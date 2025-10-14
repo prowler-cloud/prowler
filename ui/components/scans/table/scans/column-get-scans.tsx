@@ -1,16 +1,16 @@
 "use client";
 
-import { Tooltip } from "@nextui-org/react";
+import { Tooltip } from "@heroui/tooltip";
 import { ColumnDef } from "@tanstack/react-table";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { InfoIcon } from "@/components/icons";
+import { TableLink } from "@/components/ui/custom";
 import { DateWithTime, EntityInfoShort } from "@/components/ui/entities";
 import { TriggerSheet } from "@/components/ui/sheet";
 import { DataTableColumnHeader, StatusBadge } from "@/components/ui/table";
 import { ProviderType, ScanProps } from "@/types";
 
-import { LinkToFindingsFromScan } from "../../link-to-findings-from-scan";
 import { TriggerIcon } from "../../trigger-icon";
 import { DataTableDownloadDetails } from "./data-table-download-details";
 import { DataTableRowActions } from "./data-table-row-actions";
@@ -21,19 +21,44 @@ const getScanData = (row: { original: ScanProps }) => {
 };
 
 const ScanDetailsCell = ({ row }: { row: any }) => {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const scanId = searchParams.get("scanId");
   const isOpen = scanId === row.original.id;
+  const scanState = row.original.attributes?.state;
+  const isExecuting = scanState === "executing" || scanState === "available";
+
+  const handleOpenChange = (open: boolean) => {
+    if (isExecuting) return;
+
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (open) {
+      params.set("scanId", row.original.id);
+    } else {
+      params.delete("scanId");
+    }
+
+    router.push(`?${params.toString()}`, { scroll: false });
+  };
 
   return (
     <div className="flex w-9 items-center justify-center">
       <TriggerSheet
-        triggerComponent={<InfoIcon className="text-primary" size={16} />}
+        triggerComponent={
+          <InfoIcon
+            className={
+              isExecuting ? "cursor-default text-gray-400" : "text-primary"
+            }
+            size={16}
+          />
+        }
         title="Scan Details"
         description="View the scan details"
-        defaultOpen={isOpen}
+        open={isOpen}
+        onOpenChange={handleOpenChange}
       >
-        <DataTableRowDetails entityId={row.original.id} />
+        {isOpen && <DataTableRowDetails entityId={row.original.id} />}
       </TriggerSheet>
     </div>
   );
@@ -47,7 +72,7 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
   },
   {
     accessorKey: "cloudProvider",
-    header: () => <p className="pr-8">Cloud provider</p>,
+    header: () => <p className="pr-8">Cloud Provider</p>,
     cell: ({ row }) => {
       const providerInfo = row.original.providerInfo;
 
@@ -106,9 +131,25 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
       const { id } = getScanData(row);
       const scanState = row.original.attributes?.state;
       return (
-        <LinkToFindingsFromScan
-          scanId={id}
-          isDisabled={!["completed", "executing"].includes(scanState)}
+        <TableLink
+          href={`/findings?filter[scan__in]=${id}&filter[status__in]=FAIL`}
+          isDisabled={scanState !== "completed"}
+          label="See Findings"
+        />
+      );
+    },
+  },
+  {
+    accessorKey: "compliance",
+    header: "Compliance",
+    cell: ({ row }) => {
+      const { id } = getScanData(row);
+      const scanState = row.original.attributes?.state;
+      return (
+        <TableLink
+          href={`/compliance?scanId=${id}`}
+          isDisabled={!["completed"].includes(scanState)}
+          label="See Compliance"
         />
       );
     },
@@ -120,10 +161,10 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
         <p className="w-fit text-xs">Download</p>
         <Tooltip
           className="text-xs"
-          content="Download a ZIP file containing the JSON (OCSF), CSV, and HTML reports."
+          content="Download a ZIP file that includes the JSON (OCSF), CSV, and HTML scan reports, along with the compliance report."
         >
           <div className="flex items-center gap-2">
-            <InfoIcon className="mb-1 text-primary" size={12} />
+            <InfoIcon className="text-primary mb-1" size={12} />
           </div>
         </Tooltip>
       </div>

@@ -79,23 +79,23 @@ export const ColumnNewFindingsToDate: ColumnDef<FindingProps>[] = [
     cell: ({ row }) => {
       const { checktitle } = getFindingsMetadata(row);
       const {
-        attributes: { muted },
+        attributes: { muted, muted_reason },
       } = getFindingsData(row);
       const { delta } = row.original.attributes;
       return (
-        <div className="relative flex max-w-[410px] flex-row items-center gap-2 3xl:max-w-[660px]">
+        <div className="3xl:max-w-[660px] relative flex max-w-[410px] flex-row items-center gap-2">
           <div className="flex flex-row items-center gap-4">
             {delta === "new" || delta === "changed" ? (
               <DeltaIndicator delta={delta} />
             ) : (
               <div className="w-2" />
             )}
-            <p className="mr-7 whitespace-normal break-words text-sm">
+            <p className="mr-7 text-sm break-words whitespace-normal">
               {checktitle}
             </p>
           </div>
-          <span className="absolute -right-2 top-1/2 -translate-y-1/2">
-            <Muted isMuted={muted} />
+          <span className="absolute top-1/2 -right-2 -translate-y-1/2">
+            <Muted isMuted={muted} mutedReason={muted_reason || ""} />
           </span>
         </div>
       );
@@ -169,12 +169,12 @@ export const ColumnNewFindingsToDate: ColumnDef<FindingProps>[] = [
     header: "Service",
     cell: ({ row }) => {
       const { servicename } = getFindingsMetadata(row);
-      return <p className="max-w-96 truncate text-small">{servicename}</p>;
+      return <p className="text-small max-w-96 truncate">{servicename}</p>;
     },
   },
   {
     accessorKey: "cloudProvider",
-    header: "Cloud provider",
+    header: "Cloud Provider",
     cell: ({ row }) => {
       const provider = getProviderData(row, "provider");
       const alias = getProviderData(row, "alias");

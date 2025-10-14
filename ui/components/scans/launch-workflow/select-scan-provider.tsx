@@ -1,6 +1,6 @@
 "use client";
 
-import { Select, SelectItem } from "@nextui-org/react";
+import { Select, SelectItem } from "@heroui/select";
 import { Control, FieldPath, FieldValues } from "react-hook-form";
 
 import { EntityInfoShort } from "@/components/ui/entities";
@@ -43,7 +43,7 @@ export const SelectScanProvider = <
               classNames={{
                 selectorIcon: "right-2",
                 label:
-                  "tracking-tight font-light !text-default-700 text-xs !z-0",
+                  "tracking-tight font-light !text-default-700 text-xs z-0!",
                 value: "text-default-500 text-small",
               }}
               label="Select a cloud provider to launch a scan"
@@ -80,8 +80,8 @@ export const SelectScanProvider = <
               {providers.map((item) => (
                 <SelectItem
                   key={item.providerId}
-                  textValue={item.alias}
-                  aria-label={item.alias}
+                  textValue={`${item.providerType} - ${item.alias || ""} ${item.uid}`}
+                  aria-label={`${item.providerType} provider ${item.alias}`}
                 >
                   <div className="flex items-center gap-2">
                     <EntityInfoShort

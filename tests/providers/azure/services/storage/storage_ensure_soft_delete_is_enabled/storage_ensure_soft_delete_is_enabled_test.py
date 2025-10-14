@@ -5,6 +5,7 @@ from prowler.providers.azure.services.storage.storage_service import (
     Account,
     BlobProperties,
     DeleteRetentionPolicy,
+    NetworkRuleSet,
 )
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
@@ -45,16 +46,18 @@ class Test_storage_ensure_soft_delete_is_enabled:
                 Account(
                     id=storage_account_id,
                     name=storage_account_name,
-                    resouce_group_name=None,
+                    resouce_group_name="rg",
                     enable_https_traffic_only=False,
                     infrastructure_encryption=False,
-                    allow_blob_public_access=None,
-                    network_rule_set=None,
+                    allow_blob_public_access=False,
+                    network_rule_set=NetworkRuleSet(
+                        bypass="AzureServices", default_action="Allow"
+                    ),
                     encryption_type="None",
-                    minimum_tls_version=None,
+                    minimum_tls_version="TLS1_2",
                     key_expiration_period_in_days=None,
                     location="westeurope",
-                    private_endpoint_connections=None,
+                    private_endpoint_connections=[],
                     blob_properties=storage_account_blob_properties,
                 )
             ]
@@ -85,29 +88,32 @@ class Test_storage_ensure_soft_delete_is_enabled:
         storage_account_name = "Test Storage Account"
         storage_client = mock.MagicMock
         storage_account_blob_properties = BlobProperties(
-            id=None,
-            name=None,
-            type=None,
+            id="id",
+            name="name",
+            type="type",
             default_service_version=None,
             container_delete_retention_policy=DeleteRetentionPolicy(
                 enabled=False, days=7
             ),
+            versioning_enabled=False,
         )
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
                 Account(
                     id=storage_account_id,
                     name=storage_account_name,
-                    resouce_group_name=None,
+                    resouce_group_name="rg",
                     enable_https_traffic_only=False,
                     infrastructure_encryption=False,
-                    allow_blob_public_access=None,
-                    network_rule_set=None,
+                    allow_blob_public_access=False,
+                    network_rule_set=NetworkRuleSet(
+                        bypass="AzureServices", default_action="Allow"
+                    ),
                     encryption_type="None",
-                    minimum_tls_version=None,
+                    minimum_tls_version="TLS1_2",
                     key_expiration_period_in_days=None,
                     location="westeurope",
-                    private_endpoint_connections=None,
+                    private_endpoint_connections=[],
                     blob_properties=storage_account_blob_properties,
                 )
             ]
@@ -147,29 +153,32 @@ class Test_storage_ensure_soft_delete_is_enabled:
         storage_account_name = "Test Storage Account"
         storage_client = mock.MagicMock
         storage_account_blob_properties = BlobProperties(
-            id=None,
-            name=None,
-            type=None,
+            id="id",
+            name="name",
+            type="type",
             default_service_version=None,
             container_delete_retention_policy=DeleteRetentionPolicy(
                 enabled=True, days=7
             ),
+            versioning_enabled=True,
         )
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
                 Account(
                     id=storage_account_id,
                     name=storage_account_name,
-                    resouce_group_name=None,
+                    resouce_group_name="rg",
                     enable_https_traffic_only=False,
                     infrastructure_encryption=False,
-                    allow_blob_public_access=None,
-                    network_rule_set=None,
+                    allow_blob_public_access=False,
+                    network_rule_set=NetworkRuleSet(
+                        bypass="AzureServices", default_action="Allow"
+                    ),
                     encryption_type="None",
-                    minimum_tls_version=None,
+                    minimum_tls_version="TLS1_2",
                     key_expiration_period_in_days=None,
                     location="westeurope",
-                    private_endpoint_connections=None,
+                    private_endpoint_connections=[],
                     blob_properties=storage_account_blob_properties,
                 )
             ]

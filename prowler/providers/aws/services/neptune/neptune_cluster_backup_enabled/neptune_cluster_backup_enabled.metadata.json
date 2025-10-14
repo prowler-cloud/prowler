@@ -1,29 +1,39 @@
 {
   "Provider": "aws",
   "CheckID": "neptune_cluster_backup_enabled",
-  "CheckTitle": "Check for Neptune Clusters Backup Retention Period.",
-  "CheckType": [],
+  "CheckTitle": "Neptune cluster has automated backups enabled with retention period equal to or greater than the configured minimum",
+  "CheckType": [
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
   "ServiceName": "neptune",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:rds:region:account-id:db-instance",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbCluster",
-  "Description": "Check if Neptune Clusters have backup enabled.",
-  "Risk": "Ensure that your Amazon Neptune graph database clusters have set a minimum backup retention period of 7 days or greater in order to achieve your organization compliance requirements. The retention period represents the number of days to retain automated snapshots.",
-  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-5",
+  "Description": "Neptune DB cluster automated backup is enabled and retention days are more than the required minimum retention period (default to `7` days).",
+  "Risk": "**Insufficient backup retention** reduces the ability to recover from data corruption, accidental deletion, or ransomware, impacting **availability** and **integrity**.\n\n- Prevents point-in-time recovery to required dates\n- Increases downtime, irreversible data loss, and compliance violations",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-5",
+    "https://trendmicro.com/cloudoneconformity/knowledge-base/aws/Neptune/sufficient-backup-retention-period.html",
+    "https://support.icompaas.com/support/solutions/articles/62000233327-check-for-neptune-clusters-backup-retention-period",
+    "https://asecure.cloud/a/p_configrule_neptune_cluster_backup_retention_check/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws neptune modify-db-cluster --db-cluster-identifier <DB_CLUSTER_ID> --backup-retention-period 7",
-      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Neptune/sufficient-backup-retention-period.html#",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Neptune/sufficient-backup-retention-period.html#",
-      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Neptune/sufficient-backup-retention-period.html#"
+      "CLI": "aws neptune modify-db-cluster --db-cluster-identifier <DB_CLUSTER_ID> --backup-retention-period 7 --apply-immediately",
+      "NativeIaC": "```yaml\nParameters:\n  DBClusterId:\n    Type: String\nResources:\n  NeptuneCluster:\n    Type: AWS::Neptune::DBCluster\n    Properties:\n      DBClusterIdentifier: !Ref DBClusterId\n      BackupRetentionPeriod: 7  # Enable automated backups with 7-day retention minimum\n```",
+      "Terraform": "```hcl\nresource \"aws_neptune_cluster\" \"example_resource\" {\n  cluster_identifier      = var.cluster_id\n  backup_retention_period = 7  # Enable automated backups with 7-day retention minimum\n}\n```",
+      "Other": "1. Sign in to the AWS Management Console\n2. Services → Amazon Neptune → Databases\n3. Select the DB cluster and click Modify\n4. In Backup retention period set the value to 7 (or higher)\n5. Choose Apply immediately and click Modify cluster"
     },
     "Recommendation": {
-      "Text": "Enable automated backup for production data. Define a retention period and periodically test backup restoration. A Disaster Recovery process should be in place to govern Data Protection approach.",
-      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-5"
+      "Text": "Ensure automated backups are enabled and retention aligns with your **RPO/RTO** and regulatory requirements (at least `7` days).\n\n- Define backup lifecycle and storage retention policies\n- Regularly test restore procedures and monitor backup health\n- Incorporate backups into Disaster Recovery and retention governance",
+      "Url": "https://hub.prowler.com/check/neptune_cluster_backup_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

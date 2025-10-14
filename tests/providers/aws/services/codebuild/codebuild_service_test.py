@@ -28,6 +28,7 @@ build_id = "test:93f838a7-cd20-48ae-90e5-c10fbbc78ca6"
 last_invoked_time = datetime.now() - timedelta(days=2)
 bitbucket_url = "https://bitbucket.org/example/repo.git"
 secondary_bitbucket_url = "https://bitbucket.org/example/secondary-repo.git"
+project_visibility = "PRIVATE"
 
 report_group_arn = f"arn:{AWS_COMMERCIAL_PARTITION}:codebuild:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:report-group/{project_name}"
 
@@ -71,6 +72,7 @@ def mock_make_api_call(self, operation_name, kwarg):
                         },
                     },
                     "tags": [{"key": "Name", "value": project_name}],
+                    "projectVisibility": project_visibility,
                 }
             ]
         }
@@ -152,6 +154,7 @@ class Test_Codebuild_Service:
         )
         assert codebuild.projects[project_arn].tags[0]["key"] == "Name"
         assert codebuild.projects[project_arn].tags[0]["value"] == project_name
+        assert codebuild.projects[project_arn].project_visibility == project_visibility
         # Asserttions related with report groups
         assert len(codebuild.report_groups) == 1
         assert isinstance(codebuild.report_groups, dict)

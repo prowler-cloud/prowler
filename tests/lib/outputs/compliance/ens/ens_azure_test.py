@@ -1,5 +1,6 @@
 from datetime import datetime
 from io import StringIO
+from unittest import mock
 
 from freezegun import freeze_time
 from mock import patch
@@ -24,6 +25,8 @@ class TestAzureENS:
         output_data = output.data[0]
         assert isinstance(output_data, AzureENSModel)
         assert output_data.Provider == "azure"
+        assert output_data.Framework == ENS_RD2022_AZURE.Framework
+        assert output_data.Name == ENS_RD2022_AZURE.Name
         assert output_data.SubscriptionId == "123456789012"
         assert output_data.Location == "global"
         assert output_data.Description == ENS_RD2022_AZURE.Description
@@ -68,11 +71,13 @@ class TestAzureENS:
         assert output_data.StatusExtended == ""
         assert output_data.ResourceId == ""
         assert output_data.ResourceName == ""
-        assert output_data.CheckId == "test-check-id"
+        assert output_data.CheckId == "service_test_check_id"
         assert output_data.Muted is False
         # Test manual check
         output_data_manual = output.data[1]
         assert output_data_manual.Provider == "azure"
+        assert output_data_manual.Framework == ENS_RD2022_AZURE.Framework
+        assert output_data_manual.Name == ENS_RD2022_AZURE.Name
         assert output_data_manual.SubscriptionId == ""
         assert output_data_manual.Location == ""
         assert output_data_manual.Requirements_Id == ENS_RD2022_AZURE.Requirements[1].Id
@@ -118,7 +123,10 @@ class TestAzureENS:
         assert output_data_manual.CheckId == "manual"
         assert output_data_manual.Muted is False
 
-    @freeze_time(datetime.now())
+    @freeze_time("2025-01-01 00:00:00")
+    @mock.patch(
+        "prowler.lib.outputs.compliance.ens.ens_azure.timestamp", "2025-01-01 00:00:00"
+    )
     def test_batch_write_data_to_file(self):
         mock_file = StringIO()
         findings = [
@@ -136,5 +144,6 @@ class TestAzureENS:
 
         mock_file.seek(0)
         content = mock_file.read()
-        expected_csv = f"PROVIDER;DESCRIPTION;SUBSCRIPTIONID;LOCATION;ASSESSMENTDATE;REQUIREMENTS_ID;REQUIREMENTS_DESCRIPTION;REQUIREMENTS_ATTRIBUTES_IDGRUPOCONTROL;REQUIREMENTS_ATTRIBUTES_MARCO;REQUIREMENTS_ATTRIBUTES_CATEGORIA;REQUIREMENTS_ATTRIBUTES_DESCRIPCIONCONTROL;REQUIREMENTS_ATTRIBUTES_NIVEL;REQUIREMENTS_ATTRIBUTES_TIPO;REQUIREMENTS_ATTRIBUTES_DIMENSIONES;REQUIREMENTS_ATTRIBUTES_MODOEJECUCION;REQUIREMENTS_ATTRIBUTES_DEPENDENCIAS;STATUS;STATUSEXTENDED;RESOURCEID;CHECKID;MUTED;RESOURCENAME\r\nazure;The accreditation scheme of the ENS (National Security Scheme) has been developed by the Ministry of Finance and Public Administrations and the CCN (National Cryptological Center). This includes the basic principles and minimum requirements necessary for the adequate protection of information.;123456789012;global;{datetime.now()};op.exp.8.azure.ct.3;Registro de actividad;op.exp.8;operacional;explotación;Habilitar la validación de archivos en todos los trails, evitando así que estos se vean modificados o eliminados.;alto;requisito;trazabilidad;automático;;PASS;;;test-check-id;False;\r\nazure;The accreditation scheme of the ENS (National Security Scheme) has been developed by the Ministry of Finance and Public Administrations and the CCN (National Cryptological Center). This includes the basic principles and minimum requirements necessary for the adequate protection of information.;;;{datetime.now()};op.exp.8.azure.ct.4;Registro de actividad;op.exp.8;operacional;explotación;Habilitar la validación de archivos en todos los trails, evitando así que estos se vean modificados o eliminados.;alto;requisito;trazabilidad;automático;;MANUAL;Manual check;manual_check;manual;False;Manual check\r\n"
+        expected_csv = f"PROVIDER;DESCRIPTION;SUBSCRIPTIONID;LOCATION;ASSESSMENTDATE;REQUIREMENTS_ID;REQUIREMENTS_DESCRIPTION;REQUIREMENTS_ATTRIBUTES_IDGRUPOCONTROL;REQUIREMENTS_ATTRIBUTES_MARCO;REQUIREMENTS_ATTRIBUTES_CATEGORIA;REQUIREMENTS_ATTRIBUTES_DESCRIPCIONCONTROL;REQUIREMENTS_ATTRIBUTES_NIVEL;REQUIREMENTS_ATTRIBUTES_TIPO;REQUIREMENTS_ATTRIBUTES_DIMENSIONES;REQUIREMENTS_ATTRIBUTES_MODOEJECUCION;REQUIREMENTS_ATTRIBUTES_DEPENDENCIAS;STATUS;STATUSEXTENDED;RESOURCEID;CHECKID;MUTED;RESOURCENAME;FRAMEWORK;NAME\r\nazure;The accreditation scheme of the ENS (National Security Scheme) has been developed by the Ministry of Finance and Public Administrations and the CCN (National Cryptological Center). This includes the basic principles and minimum requirements necessary for the adequate protection of information.;123456789012;global;{datetime.now()};op.exp.8.azure.ct.3;Registro de actividad;op.exp.8;operacional;explotación;Habilitar la validación de archivos en todos los trails, evitando así que estos se vean modificados o eliminados.;alto;requisito;trazabilidad;automático;;PASS;;;service_test_check_id;False;;ENS;ENS RD 311/2022\r\nazure;The accreditation scheme of the ENS (National Security Scheme) has been developed by the Ministry of Finance and Public Administrations and the CCN (National Cryptological Center). This includes the basic principles and minimum requirements necessary for the adequate protection of information.;;;{datetime.now()};op.exp.8.azure.ct.4;Registro de actividad;op.exp.8;operacional;explotación;Habilitar la validación de archivos en todos los trails, evitando así que estos se vean modificados o eliminados.;alto;requisito;trazabilidad;automático;;MANUAL;Manual check;manual_check;manual;False;Manual check;ENS;ENS RD 311/2022\r\n"
+
         assert content == expected_csv

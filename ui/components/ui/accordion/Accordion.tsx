@@ -1,10 +1,7 @@
 "use client";
 
-import {
-  Accordion as NextUIAccordion,
-  AccordionItem,
-  Selection,
-} from "@nextui-org/react";
+import { Accordion as NextUIAccordion, AccordionItem } from "@heroui/accordion";
+import type { Selection } from "@react-types/shared";
 import { ChevronDown } from "lucide-react";
 import React, { ReactNode, useCallback, useMemo, useState } from "react";
 
@@ -47,7 +44,7 @@ const AccordionContent = ({
     <div className="text-sm text-gray-700 dark:text-gray-300">
       {content}
       {items && items.length > 0 && (
-        <div className="ml-2 mt-4 border-l-2 border-gray-200 pl-4 dark:border-gray-700">
+        <div className="mt-4 ml-2 border-l-2 border-gray-200 pl-4 dark:border-gray-700">
           <Accordion
             items={items}
             variant="light"
@@ -118,7 +115,7 @@ export const Accordion = ({
 
   return (
     <NextUIAccordion
-      className={cn("w-full !px-0", className)}
+      className={cn("w-full px-0!", className)}
       variant={variant}
       selectionMode={selectionMode}
       selectedKeys={expandedKeys}
@@ -138,7 +135,7 @@ export const Accordion = ({
           indicator={<ChevronDown className="text-gray-500" />}
           classNames={{
             base: index === 0 || index === 1 ? "my-1" : "my-1",
-            title: "text-sm font-medium max-w-full overflow-hidden truncate",
+            title: "text-sm",
             subtitle: "text-xs text-gray-500",
             trigger:
               "py-2 px-2 rounded-lg data-[hover=true]:bg-gray-50 dark:data-[hover=true]:bg-gray-800/50 w-full flex items-center",

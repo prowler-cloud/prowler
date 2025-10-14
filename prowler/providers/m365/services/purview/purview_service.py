@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.m365.lib.service.service import M365Service
@@ -11,8 +11,8 @@ class Purview(M365Service):
         self.audit_log_config = None
 
         if self.powershell:
-            self.powershell.connect_exchange_online()
-            self.audit_log_config = self._get_audit_log_config()
+            if self.powershell.connect_exchange_online():
+                self.audit_log_config = self._get_audit_log_config()
             self.powershell.close()
 
     def _get_audit_log_config(self):

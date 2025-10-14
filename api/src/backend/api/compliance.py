@@ -150,12 +150,16 @@ def generate_scan_compliance(
                 requirement["checks"][check_id] = status
                 requirement["checks_status"][status.lower()] += 1
 
-            if requirement["status"] != "FAIL" and any(
-                value == "FAIL" for value in requirement["checks"].values()
-            ):
-                requirement["status"] = "FAIL"
-                compliance_overview[compliance_id]["requirements_status"]["passed"] -= 1
-                compliance_overview[compliance_id]["requirements_status"]["failed"] += 1
+                if requirement["status"] != "FAIL" and any(
+                    value == "FAIL" for value in requirement["checks"].values()
+                ):
+                    requirement["status"] = "FAIL"
+                    compliance_overview[compliance_id]["requirements_status"][
+                        "passed"
+                    ] -= 1
+                    compliance_overview[compliance_id]["requirements_status"][
+                        "failed"
+                    ] += 1
 
 
 def generate_compliance_overview_template(prowler_compliance: dict):
@@ -190,10 +194,16 @@ def generate_compliance_overview_template(prowler_compliance: dict):
                 total_checks = len(requirement.Checks)
                 checks_dict = {check: None for check in requirement.Checks}
 
+                req_status_val = "MANUAL" if total_checks == 0 else "PASS"
+
                 # Build requirement dictionary
                 requirement_dict = {
                     "name": requirement.Name or requirement.Id,
                     "description": requirement.Description,
+                    "tactics": getattr(requirement, "Tactics", []),
+                    "subtechniques": getattr(requirement, "SubTechniques", []),
+                    "platforms": getattr(requirement, "Platforms", []),
+                    "technique_url": getattr(requirement, "TechniqueURL", ""),
                     "attributes": [
                         dict(attribute) for attribute in requirement.Attributes
                     ],
@@ -204,23 +214,22 @@ def generate_compliance_overview_template(prowler_compliance: dict):
                         "manual": 0,
                         "total": total_checks,
                     },
-                    "status": "PASS",
+                    "status": req_status_val,
                 }
 
-                # Update requirements status
-                if total_checks == 0:
+                # Update requirements status counts for the framework
+                if req_status_val == "MANUAL":
                     requirements_status["manual"] += 1
+                elif req_status_val == "PASS":
+                    requirements_status["passed"] += 1
 
                 # Add requirement to compliance requirements
                 compliance_requirements[requirement.Id] = requirement_dict
 
-            # Calculate pending requirements
-            pending_requirements = total_requirements - requirements_status["manual"]
-            requirements_status["passed"] = pending_requirements
-
             # Build compliance dictionary
             compliance_dict = {
                 "framework": compliance_data.Framework,
+                "name": compliance_data.Name,
                 "version": compliance_data.Version,
                 "provider": provider_type,
                 "description": compliance_data.Description,

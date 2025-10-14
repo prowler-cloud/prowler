@@ -2,8 +2,13 @@ from boto3 import client
 from moto import mock_aws
 
 from prowler.providers.aws.services.firehose.firehose_service import (
+    DatabaseSourceDescription,
+    DirectPutSourceDescription,
     EncryptionStatus,
     Firehose,
+    KinesisStreamSourceDescription,
+    MSKSourceDescription,
+    Source,
 )
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
@@ -151,4 +156,103 @@ class Test_Firehose_Service:
         assert (
             firehose.delivery_streams[arn].kms_key_arn
             == f"arn:aws:kms:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:key/test-kms-key-id"
+        )
+
+    @mock_aws
+    def test_describe_delivery_stream_source_direct_put(self):
+        # Generate S3 client
+        s3_client = client("s3", region_name=AWS_REGION_EU_WEST_1)
+        s3_client.create_bucket(
+            Bucket="test-bucket",
+            CreateBucketConfiguration={"LocationConstraint": AWS_REGION_EU_WEST_1},
+        )
+
+        # Generate Firehose client
+        firehose_client = client("firehose", region_name=AWS_REGION_EU_WEST_1)
+        delivery_stream = firehose_client.create_delivery_stream(
+            DeliveryStreamName="test-delivery-stream",
+            DeliveryStreamType="DirectPut",
+            S3DestinationConfiguration={
+                "RoleARN": "arn:aws:iam::012345678901:role/firehose-role",
+                "BucketARN": "arn:aws:s3:::test-bucket",
+                "Prefix": "",
+                "BufferingHints": {"IntervalInSeconds": 300, "SizeInMBs": 5},
+                "CompressionFormat": "UNCOMPRESSED",
+            },
+            Tags=[{"Key": "key", "Value": "value"}],
+        )
+        arn = delivery_stream["DeliveryStreamARN"]
+
+        # Firehose Client for this test class
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        firehose = Firehose(aws_provider)
+
+        assert len(firehose.delivery_streams) == 1
+        assert firehose.delivery_streams[arn].delivery_stream_type == "DirectPut"
+
+        # Test Source structure
+        assert isinstance(firehose.delivery_streams[arn].source, Source)
+        assert isinstance(
+            firehose.delivery_streams[arn].source.direct_put, DirectPutSourceDescription
+        )
+        assert isinstance(
+            firehose.delivery_streams[arn].source.kinesis_stream,
+            KinesisStreamSourceDescription,
+        )
+        assert isinstance(
+            firehose.delivery_streams[arn].source.msk, MSKSourceDescription
+        )
+        assert isinstance(
+            firehose.delivery_streams[arn].source.database, DatabaseSourceDescription
+        )
+
+    @mock_aws
+    def test_describe_delivery_stream_source_kinesis_stream(self):
+        # Generate Kinesis client
+        kinesis_client = client("kinesis", region_name=AWS_REGION_EU_WEST_1)
+        kinesis_client.create_stream(
+            StreamName="test-kinesis-stream",
+            ShardCount=1,
+        )
+        kinesis_stream_arn = f"arn:aws:kinesis:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:stream/test-kinesis-stream"
+
+        # Generate Firehose client
+        firehose_client = client("firehose", region_name=AWS_REGION_EU_WEST_1)
+        delivery_stream = firehose_client.create_delivery_stream(
+            DeliveryStreamName="test-delivery-stream",
+            DeliveryStreamType="KinesisStreamAsSource",
+            KinesisStreamSourceConfiguration={
+                "KinesisStreamARN": kinesis_stream_arn,
+                "RoleARN": "arn:aws:iam::012345678901:role/firehose-role",
+            },
+            S3DestinationConfiguration={
+                "RoleARN": "arn:aws:iam::012345678901:role/firehose-role",
+                "BucketARN": "arn:aws:s3:::test-bucket",
+                "Prefix": "",
+                "BufferingHints": {"IntervalInSeconds": 300, "SizeInMBs": 5},
+                "CompressionFormat": "UNCOMPRESSED",
+            },
+            Tags=[{"Key": "key", "Value": "value"}],
+        )
+        arn = delivery_stream["DeliveryStreamARN"]
+
+        # Firehose Client for this test class
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        firehose = Firehose(aws_provider)
+
+        assert len(firehose.delivery_streams) == 1
+        assert (
+            firehose.delivery_streams[arn].delivery_stream_type
+            == "KinesisStreamAsSource"
+        )
+
+        # Test Source structure
+        assert isinstance(firehose.delivery_streams[arn].source, Source)
+        assert isinstance(
+            firehose.delivery_streams[arn].source.kinesis_stream,
+            KinesisStreamSourceDescription,
+        )
+        assert (
+            firehose.delivery_streams[arn].source.kinesis_stream.kinesis_stream_arn
+            == kinesis_stream_arn
         )

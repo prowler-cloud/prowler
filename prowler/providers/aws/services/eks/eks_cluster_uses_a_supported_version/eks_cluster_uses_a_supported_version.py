@@ -16,6 +16,10 @@ class eks_cluster_uses_a_supported_version(Check):
         for cluster in eks_client.clusters:
             report = Check_Report_AWS(metadata=self.metadata(), resource=cluster)
 
+            # Handle case where cluster.version might be None (edge case during cluster creation/deletion)
+            if not cluster.version:
+                continue
+
             cluster_version_major, cluster_version_minor = map(
                 int, cluster.version.split(".")
             )

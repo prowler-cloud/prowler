@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 
 class ProwlerThreatScoreAWSModel(BaseModel):
@@ -17,7 +17,7 @@ class ProwlerThreatScoreAWSModel(BaseModel):
     Requirements_Description: str
     Requirements_Attributes_Title: str
     Requirements_Attributes_Section: str
-    Requirements_Attributes_SubSection: Optional[str]
+    Requirements_Attributes_SubSection: Optional[str] = None
     Requirements_Attributes_AttributeDescription: str
     Requirements_Attributes_AdditionalInformation: str
     Requirements_Attributes_LevelOfRisk: int
@@ -28,6 +28,8 @@ class ProwlerThreatScoreAWSModel(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str
 
 
 class ProwlerThreatScoreAzureModel(BaseModel):
@@ -44,7 +46,7 @@ class ProwlerThreatScoreAzureModel(BaseModel):
     Requirements_Description: str
     Requirements_Attributes_Title: str
     Requirements_Attributes_Section: str
-    Requirements_Attributes_SubSection: Optional[str]
+    Requirements_Attributes_SubSection: Optional[str] = None
     Requirements_Attributes_AttributeDescription: str
     Requirements_Attributes_AdditionalInformation: str
     Requirements_Attributes_LevelOfRisk: int
@@ -55,6 +57,8 @@ class ProwlerThreatScoreAzureModel(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str
 
 
 class ProwlerThreatScoreGCPModel(BaseModel):
@@ -71,7 +75,7 @@ class ProwlerThreatScoreGCPModel(BaseModel):
     Requirements_Description: str
     Requirements_Attributes_Title: str
     Requirements_Attributes_Section: str
-    Requirements_Attributes_SubSection: Optional[str]
+    Requirements_Attributes_SubSection: Optional[str] = None
     Requirements_Attributes_AttributeDescription: str
     Requirements_Attributes_AdditionalInformation: str
     Requirements_Attributes_LevelOfRisk: int
@@ -82,6 +86,8 @@ class ProwlerThreatScoreGCPModel(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str
 
 
 class ProwlerThreatScoreM365Model(BaseModel):
@@ -98,7 +104,7 @@ class ProwlerThreatScoreM365Model(BaseModel):
     Requirements_Description: str
     Requirements_Attributes_Title: str
     Requirements_Attributes_Section: str
-    Requirements_Attributes_SubSection: Optional[str]
+    Requirements_Attributes_SubSection: Optional[str] = None
     Requirements_Attributes_AttributeDescription: str
     Requirements_Attributes_AdditionalInformation: str
     Requirements_Attributes_LevelOfRisk: int
@@ -109,3 +115,5 @@ class ProwlerThreatScoreM365Model(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str

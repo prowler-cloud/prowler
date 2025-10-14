@@ -5,8 +5,46 @@ import { useToast } from "@/components/ui";
 import { AuthSocialProvider, MetaDataProps, PermissionInfo } from "@/types";
 
 export const baseUrl = process.env.AUTH_URL || "http://localhost:3000";
-export const apiBaseUrl = process.env.API_BASE_URL;
+export const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+/**
+ * Extracts a form value from a FormData object
+ * @param formData - The FormData object to extract from
+ * @param field - The name of the field to extract
+ * @returns The value of the field
+ */
+export const getFormValue = (formData: FormData, field: string) =>
+  formData.get(field);
+
+/**
+ * Filters out empty values from an object
+ * @param obj - Object to filter
+ * @returns New object with empty values removed
+ * Avoids sending empty values to the API
+ */
+export function filterEmptyValues(
+  obj: Record<string, any>,
+): Record<string, any> {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([_, value]) => {
+      // Keep number 0 and boolean false as they are valid values
+      if (value === 0 || value === false) return true;
+
+      // Filter out null, undefined, empty strings, and empty arrays
+      if (value === null || value === undefined) return false;
+      if (typeof value === "string" && value.trim() === "") return false;
+      if (Array.isArray(value) && value.length === 0) return false;
+
+      return true;
+    }),
+  );
+}
+
+/**
+ * Returns the authentication headers for API requests
+ * @param options - Optional configuration options
+ * @returns Authentication headers with Accept and Authorization
+ */
 export const getAuthHeaders = async (options?: { contentType?: boolean }) => {
   const session = await auth();
 
@@ -247,19 +285,16 @@ export function decryptKey(passkey: string) {
   return atob(passkey);
 }
 
-export const getErrorMessage = async (error: unknown): Promise<string> => {
-  let message: string;
-
+export const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) {
-    message = error.message;
+    return error.message;
   } else if (error && typeof error === "object" && "message" in error) {
-    message = String(error.message);
+    return String(error.message);
   } else if (typeof error === "string") {
-    message = error;
+    return error;
   } else {
-    message = "Oops! Something went wrong.";
+    return "Oops! Something went wrong.";
   }
-  return message;
 };
 
 export const permissionFormFields: PermissionInfo[] = [
@@ -285,12 +320,12 @@ export const permissionFormFields: PermissionInfo[] = [
     description:
       "Allows configuration and management of cloud provider connections",
   },
-  // {
-  //   field: "manage_integrations",
-  //   label: "Manage Integrations",
-  //   description:
-  //     "Controls the setup and management of third-party integrations",
-  // },
+  {
+    field: "manage_integrations",
+    label: "Manage Integrations",
+    description:
+      "Allows configuration and management of third-party integrations",
+  },
   {
     field: "manage_scans",
     label: "Manage Scans",

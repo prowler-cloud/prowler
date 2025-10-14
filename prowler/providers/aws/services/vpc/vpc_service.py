@@ -2,7 +2,7 @@ import json
 from typing import Optional
 
 from botocore.client import ClientError
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -276,7 +276,7 @@ class VPC(AWSService):
                                         service=endpoint["ServiceName"],
                                         owner_id=endpoint["Owner"],
                                         region=regional_client.region,
-                                        tags=endpoint.get("Tags"),
+                                        tags=endpoint.get("Tags", []),
                                     )
                                 )
                     except Exception as error:

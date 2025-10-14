@@ -12,6 +12,7 @@ ACCOUNT_URL = "/user"
 PAT_TOKEN = "github-token"
 OAUTH_TOKEN = "oauth-token"
 APP_ID = "app-id"
+APP_NAME = "app-name"
 APP_KEY = "app-key"
 
 

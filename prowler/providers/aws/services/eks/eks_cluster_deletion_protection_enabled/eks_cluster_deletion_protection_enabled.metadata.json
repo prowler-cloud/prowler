@@ -1,0 +1,32 @@
+{
+  "Provider": "aws",
+  "CheckID": "eks_cluster_deletion_protection_enabled",
+  "CheckTitle": "Ensure EKS clusters have deletion protection enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Resource Management"
+  ],
+  "ServiceName": "eks",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "Severity": "high",
+  "ResourceType": "AwsEksCluster",
+  "Description": "Ensure that your Amazon EKS clusters have deletion protection enabled to prevent accidental deletion of critical Kubernetes clusters.",
+  "Risk": "Without deletion protection, EKS clusters can be accidentally deleted through Terraform automation, AWS CLI commands, or the AWS console, leading to data loss and service disruption.",
+  "RelatedUrl": "https://docs.aws.amazon.com/eks/latest/userguide/deletion-protection.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws eks update-cluster-config --region <region_name> --name <cluster_name> --deletion-protection",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "resource \"aws_eks_cluster\" \"example\" {\n  name     = \"example-cluster\"\n  role_arn = aws_iam_role.example.arn\n  deletion_protection = true\n  # ... other configuration\n}"
+    },
+    "Recommendation": {
+      "Text": "Enable deletion protection on all EKS clusters to prevent accidental deletion. This is especially important for production clusters and those managed through Infrastructure as Code (IaC) tools.",
+      "Url": "https://docs.aws.amazon.com/eks/latest/userguide/deletion-protection.html"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

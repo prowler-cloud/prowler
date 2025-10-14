@@ -1,3 +1,4 @@
+from prowler.config.config import timestamp
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
 from prowler.lib.outputs.compliance.ens.models import GCPENSModel
@@ -44,7 +45,7 @@ class GCPENS(ComplianceOutput):
                             Description=compliance.Description,
                             ProjectId=finding.account_uid,
                             Location=finding.region,
-                            AssessmentDate=str(finding.timestamp),
+                            AssessmentDate=str(timestamp),
                             Requirements_Id=requirement.Id,
                             Requirements_Description=requirement.Description,
                             Requirements_Attributes_IdGrupoControl=attribute.IdGrupoControl,
@@ -66,6 +67,8 @@ class GCPENS(ComplianceOutput):
                             ResourceName=finding.resource_name,
                             CheckId=finding.check_id,
                             Muted=finding.muted,
+                            Framework=compliance.Framework,
+                            Name=compliance.Name,
                         )
                         self._data.append(compliance_row)
         # Add manual requirements to the compliance output
@@ -77,7 +80,7 @@ class GCPENS(ComplianceOutput):
                         Description=compliance.Description,
                         ProjectId="",
                         Location="",
-                        AssessmentDate=str(finding.timestamp),
+                        AssessmentDate=str(timestamp),
                         Requirements_Id=requirement.Id,
                         Requirements_Description=requirement.Description,
                         Requirements_Attributes_IdGrupoControl=attribute.IdGrupoControl,
@@ -99,5 +102,7 @@ class GCPENS(ComplianceOutput):
                         ResourceName="Manual check",
                         CheckId="manual",
                         Muted=False,
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                     )
                     self._data.append(compliance_row)

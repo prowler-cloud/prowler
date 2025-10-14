@@ -5,7 +5,9 @@ import { ProwlerExtended } from "@/components/icons";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
+  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Menu } from "@/components/ui/sidebar/menu";
@@ -21,12 +23,14 @@ export function SheetMenu() {
         </Button>
       </SheetTrigger>
       <SheetContent
-        className="flex h-full flex-col px-3 dark:bg-prowler-theme-midnight sm:w-72"
+        className="dark:bg-prowler-theme-midnight flex h-full flex-col px-3 sm:w-72"
         side="left"
       >
         <SheetHeader>
+          <SheetTitle className="sr-only">Sidebar</SheetTitle>
+          <SheetDescription className="sr-only" />
           <Button
-            className="flex items-center justify-center pb-2 pt-1"
+            className="flex items-center justify-center pt-1 pb-2"
             variant="link"
             asChild
           >

@@ -7,7 +7,7 @@ from freezegun import freeze_time
 from mock import patch
 from moto import mock_aws
 
-from prowler.providers.aws.services.iam.iam_service import IAM, Policy, is_service_role
+from prowler.providers.aws.services.iam.iam_service import IAM, is_service_role
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
@@ -286,6 +286,22 @@ class Test_IAM_Service:
                 }
             ],
         }
+        # Hybrid role - assumable by both service and AWS account
+        hybrid_policy_document = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Principal": {"Service": "cloudformation.amazonaws.com"},
+                    "Action": "sts:AssumeRole",
+                },
+                {
+                    "Effect": "Allow",
+                    "Principal": {"AWS": "arn:aws:iam::123456789012:root"},
+                    "Action": "sts:AssumeRole",
+                },
+            ],
+        }
         service_role = iam_client.create_role(
             RoleName="test-1",
             AssumeRolePolicyDocument=dumps(service_policy_document),
@@ -296,6 +312,13 @@ class Test_IAM_Service:
         role = iam_client.create_role(
             RoleName="test-2",
             AssumeRolePolicyDocument=dumps(policy_document),
+            Tags=[
+                {"Key": "test", "Value": "test"},
+            ],
+        )["Role"]
+        hybrid_role = iam_client.create_role(
+            RoleName="test-3",
+            AssumeRolePolicyDocument=dumps(hybrid_policy_document),
             Tags=[
                 {"Key": "test", "Value": "test"},
             ],
@@ -314,6 +337,8 @@ class Test_IAM_Service:
         ]
         assert is_service_role(service_role)
         assert not is_service_role(role)
+        # Hybrid role should return False even though it has a service principal
+        assert not is_service_role(hybrid_role)
 
     # Test IAM Get Groups
     @mock_aws
@@ -735,7 +760,7 @@ class Test_IAM_Service:
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         iam = IAM(aws_provider)
         custom_policies = 0
-        for policy in iam.policies:
+        for policy in iam.policies.values():
             if policy.type == "Custom":
                 custom_policies += 1
                 assert policy.name == "policy1"
@@ -761,7 +786,7 @@ class Test_IAM_Service:
         iam = IAM(aws_provider)
 
         custom_policies = 0
-        for policy in iam.policies:
+        for policy in iam.policies.values():
             if policy.type == "Custom":
                 custom_policies += 1
                 assert policy.name == "policy2"
@@ -846,18 +871,14 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
         assert iam.users[0].inline_policies == [policy_name]
         assert iam.users[0].tags == []
 
-        # TODO: Workaround until this gets fixed https://github.com/getmoto/moto/issues/6712
-        for policy in iam.policies:
-            if policy.name == policy_name:
-                assert policy == Policy(
-                    name=policy_name,
-                    arn=user_arn,
-                    version_id="v1",
-                    type="Inline",
-                    attached=True,
-                    document=INLINE_POLICY_NOT_ADMIN,
-                    entity=user_name,
-                )
+        policy = iam.policies[f"{user_arn}:policy/{policy_name}"]
+        assert policy.name == policy_name
+        assert policy.arn == user_arn
+        assert policy.version_id == "v1"
+        assert policy.type == "Inline"
+        assert policy.attached
+        assert policy.document == INLINE_POLICY_NOT_ADMIN
+        assert policy.entity == user_name
 
     # Test IAM Group Inline Policy
     @mock_aws
@@ -888,18 +909,14 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
         assert iam.groups[0].inline_policies == [policy_name]
         assert iam.groups[0].users == []
 
-        # TODO: Workaround until this gets fixed https://github.com/getmoto/moto/issues/6712
-        for policy in iam.policies:
-            if policy.name == policy_name:
-                assert policy == Policy(
-                    name=policy_name,
-                    arn=group_arn,
-                    version_id="v1",
-                    type="Inline",
-                    attached=True,
-                    document=INLINE_POLICY_NOT_ADMIN,
-                    entity=group_name,
-                )
+        policy = iam.policies[f"{group_arn}:policy/{policy_name}"]
+        assert policy.name == policy_name
+        assert policy.arn == group_arn
+        assert policy.version_id == "v1"
+        assert policy.type == "Inline"
+        assert policy.attached
+        assert policy.document == INLINE_POLICY_NOT_ADMIN
+        assert policy.entity == group_name
 
     # Test IAM Role Inline Policy
     @mock_aws
@@ -934,18 +951,14 @@ nTTxU4a7x1naFxzYXK1iQ1vMARKMjDb19QEJIEJKZlDK4uS7yMlf1nFS
         assert iam.roles[0].inline_policies == [policy_name]
         assert iam.roles[0].tags == []
 
-        # TODO: Workaround until this gets fixed https://github.com/getmoto/moto/issues/6712
-        for policy in iam.policies:
-            if policy.name == policy_name:
-                assert policy == Policy(
-                    name=policy_name,
-                    arn=role_arn,
-                    version_id="v1",
-                    type="Inline",
-                    attached=True,
-                    document=INLINE_POLICY_NOT_ADMIN,
-                    entity=role_name,
-                )
+        policy = iam.policies[f"{role_arn}:policy/{policy_name}"]
+        assert policy.name == policy_name
+        assert policy.arn == role_arn
+        assert policy.version_id == "v1"
+        assert policy.type == "Inline"
+        assert policy.attached
+        assert policy.document == INLINE_POLICY_NOT_ADMIN
+        assert policy.entity == role_name
 
     # Test IAM List Attached Group Policies
     @mock_aws

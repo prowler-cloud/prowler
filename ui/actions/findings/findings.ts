@@ -1,9 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { apiBaseUrl, getAuthHeaders, parseStringify } from "@/lib";
+import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { handleApiResponse } from "@/lib/server-actions-helper";
 
 export const getFindings = async ({
   page = 1,
@@ -33,12 +33,8 @@ export const getFindings = async ({
     const findings = await fetch(url.toString(), {
       headers,
     });
-    const data = await findings.json();
-    const parsedData = parseStringify(data);
-    revalidatePath("/findings");
-    return parsedData;
+    return handleApiResponse(findings);
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error fetching findings:", error);
     return undefined;
   }
@@ -74,12 +70,8 @@ export const getLatestFindings = async ({
     const findings = await fetch(url.toString(), {
       headers,
     });
-    const data = await findings.json();
-    const parsedData = parseStringify(data);
-    revalidatePath("/findings");
-    return parsedData;
+    return handleApiResponse(findings);
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error fetching findings:", error);
     return undefined;
   }
@@ -113,15 +105,8 @@ export const getMetadataInfo = async ({
       headers,
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch metadata info: ${response.statusText}`);
-    }
-
-    const parsedData = parseStringify(await response.json());
-
-    return parsedData;
+    return handleApiResponse(response);
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error fetching metadata info:", error);
     return undefined;
   }
@@ -155,16 +140,27 @@ export const getLatestMetadataInfo = async ({
       headers,
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch metadata info: ${response.statusText}`);
-    }
-
-    const parsedData = parseStringify(await response.json());
-
-    return parsedData;
+    return handleApiResponse(response);
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error fetching metadata info:", error);
+    return undefined;
+  }
+};
+
+export const getFindingById = async (findingId: string, include = "") => {
+  const headers = await getAuthHeaders({ contentType: false });
+
+  const url = new URL(`${apiBaseUrl}/findings/${findingId}`);
+  if (include) url.searchParams.append("include", include);
+
+  try {
+    const response = await fetch(url.toString(), {
+      headers,
+    });
+
+    return handleApiResponse(response);
+  } catch (error) {
+    console.error("Error fetching finding by ID:", error);
     return undefined;
   }
 };

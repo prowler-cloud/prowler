@@ -1,6 +1,8 @@
 import { LucideIcon } from "lucide-react";
 import { SVGProps } from "react";
 
+import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
+
 export type IconSvgProps = SVGProps<SVGSVGElement> & {
   size?: number;
 };
@@ -18,6 +20,8 @@ export type SubmenuProps = {
   label: string;
   active?: boolean;
   icon: IconComponent;
+  disabled?: boolean;
+  onClick?: () => void;
 };
 
 export type MenuProps = {
@@ -27,6 +31,8 @@ export type MenuProps = {
   icon: IconComponent;
   submenus?: SubmenuProps[];
   defaultOpen?: boolean;
+  target?: string;
+  tooltip?: string;
 };
 
 export type GroupProps = {
@@ -71,9 +77,11 @@ export interface FindingsByStatusData {
     attributes: {
       fail: number;
       pass: number;
+      muted: number;
       total: number;
       fail_new: number;
       pass_new: number;
+      muted_new: number;
       [key: string]: number;
     };
   };
@@ -179,60 +187,56 @@ export interface TaskDetails {
   };
 }
 export type AWSCredentials = {
-  aws_access_key_id: string;
-  aws_secret_access_key: string;
-  aws_session_token: string;
-  secretName: string;
-  providerId: string;
+  [ProviderCredentialFields.AWS_ACCESS_KEY_ID]: string;
+  [ProviderCredentialFields.AWS_SECRET_ACCESS_KEY]: string;
+  [ProviderCredentialFields.AWS_SESSION_TOKEN]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
 export type AWSCredentialsRole = {
-  role_arn: string;
-  aws_access_key_id?: string;
-  aws_secret_access_key?: string;
-  aws_session_token?: string;
-  external_id?: string;
-  role_session_name?: string;
-  session_duration?: number;
-  credentials_type?: "aws-sdk-default" | "access-secret-key";
+  [ProviderCredentialFields.ROLE_ARN]?: string;
+  [ProviderCredentialFields.AWS_ACCESS_KEY_ID]?: string;
+  [ProviderCredentialFields.AWS_SECRET_ACCESS_KEY]?: string;
+  [ProviderCredentialFields.AWS_SESSION_TOKEN]?: string;
+  [ProviderCredentialFields.EXTERNAL_ID]?: string;
+  [ProviderCredentialFields.ROLE_SESSION_NAME]?: string;
+  [ProviderCredentialFields.SESSION_DURATION]?: number;
+  [ProviderCredentialFields.CREDENTIALS_TYPE]?:
+    | "aws-sdk-default"
+    | "access-secret-key";
 };
 
 export type AzureCredentials = {
-  client_id: string;
-  client_secret: string;
-  tenant_id: string;
-  secretName: string;
-  providerId: string;
+  [ProviderCredentialFields.CLIENT_ID]: string;
+  [ProviderCredentialFields.CLIENT_SECRET]: string;
+  [ProviderCredentialFields.TENANT_ID]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
 export type M365Credentials = {
-  client_id: string;
-  client_secret: string;
-  tenant_id: string;
-  user: string;
-  password: string;
-  secretName: string;
-  providerId: string;
+  [ProviderCredentialFields.CLIENT_ID]: string;
+  [ProviderCredentialFields.CLIENT_SECRET]: string;
+  [ProviderCredentialFields.TENANT_ID]: string;
+  [ProviderCredentialFields.USER]?: string;
+  [ProviderCredentialFields.PASSWORD]?: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
 export type GCPDefaultCredentials = {
   client_id: string;
   client_secret: string;
   refresh_token: string;
-  secretName: string;
-  providerId: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
 export type GCPServiceAccountKey = {
-  service_account_key: string;
-  secretName: string;
-  providerId: string;
+  [ProviderCredentialFields.SERVICE_ACCOUNT_KEY]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
 export type KubernetesCredentials = {
-  kubeconfig_content: string;
-  secretName: string;
-  providerId: string;
+  [ProviderCredentialFields.KUBECONFIG_CONTENT]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
 export type CredentialsFormSchema =
@@ -452,6 +456,7 @@ export interface FindingProps {
     severity: "informational" | "low" | "medium" | "high" | "critical";
     check_id: string;
     muted: boolean;
+    muted_reason?: string;
     check_metadata: {
       risk: string;
       notes: string;
@@ -478,6 +483,7 @@ export interface FindingProps {
           text: string;
         };
       };
+      additionalurls?: string[];
       servicename: string;
       checkaliases: string[];
       resourcetype: string;

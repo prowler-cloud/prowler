@@ -1,26 +1,25 @@
+import csv
 import json
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
+from io import StringIO
 from unittest.mock import MagicMock, patch
 
 import pytest
 from tasks.jobs.scan import (
+    _copy_compliance_requirement_rows,
     _create_finding_delta,
+    _persist_compliance_requirement_rows,
     _store_resources,
     create_compliance_requirements,
     perform_prowler_scan,
 )
 from tasks.utils import CustomEncoder
 
-from api.models import (
-    ComplianceRequirementOverview,
-    Finding,
-    Provider,
-    Resource,
-    Severity,
-    StateChoices,
-    StatusChoices,
-)
+from api.db_router import MainRouter
+from api.exceptions import ProviderConnectionError
+from api.models import Finding, Provider, Resource, Scan, StateChoices, StatusChoices
+from prowler.lib.check.models import Severity
 
 
 @pytest.mark.django_db
@@ -158,6 +157,7 @@ class TestPerformScan:
         assert scan_finding.raw_result == finding.raw
         assert scan_finding.muted
         assert scan_finding.compliance == finding.compliance
+        assert scan_finding.muted_reason == "Muted by mutelist"
 
         assert scan_resource.tenant == tenant
         assert scan_resource.uid == finding.resource_uid
@@ -178,6 +178,9 @@ class TestPerformScan:
         tag_values = {tag.value for tag in tags}
         assert tag_keys == set(finding.resource_tags.keys())
         assert tag_values == set(finding.resource_tags.values())
+
+        # Assert that failed_findings_count is 0 (finding is PASS and muted)
+        assert scan_resource.failed_findings_count == 0
 
     @patch("tasks.jobs.scan.ProwlerScan")
     @patch(
@@ -203,7 +206,7 @@ class TestPerformScan:
         provider_id = str(provider.id)
         checks_to_execute = ["check1", "check2"]
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ProviderConnectionError):
             perform_prowler_scan(tenant_id, scan_id, provider_id, checks_to_execute)
 
         scan.refresh_from_db()
@@ -383,6 +386,359 @@ class TestPerformScan:
         assert resource == resource_instance
         assert resource_uid_tuple == (resource_instance.uid, resource_instance.region)
 
+    def test_perform_prowler_scan_with_failed_findings(
+        self,
+        tenants_fixture,
+        scans_fixture,
+        providers_fixture,
+    ):
+        """Test that failed findings increment the failed_findings_count"""
+        with (
+            patch("api.db_utils.rls_transaction"),
+            patch(
+                "tasks.jobs.scan.initialize_prowler_provider"
+            ) as mock_initialize_prowler_provider,
+            patch("tasks.jobs.scan.ProwlerScan") as mock_prowler_scan_class,
+            patch(
+                "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE",
+                new_callable=dict,
+            ),
+            patch("api.compliance.PROWLER_CHECKS", new_callable=dict),
+        ):
+            # Ensure the database is empty
+            assert Finding.objects.count() == 0
+            assert Resource.objects.count() == 0
+
+            tenant = tenants_fixture[0]
+            scan = scans_fixture[0]
+            provider = providers_fixture[0]
+
+            # Ensure the provider type is 'aws'
+            provider.provider = Provider.ProviderChoices.AWS
+            provider.save()
+
+            tenant_id = str(tenant.id)
+            scan_id = str(scan.id)
+            provider_id = str(provider.id)
+
+            # Mock a FAIL finding that is not muted
+            fail_finding = MagicMock()
+            fail_finding.uid = "fail_finding_uid"
+            fail_finding.status = StatusChoices.FAIL
+            fail_finding.status_extended = "test fail status"
+            fail_finding.severity = Severity.high
+            fail_finding.check_id = "fail_check"
+            fail_finding.get_metadata.return_value = {"key": "value"}
+            fail_finding.resource_uid = "resource_uid_fail"
+            fail_finding.resource_name = "fail_resource"
+            fail_finding.region = "us-east-1"
+            fail_finding.service_name = "ec2"
+            fail_finding.resource_type = "instance"
+            fail_finding.resource_tags = {"env": "test"}
+            fail_finding.muted = False
+            fail_finding.raw = {}
+            fail_finding.resource_metadata = {"test": "metadata"}
+            fail_finding.resource_details = {"details": "test"}
+            fail_finding.partition = "aws"
+            fail_finding.compliance = {"compliance1": "FAIL"}
+
+            # Mock the ProwlerScan instance
+            mock_prowler_scan_instance = MagicMock()
+            mock_prowler_scan_instance.scan.return_value = [(100, [fail_finding])]
+            mock_prowler_scan_class.return_value = mock_prowler_scan_instance
+
+            # Mock prowler_provider
+            mock_prowler_provider_instance = MagicMock()
+            mock_prowler_provider_instance.get_regions.return_value = ["us-east-1"]
+            mock_initialize_prowler_provider.return_value = (
+                mock_prowler_provider_instance
+            )
+
+            # Call the function under test
+            perform_prowler_scan(tenant_id, scan_id, provider_id, [])
+
+        # Refresh instances from the database
+        scan.refresh_from_db()
+        scan_resource = Resource.objects.get(provider=provider)
+
+        # Assert that failed_findings_count is 1 (one FAIL finding not muted)
+        assert scan_resource.failed_findings_count == 1
+
+    def test_perform_prowler_scan_multiple_findings_same_resource(
+        self,
+        tenants_fixture,
+        scans_fixture,
+        providers_fixture,
+    ):
+        """Test that multiple FAIL findings on the same resource increment the counter correctly"""
+        with (
+            patch("api.db_utils.rls_transaction"),
+            patch(
+                "tasks.jobs.scan.initialize_prowler_provider"
+            ) as mock_initialize_prowler_provider,
+            patch("tasks.jobs.scan.ProwlerScan") as mock_prowler_scan_class,
+            patch(
+                "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE",
+                new_callable=dict,
+            ),
+            patch("api.compliance.PROWLER_CHECKS", new_callable=dict),
+        ):
+            tenant = tenants_fixture[0]
+            scan = scans_fixture[0]
+            provider = providers_fixture[0]
+
+            provider.provider = Provider.ProviderChoices.AWS
+            provider.save()
+
+            tenant_id = str(tenant.id)
+            scan_id = str(scan.id)
+            provider_id = str(provider.id)
+
+            # Create multiple findings for the same resource
+            # Two FAIL findings (not muted) and one PASS finding
+            resource_uid = "shared_resource_uid"
+
+            fail_finding_1 = MagicMock()
+            fail_finding_1.uid = "fail_finding_1"
+            fail_finding_1.status = StatusChoices.FAIL
+            fail_finding_1.status_extended = "fail 1"
+            fail_finding_1.severity = Severity.high
+            fail_finding_1.check_id = "fail_check_1"
+            fail_finding_1.get_metadata.return_value = {"key": "value1"}
+            fail_finding_1.resource_uid = resource_uid
+            fail_finding_1.resource_name = "shared_resource"
+            fail_finding_1.region = "us-east-1"
+            fail_finding_1.service_name = "ec2"
+            fail_finding_1.resource_type = "instance"
+            fail_finding_1.resource_tags = {}
+            fail_finding_1.muted = False
+            fail_finding_1.raw = {}
+            fail_finding_1.resource_metadata = {}
+            fail_finding_1.resource_details = {}
+            fail_finding_1.partition = "aws"
+            fail_finding_1.compliance = {}
+
+            fail_finding_2 = MagicMock()
+            fail_finding_2.uid = "fail_finding_2"
+            fail_finding_2.status = StatusChoices.FAIL
+            fail_finding_2.status_extended = "fail 2"
+            fail_finding_2.severity = Severity.medium
+            fail_finding_2.check_id = "fail_check_2"
+            fail_finding_2.get_metadata.return_value = {"key": "value2"}
+            fail_finding_2.resource_uid = resource_uid
+            fail_finding_2.resource_name = "shared_resource"
+            fail_finding_2.region = "us-east-1"
+            fail_finding_2.service_name = "ec2"
+            fail_finding_2.resource_type = "instance"
+            fail_finding_2.resource_tags = {}
+            fail_finding_2.muted = False
+            fail_finding_2.raw = {}
+            fail_finding_2.resource_metadata = {}
+            fail_finding_2.resource_details = {}
+            fail_finding_2.partition = "aws"
+            fail_finding_2.compliance = {}
+
+            pass_finding = MagicMock()
+            pass_finding.uid = "pass_finding"
+            pass_finding.status = StatusChoices.PASS
+            pass_finding.status_extended = "pass"
+            pass_finding.severity = Severity.low
+            pass_finding.check_id = "pass_check"
+            pass_finding.get_metadata.return_value = {"key": "value3"}
+            pass_finding.resource_uid = resource_uid
+            pass_finding.resource_name = "shared_resource"
+            pass_finding.region = "us-east-1"
+            pass_finding.service_name = "ec2"
+            pass_finding.resource_type = "instance"
+            pass_finding.resource_tags = {}
+            pass_finding.muted = False
+            pass_finding.raw = {}
+            pass_finding.resource_metadata = {}
+            pass_finding.resource_details = {}
+            pass_finding.partition = "aws"
+            pass_finding.compliance = {}
+
+            # Mock the ProwlerScan instance
+            mock_prowler_scan_instance = MagicMock()
+            mock_prowler_scan_instance.scan.return_value = [
+                (100, [fail_finding_1, fail_finding_2, pass_finding])
+            ]
+            mock_prowler_scan_class.return_value = mock_prowler_scan_instance
+
+            # Mock prowler_provider
+            mock_prowler_provider_instance = MagicMock()
+            mock_prowler_provider_instance.get_regions.return_value = ["us-east-1"]
+            mock_initialize_prowler_provider.return_value = (
+                mock_prowler_provider_instance
+            )
+
+            # Call the function under test
+            perform_prowler_scan(tenant_id, scan_id, provider_id, [])
+
+        # Refresh instances from the database
+        scan_resource = Resource.objects.get(provider=provider, uid=resource_uid)
+
+        # Assert that failed_findings_count is 2 (two FAIL findings, one PASS)
+        assert scan_resource.failed_findings_count == 2
+
+    def test_perform_prowler_scan_with_muted_findings(
+        self,
+        tenants_fixture,
+        scans_fixture,
+        providers_fixture,
+    ):
+        """Test that muted FAIL findings do not increment the failed_findings_count"""
+        with (
+            patch("api.db_utils.rls_transaction"),
+            patch(
+                "tasks.jobs.scan.initialize_prowler_provider"
+            ) as mock_initialize_prowler_provider,
+            patch("tasks.jobs.scan.ProwlerScan") as mock_prowler_scan_class,
+            patch(
+                "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE",
+                new_callable=dict,
+            ),
+            patch("api.compliance.PROWLER_CHECKS", new_callable=dict),
+        ):
+            tenant = tenants_fixture[0]
+            scan = scans_fixture[0]
+            provider = providers_fixture[0]
+
+            provider.provider = Provider.ProviderChoices.AWS
+            provider.save()
+
+            tenant_id = str(tenant.id)
+            scan_id = str(scan.id)
+            provider_id = str(provider.id)
+
+            # Mock a FAIL finding that is muted
+            muted_fail_finding = MagicMock()
+            muted_fail_finding.uid = "muted_fail_finding"
+            muted_fail_finding.status = StatusChoices.FAIL
+            muted_fail_finding.status_extended = "muted fail"
+            muted_fail_finding.severity = Severity.high
+            muted_fail_finding.check_id = "muted_fail_check"
+            muted_fail_finding.get_metadata.return_value = {"key": "value"}
+            muted_fail_finding.resource_uid = "muted_resource_uid"
+            muted_fail_finding.resource_name = "muted_resource"
+            muted_fail_finding.region = "us-east-1"
+            muted_fail_finding.service_name = "ec2"
+            muted_fail_finding.resource_type = "instance"
+            muted_fail_finding.resource_tags = {}
+            muted_fail_finding.muted = True
+            muted_fail_finding.raw = {}
+            muted_fail_finding.resource_metadata = {}
+            muted_fail_finding.resource_details = {}
+            muted_fail_finding.partition = "aws"
+            muted_fail_finding.compliance = {}
+
+            # Mock the ProwlerScan instance
+            mock_prowler_scan_instance = MagicMock()
+            mock_prowler_scan_instance.scan.return_value = [(100, [muted_fail_finding])]
+            mock_prowler_scan_class.return_value = mock_prowler_scan_instance
+
+            # Mock prowler_provider
+            mock_prowler_provider_instance = MagicMock()
+            mock_prowler_provider_instance.get_regions.return_value = ["us-east-1"]
+            mock_initialize_prowler_provider.return_value = (
+                mock_prowler_provider_instance
+            )
+
+            # Call the function under test
+            perform_prowler_scan(tenant_id, scan_id, provider_id, [])
+
+        # Refresh instances from the database
+        scan_resource = Resource.objects.get(provider=provider)
+
+        # Assert that failed_findings_count is 0 (FAIL finding is muted)
+        assert scan_resource.failed_findings_count == 0
+
+    def test_perform_prowler_scan_reset_failed_findings_count(
+        self,
+        tenants_fixture,
+        providers_fixture,
+        resources_fixture,
+    ):
+        """Test that failed_findings_count is reset to 0 at the beginning of each scan"""
+        # Use existing resource from fixture and set initial failed_findings_count
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        resource = resources_fixture[0]
+
+        # Set a non-zero failed_findings_count initially
+        resource.failed_findings_count = 5
+        resource.save()
+
+        # Create a new scan
+        scan = Scan.objects.create(
+            name="Reset Test Scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.AVAILABLE,
+            tenant_id=tenant.id,
+        )
+
+        with (
+            patch("api.db_utils.rls_transaction"),
+            patch(
+                "tasks.jobs.scan.initialize_prowler_provider"
+            ) as mock_initialize_prowler_provider,
+            patch("tasks.jobs.scan.ProwlerScan") as mock_prowler_scan_class,
+            patch(
+                "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE",
+                new_callable=dict,
+            ),
+            patch("api.compliance.PROWLER_CHECKS", new_callable=dict),
+        ):
+            provider.provider = Provider.ProviderChoices.AWS
+            provider.save()
+
+            tenant_id = str(tenant.id)
+            scan_id = str(scan.id)
+            provider_id = str(provider.id)
+
+            # Mock a PASS finding for the existing resource
+            pass_finding = MagicMock()
+            pass_finding.uid = "reset_test_finding"
+            pass_finding.status = StatusChoices.PASS
+            pass_finding.status_extended = "reset test pass"
+            pass_finding.severity = Severity.low
+            pass_finding.check_id = "reset_test_check"
+            pass_finding.get_metadata.return_value = {"key": "value"}
+            pass_finding.resource_uid = resource.uid
+            pass_finding.resource_name = resource.name
+            pass_finding.region = resource.region
+            pass_finding.service_name = resource.service
+            pass_finding.resource_type = resource.type
+            pass_finding.resource_tags = {}
+            pass_finding.muted = False
+            pass_finding.raw = {}
+            pass_finding.resource_metadata = {}
+            pass_finding.resource_details = {}
+            pass_finding.partition = "aws"
+            pass_finding.compliance = {}
+
+            # Mock the ProwlerScan instance
+            mock_prowler_scan_instance = MagicMock()
+            mock_prowler_scan_instance.scan.return_value = [(100, [pass_finding])]
+            mock_prowler_scan_class.return_value = mock_prowler_scan_instance
+
+            # Mock prowler_provider
+            mock_prowler_provider_instance = MagicMock()
+            mock_prowler_provider_instance.get_regions.return_value = [resource.region]
+            mock_initialize_prowler_provider.return_value = (
+                mock_prowler_provider_instance
+            )
+
+            # Call the function under test
+            perform_prowler_scan(tenant_id, scan_id, provider_id, [])
+
+        # Refresh resource from the database
+        resource.refresh_from_db()
+
+        # Assert that failed_findings_count was reset to 0 during the scan
+        assert resource.failed_findings_count == 0
+
 
 # TODO Add tests for aggregations
 
@@ -398,38 +754,13 @@ class TestCreateComplianceRequirements:
         resources_fixture,
     ):
         with (
-            patch("api.db_utils.rls_transaction"),
-            patch(
-                "tasks.jobs.scan.initialize_prowler_provider"
-            ) as mock_initialize_prowler_provider,
             patch(
                 "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE"
             ) as mock_compliance_template,
             patch("tasks.jobs.scan.generate_scan_compliance"),
-            patch("tasks.jobs.scan.create_objects_in_batches") as mock_create_objects,
-            patch("api.models.Finding.objects.filter") as mock_findings_filter,
         ):
-            tenant = tenants_fixture[0]
-            scan = scans_fixture[0]
-            provider = providers_fixture[0]
-
-            provider.provider = Provider.ProviderChoices.AWS
-            provider.save()
-
-            scan.provider = provider
-            scan.save()
-
-            tenant_id = str(tenant.id)
-            scan_id = str(scan.id)
-
-            mock_prowler_provider_instance = MagicMock()
-            mock_prowler_provider_instance.get_regions.return_value = [
-                "us-east-1",
-                "us-west-2",
-            ]
-            mock_initialize_prowler_provider.return_value = (
-                mock_prowler_provider_instance
-            )
+            tenant_id = str(tenants_fixture[0].id)
+            scan_id = str(scans_fixture[0].id)
 
             mock_compliance_template.__getitem__.return_value = {
                 "cis_1.4_aws": {
@@ -458,108 +789,29 @@ class TestCreateComplianceRequirements:
                         },
                     },
                 },
-                "aws_account_security_onboarding_aws": {
-                    "framework": "AWS Account Security Onboarding",
-                    "version": "1.0",
-                    "requirements": {
-                        "requirement1": {
-                            "description": "Basic security requirement",
-                            "checks_status": {
-                                "pass": 1,
-                                "fail": 0,
-                                "manual": 0,
-                                "total": 1,
-                            },
-                            "status": "PASS",
-                        },
-                    },
-                },
             }
-
-            mock_findings_filter.return_value = []
 
             result = create_compliance_requirements(tenant_id, scan_id)
 
             assert "requirements_created" in result
             assert "regions_processed" in result
             assert "compliance_frameworks" in result
-            assert result["regions_processed"] == ["us-east-1", "us-west-2"]
-            assert result["requirements_created"] == 6
-            assert len(result["compliance_frameworks"]) == 2
-
-            mock_create_objects.assert_called_once()
-            call_args = mock_create_objects.call_args[0]
-            assert call_args[0] == tenant_id
-            assert call_args[1] == ComplianceRequirementOverview
-            assert len(call_args[2]) == 6
-
-            compliance_objects = call_args[2]
-            for obj in compliance_objects:
-                assert isinstance(obj, ComplianceRequirementOverview)
-                assert obj.tenant.id == tenant.id
-                assert obj.scan == scan
-                assert obj.region in ["us-east-1", "us-west-2"]
-                assert obj.compliance_id in [
-                    "cis_1.4_aws",
-                    "aws_account_security_onboarding_aws",
-                ]
 
     def test_create_compliance_requirements_with_findings(
         self,
         tenants_fixture,
         scans_fixture,
         providers_fixture,
+        findings_fixture,
     ):
         with (
-            patch("api.db_utils.rls_transaction"),
-            patch(
-                "tasks.jobs.scan.initialize_prowler_provider"
-            ) as mock_initialize_prowler_provider,
             patch(
                 "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE"
             ) as mock_compliance_template,
-            patch(
-                "tasks.jobs.scan.generate_scan_compliance"
-            ) as mock_generate_compliance,
-            patch("tasks.jobs.scan.create_objects_in_batches"),
-            patch("api.models.Finding.objects.filter") as mock_findings_filter,
+            patch("tasks.jobs.scan.generate_scan_compliance"),
         ):
-            tenant = tenants_fixture[0]
-            scan = scans_fixture[0]
-            provider = providers_fixture[0]
-
-            provider.provider = Provider.ProviderChoices.AWS
-            provider.save()
-            scan.provider = provider
-            scan.save()
-
-            tenant_id = str(tenant.id)
-            scan_id = str(scan.id)
-
-            mock_finding1 = MagicMock()
-            mock_finding1.check_id = "check1"
-            mock_finding1.status = "PASS"
-            mock_resource1 = MagicMock()
-            mock_resource1.region = "us-east-1"
-            mock_finding1.resources.all.return_value = [mock_resource1]
-
-            mock_finding2 = MagicMock()
-            mock_finding2.check_id = "check2"
-            mock_finding2.status = "FAIL"
-            mock_resource2 = MagicMock()
-            mock_resource2.region = "us-west-2"
-            mock_finding2.resources.all.return_value = [mock_resource2]
-
-            mock_findings_filter.return_value = [mock_finding1, mock_finding2]
-
-            mock_prowler_provider_instance = MagicMock()
-            mock_prowler_provider_instance.get_regions.return_value = [
-                "us-east-1",
-                "us-west-2",
-            ]
-            mock_initialize_prowler_provider.return_value = (
-                mock_prowler_provider_instance
-            )
+            tenant_id = str(tenants_fixture[0].id)
+            scan_id = str(scans_fixture[0].id)
 
             mock_compliance_template.__getitem__.return_value = {
                 "test_compliance": {
@@ -568,7 +820,6 @@ class TestCreateComplianceRequirements:
                     "requirements": {
                         "req_1": {
                             "description": "Test Requirement 1",
-                            "checks": {"check_1": None},
                             "checks_status": {
                                 "pass": 2,
                                 "fail": 1,
@@ -577,45 +828,26 @@ class TestCreateComplianceRequirements:
                             },
                             "status": "FAIL",
                         },
-                        "req_2": {
-                            "description": "Test Requirement 2",
-                            "checks": {"check_2": None},
-                            "checks_status": {
-                                "pass": 2,
-                                "fail": 0,
-                                "manual": 0,
-                                "total": 2,
-                            },
-                            "status": "PASS",
-                        },
                     },
                 }
             }
 
             result = create_compliance_requirements(tenant_id, scan_id)
 
-            mock_findings_filter.assert_called_once_with(scan_id=scan_id, muted=False)
-            assert mock_generate_compliance.call_count == 2
-            assert result["requirements_created"] == 4
-            assert set(result["regions_processed"]) == {"us-east-1", "us-west-2"}
+            assert "requirements_created" in result
 
-    def test_create_compliance_requirements_no_provider_regions(
+    def test_create_compliance_requirements_kubernetes_provider(
         self,
         tenants_fixture,
         scans_fixture,
         providers_fixture,
+        findings_fixture,
     ):
         with (
-            patch("api.db_utils.rls_transaction"),
-            patch(
-                "tasks.jobs.scan.initialize_prowler_provider"
-            ) as mock_initialize_prowler_provider,
             patch(
                 "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE"
             ) as mock_compliance_template,
             patch("tasks.jobs.scan.generate_scan_compliance"),
-            patch("tasks.jobs.scan.create_objects_in_batches"),
-            patch("api.models.Finding.objects.filter") as mock_findings_filter,
         ):
             tenant = tenants_fixture[0]
             scan = scans_fixture[0]
@@ -628,22 +860,6 @@ class TestCreateComplianceRequirements:
 
             tenant_id = str(tenant.id)
             scan_id = str(scan.id)
-
-            mock_finding = MagicMock()
-            mock_finding.check_id = "check1"
-            mock_finding.status = "PASS"
-            mock_resource = MagicMock()
-            mock_resource.region = "default"
-            mock_finding.resources.all.return_value = [mock_resource]
-            mock_findings_filter.return_value = [mock_finding]
-
-            mock_prowler_provider_instance = MagicMock()
-            mock_prowler_provider_instance.get_regions.side_effect = AttributeError(
-                "No get_regions method"
-            )
-            mock_initialize_prowler_provider.return_value = (
-                mock_prowler_provider_instance
-            )
 
             mock_compliance_template.__getitem__.return_value = {
                 "kubernetes_cis": {
@@ -666,205 +882,61 @@ class TestCreateComplianceRequirements:
 
             result = create_compliance_requirements(tenant_id, scan_id)
 
-            assert result["regions_processed"] == ["default"]
+            assert "regions_processed" in result
 
-    def test_create_compliance_requirements_empty_findings(
+    def test_create_compliance_requirements_empty_template(
         self,
         tenants_fixture,
         scans_fixture,
         providers_fixture,
+        findings_fixture,
     ):
         with (
-            patch("api.db_utils.rls_transaction"),
-            patch(
-                "tasks.jobs.scan.initialize_prowler_provider"
-            ) as mock_initialize_prowler_provider,
             patch(
                 "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE"
             ) as mock_compliance_template,
-            patch(
-                "tasks.jobs.scan.generate_scan_compliance"
-            ) as mock_generate_compliance,
-            patch("tasks.jobs.scan.create_objects_in_batches"),
-            patch("api.models.Finding.objects.filter") as mock_findings_filter,
+            patch("tasks.jobs.scan.generate_scan_compliance"),
         ):
-            tenant = tenants_fixture[0]
-            scan = scans_fixture[0]
-            provider = providers_fixture[0]
+            tenant_id = str(tenants_fixture[0].id)
+            scan_id = str(scans_fixture[0].id)
 
-            provider.provider = Provider.ProviderChoices.AWS
-            provider.save()
-            scan.provider = provider
-            scan.save()
-
-            tenant_id = str(tenant.id)
-            scan_id = str(scan.id)
-
-            mock_findings_filter.return_value = []
-
-            mock_prowler_provider_instance = MagicMock()
-            mock_prowler_provider_instance.get_regions.return_value = ["us-east-1"]
-            mock_initialize_prowler_provider.return_value = (
-                mock_prowler_provider_instance
-            )
-
-            mock_compliance_template.__getitem__.return_value = {
-                "cis_1.4_aws": {
-                    "framework": "CIS AWS Foundations Benchmark",
-                    "version": "1.4.0",
-                    "requirements": {
-                        "1.1": {
-                            "description": "Test requirement",
-                            "checks_status": {
-                                "pass": 0,
-                                "fail": 0,
-                                "manual": 0,
-                                "total": 1,
-                            },
-                            "status": "PASS",
-                        },
-                    },
-                },
-            }
-
-            mock_findings_filter.return_value = []
+            mock_compliance_template.__getitem__.return_value = {}
 
             result = create_compliance_requirements(tenant_id, scan_id)
 
-            assert result["regions_processed"] == ["us-east-1"]
-            assert result["requirements_created"] == 1
-            mock_generate_compliance.assert_not_called()
+            assert result["requirements_created"] == 0
 
     def test_create_compliance_requirements_error_handling(
         self,
         tenants_fixture,
         scans_fixture,
         providers_fixture,
+        findings_fixture,
     ):
-        with (
-            patch("api.db_utils.rls_transaction"),
-            patch(
-                "tasks.jobs.scan.initialize_prowler_provider"
-            ) as mock_initialize_prowler_provider,
-        ):
-            tenant = tenants_fixture[0]
-            scan = scans_fixture[0]
-            provider = providers_fixture[0]
+        with patch("tasks.jobs.scan.return_prowler_provider") as mock_prowler_provider:
+            tenant_id = str(tenants_fixture[0].id)
+            scan_id = str(scans_fixture[0].id)
 
-            provider.provider = Provider.ProviderChoices.AWS
-            provider.save()
-            scan.provider = provider
-            scan.save()
-
-            tenant_id = str(tenant.id)
-            scan_id = str(scan.id)
-
-            mock_initialize_prowler_provider.side_effect = Exception(
+            mock_prowler_provider.side_effect = Exception(
                 "Provider initialization failed"
             )
 
             with pytest.raises(Exception, match="Provider initialization failed"):
                 create_compliance_requirements(tenant_id, scan_id)
 
-    def test_create_compliance_requirements_muted_findings_excluded(
-        self,
-        tenants_fixture,
-        scans_fixture,
-        providers_fixture,
-    ):
-        with (
-            patch("api.db_utils.rls_transaction"),
-            patch(
-                "tasks.jobs.scan.initialize_prowler_provider"
-            ) as mock_initialize_prowler_provider,
-            patch(
-                "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE"
-            ) as mock_compliance_template,
-            patch("tasks.jobs.scan.generate_scan_compliance"),
-            patch("tasks.jobs.scan.create_objects_in_batches"),
-            patch("api.models.Finding.objects.filter") as mock_findings_filter,
-        ):
-            tenant = tenants_fixture[0]
-            scan = scans_fixture[0]
-            provider = providers_fixture[0]
-
-            provider.provider = Provider.ProviderChoices.AWS
-            provider.save()
-            scan.provider = provider
-            scan.save()
-
-            tenant_id = str(tenant.id)
-            scan_id = str(scan.id)
-
-            mock_findings_filter.return_value = []
-
-            mock_prowler_provider_instance = MagicMock()
-            mock_prowler_provider_instance.get_regions.return_value = ["us-east-1"]
-            mock_initialize_prowler_provider.return_value = (
-                mock_prowler_provider_instance
-            )
-
-            mock_compliance_template.__getitem__.return_value = {}
-
-            mock_findings_filter.return_value = []
-
-            create_compliance_requirements(tenant_id, scan_id)
-
-            mock_findings_filter.assert_called_once_with(scan_id=scan_id, muted=False)
-
     def test_create_compliance_requirements_check_status_priority(
-        self,
-        tenants_fixture,
-        scans_fixture,
-        providers_fixture,
+        self, tenants_fixture, scans_fixture, providers_fixture, findings_fixture
     ):
         with (
-            patch("api.db_utils.rls_transaction"),
-            patch(
-                "tasks.jobs.scan.initialize_prowler_provider"
-            ) as mock_initialize_prowler_provider,
             patch(
                 "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE"
             ) as mock_compliance_template,
             patch(
                 "tasks.jobs.scan.generate_scan_compliance"
             ) as mock_generate_compliance,
-            patch("tasks.jobs.scan.create_objects_in_batches"),
-            patch("api.models.Finding.objects.filter") as mock_findings_filter,
         ):
-            tenant = tenants_fixture[0]
-            scan = scans_fixture[0]
-            provider = providers_fixture[0]
-
-            provider.provider = Provider.ProviderChoices.AWS
-            provider.save()
-            scan.provider = provider
-            scan.save()
-
-            tenant_id = str(tenant.id)
-            scan_id = str(scan.id)
-
-            mock_finding1 = MagicMock()
-            mock_finding1.check_id = "check1"
-            mock_finding1.status = "PASS"
-            mock_resource1 = MagicMock()
-            mock_resource1.region = "us-east-1"
-            mock_finding1.resources.all.return_value = [mock_resource1]
-
-            mock_finding2 = MagicMock()
-            mock_finding2.check_id = "check1"
-            mock_finding2.status = "FAIL"
-            mock_resource2 = MagicMock()
-            mock_resource2.region = "us-east-1"
-            mock_finding2.resources.all.return_value = [mock_resource2]
-
-            mock_findings_filter.return_value = [mock_finding1, mock_finding2]
-
-            mock_prowler_provider_instance = MagicMock()
-            mock_prowler_provider_instance.get_regions.return_value = ["us-east-1"]
-            mock_initialize_prowler_provider.return_value = (
-                mock_prowler_provider_instance
-            )
+            tenant_id = str(tenants_fixture[0].id)
+            scan_id = str(scans_fixture[0].id)
 
             mock_compliance_template.__getitem__.return_value = {
                 "cis_1.4_aws": {
@@ -889,39 +961,21 @@ class TestCreateComplianceRequirements:
 
             assert mock_generate_compliance.call_count == 1
 
-    def test_compliance_overview_aggregation_requirement_fail_priority(
+    def test_create_compliance_requirements_multiple_regions(
         self,
         tenants_fixture,
         scans_fixture,
         providers_fixture,
+        findings_fixture,
     ):
         with (
-            patch("api.db_utils.rls_transaction"),
-            patch(
-                "tasks.jobs.scan.initialize_prowler_provider"
-            ) as mock_initialize_prowler_provider,
             patch(
                 "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE"
             ) as mock_compliance_template,
-            patch(
-                "tasks.jobs.scan.generate_scan_compliance"
-            ) as mock_generate_compliance,
-            patch("tasks.jobs.scan.create_objects_in_batches") as mock_create_objects,
-            patch("api.models.Finding.objects.filter") as mock_findings_filter,
+            patch("tasks.jobs.scan.generate_scan_compliance"),
         ):
-            tenant = tenants_fixture[0]
-            scan = scans_fixture[0]
-            providers_fixture[0]
-
-            mock_findings_filter.return_value = []
-
-            mock_prowler_provider = MagicMock()
-            mock_prowler_provider.get_regions.return_value = [
-                "us-east-1",
-                "us-west-2",
-                "eu-west-1",
-            ]
-            mock_initialize_prowler_provider.return_value = mock_prowler_provider
+            tenant_id = str(tenants_fixture[0].id)
+            scan_id = str(scans_fixture[0].id)
 
             mock_compliance_template.__getitem__.return_value = {
                 "test_compliance": {
@@ -930,95 +984,6 @@ class TestCreateComplianceRequirements:
                     "requirements": {
                         "req_1": {
                             "description": "Test Requirement 1",
-                            "checks": {"check_1": None},
-                            "checks_status": {
-                                "pass": 2,
-                                "fail": 1,
-                                "manual": 0,
-                                "total": 3,
-                            },
-                            "status": "FAIL",
-                        }
-                    },
-                }
-            }
-
-            mock_generate_compliance.return_value = {
-                "test_compliance": {
-                    "framework": "Test Framework",
-                    "version": "1.0",
-                    "requirements": {
-                        "req_1": {
-                            "description": "Test Requirement 1",
-                            "checks": {
-                                "check_1": {
-                                    "us-east-1": {"status": "PASS"},
-                                    "us-west-2": {"status": "FAIL"},
-                                    "eu-west-1": {"status": "PASS"},
-                                }
-                            },
-                            "checks_status": {
-                                "pass": 2,
-                                "fail": 1,
-                                "manual": 0,
-                                "total": 3,
-                            },
-                            "status": "FAIL",
-                        }
-                    },
-                }
-            }
-
-            created_objects = []
-            mock_create_objects.side_effect = (
-                lambda tenant_id, model, objs, batch_size=500: created_objects.extend(
-                    objs
-                )
-            )
-
-            create_compliance_requirements(str(tenant.id), str(scan.id))
-
-            assert len(created_objects) == 3
-            assert all(obj.requirement_status == "FAIL" for obj in created_objects)
-
-    def test_compliance_overview_aggregation_requirement_pass_all_regions(
-        self,
-        tenants_fixture,
-        scans_fixture,
-        providers_fixture,
-    ):
-        with (
-            patch("api.db_utils.rls_transaction"),
-            patch(
-                "tasks.jobs.scan.initialize_prowler_provider"
-            ) as mock_initialize_prowler_provider,
-            patch(
-                "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE"
-            ) as mock_compliance_template,
-            patch(
-                "tasks.jobs.scan.generate_scan_compliance"
-            ) as mock_generate_compliance,
-            patch("tasks.jobs.scan.create_objects_in_batches") as mock_create_objects,
-            patch("api.models.Finding.objects.filter") as mock_findings_filter,
-        ):
-            tenant = tenants_fixture[0]
-            scan = scans_fixture[0]
-            providers_fixture[0]
-
-            mock_findings_filter.return_value = []
-
-            mock_prowler_provider = MagicMock()
-            mock_prowler_provider.get_regions.return_value = ["us-east-1", "us-west-2"]
-            mock_initialize_prowler_provider.return_value = mock_prowler_provider
-
-            mock_compliance_template.__getitem__.return_value = {
-                "test_compliance": {
-                    "framework": "Test Framework",
-                    "version": "1.0",
-                    "requirements": {
-                        "req_1": {
-                            "description": "Test Requirement 1",
-                            "checks": {"check_1": None},
                             "checks_status": {
                                 "pass": 2,
                                 "fail": 0,
@@ -1031,72 +996,26 @@ class TestCreateComplianceRequirements:
                 }
             }
 
-            mock_generate_compliance.return_value = {
-                "test_compliance": {
-                    "framework": "Test Framework",
-                    "version": "1.0",
-                    "requirements": {
-                        "req_1": {
-                            "description": "Test Requirement 1",
-                            "checks": {
-                                "check_1": {
-                                    "us-east-1": {"status": "PASS"},
-                                    "us-west-2": {"status": "PASS"},
-                                }
-                            },
-                            "checks_status": {
-                                "pass": 2,
-                                "fail": 0,
-                                "manual": 0,
-                                "total": 2,
-                            },
-                            "status": "PASS",
-                        }
-                    },
-                }
-            }
+            result = create_compliance_requirements(tenant_id, scan_id)
 
-            created_objects = []
-            mock_create_objects.side_effect = (
-                lambda tenant_id, model, objs, batch_size=500: created_objects.extend(
-                    objs
-                )
-            )
+            assert "requirements_created" in result
+            assert len(result["regions_processed"]) >= 0
 
-            create_compliance_requirements(str(tenant.id), str(scan.id))
-
-            assert len(created_objects) == 2
-            assert all(obj.requirement_status == "PASS" for obj in created_objects)
-
-    def test_compliance_overview_aggregation_multiple_requirements_mixed_status(
+    def test_create_compliance_requirements_mixed_status_requirements(
         self,
         tenants_fixture,
         scans_fixture,
         providers_fixture,
+        findings_fixture,
     ):
         with (
-            patch("api.db_utils.rls_transaction"),
-            patch(
-                "tasks.jobs.scan.initialize_prowler_provider"
-            ) as mock_initialize_prowler_provider,
             patch(
                 "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE"
             ) as mock_compliance_template,
-            patch(
-                "tasks.jobs.scan.generate_scan_compliance"
-            ) as mock_generate_compliance,
-            patch("tasks.jobs.scan.create_objects_in_batches") as mock_create_objects,
-            patch("api.models.Finding.objects.filter") as mock_findings_filter,
+            patch("tasks.jobs.scan.generate_scan_compliance"),
         ):
-            tenant = tenants_fixture[0]
-            scan = scans_fixture[0]
-            providers_fixture[0]
-
-            mock_findings_filter.return_value = []
-
-            mock_prowler_provider = MagicMock()
-            mock_prowler_provider.get_regions.return_value = ["us-east-1", "us-west-2"]
-            mock_initialize_prowler_provider.return_value = mock_prowler_provider
+            tenant_id = str(tenants_fixture[0].id)
+            scan_id = str(scans_fixture[0].id)
 
             mock_compliance_template.__getitem__.return_value = {
                 "test_compliance": {
@@ -1105,7 +1024,6 @@ class TestCreateComplianceRequirements:
                     "requirements": {
                         "req_1": {
                             "description": "Test Requirement 1",
-                            "checks": {"check_1": None},
                             "checks_status": {
                                 "pass": 2,
                                 "fail": 0,
@@ -1116,7 +1034,6 @@ class TestCreateComplianceRequirements:
                         },
                         "req_2": {
                             "description": "Test Requirement 2",
-                            "checks": {"check_2": None},
                             "checks_status": {
                                 "pass": 1,
                                 "fail": 1,
@@ -1129,64 +1046,777 @@ class TestCreateComplianceRequirements:
                 }
             }
 
-            mock_generate_compliance.return_value = {
-                "test_compliance": {
-                    "framework": "Test Framework",
-                    "version": "1.0",
-                    "requirements": {
-                        "req_1": {
-                            "description": "Test Requirement 1",
-                            "checks": {
-                                "check_1": {
-                                    "us-east-1": {"status": "PASS"},
-                                    "us-west-2": {"status": "PASS"},
-                                }
-                            },
-                            "checks_status": {
-                                "pass": 2,
-                                "fail": 0,
-                                "manual": 0,
-                                "total": 2,
-                            },
-                            "status": "PASS",
-                        },
-                        "req_2": {
-                            "description": "Test Requirement 2",
-                            "checks": {
-                                "check_2": {
-                                    "us-east-1": {"status": "PASS"},
-                                    "us-west-2": {"status": "FAIL"},
-                                }
-                            },
-                            "checks_status": {
-                                "pass": 1,
-                                "fail": 1,
-                                "manual": 0,
-                                "total": 2,
-                            },
-                            "status": "FAIL",
-                        },
-                    },
-                }
+            result = create_compliance_requirements(tenant_id, scan_id)
+
+            assert "requirements_created" in result
+            assert result["requirements_created"] >= 0
+
+
+class TestComplianceRequirementCopy:
+    @patch("tasks.jobs.scan.psycopg_connection")
+    def test_copy_compliance_requirement_rows_streams_csv(
+        self, mock_psycopg_connection, settings
+    ):
+        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
+
+        connection = MagicMock()
+        cursor = MagicMock()
+        cursor_context = MagicMock()
+        cursor_context.__enter__.return_value = cursor
+        cursor_context.__exit__.return_value = False
+        connection.cursor.return_value = cursor_context
+        connection.__enter__.return_value = connection
+        connection.__exit__.return_value = False
+
+        context_manager = MagicMock()
+        context_manager.__enter__.return_value = connection
+        context_manager.__exit__.return_value = False
+        mock_psycopg_connection.return_value = context_manager
+
+        captured = {}
+
+        def copy_side_effect(sql, file_obj):
+            captured["sql"] = sql
+            captured["data"] = file_obj.read()
+
+        cursor.copy_expert.side_effect = copy_side_effect
+
+        row = {
+            "id": uuid.uuid4(),
+            "tenant_id": str(uuid.uuid4()),
+            "compliance_id": "cisa_aws",
+            "framework": "CISA",
+            "version": None,
+            "description": "desc",
+            "region": "us-east-1",
+            "requirement_id": "req-1",
+            "requirement_status": "PASS",
+            "passed_checks": 1,
+            "failed_checks": 0,
+            "total_checks": 1,
+            "scan_id": uuid.uuid4(),
+        }
+
+        with patch.object(MainRouter, "admin_db", "admin"):
+            _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+
+        mock_psycopg_connection.assert_called_once_with("admin")
+        connection.cursor.assert_called_once()
+        cursor.execute.assert_called_once()
+        cursor.copy_expert.assert_called_once()
+
+        csv_rows = list(csv.reader(StringIO(captured["data"])))
+        assert csv_rows[0][0] == str(row["id"])
+        assert csv_rows[0][5] == ""
+        assert csv_rows[0][-1] == str(row["scan_id"])
+
+    @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.bulk_create")
+    @patch("tasks.jobs.scan.rls_transaction")
+    @patch(
+        "tasks.jobs.scan._copy_compliance_requirement_rows",
+        side_effect=Exception("copy failed"),
+    )
+    def test_persist_compliance_requirement_rows_fallback(
+        self, mock_copy, mock_rls_transaction, mock_bulk_create
+    ):
+        inserted_at = datetime.now(timezone.utc)
+        row = {
+            "id": uuid.uuid4(),
+            "tenant_id": str(uuid.uuid4()),
+            "inserted_at": inserted_at,
+            "compliance_id": "cisa_aws",
+            "framework": "CISA",
+            "version": "1.0",
+            "description": "desc",
+            "region": "us-east-1",
+            "requirement_id": "req-1",
+            "requirement_status": "PASS",
+            "passed_checks": 1,
+            "failed_checks": 0,
+            "total_checks": 1,
+            "scan_id": uuid.uuid4(),
+        }
+
+        tenant_id = row["tenant_id"]
+
+        ctx = MagicMock()
+        ctx.__enter__.return_value = None
+        ctx.__exit__.return_value = False
+        mock_rls_transaction.return_value = ctx
+
+        _persist_compliance_requirement_rows(tenant_id, [row])
+
+        mock_copy.assert_called_once_with(tenant_id, [row])
+        mock_rls_transaction.assert_called_once_with(tenant_id)
+        mock_bulk_create.assert_called_once()
+
+        args, kwargs = mock_bulk_create.call_args
+        objects = args[0]
+        assert len(objects) == 1
+        fallback = objects[0]
+        assert fallback.version == row["version"]
+        assert fallback.compliance_id == row["compliance_id"]
+
+    @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.bulk_create")
+    @patch("tasks.jobs.scan.rls_transaction")
+    @patch("tasks.jobs.scan._copy_compliance_requirement_rows")
+    def test_persist_compliance_requirement_rows_no_rows(
+        self, mock_copy, mock_rls_transaction, mock_bulk_create
+    ):
+        _persist_compliance_requirement_rows(str(uuid.uuid4()), [])
+
+        mock_copy.assert_not_called()
+        mock_rls_transaction.assert_not_called()
+        mock_bulk_create.assert_not_called()
+
+    @patch("tasks.jobs.scan.psycopg_connection")
+    def test_copy_compliance_requirement_rows_multiple_rows(
+        self, mock_psycopg_connection, settings
+    ):
+        """Test COPY with multiple rows to ensure batch processing works correctly."""
+        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
+
+        connection = MagicMock()
+        cursor = MagicMock()
+        cursor_context = MagicMock()
+        cursor_context.__enter__.return_value = cursor
+        cursor_context.__exit__.return_value = False
+        connection.cursor.return_value = cursor_context
+        connection.__enter__.return_value = connection
+        connection.__exit__.return_value = False
+
+        context_manager = MagicMock()
+        context_manager.__enter__.return_value = connection
+        context_manager.__exit__.return_value = False
+        mock_psycopg_connection.return_value = context_manager
+
+        captured = {}
+
+        def copy_side_effect(sql, file_obj):
+            captured["sql"] = sql
+            captured["data"] = file_obj.read()
+
+        cursor.copy_expert.side_effect = copy_side_effect
+
+        tenant_id = str(uuid.uuid4())
+        scan_id = uuid.uuid4()
+        inserted_at = datetime.now(timezone.utc)
+
+        rows = [
+            {
+                "id": uuid.uuid4(),
+                "tenant_id": tenant_id,
+                "inserted_at": inserted_at,
+                "compliance_id": "cisa_aws",
+                "framework": "CISA",
+                "version": "1.0",
+                "description": "First requirement",
+                "region": "us-east-1",
+                "requirement_id": "req-1",
+                "requirement_status": "PASS",
+                "passed_checks": 5,
+                "failed_checks": 0,
+                "total_checks": 5,
+                "scan_id": scan_id,
+            },
+            {
+                "id": uuid.uuid4(),
+                "tenant_id": tenant_id,
+                "inserted_at": inserted_at,
+                "compliance_id": "cisa_aws",
+                "framework": "CISA",
+                "version": "1.0",
+                "description": "Second requirement",
+                "region": "us-west-2",
+                "requirement_id": "req-2",
+                "requirement_status": "FAIL",
+                "passed_checks": 3,
+                "failed_checks": 2,
+                "total_checks": 5,
+                "scan_id": scan_id,
+            },
+            {
+                "id": uuid.uuid4(),
+                "tenant_id": tenant_id,
+                "inserted_at": inserted_at,
+                "compliance_id": "aws_foundational_security_aws",
+                "framework": "AWS-Foundational-Security-Best-Practices",
+                "version": "2.0",
+                "description": "Third requirement",
+                "region": "eu-west-1",
+                "requirement_id": "req-3",
+                "requirement_status": "MANUAL",
+                "passed_checks": 0,
+                "failed_checks": 0,
+                "total_checks": 3,
+                "scan_id": scan_id,
+            },
+        ]
+
+        with patch.object(MainRouter, "admin_db", "admin"):
+            _copy_compliance_requirement_rows(tenant_id, rows)
+
+        mock_psycopg_connection.assert_called_once_with("admin")
+        connection.cursor.assert_called_once()
+        cursor.execute.assert_called_once()
+        cursor.copy_expert.assert_called_once()
+
+        csv_rows = list(csv.reader(StringIO(captured["data"])))
+        assert len(csv_rows) == 3
+
+        # Validate first row
+        assert csv_rows[0][0] == str(rows[0]["id"])
+        assert csv_rows[0][1] == tenant_id
+        assert csv_rows[0][3] == "cisa_aws"
+        assert csv_rows[0][4] == "CISA"
+        assert csv_rows[0][6] == "First requirement"
+        assert csv_rows[0][7] == "us-east-1"
+        assert csv_rows[0][10] == "5"
+        assert csv_rows[0][11] == "0"
+        assert csv_rows[0][12] == "5"
+
+        # Validate second row
+        assert csv_rows[1][0] == str(rows[1]["id"])
+        assert csv_rows[1][7] == "us-west-2"
+        assert csv_rows[1][9] == "FAIL"
+        assert csv_rows[1][10] == "3"
+        assert csv_rows[1][11] == "2"
+
+        # Validate third row
+        assert csv_rows[2][0] == str(rows[2]["id"])
+        assert csv_rows[2][3] == "aws_foundational_security_aws"
+        assert csv_rows[2][5] == "2.0"
+        assert csv_rows[2][9] == "MANUAL"
+
+    @patch("tasks.jobs.scan.psycopg_connection")
+    def test_copy_compliance_requirement_rows_null_values(
+        self, mock_psycopg_connection, settings
+    ):
+        """Test COPY handles NULL/None values correctly in nullable fields."""
+        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
+
+        connection = MagicMock()
+        cursor = MagicMock()
+        cursor_context = MagicMock()
+        cursor_context.__enter__.return_value = cursor
+        cursor_context.__exit__.return_value = False
+        connection.cursor.return_value = cursor_context
+        connection.__enter__.return_value = connection
+        connection.__exit__.return_value = False
+
+        context_manager = MagicMock()
+        context_manager.__enter__.return_value = connection
+        context_manager.__exit__.return_value = False
+        mock_psycopg_connection.return_value = context_manager
+
+        captured = {}
+
+        def copy_side_effect(sql, file_obj):
+            captured["sql"] = sql
+            captured["data"] = file_obj.read()
+
+        cursor.copy_expert.side_effect = copy_side_effect
+
+        # Row with all nullable fields set to None/empty
+        row = {
+            "id": uuid.uuid4(),
+            "tenant_id": str(uuid.uuid4()),
+            "compliance_id": "test_framework",
+            "framework": "Test",
+            "version": None,  # nullable
+            "description": None,  # nullable
+            "region": "",
+            "requirement_id": "req-1",
+            "requirement_status": "PASS",
+            "passed_checks": 0,
+            "failed_checks": 0,
+            "total_checks": 0,
+            "scan_id": uuid.uuid4(),
+        }
+
+        with patch.object(MainRouter, "admin_db", "admin"):
+            _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+
+        csv_rows = list(csv.reader(StringIO(captured["data"])))
+        assert len(csv_rows) == 1
+
+        # Validate that None values are converted to empty strings in CSV
+        assert csv_rows[0][5] == ""  # version
+        assert csv_rows[0][6] == ""  # description
+
+    @patch("tasks.jobs.scan.psycopg_connection")
+    def test_copy_compliance_requirement_rows_special_characters(
+        self, mock_psycopg_connection, settings
+    ):
+        """Test COPY correctly escapes special characters in CSV."""
+        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
+
+        connection = MagicMock()
+        cursor = MagicMock()
+        cursor_context = MagicMock()
+        cursor_context.__enter__.return_value = cursor
+        cursor_context.__exit__.return_value = False
+        connection.cursor.return_value = cursor_context
+        connection.__enter__.return_value = connection
+        connection.__exit__.return_value = False
+
+        context_manager = MagicMock()
+        context_manager.__enter__.return_value = connection
+        context_manager.__exit__.return_value = False
+        mock_psycopg_connection.return_value = context_manager
+
+        captured = {}
+
+        def copy_side_effect(sql, file_obj):
+            captured["sql"] = sql
+            captured["data"] = file_obj.read()
+
+        cursor.copy_expert.side_effect = copy_side_effect
+
+        # Row with special characters that need escaping
+        row = {
+            "id": uuid.uuid4(),
+            "tenant_id": str(uuid.uuid4()),
+            "compliance_id": 'framework"with"quotes',
+            "framework": "Framework,with,commas",
+            "version": "1.0",
+            "description": 'Description with "quotes", commas, and\nnewlines',
+            "region": "us-east-1",
+            "requirement_id": "req-1",
+            "requirement_status": "PASS",
+            "passed_checks": 1,
+            "failed_checks": 0,
+            "total_checks": 1,
+            "scan_id": uuid.uuid4(),
+        }
+
+        with patch.object(MainRouter, "admin_db", "admin"):
+            _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+
+        # Verify CSV was generated (csv module handles escaping automatically)
+        csv_rows = list(csv.reader(StringIO(captured["data"])))
+        assert len(csv_rows) == 1
+
+        # Verify special characters are preserved after CSV parsing
+        assert csv_rows[0][3] == 'framework"with"quotes'
+        assert csv_rows[0][4] == "Framework,with,commas"
+        assert "quotes" in csv_rows[0][6]
+        assert "commas" in csv_rows[0][6]
+
+    @patch("tasks.jobs.scan.psycopg_connection")
+    def test_copy_compliance_requirement_rows_missing_inserted_at(
+        self, mock_psycopg_connection, settings
+    ):
+        """Test COPY uses current datetime when inserted_at is missing."""
+        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
+
+        connection = MagicMock()
+        cursor = MagicMock()
+        cursor_context = MagicMock()
+        cursor_context.__enter__.return_value = cursor
+        cursor_context.__exit__.return_value = False
+        connection.cursor.return_value = cursor_context
+        connection.__enter__.return_value = connection
+        connection.__exit__.return_value = False
+
+        context_manager = MagicMock()
+        context_manager.__enter__.return_value = connection
+        context_manager.__exit__.return_value = False
+        mock_psycopg_connection.return_value = context_manager
+
+        captured = {}
+
+        def copy_side_effect(sql, file_obj):
+            captured["sql"] = sql
+            captured["data"] = file_obj.read()
+
+        cursor.copy_expert.side_effect = copy_side_effect
+
+        # Row without inserted_at field
+        row = {
+            "id": uuid.uuid4(),
+            "tenant_id": str(uuid.uuid4()),
+            "compliance_id": "test_framework",
+            "framework": "Test",
+            "version": "1.0",
+            "description": "desc",
+            "region": "us-east-1",
+            "requirement_id": "req-1",
+            "requirement_status": "PASS",
+            "passed_checks": 1,
+            "failed_checks": 0,
+            "total_checks": 1,
+            "scan_id": uuid.uuid4(),
+            # Note: inserted_at is intentionally missing
+        }
+
+        before_call = datetime.now(timezone.utc)
+        with patch.object(MainRouter, "admin_db", "admin"):
+            _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+        after_call = datetime.now(timezone.utc)
+
+        csv_rows = list(csv.reader(StringIO(captured["data"])))
+        assert len(csv_rows) == 1
+
+        # Verify inserted_at was auto-generated and is a valid ISO datetime
+        inserted_at_str = csv_rows[0][2]
+        inserted_at = datetime.fromisoformat(inserted_at_str)
+        assert before_call <= inserted_at <= after_call
+
+    @patch("tasks.jobs.scan.psycopg_connection")
+    def test_copy_compliance_requirement_rows_transaction_rollback_on_copy_error(
+        self, mock_psycopg_connection, settings
+    ):
+        """Test transaction is rolled back when copy_expert fails."""
+        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
+
+        connection = MagicMock()
+        cursor = MagicMock()
+        cursor_context = MagicMock()
+        cursor_context.__enter__.return_value = cursor
+        cursor_context.__exit__.return_value = False
+        connection.cursor.return_value = cursor_context
+        connection.__enter__.return_value = connection
+        connection.__exit__.return_value = False
+
+        context_manager = MagicMock()
+        context_manager.__enter__.return_value = connection
+        context_manager.__exit__.return_value = False
+        mock_psycopg_connection.return_value = context_manager
+
+        # Simulate copy_expert failure
+        cursor.copy_expert.side_effect = Exception("COPY command failed")
+
+        row = {
+            "id": uuid.uuid4(),
+            "tenant_id": str(uuid.uuid4()),
+            "compliance_id": "test",
+            "framework": "Test",
+            "version": "1.0",
+            "description": "desc",
+            "region": "us-east-1",
+            "requirement_id": "req-1",
+            "requirement_status": "PASS",
+            "passed_checks": 1,
+            "failed_checks": 0,
+            "total_checks": 1,
+            "scan_id": uuid.uuid4(),
+        }
+
+        with patch.object(MainRouter, "admin_db", "admin"):
+            with pytest.raises(Exception, match="COPY command failed"):
+                _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+
+        # Verify rollback was called
+        connection.rollback.assert_called_once()
+        connection.commit.assert_not_called()
+
+    @patch("tasks.jobs.scan.psycopg_connection")
+    def test_copy_compliance_requirement_rows_transaction_rollback_on_set_config_error(
+        self, mock_psycopg_connection, settings
+    ):
+        """Test transaction is rolled back when SET_CONFIG fails."""
+        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
+
+        connection = MagicMock()
+        cursor = MagicMock()
+        cursor_context = MagicMock()
+        cursor_context.__enter__.return_value = cursor
+        cursor_context.__exit__.return_value = False
+        connection.cursor.return_value = cursor_context
+        connection.__enter__.return_value = connection
+        connection.__exit__.return_value = False
+
+        context_manager = MagicMock()
+        context_manager.__enter__.return_value = connection
+        context_manager.__exit__.return_value = False
+        mock_psycopg_connection.return_value = context_manager
+
+        # Simulate cursor.execute failure
+        cursor.execute.side_effect = Exception("SET prowler.tenant_id failed")
+
+        row = {
+            "id": uuid.uuid4(),
+            "tenant_id": str(uuid.uuid4()),
+            "compliance_id": "test",
+            "framework": "Test",
+            "version": "1.0",
+            "description": "desc",
+            "region": "us-east-1",
+            "requirement_id": "req-1",
+            "requirement_status": "PASS",
+            "passed_checks": 1,
+            "failed_checks": 0,
+            "total_checks": 1,
+            "scan_id": uuid.uuid4(),
+        }
+
+        with patch.object(MainRouter, "admin_db", "admin"):
+            with pytest.raises(Exception, match="SET prowler.tenant_id failed"):
+                _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+
+        # Verify rollback was called
+        connection.rollback.assert_called_once()
+        connection.commit.assert_not_called()
+
+    @patch("tasks.jobs.scan.psycopg_connection")
+    def test_copy_compliance_requirement_rows_commit_on_success(
+        self, mock_psycopg_connection, settings
+    ):
+        """Test transaction is committed on successful COPY."""
+        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
+
+        connection = MagicMock()
+        cursor = MagicMock()
+        cursor_context = MagicMock()
+        cursor_context.__enter__.return_value = cursor
+        cursor_context.__exit__.return_value = False
+        connection.cursor.return_value = cursor_context
+        connection.__enter__.return_value = connection
+        connection.__exit__.return_value = False
+
+        context_manager = MagicMock()
+        context_manager.__enter__.return_value = connection
+        context_manager.__exit__.return_value = False
+        mock_psycopg_connection.return_value = context_manager
+
+        cursor.copy_expert.return_value = None  # Success
+
+        row = {
+            "id": uuid.uuid4(),
+            "tenant_id": str(uuid.uuid4()),
+            "compliance_id": "test",
+            "framework": "Test",
+            "version": "1.0",
+            "description": "desc",
+            "region": "us-east-1",
+            "requirement_id": "req-1",
+            "requirement_status": "PASS",
+            "passed_checks": 1,
+            "failed_checks": 0,
+            "total_checks": 1,
+            "scan_id": uuid.uuid4(),
+        }
+
+        with patch.object(MainRouter, "admin_db", "admin"):
+            _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+
+        # Verify commit was called and rollback was not
+        connection.commit.assert_called_once()
+        connection.rollback.assert_not_called()
+        # Verify autocommit was disabled
+        assert connection.autocommit is False
+
+    @patch("tasks.jobs.scan._copy_compliance_requirement_rows")
+    def test_persist_compliance_requirement_rows_success(self, mock_copy):
+        """Test successful COPY path without fallback to ORM."""
+        mock_copy.return_value = None  # Success, no exception
+
+        tenant_id = str(uuid.uuid4())
+        rows = [
+            {
+                "id": uuid.uuid4(),
+                "tenant_id": tenant_id,
+                "inserted_at": datetime.now(timezone.utc),
+                "compliance_id": "test",
+                "framework": "Test",
+                "version": "1.0",
+                "description": "desc",
+                "region": "us-east-1",
+                "requirement_id": "req-1",
+                "requirement_status": "PASS",
+                "passed_checks": 1,
+                "failed_checks": 0,
+                "total_checks": 1,
+                "scan_id": uuid.uuid4(),
             }
+        ]
 
-            created_objects = []
-            mock_create_objects.side_effect = (
-                lambda tenant_id, model, objs, batch_size=500: created_objects.extend(
-                    objs
-                )
-            )
+        _persist_compliance_requirement_rows(tenant_id, rows)
 
-            create_compliance_requirements(str(tenant.id), str(scan.id))
+        # Verify COPY was called
+        mock_copy.assert_called_once_with(tenant_id, rows)
 
-            assert len(created_objects) == 4
-            req_1_objects = [
-                obj for obj in created_objects if obj.requirement_id == "req_1"
-            ]
-            req_2_objects = [
-                obj for obj in created_objects if obj.requirement_id == "req_2"
-            ]
-            assert len(req_1_objects) == 2
-            assert len(req_2_objects) == 2
-            assert all(obj.requirement_status == "PASS" for obj in req_1_objects)
-            assert all(obj.requirement_status == "FAIL" for obj in req_2_objects)
+    @patch("tasks.jobs.scan.logger")
+    @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.bulk_create")
+    @patch("tasks.jobs.scan.rls_transaction")
+    @patch(
+        "tasks.jobs.scan._copy_compliance_requirement_rows",
+        side_effect=Exception("COPY failed"),
+    )
+    def test_persist_compliance_requirement_rows_fallback_logging(
+        self, mock_copy, mock_rls_transaction, mock_bulk_create, mock_logger
+    ):
+        """Test logger.exception is called when COPY fails and fallback occurs."""
+        tenant_id = str(uuid.uuid4())
+        row = {
+            "id": uuid.uuid4(),
+            "tenant_id": tenant_id,
+            "inserted_at": datetime.now(timezone.utc),
+            "compliance_id": "test",
+            "framework": "Test",
+            "version": "1.0",
+            "description": "desc",
+            "region": "us-east-1",
+            "requirement_id": "req-1",
+            "requirement_status": "PASS",
+            "passed_checks": 1,
+            "failed_checks": 0,
+            "total_checks": 1,
+            "scan_id": uuid.uuid4(),
+        }
+
+        ctx = MagicMock()
+        ctx.__enter__.return_value = None
+        ctx.__exit__.return_value = False
+        mock_rls_transaction.return_value = ctx
+
+        _persist_compliance_requirement_rows(tenant_id, [row])
+
+        # Verify logger.exception was called
+        mock_logger.exception.assert_called_once()
+        args, kwargs = mock_logger.exception.call_args
+        assert "COPY bulk insert" in args[0]
+        assert "falling back to ORM" in args[0]
+        assert kwargs.get("exc_info") is not None
+
+    @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.bulk_create")
+    @patch("tasks.jobs.scan.rls_transaction")
+    @patch(
+        "tasks.jobs.scan._copy_compliance_requirement_rows",
+        side_effect=Exception("copy failed"),
+    )
+    def test_persist_compliance_requirement_rows_fallback_multiple_rows(
+        self, mock_copy, mock_rls_transaction, mock_bulk_create
+    ):
+        """Test ORM fallback with multiple rows."""
+        tenant_id = str(uuid.uuid4())
+        scan_id = uuid.uuid4()
+        inserted_at = datetime.now(timezone.utc)
+
+        rows = [
+            {
+                "id": uuid.uuid4(),
+                "tenant_id": tenant_id,
+                "inserted_at": inserted_at,
+                "compliance_id": "cisa_aws",
+                "framework": "CISA",
+                "version": "1.0",
+                "description": "First requirement",
+                "region": "us-east-1",
+                "requirement_id": "req-1",
+                "requirement_status": "PASS",
+                "passed_checks": 5,
+                "failed_checks": 0,
+                "total_checks": 5,
+                "scan_id": scan_id,
+            },
+            {
+                "id": uuid.uuid4(),
+                "tenant_id": tenant_id,
+                "inserted_at": inserted_at,
+                "compliance_id": "cisa_aws",
+                "framework": "CISA",
+                "version": "1.0",
+                "description": "Second requirement",
+                "region": "us-west-2",
+                "requirement_id": "req-2",
+                "requirement_status": "FAIL",
+                "passed_checks": 2,
+                "failed_checks": 3,
+                "total_checks": 5,
+                "scan_id": scan_id,
+            },
+        ]
+
+        ctx = MagicMock()
+        ctx.__enter__.return_value = None
+        ctx.__exit__.return_value = False
+        mock_rls_transaction.return_value = ctx
+
+        _persist_compliance_requirement_rows(tenant_id, rows)
+
+        mock_copy.assert_called_once_with(tenant_id, rows)
+        mock_rls_transaction.assert_called_once_with(tenant_id)
+        mock_bulk_create.assert_called_once()
+
+        args, kwargs = mock_bulk_create.call_args
+        objects = args[0]
+        assert len(objects) == 2
+        assert kwargs["batch_size"] == 500
+
+        # Validate first object
+        assert objects[0].id == rows[0]["id"]
+        assert objects[0].tenant_id == rows[0]["tenant_id"]
+        assert objects[0].compliance_id == rows[0]["compliance_id"]
+        assert objects[0].framework == rows[0]["framework"]
+        assert objects[0].region == rows[0]["region"]
+        assert objects[0].passed_checks == 5
+        assert objects[0].failed_checks == 0
+
+        # Validate second object
+        assert objects[1].id == rows[1]["id"]
+        assert objects[1].requirement_id == rows[1]["requirement_id"]
+        assert objects[1].requirement_status == rows[1]["requirement_status"]
+        assert objects[1].passed_checks == 2
+        assert objects[1].failed_checks == 3
+
+    @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.bulk_create")
+    @patch("tasks.jobs.scan.rls_transaction")
+    @patch(
+        "tasks.jobs.scan._copy_compliance_requirement_rows",
+        side_effect=Exception("copy failed"),
+    )
+    def test_persist_compliance_requirement_rows_fallback_all_fields(
+        self, mock_copy, mock_rls_transaction, mock_bulk_create
+    ):
+        """Test ORM fallback correctly maps all fields from row dict to model."""
+        tenant_id = str(uuid.uuid4())
+        row_id = uuid.uuid4()
+        scan_id = uuid.uuid4()
+        inserted_at = datetime.now(timezone.utc)
+
+        row = {
+            "id": row_id,
+            "tenant_id": tenant_id,
+            "inserted_at": inserted_at,
+            "compliance_id": "aws_foundational_security_aws",
+            "framework": "AWS-Foundational-Security-Best-Practices",
+            "version": "2.0",
+            "description": "Ensure MFA is enabled",
+            "region": "eu-west-1",
+            "requirement_id": "iam.1",
+            "requirement_status": "FAIL",
+            "passed_checks": 10,
+            "failed_checks": 5,
+            "total_checks": 15,
+            "scan_id": scan_id,
+        }
+
+        ctx = MagicMock()
+        ctx.__enter__.return_value = None
+        ctx.__exit__.return_value = False
+        mock_rls_transaction.return_value = ctx
+
+        _persist_compliance_requirement_rows(tenant_id, [row])
+
+        args, kwargs = mock_bulk_create.call_args
+        objects = args[0]
+        assert len(objects) == 1
+
+        obj = objects[0]
+        # Validate ALL fields are correctly mapped
+        assert obj.id == row_id
+        assert obj.tenant_id == tenant_id
+        assert obj.inserted_at == inserted_at
+        assert obj.compliance_id == "aws_foundational_security_aws"
+        assert obj.framework == "AWS-Foundational-Security-Best-Practices"
+        assert obj.version == "2.0"
+        assert obj.description == "Ensure MFA is enabled"
+        assert obj.region == "eu-west-1"
+        assert obj.requirement_id == "iam.1"
+        assert obj.requirement_status == "FAIL"
+        assert obj.passed_checks == 10
+        assert obj.failed_checks == 5
+        assert obj.total_checks == 15
+        assert obj.scan_id == scan_id

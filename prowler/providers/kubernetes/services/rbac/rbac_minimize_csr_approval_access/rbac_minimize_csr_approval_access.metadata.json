@@ -3,7 +3,7 @@
   "CheckID": "rbac_minimize_csr_approval_access",
   "CheckTitle": "Minimize access to the approval sub-resource of certificatesigningrequests objects",
   "CheckType": [],
-  "ServiceName": "RBAC",
+  "ServiceName": "rbac",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

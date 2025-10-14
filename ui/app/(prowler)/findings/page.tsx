@@ -1,4 +1,4 @@
-import { Spacer } from "@nextui-org/react";
+import { Spacer } from "@heroui/spacer";
 import React, { Suspense } from "react";
 
 import {
@@ -9,16 +9,16 @@ import {
 } from "@/actions/findings";
 import { getProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
-import { filterFindings } from "@/components/filters/data-filters";
-import { FilterControls } from "@/components/filters/filter-controls";
+import { FindingsFilters } from "@/components/findings/findings-filters";
 import {
   ColumnFindings,
   SkeletonTableFindings,
 } from "@/components/findings/table";
 import { ContentLayout } from "@/components/ui";
-import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
+import { DataTable } from "@/components/ui/table";
 import {
   createDict,
+  createScanDetailsMapping,
   extractFiltersAndQuery,
   extractSortAndKey,
   hasDateOrScanFilter,
@@ -27,19 +27,21 @@ import {
   createProviderDetailsMapping,
   extractProviderUIDs,
 } from "@/lib/provider-helpers";
-import { ScanProps } from "@/types";
+import { FilterEntity, ScanEntity, ScanProps } from "@/types";
 import { FindingProps, SearchParamsProps } from "@/types/components";
 
 export default async function Findings({
   searchParams,
 }: {
-  searchParams: SearchParamsProps;
+  searchParams: Promise<SearchParamsProps>;
 }) {
-  const { searchParamsKey, encodedSort } = extractSortAndKey(searchParams);
-  const { filters, query } = extractFiltersAndQuery(searchParams);
+  const resolvedSearchParams = await searchParams;
+  const { searchParamsKey, encodedSort } =
+    extractSortAndKey(resolvedSearchParams);
+  const { filters, query } = extractFiltersAndQuery(resolvedSearchParams);
 
   // Check if the searchParams contain any date or scan filter
-  const hasDateOrScan = hasDateOrScanFilter(searchParams);
+  const hasDateOrScan = hasDateOrScanFilter(resolvedSearchParams);
 
   const [metadataInfoData, providersData, scansData] = await Promise.all([
     (hasDateOrScan ? getMetadataInfo : getLatestMetadataInfo)({
@@ -48,7 +50,7 @@ export default async function Findings({
       filters,
     }),
     getProviders({ pageSize: 50 }),
-    getScans({}),
+    getScans({ pageSize: 50 }),
   ]);
 
   // Extract unique regions and services from the new endpoint
@@ -60,74 +62,41 @@ export default async function Findings({
   // Extract provider UIDs and details using helper functions
   const providerUIDs = providersData ? extractProviderUIDs(providersData) : [];
   const providerDetails = providersData
-    ? createProviderDetailsMapping(providerUIDs, providersData)
+    ? (createProviderDetailsMapping(providerUIDs, providersData) as {
+        [uid: string]: FilterEntity;
+      }[])
     : [];
 
-  // Update the Provider UID filter
-  const updatedFilters = filterFindings.map((filter) => {
-    if (filter.key === "provider_uid__in") {
-      return {
-        ...filter,
-        values: providerUIDs,
-        valueLabelMapping: providerDetails,
-      };
-    }
-    return filter;
-  });
-
   // Extract scan UUIDs with "completed" state and more than one resource
-  const completedScans = scansData?.data
-    ?.filter(
-      (scan: ScanProps) =>
-        scan.attributes.state === "completed" &&
-        scan.attributes.unique_resource_count > 1,
-    )
-    .map((scan: ScanProps) => ({
-      id: scan.id,
-      name: scan.attributes.name,
-    }));
+  const completedScans = scansData?.data?.filter(
+    (scan: ScanProps) =>
+      scan.attributes.state === "completed" &&
+      scan.attributes.unique_resource_count > 1,
+  );
 
   const completedScanIds =
     completedScans?.map((scan: ScanProps) => scan.id) || [];
 
+  const scanDetails = createScanDetailsMapping(
+    completedScans,
+    providersData,
+  ) as { [uid: string]: ScanEntity }[];
+
   return (
-    <ContentLayout title="Findings" icon="carbon:data-view-alt">
-      <FilterControls search date />
-      <Spacer y={8} />
-      <DataTableFilterCustom
-        filters={[
-          ...updatedFilters,
-          {
-            key: "region__in",
-            labelCheckboxGroup: "Regions",
-            values: uniqueRegions,
-            index: 5,
-          },
-          {
-            key: "service__in",
-            labelCheckboxGroup: "Services",
-            values: uniqueServices,
-            index: 6,
-          },
-          {
-            key: "resource_type__in",
-            labelCheckboxGroup: "Resource Type",
-            values: uniqueResourceTypes,
-            index: 7,
-          },
-          {
-            key: "scan__in",
-            labelCheckboxGroup: "Scan ID",
-            values: completedScanIds,
-            index: 9,
-          },
-        ]}
-        defaultOpen={true}
+    <ContentLayout title="Findings" icon="lucide:tag">
+      <FindingsFilters
+        providerUIDs={providerUIDs}
+        providerDetails={providerDetails}
+        completedScans={completedScans || []}
+        completedScanIds={completedScanIds}
+        scanDetails={scanDetails}
+        uniqueRegions={uniqueRegions}
+        uniqueServices={uniqueServices}
+        uniqueResourceTypes={uniqueResourceTypes}
       />
       <Spacer y={8} />
-
       <Suspense key={searchParamsKey} fallback={<SkeletonTableFindings />}>
-        <SSRDataTable searchParams={searchParams} />
+        <SSRDataTable searchParams={resolvedSearchParams} />
       </Suspense>
     </ContentLayout>
   );
@@ -190,12 +159,13 @@ const SSRDataTable = async ({
   return (
     <>
       {findingsData?.errors && (
-        <div className="mb-4 flex rounded-lg border border-red-500 bg-red-100 p-2 text-small text-red-700">
+        <div className="text-small mb-4 flex rounded-lg border border-red-500 bg-red-100 p-2 text-red-700">
           <p className="mr-2 font-semibold">Error:</p>
           <p>{findingsData.errors[0].detail}</p>
         </div>
       )}
       <DataTable
+        key={Date.now()}
         columns={ColumnFindings}
         data={expandedResponse?.data || []}
         metadata={findingsData?.meta}

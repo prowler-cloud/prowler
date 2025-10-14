@@ -1,7 +1,10 @@
 from unittest import mock
 from uuid import uuid4
 
-from prowler.providers.azure.services.defender.defender_service import SecurityContacts
+from prowler.providers.azure.services.defender.defender_service import (
+    NotificationsByRole,
+    SecurityContactConfiguration,
+)
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
     set_mocked_azure_provider,
@@ -10,8 +13,8 @@ from tests.providers.azure.azure_fixtures import (
 
 class Test_defender_ensure_notify_alerts_severity_is_high:
     def test_defender_no_subscriptions(self):
-        defender_client = mock.MagicMock
-        defender_client.security_contacts = {}
+        defender_client = mock.MagicMock()
+        defender_client.security_contact_configurations = {}
 
         with (
             mock.patch(
@@ -33,18 +36,20 @@ class Test_defender_ensure_notify_alerts_severity_is_high:
 
     def test_defender_severity_alerts_critical(self):
         resource_id = str(uuid4())
-        defender_client = mock.MagicMock
-        defender_client.security_contacts = {
+        defender_client = mock.MagicMock()
+        defender_client.security_contact_configurations = {
             AZURE_SUBSCRIPTION_ID: {
-                resource_id: SecurityContacts(
-                    resource_id=resource_id,
+                resource_id: SecurityContactConfiguration(
+                    id=resource_id,
                     name="default",
-                    emails="",
+                    enabled=True,
+                    emails=[""],
                     phone="",
-                    alert_notifications_minimal_severity="Critical",
-                    alert_notifications_state="On",
-                    notified_roles=["Contributor"],
-                    notified_roles_state="On",
+                    notifications_by_role=NotificationsByRole(
+                        state=True, roles=["Contributor"]
+                    ),
+                    alert_minimal_severity="Critical",
+                    attack_path_minimal_risk_level=None,
                 )
             }
         }
@@ -77,18 +82,21 @@ class Test_defender_ensure_notify_alerts_severity_is_high:
 
     def test_defender_severity_alerts_high(self):
         resource_id = str(uuid4())
-        defender_client = mock.MagicMock
-        defender_client.security_contacts = {
+        defender_client = mock.MagicMock()
+        defender_client.security_contact_configurations = {
             AZURE_SUBSCRIPTION_ID: {
-                resource_id: SecurityContacts(
+                resource_id: SecurityContactConfiguration(
                     resource_id=resource_id,
+                    id=resource_id,
                     name="default",
-                    emails="",
+                    enabled=True,
+                    emails=[""],
                     phone="",
-                    alert_notifications_minimal_severity="High",
-                    alert_notifications_state="On",
-                    notified_roles=["Contributor"],
-                    notified_roles_state="On",
+                    notifications_by_role=NotificationsByRole(
+                        state=True, roles=["Contributor"]
+                    ),
+                    alert_minimal_severity="High",
+                    attack_path_minimal_risk_level=None,
                 )
             }
         }
@@ -121,18 +129,21 @@ class Test_defender_ensure_notify_alerts_severity_is_high:
 
     def test_defender_severity_alerts_low(self):
         resource_id = str(uuid4())
-        defender_client = mock.MagicMock
-        defender_client.security_contacts = {
+        defender_client = mock.MagicMock()
+        defender_client.security_contact_configurations = {
             AZURE_SUBSCRIPTION_ID: {
-                resource_id: SecurityContacts(
+                resource_id: SecurityContactConfiguration(
                     resource_id=resource_id,
+                    id=resource_id,
                     name="default",
-                    emails="",
+                    enabled=True,
+                    emails=[""],
                     phone="",
-                    alert_notifications_minimal_severity="Low",
-                    alert_notifications_state="On",
-                    notified_roles=["Contributor"],
-                    notified_roles_state="On",
+                    notifications_by_role=NotificationsByRole(
+                        state=True, roles=["Contributor"]
+                    ),
+                    alert_minimal_severity="Low",
+                    attack_path_minimal_risk_level=None,
                 )
             }
         }
@@ -164,18 +175,19 @@ class Test_defender_ensure_notify_alerts_severity_is_high:
             assert result[0].resource_id == resource_id
 
     def test_defender_default_security_contact_not_found(self):
-        defender_client = mock.MagicMock
-        defender_client.security_contacts = {
+        defender_client = mock.MagicMock()
+        defender_client.security_contact_configurations = {
             AZURE_SUBSCRIPTION_ID: {
-                f"/subscriptions/{AZURE_SUBSCRIPTION_ID}/providers/Microsoft.Security/securityContacts/default": SecurityContacts(
+                f"/subscriptions/{AZURE_SUBSCRIPTION_ID}/providers/Microsoft.Security/securityContacts/default": SecurityContactConfiguration(
                     resource_id=f"/subscriptions/{AZURE_SUBSCRIPTION_ID}/providers/Microsoft.Security/securityContacts/default",
+                    id=f"/subscriptions/{AZURE_SUBSCRIPTION_ID}/providers/Microsoft.Security/securityContacts/default",
                     name="default",
-                    emails="",
+                    enabled=True,
+                    emails=[""],
                     phone="",
-                    alert_notifications_minimal_severity="",
-                    alert_notifications_state="",
-                    notified_roles=[""],
-                    notified_roles_state="",
+                    notifications_by_role=NotificationsByRole(state=True, roles=[""]),
+                    alert_minimal_severity="",
+                    attack_path_minimal_risk_level=None,
                 )
             }
         }

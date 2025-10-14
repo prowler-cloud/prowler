@@ -54,8 +54,8 @@ class Test_vm_ensure_unattached_disks_encrypted_with_cmk:
             assert len(result) == 0
 
     def test_vm_one_unattached_disk_encrypt_pk(self):
-        disk_id = uuid4()
-        resource_id = uuid4()
+        disk_id = str(uuid4())
+        resource_id = str(uuid4())
         vm_client = mock.MagicMock
         vm_client.disks = {
             AZURE_SUBSCRIPTION_ID: {
@@ -97,8 +97,8 @@ class Test_vm_ensure_unattached_disks_encrypted_with_cmk:
             )
 
     def test_vm_one_unattached_disk_encrypt_cmk(self):
-        disk_id = uuid4()
-        resource_id = uuid4()
+        disk_id = str(uuid4())
+        resource_id = str(uuid4())
         vm_client = mock.MagicMock
         vm_client.disks = {
             AZURE_SUBSCRIPTION_ID: {
@@ -140,10 +140,10 @@ class Test_vm_ensure_unattached_disks_encrypted_with_cmk:
             )
 
     def test_vm_subscription_two_unattached_disk_encrypt_cmk_and_pk(self):
-        disk_id_1 = uuid4()
-        resource_id_1 = uuid4()
-        disk_id_2 = uuid4()
-        resource_id_2 = uuid4()
+        disk_id_1 = str(uuid4())
+        resource_id_1 = str(uuid4())
+        disk_id_2 = str(uuid4())
+        resource_id_2 = str(uuid4())
         vm_client = mock.MagicMock
         vm_client.disks = {
             AZURE_SUBSCRIPTION_ID: {
@@ -200,17 +200,17 @@ class Test_vm_ensure_unattached_disks_encrypted_with_cmk:
             )
 
     def test_vm_attached_disk_encrypt_cmk(self):
-        disk_id = uuid4()
-        resource_id = uuid4()
+        disk_id = str(uuid4())
+        resource_id = str(uuid4())
         vm_client = mock.MagicMock
         vm_client.disks = {
             AZURE_SUBSCRIPTION_ID: {
                 disk_id: Disk(
                     resource_id=resource_id,
                     resource_name="test-disk",
-                    location="location",
-                    vms_attached=[uuid4()],
+                    vms_attached=[str(uuid4())],
                     encryption_type="EncryptionAtRestWithCustomerKey",
+                    location="location",
                 )
             }
         }

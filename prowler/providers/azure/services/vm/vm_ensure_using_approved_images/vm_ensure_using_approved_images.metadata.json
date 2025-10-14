@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "vm_ensure_using_approved_images",
+  "CheckTitle": "Ensure that Azure VMs are using an approved machine image.",
+  "CheckType": [],
+  "ServiceName": "vm",
+  "SubServiceName": "image",
+  "ResourceIdTemplate": "/subscriptions/<subscription-id>/resourceGroups/<resource-group-name>/providers/Microsoft.Compute/images/<virtual-machine-image-id>",
+  "Severity": "medium",
+  "ResourceType": "Microsoft.Compute/images",
+  "Description": "Ensure that all your Azure virtual machine instances are launched from approved machine images only.",
+  "Risk": "An approved machine image is a custom virtual machine (VM) image that contains a pre-configured OS and a well-defined stack of server software approved by Azure, fully configured to run your application. Using approved (golden) machine images to launch new VM instances within your Azure cloud environment brings major benefits such as fast and stable application deployment and scaling, secure application stack upgrades, and versioning.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/virtual-machines/windows/create-vm-generalized-managed",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/VirtualMachines/approved-machine-image.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Re-create the required VM instances using the approved (golden) machine image.",
+      "Url": "https://docs.microsoft.com/en-us/azure/virtual-machines/windows/create-vm-generalized-managed"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check only validates if the VM was launched from a custom image. It does not validate the image content or security baseline."
+}

@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -36,7 +36,7 @@ class MemoryDB(AWSService):
                                 region=regional_client.region,
                                 security_groups=[
                                     sg["SecurityGroupId"]
-                                    for sg in cluster["SecurityGroups"]
+                                    for sg in cluster.get("SecurityGroups", [])
                                     if sg["Status"] == "active"
                                 ],
                                 tls_enabled=cluster["TLSEnabled"],

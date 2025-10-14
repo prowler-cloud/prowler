@@ -1,6 +1,7 @@
 "use client";
 
-import { Card, CardBody, Divider } from "@nextui-org/react";
+import { Card, CardBody } from "@heroui/card";
+import { Divider } from "@heroui/divider";
 
 import { DateWithTime, InfoField, SnippetChip } from "@/components/ui/entities";
 import { UserDataWithRoles } from "@/types/users";
@@ -50,7 +51,11 @@ export const UserBasicInfoCard = ({
           </div>
           <div className="flex flex-col gap-2">
             <InfoField label="Organization ID" variant="transparent">
-              <TenantIdCopy id={tenantId} />
+              {tenantId ? (
+                <TenantIdCopy id={tenantId} />
+              ) : (
+                <span className="text-xs font-light">No organization</span>
+              )}
             </InfoField>
           </div>
         </div>

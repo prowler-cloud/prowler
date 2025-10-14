@@ -3,7 +3,7 @@
   "CheckID": "trustedadvisor_premium_support_plan_subscribed",
   "CheckTitle": "Check if a Premium support plan is subscribed",
   "CheckType": [],
-  "ServiceName": "support",
+  "ServiceName": "trustedadvisor",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:aws:iam::AWS_ACCOUNT_NUMBER:root",
   "Severity": "low",

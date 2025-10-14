@@ -18,7 +18,11 @@ Valkey exposes a Redis 7.2 compliant API. Any service that exposes the Redis API
 
 # Modify environment variables
 
-Under the root path of the project, you can find a file called `.env.example`. This file shows all the environment variables that the project uses. You *must* create a new file called `.env` and set the values for the variables.
+Under the root path of the project, you can find a file called `.env`. This file shows all the environment variables that the project uses. You should review it and set the values for the variables you want to change.
+
+If you don’t set `DJANGO_TOKEN_SIGNING_KEY` or `DJANGO_TOKEN_VERIFYING_KEY`, the API will generate them at `~/.config/prowler-api/` with `0600` and `0644` permissions; back up these files to persist identity across redeploys.
+
+**Important note**: Every Prowler version (or repository branches and tags) could have different variables set in its `.env` file. Please use the `.env` file that corresponds with each version.
 
 ## Local deployment
 Keep in mind if you export the `.env` file to use it with local deployment that you will have to do it within the context of the Poetry interpreter, not before. Otherwise, variables will not be loaded properly.
@@ -257,7 +261,7 @@ cd src/backend
 python manage.py loaddata api/fixtures/0_dev_users.json --database admin
 ```
 
-> The default credentials are `dev@prowler.com:thisisapassword123` or `dev2@prowler.com:thisisapassword123`
+> The default credentials are `dev@prowler.com:Thisisapassword123@` or `dev2@prowler.com:Thisisapassword123@`
 
 ## Run tests
 

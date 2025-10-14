@@ -1,84 +1,125 @@
 import React, { Suspense } from "react";
 
-import { getAllTenants } from "@/actions/users/tenants";
+import { getSamlConfig } from "@/actions/integrations/saml";
 import { getUserInfo } from "@/actions/users/users";
-import { getUserMemberships } from "@/actions/users/users";
+import { SamlIntegrationCard } from "@/components/integrations/saml/saml-integration-card";
 import { ContentLayout } from "@/components/ui";
-import { UserBasicInfoCard } from "@/components/users/profile";
+import { ApiKeysCard, UserBasicInfoCard } from "@/components/users/profile";
 import { MembershipsCard } from "@/components/users/profile/memberships-card";
 import { RolesCard } from "@/components/users/profile/roles-card";
 import { SkeletonUserInfo } from "@/components/users/profile/skeleton-user-info";
-import { isUserOwnerAndHasManageAccount } from "@/lib/permissions";
-import { RoleDetail, TenantDetailData } from "@/types/users";
+import { SearchParamsProps } from "@/types";
+import {
+  MembershipDetailData,
+  RoleDetail,
+  TenantDetailData,
+  UserProfileResponse,
+} from "@/types/users";
 
-export default async function Profile() {
+export default async function Profile({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParamsProps>;
+}) {
+  const resolvedSearchParams = await searchParams;
+
   return (
-    <ContentLayout title="User Profile" icon="ci:users">
+    <ContentLayout title="User Profile" icon="lucide:users">
       <Suspense fallback={<SkeletonUserInfo />}>
-        <SSRDataUser />
+        <SSRDataUser searchParams={resolvedSearchParams} />
       </Suspense>
     </ContentLayout>
   );
 }
 
-const SSRDataUser = async () => {
-  const userProfile = await getUserInfo();
+const SSRDataUser = async ({
+  searchParams,
+}: {
+  searchParams: SearchParamsProps;
+}) => {
+  const userProfile = (await getUserInfo()) as UserProfileResponse | undefined;
   if (!userProfile?.data) {
     return null;
   }
 
-  const roleDetails =
-    userProfile.included?.filter((item: any) => item.type === "roles") || [];
+  const userData = userProfile.data;
 
-  const roleDetailsMap = roleDetails.reduce(
-    (acc: Record<string, RoleDetail>, role: RoleDetail) => {
+  const roleDetails =
+    userProfile.included?.filter(
+      (item): item is RoleDetail => item.type === "roles",
+    ) || [];
+
+  const membershipsIncluded =
+    userProfile.included?.filter(
+      (item): item is MembershipDetailData => item.type === "memberships",
+    ) || [];
+
+  const tenantsIncluded =
+    userProfile.included?.filter(
+      (item): item is TenantDetailData => item.type === "tenants",
+    ) || [];
+
+  const roleDetailsMap = roleDetails.reduce<Record<string, RoleDetail>>(
+    (acc, role) => {
       acc[role.id] = role;
       return acc;
     },
-    {} as Record<string, RoleDetail>,
+    {},
   );
 
-  const memberships = await getUserMemberships(userProfile.data.id);
-  const tenants = await getAllTenants();
-
-  const tenantsMap = tenants?.data?.reduce(
-    (acc: Record<string, TenantDetailData>, tenant: TenantDetailData) => {
+  const tenantsMap = tenantsIncluded.reduce<Record<string, TenantDetailData>>(
+    (acc, tenant) => {
       acc[tenant.id] = tenant;
       return acc;
     },
-    {} as Record<string, TenantDetailData>,
+    {},
   );
 
-  const userMembershipIds =
-    userProfile.data.relationships?.memberships?.data?.map(
-      (membership: { id: string }) => membership.id,
-    ) || [];
-
-  const userTenant = tenants?.data?.find((tenant: TenantDetailData) =>
-    tenant.relationships?.memberships?.data?.some(
-      (membership: { id: string }) => userMembershipIds.includes(membership.id),
-    ),
+  const firstUserMembership = membershipsIncluded.find(
+    (m) => m.relationships?.user?.data?.id === userData.id,
   );
 
-  const isOwner = isUserOwnerAndHasManageAccount(
-    roleDetails,
-    memberships?.data || [],
-    userProfile.data.id,
+  const userTenantId = firstUserMembership?.relationships?.tenant?.data?.id;
+
+  const userRoleIds =
+    userData.relationships?.roles?.data?.map((r) => r.id) || [];
+
+  const hasManageAccount = roleDetails.some(
+    (role) =>
+      role.attributes.manage_account === true && userRoleIds.includes(role.id),
   );
+
+  const hasManageIntegrations = roleDetails.some(
+    (role) =>
+      role.attributes.manage_integrations === true &&
+      userRoleIds.includes(role.id),
+  );
+
+  const isOwner = membershipsIncluded.some(
+    (m) =>
+      m.attributes.role === "owner" &&
+      m.relationships?.user?.data?.id === userData.id,
+  );
+
+  const samlConfig = hasManageIntegrations ? await getSamlConfig() : undefined;
 
   return (
     <div className="flex w-full flex-col gap-6">
-      <UserBasicInfoCard user={userProfile?.data} tenantId={userTenant?.id} />
-      <div className="flex flex-col gap-6 lg:flex-row">
-        <div className="w-full md:w-1/2 lg:w-1/2 xl:w-1/2 2xl:w-1/2">
-          <RolesCard roles={roleDetails || []} roleDetails={roleDetailsMap} />
+      <UserBasicInfoCard user={userData} tenantId={userTenantId || ""} />
+      <div className="flex flex-col gap-6 xl:flex-row">
+        <div className="flex w-full flex-col gap-6 xl:max-w-[50%]">
+          <RolesCard roles={roleDetails} roleDetails={roleDetailsMap} />
+          {hasManageIntegrations && (
+            <SamlIntegrationCard samlConfig={samlConfig?.data?.[0]} />
+          )}
         </div>
-        <div className="w-full md:w-1/2 lg:w-1/2 xl:w-1/2 2xl:w-1/2">
+        <div className="flex w-full flex-col gap-6 xl:max-w-[50%]">
           <MembershipsCard
-            memberships={memberships?.data || []}
+            memberships={membershipsIncluded}
             tenantsMap={tenantsMap}
-            isOwner={isOwner}
+            isOwner={isOwner && hasManageAccount}
           />
+          {hasManageAccount && <ApiKeysCard searchParams={searchParams} />}
         </div>
       </div>
     </div>

@@ -1,0 +1,30 @@
+{
+  "Provider": "azure",
+  "CheckID": "storage_smb_channel_encryption_with_secure_algorithm",
+  "CheckTitle": "Ensure SMB channel encryption uses a secure algorithm for SMB file shares",
+  "CheckType": [],
+  "ServiceName": "storage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}/fileServices/default",
+  "Severity": "medium",
+  "ResourceType": "AzureStorageAccount",
+  "Description": "Implement SMB channel encryption with a secure algorithm for SMB file shares to ensure data confidentiality and integrity in transit.",
+  "Risk": "Not using the recommended SMB channel encryption may expose data transmitted over SMB channels to unauthorized interception and tampering.",
+  "RelatedUrl": "https://learn.microsoft.com/en-us/azure/well-architected/service-guides/azure-files#recommendations-for-smb-file-shares",
+  "Remediation": {
+    "Code": {
+      "CLI": "az storage account file-service-properties update --resource-group <resource-group> --account-name <storage-account> --channel-encryption AES-256-GCM",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Use the portal, CLI or PowerShell to set the SMB channel encryption to a secure algorithm.",
+      "Url": "https://learn.microsoft.com/en-us/azure/storage/files/files-smb-protocol?tabs=azure-portal#smb-security-settings"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check passes if SMB channel encryption is set to a secure algorithm."
+}

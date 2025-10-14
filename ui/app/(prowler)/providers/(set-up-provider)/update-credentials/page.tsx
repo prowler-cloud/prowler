@@ -6,42 +6,41 @@ import {
   UpdateViaRoleForm,
 } from "@/components/providers/workflow/forms";
 import { UpdateViaServiceAccountForm } from "@/components/providers/workflow/forms/update-via-service-account-key-form";
+import { getProviderFormType } from "@/lib/provider-helpers";
 import { ProviderType } from "@/types/providers";
 
 interface Props {
-  searchParams: {
+  searchParams: Promise<{
     type: ProviderType;
     id: string;
     via?: string;
     secretId?: string;
-  };
+  }>;
 }
 
-export default function UpdateCredentialsPage({ searchParams }: Props) {
-  return (
-    <>
-      {(searchParams.type === "aws" || searchParams.type === "gcp") &&
-        !searchParams.via && (
-          <CredentialsUpdateInfo
-            providerType={searchParams.type}
-            initialVia={searchParams.via}
-          />
-        )}
+export default async function UpdateCredentialsPage({ searchParams }: Props) {
+  const resolvedSearchParams = await searchParams;
+  const { type: providerType, via } = resolvedSearchParams;
+  const formType = getProviderFormType(providerType, via);
 
-      {((searchParams.type === "aws" && searchParams.via === "credentials") ||
-        (searchParams.type === "gcp" && searchParams.via === "credentials") ||
-        (searchParams.type !== "aws" && searchParams.type !== "gcp")) && (
-        <UpdateViaCredentialsForm searchParams={searchParams} />
-      )}
+  switch (formType) {
+    case "selector":
+      return (
+        <CredentialsUpdateInfo providerType={providerType} initialVia={via} />
+      );
 
-      {searchParams.type === "aws" && searchParams.via === "role" && (
-        <UpdateViaRoleForm searchParams={searchParams} />
-      )}
+    case "credentials":
+      return <UpdateViaCredentialsForm searchParams={resolvedSearchParams} />;
 
-      {searchParams.type === "gcp" &&
-        searchParams.via === "service-account" && (
-          <UpdateViaServiceAccountForm searchParams={searchParams} />
-        )}
-    </>
-  );
+    case "role":
+      return <UpdateViaRoleForm searchParams={resolvedSearchParams} />;
+
+    case "service-account":
+      return (
+        <UpdateViaServiceAccountForm searchParams={resolvedSearchParams} />
+      );
+
+    default:
+      return null;
+  }
 }

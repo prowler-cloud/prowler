@@ -23,6 +23,7 @@ import argparse
 import json
 import os
 import re
+import shlex
 import signal
 import socket
 import subprocess
@@ -145,11 +146,11 @@ def _get_script_arguments():
 
 def _run_prowler(prowler_args):
     _debug("Running prowler with args: {0}".format(prowler_args), 1)
-    _prowler_command = "{prowler}/prowler {args}".format(
-        prowler=PATH_TO_PROWLER, args=prowler_args
+    _prowler_command = shlex.split(
+        "{prowler}/prowler {args}".format(prowler=PATH_TO_PROWLER, args=prowler_args)
     )
-    _debug("Running command: {0}".format(_prowler_command), 2)
-    _process = subprocess.Popen(_prowler_command, stdout=subprocess.PIPE, shell=True)
+    _debug("Running command: {0}".format(" ".join(_prowler_command)), 2)
+    _process = subprocess.Popen(_prowler_command, stdout=subprocess.PIPE)
     _output, _error = _process.communicate()
     _debug("Raw prowler output: {0}".format(_output), 3)
     _debug("Raw prowler error: {0}".format(_error), 3)

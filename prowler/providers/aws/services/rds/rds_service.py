@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 
 from botocore.client import ClientError
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -60,7 +60,7 @@ class RDS(AWSService):
                                 engine=instance["Engine"],
                                 engine_version=instance["EngineVersion"],
                                 status=instance["DBInstanceStatus"],
-                                public=instance["PubliclyAccessible"],
+                                public=instance.get("PubliclyAccessible", False),
                                 encrypted=instance["StorageEncrypted"],
                                 auto_minor_version_upgrade=instance[
                                     "AutoMinorVersionUpgrade"
@@ -80,7 +80,7 @@ class RDS(AWSService):
                                     for item in instance["DBParameterGroups"]
                                 ],
                                 multi_az=instance["MultiAZ"],
-                                username=instance["MasterUsername"],
+                                username=instance.get("MasterUsername", ""),
                                 iam_auth=instance.get(
                                     "IAMDatabaseAuthenticationEnabled", False
                                 ),
@@ -334,6 +334,13 @@ class RDS(AWSService):
                         if (
                             error.response["Error"]["Code"]
                             == "DBClusterParameterGroupName"
+                        ):
+                            logger.warning(
+                                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            )
+                        elif (
+                            error.response["Error"]["Code"]
+                            == "DBParameterGroupNotFound"
                         ):
                             logger.warning(
                                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

@@ -1,7 +1,7 @@
-from dataclasses import dataclass
-from typing import List, Optional
+from typing import Optional
 
 from azure.mgmt.storage import StorageManagementClient
+from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
@@ -13,6 +13,7 @@ class Storage(AzureService):
         super().__init__(StorageManagementClient, provider)
         self.storage_accounts = self._get_storage_accounts()
         self._get_blob_properties()
+        self._get_file_share_properties()
 
     def _get_storage_accounts(self):
         logger.info("Storage - Getting storage accounts...")
@@ -30,7 +31,7 @@ class Storage(AzureService):
                         resouce_group_name = None
                     key_expiration_period_in_days = None
                     if storage_account.key_policy:
-                        key_expiration_period_in_days = (
+                        key_expiration_period_in_days = int(
                             storage_account.key_policy.key_expiration_period_in_days
                         )
                     storage_accounts[subscription].append(
@@ -67,6 +68,45 @@ class Storage(AzureService):
                             ],
                             key_expiration_period_in_days=key_expiration_period_in_days,
                             location=storage_account.location,
+                            default_to_entra_authorization=(
+                                False
+                                if getattr(
+                                    storage_account,
+                                    "default_to_o_auth_authentication",
+                                    False,
+                                )
+                                is None
+                                else getattr(
+                                    storage_account,
+                                    "default_to_o_auth_authentication",
+                                    False,
+                                )
+                            ),
+                            replication_settings=storage_account.sku.name,
+                            allow_cross_tenant_replication=(
+                                True
+                                if getattr(
+                                    storage_account,
+                                    "allow_cross_tenant_replication",
+                                    True,
+                                )
+                                is None
+                                else getattr(
+                                    storage_account,
+                                    "allow_cross_tenant_replication",
+                                    True,
+                                )
+                            ),
+                            allow_shared_key_access=(
+                                True
+                                if getattr(
+                                    storage_account, "allow_shared_key_access", True
+                                )
+                                is None
+                                else getattr(
+                                    storage_account, "allow_shared_key_access", True
+                                )
+                            ),
                         )
                     )
             except Exception as error:
@@ -88,6 +128,9 @@ class Storage(AzureService):
                         container_delete_retention_policy = getattr(
                             properties, "container_delete_retention_policy", None
                         )
+                        versioning_enabled = getattr(
+                            properties, "is_versioning_enabled", False
+                        )
                         account.blob_properties = BlobProperties(
                             id=properties.id,
                             name=properties.name,
@@ -103,6 +146,7 @@ class Storage(AzureService):
                                     container_delete_retention_policy, "days", 0
                                 ),
                             ),
+                            versioning_enabled=versioning_enabled,
                         )
                     except Exception as error:
                         if (
@@ -122,47 +166,140 @@ class Storage(AzureService):
                 f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _get_file_share_properties(self):
+        logger.info("Storage - Getting file share properties...")
+        for subscription, accounts in self.storage_accounts.items():
+            client = self.clients[subscription]
+            for account in accounts:
+                try:
+                    file_service_properties = (
+                        client.file_services.get_service_properties(
+                            account.resouce_group_name, account.name
+                        )
+                    )
+                    share_delete_retention_policy = getattr(
+                        file_service_properties,
+                        "share_delete_retention_policy",
+                        None,
+                    )
 
-@dataclass
-class DeleteRetentionPolicy:
+                    smb_channel_encryption_raw = getattr(
+                        getattr(
+                            getattr(
+                                file_service_properties,
+                                "protocol_settings",
+                                None,
+                            ),
+                            "smb",
+                            None,
+                        ),
+                        "channel_encryption",
+                        None,
+                    )
+
+                    smb_supported_versions_raw = getattr(
+                        getattr(
+                            getattr(
+                                file_service_properties,
+                                "protocol_settings",
+                                None,
+                            ),
+                            "smb",
+                            None,
+                        ),
+                        "versions",
+                        None,
+                    )
+
+                    account.file_service_properties = FileServiceProperties(
+                        id=file_service_properties.id,
+                        name=file_service_properties.name,
+                        type=file_service_properties.type,
+                        share_delete_retention_policy=DeleteRetentionPolicy(
+                            enabled=getattr(
+                                share_delete_retention_policy,
+                                "enabled",
+                                False,
+                            ),
+                            days=getattr(
+                                share_delete_retention_policy,
+                                "days",
+                                0,
+                            ),
+                        ),
+                        smb_protocol_settings=SMBProtocolSettings(
+                            channel_encryption=(
+                                smb_channel_encryption_raw.rstrip(";").split(";")
+                                if smb_channel_encryption_raw
+                                else []
+                            ),
+                            supported_versions=(
+                                smb_supported_versions_raw.rstrip(";").split(";")
+                                if smb_supported_versions_raw
+                                else []
+                            ),
+                        ),
+                    )
+                except Exception as error:
+                    logger.error(
+                        f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+
+
+class DeleteRetentionPolicy(BaseModel):
     enabled: bool
     days: int
 
 
-@dataclass
-class BlobProperties:
+class BlobProperties(BaseModel):
     id: str
     name: str
     type: str
-    default_service_version: str
     container_delete_retention_policy: DeleteRetentionPolicy
+    default_service_version: Optional[str] = None
+    versioning_enabled: Optional[bool] = None
 
 
-@dataclass
-class NetworkRuleSet:
+class NetworkRuleSet(BaseModel):
     bypass: str
     default_action: str
 
 
-@dataclass
-class PrivateEndpointConnection:
+class PrivateEndpointConnection(BaseModel):
     id: str
     name: str
     type: str
 
 
-@dataclass
-class Account:
+class SMBProtocolSettings(BaseModel):
+    channel_encryption: list[str]
+    supported_versions: list[str]
+
+
+class FileServiceProperties(BaseModel):
     id: str
     name: str
+    type: str
+    share_delete_retention_policy: DeleteRetentionPolicy
+    smb_protocol_settings: SMBProtocolSettings
+
+
+class Account(BaseModel):
+    id: str
+    name: str
+    location: str
     resouce_group_name: str
     enable_https_traffic_only: bool
-    infrastructure_encryption: bool
+    infrastructure_encryption: Optional[bool] = None
     allow_blob_public_access: bool
     network_rule_set: NetworkRuleSet
     encryption_type: str
     minimum_tls_version: str
-    private_endpoint_connections: List[PrivateEndpointConnection]
-    key_expiration_period_in_days: str
-    location: str
+    private_endpoint_connections: list[PrivateEndpointConnection]
+    key_expiration_period_in_days: Optional[int] = None
+    replication_settings: str = "Standard_LRS"
+    allow_cross_tenant_replication: bool = True
+    allow_shared_key_access: bool = True
     blob_properties: Optional[BlobProperties] = None
+    default_to_entra_authorization: bool = False
+    file_service_properties: Optional[FileServiceProperties] = None

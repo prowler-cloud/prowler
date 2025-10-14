@@ -1,45 +1,45 @@
 import React from "react";
 
 import {
-  ViaCredentialsForm,
-  ViaRoleForm,
+  AddViaCredentialsForm,
+  AddViaRoleForm,
 } from "@/components/providers/workflow/forms";
 import { SelectViaAWS } from "@/components/providers/workflow/forms/select-credentials-type/aws";
 import {
+  AddViaServiceAccountForm,
   SelectViaGCP,
-  ViaServiceAccountForm,
 } from "@/components/providers/workflow/forms/select-credentials-type/gcp";
+import { SelectViaGitHub } from "@/components/providers/workflow/forms/select-credentials-type/github";
+import { getProviderFormType } from "@/lib/provider-helpers";
 import { ProviderType } from "@/types/providers";
 
 interface Props {
-  searchParams: { type: ProviderType; id: string; via?: string };
+  searchParams: Promise<{ type: ProviderType; id: string; via?: string }>;
 }
 
-export default function AddCredentialsPage({ searchParams }: Props) {
-  return (
-    <>
-      {searchParams.type === "aws" && !searchParams.via && (
-        <SelectViaAWS initialVia={searchParams.via} />
-      )}
+export default async function AddCredentialsPage({ searchParams }: Props) {
+  const resolvedSearchParams = await searchParams;
+  const { type: providerType, via } = resolvedSearchParams;
+  const formType = getProviderFormType(providerType, via);
 
-      {searchParams.type === "gcp" && !searchParams.via && (
-        <SelectViaGCP initialVia={searchParams.via} />
-      )}
+  switch (formType) {
+    case "selector":
+      if (providerType === "aws") return <SelectViaAWS initialVia={via} />;
+      if (providerType === "gcp") return <SelectViaGCP initialVia={via} />;
+      if (providerType === "github")
+        return <SelectViaGitHub initialVia={via} />;
+      return null;
 
-      {((searchParams.type === "aws" && searchParams.via === "credentials") ||
-        (searchParams.type === "gcp" && searchParams.via === "credentials") ||
-        (searchParams.type !== "aws" && searchParams.type !== "gcp")) && (
-        <ViaCredentialsForm searchParams={searchParams} />
-      )}
+    case "credentials":
+      return <AddViaCredentialsForm searchParams={resolvedSearchParams} />;
 
-      {searchParams.type === "aws" && searchParams.via === "role" && (
-        <ViaRoleForm searchParams={searchParams} />
-      )}
+    case "role":
+      return <AddViaRoleForm searchParams={resolvedSearchParams} />;
 
-      {searchParams.type === "gcp" &&
-        searchParams.via === "service-account" && (
-          <ViaServiceAccountForm searchParams={searchParams} />
-        )}
-    </>
-  );
+    case "service-account":
+      return <AddViaServiceAccountForm searchParams={resolvedSearchParams} />;
+
+    default:
+      return null;
+  }
 }

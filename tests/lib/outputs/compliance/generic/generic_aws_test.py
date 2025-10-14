@@ -1,5 +1,6 @@
 from datetime import datetime
 from io import StringIO
+from unittest import mock
 
 from freezegun import freeze_time
 from mock import patch
@@ -21,6 +22,11 @@ class TestAWSGenericCompliance:
         output_data = output.data[0]
         assert isinstance(output_data, GenericComplianceModel)
         assert output_data.Provider == "aws"
+        assert output_data.Framework == "NIST-800-53-Revision-4"
+        assert (
+            output_data.Name
+            == "National Institute of Standards and Technology (NIST) 800-53 Revision 4"
+        )
         assert output_data.AccountId == AWS_ACCOUNT_NUMBER
         assert output_data.Region == AWS_REGION_EU_WEST_1
         assert output_data.Description == NIST_800_53_REVISION_4_AWS.Description
@@ -55,11 +61,13 @@ class TestAWSGenericCompliance:
         assert output_data.StatusExtended == ""
         assert output_data.ResourceId == ""
         assert output_data.ResourceName == ""
-        assert output_data.CheckId == "test-check-id"
+        assert output_data.CheckId == "service_test_check_id"
         assert output_data.Muted is False
         # Test manual check
         output_data_manual = output.data[1]
         assert output_data_manual.Provider == "aws"
+        assert output_data_manual.Framework == NIST_800_53_REVISION_4_AWS.Framework
+        assert output_data_manual.Name == NIST_800_53_REVISION_4_AWS.Name
         assert output_data_manual.AccountId == ""
         assert output_data_manual.Region == ""
         assert output_data_manual.Description == NIST_800_53_REVISION_4_AWS.Description
@@ -98,7 +106,11 @@ class TestAWSGenericCompliance:
         assert output_data_manual.CheckId == "manual"
         assert output_data_manual.Muted is False
 
-    @freeze_time(datetime.now())
+    @freeze_time("2025-01-01 00:00:00")
+    @mock.patch(
+        "prowler.lib.outputs.compliance.generic.generic.timestamp",
+        "2025-01-01 00:00:00",
+    )
     def test_batch_write_data_to_file(self):
         mock_file = StringIO()
         findings = [
@@ -112,5 +124,6 @@ class TestAWSGenericCompliance:
 
         mock_file.seek(0)
         content = mock_file.read()
-        expected_csv = f"PROVIDER;DESCRIPTION;ACCOUNTID;REGION;ASSESSMENTDATE;REQUIREMENTS_ID;REQUIREMENTS_DESCRIPTION;REQUIREMENTS_ATTRIBUTES_SECTION;REQUIREMENTS_ATTRIBUTES_SUBSECTION;REQUIREMENTS_ATTRIBUTES_SUBGROUP;REQUIREMENTS_ATTRIBUTES_SERVICE;REQUIREMENTS_ATTRIBUTES_TYPE;STATUS;STATUSEXTENDED;RESOURCEID;CHECKID;MUTED;RESOURCENAME\r\naws;NIST 800-53 is a regulatory standard that defines the minimum baseline of security controls for all U.S. federal information systems except those related to national security. The controls defined in this standard are customizable and address a diverse set of security and privacy requirements.;123456789012;eu-west-1;{datetime.now()};ac_2_4;Account Management;Access Control (AC);Account Management (AC-2);;aws;;PASS;;;test-check-id;False;\r\naws;NIST 800-53 is a regulatory standard that defines the minimum baseline of security controls for all U.S. federal information systems except those related to national security. The controls defined in this standard are customizable and address a diverse set of security and privacy requirements.;;;{datetime.now()};ac_2_5;Account Management;Access Control (AC);Account Management (AC-2);;aws;;MANUAL;Manual check;manual_check;manual;False;Manual check\r\n"
+        expected_csv = f"PROVIDER;DESCRIPTION;ACCOUNTID;REGION;ASSESSMENTDATE;REQUIREMENTS_ID;REQUIREMENTS_DESCRIPTION;REQUIREMENTS_ATTRIBUTES_SECTION;REQUIREMENTS_ATTRIBUTES_SUBSECTION;REQUIREMENTS_ATTRIBUTES_SUBGROUP;REQUIREMENTS_ATTRIBUTES_SERVICE;REQUIREMENTS_ATTRIBUTES_TYPE;STATUS;STATUSEXTENDED;RESOURCEID;CHECKID;MUTED;RESOURCENAME;FRAMEWORK;NAME\r\naws;NIST 800-53 is a regulatory standard that defines the minimum baseline of security controls for all U.S. federal information systems except those related to national security. The controls defined in this standard are customizable and address a diverse set of security and privacy requirements.;123456789012;eu-west-1;{datetime.now()};ac_2_4;Account Management;Access Control (AC);Account Management (AC-2);;aws;;PASS;;;service_test_check_id;False;;NIST-800-53-Revision-4;National Institute of Standards and Technology (NIST) 800-53 Revision 4\r\naws;NIST 800-53 is a regulatory standard that defines the minimum baseline of security controls for all U.S. federal information systems except those related to national security. The controls defined in this standard are customizable and address a diverse set of security and privacy requirements.;;;{datetime.now()};ac_2_5;Account Management;Access Control (AC);Account Management (AC-2);;aws;;MANUAL;Manual check;manual_check;manual;False;Manual check;NIST-800-53-Revision-4;National Institute of Standards and Technology (NIST) 800-53 Revision 4\r\n"
+
         assert content == expected_csv

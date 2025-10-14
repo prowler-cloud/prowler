@@ -1,5 +1,6 @@
 import "@/styles/globals.css";
 
+import { GoogleTagManager } from "@next/third-parties/google";
 import { Metadata, Viewport } from "next";
 import { redirect } from "next/navigation";
 
@@ -46,13 +47,16 @@ export default async function RootLayout({
       <body
         suppressHydrationWarning
         className={cn(
-          "min-h-screen bg-background font-sans antialiased",
+          "bg-background min-h-screen font-sans antialiased",
           fontSans.variable,
         )}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
           {children}
           <Toaster />
+          <GoogleTagManager
+            gtmId={process.env.NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID || ""}
+          />
         </Providers>
       </body>
     </html>

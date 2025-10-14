@@ -1,15 +1,10 @@
 "use client";
 
-import {
-  Button,
-  Checkbox,
-  CheckboxGroup,
-  Divider,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-  ScrollShadow,
-} from "@nextui-org/react";
+import { Button } from "@heroui/button";
+import { Checkbox, CheckboxGroup } from "@heroui/checkbox";
+import { Divider } from "@heroui/divider";
+import { Popover, PopoverContent, PopoverTrigger } from "@heroui/popover";
+import { ScrollShadow } from "@heroui/scroll-shadow";
 import { ChevronDown, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import React, {
@@ -20,9 +15,15 @@ import React, {
   useState,
 } from "react";
 
-import { CustomDropdownFilterProps } from "@/types";
-
-import { EntityInfoShort } from "../entities";
+import { ComplianceScanInfo } from "@/components/compliance/compliance-header/compliance-scan-info";
+import { EntityInfoShort } from "@/components/ui/entities";
+import { isConnectionStatus, isScanEntity } from "@/lib/helper-filters";
+import {
+  CustomDropdownFilterProps,
+  FilterEntity,
+  ProviderEntity,
+  ScanEntity,
+} from "@/types";
 
 export const CustomDropdownFilter = ({
   filter,
@@ -45,55 +46,73 @@ export const CustomDropdownFilter = ({
     return filterParam ? filterParam.split(",") : [];
   }, [searchParams, filter?.key]);
 
-  // Sync URL state with component state
-  useEffect(() => {
-    if (activeFilterValue.length > 0) {
-      const newSelection = new Set(activeFilterValue);
+  // Helper function to handle URL filter values sync
+  const syncWithActiveFilters = useCallback(() => {
+    const newSelection = new Set(activeFilterValue);
+    if (
+      newSelection.size === filterValues.length &&
+      filter?.showSelectAll !== false
+    ) {
+      newSelection.add("all");
+    }
+    setGroupSelected(newSelection);
+  }, [activeFilterValue, filterValues, filter?.showSelectAll]);
+
+  const resetComponentState = useCallback(() => {
+    setGroupSelected(new Set());
+    hasUserInteracted.current = false;
+  }, []);
+
+  const applyDefaultValues = useCallback(() => {
+    if (filter?.defaultToSelectAll && filterValues.length > 0) {
+      const newSelection = new Set(filterValues);
+      if (filter?.showSelectAll !== false) {
+        newSelection.add("all");
+      }
+      setGroupSelected(newSelection);
+    } else if (filter?.defaultValues && filter.defaultValues.length > 0) {
+      const validDefaultValues = filter.defaultValues.filter((value) =>
+        filterValues.includes(value),
+      );
+      const newSelection = new Set(validDefaultValues);
+
+      // Add "all" if all items are selected and showSelectAll is not false
       if (
-        newSelection.size === filterValues.length &&
+        validDefaultValues.length === filterValues.length &&
         filter?.showSelectAll !== false
       ) {
         newSelection.add("all");
       }
       setGroupSelected(newSelection);
-    } else if (!hasUserInteracted.current) {
-      // Handle default behavior when no URL params exist
-      // Only apply defaults if user hasn't interacted yet
-      // Only set visual state, don't trigger URL changes automatically
-      if (filter?.defaultToSelectAll && filterValues.length > 0) {
-        const newSelection = new Set(filterValues);
-        if (filter?.showSelectAll !== false) {
-          newSelection.add("all");
-        }
-        setGroupSelected(newSelection);
-        // DON'T notify parent automatically - wait for user interaction
-      } else if (filter?.defaultValues && filter.defaultValues.length > 0) {
-        // Handle specific default values
-        const validDefaultValues = filter.defaultValues.filter((value) =>
-          filterValues.includes(value),
-        );
-        const newSelection = new Set(validDefaultValues);
-
-        // Add "all" if all items are selected and showSelectAll is not false
-        if (
-          validDefaultValues.length === filterValues.length &&
-          filter?.showSelectAll !== false
-        ) {
-          newSelection.add("all");
-        }
-
-        setGroupSelected(newSelection);
-        // DON'T notify parent automatically - wait for user interaction
-      } else {
-        setGroupSelected(new Set());
-      }
+    } else {
+      setGroupSelected(new Set());
     }
   }, [
-    activeFilterValue,
     filterValues,
     filter?.defaultToSelectAll,
     filter?.defaultValues,
     filter?.showSelectAll,
+  ]);
+
+  useEffect(() => {
+    const hasActiveFilters = activeFilterValue.length > 0;
+    const userHasInteracted = hasUserInteracted.current;
+
+    if (hasActiveFilters) {
+      // URL has filter values - sync component state with URL
+      syncWithActiveFilters();
+    } else if (userHasInteracted) {
+      // URL has no filters but user had interacted - reset component state
+      resetComponentState();
+    } else {
+      // URL has no filters and user hasn't interacted - apply defaults
+      applyDefaultValues();
+    }
+  }, [
+    activeFilterValue,
+    syncWithActiveFilters,
+    resetComponentState,
+    applyDefaultValues,
   ]);
 
   const updateSelection = useCallback(
@@ -160,10 +179,29 @@ export const CustomDropdownFilter = ({
 
   const getDisplayLabel = useCallback(
     (value: string) => {
-      const entity = filter.valueLabelMapping?.find((entry) => entry[value])?.[
-        value
-      ];
-      return entity?.alias || entity?.uid || value;
+      const entity: FilterEntity | undefined = filter.valueLabelMapping?.find(
+        (entry) => entry[value],
+      )?.[value];
+      if (!entity) return value;
+
+      if (isConnectionStatus(entity)) {
+        return entity.label;
+      }
+
+      if (isScanEntity(entity as ScanEntity)) {
+        return (
+          (entity as ScanEntity).attributes?.name ||
+          (entity as ScanEntity).providerInfo?.alias ||
+          (entity as ScanEntity).providerInfo?.uid ||
+          value
+        );
+      } else {
+        return (
+          (entity as ProviderEntity).alias ||
+          (entity as ProviderEntity).uid ||
+          value
+        );
+      }
     },
     [filter.valueLabelMapping],
   );
@@ -178,7 +216,7 @@ export const CustomDropdownFilter = ({
       >
         <PopoverTrigger>
           <Button
-            className="border-input hover:bg-accent hover:text-accent-foreground inline-flex h-auto min-h-10 items-center justify-between whitespace-nowrap rounded-md border border-dashed bg-background px-3 py-2 text-xs font-medium shadow-sm transition-colors focus-visible:outline-none disabled:opacity-50 dark:bg-prowler-blue-800"
+            className="border-input hover:bg-accent hover:text-accent-foreground bg-background dark:bg-prowler-blue-800 inline-flex h-auto min-h-10 items-center justify-between rounded-md border px-3 py-2 text-xs font-medium whitespace-nowrap shadow-sm transition-colors focus-visible:outline-none disabled:opacity-50"
             endContent={
               <ChevronDown
                 className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
@@ -188,26 +226,23 @@ export const CustomDropdownFilter = ({
             variant="flat"
           >
             <div className="flex min-w-0 flex-1 items-center gap-2">
-              <span className="flex-shrink-0 text-small">
+              <span className="text-small shrink-0">
                 {filter?.labelCheckboxGroup}
               </span>
 
               {selectedValues.length > 0 && (
                 <>
-                  <Divider
-                    orientation="vertical"
-                    className="h-4 flex-shrink-0"
-                  />
-                  <div className="flex min-w-0 flex-shrink items-center">
+                  <Divider orientation="vertical" className="h-4 shrink-0" />
+                  <div className="flex min-w-0 shrink items-center">
                     {selectedValues.length <= 2 ? (
                       <span
-                        className="max-w-32 truncate text-xs text-default-500"
+                        className="text-default-500 max-w-32 truncate text-xs"
                         title={selectedValues.map(getDisplayLabel).join(", ")}
                       >
                         {selectedValues.map(getDisplayLabel).join(", ")}
                       </span>
                     ) : (
-                      <span className="truncate text-xs text-default-500">
+                      <span className="text-default-500 truncate text-xs">
                         {isAllSelected
                           ? "All selected"
                           : `${selectedValues.length} selected`}
@@ -215,18 +250,18 @@ export const CustomDropdownFilter = ({
                     )}
                     <div
                       onClick={handleClearAll}
-                      className="ml-1 flex h-4 w-4 flex-shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-default-200"
+                      className="hover:bg-default-200 ml-1 flex h-4 w-4 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors"
                       aria-label="Clear selection"
                       role="button"
                       tabIndex={0}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" || e.key === " ") {
                           e.preventDefault();
-                          handleClearAll(e as any);
+                          handleClearAll(e as unknown as React.MouseEvent);
                         }
                       }}
                     >
-                      <X className="h-3 w-3 text-default-400 hover:text-default-600" />
+                      <X className="text-default-400 hover:text-default-600 h-3 w-3" />
                     </div>
                   </div>
                 </>
@@ -234,7 +269,7 @@ export const CustomDropdownFilter = ({
             </div>
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-80 dark:bg-prowler-blue-800">
+        <PopoverContent className="dark:bg-prowler-blue-800 w-auto min-w-80">
           <div className="flex w-full flex-col gap-4 p-2">
             <CheckboxGroup
               color="default"
@@ -243,7 +278,10 @@ export const CustomDropdownFilter = ({
               onValueChange={onSelectionChange}
               className="font-bold"
             >
-              {filter?.showSelectAll !== false && (
+              {filterValues.length === 0 && (
+                <span className="text-small font-normal">No results found</span>
+              )}
+              {filter?.showSelectAll !== false && filterValues.length > 0 && (
                 <>
                   <Checkbox
                     classNames={{
@@ -257,38 +295,51 @@ export const CustomDropdownFilter = ({
                   <Divider orientation="horizontal" className="mt-2" />
                 </>
               )}
-              <ScrollShadow
-                hideScrollBar
-                className="flex max-h-96 max-w-full flex-col gap-y-2 py-2"
-              >
-                {filterValues.map((value) => {
-                  const entity = filter.valueLabelMapping?.find(
-                    (entry) => entry[value],
-                  )?.[value];
-
-                  return (
-                    <Checkbox
-                      classNames={{
-                        label: "text-small font-normal",
-                        wrapper: "checkbox-update",
-                      }}
-                      key={value}
-                      value={value}
-                    >
-                      {entity ? (
-                        <EntityInfoShort
-                          cloudProvider={entity.provider}
-                          entityAlias={entity.alias ?? undefined}
-                          entityId={entity.uid}
-                          hideCopyButton
-                        />
-                      ) : (
+              {filterValues.length > 0 && (
+                <ScrollShadow
+                  hideScrollBar
+                  className="flex max-h-96 max-w-full flex-col gap-y-2 py-2"
+                >
+                  {filterValues.map((value) => {
+                    const entity: FilterEntity | undefined =
+                      filter.valueLabelMapping?.find((entry) => entry[value])?.[
                         value
-                      )}
-                    </Checkbox>
-                  );
-                })}
-              </ScrollShadow>
+                      ];
+
+                    return (
+                      <Checkbox
+                        classNames={{
+                          label: "text-small font-normal",
+                          wrapper: "checkbox-update",
+                        }}
+                        key={value}
+                        value={value}
+                      >
+                        {entity ? (
+                          isConnectionStatus(entity) ? (
+                            getDisplayLabel(value)
+                          ) : isScanEntity(entity as ScanEntity) ? (
+                            <ComplianceScanInfo scan={entity as ScanEntity} />
+                          ) : (
+                            <EntityInfoShort
+                              cloudProvider={
+                                (entity as ProviderEntity).provider
+                              }
+                              entityAlias={
+                                (entity as ProviderEntity).alias ?? undefined
+                              }
+                              entityId={(entity as ProviderEntity).uid}
+                              hideCopyButton
+                            />
+                          )
+                        ) : (
+                          getDisplayLabel(value)
+                        )}
+                      </Checkbox>
+                    );
+                  })}
+                </ScrollShadow>
+              )}
             </CheckboxGroup>
           </div>
         </PopoverContent>

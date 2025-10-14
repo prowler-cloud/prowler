@@ -70,6 +70,14 @@ class KeyVault(AzureService):
                                     "enable_purge_protection",
                                     False,
                                 ),
+                                public_network_access_disabled=(
+                                    getattr(
+                                        keyvault_properties,
+                                        "public_network_access",
+                                        "Enabled",
+                                    )
+                                    == "Disabled"
+                                ),
                             ),
                             keys=keys,
                             secrets=secrets,
@@ -247,6 +255,7 @@ class VaultProperties:
     private_endpoint_connections: List[PrivateEndpointConnection]
     enable_soft_delete: bool
     enable_purge_protection: bool
+    public_network_access_disabled: bool = False
 
 
 @dataclass

@@ -1,7 +1,10 @@
 from unittest import mock
 from uuid import uuid4
 
-from prowler.providers.azure.services.storage.storage_service import Account
+from prowler.providers.azure.services.storage.storage_service import (
+    Account,
+    NetworkRuleSet,
+)
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
     set_mocked_azure_provider,
@@ -41,16 +44,18 @@ class Test_storage_key_rotation_90_dayss:
                 Account(
                     id=storage_account_id,
                     name=storage_account_name,
-                    resouce_group_name=None,
+                    resouce_group_name="rg",
                     enable_https_traffic_only=False,
                     infrastructure_encryption=False,
-                    allow_blob_public_access=None,
-                    network_rule_set=None,
+                    allow_blob_public_access=False,
+                    network_rule_set=NetworkRuleSet(
+                        bypass="AzureServices", default_action="Allow"
+                    ),
+                    key_expiration_period_in_days="91",
                     encryption_type="None",
-                    minimum_tls_version="TLS1_1",
-                    key_expiration_period_in_days=expiration_days,
+                    minimum_tls_version="TLS1_2",
+                    private_endpoint_connections=[],
                     location="westeurope",
-                    private_endpoint_connections=None,
                 )
             ]
         }
@@ -92,16 +97,18 @@ class Test_storage_key_rotation_90_dayss:
                 Account(
                     id=storage_account_id,
                     name=storage_account_name,
-                    resouce_group_name=None,
+                    resouce_group_name="rg",
                     enable_https_traffic_only=False,
                     infrastructure_encryption=False,
-                    allow_blob_public_access=None,
-                    network_rule_set=None,
+                    allow_blob_public_access=False,
+                    network_rule_set=NetworkRuleSet(
+                        bypass="AzureServices", default_action="Allow"
+                    ),
+                    key_expiration_period_in_days=90,
                     encryption_type="None",
                     minimum_tls_version="TLS1_2",
-                    key_expiration_period_in_days=expiration_days,
+                    private_endpoint_connections=[],
                     location="westeurope",
-                    private_endpoint_connections=None,
                 )
             ]
         }
@@ -142,16 +149,18 @@ class Test_storage_key_rotation_90_dayss:
                 Account(
                     id=storage_account_id,
                     name=storage_account_name,
-                    resouce_group_name=None,
+                    resouce_group_name="rg",
                     enable_https_traffic_only=False,
                     infrastructure_encryption=False,
-                    allow_blob_public_access=None,
-                    network_rule_set=None,
+                    allow_blob_public_access=False,
+                    network_rule_set=NetworkRuleSet(
+                        bypass="AzureServices", default_action="Allow"
+                    ),
+                    key_expiration_period_in_days=None,
                     encryption_type="None",
                     minimum_tls_version="TLS1_2",
-                    key_expiration_period_in_days=None,
+                    private_endpoint_connections=[],
                     location="westeurope",
-                    private_endpoint_connections=None,
                 )
             ]
         }

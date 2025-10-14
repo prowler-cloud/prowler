@@ -75,6 +75,9 @@ class Test_iam_assignment_priviledge_access_vm_has_mfa:
                 iam_client.role_assignments = {
                     AZURE_SUBSCRIPTION_ID: {
                         role_assigment_id: RoleAssignment(
+                            id=role_assigment_id,
+                            name="test",
+                            scope=AZURE_SUBSCRIPTION_ID,
                             role_id=VIRTUAL_MACHINE_ADMINISTRATOR_LOGIN_ROLE_ID,
                             agent_type="User",
                             agent_id=user_id,
@@ -149,6 +152,9 @@ class Test_iam_assignment_priviledge_access_vm_has_mfa:
                 iam_client.role_assignments = {
                     AZURE_SUBSCRIPTION_ID: {
                         role_assigment_id: RoleAssignment(
+                            id=role_assigment_id,
+                            name="test",
+                            scope=AZURE_SUBSCRIPTION_ID,
                             role_id=VIRTUAL_MACHINE_ADMINISTRATOR_LOGIN_ROLE_ID,
                             agent_type="User",
                             agent_id=user_id,
@@ -216,6 +222,9 @@ class Test_iam_assignment_priviledge_access_vm_has_mfa:
                 iam_client.role_assignments = {
                     AZURE_SUBSCRIPTION_ID: {
                         role_assigment_id: RoleAssignment(
+                            id=role_assigment_id,
+                            name="test",
+                            scope=AZURE_SUBSCRIPTION_ID,
                             role_id=VIRTUAL_MACHINE_ADMINISTRATOR_LOGIN_ROLE_ID,
                             agent_type="User",
                             agent_id=user_id,
@@ -269,6 +278,9 @@ class Test_iam_assignment_priviledge_access_vm_has_mfa:
                 iam_client.role_assignments = {
                     AZURE_SUBSCRIPTION_ID: {
                         role_assigment_id: RoleAssignment(
+                            id=role_assigment_id,
+                            name="test",
+                            scope=AZURE_SUBSCRIPTION_ID,
                             role_id=str(uuid4()),
                             agent_type="User",
                             agent_id=user_id,

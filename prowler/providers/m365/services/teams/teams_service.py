@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.m365.lib.service.service import M365Service
@@ -14,11 +14,11 @@ class Teams(M365Service):
         self.user_settings = None
 
         if self.powershell:
-            self.powershell.connect_microsoft_teams()
-            self.teams_settings = self._get_teams_client_configuration()
-            self.global_meeting_policy = self._get_global_meeting_policy()
-            self.global_messaging_policy = self._get_global_messaging_policy()
-            self.user_settings = self._get_user_settings()
+            if self.powershell.connect_microsoft_teams():
+                self.teams_settings = self._get_teams_client_configuration()
+                self.global_meeting_policy = self._get_global_meeting_policy()
+                self.global_messaging_policy = self._get_global_messaging_policy()
+                self.user_settings = self._get_user_settings()
             self.powershell.close()
 
     def _get_teams_client_configuration(self):

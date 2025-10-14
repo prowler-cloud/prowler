@@ -1,7 +1,8 @@
 "use client";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "framer-motion";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
 
 import { scanOnDemand } from "@/actions/scans";
@@ -29,9 +30,13 @@ export const LaunchScanWorkflow = ({
   const formSchema = z.object({
     ...onDemandScanFormSchema().shape,
     scanName: z
-      .string()
-      .min(3, "Must have at least 3 characters")
-      .or(z.literal(""))
+      .union([
+        z
+          .string()
+          .min(3, "Must be at least 3 characters")
+          .max(32, "Must not exceed 32 characters"),
+        z.literal(""),
+      ])
       .optional(),
   });
 
@@ -43,6 +48,9 @@ export const LaunchScanWorkflow = ({
       scannerArgs: undefined,
     },
   });
+
+  const providerId = useWatch({ control: form.control, name: "providerId" });
+  const hasProviderSelected = Boolean(providerId);
 
   const isLoading = form.formState.isSubmitting;
 
@@ -63,13 +71,11 @@ export const LaunchScanWorkflow = ({
 
     const data = await scanOnDemand(formData);
 
-    if (data?.errors && data.errors.length > 0) {
-      const error = data.errors[0];
-      const errorMessage = `${error.detail}`;
+    if (data?.error) {
       toast({
         variant: "destructive",
         title: "Oops! Something went wrong",
-        description: errorMessage,
+        description: data.error,
       });
     } else {
       toast({
@@ -95,7 +101,7 @@ export const LaunchScanWorkflow = ({
           />
         </div>
         <AnimatePresence>
-          {form.watch("providerId") && (
+          {hasProviderSelected && (
             <>
               <div className="flex flex-wrap gap-6 md:gap-4">
                 <motion.div
@@ -103,7 +109,7 @@ export const LaunchScanWorkflow = ({
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -50 }}
                   transition={{ duration: 0.3 }}
-                  className="min-w-48 self-end"
+                  className="h-[3.4rem] min-w-[15.2rem] self-end"
                 >
                   <CustomInput
                     control={form.control}

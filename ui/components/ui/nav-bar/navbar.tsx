@@ -1,8 +1,9 @@
-import { Icon } from "@iconify/react";
+"use client";
+
 import { ReactNode } from "react";
 
 import { ThemeSwitch } from "@/components/ThemeSwitch";
-import { UserProfileProps } from "@/types";
+import { BreadcrumbNavigation } from "@/components/ui";
 
 import { SheetMenu } from "../sidebar/sheet-menu";
 import { UserNav } from "../user-nav/user-nav";
@@ -10,32 +11,26 @@ import { UserNav } from "../user-nav/user-nav";
 interface NavbarProps {
   title: string;
   icon: string | ReactNode;
-  user: UserProfileProps;
 }
 
-export function Navbar({ title, icon, user }: NavbarProps) {
+export function Navbar({ title, icon }: NavbarProps) {
   return (
-    <header className="sticky top-0 z-10 w-full bg-background/95 shadow backdrop-blur supports-[backdrop-filter]:bg-background/60 dark:shadow-primary">
+    <header className="bg-background/95 supports-[backdrop-filter]:bg-background/60 dark:shadow-primary sticky top-0 z-10 w-full shadow backdrop-blur">
       <div className="mx-4 flex h-14 items-center sm:mx-8">
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-2">
           <SheetMenu />
-          {typeof icon === "string" ? (
-            <Icon
-              className="text-default-500"
-              height={24}
-              icon={icon}
-              width={24}
-            />
-          ) : (
-            <div className="flex h-10 w-10 items-center justify-center [&>*]:h-full [&>*]:w-full">
-              {icon}
-            </div>
-          )}
-          <h1 className="text-sm font-bold text-default-700">{title}</h1>
+          <BreadcrumbNavigation
+            mode="auto"
+            title={title}
+            icon={icon}
+            paramToPreserve="scanId"
+          />
         </div>
         <div className="flex flex-1 items-center justify-end gap-3">
+          {/* TODO: Uncomment when this feature is enabled and ready for release */}
+          {/* {process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true" && <FeedsDetail />} */}
           <ThemeSwitch />
-          <UserNav user={user} />
+          <UserNav />
         </div>
       </div>
     </header>

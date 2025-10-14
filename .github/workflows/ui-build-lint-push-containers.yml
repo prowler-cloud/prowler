@@ -30,6 +30,7 @@ env:
   # Container Registries
   PROWLERCLOUD_DOCKERHUB_REPOSITORY: prowlercloud
   PROWLERCLOUD_DOCKERHUB_IMAGE: prowler-ui
+  NEXT_PUBLIC_API_BASE_URL: http://prowler-api:8080/api/v1
 
 jobs:
   repository-check:
@@ -61,7 +62,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Set short git commit SHA
         id: vars
@@ -70,22 +71,23 @@ jobs:
           echo "SHORT_SHA=${shortSha}" >> $GITHUB_ENV
 
       - name: Login to DockerHub
-        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
 
       - name: Build and push container image (latest)
         # Comment the following line for testing
         if: github.event_name == 'push'
-        uses: docker/build-push-action@14487ce63c7a62a4a324b0bfb37086795e31c6c1 # v6.16.0
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: ${{ env.WORKING_DIRECTORY }}
           build-args: |
             NEXT_PUBLIC_PROWLER_RELEASE_VERSION=${{ env.SHORT_SHA }}
+            NEXT_PUBLIC_API_BASE_URL=${{ env.NEXT_PUBLIC_API_BASE_URL }}
           # Set push: false for testing
           push: true
           tags: |
@@ -96,11 +98,12 @@ jobs:
 
       - name: Build and push container image (release)
         if: github.event_name == 'release'
-        uses: docker/build-push-action@14487ce63c7a62a4a324b0bfb37086795e31c6c1 # v6.16.0
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: ${{ env.WORKING_DIRECTORY }}
           build-args: |
             NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${{ env.RELEASE_TAG }}
+            NEXT_PUBLIC_API_BASE_URL=${{ env.NEXT_PUBLIC_API_BASE_URL }}
           push: true
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.RELEASE_TAG }}
@@ -110,7 +113,7 @@ jobs:
 
       - name: Trigger deployment
         if: github.event_name == 'push'
-        uses: peter-evans/repository-dispatch@ff45666b9427631e3450c54a1bcbee4d9ff4d7c0 # v3.0.0
+        uses: peter-evans/repository-dispatch@5fc4efd1a4797ddb68ffd0714a238564e4cc0e6f # v4.0.0
         with:
           token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
           repository: ${{ secrets.CLOUD_DISPATCH }}

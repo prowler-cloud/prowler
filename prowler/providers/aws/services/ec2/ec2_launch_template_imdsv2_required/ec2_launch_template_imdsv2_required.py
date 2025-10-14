@@ -18,7 +18,10 @@ class ec2_launch_template_imdsv2_required(Check):
                     and version.template_data.http_tokens == "required"
                 ):
                     versions_with_imdsv2_required.append(str(version.version_number))
-                elif version.template_data.http_endpoint == "disabled":
+                elif (
+                    version.template_data.http_endpoint == "disabled"
+                    or not version.template_data.http_endpoint
+                ):
                     versions_with_metadata_disabled.append(str(version.version_number))
                 else:
                     versions_with_no_imdsv2.append(str(version.version_number))

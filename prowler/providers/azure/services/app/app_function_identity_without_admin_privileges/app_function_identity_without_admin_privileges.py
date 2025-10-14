@@ -41,9 +41,15 @@ class app_function_identity_without_admin_privileges(Check):
                                 USER_ACCESS_ADMINISTRATOR_ROLE_ID,
                             ]
                         ):
-                            for role in iam_client.roles[subscription_name]:
-                                if role.id.split("/")[-1] == role_assignment.role_id:
-                                    admin_roles_assigned.append(role.name)
+                            admin_roles_assigned.append(
+                                getattr(
+                                    iam_client.roles[subscription_name].get(
+                                        f"/subscriptions/{iam_client.subscriptions[subscription_name]}/providers/Microsoft.Authorization/roleDefinitions/{role_assignment.role_id}"
+                                    ),
+                                    "name",
+                                    "",
+                                )
+                            )
 
                     if admin_roles_assigned:
                         report.status = "FAIL"

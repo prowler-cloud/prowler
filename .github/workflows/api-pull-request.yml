@@ -13,6 +13,7 @@ on:
       - "master"
       - "v5.*"
     paths:
+      - ".github/workflows/api-pull-request.yml"
       - "api/**"
 
 env:
@@ -28,6 +29,10 @@ env:
   VALKEY_DB: 0
   API_WORKING_DIR: ./api
   IMAGE_NAME: prowler-api
+  IGNORE_FILES: |
+    api/docs/**
+    api/README.md
+    api/CHANGELOG.md
 
 jobs:
   test:
@@ -71,23 +76,20 @@ jobs:
           --health-retries 5
 
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Test if changes are in not ignored paths
         id: are-non-ignored-files-changed
-        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
         with:
-          files: api/**
-          files_ignore: |
-            api/.github/**
-            api/docs/**
-            api/permissions/**
-            api/README.md
-            api/mkdocs.yml
+          files: |
+            api/**
+            .github/workflows/api-pull-request.yml
+          files_ignore: ${{ env.IGNORE_FILES }}
 
-      - name: Replace @master with current branch in pyproject.toml
+      - name: Replace @master with current branch in pyproject.toml - Only for pull requests to `master`
         working-directory: ./api
-        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true' && github.event_name == 'pull_request' && github.base_ref == 'master'
         run: |
           BRANCH_NAME="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
           echo "Using branch: $BRANCH_NAME"
@@ -100,7 +102,24 @@ jobs:
           python -m pip install --upgrade pip
           pipx install poetry==2.1.1
 
-      - name: Update poetry.lock after the branch name change
+      - name: Update SDK's poetry.lock resolved_reference to latest commit - Only for push events to `master`
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/master'
+        run: |
+          # Get the latest commit hash from the prowler-cloud/prowler repository
+          LATEST_COMMIT=$(curl -s "https://api.github.com/repos/prowler-cloud/prowler/commits/master" | jq -r '.sha')
+          echo "Latest commit hash: $LATEST_COMMIT"
+
+          # Update the resolved_reference specifically for prowler-cloud/prowler repository
+          sed -i '/url = "https:\/\/github\.com\/prowler-cloud\/prowler\.git"/,/resolved_reference = / {
+            s/resolved_reference = "[a-f0-9]\{40\}"/resolved_reference = "'"$LATEST_COMMIT"'"/
+          }' poetry.lock
+
+          # Verify the change was made
+          echo "Updated resolved_reference:"
+          grep -A2 -B2 "resolved_reference" poetry.lock
+
+      - name: Update poetry.lock
         working-directory: ./api
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
@@ -108,7 +127,7 @@ jobs:
 
       - name: Set up Python ${{ matrix.python-version }}
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
         with:
           python-version: ${{ matrix.python-version }}
           cache: "poetry"
@@ -158,8 +177,10 @@ jobs:
       - name: Safety
         working-directory: ./api
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        # 76352, 76353, 77323 come from SDK, but they cannot upgrade it yet. It does not affect API
+        # TODO: Botocore needs urllib3 1.X so we need to ignore these vulnerabilities 77744,77745. Remove this once we upgrade to urllib3 2.X
         run: |
-          poetry run safety check --ignore 70612,66963,74429
+          poetry run safety check --ignore 70612,66963,74429,76352,76353,77323,77744,77745
 
       - name: Vulture
         working-directory: ./api
@@ -181,7 +202,7 @@ jobs:
 
       - name: Upload coverage reports to Codecov
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@ad3126e916f78f00edff4ed0317cf185271ccc2d # v5.4.2
+        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -189,11 +210,20 @@ jobs:
   test-container-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Test if changes are in not ignored paths
+        id: are-non-ignored-files-changed
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        with:
+          files: api/**
+          files_ignore: ${{ env.IGNORE_FILES }}
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
       - name: Build Container
-        uses: docker/build-push-action@14487ce63c7a62a4a324b0bfb37086795e31c6c1 # v6.16.0
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: ${{ env.API_WORKING_DIR }}
           push: false

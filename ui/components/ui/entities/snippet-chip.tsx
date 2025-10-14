@@ -1,4 +1,6 @@
-import { cn, Snippet, Tooltip } from "@nextui-org/react";
+import { Snippet } from "@heroui/snippet";
+import { cn } from "@heroui/theme";
+import { Tooltip } from "@heroui/tooltip";
 import React from "react";
 
 import { CopyIcon, DoneIcon } from "@/components/icons";
@@ -23,6 +25,10 @@ export const SnippetChip = ({
   return (
     <Snippet
       className={cn("h-6", className)}
+      classNames={{
+        content: "min-w-0 overflow-hidden",
+        pre: "min-w-0 overflow-hidden text-ellipsis whitespace-nowrap",
+      }}
       color="default"
       size="sm"
       variant="flat"
@@ -34,10 +40,10 @@ export const SnippetChip = ({
       codeString={value}
       {...props}
     >
-      <div className="flex items-center space-x-2" aria-label={ariaLabel}>
+      <div className="flex min-w-0 items-center gap-2" aria-label={ariaLabel}>
         {icon}
         <Tooltip content={value} placement="top" size="sm">
-          <span className="no-scrollbar max-w-24 overflow-hidden overflow-x-scroll text-ellipsis whitespace-nowrap text-xs">
+          <span className="min-w-0 flex-1 truncate text-xs">
             {formatter ? formatter(value) : value}
           </span>
         </Tooltip>

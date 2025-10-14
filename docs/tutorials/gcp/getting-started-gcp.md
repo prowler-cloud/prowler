@@ -1,107 +1,121 @@
-# Getting Started with GCP on Prowler Cloud/App
+# Getting Started With GCP on Prowler
 
-<iframe width="560" height="380" src="https://www.youtube-nocookie.com/embed/v1as8vTFlMg" title="Prowler Cloud Onboarding GCP" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
+## Prowler App
 
-Set up your GCP project to enable security scanning using Prowler Cloud/App.
-
-## Requirements
-
-To configure your GCP project, you’ll need:
-
-1. Get the `Project ID`
-2. Access to Prowler Cloud/App
-3. Configure authentication in GCP:
-
-    3.1 Retrieve credentials from Google Cloud
-
-4. Add the credentials to Prowler Cloud/App
-
----
-
-## Step 1: Get the Project ID
+### Step 1: Get the GCP Project ID
 
 1. Go to the [GCP Console](https://console.cloud.google.com/)
-2. Locate your Project ID on the welcome screen
+2. Locate the Project ID on the welcome screen
 
 ![Get the Project ID](./img/project-id-console.png)
 
----
+### Step 2: Access Prowler Cloud or Prowler App
 
-## Step 2: Access Prowler Cloud/App
-
-1. Go to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](../prowler-app.md)
-2. Navigate to `Configuration` > `Cloud Providers`
+1. Navigate to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](../prowler-app.md)
+2. Go to "Configuration" > "Cloud Providers"
 
     ![Cloud Providers Page](../img/cloud-providers-page.png)
 
-3. Click `Add Cloud Provider`
+3. Click "Add Cloud Provider"
 
     ![Add a Cloud Provider](../img/add-cloud-provider.png)
 
-4. Select `Google Cloud Platform`
+4. Select "Google Cloud Platform"
 
     ![Select GCP](./img/select-gcp.png)
 
-5. Add the Project ID and optionally provide a provider alias, then click `Next`
+5. Add the Project ID and optionally provide a provider alias, then click "Next"
 
     ![Add Project ID](./img/add-project-id.png)
 
----
+### Step 3: Set Up GCP Authentication
 
-## Step 3: Configure Authentication in GCP
+Choose the preferred authentication mode before proceeding:
 
-### Retrieve Credentials from Google Cloud
+**User Credentials (Application Default Credentials)**
 
-1. In the [GCP Console](https://console.cloud.google.com/), click on `Activate Cloud Shell`
+* Quick scan as current user
+* Uses Google Cloud CLI authentication
+* Credentials may time out
 
-    ![Activate Cloud Shell](./img/access-console.png)
+**Service Account Key File**
 
-2. Click `Authorize Cloud Shell`
+* Authenticates as a service identity
+* Stable and auditable
+* Recommended for production
 
-    ![Authorize Cloud Shell](./img/authorize-cloud-shell.png)
+For detailed instructions on how to set up authentication, see [Authentication](./authentication.md).
 
-3. Run the following command:
+6. Once credentials are configured, return to Prowler App and enter the required values:
 
-    ```bash
-    gcloud auth application-default login
-    ```
+    For "Service Account Key":
 
-    - Type `Y` when prompted
+    - `Service Account Key JSON`
 
-    ![Run Gcloud Auth](./img/run-gcloud-auth.png)
-
-4. Open the authentication URL provided in a browser and select your Google account
-
-    ![Choose the account](./img/take-account-email.png)
-
-5. Follow the steps to obtain the authentication code
-
-    ![Copy auth code](./img/copy-auth-code.png)
-
-6. Paste the authentication code back in Cloud Shell
-
-    ![Enter Auth Code](./img/enter-auth-code.png)
-
-7. Use `cat <file_name>` to view the temporary credentials file
-
-    ![Get the FileName](./img/get-temp-file-credentials.png)
-
-8. Extract the following values for Prowler Cloud/App:
+    For "Application Default Credentials":
 
     - `client_id`
     - `client_secret`
     - `refresh_token`
 
-    ![Get the values](./img/get-needed-values-auth.png)
+    ![Enter the Credentials](./img/enter-credentials-prowler-cloud.png)
+
+7. Click "Next", then "Launch Scan"
+
+    ![Launch Scan GCP](./img/launch-scan.png)
 
 ---
 
-## Step 4: Add Credentials to Prowler Cloud/App
+## Prowler CLI
 
-1. Go back to Prowler Cloud/App and enter the required credentials, then click `Next`
+### Credentials Lookup Order
 
-    ![Enter the Credentials](./img/enter-credentials-prowler-cloud.png)
+Prowler follows the same credential search process as [Google authentication libraries](https://cloud.google.com/docs/authentication/application-default-credentials#search_order), checking credentials in this order:
 
-2. Click `Launch Scan` to begin scanning your GCP environment
+1. [`GOOGLE_APPLICATION_CREDENTIALS` environment variable](https://cloud.google.com/docs/authentication/application-default-credentials#GAC)
+2. [`CLOUDSDK_AUTH_ACCESS_TOKEN` + optional `GOOGLE_CLOUD_PROJECT`](https://cloud.google.com/sdk/gcloud/reference/auth/print-access-token)
+3. [User credentials set up by using the Google Cloud CLI](https://cloud.google.com/docs/authentication/application-default-credentials#personal)
+4. [Attached service account (e.g., Cloud Run, GCE, Cloud Functions)](https://cloud.google.com/docs/authentication/application-default-credentials#attached-sa)
 
-    ![Launch Scan GCP](./img/launch-scan.png)
+???+ note
+    The credentials must belong to a user or service account with the necessary permissions.
+    For detailed instructions on how to set the permissions, see [Authentication > Required Permissions](./authentication.md#required-permissions).
+
+???+ note
+    Prowler will use the enabled Google Cloud APIs to get the information needed to perform the checks.
+
+### Configure GCP Credentials
+
+To authenticate with GCP, use one of the following methods:
+
+```console
+gcloud auth application-default login
+```
+
+or set the credentials file path:
+
+```console
+export GOOGLE_APPLICATION_CREDENTIALS="/path/to/credentials.json"
+```
+
+These credentials must belong to a user or service account with the necessary permissions to perform security checks.
+
+For more authentication details, see the [Authentication](./authentication.md) page.
+
+### Project Specification
+
+To scan specific projects, specify them with the following command:
+
+```console
+prowler gcp --project-ids <project-id-1> <project-id-2>
+```
+
+### Service Account Impersonation
+
+For service account impersonation, use the `--impersonate-service-account` flag:
+
+```console
+prowler gcp --impersonate-service-account <service-account-email>
+```
+
+More details on authentication methods in the [Authentication](./authentication.md) page.

@@ -1,5 +1,6 @@
 from datetime import datetime
 from io import StringIO
+from unittest import mock
 
 from freezegun import freeze_time
 from mock import patch
@@ -19,6 +20,8 @@ class TestAWSKISAISMSP:
         output_data = output.data[0]
         assert isinstance(output_data, AWSKISAISMSPModel)
         assert output_data.Provider == "aws"
+        assert output_data.Framework == KISA_ISMSP_AWS.Framework
+        assert output_data.Name == KISA_ISMSP_AWS.Name
         assert output_data.AccountId == AWS_ACCOUNT_NUMBER
         assert output_data.Region == AWS_REGION_EU_WEST_1
         assert output_data.Description == KISA_ISMSP_AWS.Description
@@ -59,11 +62,13 @@ class TestAWSKISAISMSP:
         assert output_data.StatusExtended == ""
         assert output_data.ResourceId == ""
         assert output_data.ResourceName == ""
-        assert output_data.CheckId == "test-check-id"
+        assert output_data.CheckId == "service_test_check_id"
         assert output_data.Muted is False
         # Test manual check
         output_data_manual = output.data[1]
         assert output_data_manual.Provider == "aws"
+        assert output_data_manual.Framework == KISA_ISMSP_AWS.Framework
+        assert output_data_manual.Name == KISA_ISMSP_AWS.Name
         assert output_data_manual.AccountId == ""
         assert output_data_manual.Region == ""
         assert output_data_manual.Requirements_Id == KISA_ISMSP_AWS.Requirements[1].Id
@@ -106,7 +111,11 @@ class TestAWSKISAISMSP:
         assert output_data_manual.CheckId == "manual"
         assert output_data_manual.Muted is False
 
-    @freeze_time(datetime.now())
+    @freeze_time("2025-01-01 00:00:00")
+    @mock.patch(
+        "prowler.lib.outputs.compliance.kisa_ismsp.kisa_ismsp_aws.timestamp",
+        "2025-01-01 00:00:00",
+    )
     def test_batch_write_data_to_file(self):
         mock_file = StringIO()
         findings = [generate_finding_output(compliance={"KISA-ISMS-P-2023": ["2.5.3"]})]
@@ -118,5 +127,6 @@ class TestAWSKISAISMSP:
 
         mock_file.seek(0)
         content = mock_file.read()
-        expected_csv = f"PROVIDER;DESCRIPTION;ACCOUNTID;REGION;ASSESSMENTDATE;REQUIREMENTS_ID;REQUIREMENTS_NAME;REQUIREMENTS_DESCRIPTION;REQUIREMENTS_ATTRIBUTES_DOMAIN;REQUIREMENTS_ATTRIBUTES_SUBDOMAIN;REQUIREMENTS_ATTRIBUTES_SECTION;REQUIREMENTS_ATTRIBUTES_AUDITCHECKLIST;REQUIREMENTS_ATTRIBUTES_RELATEDREGULATIONS;REQUIREMENTS_ATTRIBUTES_AUDITEVIDENCE;REQUIREMENTS_ATTRIBUTES_NONCOMPLIANCECASES;STATUS;STATUSEXTENDED;RESOURCEID;RESOURCENAME;CHECKID;MUTED\r\naws;The ISMS-P certification, established by KISA Korea Internet & Security Agency;123456789012;eu-west-1;{datetime.now()};2.5.3;User Authentication;User access to information systems;2. Protection Measure Requirements;2.5. Authentication and Authorization Management;2.5.3 User Authentication;['Is access to information systems and personal information controlled through secure authentication?', 'Are login attempt limitations enforced?'];['Personal Information Protection Act, Article 29', 'Standards for Ensuring the Safety of Personal Information, Article 5'];['Login screen for information systems', 'Login failure message screen'];['Case 1: Insufficient authentication when accessing information systems externally.', 'Case 2: No limitation on login failure attempts.'];PASS;;;;test-check-id;False\r\naws;The ISMS-P certification, established by KISA Korea Internet & Security Agency;;;{datetime.now()};2.5.4;User Authentication;User access to information systems;2. Protection Measure Requirements;2.5. Authentication and Authorization Management;2.5.3 User Authentication;['Is access to information systems and personal information controlled through secure authentication?', 'Are login attempt limitations enforced?'];['Personal Information Protection Act, Article 29', 'Standards for Ensuring the Safety of Personal Information, Article 5'];['Login screen for information systems', 'Login failure message screen'];['Case 1: Insufficient authentication when accessing information systems externally.', 'Case 2: No limitation on login failure attempts.'];MANUAL;Manual check;manual_check;Manual check;manual;False\r\n"
+        expected_csv = f"PROVIDER;DESCRIPTION;ACCOUNTID;REGION;ASSESSMENTDATE;REQUIREMENTS_ID;REQUIREMENTS_NAME;REQUIREMENTS_DESCRIPTION;REQUIREMENTS_ATTRIBUTES_DOMAIN;REQUIREMENTS_ATTRIBUTES_SUBDOMAIN;REQUIREMENTS_ATTRIBUTES_SECTION;REQUIREMENTS_ATTRIBUTES_AUDITCHECKLIST;REQUIREMENTS_ATTRIBUTES_RELATEDREGULATIONS;REQUIREMENTS_ATTRIBUTES_AUDITEVIDENCE;REQUIREMENTS_ATTRIBUTES_NONCOMPLIANCECASES;STATUS;STATUSEXTENDED;RESOURCEID;RESOURCENAME;CHECKID;MUTED;FRAMEWORK;NAME\r\naws;The ISMS-P certification, established by KISA Korea Internet & Security Agency;123456789012;eu-west-1;{datetime.now()};2.5.3;User Authentication;User access to information systems;2. Protection Measure Requirements;2.5. Authentication and Authorization Management;2.5.3 User Authentication;['Is access to information systems and personal information controlled through secure authentication?', 'Are login attempt limitations enforced?'];['Personal Information Protection Act, Article 29', 'Standards for Ensuring the Safety of Personal Information, Article 5'];['Login screen for information systems', 'Login failure message screen'];['Case 1: Insufficient authentication when accessing information systems externally.', 'Case 2: No limitation on login failure attempts.'];PASS;;;;service_test_check_id;False;KISA-ISMS-P;KISA ISMS compliance framework 2023\r\naws;The ISMS-P certification, established by KISA Korea Internet & Security Agency;;;{datetime.now()};2.5.4;User Authentication;User access to information systems;2. Protection Measure Requirements;2.5. Authentication and Authorization Management;2.5.3 User Authentication;['Is access to information systems and personal information controlled through secure authentication?', 'Are login attempt limitations enforced?'];['Personal Information Protection Act, Article 29', 'Standards for Ensuring the Safety of Personal Information, Article 5'];['Login screen for information systems', 'Login failure message screen'];['Case 1: Insufficient authentication when accessing information systems externally.', 'Case 2: No limitation on login failure attempts.'];MANUAL;Manual check;manual_check;Manual check;manual;False;KISA-ISMS-P;KISA ISMS compliance framework 2023\r\n"
+
         assert content == expected_csv

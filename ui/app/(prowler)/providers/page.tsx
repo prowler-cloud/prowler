@@ -1,49 +1,58 @@
-import { Spacer } from "@nextui-org/react";
+import { Spacer } from "@heroui/spacer";
 import { Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
 import { FilterControls, filterProviders } from "@/components/filters";
 import { ManageGroupsButton } from "@/components/manage-groups";
-import { AddProviderButton } from "@/components/providers";
+import {
+  AddProviderButton,
+  MutedFindingsConfigButton,
+} from "@/components/providers";
 import {
   ColumnProviders,
   SkeletonTableProviders,
 } from "@/components/providers/table";
 import { ContentLayout } from "@/components/ui";
-import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
+import { DataTable } from "@/components/ui/table";
 import { ProviderProps, SearchParamsProps } from "@/types";
 
 export default async function Providers({
   searchParams,
 }: {
-  searchParams: SearchParamsProps;
+  searchParams: Promise<SearchParamsProps>;
 }) {
-  const searchParamsKey = JSON.stringify(searchParams || {});
+  const resolvedSearchParams = await searchParams;
+  const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
 
   return (
-    <ContentLayout title="Cloud Providers" icon="fluent:cloud-sync-24-regular">
-      <FilterControls search />
+    <ContentLayout title="Cloud Providers" icon="lucide:cloud-cog">
+      <FilterControls search customFilters={filterProviders || []} />
       <Spacer y={8} />
-      <div className="flex items-center gap-4 md:justify-end">
-        <ManageGroupsButton />
-        <AddProviderButton />
-      </div>
-      <Spacer y={4} />
-      <DataTableFilterCustom filters={filterProviders || []} />
-      <Spacer y={8} />
-
-      <div className="grid grid-cols-12 gap-4">
-        <div className="col-span-12">
-          <Suspense key={searchParamsKey} fallback={<SkeletonTableProviders />}>
-            <SSRDataTable searchParams={searchParams} />
-          </Suspense>
-        </div>
-      </div>
+      <Suspense
+        key={searchParamsKey}
+        fallback={
+          <>
+            <div className="flex items-center gap-4 md:justify-end">
+              <ManageGroupsButton />
+              <MutedFindingsConfigButton />
+              <AddProviderButton />
+            </div>
+            <Spacer y={8} />
+            <div className="grid grid-cols-12 gap-4">
+              <div className="col-span-12">
+                <SkeletonTableProviders />
+              </div>
+            </div>
+          </>
+        }
+      >
+        <ProvidersContent searchParams={resolvedSearchParams} />
+      </Suspense>
     </ContentLayout>
   );
 }
 
-const SSRDataTable = async ({
+const ProvidersContent = async ({
   searchParams,
 }: {
   searchParams: SearchParamsProps;
@@ -87,10 +96,24 @@ const SSRDataTable = async ({
     }) || [];
 
   return (
-    <DataTable
-      columns={ColumnProviders}
-      data={enrichedProviders || []}
-      metadata={providersData?.meta}
-    />
+    <>
+      <div className="flex items-center gap-4 md:justify-end">
+        <ManageGroupsButton />
+        <MutedFindingsConfigButton />
+        <AddProviderButton />
+      </div>
+      <Spacer y={8} />
+
+      <div className="grid grid-cols-12 gap-4">
+        <div className="col-span-12">
+          <DataTable
+            key={`providers-${Date.now()}`}
+            columns={ColumnProviders}
+            data={enrichedProviders || []}
+            metadata={providersData?.meta}
+          />
+        </div>
+      </div>
+    </>
   );
 };

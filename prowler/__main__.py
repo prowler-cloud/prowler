@@ -13,6 +13,7 @@ from prowler.config.config import (
     html_file_suffix,
     json_asff_file_suffix,
     json_ocsf_file_suffix,
+    orange_color,
 )
 from prowler.lib.banner import print_banner
 from prowler.lib.check.check import (
@@ -23,6 +24,7 @@ from prowler.lib.check.check import (
     list_checks_json,
     list_fixers,
     list_services,
+    parse_checks_from_file,
     parse_checks_from_folder,
     print_categories,
     print_checks,
@@ -67,6 +69,7 @@ from prowler.lib.outputs.compliance.iso27001.iso27001_gcp import GCPISO27001
 from prowler.lib.outputs.compliance.iso27001.iso27001_kubernetes import (
     KubernetesISO27001,
 )
+from prowler.lib.outputs.compliance.iso27001.iso27001_m365 import M365ISO27001
 from prowler.lib.outputs.compliance.iso27001.iso27001_nhn import NHNISO27001
 from prowler.lib.outputs.compliance.kisa_ismsp.kisa_ismsp_aws import AWSKISAISMSP
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_aws import AWSMitreAttack
@@ -90,7 +93,7 @@ from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.html.html import HTML
 from prowler.lib.outputs.ocsf.ocsf import OCSF
-from prowler.lib.outputs.outputs import extract_findings_statistics
+from prowler.lib.outputs.outputs import extract_findings_statistics, report
 from prowler.lib.outputs.slack.slack import Slack
 from prowler.lib.outputs.summary_table import display_summary_table
 from prowler.providers.aws.lib.s3.s3 import S3
@@ -101,8 +104,11 @@ from prowler.providers.common.provider import Provider
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
 from prowler.providers.gcp.models import GCPOutputOptions
 from prowler.providers.github.models import GithubOutputOptions
+from prowler.providers.iac.models import IACOutputOptions
 from prowler.providers.kubernetes.models import KubernetesOutputOptions
+from prowler.providers.llm.models import LLMOutputOptions
 from prowler.providers.m365.models import M365OutputOptions
+from prowler.providers.mongodbatlas.models import MongoDBAtlasOutputOptions
 from prowler.providers.nhn.models import NHNOutputOptions
 
 
@@ -122,6 +128,7 @@ def prowler():
 
     checks = args.check
     excluded_checks = args.excluded_check
+    excluded_checks_file = args.excluded_checks_file
     excluded_services = args.excluded_service
     services = args.service
     categories = args.category
@@ -178,11 +185,13 @@ def prowler():
     # Load compliance frameworks
     logger.debug("Loading compliance frameworks from .json files")
 
-    bulk_compliance_frameworks = Compliance.get_bulk(provider)
-    # Complete checks metadata with the compliance framework specification
-    bulk_checks_metadata = update_checks_metadata_with_compliance(
-        bulk_compliance_frameworks, bulk_checks_metadata
-    )
+    # Skip compliance frameworks for IAC and LLM providers
+    if provider != "iac" and provider != "llm":
+        bulk_compliance_frameworks = Compliance.get_bulk(provider)
+        # Complete checks metadata with the compliance framework specification
+        bulk_checks_metadata = update_checks_metadata_with_compliance(
+            bulk_compliance_frameworks, bulk_checks_metadata
+        )
 
     # Update checks metadata if the --custom-checks-metadata-file is present
     custom_checks_metadata = None
@@ -234,39 +243,54 @@ def prowler():
     if not args.only_logs:
         global_provider.print_credentials()
 
-    # Import custom checks from folder
-    if checks_folder:
-        custom_checks = parse_checks_from_folder(global_provider, checks_folder)
-        # Workaround to be able to execute custom checks alongside all checks if nothing is explicitly set
-        if (
-            not checks_file
-            and not checks
-            and not services
-            and not severities
-            and not compliance_framework
-            and not categories
-        ):
-            checks_to_execute.update(custom_checks)
+    # Skip service and check loading for IAC and LLM providers
+    if provider != "iac" and provider != "llm":
+        # Import custom checks from folder
+        if checks_folder:
+            custom_checks = parse_checks_from_folder(global_provider, checks_folder)
+            # Workaround to be able to execute custom checks alongside all checks if nothing is explicitly set
+            if (
+                not checks_file
+                and not checks
+                and not services
+                and not severities
+                and not compliance_framework
+                and not categories
+            ):
+                checks_to_execute.update(custom_checks)
 
-    # Exclude checks if -e/--excluded-checks
-    if excluded_checks:
-        checks_to_execute = exclude_checks_to_run(checks_to_execute, excluded_checks)
+        # Exclude checks if -e/--excluded-checks
+        if excluded_checks:
+            checks_to_execute = exclude_checks_to_run(
+                checks_to_execute, excluded_checks
+            )
 
-    # Exclude services if --excluded-services
-    if excluded_services:
-        checks_to_execute = exclude_services_to_run(
-            checks_to_execute, excluded_services, provider
+        # Exclude checks if --excluded-checks-file
+        if excluded_checks_file:
+            excluded_checks_from_file = parse_checks_from_file(
+                excluded_checks_file, provider
+            )
+            checks_to_execute = exclude_checks_to_run(
+                checks_to_execute, list(excluded_checks_from_file)
+            )
+
+        # Exclude services if --excluded-services
+        if excluded_services:
+            checks_to_execute = exclude_services_to_run(
+                checks_to_execute, excluded_services, provider
+            )
+
+        # Once the provider is set and we have the eventual checks based on the resource identifier,
+        # it is time to check what Prowler's checks are going to be executed
+        checks_from_resources = (
+            global_provider.get_checks_to_execute_by_audit_resources()
         )
+        # Intersect checks from resources with checks to execute so we only run the checks that apply to the resources with the specified ARNs or tags
+        if getattr(args, "resource_arn", None) or getattr(args, "resource_tag", None):
+            checks_to_execute = checks_to_execute.intersection(checks_from_resources)
 
-    # Once the provider is set and we have the eventual checks based on the resource identifier,
-    # it is time to check what Prowler's checks are going to be executed
-    checks_from_resources = global_provider.get_checks_to_execute_by_audit_resources()
-    # Intersect checks from resources with checks to execute so we only run the checks that apply to the resources with the specified ARNs or tags
-    if getattr(args, "resource_arn", None) or getattr(args, "resource_tag", None):
-        checks_to_execute = checks_to_execute.intersection(checks_from_resources)
-
-    # Sort final check list
-    checks_to_execute = sorted(checks_to_execute)
+        # Sort final check list
+        checks_to_execute = sorted(checks_to_execute)
 
     # Setup Output Options
     if provider == "aws":
@@ -293,10 +317,18 @@ def prowler():
         output_options = M365OutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
+    elif provider == "mongodbatlas":
+        output_options = MongoDBAtlasOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
     elif provider == "nhn":
         output_options = NHNOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
+    elif provider == "iac":
+        output_options = IACOutputOptions(args, bulk_checks_metadata)
+    elif provider == "llm":
+        output_options = LLMOutputOptions(args, bulk_checks_metadata)
 
     # Run the quick inventory for the provider if available
     if hasattr(args, "quick_inventory") and args.quick_inventory:
@@ -306,7 +338,21 @@ def prowler():
     # Execute checks
     findings = []
 
-    if len(checks_to_execute):
+    if provider == "iac" or provider == "llm":
+        # For IAC and LLM providers, run the scan directly
+        if provider == "llm":
+
+            def streaming_callback(findings_batch):
+                """Callback to report findings as they are processed in real-time."""
+                report(findings_batch, global_provider, output_options)
+
+            findings = global_provider.run_scan(streaming_callback=streaming_callback)
+        else:
+            # Original behavior for IAC or non-verbose LLM
+            findings = global_provider.run()
+            # Report findings for verbose output
+            report(findings, global_provider, output_options)
+    elif len(checks_to_execute):
         findings = execute_checks(
             checks_to_execute,
             global_provider,
@@ -786,6 +832,19 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(prowler_threatscore)
                 prowler_threatscore.batch_write_data_to_file()
+            elif compliance_name.startswith("iso27001_"):
+                # Generate ISO27001 Finding Object
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                iso27001 = M365ISO27001(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(iso27001)
+                iso27001.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -897,9 +956,14 @@ def prowler():
             )
             # Send the findings to Security Hub
             findings_sent_to_security_hub = security_hub.batch_send_to_security_hub()
-            print(
-                f"{Style.BRIGHT}{Fore.GREEN}\n{findings_sent_to_security_hub} findings sent to AWS Security Hub!{Style.RESET_ALL}"
-            )
+            if findings_sent_to_security_hub == 0:
+                print(
+                    f"{Style.BRIGHT}{orange_color}\nNo findings sent to AWS Security Hub.{Style.RESET_ALL}"
+                )
+            else:
+                print(
+                    f"{Style.BRIGHT}{Fore.GREEN}\n{findings_sent_to_security_hub} findings sent to AWS Security Hub!{Style.RESET_ALL}"
+                )
 
             # Resolve previous fails of Security Hub
             if not args.skip_sh_update:
@@ -909,9 +973,14 @@ def prowler():
                 findings_archived_in_security_hub = (
                     security_hub.archive_previous_findings()
                 )
-                print(
-                    f"{Style.BRIGHT}{Fore.GREEN}\n{findings_archived_in_security_hub} findings archived in AWS Security Hub!{Style.RESET_ALL}"
-                )
+                if findings_archived_in_security_hub == 0:
+                    print(
+                        f"{Style.BRIGHT}{orange_color}\nNo findings archived in AWS Security Hub.{Style.RESET_ALL}"
+                    )
+                else:
+                    print(
+                        f"{Style.BRIGHT}{Fore.GREEN}\n{findings_archived_in_security_hub} findings archived in AWS Security Hub!{Style.RESET_ALL}"
+                    )
 
     # Display summary table
     if not args.only_logs:

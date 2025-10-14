@@ -1,5 +1,4 @@
-from datetime import datetime
-
+from prowler.config.config import timestamp
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.compliance.cis.models import GithubCISModel
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
@@ -46,7 +45,7 @@ class GithubCIS(ComplianceOutput):
                             Description=compliance.Description,
                             Account_Id=finding.account_uid,
                             Account_Name=finding.account_name,
-                            AssessmentDate=str(finding.timestamp),
+                            AssessmentDate=str(timestamp),
                             Requirements_Id=requirement.Id,
                             Requirements_Description=requirement.Description,
                             Requirements_Attributes_Section=attribute.Section,
@@ -66,6 +65,8 @@ class GithubCIS(ComplianceOutput):
                             ResourceName=finding.resource_name,
                             CheckId=finding.check_id,
                             Muted=finding.muted,
+                            Framework=compliance.Framework,
+                            Name=compliance.Name,
                         )
                         self._data.append(compliance_row)
         # Add manual requirements to the compliance output
@@ -77,7 +78,7 @@ class GithubCIS(ComplianceOutput):
                         Description=compliance.Description,
                         Account_Id="",
                         Account_Name="",
-                        AssessmentDate=str(datetime.now()),
+                        AssessmentDate=str(timestamp),
                         Requirements_Id=requirement.Id,
                         Requirements_Description=requirement.Description,
                         Requirements_Attributes_Section=attribute.Section,
@@ -97,5 +98,7 @@ class GithubCIS(ComplianceOutput):
                         ResourceName="Manual check",
                         CheckId="manual",
                         Muted=False,
+                        Framework=compliance.Framework,
+                        Name=compliance.Name,
                     )
                     self._data.append(compliance_row)

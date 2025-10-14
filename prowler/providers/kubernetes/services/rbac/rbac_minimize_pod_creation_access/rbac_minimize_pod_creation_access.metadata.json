@@ -3,7 +3,7 @@
   "CheckID": "rbac_minimize_pod_creation_access",
   "CheckTitle": "Minimize access to create pods",
   "CheckType": [],
-  "ServiceName": "RBAC",
+  "ServiceName": "rbac",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",

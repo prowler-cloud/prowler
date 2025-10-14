@@ -1,6 +1,14 @@
 from unittest import mock
 from uuid import uuid4
 
+from prowler.providers.azure.services.vm.vm_service import (
+    ManagedDiskParameters,
+    OSDisk,
+    SecurityProfile,
+    StorageProfile,
+    UefiSettings,
+    VirtualMachine,
+)
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
     set_mocked_azure_provider,
@@ -63,7 +71,6 @@ class Test_vm_trusted_launch_enabled:
                 new=vm_client,
             ),
         ):
-            from prowler.providers.azure.services.vm.vm_service import VirtualMachine
             from prowler.providers.azure.services.vm.vm_trusted_launch_enabled.vm_trusted_launch_enabled import (
                 vm_trusted_launch_enabled,
             )
@@ -74,18 +81,21 @@ class Test_vm_trusted_launch_enabled:
                         resource_id=vm_id,
                         resource_name="VMTest",
                         location="location",
-                        security_profile=mock.MagicMock(
+                        security_profile=SecurityProfile(
                             security_type="TrustedLaunch",
-                            uefi_settings=mock.MagicMock(
+                            uefi_settings=UefiSettings(
                                 secure_boot_enabled=True,
                                 v_tpm_enabled=True,
                             ),
                         ),
                         extensions=[],
-                        storage_profile=mock.MagicMock(
-                            os_disk=mock.MagicMock(
-                                create_option="FromImage",
-                                managed_disk=mock.MagicMock(id="managed_disk_id"),
+                        storage_profile=StorageProfile(
+                            os_disk=OSDisk(
+                                name="os_disk_name",
+                                operating_system_type="Linux",
+                                managed_disk=ManagedDiskParameters(
+                                    id="managed_disk_id"
+                                ),
                             ),
                             data_disks=[],
                         ),
@@ -117,7 +127,6 @@ class Test_vm_trusted_launch_enabled:
                 new=vm_client,
             ),
         ):
-            from prowler.providers.azure.services.vm.vm_service import VirtualMachine
             from prowler.providers.azure.services.vm.vm_trusted_launch_enabled.vm_trusted_launch_enabled import (
                 vm_trusted_launch_enabled,
             )
@@ -128,18 +137,21 @@ class Test_vm_trusted_launch_enabled:
                         resource_id=vm_id,
                         resource_name="VMTest",
                         location="location",
-                        security_profile=mock.MagicMock(
+                        security_profile=SecurityProfile(
                             security_type="TrustedLaunch",
-                            uefi_settings=mock.MagicMock(
+                            uefi_settings=UefiSettings(
                                 secure_boot_enabled=False,
                                 v_tpm_enabled=False,
                             ),
                         ),
                         extensions=[],
-                        storage_profile=mock.MagicMock(
-                            os_disk=mock.MagicMock(
-                                create_option="FromImage",
-                                managed_disk=mock.MagicMock(id="managed_disk_id"),
+                        storage_profile=StorageProfile(
+                            os_disk=OSDisk(
+                                name="os_disk_name",
+                                operating_system_type="Linux",
+                                managed_disk=ManagedDiskParameters(
+                                    id="managed_disk_id"
+                                ),
                             ),
                             data_disks=[],
                         ),
@@ -172,7 +184,6 @@ class Test_vm_trusted_launch_enabled:
                 new=vm_client,
             ),
         ):
-            from prowler.providers.azure.services.vm.vm_service import VirtualMachine
             from prowler.providers.azure.services.vm.vm_trusted_launch_enabled.vm_trusted_launch_enabled import (
                 vm_trusted_launch_enabled,
             )
@@ -185,10 +196,13 @@ class Test_vm_trusted_launch_enabled:
                         location="location",
                         security_profile=None,
                         extensions=[],
-                        storage_profile=mock.MagicMock(
-                            os_disk=mock.MagicMock(
-                                create_option="FromImage",
-                                managed_disk=mock.MagicMock(id="managed_disk_id"),
+                        storage_profile=StorageProfile(
+                            os_disk=OSDisk(
+                                name="os_disk_name",
+                                operating_system_type="Linux",
+                                managed_disk=ManagedDiskParameters(
+                                    id="managed_disk_id"
+                                ),
                             ),
                             data_disks=[],
                         ),

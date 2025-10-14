@@ -10,6 +10,8 @@ from config.settings.social_login import *  # noqa
 SECRET_KEY = env("SECRET_KEY", default="secret")
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
 
 # Application definition
 
@@ -33,12 +35,15 @@ INSTALLED_APPS = [
     "django_celery_beat",
     "rest_framework_simplejwt.token_blacklist",
     "allauth",
+    "django.contrib.sites",
     "allauth.account",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
     "allauth.socialaccount.providers.github",
+    "allauth.socialaccount.providers.saml",
     "dj_rest_auth.registration",
     "rest_framework.authtoken",
+    "drf_simple_apikey",
 ]
 
 MIDDLEWARE = [
@@ -80,7 +85,7 @@ TEMPLATES = [
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular_jsonapi.schemas.openapi.JsonApiAutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "api.authentication.CombinedJWTOrAPIKeyAuthentication",
     ),
     "PAGE_SIZE": 10,
     "EXCEPTION_HANDLER": "api.exceptions.custom_exception_handler",
@@ -104,6 +109,13 @@ REST_FRAMEWORK = {
     ),
     "TEST_REQUEST_DEFAULT_FORMAT": "vnd.api+json",
     "JSON_API_UNIFORM_EXCEPTIONS": True,
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.ScopedRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "token-obtain": env("DJANGO_THROTTLE_TOKEN_OBTAIN", default=None),
+        "dj_rest_auth": None,
+    },
 }
 
 SPECTACULAR_SETTINGS = {
@@ -111,6 +123,9 @@ SPECTACULAR_SETTINGS = {
     "COMPONENT_SPLIT_REQUEST": True,
     "PREPROCESSING_HOOKS": [
         "drf_spectacular_jsonapi.hooks.fix_nested_path_parameters",
+    ],
+    "POSTPROCESSING_HOOKS": [
+        "api.schema_hooks.attach_task_202_examples",
     ],
     "TITLE": "API Reference - Prowler",
 }
@@ -155,6 +170,30 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
+    {
+        "NAME": "api.validators.SpecialCharactersValidator",
+        "OPTIONS": {
+            "min_special_characters": 1,
+        },
+    },
+    {
+        "NAME": "api.validators.UppercaseValidator",
+        "OPTIONS": {
+            "min_uppercase": 1,
+        },
+    },
+    {
+        "NAME": "api.validators.LowercaseValidator",
+        "OPTIONS": {
+            "min_lowercase": 1,
+        },
+    },
+    {
+        "NAME": "api.validators.NumericValidator",
+        "OPTIONS": {
+            "min_numeric": 1,
+        },
+    },
 ]
 
 SIMPLE_JWT = {
@@ -182,7 +221,8 @@ SIMPLE_JWT = {
     "JTI_CLAIM": "jti",
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "sub",
-    # Issuer and Audience claims, for the moment we will keep these values as default values, they may change in the future.
+    # Issuer and Audience claims, for the moment we will keep these values as default values, they may change in the
+    # future.
     "AUDIENCE": env.str("DJANGO_JWT_AUDIENCE", "https://api.prowler.com"),
     "ISSUER": env.str("DJANGO_JWT_ISSUER", "https://api.prowler.com"),
     # Additional security settings
@@ -190,6 +230,13 @@ SIMPLE_JWT = {
 }
 
 SECRETS_ENCRYPTION_KEY = env.str("DJANGO_SECRETS_ENCRYPTION_KEY", "")
+
+# DRF Simple API Key settings
+DRF_API_KEY = {
+    "FERNET_SECRET": SECRETS_ENCRYPTION_KEY,
+    "API_KEY_LIFETIME": 365,
+    "AUTHENTICATION_KEYWORD_HEADER": "Api-Key",
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
@@ -245,3 +292,7 @@ X_FRAME_OPTIONS = "DENY"
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 
 DJANGO_DELETION_BATCH_SIZE = env.int("DJANGO_DELETION_BATCH_SIZE", 5000)
+
+# SAML requirement
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True

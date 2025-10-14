@@ -54,7 +54,7 @@ export const DeleteRoleForm = ({
     <Form {...form}>
       <form action={onSubmitClient}>
         <input type="hidden" name="id" value={roleId} />
-        <div className="flex w-full justify-center sm:space-x-6">
+        <div className="flex w-full justify-center sm:gap-6">
           <CustomButton
             type="button"
             ariaLabel="Cancel"
@@ -75,6 +75,7 @@ export const DeleteRoleForm = ({
             variant="solid"
             color="danger"
             size="lg"
+            radius="lg"
             isLoading={isLoading}
             startContent={!isLoading && <DeleteIcon size={24} />}
           >

@@ -117,6 +117,40 @@ from rest_framework_json_api import serializers
                     },
                     "user": {
                         "type": "email",
+                        "description": "Deprecated: User microsoft email address.",
+                    },
+                    "password": {
+                        "type": "string",
+                        "description": "Deprecated: User password.",
+                    },
+                },
+                "required": [
+                    "client_id",
+                    "client_secret",
+                    "tenant_id",
+                    "user",
+                    "password",
+                ],
+            },
+            {
+                "type": "object",
+                "title": "M365 Certificate Credentials",
+                "properties": {
+                    "client_id": {
+                        "type": "string",
+                        "description": "The Azure application (client) ID for authentication in Azure AD.",
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "description": "The Azure tenant ID, representing the directory where the application is "
+                        "registered.",
+                    },
+                    "certificate_content": {
+                        "type": "string",
+                        "description": "The certificate content in base64 format for certificate-based authentication.",
+                    },
+                    "user": {
+                        "type": "email",
                         "description": "User microsoft email address.",
                     },
                     "password": {
@@ -126,8 +160,8 @@ from rest_framework_json_api import serializers
                 },
                 "required": [
                     "client_id",
-                    "client_secret",
                     "tenant_id",
+                    "certificate_content",
                     "user",
                     "password",
                 ],
@@ -175,6 +209,43 @@ from rest_framework_json_api import serializers
                     }
                 },
                 "required": ["kubeconfig_content"],
+            },
+            {
+                "type": "object",
+                "title": "GitHub Personal Access Token",
+                "properties": {
+                    "personal_access_token": {
+                        "type": "string",
+                        "description": "GitHub personal access token for authentication.",
+                    }
+                },
+                "required": ["personal_access_token"],
+            },
+            {
+                "type": "object",
+                "title": "GitHub OAuth App Token",
+                "properties": {
+                    "oauth_app_token": {
+                        "type": "string",
+                        "description": "GitHub OAuth App token for authentication.",
+                    }
+                },
+                "required": ["oauth_app_token"],
+            },
+            {
+                "type": "object",
+                "title": "GitHub App Credentials",
+                "properties": {
+                    "github_app_id": {
+                        "type": "integer",
+                        "description": "GitHub App ID for authentication.",
+                    },
+                    "github_app_key": {
+                        "type": "string",
+                        "description": "Path to the GitHub App private key file.",
+                    },
+                },
+                "required": ["github_app_id", "github_app_key"],
             },
         ]
     }

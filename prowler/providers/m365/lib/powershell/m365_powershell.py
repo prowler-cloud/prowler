@@ -1,13 +1,12 @@
 import os
-import platform
-
-import msal
 
 from prowler.lib.logger import logger
 from prowler.lib.powershell.powershell import PowerShellSession
 from prowler.providers.m365.exceptions.exceptions import (
-    M365UserNotBelongingToTenantError,
+    M365CertificateCreationError,
+    M365GraphConnectionError,
 )
+from prowler.providers.m365.lib.jwt.jwt_decoder import decode_jwt, decode_msal_token
 from prowler.providers.m365.models import M365Credentials, M365IdentityInfo
 
 
@@ -50,122 +49,206 @@ class M365PowerShell(PowerShellSession):
         self.tenant_identity = identity
         self.init_credential(credentials)
 
+    def clean_certificate_content(self, cert_content: str) -> str:
+        """
+        Clean certificate content for PowerShell consumption.
+
+        Removes newlines, carriage returns, and extra spaces from base64 content
+        to ensure proper parsing in PowerShell.
+
+        Args:
+            cert_content (str): Base64 encoded certificate content
+
+        Returns:
+            str: Cleaned base64 certificate content
+        """
+        # Clean base64 content - remove any newlines or whitespace
+        clean_content = (
+            cert_content.strip().replace("\n", "").replace("\r", "").replace(" ", "")
+        )
+        logger.info(f"Cleaned certificate content length: {len(clean_content)}")
+        return clean_content
+
     def init_credential(self, credentials: M365Credentials) -> None:
         """
         Initialize PowerShell credential object for Microsoft 365 authentication.
 
-        Sanitizes the username and password, then creates a PSCredential object
-        in the PowerShell session for use with Microsoft 365 cmdlets.
+        Supports two authentication methods:
+        1. Application authentication (client_id/client_secret)
+        2. Certificate authentication (certificate_content in base64/client_id)
 
         Args:
             credentials (M365Credentials): The credentials object containing
-                username and password.
+                authentication information.
 
         Note:
             The credentials are sanitized to prevent command injection and
             stored securely in the PowerShell session.
         """
+        # Certificate Auth
+        if credentials.certificate_content and credentials.client_id:
+            # Clean certificate content for PowerShell consumption
+            clean_cert_content = self.clean_certificate_content(
+                credentials.certificate_content
+            )
 
-        credentials.encrypted_passwd = self.encrypt_password(credentials.passwd)
+            # Sanitize credentials
+            sanitized_client_id = self.sanitize(credentials.client_id)
+            sanitized_tenant_id = self.sanitize(credentials.tenant_id)
 
-        # Sanitize user and password
-        sanitized_user = self.sanitize(credentials.user)
-        sanitized_encrypted_passwd = self.sanitize(credentials.encrypted_passwd)
-
-        # Securely convert encrypted password to SecureString
-        self.execute(f'$user = "{sanitized_user}"')
-        self.execute(
-            f'$secureString = "{sanitized_encrypted_passwd}" | ConvertTo-SecureString'
-        )
-        self.execute(
-            "$credential = New-Object System.Management.Automation.PSCredential ($user, $secureString)"
-        )
-
-    def encrypt_password(self, password: str) -> str:
-        """
-        Encrypts a password using Windows CryptProtectData on Windows systems
-        or UTF-16LE encoding on other systems.
-
-        Args:
-        password (str): The password to encrypt
-
-        Returns:
-        str: The encrypted password in hexadecimal format
-
-        Raises:
-        ValueError: If password is None or empty
-        """
-        try:
-            if platform.system() == "Windows":
-                import win32crypt
-
-                encrypted_blob = win32crypt.CryptProtectData(
-                    password.encode("utf-16le"), None, None, None, None, 0
+            self.execute(
+                f'$certBytes = [Convert]::FromBase64String("{clean_cert_content}")'
+            )
+            error = self.execute(
+                "$certificate = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2(,$certBytes)"
+            )
+            if error:
+                raise M365CertificateCreationError(
+                    f"[{os.path.basename(__file__)}] Error creating certificate: {error}"
                 )
 
-                encrypted_bytes = encrypted_blob
-                if isinstance(encrypted_blob, tuple):
-                    encrypted_bytes = encrypted_blob[1]
-                elif hasattr(encrypted_blob, "data"):
-                    encrypted_bytes = encrypted_blob.data
+            self.execute(f'$clientID = "{sanitized_client_id}"')
+            self.execute(f'$tenantID = "{sanitized_tenant_id}"')
+            self.execute(f'$tenantDomain = "{credentials.tenant_domains[0]}"')
 
-                return encrypted_bytes.hex()
-
-            else:
-                return password.encode("utf-16le").hex()
-        except Exception as error:
-            raise Exception(
-                f"[{os.path.basename(__file__)}] Error encrypting password: {str(error)}"
+        else:
+            # Application Auth
+            self.execute(f'$clientID = "{credentials.client_id}"')
+            self.execute(f'$clientSecret = "{credentials.client_secret}"')
+            self.execute(f'$tenantID = "{credentials.tenant_id}"')
+            self.execute(
+                '$graphtokenBody = @{ Grant_Type = "client_credentials"; Scope = "https://graph.microsoft.com/.default"; Client_Id = $clientID; Client_Secret = $clientSecret }'
+            )
+            self.execute(
+                '$graphToken = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$tenantID/oauth2/v2.0/token" -Method POST -Body $graphtokenBody | Select-Object -ExpandProperty Access_Token'
             )
 
     def test_credentials(self, credentials: M365Credentials) -> bool:
         """
         Test Microsoft 365 credentials by attempting to authenticate against Entra ID.
 
+        Supports testing two authentication methods:
+        1. Application authentication (client_id/client_secret)
+        2. Certificate authentication (certificate_content in base64/client_id)
+
         Args:
             credentials (M365Credentials): The credentials object containing
-                username and password to test.
+                authentication information to test.
 
         Returns:
             bool: True if credentials are valid and authentication succeeds, False otherwise.
         """
-        self.execute(
-            f'$securePassword = "{credentials.encrypted_passwd}" | ConvertTo-SecureString'  # encrypted password already sanitized
-        )
-        self.execute(
-            f'$credential = New-Object System.Management.Automation.PSCredential("{self.sanitize(credentials.user)}", $securePassword)'
-        )
+        # Test Certificate Auth
+        if credentials.certificate_content and credentials.client_id:
+            try:
+                self.test_teams_certificate_connection() or self.test_exchange_certificate_connection()
+                return True
+            except Exception as e:
+                logger.error(f"Exchange Online Certificate connection failed: {e}")
 
-        # Validate user belongs to tenant
-        user_domain = credentials.user.split("@")[1]
-        if not any(
-            user_domain.endswith(domain)
-            for domain in self.tenant_identity.tenant_domains
-        ):
-            raise M365UserNotBelongingToTenantError(
+        else:
+            # Test Microsoft Graph connection
+            try:
+                logger.info("Testing Microsoft Graph connection...")
+                self.test_graph_connection()
+                logger.info("Microsoft Graph connection successful")
+                return True
+            except Exception as e:
+                logger.error(f"Microsoft Graph connection failed: {e}")
+                raise M365GraphConnectionError(
+                    file=os.path.basename(__file__),
+                    original_exception=e,
+                    message="Check your Microsoft Application credentials and ensure the app has proper permissions",
+                )
+
+    def test_graph_connection(self) -> bool:
+        """Test Microsoft Graph API connection and raise exception if it fails."""
+        try:
+            if self.execute("Write-Output $graphToken") == "":
+                raise M365GraphConnectionError(
+                    file=os.path.basename(__file__),
+                    message="Microsoft Graph token is empty or invalid.",
+                )
+            return True
+        except Exception as e:
+            logger.error(f"Microsoft Graph connection failed: {e}")
+            raise M365GraphConnectionError(
                 file=os.path.basename(__file__),
-                message=f"The user domain {user_domain} does not match any of the tenant domains: {', '.join(self.tenant_identity.tenant_domains)}",
+                original_exception=e,
+                message=f"Failed to connect to Microsoft Graph API: {str(e)}",
             )
 
-        app = msal.ConfidentialClientApplication(
-            client_id=credentials.client_id,
-            client_credential=credentials.client_secret,
-            authority=f"https://login.microsoftonline.com/{credentials.tenant_id}",
-        )
-
-        # Validate credentials
-        result = app.acquire_token_by_username_password(
-            username=credentials.user,
-            password=credentials.passwd,
-            scopes=["https://graph.microsoft.com/.default"],
-        )
-
-        if result is None:
+    def test_teams_connection(self) -> bool:
+        """Test Microsoft Teams API connection and raise exception if it fails."""
+        try:
+            self.execute(
+                '$teamstokenBody = @{ Grant_Type = "client_credentials"; Scope = "48ac35b8-9aa8-4d74-927d-1f4a14a0b239/.default"; Client_Id = $clientID; Client_Secret = $clientSecret }'
+            )
+            self.execute(
+                '$teamsToken = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$tenantID/oauth2/v2.0/token" -Method POST -Body $teamstokenBody | Select-Object -ExpandProperty Access_Token'
+            )
+            permissions = decode_jwt(self.execute("Write-Output $teamsToken")).get(
+                "roles", []
+            )
+            if "application_access" not in permissions:
+                logger.error(
+                    "Microsoft Teams connection failed: Please check your permissions and try again."
+                )
+                return False
+            self.execute(
+                'Connect-MicrosoftTeams -AccessTokens @("$graphToken","$teamsToken")'
+            )
+            return True
+        except Exception as e:
+            logger.error(
+                f"Microsoft Teams connection failed: {e}. Please check your permissions and try again."
+            )
             return False
 
-        if "access_token" not in result:
+    def test_teams_certificate_connection(self) -> bool:
+        """Test Microsoft Teams API connection using certificate and raise exception if it fails."""
+        result = self.execute(
+            "Connect-MicrosoftTeams -Certificate $certificate -ApplicationId $clientID -TenantId $tenantID"
+        )
+        if self.tenant_identity.identity_id not in result:
+            logger.error(f"Microsoft Teams Certificate connection failed: {result}")
+            return False
+        return True
+
+    def test_exchange_connection(self) -> bool:
+        """Test Exchange Online API connection and raise exception if it fails."""
+        try:
+            self.execute(
+                '$SecureSecret = ConvertTo-SecureString "$clientSecret" -AsPlainText -Force'
+            )
+            self.execute(
+                '$exchangeToken = Get-MsalToken -clientID "$clientID" -tenantID "$tenantID" -clientSecret $SecureSecret -Scopes "https://outlook.office365.com/.default"'
+            )
+            token = decode_msal_token(self.execute("Write-Output $exchangeToken"))
+            permissions = token.get("roles", [])
+            if "Exchange.ManageAsApp" not in permissions:
+                logger.error(
+                    "Exchange Online connection failed: Please check your permissions and try again."
+                )
+                return False
+            self.execute(
+                'Connect-ExchangeOnline -AccessToken $exchangeToken.AccessToken -Organization "$tenantID"'
+            )
+            return True
+        except Exception as e:
+            logger.error(
+                f"Exchange Online connection failed: {e}. Please check your permissions and try again."
+            )
             return False
 
+    def test_exchange_certificate_connection(self) -> bool:
+        """Test Exchange Online API connection using certificate and raise exception if it fails."""
+        result = self.execute(
+            "Connect-ExchangeOnline -Certificate $certificate -AppId $clientID -Organization $tenantDomain"
+        )
+        if "https://aka.ms/exov3-module" not in result:
+            logger.error(f"Exchange Online Certificate connection failed: {result}")
+            return False
         return True
 
     def connect_microsoft_teams(self) -> dict:
@@ -173,6 +256,9 @@ class M365PowerShell(PowerShellSession):
         Connect to Microsoft Teams Module PowerShell Module.
 
         Establishes a connection to Microsoft Teams using the initialized credentials.
+        Supports two authentication methods:
+        1. Application authentication (client_id/client_secret)
+        2. Certificate authentication (certificate_content in base64/client_id)
 
         Returns:
             dict: Connection status information in JSON format.
@@ -180,7 +266,11 @@ class M365PowerShell(PowerShellSession):
         Note:
             This method requires the Microsoft Teams PowerShell module to be installed.
         """
-        return self.execute("Connect-MicrosoftTeams -Credential $credential")
+        # Certificate Auth
+        if self.execute("Write-Output $certificate") != "":
+            return self.test_teams_certificate_connection()
+        # Application Auth
+        return self.test_teams_connection()
 
     def get_teams_settings(self) -> dict:
         """
@@ -267,6 +357,9 @@ class M365PowerShell(PowerShellSession):
         Connect to Exchange Online PowerShell Module.
 
         Establishes a connection to Exchange Online using the initialized credentials.
+        Supports two authentication methods:
+        1. Application authentication (client_id/client_secret)
+        2. Certificate authentication (certificate_content in base64/client_id)
 
         Returns:
             dict: Connection status information in JSON format.
@@ -274,7 +367,11 @@ class M365PowerShell(PowerShellSession):
         Note:
             This method requires the Exchange Online PowerShell module to be installed.
         """
-        return self.execute("Connect-ExchangeOnline -Credential $credential")
+        # Certificate Auth
+        if self.execute("Write-Output $certificate") != "":
+            return self.test_exchange_certificate_connection()
+        # Application Auth
+        return self.test_exchange_connection()
 
     def get_audit_log_config(self) -> dict:
         """
@@ -743,6 +840,20 @@ class M365PowerShell(PowerShellSession):
         """
         return self.execute("Get-SharingPolicy | ConvertTo-Json", json_parse=True)
 
+    def get_user_account_status(self) -> dict:
+        """
+        Get User Account Status.
+
+        Retrieves the current user account status settings for Exchange Online.
+
+        Returns:
+            dict: User account status settings in JSON format.
+        """
+        return self.execute(
+            "$dict=@{}; Get-User -ResultSize Unlimited | ForEach-Object { $dict[$_.Id] = @{ AccountDisabled = $_.AccountDisabled } }; $dict | ConvertTo-Json",
+            json_parse=True,
+        )
+
 
 # This function is used to install the required M365 PowerShell modules in Docker containers
 def initialize_m365_powershell_modules():
@@ -756,25 +867,20 @@ def initialize_m365_powershell_modules():
         bool: True if all modules were successfully initialized, False otherwise
     """
 
-    REQUIRED_MODULES = [
-        "ExchangeOnlineManagement",
-        "MicrosoftTeams",
-    ]
+    REQUIRED_MODULES = ["ExchangeOnlineManagement", "MicrosoftTeams", "MSAL.PS"]
 
     pwsh = PowerShellSession()
     try:
         for module in REQUIRED_MODULES:
             try:
                 # Check if module is already installed
-                result = pwsh.execute(
-                    f"Get-Module -ListAvailable -Name {module}", timeout=5
-                )
+                result = pwsh.execute(f"Get-Module -ListAvailable {module}", timeout=5)
 
                 # Install module if not installed
                 if not result:
                     install_result = pwsh.execute(
-                        f'Install-Module -Name "{module}" -Force -AllowClobber -Scope CurrentUser',
-                        timeout=30,
+                        f'Install-Module "{module}" -Force -AllowClobber -Scope CurrentUser',
+                        timeout=60,
                     )
                     if install_result:
                         logger.warning(
@@ -784,7 +890,7 @@ def initialize_m365_powershell_modules():
                         logger.info(f"Successfully installed module {module}")
 
                     # Import module
-                    pwsh.execute(f'Import-Module -Name "{module}" -Force', timeout=1)
+                    pwsh.execute(f'Import-Module "{module}" -Force', timeout=1)
 
             except Exception as error:
                 logger.error(f"Failed to initialize module {module}: {str(error)}")

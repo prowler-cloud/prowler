@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -33,7 +33,7 @@ class AutoScaling(AWSService):
                         self.launch_configurations[arn] = LaunchConfiguration(
                             arn=arn,
                             name=configuration["LaunchConfigurationName"],
-                            user_data=configuration["UserData"],
+                            user_data=configuration.get("UserData", ""),
                             image_id=configuration["ImageId"],
                             region=regional_client.region,
                             http_tokens=configuration.get("MetadataOptions", {}).get(

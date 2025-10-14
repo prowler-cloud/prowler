@@ -1,5 +1,6 @@
 from datetime import datetime
 from io import StringIO
+from unittest import mock
 
 from freezegun import freeze_time
 from mock import patch
@@ -28,6 +29,8 @@ class TestGCPMITREAttack:
         output_data = output.data[0]
         assert isinstance(output_data, GCPMitreAttackModel)
         assert output_data.Provider == "gcp"
+        assert output_data.Framework == MITRE_ATTACK_GCP.Framework
+        assert output_data.Name == MITRE_ATTACK_GCP.Name
         assert output_data.Description == MITRE_ATTACK_GCP.Description
         assert output_data.ProjectId == GCP_PROJECT_ID
         assert output_data.Location == ""
@@ -69,11 +72,13 @@ class TestGCPMITREAttack:
         assert output_data.StatusExtended == ""
         assert output_data.ResourceId == ""
         assert output_data.ResourceName == ""
-        assert output_data.CheckId == "test-check-id"
+        assert output_data.CheckId == "service_test_check_id"
         assert not output_data.Muted
         # Test manual check
         output_data_manual = output.data[1]
         assert output_data_manual.Provider == "gcp"
+        assert output_data_manual.Framework == MITRE_ATTACK_GCP.Framework
+        assert output_data_manual.Name == MITRE_ATTACK_GCP.Name
         assert output_data_manual.ProjectId == ""
         assert output_data_manual.Location == ""
         assert output_data_manual.Requirements_Id == MITRE_ATTACK_GCP.Requirements[1].Id
@@ -120,7 +125,11 @@ class TestGCPMITREAttack:
         assert output_data_manual.CheckId == "manual"
         assert output_data_manual.Muted is False
 
-    @freeze_time(datetime.now())
+    @freeze_time("2025-01-01 00:00:00")
+    @mock.patch(
+        "prowler.lib.outputs.compliance.mitre_attack.mitre_attack_gcp.timestamp",
+        "2025-01-01 00:00:00",
+    )
     def test_batch_write_data_to_file(self):
         mock_file = StringIO()
         findings = [
@@ -140,5 +149,6 @@ class TestGCPMITREAttack:
 
         mock_file.seek(0)
         content = mock_file.read()
-        expected_csv = f"PROVIDER;DESCRIPTION;PROJECTID;ASSESSMENTDATE;REQUIREMENTS_ID;REQUIREMENTS_NAME;REQUIREMENTS_DESCRIPTION;REQUIREMENTS_TACTICS;REQUIREMENTS_SUBTECHNIQUES;REQUIREMENTS_PLATFORMS;REQUIREMENTS_TECHNIQUEURL;REQUIREMENTS_ATTRIBUTES_SERVICES;REQUIREMENTS_ATTRIBUTES_CATEGORIES;REQUIREMENTS_ATTRIBUTES_VALUES;REQUIREMENTS_ATTRIBUTES_COMMENTS;STATUS;STATUSEXTENDED;RESOURCEID;CHECKID;MUTED;RESOURCENAME;LOCATION\r\ngcp;MITRE ATT&CK® is a globally-accessible knowledge base of adversary tactics and techniques based on real-world observations. The ATT&CK knowledge base is used as a foundation for the development of specific threat models and methodologies in the private sector, in government, and in the cybersecurity product and service community.;123456789012;{datetime.now()};T1190;Exploit Public-Facing Application;Adversaries may attempt to exploit a weakness in an Internet-facing host or system to initially access a network. The weakness in the system can be a software bug, a temporary glitch, or a misconfiguration.;Initial Access;;Containers | IaaS | Linux | Network | Windows | macOS;https://attack.mitre.org/techniques/T1190/;Artifact Registry;Protect;Partial;Once this control is deployed, it can detect known vulnerabilities in various Linux OS packages. This information can be used to patch, isolate, or remove vulnerable software and machines. This control does not directly protect against exploitation and is not effective against zero day attacks, vulnerabilities with no available patch, and other end-of-life packages.;PASS;;;test-check-id;False;;\r\ngcp;MITRE ATT&CK® is a globally-accessible knowledge base of adversary tactics and techniques based on real-world observations. The ATT&CK knowledge base is used as a foundation for the development of specific threat models and methodologies in the private sector, in government, and in the cybersecurity product and service community.;;{datetime.now()};T1191;Exploit Public-Facing Application;Adversaries may attempt to exploit a weakness in an Internet-facing host or system to initially access a network. The weakness in the system can be a software bug, a temporary glitch, or a misconfiguration.;Initial Access;;Containers | IaaS | Linux | Network | Windows | macOS;https://attack.mitre.org/techniques/T1190/;Artifact Registry;Protect;Partial;Once this control is deployed, it can detect known vulnerabilities in various Linux OS packages. This information can be used to patch, isolate, or remove vulnerable software and machines. This control does not directly protect against exploitation and is not effective against zero day attacks, vulnerabilities with no available patch, and other end-of-life packages.;MANUAL;Manual check;manual_check;manual;False;Manual check;\r\n"
+        expected_csv = f"PROVIDER;DESCRIPTION;PROJECTID;ASSESSMENTDATE;REQUIREMENTS_ID;REQUIREMENTS_NAME;REQUIREMENTS_DESCRIPTION;REQUIREMENTS_TACTICS;REQUIREMENTS_SUBTECHNIQUES;REQUIREMENTS_PLATFORMS;REQUIREMENTS_TECHNIQUEURL;REQUIREMENTS_ATTRIBUTES_SERVICES;REQUIREMENTS_ATTRIBUTES_CATEGORIES;REQUIREMENTS_ATTRIBUTES_VALUES;REQUIREMENTS_ATTRIBUTES_COMMENTS;STATUS;STATUSEXTENDED;RESOURCEID;CHECKID;MUTED;RESOURCENAME;LOCATION;FRAMEWORK;NAME\r\ngcp;MITRE ATT&CK® is a globally-accessible knowledge base of adversary tactics and techniques based on real-world observations. The ATT&CK knowledge base is used as a foundation for the development of specific threat models and methodologies in the private sector, in government, and in the cybersecurity product and service community.;123456789012;{datetime.now()};T1190;Exploit Public-Facing Application;Adversaries may attempt to exploit a weakness in an Internet-facing host or system to initially access a network. The weakness in the system can be a software bug, a temporary glitch, or a misconfiguration.;Initial Access;;Containers | IaaS | Linux | Network | Windows | macOS;https://attack.mitre.org/techniques/T1190/;Artifact Registry;Protect;Partial;Once this control is deployed, it can detect known vulnerabilities in various Linux OS packages. This information can be used to patch, isolate, or remove vulnerable software and machines. This control does not directly protect against exploitation and is not effective against zero day attacks, vulnerabilities with no available patch, and other end-of-life packages.;PASS;;;service_test_check_id;False;;;MITRE-ATTACK;MITRE ATT&CK compliance framework\r\ngcp;MITRE ATT&CK® is a globally-accessible knowledge base of adversary tactics and techniques based on real-world observations. The ATT&CK knowledge base is used as a foundation for the development of specific threat models and methodologies in the private sector, in government, and in the cybersecurity product and service community.;;{datetime.now()};T1191;Exploit Public-Facing Application;Adversaries may attempt to exploit a weakness in an Internet-facing host or system to initially access a network. The weakness in the system can be a software bug, a temporary glitch, or a misconfiguration.;Initial Access;;Containers | IaaS | Linux | Network | Windows | macOS;https://attack.mitre.org/techniques/T1190/;Artifact Registry;Protect;Partial;Once this control is deployed, it can detect known vulnerabilities in various Linux OS packages. This information can be used to patch, isolate, or remove vulnerable software and machines. This control does not directly protect against exploitation and is not effective against zero day attacks, vulnerabilities with no available patch, and other end-of-life packages.;MANUAL;Manual check;manual_check;manual;False;Manual check;;MITRE-ATTACK;MITRE ATT&CK compliance framework\r\n"
+
         assert content == expected_csv

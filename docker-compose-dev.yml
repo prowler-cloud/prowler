@@ -14,9 +14,11 @@ services:
     ports:
       - "${DJANGO_PORT:-8080}:${DJANGO_PORT:-8080}"
     volumes:
-      - "./api/src/backend:/home/prowler/backend"
-      - "./api/pyproject.toml:/home/prowler/pyproject.toml"
-      - "/tmp/prowler_api_output:/tmp/prowler_api_output"
+      - ./api/src/backend:/home/prowler/backend
+      - ./api/pyproject.toml:/home/prowler/pyproject.toml
+      - ./api/docker-entrypoint.sh:/home/prowler/docker-entrypoint.sh
+      - ./_data/api:/home/prowler/.config/prowler-api
+      - outputs:/tmp/prowler_api_output
     depends_on:
       postgres:
         condition: service_healthy
@@ -64,7 +66,7 @@ services:
     image: valkey/valkey:7-alpine3.19
     hostname: "valkey"
     volumes:
-      - ./api/_data/valkey:/data
+      - ./_data/valkey:/data
     env_file:
       - path: .env
         required: false
@@ -87,7 +89,7 @@ services:
       - path: .env
         required: false
     volumes:
-      - "/tmp/prowler_api_output:/tmp/prowler_api_output"
+      - "outputs:/tmp/prowler_api_output"
     depends_on:
       valkey:
         condition: service_healthy
@@ -115,3 +117,7 @@ services:
     entrypoint:
       - "../docker-entrypoint.sh"
       - "beat"
+
+volumes:
+  outputs:
+    driver: local

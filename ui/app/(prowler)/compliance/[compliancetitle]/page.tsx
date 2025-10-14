@@ -1,19 +1,18 @@
-import { Spacer } from "@nextui-org/react";
+import { Spacer } from "@heroui/spacer";
 import Image from "next/image";
-import { Suspense } from "react";
+import React, { Suspense } from "react";
 
 import {
   getComplianceAttributes,
   getComplianceOverviewMetadataInfo,
   getComplianceRequirements,
 } from "@/actions/compliances";
-import { getProvider } from "@/actions/providers";
-import { getScans } from "@/actions/scans";
 import {
   BarChart,
   BarChartSkeleton,
   ClientAccordionWrapper,
   ComplianceHeader,
+  ComplianceScanInfo,
   HeatmapChart,
   HeatmapChartSkeleton,
   PieChart,
@@ -22,20 +21,23 @@ import {
 } from "@/components/compliance";
 import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
 import { ContentLayout } from "@/components/ui";
+import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
 import {
-  calculateCategoryHeatmapData,
-  calculateRegionHeatmapData,
-  getComplianceMapper,
-} from "@/lib/compliance/commons";
-import { ScanProps } from "@/types";
-import { Framework, RequirementsTotals } from "@/types/compliance";
+  AttributesData,
+  Framework,
+  RequirementsTotals,
+} from "@/types/compliance";
+import { ScanEntity } from "@/types/scans";
 
 interface ComplianceDetailSearchParams {
   complianceId: string;
   version?: string;
   scanId?: string;
+  scanData?: string;
   "filter[region__in]"?: string;
   "filter[cis_profile_level]"?: string;
+  page?: string;
+  pageSize?: string;
 }
 
 const ComplianceIconSmall = ({
@@ -46,12 +48,12 @@ const ComplianceIconSmall = ({
   title: string;
 }) => {
   return (
-    <div className="relative h-6 w-6 flex-shrink-0">
+    <div className="relative h-6 w-6 shrink-0">
       <Image
         src={logoPath}
         alt={`${title} logo`}
         fill
-        className="h-10 w-10 min-w-10 rounded-md border-1 border-gray-300 bg-white object-contain p-[2px]"
+        className="h-8 w-8 min-w-8 rounded-md border border-gray-300 bg-white object-contain p-[2px]"
       />
     </div>
   );
@@ -64,7 +66,7 @@ const ChartsWrapper = ({
   logoPath?: string;
 }) => {
   return (
-    <div className="mb-8 flex w-full flex-col items-center justify-between lg:flex-row">
+    <div className="mb-8 flex w-full flex-wrap items-center justify-center gap-12 lg:justify-start lg:gap-24">
       {children}
     </div>
   );
@@ -74,73 +76,57 @@ export default async function ComplianceDetail({
   params,
   searchParams,
 }: {
-  params: { compliancetitle: string };
-  searchParams: ComplianceDetailSearchParams;
+  params: Promise<{ compliancetitle: string }>;
+  searchParams: Promise<ComplianceDetailSearchParams>;
 }) {
-  const { compliancetitle } = params;
-  const { complianceId, version, scanId } = searchParams;
-  const regionFilter = searchParams["filter[region__in]"];
-  const cisProfileFilter = searchParams["filter[cis_profile_level]"];
+  const { compliancetitle } = await params;
+  const resolvedSearchParams = await searchParams;
+  const { complianceId, version, scanId, scanData } = resolvedSearchParams;
+  const regionFilter = resolvedSearchParams["filter[region__in]"];
+  const cisProfileFilter = resolvedSearchParams["filter[cis_profile_level]"];
   const logoPath = getComplianceIcon(compliancetitle);
 
-  // Create a key that includes region filter for Suspense
-  const searchParamsKey = JSON.stringify(searchParams || {});
+  // Create a key that excludes pagination parameters to preserve accordion state avoiding reloads with pagination
+  const paramsForKey = Object.fromEntries(
+    Object.entries(resolvedSearchParams).filter(
+      ([key]) => key !== "page" && key !== "pageSize",
+    ),
+  );
+  const searchParamsKey = JSON.stringify(paramsForKey);
 
   const formattedTitle = compliancetitle.split("-").join(" ");
   const pageTitle = version
     ? `Compliance Details: ${formattedTitle} - ${version}`
     : `Compliance Details: ${formattedTitle}`;
 
-  // Fetch scans data
-  const scansData = await getScans({
-    filters: {
-      "filter[state]": "completed",
-    },
-  });
+  let selectedScan: ScanEntity | null = null;
 
-  // Expand scans with provider information
-  const expandedScansData = scansData?.data?.length
-    ? await Promise.all(
-        scansData.data.map(async (scan: ScanProps) => {
-          const providerId = scan.relationships?.provider?.data?.id;
+  if (scanData) {
+    selectedScan = JSON.parse(decodeURIComponent(scanData));
+  }
 
-          if (!providerId) {
-            return { ...scan, providerInfo: null };
-          }
+  const selectedScanId = scanId || selectedScan?.id || null;
 
-          const formData = new FormData();
-          formData.append("id", providerId);
-
-          const providerData = await getProvider(formData);
-
-          return {
-            ...scan,
-            providerInfo: providerData?.data
-              ? {
-                  provider: providerData.data.attributes.provider,
-                  uid: providerData.data.attributes.uid,
-                  alias: providerData.data.attributes.alias,
-                }
-              : null,
-          };
-        }),
-      )
-    : [];
-
-  const selectedScanId = scanId || expandedScansData[0]?.id || null;
-
-  // Fetch metadata info for regions
-  const metadataInfoData = await getComplianceOverviewMetadataInfo({
-    filters: {
-      "filter[scan_id]": selectedScanId,
-    },
-  });
+  const [metadataInfoData, attributesData] = await Promise.all([
+    getComplianceOverviewMetadataInfo({
+      filters: {
+        "filter[scan_id]": selectedScanId,
+      },
+    }),
+    getComplianceAttributes(complianceId),
+  ]);
 
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
 
+  // Use compliance_name from attributes if available, otherwise fallback to formatted title
+  const complianceName = attributesData?.data?.[0]?.attributes?.compliance_name;
+  const finalPageTitle = complianceName
+    ? `Compliance Details: ${complianceName}`
+    : pageTitle;
+
   return (
     <ContentLayout
-      title={pageTitle}
+      title={finalPageTitle}
       icon={
         logoPath ? (
           <ComplianceIconSmall logoPath={logoPath} title={compliancetitle} />
@@ -149,17 +135,26 @@ export default async function ComplianceDetail({
         )
       }
     >
+      {selectedScanId && selectedScan && (
+        <div className="flex max-w-[328px] flex-col items-start">
+          <div className="rounded-lg bg-gray-50 p-2 dark:bg-gray-800">
+            <ComplianceScanInfo scan={selectedScan} />
+          </div>
+          <Spacer y={8} />
+        </div>
+      )}
       <ComplianceHeader
-        scans={expandedScansData}
+        scans={[]}
         uniqueRegions={uniqueRegions}
         showSearch={false}
         framework={compliancetitle}
+        showProviders={false}
       />
 
       <Suspense
         key={searchParamsKey}
         fallback={
-          <div className="space-y-8">
+          <div className="flex flex-col gap-8">
             <ChartsWrapper logoPath={logoPath}>
               <PieChartSkeleton />
               <BarChartSkeleton />
@@ -171,15 +166,11 @@ export default async function ComplianceDetail({
       >
         <SSRComplianceContent
           complianceId={complianceId}
-          scanId={selectedScanId}
+          scanId={selectedScanId || ""}
           region={regionFilter}
           filter={cisProfileFilter}
           logoPath={logoPath}
-          uniqueRegions={uniqueRegions}
-          isRegionFiltered={
-            !!regionFilter &&
-            regionFilter.split(",").length < uniqueRegions.length
-          }
+          attributesData={attributesData}
         />
       </Suspense>
     </ContentLayout>
@@ -192,48 +183,35 @@ const SSRComplianceContent = async ({
   region,
   filter,
   logoPath,
-  uniqueRegions,
-  isRegionFiltered,
+  attributesData,
 }: {
   complianceId: string;
   scanId: string;
   region?: string;
   filter?: string;
   logoPath?: string;
-  uniqueRegions: string[];
-  isRegionFiltered: boolean;
+  attributesData: AttributesData;
 }) => {
-  if (!scanId) {
+  const requirementsData = await getComplianceRequirements({
+    complianceId,
+    scanId,
+    region,
+  });
+  const type = requirementsData?.data?.[0]?.type;
+
+  if (!scanId || type === "tasks") {
     return (
-      <div className="space-y-8">
+      <div className="flex flex-col gap-8">
         <ChartsWrapper logoPath={logoPath}>
           <PieChart pass={0} fail={0} manual={0} />
           <BarChart sections={[]} />
-          <HeatmapChart
-            regions={[]}
-            categories={[]}
-            isRegionFiltered={
-              !!region && region.split(",").length < uniqueRegions.length
-            }
-            filteredRegionName={region}
-          />
+          <HeatmapChart categories={[]} />
         </ChartsWrapper>
         <ClientAccordionWrapper items={[]} defaultExpandedKeys={[]} />
       </div>
     );
   }
 
-  // Get compliance data and attributes once
-  const [attributesData, requirementsData] = await Promise.all([
-    getComplianceAttributes(complianceId),
-    getComplianceRequirements({
-      complianceId,
-      scanId,
-      region,
-    }),
-  ]);
-
-  // Determine framework from the first attribute item
   const framework = attributesData?.data?.[0]?.attributes?.framework;
   const mapper = getComplianceMapper(framework);
   const data = mapper.mapComplianceData(
@@ -241,17 +219,7 @@ const SSRComplianceContent = async ({
     requirementsData,
     filter,
   );
-
-  // Calculate region heatmap data using already obtained data
-  const regionHeatmapData = await calculateRegionHeatmapData(
-    complianceId,
-    scanId,
-    uniqueRegions,
-    attributesData,
-    mapper,
-  );
-  const categoryHeatmapData = calculateCategoryHeatmapData(data);
-
+  const categoryHeatmapData = mapper.calculateCategoryHeatmapData(data);
   const totalRequirements: RequirementsTotals = data.reduce(
     (acc: RequirementsTotals, framework: Framework) => ({
       pass: acc.pass + framework.pass,
@@ -260,16 +228,11 @@ const SSRComplianceContent = async ({
     }),
     { pass: 0, fail: 0, manual: 0 },
   );
-
   const accordionItems = mapper.toAccordionItems(data, scanId);
   const topFailedSections = mapper.getTopFailedSections(data);
 
-  // Todo: rethink as every compliance has a different number of items
-  // const defaultKeys = accordionItems.slice(0, 2).map((item) => item.key);
-  const defaultKeys = [""];
-
   return (
-    <div className="space-y-8">
+    <div className="flex flex-col gap-8">
       <ChartsWrapper logoPath={logoPath}>
         <PieChart
           pass={totalRequirements.pass}
@@ -277,18 +240,14 @@ const SSRComplianceContent = async ({
           manual={totalRequirements.manual}
         />
         <BarChart sections={topFailedSections} />
-        <HeatmapChart
-          regions={regionHeatmapData}
-          categories={categoryHeatmapData}
-          isRegionFiltered={isRegionFiltered}
-          filteredRegionName={region}
-        />
+        <HeatmapChart categories={categoryHeatmapData} />
       </ChartsWrapper>
 
       <Spacer className="h-1 w-full rounded-full bg-gray-200 dark:bg-gray-800" />
       <ClientAccordionWrapper
+        hideExpandButton={complianceId.includes("mitre_attack")}
         items={accordionItems}
-        defaultExpandedKeys={defaultKeys}
+        defaultExpandedKeys={[]}
       />
     </div>
   );

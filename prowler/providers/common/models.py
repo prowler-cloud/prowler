@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from os import makedirs
 from os.path import isdir
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.providers.common.provider import Provider
 

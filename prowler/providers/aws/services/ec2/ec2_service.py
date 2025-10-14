@@ -3,7 +3,7 @@ from ipaddress import IPv4Address, IPv6Address, ip_address
 from typing import Optional, Union
 
 from botocore.client import ClientError
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
@@ -349,20 +349,30 @@ class EC2(AWSService):
 
     def _describe_images(self, regional_client):
         try:
-            for image in regional_client.describe_images(Owners=["self"])["Images"]:
-                arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:image/{image['ImageId']}"
-                if not self.audit_resources or (
-                    is_resource_filtered(arn, self.audit_resources)
-                ):
-                    self.images.append(
-                        Image(
-                            id=image["ImageId"],
-                            arn=arn,
-                            name=image.get("Name", ""),
-                            public=image.get("Public", False),
-                            region=regional_client.region,
-                            tags=image.get("Tags"),
-                        )
+            for owner in ["self", "amazon"]:
+                try:
+                    for image in regional_client.describe_images(
+                        Owners=[owner], IncludeDeprecated=True
+                    )["Images"]:
+                        arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:image/{image['ImageId']}"
+                        if not self.audit_resources or (
+                            is_resource_filtered(arn, self.audit_resources)
+                        ):
+                            self.images.append(
+                                Image(
+                                    id=image["ImageId"],
+                                    arn=arn,
+                                    name=image.get("Name", ""),
+                                    public=image.get("Public", False),
+                                    region=regional_client.region,
+                                    tags=image.get("Tags"),
+                                    deprecation_time=image.get("DeprecationTime"),
+                                    owner=owner,
+                                )
+                            )
+                except Exception as error:
+                    logger.error(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
             logger.error(
@@ -746,6 +756,8 @@ class Image(BaseModel):
     arn: str
     name: str
     public: bool
+    deprecation_time: Optional[str]
+    owner: str
     region: str
     tags: Optional[list] = []
 
