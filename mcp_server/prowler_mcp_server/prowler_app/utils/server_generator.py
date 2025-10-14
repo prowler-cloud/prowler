@@ -527,8 +527,8 @@ class OpenAPIToMCPGenerator:
         original_type = param.get("original_type", "string")
 
         if original_type == "boolean":
-            # First decode JSON if string, then convert to bool
-            return f"bool(json.loads({python_name}) if isinstance({python_name}, str) else {python_name})"
+            # Convert string to boolean using simple comparison
+            return f"({python_name}.lower() in ('true', '1', 'yes', 'on') if isinstance({python_name}, str) else {python_name})"
         elif original_type == "array":
             if param.get("in") == "query":
                 self.needs_query_array_normalizer = True
