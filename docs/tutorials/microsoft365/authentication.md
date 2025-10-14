@@ -5,16 +5,12 @@ Prowler for Microsoft 365 supports multiple authentication types. Authentication
 **Prowler App:**
 
 - [**Service Principal Application**](#service-principal-authentication-recommended) (**Recommended**)
-- [**Service Principal with User Credentials**](#service-principal-and-user-credentials-authentication) (Being deprecated)
+- [**Service Principal with User Credentials**](#service-principal-and-user-credentials-authentication) (Deprecated)
 
 **Prowler CLI:**
 
 - [**Service Principal Application**](#service-principal-authentication-recommended) (**Recommended**)
-- [**Service Principal with User Credentials**](#service-principal-and-user-credentials-authentication) (Being deprecated)
 - [**Interactive browser authentication**](#interactive-browser-authentication)
-
-???+ warning
-    The Service Principal with User Credentials method will be deprecated in October 2025 when Microsoft enforces MFA in all tenants, which will not allow user authentication without interactive methods.
 
 ## Required Permissions
 
@@ -30,7 +26,6 @@ When using service principal authentication, add these **Application Permissions
 - `Directory.Read.All`: Required for all services.
 - `Policy.Read.All`: Required for all services.
 - `SharePointTenantSettings.Read.All`: Required for SharePoint service.
-- `User.Read` (IMPORTANT: this must be set as **delegated**): Required for the sign-in.
 
 **External API Permissions:**
 
@@ -42,20 +37,6 @@ When using service principal authentication, add these **Application Permissions
 
 ???+ note
     This is the **recommended authentication method** because it allows running the full M365 provider including PowerShell checks, providing complete coverage of all available security checks.
-
-### Service Principal + User Credentials Authentication Permissions
-
-When using service principal with user credentials authentication, you need **both** sets of permissions:
-
-**1. Service Principal Application Permissions**:
-
-- All the Microsoft Graph API permissions listed above are required.
-- External API permissions listed above are **not needed**.
-
-**2. User-Level Permissions**: These are set at the `M365_USER` level, so the user used to run Prowler must have one of the following roles:
-
-- `Global Reader` (recommended): Allows reading all required information.
-- `Exchange Administrator` and `Teams Administrator`: User needs both roles for the same access as Global Reader.
 
 ### Browser Authentication Permissions
 
@@ -144,30 +125,6 @@ When using browser authentication, permissions are delegated to the user, so the
 
     ![Grant Admin Consent](../microsoft365/img/grant-external-api-permissions.png)
 
-#### Assign User Roles (For User Authentication)
-
-When using Service Principal with User Credentials authentication, assign the following roles to the user:
-
-1. Go to Users > All Users > Click on the email for the user
-
-    ![User Overview](../microsoft365/img/user-info-page.png)
-
-2. Click "Assigned Roles"
-
-    ![User Roles](../microsoft365/img/user-role-page.png)
-
-3. Click "Add assignments", then search and select:
-
-    - `Global Reader` (recommended)
-    - OR `Exchange Administrator` and `Teams Administrator` (both required)
-
-    ![Global Reader Screenshots](../microsoft365/img/global-reader.png)
-
-4. Click next, assign the role as "Active", and click "Assign"
-
-    ![Grant Admin Consent for Role](../microsoft365/img/grant-admin-consent-for-role.png)
-
----
 
 ## Service Principal Authentication (Recommended)
 
@@ -191,48 +148,6 @@ If the external API permissions described in the mentioned section above are not
 
 ???+ note
     In order to scan all the checks from M365 required permissions to the service principal application must be added. Refer to the [PowerShell Module Permissions](#grant-powershell-module-permissions-for-service-principal-authentication) section for more information.
-
-## Service Principal and User Credentials Authentication
-
-*Available for both Prowler App and Prowler CLI*
-
-**Authentication flag for CLI:** `--env-auth`
-
-???+ warning
-    This method is not recommended and will be deprecated in October 2025. Use the **Service Principal Application** authentication method instead.
-
-This method builds upon Service Principal authentication by adding User Credentials. Configure the following environment variables: `M365_USER` and `M365_PASSWORD`.
-
-```console
-export AZURE_CLIENT_ID="XXXXXXXXX"
-export AZURE_CLIENT_SECRET="XXXXXXXXX"
-export AZURE_TENANT_ID="XXXXXXXXX"
-export M365_USER="your_email@example.com"
-export M365_PASSWORD="examplepassword"
-```
-
-These two new environment variables are **required** in this authentication method to execute the PowerShell modules needed to retrieve information from M365 services. Prowler uses Service Principal authentication to access Microsoft Graph and user credentials to authenticate to Microsoft PowerShell modules.
-
-- `M365_USER` should be your Microsoft account email using the **assigned domain in the tenant**. This means it must look like `example@YourCompany.onmicrosoft.com` or `example@YourCompany.com`, but it must be the exact domain assigned to that user in the tenant.
-
-    ???+ warning
-        Newly created users must sign in with the account first, as Microsoft prompts for password change. Without completing this step, user authentication fails because Microsoft marks the initial password as expired.
-
-    ???+ warning
-        The user must not be MFA capable. Microsoft does not allow MFA capable users to authenticate programmatically. See [Microsoft documentation](https://learn.microsoft.com/en-us/entra/identity-platform/scenario-desktop-acquire-token-username-password?tabs=dotnet) for more information.
-
-    ???+ warning
-        Using a tenant domain other than the one assigned — even if it belongs to the same tenant — will cause Prowler to fail, as Microsoft authentication will not succeed.
-
-    Ensure the correct domain is used for the authenticating user.
-
-    ![User Domains](img/user-domains.png)
-
-- `M365_PASSWORD` must be the user password.
-
-    ???+ note
-        Previously an encrypted password was required, but now the user password is accepted directly. Prowler handles the password encryption.
-
 
 
 ## Interactive Browser Authentication
@@ -471,7 +386,7 @@ The required modules are automatically installed when running Prowler with the `
 Example command:
 
 ```console
-python3 prowler-cli.py m365 --verbose --log-level ERROR --env-auth --init-modules
+python3 prowler-cli.py m365 --verbose --log-level ERROR --sp-env-auth --init-modules
 ```
 If the modules are already installed, running this command will not cause issues—it will simply verify that the necessary modules are available.
 

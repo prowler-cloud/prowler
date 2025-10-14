@@ -137,8 +137,8 @@ test.describe("Session Persistence", () => {
   }) => {
     // Try to access protected route without login
     await page.goto(URLS.DASHBOARD);
-    // Should be redirected to login page
-    await expect(page).toHaveURL(URLS.LOGIN);
+    // Should be redirected to login page (may include callbackUrl)
+    await expect(page).toHaveURL(/\/sign-in/);
     await expect(page.getByText("Sign in", { exact: true })).toBeVisible();
   });
 
@@ -154,7 +154,7 @@ test.describe("Session Persistence", () => {
 
     // Verify cannot access protected route after logout
     await page.goto(URLS.DASHBOARD);
-    await expect(page).toHaveURL(URLS.LOGIN);
+    await expect(page).toHaveURL(/\/sign-in/);
   });
 
   test("should handle session timeout gracefully", async ({ browser }) => {
@@ -184,8 +184,8 @@ test.describe("Session Persistence", () => {
       waitUntil: "networkidle",
     });
 
-    // Should be redirected to login since this context has no auth
-    await expect(unauthPage).toHaveURL(URLS.LOGIN);
+    // Should be redirected to login since this context has no auth (may include callbackUrl)
+    await expect(unauthPage).toHaveURL(/\/sign-in/);
 
     // Verify session is null in unauthenticated context
     const unauthResponse = await unauthPage.request.get("/api/auth/session");
