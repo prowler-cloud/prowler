@@ -157,8 +157,8 @@ class ProwlerDocsSearchEngine:
             doc_path = doc_path.rstrip("/")
 
             # Add .md extension if not present
-            if not doc_path.endswith(".md"):
-                doc_path = f"{doc_path}.md"
+            if not doc_path.endswith(".mdx"):
+                doc_path = f"{doc_path}.mdx"
 
             # Construct GitHub raw URL
             url = f"{self.github_raw_base}/{doc_path}"
