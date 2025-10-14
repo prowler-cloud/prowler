@@ -10,9 +10,9 @@ import {
   AlertTitle,
 } from "@/components/ui/alert/Alert";
 import { CustomAlertModal } from "@/components/ui/custom/custom-alert-modal";
+import { ModalButtons } from "@/components/ui/custom/custom-modal-buttons";
 
 import { FALLBACK_VALUES } from "./api-keys/constants";
-import { ModalButtons } from "./api-keys/modal-buttons";
 import { EnrichedApiKey } from "./api-keys/types";
 import { useModalForm } from "./api-keys/use-modal-form";
 
