@@ -1,0 +1,5 @@
+auth:
+    database: prowler_db
+    username: prowler
+    postgresPassword: postgres
+    password: postgres
