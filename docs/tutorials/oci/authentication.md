@@ -15,6 +15,17 @@ Prowler supports three authentication methods for OCI:
 
 **This is the recommended authentication method** as it automatically generates the config file and doesn't require managing static API keys.
 
+### Prerequisites
+
+You need to have the **OCI CLI installed** to use session authentication.
+
+For installation instructions, see the [OCI CLI Installation Guide](https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/cliinstall.htm).
+
+Verify your OCI CLI installation:
+```bash
+oci --version
+```
+
 ### How It Works
 
 The `oci session authenticate` command uses your browser to authenticate and creates temporary session tokens that are more secure than static API keys.
@@ -35,8 +46,16 @@ This command will:
 
 After running `oci session authenticate`, you need to manually add your user OCID to the config file:
 
+**Get your user OCID from the OCI Console:**
+
+Navigate to: **Identity & Security** → **Users** → Click on your username → Copy the OCID
+
+![Get User OCID from OCI Console](./images/oci-user-ocid.png)
+
+Direct link: [OCI Console - Users](https://cloud.oracle.com/identity/domains/my-profile)
+
+Or use the OCI CLI:
 ```bash
-# Get your user OCID from OCI Console or CLI
 oci iam user list --all
 ```
 

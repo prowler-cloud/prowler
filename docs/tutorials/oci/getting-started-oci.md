@@ -26,7 +26,9 @@ Prowler supports multiple authentication methods for OCI. For detailed authentic
 
 ### Quick Start: OCI Session Authentication (Recommended)
 
-The easiest and most secure method is using OCI session authentication:
+The easiest and most secure method is using OCI session authentication.
+
+**Prerequisites:** You need to have the **OCI CLI installed**. See the [OCI CLI Installation Guide](https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/cliinstall.htm) for installation instructions.
 
 1. Authenticate using the OCI CLI:
    ```bash
@@ -35,8 +37,17 @@ The easiest and most secure method is using OCI session authentication:
    This will open your browser for OCI Console login and automatically generate the config file.
 
 2. Add your user OCID to `~/.oci/config`:
+
+   **Get your user OCID from the OCI Console:**
+
+   Navigate to: **Identity & Security** → **Users** → Click on your username → Copy the OCID
+
+   ![Get User OCID from OCI Console](./images/oci-user-ocid.png)
+
+   Direct link: [OCI Console - Users](https://cloud.oracle.com/identity/domains/my-profile)
+
+   Or use the OCI CLI:
    ```bash
-   # Get your user OCID
    oci iam user list --all
    ```
 
