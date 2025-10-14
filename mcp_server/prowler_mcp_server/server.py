@@ -2,6 +2,7 @@ import os
 
 from fastmcp import FastMCP
 from prowler_mcp_server.lib.logger import logger
+from starlette.responses import JSONResponse
 
 
 async def setup_main_server(transport: str) -> FastMCP:
@@ -51,5 +52,10 @@ async def setup_main_server(transport: str) -> FastMCP:
         logger.info("Successfully imported Prowler Documentation server")
     except Exception as e:
         logger.error(f"Failed to import Prowler Documentation server: {e}")
+
+    # Add health check endpoint
+    @prowler_mcp_server.custom_route("/health", methods=["GET"])
+    async def health_check(request):
+        return JSONResponse({"status": "healthy", "service": "prowler-mcp-server"})
 
     return prowler_mcp_server
