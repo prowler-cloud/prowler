@@ -79,6 +79,12 @@ class OciProvider(Provider):
         mutelist_path: str = None,
         mutelist_content: dict = None,
         use_instance_principal: bool = False,
+        user: str = None,
+        fingerprint: str = None,
+        key_file: str = None,
+        key_content: str = None,
+        tenancy: str = None,
+        pass_phrase: str = None,
     ):
         """
         Initializes the OCI provider.
@@ -94,6 +100,12 @@ class OciProvider(Provider):
             - mutelist_path: The path to the mutelist file.
             - mutelist_content: The content of the mutelist file.
             - use_instance_principal: Whether to use instance principal authentication.
+            - user: The OCID of the user (for API key authentication).
+            - fingerprint: The fingerprint of the API signing key.
+            - key_file: Path to the private key file.
+            - key_content: Content of the private key (base64 encoded).
+            - tenancy: The OCID of the tenancy.
+            - pass_phrase: The passphrase for the private key, if encrypted.
 
         Raises:
             - OCISetUpSessionError: If an error occurs during the setup process.
@@ -110,6 +122,7 @@ class OciProvider(Provider):
                     - oci = OciProvider(profile="profile_name")
                     - oci = OciProvider(oci_config_file="/path/to/config")
                     - oci = OciProvider(use_instance_principal=True)
+                    - oci = OciProvider(user="ocid1...", fingerprint="...", key_content="...", tenancy="ocid1...", region="us-ashburn-1")
         """
 
         logger.info("Initializing OCI provider ...")
@@ -120,6 +133,13 @@ class OciProvider(Provider):
             oci_config_file=oci_config_file,
             profile=profile,
             use_instance_principal=use_instance_principal,
+            user=user,
+            fingerprint=fingerprint,
+            key_file=key_file,
+            key_content=key_content,
+            tenancy=tenancy,
+            region=region,
+            pass_phrase=pass_phrase,
         )
 
         logger.info("OCI session configured successfully")
@@ -208,6 +228,13 @@ class OciProvider(Provider):
         oci_config_file: str = None,
         profile: str = None,
         use_instance_principal: bool = False,
+        user: str = None,
+        fingerprint: str = None,
+        key_file: str = None,
+        key_content: str = None,
+        tenancy: str = None,
+        region: str = None,
+        pass_phrase: str = None,
     ) -> OCISession:
         """
         setup_session sets up an OCI session using the provided credentials.
@@ -216,6 +243,13 @@ class OciProvider(Provider):
             - oci_config_file: The path to the OCI config file.
             - profile: The name of the OCI CLI profile to use.
             - use_instance_principal: Whether to use instance principal authentication.
+            - user: The OCID of the user (for API key authentication).
+            - fingerprint: The fingerprint of the API signing key.
+            - key_file: Path to the private key file.
+            - key_content: Content of the private key (base64 encoded).
+            - tenancy: The OCID of the tenancy.
+            - region: The OCI region.
+            - pass_phrase: The passphrase for the private key, if encrypted.
 
         Returns:
             - OCISession: The OCI session.
@@ -229,7 +263,61 @@ class OciProvider(Provider):
             config = {}
             signer = None
 
-            if use_instance_principal:
+            # If API key credentials are provided directly, create config from them
+            if user and fingerprint and tenancy and region:
+                import base64
+                import tempfile
+
+                logger.info("Using API key credentials from direct parameters")
+
+                # Create config dict from provided credentials
+                config = {
+                    "user": user,
+                    "fingerprint": fingerprint,
+                    "tenancy": tenancy,
+                    "region": region,
+                }
+
+                # Handle private key
+                if key_content:
+                    # Decode base64 key content and write to temp file
+                    try:
+                        key_data = base64.b64decode(key_content)
+                        temp_key_file = tempfile.NamedTemporaryFile(
+                            mode="wb", delete=False, suffix=".pem"
+                        )
+                        temp_key_file.write(key_data)
+                        temp_key_file.close()
+                        config["key_file"] = temp_key_file.name
+                    except Exception as decode_error:
+                        logger.error(f"Failed to decode key_content: {decode_error}")
+                        raise OCIInvalidConfigError(
+                            file=pathlib.Path(__file__).name,
+                            message="Failed to decode key_content. Ensure it is base64 encoded.",
+                        )
+                elif key_file:
+                    config["key_file"] = os.path.expanduser(key_file)
+                else:
+                    raise OCINoCredentialsError(
+                        file=pathlib.Path(__file__).name,
+                        message="Either key_file or key_content must be provided",
+                    )
+
+                if pass_phrase:
+                    config["pass_phrase"] = pass_phrase
+
+                # Validate the config
+                try:
+                    oci.config.validate_config(config)
+                except oci.exceptions.InvalidConfig as error:
+                    raise OCIInvalidConfigError(
+                        original_exception=error,
+                        file=pathlib.Path(__file__).name,
+                    )
+
+                return OCISession(config=config, signer=None, profile=None)
+
+            elif use_instance_principal:
                 # Use instance principal authentication
                 try:
                     signer = oci.auth.signers.InstancePrincipalsSecurityTokenSigner()
@@ -692,6 +780,13 @@ class OciProvider(Provider):
         region: str = None,
         use_instance_principal: bool = False,
         raise_on_exception: bool = True,
+        provider_id: str = None,
+        user: str = None,
+        fingerprint: str = None,
+        key_file: str = None,
+        key_content: str = None,
+        tenancy: str = None,
+        pass_phrase: str = None,
     ) -> Connection:
         """
         Test the connection to OCI with the provided credentials.
@@ -702,6 +797,13 @@ class OciProvider(Provider):
             region (str): The OCI region to validate the credentials in.
             use_instance_principal (bool): Whether to use instance principal authentication.
             raise_on_exception (bool): Whether to raise an exception if an error occurs.
+            provider_id (str): The expected tenancy OCID to validate against.
+            user (str): The OCID of the user (for API key authentication).
+            fingerprint (str): The fingerprint of the API signing key.
+            key_file (str): Path to the private key file.
+            key_content (str): Content of the private key (base64 encoded).
+            tenancy (str): The OCID of the tenancy.
+            pass_phrase (str): The passphrase for the private key, if encrypted.
 
         Returns:
             Connection: An object that contains the result of the test connection operation.
@@ -711,6 +813,7 @@ class OciProvider(Provider):
         Raises:
             OCISetUpSessionError: If there is an error setting up the session.
             OCIAuthenticationError: If there is an authentication error.
+            OCIInvalidTenancyError: If the provider_id doesn't match the authenticated tenancy.
             Exception: If there is an unexpected error.
 
         Examples:
@@ -718,18 +821,92 @@ class OciProvider(Provider):
             Connection(is_connected=True, Error=None)
             >>> OciProvider.test_connection(use_instance_principal=True, raise_on_exception=False)
             Connection(is_connected=True, Error=None)
+            >>> OciProvider.test_connection(
+                    user="ocid1.user.oc1..aaaaaa...",
+                    fingerprint="12:34:56:78:...",
+                    key_content="base64_encoded_key",
+                    tenancy="ocid1.tenancy.oc1..aaaaaa...",
+                    region="us-ashburn-1",
+                    provider_id="ocid1.tenancy.oc1..aaaaaa...",
+                    raise_on_exception=False
+                )
+            Connection(is_connected=True, Error=None)
         """
         try:
-            session = OciProvider.setup_session(
-                oci_config_file=oci_config_file,
-                profile=profile,
-                use_instance_principal=use_instance_principal,
-            )
+            session = None
+
+            # If API key credentials are provided directly, create config from them
+            if user and fingerprint and tenancy and region:
+                import base64
+                import tempfile
+
+                logger.info("Using API key credentials from direct parameters")
+
+                # Create config dict from provided credentials
+                config = {
+                    "user": user,
+                    "fingerprint": fingerprint,
+                    "tenancy": tenancy,
+                    "region": region,
+                }
+
+                # Handle private key
+                if key_content:
+                    # Decode base64 key content and write to temp file
+                    try:
+                        key_data = base64.b64decode(key_content)
+                        temp_key_file = tempfile.NamedTemporaryFile(
+                            mode="wb", delete=False, suffix=".pem"
+                        )
+                        temp_key_file.write(key_data)
+                        temp_key_file.close()
+                        config["key_file"] = temp_key_file.name
+                    except Exception as decode_error:
+                        logger.error(f"Failed to decode key_content: {decode_error}")
+                        raise OCIInvalidConfigError(
+                            file=pathlib.Path(__file__).name,
+                            message="Failed to decode key_content. Ensure it is base64 encoded.",
+                        )
+                elif key_file:
+                    config["key_file"] = os.path.expanduser(key_file)
+                else:
+                    raise OCINoCredentialsError(
+                        file=pathlib.Path(__file__).name,
+                        message="Either key_file or key_content must be provided",
+                    )
+
+                if pass_phrase:
+                    config["pass_phrase"] = pass_phrase
+
+                # Validate the config
+                try:
+                    oci.config.validate_config(config)
+                except oci.exceptions.InvalidConfig as error:
+                    raise OCIInvalidConfigError(
+                        original_exception=error,
+                        file=pathlib.Path(__file__).name,
+                    )
+
+                session = OCISession(config=config, signer=None, profile=None)
+            else:
+                # Use traditional config file or instance principal authentication
+                session = OciProvider.setup_session(
+                    oci_config_file=oci_config_file,
+                    profile=profile,
+                    use_instance_principal=use_instance_principal,
+                )
 
             identity = OciProvider.set_identity(
                 session=session,
                 region=region,
             )
+
+            # Validate provider_id if provided
+            if provider_id and identity.tenancy_id != provider_id:
+                raise OCIInvalidTenancyError(
+                    file=pathlib.Path(__file__).name,
+                    message=f"Provider ID mismatch: expected '{provider_id}', got '{identity.tenancy_id}'",
+                )
 
             logger.info(f"Successfully connected to OCI tenancy: {identity.tenancy_id}")
 
@@ -750,6 +927,14 @@ class OciProvider(Provider):
             if raise_on_exception:
                 raise auth_error
             return Connection(error=auth_error)
+
+        except OCIInvalidTenancyError as tenancy_error:
+            logger.error(
+                f"{tenancy_error.__class__.__name__}[{tenancy_error.__traceback__.tb_lineno}]: {tenancy_error}"
+            )
+            if raise_on_exception:
+                raise tenancy_error
+            return Connection(error=tenancy_error)
 
         except Exception as error:
             logger.critical(
