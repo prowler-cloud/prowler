@@ -365,7 +365,6 @@ export const S3IntegrationForm = ({
       <FormButtons
         setIsOpen={() => {}}
         onCancel={handleBack}
-        submitColor="danger"
         submitText="Create Integration"
         cancelText="Back"
         loadingText="Creating..."

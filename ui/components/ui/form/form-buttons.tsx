@@ -34,7 +34,7 @@ interface FormButtonsProps {
   submitColor?: SubmitColorsType;
 }
 
-const SubmitColors = {
+export const SubmitColors = {
   action: "action",
   danger: "danger",
 } as const;
