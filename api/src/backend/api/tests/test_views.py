@@ -7948,6 +7948,27 @@ class TestTenantApiKeyViewSet:
         api_key.refresh_from_db()
         assert api_key.revoked is True
 
+    def test_api_keys_revoke_preserves_created_field(
+        self, authenticated_client, api_keys_fixture
+    ):
+        """Test that revoking an API key preserves the created timestamp."""
+        api_key = api_keys_fixture[0]  # Not revoked
+        assert api_key.revoked is False
+
+        # Record the original created timestamp
+        original_created = api_key.created
+
+        response = authenticated_client.delete(
+            reverse("api-key-revoke", kwargs={"pk": api_key.id})
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+        # Verify in database
+        api_key.refresh_from_db()
+        assert api_key.revoked is True
+        # Verify created field has not changed
+        assert api_key.created == original_created
+
     def test_api_keys_revoke_already_revoked(
         self, authenticated_client, api_keys_fixture
     ):

@@ -1,6 +1,7 @@
 import React from "react";
 
 import { AWSWellArchitectedCustomDetails } from "@/components/compliance/compliance-custom-details/aws-well-architected-details";
+import { C5CustomDetails } from "@/components/compliance/compliance-custom-details/c5-details";
 import { CISCustomDetails } from "@/components/compliance/compliance-custom-details/cis-details";
 import { ENSCustomDetails } from "@/components/compliance/compliance-custom-details/ens-details";
 import { GenericCustomDetails } from "@/components/compliance/compliance-custom-details/generic-details";
@@ -22,6 +23,10 @@ import {
   mapComplianceData as mapAWSWellArchitectedComplianceData,
   toAccordionItems as toAWSWellArchitectedAccordionItems,
 } from "./aws-well-architected";
+import {
+  mapComplianceData as mapC5ComplianceData,
+  toAccordionItems as toC5AccordionItems,
+} from "./c5";
 import {
   mapComplianceData as mapCISComplianceData,
   toAccordionItems as toCISAccordionItems,
@@ -80,6 +85,15 @@ const getDefaultMapper = (): ComplianceMapper => ({
 });
 
 const getComplianceMappers = (): Record<string, ComplianceMapper> => ({
+  C5: {
+    mapComplianceData: mapC5ComplianceData,
+    toAccordionItems: toC5AccordionItems,
+    getTopFailedSections,
+    calculateCategoryHeatmapData: (data: Framework[]) =>
+      calculateCategoryHeatmapData(data),
+    getDetailsComponent: (requirement: Requirement) =>
+      React.createElement(C5CustomDetails, { requirement }),
+  },
   ENS: {
     mapComplianceData: mapENSComplianceData,
     toAccordionItems: toENSAccordionItems,
