@@ -172,7 +172,7 @@ export class SignUpPage extends BasePage {
 
   async submitGithubLogin(): Promise<void> {
     // Click Github Sign in button
-    await this.page.getByRole("button", { name: "Sign in" }).click();
+    await this.page.locator('input[type="submit"][name="commit"][value="Sign in"]').click();
   }
 
   async completeGithubOAuth(username: string, password: string): Promise<void> {
@@ -194,7 +194,7 @@ export class SignUpPage extends BasePage {
     // Verify GitHub OAuth form elements are present
     await expect(this.page.getByRole("textbox", { name: /username or email/i })).toBeVisible();
     await expect(this.page.getByRole("textbox", { name: /password/i })).toBeVisible();
-    await expect(this.page.getByRole("button", { name: "Sign in" })).toBeVisible();
+    await expect(this.page.locator('input[type="submit"][name="commit"][value="Sign in"]')).toBeVisible();
   }
 }
 
