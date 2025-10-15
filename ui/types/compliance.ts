@@ -27,7 +27,7 @@ export interface Requirement {
   check_ids: string[];
   // This is to allow any key to be added to the requirement object
   // because each compliance has different keys
-  [key: string]: string | string[] | number | object[] | undefined;
+  [key: string]: string | string[] | number | boolean | object[] | undefined;
 }
 
 export interface Control {

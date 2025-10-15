@@ -667,36 +667,48 @@ class TenantFinishACSView(FinishACSView):
             .get(email_domain=email_domain)
             .tenant
         )
-        role_name = (
-            extra.get("userType", ["no_permissions"])[0].strip()
-            if extra.get("userType")
-            else "no_permissions"
+
+        # Check if tenant has only one user with MANAGE_ACCOUNT role
+        users_with_manage_account = (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(role__manage_account=True, tenant_id=tenant.id)
+            .values("user")
+            .distinct()
+            .count()
         )
-        try:
-            role = Role.objects.using(MainRouter.admin_db).get(
-                name=role_name, tenant=tenant
+
+        # Only apply role mapping from userType if tenant does NOT have exactly one user with MANAGE_ACCOUNT
+        if users_with_manage_account != 1:
+            role_name = (
+                extra.get("userType", ["no_permissions"])[0].strip()
+                if extra.get("userType")
+                else "no_permissions"
             )
-        except Role.DoesNotExist:
-            role = Role.objects.using(MainRouter.admin_db).create(
-                name=role_name,
-                tenant=tenant,
-                manage_users=False,
-                manage_account=False,
-                manage_billing=False,
-                manage_providers=False,
-                manage_integrations=False,
-                manage_scans=False,
-                unlimited_visibility=False,
+            try:
+                role = Role.objects.using(MainRouter.admin_db).get(
+                    name=role_name, tenant=tenant
+                )
+            except Role.DoesNotExist:
+                role = Role.objects.using(MainRouter.admin_db).create(
+                    name=role_name,
+                    tenant=tenant,
+                    manage_users=False,
+                    manage_account=False,
+                    manage_billing=False,
+                    manage_providers=False,
+                    manage_integrations=False,
+                    manage_scans=False,
+                    unlimited_visibility=False,
+                )
+            UserRoleRelationship.objects.using(MainRouter.admin_db).filter(
+                user=user,
+                tenant_id=tenant.id,
+            ).delete()
+            UserRoleRelationship.objects.using(MainRouter.admin_db).create(
+                user=user,
+                role=role,
+                tenant_id=tenant.id,
             )
-        UserRoleRelationship.objects.using(MainRouter.admin_db).filter(
-            user=user,
-            tenant_id=tenant.id,
-        ).delete()
-        UserRoleRelationship.objects.using(MainRouter.admin_db).create(
-            user=user,
-            role=role,
-            tenant_id=tenant.id,
-        )
         membership, _ = Membership.objects.using(MainRouter.admin_db).get_or_create(
             user=user,
             tenant=tenant,
@@ -3500,20 +3512,16 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             )
         filtered_queryset = self.filter_queryset(self.get_queryset())
 
-        all_requirements = (
-            filtered_queryset.values(
-                "requirement_id",
-                "framework",
-                "version",
-                "description",
-                "passed_findings",
-                "total_findings",
-            )
-            .distinct()
-            .annotate(
-                total_instances=Count("id"),
-                manual_count=Count("id", filter=Q(requirement_status="MANUAL")),
-            )
+        all_requirements = filtered_queryset.values(
+            "requirement_id",
+            "framework",
+            "version",
+            "description",
+        ).annotate(
+            total_instances=Count("id"),
+            manual_count=Count("id", filter=Q(requirement_status="MANUAL")),
+            passed_findings_sum=Sum("passed_findings"),
+            total_findings_sum=Sum("total_findings"),
         )
 
         passed_instances = (
@@ -3532,8 +3540,8 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             total_instances = requirement["total_instances"]
             passed_count = passed_counts.get(requirement_id, 0)
             is_manual = requirement["manual_count"] == total_instances
-            passed_findings = requirement["passed_findings"]
-            total_findings = requirement["total_findings"]
+            passed_findings = requirement["passed_findings_sum"] or 0
+            total_findings = requirement["total_findings_sum"] or 0
             if is_manual:
                 requirement_status = "MANUAL"
             elif passed_count == total_instances:

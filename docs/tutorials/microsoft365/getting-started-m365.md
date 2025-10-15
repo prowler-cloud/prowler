@@ -55,11 +55,6 @@ Configure authentication for Microsoft 365 by following the [Microsoft 365 Authe
     - Tenant ID
     - `AZURE_CLIENT_SECRET` from the Service Principal setup
 
-    If using user authentication, also add:
-
-    - `M365_USER` (email using the assigned domain in tenant)
-    - `M365_PASSWORD` (user password)
-
     ![Prowler Cloud M365 Credentials](./img/m365-credentials.png)
 
 3. Click "Next"
@@ -85,7 +80,6 @@ PowerShell 7.4+ is required for comprehensive Microsoft 365 security coverage. I
 Select an authentication method from the [Microsoft 365 Authentication](authentication.md) guide:
 
 - **Service Principal Application** (recommended): `--sp-env-auth`
-- **Service Principal with User Credentials**: `--env-auth`
 - **Interactive Browser Authentication**: `--browser-auth`
 
 ### Basic Usage

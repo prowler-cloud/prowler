@@ -12020,14 +12020,41 @@ components:
                           where the application is registered.
                       user:
                         type: email
+                        description: 'Deprecated: User microsoft email address.'
+                      password:
+                        type: string
+                        description: 'Deprecated: User password.'
+                    required:
+                    - client_id
+                    - client_secret
+                    - tenant_id
+                    - user
+                    - password
+                  - type: object
+                    title: M365 Certificate Credentials
+                    properties:
+                      client_id:
+                        type: string
+                        description: The Azure application (client) ID for authentication
+                          in Azure AD.
+                      tenant_id:
+                        type: string
+                        description: The Azure tenant ID, representing the directory
+                          where the application is registered.
+                      certificate_content:
+                        type: string
+                        description: The certificate content in base64 format for
+                          certificate-based authentication.
+                      user:
+                        type: email
                         description: User microsoft email address.
                       password:
                         type: string
                         description: User password.
                     required:
                     - client_id
-                    - client_secret
                     - tenant_id
+                    - certificate_content
                     - user
                     - password
                   - type: object
@@ -12433,8 +12460,8 @@ components:
               properties:
                 name:
                   type: string
-                  nullable: true
-                  maxLength: 255
+                  minLength: 3
+                  maxLength: 100
                 prefix:
                   type: string
                   readOnly: true
@@ -12454,6 +12481,8 @@ components:
                   readOnly: true
                   nullable: true
                   description: Last time this API key was used for authentication
+              required:
+              - name
             relationships:
               type: object
               properties:
@@ -13884,14 +13913,41 @@ components:
                       the application is registered.
                   user:
                     type: email
+                    description: 'Deprecated: User microsoft email address.'
+                  password:
+                    type: string
+                    description: 'Deprecated: User password.'
+                required:
+                - client_id
+                - client_secret
+                - tenant_id
+                - user
+                - password
+              - type: object
+                title: M365 Certificate Credentials
+                properties:
+                  client_id:
+                    type: string
+                    description: The Azure application (client) ID for authentication
+                      in Azure AD.
+                  tenant_id:
+                    type: string
+                    description: The Azure tenant ID, representing the directory where
+                      the application is registered.
+                  certificate_content:
+                    type: string
+                    description: The certificate content in base64 format for certificate-based
+                      authentication.
+                  user:
+                    type: email
                     description: User microsoft email address.
                   password:
                     type: string
                     description: User password.
                 required:
                 - client_id
-                - client_secret
                 - tenant_id
+                - certificate_content
                 - user
                 - password
               - type: object
@@ -14132,14 +14188,41 @@ components:
                           where the application is registered.
                       user:
                         type: email
+                        description: 'Deprecated: User microsoft email address.'
+                      password:
+                        type: string
+                        description: 'Deprecated: User password.'
+                    required:
+                    - client_id
+                    - client_secret
+                    - tenant_id
+                    - user
+                    - password
+                  - type: object
+                    title: M365 Certificate Credentials
+                    properties:
+                      client_id:
+                        type: string
+                        description: The Azure application (client) ID for authentication
+                          in Azure AD.
+                      tenant_id:
+                        type: string
+                        description: The Azure tenant ID, representing the directory
+                          where the application is registered.
+                      certificate_content:
+                        type: string
+                        description: The certificate content in base64 format for
+                          certificate-based authentication.
+                      user:
+                        type: email
                         description: User microsoft email address.
                       password:
                         type: string
                         description: User password.
                     required:
                     - client_id
-                    - client_secret
                     - tenant_id
+                    - certificate_content
                     - user
                     - password
                   - type: object
@@ -14396,14 +14479,41 @@ components:
                       the application is registered.
                   user:
                     type: email
+                    description: 'Deprecated: User microsoft email address.'
+                  password:
+                    type: string
+                    description: 'Deprecated: User password.'
+                required:
+                - client_id
+                - client_secret
+                - tenant_id
+                - user
+                - password
+              - type: object
+                title: M365 Certificate Credentials
+                properties:
+                  client_id:
+                    type: string
+                    description: The Azure application (client) ID for authentication
+                      in Azure AD.
+                  tenant_id:
+                    type: string
+                    description: The Azure tenant ID, representing the directory where
+                      the application is registered.
+                  certificate_content:
+                    type: string
+                    description: The certificate content in base64 format for certificate-based
+                      authentication.
+                  user:
+                    type: email
                     description: User microsoft email address.
                   password:
                     type: string
                     description: User password.
                 required:
                 - client_id
-                - client_secret
                 - tenant_id
+                - certificate_content
                 - user
                 - password
               - type: object
@@ -15659,8 +15769,8 @@ components:
           properties:
             name:
               type: string
-              nullable: true
-              maxLength: 255
+              maxLength: 100
+              minLength: 3
             prefix:
               type: string
               readOnly: true
@@ -15682,6 +15792,8 @@ components:
               format: date-time
               nullable: true
               description: Last time this API key was used for authentication
+          required:
+          - name
         relationships:
           type: object
           properties:
@@ -15728,8 +15840,8 @@ components:
           properties:
             name:
               type: string
-              nullable: true
-              maxLength: 255
+              maxLength: 100
+              minLength: 3
             prefix:
               type: string
               readOnly: true
@@ -15755,6 +15867,8 @@ components:
             api_key:
               type: string
               readOnly: true
+          required:
+          - name
         relationships:
           type: object
           properties:
@@ -15805,8 +15919,8 @@ components:
               properties:
                 name:
                   type: string
-                  nullable: true
-                  maxLength: 255
+                  minLength: 3
+                  maxLength: 100
                 prefix:
                   type: string
                   readOnly: true
@@ -15833,6 +15947,8 @@ components:
                 api_key:
                   type: string
                   readOnly: true
+              required:
+              - name
             relationships:
               type: object
               properties:
@@ -15900,8 +16016,8 @@ components:
           properties:
             name:
               type: string
-              nullable: true
-              maxLength: 255
+              maxLength: 100
+              minLength: 3
             prefix:
               type: string
               readOnly: true
@@ -15920,6 +16036,8 @@ components:
               readOnly: true
               nullable: true
               description: Last time this API key was used for authentication
+          required:
+          - name
         relationships:
           type: object
           properties:
