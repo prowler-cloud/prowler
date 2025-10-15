@@ -150,6 +150,24 @@ export interface GenericAttributesMetadata {
   Type: string | null;
 }
 
+export interface CCCAttributesMetadata {
+  FamilyName: string;
+  FamilyDescription: string;
+  Section: string;
+  SubSection: string;
+  SubSectionObjective: string;
+  Applicability: string[];
+  Recommendation: string;
+  SectionThreatMappings: Array<{
+    ReferenceId: string;
+    Identifiers: string[];
+  }>;
+  SectionGuidelineMappings: Array<{
+    ReferenceId: string;
+    Identifiers: string[];
+  }>;
+}
+
 export interface AttributesItemData {
   type: "compliance-requirements-attributes";
   id: string;
@@ -168,6 +186,7 @@ export interface AttributesItemData {
         | ThreatAttributesMetadata[]
         | KISAAttributesMetadata[]
         | MITREAttributesMetadata[]
+        | CCCAttributesMetadata[]
         | GenericAttributesMetadata[];
       check_ids: string[];
       // MITRE structure

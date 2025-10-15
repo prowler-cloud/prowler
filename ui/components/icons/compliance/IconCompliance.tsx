@@ -1,4 +1,5 @@
 import AWSLogo from "./aws.svg";
+import CCCLogo from "./ccc.svg";
 import CISLogo from "./cis.svg";
 import CISALogo from "./cisa.svg";
 import ENSLogo from "./ens.png";
@@ -18,6 +19,9 @@ import RBILogo from "./rbi.svg";
 import SOC2Logo from "./soc2.svg";
 
 export const getComplianceIcon = (complianceTitle: string) => {
+  if (complianceTitle.toLowerCase().includes("ccc")) {
+    return CCCLogo;
+  }
   if (complianceTitle.toLowerCase().includes("aws")) {
     return AWSLogo;
   }
