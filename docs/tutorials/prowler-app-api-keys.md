@@ -1,78 +1,94 @@
 # API Keys
 
-Prowler App provides API key authentication as an alternative to JWT tokens, enabling programmatic access to the Prowler API for automation, CI/CD pipelines, and third-party integrations. This comprehensive guide demonstrates how to create, manage, and securely use API keys to authenticate with the Prowler API.
+API key authentication in Prowler App provides an alternative to JWT tokens and empowers automation, CI/CD pipelines, and third-party integrations. This guide explains how to create, manage, and safeguard API keys when working with the Prowler API.
 
-Using API keys with Prowler App provides:
+## API Key Advantages
 
-* **Programmatic access:** Enable automated workflows and scripts to interact with Prowler
-* **Long-lived authentication:** Create keys with optional expiration dates (default: 1 year)
-* **Granular control:** Manage multiple keys with different names and purposes
-* **Secure automation:** Safely integrate Prowler into CI/CD pipelines and infrastructure-as-code
+- **Programmatic access:** Enables automated workflows and scripts to interact with Prowler App.
+- **Long-lived authentication:** Allows optional expiration dates, with a default of 1 year.
+- **Granular control:** Supports multiple keys with distinct names and purposes.
+- **Secure automation:** Simplifies safe integration into CI/CD pipelines and infrastructure-as-code tooling.
 
 ## How It Works
 
 API keys provide a secure authentication mechanism for accessing the Prowler API:
 
-1. API keys are created through the Prowler App interface with a user-defined name and optional expiration date
-2. The full API key is displayed **only once** upon creation - it cannot be retrieved later
-3. Each API key consists of a prefix (visible in the UI) and an encrypted secret portion
-4. API keys are used in the `Authorization` header with the format: `Authorization: Api-Key <your-api-key>`
-5. The system tracks usage by updating the last used timestamp on each authenticated request
-6. API keys automatically inherit the RBAC permissions of the user who created them (see [Permission Inheritance](#permission-inheritance))
-7. API keys can be revoked at any time to immediately disable access
+1. API keys are created through Prowler App with a user-defined name and optional expiration date.
+2. The full API key appears only once upon creation and cannot be retrieved later.
+3. Each API key consists of a prefix (visible in the interface) and an encrypted secret portion.
+4. Requests include the API key in the header as `Authorization: Api-Key <api-key>`.
+5. The system updates the Last Used timestamp after each authenticated request.
+6. API keys automatically inherit the RBAC permissions of the creator (see [Permission Inheritance](#permission-inheritance)).
+7. Revocation immediately disables an API key and prevents further access.
+
+### Example curl Request
+
+This example demonstrates how to invoke the Prowler API with an API key.
+
+1. Define the API key as an environment variable to avoid exposing the secret in shell history.
+2. Call the desired endpoint with `curl` and supply the `Authorization` header.
+
+```bash
+export PROWLER_API_KEY="pk_example_redacted"
+
+curl -X GET \
+  -H "Authorization: Api-Key ${PROWLER_API_KEY}" \
+  -H "Content-Type: application/vnd.api+json" \
+  https://api.prowler.com/api/v1/tenants
+```
 
 !!! note "Authentication Priority"
-    If both a JWT token and an API key are present in the same request, the JWT token will be used for authentication by default.
+    When a request includes both a JWT token and an API key, the JWT token takes precedence for authentication.
 
 !!! warning "Security Notice"
-    API keys are equivalent to passwords and provide full access to your Prowler tenant with the permissions of the user who created them. Treat them with the same level of security as passwords.
+    API keys are equivalent to passwords and grant the same access level as the creator. Handle every key with password-level safeguards.
 
 ## Required Permissions
 
-To create, view, or manage API keys, you must have the **MANAGE_ACCOUNT** RBAC permission in your tenant. This permission controls access to all API key management operations.
+Creating, viewing, or managing API keys requires the **MANAGE_ACCOUNT** RBAC permission within the tenant. This permission governs all API key management operations.
 
-If you don't have this permission, the API Keys section will not be accessible. Contact your tenant administrator to request access if needed.
+Without this permission, the API Keys section remains hidden. Access requests should be routed through the tenant administrator.
 
 For more information about RBAC permissions, refer to the [Prowler App RBAC documentation](./prowler-app-rbac.md).
 
 ## Creating API Keys
 
-To create a new API key in Prowler App:
+Follow these steps to create an API key in Prowler App:
 
-1. Navigate to **Profile** → **Account** in the Prowler App interface
-2. Click the **Create API Key** button
+1. Navigate to **Profile** → **Account** in Prowler App.
+2. Select the **Create API Key** button.
 
     ![API Keys list](./img/api-keys/list.png)
 
 3. Configure the API key settings:
-    * **Name:** Enter a descriptive name to identify this API key (minimum 3 characters, e.g., "CI Pipeline Production", "Monitoring Script")
-    * **Expiration Date (optional):** Set a custom expiration date for the key. If not specified, the key will automatically expire **1 year (365 days)** from the creation date. After this date, the key will no longer authenticate
+    * **Name:** Provide a descriptive label with at least 3 characters (examples: "CI Pipeline Production", "Monitoring Script").
+    * **Expiration Date (optional):** Set a custom expiration date. When omitted, the key expires automatically 1 year (365 days) after creation.
 
     ![Create API key form](./img/api-keys/create.png)
 
-4. Click **Create API Key** to generate the API key
-5. **Important:** Copy and securely store the API key immediately. The full key is displayed only once and cannot be retrieved later
+4. Select **Create API Key** to generate the key.
+5. **Important:** Copy and securely store the API key immediately. The full value appears only once and cannot be retrieved later.
 
     ![API key created successfully](./img/api-keys/created.png)
 
-!!! warning "Save Your API Key Immediately"
-    After closing the creation dialog, only the key prefix will be visible in the interface. The full API key cannot be retrieved again. If you lose the key, you must create a new one and update your applications.
+!!! warning "Save the API Key Immediately"
+    After the creation dialog closes, only the key prefix remains visible in the interface. Lost keys require generating a replacement and updating dependent applications.
 
 ## Managing API Keys
 
 ### Viewing API Keys
 
-The API Keys management interface displays all keys associated with your user account:
+The API Keys management interface displays every key associated with the signed-in account:
 
-1. Navigate to **Profile** → **Account**
-2. View the list of API keys with the following information:
-    * **Name:** The descriptive name you assigned to the key
-    * **Prefix:** The visible portion of the key for identification (e.g., `pk_ABC12345`)
-    * **Email:** The email of the user who created the key
-    * **Created:** Timestamp when the key was created
-    * **Last Used:** Timestamp of the most recent successful authentication using this key
-    * **Expires:** The expiration date
-    * **Status:** Whether the key is currently active or has been revoked
+1. Navigate to **Profile** → **Account**.
+2. Review the list of API keys, which includes:
+    * **Name:** The descriptive label assigned to the key.
+    * **Prefix:** The visible portion of the key for identification (for example, `pk_ABC12345`).
+    * **Email:** The email address of the creator.
+    * **Created:** The timestamp when the key was created.
+    * **Last Used:** The timestamp of the most recent successful authentication.
+    * **Expires:** The configured expiration date.
+    * **Status:** Whether the key is active or revoked.
 
     ![API Keys management interface](./img/api-keys/management.png)
 
@@ -80,15 +96,14 @@ The API Keys management interface displays all keys associated with your user ac
 
 API keys support limited updates to maintain security:
 
-1. Locate the API key you want to modify in the list
-2. Click the **Edit name** button or action menu
-3. **Updatable field:**
-    * **Name:** Change the descriptive name for better identification
-4. **Non-updatable fields:**
-    * Prefix, expiration date, and the secret key itself cannot be modified
-    * To change these properties, you must create a new API key and revoke the old one
-
-5. Click **Save** to apply changes
+1. Locate the target API key in the list.
+2. Select **Edit name** from the action menu.
+3. Update the available field:
+    * **Name:** Modify the descriptive label for clearer identification.
+4. Review the fields that cannot be changed:
+    * Prefix, expiration date, and the secret itself remain immutable.
+    * Adjusting those properties requires creating a new API key and revoking the existing one.
+5. Select **Save** to apply the change.
 
     ![Update API key name](./img/api-keys/update.png)
 
@@ -102,103 +117,98 @@ Each API key provides management actions through dedicated buttons or the action
 | **Revoke** | Disable the API key | Sets revoked status to true, blocking all authentication | Maintains audit trail and key history |
 
 !!! note "API Keys Cannot Be Deleted"
-    For security and audit purposes, API keys cannot be permanently deleted from the system. Instead, use the **Revoke** action to disable a key. Revoked keys remain visible in the interface for audit purposes but cannot be used for authentication.
+    For security and audit purposes, API keys cannot be permanently removed from the system. Use the **Revoke** action to disable a key. Revoked keys remain visible for audit purposes but cannot be used for authentication.
 
 ## Permission Inheritance
 
-API keys automatically inherit the RBAC permissions of the user who created them. This ensures that programmatic access maintains the same security boundaries as user access.
+API keys automatically inherit the RBAC permissions of the creator, ensuring that programmatic access mirrors user-level security boundaries.
 
 ### How Permission Inheritance Works
 
-* **Current permissions apply:** When an API key is used, it operates with the same RBAC permissions that the creating user currently has
-* **Dynamic updates:** If the user's permissions change, the API key permissions are automatically updated to match
-* **User downgrade:** If a user has their permissions reduced, all of their API keys will also have reduced permissions
-* **Tenant removal:** If a user is removed from a tenant, all of their API keys for that tenant are **automatically revoked**
-* **User deletion:** If a user is deleted from the application entirely, all of their API keys are **automatically revoked**
+* **Current permissions apply:** When an API key is used, it operates with the creator's current RBAC permissions.
+* **Dynamic updates:** Permission changes on the creator immediately propagate to every associated API key.
+* **User downgrade:** Reduced user permissions result in reduced API key capabilities.
+* **Tenant removal:** Removing a user from a tenant automatically revokes every key for that tenant.
+* **User deletion:** Deleting a user from the application automatically revokes all associated API keys.
 
 !!! warning "Automatic Revocation"
-    API keys are automatically revoked when:
-
-    - The user who created the key is removed from the tenant
-    - The user who created the key is deleted from the application
-
-    This ensures that access is immediately terminated when user access is revoked.
+    API keys are automatically revoked when the creator is removed from the tenant or deleted from the application. This mechanism ensures that access ends as soon as the user loses access.
 
 ### Best Practices for Permission Management
 
-* **Use service accounts for automation** - Create dedicated user accounts for API-based automation to separate human and programmatic access, ensuring API keys persist when team members leave
-* **Review API key ownership regularly** - Ensure API keys are associated with appropriate user accounts and document ownership
-* **Monitor permission changes** - Be aware that changing a user's permissions will affect all of their API keys
-* **Plan for user offboarding** - Create replacement API keys under service accounts before removing users to avoid disruptions
+* **Use service accounts for automation:** Create dedicated user accounts for API-based automation to separate human and programmatic access, ensuring continuity when team members transition.
+* **Review API key ownership regularly:** Confirm that API keys remain associated with appropriate user accounts and document ownership.
+* **Monitor permission changes:** Track user permission updates because every change affects associated API keys.
+* **Plan for user offboarding:** Provision replacement API keys under service accounts before removing users to avoid disruptions.
 
 ## Security Best Practices
 
 ### Key Storage and Management
 
-* **Never commit API keys to version control** - Add them to `.gitignore` and use environment variables or secure secret management systems
-* **Use secret managers** - Store keys in tools like AWS Secrets Manager, HashiCorp Vault, Azure Key Vault, or GitHub Secrets
-* **Rotate keys regularly** - Create new keys and revoke old ones periodically as part of your security hygiene
-* **Set expiration dates** - Use expiration dates to enforce automatic key rotation and reduce risk
-* **Monitor last used timestamps** - Regularly review when keys were last used to identify unused or potentially compromised keys
+* **Never commit API keys to version control:** Add them to `.gitignore` and rely on environment variables or secure secret management systems.
+* **Use secret managers:** Store keys in AWS Secrets Manager, HashiCorp Vault, Azure Key Vault, GitHub Secrets, or equivalent solutions.
+* **Rotate keys regularly:** Create new keys and revoke old ones on a scheduled basis as part of standard security hygiene.
+* **Set expiration dates:** Enforce automatic rotation and reduce risk by applying expiration dates.
+* **Monitor last used timestamps:** Review usage data to identify unused or potentially compromised keys.
 
 ### Key Usage
 
-* **Create dedicated keys per application** - Use separate keys for different services, environments, or purposes
-* **Use descriptive names** - Name keys clearly like "ci-pipeline-prod", "monitoring-staging", or "terraform-automation"
-* **Limit key distribution** - Only share keys with team members who absolutely need them
-* **Revoke immediately on breach** - If a key is exposed or compromised, revoke it immediately and create a new one
+* **Create dedicated keys per application:** Isolate access by assigning separate keys to services, environments, or purposes.
+* **Use descriptive names:** Label keys clearly, such as "ci-pipeline-prod", "monitoring-staging", or "terraform-automation".
+* **Limit key distribution:** Share keys only with team members who require access.
+* **Revoke immediately on breach:** Replace exposed or compromised keys without delay.
 
 ### Environment Variables
 
-Store API keys in environment variables rather than hardcoding them in scripts or configuration files. Use platform-specific secret management systems (GitHub Secrets, GitLab CI/CD Variables, AWS Secrets Manager, HashiCorp Vault, etc.) for production environments.
+Store API keys in environment variables rather than hardcoding them in scripts or configuration files. Platform-specific secret management systems (GitHub Secrets, GitLab CI/CD Variables, AWS Secrets Manager, HashiCorp Vault, and similar tools) are recommended for production environments.
 
 ### CI/CD Integration Best Practices
 
 When using API keys in CI/CD pipelines:
 
-* **Use pipeline secrets:** Store keys in your CI/CD platform's secret management system
-* **Mask in logs:** Ensure your CI/CD platform automatically masks the API key in build logs
-* **Create pipeline-specific keys:** Use separate keys for each pipeline or environment (dev, staging, production)
-* **Set shorter expirations:** Use shorter expiration periods (e.g., 90 days) for automated systems to enforce rotation
-* **Use service accounts:** Create dedicated user accounts for CI/CD pipelines (see [Permission Inheritance](#permission-inheritance) for details on automatic revocation)
+* **Use pipeline secrets:** Store keys in the CI/CD platform's secret management system.
+* **Mask in logs:** Ensure the platform masks API keys in build and deployment logs.
+* **Create pipeline-specific keys:** Issue separate keys for each pipeline or environment (development, staging, production).
+* **Set shorter expirations:** Apply shorter expiration periods (for example, 90 days) to enforce rotation.
+* **Use service accounts:** Create dedicated user accounts for CI/CD pipelines (see [Permission Inheritance](#permission-inheritance) for automatic revocation details).
 
 ## Troubleshooting
 
-### Authentication fails with "Invalid API Key"
+### Authentication Fails with "Invalid API Key"
 
-* Verify the API key is copied correctly with no extra spaces, line breaks, or hidden characters
-* Ensure the key has not been revoked (check the Revoked column in the API Keys list)
-* Check that the key has not expired (review the Expires At date)
-* Confirm you're using the correct API key format with both prefix and secret portions
-* Verify the key prefix matches what's displayed in the Prowler App interface
+* Verify that the API key is copied correctly with no extra spaces, line breaks, or hidden characters.
+* Ensure the key has not been revoked by checking the Revoked column in the API Keys list.
+* Confirm that the key has not expired by reviewing the expiration date.
+* Confirm that the correct API key format is in use, including both prefix and secret portions.
+* Verify that the key prefix matches what is displayed in Prowler App.
 
-### API key not working after creation
+### API Key Not Working After Creation
 
-* Verify you copied the full API key from the creation dialog, including both the prefix and encrypted portions
-* Check that the key hasn't expired by reviewing the expiration date in the management interface
-* Ensure the key is not revoked by checking its status in the API Keys list
-* Confirm you're authenticating against the correct Prowler API environment
+* Verify that the full API key was copied from the creation dialog, including both the prefix and encrypted portions.
+* Check that the key has not expired by reviewing the expiration date in the management interface.
+* Ensure the key is not revoked by reviewing its status in the API Keys list.
+* Confirm that authentication targets the correct Prowler API environment.
 
-### Last used timestamp not updating
+### Last Used Timestamp Not Updating
 
-* The timestamp only updates on successful authentication requests
-* If authentication fails, the timestamp will not be updated
-* Verify your requests are completing successfully (not returning authentication errors)
-* Check that the request is reaching the Prowler API and not being blocked by network policies
+* The timestamp updates only on successful authentication requests.
+* Authentication failures prevent the timestamp from updating.
+* Verify that requests complete successfully and do not return authentication errors.
+* Check that the request reaches the Prowler API and is not blocked by network policies.
 
-### Need to retrieve a lost API key
+### Need to Retrieve a Lost API Key
 
-* API keys cannot be retrieved after the creation dialog is closed for security reasons
-* You must create a new API key to replace the lost one
-* Update all applications and scripts that use the old key with the new key
-* Revoke the old key after confirming the new key works to prevent security issues
-* Consider using a secret management system to prevent future loss
+* API keys cannot be retrieved after the creation dialog closes for security reasons.
+* Create a new API key to replace the lost one.
+* Update all applications and scripts that rely on the old key with the new value.
+* Revoke the old key after confirming that the new key works to prevent security issues.
+* Consider using a secret management system to avoid future loss.
 
-### Key was exposed or compromised
+### Key Was Exposed or Compromised
 
-1. Immediately revoke the compromised key through the API Keys management interface
-2. Review recent activity for any unauthorized access using the Last Used At timestamps
-3. Create a new API key with a different name to replace the compromised one
-4. Update all legitimate applications with the new key
-5. Investigate how the key was exposed to prevent future incidents
-6. Consider implementing additional security measures or using service accounts for better isolation
+1. Immediately revoke the compromised key through the API Keys management interface.
+2. Review recent activity for unauthorized access using the Last Used timestamp.
+3. Create a new API key with a different name to replace the compromised one.
+4. Update all legitimate applications with the new key.
+5. Investigate the exposure to prevent similar incidents.
+6. Implement additional security measures or rely on service accounts for better isolation.
