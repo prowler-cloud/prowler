@@ -24,7 +24,7 @@ Before you begin, ensure you have:
 
 ## Authentication
 
-Prowler supports multiple authentication methods for OCI. For detailed authentication setup, see the [OCI Authentication Guide](./authentication.md).
+Prowler supports multiple authentication methods for OCI. For detailed authentication setup, see the [OCI Authentication Guide](./authentication.mdx).
 
 **Note:** OCI Session Authentication and Config File Authentication both use the same `~/.oci/config` file. The difference is how the config file is generated - automatically via browser (session auth) or manually with API keys.
 
@@ -73,7 +73,7 @@ The easiest and most secure method is using OCI session authentication, which au
 
 ### Alternative: Manual API Key Setup
 
-If you prefer to manually generate API keys instead of using browser-based session authentication, see the detailed instructions in the [Authentication Guide](./authentication.md#config-file-authentication-manual-api-key-setup).
+If you prefer to manually generate API keys instead of using browser-based session authentication, see the detailed instructions in the [Authentication Guide](./authentication.mdx#config-file-authentication-manual-api-key-setup).
 
 **Note:** Both methods use the same `~/.oci/config` file - the difference is that manual setup uses static API keys while session authentication uses temporary session tokens.
 
@@ -364,10 +364,9 @@ prowler oci --severity critical high
 
 ## Next Steps
 
-- Review the [OCI CIS Compliance](../compliance.md) documentation
-- Learn about [Prowler Output Formats](../reporting.md)
-- Explore [Integrations](../integrations.md) with SIEM and ticketing systems
-- Set up [Continuous Monitoring](../tutorials/continuous-monitoring.md) with Prowler
+- Learn about [Compliance Frameworks](/user-guide/cli/tutorials/compliance) in Prowler
+- Review [Prowler Output Formats](/user-guide/cli/tutorials/reporting)
+- Explore [Integrations](/user-guide/cli/tutorials/integrations) with SIEM and ticketing systems
 
 ## Additional Resources
 
