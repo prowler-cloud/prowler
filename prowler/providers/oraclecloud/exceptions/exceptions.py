@@ -1,60 +1,60 @@
 from prowler.exceptions.exceptions import ProwlerException
 
 
-# Exceptions codes from 2000 to 2999 are reserved for OCI exceptions
+# Exceptions codes from 7000 to 7999 are reserved for OCI exceptions
 class OCIBaseException(ProwlerException):
     """Base class for OCI errors."""
 
     OCI_ERROR_CODES = {
-        (2000, "OCIClientError"): {
+        (7000, "OCIClientError"): {
             "message": "OCI ClientError occurred",
             "remediation": "Check your OCI client configuration and permissions.",
         },
-        (2001, "OCIConfigFileNotFoundError"): {
+        (7001, "OCIConfigFileNotFoundError"): {
             "message": "OCI Config file not found",
             "remediation": "Ensure the OCI config file exists at the specified path, please visit https://docs.oracle.com/en-us/iaas/Content/API/Concepts/sdkconfig.htm",
         },
-        (2002, "OCIInvalidConfigError"): {
+        (7002, "OCIInvalidConfigError"): {
             "message": "Invalid OCI configuration",
             "remediation": "Verify that your OCI configuration is properly set up, please visit https://docs.oracle.com/en-us/iaas/Content/API/Concepts/sdkconfig.htm",
         },
-        (2003, "OCIProfileNotFoundError"): {
+        (7003, "OCIProfileNotFoundError"): {
             "message": "OCI Profile not found",
             "remediation": "Ensure the OCI profile exists in your config file, please visit https://docs.oracle.com/en-us/iaas/Content/API/Concepts/sdkconfig.htm",
         },
-        (2004, "OCINoCredentialsError"): {
+        (7004, "OCINoCredentialsError"): {
             "message": "No OCI credentials found",
             "remediation": "Verify that OCI credentials are properly set up, please visit https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm",
         },
-        (2005, "OCIAuthenticationError"): {
+        (7005, "OCIAuthenticationError"): {
             "message": "OCI authentication failed",
             "remediation": "Check your OCI credentials and ensure they are valid.",
         },
-        (2006, "OCISetUpSessionError"): {
+        (7006, "OCISetUpSessionError"): {
             "message": "OCI session setup error",
             "remediation": "Check the OCI session setup and ensure it is properly configured.",
         },
-        (2007, "OCIInvalidRegionError"): {
+        (7007, "OCIInvalidRegionError"): {
             "message": "Invalid OCI region",
             "remediation": "Check the OCI region name and ensure it is valid, please visit https://docs.oracle.com/en-us/iaas/Content/General/Concepts/regions.htm",
         },
-        (2008, "OCIInvalidCompartmentError"): {
+        (7008, "OCIInvalidCompartmentError"): {
             "message": "Invalid OCI compartment",
             "remediation": "Check the OCI compartment OCID and ensure it exists and is accessible.",
         },
-        (2009, "OCIInvalidTenancyError"): {
+        (7009, "OCIInvalidTenancyError"): {
             "message": "Invalid OCI tenancy",
             "remediation": "Check the OCI tenancy OCID and ensure it is valid.",
         },
-        (2010, "OCIServiceError"): {
+        (7010, "OCIServiceError"): {
             "message": "OCI service error occurred",
             "remediation": "Check the OCI service error details and ensure proper permissions.",
         },
-        (2011, "OCIInstancePrincipalError"): {
+        (7011, "OCIInstancePrincipalError"): {
             "message": "OCI instance principal authentication failed",
             "remediation": "Ensure the instance has proper instance principal configuration and dynamic group policies.",
         },
-        (2012, "OCIInvalidOCIDError"): {
+        (7012, "OCIInvalidOCIDError"): {
             "message": "Invalid OCI OCID format",
             "remediation": "Check the OCID format and ensure it matches the pattern: ocid1.<resource_type>.<realm>.<region>.<unique_id>",
         },
@@ -85,7 +85,7 @@ class OCIClientError(OCICredentialsError):
 
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            2000, file=file, original_exception=original_exception, message=message
+            7000, file=file, original_exception=original_exception, message=message
         )
 
 
@@ -94,7 +94,7 @@ class OCIConfigFileNotFoundError(OCICredentialsError):
 
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            2001, file=file, original_exception=original_exception, message=message
+            7001, file=file, original_exception=original_exception, message=message
         )
 
 
@@ -103,7 +103,7 @@ class OCIInvalidConfigError(OCICredentialsError):
 
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            2002, file=file, original_exception=original_exception, message=message
+            7002, file=file, original_exception=original_exception, message=message
         )
 
 
@@ -112,7 +112,7 @@ class OCIProfileNotFoundError(OCICredentialsError):
 
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            2003, file=file, original_exception=original_exception, message=message
+            7003, file=file, original_exception=original_exception, message=message
         )
 
 
@@ -121,7 +121,7 @@ class OCINoCredentialsError(OCICredentialsError):
 
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            2004, file=file, original_exception=original_exception, message=message
+            7004, file=file, original_exception=original_exception, message=message
         )
 
 
@@ -130,7 +130,7 @@ class OCIAuthenticationError(OCICredentialsError):
 
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            2005, file=file, original_exception=original_exception, message=message
+            7005, file=file, original_exception=original_exception, message=message
         )
 
 
@@ -139,7 +139,7 @@ class OCISetUpSessionError(OCIBaseException):
 
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            2006, file=file, original_exception=original_exception, message=message
+            7006, file=file, original_exception=original_exception, message=message
         )
 
 
@@ -148,7 +148,7 @@ class OCIInvalidRegionError(OCIBaseException):
 
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            2007, file=file, original_exception=original_exception, message=message
+            7007, file=file, original_exception=original_exception, message=message
         )
 
 
@@ -157,7 +157,7 @@ class OCIInvalidCompartmentError(OCIBaseException):
 
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            2008, file=file, original_exception=original_exception, message=message
+            7008, file=file, original_exception=original_exception, message=message
         )
 
 
@@ -166,7 +166,7 @@ class OCIInvalidTenancyError(OCIBaseException):
 
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            2009, file=file, original_exception=original_exception, message=message
+            7009, file=file, original_exception=original_exception, message=message
         )
 
 
@@ -175,7 +175,7 @@ class OCIServiceError(OCIBaseException):
 
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            2010, file=file, original_exception=original_exception, message=message
+            7010, file=file, original_exception=original_exception, message=message
         )
 
 
@@ -184,7 +184,7 @@ class OCIInstancePrincipalError(OCIBaseException):
 
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            2011, file=file, original_exception=original_exception, message=message
+            7011, file=file, original_exception=original_exception, message=message
         )
 
 
@@ -193,5 +193,5 @@ class OCIInvalidOCIDError(OCIBaseException):
 
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
-            2012, file=file, original_exception=original_exception, message=message
+            7012, file=file, original_exception=original_exception, message=message
         )
