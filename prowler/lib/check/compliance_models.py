@@ -214,6 +214,7 @@ class CCC_Requirement_Attribute(BaseModel):
     SectionThreatMappings: list[dict]
     SectionGuidelineMappings: list[dict]
 
+
 # C5 Germany Requirement Attribute
 class C5Germany_Requirement_Attribute(BaseModel):
     """C5 Germany Requirement Attribute"""
