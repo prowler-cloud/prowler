@@ -15,6 +15,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Support C5 compliance framework for the AWS provider [(#8830)](https://github.com/prowler-cloud/prowler/pull/8830)
 - API key management in user profile [(#8308)](https://github.com/prowler-cloud/prowler/pull/8308)
 - Refresh access token error handling [(#8864)](https://github.com/prowler-cloud/prowler/pull/8864)
+- Support Common Cloud Controls for AWS, Azure and GCP [(#8000)](https://github.com/prowler-cloud/prowler/pull/8000)
 
 ### 🔄 Changed
 

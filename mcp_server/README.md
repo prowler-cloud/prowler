@@ -2,16 +2,18 @@
 
 > ⚠️ **Preview Feature**: This MCP server is currently in preview and under active development. Features and functionality may change. We welcome your feedback—please report any issues on [GitHub](https://github.com/prowler-cloud/prowler/issues) or join our [Slack community](https://goto.prowler.com/slack) to discuss and share your thoughts.
 
-Access the entire Prowler ecosystem through the Model Context Protocol (MCP). This server provides two main capabilities:
+Access the entire Prowler ecosystem through the Model Context Protocol (MCP). This server provides three main capabilities:
 
 - **Prowler Cloud and Prowler App (Self-Managed)**: Full access to Prowler Cloud platform and Prowler Self-Managed for managing providers, running scans, and analyzing security findings
 - **Prowler Hub**: Access to Prowler's security checks, fixers, and compliance frameworks catalog
+- **Prowler Documentation**: Search and retrieve official Prowler documentation
 
 
 ## Requirements
 
 - Python 3.12+
 - Network access to `https://hub.prowler.com` (for Prowler Hub)
+- Network access to `https://prowler.mintlify.app` (for Prowler Documentation)
 - Network access to Prowler Cloud and Prowler App (Self-Managed) API (it can be Prowler Cloud API or self-hosted Prowler App API)
 - Prowler Cloud account credentials (for Prowler Cloud and Prowler App (Self-Managed) features)
 
@@ -169,6 +171,13 @@ All tools are exposed under the `prowler_hub` prefix.
 - `prowler_hub_list_providers`: List Prowler official providers and their services.
 - `prowler_hub_get_artifacts_count`: Return total artifact count (checks + frameworks).
 
+### Prowler Documentation
+
+All tools are exposed under the `prowler_docs` prefix.
+
+- `prowler_docs_search`: Search the official Prowler documentation using fulltext search. Returns relevant documentation pages with highlighted snippets and relevance scores.
+- `prowler_docs_get_document`: Retrieve the full markdown content of a specific documentation file using the path from search results.
+
 ### Prowler Cloud and Prowler App (Self-Managed)
 
 All tools are exposed under the `prowler_app` prefix.
@@ -218,7 +227,7 @@ All tools are exposed under the `prowler_app` prefix.
 ### Prowler Cloud and Prowler App (Self-Managed) Authentication
 
 > [!IMPORTANT]
-> Authentication is not needed for using Prowler Hub features.
+> Authentication is not needed for using Prowler Hub or Prowler Documentation features.
 
 The Prowler MCP server supports different authentication in Prowler Cloud and Prowler App (Self-Managed) methods depending on the transport mode:
 

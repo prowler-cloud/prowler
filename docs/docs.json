@@ -417,6 +417,10 @@
       "destination": "/user-guide/tutorials/prowler-app-sso"
     },
     {
+      "source": "/projects/prowler-open-source/en/latest",
+      "destination": "/introduction"
+    },
+    {
       "source": "/projects/prowler-saas/en/latest/:slug*",
       "destination": "https://docs.prowler.pro/en/latest/:slug*"
     }
