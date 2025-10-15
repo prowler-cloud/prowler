@@ -15,6 +15,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Equality validation for CheckID, filename and classname [(#8690)](https://github.com/prowler-cloud/prowler/pull/8690)
 - Improve logging for Security Hub integration [(#8608)](https://github.com/prowler-cloud/prowler/pull/8608)
 - Support for Atlassian Document Format (ADF) in Jira integration [(#8878)](https://github.com/prowler-cloud/prowler/pull/8878)
+- Add Common Cloud Controls for AWS, Azure and GCP [(#8000)](https://github.com/prowler-cloud/prowler/pull/8000)
 
 ### Changed
 
