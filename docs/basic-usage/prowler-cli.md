@@ -284,20 +284,20 @@ Prowler allows you to scan your Oracle Cloud deployments for security and compli
 
 You have two options to authenticate:
 
-1. OCI Config File Authentication: this config file can be generated using the OCI CLI with the `oci session authenticate` command or created manually using the OCI Console. For more details, see the [OCI Authentication Guide](../tutorials/oci/authentication.md).
+1. OCI Config File Authentication: this config file can be generated using the OCI CLI with the `oci session authenticate` command or created manually using the OCI Console. For more details, see the [OCI Authentication Guide](../tutorials/oci/authentication.md#oci-session-authentication).
 
-```console
-prowler oci
-```
+    ```console
+    prowler oci
+    ```
 
-You can add different profiles to the config file to scan different tenancies or regions. In order to scan a specific profile, use the `--profile` flag:
+    You can add different profiles to the config file to scan different tenancies or regions. In order to scan a specific profile, use the `--profile` flag:
 
-```console
-prowler oci --profile <profile_name>
-```
+    ```console
+    prowler oci --profile <profile_name>
+    ```
 
 2. Instance Principal Authentication: when running Prowler on an OCI Compute instance, you can use Instance Principal authentication. For more details, see the [OCI Authentication Guide](../tutorials/oci/authentication.md#instance-principal-authentication).
 
-```console
-prowler oci --use-instance-principal
-```
+    ```console
+    prowler oci --use-instance-principal
+    ```
