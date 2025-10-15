@@ -98,7 +98,7 @@ class TestGenerateOutputs:
             ),
             patch(
                 "tasks.tasks._generate_output_directory",
-                return_value=("out-dir", "comp-dir"),
+                return_value=("out-dir", "comp-dir", "threat-dir"),
             ),
             patch("tasks.tasks.Scan.all_objects.filter") as mock_scan_update,
             patch("tasks.tasks.rmtree"),
@@ -126,7 +126,8 @@ class TestGenerateOutputs:
             patch("tasks.tasks.get_compliance_frameworks"),
             patch("tasks.tasks.Finding.all_objects.filter") as mock_findings,
             patch(
-                "tasks.tasks._generate_output_directory", return_value=("out", "comp")
+                "tasks.tasks._generate_output_directory",
+                return_value=("out", "comp", "threat"),
             ),
             patch("tasks.tasks.FindingOutput._transform_findings_stats"),
             patch("tasks.tasks.FindingOutput.transform_api_finding"),
@@ -176,7 +177,8 @@ class TestGenerateOutputs:
             patch("tasks.tasks.get_compliance_frameworks", return_value=["cis"]),
             patch("tasks.tasks.Finding.all_objects.filter") as mock_findings,
             patch(
-                "tasks.tasks._generate_output_directory", return_value=("out", "comp")
+                "tasks.tasks._generate_output_directory",
+                return_value=("out", "comp", "threat"),
             ),
             patch(
                 "tasks.tasks.FindingOutput._transform_findings_stats",
@@ -256,7 +258,7 @@ class TestGenerateOutputs:
             ),
             patch(
                 "tasks.tasks._generate_output_directory",
-                return_value=("outdir", "compdir"),
+                return_value=("outdir", "compdir", "threatdir"),
             ),
             patch("tasks.tasks._compress_output_files", return_value="outdir.zip"),
             patch("tasks.tasks._upload_to_s3", return_value="s3://bucket/outdir.zip"),
@@ -329,7 +331,7 @@ class TestGenerateOutputs:
             patch("tasks.tasks.get_compliance_frameworks", return_value=["cis"]),
             patch(
                 "tasks.tasks._generate_output_directory",
-                return_value=("outdir", "compdir"),
+                return_value=("outdir", "compdir", "threatdir"),
             ),
             patch("tasks.tasks.FindingOutput._transform_findings_stats"),
             patch(
@@ -376,7 +378,8 @@ class TestGenerateOutputs:
             patch("tasks.tasks.get_compliance_frameworks", return_value=["cis"]),
             patch("tasks.tasks.Finding.all_objects.filter") as mock_findings,
             patch(
-                "tasks.tasks._generate_output_directory", return_value=("out", "comp")
+                "tasks.tasks._generate_output_directory",
+                return_value=("out", "comp", "threat"),
             ),
             patch(
                 "tasks.tasks.FindingOutput._transform_findings_stats",
@@ -435,7 +438,8 @@ class TestGenerateOutputs:
             patch("tasks.tasks.get_compliance_frameworks", return_value=[]),
             patch("tasks.tasks.Finding.all_objects.filter") as mock_findings,
             patch(
-                "tasks.tasks._generate_output_directory", return_value=("out", "comp")
+                "tasks.tasks._generate_output_directory",
+                return_value=("out", "comp", "threat"),
             ),
             patch("tasks.tasks.FindingOutput._transform_findings_stats"),
             patch("tasks.tasks.FindingOutput.transform_api_finding"),
@@ -477,12 +481,14 @@ class TestScanCompleteTasks:
     @patch("tasks.tasks.perform_scan_summary_task.si")
     @patch("tasks.tasks.generate_outputs_task.si")
     @patch("tasks.tasks.generate_threatscore_report_task.si")
+    @patch("tasks.tasks.check_integrations_task.si")
     def test_scan_complete_tasks(
         self,
+        mock_check_integrations_task,
+        mock_threatscore_task,
         mock_outputs_task,
         mock_scan_summary_task,
         mock_compliance_tasks,
-        mock_threatscore_task,
     ):
         _perform_scan_complete_tasks("tenant-id", "scan-id", "provider-id")
         mock_compliance_tasks.assert_called_once_with(
@@ -498,9 +504,14 @@ class TestScanCompleteTasks:
             tenant_id="tenant-id",
         )
         mock_threatscore_task.assert_called_once_with(
+            tenant_id="tenant-id",
             scan_id="scan-id",
             provider_id="provider-id",
+        )
+        mock_check_integrations_task.assert_called_once_with(
             tenant_id="tenant-id",
+            provider_id="provider-id",
+            scan_id="scan-id",
         )
 
 

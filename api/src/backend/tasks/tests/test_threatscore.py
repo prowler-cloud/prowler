@@ -199,6 +199,7 @@ class TestGenerateThreatscoreReportFunction:
     def setup_method(self):
         self.scan_id = str(uuid.uuid4())
         self.provider_id = str(uuid.uuid4())
+        self.tenant_id = str(uuid.uuid4())
         self.compliance_id = "prowler_threatscore_aws"
         self.output_path = "/tmp/test_threatscore_report.pdf"
 
@@ -288,6 +289,7 @@ class TestGenerateThreatscoreReportFunction:
         mock_table_style.return_value = MagicMock()
 
         generate_threatscore_report(
+            tenant_id=self.tenant_id,
             scan_id=self.scan_id,
             compliance_id=self.compliance_id,
             output_path=self.output_path,
@@ -320,6 +322,7 @@ class TestGenerateThreatscoreReportFunction:
 
         with pytest.raises(Exception, match="Provider not found"):
             generate_threatscore_report(
+                tenant_id=self.tenant_id,
                 scan_id=self.scan_id,
                 compliance_id=self.compliance_id,
                 output_path=self.output_path,
