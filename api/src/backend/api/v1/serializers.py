@@ -1353,6 +1353,8 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 serializer = KubernetesProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.M365.value:
                 serializer = M365ProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.OCI.value:
+                serializer = OracleCloudProviderSecret(data=secret)
             else:
                 raise serializers.ValidationError(
                     {"provider": f"Provider type not supported {provider_type}"}
@@ -1461,6 +1463,19 @@ class GithubProviderSecret(serializers.Serializer):
     oauth_app_token = serializers.CharField(required=False)
     github_app_id = serializers.IntegerField(required=False)
     github_app_key_content = serializers.CharField(required=False)
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
+class OracleCloudProviderSecret(serializers.Serializer):
+    user = serializers.CharField()
+    fingerprint = serializers.CharField()
+    key_file = serializers.CharField(required=False)
+    key_content = serializers.CharField(required=False)
+    tenancy = serializers.CharField()
+    region = serializers.CharField()
+    pass_phrase = serializers.CharField(required=False)
 
     class Meta:
         resource_name = "provider-secrets"
