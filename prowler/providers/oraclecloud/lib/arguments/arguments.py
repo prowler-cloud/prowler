@@ -10,27 +10,32 @@ def init_parser(self):
         "oci", parents=[self.common_providers_parser], help="OCI Provider"
     )
 
-    # Authentication Methods
-    oci_auth_subparser = oci_parser.add_argument_group("Authentication Modes")
-    oci_auth_subparser.add_argument(
+    # Config File Authentication Options
+    oci_config_subparser = oci_parser.add_argument_group("Config File Authentication")
+    oci_config_subparser.add_argument(
         "--oci-config-file",
         "-cf",
         nargs="?",
         default=None,
         help=f"OCI config file path. Defaults to {OCI_DEFAULT_CONFIG_FILE}",
     )
-    oci_auth_subparser.add_argument(
+    oci_config_subparser.add_argument(
         "--profile",
         "-p",
         nargs="?",
         default=None,
         help="OCI profile to use from the config file. Defaults to DEFAULT",
     )
-    oci_auth_subparser.add_argument(
+
+    # Instance Principal Authentication
+    oci_instance_principal_subparser = oci_parser.add_argument_group(
+        "Instance Principal Authentication"
+    )
+    oci_instance_principal_subparser.add_argument(
         "--use-instance-principal",
         "--instance-principal",
         action="store_true",
-        help="Use OCI Instance Principal authentication instead of config file",
+        help="Use OCI Instance Principal authentication (only works when running inside an OCI compute instance)",
     )
 
     # OCI Regions
