@@ -23,15 +23,15 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        fail: ["bg-[#432232]", `text-[${variantColors.fail}]`],
-        pass: ["bg-[#204237]", `text-[${variantColors.pass}]`],
-        warning: ["bg-[#3d3520]", `text-[${variantColors.warning}]`],
-        info: ["bg-[#1e3a5f]", `text-[${variantColors.info}]`],
+        fail: "bg-[#432232]",
+        pass: "bg-[#204237]",
+        warning: "bg-[#3d3520]",
+        info: "bg-[#1e3a5f]",
       },
       size: {
-        sm: ["px-1", "text-xs"],
-        md: ["px-1.5", "text-sm"],
-        lg: ["px-2", "text-base"],
+        sm: "px-1 text-xs",
+        md: "px-1.5 text-sm",
+        lg: "px-2 text-base",
       },
     },
     defaultVariants: {
@@ -41,26 +41,63 @@ const badgeVariants = cva(
   },
 );
 
-const sizeStyles = {
-  sm: {
-    badgeIcon: "h-2.5 w-2.5",
-    labelText: "text-xs",
-    statIcon: "h-2.5 w-2.5",
-    statLabel: "text-xs",
+const badgeIconVariants = cva("", {
+  variants: {
+    size: {
+      sm: "h-2.5 w-2.5",
+      md: "h-3 w-3",
+      lg: "h-4 w-4",
+    },
   },
-  md: {
-    badgeIcon: "h-3 w-3",
-    labelText: "text-sm",
-    statIcon: "h-3 w-3",
-    statLabel: "text-sm",
+  defaultVariants: {
+    size: "md",
   },
-  lg: {
-    badgeIcon: "h-4 w-4",
-    labelText: "text-base",
-    statIcon: "h-3.5 w-3.5",
-    statLabel: "text-base",
+});
+
+const labelTextVariants = cva(
+  "leading-6 font-semibold text-zinc-300 dark:text-zinc-300",
+  {
+    variants: {
+      size: {
+        sm: "text-xs",
+        md: "text-sm",
+        lg: "text-base",
+      },
+    },
+    defaultVariants: {
+      size: "md",
+    },
   },
-};
+);
+
+const statIconVariants = cva("text-zinc-300 dark:text-zinc-300", {
+  variants: {
+    size: {
+      sm: "h-2.5 w-2.5",
+      md: "h-3 w-3",
+      lg: "h-3.5 w-3.5",
+    },
+  },
+  defaultVariants: {
+    size: "md",
+  },
+});
+
+const statLabelVariants = cva(
+  "leading-5 font-medium text-zinc-300 dark:text-zinc-300",
+  {
+    variants: {
+      size: {
+        sm: "text-xs",
+        md: "text-sm",
+        lg: "text-base",
+      },
+    },
+    defaultVariants: {
+      size: "md",
+    },
+  },
+);
 
 export interface ResourceStatsCardContentProps
   extends React.HTMLAttributes<HTMLDivElement> {
@@ -85,7 +122,6 @@ export const ResourceStatsCardContent = React.forwardRef<
   ) => {
     const BadgeIcon = badge.icon;
     const badgeVariant: BadgeVariant = badge.variant || "fail";
-    const styles = sizeStyles[size];
 
     // Determine accent line color
     const lineColor = accentColor || variantColors[badgeVariant] || "#d4d4d8";
@@ -100,19 +136,21 @@ export const ResourceStatsCardContent = React.forwardRef<
         <div className="flex w-full items-center gap-1">
           {/* Badge */}
           <div className={cn(badgeVariants({ variant: badgeVariant, size }))}>
-            <BadgeIcon className={styles.badgeIcon} strokeWidth={2.5} />
-            <span className="leading-6 font-bold">{badge.count}</span>
+            <BadgeIcon
+              className={badgeIconVariants({ size })}
+              strokeWidth={2.5}
+              style={{ color: variantColors[badgeVariant] }}
+            />
+            <span
+              className="leading-6 font-bold"
+              style={{ color: variantColors[badgeVariant] }}
+            >
+              {badge.count}
+            </span>
           </div>
 
           {/* Label */}
-          <span
-            className={cn(
-              "leading-6 font-semibold text-zinc-300 dark:text-zinc-300",
-              styles.labelText,
-            )}
-          >
-            {label}
-          </span>
+          <span className={labelTextVariants({ size })}>{label}</span>
         </div>
 
         {/* Stats Section */}
@@ -133,18 +171,10 @@ export const ResourceStatsCardContent = React.forwardRef<
                 return (
                   <div key={index} className="flex items-center gap-1">
                     <StatIcon
-                      className={cn(
-                        "text-zinc-300 dark:text-zinc-300",
-                        styles.statIcon,
-                      )}
+                      className={statIconVariants({ size })}
                       strokeWidth={2}
                     />
-                    <span
-                      className={cn(
-                        "leading-5 font-medium text-zinc-300 dark:text-zinc-300",
-                        styles.statLabel,
-                      )}
-                    >
+                    <span className={statLabelVariants({ size })}>
                       {stat.label}
                     </span>
                   </div>

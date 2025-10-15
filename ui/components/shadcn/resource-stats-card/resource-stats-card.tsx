@@ -1,3 +1,4 @@
+import { cva, type VariantProps } from "class-variance-authority";
 import { LucideIcon } from "lucide-react";
 import * as React from "react";
 
@@ -10,25 +11,37 @@ import { ResourceStatsCardHeader } from "./resource-stats-card-header";
 
 export type { StatItem };
 
-// Variant styles for the container
-const variantStyles = {
-  default: "",
-  fail: "border-[rgba(67,34,50,0.5)] bg-[rgba(67,34,50,0.2)] dark:border-[rgba(67,34,50,0.7)] dark:bg-[rgba(67,34,50,0.3)]",
-  pass: "border-[rgba(32,66,55,0.5)] bg-[rgba(32,66,55,0.2)] dark:border-[rgba(32,66,55,0.7)] dark:bg-[rgba(32,66,55,0.3)]",
-  warning:
-    "border-[rgba(61,53,32,0.5)] bg-[rgba(61,53,32,0.2)] dark:border-[rgba(61,53,32,0.7)] dark:bg-[rgba(61,53,32,0.3)]",
-  info: "border-[rgba(30,58,95,0.5)] bg-[rgba(30,58,95,0.2)] dark:border-[rgba(30,58,95,0.7)] dark:bg-[rgba(30,58,95,0.3)]",
-} as const;
-
-// Size styles for the container
-const sizeStyles = {
-  sm: "px-2 py-1.5 gap-1",
-  md: "px-3 py-2 gap-2",
-  lg: "px-4 py-3 gap-3",
-} as const;
+// Variant styles using CVA for type safety and consistency
+// Colors are exact HEX values from Figma design system
+const cardVariants = cva("", {
+  variants: {
+    variant: {
+      default: "",
+      // Fail variant - rgba(67,34,50) from Figma
+      fail: "border-[rgba(67,34,50,0.5)] bg-[rgba(67,34,50,0.2)] dark:border-[rgba(67,34,50,0.7)] dark:bg-[rgba(67,34,50,0.3)]",
+      // Pass variant - rgba(32,66,55) from Figma
+      pass: "border-[rgba(32,66,55,0.5)] bg-[rgba(32,66,55,0.2)] dark:border-[rgba(32,66,55,0.7)] dark:bg-[rgba(32,66,55,0.3)]",
+      // Warning variant - rgba(61,53,32) from Figma
+      warning:
+        "border-[rgba(61,53,32,0.5)] bg-[rgba(61,53,32,0.2)] dark:border-[rgba(61,53,32,0.7)] dark:bg-[rgba(61,53,32,0.3)]",
+      // Info variant - rgba(30,58,95) from Figma
+      info: "border-[rgba(30,58,95,0.5)] bg-[rgba(30,58,95,0.2)] dark:border-[rgba(30,58,95,0.7)] dark:bg-[rgba(30,58,95,0.3)]",
+    },
+    size: {
+      sm: "px-2 py-1.5 gap-1",
+      md: "px-3 py-2 gap-2",
+      lg: "px-4 py-3 gap-3",
+    },
+  },
+  defaultVariants: {
+    variant: "default",
+    size: "md",
+  },
+});
 
 export interface ResourceStatsCardProps
-  extends Omit<React.HTMLAttributes<HTMLDivElement>, "color"> {
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, "color">,
+    VariantProps<typeof cardVariants> {
   // Optional header (icon + title + resource count)
   header?: {
     icon: LucideIcon;
@@ -57,12 +70,6 @@ export interface ResourceStatsCardProps
   // Sub-statistics array (flexible items)
   stats?: StatItem[];
 
-  // Visual variant for the container background/border
-  variant?: "default" | "fail" | "pass" | "warning" | "info";
-
-  // Size variant
-  size?: "sm" | "md" | "lg";
-
   // Render without container (no border, background, padding) - useful for composing multiple cards in a custom container
   containerless?: boolean;
 }
@@ -87,6 +94,9 @@ export const ResourceStatsCard = React.forwardRef<
     },
     ref,
   ) => {
+    // Resolve size to ensure it's not null (CVA can return null but we need a defined value)
+    const resolvedSize = size || "md";
+
     // If containerless, render without outer wrapper
     if (containerless) {
       return (
@@ -95,10 +105,12 @@ export const ResourceStatsCard = React.forwardRef<
           className={cn("flex flex-col gap-[5px]", className)}
           {...props}
         >
-          {header && <ResourceStatsCardHeader {...header} size={size} />}
+          {header && (
+            <ResourceStatsCardHeader {...header} size={resolvedSize} />
+          )}
           {emptyState ? (
             <div className="flex h-[51px] w-full flex-col items-center justify-center">
-              <p className="text-center text-sm leading-5 font-medium text-zinc-600 dark:text-zinc-600">
+              <p className="text-center text-sm leading-5 font-medium text-zinc-300 dark:text-zinc-300">
                 {emptyState.message}
               </p>
             </div>
@@ -110,7 +122,7 @@ export const ResourceStatsCard = React.forwardRef<
                 label={label}
                 stats={stats}
                 accentColor={accentColor}
-                size={size}
+                size={resolvedSize}
               />
             )
           )}
@@ -122,18 +134,13 @@ export const ResourceStatsCard = React.forwardRef<
     return (
       <ResourceStatsCardContainer
         ref={ref}
-        className={cn(
-          variantStyles[variant],
-          sizeStyles[size],
-          "flex-col",
-          className,
-        )}
+        className={cn(cardVariants({ variant, size }), "flex-col", className)}
         {...props}
       >
-        {header && <ResourceStatsCardHeader {...header} size={size} />}
+        {header && <ResourceStatsCardHeader {...header} size={resolvedSize} />}
         {emptyState ? (
           <div className="flex h-[51px] w-full flex-col items-center justify-center">
-            <p className="text-center text-sm leading-5 font-medium text-zinc-600 dark:text-zinc-600">
+            <p className="text-center text-sm leading-5 font-medium text-zinc-300 dark:text-zinc-300">
               {emptyState.message}
             </p>
           </div>
@@ -145,7 +152,7 @@ export const ResourceStatsCard = React.forwardRef<
               label={label}
               stats={stats}
               accentColor={accentColor}
-              size={size}
+              size={resolvedSize}
             />
           )
         )}
