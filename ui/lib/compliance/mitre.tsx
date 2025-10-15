@@ -9,8 +9,8 @@ import {
   Framework,
   MITREAttributesMetadata,
   Requirement,
-  RequirementsData,
   REQUIREMENT_STATUS,
+  RequirementsData,
   RequirementStatus,
 } from "@/types/compliance";
 

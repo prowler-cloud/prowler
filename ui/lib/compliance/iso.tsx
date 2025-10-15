@@ -8,8 +8,8 @@ import {
   Framework,
   ISO27001AttributesMetadata,
   Requirement,
-  RequirementsData,
   REQUIREMENT_STATUS,
+  RequirementsData,
   RequirementStatus,
 } from "@/types/compliance";
 

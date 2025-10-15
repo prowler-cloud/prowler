@@ -7,8 +7,8 @@ import {
   AttributesData,
   Framework,
   Requirement,
-  RequirementsData,
   REQUIREMENT_STATUS,
+  RequirementsData,
   RequirementStatus,
   ThreatAttributesMetadata,
 } from "@/types/compliance";

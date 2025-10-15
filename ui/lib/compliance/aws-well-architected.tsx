@@ -8,8 +8,8 @@ import {
   AWSWellArchitectedAttributesMetadata,
   Framework,
   Requirement,
-  RequirementsData,
   REQUIREMENT_STATUS,
+  RequirementsData,
   RequirementStatus,
 } from "@/types/compliance";
 

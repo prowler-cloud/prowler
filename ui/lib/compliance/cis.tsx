@@ -8,8 +8,8 @@ import {
   CISAttributesMetadata,
   Framework,
   Requirement,
-  RequirementsData,
   REQUIREMENT_STATUS,
+  RequirementsData,
   RequirementStatus,
 } from "@/types/compliance";
 
