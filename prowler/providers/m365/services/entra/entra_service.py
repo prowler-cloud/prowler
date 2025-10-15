@@ -254,7 +254,7 @@ class Entra(M365Service):
                         ),
                         authentication_strength=(
                             AuthenticationStrength(
-                                policy.grant_controls.authentication_strength.display_name
+                                display_name=policy.grant_controls.authentication_strength.display_name
                             )
                             if policy.grant_controls is not None
                             and policy.grant_controls.authentication_strength
@@ -455,6 +455,7 @@ class ConditionalAccessPolicyState(Enum):
 
 class UserAction(Enum):
     REGISTER_SECURITY_INFO = "urn:user:registersecurityinfo"
+    REGISTER_DEVICE = "urn:user:registerdevice"
 
 
 class ApplicationsConditions(BaseModel):
@@ -523,11 +524,19 @@ class SessionControls(BaseModel):
 
 
 class ConditionalAccessGrantControl(Enum):
+    """
+    Built-in grant controls for Conditional Access policies.
+    Reference: https://learn.microsoft.com/en-us/graph/api/resources/conditionalaccessgrantcontrols
+    """
+
     MFA = "mfa"
     BLOCK = "block"
     DOMAIN_JOINED_DEVICE = "domainJoinedDevice"
     PASSWORD_CHANGE = "passwordChange"
     COMPLIANT_DEVICE = "compliantDevice"
+    APPROVED_APPLICATION = "approvedApplication"
+    COMPLIANT_APPLICATION = "compliantApplication"
+    TERMS_OF_USE = "termsOfUse"
 
 
 class GrantControlOperator(Enum):
@@ -535,10 +544,15 @@ class GrantControlOperator(Enum):
     OR = "OR"
 
 
-class AuthenticationStrength(Enum):
-    MFA = "Multifactor authentication"
-    PASSWORDLESS_MFA = "Passwordless MFA"
-    PHISHING_RESISTANT_MFA = "Phishing-resistant MFA"
+class AuthenticationStrength(BaseModel):
+    """
+    Authentication Strength can be:
+    - Predefined by Microsoft (e.g., "Multifactor authentication", "Passwordless MFA", "Phishing-resistant MFA")
+    - Custom policies created by admins (e.g., "MFA Budgetbox", "FIDO2 MFA")
+    We store it as a string to support both predefined and custom values.
+    """
+
+    display_name: str
 
 
 class GrantControls(BaseModel):
