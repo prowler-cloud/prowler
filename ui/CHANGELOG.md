@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.14.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- ResourceStatsCard composition components for flexible dashboard layouts [(#8921)](https://github.com/prowler-cloud/prowler/pull/8921)
+
+---
+
 ## [1.13.0] (Prowler UNRELEASED)
 
 ### 🚀 Added
@@ -14,7 +22,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Add compliance name in compliance detail view [(#8775)](https://github.com/prowler-cloud/prowler/pull/8775)
 - API key management in user profile [(#8308)](https://github.com/prowler-cloud/prowler/pull/8308)
 - Refresh access token error handling [(#8864)](https://github.com/prowler-cloud/prowler/pull/8864)
-- ResourceStatsCard composition components for flexible dashboard layouts [(#8921)](https://github.com/prowler-cloud/prowler/pull/8921)
 
 ### 🔄 Changed
 
