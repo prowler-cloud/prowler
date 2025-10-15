@@ -105,15 +105,15 @@ from rest_framework_json_api import serializers
                         "type": "string",
                         "description": "The Azure application (client) ID for authentication in Azure AD.",
                     },
-                    "client_secret": {
-                        "type": "string",
-                        "description": "The client secret associated with the application (client) ID, providing "
-                        "secure access.",
-                    },
                     "tenant_id": {
                         "type": "string",
                         "description": "The Azure tenant ID, representing the directory where the application is "
                         "registered.",
+                    },
+                    "client_secret": {
+                        "type": "string",
+                        "description": "The client secret associated with the application (client) ID, providing "
+                        "secure access.",
                     },
                     "user": {
                         "type": "email",
