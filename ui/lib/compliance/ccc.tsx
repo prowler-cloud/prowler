@@ -8,9 +8,9 @@ import {
   CCCAttributesMetadata,
   Framework,
   Requirement,
+  REQUIREMENT_STATUS,
   RequirementsData,
   RequirementStatus,
-  REQUIREMENT_STATUS,
 } from "@/types/compliance";
 
 import {
