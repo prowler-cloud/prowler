@@ -1,3 +1,4 @@
+import { cn } from "@/lib";
 import { Requirement } from "@/types/compliance";
 
 import {
@@ -14,17 +15,26 @@ interface CCCDetailsProps {
 }
 
 export const CCCCustomDetails = ({ requirement }: CCCDetailsProps) => {
-  // Helper to render threat mappings
-  const renderThreatMappings = () => {
-    if (!requirement.section_threat_mappings) return null;
+  // Helper to render section mappings (threats or guidelines)
+  const renderSectionMappings = (
+    data: unknown,
+    title: string,
+    colorScheme: "red" | "blue",
+  ) => {
+    if (!data) return null;
 
-    const mappings = requirement.section_threat_mappings as Array<{
+    const mappings = data as Array<{
       ReferenceId: string;
       Identifiers: string[];
     }>;
 
+    const colorClasses = {
+      red: "bg-red-50 text-red-700 ring-red-600/10 dark:bg-red-400/10 dark:text-red-400 dark:ring-red-400/20",
+      blue: "bg-blue-50 text-blue-700 ring-blue-600/10 dark:bg-blue-400/10 dark:text-blue-400 dark:ring-blue-400/20",
+    };
+
     return (
-      <ComplianceDetailSection title="Threat Mappings">
+      <ComplianceDetailSection title={title}>
         <div className="flex flex-col gap-3">
           {mappings.map((mapping, index) => (
             <div key={index} className="flex flex-col gap-1">
@@ -35,41 +45,10 @@ export const CCCCustomDetails = ({ requirement }: CCCDetailsProps) => {
                 {mapping.Identifiers.map((identifier, idx) => (
                   <span
                     key={idx}
-                    className="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-red-600/10 ring-inset dark:bg-red-400/10 dark:text-red-400 dark:ring-red-400/20"
-                  >
-                    {identifier}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </ComplianceDetailSection>
-    );
-  };
-
-  // Helper to render guideline mappings
-  const renderGuidelineMappings = () => {
-    if (!requirement.section_guideline_mappings) return null;
-
-    const mappings = requirement.section_guideline_mappings as Array<{
-      ReferenceId: string;
-      Identifiers: string[];
-    }>;
-
-    return (
-      <ComplianceDetailSection title="Guideline Mappings">
-        <div className="flex flex-col gap-3">
-          {mappings.map((mapping, index) => (
-            <div key={index} className="flex flex-col gap-1">
-              <span className="text-muted-foreground text-xs font-medium">
-                {mapping.ReferenceId}
-              </span>
-              <div className="flex flex-wrap gap-2">
-                {mapping.Identifiers.map((identifier, idx) => (
-                  <span
-                    key={idx}
-                    className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-blue-600/10 ring-inset dark:bg-blue-400/10 dark:text-blue-400 dark:ring-blue-400/20"
+                    className={cn(
+                      "inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset",
+                      colorClasses[colorScheme],
+                    )}
                   >
                     {identifier}
                   </span>
@@ -139,8 +118,16 @@ export const CCCCustomDetails = ({ requirement }: CCCDetailsProps) => {
         </ComplianceDetailSection>
       )}
 
-      {renderThreatMappings()}
-      {renderGuidelineMappings()}
+      {renderSectionMappings(
+        requirement.section_threat_mappings,
+        "Threat Mappings",
+        "red",
+      )}
+      {renderSectionMappings(
+        requirement.section_guideline_mappings,
+        "Guideline Mappings",
+        "blue",
+      )}
     </ComplianceDetailContainer>
   );
 };

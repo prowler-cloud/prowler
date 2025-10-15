@@ -1,4 +1,12 @@
-export type RequirementStatus = "PASS" | "FAIL" | "MANUAL" | "No findings";
+export const REQUIREMENT_STATUS = {
+  PASS: "PASS",
+  FAIL: "FAIL",
+  MANUAL: "MANUAL",
+  NO_FINDINGS: "No findings",
+} as const;
+
+export type RequirementStatus =
+  (typeof REQUIREMENT_STATUS)[keyof typeof REQUIREMENT_STATUS];
 
 export interface CompliancesOverview {
   data: ComplianceOverviewData[];
@@ -133,6 +141,14 @@ export interface KISAAttributesMetadata {
   NonComplianceCases: string[];
 }
 
+export interface C5AttributesMetadata {
+  Section: string;
+  SubSection: string;
+  Type: string;
+  AboutCriteria: string;
+  ComplementaryCriteria: string;
+}
+
 export interface MITREAttributesMetadata {
   // Dynamic cloud service field - could be AWSService, GCPService, AzureService, etc.
   [key: string]: string;
@@ -185,6 +201,7 @@ export interface AttributesItemData {
         | AWSWellArchitectedAttributesMetadata[]
         | ThreatAttributesMetadata[]
         | KISAAttributesMetadata[]
+        | C5AttributesMetadata[]
         | MITREAttributesMetadata[]
         | CCCAttributesMetadata[]
         | GenericAttributesMetadata[];

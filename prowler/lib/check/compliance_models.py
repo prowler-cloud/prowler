@@ -214,6 +214,16 @@ class CCC_Requirement_Attribute(BaseModel):
     SectionThreatMappings: list[dict]
     SectionGuidelineMappings: list[dict]
 
+# C5 Germany Requirement Attribute
+class C5Germany_Requirement_Attribute(BaseModel):
+    """C5 Germany Requirement Attribute"""
+
+    Section: str
+    SubSection: str
+    Type: str
+    AboutCriteria: str
+    ComplementaryCriteria: str
+
 
 # Base Compliance Model
 # TODO: move this to compliance folder
@@ -232,6 +242,7 @@ class Compliance_Requirement(BaseModel):
             KISA_ISMSP_Requirement_Attribute,
             Prowler_ThreatScore_Requirement_Attribute,
             CCC_Requirement_Attribute,
+            C5Germany_Requirement_Attribute,
             # Generic_Compliance_Requirement_Attribute must be the last one since it is the fallback for generic compliance framework
             Generic_Compliance_Requirement_Attribute,
         ]
