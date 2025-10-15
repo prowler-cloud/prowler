@@ -20,6 +20,9 @@ jobs:
       NEXT_PUBLIC_API_BASE_URL: 'http://localhost:8080/api/v1'
       E2E_GITHUB_USER: ${{ secrets.E2E_GITHUB_USER }}
       E2E_GITHUB_PASSWORD: ${{ secrets.E2E_GITHUB_PASSWORD }}
+      SOCIAL_GITHUB_OAUTH_CLIENT_ID: ${{ secrets.SOCIAL_GITHUB_OAUTH_CLIENT_ID }}
+      SOCIAL_GITHUB_OAUTH_CLIENT_SECRET: ${{ secrets.SOCIAL_GITHUB_OAUTH_CLIENT_SECRET }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
