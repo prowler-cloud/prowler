@@ -36,10 +36,8 @@ class TestGenerateThreatscoreReport:
     @patch("tasks.jobs.report._generate_output_directory")
     @patch("tasks.jobs.report.Provider.objects.get")
     @patch("tasks.jobs.report.ScanSummary.objects.filter")
-    @patch("tasks.jobs.report.Scan.all_objects.filter")
     def test_generate_threatscore_report_happy_path(
         self,
-        mock_scan_update,
         mock_scan_summary_filter,
         mock_provider_get,
         mock_generate_output_directory,
@@ -70,15 +68,13 @@ class TestGenerateThreatscoreReport:
 
         assert result == {"upload": True}
         mock_generate_report.assert_called_once_with(
+            tenant_id=self.tenant_id,
             scan_id=self.scan_id,
             compliance_id="prowler_threatscore_aws",
             output_path="/tmp/threatscore_path_threatscore_report.pdf",
             provider_id=self.provider_id,
             only_failed=True,
             min_risk_level=4,
-        )
-        mock_scan_update.return_value.update.assert_called_once_with(
-            output_location="s3://bucket/threatscore_report.pdf"
         )
         mock_rmtree.assert_called_once_with(
             Path("/tmp/threatscore_path_threatscore_report.pdf").parent,
@@ -92,7 +88,6 @@ class TestGenerateThreatscoreReport:
             patch("tasks.jobs.report._generate_output_directory") as mock_gen_dir,
             patch("tasks.jobs.report.generate_threatscore_report"),
             patch("tasks.jobs.report._upload_to_s3", return_value=None),
-            patch("tasks.jobs.report.Scan.all_objects.filter") as mock_scan_update,
         ):
             mock_filter.return_value.exists.return_value = True
 
@@ -115,7 +110,6 @@ class TestGenerateThreatscoreReport:
             )
 
             assert result == {"upload": False}
-            mock_scan_update.return_value.update.assert_called_once()
 
     def test_generate_threatscore_report_logs_rmtree_exception(self, caplog):
         with (
@@ -126,7 +120,6 @@ class TestGenerateThreatscoreReport:
             patch(
                 "tasks.jobs.report._upload_to_s3", return_value="s3://bucket/report.pdf"
             ),
-            patch("tasks.jobs.report.Scan.all_objects.filter"),
             patch(
                 "tasks.jobs.report.rmtree", side_effect=Exception("Test deletion error")
             ),
@@ -162,7 +155,6 @@ class TestGenerateThreatscoreReport:
             patch(
                 "tasks.jobs.report._upload_to_s3", return_value="s3://bucket/report.pdf"
             ),
-            patch("tasks.jobs.report.Scan.all_objects.filter"),
             patch("tasks.jobs.report.rmtree"),
         ):
             mock_filter.return_value.exists.return_value = True
@@ -185,6 +177,7 @@ class TestGenerateThreatscoreReport:
             )
 
             mock_generate.assert_called_once_with(
+                tenant_id=self.tenant_id,
                 scan_id=self.scan_id,
                 compliance_id="prowler_threatscore_azure",
                 output_path="/tmp/threatscore_path_threatscore_report.pdf",
@@ -301,7 +294,7 @@ class TestGenerateThreatscoreReportFunction:
         mock_provider_get.assert_called_once_with(id=self.provider_id)
         mock_initialize_provider.assert_called_once_with(mock_provider)
         mock_compliance_get_bulk.assert_called_once_with("aws")
-        mock_finding_filter.assert_called_once_with(scan_id=self.scan_id)
+        mock_finding_filter.assert_called_once_with(tenant_id=self.tenant_id, scan_id=self.scan_id)
         mock_batched.assert_called_once()
         mock_transform_finding.assert_called_once_with(mock_finding, prowler_provider)
         mock_doc_template.assert_called_once()

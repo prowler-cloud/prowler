@@ -98,7 +98,7 @@ class TestGenerateOutputs:
             ),
             patch(
                 "tasks.tasks._generate_output_directory",
-                return_value=("out-dir", "comp-dir", "threat-dir"),
+                return_value=("/tmp/test/out-dir", "/tmp/test/comp-dir", "/tmp/test/threat-dir"),
             ),
             patch("tasks.tasks.Scan.all_objects.filter") as mock_scan_update,
             patch("tasks.tasks.rmtree"),
@@ -127,7 +127,7 @@ class TestGenerateOutputs:
             patch("tasks.tasks.Finding.all_objects.filter") as mock_findings,
             patch(
                 "tasks.tasks._generate_output_directory",
-                return_value=("out", "comp", "threat"),
+                return_value=("/tmp/test/out", "/tmp/test/comp", "/tmp/test/threat"),
             ),
             patch("tasks.tasks.FindingOutput._transform_findings_stats"),
             patch("tasks.tasks.FindingOutput.transform_api_finding"),
@@ -178,7 +178,7 @@ class TestGenerateOutputs:
             patch("tasks.tasks.Finding.all_objects.filter") as mock_findings,
             patch(
                 "tasks.tasks._generate_output_directory",
-                return_value=("out", "comp", "threat"),
+                return_value=("/tmp/test/out", "/tmp/test/comp", "/tmp/test/threat"),
             ),
             patch(
                 "tasks.tasks.FindingOutput._transform_findings_stats",
@@ -258,7 +258,7 @@ class TestGenerateOutputs:
             ),
             patch(
                 "tasks.tasks._generate_output_directory",
-                return_value=("outdir", "compdir", "threatdir"),
+                return_value=("/tmp/test/outdir", "/tmp/test/compdir", "/tmp/test/threatdir"),
             ),
             patch("tasks.tasks._compress_output_files", return_value="outdir.zip"),
             patch("tasks.tasks._upload_to_s3", return_value="s3://bucket/outdir.zip"),
@@ -305,12 +305,14 @@ class TestGenerateOutputs:
             def __init__(self, *args, **kwargs):
                 self.transform_calls = []
                 self._data = []
+                self.close_file = False
                 writer_instances.append(self)
 
             def transform(self, fos, comp_obj, name):
                 self.transform_calls.append((fos, comp_obj, name))
 
             def batch_write_data_to_file(self):
+                # Mock implementation - do nothing
                 pass
 
         two_batches = [
@@ -331,7 +333,7 @@ class TestGenerateOutputs:
             patch("tasks.tasks.get_compliance_frameworks", return_value=["cis"]),
             patch(
                 "tasks.tasks._generate_output_directory",
-                return_value=("outdir", "compdir", "threatdir"),
+                return_value=("/tmp/test/outdir", "/tmp/test/compdir", "/tmp/test/threatdir"),
             ),
             patch("tasks.tasks.FindingOutput._transform_findings_stats"),
             patch(
@@ -379,7 +381,7 @@ class TestGenerateOutputs:
             patch("tasks.tasks.Finding.all_objects.filter") as mock_findings,
             patch(
                 "tasks.tasks._generate_output_directory",
-                return_value=("out", "comp", "threat"),
+                return_value=("/tmp/test/out", "/tmp/test/comp", "/tmp/test/threat"),
             ),
             patch(
                 "tasks.tasks.FindingOutput._transform_findings_stats",
@@ -439,7 +441,7 @@ class TestGenerateOutputs:
             patch("tasks.tasks.Finding.all_objects.filter") as mock_findings,
             patch(
                 "tasks.tasks._generate_output_directory",
-                return_value=("out", "comp", "threat"),
+                return_value=("/tmp/test/out", "/tmp/test/comp", "/tmp/test/threat"),
             ),
             patch("tasks.tasks.FindingOutput._transform_findings_stats"),
             patch("tasks.tasks.FindingOutput.transform_api_finding"),
@@ -683,7 +685,7 @@ class TestCheckIntegrationsTask:
         mock_initialize_provider.return_value = MagicMock()
         mock_compliance_bulk.return_value = {}
         mock_get_frameworks.return_value = []
-        mock_generate_dir.return_value = ("out-dir", "comp-dir")
+        mock_generate_dir.return_value = ("out-dir", "comp-dir", "threat-dir")
         mock_transform_stats.return_value = {"stats": "data"}
 
         # Mock findings
@@ -808,7 +810,7 @@ class TestCheckIntegrationsTask:
         mock_initialize_provider.return_value = MagicMock()
         mock_compliance_bulk.return_value = {}
         mock_get_frameworks.return_value = []
-        mock_generate_dir.return_value = ("out-dir", "comp-dir")
+        mock_generate_dir.return_value = ("out-dir", "comp-dir", "threat-dir")
         mock_transform_stats.return_value = {"stats": "data"}
 
         # Mock findings
@@ -924,7 +926,7 @@ class TestCheckIntegrationsTask:
         mock_initialize_provider.return_value = MagicMock()
         mock_compliance_bulk.return_value = {}
         mock_get_frameworks.return_value = []
-        mock_generate_dir.return_value = ("out-dir", "comp-dir")
+        mock_generate_dir.return_value = ("out-dir", "comp-dir", "threat-dir")
         mock_transform_stats.return_value = {"stats": "data"}
 
         # Mock findings
