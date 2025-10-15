@@ -173,9 +173,28 @@ class TestGenerateOutputs:
         mock_finding_output = MagicMock()
         mock_finding_output.compliance = {"cis": ["requirement-1", "requirement-2"]}
 
+        html_writer_mock = MagicMock()
+        html_writer_mock._data = []
+        html_writer_mock.close_file = False
+        html_writer_mock.transform = MagicMock()
+        html_writer_mock.batch_write_data_to_file = MagicMock()
+
+        compliance_writer_mock = MagicMock()
+        compliance_writer_mock._data = []
+        compliance_writer_mock.close_file = False
+        compliance_writer_mock.transform = MagicMock()
+        compliance_writer_mock.batch_write_data_to_file = MagicMock()
+
+        # Create a mock class that returns our mock instance when called
+        mock_compliance_class = MagicMock(return_value=compliance_writer_mock)
+
+        mock_provider = MagicMock()
+        mock_provider.provider = "aws"
+        mock_provider.uid = "test-provider-uid"
+
         with (
             patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter,
-            patch("tasks.tasks.Provider.objects.get"),
+            patch("tasks.tasks.Provider.objects.get", return_value=mock_provider),
             patch("tasks.tasks.initialize_prowler_provider"),
             patch("tasks.tasks.Compliance.get_bulk", return_value={"cis": MagicMock()}),
             patch("tasks.tasks.get_compliance_frameworks", return_value=["cis"]),
@@ -196,6 +215,20 @@ class TestGenerateOutputs:
             patch("tasks.tasks._upload_to_s3", return_value="s3://bucket/f.zip"),
             patch("tasks.tasks.Scan.all_objects.filter"),
             patch("tasks.tasks.rmtree"),
+            patch(
+                "tasks.tasks.OUTPUT_FORMATS_MAPPING",
+                {
+                    "html": {
+                        "class": lambda *args, **kwargs: html_writer_mock,
+                        "suffix": ".html",
+                        "kwargs": {},
+                    }
+                },
+            ),
+            patch(
+                "tasks.tasks.COMPLIANCE_CLASS_MAP",
+                {"aws": [(lambda x: True, mock_compliance_class)]},
+            ),
         ):
             mock_filter.return_value.exists.return_value = True
             mock_findings.return_value.order_by.return_value.iterator.return_value = [
@@ -203,29 +236,12 @@ class TestGenerateOutputs:
                 True,
             ]
 
-            html_writer_mock = MagicMock()
-            with (
-                patch(
-                    "tasks.tasks.OUTPUT_FORMATS_MAPPING",
-                    {
-                        "html": {
-                            "class": lambda *args, **kwargs: html_writer_mock,
-                            "suffix": ".html",
-                            "kwargs": {},
-                        }
-                    },
-                ),
-                patch(
-                    "tasks.tasks.COMPLIANCE_CLASS_MAP",
-                    {"aws": [(lambda x: True, MagicMock())]},
-                ),
-            ):
-                generate_outputs_task(
-                    scan_id=self.scan_id,
-                    provider_id=self.provider_id,
-                    tenant_id=self.tenant_id,
-                )
-                html_writer_mock.batch_write_data_to_file.assert_called_once()
+            generate_outputs_task(
+                scan_id=self.scan_id,
+                provider_id=self.provider_id,
+                tenant_id=self.tenant_id,
+            )
+            html_writer_mock.batch_write_data_to_file.assert_called_once()
 
     def test_transform_called_only_on_second_batch(self):
         raw1 = MagicMock()
@@ -384,9 +400,28 @@ class TestGenerateOutputs:
         mock_finding_output = MagicMock()
         mock_finding_output.compliance = {"cis": ["requirement-1", "requirement-2"]}
 
+        json_writer_mock = MagicMock()
+        json_writer_mock._data = []
+        json_writer_mock.close_file = False
+        json_writer_mock.transform = MagicMock()
+        json_writer_mock.batch_write_data_to_file = MagicMock()
+
+        compliance_writer_mock = MagicMock()
+        compliance_writer_mock._data = []
+        compliance_writer_mock.close_file = False
+        compliance_writer_mock.transform = MagicMock()
+        compliance_writer_mock.batch_write_data_to_file = MagicMock()
+
+        # Create a mock class that returns our mock instance when called
+        mock_compliance_class = MagicMock(return_value=compliance_writer_mock)
+
+        mock_provider = MagicMock()
+        mock_provider.provider = "aws"
+        mock_provider.uid = "test-provider-uid"
+
         with (
             patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter,
-            patch("tasks.tasks.Provider.objects.get"),
+            patch("tasks.tasks.Provider.objects.get", return_value=mock_provider),
             patch("tasks.tasks.initialize_prowler_provider"),
             patch("tasks.tasks.Compliance.get_bulk", return_value={"cis": MagicMock()}),
             patch("tasks.tasks.get_compliance_frameworks", return_value=["cis"]),
@@ -407,6 +442,20 @@ class TestGenerateOutputs:
             patch("tasks.tasks._upload_to_s3", return_value="s3://bucket/file.zip"),
             patch("tasks.tasks.Scan.all_objects.filter"),
             patch("tasks.tasks.rmtree", side_effect=Exception("Test deletion error")),
+            patch(
+                "tasks.tasks.OUTPUT_FORMATS_MAPPING",
+                {
+                    "json": {
+                        "class": lambda *args, **kwargs: json_writer_mock,
+                        "suffix": ".json",
+                        "kwargs": {},
+                    }
+                },
+            ),
+            patch(
+                "tasks.tasks.COMPLIANCE_CLASS_MAP",
+                {"aws": [(lambda x: True, mock_compliance_class)]},
+            ),
         ):
             mock_filter.return_value.exists.return_value = True
             mock_findings.return_value.order_by.return_value.iterator.return_value = [
@@ -414,29 +463,13 @@ class TestGenerateOutputs:
                 True,
             ]
 
-            with (
-                patch(
-                    "tasks.tasks.OUTPUT_FORMATS_MAPPING",
-                    {
-                        "json": {
-                            "class": lambda *args, **kwargs: MagicMock(),
-                            "suffix": ".json",
-                            "kwargs": {},
-                        }
-                    },
-                ),
-                patch(
-                    "tasks.tasks.COMPLIANCE_CLASS_MAP",
-                    {"aws": [(lambda x: True, MagicMock())]},
-                ),
-            ):
-                with caplog.at_level("ERROR"):
-                    generate_outputs_task(
-                        scan_id=self.scan_id,
-                        provider_id=self.provider_id,
-                        tenant_id=self.tenant_id,
-                    )
-                    assert "Error deleting output files" in caplog.text
+            with caplog.at_level("ERROR"):
+                generate_outputs_task(
+                    scan_id=self.scan_id,
+                    provider_id=self.provider_id,
+                    tenant_id=self.tenant_id,
+                )
+                assert "Error deleting output files" in caplog.text
 
     @patch("tasks.tasks.rls_transaction")
     @patch("tasks.tasks.Integration.objects.filter")
