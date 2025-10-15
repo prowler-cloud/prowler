@@ -1970,6 +1970,7 @@ class LighthouseProviderConfiguration(RowLevelSecurityProtectedModel):
 
     class LLMProviderChoices(models.TextChoices):
         OPENAI = "openai", _("OpenAI")
+        BEDROCK = "bedrock", _("AWS Bedrock")
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)

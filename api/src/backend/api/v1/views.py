@@ -4350,23 +4350,13 @@ class LighthouseProviderConfigViewSet(BaseRLSViewSet):
     @extend_schema(
         tags=["Lighthouse AI"],
         summary="Check LLM provider connection",
-        description="Validate provider credentials asynchronously and toggle is_active.",
+        description="Validate provider credentials asynchronously and toggle is_active. Supports OpenAI and AWS Bedrock providers.",
         request=None,
         responses={202: OpenApiResponse(response=TaskSerializer)},
     )
     @action(detail=True, methods=["post"], url_name="connection")
     def connection(self, request, pk=None):
         instance = self.get_object()
-        if (
-            instance.provider_type
-            != LighthouseProviderConfiguration.LLMProviderChoices.OPENAI
-        ):
-            return Response(
-                data={
-                    "errors": [{"detail": "Only 'openai' provider supported in MVP"}]
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
 
         with transaction.atomic():
             task = check_lighthouse_provider_connection_task.delay(
@@ -4388,7 +4378,7 @@ class LighthouseProviderConfigViewSet(BaseRLSViewSet):
     @extend_schema(
         tags=["Lighthouse AI"],
         summary="Refresh LLM models catalog",
-        description="Fetch available models for this provider configuration and upsert into catalog.",
+        description="Fetch available models for this provider configuration and upsert into catalog. Supports OpenAI and AWS Bedrock providers.",
         request=None,
         responses={202: OpenApiResponse(response=TaskSerializer)},
     )
@@ -4400,16 +4390,6 @@ class LighthouseProviderConfigViewSet(BaseRLSViewSet):
     )
     def refresh_models(self, request, pk=None):
         instance = self.get_object()
-        if (
-            instance.provider_type
-            != LighthouseProviderConfiguration.LLMProviderChoices.OPENAI
-        ):
-            return Response(
-                data={
-                    "errors": [{"detail": "Only 'openai' provider supported in MVP"}]
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
 
         with transaction.atomic():
             task = refresh_lighthouse_provider_models_task.delay(
