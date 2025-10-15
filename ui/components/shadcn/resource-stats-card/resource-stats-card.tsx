@@ -9,13 +9,61 @@ export interface StatItem {
   label: string;
 }
 
-// Shared color palette for variants
+type CardSize = "sm" | "md" | "lg";
+
 const variantColors = {
   fail: "#f54280",
   pass: "#4ade80",
   warning: "#fbbf24",
   info: "#60a5fa",
 } as const;
+
+type BadgeVariant = keyof typeof variantColors;
+
+const sizeStyles: Record<
+  CardSize,
+  {
+    headerIcon: string;
+    headerTitle: string;
+    resourceCount: string;
+    emptyState: string;
+    badgeIcon: string;
+    labelText: string;
+    statIcon: string;
+    statLabel: string;
+  }
+> = {
+  sm: {
+    headerIcon: "h-3.5 w-3.5",
+    headerTitle: "text-sm",
+    resourceCount: "text-[9px]",
+    emptyState: "text-xs",
+    badgeIcon: "h-2.5 w-2.5",
+    labelText: "text-xs",
+    statIcon: "h-2.5 w-2.5",
+    statLabel: "text-xs",
+  },
+  md: {
+    headerIcon: "h-4 w-4",
+    headerTitle: "text-base",
+    resourceCount: "text-[10px]",
+    emptyState: "text-sm",
+    badgeIcon: "h-3 w-3",
+    labelText: "text-sm",
+    statIcon: "h-3 w-3",
+    statLabel: "text-sm",
+  },
+  lg: {
+    headerIcon: "h-5 w-5",
+    headerTitle: "text-lg",
+    resourceCount: "text-xs",
+    emptyState: "text-base",
+    badgeIcon: "h-4 w-4",
+    labelText: "text-base",
+    statIcon: "h-3.5 w-3.5",
+    statLabel: "text-base",
+  },
+};
 
 const resourceStatsCardVariants = cva(
   [
@@ -80,11 +128,10 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        fail: ["bg-[#432232]", "text-[#f54280]"],
-        pass: ["bg-[#204237]", "text-[#4ade80]"],
-        warning: ["bg-[#3d3520]", "text-[#fbbf24]"],
-        info: ["bg-[#1e3a5f]", "text-[#60a5fa]"],
-        custom: [], // For custom colors
+        fail: ["bg-[#432232]", `text-[${variantColors.fail}]`],
+        pass: ["bg-[#204237]", `text-[${variantColors.pass}]`],
+        warning: ["bg-[#3d3520]", `text-[${variantColors.warning}]`],
+        info: ["bg-[#1e3a5f]", `text-[${variantColors.info}]`],
       },
       size: {
         sm: ["px-1", "text-xs"],
@@ -118,9 +165,7 @@ export interface ResourceStatsCardProps
   badge?: {
     icon: LucideIcon;
     count: number | string;
-    variant?: "fail" | "pass" | "warning" | "info" | "custom";
-    backgroundColor?: string; // For custom variant
-    textColor?: string; // For custom variant
+    variant?: "fail" | "pass" | "warning" | "info";
   };
 
   // Main label - optional when using empty state
@@ -152,38 +197,28 @@ export const ResourceStatsCard = React.forwardRef<
     },
     ref,
   ) => {
-    const BadgeIcon = badge?.icon;
+    const resolvedSize: CardSize = size ?? "md";
+    const BadgeIconComponent = badge?.icon;
     const HeaderIcon = header?.icon;
-    // Use badge variant, fallback to card variant, or default to "fail"
-    // Map "default" variant to "fail" for badge colors
-    const determineVariant = () => {
-      const v = badge?.variant || variant || "fail";
-      return v === "default" ? "fail" : v;
-    };
-    const badgeVariant = determineVariant();
+    const badgeVariantUnresolved = badge?.variant ?? variant ?? "fail";
+    const badgeVariant: BadgeVariant =
+      badgeVariantUnresolved === "default"
+        ? "fail"
+        : (badgeVariantUnresolved as BadgeVariant);
+    const currentSizeStyles = sizeStyles[resolvedSize];
+    const showBadgeRow = Boolean(badge && label && BadgeIconComponent);
+    const showStats = stats.length > 0;
 
     // Determine accent line color
-    const lineColor =
-      accentColor ||
-      badge?.textColor ||
-      (badgeVariant !== "custom"
-        ? variantColors[badgeVariant as keyof typeof variantColors]
-        : undefined) ||
-      "#d4d4d8";
-
-    // Custom inline styles for custom variant
-    const badgeStyle =
-      badgeVariant === "custom" && badge
-        ? {
-            backgroundColor: badge.backgroundColor,
-            color: badge.textColor,
-          }
-        : undefined;
+    const lineColor = accentColor || variantColors[badgeVariant] || "#d4d4d8";
 
     return (
       <div
         ref={ref}
-        className={cn(resourceStatsCardVariants({ variant, size }), className)}
+        className={cn(
+          resourceStatsCardVariants({ variant, size: resolvedSize }),
+          className,
+        )}
         {...props}
       >
         {/* Optional Header */}
@@ -194,9 +229,7 @@ export const ResourceStatsCard = React.forwardRef<
                 <HeaderIcon
                   className={cn(
                     "text-zinc-300 dark:text-zinc-300",
-                    size === "sm" && "h-3.5 w-3.5",
-                    size === "md" && "h-4 w-4",
-                    size === "lg" && "h-5 w-5",
+                    currentSizeStyles.headerIcon,
                   )}
                   strokeWidth={2}
                 />
@@ -204,9 +237,7 @@ export const ResourceStatsCard = React.forwardRef<
               <span
                 className={cn(
                   "leading-7 font-semibold text-zinc-300 dark:text-zinc-300",
-                  size === "sm" && "text-sm",
-                  size === "md" && "text-base",
-                  size === "lg" && "text-lg",
+                  currentSizeStyles.headerTitle,
                 )}
               >
                 {header.title}
@@ -216,9 +247,7 @@ export const ResourceStatsCard = React.forwardRef<
               <span
                 className={cn(
                   "leading-4 font-normal text-zinc-400 dark:text-zinc-400",
-                  size === "sm" && "text-[9px]",
-                  size === "md" && "text-[10px]",
-                  size === "lg" && "text-xs",
+                  currentSizeStyles.resourceCount,
                 )}
               >
                 {typeof header.resourceCount === "number"
@@ -235,9 +264,7 @@ export const ResourceStatsCard = React.forwardRef<
             <p
               className={cn(
                 "text-center leading-5 font-medium text-zinc-600 dark:text-zinc-600",
-                size === "sm" && "text-xs",
-                size === "md" && "text-sm",
-                size === "lg" && "text-base",
+                currentSizeStyles.emptyState,
               )}
             >
               {emptyState.message}
@@ -246,19 +273,19 @@ export const ResourceStatsCard = React.forwardRef<
         ) : (
           <>
             {/* Badge and Label Row */}
-            {badge && label && BadgeIcon && (
+            {showBadgeRow && BadgeIconComponent && badge && (
               <div className="flex w-full items-center gap-1">
                 {/* Badge */}
                 <div
-                  className={cn(badgeVariants({ variant: badgeVariant, size }))}
-                  style={badgeStyle}
+                  className={cn(
+                    badgeVariants({
+                      variant: badgeVariant,
+                      size: resolvedSize,
+                    }),
+                  )}
                 >
-                  <BadgeIcon
-                    className={cn(
-                      "h-3 w-3",
-                      size === "sm" && "h-2.5 w-2.5",
-                      size === "lg" && "h-4 w-4",
-                    )}
+                  <BadgeIconComponent
+                    className={currentSizeStyles.badgeIcon}
                     strokeWidth={2.5}
                   />
                   <span className="leading-6 font-bold">{badge.count}</span>
@@ -268,9 +295,7 @@ export const ResourceStatsCard = React.forwardRef<
                 <span
                   className={cn(
                     "leading-6 font-semibold text-zinc-300 dark:text-zinc-300",
-                    size === "sm" && "text-xs",
-                    size === "md" && "text-sm",
-                    size === "lg" && "text-base",
+                    currentSizeStyles.labelText,
                   )}
                 >
                   {label}
@@ -279,7 +304,7 @@ export const ResourceStatsCard = React.forwardRef<
             )}
 
             {/* Stats Section */}
-            {stats.length > 0 && (
+            {showStats && (
               <div className="flex w-full items-stretch gap-0">
                 {/* Vertical Accent Line */}
                 <div className="flex items-stretch px-3 py-1">
@@ -298,18 +323,14 @@ export const ResourceStatsCard = React.forwardRef<
                         <StatIcon
                           className={cn(
                             "text-zinc-300 dark:text-zinc-300",
-                            size === "sm" && "h-2.5 w-2.5",
-                            size === "md" && "h-3 w-3",
-                            size === "lg" && "h-3.5 w-3.5",
+                            currentSizeStyles.statIcon,
                           )}
                           strokeWidth={2}
                         />
                         <span
                           className={cn(
                             "leading-5 font-medium text-zinc-300 dark:text-zinc-300",
-                            size === "sm" && "text-xs",
-                            size === "md" && "text-sm",
-                            size === "lg" && "text-base",
+                            currentSizeStyles.statLabel,
                           )}
                         >
                           {stat.label}
