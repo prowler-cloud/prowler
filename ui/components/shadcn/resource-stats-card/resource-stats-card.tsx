@@ -7,8 +7,15 @@ import { cn } from "@/lib/utils";
 export interface StatItem {
   icon: LucideIcon;
   label: string;
-  count?: number | string;
 }
+
+// Shared color palette for variants
+const variantColors = {
+  fail: "#f54280",
+  pass: "#4ade80",
+  warning: "#fbbf24",
+  info: "#60a5fa",
+} as const;
 
 const resourceStatsCardVariants = cva(
   [
@@ -155,24 +162,14 @@ export const ResourceStatsCard = React.forwardRef<
     };
     const badgeVariant = determineVariant();
 
-    // Determine accent color based on variant
-    const getAccentColor = () => {
-      if (accentColor) return accentColor;
-      if (badge?.textColor) return badge.textColor;
-
-      // Default colors based on badge variant
-      const variantColors: Record<string, string> = {
-        fail: "#f54280",
-        pass: "#4ade80",
-        warning: "#fbbf24",
-        info: "#60a5fa",
-        custom: badge?.textColor || "#d4d4d8",
-      };
-
-      return variantColors[badgeVariant] || "#d4d4d8";
-    };
-
-    const lineColor = getAccentColor();
+    // Determine accent line color
+    const lineColor =
+      accentColor ||
+      badge?.textColor ||
+      (badgeVariant !== "custom"
+        ? variantColors[badgeVariant as keyof typeof variantColors]
+        : undefined) ||
+      "#d4d4d8";
 
     // Custom inline styles for custom variant
     const badgeStyle =
