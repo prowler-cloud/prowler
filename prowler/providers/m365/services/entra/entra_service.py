@@ -253,9 +253,7 @@ class Entra(M365Service):
                             )
                         ),
                         authentication_strength=(
-                            AuthenticationStrength(
-                                display_name=policy.grant_controls.authentication_strength.display_name
-                            )
+                            policy.grant_controls.authentication_strength.display_name
                             if policy.grant_controls is not None
                             and policy.grant_controls.authentication_strength
                             is not None
@@ -544,21 +542,10 @@ class GrantControlOperator(Enum):
     OR = "OR"
 
 
-class AuthenticationStrength(BaseModel):
-    """
-    Authentication Strength can be:
-    - Predefined by Microsoft (e.g., "Multifactor authentication", "Passwordless MFA", "Phishing-resistant MFA")
-    - Custom policies created by admins (e.g., "MFA Budgetbox", "FIDO2 MFA")
-    We store it as a string to support both predefined and custom values.
-    """
-
-    display_name: str
-
-
 class GrantControls(BaseModel):
     built_in_controls: List[ConditionalAccessGrantControl]
     operator: GrantControlOperator
-    authentication_strength: Optional[AuthenticationStrength]
+    authentication_strength: Optional[str]
 
 
 class ConditionalAccessPolicy(BaseModel):
