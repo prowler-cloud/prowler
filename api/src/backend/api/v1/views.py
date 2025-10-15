@@ -207,7 +207,7 @@ from api.v1.serializers import (
     UserSerializer,
     UserUpdateSerializer,
 )
-from tasks.jobs.cartography import sync_scan_to_cartography
+from tasks.jobs.cartography import cartography_sync_scan
 
 logger = logging.getLogger(BackendLogger.API)
 
@@ -1547,10 +1547,15 @@ class ProviderViewSet(BaseRLSViewSet):
         # Always run synchronously
         payload = request.data if isinstance(request.data, dict) else {}
 
-        result = sync_scan_to_cartography(
-            tenant_id=self.request.tenant_id,
-            provider_id=pk,
-            scan_id=payload.get("scan_id"),
+        # Cleaning input
+        tenant_id = self.request.tenant_id
+        provider_id = pk
+        scan_id = payload.get("scan_id")
+
+        result = cartography_sync_scan(
+            tenant_id=tenant_id,
+            provider_id=provider_id,
+            scan_id=scan_id,
         )
         return Response(data={"result": result}, status=status.HTTP_201_CREATED)
 

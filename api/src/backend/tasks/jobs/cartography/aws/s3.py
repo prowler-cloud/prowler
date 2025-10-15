@@ -1,7 +1,6 @@
 import json
 
-from datetime import datetime, timezone
-from typing import Any, Generator
+from typing import Any
 
 import neo4j
 
@@ -9,14 +8,19 @@ from cartography.intel.aws import s3 as cartography_s3
 from celery.utils.log import get_task_logger
 
 from api.db_utils import rls_transaction
-from api.models import Provider, Resource, ResourceScanSummary
+from api.models import Resource, ResourceScanSummary
 
-logger = get_task_logger(__name__)
+# TODO: Do the rigth logging setup
+# logger = get_task_logger(__name__)
+import logging
+from config.custom_logging import BackendLogger
+logger = logging.getLogger(BackendLogger.API)
 
 
 def sync_aws_s3(
     tenant_id: str,
     provider_id: str,
+    account_id: str,
     scan_id: str,
     regions: list[str],
     neo4j_session: neo4j.Session,
@@ -24,198 +28,273 @@ def sync_aws_s3(
     common_job_parameters: dict[str, Any],
 ) -> dict[str, Any]:
     """
-    Monkey-patch Cartography S3 extractors and call cartography.intel.aws.s3.sync.
-
-    Patched functions:
-      - get_s3_bucket_list
-      - get_s3_bucket_details
-      - _sync_s3_notifications (uses Prowler data and Cartography's original _load_s3_notifications)
+    Entry point for syncing AWS S3 data into Cartography.
     """
 
-    with rls_transaction(tenant_id):
-        provider = Provider.objects.get(pk=provider_id)
-        account_id = provider.uid
+    # Getting scan data from Prowler DB
+    buckets_metadata = _get_s3_buckets_metadata(tenant_id, provider_id, scan_id, regions)
 
-    bucket_list = _build_s3_bucket_list(tenant_id, provider_id, scan_id, regions)
-    bucket_data = _build_s3_bucket_details(bucket_list)
-    bucket_notifications = _build_s3_notifications(tenant_id, provider_id, scan_id, regions)
-
-    def _patched_get_s3_bucket_list(_boto3_session):
-        return bucket_list
-
-    def _patched_get_s3_bucket_details(_boto3_session, _bucket_data):
-        return bucket_data
-
-    def _patched_sync_s3_notifications(_neo4j_session, _boto3_session, _bucket_data, _update_tag):
-        cartography_s3._load_s3_notifications(_neo4j_session, bucket_notifications, _update_tag)
-
-    # Apply patches without restoring originals by request
-    setattr(cartography_s3, "get_s3_bucket_list", _patched_get_s3_bucket_list)
-    setattr(cartography_s3, "get_s3_bucket_details", _patched_get_s3_bucket_details)
-    setattr(cartography_s3, "_sync_s3_notifications", _patched_sync_s3_notifications)
-
-    cartography_s3.sync(
+    # Calling our version of cartography AWS S3 sync
+    return _sync(
         neo4j_session,
-        None,
         account_id,
+        buckets_metadata,
         update_tag,
         common_job_parameters,
     )
 
-    # Stats
-    bucket_notifications_count = 0
-    for bn in bucket_notifications:
-        bucket_notifications_count += len(bn.get("TopicConfigurations", []) or [])
-        bucket_notifications_count += len(bn.get("QueueConfigurations", []) or [])
-        bucket_notifications_count += len(bn.get("LambdaFunctionConfigurations", []) or [])
 
-    return {"buckets": len(bucket_data.get("Buckets", [])), "notifications": bucket_notifications_count}
-
-
-def _build_s3_bucket_list(
+def _get_s3_buckets_metadata(
     tenant_id: str,
     provider_id: str,
-    scan_id: str | None,
+    scan_id: str,
     regions: list[str],
-) -> dict[str, Any]:
-    bucket_items: list[dict[str, Any]] = []
+) -> list(dict[str, Any]):
+    """
+    Getting S3 buckets metadata from Prowler DB.
+    """
 
     with rls_transaction(tenant_id):
-        base_qs = Resource.objects.filter(
+        buckets_qs = Resource.objects.filter(
             provider_id=provider_id,
             service="s3",
-            type__in=["bucket", "s3_bucket"],
-        )
-        if scan_id:
-            rss_ids = ResourceScanSummary.objects.filter(
-                tenant_id=tenant_id, scan_id=scan_id, service="s3"
-            ).values_list("resource_id", flat=True)
-            base_qs = base_qs.filter(id__in=list(rss_ids))
-        if regions:
-            base_qs = base_qs.filter(region__in=regions)
+            type="AwsS3Bucket",
+            id__in=ResourceScanSummary.objects.filter(
+                scan_id=scan_id,
+                service="s3",
+            ).values_list("resource_id", flat=True),
+            region__in=regions,
+        ).only("metadata", "inserted_at")
 
-        resources = list(base_qs.only("name", "region", "metadata", "uid", "inserted_at"))
+    buckets_metadata = []
+    for bucket in buckets_qs:
+        bucket_metadata = json.loads(bucket.metadata)
+        bucket_metadata["inserted_at"] = bucket.inserted_at
+        buckets_metadata.append(bucket_metadata)
 
-    owner: dict[str, Any] = {"DisplayName": None, "ID": None}
-
-    for r in resources:
-        name = r.name or _s3_derive_bucket_name_from_uid(r.uid)
-        creation_date = (
-            datetime.now(tz=timezone.utc).isoformat()
-            if not getattr(r, "inserted_at", None)
-            else r.inserted_at.replace(tzinfo=timezone.utc).isoformat()
-        )
-        bucket_items.append({"Name": name, "CreationDate": creation_date, "Region": r.region})
-
-    return {"Owner": owner, "Buckets": bucket_items}
+    return buckets_metadata
 
 
-def _s3_derive_bucket_name_from_uid(uid: str) -> str:
-    if uid and ":s3:::" in uid:
-        try:
-            return uid.split(":s3:::", 1)[1]
-        except Exception:
-            return uid
-    return uid or "unknown-bucket"
-
-
-def _build_s3_bucket_details(
-    bucket_data: dict[str, Any],
-) -> Generator[
-    tuple[
-        str,
-        dict[str, Any] | None,
-        dict[str, Any] | None,
-        dict[str, Any] | None,
-        dict[str, Any] | None,
-        dict[str, Any] | None,
-        dict[str, Any] | None,
-        dict[str, Any] | None,
-    ],
-    None,
-    None,
-]:
-    for b in bucket_data.get("Buckets", []):
-        yield (b["Name"], None, None, None, None, None, None, None)
-
-
-def _build_s3_notifications(
-    tenant_id: str,
-    provider_id: str,
-    scan_id: str | None,
-    regions: list[str],
-) -> list[dict[str, Any]]:
+def _sync(
+    neo4j_session: neo4j.Session,
+    account_id: str,
+    buckets_metadata: list[dict[str, Any]],
+    update_tag: int,
+    common_job_parameters: dict[str, Any],
+) -> dict[str, Any]:
     """
-    Return a list of per-bucket notifications.
+    Code based on `cartography.intel.aws.s3.sync`.
+    """
 
-    Shape (best-effort, Cartography-compatible):
-      {
-        "bucket": <bucket-name>,
-        "TopicConfigurations": [...],
-        "QueueConfigurations": [...],
-        "LambdaFunctionConfigurations": [...],
-        "EventBridgeConfiguration": {...} | None,
-      }
+    logger.info("Syncing AWS S3 for account '%s'", account_id)
+
+    bucket_list = _get_s3_bucket_list(buckets_metadata)
+    cartography_s3.load_s3_buckets(neo4j_session, bucket_list, account_id, update_tag)
+    cartography_s3.cleanup_s3_buckets(neo4j_session, common_job_parameters)
+
+    _get_and_load_s3_bucket_details(neo4j_session, buckets_metadata, account_id, update_tag)
+
+    cartography_s3.cleanup_s3_bucket_acl_and_policy(neo4j_session, common_job_parameters)
+
+    bucket_notifications = _sync_s3_notifications(neo4j_session, buckets_metadata, update_tag)
+
+    cartography_s3.merge_module_sync_metadata(
+        neo4j_session,
+        group_type="AWSAccount",
+        group_id=account_id,
+        synced_type="S3Bucket",
+        update_tag=update_tag,
+        stat_handler=cartography_s3.stat_handler,
+    )
+
+    return {"buckets": len(buckets_metadata), "notifications": len(bucket_notifications)}
+
+
+def _get_s3_bucket_list(buckets_metadata: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    """
+    Code based on `cartography.intel.aws.s3.get_s3_bucket_list`.
+    """
+
+    bucket_list = []
+    for bucket_metadata in buckets_metadata:
+        bucket_list.append({
+            "Name": bucket_metadata.get("name"),
+            "Region": bucket_metadata.get("region"),
+            "CreationDate": bucket_metadata.get("inserted_at"),
+        })
+
+    return {"Buckets": bucket_list}
+
+
+def _get_and_load_s3_bucket_details(
+    neo4j_session: neo4j.Session,
+    buckets_metadata: list[dict[str, Any]],
+    account_id: str,
+    update_tag: int,
+) -> None:
+    """
+    Code based on `cartography.intel.aws.s3.get_s3_bucket_details` and `cartography.intel.aws.s3.load_s3_details`.
+    TODO: Versions of the next functions are not implemented yet:
+        - `cartography.intel.aws.s3.parse_acl`
+        - `cartography.intel.aws.s3.parse_policy` and `cartography.intel.aws.s3.parse_policy_statements` as a single function, if not two  # noqa: E501
+    """
+
+    acls: list[dict[str, Any]] = []  # TODO
+    policies: list[dict[str, Any]] = []  # TODO
+    statements: list[dict[str, Any]] = []  # TODO
+    encryption_configs: list[dict[str, Any]] = []
+    versioning_configs: list[dict[str, Any]] = []
+    public_access_block_configs: list[dict[str, Any]] = []
+    bucket_ownership_controls_configs: list[dict[str, Any]] = []
+    bucket_logging_configs: list[dict[str, Any]] = []
+
+    for bucket_metadata in buckets_metadata:
+        parsed_acls = None  # TODO
+        parsed_policy = None  # TODO
+        parsed_statements = None  # TODO
+
+        parsed_encryption = _parse_s3_bucket_encryption(bucket_metadata)
+        if parsed_encryption is not None:
+            encryption_configs.append(parsed_encryption)
+
+        parsed_versioning = _parse_s3_bucket_versioning(bucket_metadata)
+        versioning_configs.append(parsed_versioning)
+
+        parsed_public_access_block = _parse_s3_bucket_public_access_block(bucket_metadata)
+        public_access_block_configs.append(parsed_public_access_block)
+
+        parsed_bucket_ownership_controls = _parse_s3_bucket_ownership_controls(bucket_metadata)
+        bucket_ownership_controls_configs.append(parsed_bucket_ownership_controls)
+
+        parsed_bucket_logging = _parse_s3_bucket_bucket_logging(bucket_metadata)
+        bucket_logging_configs.append(parsed_bucket_logging)
+
+    cartography_s3.run_cleanup_job(
+        "aws_s3_details.json",
+        neo4j_session,
+        {"UPDATE_TAG": update_tag, "AWS_ID": account_id},
+    )
+
+    cartography_s3._load_s3_acls(neo4j_session, acls, account_id, update_tag)
+    cartography_s3._load_s3_policies(neo4j_session, policies, update_tag)
+    cartography_s3._load_s3_policy_statements(neo4j_session, statements, update_tag)
+    cartography_s3._load_s3_encryption(neo4j_session, encryption_configs, update_tag)
+    cartography_s3._load_s3_versioning(neo4j_session, versioning_configs, update_tag)
+    cartography_s3._load_s3_public_access_block(neo4j_session, public_access_block_configs, update_tag)
+    cartography_s3._load_bucket_ownership_controls(neo4j_session, bucket_ownership_controls_configs, update_tag)
+    cartography_s3._load_bucket_logging(neo4j_session, bucket_logging_configs, update_tag)
+
+    cartography_s3._set_default_values(neo4j_session, account_id)
+
+
+def _parse_s3_bucket_encryption(bucket_metadata: dict[str, Any]) -> dict[str, Any] | None:
+    """
+    Code based on `cartography.intel.aws.s3.parse_encryption`.
+    TODO: Keys `encryption_key_id` and `bucket_key_enabled` are implemented yet.
+    """
+
+    if not bucket_metadata.get("encryption"):
+        return None
+
+    return {
+        "bucket": bucket_metadata.get("name"),
+        "default_encryption": True,
+        "encryption_algorithm": bucket_metadata.get("encryption"),  # ServerSideEncryptionConfiguration.Rules[-1].ApplyServerSideEncryptionByDefault.SSEAlgorithm  # noqa: E501
+        "encryption_key_id": None,  # ServerSideEncryptionConfiguration.Rules[-1].ApplyServerSideEncryptionByDefault.KMSMasterKeyID  # TODO  # noqa: E501
+        "bucket_key_enabled": None,  # ServerSideEncryptionConfiguration.Rules[-1].BucketKeyEnabled  # TODO  # noqa: E501
+    }
+
+
+def _parse_s3_bucket_versioning(bucket_metadata: dict[str, Any]) -> dict[str, Any] | None:
+    """
+    Code based on `cartography.intel.aws.s3.parse_versioning`.
+    """
+
+    return {
+        "bucket": bucket_metadata.get("name"),
+        "status": "Enabled" if bucket_metadata.get("versioning") else "Suspended",
+        "mfa_delete": "Enabled" if bucket_metadata.get("mfa_delete") else "Disabled",
+    }
+
+
+def _parse_s3_bucket_public_access_block(bucket_metadata: dict[str, Any]) -> dict[str, Any] | None:
+    """
+    Code based on `cartography.intel.aws.s3.parse_public_access_block`.
+    """
+
+    return {
+        "bucket": bucket_metadata.get("name"),
+        **bucket_metadata.get("public_access_block"),
+    }
+
+def _parse_s3_bucket_ownership_controls(bucket_metadata: dict[str, Any]) -> dict[str, Any] | None:
+    """
+    Code based on `cartography.intel.aws.s3.parse_bucket_ownership_controls`.
+    """
+
+    return {
+        "bucket": bucket_metadata.get("name"),
+        "object_ownership": bucket_metadata.get("ownership"),
+    }
+
+def _parse_s3_bucket_bucket_logging(bucket_metadata: dict[str, Any]) -> dict[str, Any] | None:
+    """
+    Code based on `cartography.intel.aws.s3.parse_bucket_logging`.
+    """
+
+    return {
+        "bucket": bucket_metadata.get("name"),
+        "logging_enabled": bucket_metadata.get("logging"),
+        "target_bucket": bucket_metadata.get("logging_target_bucket"),
+    }
+
+
+def _load_s3_details(neo4j_session: neo4j.Session, update_tag: int, aws_account_id: str) -> None:
+    cartography_s3.run_cleanup_job(
+        "aws_s3_details.json",
+        neo4j_session,
+        {"UPDATE_TAG": update_tag, "AWS_ID": aws_account_id},
+    )
+
+    cartography_s3._load_s3_acls(neo4j_session, acls, aws_account_id, update_tag)
+    cartography_s3._load_s3_policies(neo4j_session, policies, update_tag)
+    cartography_s3._load_s3_policy_statements(neo4j_session, statements, update_tag)
+    cartography_s3._load_s3_encryption(neo4j_session, encryption_configs, update_tag)
+    cartography_s3._load_s3_versioning(neo4j_session, versioning_configs, update_tag)
+    cartography_s3._load_s3_public_access_block(neo4j_session, public_access_block_configs, update_tag)
+    cartography_s3._load_bucket_ownership_controls(neo4j_session, bucket_ownership_controls_configs, update_tag)
+    cartography_s3._load_bucket_logging(neo4j_session, bucket_logging_configs, update_tag)
+
+    cartography_s3._set_default_values(neo4j_session, aws_account_id)
+
+
+# TODO: Deeper check
+def _parse_s3_notifications(buckets_metadata: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """
+    Code based on `cartography.intel.aws.s3.parse_notification_configuration`.
     """
 
     notifications: list[dict[str, Any]] = []
-
-    with rls_transaction(tenant_id):
-        base_qs = Resource.objects.filter(
-            provider_id=provider_id,
-            service="s3",
-            type__in=["bucket", "s3_bucket"],
-        )
-        if scan_id:
-            rss_ids = ResourceScanSummary.objects.filter(
-                tenant_id=tenant_id, scan_id=scan_id, service="s3"
-            ).values_list("resource_id", flat=True)
-            base_qs = base_qs.filter(id__in=list(rss_ids))
-        if regions:
-            base_qs = base_qs.filter(region__in=regions)
-
-        resources = list(base_qs.only("name", "metadata", "details", "uid"))
-
-    for r in resources:
-        name = r.name or _s3_derive_bucket_name_from_uid(r.uid)
-        conf_obj: dict[str, Any] | None= None
-
-        for raw in (getattr(r, "metadata", None), getattr(r, "details", None)):
-            if not raw:
-                continue
-            try:
-                data = json.loads(raw) if isinstance(raw, str) else raw
-            except Exception:
-                continue
-
-            candidate = data.get("notification_config") if isinstance(data, dict) else None
-            if not candidate and isinstance(data, dict):
-                has_keys = any(
-                    k in data
-                    for k in (
-                        "TopicConfigurations",
-                        "QueueConfigurations",
-                        "LambdaFunctionConfigurations",
-                        "EventBridgeConfiguration",
-                    )
-                )
-                if has_keys:
-                    candidate = data
-
-            if candidate and isinstance(candidate, dict):
-                conf_obj = candidate
-                break
-
-        if not conf_obj:
-            continue
-
-        notification = {
-            "bucket": name,
-            "TopicConfigurations": conf_obj.get("TopicConfigurations") or [],
-            "QueueConfigurations": conf_obj.get("QueueConfigurations") or [],
-            "LambdaFunctionConfigurations": conf_obj.get("LambdaFunctionConfigurations") or [],
-            "EventBridgeConfiguration": conf_obj.get("EventBridgeConfiguration"),
-        }
-        notifications.append(notification)
+    for bucket_metadata in buckets_metadata:
+        for bucket_topic_configuration in bucket_metadata.get("notification_config", {}).get("TopicConfigurations", []):
+            notifications.append({
+                "bucket": bucket_metadata.get("name"),
+                "TopicArn": bucket_topic_configuration.get("TopicArn"),
+            })
 
     return notifications
+
+
+def _sync_s3_notifications(
+        neo4j_session: neo4j.Session,
+        buckets_metadata: list[dict[str, Any]],
+        update_tag: int,
+) -> list[dict[str, Any]]:
+    """
+    Prowler version of Cartography's `cartography.intel.aws.s3._sync_s3_notifications`
+    as we already have the needed information for building the S3 bucket notifications data.
+    """
+
+    bucket_notifications = _parse_s3_notifications(buckets_metadata)
+    cartography_s3._load_s3_notifications(neo4j_session, bucket_notifications, update_tag)
+    return bucket_notifications

@@ -3,6 +3,8 @@ from typing import Any
 
 import neo4j
 
+from api.db_utils import rls_transaction
+from api.models import Provider, ResourceScanSummary
 from tasks.jobs.cartography.aws.s3 import sync_aws_s3
 from tasks.jobs.cartography.aws.ecs import sync_aws_ecs
 from tasks.jobs.cartography.aws.iam import sync_aws_iam
@@ -12,20 +14,47 @@ def sync_aws(
     tenant_id: str,
     provider_id: str,
     scan_id: str,
-    regions: list[str],
     neo4j_session: neo4j.Session,
 ) -> dict[str, Any]:
     """
     Sync AWS resources for a specific tenant and provider.
     """
 
-    regions = []  # TODO: Get `regions` from scan
+    # Getting data from DB
+    account_id = get_aws_provider_account_id(tenant_id, provider_id)
+    regions = get_aws_provider_regions(tenant_id, scan_id)
 
-    update_tag = int(datetime.now(tz=timezone.utc).timestamp() * 1000)  # TODO: Check if is calculated right
-    common_job_parameters = {"UPDATE_TAG": update_tag}  # TODO: Add other stuff to `common_job_parameters`
+    # Configuring Cartography job parameters
+    update_tag = int(datetime.now(tz=timezone.utc).timestamp() * 1000)
+    common_job_parameters = {"UPDATE_TAG": update_tag, "AWS_ID": account_id}
 
     return {
-        "s3": sync_aws_s3(tenant_id, provider_id, scan_id, regions, neo4j_session, update_tag, common_job_parameters),
-        # "ecs": sync_aws_ecs(tenant_id, provider_id, scan_id, regions, neo4j_session, update_tag, common_job_parameters),
-        # "iam": sync_aws_iam(tenant_id, provider_id, scan_id, neo4j_session, update_tag, common_job_parameters),
+        # "iam": sync_aws_iam(tenant_id, provider_id, account_id, scan_id, regions, neo4j_session, update_tag, common_job_parameters),  # noqa: E501
+        "s3": sync_aws_s3(tenant_id, provider_id, account_id, scan_id, regions, neo4j_session, update_tag, common_job_parameters),  # noqa: E501
+        # "ecs": sync_aws_ecs(tenant_id, provider_id, account_id, scan_id, regions, neo4j_session, update_tag, common_job_parameters),  # noqa: E501
     }
+
+    # TODO: Add `cartography.intel.aws._perform_aws_analysis` here, after all the sync functions
+
+
+def get_aws_provider_account_id(tenant_id: str, provider_id: str) -> str:
+    """
+    Getting AWS account ID from Prowler DB for a provider.
+    """
+
+    with rls_transaction(tenant_id):
+        provider = Provider.objects.get(pk=provider_id)
+
+    return provider.uid
+
+
+def get_aws_provider_regions(tenant_id: str, scan_id: str) -> list[str]:
+    """
+    Getting AWS regions from Prowler DB for a provider in a specific scan.
+    """
+
+    with rls_transaction(tenant_id):
+        regions_queryset = ResourceScanSummary.objects.filter(
+            scan_id=scan_id,
+        ).exclude(region="").values_list("region", flat=True).distinct().order_by("region")
+    return list(regions_queryset)
