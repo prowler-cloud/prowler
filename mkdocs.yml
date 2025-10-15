@@ -66,6 +66,7 @@ nav:
             - Social Login: tutorials/prowler-app-social-login.md
             - SSO with SAML: tutorials/prowler-app-sso.md
           - Role-Based Access Control: tutorials/prowler-app-rbac.md
+          - API Keys: tutorials/prowler-app-api-keys.md
           - Mutelist: tutorials/prowler-app-mute-findings.md
           - Integrations:
             - Amazon S3: tutorials/prowler-app-s3-integration.md

@@ -1,4 +1,12 @@
-export type RequirementStatus = "PASS" | "FAIL" | "MANUAL" | "No findings";
+export const REQUIREMENT_STATUS = {
+  PASS: "PASS",
+  FAIL: "FAIL",
+  MANUAL: "MANUAL",
+  NO_FINDINGS: "No findings",
+} as const;
+
+export type RequirementStatus =
+  (typeof REQUIREMENT_STATUS)[keyof typeof REQUIREMENT_STATUS];
 
 export interface CompliancesOverview {
   data: ComplianceOverviewData[];
@@ -27,7 +35,7 @@ export interface Requirement {
   check_ids: string[];
   // This is to allow any key to be added to the requirement object
   // because each compliance has different keys
-  [key: string]: string | string[] | number | object[] | undefined;
+  [key: string]: string | string[] | number | boolean | object[] | undefined;
 }
 
 export interface Control {
@@ -133,6 +141,14 @@ export interface KISAAttributesMetadata {
   NonComplianceCases: string[];
 }
 
+export interface C5AttributesMetadata {
+  Section: string;
+  SubSection: string;
+  Type: string;
+  AboutCriteria: string;
+  ComplementaryCriteria: string;
+}
+
 export interface MITREAttributesMetadata {
   // Dynamic cloud service field - could be AWSService, GCPService, AzureService, etc.
   [key: string]: string;
@@ -167,6 +183,7 @@ export interface AttributesItemData {
         | AWSWellArchitectedAttributesMetadata[]
         | ThreatAttributesMetadata[]
         | KISAAttributesMetadata[]
+        | C5AttributesMetadata[]
         | MITREAttributesMetadata[]
         | GenericAttributesMetadata[];
       check_ids: string[];

@@ -12,6 +12,8 @@ All notable changes to the **Prowler UI** are documented in this file.
 - React Compiler support for automatic optimization [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
 - Turbopack support for faster development builds [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
 - Add compliance name in compliance detail view [(#8775)](https://github.com/prowler-cloud/prowler/pull/8775)
+- Support C5 compliance framework for the AWS provider [(#8830)](https://github.com/prowler-cloud/prowler/pull/8830)
+- API key management in user profile [(#8308)](https://github.com/prowler-cloud/prowler/pull/8308)
 - Refresh access token error handling [(#8864)](https://github.com/prowler-cloud/prowler/pull/8864)
 
 ### 🔄 Changed
@@ -31,14 +33,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - SAML configuration errors are now properly caught and displayed [(#8880)](https://github.com/prowler-cloud/prowler/pull/8880)
 - ThreatScore for each pillar in Prowler ThreatScore specific view [(#8582)](https://github.com/prowler-cloud/prowler/pull/8582)
+- Remove maxTokens model param for GPT-5 models [(#8843)](https://github.com/prowler-cloud/prowler/pull/8843)
+- MITRE ATTACK compliance view now shows all requirements in charts [(#8886)](https://github.com/prowler-cloud/prowler/pull/8886)
 
 ---
-
-## [1.12.4] (Prowler v5.12.4)
-
-### 🐞 Fixed
-
-- Remove maxTokens model param for GPT-5 models [(#8843)](https://github.com/prowler-cloud/prowler/pull/8843)
 
 ## [1.12.3] (Prowler v5.12.3)
 

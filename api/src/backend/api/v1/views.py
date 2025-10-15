@@ -3449,20 +3449,16 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             )
         filtered_queryset = self.filter_queryset(self.get_queryset())
 
-        all_requirements = (
-            filtered_queryset.values(
-                "requirement_id",
-                "framework",
-                "version",
-                "description",
-                "passed_findings",
-                "total_findings",
-            )
-            .distinct()
-            .annotate(
-                total_instances=Count("id"),
-                manual_count=Count("id", filter=Q(requirement_status="MANUAL")),
-            )
+        all_requirements = filtered_queryset.values(
+            "requirement_id",
+            "framework",
+            "version",
+            "description",
+        ).annotate(
+            total_instances=Count("id"),
+            manual_count=Count("id", filter=Q(requirement_status="MANUAL")),
+            passed_findings_sum=Sum("passed_findings"),
+            total_findings_sum=Sum("total_findings"),
         )
 
         passed_instances = (
@@ -3481,8 +3477,8 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             total_instances = requirement["total_instances"]
             passed_count = passed_counts.get(requirement_id, 0)
             is_manual = requirement["manual_count"] == total_instances
-            passed_findings = requirement["passed_findings"]
-            total_findings = requirement["total_findings"]
+            passed_findings = requirement["passed_findings_sum"] or 0
+            total_findings = requirement["total_findings_sum"] or 0
             if is_manual:
                 requirement_status = "MANUAL"
             elif passed_count == total_instances:
