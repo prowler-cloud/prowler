@@ -1,18 +1,23 @@
 import { toUIMessageStream } from "@ai-sdk/langchain";
 import { createUIMessageStreamResponse, UIMessage } from "ai";
 
-import { getLighthouseConfig } from "@/actions/lighthouse/lighthouse";
+import { getTenantConfig } from "@/actions/lighthouse/lighthouse";
 import { getErrorMessage } from "@/lib/helper";
 import { getCurrentDataSection } from "@/lib/lighthouse/data";
 import { convertVercelMessageToLangChainMessage } from "@/lib/lighthouse/utils";
-import { initLighthouseWorkflow } from "@/lib/lighthouse/workflow";
+import {
+  initLighthouseWorkflow,
+  type RuntimeConfig,
+} from "@/lib/lighthouse/workflow";
 
 export async function POST(req: Request) {
   try {
     const {
       messages,
+      model,
     }: {
       messages: UIMessage[];
+      model?: string;
     } = await req.json();
 
     if (!messages) {
@@ -23,8 +28,9 @@ export async function POST(req: Request) {
     const processedMessages = [...messages];
 
     // Get AI configuration to access business context
-    const lighthouseConfig = await getLighthouseConfig();
-    const businessContext = lighthouseConfig.business_context;
+    const tenantConfigResult = await getTenantConfig();
+    const businessContext =
+      tenantConfigResult?.data?.attributes?.business_context;
 
     // Get current user data
     const currentData = await getCurrentDataSection();
@@ -63,7 +69,12 @@ export async function POST(req: Request) {
     // Insert all context messages at the beginning
     processedMessages.unshift(...contextMessages);
 
-    const app = await initLighthouseWorkflow();
+    // Prepare runtime config with client-provided model
+    const runtimeConfig: RuntimeConfig = {
+      model,
+    };
+
+    const app = await initLighthouseWorkflow(runtimeConfig);
 
     const agentStream = app.streamEvents(
       {
