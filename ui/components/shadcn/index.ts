@@ -8,6 +8,14 @@ export {
 } from "./card";
 export {
   ResourceStatsCard,
+  ResourceStatsCardContainer,
+  type ResourceStatsCardContainerProps,
+  ResourceStatsCardContent,
+  type ResourceStatsCardContentProps,
+  ResourceStatsCardDivider,
+  type ResourceStatsCardDividerProps,
+  ResourceStatsCardHeader,
+  type ResourceStatsCardHeaderProps,
   type ResourceStatsCardProps,
   type StatItem,
 } from "./resource-stats-card";
