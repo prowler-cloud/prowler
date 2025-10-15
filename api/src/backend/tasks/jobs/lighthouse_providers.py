@@ -141,7 +141,10 @@ def refresh_lighthouse_provider_models(provider_config_id: str) -> Dict:
             tenant_id=provider_cfg.tenant_id,
             provider_configuration=provider_cfg,
             model_id=model_id,
-            defaults={"default_parameters": {}},
+            defaults={
+                "model_name": model_id,  # OpenAI doesn't return a separate display name
+                "default_parameters": {},
+            },
         )
         if was_created:
             created += 1

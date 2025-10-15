@@ -3276,6 +3276,7 @@ class LighthouseProviderModelsSerializer(RLSSerializer):
             "updated_at",
             "provider_configuration",
             "model_id",
+            "model_name",
             "default_parameters",
             "url",
         ]

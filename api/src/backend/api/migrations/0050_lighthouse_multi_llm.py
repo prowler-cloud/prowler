@@ -75,6 +75,7 @@ def migrate_lighthouse_configs_forward(apps, schema_editor):
                     tenant=tenant,
                     provider_configuration=provider_config,
                     model_id=old_config.model,
+                    model_name=old_config.model,
                     default_parameters={},
                 )
 
@@ -143,6 +144,7 @@ class Migration(migrations.Migration):
                 ("inserted_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
                 ("model_id", models.CharField(max_length=100)),
+                ("model_name", models.CharField(max_length=100)),
                 ("default_parameters", models.JSONField(blank=True, default=dict)),
             ],
             options={

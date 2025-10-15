@@ -2137,6 +2137,9 @@ class LighthouseProviderModels(RowLevelSecurityProtectedModel):
     )
     model_id = models.CharField(max_length=100)
 
+    # Human-friendly model name
+    model_name = models.CharField(max_length=100)
+
     # Model-specific default parameters (e.g., temperature, max_tokens)
     default_parameters = models.JSONField(default=dict, blank=True)
 
