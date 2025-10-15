@@ -141,9 +141,6 @@ nav:
             - Authentication: tutorials/mongodbatlas/authentication.md
         - LLM:
             - Getting Started: tutorials/llm/getting-started-llm.md
-        - Oracle Cloud:
-            - Getting Started: tutorials/oci/getting-started-oci.md
-            - Authentication: tutorials/oci/authentication.md
       - Compliance:
         - ThreatScore: tutorials/compliance/threatscore.md
 
