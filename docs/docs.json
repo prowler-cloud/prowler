@@ -224,6 +224,13 @@
                 "pages": [
                   "user-guide/providers/llm/getting-started-llm"
                 ]
+              },
+              {
+                "group": "Oracle Cloud Infrastructure",
+                "pages": [
+                  "user-guide/providers/oci/getting-started-oci",
+                  "user-guide/providers/oci/authentication"
+                ]
               }
             ]
           },
