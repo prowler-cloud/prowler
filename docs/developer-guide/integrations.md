@@ -151,7 +151,7 @@ Refer to the [Prowler Developer Guide](https://docs.prowler.com/projects/prowler
 
     # More properties and methods
     ```
-    
+
 * Test Connection Method:
 
     * Validating Credentials or Tokens
