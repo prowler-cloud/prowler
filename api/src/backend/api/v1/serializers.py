@@ -59,7 +59,10 @@ from api.v1.serializer_utils.integrations import (
     S3ConfigSerializer,
     SecurityHubConfigSerializer,
 )
-from api.v1.serializer_utils.lighthouse import OpenAICredentialsSerializer
+from api.v1.serializer_utils.lighthouse import (
+    BedrockCredentialsSerializer,
+    OpenAICredentialsSerializer,
+)
 from api.v1.serializer_utils.processors import ProcessorConfigField
 from api.v1.serializer_utils.providers import ProviderSecretField
 from prowler.lib.mutelist.mutelist import Mutelist
@@ -3092,6 +3095,19 @@ class LighthouseProviderConfigCreateSerializer(RLSSerializer, BaseWriteSerialize
                     e.detail[f"credentials/{key}"] = value
                     del e.detail[key]
                 raise e
+        elif (
+            provider_type == LighthouseProviderConfiguration.LLMProviderChoices.BEDROCK
+        ):
+            try:
+                BedrockCredentialsSerializer(data=credentials).is_valid(
+                    raise_exception=True
+                )
+            except ValidationError as e:
+                details = e.detail.copy()
+                for key, value in details.items():
+                    e.detail[f"credentials/{key}"] = value
+                    del e.detail[key]
+                raise e
 
         return super().validate(attrs)
 
@@ -3142,6 +3158,21 @@ class LighthouseProviderConfigUpdateSerializer(BaseWriteSerializer):
         ):
             try:
                 OpenAICredentialsSerializer(data=credentials).is_valid(
+                    raise_exception=True
+                )
+            except ValidationError as e:
+                details = e.detail.copy()
+                for key, value in details.items():
+                    e.detail[f"credentials/{key}"] = value
+                    del e.detail[key]
+                raise e
+        elif (
+            credentials is not None
+            and provider_type
+            == LighthouseProviderConfiguration.LLMProviderChoices.BEDROCK
+        ):
+            try:
+                BedrockCredentialsSerializer(data=credentials).is_valid(
                     raise_exception=True
                 )
             except ValidationError as e:
