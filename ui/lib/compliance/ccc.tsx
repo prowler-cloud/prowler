@@ -10,6 +10,7 @@ import {
   Requirement,
   RequirementsData,
   RequirementStatus,
+  REQUIREMENT_STATUS,
 } from "@/types/compliance";
 
 import {
@@ -28,6 +29,59 @@ interface ProcessedItem {
   requirementData: any;
 }
 
+// CCC-specific section configuration
+export interface CCCTextSection {
+  title: string;
+  key: keyof Requirement;
+  className?: string;
+}
+
+export interface CCCMappingSection {
+  title: string;
+  key: keyof Requirement;
+  colorClasses: string;
+}
+
+export const CCC_TEXT_SECTIONS: CCCTextSection[] = [
+  {
+    title: "Description",
+    key: "description",
+  },
+  {
+    title: "Family Description",
+    key: "family_description",
+  },
+  {
+    title: "SubSection",
+    key: "subsection",
+  },
+  {
+    title: "SubSection Objective",
+    key: "subsection_objective",
+    className: "whitespace-pre-wrap",
+  },
+  {
+    title: "Recommendation",
+    key: "recommendation",
+    className: "whitespace-pre-wrap",
+  },
+];
+
+export const CCC_MAPPING_SECTIONS: CCCMappingSection[] = [
+  {
+    title: "Threat Mappings",
+    key: "section_threat_mappings",
+    colorClasses:
+      "bg-red-50 text-red-700 ring-red-600/10 dark:bg-red-400/10 dark:text-red-400 dark:ring-red-400/20",
+  },
+  {
+    title: "Guideline Mappings",
+    key: "section_guideline_mappings",
+    colorClasses:
+      "bg-blue-50 text-blue-700 ring-blue-600/10 dark:bg-blue-400/10 dark:text-blue-400 dark:ring-blue-400/20",
+  },
+];
+
 const createRequirement = (itemData: ProcessedItem): Requirement => {
   const { id, attrs, attributeItem, requirementData } = itemData;
   const description = attributeItem.attributes.description;
@@ -40,9 +94,9 @@ const createRequirement = (itemData: ProcessedItem): Requirement => {
     description: description,
     status: finalStatus,
     check_ids: checks,
-    pass: finalStatus === "PASS" ? 1 : 0,
-    fail: finalStatus === "FAIL" ? 1 : 0,
-    manual: finalStatus === "MANUAL" ? 1 : 0,
+    pass: finalStatus === REQUIREMENT_STATUS.PASS ? 1 : 0,
+    fail: finalStatus === REQUIREMENT_STATUS.FAIL ? 1 : 0,
+    manual: finalStatus === REQUIREMENT_STATUS.MANUAL ? 1 : 0,
     family_name: attrs.FamilyName,
     family_description: attrs.FamilyDescription,
     subsection: attrs.SubSection,
