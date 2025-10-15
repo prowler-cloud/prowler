@@ -98,7 +98,11 @@ class TestGenerateOutputs:
             ),
             patch(
                 "tasks.tasks._generate_output_directory",
-                return_value=("/tmp/test/out-dir", "/tmp/test/comp-dir", "/tmp/test/threat-dir"),
+                return_value=(
+                    "/tmp/test/out-dir",
+                    "/tmp/test/comp-dir",
+                    "/tmp/test/threat-dir",
+                ),
             ),
             patch("tasks.tasks.Scan.all_objects.filter") as mock_scan_update,
             patch("tasks.tasks.rmtree"),
@@ -258,7 +262,11 @@ class TestGenerateOutputs:
             ),
             patch(
                 "tasks.tasks._generate_output_directory",
-                return_value=("/tmp/test/outdir", "/tmp/test/compdir", "/tmp/test/threatdir"),
+                return_value=(
+                    "/tmp/test/outdir",
+                    "/tmp/test/compdir",
+                    "/tmp/test/threatdir",
+                ),
             ),
             patch("tasks.tasks._compress_output_files", return_value="outdir.zip"),
             patch("tasks.tasks._upload_to_s3", return_value="s3://bucket/outdir.zip"),
@@ -333,7 +341,11 @@ class TestGenerateOutputs:
             patch("tasks.tasks.get_compliance_frameworks", return_value=["cis"]),
             patch(
                 "tasks.tasks._generate_output_directory",
-                return_value=("/tmp/test/outdir", "/tmp/test/compdir", "/tmp/test/threatdir"),
+                return_value=(
+                    "/tmp/test/outdir",
+                    "/tmp/test/compdir",
+                    "/tmp/test/threatdir",
+                ),
             ),
             patch("tasks.tasks.FindingOutput._transform_findings_stats"),
             patch(

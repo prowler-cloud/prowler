@@ -294,7 +294,9 @@ class TestGenerateThreatscoreReportFunction:
         mock_provider_get.assert_called_once_with(id=self.provider_id)
         mock_initialize_provider.assert_called_once_with(mock_provider)
         mock_compliance_get_bulk.assert_called_once_with("aws")
-        mock_finding_filter.assert_called_once_with(tenant_id=self.tenant_id, scan_id=self.scan_id)
+        mock_finding_filter.assert_called_once_with(
+            tenant_id=self.tenant_id, scan_id=self.scan_id
+        )
         mock_batched.assert_called_once()
         mock_transform_finding.assert_called_once_with(mock_finding, prowler_provider)
         mock_doc_template.assert_called_once()
