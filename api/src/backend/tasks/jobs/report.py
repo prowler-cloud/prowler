@@ -26,7 +26,9 @@ from reportlab.platypus import (
 from tasks.jobs.export import _generate_output_directory, _upload_to_s3
 from tasks.utils import batched
 
-from api.models import Finding, Provider, Scan, ScanSummary
+from api.db_router import READ_REPLICA_ALIAS
+from api.db_utils import rls_transaction
+from api.models import Finding, Provider, ScanSummary
 from api.utils import initialize_prowler_provider
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.finding import Finding as FindingOutput
@@ -51,6 +53,7 @@ logger = get_task_logger(__name__)
 
 
 def generate_threatscore_report(
+    tenant_id: str,
     scan_id: str,
     compliance_id: str,
     output_path: str,
@@ -146,82 +149,86 @@ def generate_threatscore_report(
             textColor=colors.Color(0.2, 0.2, 0.2),
             fontName="PlusJakartaSans",
         )
+        with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+            provider_obj = Provider.objects.get(id=provider_id)
+            prowler_provider = initialize_prowler_provider(provider_obj)
+            provider_type = provider_obj.provider
 
-        provider_obj = Provider.objects.get(id=provider_id)
-        prowler_provider = initialize_prowler_provider(provider_obj)
-        provider_type = provider_obj.provider
-
-        frameworks_bulk = Compliance.get_bulk(provider_type)
-        compliance_obj = frameworks_bulk[compliance_id]
-        compliance_framework = getattr(compliance_obj, "Framework", "N/A")
-        compliance_version = getattr(compliance_obj, "Version", "N/A")
-        compliance_name = getattr(compliance_obj, "Name", "N/A")
-        compliance_description = getattr(compliance_obj, "Description", "")
+            frameworks_bulk = Compliance.get_bulk(provider_type)
+            compliance_obj = frameworks_bulk[compliance_id]
+            compliance_framework = getattr(compliance_obj, "Framework", "N/A")
+            compliance_version = getattr(compliance_obj, "Version", "N/A")
+            compliance_name = getattr(compliance_obj, "Name", "N/A")
+            compliance_description = getattr(compliance_obj, "Description", "")
 
         logger.info(f"Getting findings for scan {scan_id}")
         findings_qs = (
-            Finding.all_objects.filter(scan_id=scan_id).order_by("uid").iterator()
+            Finding.all_objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+            .order_by("uid")
+            .iterator()
         )
         findings = []
-        for batch, is_last in batched(findings_qs, DJANGO_FINDINGS_BATCH_SIZE):
-            fos = [
-                FindingOutput.transform_api_finding(f, prowler_provider) for f in batch
-            ]
-            findings.extend(fos)
+        with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+            for batch, is_last in batched(findings_qs, DJANGO_FINDINGS_BATCH_SIZE):
+                fos = [
+                    FindingOutput.transform_api_finding(f, prowler_provider)
+                    for f in batch
+                ]
+                findings.extend(fos)
 
-        attrs_map = {}
-        resp_reqs = []
-        for req in compliance_obj.Requirements:
-            req_id = req.Id
-            attrs_map[req_id] = {
-                "attributes": {
-                    "req_attributes": getattr(req, "Attributes", []),
-                    "checks": getattr(req, "Checks", []),
-                },
-                "description": getattr(req, "Description", ""),
-            }
-
-            # Calculate passed and total findings for this requirement
-            req_checks = getattr(req, "Checks", [])
-            passed_findings = 0
-            total_findings = 0
-            status = "UNKNOWN"
-            description = getattr(req, "Description", "")
-
-            for f in findings:
-                if f.check_id in req_checks:
-                    total_findings += 1
-                    if getattr(f, "status", "").upper() == "PASS":
-                        passed_findings += 1
-                    # Set status based on the first finding (for backward compatibility)
-                    if status == "UNKNOWN":
-                        status = getattr(f, "status", "UNKNOWN")
-                        description = getattr(f, "description", description)
-
-            # Determine overall status for the requirement
-            if total_findings > 0:
-                if passed_findings == total_findings:
-                    status = "PASS"
-                elif passed_findings == 0:
-                    status = "FAIL"
-                else:
-                    status = "FAIL"  # Partial pass is still considered FAIL
-            else:
-                status = "MANUAL"
-
-            resp_reqs.append(
-                {
-                    "id": req_id,
+            attrs_map = {}
+            resp_reqs = []
+            for req in compliance_obj.Requirements:
+                req_id = req.Id
+                attrs_map[req_id] = {
                     "attributes": {
-                        "framework": compliance_framework,
-                        "version": compliance_version,
-                        "status": status,
-                        "description": description,
-                        "passed_findings": passed_findings,
-                        "total_findings": total_findings,
+                        "req_attributes": getattr(req, "Attributes", []),
+                        "checks": getattr(req, "Checks", []),
                     },
+                    "description": getattr(req, "Description", ""),
                 }
-            )
+
+                # Calculate passed and total findings for this requirement
+                req_checks = getattr(req, "Checks", [])
+                passed_findings = 0
+                total_findings = 0
+                status = "UNKNOWN"
+                description = getattr(req, "Description", "")
+
+                for f in findings:
+                    if f.check_id in req_checks:
+                        total_findings += 1
+                        if getattr(f, "status", "").upper() == "PASS":
+                            passed_findings += 1
+                        # Set status based on the first finding (for backward compatibility)
+                        if status == "UNKNOWN":
+                            status = getattr(f, "status", "UNKNOWN")
+                            description = getattr(f, "description", description)
+
+                # Determine overall status for the requirement
+                if total_findings > 0:
+                    if passed_findings == total_findings:
+                        status = "PASS"
+                    elif passed_findings == 0:
+                        status = "FAIL"
+                    else:
+                        status = "FAIL"  # Partial pass is still considered FAIL
+                else:
+                    status = "MANUAL"
+
+                resp_reqs.append(
+                    {
+                        "id": req_id,
+                        "attributes": {
+                            "framework": compliance_framework,
+                            "version": compliance_version,
+                            "status": status,
+                            "description": description,
+                            "passed_findings": passed_findings,
+                            "total_findings": total_findings,
+                        },
+                    }
+                )
 
         def create_risk_component(risk_level, weight, score=0):
             """Create a visual risk component similar to the UI design"""
@@ -959,18 +966,21 @@ def generate_threatscore_report(
 
 
 def generate_threatscore_report_job(tenant_id: str, scan_id: str, provider_id: str):
-    # Check if the scan has findings
-    if not ScanSummary.objects.filter(scan_id=scan_id).exists():
-        logger.info(f"No findings found for scan {scan_id}")
-        return {"upload": False}
+    # Check if the scan has findings and get provider info
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        if not ScanSummary.objects.filter(scan_id=scan_id).exists():
+            logger.info(f"No findings found for scan {scan_id}")
+            return {"upload": False}
 
-    provider_obj = Provider.objects.get(id=provider_id)
-    provider_uid = provider_obj.uid
-    provider_type = provider_obj.provider
+        provider_obj = Provider.objects.get(id=provider_id)
+        provider_uid = provider_obj.uid
+        provider_type = provider_obj.provider
 
-    if provider_type not in ["aws", "azure", "gcp", "m365"]:
-        logger.info(f"Provider {provider_id} is not supported for threatscore report")
-        return {"upload": False}
+        if provider_type not in ["aws", "azure", "gcp", "m365"]:
+            logger.info(
+                f"Provider {provider_id} is not supported for threatscore report"
+            )
+            return {"upload": False}
 
     # This compliance is hardcoded because is the only one that is available for the threatscore report
     compliance_id = f"prowler_threatscore_{provider_type}"
@@ -989,6 +999,7 @@ def generate_threatscore_report_job(tenant_id: str, scan_id: str, provider_id: s
     pdf_path = f"{threatscore_path}_threatscore_report.pdf"
     logger.info(f"The path for the threatscore report is {pdf_path}")
     generate_threatscore_report(
+        tenant_id=tenant_id,
         scan_id=scan_id,
         compliance_id=compliance_id,
         output_path=pdf_path,
@@ -1007,7 +1018,6 @@ def generate_threatscore_report_job(tenant_id: str, scan_id: str, provider_id: s
     else:
         final_location, did_upload = out_dir, False
 
-    Scan.all_objects.filter(id=scan_id).update(output_location=final_location)
     logger.info(f"Threatscore report outputs at {final_location}")
 
     return {"upload": did_upload}

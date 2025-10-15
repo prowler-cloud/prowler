@@ -65,13 +65,15 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
         generate_outputs_task.si(
             scan_id=scan_id, provider_id=provider_id, tenant_id=tenant_id
         ),
-        generate_threatscore_report_task.si(
-            tenant_id=tenant_id, scan_id=scan_id, provider_id=provider_id
-        ),
-        check_integrations_task.si(
-            tenant_id=tenant_id,
-            provider_id=provider_id,
-            scan_id=scan_id,
+        group(
+            generate_threatscore_report_task.si(
+                tenant_id=tenant_id, scan_id=scan_id, provider_id=provider_id
+            ),
+            check_integrations_task.si(
+                tenant_id=tenant_id,
+                provider_id=provider_id,
+                scan_id=scan_id,
+            ),
         ),
     ).apply_async()
 
@@ -628,7 +630,6 @@ def jira_integration_task(
     name="scan-threatscore-report",
     queue="scan-reports",
 )
-@set_tenant(keep_tenant=True)
 def generate_threatscore_report_task(tenant_id: str, scan_id: str, provider_id: str):
     """
     Task to generate a threatscore report for a given scan.
