@@ -116,7 +116,6 @@ class Test_events_rule_local_user_authentication:
             check = events_rule_local_user_authentication()
             result = check.execute()
 
-            # Comprehensive assertions like AWS tests
             assert isinstance(result, list)
 
             # If results exist, verify PASS findings
@@ -202,7 +201,6 @@ class Test_events_rule_local_user_authentication:
             check = events_rule_local_user_authentication()
             result = check.execute()
 
-            # Comprehensive assertions like AWS tests
             assert isinstance(result, list)
 
             # Verify FAIL findings exist

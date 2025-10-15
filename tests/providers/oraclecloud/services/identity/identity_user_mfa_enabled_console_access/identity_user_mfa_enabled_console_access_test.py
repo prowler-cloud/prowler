@@ -116,7 +116,6 @@ class Test_identity_user_mfa_enabled_console_access:
             check = identity_user_mfa_enabled_console_access()
             result = check.execute()
 
-            # Comprehensive assertions like AWS tests
             assert isinstance(result, list)
 
             # If results exist, verify PASS findings
@@ -202,7 +201,6 @@ class Test_identity_user_mfa_enabled_console_access:
             check = identity_user_mfa_enabled_console_access()
             result = check.execute()
 
-            # Comprehensive assertions like AWS tests
             assert isinstance(result, list)
 
             # Verify FAIL findings exist

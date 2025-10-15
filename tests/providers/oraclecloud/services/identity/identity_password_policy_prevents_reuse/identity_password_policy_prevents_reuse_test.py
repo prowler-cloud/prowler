@@ -116,7 +116,6 @@ class Test_identity_password_policy_prevents_reuse:
             check = identity_password_policy_prevents_reuse()
             result = check.execute()
 
-            # Comprehensive assertions like AWS tests
             assert isinstance(result, list)
 
             # If results exist, verify PASS findings
@@ -202,7 +201,6 @@ class Test_identity_password_policy_prevents_reuse:
             check = identity_password_policy_prevents_reuse()
             result = check.execute()
 
-            # Comprehensive assertions like AWS tests
             assert isinstance(result, list)
 
             # Verify FAIL findings exist

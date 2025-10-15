@@ -116,7 +116,6 @@ class Test_network_vcn_subnet_flow_logs_enabled:
             check = network_vcn_subnet_flow_logs_enabled()
             result = check.execute()
 
-            # Comprehensive assertions like AWS tests
             assert isinstance(result, list)
 
             # If results exist, verify PASS findings
@@ -202,7 +201,6 @@ class Test_network_vcn_subnet_flow_logs_enabled:
             check = network_vcn_subnet_flow_logs_enabled()
             result = check.execute()
 
-            # Comprehensive assertions like AWS tests
             assert isinstance(result, list)
 
             # Verify FAIL findings exist

@@ -116,7 +116,6 @@ class Test_network_security_group_ingress_from_internet_to_rdp_port:
             check = network_security_group_ingress_from_internet_to_rdp_port()
             result = check.execute()
 
-            # Comprehensive assertions like AWS tests
             assert isinstance(result, list)
 
             # If results exist, verify PASS findings
@@ -202,7 +201,6 @@ class Test_network_security_group_ingress_from_internet_to_rdp_port:
             check = network_security_group_ingress_from_internet_to_rdp_port()
             result = check.execute()
 
-            # Comprehensive assertions like AWS tests
             assert isinstance(result, list)
 
             # Verify FAIL findings exist

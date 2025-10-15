@@ -116,7 +116,6 @@ class Test_identity_service_level_admins_exist:
             check = identity_service_level_admins_exist()
             result = check.execute()
 
-            # Comprehensive assertions like AWS tests
             assert isinstance(result, list)
 
             # If results exist, verify PASS findings
@@ -202,7 +201,6 @@ class Test_identity_service_level_admins_exist:
             check = identity_service_level_admins_exist()
             result = check.execute()
 
-            # Comprehensive assertions like AWS tests
             assert isinstance(result, list)
 
             # Verify FAIL findings exist

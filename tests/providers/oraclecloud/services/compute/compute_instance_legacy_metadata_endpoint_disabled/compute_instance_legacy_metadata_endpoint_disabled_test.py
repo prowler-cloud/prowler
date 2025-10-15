@@ -116,7 +116,6 @@ class Test_compute_instance_legacy_metadata_endpoint_disabled:
             check = compute_instance_legacy_metadata_endpoint_disabled()
             result = check.execute()
 
-            # Comprehensive assertions like AWS tests
             assert isinstance(result, list)
 
             # If results exist, verify PASS findings
@@ -202,7 +201,6 @@ class Test_compute_instance_legacy_metadata_endpoint_disabled:
             check = compute_instance_legacy_metadata_endpoint_disabled()
             result = check.execute()
 
-            # Comprehensive assertions like AWS tests
             assert isinstance(result, list)
 
             # Verify FAIL findings exist

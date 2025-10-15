@@ -4,16 +4,21 @@ This guide covers all authentication methods supported by Prowler for Oracle Clo
 
 ## Authentication Methods
 
-Prowler supports three authentication methods for OCI:
+Prowler supports the following authentication methods for OCI:
 
-1. [OCI Session Authentication](#oci-session-authentication) (Recommended)
-2. [Config File Authentication](#config-file-authentication)
-3. [Instance Principal Authentication](#instance-principal-authentication)
-4. [Environment Variables](#environment-variables) (Limited Support)
+1. **Config File Authentication** (using `~/.oci/config`)
+   - [OCI Session Authentication](#oci-session-authentication) **(Recommended)** - Automatically generates the config file via browser login
+   - [Manual API Key Setup](#setting-up-api-keys) - Manually create the config file with static API keys
+2. [Instance Principal Authentication](#instance-principal-authentication) - For Prowler running inside OCI compute instances
+3. [Environment Variables](#environment-variables) (Limited Support)
+
+**Important Note:** OCI Session Authentication and Manual API Key Setup both use the same config file-based authentication method. The only difference is how the `~/.oci/config` file is generated:
+- **Session Authentication**: Automatically created via browser login with temporary session tokens
+- **Manual Setup**: You manually generate static API keys and create the config file
 
 ## OCI Session Authentication
 
-**This is the recommended authentication method** as it automatically generates the config file and doesn't require managing static API keys.
+**This is the recommended method for config file authentication** as it automatically generates the config file and doesn't require managing static API keys.
 
 ### Prerequisites
 
@@ -92,7 +97,11 @@ Session tokens typically expire after a period of time. When your session expire
 oci session authenticate
 ```
 
-## Config File Authentication
+## Config File Authentication (Manual API Key Setup)
+
+If you prefer to manually generate API keys instead of using browser-based session authentication, you can create the config file yourself with static API keys.
+
+**Note:** This method uses the same `~/.oci/config` file as session authentication, but with static API keys instead of temporary session tokens.
 
 ### Default Configuration
 
@@ -241,10 +250,13 @@ prowler oci --list-checks
 
 Instance Principal authentication allows OCI compute instances to authenticate without storing credentials.
 
+**IMPORTANT:** This authentication method **only works when Prowler is running inside an OCI compute instance**. If you're running Prowler from your local machine or outside OCI, use [OCI Session Authentication](#oci-session-authentication) or [Config File Authentication](#config-file-authentication) instead.
+
 ### Prerequisites
 
-1. **Dynamic Group**: Create a dynamic group that includes your compute instance
-2. **Policy**: Create policies granting the dynamic group access to resources
+1. **Prowler must be running on an OCI compute instance**
+2. **Dynamic Group**: Create a dynamic group that includes your compute instance
+3. **Policy**: Create policies granting the dynamic group access to resources
 
 ### Step 1: Create Dynamic Group
 

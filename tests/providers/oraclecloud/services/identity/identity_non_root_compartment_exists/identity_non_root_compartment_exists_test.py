@@ -116,7 +116,6 @@ class Test_identity_non_root_compartment_exists:
             check = identity_non_root_compartment_exists()
             result = check.execute()
 
-            # Comprehensive assertions like AWS tests
             assert isinstance(result, list)
 
             # If results exist, verify PASS findings
@@ -202,7 +201,6 @@ class Test_identity_non_root_compartment_exists:
             check = identity_non_root_compartment_exists()
             result = check.execute()
 
-            # Comprehensive assertions like AWS tests
             assert isinstance(result, list)
 
             # Verify FAIL findings exist

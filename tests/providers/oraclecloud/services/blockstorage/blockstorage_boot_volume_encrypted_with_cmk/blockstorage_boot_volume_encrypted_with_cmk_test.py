@@ -120,7 +120,6 @@ class Test_blockstorage_boot_volume_encrypted_with_cmk:
             check = blockstorage_boot_volume_encrypted_with_cmk()
             result = check.execute()
 
-            # Comprehensive assertions like AWS tests
             assert isinstance(result, list)
 
             # If results exist, verify PASS findings
@@ -208,7 +207,6 @@ class Test_blockstorage_boot_volume_encrypted_with_cmk:
             check = blockstorage_boot_volume_encrypted_with_cmk()
             result = check.execute()
 
-            # Comprehensive assertions like AWS tests
             assert isinstance(result, list)
 
             # Verify FAIL findings exist

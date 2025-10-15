@@ -24,9 +24,11 @@ Before you begin, ensure you have:
 
 Prowler supports multiple authentication methods for OCI. For detailed authentication setup, see the [OCI Authentication Guide](./authentication.md).
 
+**Note:** OCI Session Authentication and Config File Authentication both use the same `~/.oci/config` file. The difference is how the config file is generated - automatically via browser (session auth) or manually with API keys.
+
 ### Quick Start: OCI Session Authentication (Recommended)
 
-The easiest and most secure method is using OCI session authentication.
+The easiest and most secure method is using OCI session authentication, which automatically generates your config file via browser login.
 
 **Prerequisites:** You need to have the **OCI CLI installed**. See the [OCI CLI Installation Guide](https://docs.oracle.com/en-us/iaas/Content/API/SDKDocs/cliinstall.htm) for installation instructions.
 
@@ -67,9 +69,11 @@ The easiest and most secure method is using OCI session authentication.
    prowler oci
    ```
 
-### Alternative: Config File with Static API Keys
+### Alternative: Manual API Key Setup
 
-If you prefer using static API keys, see the detailed instructions in the [Authentication Guide](./authentication.md#config-file-authentication).
+If you prefer to manually generate API keys instead of using browser-based session authentication, see the detailed instructions in the [Authentication Guide](./authentication.md#config-file-authentication-manual-api-key-setup).
+
+**Note:** Both methods use the same `~/.oci/config` file - the difference is that manual setup uses static API keys while session authentication uses temporary session tokens.
 
 #### Using a Specific Profile
 
@@ -87,6 +91,8 @@ prowler oci --config-file /path/to/custom/config
 
 ### 2. Instance Principal Authentication
 
+**IMPORTANT:** This authentication method **only works when Prowler is running inside an OCI compute instance**. If you're running Prowler from your local machine, use [OCI Session Authentication](#quick-start-oci-session-authentication-recommended) instead.
+
 When running Prowler on an OCI Compute instance, you can use Instance Principal authentication:
 
 ```bash
@@ -94,6 +100,7 @@ prowler oci --use-instance-principal
 ```
 
 **Requirements:**
+- **Prowler must be running on an OCI compute instance**
 - The compute instance must have a dynamic group and policy allowing access to OCI resources
 - Example policy:
   ```

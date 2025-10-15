@@ -116,7 +116,6 @@ class Test_events_rule_security_list_changes:
             check = events_rule_security_list_changes()
             result = check.execute()
 
-            # Comprehensive assertions like AWS tests
             assert isinstance(result, list)
 
             # If results exist, verify PASS findings
@@ -202,7 +201,6 @@ class Test_events_rule_security_list_changes:
             check = events_rule_security_list_changes()
             result = check.execute()
 
-            # Comprehensive assertions like AWS tests
             assert isinstance(result, list)
 
             # Verify FAIL findings exist

@@ -116,7 +116,6 @@ class Test_network_default_security_list_restricts_traffic:
             check = network_default_security_list_restricts_traffic()
             result = check.execute()
 
-            # Comprehensive assertions like AWS tests
             assert isinstance(result, list)
 
             # If results exist, verify PASS findings
@@ -202,7 +201,6 @@ class Test_network_default_security_list_restricts_traffic:
             check = network_default_security_list_restricts_traffic()
             result = check.execute()
 
-            # Comprehensive assertions like AWS tests
             assert isinstance(result, list)
 
             # Verify FAIL findings exist

@@ -120,7 +120,6 @@ class Test_objectstorage_bucket_versioning_enabled:
             check = objectstorage_bucket_versioning_enabled()
             result = check.execute()
 
-            # Comprehensive assertions like AWS tests
             assert isinstance(result, list)
 
             # If results exist, verify PASS findings
@@ -208,7 +207,6 @@ class Test_objectstorage_bucket_versioning_enabled:
             check = objectstorage_bucket_versioning_enabled()
             result = check.execute()
 
-            # Comprehensive assertions like AWS tests
             assert isinstance(result, list)
 
             # Verify FAIL findings exist

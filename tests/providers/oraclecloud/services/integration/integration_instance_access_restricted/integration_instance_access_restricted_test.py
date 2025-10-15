@@ -116,7 +116,6 @@ class Test_integration_instance_access_restricted:
             check = integration_instance_access_restricted()
             result = check.execute()
 
-            # Comprehensive assertions like AWS tests
             assert isinstance(result, list)
 
             # If results exist, verify PASS findings
@@ -202,7 +201,6 @@ class Test_integration_instance_access_restricted:
             check = integration_instance_access_restricted()
             result = check.execute()
 
-            # Comprehensive assertions like AWS tests
             assert isinstance(result, list)
 
             # Verify FAIL findings exist
