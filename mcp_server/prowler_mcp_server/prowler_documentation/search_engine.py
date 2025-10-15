@@ -31,9 +31,6 @@ class ProwlerDocsSearchEngine:
         self.dataset_id = "0096ba11-3f72-463b-9d95-b788495ac392"
         self.api_key = "tr-T6JLeTkFXeNbNPyhijtI9XhIncydQQ3O"
         self.docs_base_url = "https://prowler.mintlify.app"
-        self.github_raw_base = (
-            "https://raw.githubusercontent.com/prowler-cloud/prowler/master/docs"
-        )
 
         # HTTP client for Mintlify API
         self.mintlify_client = httpx.Client(
@@ -48,11 +45,11 @@ class ProwlerDocsSearchEngine:
             },
         )
 
-        # HTTP client for GitHub raw content
-        self.github_client = httpx.Client(
+        # HTTP client for Mintlify documentation
+        self.docs_client = httpx.Client(
             timeout=30.0,
             headers={
-                "Accept": "*/*",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
                 "User-Agent": f"prowler-mcp-server/{__version__}",
             },
         )
@@ -144,7 +141,7 @@ class ProwlerDocsSearchEngine:
 
     def get_document(self, doc_path: str) -> Optional[str]:
         """
-        Get full document content from GitHub raw API.
+        Get full document content from Mintlify documentation.
 
         Args:
             doc_path: Path to the documentation file (e.g., "getting-started/installation")
@@ -156,15 +153,15 @@ class ProwlerDocsSearchEngine:
             # Clean up the path
             doc_path = doc_path.rstrip("/")
 
-            # Add .md extension if not present
-            if not doc_path.endswith(".mdx"):
-                doc_path = f"{doc_path}.mdx"
+            # Add .md extension if not present (Mintlify serves both .md and .mdx)
+            if not doc_path.endswith(".md"):
+                doc_path = f"{doc_path}.md"
 
-            # Construct GitHub raw URL
-            url = f"{self.github_raw_base}/{doc_path}"
+            # Construct Mintlify URL
+            url = f"{self.docs_base_url}/{doc_path}"
 
-            # Fetch the raw markdown
-            response = self.github_client.get(url)
+            # Fetch the documentation page
+            response = self.docs_client.get(url)
             response.raise_for_status()
 
             return response.text
