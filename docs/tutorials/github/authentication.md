@@ -136,7 +136,7 @@ GitHub Apps provide the recommended integration method for accessing multiple re
         - **GitHub App name**: Unique application name
         - **Homepage URL**: Application homepage
         - **Webhook URL**: Webhook payload URL (optional)
-        - **Permissions**: Application permission requirements
+        - **Permissions**: Configure application permission requirements following the next step
 
 3. **Configure Permissions**
     To enable Prowler functionality, configure these permissions:
@@ -208,4 +208,3 @@ Choose the appropriate method based on use case:
 ### Organization Settings
 - Some organizations restrict third-party applications
 - Contact organization administrator if access is denied
-
