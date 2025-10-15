@@ -39,21 +39,21 @@ For more information about RBAC permissions, refer to the [Prowler App RBAC docu
 
 To create a new API key in Prowler App:
 
-1. Navigate to **Settings** → **API Keys** in the Prowler App interface
+1. Navigate to **Profile** → **Account** in the Prowler App interface
 2. Click the **Create API Key** button
 
-    ![API Keys list](./img/api-keys/api-keys-list.png)
+    ![API Keys list](./img/api-keys/list.png)
 
 3. Configure the API key settings:
     * **Name:** Enter a descriptive name to identify this API key (minimum 3 characters, e.g., "CI Pipeline Production", "Monitoring Script")
     * **Expiration Date (optional):** Set a custom expiration date for the key. If not specified, the key will automatically expire **1 year (365 days)** from the creation date. After this date, the key will no longer authenticate
 
-    ![Create API key form](./img/api-keys/create-api-key-form.png)
+    ![Create API key form](./img/api-keys/create.png)
 
-4. Click **Create** to generate the API key
+4. Click **Create API Key** to generate the API key
 5. **Important:** Copy and securely store the API key immediately. The full key is displayed only once and cannot be retrieved later
 
-    ![API key created successfully](./img/api-keys/api-key-created.png)
+    ![API key created successfully](./img/api-keys/created.png)
 
 !!! warning "Save Your API Key Immediately"
     After closing the creation dialog, only the key prefix will be visible in the interface. The full API key cannot be retrieved again. If you lose the key, you must create a new one and update your applications.
@@ -64,23 +64,24 @@ To create a new API key in Prowler App:
 
 The API Keys management interface displays all keys associated with your user account:
 
-1. Navigate to **Settings** → **API Keys**
+1. Navigate to **Profile** → **Account**
 2. View the list of API keys with the following information:
     * **Name:** The descriptive name you assigned to the key
-    * **Prefix:** The visible portion of the key for identification (e.g., `pk_abc12345`)
+    * **Prefix:** The visible portion of the key for identification (e.g., `pk_ABC12345`)
+    * **Email:** The email of the user who created the key
     * **Created:** Timestamp when the key was created
-    * **Expires At:** The expiration date (if set)
-    * **Last Used At:** Timestamp of the most recent successful authentication using this key
-    * **Revoked:** Whether the key is currently active or has been revoked
+    * **Last Used:** Timestamp of the most recent successful authentication using this key
+    * **Expires:** The expiration date
+    * **Status:** Whether the key is currently active or has been revoked
 
-    ![API Keys management interface](./img/api-keys/api-keys-management.png)
+    ![API Keys management interface](./img/api-keys/management.png)
 
 ### Updating API Keys
 
 API keys support limited updates to maintain security:
 
 1. Locate the API key you want to modify in the list
-2. Click the **Edit** button or action menu
+2. Click the **Edit name** button or action menu
 3. **Updatable field:**
     * **Name:** Change the descriptive name for better identification
 4. **Non-updatable fields:**
@@ -89,7 +90,7 @@ API keys support limited updates to maintain security:
 
 5. Click **Save** to apply changes
 
-    ![Update API key name](./img/api-keys/update-api-key.png)
+    ![Update API key name](./img/api-keys/update.png)
 
 ### Actions
 
