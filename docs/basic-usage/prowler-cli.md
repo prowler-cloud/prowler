@@ -277,3 +277,27 @@ prowler mongodbatlas --atlas-project-id <project_id>
 ```
 
 See more details about MongoDB Atlas Authentication in [MongoDB Atlas Authentication](../tutorials/mongodbatlas/authentication.md)
+
+## Oracle Cloud
+
+Prowler allows you to scan your Oracle Cloud deployments for security and compliance issues.
+
+You have two options to authenticate:
+
+1. OCI Config File Authentication: this config file can be generated using the OCI CLI with the `oci session authenticate` command or created manually using the OCI Console. For more details, see the [OCI Authentication Guide](../tutorials/oci/authentication.md).
+
+```console
+prowler oci
+```
+
+You can add different profiles to the config file to scan different tenancies or regions. In order to scan a specific profile, use the `--profile` flag:
+
+```console
+prowler oci --profile <profile_name>
+```
+
+2. Instance Principal Authentication: when running Prowler on an OCI Compute instance, you can use Instance Principal authentication. For more details, see the [OCI Authentication Guide](../tutorials/oci/authentication.md#instance-principal-authentication).
+
+```console
+prowler oci --use-instance-principal
+```
