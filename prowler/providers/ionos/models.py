@@ -1,12 +1,8 @@
-from argparse import Namespace
 from dataclasses import dataclass
-from datetime import datetime
-from enum import Enum
-import ionoscloud
 
 from prowler.config.config import output_file_timestamp
 from prowler.providers.common.models import ProviderOutputOptions
-from ionoscloud.models.datacenters import Datacenters
+
 
 @dataclass
 class IonosIdentityInfo:
@@ -14,6 +10,7 @@ class IonosIdentityInfo:
     password: str
     datacenter_id: str
     token: str
+
 
 class IonosOutputOptions(ProviderOutputOptions):
     """

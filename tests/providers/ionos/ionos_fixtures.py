@@ -1,7 +1,8 @@
 from mock import MagicMock
+
 from prowler.providers.ionos.ionos_provider import IonosProvider
-from prowler.providers.ionos.models import IonosIdentityInfo
 from prowler.providers.ionos.lib.mutelist.mutelist import IonosMutelist
+from prowler.providers.ionos.models import IonosIdentityInfo
 
 
 def set_mocked_ionos_provider(
@@ -49,7 +50,7 @@ def set_mocked_ionos_provider(
     mock_datacenter.properties.name = datacenter_name
     mock_datacenter.properties.location = "us/las"
     provider.get_datacenters.return_value = [mock_datacenter]
-    
+
     # Mock property getters
     provider.identity = property(lambda self: self._identity)
     provider.session = property(lambda self: self._session)

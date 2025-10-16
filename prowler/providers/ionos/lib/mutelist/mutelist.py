@@ -1,12 +1,14 @@
 from prowler.lib.check.models import Check_Report_IONOS
+from prowler.lib.logger import logger
 from prowler.lib.mutelist.mutelist import Mutelist
 from prowler.lib.outputs.utils import unroll_dict, unroll_tags
-from prowler.lib.logger import logger
+
 
 class IonosMutelist(Mutelist):
     """
     Clase Mutelist para IONOS Cloud.
     """
+
     def is_finding_muted(
         self,
         finding: Check_Report_IONOS,
