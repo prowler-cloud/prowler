@@ -16,18 +16,14 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AwsEfsAccessPoint",
+  "ResourceType": "AwsEfsFileSystem",
   "Description": "**Amazon EFS file system** has **encryption at rest** enabled using AWS KMS to protect file data and metadata stored on the service",
   "Risk": "Without encryption at rest, EFS contents can be read from storage media, backups, or compromised hosts, eroding **confidentiality** and enabling offline exfiltration. Privileged compromise also allows covert data harvesting or manipulation, threatening **integrity** of files.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/general-policies/general_17/",
     "https://repost.aws/knowledge-center/efs-turn-on-encryption-at-rest",
     "https://docs.aws.amazon.com/efs/latest/ug/EFSKMS.html",
-    "https://docs.prowler.com/checks/aws/general-policies/general_17#terraform",
-    "https://docs.aws.amazon.com/efs/latest/ug/managing-encrypt.html",
-    "https://docs.aws.amazon.com/efs/latest/ug/encryption-at-rest.html",
-    "https://d1.awsstatic.com/whitepapers/amazon-efs-encrypted-filesystems.pdf"
+    "https://docs.aws.amazon.com/efs/latest/ug/encryption-at-rest.html"
   ],
   "Remediation": {
     "Code": {

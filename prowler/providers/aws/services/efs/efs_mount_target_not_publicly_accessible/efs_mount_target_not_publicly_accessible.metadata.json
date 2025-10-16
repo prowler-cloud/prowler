@@ -11,12 +11,11 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Other",
+  "ResourceType": "AwsEfsFileSystem",
   "Description": "**EFS mount targets** associated with VPC subnets that auto-assign public IPv4 addresses (`mapPublicIpOnLaunch=true`) are identified per file system.\n\nThe evaluation focuses on the subnet attribute linked to each mount target.",
   "Risk": "Publicly addressable mount targets expose NFS to Internet scanning and exploit attempts.\n- **Confidentiality**: unauthorized reads\n- **Integrity**: illicit writes or deletion\n- **Availability**: DDoS/resource exhaustion\n\n*Even with tight rules*, a public IP weakens isolation and eases recon.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/config/latest/developerguide/efs-mount-target-public-accessible.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/efs-controls.html#efs-6",
     "https://docs.aws.amazon.com/efs/latest/ug/accessing-fs.html"
   ],

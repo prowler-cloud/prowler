@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "efs_access_point_enforce_root_directory",
-  "CheckTitle": "EFS file system has no access points allowing access to the root directory (/)",
+  "CheckTitle": "EFS file system has no access points allowing access to the root directory",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices",
     "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
@@ -17,10 +17,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/efs/latest/ug/enforce-root-directory-access-point.html",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/efs-controls.html#efs-3",
-    "https://docs.aws.amazon.com/config/latest/developerguide/efs-access-point-enforce-root-directory.html",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/efs-controls.html",
-    "https://hub.powerpipe.io/mods/turbot/steampipe-mod-aws-compliance/benchmarks/benchmark.pci_dss_v40_requirement_3_5"
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/efs-controls.html#efs-3"
   ],
   "Remediation": {
     "Code": {
@@ -35,7 +32,7 @@
     }
   },
   "Categories": [
-    "identity-access"
+    "vulnerabilities"
   ],
   "DependsOn": [],
   "RelatedTo": [],

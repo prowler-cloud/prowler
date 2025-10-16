@@ -10,14 +10,11 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AwsEfsAccessPoint",
+  "ResourceType": "AwsEfsFileSystem",
   "Description": "**Amazon EFS** file systems are assessed for **multi-AZ resilience**: Regional type (no `availability_zone_id`) with mount targets in more than one Availability Zone. Single-AZ (One Zone) or Regional with only one mount target is identified for attention.",
   "Risk": "Concentrating access through a single AZ or a lone mount target reduces **availability**. An AZ outage can sever client connectivity, causing downtime and I/O errors. A single mount target also forces cross-AZ traffic, increasing latency and costs and undermining **resilience** and seamless failover.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://overmind.tech/types/efs-mount-target",
-    "https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/efs/client/create_mount_target.html",
-    "https://nimtechnology.com/2024/12/10/aws-filtering-subnets-in-different-availability-zones-for-efs-mount-targets-with-terraform/",
     "https://docs.aws.amazon.com/efs/latest/ug/creating-using-create-fs.html#availabiltydurability",
     "https://docs.aws.amazon.com/efs/latest/ug/accessing-fs.html",
     "https://ops.tips/gists/how-aws-efs-multiple-availability-zones-terraform/"

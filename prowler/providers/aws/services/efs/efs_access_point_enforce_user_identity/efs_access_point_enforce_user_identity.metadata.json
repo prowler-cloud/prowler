@@ -21,8 +21,6 @@
     "https://repost.aws/knowledge-center/efs-access-points-directory-access",
     "https://www.plerion.com/cloud-knowledge-base/efs-access-points-should-be-configured-to-enforce-a-user-identity",
     "https://docs.aws.amazon.com/efs/latest/ug/enforce-identity-access-points.html",
-    "https://docs.aws.amazon.com/config/latest/developerguide/efs-access-point-enforce-user-identity.html",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/efs-controls.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/efs-controls.html#efs-4"
   ],
   "Remediation": {

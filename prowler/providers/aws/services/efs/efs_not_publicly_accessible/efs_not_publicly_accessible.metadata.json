@@ -10,12 +10,13 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AwsEfsAccessPoint",
+  "ResourceType": "AwsEfsFileSystem",
   "Description": "**Amazon EFS** file system policy is assessed for **public or VPC-wide access**. Policies with broad `Principal` values or that permit any client in the VPC without the `elasticfilesystem:AccessedViaMountTarget` condition are identified.\n\n*An absent or empty policy is treated as open to VPC clients.*",
   "Risk": "Broad EFS access lets any VPC client-or a compromised workload-mount the share, impacting CIA:\n- Confidentiality: bulk data exfiltration\n- Integrity: unauthorized writes or ransomware\n- Availability: deletion or lockout via elevated client access\nAlso facilitates lateral movement within the VPC.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/efs/latest/ug/access-control-block-public-access.html"
+    "https://docs.aws.amazon.com/efs/latest/ug/access-control-block-public-access.html",
+    "https://support.icompaas.com/support/solutions/articles/62000233324-efs-should-not-have-policies-allowing-unrestricted-access-within-vpc"
   ],
   "Remediation": {
     "Code": {

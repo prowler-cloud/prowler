@@ -11,12 +11,13 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Other",
+  "ResourceType": "AwsEfsFileSystem",
   "Description": "**Amazon EFS file systems** are assessed for automated backups configured via the `backup policy`. The finding highlights file systems where backups are not enabled or are being disabled.",
   "Risk": "Absence of EFS backups degrades **availability** and **integrity**. Accidental deletion, ransomware, or misconfiguration can wipe or corrupt data with no recovery path. Without point-in-time copies, RPO/RTO suffer and localized incidents can become prolonged outages and irreversible loss.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/efs/latest/ug/whatisefs.html"
+    "https://docs.aws.amazon.com/efs/latest/ug/awsbackup.html",
+    "https://docs.aws.amazon.com/efs/latest/ug/automatic-backups.html"
   ],
   "Remediation": {
     "Code": {
