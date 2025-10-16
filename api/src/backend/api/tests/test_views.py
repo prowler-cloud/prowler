@@ -1894,6 +1894,43 @@ class TestProviderSecretViewSet:
                     "password": "supersecret",
                 },
             ),
+            # OCI with API key credentials (with key_content)
+            (
+                Provider.ProviderChoices.OCI.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
+                    "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
+                    "key_content": "-----BEGIN RSA PRIVATE KEY-----\ntest-key-content\n-----END RSA PRIVATE KEY-----",
+                    "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
+                    "region": "us-ashburn-1",
+                },
+            ),
+            # OCI with API key credentials (with key_file)
+            (
+                Provider.ProviderChoices.OCI.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
+                    "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
+                    "key_file": "/path/to/oci_api_key.pem",
+                    "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
+                    "region": "us-ashburn-1",
+                },
+            ),
+            # OCI with API key credentials (with passphrase)
+            (
+                Provider.ProviderChoices.OCI.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
+                    "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
+                    "key_content": "-----BEGIN RSA PRIVATE KEY-----\ntest-encrypted-key\n-----END RSA PRIVATE KEY-----",
+                    "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
+                    "region": "us-ashburn-1",
+                    "pass_phrase": "my-secure-passphrase",
+                },
+            ),
         ],
     )
     def test_provider_secrets_create_valid(
