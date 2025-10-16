@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.14.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- New M365 credentials form [(#8929)](https://github.com/prowler-cloud/prowler/pull/8929)
+
+---
+
 ## [1.13.0] (Prowler UNRELEASED)
 
 ### 🚀 Added
