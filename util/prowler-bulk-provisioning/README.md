@@ -19,6 +19,7 @@ A Python script to bulk-provision cloud providers in Prowler Cloud/App via REST 
 - **Flexible Authentication:** Supports various authentication methods per provider
 - **Error Handling:** Comprehensive error reporting and validation
 - **Connection Testing:** Built-in provider connection verification
+- **AWS Organizations Support:** Automated YAML generation for all accounts in an AWS Organization
 
 ## How It Works
 
@@ -67,6 +68,87 @@ This two-step approach follows the Prowler API design where providers and their 
     }' | jq -r .data.attributes.access)
   ```
 
+
+## AWS Organizations Integration
+
+For organizations with many AWS accounts, use the included `aws_org_generator.py` script to automatically generate configuration for all accounts in your AWS Organization.
+
+**📖 Full Guide:** See [AWS_ORGANIZATIONS.md](AWS_ORGANIZATIONS.md) for complete documentation, examples, and troubleshooting.
+
+### Prerequisites
+
+Before using the AWS Organizations generator, deploy the ProwlerRole across all accounts using CloudFormation StackSets:
+
+**Documentation:** [Deploying Prowler IAM Roles Across AWS Organizations](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/aws/organizations/#deploying-prowler-iam-roles-across-aws-organizations)
+
+### Quick Start
+
+1. Install additional dependencies:
+   ```bash
+   pip install -r requirements-aws-org.txt
+   ```
+
+2. Generate YAML configuration for all organization accounts:
+   ```bash
+   python aws_org_generator.py -o aws-accounts.yaml --external-id your-external-id
+   ```
+
+3. Run bulk provisioning:
+   ```bash
+   python prowler_bulk_provisioning.py aws-accounts.yaml
+   ```
+
+### AWS Organizations Generator Options
+
+```bash
+python aws_org_generator.py -o aws-accounts.yaml \
+  --role-name ProwlerRole \
+  --external-id my-external-id \
+  --exclude 123456789012 \
+  --profile org-management
+```
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-o, --output` | Output YAML file path | `aws-org-accounts.yaml` |
+| `--role-name` | IAM role name across accounts | `ProwlerRole` |
+| `--external-id` | External ID for role assumption | None (recommended) |
+| `--session-name` | Session name for role assumption | None |
+| `--duration-seconds` | Session duration in seconds | None |
+| `--alias-format` | Alias template: `{name}`, `{id}`, `{email}` | `{name}` |
+| `--exclude` | Comma-separated account IDs to exclude | None |
+| `--include` | Comma-separated account IDs to include | None |
+| `--profile` | AWS CLI profile name | Default credentials |
+| `--region` | AWS region | `us-east-1` |
+| `--dry-run` | Print to stdout without writing | `False` |
+
+### Examples
+
+**Generate config for all accounts with custom external ID:**
+```bash
+python aws_org_generator.py -o aws-accounts.yaml --external-id prowler-2024-abc123
+```
+
+**Exclude management account:**
+```bash
+python aws_org_generator.py -o aws-accounts.yaml \
+  --external-id prowler-ext-id \
+  --exclude 123456789012
+```
+
+**Use specific AWS profile:**
+```bash
+python aws_org_generator.py -o aws-accounts.yaml \
+  --profile org-admin \
+  --external-id prowler-ext-id
+```
+
+**Custom alias format:**
+```bash
+python aws_org_generator.py -o aws-accounts.yaml \
+  --alias-format "{name}-{id}" \
+  --external-id prowler-ext-id
+```
 
 ## Configuration
 
