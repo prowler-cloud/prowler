@@ -42,6 +42,4 @@ class IonosTokenLoadError(IonosAuthenticationError):
     """Exception raised when the IONOS token cannot be loaded."""
 
     def __init__(self):
-        super().__init__(
-            "Could not load IONOS token from ionosctl configuration"
-        )
+        super().__init__("Could not load IONOS token from ionosctl configuration")
