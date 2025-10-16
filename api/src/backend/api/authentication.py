@@ -10,6 +10,7 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.request import Request
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
+from api.db_router import MainRouter
 from api.models import TenantAPIKey, TenantAPIKeyManager
 
 
@@ -18,6 +19,22 @@ class TenantAPIKeyAuthentication(BaseAPIKeyAuth):
 
     def __init__(self):
         self.key_crypto = get_crypto()
+
+    def _authenticate_credentials(self, request, key):
+        """
+        Override to use admin connection, bypassing RLS during authentication.
+        Delegates to parent after temporarily routing model queries to admin DB.
+        """
+        # Temporarily point the model's manager to admin database
+        original_objects = self.model.objects
+        self.model.objects = self.model.objects.using(MainRouter.admin_db)
+
+        try:
+            # Call parent method which will now use admin database
+            return super()._authenticate_credentials(request, key)
+        finally:
+            # Restore original manager
+            self.model.objects = original_objects
 
     def authenticate(self, request: Request):
         prefixed_key = self.get_key(request)
@@ -43,13 +60,15 @@ class TenantAPIKeyAuthentication(BaseAPIKeyAuth):
             api_key_pk = UUID(api_key_pk)
 
         try:
-            api_key_instance = TenantAPIKey.objects.get(id=api_key_pk, prefix=prefix)
+            api_key_instance = TenantAPIKey.objects.using(MainRouter.admin_db).get(
+                id=api_key_pk, prefix=prefix
+            )
         except TenantAPIKey.DoesNotExist:
             raise AuthenticationFailed("Invalid API Key.")
 
         # Update last_used_at
         api_key_instance.last_used_at = timezone.now()
-        api_key_instance.save(update_fields=["last_used_at"])
+        api_key_instance.save(update_fields=["last_used_at"], using=MainRouter.admin_db)
 
         return entity, {
             "tenant_id": str(api_key_instance.tenant_id),
