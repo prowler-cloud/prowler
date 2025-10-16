@@ -2,14 +2,6 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.14.0] (Prowler UNRELEASED)
-
-### 🚀 Added
-
-- ResourceStatsCard composition components for flexible dashboard layouts [(#8921)](https://github.com/prowler-cloud/prowler/pull/8921)
-
----
-
 ## [1.13.0] (Prowler UNRELEASED)
 
 ### 🚀 Added
