@@ -213,14 +213,23 @@ export type AzureCredentials = {
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
-export type M365Credentials = {
+export type M365ClientSecretCredentials = {
   [ProviderCredentialFields.CLIENT_ID]: string;
   [ProviderCredentialFields.CLIENT_SECRET]: string;
   [ProviderCredentialFields.TENANT_ID]: string;
-  [ProviderCredentialFields.USER]?: string;
-  [ProviderCredentialFields.PASSWORD]?: string;
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
+
+export type M365CertificateCredentials = {
+  [ProviderCredentialFields.CLIENT_ID]: string;
+  [ProviderCredentialFields.CERTIFICATE_CONTENT]: string;
+  [ProviderCredentialFields.TENANT_ID]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
+export type M365Credentials =
+  | M365ClientSecretCredentials
+  | M365CertificateCredentials;
 
 export type GCPDefaultCredentials = {
   client_id: string;
