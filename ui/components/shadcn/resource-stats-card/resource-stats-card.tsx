@@ -11,6 +11,7 @@ import { ResourceStatsCardHeader } from "./resource-stats-card-header";
 
 export type { StatItem };
 
+// Todo: when the design system is ready, we must use the colors from the design system (semantic colors)
 // Variant styles using CVA for type safety and consistency
 // Colors are exact HEX values from Figma design system
 const cardVariants = cva("", {
