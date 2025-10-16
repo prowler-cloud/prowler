@@ -10,13 +10,18 @@ class kafka_cluster_is_public(Check):
             report = Check_Report_AWS(metadata=self.metadata(), resource=cluster)
             report.status = "FAIL"
             report.status_extended = (
-                f"Kafka cluster '{cluster.name}' is publicly accessible."
+                f"Kafka cluster {cluster.name} is publicly accessible."
             )
 
-            if cluster.public_access:
+            # Serverless clusters are always private by default
+            if cluster.kafka_version == "SERVERLESS":
+                report.status = "PASS"
+                report.status_extended = f"Kafka cluster {cluster.name} is serverless and always private by default."
+            # For provisioned clusters, check the public access configuration
+            elif not cluster.public_access:
                 report.status = "PASS"
                 report.status_extended = (
-                    f"Kafka cluster '{cluster.name}' is not publicly accessible."
+                    f"Kafka cluster {cluster.name} is not publicly accessible."
                 )
 
             findings.append(report)

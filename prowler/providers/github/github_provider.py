@@ -133,6 +133,12 @@ class GithubProvider(Provider):
         """
         logger.info("Instantiating GitHub Provider...")
 
+        # Mute GitHub library logs to reduce noise since it is already handled by the Prowler logger
+        import logging
+
+        logging.getLogger("github").setLevel(logging.CRITICAL)
+        logging.getLogger("github.GithubRetry").setLevel(logging.CRITICAL)
+
         # Set repositories and organizations for scoping
         self._repositories = repositories or []
         self._organizations = organizations or []
@@ -150,7 +156,7 @@ class GithubProvider(Provider):
             self._auth_method = "Personal Access Token"
         elif oauth_app_token:
             self._auth_method = "OAuth App Token"
-        elif github_app_id and github_app_key:
+        elif github_app_id and (github_app_key or github_app_key_content):
             self._auth_method = "GitHub App Token"
         elif environ.get("GITHUB_PERSONAL_ACCESS_TOKEN", ""):
             self._auth_method = "Environment Variable for Personal Access Token"
@@ -344,10 +350,22 @@ class GithubProvider(Provider):
                 auth = Auth.Token(session.token)
                 g = Github(auth=auth, retry=retry_config)
                 try:
+                    user = g.get_user()
+                    # Try to get email if the token has the necessary scope
+                    account_email = None
+                    try:
+                        emails = user.get_emails()
+                        if emails:
+                            account_email = emails[0].email
+                    except Exception:
+                        # Token doesn't have user:email scope or other API error
+                        pass
+
                     identity = GithubIdentityInfo(
-                        account_id=g.get_user().id,
-                        account_name=g.get_user().login,
-                        account_url=g.get_user().url,
+                        account_id=user.id,
+                        account_name=user.login,
+                        account_url=user.url,
+                        account_email=account_email,
                     )
                     return identity
 
@@ -359,8 +377,18 @@ class GithubProvider(Provider):
             elif session.id != 0 and session.key:
                 auth = Auth.AppAuth(session.id, session.key)
                 gi = GithubIntegration(auth=auth, retry=retry_config)
+                installations = []
+                for installation in gi.get_installations():
+                    installations.append(
+                        installation.raw_data.get("account", {}).get("login")
+                    )
                 try:
-                    identity = GithubAppIdentityInfo(app_id=gi.get_app().id)
+                    app = gi.get_app()
+                    identity = GithubAppIdentityInfo(
+                        app_id=app.id,
+                        app_name=app.name,
+                        installations=installations,
+                    )
                     return identity
 
                 except Exception as error:
@@ -387,11 +415,18 @@ class GithubProvider(Provider):
             report_lines = [
                 f"GitHub Account: {Fore.YELLOW}{self.identity.account_name}{Style.RESET_ALL}",
                 f"GitHub Account ID: {Fore.YELLOW}{self.identity.account_id}{Style.RESET_ALL}",
-                f"Authentication Method: {Fore.YELLOW}{self.auth_method}{Style.RESET_ALL}",
             ]
+            if self.identity.account_email:
+                report_lines.append(
+                    f"GitHub Account Email: {Fore.YELLOW}{self.identity.account_email}{Style.RESET_ALL}"
+                )
+            report_lines.append(
+                f"Authentication Method: {Fore.YELLOW}{self.auth_method}{Style.RESET_ALL}"
+            )
         elif isinstance(self.identity, GithubAppIdentityInfo):
             report_lines = [
                 f"GitHub App ID: {Fore.YELLOW}{self.identity.app_id}{Style.RESET_ALL}",
+                f"GitHub App Name: {Fore.YELLOW}{self.identity.app_name}{Style.RESET_ALL}",
                 f"Authentication Method: {Fore.YELLOW}{self.auth_method}{Style.RESET_ALL}",
             ]
         report_title = (

@@ -166,4 +166,4 @@ class defender_antispam_outbound_policy_forwarding_disabled(Check):
             policy.default
             or defender_client.outbound_spam_rules[policy.name].state.lower()
             == "enabled"
-        ) and not policy.auto_forwarding_mode
+        ) and policy.auto_forwarding_mode == "Off"

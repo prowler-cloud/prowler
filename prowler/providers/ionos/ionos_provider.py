@@ -1,31 +1,32 @@
-import sys
 import json
 import os
-import subprocess
+import sys
 from typing import Any, Optional, Tuple
 
 import ionoscloud
+from colorama import Fore, Style
 from ionoscloud import ApiClient, Configuration
-from ionoscloud.rest import ApiException
-import ionoscloud_dataplatform
 from ionoscloud.api.data_centers_api import DataCentersApi
 from ionoscloud.api.user_management_api import UserManagementApi
+from ionoscloud.rest import ApiException
 
-from prowler.config.config import get_default_mute_file_path, load_and_validate_config_file
+from prowler.config.config import (
+    default_config_file_path,
+    get_default_mute_file_path,
+    load_and_validate_config_file,
+)
 from prowler.lib.logger import logger
-from prowler.lib.mutelist.mutelist import Mutelist
-from prowler.providers.ionos.lib.mutelist.mutelist import IonosMutelist
-from prowler.providers.ionos.models import IonosIdentityInfo
-from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
+from prowler.lib.utils.utils import print_boxes
+from prowler.providers.common.provider import Provider
 from prowler.providers.ionos.exceptions.exceptions import (
-    IonosNoAuthMethodProvidedError,
-    IonosIncompleteCredentialsError,
     IonosEnvironmentCredentialsError,
+    IonosIncompleteCredentialsError,
+    IonosNoAuthMethodProvidedError,
     IonosTokenLoadError,
 )
-from colorama import Fore, Style
+from prowler.providers.ionos.lib.mutelist.mutelist import IonosMutelist
+from prowler.providers.ionos.models import IonosIdentityInfo
 
-from prowler.providers.common.provider import Provider
 
 class IonosProvider(Provider):
     _type: str = "ionos"
@@ -46,6 +47,7 @@ class IonosProvider(Provider):
         ionos_password: Optional[str] = None,
         ionos_datacenter_name: Optional[str] = None,
         config_path: Optional[str] = None,
+        fixer_config: dict = None,
         mutelist_path: Optional[str] = None,
         mutelist_content: dict = None,
         use_ionosctl: bool = False,
@@ -59,6 +61,7 @@ class IonosProvider(Provider):
             ionos_password (Optional[str]): Static password for IONOS authentication
             ionos_datacenter_name (Optional[str]): Name of the datacenter to use
             config_path (Optional[str]): Path to the configuration file
+            fixer_config (dict): Fixer configuration as dictionary
             mutelist_path (Optional[str]): Path to the mutelist file
             mutelist_content (dict): Mutelist content as dictionary
             use_ionosctl (bool): Whether to use ionosctl token authentication
@@ -79,6 +82,12 @@ class IonosProvider(Provider):
 
         if not any([use_ionosctl, use_env_vars, all([ionos_username, ionos_password])]):
             raise IonosNoAuthMethodProvidedError()
+
+        # Load audit_config, fixer_config, mutelist
+        self._fixer_config = fixer_config if fixer_config else {}
+        if not config_path:
+            config_path = default_config_file_path
+        self._audit_config = load_and_validate_config_file(self._type, config_path)
 
         if use_ionosctl:
             self._token = self.load_ionosctl_token()
@@ -118,14 +127,16 @@ class IonosProvider(Provider):
         self._identity.datacenter_id = self.get_datacenter_id(self._datacenter_name)
 
         if not self.test_connection():
-            logger.critical("Failed to establish connection with IONOS Cloud API, please check your credentials.")
+            logger.critical(
+                "Failed to establish connection with IONOS Cloud API, please check your credentials."
+            )
             sys.exit(1)
 
         if config_path is None:
             self._audit_config = {}
         else:
             self._audit_config = load_and_validate_config_file("ionos", config_path)
-        
+
         if mutelist_content:
             self._mutelist = IonosMutelist(
                 mutelist_content=mutelist_content,
@@ -133,7 +144,9 @@ class IonosProvider(Provider):
         else:
             if not mutelist_path:
                 mutelist_path = get_default_mute_file_path(self.type)
-                logger.info(f"No mutelist path provided, using default: {mutelist_path}")
+                logger.info(
+                    f"No mutelist path provided, using default: {mutelist_path}"
+                )
             self._mutelist = IonosMutelist(
                 mutelist_path=mutelist_path,
             )
@@ -168,41 +181,57 @@ class IonosProvider(Provider):
             IonosTokenLoadError: If the token cannot be loaded from the configuration
         """
         platform = sys.platform
-        
+
         is_wsl = False
         try:
-            with open('/proc/version') as f:
-                is_wsl = 'microsoft' in f.read().lower()
-        except:
+            with open("/proc/version") as f:
+                is_wsl = "microsoft" in f.read().lower()
+        except OSError:
             pass
 
         config_paths = {
-            "darwin": os.path.join(os.path.expanduser("~"), "Library", "Application Support", "ionosctl", "config.json"),
-            "linux": os.path.join(os.getenv("XDG_CONFIG_HOME", os.path.expanduser("~/.config")), "ionosctl", "config.json"),
-            "win32": os.path.join(os.getenv("APPDATA", ""), "ionosctl", "config.json")
+            "darwin": os.path.join(
+                os.path.expanduser("~"),
+                "Library",
+                "Application Support",
+                "ionosctl",
+                "config.json",
+            ),
+            "linux": os.path.join(
+                os.getenv("XDG_CONFIG_HOME", os.path.expanduser("~/.config")),
+                "ionosctl",
+                "config.json",
+            ),
+            "win32": os.path.join(os.getenv("APPDATA", ""), "ionosctl", "config.json"),
         }
-        
+
         if is_wsl:
             try:
-                windows_config = "/mnt/c/Users/{}/AppData/Roaming/ionosctl/config.json".format(
-                    os.getenv("USER")
+                windows_config = (
+                    "/mnt/c/Users/{}/AppData/Roaming/ionosctl/config.json".format(
+                        os.getenv("USER")
+                    )
                 )
                 try:
                     with open(windows_config, "r") as config_file:
                         config = json.load(config_file)
-                        logger.info("Loaded IONOS token from Windows ionosctl config file in WSL.")
+                        logger.info(
+                            "Loaded IONOS token from Windows ionosctl config file in WSL."
+                        )
                         return config.get("userdata.token")
                 except Exception as e:
-                    logger.debug(f"Could not load Windows config file in WSL, trying Linux path... {e}")
+                    logger.debug(
+                        f"Could not load Windows config file in WSL, trying Linux path... {e}"
+                    )
             except Exception as e:
                 logger.debug(f"Failed to access Windows config file: {e}")
-        
+
         config_path = config_paths.get(platform)
-        
+
         if not config_path:
             logger.warning(f"Unsupported platform: {platform}")
             return None
-            
+
         try:
             with open(config_path, "r") as config_file:
                 config = json.load(config_file)
@@ -249,13 +278,9 @@ class IonosProvider(Provider):
         mutelist method returns the provider's mutelist
         """
         return self._mutelist
-    
-    @property
-    def session(self) -> ApiClient:
-        return self._session
 
     def setup_session(
-        self, 
+        self,
         identity: IonosIdentityInfo,
     ) -> ApiClient:
         """
@@ -274,35 +299,52 @@ class IonosProvider(Provider):
             logger.critical(f"Failed to initialize IONOS session: {error}")
             sys.exit(1)
 
-    def print_credentials(self) -> None:     
+    def print_credentials(self) -> None:
         """
         Print the IONOS Cloud credentials.
 
         This method prints the IONOS Cloud credentials used by the provider.
         """
 
-        username = self._session.configuration.username
-        host = self._session.configuration.host
-        if self._identity.token:
-            if len(self._identity.token) > 8:
-                masked_token = self._identity.token[:4] + "*" * 16 + self._identity.token[-4:]
+        session_config = getattr(self._session, "configuration", None)
+        identity = self._identity
+
+        username = getattr(session_config, "username", None) if session_config else None
+        host = getattr(session_config, "host", None) if session_config else None
+
+        identity_username = (
+            identity.username if identity and identity.username else None
+        )
+        username_display = username or identity_username or "Not Provided"
+        host_display = host or "Not Provided"
+
+        token_display = "Not Provided"
+        token = identity.token if identity and identity.token else ""
+        if token:
+            if len(token) > 8:
+                token_display = f"{token[:4]}{'*' * 16}{token[-4:]}"
             else:
-                masked_token = self._identity.token
-        else:
-            masked_token = "Not Provided"
+                token_display = "*" * len(token)
 
         datacenters = self.get_datacenters()
 
         datacenter_id = datacenters[0].id if datacenters else "Not Found"
         datacenter_name = datacenters[0].properties.name if datacenters else "Not Found"
-        datacenter_location = datacenters[0].properties.location if datacenters else "Not Found"
+        datacenter_location = (
+            datacenters[0].properties.location if datacenters else "Not Found"
+        )
 
         report_lines = [
+            f"Username: {Fore.YELLOW}{username_display}{Style.RESET_ALL}",
+            f"API Host: {Fore.YELLOW}{host_display}{Style.RESET_ALL}",
+            f"Token: {Fore.YELLOW}{token_display}{Style.RESET_ALL}",
             f"Datacenter ID: {Fore.YELLOW}{datacenter_id}{Style.RESET_ALL}",
             f"Datacenter Name: {Fore.YELLOW}{datacenter_name}{Style.RESET_ALL}",
             f"Datacenter Location: {Fore.YELLOW}{datacenter_location}{Style.RESET_ALL}",
         ]
-        report_title = f"{Style.BRIGHT}Using the IONOS Cloud credentials below:{Style.RESET_ALL}"
+        report_title = (
+            f"{Style.BRIGHT}Using the IONOS Cloud credentials below:{Style.RESET_ALL}"
+        )
         print_boxes(report_lines, report_title)
 
     def get_datacenter_id(self, datacenter_name: Optional[str] = None) -> str:
@@ -311,10 +353,10 @@ class IonosProvider(Provider):
         If the name is empty or None, returns the first available datacenter.
         """
         datacenters = self.get_datacenters()
-        
+
         if not datacenter_name:
             return datacenters[0].id if datacenters else ""
-        
+
         for datacenter in datacenters:
             if datacenter.properties.name == datacenter_name:
                 return datacenter.id
@@ -332,10 +374,10 @@ class IonosProvider(Provider):
         """
         try:
             datacenter_api = DataCentersApi(self._session)
-            datacenters = datacenter_api.datacenters_get()
+            datacenter_api.datacenters_get()
             logger.info("Successfully connected to IONOS Cloud API.")
             return True
-        except ApiException as error:
+        except ApiException:
             return False
 
     def get_datacenters(self) -> list:
@@ -348,7 +390,9 @@ class IonosProvider(Provider):
             logger.info("Successfully retrieved datacenters from IONOS Cloud API.")
             return datacenters
         except ApiException as error:
-            logger.error(f"Failed to retrieve datacenters from IONOS Cloud API: {error}")
+            logger.error(
+                f"Failed to retrieve datacenters from IONOS Cloud API: {error}"
+            )
             return []
 
     def setup_identity(

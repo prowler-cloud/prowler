@@ -1,8 +1,13 @@
 "use client";
 
-import { Textarea } from "@nextui-org/react";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
-import { useFormState } from "react-dom";
+import { Textarea } from "@heroui/input";
+import {
+  Dispatch,
+  SetStateAction,
+  useActionState,
+  useEffect,
+  useState,
+} from "react";
 
 import {
   createMutedFindingsConfig,
@@ -16,7 +21,11 @@ import { CustomButton } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { FormButtons } from "@/components/ui/form";
 import { fontMono } from "@/config/fonts";
-import { convertToYaml, parseYamlValidation } from "@/lib/yaml";
+import {
+  convertToYaml,
+  defaultMutedFindingsConfig,
+  parseYamlValidation,
+} from "@/lib/yaml";
 import {
   MutedFindingsConfigActionState,
   ProcessorData,
@@ -24,10 +33,12 @@ import {
 
 interface MutedFindingsConfigFormProps {
   setIsOpen: Dispatch<SetStateAction<boolean>>;
+  onCancel?: () => void;
 }
 
 export const MutedFindingsConfigForm = ({
   setIsOpen,
+  onCancel,
 }: MutedFindingsConfigFormProps) => {
   const [config, setConfig] = useState<ProcessorData | null>(null);
   const [configText, setConfigText] = useState("");
@@ -39,7 +50,7 @@ export const MutedFindingsConfigForm = ({
   }>({ isValid: true });
   const [hasUserStartedTyping, setHasUserStartedTyping] = useState(false);
 
-  const [state, formAction, isPending] = useFormState<
+  const [state, formAction, isPending] = useActionState<
     MutedFindingsConfigActionState,
     FormData
   >(config ? updateMutedFindingsConfig : createMutedFindingsConfig, null);
@@ -122,15 +133,15 @@ export const MutedFindingsConfigForm = ({
 
   if (showDeleteConfirmation) {
     return (
-      <div className="flex flex-col space-y-4">
-        <h3 className="text-lg font-semibold text-default-700">
+      <div className="flex flex-col gap-4">
+        <h3 className="text-default-700 text-lg font-semibold">
           Delete Mutelist Configuration
         </h3>
-        <p className="text-sm text-default-600">
+        <p className="text-default-600 text-sm">
           Are you sure you want to delete this configuration? This action cannot
           be undone.
         </p>
-        <div className="flex w-full justify-center space-x-6">
+        <div className="flex w-full justify-center gap-6">
           <CustomButton
             type="button"
             ariaLabel="Cancel"
@@ -161,12 +172,12 @@ export const MutedFindingsConfigForm = ({
   }
 
   return (
-    <form action={formAction} className="flex flex-col space-y-4">
+    <form action={formAction} className="flex flex-col gap-4">
       {config && <input type="hidden" name="id" value={config.id} />}
 
-      <div className="space-y-4">
+      <div className="flex flex-col gap-4">
         <div>
-          <ul className="mb-4 list-disc pl-5 text-sm text-default-600">
+          <ul className="text-default-600 mb-4 list-disc pl-5 text-sm">
             <li>
               <strong>
                 This Mutelist configuration will take effect on the next scan.
@@ -190,10 +201,10 @@ export const MutedFindingsConfigForm = ({
           </ul>
         </div>
 
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           <label
             htmlFor="configuration"
-            className="text-sm font-medium text-default-700"
+            className="text-default-700 text-sm font-medium"
           >
             Mutelist Configuration
           </label>
@@ -201,7 +212,7 @@ export const MutedFindingsConfigForm = ({
             <Textarea
               id="configuration"
               name="configuration"
-              placeholder="Enter your YAML configuration..."
+              placeholder={defaultMutedFindingsConfig}
               variant="bordered"
               value={configText}
               onChange={(e) => handleConfigChange(e.target.value)}
@@ -222,7 +233,7 @@ export const MutedFindingsConfigForm = ({
               }}
             />
             {yamlValidation.isValid && configText && hasUserStartedTyping && (
-              <div className="my-1 flex items-center px-1 text-tiny text-success">
+              <div className="text-tiny text-success my-1 flex items-center px-1">
                 <span>Valid YAML format</span>
               </div>
             )}
@@ -230,9 +241,10 @@ export const MutedFindingsConfigForm = ({
         </div>
       </div>
 
-      <div className="flex flex-col space-y-4">
+      <div className="flex flex-col gap-4">
         <FormButtons
           setIsOpen={setIsOpen}
+          onCancel={onCancel}
           submitText={config ? "Update" : "Save"}
           isDisabled={!yamlValidation.isValid || !configText.trim()}
         />

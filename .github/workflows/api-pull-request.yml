@@ -13,6 +13,7 @@ on:
       - "master"
       - "v5.*"
     paths:
+      - ".github/workflows/api-pull-request.yml"
       - "api/**"
 
 env:
@@ -75,18 +76,20 @@ jobs:
           --health-retries 5
 
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Test if changes are in not ignored paths
         id: are-non-ignored-files-changed
-        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
         with:
-          files: api/**
+          files: |
+            api/**
+            .github/workflows/api-pull-request.yml
           files_ignore: ${{ env.IGNORE_FILES }}
 
-      - name: Replace @master with current branch in pyproject.toml
+      - name: Replace @master with current branch in pyproject.toml - Only for pull requests to `master`
         working-directory: ./api
-        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true' && github.event_name == 'pull_request' && github.base_ref == 'master'
         run: |
           BRANCH_NAME="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
           echo "Using branch: $BRANCH_NAME"
@@ -99,7 +102,24 @@ jobs:
           python -m pip install --upgrade pip
           pipx install poetry==2.1.1
 
-      - name: Update poetry.lock after the branch name change
+      - name: Update SDK's poetry.lock resolved_reference to latest commit - Only for push events to `master`
+        working-directory: ./api
+        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/master'
+        run: |
+          # Get the latest commit hash from the prowler-cloud/prowler repository
+          LATEST_COMMIT=$(curl -s "https://api.github.com/repos/prowler-cloud/prowler/commits/master" | jq -r '.sha')
+          echo "Latest commit hash: $LATEST_COMMIT"
+
+          # Update the resolved_reference specifically for prowler-cloud/prowler repository
+          sed -i '/url = "https:\/\/github\.com\/prowler-cloud\/prowler\.git"/,/resolved_reference = / {
+            s/resolved_reference = "[a-f0-9]\{40\}"/resolved_reference = "'"$LATEST_COMMIT"'"/
+          }' poetry.lock
+
+          # Verify the change was made
+          echo "Updated resolved_reference:"
+          grep -A2 -B2 "resolved_reference" poetry.lock
+
+      - name: Update poetry.lock
         working-directory: ./api
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
@@ -107,16 +127,10 @@ jobs:
 
       - name: Set up Python ${{ matrix.python-version }}
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
         with:
           python-version: ${{ matrix.python-version }}
           cache: "poetry"
-
-      - name: Install system dependencies for xmlsec
-        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libxml2-dev libxmlsec1-dev libxmlsec1-openssl pkg-config
 
       - name: Install dependencies
         working-directory: ./api
@@ -188,7 +202,7 @@ jobs:
 
       - name: Upload coverage reports to Codecov
         if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
-        uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24 # v5.4.3
+        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
@@ -196,11 +210,11 @@ jobs:
   test-container-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Test if changes are in not ignored paths
         id: are-non-ignored-files-changed
-        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46.0.5
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
         with:
           files: api/**
           files_ignore: ${{ env.IGNORE_FILES }}

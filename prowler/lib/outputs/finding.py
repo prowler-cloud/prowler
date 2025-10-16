@@ -19,6 +19,7 @@ from prowler.lib.outputs.compliance.compliance import get_check_compliance
 from prowler.lib.outputs.utils import unroll_tags
 from prowler.lib.utils.utils import dict_to_lowercase, get_nested_attribute
 from prowler.providers.common.provider import Provider
+from prowler.providers.github.models import GithubAppIdentityInfo, GithubIdentityInfo
 
 
 class Finding(BaseModel):
@@ -249,8 +250,18 @@ class Finding(BaseModel):
                 output_data["auth_method"] = provider.auth_method
                 output_data["resource_name"] = check_output.resource_name
                 output_data["resource_uid"] = check_output.resource_id
-                output_data["account_name"] = provider.identity.account_name
-                output_data["account_uid"] = provider.identity.account_id
+
+                if isinstance(provider.identity, GithubIdentityInfo):
+                    # GithubIdentityInfo (Personal Access Token, OAuth)
+                    output_data["account_name"] = provider.identity.account_name
+                    output_data["account_uid"] = provider.identity.account_id
+                    output_data["account_email"] = provider.identity.account_email
+                elif isinstance(provider.identity, GithubAppIdentityInfo):
+                    # GithubAppIdentityInfo (GitHub App)
+                    output_data["account_name"] = provider.identity.app_name
+                    output_data["account_uid"] = provider.identity.app_id
+                    output_data["installations"] = provider.identity.installations
+
                 output_data["region"] = check_output.owner
 
             elif provider.type == "m365":
@@ -276,6 +287,50 @@ class Finding(BaseModel):
                 output_data["region"] = check_output.resource_path
                 output_data["resource_line_range"] = check_output.resource_line_range
                 output_data["framework"] = check_output.check_metadata.ServiceName
+
+            elif provider.type == "mongodbatlas":
+                output_data["auth_method"] = "api_key"
+                output_data["account_uid"] = get_nested_attribute(
+                    provider, "identity.organization_id"
+                )
+                output_data["account_name"] = get_nested_attribute(
+                    provider, "identity.organization_name"
+                )
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = check_output.location
+
+            elif provider.type == "iac":
+                output_data["auth_method"] = provider.auth_method
+                output_data["account_uid"] = "iac"
+                output_data["account_name"] = "iac"
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_name
+                output_data["region"] = check_output.resource_line_range
+                output_data["resource_line_range"] = check_output.resource_line_range
+                output_data["framework"] = check_output.check_metadata.ServiceName
+
+            elif provider.type == "llm":
+                output_data["auth_method"] = provider.auth_method
+                output_data["account_uid"] = "llm"
+                output_data["account_name"] = "llm"
+                output_data["resource_name"] = check_output.model
+                output_data["resource_uid"] = check_output.model
+                output_data["region"] = check_output.model
+
+            elif provider.type == "oci":
+                output_data["auth_method"] = (
+                    f"Profile: {get_nested_attribute(provider, 'session.profile')}"
+                )
+                output_data["account_uid"] = get_nested_attribute(
+                    provider, "identity.tenancy_id"
+                )
+                output_data["account_name"] = get_nested_attribute(
+                    provider, "identity.tenancy_name"
+                )
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = check_output.region
 
             elif provider.type == "nhn":
                 output_data["auth_method"] = (

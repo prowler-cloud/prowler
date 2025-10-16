@@ -3,6 +3,7 @@ import datetime
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.providers.gcp.config import DEFAULT_RETRY_ATTEMPTS
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.gcp.lib.service.service import GCPService
 
@@ -28,12 +29,40 @@ class Monitoring(GCPService):
                     .list(name=f"projects/{project_id}")
                 )
                 while request is not None:
-                    response = request.execute()
+                    response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
 
                     for policy in response.get("alertPolicies", []):
                         filters = []
-                        for condition in policy["conditions"]:
-                            filters.append(condition["conditionThreshold"]["filter"])
+                        for condition in policy.get("conditions", []):
+                            # Handle different condition types
+                            if "conditionThreshold" in condition:
+                                filter_value = condition["conditionThreshold"].get(
+                                    "filter", ""
+                                )
+                                if filter_value:
+                                    filters.append(filter_value)
+                            elif "conditionAbsent" in condition:
+                                filter_value = condition["conditionAbsent"].get(
+                                    "filter", ""
+                                )
+                                if filter_value:
+                                    filters.append(filter_value)
+                            elif "conditionMatchedLog" in condition:
+                                filter_value = condition["conditionMatchedLog"].get(
+                                    "filter", ""
+                                )
+                                if filter_value:
+                                    filters.append(filter_value)
+                            elif "conditionMonitoringQueryLanguage" in condition:
+                                query = condition[
+                                    "conditionMonitoringQueryLanguage"
+                                ].get("query", "")
+                                if query:
+                                    filters.append(query)
+                            else:
+                                logger.warning(
+                                    f"Unknown condition type in alert policy {policy.get('name', 'Unknown')}: {condition.keys()}"
+                                )
                         self.alert_policies.append(
                             AlertPolicy(
                                 name=policy["name"],
@@ -83,7 +112,7 @@ class Monitoring(GCPService):
                             view="HEADERS",
                         )
                     )
-                    response = request.execute()
+                    response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
 
                     for metric in response.get("timeSeries", []):
                         key_id = metric["metric"]["labels"].get("key_id")
@@ -128,7 +157,7 @@ class Monitoring(GCPService):
                             view="HEADERS",
                         )
                     )
-                    response = request.execute()
+                    response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
 
                     for metric in response.get("timeSeries", []):
                         sa_id = metric["resource"]["labels"].get("credential_id")

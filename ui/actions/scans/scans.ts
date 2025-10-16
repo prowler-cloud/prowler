@@ -1,14 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import {
-  apiBaseUrl,
-  getAuthHeaders,
-  getErrorMessage,
-  parseStringify,
-} from "@/lib";
+import { apiBaseUrl, getAuthHeaders, getErrorMessage } from "@/lib";
+import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 
 export const getScans = async ({
   page = 1,
@@ -43,12 +38,9 @@ export const getScans = async ({
 
   try {
     const response = await fetch(url.toString(), { headers });
-    const data = await response.json();
-    const parsedData = parseStringify(data);
-    revalidatePath("/scans");
-    return parsedData;
+
+    return handleApiResponse(response);
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error fetching scans:", error);
     return undefined;
   }
@@ -56,9 +48,7 @@ export const getScans = async ({
 
 export const getScansByState = async () => {
   const headers = await getAuthHeaders({ contentType: false });
-
   const url = new URL(`${apiBaseUrl}/scans`);
-
   // Request only the necessary fields to optimize the response
   url.searchParams.append("fields[scans]", "state");
 
@@ -67,20 +57,8 @@ export const getScansByState = async () => {
       headers,
     });
 
-    if (!response.ok) {
-      try {
-        const errorData = await response.json();
-        throw new Error(errorData?.message || "Failed to fetch scans by state");
-      } catch {
-        throw new Error("Failed to fetch scans by state");
-      }
-    }
-
-    const data = await response.json();
-
-    return parseStringify(data);
+    return handleApiResponse(response);
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error fetching scans by state:", error);
     return undefined;
   }
@@ -92,17 +70,13 @@ export const getScan = async (scanId: string) => {
   const url = new URL(`${apiBaseUrl}/scans/${scanId}`);
 
   try {
-    const scan = await fetch(url.toString(), {
+    const response = await fetch(url.toString(), {
       headers,
     });
-    const data = await scan.json();
-    const parsedData = parseStringify(data);
 
-    return parsedData;
+    return handleApiResponse(response);
   } catch (error) {
-    return {
-      error: getErrorMessage(error),
-    };
+    return handleApiError(error);
   }
 };
 
@@ -139,20 +113,9 @@ export const scanOnDemand = async (formData: FormData) => {
       body: JSON.stringify(requestBody),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-
-      return { success: false, error: errorData.errors[0].detail };
-    }
-
-    const data = await response.json();
-    revalidatePath("/scans");
-
-    return parseStringify(data);
+    return handleApiResponse(response, "/scans");
   } catch (error) {
-    console.error("Error starting scan:", error);
-
-    return { error: getErrorMessage(error) };
+    return handleApiError(error);
   }
 };
 
@@ -177,19 +140,9 @@ export const scheduleDaily = async (formData: FormData) => {
       }),
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to schedule daily: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    revalidatePath("/scans");
-    return parseStringify(data);
+    return handleApiResponse(response, "/scans");
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error(error);
-    return {
-      error: getErrorMessage(error),
-    };
+    return handleApiError(error);
   }
 };
 
@@ -215,15 +168,10 @@ export const updateScan = async (formData: FormData) => {
         },
       }),
     });
-    const data = await response.json();
-    revalidatePath("/scans");
-    return parseStringify(data);
+
+    return handleApiResponse(response, "/scans");
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error(error);
-    return {
-      error: getErrorMessage(error),
-    };
+    return handleApiError(error);
   }
 };
 

@@ -48,22 +48,35 @@ test.describe("Login Flow", () => {
   test("should handle empty form submission", async ({ page }) => {
     // Submit empty form
     await submitLoginForm(page);
-    await verifyLoginError(page, ERROR_MESSAGES.INVALID_CREDENTIALS);
+
+    // Should show both email and password validation errors
+    await verifyLoginError(page, ERROR_MESSAGES.INVALID_EMAIL);
+    await verifyLoginError(page, ERROR_MESSAGES.PASSWORD_REQUIRED);
+
     // Verify we're still on login page
     await expect(page).toHaveURL(URLS.LOGIN);
   });
 
-  /*
-  TODO: This test is failing, need UI work before.
   test("should validate email format", async ({ page }) => {
     // Attempt login with invalid email format
     await login(page, TEST_CREDENTIALS.INVALID_EMAIL_FORMAT);
-    // Verify error message (application shows generic error for invalid email format too)
-    await verifyLoginError(page, ERROR_MESSAGES.INVALID_CREDENTIALS);
+    // Verify field-level email validation message
+    await verifyLoginError(page, ERROR_MESSAGES.INVALID_EMAIL);
     // Verify we're still on login page
     await expect(page).toHaveURL(URLS.LOGIN);
   });
-  */
+
+  test("should require password when email is filled", async ({ page }) => {
+    // Fill only email, leave password empty
+    await page.getByLabel("Email").fill(TEST_CREDENTIALS.VALID.email);
+    await submitLoginForm(page);
+
+    // Should show password required error
+    await verifyLoginError(page, ERROR_MESSAGES.PASSWORD_REQUIRED);
+
+    // Verify we're still on login page
+    await expect(page).toHaveURL(URLS.LOGIN);
+  });
 
   test("should toggle SAML SSO mode", async ({ page }) => {
     // Toggle to SAML mode
@@ -124,8 +137,8 @@ test.describe("Session Persistence", () => {
   }) => {
     // Try to access protected route without login
     await page.goto(URLS.DASHBOARD);
-    // Should be redirected to login page
-    await expect(page).toHaveURL(URLS.LOGIN);
+    // Should be redirected to login page (may include callbackUrl)
+    await expect(page).toHaveURL(/\/sign-in/);
     await expect(page.getByText("Sign in", { exact: true })).toBeVisible();
   });
 
@@ -134,25 +147,56 @@ test.describe("Session Persistence", () => {
     await goToLogin(page);
     await login(page, TEST_CREDENTIALS.VALID);
     await verifySuccessfulLogin(page);
+
     // Logout
     await logout(page);
     await verifyLogoutSuccess(page);
+
     // Verify cannot access protected route after logout
     await page.goto(URLS.DASHBOARD);
-    await expect(page).toHaveURL(URLS.LOGIN);
+    await expect(page).toHaveURL(/\/sign-in/);
   });
 
-  test("should handle session timeout gracefully", async ({ page }) => {
-    // Login first
-    await goToLogin(page);
-    await login(page, TEST_CREDENTIALS.VALID);
-    await verifySuccessfulLogin(page);
-    // Simulate session timeout by clearing cookies
-    await page.context().clearCookies();
-    // Try to navigate to a protected route
-    await page.goto(URLS.PROFILE);
-    // Should be redirected to login
-    await expect(page).toHaveURL(URLS.LOGIN);
+  test("should handle session timeout gracefully", async ({ browser }) => {
+    // Test approach: Verify that a new browser context without auth cookies
+    // gets redirected to login when accessing protected routes
+
+    // First, login in one context to verify auth works
+    const authContext = await browser.newContext();
+    const authPage = await authContext.newPage();
+
+    await goToLogin(authPage);
+    await login(authPage, TEST_CREDENTIALS.VALID);
+    await verifySuccessfulLogin(authPage);
+
+    // Verify session exists in authenticated context
+    const authResponse = await authPage.request.get("/api/auth/session");
+    const authSession = await authResponse.json();
+    expect(authSession).toBeTruthy();
+    expect(authSession.user).toBeTruthy();
+
+    // Now create a completely separate context without any auth
+    const unauthContext = await browser.newContext();
+    const unauthPage = await unauthContext.newPage();
+
+    // Try to access protected route in unauthenticated context
+    await unauthPage.goto(URLS.PROFILE, {
+      waitUntil: "networkidle",
+    });
+
+    // Should be redirected to login since this context has no auth (may include callbackUrl)
+    await expect(unauthPage).toHaveURL(/\/sign-in/);
+
+    // Verify session is null in unauthenticated context
+    const unauthResponse = await unauthPage.request.get("/api/auth/session");
+    const unauthSessionText = await unauthResponse.text();
+    expect(unauthSessionText).toBe("null");
+
+    // Clean up
+    await authPage.close();
+    await authContext.close();
+    await unauthPage.close();
+    await unauthContext.close();
   });
 });
 

@@ -1,5 +1,6 @@
+from unittest.mock import MagicMock
+
 from azure.identity import DefaultAzureCredential
-from mock import MagicMock
 
 from prowler.providers.m365.m365_provider import M365Provider
 from prowler.providers.m365.models import (
@@ -22,7 +23,9 @@ LOCATION = "global"
 def set_mocked_m365_provider(
     session_credentials: DefaultAzureCredential = DefaultAzureCredential(),
     credentials: M365Credentials = M365Credentials(
-        user="user@email.com", passwd="111111aa111111aaa1111"
+        client_id=CLIENT_ID,
+        client_secret=CLIENT_SECRET,
+        tenant_id=TENANT_ID,
     ),
     identity: M365IdentityInfo = M365IdentityInfo(
         identity_id=IDENTITY_ID,

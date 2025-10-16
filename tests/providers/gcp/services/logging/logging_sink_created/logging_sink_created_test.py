@@ -204,7 +204,7 @@ class Test_logging_sink_created:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].resource_id == GCP_PROJECT_ID
-            assert result[0].resource_name == GCP_PROJECT_ID
+            assert result[0].resource_name == "GCP Project"
             assert result[0].project_id == GCP_PROJECT_ID
             assert result[0].location == GCP_EU1_LOCATION
             assert (

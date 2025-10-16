@@ -20,6 +20,14 @@ def stdout_report(finding, color, verbose, status, fix):
         details = finding.owner
     if finding.check_metadata.Provider == "m365":
         details = finding.location
+    if finding.check_metadata.Provider == "mongodbatlas":
+        details = finding.location
+    if finding.check_metadata.Provider == "llm":
+        details = finding.check_metadata.CheckID
+    if finding.check_metadata.Provider == "iac":
+        details = finding.check_metadata.CheckID
+    if finding.check_metadata.Provider == "oci":
+        details = finding.region
     if finding.check_metadata.Provider == "nhn":
         details = finding.location
     if finding.check_metadata.Provider == "ionos":

@@ -4,15 +4,21 @@ from io import StringIO
 from mock import patch
 
 from prowler.config.config import prowler_version, timestamp
+from prowler.lib.logger import logger
 from prowler.lib.outputs.html.html import HTML
+from prowler.providers.github.models import GithubAppIdentityInfo
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
 from tests.providers.azure.azure_fixtures import set_mocked_azure_provider
 from tests.providers.gcp.gcp_fixtures import GCP_PROJECT_ID, set_mocked_gcp_provider
+from tests.providers.github.github_fixtures import APP_ID, set_mocked_github_provider
 from tests.providers.kubernetes.kubernetes_fixtures import (
     set_mocked_kubernetes_provider,
 )
 from tests.providers.m365.m365_fixtures import set_mocked_m365_provider
+from tests.providers.mongodbatlas.mongodbatlas_fixtures import (
+    set_mocked_mongodbatlas_provider,
+)
 
 html_stats = {
     "total_pass": 25,
@@ -34,7 +40,7 @@ pass_html_finding = """
                             <td></td>
                             <td></td>
                             <td><p class="show-read-more">test-risk</p></td>
-                            <td><p class="show-read-more"></p> <a class="read-more" href=""><i class="fas fa-external-link-alt"></i></a></td>
+                            <td><p class="show-read-more"></p> <a class="read-more" href="https://hub.prowler.com/check/check-id"><i class="fas fa-external-link-alt"></i></a></td>
                             <td><p class="show-read-more">
 &#x2022;test-compliance: test-compliance
 </p></td>
@@ -56,7 +62,7 @@ fail_html_finding = """
 </td>
                             <td>test-status-extended</td>
                             <td><p class="show-read-more">test-risk</p></td>
-                            <td><p class="show-read-more">test-remediation-recommendation-text</p> <a class="read-more" href=""><i class="fas fa-external-link-alt"></i></a></td>
+                            <td><p class="show-read-more">test-remediation-recommendation-text</p> <a class="read-more" href="https://hub.prowler.com/check/check-id"><i class="fas fa-external-link-alt"></i></a></td>
                             <td><p class="show-read-more">
 &#x2022;test-compliance: test-compliance
 </p></td>
@@ -74,7 +80,7 @@ muted_html_finding = """
                             <td></td>
                             <td></td>
                             <td><p class="show-read-more">test-risk</p></td>
-                            <td><p class="show-read-more"></p> <a class="read-more" href=""><i class="fas fa-external-link-alt"></i></a></td>
+                            <td><p class="show-read-more"></p> <a class="read-more" href="https://hub.prowler.com/check/check-id"><i class="fas fa-external-link-alt"></i></a></td>
                             <td><p class="show-read-more">
 &#x2022;test-compliance: test-compliance
 </p></td>
@@ -92,7 +98,7 @@ manual_html_finding = """
                             <td></td>
                             <td></td>
                             <td><p class="show-read-more">test-risk</p></td>
-                            <td><p class="show-read-more"></p> <a class="read-more" href=""><i class="fas fa-external-link-alt"></i></a></td>
+                            <td><p class="show-read-more"></p> <a class="read-more" href="https://hub.prowler.com/check/check-id"><i class="fas fa-external-link-alt"></i></a></td>
                             <td><p class="show-read-more">
 &#x2022;test-compliance: test-compliance
 </p></td>
@@ -223,6 +229,67 @@ kubernetes_html_assessment_summary = """
                     </div>
                 </div>"""
 
+github_personal_access_token_html_assessment_summary = """
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            GitHub Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+
+                            <li class="list-group-item">
+                                <b>GitHub account:</b> account-name
+                            </li>
+
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            GitHub Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">
+
+                            <li class="list-group-item">
+                                <b>GitHub authentication method:</b> Personal Access Token
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+
+github_app_html_assessment_summary = """
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            GitHub Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>GitHub App Name:</b> test-app
+                            </li>
+                            <li class="list-group-item">
+                                <b>Installations:</b> test-org
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            GitHub Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>GitHub authentication method:</b> GitHub App Token
+                            </li>
+                            <li class="list-group-item">
+                                <b>GitHub App ID:</b> app-id
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+
 m365_html_assessment_summary = """
                 <div class="col-md-2">
                     <div class="card">
@@ -250,6 +317,34 @@ m365_html_assessment_summary = """
                             </li>
                             <li class="list-group-item">
                                 <b>M365 User:</b> user@email.com
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+
+mongodbatlas_html_assessment_summary = """
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            MongoDB Atlas Assessment Summary
+                        </div>
+                        <ul class="list-group
+                        list-group-flush">
+                            <li class="list-group-item">
+                                <b>MongoDB Atlas organization:</b> test_org_name
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            MongoDB Atlas Credentials
+                        </div>
+                        <ul class="list-group
+                        list-group-flush">
+                            <li class="list-group-item">
+                                <b>MongoDB Atlas authentication method:</b> API Key
                             </li>
                         </ul>
                     </div>
@@ -442,10 +537,68 @@ html_footer = """
             var maxLength = 30;
             // ReadMore ReadLess
             $(".show-read-more").each(function () {
-                var myStr = $(this).text();
-                if ($.trim(myStr).length > maxLength) {
-                    var newStr = myStr.substring(0, maxLength);
-                    var removedStr = myStr.substring(maxLength, $.trim(myStr).length);
+                var myStr = $(this).html();
+                var textLength = $(this).text().length;
+                if (textLength > maxLength) {
+                    // Find the position where to cut while preserving HTML tags and breaking at word boundaries
+                    var cutPosition = 0;
+                    var currentLength = 0;
+                    var inTag = false;
+                    var lastWordBoundary = 0;
+                    var tagStack = [];
+
+                    for (var i = 0; i < myStr.length; i++) {
+                        if (myStr[i] === '<') {
+                            inTag = true;
+                            // Track opening tags
+                            if (myStr[i + 1] !== '/') {
+                                var tagEnd = myStr.indexOf('>', i);
+                                if (tagEnd !== -1) {
+                                    var tagName = myStr.substring(i + 1, tagEnd).split(' ')[0];
+                                    tagStack.push(tagName);
+                                }
+                            } else {
+                                // Closing tag
+                                var tagEnd = myStr.indexOf('>', i);
+                                if (tagEnd !== -1) {
+                                    var tagName = myStr.substring(i + 2, tagEnd).split(' ')[0];
+                                    if (tagStack.length > 0) {
+                                        tagStack.pop();
+                                    }
+                                }
+                            }
+                        } else if (myStr[i] === '>') {
+                            inTag = false;
+                        } else if (!inTag) {
+                            currentLength++;
+                            // Only consider word boundaries if we're not inside any HTML tags
+                            if (tagStack.length === 0 && (myStr[i] === ' ' || myStr[i] === '.' || myStr[i] === ',' || myStr[i] === ';' || myStr[i] === ':' || myStr[i] === '!' || myStr[i] === '?')) {
+                                lastWordBoundary = i + 1;
+                            }
+
+                            if (currentLength >= maxLength) {
+                                // If we're inside HTML tags, find the next closing tag
+                                if (tagStack.length > 0) {
+                                    // Find the next closing tag for the current open tag
+                                    var nextClosingTag = '</' + tagStack[tagStack.length - 1] + '>';
+                                    var closingTagPos = myStr.indexOf(nextClosingTag, i);
+                                    if (closingTagPos !== -1) {
+                                        cutPosition = closingTagPos + nextClosingTag.length;
+                                    } else {
+                                        // If no closing tag found, use current position
+                                        cutPosition = i + 1;
+                                    }
+                                } else {
+                                    // Use the last word boundary if available, otherwise use current position
+                                    cutPosition = lastWordBoundary > 0 ? lastWordBoundary : i + 1;
+                                }
+                                break;
+                            }
+                        }
+                    }
+
+                    var newStr = myStr.substring(0, cutPosition);
+                    var removedStr = myStr.substring(cutPosition);
                     $(this).empty().html(newStr);
                     $(this).append(' <a href="javascript:void(0);" class="read-more">read more...</a>');
                     $(this).append('<span class="more-text">' + removedStr + '</span>');
@@ -478,6 +631,7 @@ class TestHTML:
                 status_extended="test-status-extended",
                 risk="test-risk",
                 remediation_recommendation_text="test-remediation-recommendation-text",
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id",
                 compliance={"test-compliance": "test-compliance"},
             )
         ]
@@ -488,21 +642,35 @@ class TestHTML:
         assert output_data == fail_html_finding
 
     def test_transform_pass_finding(self):
-        findings = [generate_finding_output()]
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
         html = HTML(findings)
         output_data = html.data[0]
         assert isinstance(output_data, str)
         assert output_data == pass_html_finding
 
     def test_transform_muted_finding(self):
-        findings = [generate_finding_output(muted=True)]
+        findings = [
+            generate_finding_output(
+                muted=True,
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id",
+            )
+        ]
         html = HTML(findings)
         output_data = html.data[0]
         assert isinstance(output_data, str)
         assert output_data == muted_html_finding
 
     def test_transform_manual_finding(self):
-        findings = [generate_finding_output(status="MANUAL")]
+        findings = [
+            generate_finding_output(
+                status="MANUAL",
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id",
+            )
+        ]
         html = HTML(findings)
         output_data = html.data[0]
         assert isinstance(output_data, str)
@@ -510,7 +678,11 @@ class TestHTML:
 
     def test_batch_write_data_to_file(self):
         mock_file = StringIO()
-        findings = [generate_finding_output()]
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
         output = HTML(findings)
         output._file_descriptor = mock_file
         provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1])
@@ -528,7 +700,11 @@ class TestHTML:
 
     def test_write_header(self):
         mock_file = StringIO()
-        findings = [generate_finding_output()]
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
         output = HTML(findings)
         output._file_descriptor = mock_file
         provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1])
@@ -542,7 +718,11 @@ class TestHTML:
 
     def test_write_footer(self):
         mock_file = StringIO()
-        findings = [generate_finding_output()]
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
         output = HTML(findings)
         output._file_descriptor = mock_file
 
@@ -553,7 +733,11 @@ class TestHTML:
         assert content == html_footer
 
     def test_aws_get_assessment_summary(self):
-        findings = [generate_finding_output()]
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
         output = HTML(findings)
         provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1])
 
@@ -562,7 +746,11 @@ class TestHTML:
         assert summary == aws_html_assessment_summary
 
     def test_azure_get_assessment_summary(self):
-        findings = [generate_finding_output()]
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
         output = HTML(findings)
         provider = set_mocked_azure_provider()
 
@@ -571,7 +759,11 @@ class TestHTML:
         assert summary == summary
 
     def test_gcp_get_assessment_summary(self):
-        findings = [generate_finding_output()]
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
         output = HTML(findings)
         provider = set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID])
 
@@ -580,7 +772,11 @@ class TestHTML:
         assert summary == gcp_html_assessment_summary
 
     def test_kubernetes_get_assessment_summary(self):
-        findings = [generate_finding_output()]
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
         output = HTML(findings)
         provider = set_mocked_kubernetes_provider()
 
@@ -589,7 +785,11 @@ class TestHTML:
         assert summary == kubernetes_html_assessment_summary
 
     def test_m365_get_assessment_summary(self):
-        findings = [generate_finding_output()]
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
         output = HTML(findings)
         provider = set_mocked_m365_provider()
 
@@ -597,3 +797,145 @@ class TestHTML:
 
         expected_summary = m365_html_assessment_summary
         assert summary == expected_summary
+
+    def test_github_personal_access_token_get_assessment_summary(self):
+        """Test GitHub HTML assessment summary generation with Personal Access Token authentication."""
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
+        output = HTML(findings)
+        provider = set_mocked_github_provider(auth_method="Personal Access Token")
+
+        summary = output.get_assessment_summary(provider)
+
+        # Check for expected content in the summary
+        assert "GitHub Assessment Summary" in summary
+        assert "GitHub Credentials" in summary
+        assert "<b>GitHub account:</b> account-name" in summary
+        assert "<b>GitHub authentication method:</b> Personal Access Token" in summary
+        # Note: account_email is None in the default fixture, so it shouldn't appear
+
+    def test_github_app_get_assessment_summary(self):
+        """Test GitHub HTML assessment summary generation with GitHub App authentication."""
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
+        output = HTML(findings)
+
+        provider = set_mocked_github_provider(
+            auth_method="GitHub App Token",
+            identity=GithubAppIdentityInfo(
+                app_id=APP_ID, app_name="test-app", installations=["test-org"]
+            ),
+        )
+
+        summary = output.get_assessment_summary(provider)
+        logger.error(summary)
+
+        # Check for expected content in the summary
+        assert "GitHub Assessment Summary" in summary
+        assert "GitHub Credentials" in summary
+        assert "<b>GitHub App Name:</b> test-app" in summary
+        assert "<b>Installations:</b> test-org" in summary
+        assert "<b>GitHub authentication method:</b> GitHub App Token" in summary
+        assert f"<b>GitHub App ID:</b> {APP_ID}" in summary
+
+    def test_mongodbatlas_get_assessment_summary(self):
+        """Test MongoDB Atlas HTML assessment summary generation."""
+        findings = [generate_finding_output()]
+        output = HTML(findings)
+        provider = set_mocked_mongodbatlas_provider()
+
+        summary = output.get_assessment_summary(provider)
+
+        assert summary == mongodbatlas_html_assessment_summary
+
+    def test_process_markdown_bold_text(self):
+        """Test that **text** is converted to <strong>text</strong>"""
+        test_text = "This is **bold text** and this is **also bold**"
+        result = HTML.process_markdown(test_text)
+        expected = (
+            "This is <strong>bold text</strong> and this is <strong>also bold</strong>"
+        )
+        assert result == expected
+
+    def test_process_markdown_italic_text(self):
+        """Test that *text* is converted to <em>text</em>"""
+        test_text = "This is *italic text* and this is *also italic*"
+        result = HTML.process_markdown(test_text)
+        expected = "This is <em>italic text</em> and this is <em>also italic</em>"
+        assert result == expected
+
+    def test_process_markdown_code_text(self):
+        """Test that `text` is converted to <code>text</code>"""
+        test_text = "Use the `ls` command to list files and `cd` to change directories"
+        result = HTML.process_markdown(test_text)
+        expected = "Use the <code>ls</code> command to list files and <code>cd</code> to change directories"
+        assert result == expected
+
+    def test_process_markdown_line_breaks(self):
+        """Test that line breaks are converted to <br> tags"""
+        test_text = "Line 1\nLine 2\nLine 3"
+        result = HTML.process_markdown(test_text)
+        expected = "Line 1<br />\nLine 2<br />\nLine 3"
+        assert result == expected
+
+    def test_process_markdown_mixed_formatting(self):
+        """Test mixed markdown formatting"""
+        test_text = "**Bold text** with *italic* and `code` elements.\n\nNew paragraph with **more bold**."
+        result = HTML.process_markdown(test_text)
+        expected = "<strong>Bold text</strong> with <em>italic</em> and <code>code</code> elements.<br />\n<br />\nNew paragraph with <strong>more bold</strong>."
+        assert result == expected
+
+    def test_process_markdown_empty_string(self):
+        """Test that empty string returns empty string"""
+        result = HTML.process_markdown("")
+        assert result == ""
+
+    def test_process_markdown_none_input(self):
+        """Test that None input returns None"""
+        result = HTML.process_markdown(None)
+        assert result is None
+
+    def test_process_markdown_no_markdown(self):
+        """Test that plain text without markdown is returned unchanged"""
+        test_text = "This is plain text without any markdown formatting"
+        result = HTML.process_markdown(test_text)
+        assert result == test_text
+
+    def test_transform_with_markdown_risk(self):
+        """Test that Risk field with markdown is properly converted"""
+        findings = [
+            generate_finding_output(
+                risk="Outdated contacts delay **security notifications** and slow **incident response**",
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id",
+            )
+        ]
+        html = HTML(findings)
+        output_data = html.data[0]
+
+        # Check that markdown is converted to HTML
+        assert "<strong>security notifications</strong>" in output_data
+        assert "<strong>incident response</strong>" in output_data
+
+    def test_transform_with_markdown_recommendation(self):
+        """Test that Recommendation field with markdown is properly converted"""
+        findings = [
+            generate_finding_output(
+                risk="test-risk",
+                remediation_recommendation_text="Adopt:\n- **Primary** and **alternate contacts**\n- Use `monitored aliases`",
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id",
+            )
+        ]
+        html = HTML(findings)
+        output_data = html.data[0]
+
+        # Check that markdown is converted to HTML
+        assert "<strong>Primary</strong>" in output_data
+        assert "<strong>alternate contacts</strong>" in output_data
+        assert "<code>monitored aliases</code>" in output_data
+        assert "<br />" in output_data  # Line breaks converted

@@ -6,6 +6,7 @@ from prowler.providers.azure.services.defender.defender_service import (
     AutoProvisioningSetting,
     Defender,
     IoTSecuritySolution,
+    JITPolicy,
     Pricing,
     SecurityContactConfiguration,
     Setting,
@@ -103,6 +104,19 @@ def mock_defender_get_iot_security_solutions(_):
     }
 
 
+def mock_defender_get_jit_policies(_):
+    return {
+        AZURE_SUBSCRIPTION_ID: {
+            "policy-1": JITPolicy(
+                id="policy-1",
+                name="JITPolicy1",
+                location="eastus",
+                vm_ids=["vm-1", "vm-2"],
+            )
+        }
+    }
+
+
 @patch(
     "prowler.providers.azure.services.defender.defender_service.Defender._get_pricings",
     new=mock_defender_get_pricings,
@@ -126,6 +140,10 @@ def mock_defender_get_iot_security_solutions(_):
 @patch(
     "prowler.providers.azure.services.defender.defender_service.Defender._get_iot_security_solutions",
     new=mock_defender_get_iot_security_solutions,
+)
+@patch(
+    "prowler.providers.azure.services.defender.defender_service.Defender._get_jit_policies",
+    new=mock_defender_get_jit_policies,
 )
 class Test_Defender_Service:
     def test_get_client(self):
@@ -255,3 +273,13 @@ class Test_Defender_Service:
             ].status
             == "Enabled"
         )
+
+    def test_get_jit_policies(self):
+        defender = Defender(set_mocked_azure_provider())
+        assert AZURE_SUBSCRIPTION_ID in defender.jit_policies
+        assert "policy-1" in defender.jit_policies[AZURE_SUBSCRIPTION_ID]
+        policy1 = defender.jit_policies[AZURE_SUBSCRIPTION_ID]["policy-1"]
+        assert policy1.id == "policy-1"
+        assert policy1.name == "JITPolicy1"
+        assert policy1.location == "eastus"
+        assert set(policy1.vm_ids) == {"vm-1", "vm-2"}

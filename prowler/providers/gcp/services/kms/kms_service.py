@@ -3,6 +3,7 @@ from typing import Optional
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.providers.gcp.config import DEFAULT_RETRY_ATTEMPTS
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.gcp.lib.service.service import GCPService
 
@@ -27,7 +28,7 @@ class KMS(GCPService):
                     .list(name="projects/" + project_id)
                 )
                 while request is not None:
-                    response = request.execute()
+                    response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
 
                     for location in response["locations"]:
                         self.locations.append(
@@ -50,7 +51,10 @@ class KMS(GCPService):
                 self.client.projects().locations().keyRings().list(parent=location.name)
             )
             while request is not None:
-                response = request.execute(http=self.__get_AuthorizedHttp_client__())
+                response = request.execute(
+                    http=self.__get_AuthorizedHttp_client__(),
+                    num_retries=DEFAULT_RETRY_ATTEMPTS,
+                )
 
                 for ring in response.get("keyRings", []):
                     self.key_rings.append(
@@ -82,7 +86,7 @@ class KMS(GCPService):
                     .list(parent=ring.name)
                 )
                 while request is not None:
-                    response = request.execute()
+                    response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
 
                     for key in response.get("cryptoKeys", []):
                         self.crypto_keys.append(
@@ -119,7 +123,7 @@ class KMS(GCPService):
                     .cryptoKeys()
                     .getIamPolicy(resource=key.key_ring + "/cryptoKeys/" + key.name)
                 )
-                response = request.execute()
+                response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
 
                 for binding in response.get("bindings", []):
                     key.members.extend(binding.get("members", []))

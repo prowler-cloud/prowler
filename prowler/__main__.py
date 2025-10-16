@@ -12,6 +12,7 @@ from prowler.config.config import (
     html_file_suffix,
     json_asff_file_suffix,
     json_ocsf_file_suffix,
+    orange_color,
 )
 from prowler.lib.banner import print_banner
 from prowler.lib.check.check import (
@@ -22,6 +23,7 @@ from prowler.lib.check.check import (
     list_checks_json,
     list_fixers,
     list_services,
+    parse_checks_from_file,
     parse_checks_from_folder,
     print_categories,
     print_checks,
@@ -46,12 +48,17 @@ from prowler.lib.outputs.asff.asff import ASFF
 from prowler.lib.outputs.compliance.aws_well_architected.aws_well_architected import (
     AWSWellArchitected,
 )
+from prowler.lib.outputs.compliance.c5.c5_aws import AWSC5
+from prowler.lib.outputs.compliance.ccc.ccc_aws import CCC_AWS
+from prowler.lib.outputs.compliance.ccc.ccc_azure import CCC_Azure
+from prowler.lib.outputs.compliance.ccc.ccc_gcp import CCC_GCP
 from prowler.lib.outputs.compliance.cis.cis_aws import AWSCIS
 from prowler.lib.outputs.compliance.cis.cis_azure import AzureCIS
 from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
 from prowler.lib.outputs.compliance.cis.cis_github import GithubCIS
 from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
 from prowler.lib.outputs.compliance.cis.cis_m365 import M365CIS
+from prowler.lib.outputs.compliance.cis.cis_oci import OCICIS
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
 from prowler.lib.outputs.compliance.ens.ens_aws import AWSENS
 from prowler.lib.outputs.compliance.ens.ens_azure import AzureENS
@@ -87,7 +94,7 @@ from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.html.html import HTML
 from prowler.lib.outputs.ocsf.ocsf import OCSF
-from prowler.lib.outputs.outputs import extract_findings_statistics
+from prowler.lib.outputs.outputs import extract_findings_statistics, report
 from prowler.lib.outputs.slack.slack import Slack
 from prowler.lib.outputs.summary_table import display_summary_table
 from prowler.providers.aws.lib.s3.s3 import S3
@@ -101,8 +108,11 @@ from prowler.providers.github.models import GithubOutputOptions
 from prowler.providers.iac.models import IACOutputOptions
 from prowler.providers.ionos.models import IonosOutputOptions
 from prowler.providers.kubernetes.models import KubernetesOutputOptions
+from prowler.providers.llm.models import LLMOutputOptions
 from prowler.providers.m365.models import M365OutputOptions
+from prowler.providers.mongodbatlas.models import MongoDBAtlasOutputOptions
 from prowler.providers.nhn.models import NHNOutputOptions
+from prowler.providers.oraclecloud.models import OCIOutputOptions
 
 
 def prowler():
@@ -121,6 +131,7 @@ def prowler():
 
     checks = args.check
     excluded_checks = args.excluded_check
+    excluded_checks_file = args.excluded_checks_file
     excluded_services = args.excluded_service
     services = args.service
     categories = args.category
@@ -177,8 +188,8 @@ def prowler():
     # Load compliance frameworks
     logger.debug("Loading compliance frameworks from .json files")
 
-    # Skip compliance frameworks for IAC provider
-    if provider != "iac":
+    # Skip compliance frameworks for IAC and LLM providers
+    if provider != "iac" and provider != "llm":
         bulk_compliance_frameworks = Compliance.get_bulk(provider)
         # Complete checks metadata with the compliance framework specification
         bulk_checks_metadata = update_checks_metadata_with_compliance(
@@ -235,8 +246,8 @@ def prowler():
     if not args.only_logs:
         global_provider.print_credentials()
 
-    # Skip service and check loading for IAC provider
-    if provider != "iac":
+    # Skip service and check loading for IAC and LLM providers
+    if provider != "iac" and provider != "llm":
         # Import custom checks from folder
         if checks_folder:
             custom_checks = parse_checks_from_folder(global_provider, checks_folder)
@@ -255,6 +266,15 @@ def prowler():
         if excluded_checks:
             checks_to_execute = exclude_checks_to_run(
                 checks_to_execute, excluded_checks
+            )
+
+        # Exclude checks if --excluded-checks-file
+        if excluded_checks_file:
+            excluded_checks_from_file = parse_checks_from_file(
+                excluded_checks_file, provider
+            )
+            checks_to_execute = exclude_checks_to_run(
+                checks_to_execute, list(excluded_checks_from_file)
             )
 
         # Exclude services if --excluded-services
@@ -302,6 +322,16 @@ def prowler():
         )
     elif provider == "iac":
         output_options = IACOutputOptions(args, bulk_checks_metadata)
+    elif provider == "mongodbatlas":
+        output_options = MongoDBAtlasOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "llm":
+        output_options = LLMOutputOptions(args, bulk_checks_metadata)
+    elif provider == "oci":
+        output_options = OCIOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
     elif provider == "nhn":
         output_options = NHNOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
@@ -319,9 +349,20 @@ def prowler():
     # Execute checks
     findings = []
 
-    if provider == "iac":
-        # For IAC provider, run the scan directly
-        findings = global_provider.run()
+    if provider == "iac" or provider == "llm":
+        # For IAC and LLM providers, run the scan directly
+        if provider == "llm":
+
+            def streaming_callback(findings_batch):
+                """Callback to report findings as they are processed in real-time."""
+                report(findings_batch, global_provider, output_options)
+
+            findings = global_provider.run_scan(streaming_callback=streaming_callback)
+        else:
+            # Original behavior for IAC or non-verbose LLM
+            findings = global_provider.run()
+            # Report findings for verbose output
+            report(findings, global_provider, output_options)
     elif len(checks_to_execute):
         findings = execute_checks(
             checks_to_execute,
@@ -527,6 +568,32 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(prowler_threatscore)
                 prowler_threatscore.batch_write_data_to_file()
+            elif compliance_name.startswith("ccc_"):
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+
+                ccc_aws = CCC_AWS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+
+                generated_outputs["compliance"].append(ccc_aws)
+                ccc_aws.batch_write_data_to_file()
+            elif compliance_name == "c5_aws":
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                c5 = AWSC5(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(c5)
+                c5.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -606,6 +673,18 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(prowler_threatscore)
                 prowler_threatscore.batch_write_data_to_file()
+            elif compliance_name.startswith("ccc_"):
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                ccc_azure = CCC_Azure(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(ccc_azure)
+                ccc_azure.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -685,6 +764,18 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(prowler_threatscore)
                 prowler_threatscore.batch_write_data_to_file()
+            elif compliance_name.startswith("ccc_"):
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                ccc_gcp = CCC_GCP(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(ccc_gcp)
+                ccc_gcp.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -849,6 +940,34 @@ def prowler():
                 generated_outputs["compliance"].append(generic_compliance)
                 generic_compliance.batch_write_data_to_file()
 
+    elif provider == "oci":
+        for compliance_name in input_compliance_frameworks:
+            if compliance_name.startswith("cis_"):
+                # Generate CIS Finding Object
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                cis = OCICIS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(cis)
+                cis.batch_write_data_to_file()
+            else:
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                generic_compliance = GenericCompliance(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(generic_compliance)
+                generic_compliance.batch_write_data_to_file()
+
     # AWS Security Hub Integration
     if provider == "aws":
         # Send output to S3 if needed (-B / -D) for all the output formats
@@ -890,9 +1009,14 @@ def prowler():
             )
             # Send the findings to Security Hub
             findings_sent_to_security_hub = security_hub.batch_send_to_security_hub()
-            print(
-                f"{Style.BRIGHT}{Fore.GREEN}\n{findings_sent_to_security_hub} findings sent to AWS Security Hub!{Style.RESET_ALL}"
-            )
+            if findings_sent_to_security_hub == 0:
+                print(
+                    f"{Style.BRIGHT}{orange_color}\nNo findings sent to AWS Security Hub.{Style.RESET_ALL}"
+                )
+            else:
+                print(
+                    f"{Style.BRIGHT}{Fore.GREEN}\n{findings_sent_to_security_hub} findings sent to AWS Security Hub!{Style.RESET_ALL}"
+                )
 
             # Resolve previous fails of Security Hub
             if not args.skip_sh_update:
@@ -902,9 +1026,14 @@ def prowler():
                 findings_archived_in_security_hub = (
                     security_hub.archive_previous_findings()
                 )
-                print(
-                    f"{Style.BRIGHT}{Fore.GREEN}\n{findings_archived_in_security_hub} findings archived in AWS Security Hub!{Style.RESET_ALL}"
-                )
+                if findings_archived_in_security_hub == 0:
+                    print(
+                        f"{Style.BRIGHT}{orange_color}\nNo findings archived in AWS Security Hub.{Style.RESET_ALL}"
+                    )
+                else:
+                    print(
+                        f"{Style.BRIGHT}{Fore.GREEN}\n{findings_archived_in_security_hub} findings archived in AWS Security Hub!{Style.RESET_ALL}"
+                    )
 
     # Display summary table
     if not args.only_logs:

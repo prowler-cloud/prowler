@@ -63,7 +63,12 @@ class Test_Organization_Scoping:
 
         mock_client = MagicMock()
         mock_user = MagicMock()
-        mock_user.get_orgs.return_value = [self.mock_org1, self.mock_org2]
+        mock_orgs = MagicMock()
+        mock_orgs.totalCount = 2
+        mock_orgs.__iter__ = MagicMock(
+            return_value=iter([self.mock_org1, self.mock_org2])
+        )
+        mock_user.get_orgs.return_value = mock_orgs
         mock_client.get_user.return_value = mock_user
 
         with patch(
@@ -80,6 +85,95 @@ class Test_Organization_Scoping:
             assert 2 in orgs
             assert orgs[1].name == "test-org1"
             assert orgs[2].name == "test-org2"
+
+    def test_no_organizations_found_for_user(self):
+        """Test that when user has no organizations, empty dict is returned"""
+        provider = set_mocked_github_provider()
+        provider.repositories = []
+        provider.organizations = []
+
+        mock_client = MagicMock()
+        mock_user = MagicMock()
+        mock_orgs = MagicMock()
+        mock_orgs.totalCount = 0
+        mock_user.get_orgs.return_value = mock_orgs
+        mock_client.get_user.return_value = mock_user
+
+        with patch(
+            "prowler.providers.github.services.organization.organization_service.GithubService.__init__"
+        ):
+            organization_service = Organization(provider)
+            organization_service.clients = [mock_client]
+            organization_service.provider = provider
+
+            orgs = organization_service._list_organizations()
+
+            assert len(orgs) == 0
+
+    def test_github_app_organization_scoping(self):
+        """Test GitHub App organization listing"""
+        from prowler.providers.github.models import GithubAppIdentityInfo
+
+        provider = set_mocked_github_provider()
+        provider.repositories = []
+        provider.organizations = []
+        # Set GitHub App identity
+        provider.identity = GithubAppIdentityInfo(
+            app_id="test-app-id",
+            app_name="test-app",
+            installations=["test-org1", "test-org2"],
+        )
+
+        mock_client = MagicMock()
+        mock_orgs = MagicMock()
+        mock_orgs.totalCount = 2
+        mock_orgs.__iter__ = MagicMock(
+            return_value=iter([self.mock_org1, self.mock_org2])
+        )
+        mock_client.get_organizations.return_value = mock_orgs
+
+        with patch(
+            "prowler.providers.github.services.organization.organization_service.GithubService.__init__"
+        ):
+            organization_service = Organization(provider)
+            organization_service.clients = [mock_client]
+            organization_service.provider = provider
+
+            orgs = organization_service._list_organizations()
+
+            assert len(orgs) == 2
+            assert 1 in orgs
+            assert 2 in orgs
+            assert orgs[1].name == "test-org1"
+            assert orgs[2].name == "test-org2"
+
+    def test_github_app_no_organizations_found(self):
+        """Test GitHub App when no organizations are accessible"""
+        from prowler.providers.github.models import GithubAppIdentityInfo
+
+        provider = set_mocked_github_provider()
+        provider.repositories = []
+        provider.organizations = []
+        # Set GitHub App identity
+        provider.identity = GithubAppIdentityInfo(
+            app_id="test-app-id", app_name="test-app", installations=[]
+        )
+
+        mock_client = MagicMock()
+        mock_orgs = MagicMock()
+        mock_orgs.totalCount = 0
+        mock_client.get_organizations.return_value = mock_orgs
+
+        with patch(
+            "prowler.providers.github.services.organization.organization_service.GithubService.__init__"
+        ):
+            organization_service = Organization(provider)
+            organization_service.clients = [mock_client]
+            organization_service.provider = provider
+
+            orgs = organization_service._list_organizations()
+
+            assert len(orgs) == 0
 
     def test_specific_organization_scoping(self):
         """Test that only specified organizations are returned"""

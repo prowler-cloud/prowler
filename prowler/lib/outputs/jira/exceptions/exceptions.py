@@ -90,6 +90,10 @@ class JiraBaseException(ProwlerException):
             "message": "Missing parameters on Jira Init function.",
             "remediation": "Please check the parameters and try again.",
         },
+        (9021, "JiraRequiredCustomFieldsError"): {
+            "message": "Jira project requires custom fields that are not supported.",
+            "remediation": "Please configure the Jira project to not require custom fields, or use a different project.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -250,4 +254,11 @@ class JiraInvalidParameterError(JiraBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             9020, file=file, original_exception=original_exception, message=message
+        )
+
+
+class JiraRequiredCustomFieldsError(JiraBaseException):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            9021, file=file, original_exception=original_exception, message=message
         )

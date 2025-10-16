@@ -20,6 +20,8 @@ export type SubmenuProps = {
   label: string;
   active?: boolean;
   icon: IconComponent;
+  disabled?: boolean;
+  onClick?: () => void;
 };
 
 export type MenuProps = {
@@ -29,6 +31,8 @@ export type MenuProps = {
   icon: IconComponent;
   submenus?: SubmenuProps[];
   defaultOpen?: boolean;
+  target?: string;
+  tooltip?: string;
 };
 
 export type GroupProps = {
@@ -479,6 +483,7 @@ export interface FindingProps {
           text: string;
         };
       };
+      additionalurls?: string[];
       servicename: string;
       checkaliases: string[];
       resourcetype: string;

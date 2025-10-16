@@ -22,6 +22,8 @@ from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 from django_celery_beat.models import PeriodicTask
 from django_celery_results.models import TaskResult
+from drf_simple_apikey.crypto import get_crypto
+from drf_simple_apikey.models import AbstractAPIKey, AbstractAPIKeyManager
 from psqlextra.manager import PostgresManager
 from psqlextra.models import PostgresPartitionedModel
 from psqlextra.types import PostgresPartitioningMethod
@@ -42,6 +44,7 @@ from api.db_utils import (
     StateEnumField,
     StatusEnumField,
     enum_to_choices,
+    generate_api_key_prefix,
     generate_random_token,
     one_week_from_now,
 )
@@ -72,6 +75,15 @@ class StatusChoices(models.TextChoices):
     FAIL = "FAIL", _("Fail")
     PASS = "PASS", _("Pass")
     MANUAL = "MANUAL", _("Manual")
+
+
+class OverviewStatusChoices(models.TextChoices):
+    """
+    Status filters allowed in overview/severity endpoints.
+    """
+
+    FAIL = "FAIL", _("Fail")
+    PASS = "PASS", _("Pass")
 
 
 class StateChoices(models.TextChoices):
@@ -114,6 +126,17 @@ class ActiveProviderManager(models.Manager):
 class ActiveProviderPartitionedManager(PostgresManager, ActiveProviderManager):
     def get_queryset(self):
         return super().get_queryset().filter(self.active_provider_filter())
+
+
+class TenantAPIKeyManager(AbstractAPIKeyManager):
+    separator = "."
+
+    def assign_api_key(self, obj) -> str:
+        payload = {"_pk": str(obj.pk), "_exp": obj.expiry_date.timestamp()}
+        key = get_crypto().generate(payload)
+
+        prefixed_key = f"{obj.prefix}{self.separator}{key}"
+        return prefixed_key
 
 
 class User(AbstractBaseUser):
@@ -193,6 +216,61 @@ class Membership(models.Model):
 
     class JSONAPIMeta:
         resource_name = "memberships"
+
+
+class TenantAPIKey(AbstractAPIKey, RowLevelSecurityProtectedModel):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    name = models.CharField(max_length=100, validators=[MinLengthValidator(3)])
+    created = models.DateTimeField(auto_now_add=True, editable=False)
+    prefix = models.CharField(
+        max_length=11,
+        unique=True,
+        default=generate_api_key_prefix,
+        editable=False,
+        help_text="Unique prefix to identify the API key",
+    )
+    last_used_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Last time this API key was used for authentication",
+    )
+    entity = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="user_api_keys",
+    )
+
+    objects = TenantAPIKeyManager()
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "api_keys"
+
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+            models.UniqueConstraint(
+                fields=("tenant_id", "prefix"),
+                name="unique_api_key_prefixes",
+            ),
+            models.UniqueConstraint(
+                fields=("tenant_id", "name"),
+                name="unique_api_key_name_per_tenant",
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "prefix"], name="api_keys_tenant_prefix_idx"
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "api-keys"
 
 
 class Provider(RowLevelSecurityProtectedModel):
@@ -1221,6 +1299,8 @@ class ComplianceRequirementOverview(RowLevelSecurityProtectedModel):
     passed_checks = models.IntegerField(default=0)
     failed_checks = models.IntegerField(default=0)
     total_checks = models.IntegerField(default=0)
+    passed_findings = models.IntegerField(default=0)
+    total_findings = models.IntegerField(default=0)
 
     scan = models.ForeignKey(
         Scan,
@@ -1372,10 +1452,6 @@ class Integration(RowLevelSecurityProtectedModel):
         db_table = "integrations"
 
         constraints = [
-            models.UniqueConstraint(
-                fields=("configuration", "tenant"),
-                name="unique_configuration_per_tenant",
-            ),
             RowLevelSecurityConstraint(
                 field="tenant_id",
                 name="rls_on_%(class)s",
@@ -1752,6 +1828,10 @@ class LighthouseConfiguration(RowLevelSecurityProtectedModel):
         GPT_4O = "gpt-4o", _("GPT-4o Default")
         GPT_4O_MINI_2024_07_18 = "gpt-4o-mini-2024-07-18", _("GPT-4o Mini v2024-07-18")
         GPT_4O_MINI = "gpt-4o-mini", _("GPT-4o Mini Default")
+        GPT_5_2025_08_07 = "gpt-5-2025-08-07", _("GPT-5 v2025-08-07")
+        GPT_5 = "gpt-5", _("GPT-5 Default")
+        GPT_5_MINI_2025_08_07 = "gpt-5-mini-2025-08-07", _("GPT-5 Mini v2025-08-07")
+        GPT_5_MINI = "gpt-5-mini", _("GPT-5 Mini Default")
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)

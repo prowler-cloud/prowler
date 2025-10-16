@@ -1,6 +1,7 @@
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.providers.gcp.config import DEFAULT_RETRY_ATTEMPTS
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.gcp.lib.service.service import GCPService
 
@@ -16,7 +17,7 @@ class CloudSQL(GCPService):
             try:
                 request = self.client.instances().list(project=project_id)
                 while request is not None:
-                    response = request.execute()
+                    response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
 
                     for instance in response.get("items", []):
                         public_ip = False
@@ -36,9 +37,9 @@ class CloudSQL(GCPService):
                                 ssl_mode=instance["settings"]
                                 .get("ipConfiguration", {})
                                 .get("sslMode", "ALLOW_UNENCRYPTED_AND_ENCRYPTED"),
-                                automated_backups=instance["settings"][
-                                    "backupConfiguration"
-                                ]["enabled"],
+                                automated_backups=instance["settings"]
+                                .get("backupConfiguration", {})
+                                .get("enabled", False),
                                 authorized_networks=instance["settings"]
                                 .get("ipConfiguration", {})
                                 .get("authorizedNetworks", []),

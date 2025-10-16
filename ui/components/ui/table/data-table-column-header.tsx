@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@nextui-org/react";
+import { Button } from "@heroui/button";
 import { Column } from "@tanstack/react-table";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { HTMLAttributes } from "react";
@@ -80,10 +80,10 @@ export const DataTableColumnHeader = <TData, TValue>({
 
   return (
     <Button
-      className="flex h-10 w-full items-center justify-between whitespace-nowrap bg-transparent px-0 text-left align-middle text-tiny font-semibold text-foreground-500 outline-none dark:text-slate-400"
+      className="text-tiny text-foreground-500 flex h-10 w-full items-center justify-between bg-transparent px-0 text-left align-middle font-semibold whitespace-nowrap outline-none dark:text-slate-400"
       onPress={getToggleSortingHandler}
     >
-      <span className="block whitespace-normal break-normal">{title}</span>
+      <span className="block break-normal whitespace-nowrap">{title}</span>
       {renderSortIcon()}
     </Button>
   );

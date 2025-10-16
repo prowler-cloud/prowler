@@ -2,6 +2,8 @@ import { Page, expect } from "@playwright/test";
 
 export const ERROR_MESSAGES = {
   INVALID_CREDENTIALS: "Invalid email or password",
+  INVALID_EMAIL: "Please enter a valid email address.",
+  PASSWORD_REQUIRED: "Password is required.",
 } as const;
 
 export const URLS = {
@@ -69,7 +71,8 @@ export async function verifyLoginError(
   page: Page,
   errorMessage = "Invalid email or password",
 ) {
-  await expect(page.getByText(errorMessage)).toBeVisible();
+  // There may be multiple field-level errors with the same text; assert at least one is visible
+  await expect(page.getByText(errorMessage).first()).toBeVisible();
   await expect(page).toHaveURL("/sign-in");
 }
 
@@ -97,7 +100,7 @@ export async function logout(page: Page) {
 }
 
 export async function verifyLogoutSuccess(page: Page) {
-  await expect(page).toHaveURL("/sign-in");
+  await expect(page).toHaveURL(/\/sign-in/);
   await expect(page.getByText("Sign in", { exact: true })).toBeVisible();
 }
 
@@ -133,4 +136,18 @@ export async function waitForPageLoad(page: Page) {
 
 export async function verifyDashboardRoute(page: Page) {
   await expect(page).toHaveURL("/");
+}
+
+export async function getSession(page: Page) {
+  const response = await page.request.get("/api/auth/session");
+  return response.json();
+}
+
+export async function verifySessionValid(page: Page) {
+  const session = await getSession(page);
+  expect(session).toBeTruthy();
+  expect(session.user).toBeTruthy();
+  expect(session.accessToken).toBeTruthy();
+  expect(session.refreshToken).toBeTruthy();
+  return session;
 }

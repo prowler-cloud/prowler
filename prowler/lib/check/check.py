@@ -518,8 +518,16 @@ def execute_checks(
                 )
                 try:
                     try:
+                        # Map CLI provider names to directory names (for cases where they differ)
+                        provider_directory_map = {
+                            "oci": "oraclecloud",  # oci SDK conflict avoidance
+                        }
+                        provider_directory = provider_directory_map.get(
+                            global_provider.type, global_provider.type
+                        )
+
                         # Import check module
-                        check_module_path = f"prowler.providers.{global_provider.type}.services.{service}.{check_name}.{check_name}"
+                        check_module_path = f"prowler.providers.{provider_directory}.services.{service}.{check_name}.{check_name}"
                         lib = import_check(check_module_path)
                         # Recover functions from check
                         check_to_execute = getattr(lib, check_name)
@@ -637,6 +645,10 @@ def execute(
                 )
             elif global_provider.type == "m365":
                 is_finding_muted_args["tenant_id"] = global_provider.identity.tenant_id
+            elif global_provider.type == "mongodbatlas":
+                is_finding_muted_args["organization_id"] = (
+                    global_provider.identity.organization_id
+                )
             for finding in check_findings:
                 if global_provider.type == "azure":
                     is_finding_muted_args["subscription_id"] = (

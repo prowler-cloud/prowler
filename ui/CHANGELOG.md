@@ -2,28 +2,152 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.10.0] (Prowler v5.10.0 - UNRELEASED)
+## [1.13.0] (Prowler UNRELEASED)
 
-### Added
+### 🚀 Added
+
+- Support for Markdown and AdditionalURLs in findings detail page [(#8704)](https://github.com/prowler-cloud/prowler/pull/8704)
+- `Prowler Hub` menu item with tooltip [(#8692)](https://github.com/prowler-cloud/prowler/pull/8692)
+- Copy link button to finding detail page [(#8685)](https://github.com/prowler-cloud/prowler/pull/8685)
+- React Compiler support for automatic optimization [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
+- Turbopack support for faster development builds [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
+- Add compliance name in compliance detail view [(#8775)](https://github.com/prowler-cloud/prowler/pull/8775)
+- Support C5 compliance framework for the AWS provider [(#8830)](https://github.com/prowler-cloud/prowler/pull/8830)
+- API key management in user profile [(#8308)](https://github.com/prowler-cloud/prowler/pull/8308)
+- Refresh access token error handling [(#8864)](https://github.com/prowler-cloud/prowler/pull/8864)
+- Support Common Cloud Controls for AWS, Azure and GCP [(#8000)](https://github.com/prowler-cloud/prowler/pull/8000)
+
+### 🔄 Changed
+
+- Upgraded Zod to version 4.1.11 with comprehensive migration of deprecated syntax [(#8801)](https://github.com/prowler-cloud/prowler/pull/8801)
+- Upgraded Zustand to version 5.0.8 (no code changes required) [(#8801)](https://github.com/prowler-cloud/prowler/pull/8801)
+- Upgraded AI SDK to version 5.0.59 with new transport and message structure [(#8801)](https://github.com/prowler-cloud/prowler/pull/8801)
+- Upgraded React to version 19.1.1 with async components support [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
+- Upgraded Next.js to version 15.5.3 with enhanced App Router [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
+- Updated from NextUI to HeroUI [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
+- Updated LangChain to latest versions with API improvements [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
+- Migrated all page components to async `params`/`searchParams` API [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
+- Migrated from `useFormState` to `useActionState` for React 19 compatibility [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
+- References display in findings detail page now shows as a proper bulleted list [(#8793)](https://github.com/prowler-cloud/prowler/pull/8793)
+
+### 🐞 Fixed
+
+- SAML configuration errors are now properly caught and displayed [(#8880)](https://github.com/prowler-cloud/prowler/pull/8880)
+- ThreatScore for each pillar in Prowler ThreatScore specific view [(#8582)](https://github.com/prowler-cloud/prowler/pull/8582)
+- Remove maxTokens model param for GPT-5 models [(#8843)](https://github.com/prowler-cloud/prowler/pull/8843)
+- MITRE ATTACK compliance view now shows all requirements in charts [(#8886)](https://github.com/prowler-cloud/prowler/pull/8886)
+
+---
+
+## [1.12.3] (Prowler v5.12.3)
+
+### 🐞 Fixed
+
+- Disable "See Findings" button until scan completes [(#8762)](https://github.com/prowler-cloud/prowler/pull/8762)
+- Scrolling during Lighthouse AI response streaming [(#8669)](https://github.com/prowler-cloud/prowler/pull/8669)
+- Lighthouse textbox to send messages on Enter [(#8747)](https://github.com/prowler-cloud/prowler/pull/8747)
+
+---
+
+## [1.12.2] (Prowler v5.12.2)
+
+### 🐞 Fixed
+
+- Handle 4XX errors consistently and 204 responses properly[(#8722)](https://github.com/prowler-cloud/prowler/pull/8722)
+
+## [1.12.1] (Prowler v5.12.1)
+
+### 🐞 Fixed
+
+- Field-level email validation message [(#8698)](https://github.com/prowler-cloud/prowler/pull/8698)
+- POST method on auth form [(#8699)](https://github.com/prowler-cloud/prowler/pull/8699)
+
+## [1.12.0] (Prowler v5.12.0)
+
+### 🚀 Added
+
+- Jira integration[(#8640)](https://github.com/prowler-cloud/prowler/pull/8640),[(#8649)](https://github.com/prowler-cloud/prowler/pull/8649)
+
+### 🔄 Changed
+
+- Overview chart "Findings by Severity" now shows only failing findings (defaults to `status=FAIL`) and chart links open the Findings page pre-filtered to fails per severity [(#8186)](https://github.com/prowler-cloud/prowler/pull/8186)
+- Handle API responses and errors consistently across the app [(#8621)](https://github.com/prowler-cloud/prowler/pull/8621)
+- No-permission message on the scan page [(#8624)](https://github.com/prowler-cloud/prowler/pull/8624)
+
+### 🐞 Fixed
+
+- Scan page shows NoProvidersAdded when no providers [(#8626)](https://github.com/prowler-cloud/prowler/pull/8626)
+- XML field in SAML configuration form validation [(#8638)](https://github.com/prowler-cloud/prowler/pull/8638)
+- Social login buttons in sign-up page [(#8673)](https://github.com/prowler-cloud/prowler/pull/8673)
+
+---
+
+## [1.11.0] (Prowler v5.11.0)
+
+### 🚀 Added
+
+- Security Hub integration [(#8552)](https://github.com/prowler-cloud/prowler/pull/8552)
+- `Cloud Provider` type filter to providers page [(#8473)](https://github.com/prowler-cloud/prowler/pull/8473)
+- New menu item under Configuration section for quick access to the Mutelist [(#8444)](https://github.com/prowler-cloud/prowler/pull/8444)
+- Resource agent to Lighthouse for querying resource information [(#8509)](https://github.com/prowler-cloud/prowler/pull/8509)
+- Lighthouse support for OpenAI GPT-5 [(#8527)](https://github.com/prowler-cloud/prowler/pull/8527)
+- Link to the configured S3 bucket and folder in each integration [(#8554)](https://github.com/prowler-cloud/prowler/pull/8554)
+
+### 🔄 Changed
+
+- Disable `See Compliance` button until scan completes [(#8487)](https://github.com/prowler-cloud/prowler/pull/8487)
+- Provider connection filter now shows "Connected/Disconnected" instead of "true/false" for better UX [(#8520)](https://github.com/prowler-cloud/prowler/pull/8520)
+- Provider Uid filter on scan page to list all UIDs regardless of connection status [(#8375)](https://github.com/prowler-cloud/prowler/pull/8375)
+
+### 🐞 Fixed
+
+- Default value inside credentials form in AWS Provider add workflow properly set [(#8553)](https://github.com/prowler-cloud/prowler/pull/8553)
+- Auth callback route checking working as expected [(#8556)](https://github.com/prowler-cloud/prowler/pull/8556)
+- DataTable column headers set to single-line [(#8480)](https://github.com/prowler-cloud/prowler/pull/8480)
+
+---
+
+## [1.10.2] (Prowler v5.10.3)
+
+### 🐞 Fixed
+
+- Lighthouse using default config instead of backend config [(#8546)](https://github.com/prowler-cloud/prowler/pull/8546)
+
+---
+
+## [1.10.1] (Prowler v5.10.1)
+
+### 🐞 Fixed
+
+- Field for `Assume Role` in AWS role credentials form shown again [(#8484)](https://github.com/prowler-cloud/prowler/pull/8484)
+- `GitHub` submenu to High Risk Findings [(#8488)](https://github.com/prowler-cloud/prowler/pull/8488)
+- Improved Overview chart `Findings by Severity` spacing [(#8491)](https://github.com/prowler-cloud/prowler/pull/8491)
+
+## [1.10.0] (Prowler v5.10.0)
+
+### 🚀 Added
 
 - Lighthouse banner [(#8259)](https://github.com/prowler-cloud/prowler/pull/8259)
 - Amazon AWS S3 integration [(#8391)](https://github.com/prowler-cloud/prowler/pull/8391)
 - Github provider support [(#8405)](https://github.com/prowler-cloud/prowler/pull/8405)
 - XML validation for SAML metadata in the UI [(#8429)](https://github.com/prowler-cloud/prowler/pull/8429)
+- Default Mutelist placeholder in the UI [(#8455)](https://github.com/prowler-cloud/prowler/pull/8455)
+- Help link in the SAML configuration modal [(#8461)](https://github.com/prowler-cloud/prowler/pull/8461)
 
 ### 🔄 Changed
 
 - Rename `Memberships` to `Organization` in the sidebar [(#8415)](https://github.com/prowler-cloud/prowler/pull/8415)
-- Removed `Browse all resources` from the sidebar, sidebar now shows a single `Resources` entry [(#8418)](https://github.com/prowler-cloud/prowler/pull/8418)
-- Removed `Misconfigurations` from the `Top Failed Findings` section in the sidebar [(#8426)](https://github.com/prowler-cloud/prowler/pull/8426)
-
----
-
-## [v1.9.3] (Prowler v5.9.3)
 
 ### 🐞 Fixed
 
 - Display error messages and allow editing last message in Lighthouse [(#8358)](https://github.com/prowler-cloud/prowler/pull/8358)
+
+### ❌ Removed
+
+- Removed `Browse all resources` from the sidebar, sidebar now shows a single `Resources` entry [(#8418)](https://github.com/prowler-cloud/prowler/pull/8418)
+- Removed `Misconfigurations` from the `Top Failed Findings` section in the sidebar [(#8426)](https://github.com/prowler-cloud/prowler/pull/8426)
+
+---
 
 ## [v1.9.0] (Prowler v5.9.0)
 
@@ -37,7 +161,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Allow to restrict routes access based on user permissions [(#8287)](https://github.com/prowler-cloud/prowler/pull/8287)
 - Max character limit validation for Scan label [(#8319)](https://github.com/prowler-cloud/prowler/pull/8319)
 
-### Security
+### 🔐 Security
 
 - Enhanced password validation to enforce 12+ character passwords with special characters, uppercase, lowercase, and numbers [(#8225)](https://github.com/prowler-cloud/prowler/pull/8225)
 
@@ -51,8 +175,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Error message when launching a scan if user has no permissions [(#8280)](https://github.com/prowler-cloud/prowler/pull/8280)
 - Include compliance in the download button tooltip [(#8307)](https://github.com/prowler-cloud/prowler/pull/8307)
-
-### Removed
+- Redirection and error handling issues after deleting a provider groups [(#8389)](https://github.com/prowler-cloud/prowler/pull/8389)
 
 ---
 
@@ -62,7 +185,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Latest new failed findings now use `GET /findings/latest` [(#8219)](https://github.com/prowler-cloud/prowler/pull/8219)
 
-### Removed
+### ❌ Removed
 
 - Validation of the provider's secret type during updates [(#8197)](https://github.com/prowler-cloud/prowler/pull/8197)
 
@@ -154,7 +277,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Moved ProviderType to a shared types file and replaced all occurrences across the codebase [(#7710)](https://github.com/prowler-cloud/prowler/pull/7710)
 - Added filter to retrieve only connected providers on the scan page [(#7723)](https://github.com/prowler-cloud/prowler/pull/7723)
 
-### Removed
+### ❌ Removed
 
 - Alias if not added from findings detail page [(#7751)](https://github.com/prowler-cloud/prowler/pull/7751)
 

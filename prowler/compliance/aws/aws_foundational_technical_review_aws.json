@@ -1,5 +1,6 @@
 {
   "Framework": "AWS-Foundational-Technical-Review",
+  "Name": "AWS Foundational Technical Review",
   "Version": "",
   "Provider": "AWS",
   "Description": "The AWS Foundational Technical Review (FTR) assesses an AWS Partner's solution against a specific set of Amazon Web Services (AWS) best practices around security, performance, and operational processes that are most critical for customer success. Passing the FTR is required to qualify AWS Software Partners for AWS Partner Network (APN) programs such as AWS Competency and AWS Service Ready but any AWS Partner who offers a technology solution may request a FTR review through AWS Partner Central.",
@@ -364,8 +365,8 @@
         "ec2_ami_public",
         "ec2_instance_public_ip",
         "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
-        "ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_27018",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mongodb_27017_27018",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_ftp_20_21",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888",

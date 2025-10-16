@@ -14,12 +14,6 @@ import {
   ProviderType,
 } from "@/types";
 
-type CredentialsFormData = {
-  providerId: string;
-  providerType: ProviderType;
-  [key: string]: any;
-};
-
 type UseCredentialsFormProps = {
   providerType: ProviderType;
   providerId: string;
@@ -56,7 +50,7 @@ export const useCredentialsForm = ({
   const formSchema = getFormSchema();
 
   // Get default values based on provider type and via parameter
-  const getDefaultValues = (): CredentialsFormData => {
+  const getDefaultValues = () => {
     const baseDefaults = {
       [ProviderCredentialFields.PROVIDER_ID]: providerId,
       [ProviderCredentialFields.PROVIDER_TYPE]: providerType,
@@ -64,9 +58,13 @@ export const useCredentialsForm = ({
 
     // AWS Role credentials
     if (providerType === "aws" && via === "role") {
+      const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+      const defaultCredentialsType = isCloudEnv
+        ? "aws-sdk-default"
+        : "access-secret-key";
       return {
         ...baseDefaults,
-        [ProviderCredentialFields.CREDENTIALS_TYPE]: "access-secret-key",
+        [ProviderCredentialFields.CREDENTIALS_TYPE]: defaultCredentialsType,
         [ProviderCredentialFields.ROLE_ARN]: "",
         [ProviderCredentialFields.EXTERNAL_ID]: session?.tenantId || "",
         [ProviderCredentialFields.AWS_ACCESS_KEY_ID]: "",
@@ -148,7 +146,7 @@ export const useCredentialsForm = ({
     }
   };
 
-  const form = useForm<CredentialsFormData>({
+  const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: getDefaultValues(),
   });
@@ -166,7 +164,7 @@ export const useCredentialsForm = ({
   };
 
   // Form submit handler
-  const handleSubmit = async (values: CredentialsFormData) => {
+  const handleSubmit = async (values: Record<string, unknown>) => {
     const formData = new FormData();
 
     // Filter out empty values first, then append all remaining values

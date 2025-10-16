@@ -1,11 +1,7 @@
 "use server";
 
-import {
-  apiBaseUrl,
-  getAuthHeaders,
-  getErrorMessage,
-  parseStringify,
-} from "@/lib";
+import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 
 export const getTask = async (taskId: string) => {
   const headers = await getAuthHeaders({ contentType: false });
@@ -16,9 +12,9 @@ export const getTask = async (taskId: string) => {
     const response = await fetch(url.toString(), {
       headers,
     });
-    const data = await response.json();
-    return parseStringify(data);
+
+    return handleApiResponse(response);
   } catch (error) {
-    return { error: getErrorMessage(error) };
+    return handleApiError(error);
   }
 };
