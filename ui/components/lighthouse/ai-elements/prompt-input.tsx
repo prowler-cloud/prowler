@@ -805,6 +805,7 @@ export const PromptInputTextarea = ({
 
     const files: File[] = [];
 
+    // @ts-expect-error - Code from AI Elements library
     for (const item of items) {
       if (item.kind === "file") {
         const file = item.getAsFile();
