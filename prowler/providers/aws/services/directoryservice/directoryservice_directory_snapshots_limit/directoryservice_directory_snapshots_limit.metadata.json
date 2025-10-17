@@ -15,11 +15,8 @@
   "Risk": "With no remaining snapshot capacity, you cannot create new recovery points:\n- Reduced availability during outages or ransomware\n- Higher RPO from failed scheduled backups\n- Greater change risk (schema/OS updates) without a safe rollback",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/general/latest/gr/ds_region.html",
-    "https://hackage.haskell.org/package/amazonka-ds-1.6.1/docs/Network-AWS-DirectoryService-GetSnapshotLimits.html",
     "https://support.icompaas.com/support/solutions/articles/62000233531--ensure-directory-service-manual-snapshots-limit-reached",
-    "https://docs.amazonaws.cn/en_us/directoryservice/latest/admin-guide/directoryservice-admin-guide.pdf",
-    "https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DirectoryService.html"
+    "https://docs.aws.amazon.com/directoryservice/latest/admin-guide/ms_ad_limits.html"
   ],
   "Remediation": {
     "Code": {

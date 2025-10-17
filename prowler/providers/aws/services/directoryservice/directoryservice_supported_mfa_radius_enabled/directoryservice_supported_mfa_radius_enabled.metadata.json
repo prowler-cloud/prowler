@@ -17,7 +17,8 @@
   "Risk": "Without **RADIUS MFA**, directory-based sign-ins to AWS-integrated services rely on a single factor, enabling credential stuffing and phishing to succeed. Compromised passwords can grant unauthorized access, drive data exfiltration, and enable privilege escalation, undermining confidentiality and integrity.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/directoryservice/latest/admin-guide/ms_ad_mfa.html"
+    "https://docs.aws.amazon.com/directoryservice/latest/admin-guide/ms_ad_mfa.html",
+    "https://support.icompaas.com/support/solutions/articles/62000233537-ensure-multi-factor-authentication-mfa-using-a-radius-server-is-enabled-in-directory-service"
   ],
   "Remediation": {
     "Code": {

@@ -18,9 +18,7 @@
   "AdditionalURLs": [
     "https://docs.secureauth.com/0903/en/ms-chapv2-and-radius--sp-initiated--for-cisco-and-netscaler-configuration-guide.html",
     "https://docs.aws.amazon.com/directoryservice/latest/admin-guide/ms_ad_mfa.html",
-    "https://docs.aws.amazon.com/directoryservice/latest/devguide/API_RadiusSettings.html",
-    "https://www.freeradius.org/documentation/freeradius-server/4.0~alpha1/raddb/mods-available/mschap.html",
-    "https://aws.amazon.com/blogs/security/how-to-enable-multi-factor-authentication-for-amazon-workspaces-and-amazon-quicksight-by-using-microsoft-ad-and-on-premises-credentials/"
+    "https://www.freeradius.org/documentation/freeradius-server/4.0~alpha1/raddb/mods-available/mschap.html"
   ],
   "Remediation": {
     "Code": {

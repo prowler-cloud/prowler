@@ -15,11 +15,12 @@
   "Risk": "Expired LDAPS certificates cause TLS handshakes to fail, blocking directory binds and queries and disrupting authentication and app integrations (availability). If clients fall back to plain LDAP, credentials and directory data can be intercepted or altered (confidentiality and integrity).",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/directoryservice/latest/admin-guide/ms_ad_ldap.html"
+    "https://docs.aws.amazon.com/directoryservice/latest/admin-guide/ms_ad_ldap.html",
+    "https://support.icompaas.com/support/solutions/articles/62000229587-ensure-to-monitor-directory-service-ldap-certificates-expiration"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aws ds register-certificate --directory-id <DIRECTORY_ID> --certificate-data file://certificate.pem",
       "NativeIaC": "",
       "Other": "1. In the AWS Console, open Directory Service and select your AWS Managed Microsoft AD (<example_resource_id>)\n2. Go to Networking & security > Secure LDAP\n3. Click Edit (Manage certificate)\n4. Choose Replace certificate (or Upload certificate)\n5. Upload a new LDAPS server certificate with private key from a trusted CA (valid for >90 days); enter the password if using a .pfx\n6. Save and wait until the certificate status is Active",
       "Terraform": ""

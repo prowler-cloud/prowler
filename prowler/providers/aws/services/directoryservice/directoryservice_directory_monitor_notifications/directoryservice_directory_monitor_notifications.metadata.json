@@ -15,15 +15,14 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/directoryservice/latest/admin-guide/ms_ad_enable_notifications.html",
-    "https://www.pulumi.com/ai/answers/sCKVuHuFR5SrFdQgsa27GS/integrating-aws-sns-with-aws-directory-service",
     "https://support.icompaas.com/support/solutions/articles/62000233533-ensure-directory-service-has-sns-notifications-enabled"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "aws ds create-event-topic --directory-id <DIRECTORY_ID> --topic-name <SNS_TOPIC_NAME>",
-      "NativeIaC": "```yaml\n# CloudFormation: Associate an SNS topic with a Directory Service directory\nResources:\n  <example_resource_name>:\n    Type: AWS::DirectoryService::EventTopic\n    Properties:\n      DirectoryId: <example_resource_id>  # CRITICAL: Directory to receive notifications\n      TopicName: <example_resource_name>  # CRITICAL: SNS topic name to publish directory events\n```",
+      "CLI": "aws ds register-event-topic --directory-id <DIRECTORY_ID> --topic-name <SNS_TOPIC_NAME>",
+      "NativeIaC": "",
       "Other": "1. Open AWS Console > Directory Service > Directories and select your directory\n2. Go to the Maintenance or Monitoring/Notifications section\n3. Click Actions > Create notification (or Set up notifications)\n4. Select an existing SNS topic (or create one) and Save",
-      "Terraform": "```hcl\n# Terraform: Associate an SNS topic with a Directory Service directory\nresource \"aws_directory_service_event_topic\" \"<example_resource_name>\" {\n  directory_id = \"<example_resource_id>\"   # CRITICAL: Directory to receive notifications\n  topic_name   = \"<example_resource_name>\"  # CRITICAL: SNS topic name to publish directory events\n}\n```"
+      "Terraform": ""
     },
     "Recommendation": {
       "Text": "Configure **AWS Directory Service** to publish directory status changes to an **SNS topic**, and subscribe your operations channels for timely alerts.\n\nApply **least privilege** on topic permissions, integrate alerts with incident response, and use **defense in depth** by pairing notifications with logs and dashboards.",
