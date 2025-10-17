@@ -586,3 +586,12 @@ github:
 mongodbatlas:
   # mongodbatlas.organizations_service_account_secrets_expiration --> Maximum hours for service account secrets validity
   max_service_account_secret_validity_hours: 8
+
+# IONOS Configuration
+ionos:
+  # (Optional) Maximum timeout for API requests (in seconds)
+  timeout: 60
+
+  # (Optional) Threshold or specific configurations for your checks, for example:
+  # Maximum number of days without using an access key, similar to AWS configuration
+  max_unused_access_keys_days: 45
