@@ -60,10 +60,10 @@ export const M365CertificateCredentialsForm = ({
         certificate. For detailed instructions on how to generate and encode
         your certificate, please refer to the{" "}
         <CustomLink
-          href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/microsoft365/getting-started-m365/#step-3-configure-your-m365-account"
+          href="https://docs.prowler.com/user-guide/providers/microsoft365/authentication#generate-the-certificate"
           size="sm"
         >
-          Microsoft 365 getting started guide
+          certificate generation guide
         </CustomLink>
         .
       </p>
