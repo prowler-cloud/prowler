@@ -28,31 +28,39 @@ export default async function Providers({
     <ContentLayout title="Cloud Providers" icon="lucide:cloud-cog">
       <FilterControls search customFilters={filterProviders || []} />
       <Spacer y={8} />
+      <ProvidersActions />
+      <Spacer y={8} />
       <Suspense
         key={searchParamsKey}
-        fallback={
-          <>
-            <div className="flex items-center gap-4 md:justify-end">
-              <ManageGroupsButton />
-              <MutedFindingsConfigButton />
-              <AddProviderButton />
-            </div>
-            <Spacer y={8} />
-            <div className="grid grid-cols-12 gap-4">
-              <div className="col-span-12">
-                <SkeletonTableProviders />
-              </div>
-            </div>
-          </>
-        }
+        fallback={<ProvidersTableFallback />}
       >
-        <ProvidersContent searchParams={resolvedSearchParams} />
+        <ProvidersTable searchParams={resolvedSearchParams} />
       </Suspense>
     </ContentLayout>
   );
 }
 
-const ProvidersContent = async ({
+const ProvidersActions = () => {
+  return (
+    <div className="flex items-center gap-4 md:justify-end">
+      <ManageGroupsButton />
+      <MutedFindingsConfigButton />
+      <AddProviderButton />
+    </div>
+  );
+};
+
+const ProvidersTableFallback = () => {
+  return (
+    <div className="grid grid-cols-12 gap-4">
+      <div className="col-span-12">
+        <SkeletonTableProviders />
+      </div>
+    </div>
+  );
+};
+
+const ProvidersTable = async ({
   searchParams,
 }: {
   searchParams: SearchParamsProps;
@@ -97,13 +105,6 @@ const ProvidersContent = async ({
 
   return (
     <>
-      <div className="flex items-center gap-4 md:justify-end">
-        <ManageGroupsButton />
-        <MutedFindingsConfigButton />
-        <AddProviderButton />
-      </div>
-      <Spacer y={8} />
-
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-12">
           <DataTable
