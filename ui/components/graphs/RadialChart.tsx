@@ -23,7 +23,7 @@ interface RadialChartProps {
 export function RadialChart({
   percentage,
   label = "Score",
-  color = "var(--color-success)",
+  color = "var(--chart-success-color)",
   backgroundColor = CHART_COLORS.tooltipBackground,
   height = 250,
   innerRadius = 60,

@@ -110,7 +110,7 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
               >
                 <span className="font-semibold">{item.percentage}%</span>
                 <span className="text-slate-400">•</span>
-                <span>{item.value.toLocaleString()}</span>
+                <span className="font-bold">{item.value.toLocaleString()}</span>
               </div>
             </div>
           );

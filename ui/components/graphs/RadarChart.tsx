@@ -28,7 +28,7 @@ interface RadarChartProps {
 const chartConfig = {
   value: {
     label: "Findings",
-    color: "var(--color-magenta)",
+    color: "var(--chart-radar-primary)",
   },
 } satisfies ChartConfig;
 
@@ -84,8 +84,9 @@ const CustomDot = (props: any) => {
       cx={cx}
       cy={cy}
       r={isSelected ? 9 : 6}
-      fill={isSelected ? "var(--color-success)" : "var(--color-purple-dark)"}
+      fill={isSelected ? "var(--chart-success-color)" : "var(--chart-radar-primary)"}
       fillOpacity={1}
+      className={isSelected ? "drop-shadow-[0_0_8px_#86da26]" : ""}
       style={{
         cursor: onSelectPoint ? "pointer" : "default",
         pointerEvents: "all",
@@ -117,7 +118,7 @@ export function RadarChart({
         <PolarGrid strokeOpacity={0.3} />
         <Radar
           dataKey={dataKey}
-          fill="var(--color-magenta)"
+          fill="var(--chart-radar-primary)"
           fillOpacity={0.2}
           activeDot={false}
           dot={
@@ -135,7 +136,7 @@ export function RadarChart({
                 }
               : {
                   r: 6,
-                  fill: "var(--color-purple-dark)",
+                  fill: "var(--chart-radar-primary)",
                   fillOpacity: 1,
                 }
           }

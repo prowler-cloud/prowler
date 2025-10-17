@@ -34,9 +34,9 @@ interface ScatterPlotProps {
 }
 
 const PROVIDER_COLORS = {
-  AWS: "var(--color-orange)",
-  Azure: "var(--color-cyan)",
-  Google: "var(--color-red)",
+  AWS: "var(--chart-provider-aws)",
+  Azure: "var(--chart-provider-azure)",
+  Google: "var(--chart-provider-google)",
 };
 
 const CustomTooltip = ({ active, payload }: any) => {
@@ -69,7 +69,7 @@ const CustomScatterDot = ({
   const isSelected = selectedPoint?.name === payload.name;
   const size = isSelected ? 18 : 8;
   const fill = isSelected
-    ? "var(--color-success)"
+    ? "#86DA26"
     : PROVIDER_COLORS[payload.provider as keyof typeof PROVIDER_COLORS] ||
       CHART_COLORS.defaultColor;
 
@@ -79,8 +79,9 @@ const CustomScatterDot = ({
       cy={cy}
       r={size / 2}
       fill={fill}
-      stroke={isSelected ? "var(--color-success)" : "transparent"}
+      stroke={isSelected ? "#86DA26" : "transparent"}
       strokeWidth={2}
+      className={isSelected ? "drop-shadow-[0_0_8px_#86da26]" : ""}
       style={{ cursor: "pointer" }}
       onClick={() => onSelectPoint?.(payload)}
     />

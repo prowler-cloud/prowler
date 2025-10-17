@@ -1,6 +1,38 @@
 @import "tailwindcss";
 @config "../tailwind.config.js";
 
+@theme {
+  /* Chart Severity Colors */
+  --chart-info: #2e51b2;
+  --chart-warning: #fdd34f;
+  --chart-warning-emphasis: #ff7d19;
+  --chart-danger: #ff3077;
+  --chart-danger-emphasis: #971348;
+
+  /* Chart Status Colors */
+  --chart-success-color: #86da26;
+  --chart-fail: #db2b49;
+
+  /* Chart Radar Colors */
+  --chart-radar-primary: #b51c80;
+  --chart-radar-primary-rgb: 181 28 128;
+
+  /* Chart Provider Colors */
+  --chart-provider-aws: #ff9900;
+  --chart-provider-azure: #00bcd4;
+  --chart-provider-google: #db2b49;
+
+  /* Chart UI Colors */
+  --chart-text-secondary: #94a3b8;
+  --chart-border: #475569;
+  --chart-border-emphasis: #334155;
+  --chart-background: #1e293b;
+
+  /* Chart Alert Colors */
+  --chart-alert-bg: #432232;
+  --chart-alert-text: #f54280;
+}
+
 @layer base {
   :root {
     --chart-success: 146 80% 35%;
@@ -56,6 +88,7 @@
     transform-box: fill-box;
     transform-origin: center;
   }
+
 }
 
 @layer base {

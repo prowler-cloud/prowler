@@ -23,11 +23,11 @@ interface SankeyChartProps {
 }
 
 const COLORS: Record<string, string> = {
-  Success: "var(--color-success)",
-  Fail: "var(--color-destructive)",
-  AWS: "var(--color-orange)",
-  Azure: "var(--color-cyan)",
-  Google: "var(--color-red)",
+  Success: "var(--chart-success-color)",
+  Fail: "var(--chart-fail)",
+  AWS: "var(--chart-provider-aws)",
+  Azure: "var(--chart-provider-azure)",
+  Google: "var(--chart-provider-google)",
   ...SEVERITY_COLORS,
 };
 

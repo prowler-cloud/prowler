@@ -217,6 +217,14 @@
   },
   {
     "section": "dependencies",
+    "name": "d3",
+    "from": "7.9.0",
+    "to": "7.9.0",
+    "strategy": "installed",
+    "generatedAt": "2025-10-16T10:46:11.221Z"
+  },
+  {
+    "section": "dependencies",
     "name": "date-fns",
     "from": "4.1.0",
     "to": "4.1.0",
@@ -401,11 +409,27 @@
   },
   {
     "section": "dependencies",
+    "name": "topojson-client",
+    "from": "3.1.0",
+    "to": "3.1.0",
+    "strategy": "installed",
+    "generatedAt": "2025-10-16T10:46:11.221Z"
+  },
+  {
+    "section": "dependencies",
     "name": "uuid",
     "from": "11.1.0",
     "to": "11.1.0",
     "strategy": "installed",
     "generatedAt": "2025-09-10T11:50:17.548Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "world-atlas",
+    "from": "2.0.2",
+    "to": "2.0.2",
+    "strategy": "installed",
+    "generatedAt": "2025-10-16T10:46:11.221Z"
   },
   {
     "section": "dependencies",
@@ -441,6 +465,14 @@
   },
   {
     "section": "devDependencies",
+    "name": "@types/d3",
+    "from": "7.4.3",
+    "to": "7.4.3",
+    "strategy": "installed",
+    "generatedAt": "2025-10-16T10:46:11.221Z"
+  },
+  {
+    "section": "devDependencies",
     "name": "@types/node",
     "from": "20.5.7",
     "to": "20.5.7",
@@ -462,6 +494,14 @@
     "to": "19.1.9",
     "strategy": "installed",
     "generatedAt": "2025-09-23T10:22:08.630Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "@types/topojson-client",
+    "from": "3.1.5",
+    "to": "3.1.5",
+    "strategy": "installed",
+    "generatedAt": "2025-10-16T10:46:11.221Z"
   },
   {
     "section": "devDependencies",
