@@ -29,6 +29,8 @@ import {
 } from "@/types/compliance";
 import { ScanEntity } from "@/types/scans";
 
+import { ThreatScoreDownloadButton } from "./threatscore-download-button";
+
 interface ComplianceDetailSearchParams {
   complianceId: string;
   version?: string;
@@ -143,13 +145,24 @@ export default async function ComplianceDetail({
           <Spacer y={8} />
         </div>
       )}
-      <ComplianceHeader
-        scans={[]}
-        uniqueRegions={uniqueRegions}
-        showSearch={false}
-        framework={compliancetitle}
-        showProviders={false}
-      />
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1">
+          <ComplianceHeader
+            scans={[]}
+            uniqueRegions={uniqueRegions}
+            showSearch={false}
+            framework={compliancetitle}
+            showProviders={false}
+          />
+        </div>
+        {attributesData?.data?.[0]?.attributes?.framework ===
+          "ProwlerThreatScore" &&
+          selectedScanId && (
+            <div className="flex-shrink-0 pt-1">
+              <ThreatScoreDownloadButton scanId={selectedScanId} />
+            </div>
+          )}
+      </div>
 
       <Suspense
         key={searchParamsKey}

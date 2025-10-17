@@ -229,7 +229,7 @@ def _upload_to_s3(tenant_id: str, zip_path: str, scan_id: str) -> str | None:
 
 def _generate_output_directory(
     output_directory, prowler_provider: object, tenant_id: str, scan_id: str
-) -> tuple[str, str]:
+) -> tuple[str, str, str]:
     """
     Generate a file system path for the output directory of a prowler scan.
 
@@ -256,6 +256,7 @@ def _generate_output_directory(
         >>> _generate_output_directory("/tmp", "aws", "tenant-1234", "scan-5678")
         '/tmp/tenant-1234/aws/scan-5678/prowler-output-2023-02-15T12:34:56',
         '/tmp/tenant-1234/aws/scan-5678/compliance/prowler-output-2023-02-15T12:34:56'
+        '/tmp/tenant-1234/aws/scan-5678/threatscore/prowler-output-2023-02-15T12:34:56'
     """
     # Sanitize the prowler provider name to ensure it is a valid directory name
     prowler_provider_sanitized = re.sub(r"[^\w\-]", "-", prowler_provider)
@@ -276,4 +277,10 @@ def _generate_output_directory(
     )
     os.makedirs("/".join(compliance_path.split("/")[:-1]), exist_ok=True)
 
-    return path, compliance_path
+    threatscore_path = (
+        f"{output_directory}/{tenant_id}/{scan_id}/threatscore/prowler-output-"
+        f"{prowler_provider_sanitized}-{timestamp}"
+    )
+    os.makedirs("/".join(threatscore_path.split("/")[:-1]), exist_ok=True)
+
+    return path, compliance_path, threatscore_path
