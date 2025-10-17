@@ -72,6 +72,7 @@ export interface ProviderProps {
 export interface ProviderEntity {
   uid: string;
   alias: string | null;
+  provider: ProviderType;
 }
 
 export interface ProviderConnectionStatus {
