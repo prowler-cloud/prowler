@@ -36,6 +36,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - ThreatScore for each pillar in Prowler ThreatScore specific view [(#8582)](https://github.com/prowler-cloud/prowler/pull/8582)
 - Remove maxTokens model param for GPT-5 models [(#8843)](https://github.com/prowler-cloud/prowler/pull/8843)
 - MITRE ATTACK compliance view now shows all requirements in charts [(#8886)](https://github.com/prowler-cloud/prowler/pull/8886)
+- Mutelist menu item now doesn't blink [(#8932)](https://github.com/prowler-cloud/prowler/pull/8932)
 
 ---
 
