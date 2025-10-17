@@ -3,6 +3,7 @@
 import { SelectViaAWS } from "@/components/providers/workflow/forms/select-credentials-type/aws";
 import { SelectViaGCP } from "@/components/providers/workflow/forms/select-credentials-type/gcp";
 import { SelectViaGitHub } from "@/components/providers/workflow/forms/select-credentials-type/github";
+import { SelectViaM365 } from "@/components/providers/workflow/forms/select-credentials-type/m365";
 import { ProviderType } from "@/types/providers";
 
 interface UpdateCredentialsInfoProps {
@@ -23,6 +24,9 @@ export const CredentialsUpdateInfo = ({
     }
     if (providerType === "github") {
       return <SelectViaGitHub initialVia={initialVia} />;
+    }
+    if (providerType === "m365") {
+      return <SelectViaM365 initialVia={initialVia} />;
     }
     return null;
   };
