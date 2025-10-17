@@ -42,18 +42,26 @@
             ]
           },
           {
-            "group": "Prowler Lighthouse AI",
-            "pages": [
-              "user-guide/tutorials/prowler-app-lighthouse",
-              "getting-started/goto/prowler-mcp"
-            ]
-          },
-          {
             "group": "Prowler App",
             "pages": [
               "getting-started/products/prowler-app",
               "getting-started/installation/prowler-app",
               "getting-started/basic-usage/prowler-app"
+            ]
+          },
+          {
+            "group": "Prowler Lighthouse AI",
+            "pages": [
+              "user-guide/tutorials/prowler-app-lighthouse"
+            ]
+          },
+          {
+            "group": "Prowler MCP Server",
+            "pages": [
+              "getting-started/products/prowler-mcp",
+              "getting-started/installation/prowler-mcp",
+              "getting-started/basic-usage/prowler-mcp",
+              "getting-started/basic-usage/prowler-mcp-tools"
             ]
           },
           {
