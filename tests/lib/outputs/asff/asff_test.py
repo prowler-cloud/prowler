@@ -6,7 +6,7 @@ from os import path
 from freezegun import freeze_time
 from mock import patch
 
-from prowler.config.config import prowler_version, timestamp_utc
+from prowler.config.config import get_timestamp_utc, prowler_version, refresh_timestamps
 from prowler.lib.outputs.asff.asff import (
     ASFF,
     AWSSecurityFindingFormat,
@@ -30,6 +30,10 @@ METADATA_FIXTURE_PATH = (
 )
 
 
+def _current_timestamp_string() -> str:
+    return get_timestamp_utc().strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 class TestASFF:
     def test_asff(self):
         status = "PASS"
@@ -43,7 +47,8 @@ class TestASFF:
             resource_tags={"key1": "value1"},
         )
 
-        timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+        refresh_timestamps()
+        timestamp = _current_timestamp_string()
 
         associated_standards, compliance_summary = ASFF.format_compliance(
             finding.compliance
@@ -109,13 +114,15 @@ class TestASFF:
             "https://hub.prowler.com/check/check-id"
         )
 
-        timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+        refresh_timestamps()
+        timestamp = _current_timestamp_string()
 
         associated_standards, compliance_summary = ASFF.format_compliance(
             finding.compliance
         )
 
-        timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+        refresh_timestamps()
+        timestamp = _current_timestamp_string()
 
         expected = AWSSecurityFindingFormat(
             Id=f"prowler-{finding.metadata.CheckID}-{AWS_ACCOUNT_NUMBER}-{AWS_REGION_EU_WEST_1}-{hash_sha512(finding.resource_uid)}",
@@ -176,13 +183,15 @@ class TestASFF:
             "https://hub.prowler.com/check/check-id"
         )
 
-        timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+        refresh_timestamps()
+        timestamp = _current_timestamp_string()
 
         associated_standards, compliance_summary = ASFF.format_compliance(
             finding.compliance
         )
 
-        timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+        refresh_timestamps()
+        timestamp = _current_timestamp_string()
 
         expected = AWSSecurityFindingFormat(
             Id=f"prowler-{finding.metadata.CheckID}-{AWS_ACCOUNT_NUMBER}-{AWS_REGION_EU_WEST_1}-{hash_sha512(finding.resource_uid)}",
@@ -247,13 +256,15 @@ class TestASFF:
         )
         finding.metadata.Remediation.Recommendation.Text = "x" * 513
 
-        timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+        refresh_timestamps()
+        timestamp = _current_timestamp_string()
 
         associated_standards, compliance_summary = ASFF.format_compliance(
             finding.compliance
         )
 
-        timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+        refresh_timestamps()
+        timestamp = _current_timestamp_string()
 
         expected = AWSSecurityFindingFormat(
             Id=f"prowler-{finding.metadata.CheckID}-{AWS_ACCOUNT_NUMBER}-{AWS_REGION_EU_WEST_1}-{hash_sha512(finding.resource_uid)}",
@@ -458,7 +469,8 @@ class TestASFF:
             },
         )
 
-        timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+        refresh_timestamps()
+        timestamp = _current_timestamp_string()
 
         associated_standards, compliance_summary = ASFF.format_compliance(
             finding.compliance
@@ -527,7 +539,8 @@ class TestASFF:
             "https://hub.prowler.com/check/check-id"
         )
 
-        timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+        refresh_timestamps()
+        timestamp = _current_timestamp_string()
 
         expected_asff = [
             {
