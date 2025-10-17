@@ -1,30 +1,43 @@
 {
   "Provider": "aws",
   "CheckID": "elasticache_redis_cluster_multi_az_enabled",
-  "CheckTitle": "Ensure Elasticache Redis cache cluster has Multi-AZ enabled.",
-  "CheckType": [],
+  "CheckTitle": "ElastiCache Redis replication group has Multi-AZ enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Effects/Denial of Service"
+  ],
   "ServiceName": "elasticache",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AWSElastiCacheClusters",
-  "Description": "Ensure Elasticache Redis cache cluster has Multi-AZ enabled.",
-  "Risk": "Ensure that your Amazon ElastiCache Redis cache clusters has Multi-AZ enabled.",
-  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/ElastiCache/elasticache-multi-az.html#",
+  "ResourceType": "Other",
+  "Description": "**ElastiCache for Redis replication groups** have **Multi-AZ automatic failover** enabled, distributing primary and replicas across distinct Availability Zones",
+  "Risk": "Without **Multi-AZ failover**, a node or AZ outage can make Redis endpoints unreachable, reducing **availability**. Cold-cache rebuilds shift load to databases, risking saturation and cascading timeouts. Recent writes may be lost during failures, impacting **integrity**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/ensure-aws-elasticache-redis-cluster-with-multi-az-automatic-failover-feature-set-to-enabled",
+    "https://docs.bridgecrew.io/docs/ensure-aws-elasticache-redis-cluster-with-multi-az-automatic-failover-feature-set-to-enabled",
+    "https://aws.amazon.com/blogs/aws/elasticache-redis-multi-az/",
+    "https://docs.prowler.com/checks/aws/general-policies/ensure-aws-elasticache-redis-cluster-with-multi-az-automatic-failover-feature-set-to-enabled/",
+    "https://repost.aws/knowledge-center/elasticache-minimize-downtime-failovers",
+    "https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/AutoFailover.html",
+    "https://repost.aws/knowledge-center/multi-az-replication-redis",
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/ElastiCache/elasticache-multi-az.html#"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws elasticache modify-replication-group --region <value> --replication-group-id <value> --multi-az-enabled --apply-immediately",
-      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/ElastiCache/elasticache-multi-az.html#",
-      "Other": "",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-aws-elasticache-redis-cluster-with-multi-az-automatic-failover-feature-set-to-enabled/"
+      "CLI": "aws elasticache modify-replication-group --replication-group-id <example_resource_id> --multi-az-enabled --automatic-failover-enabled --apply-immediately",
+      "NativeIaC": "```yaml\n# CloudFormation: Enable Multi-AZ on an ElastiCache Redis replication group\nResources:\n  <example_resource_name>:\n    Type: AWS::ElastiCache::ReplicationGroup\n    Properties:\n      ReplicationGroupDescription: \"<description>\"\n      Engine: redis\n      CacheNodeType: cache.t4g.small\n      NumCacheClusters: 2\n      MultiAZEnabled: true  # CRITICAL: Enables Multi-AZ for the replication group\n```",
+      "Other": "1. In the AWS Console, go to ElastiCache > Redis\n2. Select the target replication group\n3. Click Modify\n4. Enable Multi-AZ (and Automatic failover if prompted)\n5. Check Apply immediately and click Modify",
+      "Terraform": "```hcl\n# Enable Multi-AZ on an ElastiCache Redis replication group\nresource \"aws_elasticache_replication_group\" \"<example_resource_name>\" {\n  replication_group_id  = \"<example_resource_id>\"\n  description           = \"<description>\"\n  engine                = \"redis\"\n  node_type             = \"cache.t4g.small\"\n  number_cache_clusters = 2\n\n  multi_az_enabled           = true  # CRITICAL: Enables Multi-AZ\n  automatic_failover_enabled = true  # Required for Multi-AZ failover\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure Elasticache Redis cache cluster has Multi-AZ enabled.",
-      "Url": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/ElastiCache/elasticache-multi-az.html#"
+      "Text": "Enable **Multi-AZ with automatic failover** (`MultiAZ: enabled`) on Redis replication groups and place replicas in separate AZs. Use clients that follow primary/reader endpoints, monitor replication lag, and regularly test failover. Pair with snapshots for recovery; this enforces high **availability** and **resilience**.",
+      "Url": "https://hub.prowler.com/check/elasticache_redis_cluster_multi_az_enabled"
     }
   },
   "Categories": [
-    "redundancy"
+    "resilience"
   ],
   "DependsOn": [],
   "RelatedTo": [],

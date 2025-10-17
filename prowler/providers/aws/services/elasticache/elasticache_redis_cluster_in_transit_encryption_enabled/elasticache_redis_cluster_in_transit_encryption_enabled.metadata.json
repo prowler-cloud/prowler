@@ -1,26 +1,42 @@
 {
   "Provider": "aws",
   "CheckID": "elasticache_redis_cluster_in_transit_encryption_enabled",
-  "CheckTitle": "Ensure Elasticache Redis cache clusters have in transit encryption enabled.",
-  "CheckType": [],
+  "CheckTitle": "ElastiCache Redis cache cluster has in-transit encryption enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Security",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Data Exposure"
+  ],
   "ServiceName": "elasticache",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
-  "Description": "Ensure Elasticache Redis cache clusters have in transit encryption enabled.",
-  "Risk": "There is a risk of exposing sensitive data if Elasticache Redis cache cluster does not have in transit encryption enabled.",
-  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticache-controls.html#elasticache-5",
+  "Description": "**ElastiCache for Redis** replication groups have **in-transit encryption (TLS)** enabled for client and inter-node traffic (`TransitEncryptionEnabled=true`).",
+  "Risk": "Absent **in-transit encryption**, traffic between apps and Redis or between nodes can be **eavesdropped** or **tampered**.\n\nThis exposes keys, tokens, and cached sensitive data, enables **MITM** and session hijacking, and can corrupt replication, harming **confidentiality** and **integrity**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.cgn.portal.checkpoint.com/docs/d9_aws_cry_32",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ElastiCache/in-transit-and-at-rest-encryption.html",
+    "https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/in-transit-encryption-enable.html",
+    "https://docs.bridgecrew.io/docs/general_10",
+    "https://docs.prowler.com/checks/aws/general-policies/general_10#terraform",
+    "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/in-transit-encryption.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticache-controls.html#elasticache-5",
+    "https://docs.prowler.com/checks/aws/general-policies/general_10/",
+    "https://github.com/aws/aws-cdk/issues/27379",
+    "https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/in-transit-encryption.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/general_10#cloudformation",
-      "Other": "https://docs.prowler.com/checks/aws/general-policies/general_10/",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/general_10#terraform"
+      "CLI": "aws elasticache modify-replication-group --replication-group-id <example_resource_id> --transit-encryption-enabled --transit-encryption-mode preferred --apply-immediately",
+      "NativeIaC": "```yaml\n# CloudFormation: enable in-transit encryption for a Redis replication group\nResources:\n  <example_resource_name>:\n    Type: AWS::ElastiCache::ReplicationGroup\n    Properties:\n      ReplicationGroupId: \"<example_resource_id>\"\n      ReplicationGroupDescription: \"<example_description>\"\n      NumCacheClusters: 1\n      CacheSubnetGroupName: \"<example_resource_name>\"\n      TransitEncryptionEnabled: true  # CRITICAL: enables TLS in-transit to pass the check\n```",
+      "Other": "1. In the AWS Console, go to ElastiCache > Redis OSS (or Valkey) replication groups\n2. Select the replication group and click Actions > Modify\n3. Under Security, enable Encryption in transit and set Transit encryption mode to Preferred\n4. Check Apply immediately and Save changes",
+      "Terraform": "```hcl\n# Enable in-transit encryption for a Redis replication group\nresource \"aws_elasticache_replication_group\" \"<example_resource_name>\" {\n  replication_group_id       = \"<example_resource_id>\"\n  description                = \"<example_description>\"\n  node_type                  = \"cache.t3.micro\"\n  num_cache_clusters         = 1\n  subnet_group_name          = \"<example_resource_name>\"\n  transit_encryption_enabled = true  # CRITICAL: enables TLS in-transit to pass the check\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure your Elasticache Redis cache clusters have in transit encryption enabled.",
-      "Url": "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/in-transit-encryption.html"
+      "Text": "Enable **TLS** by setting `TransitEncryptionEnabled=true` and enforce a strict mode (require TLS 1.2+).\n\nEnsure clients validate certificates, restrict network paths, and pair with **least privilege** plus Redis AUTH/RBAC for defense in depth.",
+      "Url": "https://hub.prowler.com/check/elasticache_redis_cluster_in_transit_encryption_enabled"
     }
   },
   "Categories": [
