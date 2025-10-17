@@ -57,11 +57,10 @@ def _get_s3_buckets_metadata(
     with rls_transaction(tenant_id):
         buckets_qs = Resource.objects.filter(
             provider_id=provider_id,
-            service="s3",
-            type="AwsS3Bucket",
             id__in=ResourceScanSummary.objects.filter(
                 scan_id=scan_id,
                 service="s3",
+                resource_type="AwsS3Bucket",
             ).values_list("resource_id", flat=True),
             region__in=regions,
         ).only("metadata", "inserted_at")
@@ -134,9 +133,10 @@ def _get_and_load_s3_bucket_details(
 ) -> None:
     """
     Code based on `cartography.intel.aws.s3.get_s3_bucket_details` and `cartography.intel.aws.s3.load_s3_details`.
-    TODO: Versions of the next functions are not implemented yet:
-        - `cartography.intel.aws.s3.parse_acl`
-        - `cartography.intel.aws.s3.parse_policy` and `cartography.intel.aws.s3.parse_policy_statements` as a single function, if not two  # noqa: E501
+    # TODO: Versions of the next functions are not implemented yet:
+        - `cartography.intel.aws.s3.parse_acl`.
+        - `cartography.intel.aws.s3.parse_policy` and
+          `cartography.intel.aws.s3.parse_policy_statements` as a single function, if not two.
     """
 
     acls: list[dict[str, Any]] = []  # TODO
@@ -190,7 +190,7 @@ def _get_and_load_s3_bucket_details(
 def _parse_s3_bucket_encryption(bucket_metadata: dict[str, Any]) -> dict[str, Any] | None:
     """
     Code based on `cartography.intel.aws.s3.parse_encryption`.
-    TODO: Keys `encryption_key_id` and `bucket_key_enabled` are implemented yet.
+    # TODO: Keys `encryption_key_id` and `bucket_key_enabled` are implemented yet.
     """
 
     if not bucket_metadata.get("encryption"):
@@ -200,8 +200,8 @@ def _parse_s3_bucket_encryption(bucket_metadata: dict[str, Any]) -> dict[str, An
         "bucket": bucket_metadata.get("name"),
         "default_encryption": True,
         "encryption_algorithm": bucket_metadata.get("encryption"),  # ServerSideEncryptionConfiguration.Rules[-1].ApplyServerSideEncryptionByDefault.SSEAlgorithm  # noqa: E501
-        "encryption_key_id": None,  # ServerSideEncryptionConfiguration.Rules[-1].ApplyServerSideEncryptionByDefault.KMSMasterKeyID  # TODO  # noqa: E501
-        "bucket_key_enabled": None,  # ServerSideEncryptionConfiguration.Rules[-1].BucketKeyEnabled  # TODO  # noqa: E501
+        # "encryption_key_id"  # TODO:  ServerSideEncryptionConfiguration.Rules[-1].ApplyServerSideEncryptionByDefault.KMSMasterKeyID  # noqa: E501
+        # "bucket_key_enabled"  # TODO: ServerSideEncryptionConfiguration.Rules[-1].BucketKeyEnabled
     }
 
 
@@ -227,6 +227,7 @@ def _parse_s3_bucket_public_access_block(bucket_metadata: dict[str, Any]) -> dic
         **bucket_metadata.get("public_access_block"),
     }
 
+
 def _parse_s3_bucket_ownership_controls(bucket_metadata: dict[str, Any]) -> dict[str, Any] | None:
     """
     Code based on `cartography.intel.aws.s3.parse_bucket_ownership_controls`.
@@ -236,6 +237,7 @@ def _parse_s3_bucket_ownership_controls(bucket_metadata: dict[str, Any]) -> dict
         "bucket": bucket_metadata.get("name"),
         "object_ownership": bucket_metadata.get("ownership"),
     }
+
 
 def _parse_s3_bucket_bucket_logging(bucket_metadata: dict[str, Any]) -> dict[str, Any] | None:
     """
@@ -249,29 +251,10 @@ def _parse_s3_bucket_bucket_logging(bucket_metadata: dict[str, Any]) -> dict[str
     }
 
 
-def _load_s3_details(neo4j_session: neo4j.Session, update_tag: int, aws_account_id: str) -> None:
-    cartography_s3.run_cleanup_job(
-        "aws_s3_details.json",
-        neo4j_session,
-        {"UPDATE_TAG": update_tag, "AWS_ID": aws_account_id},
-    )
-
-    cartography_s3._load_s3_acls(neo4j_session, acls, aws_account_id, update_tag)
-    cartography_s3._load_s3_policies(neo4j_session, policies, update_tag)
-    cartography_s3._load_s3_policy_statements(neo4j_session, statements, update_tag)
-    cartography_s3._load_s3_encryption(neo4j_session, encryption_configs, update_tag)
-    cartography_s3._load_s3_versioning(neo4j_session, versioning_configs, update_tag)
-    cartography_s3._load_s3_public_access_block(neo4j_session, public_access_block_configs, update_tag)
-    cartography_s3._load_bucket_ownership_controls(neo4j_session, bucket_ownership_controls_configs, update_tag)
-    cartography_s3._load_bucket_logging(neo4j_session, bucket_logging_configs, update_tag)
-
-    cartography_s3._set_default_values(neo4j_session, aws_account_id)
-
-
-# TODO: Deeper check
 def _parse_s3_notifications(buckets_metadata: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """
     Code based on `cartography.intel.aws.s3.parse_notification_configuration`.
+    # TODO: Do a deeper check of this function
     """
 
     notifications: list[dict[str, Any]] = []
