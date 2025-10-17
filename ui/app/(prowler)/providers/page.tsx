@@ -30,10 +30,7 @@ export default async function Providers({
       <Spacer y={8} />
       <ProvidersActions />
       <Spacer y={8} />
-      <Suspense
-        key={searchParamsKey}
-        fallback={<ProvidersTableFallback />}
-      >
+      <Suspense key={searchParamsKey} fallback={<ProvidersTableFallback />}>
         <ProvidersTable searchParams={resolvedSearchParams} />
       </Suspense>
     </ContentLayout>
