@@ -824,6 +824,169 @@ npm run start # Start production server
 - Network tab for API debugging
 - Lighthouse for performance analysis
 
+## Code Spacing and Logical Unit Separation Guidelines
+
+Proper spacing improves code readability and establishes clear boundaries between distinct operations.
+
+### Rule 1: Separate Logical Units with Blank Lines
+
+Add a blank line between distinct logical operations or phases in a function.
+
+**Example:**
+
+```typescript
+// ✅ GOOD - Clear separation between units
+async selectCredentialsType(type: "role" | "credentials"): Promise<void> {
+  // Unit 1: Verify preconditions
+  await expect(this.page).toHaveURL(/\/providers\/add-credentials/)
+
+  // Unit 2: Perform action
+  if (type === "role") {
+    await this.roleRadio.click({ force: true });
+  } else {
+    await this.staticCredentialsRadio.click({ force: true });
+  }
+
+  // Unit 3: Verify result
+  await this.waitForPageLoad();
+}
+
+// ❌ BAD - No separation makes it hard to read
+async selectCredentialsType(type: "role" | "credentials"): Promise<void> {
+  await expect(this.page).toHaveURL(/\/providers\/add-credentials/)
+  if (type === "role") {
+    await this.roleRadio.click({ force: true });
+  } else {
+    await this.staticCredentialsRadio.click({ force: true });
+  }
+  await this.waitForPageLoad();
+}
+```
+
+### Rule 2: Group Related Statements Together
+
+Keep statements that belong to the same logical unit without blank lines.
+
+**Example:**
+
+```typescript
+// ✅ GOOD - Related statements grouped
+if (type === "role") {
+  await this.roleRadio.click({ force: true });
+  await this.waitForSelection();
+} else {
+  await this.staticCredentialsRadio.click({ force: true });
+  await this.waitForSelection();
+}
+
+// ❌ BAD - Unnecessary spacing within same unit
+if (type === "role") {
+  await this.roleRadio.click({ force: true });
+
+  await this.waitForSelection();
+}
+```
+
+### Rule 3: Separate Sequential Phases in Functions
+
+Use blank lines to distinguish between:
+- **Assertion/Verification** phase (checks and expects)
+- **Action** phase (clicks, inputs, navigation)
+- **Wait/Confirmation** phase (waits and final assertions)
+
+**Example:**
+
+```typescript
+async navigateToAddCredentials(provider: string): Promise<void> {
+  // Verification: Check current state
+  await expect(this.page).toHaveURL(/\/providers/)
+
+  // Action: Navigate to add credentials
+  await this.addCredentialsButton.click();
+  await this.selectProvider(provider);
+
+  // Confirmation: Verify arrival
+  await this.waitForPageLoad();
+  await expect(this.page).toHaveURL(/\/providers\/add-credentials/)
+}
+```
+
+### Rule 4: One Blank Line Between Independent Operations
+
+When two operations don't directly depend on each other or serve different purposes, separate them with a blank line.
+
+**Example:**
+
+```typescript
+// ✅ GOOD - Different concerns separated
+await this.fillPasswordField(password);
+
+await this.acceptTerms();
+
+// ❌ BAD - Related operations should stay together
+await this.fillEmailField(email);
+
+await this.fillPasswordField(password);
+```
+
+### Rule 5: Comments Can Define Logical Boundaries
+
+Use comments to clarify why blank lines exist between units.
+
+**Example:**
+
+```typescript
+async fillCredentialsForm(email: string, secret: string): Promise<void> {
+  // Setup: Initialize form
+  await this.openForm();
+  await this.clearExistingData();
+
+  // Input: Fill credentials
+  await this.fillEmailField(email);
+  await this.fillSecretField(secret);
+
+  // Confirm: Submit and verify
+  await this.submitForm();
+  await this.waitForSuccess();
+}
+```
+
+### Rule 6: Avoid Excessive Spacing
+
+Don't add blank lines between every statement. Keep related operations compact.
+
+**Example:**
+
+```typescript
+// ✅ GOOD - Appropriate spacing density
+async fillLoginForm(credentials: Credentials): Promise<void> {
+  await this.emailInput.fill(credentials.email);
+  await this.passwordInput.fill(credentials.password);
+
+  await this.loginButton.click();
+  await this.page.waitForURL(/\/dashboard/);
+}
+
+// ❌ BAD - Over-spaced and hard to follow
+async fillLoginForm(credentials: Credentials): Promise<void> {
+  await this.emailInput.fill(credentials.email);
+
+  await this.passwordInput.fill(credentials.password);
+
+  await this.loginButton.click();
+
+  await this.page.waitForURL(/\/dashboard/);
+}
+```
+
+### Spacing Checklist
+
+- [ ] Use blank lines between distinct logical phases (verify → act → confirm)
+- [ ] Keep related statements together without spacing
+- [ ] Add comments if boundaries aren't obvious
+- [ ] Maximum 2-3 blank lines per function
+- [ ] Be consistent across the codebase
+
 ## Recent Major Migrations (January 2025)
 
 - ✅ React 18 → 19.1.1 (async components, useActionState, React Compiler)
