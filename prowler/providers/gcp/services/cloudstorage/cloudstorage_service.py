@@ -36,7 +36,7 @@ class CloudStorage(GCPService):
                         lifecycle = bucket.get("lifecycle")
                         if isinstance(lifecycle, dict):
                             rules = lifecycle.get("rule")
-                            if isinstance(rules, list): 
+                            if isinstance(rules, list):
                                 lifecycle_rules = rules
 
                         self.buckets.append(
