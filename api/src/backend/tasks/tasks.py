@@ -26,6 +26,10 @@ from tasks.jobs.integrations import (
     upload_s3_integration,
     upload_security_hub_integration,
 )
+from tasks.jobs.lighthouse_providers import (
+    check_lighthouse_provider_connection,
+    refresh_lighthouse_provider_models,
+)
 from tasks.jobs.scan import (
     aggregate_findings,
     create_compliance_requirements,
@@ -498,6 +502,24 @@ def check_lighthouse_connection_task(lighthouse_config_id: str, tenant_id: str =
             - 'available_models' (list): List of available models if connection is successful.
     """
     return check_lighthouse_connection(lighthouse_config_id=lighthouse_config_id)
+
+
+@shared_task(base=RLSTask, name="lighthouse-provider-connection-check")
+@set_tenant
+def check_lighthouse_provider_connection_task(
+    provider_config_id: str, tenant_id: str | None = None
+) -> dict:
+    """Task wrapper to validate provider credentials and set is_active."""
+    return check_lighthouse_provider_connection(provider_config_id=provider_config_id)
+
+
+@shared_task(base=RLSTask, name="lighthouse-provider-models-refresh")
+@set_tenant
+def refresh_lighthouse_provider_models_task(
+    provider_config_id: str, tenant_id: str | None = None
+) -> dict:
+    """Task wrapper to refresh provider models catalog for the given configuration."""
+    return refresh_lighthouse_provider_models(provider_config_id=provider_config_id)
 
 
 @shared_task(name="integration-check")
