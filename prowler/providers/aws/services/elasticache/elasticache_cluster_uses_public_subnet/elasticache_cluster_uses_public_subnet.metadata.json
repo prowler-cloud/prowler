@@ -1,30 +1,42 @@
 {
   "Provider": "aws",
   "CheckID": "elasticache_cluster_uses_public_subnet",
-  "CheckTitle": "Ensure Elasticache Cluster is not using a public subnet",
-  "CheckType": [],
+  "CheckTitle": "ElastiCache cluster is not using public subnets",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Data Exposure"
+  ],
   "ServiceName": "elasticache",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
-  "Description": "Ensure Elasticache Cluster is not using a public subnet",
-  "Risk": "There is a risk of exposing sensitive data if Elasticache Cluster uses a public subnet.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/VPCs.html",
+  "Description": "**ElastiCache resources** (Redis nodes and Memcached clusters) are assessed for placement in **public subnets**.\n\nThe finding identifies cache subnet groups that include subnets configured with Internet routing instead of private-only subnets.",
+  "Risk": "Hosting caches in **public subnets** can permit direct or misconfigured Internet access, impacting CIA:\n- Confidentiality: unauthorized reads and key dumps\n- Integrity: cache poisoning or key tampering\n- Availability: scanning and DDoS\n\nAttackers may pivot from the cache to **lateral movement** within the VPC.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://medium.com/@programmerohit/accessing-aws-elasticache-redis-from-multiple-aws-accounts-via-aws-privatelink-8938891bec6c",
+    "https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/SubnetGroups.html",
+    "https://www.dragonflydb.io/faq/how-can-i-make-my-elasticache-redis-publically-available",
+    "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/VPCs.html",
+    "https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/VPCs.EC.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws elasticache modify-cache-cluster --cache-cluster-id my-elasticache-cluster --cache-subnet-group-name my-private-subnet-group",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "aws elasticache modify-cache-cluster --cache-cluster-id <example_resource_id> --cache-subnet-group-name <example_resource_name> --apply-immediately",
+      "NativeIaC": "```yaml\n# CloudFormation: move ElastiCache into private subnets via a private subnet group\nResources:\n  PrivateCacheSubnetGroup:\n    Type: AWS::ElastiCache::SubnetGroup\n    Properties:\n      Description: Private subnets only\n      SubnetIds:\n        - <example_resource_id>  # private subnet\n        - <example_resource_id>  # private subnet\n\n  CacheCluster:\n    Type: AWS::ElastiCache::CacheCluster\n    Properties:\n      CacheClusterId: <example_resource_id>\n      Engine: redis\n      CacheNodeType: cache.t3.micro\n      NumCacheNodes: 1\n      CacheSubnetGroupName: !Ref PrivateCacheSubnetGroup  # CRITICAL: forces the cluster to use only private subnets\n```",
+      "Other": "1. In the AWS Console, go to ElastiCache > Subnet groups\n2. Click Create cache subnet group and select only private subnets (no route to an Internet Gateway)\n3. Go to ElastiCache > Redis or Memcached, select your cluster\n4. Click Modify, set Subnet group to the private subnet group\n5. Check Apply immediately and click Modify to save",
+      "Terraform": "```hcl\n# Terraform: ensure the cluster uses a subnet group with only private subnets\nresource \"aws_elasticache_subnet_group\" \"private\" {\n  name       = \"<example_resource_name>\"\n  subnet_ids = [\"<example_resource_id>\", \"<example_resource_id>\"] # private subnets only\n}\n\nresource \"aws_elasticache_cluster\" \"cache\" {\n  cluster_id      = \"<example_resource_id>\"\n  engine          = \"redis\"\n  node_type       = \"cache.t3.micro\"\n  num_cache_nodes = 1\n  subnet_group_name = aws_elasticache_subnet_group.private.name  # CRITICAL: restricts cluster to private subnets\n}\n```"
     },
     "Recommendation": {
-      "Text": "To ensure your Elasticache cluster is not using a public subnet, follow the recommended remediation steps based on your preferred method.",
-      "Url": "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/VPCs.html"
+      "Text": "Place caches in **private subnets** only and ensure route tables lack Internet egress. Apply **least privilege** with tight **security groups** limited to required ports and trusted sources.\n\nFor external access, use **VPC peering**, **VPN**, or **PrivateLink**. Enable encryption in transit and Redis `AUTH` for layered controls.",
+      "Url": "https://hub.prowler.com/check/elasticache_cluster_uses_public_subnet"
     }
   },
   "Categories": [
-    "internet-exposed"
+    "internet-exposed",
+    "trust-boundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],
