@@ -1,5 +1,5 @@
 import { LucideIcon } from "lucide-react";
-import { SVGProps } from "react";
+import { MouseEvent, SVGProps } from "react";
 
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 
@@ -21,7 +21,7 @@ export type SubmenuProps = {
   active?: boolean;
   icon: IconComponent;
   disabled?: boolean;
-  onClick?: () => void;
+  onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
 };
 
 export type MenuProps = {

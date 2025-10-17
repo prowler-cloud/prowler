@@ -15,6 +15,11 @@ class iam_role_kms_enforce_separation_of_duties(Check):
                 resource=cloudresourcemanager_client.projects[project],
                 project_id=project,
                 location=cloudresourcemanager_client.region,
+                resource_name=(
+                    cloudresourcemanager_client.projects[project].name
+                    if cloudresourcemanager_client.projects[project].name
+                    else "GCP Project"
+                ),
             )
             report.status = "PASS"
             report.status_extended = f"Principle of separation of duties was enforced for KMS-Related Roles in project {project}."
