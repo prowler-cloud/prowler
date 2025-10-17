@@ -1,4 +1,5 @@
 import { Page, expect } from "@playwright/test";
+import { SignInPage, SignInCredentials } from "./sign-in/sign-in-page";
 
 export const ERROR_MESSAGES = {
   INVALID_CREDENTIALS: "Invalid email or password",
@@ -136,6 +137,41 @@ export async function waitForPageLoad(page: Page) {
 
 export async function verifyDashboardRoute(page: Page) {
   await expect(page).toHaveURL("/");
+}
+
+export async function authenticateAndSaveState(
+  page: Page,
+  email: string,
+  password: string,
+  storagePath: string,
+) {
+  if (!email || !password) {
+    throw new Error('Email and password are required for authentication and save state');
+  }
+
+  // Create SignInPage instance
+  const signInPage = new SignInPage(page);
+  const credentials: SignInCredentials = { email, password };
+
+  // Perform authentication steps using Page Object Model
+  await signInPage.goto();
+  await signInPage.login(credentials);
+  await signInPage.verifySuccessfulLogin();
+
+  // Save authentication state
+  await page.context().storageState({ path: storagePath });
+}
+
+/**
+ * Generate a random base36 suffix of specified length
+ * Used for creating unique test data to avoid conflicts
+ */
+export function makeSuffix(len: number): string {
+  let s = "";
+  while (s.length < len) {
+    s += Math.random().toString(36).slice(2);
+  }
+  return s.slice(0, len);
 }
 
 export async function getSession(page: Page) {
