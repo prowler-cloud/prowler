@@ -4,6 +4,14 @@ title: "Tools Reference"
 
 Complete reference guide for all tools available in the Prowler MCP Server. Tools are organized by namespace.
 
+## Tool Categories Summary
+
+| Category | Tool Count | Authentication Required |
+|----------|------------|------------------------|
+| Prowler Hub | 10 tools | No |
+| Prowler Documentation | 2 tools | No |
+| Prowler Cloud/App | 28 tools | Yes |
+
 ## Tool Naming Convention
 
 All tools follow a consistent naming pattern with prefixes:
@@ -23,7 +31,7 @@ Access Prowler's security check catalog and compliance frameworks. **No authenti
 - **`prowler_hub_search_checks`** - Full-text search across check metadata
 - **`prowler_hub_get_check_raw_metadata`** - Fetch raw check metadata in JSON format
 
-### Check Implementation
+### Check Code
 
 - **`prowler_hub_get_check_code`** - Fetch the Python implementation code for a security check
 - **`prowler_hub_get_check_fixer`** - Fetch the automated fixer code for a check (if available)
@@ -98,14 +106,6 @@ These tools require a valid API key. See the [Configuration Guide](/getting-star
 - **`prowler_app_processors_retrieve`** - Get processor details by ID
 - **`prowler_app_processors_partial_update`** - Update processor configuration
 - **`prowler_app_processors_destroy`** - Delete a processor
-
-## Tool Categories Summary
-
-| Category | Tool Count | Authentication Required |
-|----------|------------|------------------------|
-| Prowler Hub | 10 tools | No |
-| Prowler Documentation | 2 tools | No |
-| Prowler Cloud/App | 28 tools | Yes |
 
 ## Usage Tips
 
