@@ -1,28 +1,39 @@
 {
   "Provider": "aws",
   "CheckID": "elasticbeanstalk_environment_managed_updates_enabled",
-  "CheckTitle": "Elastic Beanstalk managed platform updates should be enabled",
+  "CheckTitle": "Elastic Beanstalk environment has managed platform updates enabled",
   "CheckType": [
+    "Software and Configuration Checks/Patch Management",
     "Software and Configuration Checks/AWS Security Best Practices"
   ],
   "ServiceName": "elasticbeanstalk",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:elasticbeanstalk:{region}:{account-id}:environment/{environment-id}",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsElasticBeanstalkEnvironment",
-  "Description": "This control checks whether managed platform updates are enabled for an Elastic Beanstalk environment. The control fails if no managed platform updates are enabled.",
-  "Risk": "If managed platform updates are not enabled, the environment might miss critical security patches and updates, which can expose it to vulnerabilities.",
-  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/elastic-beanstalk-managed-updates-enabled.html",
+  "Description": "**Elastic Beanstalk environments** with **managed platform updates** enabled (`ManagedActionsEnabled: true`) automatically apply platform patch/minor updates during a scheduled maintenance window.",
+  "Risk": "Without automatic platform updates, environments may run **vulnerable OS/runtime versions**, enabling exploitation of known CVEs, RCE, or privilege escalation.\n\nPatch drift also increases instability, harming **availability** and undermining application **integrity**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/config/latest/developerguide/elastic-beanstalk-managed-updates-enabled.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticbeanstalk-controls.html#elasticbeanstalk-2",
+    "https://docs.amazonaws.cn/en_us/elasticbeanstalk/latest/dg/environment-platform-update-managed.html",
+    "https://stackoverflow.com/questions/70274271/enabling-managed-updates-for-elastic-beanstalk-with-terraform",
+    "https://github.com/aws-samples/aws-elastic-beanstalk-hardened-security-cdk-sample",
+    "https://learn-codes.org/php/206467-automatically-applying-security-updates-for-aws-elastic-beanstalk",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ElasticBeanstalk/managed-platform-updates.html",
+    "https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/environment-platform-update-managed.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws elasticbeanstalk update-environment --environment-id <environment-id> --option-settings Namespace=aws:elasticbeanstalk:environment:ManagedActions,OptionName=ManagedActionsEnabled,Value=true",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticbeanstalk-controls.html#elasticbeanstalk-2",
-      "Terraform": ""
+      "CLI": "aws elasticbeanstalk update-environment --environment-id <example_resource_id> --option-settings Namespace=aws:elasticbeanstalk:managedactions,OptionName=ManagedActionsEnabled,Value=true",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::ElasticBeanstalk::Environment\n    Properties:\n      ApplicationName: <example_resource_name>\n      SolutionStackName: <example_resource_name>\n      OptionSettings:\n        - Namespace: aws:elasticbeanstalk:managedactions\n          OptionName: ManagedActionsEnabled  # Critical: enables managed platform updates\n          Value: \"true\"                      # Critical: set to true to pass the check\n```",
+      "Other": "1. Open the AWS Management Console and go to Elastic Beanstalk\n2. Select your environment\n3. Choose Configuration\n4. In Managed updates, click Edit\n5. Turn Managed updates to Enabled\n6. Click Apply/Save",
+      "Terraform": "```hcl\nresource \"aws_elastic_beanstalk_environment\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  application         = \"<example_resource_name>\"\n  solution_stack_name = \"<example_resource_name>\"\n\n  setting {\n    namespace = \"aws:elasticbeanstalk:managedactions\"\n    name      = \"ManagedActionsEnabled\"   # Critical: enables managed platform updates\n    value     = \"true\"                    # Critical: set to true to pass the check\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable managed platform updates for your Elastic Beanstalk environment to ensure the latest security patches and updates are applied.",
-      "Url": "https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/environment-platform-update-managed.html"
+      "Text": "Enable **managed platform updates** with a set maintenance window and choose an update level (`patch` or `minor`). Ensure **enhanced health** is on and the update role follows **least privilege**. Validate in staging, roll out gradually, and stagger windows across environments to strengthen **defense in depth** and resilience.",
+      "Url": "https://hub.prowler.com/check/elasticbeanstalk_environment_managed_updates_enabled"
     }
   },
   "Categories": [
