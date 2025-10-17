@@ -1,3 +1,7 @@
+import { SelectViaAWS } from "@/components/providers/workflow/forms/select-credentials-type/aws";
+import { SelectViaGCP } from "@/components/providers/workflow/forms/select-credentials-type/gcp";
+import { SelectViaGitHub } from "@/components/providers/workflow/forms/select-credentials-type/github";
+import { SelectViaM365 } from "@/components/providers/workflow/forms/select-credentials-type/m365";
 import {
   ProviderEntity,
   ProviderProps,
@@ -112,4 +116,29 @@ export const requiresBackButton = (via?: string | null): boolean => {
   ];
 
   return validViaTypes.includes(via);
+};
+
+// Provider selector components mapping
+export const PROVIDER_SELECTOR_COMPONENTS = {
+  AWS: SelectViaAWS,
+  GCP: SelectViaGCP,
+  GITHUB: SelectViaGitHub,
+  M365: SelectViaM365,
+} as const;
+
+export type SelectorProvider = keyof typeof PROVIDER_SELECTOR_COMPONENTS;
+
+// Helper to map ProviderType to SelectorProvider key
+export const getSelectorComponentKey = (
+  provider: ProviderType,
+): SelectorProvider | null => {
+  const keyMap: Record<ProviderType, SelectorProvider | null> = {
+    aws: "AWS",
+    azure: null,
+    gcp: "GCP",
+    github: "GITHUB",
+    kubernetes: null,
+    m365: "M365",
+  };
+  return keyMap[provider] ?? null;
 };

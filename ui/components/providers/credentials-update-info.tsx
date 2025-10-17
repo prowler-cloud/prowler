@@ -1,9 +1,9 @@
 "use client";
 
-import { SelectViaAWS } from "@/components/providers/workflow/forms/select-credentials-type/aws";
-import { SelectViaGCP } from "@/components/providers/workflow/forms/select-credentials-type/gcp";
-import { SelectViaGitHub } from "@/components/providers/workflow/forms/select-credentials-type/github";
-import { SelectViaM365 } from "@/components/providers/workflow/forms/select-credentials-type/m365";
+import {
+  getSelectorComponentKey,
+  PROVIDER_SELECTOR_COMPONENTS,
+} from "@/lib/provider-helpers";
 import { ProviderType } from "@/types/providers";
 
 interface UpdateCredentialsInfoProps {
@@ -15,21 +15,15 @@ export const CredentialsUpdateInfo = ({
   providerType,
   initialVia,
 }: UpdateCredentialsInfoProps) => {
-  const renderSelectComponent = () => {
-    if (providerType === "aws") {
-      return <SelectViaAWS initialVia={initialVia} />;
-    }
-    if (providerType === "gcp") {
-      return <SelectViaGCP initialVia={initialVia} />;
-    }
-    if (providerType === "github") {
-      return <SelectViaGitHub initialVia={initialVia} />;
-    }
-    if (providerType === "m365") {
-      return <SelectViaM365 initialVia={initialVia} />;
-    }
-    return null;
-  };
+  const componentKey = getSelectorComponentKey(providerType);
 
-  return <div className="flex flex-col gap-4">{renderSelectComponent()}</div>;
+  if (!componentKey) return null;
+
+  const SelectorComponent = PROVIDER_SELECTOR_COMPONENTS[componentKey];
+
+  return (
+    <div className="flex flex-col gap-4">
+      <SelectorComponent initialVia={initialVia} />
+    </div>
+  );
 };
