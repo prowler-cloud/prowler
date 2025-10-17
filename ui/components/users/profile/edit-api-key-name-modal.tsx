@@ -9,9 +9,8 @@ import { updateApiKey } from "@/actions/api-keys/api-keys";
 import { useToast } from "@/components/ui";
 import { CustomInput } from "@/components/ui/custom";
 import { CustomAlertModal } from "@/components/ui/custom/custom-alert-modal";
-import { Form } from "@/components/ui/form";
+import { Form, FormButtons } from "@/components/ui/form";
 
-import { ModalButtons } from "./api-keys/modal-buttons";
 import { EnrichedApiKey } from "./api-keys/types";
 import { isApiKeyNameDuplicate } from "./api-keys/utils";
 
@@ -44,8 +43,6 @@ export const EditApiKeyNameModal = ({
       name: apiKey?.attributes.name || "",
     },
   });
-
-  const isLoading = form.formState.isSubmitting;
 
   // Sync form data when apiKey changes or modal opens
   useEffect(() => {
@@ -124,12 +121,12 @@ export const EditApiKeyNameModal = ({
             />
           </div>
 
-          <ModalButtons
+          <FormButtons
             onCancel={handleClose}
-            onSubmit={form.handleSubmit(onSubmitClient)}
-            isLoading={isLoading}
-            isDisabled={!form.formState.isValid}
             submitText="Save Changes"
+            cancelText="Cancel"
+            loadingText="Processing..."
+            isDisabled={!form.formState.isValid}
           />
         </form>
       </Form>

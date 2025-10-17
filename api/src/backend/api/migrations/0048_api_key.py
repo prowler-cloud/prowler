@@ -44,7 +44,7 @@ class Migration(migrations.Migration):
                         help_text="If the API key is revoked, entities cannot use it anymore. (This cannot be undone.)",
                     ),
                 ),
-                ("created", models.DateTimeField(auto_now=True)),
+                ("created", models.DateTimeField(auto_now_add=True, editable=False)),
                 (
                     "whitelisted_ips",
                     models.JSONField(
