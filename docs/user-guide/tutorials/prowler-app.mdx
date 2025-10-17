@@ -207,17 +207,28 @@ If you are adding an **EKS**, **GKE**, **AKS** or external cluster, follow these
 4. Now you can add the modified `kubeconfig` in Prowler Cloud. Then test the connection.
 
 ### **Step 4.5: M365 Credentials**
-For M365, you must enter your Domain ID and choose the authentication method you want to use:
+Enter your Microsoft Entra domain (primary tenant domain) and select how the provider should authenticate. Prowler App guides you through the process:
 
-- Service Principal Authentication (Recommended)
+<img src="/images/providers/m365-auth-selection-form.png" alt="M365 authentication method selection" width="700" />
 
-<Warning>
-User authentication with M365_USER and M365_PASSWORD is deprecated and will be removed.
+- **Application Client Secret Authentication**: Client secret-based authentication.
+- **Application Certificate Authentication (Recommended)**: Certificate-based authentication. Recommended by Microsoft.
 
-</Warning>
-For full setup instructions and requirements, check the [Microsoft 365 provider requirements](/user-guide/providers/microsoft365/getting-started-m365).
+#### Application Client Secret Authentication
+1. **Enter your tenant ID**: This is the unique identifier for your Microsoft Entra ID directory.
+2. **Enter your application (client) ID**: This is the unique identifier assigned to your app registration in Microsoft Entra ID.
+3. **Enter your client secret**: This is the secret key used to authenticate your application.
 
-<img src="/images/m365-credentials.png" alt="Prowler Cloud M365 Credentials" width="700" />
+<img src="/images/providers/secret-form.png" alt="M365 client secret authentication form" width="700" />
+
+For full setup instructions, certificate generation commands, and required permissions, review the [Microsoft 365 provider requirements](/user-guide/providers/microsoft365/getting-started-m365).
+
+#### Application Certificate Authentication (Recommended)
+1. **Enter your tenant ID**: This is the unique identifier for your Microsoft Entra ID directory.
+2. **Enter your application (client) ID**: This is the unique identifier assigned to your app registration in Microsoft Entra ID.
+3. **Upload your certificate file content**: This is the **Base64** encoded certificate content used to authenticate your application.
+
+<img src="/images/providers/certificate-form.png" alt="M365 certificate authentication form" width="700" />
 
 ### **Step 4.6: GitHub Credentials**
 For GitHub, you must enter your Provider ID (username or organization name) and choose the authentication method you want to use:
