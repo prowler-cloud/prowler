@@ -95,6 +95,7 @@ from api.filters import (
     ScanSummarySeverityFilter,
     ServiceOverviewFilter,
     TaskFilter,
+    TenantApiKeyFilter,
     TenantFilter,
     UserFilter,
 )
@@ -124,6 +125,7 @@ from api.models import (
     SeverityChoices,
     StateChoices,
     Task,
+    TenantAPIKey,
     User,
     UserRoleRelationship,
 )
@@ -140,6 +142,7 @@ from api.v1.mixins import PaginateByPkMixin, TaskManagementMixin
 from api.v1.serializers import (
     ComplianceOverviewAttributesSerializer,
     ComplianceOverviewDetailSerializer,
+    ComplianceOverviewDetailThreatscoreSerializer,
     ComplianceOverviewMetadataSerializer,
     ComplianceOverviewSerializer,
     FindingDynamicFilterSerializer,
@@ -189,6 +192,9 @@ from api.v1.serializers import (
     ScanUpdateSerializer,
     ScheduleDailyCreateSerializer,
     TaskSerializer,
+    TenantApiKeyCreateSerializer,
+    TenantApiKeySerializer,
+    TenantApiKeyUpdateSerializer,
     TenantSerializer,
     TokenRefreshSerializer,
     TokenSerializer,
@@ -386,6 +392,11 @@ class SchemaView(SpectacularAPIView):
                 "name": "SAML",
                 "description": "Endpoints for Single Sign-On authentication management via SAML for seamless user "
                 "authentication.",
+            },
+            {
+                "name": "API Keys",
+                "description": "Endpoints for API keys management. These can be used as an alternative to JWT "
+                "authorization.",
             },
         ]
         return super().get(request, *args, **kwargs)
@@ -655,36 +666,48 @@ class TenantFinishACSView(FinishACSView):
             .get(email_domain=email_domain)
             .tenant
         )
-        role_name = (
-            extra.get("userType", ["no_permissions"])[0].strip()
-            if extra.get("userType")
-            else "no_permissions"
+
+        # Check if tenant has only one user with MANAGE_ACCOUNT role
+        users_with_manage_account = (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(role__manage_account=True, tenant_id=tenant.id)
+            .values("user")
+            .distinct()
+            .count()
         )
-        try:
-            role = Role.objects.using(MainRouter.admin_db).get(
-                name=role_name, tenant=tenant
+
+        # Only apply role mapping from userType if tenant does NOT have exactly one user with MANAGE_ACCOUNT
+        if users_with_manage_account != 1:
+            role_name = (
+                extra.get("userType", ["no_permissions"])[0].strip()
+                if extra.get("userType")
+                else "no_permissions"
             )
-        except Role.DoesNotExist:
-            role = Role.objects.using(MainRouter.admin_db).create(
-                name=role_name,
-                tenant=tenant,
-                manage_users=False,
-                manage_account=False,
-                manage_billing=False,
-                manage_providers=False,
-                manage_integrations=False,
-                manage_scans=False,
-                unlimited_visibility=False,
+            try:
+                role = Role.objects.using(MainRouter.admin_db).get(
+                    name=role_name, tenant=tenant
+                )
+            except Role.DoesNotExist:
+                role = Role.objects.using(MainRouter.admin_db).create(
+                    name=role_name,
+                    tenant=tenant,
+                    manage_users=False,
+                    manage_account=False,
+                    manage_billing=False,
+                    manage_providers=False,
+                    manage_integrations=False,
+                    manage_scans=False,
+                    unlimited_visibility=False,
+                )
+            UserRoleRelationship.objects.using(MainRouter.admin_db).filter(
+                user=user,
+                tenant_id=tenant.id,
+            ).delete()
+            UserRoleRelationship.objects.using(MainRouter.admin_db).create(
+                user=user,
+                role=role,
+                tenant_id=tenant.id,
             )
-        UserRoleRelationship.objects.using(MainRouter.admin_db).filter(
-            user=user,
-            tenant_id=tenant.id,
-        ).delete()
-        UserRoleRelationship.objects.using(MainRouter.admin_db).create(
-            user=user,
-            role=role,
-            tenant_id=tenant.id,
-        )
         membership, _ = Membership.objects.using(MainRouter.admin_db).get_or_create(
             user=user,
             tenant=tenant,
@@ -3426,15 +3449,16 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             )
         filtered_queryset = self.filter_queryset(self.get_queryset())
 
-        all_requirements = (
-            filtered_queryset.values(
-                "requirement_id", "framework", "version", "description"
-            )
-            .distinct()
-            .annotate(
-                total_instances=Count("id"),
-                manual_count=Count("id", filter=Q(requirement_status="MANUAL")),
-            )
+        all_requirements = filtered_queryset.values(
+            "requirement_id",
+            "framework",
+            "version",
+            "description",
+        ).annotate(
+            total_instances=Count("id"),
+            manual_count=Count("id", filter=Q(requirement_status="MANUAL")),
+            passed_findings_sum=Sum("passed_findings"),
+            total_findings_sum=Sum("total_findings"),
         )
 
         passed_instances = (
@@ -3453,6 +3477,8 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             total_instances = requirement["total_instances"]
             passed_count = passed_counts.get(requirement_id, 0)
             is_manual = requirement["manual_count"] == total_instances
+            passed_findings = requirement["passed_findings_sum"] or 0
+            total_findings = requirement["total_findings_sum"] or 0
             if is_manual:
                 requirement_status = "MANUAL"
             elif passed_count == total_instances:
@@ -3467,10 +3493,19 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                     "version": requirement["version"],
                     "description": requirement["description"],
                     "status": requirement_status,
+                    "passed_findings": passed_findings,
+                    "total_findings": total_findings,
                 }
             )
 
-        serializer = self.get_serializer(requirements_summary, many=True)
+        # Use different serializer for threatscore framework
+        if "threatscore" not in compliance_id:
+            serializer = self.get_serializer(requirements_summary, many=True)
+        else:
+            serializer = ComplianceOverviewDetailThreatscoreSerializer(
+                requirements_summary, many=True
+            )
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], url_name="attributes")
@@ -4190,3 +4225,84 @@ class ProcessorViewSet(BaseRLSViewSet):
         elif self.action == "partial_update":
             return ProcessorUpdateSerializer
         return super().get_serializer_class()
+
+
+@extend_schema_view(
+    list=extend_schema(
+        tags=["API Keys"],
+        summary="List API keys",
+        description="Retrieve a list of API keys for the tenant, with filtering support.",
+    ),
+    retrieve=extend_schema(
+        tags=["API Keys"],
+        summary="Retrieve API key details",
+        description="Fetch detailed information about a specific API key by its ID.",
+    ),
+    create=extend_schema(
+        tags=["API Keys"],
+        summary="Create a new API key",
+        description="Create a new API key for the tenant.",
+    ),
+    partial_update=extend_schema(
+        tags=["API Keys"],
+        summary="Partially update an API key",
+        description="Modify certain fields of an existing API key without affecting other settings.",
+    ),
+    revoke=extend_schema(
+        tags=["API Keys"],
+        summary="Revoke an API key",
+        description="Revoke an API key by its ID. This action is irreversible and will prevent the key from being "
+        "used.",
+        request=None,
+        responses={
+            200: OpenApiResponse(
+                response=TenantApiKeySerializer,
+                description="API key was successfully revoked",
+            )
+        },
+    ),
+)
+class TenantApiKeyViewSet(BaseRLSViewSet):
+    queryset = TenantAPIKey.objects.all()
+    serializer_class = TenantApiKeySerializer
+    filterset_class = TenantApiKeyFilter
+    http_method_names = ["get", "post", "patch", "delete"]
+    ordering = ["revoked", "-created"]
+    ordering_fields = ["name", "prefix", "revoked", "inserted_at", "expires_at"]
+    # RBAC required permissions
+    required_permissions = [Permissions.MANAGE_ACCOUNT]
+
+    def get_queryset(self):
+        queryset = TenantAPIKey.objects.filter(
+            tenant_id=self.request.tenant_id
+        ).annotate(inserted_at=F("created"), expires_at=F("expiry_date"))
+        return queryset
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return TenantApiKeyCreateSerializer
+        elif self.action == "partial_update":
+            return TenantApiKeyUpdateSerializer
+        return super().get_serializer_class()
+
+    @extend_schema(exclude=True)
+    def destroy(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="DESTROY")
+
+    @action(detail=True, methods=["delete"])
+    def revoke(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        # Check if already revoked
+        if instance.revoked:
+            raise ValidationError(
+                {
+                    "detail": "API key is already revoked",
+                }
+            )
+
+        TenantAPIKey.objects.revoke_api_key(instance.pk)
+        instance.refresh_from_db()
+
+        serializer = self.get_serializer(instance)
+        return Response(data=serializer.data, status=status.HTTP_200_OK)

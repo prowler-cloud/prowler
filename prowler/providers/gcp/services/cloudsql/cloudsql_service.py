@@ -37,9 +37,9 @@ class CloudSQL(GCPService):
                                 ssl_mode=instance["settings"]
                                 .get("ipConfiguration", {})
                                 .get("sslMode", "ALLOW_UNENCRYPTED_AND_ENCRYPTED"),
-                                automated_backups=instance["settings"][
-                                    "backupConfiguration"
-                                ]["enabled"],
+                                automated_backups=instance["settings"]
+                                .get("backupConfiguration", {})
+                                .get("enabled", False),
                                 authorized_networks=instance["settings"]
                                 .get("ipConfiguration", {})
                                 .get("authorizedNetworks", []),

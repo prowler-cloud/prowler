@@ -1,5 +1,5 @@
- @import "tailwindcss";
- @config "../tailwind.config.js";
+@import "tailwindcss";
+@config "../tailwind.config.js";
 
 @layer base {
   :root {
@@ -44,8 +44,8 @@
   }
 
   .checkbox-update {
-     margin-right: 0.5rem;
-     background-color: var(--background);
+    margin-right: 0.5rem;
+    background-color: var(--background);
   }
 }
 

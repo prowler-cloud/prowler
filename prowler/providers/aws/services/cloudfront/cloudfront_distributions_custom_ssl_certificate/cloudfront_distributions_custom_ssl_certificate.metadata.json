@@ -1,26 +1,35 @@
 {
   "Provider": "aws",
   "CheckID": "cloudfront_distributions_custom_ssl_certificate",
-  "CheckTitle": "CloudFront distributions should use custom SSL/TLS certificates.",
-  "CheckType": [],
+  "CheckTitle": "CloudFront distribution uses a custom SSL/TLS certificate",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
   "ServiceName": "cloudfront",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCloudFrontDistribution",
-  "Description": "Ensure that your Amazon CloudFront distributions are configured to use a custom SSL/TLS certificate instead of the default one.",
-  "Risk": "Using the default SSL/TLS certificate provided by CloudFront can limit your ability to use custom domain names and may not align with your organization's security policies or branding requirements.",
-  "RelatedUrl": "https://aws.amazon.com/what-is/ssl-certificate/",
+  "Description": "CloudFront distributions are configured with a **custom SSL/TLS certificate** rather than the default `*.cloudfront.net` certificate for viewer connections.",
+  "Risk": "Using the default certificate prevents HTTPS on your own hostnames, breaking hostname validation. Clients may face errors or avoid TLS, impacting **authentication** and **availability**. Control over TLS posture and domain-bound security headers is reduced, weakening **confidentiality** and user trust.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/cloudfront-distro-custom-tls.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudfront-controls.html#cloudfront-7",
+    "https://support.icompaas.com/support/solutions/articles/62000233491-ensure-cloudfront-distributions-use-custom-ssl-tls-certificates",
+    "https://reintech.io/blog/configure-https-ssl-certificates-cloudfront-distributions"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/networking-policies/ensure-aws-cloudfront-distribution-uses-custom-ssl-certificate/",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudfront-controls.html#cloudfront-7",
-      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/cloudfront-distro-custom-tls.html"
+      "CLI": "aws cloudfront get-distribution-config --id <DISTRIBUTION_ID> --output json > current-config.json && echo 'Manually edit current-config.json to add Aliases and ViewerCertificate fields, then run:' && echo 'aws cloudfront update-distribution --id <DISTRIBUTION_ID> --distribution-config file://current-config.json --if-match $(aws cloudfront get-distribution-config --id <DISTRIBUTION_ID> --query \"ETag\" --output text)'",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::CloudFront::Distribution\n    Properties:\n      DistributionConfig:\n        Enabled: true\n        Origins:\n          - Id: origin1\n            DomainName: <example_origin_domain>\n            S3OriginConfig: {}\n        DefaultCacheBehavior:\n          TargetOriginId: origin1\n          ViewerProtocolPolicy: redirect-to-https\n          ForwardedValues:\n            QueryString: false\n        Aliases:\n          - <example_domain>  # CRITICAL: add an alternate domain name (CNAME) covered by the certificate\n        ViewerCertificate:\n          AcmCertificateArn: <example_certificate_arn>  # CRITICAL: attach custom ACM cert (must be in us-east-1)\n          SslSupportMethod: sni-only  # CRITICAL: required when using ACM cert\n```",
+      "Other": "1. Open the CloudFront console and select your distribution\n2. Go to the Settings/General tab and click Edit\n3. In Alternate domain name (CNAME), add <example_domain>\n4. In SSL certificate, choose Custom SSL certificate and select your ACM certificate (issued in us-east-1 and covering <example_domain>)\n5. Click Save/Yes, Edit and wait for the distribution to deploy",
+      "Terraform": "```hcl\nresource \"aws_cloudfront_distribution\" \"<example_resource_name>\" {\n  enabled = true\n\n  origin {\n    domain_name = \"<example_origin_domain>\"\n    origin_id   = \"origin1\"\n    s3_origin_config {}\n  }\n\n  default_cache_behavior {\n    target_origin_id       = \"origin1\"\n    viewer_protocol_policy = \"redirect-to-https\"\n    forwarded_values { query_string = false }\n  }\n\n  aliases = [\"<example_domain>\"]  # CRITICAL: add CNAME covered by the cert\n\n  viewer_certificate {\n    acm_certificate_arn = \"<example_certificate_arn>\"  # CRITICAL: custom ACM cert (in us-east-1)\n    ssl_support_method  = \"sni-only\"                    # CRITICAL: required with ACM cert\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Configure your CloudFront distributions to use a custom SSL/TLS certificate to enable secure access via your own domain names and meet specific security and branding needs. This allows for more control over encryption and authentication settings.",
-      "Url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/CNAMEs.html#CreatingCNAME"
+      "Text": "- Use a **custom SSL/TLS certificate** covering your domains and configure aliases.\n- Enforce modern TLS policy, **SNI**, and **HSTS**; disable legacy protocols.\n- Apply **least privilege** to certificate lifecycle and rotate/monitor keys.",
+      "Url": "https://hub.prowler.com/check/cloudfront_distributions_custom_ssl_certificate"
     }
   },
   "Categories": [
