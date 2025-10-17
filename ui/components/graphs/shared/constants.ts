@@ -7,6 +7,17 @@ export const SEVERITY_COLORS = {
   Critical: "var(--chart-danger-emphasis)",
 } as const;
 
+export const PROVIDER_COLORS = {
+  AWS: "var(--chart-provider-aws)",
+  Azure: "var(--chart-provider-azure)",
+  Google: "var(--chart-provider-google)",
+} as const;
+
+export const STATUS_COLORS = {
+  Success: "var(--chart-success-color)",
+  Fail: "var(--chart-fail)",
+} as const;
+
 export const CHART_COLORS = {
   tooltipBorder: "var(--chart-border-emphasis)",
   tooltipBackground: "var(--chart-background)",

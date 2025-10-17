@@ -1,4 +1,3 @@
-export { BarChart } from "./BarChart";
 export { DonutChart } from "./DonutChart";
 export { HorizontalBarChart } from "./HorizontalBarChart";
 export { LineChart } from "./LineChart";
