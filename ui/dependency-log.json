@@ -401,6 +401,14 @@
   },
   {
     "section": "dependencies",
+    "name": "tw-animate-css",
+    "from": "1.4.0",
+    "to": "1.4.0",
+    "strategy": "installed",
+    "generatedAt": "2025-10-15T07:57:13.225Z"
+  },
+  {
+    "section": "dependencies",
     "name": "uuid",
     "from": "11.1.0",
     "to": "11.1.0",
