@@ -12,8 +12,9 @@ Government cloud accounts or tenants (Microsoft 365 Government) are currently un
 
 Configure authentication for Microsoft 365 by following the [Microsoft 365 Authentication](/user-guide/providers/microsoft365/authentication) guide. This includes:
 
-- Creating a Service Principal Application
-- Granting required Microsoft Graph API permissions
+- Registering an application in Microsoft Entra ID
+- Granting all required Microsoft Graph and external API permissions
+- Generating the application certificate (recommended) or client secret
 - Setting up PowerShell module permissions (for full security coverage)
 
 ## Prowler App
@@ -47,25 +48,42 @@ Configure authentication for Microsoft 365 by following the [Microsoft 365 Authe
 
     ![Add Domain ID](/images/providers/add-domain-id.png)
 
-### Step 3: Add Credentials to Prowler App
+### Step 3: Select Authentication Method and Provide Credentials
 
-1. Go to App Registration overview and copy the Client ID and Tenant ID
+Prowler App now separates Microsoft 365 authentication into two app-only options. After adding the Domain ID, choose the method that matches your setup:
 
-    ![App Overview](/images/providers/app-overview.png)
+<img src="/images/providers/m365-auth-selection-form.png" alt="M365 authentication method selection" width="700" />
 
-2. Go to Prowler App and paste:
+#### Application Certificate Authentication (Recommended)
 
-    - Client ID
-    - Tenant ID
-    - `AZURE_CLIENT_SECRET` from the Service Principal setup
+1. Copy the Application (client) ID and Tenant ID from the app registration overview page.
+2. Paste both values into the Prowler App form.
+3. Upload the PFX bundle or paste the Base64-encoded certificate (`M365_CERTIFICATE_CONTENT`), then click **Test Connection**.
 
-    ![Prowler Cloud M365 Credentials](/images/providers/m365-credentials.png)
+<img src="/images/providers/certificate-form.png" alt="M365 certificate authentication form" width="700" />
 
-3. Click "Next"
+Use this method whenever possible to avoid managing client secrets and to unlock every Microsoft 365 check, including those that require PowerShell modules.
+
+#### Application Client Secret Authentication
+
+1. From the app registration, copy the Application (client) ID and Tenant ID.
+2. Paste both values plus the client secret into the Prowler App form.
+3. Click **Test Connection** to validate the credentials.
+
+<img src="/images/providers/secret-form.png" alt="M365 client secret authentication form" width="700" />
+
+<Warning>
+User/password authentication (`M365_USER` and `M365_PASSWORD`) is deprecated and will be removed.
+
+</Warning>
+
+### Step 4: Launch the Scan
+
+1. Review the summary, then click **Next**.
 
     ![Next Detail](/images/providers/click-next-m365.png)
 
-4. Click "Launch Scan"
+2. Click **Launch Scan** to start auditing Microsoft 365.
 
     ![Launch Scan M365](/images/providers/launch-scan.png)
 
@@ -83,7 +101,9 @@ PowerShell 7.4+ is required for comprehensive Microsoft 365 security coverage. I
 
 Select an authentication method from the [Microsoft 365 Authentication](/user-guide/providers/microsoft365/authentication) guide:
 
-- **Service Principal Application** (recommended): `--sp-env-auth`
+- **Application Certificate Authentication** (recommended): `--certificate-auth`
+- **Application Client Secret Authentication**: `--sp-env-auth`
+- **Azure CLI Authentication**: `--az-cli-auth`
 - **Interactive Browser Authentication**: `--browser-auth`
 
 ### Basic Usage
