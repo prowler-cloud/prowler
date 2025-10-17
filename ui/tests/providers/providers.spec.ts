@@ -3,14 +3,14 @@ import * as helpers from "../helpers";
 import {
   ProvidersPage,
   AWSProviderData,
-  ProviderCredentials,
+  AWSProviderCredential,
+  AWS_CREDENTIAL_OPTIONS
 } from "./providers-page";
 
 
-
-
-// Configure serial execution for provider tests
 test.describe.serial("Add AWS Provider", () => {
+
+  // Providers page object
   let providersPage: ProvidersPage;
 
   // Test data from environment variables
@@ -43,6 +43,7 @@ test.describe.serial("Add AWS Provider", () => {
       tag: ["@critical", "@e2e", "@providers", "@aws", "@serial", "@PROVIDER-E2E-001"],
     },
     async ({ page }) => {
+
       // Validate required environment variables
       if (!accountId || !accessKey || !secretKey) {
         throw new Error(
@@ -57,8 +58,8 @@ test.describe.serial("Add AWS Provider", () => {
       };
 
       // Prepare static credentials
-      const staticCredentials: ProviderCredentials = {
-        type: "credentials",
+      const staticCredentials: AWSProviderCredential = {
+        type: AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS,
         accessKeyId: accessKey,
         secretAccessKey: secretKey,
       };
@@ -79,7 +80,7 @@ test.describe.serial("Add AWS Provider", () => {
       await providersPage.clickNext();
 
       // Select static credentials type
-      await providersPage.selectCredentialsType("credentials");
+      await providersPage.selectCredentialsType(AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS);
       await providersPage.verifyCredentialsPageLoaded();
 
       // Fill static credentials
@@ -101,6 +102,7 @@ test.describe.serial("Add AWS Provider", () => {
       tag: ["@critical", "@e2e", "@providers", "@aws","@serial", "@PROVIDER-E2E-002"],
     },
     async ({ page }) => {
+
       // Validate required environment variables
       if (!accountId || !accessKey || !secretKey || !roleArn) {
         throw new Error(
@@ -115,8 +117,8 @@ test.describe.serial("Add AWS Provider", () => {
       };
 
       // Prepare role-based credentials
-      const roleCredentials: ProviderCredentials = {
-        type: "role",
+      const roleCredentials: AWSProviderCredential = {
+        type: AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN,
         accessKeyId: accessKey,
         secretAccessKey: secretKey,
         roleArn: roleArn,
@@ -138,7 +140,7 @@ test.describe.serial("Add AWS Provider", () => {
       await providersPage.clickNext();
 
       // Select role credentials type
-      await providersPage.selectCredentialsType("role");
+      await providersPage.selectCredentialsType(AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN);
       await providersPage.verifyCredentialsPageLoaded();
 
       // Fill role credentials

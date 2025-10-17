@@ -1,6 +1,7 @@
 import { Page, Locator, expect } from "@playwright/test";
 import { BasePage } from "../base-page";
 
+// AWS provider data
 export interface AWSProviderData {
   accountId: string;
   alias?: string;
@@ -10,15 +11,28 @@ export interface AWSProviderData {
   secretAccessKey?: string;
 }
 
-export interface ProviderCredentials {
-  type: "role" | "credentials";
+// AWS credential options
+export const AWS_CREDENTIAL_OPTIONS = {
+  AWS_ROLE_ARN: "role",
+  AWS_CREDENTIALS: "credentials"
+} as const;
+
+// AWS credential type
+type AWSCredentialType = (typeof AWS_CREDENTIAL_OPTIONS)[keyof typeof AWS_CREDENTIAL_OPTIONS];
+
+// AWS provider credential
+export interface AWSProviderCredential {
+  type: AWSCredentialType;
   roleArn?: string;
   externalId?: string;
   accessKeyId?: string;
   secretAccessKey?: string;
 }
 
+// Providers page
 export class ProvidersPage extends BasePage {
+
+  // Button to add a new cloud provider
   readonly addProviderButton: Locator;
   readonly providersTable: Locator;
 
@@ -95,6 +109,7 @@ export class ProvidersPage extends BasePage {
     // Button to save the form
     this.saveButton = page.getByRole("button", { name: "Save", exact: true });
 
+    // Button to launch a scan
     this.launchScanButton = page.getByRole("button", {
       name: "Launch scan",
       exact: true,
@@ -123,22 +138,30 @@ export class ProvidersPage extends BasePage {
   }
 
   async goto(): Promise<void> {
+    // Go to the providers page
+
     await super.goto("/providers");
   }
 
   async clickAddProvider(): Promise<void> {
+    // Click the add provider button
+
     await this.addProviderButton.click();
     await this.waitForPageLoad();
   }
 
   async selectAWSProvider(): Promise<void> {
     // Prefer label-based click for radios, force if overlay intercepts
+
     await this.awsProviderRadio.click({ force: true });
     await this.waitForPageLoad();
   }
 
   async fillAWSProviderDetails(data: AWSProviderData): Promise<void> {
+    // Fill the AWS provider details
+
     await this.accountIdInput.fill(data.accountId);
+
     if (data.alias) {
       await this.aliasInput.fill(data.alias);
     }
@@ -148,7 +171,8 @@ export class ProvidersPage extends BasePage {
     // The wizard interface may use different labels for its primary action button on each step.
     // This function determines which button to click depending on the current URL and page content.
 
-    const url = this.page.url(); // Get the current page URL
+    // Get the current page URL
+    const url = this.page.url(); 
 
     // If on the "connect-account" step, click the "Next" button
     if (/\/providers\/connect-account/.test(url)) {
@@ -179,6 +203,7 @@ export class ProvidersPage extends BasePage {
       const buttonByText = this.page
         .locator("button")
         .filter({ hasText: "Launch scan" });
+
       await buttonByText.click();
       await this.waitForPageLoad();
       return;
@@ -192,11 +217,13 @@ export class ProvidersPage extends BasePage {
       { name: /Continue|Proceed/i }, // Try "Continue" or "Proceed" (case-insensitive)
     ] as const;
 
+    // Try each candidate name and click it if found
     for (const candidate of candidates) {
       // Try each candidate name and click it if found
       const btn = this.page.getByRole("button", {
         name: candidate.name as any,
       });
+
       if (await btn.count()) {
         await btn.click();
         await this.waitForPageLoad();
@@ -210,19 +237,24 @@ export class ProvidersPage extends BasePage {
     );
   }
 
-  async selectCredentialsType(type: "role" | "credentials"): Promise<void> {
+  async selectCredentialsType(type: AWSCredentialType): Promise<void> {
     // Ensure we are on the add-credentials page where the selector exists
+
     await expect(this.page).toHaveURL(/\/providers\/add-credentials/);
-    if (type === "role") {
+    if (type === AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN) {
       await this.roleCredentialsRadio.click({ force: true });
-    } else {
+    } else if (type === AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS) {
       await this.staticCredentialsRadio.click({ force: true });
+    } else {
+      throw new Error(`Invalid AWS credential type: ${type}`);
     }
+    // Wait for the page to load
     await this.waitForPageLoad();
   }
 
-  async fillRoleCredentials(credentials: ProviderCredentials): Promise<void> {
+  async fillRoleCredentials(credentials: AWSProviderCredential): Promise<void> {
     // Fill the role credentials form
+    
     if (credentials.accessKeyId) {
       await this.accessKeyIdInput.fill(credentials.accessKeyId);
     }
@@ -240,8 +272,9 @@ export class ProvidersPage extends BasePage {
     }
   }
 
-  async fillStaticCredentials(credentials: ProviderCredentials): Promise<void> {
+  async fillStaticCredentials(credentials: AWSProviderCredential): Promise<void> {
     // Fill the static credentials form
+
     if (credentials.accessKeyId) {
       await this.accessKeyIdInput.fill(credentials.accessKeyId);
     }
@@ -252,24 +285,28 @@ export class ProvidersPage extends BasePage {
 
   async verifyPageLoaded(): Promise<void> {
     // Verify the providers page is loaded
+
     await expect(this.page).toHaveTitle(/Prowler/);
     await expect(this.addProviderButton).toBeVisible();
   }
 
   async verifyConnectAccountPageLoaded(): Promise<void> {
     // Verify the connect account page is loaded
+
     await expect(this.page).toHaveTitle(/Prowler/);
     await expect(this.awsProviderRadio).toBeVisible();
   }
 
   async verifyCredentialsPageLoaded(): Promise<void> {
     // Verify the credentials page is loaded
+
     await expect(this.page).toHaveTitle(/Prowler/);
     await expect(this.roleCredentialsRadio).toBeVisible();
   }
 
   async verifyLaunchScanPageLoaded(): Promise<void> {
     // Verify the launch scan page is loaded
+
     await expect(this.page).toHaveTitle(/Prowler/);
     await expect(this.page).toHaveURL(/\/providers\/test-connection/);
 
@@ -282,6 +319,7 @@ export class ProvidersPage extends BasePage {
 
   async verifyProviderExists(providerUID: string): Promise<boolean> {
     // Filter search by providerUID
+
     await this.filterProvidersByProviderUID(providerUID);
     // Verify if table has 1 row
     if (!(await this.verifySingleRowForProviderUID(providerUID))) {
@@ -292,16 +330,22 @@ export class ProvidersPage extends BasePage {
 
   async verifyLoadProviderPageAfterNewProvider(): Promise<void> {
     // Verify the provider page is loaded
+
     await expect(this.page).toHaveTitle(/Prowler/);
     await expect(this.providersTable).toBeVisible();
   }
 
   async verifySingleRowForProviderUID(providerUID: string): Promise<boolean> {
     // Verify if table has 1 row and that row contains providerUID
+
     await expect(this.providersTable).toBeVisible();
+
+    // Get the matching rows
     const matchingRows = this.providersTable.locator("tbody tr", {
       hasText: providerUID,
     });
+
+    // Verify the number of matching rows is 1
     const count = await matchingRows.count();
     if (count !== 1) return false;
     return true;
@@ -309,9 +353,14 @@ export class ProvidersPage extends BasePage {
 
   async filterProvidersByProviderUID(providerUID: string): Promise<void> {
     // Filter providers by providerUID
+
+    // Go to the providers page
     await this.goto();
+
+    // Verify the providers table is visible
     await expect(this.providersTable).toBeVisible();
 
+    // Get the search input
     const searchInput = this.page.getByPlaceholder(/search|filter/i);
     if (!searchInput) {
       throw new Error("No search input available");
@@ -334,17 +383,24 @@ export class ProvidersPage extends BasePage {
 
   async actionDeleteProvider(providerUID: string): Promise<void> {
     // Delete the provider
+
     // Filter search by providerUID
     await this.filterProvidersByProviderUID(providerUID);
 
+    // Verify the providers table is visible
     await expect(this.providersTable).toBeVisible();
 
     // Find the first row in the filtered results
     const firstRow = this.providersTable.locator("tbody tr").first();
+
+    // Verify the first row is visible
     await expect(firstRow).toBeVisible();
 
+    // Get button in the last cell
     const lastCell = firstRow.locator("td").last();
     const actionButton = lastCell.locator("button").first();
+
+    // Verify the action button is visible
     await actionButton.click();
 
     // Wait for the dropdown menu to appear
@@ -352,9 +408,12 @@ export class ProvidersPage extends BasePage {
       timeout: 5000,
     });
 
+    // Find the delete menu item
     const deleteMenuItem = this.page.getByRole("menuitem", {
       name: /delete.*provider/i,
     });
+
+    // Verify the delete menu item is visible
     await expect(deleteMenuItem).toBeVisible();
 
     // Click the delete menu item with force to handle unstable elements
@@ -378,6 +437,8 @@ export class ProvidersPage extends BasePage {
     const modalToCheck = this.page
       .locator('[role="dialog"], .modal, [data-testid*="modal"]')
       .first();
+
+    // Verify the modal is not visible
     await expect(modalToCheck).not.toBeVisible();
     await this.waitForPageLoad();
   }
