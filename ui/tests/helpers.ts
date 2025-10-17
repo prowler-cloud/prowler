@@ -1,5 +1,6 @@
 import { Page, expect } from "@playwright/test";
 import { SignInPage, SignInCredentials } from "./sign-in/sign-in-page";
+import { ProvidersPage } from "./providers/providers-page";
 
 export const ERROR_MESSAGES = {
   INVALID_CREDENTIALS: "Invalid email or password",
@@ -187,3 +188,10 @@ export async function verifySessionValid(page: Page) {
   expect(session.refreshToken).toBeTruthy();
   return session;
 }
+
+export async function deleteProviderIfExists(page: Page, accountId: string) {
+  const providersPage = new ProvidersPage(page);
+  if (await providersPage.verifyProviderExists(accountId)) {  
+     await providersPage.actionDeleteProvider(accountId);
+  }
+} 
