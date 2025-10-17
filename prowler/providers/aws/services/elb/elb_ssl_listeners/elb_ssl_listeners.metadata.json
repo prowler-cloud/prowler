@@ -1,28 +1,38 @@
 {
   "Provider": "aws",
   "CheckID": "elb_ssl_listeners",
-  "CheckTitle": "Check if Elastic Load Balancers have SSL listeners.",
+  "CheckTitle": "Elastic Load Balancer has only HTTPS or SSL listeners",
   "CheckType": [
-    "Data Protection"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/PCI-DSS",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "elb",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsElbLoadBalancer",
-  "Description": "Check if Elastic Load Balancers have SSL listeners.",
-  "Risk": "Clear text communication could affect privacy of information in transit.",
+  "Description": "**Elastic Load Balancers** are assessed for client-facing listener protocols. Only `HTTPS` or `SSL` are considered encrypted; any `HTTP` or `TCP` listener indicates plaintext between clients and the load balancer.",
+  "Risk": "Plaintext listeners enable network eavesdropping and content injection, compromising **confidentiality** and **integrity**. Attackers on public or untrusted paths can harvest credentials and session tokens or alter traffic via MITM, leading to data exposure and unauthorized access.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELB/elb-listener-security.html",
+    "https://aws.github.io/aws-elb-best-practices/security/data_protection/",
+    "https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/elb-security-policy-table.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/elb-controls.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws elb create-load-balancer-listeners --load-balancer-name <lb_name> --listeners Protocol=HTTPS, LoadBalancerPort=443, InstanceProtocol=HTTP, InstancePort=80, SSLCertificateId=<certificate_arn>",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELB/elb-listener-security.html",
-      "Terraform": ""
+      "CLI": "aws elb delete-load-balancer-listeners --load-balancer-name <lb_name> --load-balancer-ports 80",
+      "NativeIaC": "```yaml\n# CloudFormation: Classic ELB with only encrypted (HTTPS) listener\nResources:\n  <example_resource_name>:\n    Type: AWS::ElasticLoadBalancing::LoadBalancer\n    Properties:\n      AvailabilityZones:\n        - <example_az>\n      Listeners:\n        - Protocol: HTTPS           # CRITICAL: enforce encrypted listener\n          LoadBalancerPort: 443\n          InstanceProtocol: HTTP\n          InstancePort: 80\n          SSLCertificateId: <certificate_arn>  # CRITICAL: required for HTTPS termination\n```",
+      "Other": "1. In the AWS console, go to EC2 > Load Balancers (Classic)\n2. Select the load balancer and open the Listeners tab\n3. Click Edit and remove any listener with Protocol HTTP or TCP\n4. Add a listener with Protocol HTTPS (port 443) and select an SSL certificate\n5. Save changes",
+      "Terraform": "```hcl\n# Classic ELB with only encrypted (HTTPS) listener\nresource \"aws_elb\" \"<example_resource_name>\" {\n  availability_zones = [\"<example_az>\"]\n\n  listener {\n    lb_port            = 443\n    lb_protocol        = \"https\"   # CRITICAL: enforce encrypted listener\n    instance_port      = 80\n    instance_protocol  = \"http\"\n    ssl_certificate_id = \"<certificate_arn>\"  # CRITICAL: required for HTTPS/SSL\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Scan for Load Balancers with HTTP or TCP listeners and understand the reason for each of them. Check if the listener can be implemented as TLS instead..",
-      "Url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html"
+      "Text": "Enforce **encryption in transit** by using only `HTTPS`/`TLS` listeners. Redirect `HTTP` to `HTTPS` and retire plaintext listeners. Use trusted certificates (e.g., ACM) and modern TLS policies; align with **zero trust** and **defense in depth**. *If needed*, use end-to-end TLS to targets and monitor certificate health.",
+      "Url": "https://hub.prowler.com/check/elb_ssl_listeners"
     }
   },
   "Categories": [
