@@ -446,6 +446,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ## [v5.5.1] (Prowler v5.5.1)
 
+### Added
+- Added new KISA ISMS-P compliance mapping (based on real AWS incident cases) [#XXXX]
+
 ### Fixed
 - Default name to contacts in Azure Defender [(#7483)](https://github.com/prowler-cloud/prowler/pull/7483)
 - Handle projects without ID in GCP [(#7496)](https://github.com/prowler-cloud/prowler/pull/7496)
