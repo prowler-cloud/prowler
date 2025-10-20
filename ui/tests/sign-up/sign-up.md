@@ -18,6 +18,7 @@
 **Preconditions:**
 - Application is running, email domain & password is acceptable for sign-up.
 - No existing data in Prowler is required; the test can run on a clean state.
+- `E2E_NEW_PASSWORD` environment variable must be set with a valid password for the test.
 
 ### Flow Steps:
 1. Navigate to the Sign up page.
@@ -37,5 +38,6 @@
 
 ### Notes:
 - Test data uses a random base36 suffix to avoid collisions with email.
+- The test requires the `E2E_NEW_PASSWORD` environment variable to be set before running.
 
 
