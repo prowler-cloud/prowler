@@ -1,5 +1,4 @@
 import { cva, type VariantProps } from "class-variance-authority";
-import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -35,12 +34,17 @@ const lineVariants = cva("bg-[rgba(39,39,42,1)]", {
 
 export interface ResourceStatsCardDividerProps
   extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof dividerVariants> {}
+    VariantProps<typeof dividerVariants> {
+  ref?: React.Ref<HTMLDivElement>;
+}
 
-export const ResourceStatsCardDivider = React.forwardRef<
-  HTMLDivElement,
-  ResourceStatsCardDividerProps
->(({ className, spacing, orientation, ...props }, ref) => {
+export const ResourceStatsCardDivider = ({
+  className,
+  spacing,
+  orientation,
+  ref,
+  ...props
+}: ResourceStatsCardDividerProps) => {
   return (
     <div
       ref={ref}
@@ -50,6 +54,6 @@ export const ResourceStatsCardDivider = React.forwardRef<
       <div className={lineVariants({ orientation })} />
     </div>
   );
-});
+};
 
 ResourceStatsCardDivider.displayName = "ResourceStatsCardDivider";

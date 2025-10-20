@@ -1,5 +1,4 @@
 import { cva, type VariantProps } from "class-variance-authority";
-import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -32,12 +31,17 @@ const containerVariants = cva(
 
 export interface ResourceStatsCardContainerProps
   extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof containerVariants> {}
+    VariantProps<typeof containerVariants> {
+  ref?: React.Ref<HTMLDivElement>;
+}
 
-export const ResourceStatsCardContainer = React.forwardRef<
-  HTMLDivElement,
-  ResourceStatsCardContainerProps
->(({ className, children, padding, ...props }, ref) => {
+export const ResourceStatsCardContainer = ({
+  className,
+  children,
+  padding,
+  ref,
+  ...props
+}: ResourceStatsCardContainerProps) => {
   return (
     <div
       ref={ref}
@@ -47,6 +51,6 @@ export const ResourceStatsCardContainer = React.forwardRef<
       {children}
     </div>
   );
-});
+};
 
 ResourceStatsCardContainer.displayName = "ResourceStatsCardContainer";

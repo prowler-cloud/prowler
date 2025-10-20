@@ -1,6 +1,5 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import { LucideIcon } from "lucide-react";
-import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -73,69 +72,34 @@ export interface ResourceStatsCardProps
 
   // Render without container (no border, background, padding) - useful for composing multiple cards in a custom container
   containerless?: boolean;
+
+  // Ref for the root element
+  ref?: React.Ref<HTMLDivElement>;
 }
 
-export const ResourceStatsCard = React.forwardRef<
-  HTMLDivElement,
-  ResourceStatsCardProps
->(
-  (
-    {
-      header,
-      emptyState,
-      badge,
-      label,
-      accentColor,
-      stats = [],
-      variant = "default",
-      size = "md",
-      containerless = false,
-      className,
-      ...props
-    },
-    ref,
-  ) => {
-    // Resolve size to ensure it's not null (CVA can return null but we need a defined value)
-    const resolvedSize = size || "md";
+export const ResourceStatsCard = ({
+  header,
+  emptyState,
+  badge,
+  label,
+  accentColor,
+  stats = [],
+  variant = "default",
+  size = "md",
+  containerless = false,
+  className,
+  ref,
+  ...props
+}: ResourceStatsCardProps) => {
+  // Resolve size to ensure it's not null (CVA can return null but we need a defined value)
+  const resolvedSize = size || "md";
 
-    // If containerless, render without outer wrapper
-    if (containerless) {
-      return (
-        <div
-          ref={ref}
-          className={cn("flex flex-col gap-[5px]", className)}
-          {...props}
-        >
-          {header && (
-            <ResourceStatsCardHeader {...header} size={resolvedSize} />
-          )}
-          {emptyState ? (
-            <div className="flex h-[51px] w-full flex-col items-center justify-center">
-              <p className="text-center text-sm leading-5 font-medium text-zinc-300 dark:text-zinc-300">
-                {emptyState.message}
-              </p>
-            </div>
-          ) : (
-            badge &&
-            label && (
-              <ResourceStatsCardContent
-                badge={badge}
-                label={label}
-                stats={stats}
-                accentColor={accentColor}
-                size={resolvedSize}
-              />
-            )
-          )}
-        </div>
-      );
-    }
-
-    // Otherwise, render with container
+  // If containerless, render without outer wrapper
+  if (containerless) {
     return (
-      <ResourceStatsCardContainer
+      <div
         ref={ref}
-        className={cn(cardVariants({ variant, size }), "flex-col", className)}
+        className={cn("flex flex-col gap-[5px]", className)}
         {...props}
       >
         {header && <ResourceStatsCardHeader {...header} size={resolvedSize} />}
@@ -157,9 +121,38 @@ export const ResourceStatsCard = React.forwardRef<
             />
           )
         )}
-      </ResourceStatsCardContainer>
+      </div>
     );
-  },
-);
+  }
+
+  // Otherwise, render with container
+  return (
+    <ResourceStatsCardContainer
+      ref={ref}
+      className={cn(cardVariants({ variant, size }), "flex-col", className)}
+      {...props}
+    >
+      {header && <ResourceStatsCardHeader {...header} size={resolvedSize} />}
+      {emptyState ? (
+        <div className="flex h-[51px] w-full flex-col items-center justify-center">
+          <p className="text-center text-sm leading-5 font-medium text-zinc-300 dark:text-zinc-300">
+            {emptyState.message}
+          </p>
+        </div>
+      ) : (
+        badge &&
+        label && (
+          <ResourceStatsCardContent
+            badge={badge}
+            label={label}
+            stats={stats}
+            accentColor={accentColor}
+            size={resolvedSize}
+          />
+        )
+      )}
+    </ResourceStatsCardContainer>
+  );
+};
 
 ResourceStatsCard.displayName = "ResourceStatsCard";

@@ -1,6 +1,5 @@
 import { cva } from "class-variance-authority";
 import { LucideIcon } from "lucide-react";
-import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -110,82 +109,84 @@ export interface ResourceStatsCardContentProps
   stats?: StatItem[];
   accentColor?: string;
   size?: "sm" | "md" | "lg";
+  ref?: React.Ref<HTMLDivElement>;
 }
 
-export const ResourceStatsCardContent = React.forwardRef<
-  HTMLDivElement,
-  ResourceStatsCardContentProps
->(
-  (
-    { badge, label, stats = [], accentColor, size = "md", className, ...props },
-    ref,
-  ) => {
-    const BadgeIcon = badge.icon;
-    const badgeVariant: BadgeVariant = badge.variant || "fail";
+export const ResourceStatsCardContent = ({
+  badge,
+  label,
+  stats = [],
+  accentColor,
+  size = "md",
+  className,
+  ref,
+  ...props
+}: ResourceStatsCardContentProps) => {
+  const BadgeIcon = badge.icon;
+  const badgeVariant: BadgeVariant = badge.variant || "fail";
 
-    // Determine accent line color
-    const lineColor = accentColor || variantColors[badgeVariant] || "#d4d4d8";
+  // Determine accent line color
+  const lineColor = accentColor || variantColors[badgeVariant] || "#d4d4d8";
 
-    return (
-      <div
-        ref={ref}
-        className={cn("flex flex-col gap-[5px]", className)}
-        {...props}
-      >
-        {/* Badge and Label Row */}
-        <div className="flex w-full items-center gap-1">
-          {/* Badge */}
-          <div className={cn(badgeVariants({ variant: badgeVariant, size }))}>
-            <BadgeIcon
-              className={badgeIconVariants({ size })}
-              strokeWidth={2.5}
-              style={{ color: variantColors[badgeVariant] }}
-            />
-            <span
-              className="leading-6 font-bold"
-              style={{ color: variantColors[badgeVariant] }}
-            >
-              {badge.count}
-            </span>
-          </div>
-
-          {/* Label */}
-          <span className={labelTextVariants({ size })}>{label}</span>
+  return (
+    <div
+      ref={ref}
+      className={cn("flex flex-col gap-[5px]", className)}
+      {...props}
+    >
+      {/* Badge and Label Row */}
+      <div className="flex w-full items-center gap-1">
+        {/* Badge */}
+        <div className={cn(badgeVariants({ variant: badgeVariant, size }))}>
+          <BadgeIcon
+            className={badgeIconVariants({ size })}
+            strokeWidth={2.5}
+            style={{ color: variantColors[badgeVariant] }}
+          />
+          <span
+            className="leading-6 font-bold"
+            style={{ color: variantColors[badgeVariant] }}
+          >
+            {badge.count}
+          </span>
         </div>
 
-        {/* Stats Section */}
-        {stats.length > 0 && (
-          <div className="flex w-full items-stretch gap-0">
-            {/* Vertical Accent Line */}
-            <div className="flex items-stretch px-3 py-1">
-              <div
-                className="w-px rounded-full"
-                style={{ backgroundColor: lineColor }}
-              />
-            </div>
-
-            {/* Stats List */}
-            <div className="flex flex-1 flex-col gap-0.5">
-              {stats.map((stat, index) => {
-                const StatIcon = stat.icon;
-                return (
-                  <div key={index} className="flex items-center gap-1">
-                    <StatIcon
-                      className={statIconVariants({ size })}
-                      strokeWidth={2}
-                    />
-                    <span className={statLabelVariants({ size })}>
-                      {stat.label}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        {/* Label */}
+        <span className={labelTextVariants({ size })}>{label}</span>
       </div>
-    );
-  },
-);
+
+      {/* Stats Section */}
+      {stats.length > 0 && (
+        <div className="flex w-full items-stretch gap-0">
+          {/* Vertical Accent Line */}
+          <div className="flex items-stretch px-3 py-1">
+            <div
+              className="w-px rounded-full"
+              style={{ backgroundColor: lineColor }}
+            />
+          </div>
+
+          {/* Stats List */}
+          <div className="flex flex-1 flex-col gap-0.5">
+            {stats.map((stat, index) => {
+              const StatIcon = stat.icon;
+              return (
+                <div key={index} className="flex items-center gap-1">
+                  <StatIcon
+                    className={statIconVariants({ size })}
+                    strokeWidth={2}
+                  />
+                  <span className={statLabelVariants({ size })}>
+                    {stat.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 ResourceStatsCardContent.displayName = "ResourceStatsCardContent";

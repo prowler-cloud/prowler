@@ -1,6 +1,5 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import { LucideIcon } from "lucide-react";
-import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -68,36 +67,37 @@ export interface ResourceStatsCardHeaderProps
   icon: LucideIcon;
   title: string;
   resourceCount?: number | string;
+  ref?: React.Ref<HTMLDivElement>;
 }
 
-export const ResourceStatsCardHeader = React.forwardRef<
-  HTMLDivElement,
-  ResourceStatsCardHeaderProps
->(
-  (
-    { icon: Icon, title, resourceCount, size = "md", className, ...props },
-    ref,
-  ) => {
-    return (
-      <div
-        ref={ref}
-        className={cn(headerVariants({ size }), className)}
-        {...props}
-      >
-        <div className="flex flex-1 items-center gap-1">
-          <Icon className={iconVariants({ size })} strokeWidth={2} />
-          <span className={titleVariants({ size })}>{title}</span>
-        </div>
-        {resourceCount !== undefined && (
-          <span className={countVariants({ size })}>
-            {typeof resourceCount === "number"
-              ? `${resourceCount} Resources`
-              : resourceCount}
-          </span>
-        )}
+export const ResourceStatsCardHeader = ({
+  icon: Icon,
+  title,
+  resourceCount,
+  size = "md",
+  className,
+  ref,
+  ...props
+}: ResourceStatsCardHeaderProps) => {
+  return (
+    <div
+      ref={ref}
+      className={cn(headerVariants({ size }), className)}
+      {...props}
+    >
+      <div className="flex flex-1 items-center gap-1">
+        <Icon className={iconVariants({ size })} strokeWidth={2} />
+        <span className={titleVariants({ size })}>{title}</span>
       </div>
-    );
-  },
-);
+      {resourceCount !== undefined && (
+        <span className={countVariants({ size })}>
+          {typeof resourceCount === "number"
+            ? `${resourceCount} Resources`
+            : resourceCount}
+        </span>
+      )}
+    </div>
+  );
+};
 
 ResourceStatsCardHeader.displayName = "ResourceStatsCardHeader";
