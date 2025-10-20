@@ -74,6 +74,14 @@ export default defineConfig({
       name: "invite-and-manage-users.auth.setup",
       testMatch: "invite-and-manage-users.auth.setup.ts",
     },
+
+    // All authentication setups combined
+    // Runs all authentication setup files to create all user states
+    {
+      name: "all.auth.setup",
+      testMatch: "**/*.auth.setup.ts",
+    },
+
     // ===========================================
     // Test Suite Projects
     // ===========================================

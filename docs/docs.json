@@ -1,0 +1,440 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Prowler Documentation",
+  "colors": {
+    "primary": "#000000",
+    "light": "#10B981",
+    "dark": "#10B981"
+  },
+  "favicon": "/favicon.ico",
+  "logo": {
+    "dark": "/images/prowler-logo-white.png",
+    "light": "/images/prowler-logo-black.png"
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Getting Started",
+        "groups": [
+          {
+            "group": "Welcome",
+            "pages": [
+              "introduction"
+            ]
+          },
+          {
+            "group": "Prowler Cloud",
+            "pages": [
+              "getting-started/products/prowler-cloud",
+              "getting-started/products/prowler-cloud-pricing",
+              "getting-started/products/prowler-cloud-aws-marketplace",
+              "getting-started/goto/prowler-cloud",
+              "getting-started/goto/prowler-api-reference"
+            ]
+          },
+          {
+            "group": "Prowler CLI",
+            "pages": [
+              "getting-started/products/prowler-cli",
+              "getting-started/installation/prowler-cli",
+              "getting-started/basic-usage/prowler-cli"
+            ]
+          },
+          {
+            "group": "Prowler App",
+            "pages": [
+              "getting-started/products/prowler-app",
+              "getting-started/installation/prowler-app",
+              "getting-started/basic-usage/prowler-app"
+            ]
+          },
+          {
+            "group": "Prowler Lighthouse AI",
+            "pages": [
+              "user-guide/tutorials/prowler-app-lighthouse"
+            ]
+          },
+          {
+            "group": "Prowler MCP Server",
+            "pages": [
+              "getting-started/products/prowler-mcp",
+              "getting-started/installation/prowler-mcp",
+              "getting-started/basic-usage/prowler-mcp",
+              "getting-started/basic-usage/prowler-mcp-tools"
+            ]
+          },
+          {
+            "group": "Prowler Hub",
+            "pages": [
+              "getting-started/products/prowler-hub",
+              "getting-started/goto/prowler-hub"
+            ]
+          },
+          {
+            "group": "Prowler vs. Others",
+            "pages": [
+              "getting-started/comparison/index",
+              "getting-started/comparison/awssecurityhub",
+              "getting-started/comparison/gcp",
+              "getting-started/comparison/microsoftdefender",
+              "getting-started/comparison/microsoftsentinel"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Guides",
+        "groups": [
+          {
+            "group": "Prowler Cloud/App",
+            "pages": [
+              "user-guide/tutorials/prowler-app",
+              {
+                "group": "Authentication",
+                "pages": [
+                  "user-guide/tutorials/prowler-app-social-login",
+                  "user-guide/tutorials/prowler-app-sso"
+                ]
+              },
+              "user-guide/tutorials/prowler-app-rbac",
+              "user-guide/providers/prowler-app-api-keys",
+              "user-guide/tutorials/prowler-app-mute-findings",
+              {
+                "group": "Integrations",
+                "expanded": true,
+                "pages": [
+                  "user-guide/tutorials/prowler-app-s3-integration",
+                  "user-guide/tutorials/prowler-app-security-hub-integration",
+                  "user-guide/tutorials/prowler-app-jira-integration"
+                ]
+              },
+              "user-guide/tutorials/prowler-app-lighthouse",
+              {
+                "group": "Tutorials",
+                "pages": [
+                  "user-guide/tutorials/prowler-app-sso-entra",
+                  "user-guide/tutorials/bulk-provider-provisioning"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "CLI",
+            "pages": [
+              "user-guide/cli/tutorials/misc",
+              "user-guide/cli/tutorials/reporting",
+              "user-guide/cli/tutorials/compliance",
+              "user-guide/cli/tutorials/dashboard",
+              "user-guide/cli/tutorials/configuration_file",
+              "user-guide/cli/tutorials/logging",
+              "user-guide/cli/tutorials/mutelist",
+              {
+                "group": "Integrations",
+                "pages": [
+                  "user-guide/providers/aws/securityhub",
+                  "user-guide/cli/tutorials/integrations",
+                  "user-guide/providers/aws/s3"
+                ]
+              },
+              "user-guide/cli/tutorials/fixer",
+              "user-guide/cli/tutorials/check-aliases",
+              "user-guide/cli/tutorials/custom-checks-metadata",
+              "user-guide/cli/tutorials/pentesting",
+              "user-guide/cli/tutorials/scan-unused-services",
+              "user-guide/cli/tutorials/quick-inventory",
+              {
+                "group": "Tutorials",
+                "pages": [
+                  "user-guide/cli/tutorials/parallel-execution"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Providers",
+            "pages": [
+              {
+                "group": "AWS",
+                "pages": [
+                  "user-guide/providers/aws/getting-started-aws",
+                  "user-guide/providers/aws/authentication",
+                  "user-guide/providers/aws/role-assumption",
+                  "user-guide/providers/aws/organizations",
+                  "user-guide/providers/aws/regions-and-partitions",
+                  "user-guide/providers/aws/tag-based-scan",
+                  "user-guide/providers/aws/resource-arn-based-scan",
+                  "user-guide/providers/aws/boto3-configuration",
+                  "user-guide/providers/aws/threat-detection",
+                  "user-guide/providers/aws/cloudshell",
+                  "user-guide/providers/aws/multiaccount"
+                ]
+              },
+              {
+                "group": "Azure",
+                "pages": [
+                  "user-guide/providers/azure/getting-started-azure",
+                  "user-guide/providers/azure/authentication",
+                  "user-guide/providers/azure/use-non-default-cloud",
+                  "user-guide/providers/azure/subscriptions",
+                  "user-guide/providers/azure/create-prowler-service-principal"
+                ]
+              },
+              {
+                "group": "Google Cloud",
+                "pages": [
+                  "user-guide/providers/gcp/getting-started-gcp",
+                  "user-guide/providers/gcp/authentication",
+                  "user-guide/providers/gcp/projects",
+                  "user-guide/providers/gcp/organization",
+                  "user-guide/providers/gcp/retry-configuration"
+                ]
+              },
+              {
+                "group": "Kubernetes",
+                "pages": [
+                  "user-guide/providers/kubernetes/in-cluster",
+                  "user-guide/providers/kubernetes/outside-cluster",
+                  "user-guide/providers/kubernetes/misc"
+                ]
+              },
+              {
+                "group": "Microsoft 365",
+                "pages": [
+                  "user-guide/providers/microsoft365/getting-started-m365",
+                  "user-guide/providers/microsoft365/authentication",
+                  "user-guide/providers/microsoft365/use-of-powershell"
+                ]
+              },
+              {
+                "group": "GitHub",
+                "pages": [
+                  "user-guide/providers/github/getting-started-github",
+                  "user-guide/providers/github/authentication"
+                ]
+              },
+              {
+                "group": "IaC",
+                "pages": [
+                  "user-guide/providers/iac/getting-started-iac",
+                  "user-guide/providers/iac/authentication"
+                ]
+              },
+              {
+                "group": "MongoDB Atlas",
+                "pages": [
+                  "user-guide/providers/mongodbatlas/getting-started-mongodbatlas",
+                  "user-guide/providers/mongodbatlas/authentication"
+                ]
+              },
+              {
+                "group": "LLM",
+                "pages": [
+                  "user-guide/providers/llm/getting-started-llm"
+                ]
+              },
+              {
+                "group": "Oracle Cloud Infrastructure",
+                "pages": [
+                  "user-guide/providers/oci/getting-started-oci",
+                  "user-guide/providers/oci/authentication"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Compliance",
+            "pages": [
+              "user-guide/compliance/tutorials/threatscore"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Developer Guide",
+        "groups": [
+          {
+            "group": "Concepts",
+            "pages": [
+              "developer-guide/introduction",
+              "developer-guide/provider",
+              "developer-guide/services",
+              "developer-guide/checks",
+              "developer-guide/outputs",
+              "developer-guide/integrations",
+              "developer-guide/security-compliance-framework",
+              "developer-guide/lighthouse"
+            ]
+          },
+          {
+            "group": "Providers",
+            "pages": [
+              "developer-guide/aws-details",
+              "developer-guide/azure-details",
+              "developer-guide/gcp-details",
+              "developer-guide/kubernetes-details",
+              "developer-guide/m365-details",
+              "developer-guide/github-details",
+              "developer-guide/llm-details"
+            ]
+          },
+          {
+            "group": "Miscellaneous",
+            "pages": [
+              "developer-guide/documentation",
+              {
+                "group": "Testing",
+                "pages": [
+                  "developer-guide/unit-testing",
+                  "developer-guide/integration-testing"
+                ]
+              },
+              "developer-guide/debugging",
+              "developer-guide/configurable-checks",
+              "developer-guide/renaming-checks",
+              "developer-guide/check-metadata-guidelines"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Security",
+        "pages": [
+          "security"
+        ]
+      },
+      {
+        "tab": "Contact Us",
+        "pages": [
+          "contact"
+        ]
+      },
+      {
+        "tab": "Troubleshooting",
+        "pages": [
+          "troubleshooting"
+        ]
+      },
+      {
+        "tab": "About Us",
+        "icon": "/favicon.ico",
+        "href": "https://prowler.com/about#team"
+      },
+      {
+        "tab": "Changelog",
+        "icon": "github",
+        "href": "https://github.com/prowler-cloud/prowler/releases"
+      },
+      {
+        "tab": "Public Roadmap",
+        "href": "https://roadmap.prowler.com/"
+      }
+    ],
+    "global": {
+      "anchors": [
+        {
+          "anchor": "GitHub",
+          "href": "https://github.com/prowler-cloud/prowler",
+          "icon": "github"
+        },
+        {
+          "anchor": "Slack",
+          "href": "https://goto.prowler.com/slack",
+          "icon": "slack"
+        },
+        {
+          "anchor": "YouTube",
+          "href": "https://www.youtube.com/@prowlercloud",
+          "icon": "youtube"
+        }
+      ]
+    }
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Prowler Hub",
+        "href": "https://hub.prowler.com"
+      },
+      {
+        "label": "Prowler Cloud",
+        "href": "https://cloud.prowler.com",
+        "style": "primary"
+      }
+    ]
+  },
+  "analytics": {
+    "ga4": {
+      "measurementId": "G-KBKV70W5Y2"
+    }
+  },
+  "feedback": {
+    "thumbsRating": true,
+    "suggestEdit": true,
+    "raiseIssue": true
+  },
+  "footer": {
+    "socials": {
+      "x-twitter": "https://x.com/prowlercloud",
+      "github": "https://github.com/prowler-cloud/prowler",
+      "linkedin": "https://www.linkedin.com/company/prowler-security",
+      "youtube": "https://www.youtube.com/@prowlercloud",
+      "slack": "https://goto.prowler.com/slack",
+      "website": "https://prowler.com"
+    }
+  },
+  "redirects": [
+    {
+      "source": "/projects/prowler-open-source/en/latest/tutorials/prowler-app-lighthouse",
+      "destination": "/user-guide/tutorials/prowler-app-lighthouse"
+    },
+    {
+      "source": "/projects/prowler-open-source/en/latest/developer-guide/introduction",
+      "destination": "/developer-guide/introduction"
+    },
+    {
+      "source": "/projects/prowler-open-source/en/latest/tutorials/aws/getting-started-aws",
+      "destination": "/user-guide/providers/aws/getting-started-aws"
+    },
+    {
+      "source": "/projects/prowler-open-source/en/latest/tutorials/azure/getting-started-azure",
+      "destination": "/user-guide/providers/azure/getting-started-azure"
+    },
+    {
+      "source": "/projects/prowler-open-source/en/latest/tutorials/gcp/getting-started-gcp",
+      "destination": "/user-guide/providers/gcp/getting-started-gcp"
+    },
+    {
+      "source": "/projects/prowler-open-source/en/latest/tutorials/prowler-app",
+      "destination": "/user-guide/tutorials/prowler-app#step-4-4%3A-kubernetes-credentials%3A"
+    },
+    {
+      "source": "/projects/prowler-open-source/en/latest/tutorials/prowler-app/#step-3-add-a-provider",
+      "destination": "/user-guide/tutorials/prowler-app#step-3-add-a-provider"
+    },
+    {
+      "source": "/projects/prowler-open-source/en/latest/tutorials/microsoft365/getting-started-m365",
+      "destination": "/user-guide/providers/microsoft365/getting-started-m365"
+    },
+    {
+      "source": "/projects/prowler-open-source/en/latest/tutorials/github/getting-started-github",
+      "destination": "/user-guide/providers/github/getting-started-github"
+    },
+    {
+      "source": "/projects/prowler-open-source/en/latest/tutorials/prowler-app-sso",
+      "destination": "/user-guide/tutorials/prowler-app-sso"
+    },
+    {
+      "source": "/projects/prowler-open-source/en/latest",
+      "destination": "/introduction"
+    },
+    {
+      "source": "/projects/prowler-saas/en/latest/:slug*",
+      "destination": "https://docs.prowler.pro/en/latest/:slug*"
+    },
+    {
+      "source": "/projects/prowler-open-source/en/latest/tutorials/:slug*",
+      "destination": "/user-guide/tutorials/:slug*"
+    }
+  ]
+}
