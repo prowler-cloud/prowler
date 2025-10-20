@@ -55,7 +55,8 @@ export interface AZUREProviderCredential {
 
 // M365 credential options
 export const M365_CREDENTIAL_OPTIONS = {
-  M365_CREDENTIALS: "credentials"
+  M365_CREDENTIALS: "credentials",
+  M365_CERTIFICATE_CREDENTIALS: "certificate"
 } as const;
 
 // M365 credential type
@@ -65,8 +66,9 @@ type M365CredentialType = (typeof M365_CREDENTIAL_OPTIONS)[keyof typeof M365_CRE
 export interface M365ProviderCredential {
   type: M365CredentialType;
   clientId:string;
-  clientSecret:string;
+  clientSecret?:string;
   tenantId:string;
+  certificateContent?:string;
 }
 
 
@@ -97,6 +99,10 @@ export class ProvidersPage extends BasePage {
   readonly roleCredentialsRadio: Locator;
   readonly staticCredentialsRadio: Locator;
 
+  // M365 credentials type selection
+  readonly m365StaticCredentialsRadio: Locator;
+  readonly m365CertificateCredentialsRadio: Locator;
+
   // AWS role credentials form
   readonly roleArnInput: Locator;
   readonly externalIdInput: Locator;
@@ -116,6 +122,7 @@ export class ProvidersPage extends BasePage {
   readonly m365ClientIdInput: Locator;
   readonly m365ClientSecretInput: Locator;
   readonly m365TenantIdInput: Locator;
+  readonly m365CertificateContentInput: Locator;
 
   // Delete button
   readonly deleteProviderConfirmationButton: Locator;
@@ -163,6 +170,7 @@ export class ProvidersPage extends BasePage {
     this.m365ClientIdInput = page.getByLabel("Client ID");
     this.m365ClientSecretInput = page.getByLabel("Client Secret");
     this.m365TenantIdInput = page.getByLabel("Tenant ID");
+    this.m365CertificateContentInput = page.getByLabel("Certificate Content");
     
     // Alias input
     this.aliasInput = page.getByLabel("Provider alias (optional)");
@@ -188,6 +196,15 @@ export class ProvidersPage extends BasePage {
     });
     this.staticCredentialsRadio = page.getByRole("radio", {
       name: /Connect via Credentials/i,
+    });
+
+
+    // Radios for selecting M365 credentials method
+    this.m365StaticCredentialsRadio = page.getByRole("radio", {
+      name: /App Client Secret Credentials/i,
+    });
+    this.m365CertificateCredentialsRadio = page.getByRole("radio", {
+      name: /App Certificate Credentials/i,
     });
 
     // Inputs for IAM Role credentials
@@ -353,6 +370,21 @@ export class ProvidersPage extends BasePage {
     await this.waitForPageLoad();
   }
 
+  async selectM365CredentialsType(type: M365CredentialType): Promise<void> {
+    // Ensure we are on the add-credentials page where the selector exists
+
+    await expect(this.page).toHaveURL(/\/providers\/add-credentials/);
+    if (type === M365_CREDENTIAL_OPTIONS.M365_CREDENTIALS) {
+      await this.m365StaticCredentialsRadio.click({ force: true });
+    } else if (type === M365_CREDENTIAL_OPTIONS.M365_CERTIFICATE_CREDENTIALS) {
+      await this.m365CertificateCredentialsRadio.click({ force: true }); 
+    } else {
+      throw new Error(`Invalid M365 credential type: ${type}`);
+    }
+    // Wait for the page to load
+    await this.waitForPageLoad();
+  }
+
   async fillRoleCredentials(credentials: AWSProviderCredential): Promise<void> {
     // Fill the role credentials form
     
@@ -412,6 +444,21 @@ export class ProvidersPage extends BasePage {
     }
   }
 
+  async fillM365CertificateCredentials(credentials: M365ProviderCredential): Promise<void> {
+    // Fill the m365 certificate credentials form
+
+    if (credentials.clientId) {
+      await this.m365ClientIdInput.fill(credentials.clientId);
+    }
+    if (credentials.certificateContent) {
+      await this.m365CertificateContentInput.fill(credentials.certificateContent);
+    }
+    if (credentials.tenantId) {
+      await this.m365TenantIdInput.fill(credentials.tenantId);
+    }
+  }
+
+
   async verifyPageLoaded(): Promise<void> {
     // Verify the providers page is loaded
 
@@ -433,6 +480,16 @@ export class ProvidersPage extends BasePage {
     await expect(this.page).toHaveTitle(/Prowler/);
     await expect(this.roleCredentialsRadio).toBeVisible();
   }
+
+  async verifyM365CredentialsPageLoaded(): Promise<void> {
+    // Verify the M365 credentials page is loaded
+
+    await expect(this.page).toHaveTitle(/Prowler/);
+    await expect(this.m365StaticCredentialsRadio).toBeVisible();
+    await expect(this.m365CertificateCredentialsRadio).toBeVisible();
+  }
+
+
 
   async verifyLaunchScanPageLoaded(): Promise<void> {
     // Verify the launch scan page is loaded

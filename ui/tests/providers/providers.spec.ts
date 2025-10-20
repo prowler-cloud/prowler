@@ -10,318 +10,417 @@ import {
   AZURE_CREDENTIAL_OPTIONS,
   M365ProviderData,
   M365ProviderCredential,
-  M365_CREDENTIAL_OPTIONS
+  M365_CREDENTIAL_OPTIONS,
 } from "./providers-page";
 
+test.describe.serial("AddProvider", () => {
+  test.describe("Add AWS Provider", () => {
+    // Providers page object
+    let providersPage: ProvidersPage;
 
-test.describe.serial("Add AWS Provider", () => {
+    // Test data from environment variables
+    const accountId = process.env.E2E_AWS_PROVIDER_ACCOUNT_ID;
+    const accessKey = process.env.E2E_AWS_PROVIDER_ACCESS_KEY;
+    const secretKey = process.env.E2E_AWS_PROVIDER_SECRET_KEY;
+    const roleArn = process.env.E2E_AWS_PROVIDER_ROLE_ARN;
 
-  // Providers page object
-  let providersPage: ProvidersPage;
+    // Validate required environment variables
+    if (!accountId) {
+      throw new Error(
+        "E2E_AWS_PROVIDER_ACCOUNT_ID environment variable is not set",
+      );
+    }
 
-  // Test data from environment variables
-  const accountId = process.env.E2E_AWS_PROVIDER_ACCOUNT_ID;
-  const accessKey = process.env.E2E_AWS_PROVIDER_ACCESS_KEY;
-  const secretKey = process.env.E2E_AWS_PROVIDER_SECRET_KEY;
-  const roleArn = process.env.E2E_AWS_PROVIDER_ROLE_ARN;
+    // Setup before each test
+    test.beforeEach(async ({ page }) => {
+      providersPage = new ProvidersPage(page);
+      // Clean up existing provider to ensure clean test state
+      await helpers.deleteProviderIfExists(page, accountId);
+    });
 
-  // Validate required environment variables
-  if (!accountId) {
-    throw new Error(
-      "E2E_AWS_PROVIDER_ACCOUNT_ID environment variable is not set",
-    );
-  }
+    // Use admin authentication for provider management
+    test.use({ storageState: "playwright/.auth/admin_user.json" });
 
-  // Setup before each test
-  test.beforeEach(async ({ page }) => {
-    providersPage = new ProvidersPage(page);
-    // Clean up existing provider to ensure clean test state
-    await helpers.deleteProviderIfExists(page, accountId);
-  });
+    test(
+      "should add a new AWS provider with static credentials",
+      {
+        tag: [
+          "@critical",
+          "@e2e",
+          "@providers",
+          "@aws",
+          "@serial",
+          "@PROVIDER-E2E-001",
+        ],
+      },
+      async ({ page }) => {
+        // Validate required environment variables
+        if (!accountId || !accessKey || !secretKey) {
+          throw new Error(
+            "E2E_AWS_PROVIDER_ACCOUNT_ID, E2E_AWS_PROVIDER_ACCESS_KEY, and E2E_AWS_PROVIDER_SECRET_KEY environment variables are not set",
+          );
+        }
 
-  // Use admin authentication for provider management
-  test.use({ storageState: "playwright/.auth/admin_user.json" });
+        // Prepare test data for AWS provider
+        const awsProviderData: AWSProviderData = {
+          accountId: accountId,
+          alias: "Test E2E AWS Account - Credentials",
+        };
 
+        // Prepare static credentials
+        const staticCredentials: AWSProviderCredential = {
+          type: AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS,
+          accessKeyId: accessKey,
+          secretAccessKey: secretKey,
+        };
 
-  test(
-    "should add a new AWS provider with static credentials",
-    {
-      tag: ["@critical", "@e2e", "@providers", "@aws", "@serial", "@PROVIDER-E2E-001"],
-    },
-    async ({ page }) => {
+        // Navigate to providers page
+        await providersPage.goto();
+        await providersPage.verifyPageLoaded();
 
-      // Validate required environment variables
-      if (!accountId || !accessKey || !secretKey) {
-        throw new Error(
-          "E2E_AWS_PROVIDER_ACCOUNT_ID, E2E_AWS_PROVIDER_ACCESS_KEY, and E2E_AWS_PROVIDER_SECRET_KEY environment variables are not set",
+        // Start adding new provider
+        await providersPage.clickAddProvider();
+        await providersPage.verifyConnectAccountPageLoaded();
+
+        // Select AWS provider
+        await providersPage.selectAWSProvider();
+
+        // Fill provider details
+        await providersPage.fillAWSProviderDetails(awsProviderData);
+        await providersPage.clickNext();
+
+        // Select static credentials type
+        await providersPage.selectCredentialsType(
+          AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS,
         );
-      }
+        await providersPage.verifyCredentialsPageLoaded();
 
-      // Prepare test data for AWS provider
-      const awsProviderData: AWSProviderData = {
-        accountId: accountId,
-        alias: "Test E2E AWS Account - Credentials",
-      };
+        // Fill static credentials
+        await providersPage.fillStaticCredentials(staticCredentials);
+        await providersPage.clickNext();
 
-      // Prepare static credentials
-      const staticCredentials: AWSProviderCredential = {
-        type: AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS,
-        accessKeyId: accessKey,
-        secretAccessKey: secretKey,
-      };
+        // Launch scan
+        await providersPage.verifyLaunchScanPageLoaded();
+        await providersPage.clickNext();
 
-      // Navigate to providers page
-      await providersPage.goto();
-      await providersPage.verifyPageLoaded();
+        // Wait for redirect to provider page
+        await providersPage.verifyLoadProviderPageAfterNewProvider();
+      },
+    );
 
-      // Start adding new provider
-      await providersPage.clickAddProvider();
-      await providersPage.verifyConnectAccountPageLoaded();
+    test(
+      "should add a new AWS provider with assume role credentials with Access Key and Secret Key",
+      {
+        tag: [
+          "@critical",
+          "@e2e",
+          "@providers",
+          "@aws",
+          "@serial",
+          "@PROVIDER-E2E-002",
+        ],
+      },
+      async ({ page }) => {
+        // Validate required environment variables
+        if (!accountId || !accessKey || !secretKey || !roleArn) {
+          throw new Error(
+            "E2E_AWS_PROVIDER_ACCOUNT_ID, E2E_AWS_PROVIDER_ACCESS_KEY, E2E_AWS_PROVIDER_SECRET_KEY, and E2E_AWS_PROVIDER_ROLE_ARN environment variables are not set",
+          );
+        }
 
-      // Select AWS provider
-      await providersPage.selectAWSProvider();
+        // Prepare test data for AWS provider
+        const awsProviderData: AWSProviderData = {
+          accountId: accountId,
+          alias: "Test E2E AWS Account - Credentials",
+        };
 
-      // Fill provider details
-      await providersPage.fillAWSProviderDetails(awsProviderData);
-      await providersPage.clickNext();
+        // Prepare role-based credentials
+        const roleCredentials: AWSProviderCredential = {
+          type: AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN,
+          accessKeyId: accessKey,
+          secretAccessKey: secretKey,
+          roleArn: roleArn,
+        };
 
-      // Select static credentials type
-      await providersPage.selectCredentialsType(AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS);
-      await providersPage.verifyCredentialsPageLoaded();
+        // Navigate to providers page
+        await providersPage.goto();
+        await providersPage.verifyPageLoaded();
 
-      // Fill static credentials
-      await providersPage.fillStaticCredentials(staticCredentials);
-      await providersPage.clickNext();
+        // Start adding new provider
+        await providersPage.clickAddProvider();
+        await providersPage.verifyConnectAccountPageLoaded();
 
-      // Launch scan
-      await providersPage.verifyLaunchScanPageLoaded();
-      await providersPage.clickNext();
+        // Select AWS provider
+        await providersPage.selectAWSProvider();
 
-      // Wait for redirect to provider page
-      await providersPage.verifyLoadProviderPageAfterNewProvider();
-    }
-  )
+        // Fill provider details
+        await providersPage.fillAWSProviderDetails(awsProviderData);
+        await providersPage.clickNext();
 
-  test(
-    "should add a new AWS provider with assume role credentials with Access Key and Secret Key",
-    {
-      tag: ["@critical", "@e2e", "@providers", "@aws","@serial", "@PROVIDER-E2E-002"],
-    },
-    async ({ page }) => {
-
-      // Validate required environment variables
-      if (!accountId || !accessKey || !secretKey || !roleArn) {
-        throw new Error(
-          "E2E_AWS_PROVIDER_ACCOUNT_ID, E2E_AWS_PROVIDER_ACCESS_KEY, E2E_AWS_PROVIDER_SECRET_KEY, and E2E_AWS_PROVIDER_ROLE_ARN environment variables are not set",
+        // Select role credentials type
+        await providersPage.selectCredentialsType(
+          AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN,
         );
-      }
+        await providersPage.verifyCredentialsPageLoaded();
 
-      // Prepare test data for AWS provider
-      const awsProviderData: AWSProviderData = {
-        accountId: accountId,
-        alias: "Test E2E AWS Account - Credentials",
-      };
+        // Fill role credentials
+        await providersPage.fillRoleCredentials(roleCredentials);
+        await providersPage.clickNext();
 
-      // Prepare role-based credentials
-      const roleCredentials: AWSProviderCredential = {
-        type: AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN,
-        accessKeyId: accessKey,
-        secretAccessKey: secretKey,
-        roleArn: roleArn,
-      };
+        // Launch scan
+        await providersPage.verifyLaunchScanPageLoaded();
+        await providersPage.clickNext();
 
-      // Navigate to providers page
-      await providersPage.goto();
-      await providersPage.verifyPageLoaded();
-
-      // Start adding new provider
-      await providersPage.clickAddProvider();
-      await providersPage.verifyConnectAccountPageLoaded();
-
-      // Select AWS provider
-      await providersPage.selectAWSProvider();
-
-      // Fill provider details
-      await providersPage.fillAWSProviderDetails(awsProviderData);
-      await providersPage.clickNext();
-
-      // Select role credentials type
-      await providersPage.selectCredentialsType(AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN);
-      await providersPage.verifyCredentialsPageLoaded();
-
-      // Fill role credentials
-      await providersPage.fillRoleCredentials(roleCredentials);
-      await providersPage.clickNext();
-
-      // Launch scan
-      await providersPage.verifyLaunchScanPageLoaded();
-      await providersPage.clickNext();
-
-      // Wait for redirect to provider page
-      await providersPage.verifyLoadProviderPageAfterNewProvider();
-    }
-  );
-}); 
-
-
-test.describe.serial("Add AZURE Provider", () => {
-
-  // Providers page object
-  let providersPage: ProvidersPage;
-
-  // Test data from environment variables
-  const subscriptionId= process.env.E2E_AZURE_SUBSCRIPTION_ID;
-  const clientId= process.env.E2E_AZURE_CLIENT_ID
-  const clientSecret= process.env.E2E_AZURE_SECRET_ID
-  const tenantId= process.env.E2E_AZURE_TENANT_ID
-
-  // Validate required environment variables
-  if (!subscriptionId || !clientId || !clientSecret || !tenantId) {
-    throw new Error(
-      "E2E_AZURE_SUBSCRIPTION_ID, E2E_AZURE_CLIENT_ID, E2E_AZURE_SECRET_ID, and E2E_AZURE_TENANT_ID environment variables are not set",
+        // Wait for redirect to provider page
+        await providersPage.verifyLoadProviderPageAfterNewProvider();
+      },
     );
-  }
-
-  // Setup before each test
-  test.beforeEach(async ({ page }) => {
-    providersPage = new ProvidersPage(page);
-    // Clean up existing provider to ensure clean test state
-    await helpers.deleteProviderIfExists(page, subscriptionId);
   });
 
-  // Use admin authentication for provider management
-  test.use({ storageState: "playwright/.auth/admin_user.json" });
+  test.describe("Add AZURE Provider", () => {
+    // Providers page object
+    let providersPage: ProvidersPage;
 
+    // Test data from environment variables
+    const subscriptionId = process.env.E2E_AZURE_SUBSCRIPTION_ID;
+    const clientId = process.env.E2E_AZURE_CLIENT_ID;
+    const clientSecret = process.env.E2E_AZURE_SECRET_ID;
+    const tenantId = process.env.E2E_AZURE_TENANT_ID;
 
-  test(
-    "should add a new Azure provider with static credentials",
-    {
-      tag: ["@critical", "@e2e", "@providers", "@azure", "@serial", "@PROVIDER-E2E-003"],
-    },
-    async ({ page }) => {
-
-      // Prepare test data for AZURE provider
-      const azureProviderData: AZUREProviderData = {
-        subscriptionId:subscriptionId,
-        alias: "Test E2E AZURE Account - Credentials",
-      };
-
-      // Prepare static credentials
-      const azureCredentials: AZUREProviderCredential = {
-        type: AZURE_CREDENTIAL_OPTIONS.AZURE_CREDENTIALS,
-        clientId: clientId,
-        clientSecret: clientSecret,
-        tenantId: tenantId,
-      };
-
-      // Navigate to providers page
-      await providersPage.goto();
-      await providersPage.verifyPageLoaded();
-
-      // Start adding new provider
-      await providersPage.clickAddProvider();
-      await providersPage.verifyConnectAccountPageLoaded();
-
-      // Select AZURE provider
-      await providersPage.selectAZUREProvider();
-
-      // Fill provider details
-      await providersPage.fillAZUREProviderDetails(azureProviderData);
-      await providersPage.clickNext();
-
-      // Fill static credentials details
-      await providersPage.fillAZURECredentials(azureCredentials);
-      await providersPage.clickNext();
-
-      // Launch scan
-      await providersPage.verifyLaunchScanPageLoaded();
-      await providersPage.clickNext();
-
-      // Wait for redirect to provider page
-      await providersPage.verifyLoadProviderPageAfterNewProvider();
+    // Validate required environment variables
+    if (!subscriptionId || !clientId || !clientSecret || !tenantId) {
+      throw new Error(
+        "E2E_AZURE_SUBSCRIPTION_ID, E2E_AZURE_CLIENT_ID, E2E_AZURE_SECRET_ID, and E2E_AZURE_TENANT_ID environment variables are not set",
+      );
     }
-  )
-}); 
 
+    // Setup before each test
+    test.beforeEach(async ({ page }) => {
+      providersPage = new ProvidersPage(page);
+      // Clean up existing provider to ensure clean test state
+      await helpers.deleteProviderIfExists(page, subscriptionId);
+    });
 
-test.describe.serial("Add M365 Provider", () => {
+    // Use admin authentication for provider management
+    test.use({ storageState: "playwright/.auth/admin_user.json" });
 
-  // Providers page object
-  let providersPage: ProvidersPage;
+    test(
+      "should add a new Azure provider with static credentials",
+      {
+        tag: [
+          "@critical",
+          "@e2e",
+          "@providers",
+          "@azure",
+          "@serial",
+          "@PROVIDER-E2E-003",
+        ],
+      },
+      async ({ page }) => {
+        // Prepare test data for AZURE provider
+        const azureProviderData: AZUREProviderData = {
+          subscriptionId: subscriptionId,
+          alias: "Test E2E AZURE Account - Credentials",
+        };
 
-  // Test data from environment variables
-  const domainId= process.env.E2E_M365_DOMAIN_ID;
-  const clientId= process.env.E2E_M365_CLIENT_ID
-  const clientSecret= process.env.E2E_M365_SECRET_ID
-  const tenantId= process.env.E2E_M365_TENANT_ID
+        // Prepare static credentials
+        const azureCredentials: AZUREProviderCredential = {
+          type: AZURE_CREDENTIAL_OPTIONS.AZURE_CREDENTIALS,
+          clientId: clientId,
+          clientSecret: clientSecret,
+          tenantId: tenantId,
+        };
 
-  // Validate required environment variables
-  if (!domainId || !clientId || !clientSecret || !tenantId) {
-    throw new Error(
-      "E2E_M365_DOMAIN_ID, E2E_M365_CLIENT_ID, E2E_M365_SECRET_ID, and E2E_M365_TENANT_ID environment variables are not set",
+        // Navigate to providers page
+        await providersPage.goto();
+        await providersPage.verifyPageLoaded();
+
+        // Start adding new provider
+        await providersPage.clickAddProvider();
+        await providersPage.verifyConnectAccountPageLoaded();
+
+        // Select AZURE provider
+        await providersPage.selectAZUREProvider();
+
+        // Fill provider details
+        await providersPage.fillAZUREProviderDetails(azureProviderData);
+        await providersPage.clickNext();
+
+        // Fill static credentials details
+        await providersPage.fillAZURECredentials(azureCredentials);
+        await providersPage.clickNext();
+
+        // Launch scan
+        await providersPage.verifyLaunchScanPageLoaded();
+        await providersPage.clickNext();
+
+        // Wait for redirect to provider page
+        await providersPage.verifyLoadProviderPageAfterNewProvider();
+      },
     );
-  }
-
-  // Setup before each test
-  test.beforeEach(async ({ page }) => {
-    providersPage = new ProvidersPage(page);
-    // Clean up existing provider to ensure clean test state
-    await helpers.deleteProviderIfExists(page, domainId);
   });
 
-  // Use admin authentication for provider management
-  test.use({ storageState: "playwright/.auth/admin_user.json" });
+  test.describe("Add M365 Provider", () => {
+    // Providers page object
+    let providersPage: ProvidersPage;
 
+    // Test data from environment variables
+    const domainId = process.env.E2E_M365_DOMAIN_ID;
+    const clientId = process.env.E2E_M365_CLIENT_ID;
+    const tenantId = process.env.E2E_M365_TENANT_ID;
 
-  test(
-    "should add a new M365 provider with static credentials",
-    {
-      tag: ["@critical", "@e2e", "@providers", "@m365", "@serial", "@PROVIDER-E2E-004"],
-    },
-    async ({ page }) => {
-  
-      // Prepare test data for M365 provider
-      const m365ProviderData: M365ProviderData = {
-        domainId:domainId,
-        alias: "Test E2E M365 Account - Credentials",
-      };
-  
-      // Prepare static credentials
-      const m365Credentials: M365ProviderCredential = {
-        type: M365_CREDENTIAL_OPTIONS.M365_CREDENTIALS,
-        clientId: clientId,
-        clientSecret: clientSecret,
-        tenantId: tenantId,
-      };
-  
-      // Navigate to providers page
-      await providersPage.goto();
-      await providersPage.verifyPageLoaded();
-  
-      // Start adding new provider
-      await providersPage.clickAddProvider();
-      await providersPage.verifyConnectAccountPageLoaded();
-  
-      // Select M365 provider
-      await providersPage.selectM365Provider();
-  
-      // Fill provider details
-      await providersPage.fillM365ProviderDetails(m365ProviderData);
-      await providersPage.clickNext();
-  
-      // Fill static credentials details
-      await providersPage.fillM365Credentials(m365Credentials);
-      await providersPage.clickNext();
-  
-      // Launch scan
-      await providersPage.verifyLaunchScanPageLoaded();
-      await providersPage.clickNext();
-  
-      // Wait for redirect to provider page
-      await providersPage.verifyLoadProviderPageAfterNewProvider();
+    // Validate required environment variables
+    if (!domainId || !clientId || !tenantId) {
+      throw new Error(
+        "E2E_M365_DOMAIN_ID, E2E_M365_CLIENT_ID, and E2E_M365_TENANT_ID environment variables are not set",
+      );
     }
-  )
 
+    // Setup before each test
+    test.beforeEach(async ({ page }) => {
+      providersPage = new ProvidersPage(page);
+      // Clean up existing provider to ensure clean test state
+      await helpers.deleteProviderIfExists(page, domainId);
+    });
 
-}); 
+    // Use admin authentication for provider management
+    test.use({ storageState: "playwright/.auth/admin_user.json" });
 
+    test(
+      "should add a new M365 provider with static credentials",
+      {
+        tag: [
+          "@critical",
+          "@e2e",
+          "@providers",
+          "@m365",
+          "@serial",
+          "@PROVIDER-E2E-004",
+        ],
+      },
+      async ({ page }) => {
+        // Validate required environment variables
+        const clientSecret = process.env.E2E_M365_SECRET_ID;
+
+        if (!clientSecret) {
+          throw new Error("E2E_M365_SECRET_ID environment variable is not set");
+        }
+        // Prepare test data for M365 provider
+        const m365ProviderData: M365ProviderData = {
+          domainId: domainId,
+          alias: "Test E2E M365 Account - Credentials",
+        };
+
+        // Prepare static credentials
+        const m365Credentials: M365ProviderCredential = {
+          type: M365_CREDENTIAL_OPTIONS.M365_CREDENTIALS,
+          clientId: clientId,
+          clientSecret: clientSecret,
+          tenantId: tenantId,
+        };
+
+        // Navigate to providers page
+        await providersPage.goto();
+        await providersPage.verifyPageLoaded();
+
+        // Start adding new provider
+        await providersPage.clickAddProvider();
+        await providersPage.verifyConnectAccountPageLoaded();
+
+        // Select M365 provider
+        await providersPage.selectM365Provider();
+
+        // Fill provider details
+        await providersPage.fillM365ProviderDetails(m365ProviderData);
+        await providersPage.clickNext();
+
+        // Select static credentials type
+        await providersPage.selectM365CredentialsType(
+          M365_CREDENTIAL_OPTIONS.M365_CREDENTIALS,
+        );
+        await providersPage.verifyM365CredentialsPageLoaded();
+
+        // Fill static credentials details
+        await providersPage.fillM365Credentials(m365Credentials);
+        await providersPage.clickNext();
+
+        // Launch scan
+        await providersPage.verifyLaunchScanPageLoaded();
+        await providersPage.clickNext();
+
+        // Wait for redirect to provider page
+        await providersPage.verifyLoadProviderPageAfterNewProvider();
+      },
+    );
+
+    test(
+      "should add a new M365 provider with certificate",
+      {
+        tag: [
+          "@critical",
+          "@e2e",
+          "@providers",
+          "@m365",
+          "@serial",
+          "@PROVIDER-E2E-005",
+        ],
+      },
+      async ({ page }) => {
+        // Validate required environment variables
+        const certificateContent = process.env.E2E_M365_CERTIFICATE_CONTENT;
+
+        if (!certificateContent) {
+          throw new Error(
+            "E2E_M365_CERTIFICATE_CONTENT environment variable is not set",
+          );
+        }
+
+        // Prepare test data for M365 provider
+        const m365ProviderData: M365ProviderData = {
+          domainId: domainId,
+          alias: "Test E2E M365 Account - Certificate",
+        };
+
+        // Prepare static credentials
+        const m365Credentials: M365ProviderCredential = {
+          type: M365_CREDENTIAL_OPTIONS.M365_CERTIFICATE_CREDENTIALS,
+          clientId: clientId,
+          tenantId: tenantId,
+          certificateContent: certificateContent,
+        };
+
+        // Navigate to providers page
+        await providersPage.goto();
+        await providersPage.verifyPageLoaded();
+
+        // Start adding new provider
+        await providersPage.clickAddProvider();
+        await providersPage.verifyConnectAccountPageLoaded();
+
+        // Select M365 provider
+        await providersPage.selectM365Provider();
+
+        // Fill provider details
+        await providersPage.fillM365ProviderDetails(m365ProviderData);
+        await providersPage.clickNext();
+
+        // Select static credentials type
+        await providersPage.selectM365CredentialsType(
+          M365_CREDENTIAL_OPTIONS.M365_CERTIFICATE_CREDENTIALS,
+        );
+        await providersPage.verifyM365CredentialsPageLoaded();
+
+        // Fill static credentials details
+        await providersPage.fillM365CertificateCredentials(m365Credentials);
+        await providersPage.clickNext();
+
+        // Launch scan
+        await providersPage.verifyLaunchScanPageLoaded();
+        await providersPage.clickNext();
+
+        // Wait for redirect to provider page
+        await providersPage.verifyLoadProviderPageAfterNewProvider();
+      },
+    );
+  });
+});

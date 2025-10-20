@@ -32,6 +32,7 @@ jobs:
       E2E_M365_CLIENT_ID: ${{ secrets.E2E_M365_CLIENT_ID }}
       E2E_M365_SECRET_ID: ${{ secrets.E2E_M365_SECRET_ID }}
       E2E_M365_TENANT_ID: ${{ secrets.E2E_M365_TENANT_ID }}
+      E2E_M365_CERTIFICATE_CONTENT: ${{ secrets.E2E_M365_CERTIFICATE_CONTENT }}
 
     steps:
       - name: Checkout repository
