@@ -9342,3 +9342,126 @@ class TestLighthouseProviderConfigViewSet:
         assert creds["access_key_id"] == new_credentials["access_key_id"]
         assert creds["secret_access_key"] == new_credentials["secret_access_key"]
         assert creds["region"] == new_credentials["region"]
+
+    @pytest.mark.parametrize(
+        "attributes",
+        [
+            pytest.param(
+                {
+                    "provider_type": "openai_compatible",
+                    "credentials": {"api_key": "compat-key"},
+                },
+                id="missing",
+            ),
+            pytest.param(
+                {
+                    "provider_type": "openai_compatible",
+                    "credentials": {"api_key": "compat-key"},
+                    "base_url": "",
+                },
+                id="empty",
+            ),
+        ],
+    )
+    def test_openai_compatible_missing_base_url(self, authenticated_client, attributes):
+        payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": attributes,
+            }
+        }
+
+        resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        error_detail = str(resp.json()).lower()
+        assert "base_url" in error_detail
+
+    def test_openai_compatible_invalid_credentials(self, authenticated_client):
+        payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "openai_compatible",
+                    "base_url": "https://compat.example/v1",
+                    "credentials": {"api_key": ""},
+                },
+            }
+        }
+
+        resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        errors = resp.json().get("errors", [])
+        assert any(
+            error.get("source", {}).get("pointer")
+            == "/data/attributes/credentials/api_key"
+            for error in errors
+        )
+        assert any(
+            "may not be blank" in error.get("detail", "").lower() for error in errors
+        )
+
+    def test_openai_compatible_patch_credentials_and_fields(self, authenticated_client):
+        create_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "openai_compatible",
+                    "base_url": "https://compat.example/v1",
+                    "credentials": {"api_key": "compat-key-123"},
+                },
+            }
+        }
+
+        create_resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=create_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert create_resp.status_code == status.HTTP_201_CREATED
+        provider_id = create_resp.json()["data"]["id"]
+
+        updated_base_url = "https://compat.example/v2"
+        updated_api_key = "compat-key-456"
+        patch_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "id": provider_id,
+                "attributes": {
+                    "base_url": updated_base_url,
+                    "credentials": {"api_key": updated_api_key},
+                },
+            }
+        }
+
+        patch_resp = authenticated_client.patch(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id}),
+            data=patch_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert patch_resp.status_code == status.HTTP_200_OK
+        updated_attrs = patch_resp.json()["data"]["attributes"]
+        assert updated_attrs["base_url"] == updated_base_url
+        assert updated_attrs["credentials"]["api_key"] == "*" * len(updated_api_key)
+
+        get_resp = authenticated_client.get(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id})
+        )
+        assert get_resp.status_code == status.HTTP_200_OK
+        masked = get_resp.json()["data"]["attributes"]["credentials"]["api_key"]
+        assert masked == "*" * len(updated_api_key)
+
+        get_full = authenticated_client.get(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id})
+            + "?fields[lighthouse-providers]=credentials"
+        )
+        assert get_full.status_code == status.HTTP_200_OK
+        creds = get_full.json()["data"]["attributes"]["credentials"]
+        assert creds["api_key"] == updated_api_key
