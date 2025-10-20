@@ -17,16 +17,9 @@
   "Risk": "Exposed CloudTrail logs erode **confidentiality** and **integrity**.\n\nAdversaries can harvest API activity to map accounts, roles, and keys, enabling **reconnaissance** and evasion. If write is allowed, logs can be **poisoned** or deleted, thwarting investigations and compromising incident timelines.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.icompaas.com/support/solutions/articles/62000083427-ensure-the-s3-bucket-used-to-store-cloudtrail-logs-is-not-publicly-accessible",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudTrail/cloudtrail-bucket-publicly-accessible.html",
-    "https://docs.prowler.com/checks/aws/logging-policies/logging_3#aws-console",
-    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/access-control-block-public-access.html",
     "https://docs.aws.amazon.com/config/latest/developerguide/cloudtrail-s3-bucket-public-access-prohibited.html",
-    "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_principal.html",
-    "https://docs.panther.com/alerts/alert-runbooks/built-in-policies/aws-cloudtrail-logs-s3-bucket-not-publicly-accessible",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/s3-controls.html",
-    "https://docs.cloudyali.io/docs/rules/cloudtrail_s3bucket_not_public/",
-    "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/create-s3-bucket-policy-for-cloudtrail.html"
+    "https://docs.panther.com/alerts/alert-runbooks/built-in-policies/aws-cloudtrail-logs-s3-bucket-not-publicly-accessible"
   ],
   "Remediation": {
     "Code": {
