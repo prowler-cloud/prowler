@@ -22,20 +22,20 @@ export const createApiKeyColumns = (
   {
     accessorKey: "name",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="NAME" param="name" />
+      <DataTableColumnHeader column={column} title="Name" param="name" />
     ),
     cell: ({ row }) => <NameCell apiKey={row.original} />,
   },
   {
     accessorKey: "prefix",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="PREFIX" param="prefix" />
+      <DataTableColumnHeader column={column} title="Prefix" param="prefix" />
     ),
     cell: ({ row }) => <PrefixCell apiKey={row.original} />,
   },
   {
     id: "email",
-    header: "EMAIL",
+    header: "Email",
     cell: ({ row }) => <EmailCell apiKey={row.original} />,
     enableSorting: false,
   },
@@ -44,7 +44,7 @@ export const createApiKeyColumns = (
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
-        title="CREATED"
+        title="Created"
         param="inserted_at"
       />
     ),
@@ -52,7 +52,7 @@ export const createApiKeyColumns = (
   },
   {
     accessorKey: "last_used_at",
-    header: "LAST USED",
+    header: "Last Used",
     cell: ({ row }) => <LastUsedCell apiKey={row.original} />,
     enableSorting: false,
   },
@@ -61,7 +61,7 @@ export const createApiKeyColumns = (
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
-        title="EXPIRES"
+        title="Expires"
         param="expires_at"
       />
     ),
@@ -70,7 +70,7 @@ export const createApiKeyColumns = (
   {
     accessorKey: "revoked",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="STATUS" param="revoked" />
+      <DataTableColumnHeader column={column} title="Status" param="revoked" />
     ),
     cell: ({ row }) => <StatusCell apiKey={row.original} />,
   },

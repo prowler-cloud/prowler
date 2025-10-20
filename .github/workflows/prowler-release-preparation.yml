@@ -76,10 +76,12 @@ jobs:
           UI_VERSION=$(extract_latest_version "ui/CHANGELOG.md")
           API_VERSION=$(extract_latest_version "api/CHANGELOG.md")
           SDK_VERSION=$(extract_latest_version "prowler/CHANGELOG.md")
+          MCP_VERSION=$(extract_latest_version "mcp_server/CHANGELOG.md")
 
           echo "UI_VERSION=${UI_VERSION}" >> "${GITHUB_ENV}"
           echo "API_VERSION=${API_VERSION}" >> "${GITHUB_ENV}"
           echo "SDK_VERSION=${SDK_VERSION}" >> "${GITHUB_ENV}"
+          echo "MCP_VERSION=${MCP_VERSION}" >> "${GITHUB_ENV}"
 
           if [ -n "$UI_VERSION" ]; then
             echo "Read UI version from changelog: $UI_VERSION"
@@ -99,11 +101,18 @@ jobs:
             echo "Warning: No SDK version found in prowler/CHANGELOG.md"
           fi
 
+          if [ -n "$MCP_VERSION" ]; then
+            echo "Read MCP version from changelog: $MCP_VERSION"
+          else
+            echo "Warning: No MCP version found in mcp_server/CHANGELOG.md"
+          fi
+
           echo "Prowler version: $PROWLER_VERSION"
           echo "Branch name: $BRANCH_NAME"
           echo "UI version: $UI_VERSION"
           echo "API version: $API_VERSION"
           echo "SDK version: $SDK_VERSION"
+          echo "MCP version: $MCP_VERSION"
           echo "Is minor release: $([ $PATCH_VERSION -eq 0 ] && echo 'true' || echo 'false')"
         else
           echo "Invalid version syntax: '$PROWLER_VERSION' (must be N.N.N)" >&2
@@ -183,7 +192,26 @@ jobs:
           touch "prowler_changelog.md"
         fi
 
-        # Combine changelogs in order: UI, API, SDK
+        # MCP has changes if the changelog references this Prowler version
+        # Check if the changelog contains "(Prowler X.Y.Z)" or "(Prowler UNRELEASED)"
+        if [ -f "mcp_server/CHANGELOG.md" ]; then
+          MCP_PROWLER_REF=$(grep -m 1 "^## \[.*\] (Prowler" mcp_server/CHANGELOG.md | sed -E 's/.*\(Prowler ([^)]+)\).*/\1/' | tr -d '[:space:]')
+          if [ "$MCP_PROWLER_REF" = "$PROWLER_VERSION" ] || [ "$MCP_PROWLER_REF" = "UNRELEASED" ]; then
+            echo "HAS_MCP_CHANGES=true" >> $GITHUB_ENV
+            echo "✓ MCP changes detected - Prowler reference: $MCP_PROWLER_REF (version: $MCP_VERSION)"
+            extract_changelog "mcp_server/CHANGELOG.md" "$MCP_VERSION" "mcp_changelog.md"
+          else
+            echo "HAS_MCP_CHANGES=false" >> $GITHUB_ENV
+            echo "ℹ No MCP changes for this release (Prowler reference: $MCP_PROWLER_REF, input: $PROWLER_VERSION)"
+            touch "mcp_changelog.md"
+          fi
+        else
+          echo "HAS_MCP_CHANGES=false" >> $GITHUB_ENV
+          echo "ℹ No MCP changelog found"
+          touch "mcp_changelog.md"
+        fi
+
+        # Combine changelogs in order: UI, API, SDK, MCP
         > combined_changelog.md
 
         if [ "$HAS_UI_CHANGES" = "true" ] && [ -s "ui_changelog.md" ]; then
@@ -204,6 +232,13 @@ jobs:
           echo "## SDK" >> combined_changelog.md
           echo "" >> combined_changelog.md
           cat prowler_changelog.md >> combined_changelog.md
+          echo "" >> combined_changelog.md
+        fi
+
+        if [ "$HAS_MCP_CHANGES" = "true" ] && [ -s "mcp_changelog.md" ]; then
+          echo "## MCP" >> combined_changelog.md
+          echo "" >> combined_changelog.md
+          cat mcp_changelog.md >> combined_changelog.md
           echo "" >> combined_changelog.md
         fi
 
@@ -367,4 +402,4 @@ jobs:
 
     - name: Clean up temporary files
       run: |
-        rm -f prowler_changelog.md api_changelog.md ui_changelog.md combined_changelog.md
+        rm -f prowler_changelog.md api_changelog.md ui_changelog.md mcp_changelog.md combined_changelog.md
