@@ -3429,6 +3429,7 @@ paths:
       - Lighthouse AI
       security:
       - JWT or API Key: []
+      deprecated: true
       responses:
         '200':
           content:
@@ -3456,6 +3457,7 @@ paths:
         required: true
       security:
       - JWT or API Key: []
+      deprecated: true
       responses:
         '201':
           content:
@@ -3490,6 +3492,7 @@ paths:
         required: true
       security:
       - JWT or API Key: []
+      deprecated: true
       responses:
         '200':
           content:
@@ -3511,6 +3514,7 @@ paths:
       - Lighthouse AI
       security:
       - JWT or API Key: []
+      deprecated: true
       responses:
         '204':
           description: No response body
@@ -3530,6 +3534,7 @@ paths:
       - Lighthouse AI
       security:
       - JWT or API Key: []
+      deprecated: true
       responses:
         '202':
           content:
@@ -3554,7 +3559,7 @@ paths:
           description: ''
   /api/v1/lighthouse/configuration:
     get:
-      operationId: lighthouse_config_list
+      operationId: lighthouse_configuration_list
       description: Retrieve current tenant-level Lighthouse AI settings. Returns a
         single configuration object.
       summary: Get Lighthouse AI Tenant config
@@ -3629,11 +3634,11 @@ paths:
                 $ref: '#/components/schemas/PaginatedLighthouseTenantConfigList'
           description: ''
     patch:
-      operationId: lighthouse_config_partial_update
+      operationId: lighthouse_configuration_partial_update
       description: Update tenant-level settings. Validates that the default provider
         is configured and active and that default model IDs exist for the chosen providers.
         Auto-creates configuration if it doesn't exist.
-      summary: Update Lighthouse AI tenant config
+      summary: Update Lighthouse AI Tenant config
       tags:
       - Lighthouse AI
       requestBody:
@@ -3675,6 +3680,7 @@ paths:
             - updated_at
             - provider_configuration
             - model_id
+            - model_name
             - default_parameters
             - url
         description: endpoint return only specific fields in the response on a per-type
@@ -3760,6 +3766,8 @@ paths:
             - -provider_configuration
             - model_id
             - -model_id
+            - model_name
+            - -model_name
             - default_parameters
             - -default_parameters
             - url
@@ -3793,6 +3801,7 @@ paths:
             - updated_at
             - provider_configuration
             - model_id
+            - model_name
             - default_parameters
             - url
         description: endpoint return only specific fields in the response on a per-type
@@ -11618,9 +11627,13 @@ components:
             model_id:
               type: string
               maxLength: 100
+            model_name:
+              type: string
+              maxLength: 100
             default_parameters: {}
           required:
           - model_id
+          - model_name
         relationships:
           type: object
           properties:

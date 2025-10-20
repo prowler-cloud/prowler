@@ -4118,21 +4118,25 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
         tags=["Lighthouse AI"],
         summary="List all Lighthouse AI configurations",
         description="Retrieve a list of all Lighthouse AI configurations.",
+        deprecated=True,
     ),
     create=extend_schema(
         tags=["Lighthouse AI"],
         summary="Create a new Lighthouse AI configuration",
         description="Create a new Lighthouse AI configuration with the specified details.",
+        deprecated=True,
     ),
     partial_update=extend_schema(
         tags=["Lighthouse AI"],
         summary="Partially update a Lighthouse AI configuration",
         description="Update certain fields of an existing Lighthouse AI configuration.",
+        deprecated=True,
     ),
     destroy=extend_schema(
         tags=["Lighthouse AI"],
         summary="Delete a Lighthouse AI configuration",
         description="Remove a Lighthouse AI configuration by its ID.",
+        deprecated=True,
     ),
     connection=extend_schema(
         tags=["Lighthouse AI"],
@@ -4140,6 +4144,7 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
         description="Verify the connection to the OpenAI API for a specific Lighthouse AI configuration.",
         request=None,
         responses={202: OpenApiResponse(response=TaskSerializer)},
+        deprecated=True,
     ),
 )
 class LighthouseConfigViewSet(BaseRLSViewSet):
