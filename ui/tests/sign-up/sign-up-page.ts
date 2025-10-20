@@ -39,7 +39,7 @@ export class SignUpPage extends BasePage {
 
     this.submitButton = page.getByRole("button", { name: "Sign up" });
     this.loginLink = page.getByRole("link", { name: "Log in" });
-    this.termsCheckbox = page.getByText("I agree with the");
+    this.termsCheckbox = page.getByRole("checkbox", { name: /I agree with the/i });
   }
 
   async goto(): Promise<void> {
@@ -47,7 +47,7 @@ export class SignUpPage extends BasePage {
   }
 
   async verifyPageLoaded(): Promise<void> {
-    await expect(this.page.getByText("Sign up", { exact: true })).toBeVisible();
+    await expect(this.page.getByRole("heading", { name: "Sign up" })).toBeVisible();
     await expect(this.emailInput).toBeVisible();
     await expect(this.submitButton).toBeVisible();
     await this.waitForPageLoad();
