@@ -13,7 +13,11 @@ class Migration(migrations.Migration):
             model_name="lighthouseproviderconfiguration",
             name="provider_type",
             field=models.CharField(
-                choices=[("openai", "OpenAI"), ("bedrock", "AWS Bedrock")],
+                choices=[
+                    ("openai", "OpenAI"),
+                    ("bedrock", "AWS Bedrock"),
+                    ("openai_compatible", "OpenAI Compatible"),
+                ],
                 help_text="LLM provider name",
                 max_length=50,
             ),
