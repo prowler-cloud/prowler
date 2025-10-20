@@ -2026,32 +2026,6 @@ class LighthouseProviderConfiguration(RowLevelSecurityProtectedModel):
             )
         self.credentials = fernet.encrypt(json.dumps(value).encode())
 
-    def delete(self, *args, **kwargs):
-        # Cleanup tenant defaults that reference this provider
-        try:
-            tenant_cfg = LighthouseTenantConfiguration.objects.get(
-                tenant_id=self.tenant_id
-            )
-        except LighthouseTenantConfiguration.DoesNotExist:
-            tenant_cfg = None
-
-        if tenant_cfg:
-            updated = False
-            defaults = tenant_cfg.default_models or {}
-            if self.provider_type in defaults:
-                defaults.pop(self.provider_type, None)
-                tenant_cfg.default_models = defaults
-                updated = True
-
-            if tenant_cfg.default_provider == self.provider_type:
-                tenant_cfg.default_provider = ""
-                updated = True
-
-            if updated:
-                tenant_cfg.save()
-
-        return super().delete(*args, **kwargs)
-
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "lighthouse_provider_configurations"
 
