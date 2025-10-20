@@ -8,6 +8,7 @@ import { createApiKey } from "@/actions/api-keys/api-keys";
 import { useToast } from "@/components/ui";
 import { CustomInput } from "@/components/ui/custom";
 import { CustomAlertModal } from "@/components/ui/custom/custom-alert-modal";
+import { CustomLink } from "@/components/ui/custom/custom-link";
 import { Form, FormButtons } from "@/components/ui/form";
 
 import { DEFAULT_EXPIRY_DAYS } from "./api-keys/constants";
@@ -96,6 +97,13 @@ export const CreateApiKeyModal = ({
           onSubmit={form.handleSubmit(onSubmitClient)}
           className="flex flex-col gap-4"
         >
+          <p className="text-xs text-gray-500">
+            Learn more about API keys and best practices.{" "}
+            <CustomLink href="https://docs.prowler.com/user-guide/providers/prowler-app-api-keys">
+              Read the docs
+            </CustomLink>
+          </p>
+
           <div className="flex w-full justify-center gap-6">
             <CustomInput
               control={form.control}
