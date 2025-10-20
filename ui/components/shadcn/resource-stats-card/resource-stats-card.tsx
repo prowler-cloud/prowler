@@ -10,22 +10,35 @@ import { ResourceStatsCardHeader } from "./resource-stats-card-header";
 
 export type { StatItem };
 
+export const CardVariant = {
+  default: "default",
+  fail: "fail",
+  pass: "pass",
+  warning: "warning",
+  info: "info",
+} as const;
+
+export type CardVariant = (typeof CardVariant)[keyof typeof CardVariant];
+
 // Todo: when the design system is ready, we must use the colors from the design system (semantic colors)
 // Variant styles using CVA for type safety and consistency
 // Colors are exact HEX values from Figma design system
 const cardVariants = cva("", {
   variants: {
     variant: {
-      default: "",
+      [CardVariant.default]: "",
       // Fail variant - rgba(67,34,50) from Figma
-      fail: "border-[rgba(67,34,50,0.5)] bg-[rgba(67,34,50,0.2)] dark:border-[rgba(67,34,50,0.7)] dark:bg-[rgba(67,34,50,0.3)]",
+      [CardVariant.fail]:
+        "border-[rgba(67,34,50,0.5)] bg-[rgba(67,34,50,0.2)] dark:border-[rgba(67,34,50,0.7)] dark:bg-[rgba(67,34,50,0.3)]",
       // Pass variant - rgba(32,66,55) from Figma
-      pass: "border-[rgba(32,66,55,0.5)] bg-[rgba(32,66,55,0.2)] dark:border-[rgba(32,66,55,0.7)] dark:bg-[rgba(32,66,55,0.3)]",
+      [CardVariant.pass]:
+        "border-[rgba(32,66,55,0.5)] bg-[rgba(32,66,55,0.2)] dark:border-[rgba(32,66,55,0.7)] dark:bg-[rgba(32,66,55,0.3)]",
       // Warning variant - rgba(61,53,32) from Figma
-      warning:
+      [CardVariant.warning]:
         "border-[rgba(61,53,32,0.5)] bg-[rgba(61,53,32,0.2)] dark:border-[rgba(61,53,32,0.7)] dark:bg-[rgba(61,53,32,0.3)]",
       // Info variant - rgba(30,58,95) from Figma
-      info: "border-[rgba(30,58,95,0.5)] bg-[rgba(30,58,95,0.2)] dark:border-[rgba(30,58,95,0.7)] dark:bg-[rgba(30,58,95,0.3)]",
+      [CardVariant.info]:
+        "border-[rgba(30,58,95,0.5)] bg-[rgba(30,58,95,0.2)] dark:border-[rgba(30,58,95,0.7)] dark:bg-[rgba(30,58,95,0.3)]",
     },
     size: {
       sm: "px-2 py-1.5 gap-1",
@@ -34,7 +47,7 @@ const cardVariants = cva("", {
     },
   },
   defaultVariants: {
-    variant: "default",
+    variant: CardVariant.default,
     size: "md",
   },
 });
@@ -58,7 +71,7 @@ export interface ResourceStatsCardProps
   badge?: {
     icon: LucideIcon;
     count: number | string;
-    variant?: "fail" | "pass" | "warning" | "info";
+    variant?: CardVariant;
   };
 
   // Main label - optional when using empty state
@@ -84,7 +97,7 @@ export const ResourceStatsCard = ({
   label,
   accentColor,
   stats = [],
-  variant = "default",
+  variant = CardVariant.default,
   size = "md",
   containerless = false,
   className,
