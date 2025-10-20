@@ -58,7 +58,7 @@ export class HomePage {
     await expect(this.page).toHaveURL("/");
     await expect(this.mainContent).toBeVisible();
     await expect(this.overviewHeading).toBeVisible();
-    await this.page.waitForLoadState('networkidle');
+    await this.waitForPageLoad();
   }
 
   async verifyBreadcrumbs(): Promise<void> {
