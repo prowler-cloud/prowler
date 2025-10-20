@@ -228,6 +228,16 @@ uvx /path/to/prowler/mcp_server/
 
 This is particularly useful when configuring MCP clients that need to launch the server from a specific path.
 
+## Production Deployment
+
+For production deployments that require customization, it is recommended to use the ASGI application that can be found in `prowler_mcp_server.server`. This can be run with uvicorn:
+
+```bash
+uvicorn prowler_mcp_server.server:app --host 0.0.0.0 --port 8000
+```
+
+For more details on production deployment options, see the [FastMCP production deployment guide](https://gofastmcp.com/deployment/http#production-deployment) and [uvicorn settings](https://www.uvicorn.org/settings/).
+
 ## Next Steps
 
 Now that you have the Prowler MCP Server installed, proceed to configure your MCP client:
