@@ -159,3 +159,55 @@
 - Provider cleanup performed before each test to ensure clean state
 - Requires valid Azure subscription with appropriate permissions
 - Client credentials must have sufficient permissions for security scanning
+
+---
+
+## Test Case: `PROVIDER-E2E-004` - Add M365 Provider with Static Credentials
+
+**Priority:** `critical`
+
+**Tags:**
+
+- type → @e2e, @serial
+- feature → @providers
+- provider → @m365
+
+**Description/Objective:** Validates the complete flow of adding a new Microsoft 365 provider using static client credentials (Client ID, Client Secret, Tenant ID) tied to a Domain ID.
+
+**Preconditions:**
+
+- Admin user authentication required (admin.auth.setup setup)
+- Environment variables configured: E2E_M365_DOMAIN_ID, E2E_M365_CLIENT_ID, E2E_M365_SECRET_ID, E2E_M365_TENANT_ID
+- Remove any existing provider with the same Domain ID before starting the test
+- This test must be run serially and never in parallel with other tests, as it requires the Domain ID not to be already registered beforehand.
+
+### Flow Steps:
+
+1. Navigate to providers page
+2. Click "Add Provider" button
+3. Select M365 provider type
+4. Fill provider details (domain ID and alias)
+5. Fill M365 credentials (client ID, client secret, tenant ID)
+6. Launch initial scan
+7. Verify redirect to provider management page
+
+### Expected Result:
+
+- M365 provider successfully added with static credentials
+- Initial scan launched successfully
+- User redirected to provider details page
+
+### Key verification points:
+
+- Provider page loads correctly
+- Connect account page displays M365 option
+- M365 credentials form accepts all required fields
+- Launch scan page appears
+- Successful redirect to provider page after scan launch
+
+### Notes:
+
+- Test uses environment variables for M365 credentials
+- Provider cleanup performed before each test to ensure clean state
+- Requires valid Microsoft 365 tenant with appropriate permissions
+- Client credentials must have sufficient permissions for security scanning

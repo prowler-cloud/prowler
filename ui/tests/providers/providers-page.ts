@@ -13,6 +13,12 @@ export interface AZUREProviderData {
   alias?: string;
 }
 
+// M365 provider data
+export interface M365ProviderData {
+  domainId: string;
+  alias?: string;
+}
+
 // AWS credential options
 export const AWS_CREDENTIAL_OPTIONS = {
   AWS_ROLE_ARN: "role",
@@ -42,6 +48,22 @@ type AZURECredentialType = (typeof AZURE_CREDENTIAL_OPTIONS)[keyof typeof AZURE_
 // AZURE provider credential
 export interface AZUREProviderCredential {
   type: AZURECredentialType;
+  clientId:string;
+  clientSecret:string;
+  tenantId:string;
+}
+
+// M365 credential options
+export const M365_CREDENTIAL_OPTIONS = {
+  M365_CREDENTIALS: "credentials"
+} as const;
+
+// M365 credential type
+type M365CredentialType = (typeof M365_CREDENTIAL_OPTIONS)[keyof typeof M365_CREDENTIAL_OPTIONS]; 
+
+// M365 provider credential
+export interface M365ProviderCredential {
+  type: M365CredentialType;
   clientId:string;
   clientSecret:string;
   tenantId:string;
@@ -84,10 +106,16 @@ export class ProvidersPage extends BasePage {
   readonly secretAccessKeyInput: Locator;
 
   // AZURE provider form elements
-  readonly subscriptionIdInput: Locator;
-  readonly clientIdInput: Locator;
-  readonly clientSecretInput: Locator;
-  readonly tenantIdInput: Locator;
+  readonly azureSubscriptionIdInput: Locator;
+  readonly azureClientIdInput: Locator;
+  readonly azureClientSecretInput: Locator;
+  readonly azureTenantIdInput: Locator;
+
+  // M365 provider form elements
+  readonly m365domainIdInput: Locator;
+  readonly m365ClientIdInput: Locator;
+  readonly m365ClientSecretInput: Locator;
+  readonly m365TenantIdInput: Locator;
 
   // Delete button
   readonly deleteProviderConfirmationButton: Locator;
@@ -125,10 +153,16 @@ export class ProvidersPage extends BasePage {
     this.accountIdInput = page.getByLabel("Account ID");
     
     // AZURE provider form inputs
-    this.subscriptionIdInput = page.getByLabel("Subscription ID");
-    this.clientIdInput = page.getByLabel("Client ID");
-    this.clientSecretInput = page.getByLabel("Client Secret");
-    this.tenantIdInput = page.getByLabel("Tenant ID");
+    this.azureSubscriptionIdInput = page.getByLabel("Subscription ID");
+    this.azureClientIdInput = page.getByLabel("Client ID");
+    this.azureClientSecretInput = page.getByLabel("Client Secret");
+    this.azureTenantIdInput = page.getByLabel("Tenant ID");
+    
+    // M365 provider form inputs
+    this.m365domainIdInput = page.getByLabel("Domain ID");
+    this.m365ClientIdInput = page.getByLabel("Client ID");
+    this.m365ClientSecretInput = page.getByLabel("Client Secret");
+    this.m365TenantIdInput = page.getByLabel("Tenant ID");
     
     // Alias input
     this.aliasInput = page.getByLabel("Provider alias (optional)");
@@ -197,6 +231,12 @@ export class ProvidersPage extends BasePage {
     await this.waitForPageLoad();
   }
   
+  async selectM365Provider(): Promise<void> {
+    // Select the M365 provider
+
+    await this.m365ProviderRadio.click({ force: true });
+    await this.waitForPageLoad();
+  }
 
   async fillAWSProviderDetails(data: AWSProviderData): Promise<void> {
     // Fill the AWS provider details
@@ -211,7 +251,17 @@ export class ProvidersPage extends BasePage {
   async fillAZUREProviderDetails(data: AZUREProviderData): Promise<void> {
     // Fill the AWS provider details
 
-    await this.subscriptionIdInput.fill(data.subscriptionId);
+    await this.azureSubscriptionIdInput.fill(data.subscriptionId);
+
+    if (data.alias) {
+      await this.aliasInput.fill(data.alias);
+    }
+  }
+
+  async fillM365ProviderDetails(data: M365ProviderData): Promise<void> {
+    // Fill the M365 provider details
+
+    await this.m365domainIdInput.fill(data.domainId);
 
     if (data.alias) {
       await this.aliasInput.fill(data.alias);
@@ -338,16 +388,29 @@ export class ProvidersPage extends BasePage {
     // Fill the azure credentials form
 
     if (credentials.clientId) {
-      await this.clientIdInput.fill(credentials.clientId);
+      await this.azureClientIdInput.fill(credentials.clientId);
     }
     if (credentials.clientSecret) {
-      await this.clientSecretInput.fill(credentials.clientSecret);
+      await this.azureClientSecretInput.fill(credentials.clientSecret);
     }
     if (credentials.tenantId) {
-      await this.tenantIdInput.fill(credentials.tenantId);
+      await this.azureTenantIdInput.fill(credentials.tenantId);
     }
   }
 
+  async fillM365Credentials(credentials: M365ProviderCredential): Promise<void> {
+    // Fill the m365 credentials form
+
+    if (credentials.clientId) {
+      await this.m365ClientIdInput.fill(credentials.clientId);
+    }
+    if (credentials.clientSecret) {
+      await this.m365ClientSecretInput.fill(credentials.clientSecret);
+    }
+    if (credentials.tenantId) {
+      await this.m365TenantIdInput.fill(credentials.tenantId);
+    }
+  }
 
   async verifyPageLoaded(): Promise<void> {
     // Verify the providers page is loaded
