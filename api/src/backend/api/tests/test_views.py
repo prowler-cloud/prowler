@@ -5854,6 +5854,84 @@ class TestOverviewViewSet:
         assert combined_attributes["muted"] == 3
         assert combined_attributes["total"] == 14
 
+    def test_overview_findings_severity_provider_id_in_filter(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        tenant = tenants_fixture[0]
+        provider1, provider2, *_ = providers_fixture
+
+        scan1 = Scan.objects.create(
+            name="severity-scan-one",
+            provider=provider1,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+        scan2 = Scan.objects.create(
+            name="severity-scan-two",
+            provider=provider2,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan1,
+            check_id="severity-check-one",
+            service="service-a",
+            severity="high",
+            region="region-a",
+            _pass=4,
+            fail=4,
+            muted=0,
+            total=8,
+        )
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan1,
+            check_id="severity-check-two",
+            service="service-a",
+            severity="medium",
+            region="region-b",
+            _pass=2,
+            fail=2,
+            muted=0,
+            total=4,
+        )
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan2,
+            check_id="severity-check-three",
+            service="service-b",
+            severity="critical",
+            region="region-c",
+            _pass=1,
+            fail=2,
+            muted=0,
+            total=3,
+        )
+
+        single_response = authenticated_client.get(
+            reverse("overview-findings_severity"),
+            {"filter[provider_id__in]": str(provider1.id)},
+        )
+        assert single_response.status_code == status.HTTP_200_OK
+        single_attributes = single_response.json()["data"]["attributes"]
+        assert single_attributes["high"] == 8
+        assert single_attributes["medium"] == 4
+        assert single_attributes["critical"] == 0
+
+        combined_response = authenticated_client.get(
+            reverse("overview-findings_severity"),
+            {"filter[provider_id__in]": f"{provider1.id},{provider2.id}"},
+        )
+        assert combined_response.status_code == status.HTTP_200_OK
+        combined_attributes = combined_response.json()["data"]["attributes"]
+        assert combined_attributes["high"] == 8
+        assert combined_attributes["medium"] == 4
+        assert combined_attributes["critical"] == 3
+
 
 @pytest.mark.django_db
 class TestScheduleViewSet:

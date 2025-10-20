@@ -5,7 +5,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ## [1.15.0] (Prowler UNRELEASED)
 
 ### Added
-- Add provider_id__in filter to findings overview endpoint [(#8951)](https://github.com/prowler-cloud/prowler/pull/8951)
+- Add `provider_id__in` filter support to findings and findings severity overview endpoints [(#8951)](https://github.com/prowler-cloud/prowler/pull/8951)
 
 ---
 
