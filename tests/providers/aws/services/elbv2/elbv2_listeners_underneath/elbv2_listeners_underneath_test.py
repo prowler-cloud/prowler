@@ -152,6 +152,7 @@ class Test_elbv2_listeners_underneath:
         response = conn.create_listener(
             LoadBalancerArn=lb["LoadBalancerArn"],
             Protocol="HTTP",
+            Port=80,
             DefaultActions=[{"Type": "forward", "TargetGroupArn": target_group_arn}],
         )
 

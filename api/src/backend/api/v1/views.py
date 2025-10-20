@@ -95,6 +95,7 @@ from api.filters import (
     ScanSummarySeverityFilter,
     ServiceOverviewFilter,
     TaskFilter,
+    TenantApiKeyFilter,
     TenantFilter,
     UserFilter,
 )
@@ -124,6 +125,7 @@ from api.models import (
     SeverityChoices,
     StateChoices,
     Task,
+    TenantAPIKey,
     User,
     UserRoleRelationship,
 )
@@ -140,6 +142,7 @@ from api.v1.mixins import PaginateByPkMixin, TaskManagementMixin
 from api.v1.serializers import (
     ComplianceOverviewAttributesSerializer,
     ComplianceOverviewDetailSerializer,
+    ComplianceOverviewDetailThreatscoreSerializer,
     ComplianceOverviewMetadataSerializer,
     ComplianceOverviewSerializer,
     FindingDynamicFilterSerializer,
@@ -189,6 +192,9 @@ from api.v1.serializers import (
     ScanUpdateSerializer,
     ScheduleDailyCreateSerializer,
     TaskSerializer,
+    TenantApiKeyCreateSerializer,
+    TenantApiKeySerializer,
+    TenantApiKeyUpdateSerializer,
     TenantSerializer,
     TokenRefreshSerializer,
     TokenSerializer,
@@ -300,7 +306,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.13.0"
+        spectacular_settings.VERSION = "1.14.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -386,6 +392,11 @@ class SchemaView(SpectacularAPIView):
                 "name": "SAML",
                 "description": "Endpoints for Single Sign-On authentication management via SAML for seamless user "
                 "authentication.",
+            },
+            {
+                "name": "API Keys",
+                "description": "Endpoints for API keys management. These can be used as an alternative to JWT "
+                "authorization.",
             },
         ]
         return super().get(request, *args, **kwargs)
@@ -655,36 +666,48 @@ class TenantFinishACSView(FinishACSView):
             .get(email_domain=email_domain)
             .tenant
         )
-        role_name = (
-            extra.get("userType", ["no_permissions"])[0].strip()
-            if extra.get("userType")
-            else "no_permissions"
+
+        # Check if tenant has only one user with MANAGE_ACCOUNT role
+        users_with_manage_account = (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(role__manage_account=True, tenant_id=tenant.id)
+            .values("user")
+            .distinct()
+            .count()
         )
-        try:
-            role = Role.objects.using(MainRouter.admin_db).get(
-                name=role_name, tenant=tenant
+
+        # Only apply role mapping from userType if tenant does NOT have exactly one user with MANAGE_ACCOUNT
+        if users_with_manage_account != 1:
+            role_name = (
+                extra.get("userType", ["no_permissions"])[0].strip()
+                if extra.get("userType")
+                else "no_permissions"
             )
-        except Role.DoesNotExist:
-            role = Role.objects.using(MainRouter.admin_db).create(
-                name=role_name,
-                tenant=tenant,
-                manage_users=False,
-                manage_account=False,
-                manage_billing=False,
-                manage_providers=False,
-                manage_integrations=False,
-                manage_scans=False,
-                unlimited_visibility=False,
+            try:
+                role = Role.objects.using(MainRouter.admin_db).get(
+                    name=role_name, tenant=tenant
+                )
+            except Role.DoesNotExist:
+                role = Role.objects.using(MainRouter.admin_db).create(
+                    name=role_name,
+                    tenant=tenant,
+                    manage_users=False,
+                    manage_account=False,
+                    manage_billing=False,
+                    manage_providers=False,
+                    manage_integrations=False,
+                    manage_scans=False,
+                    unlimited_visibility=False,
+                )
+            UserRoleRelationship.objects.using(MainRouter.admin_db).filter(
+                user=user,
+                tenant_id=tenant.id,
+            ).delete()
+            UserRoleRelationship.objects.using(MainRouter.admin_db).create(
+                user=user,
+                role=role,
+                tenant_id=tenant.id,
             )
-        UserRoleRelationship.objects.using(MainRouter.admin_db).filter(
-            user=user,
-            tenant_id=tenant.id,
-        ).delete()
-        UserRoleRelationship.objects.using(MainRouter.admin_db).create(
-            user=user,
-            role=role,
-            tenant_id=tenant.id,
-        )
         membership, _ = Membership.objects.using(MainRouter.admin_db).get_or_create(
             user=user,
             tenant=tenant,
@@ -768,11 +791,13 @@ class UserViewSet(BaseUserViewset):
         # If called during schema generation, return an empty queryset
         if getattr(self, "swagger_fake_view", False):
             return User.objects.none()
+
         queryset = (
             User.objects.filter(membership__tenant__id=self.request.tenant_id)
             if hasattr(self.request, "tenant_id")
             else User.objects.all()
         )
+
         return queryset.prefetch_related("memberships", "roles")
 
     def get_permissions(self):
@@ -790,6 +815,12 @@ class UserViewSet(BaseUserViewset):
         else:
             return UserSerializer
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        if self.request.user.is_authenticated:
+            context["role"] = get_role(self.request.user)
+        return context
+
     @action(detail=False, methods=["get"], url_name="me")
     def me(self, request):
         user = self.request.user
@@ -803,7 +834,9 @@ class UserViewSet(BaseUserViewset):
         if kwargs["pk"] != str(self.request.user.id):
             raise ValidationError("Only the current user can be deleted.")
 
-        return super().destroy(request, *args, **kwargs)
+        user = self.get_object()
+        user.delete(using=MainRouter.admin_db)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @extend_schema(
         parameters=[
@@ -894,7 +927,11 @@ class UserViewSet(BaseUserViewset):
     partial_update=extend_schema(
         tags=["User"],
         summary="Partially update a user-roles relationship",
-        description="Update the user-roles relationship information without affecting other fields.",
+        description=(
+            "Update the user-roles relationship information without affecting other fields. "
+            "If the update would remove MANAGE_ACCOUNT from the last remaining user in the "
+            "tenant, the API rejects the request with a 400 response."
+        ),
         responses={
             204: OpenApiResponse(
                 response=None, description="Relationship updated successfully"
@@ -904,7 +941,12 @@ class UserViewSet(BaseUserViewset):
     destroy=extend_schema(
         tags=["User"],
         summary="Delete a user-roles relationship",
-        description="Remove the user-roles relationship from the system by their ID.",
+        description=(
+            "Remove the user-roles relationship from the system by their ID. If removing "
+            "MANAGE_ACCOUNT would take it away from the last remaining user in the tenant, "
+            "the API rejects the request with a 400 response. Users also cannot delete their "
+            "own role assignments; attempting to do so returns a 400 response."
+        ),
         responses={
             204: OpenApiResponse(
                 response=None, description="Relationship deleted successfully"
@@ -919,10 +961,47 @@ class UserRoleRelationshipView(RelationshipView, BaseRLSViewSet):
     http_method_names = ["post", "patch", "delete"]
     schema = RelationshipViewSchema()
     # RBAC required permissions
-    required_permissions = [Permissions.MANAGE_USERS]
+    required_permissions = [Permissions.MANAGE_ACCOUNT]
 
     def get_queryset(self):
         return User.objects.filter(membership__tenant__id=self.request.tenant_id)
+
+    def destroy(self, request, *args, **kwargs):
+        """
+        Prevent deleting role relationships if it would leave the tenant with no
+        users having MANAGE_ACCOUNT. Supports deleting specific roles via JSON:API
+        relationship payload or clearing all roles for the user when no payload.
+        """
+        user = self.get_object()
+        # Disallow deleting own roles
+        if str(user.id) == str(request.user.id):
+            return Response(
+                data={
+                    "detail": "Users cannot delete the relationship with their role."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        tenant_id = self.request.tenant_id
+        payload = request.data if isinstance(request.data, dict) else None
+
+        # If a user has more than one role, we will delete the relationship with the roles in the payload
+        data = payload.get("data") if payload else None
+        if data:
+            try:
+                role_ids = [item["id"] for item in data]
+            except KeyError:
+                role_ids = []
+            roles_to_remove = Role.objects.filter(id__in=role_ids, tenant_id=tenant_id)
+        else:
+            roles_to_remove = user.roles.filter(tenant_id=tenant_id)
+
+        UserRoleRelationship.objects.filter(
+            user=user,
+            tenant_id=tenant_id,
+            role_id__in=roles_to_remove.values_list("id", flat=True),
+        ).delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     def create(self, request, *args, **kwargs):
         user = self.get_object()
@@ -960,12 +1039,6 @@ class UserRoleRelationshipView(RelationshipView, BaseRLSViewSet):
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-    def destroy(self, request, *args, **kwargs):
-        user = self.get_object()
-        user.roles.clear()
-
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -2872,13 +2945,11 @@ class InvitationAcceptViewSet(BaseRLSViewSet):
     partial_update=extend_schema(
         tags=["Role"],
         summary="Partially update a role",
-        description="Update certain fields of an existing role's information without affecting other fields.",
         responses={200: RoleSerializer},
     ),
     destroy=extend_schema(
         tags=["Role"],
         summary="Delete a role",
-        description="Remove a role from the system by their ID.",
     ),
 )
 class RoleViewSet(BaseRLSViewSet):
@@ -2900,6 +2971,14 @@ class RoleViewSet(BaseRLSViewSet):
             return RoleUpdateSerializer
         return super().get_serializer_class()
 
+    @extend_schema(
+        description=(
+            "Update selected fields on an existing role. When changing the `users` "
+            "relationship of a role that grants MANAGE_ACCOUNT, the API blocks attempts "
+            "that would leave the tenant without any MANAGE_ACCOUNT assignees and prevents "
+            "callers from removing their own assignment to that role."
+        )
+    )
     def partial_update(self, request, *args, **kwargs):
         user_role = get_role(request.user)
         # If the user is the owner of the role, the manage_account field is not editable
@@ -2907,12 +2986,33 @@ class RoleViewSet(BaseRLSViewSet):
             request.data["manage_account"] = str(user_role.manage_account).lower()
         return super().partial_update(request, *args, **kwargs)
 
+    @extend_schema(
+        description=(
+            "Delete the specified role. The API rejects deletion of the last role "
+            "in the tenant that grants MANAGE_ACCOUNT."
+        )
+    )
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         if (
             instance.name == "admin"
         ):  # TODO: Move to a constant/enum (in case other roles are created by default)
             raise ValidationError(detail="The admin role cannot be deleted.")
+
+        # Prevent deleting the last MANAGE_ACCOUNT role in the tenant
+        if instance.manage_account:
+            has_other_ma = (
+                Role.objects.filter(tenant_id=instance.tenant_id, manage_account=True)
+                .exclude(id=instance.id)
+                .exists()
+            )
+            if not has_other_ma:
+                return Response(
+                    data={
+                        "detail": "Cannot delete the only role with MANAGE_ACCOUNT in the tenant."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         return super().destroy(request, *args, **kwargs)
 
@@ -3349,15 +3449,16 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             )
         filtered_queryset = self.filter_queryset(self.get_queryset())
 
-        all_requirements = (
-            filtered_queryset.values(
-                "requirement_id", "framework", "version", "description"
-            )
-            .distinct()
-            .annotate(
-                total_instances=Count("id"),
-                manual_count=Count("id", filter=Q(requirement_status="MANUAL")),
-            )
+        all_requirements = filtered_queryset.values(
+            "requirement_id",
+            "framework",
+            "version",
+            "description",
+        ).annotate(
+            total_instances=Count("id"),
+            manual_count=Count("id", filter=Q(requirement_status="MANUAL")),
+            passed_findings_sum=Sum("passed_findings"),
+            total_findings_sum=Sum("total_findings"),
         )
 
         passed_instances = (
@@ -3376,6 +3477,8 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             total_instances = requirement["total_instances"]
             passed_count = passed_counts.get(requirement_id, 0)
             is_manual = requirement["manual_count"] == total_instances
+            passed_findings = requirement["passed_findings_sum"] or 0
+            total_findings = requirement["total_findings_sum"] or 0
             if is_manual:
                 requirement_status = "MANUAL"
             elif passed_count == total_instances:
@@ -3390,10 +3493,19 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                     "version": requirement["version"],
                     "description": requirement["description"],
                     "status": requirement_status,
+                    "passed_findings": passed_findings,
+                    "total_findings": total_findings,
                 }
             )
 
-        serializer = self.get_serializer(requirements_summary, many=True)
+        # Use different serializer for threatscore framework
+        if "threatscore" not in compliance_id:
+            serializer = self.get_serializer(requirements_summary, many=True)
+        else:
+            serializer = ComplianceOverviewDetailThreatscoreSerializer(
+                requirements_summary, many=True
+            )
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], url_name="attributes")
@@ -3470,6 +3582,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                     ),
                     "name": requirement.get("name", ""),
                     "framework": compliance_framework.get("framework", ""),
+                    "compliance_name": compliance_framework.get("name", ""),
                     "version": compliance_framework.get("version", ""),
                     "description": requirement.get("description", ""),
                     "attributes": base_attributes,
@@ -4112,3 +4225,84 @@ class ProcessorViewSet(BaseRLSViewSet):
         elif self.action == "partial_update":
             return ProcessorUpdateSerializer
         return super().get_serializer_class()
+
+
+@extend_schema_view(
+    list=extend_schema(
+        tags=["API Keys"],
+        summary="List API keys",
+        description="Retrieve a list of API keys for the tenant, with filtering support.",
+    ),
+    retrieve=extend_schema(
+        tags=["API Keys"],
+        summary="Retrieve API key details",
+        description="Fetch detailed information about a specific API key by its ID.",
+    ),
+    create=extend_schema(
+        tags=["API Keys"],
+        summary="Create a new API key",
+        description="Create a new API key for the tenant.",
+    ),
+    partial_update=extend_schema(
+        tags=["API Keys"],
+        summary="Partially update an API key",
+        description="Modify certain fields of an existing API key without affecting other settings.",
+    ),
+    revoke=extend_schema(
+        tags=["API Keys"],
+        summary="Revoke an API key",
+        description="Revoke an API key by its ID. This action is irreversible and will prevent the key from being "
+        "used.",
+        request=None,
+        responses={
+            200: OpenApiResponse(
+                response=TenantApiKeySerializer,
+                description="API key was successfully revoked",
+            )
+        },
+    ),
+)
+class TenantApiKeyViewSet(BaseRLSViewSet):
+    queryset = TenantAPIKey.objects.all()
+    serializer_class = TenantApiKeySerializer
+    filterset_class = TenantApiKeyFilter
+    http_method_names = ["get", "post", "patch", "delete"]
+    ordering = ["revoked", "-created"]
+    ordering_fields = ["name", "prefix", "revoked", "inserted_at", "expires_at"]
+    # RBAC required permissions
+    required_permissions = [Permissions.MANAGE_ACCOUNT]
+
+    def get_queryset(self):
+        queryset = TenantAPIKey.objects.filter(
+            tenant_id=self.request.tenant_id
+        ).annotate(inserted_at=F("created"), expires_at=F("expiry_date"))
+        return queryset
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return TenantApiKeyCreateSerializer
+        elif self.action == "partial_update":
+            return TenantApiKeyUpdateSerializer
+        return super().get_serializer_class()
+
+    @extend_schema(exclude=True)
+    def destroy(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="DESTROY")
+
+    @action(detail=True, methods=["delete"])
+    def revoke(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        # Check if already revoked
+        if instance.revoked:
+            raise ValidationError(
+                {
+                    "detail": "API key is already revoked",
+                }
+            )
+
+        TenantAPIKey.objects.revoke_api_key(instance.pk)
+        instance.refresh_from_db()
+
+        serializer = self.get_serializer(instance)
+        return Response(data=serializer.data, status=status.HTTP_200_OK)

@@ -62,7 +62,7 @@ export const DeleteForm = ({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmitClient)}>
         <input type="hidden" name="id" value={userId} />
-        <div className="flex w-full justify-center sm:space-x-6">
+        <div className="flex w-full justify-center sm:gap-6">
           <CustomButton
             type="button"
             ariaLabel="Cancel"
@@ -83,6 +83,7 @@ export const DeleteForm = ({
             variant="solid"
             color="danger"
             size="lg"
+            radius="lg"
             isLoading={isLoading}
             startContent={!isLoading && <DeleteIcon size={24} />}
           >

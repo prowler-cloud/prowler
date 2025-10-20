@@ -1,30 +1,39 @@
 {
   "Provider": "aws",
   "CheckID": "cloudfront_distributions_logging_enabled",
-  "CheckTitle": "Check if CloudFront distributions have logging enabled.",
-  "CheckType": [],
+  "CheckTitle": "CloudFront distribution has logging enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
   "ServiceName": "cloudfront",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:cloudfront:region:account-id:distribution/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCloudFrontDistribution",
-  "Description": "Check if CloudFront distributions have logging enabled.",
-  "Risk": "If not enabled monitoring of service use is not possible.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html",
+  "Description": "**CloudFront distributions** record viewer requests using either **standard access logs** or an attached **real-time log configuration**.\n\nThe finding evaluates whether logging is configured so request metadata is captured for each distribution.",
+  "Risk": "Missing **CloudFront logs** blinds monitoring of edge requests, impeding detection of bot abuse, credential stuffing, origin probing, and cache-bypass attempts.\n\nThis delays incident response and weakens evidence for forensics, impacting **confidentiality**, **integrity**, and **availability**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html",
+    "https://repost.aws/knowledge-center/cloudfront-logging-requests",
+    "https://aws.amazon.com/awstv/watch/e895e7811ac/",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/enable-real-time-logging.html",
+    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/real-time-logs.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws cloudfront update-distribution --id <DISTRIBUTION_ID> --distribution-config logging.json --if-match <ETAG>",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/logging-policies/logging_20#cloudformation",
-      "Other": "https://docs.prowler.com/checks/aws/logging-policies/logging_20",
-      "Terraform": "https://docs.prowler.com/checks/aws/logging-policies/logging_20#terraform"
+      "CLI": "aws cloudfront get-distribution-config --id <DISTRIBUTION_ID> --output json > current-config.json && echo 'Manually edit current-config.json to add Logging.Bucket: <example_bucket>.s3.amazonaws.com', then run:' && echo 'aws cloudfront update-distribution --id <DISTRIBUTION_ID> --distribution-config file://current-config.json --if-match $(aws cloudfront get-distribution-config --id <DISTRIBUTION_ID> --query \"ETag\" --output text)'",
+      "NativeIaC": "```yaml\n# CloudFormation: enable CloudFront standard access logging\nResources:\n  <example_resource_name>:\n    Type: AWS::CloudFront::Distribution\n    Properties:\n      DistributionConfig:\n        Enabled: true\n        Origins:\n          - Id: origin1\n            DomainName: <example_origin_domain>\n            S3OriginConfig: {}\n        DefaultCacheBehavior:\n          TargetOriginId: origin1\n          ViewerProtocolPolicy: allow-all\n        Logging:\n          Bucket: <example_bucket>.s3.amazonaws.com  # CRITICAL: enables standard access logs to S3 for this distribution\n          # The presence of Logging with Bucket turns on access logging\n```",
+      "Other": "1. In the AWS Console, go to CloudFront and select your distribution\n2. Open the General tab and click Edit\n3. In Standard logging, set to On\n4. Select the S3 bucket to receive logs\n5. Ensure the S3 bucket has Object Ownership set to ACLs enabled (Bucket owner preferred/ObjectWriter)\n6. Save changes",
+      "Terraform": "```hcl\n# Add this block to your existing CloudFront distribution to enable access logging\nresource \"aws_cloudfront_distribution\" \"<example_resource_name>\" {\n  # ... existing required config ...\n  logging_config {\n    bucket = \"<example_bucket>.s3.amazonaws.com\"  # CRITICAL: enables standard access logs to S3\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Real-time monitoring can be achieved by directing CloudTrail Logs to CloudWatch Logs and establishing corresponding metric filters and alarms. Enable logging for services with defined log rotation. These logs are useful for Incident Response and forensics investigation among other use cases.",
-      "Url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/AccessLogs.html"
+      "Text": "Enable **standard access logs** or **real-time logs** for all distributions.\n\nApply **least privilege** to log storage, enforce retention and immutability, and centralize ingestion with alerts.\n\nUse **defense-in-depth**: correlate with WAF metrics, sample real-time when needed, and audit new distributions for logging.",
+      "Url": "https://hub.prowler.com/check/cloudfront_distributions_logging_enabled"
     }
   },
   "Categories": [
-    "forensics-ready",
     "logging"
   ],
   "DependsOn": [],

@@ -1,6 +1,8 @@
 "use client";
 
 import { SettingsIcon } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 
 import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
 import { useUIStore } from "@/store/ui/store";
@@ -8,12 +10,37 @@ import { useUIStore } from "@/store/ui/store";
 import { MutedFindingsConfigForm } from "./forms";
 
 export const MutedFindingsConfigButton = () => {
+  const pathname = usePathname();
   const {
     isMutelistModalOpen,
     openMutelistModal,
     closeMutelistModal,
     hasProviders,
+    shouldAutoOpenMutelist,
+    resetMutelistModalRequest,
   } = useUIStore();
+
+  useEffect(() => {
+    if (!shouldAutoOpenMutelist) {
+      return;
+    }
+
+    if (pathname !== "/providers") {
+      return;
+    }
+
+    if (hasProviders) {
+      openMutelistModal();
+    }
+
+    resetMutelistModalRequest();
+  }, [
+    hasProviders,
+    openMutelistModal,
+    pathname,
+    resetMutelistModalRequest,
+    shouldAutoOpenMutelist,
+  ]);
 
   const handleOpenModal = () => {
     if (hasProviders) {

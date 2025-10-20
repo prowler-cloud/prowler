@@ -33,6 +33,7 @@ class Provider(str, Enum):
     IAC = "iac"
     NHN = "nhn"
     MONGODBATLAS = "mongodbatlas"
+    OCI = "oci"
 
 
 # Compliance
@@ -75,6 +76,9 @@ default_config_file_path = (
 )
 default_fixer_config_file_path = (
     f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/fixer_config.yaml"
+)
+default_redteam_config_file_path = (
+    f"{pathlib.Path(os.path.dirname(os.path.realpath(__file__)))}/llm_config.yaml"
 )
 encoding_format_utf_8 = "utf-8"
 available_output_formats = ["csv", "json-asff", "json-ocsf", "html"]
