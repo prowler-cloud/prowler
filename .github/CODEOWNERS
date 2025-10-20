@@ -1,6 +1,0 @@
-/* @prowler-cloud/sdk
-/.github/ @prowler-cloud/sdk
-prowler @prowler-cloud/sdk @prowler-cloud/detection-and-remediation
-tests @prowler-cloud/sdk @prowler-cloud/detection-and-remediation
-api @prowler-cloud/api
-ui @prowler-cloud/ui

@@ -1,4 +1,0 @@
-name: "SDK - CodeQL Config"
-paths-ignore:
-  - "api/"
-  - "ui/"
