@@ -18,7 +18,7 @@
     "https://awswala.medium.com/enable-cloudtrail-data-events-logging-for-objects-in-an-s3-bucket-33cade51ae2b",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/s3-controls.html#s3-23",
     "https://docs.aws.amazon.com/AmazonS3/latest/userguide/enable-cloudtrail-logging-for-s3.html",
-    "https://www.plerion.com/cloud-knowledge-base/ensure-object-level-logging-for-read-events-enabled-for-s3-bucket",
+    "https://www.plerion.com/cloud-knowledge-base/ensure-object-level-logging-for-read-events-enabled-for-s3-bucket"
   ],
   "Remediation": {
     "Code": {
