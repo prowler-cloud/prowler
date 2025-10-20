@@ -2,6 +2,7 @@ from typing import Dict
 
 import boto3
 import openai
+import requests
 from botocore.exceptions import BotoCoreError, ClientError
 from celery.utils.log import get_task_logger
 
@@ -30,6 +31,24 @@ def _extract_openai_api_key(
     if not isinstance(api_key, str) or not api_key:
         return None
     return api_key
+
+
+def _extract_openai_compatible_params(
+    provider_cfg: LighthouseProviderConfiguration,
+) -> Dict[str, str] | None:
+    """
+    Extract base_url and api_key for OpenAI-compatible providers.
+    """
+    creds = provider_cfg.credentials_decoded
+    base_url = provider_cfg.base_url
+    if not isinstance(creds, dict):
+        return None
+    api_key = creds.get("api_key")
+    if not isinstance(api_key, str) or not api_key:
+        return None
+    if not isinstance(base_url, str) or not base_url:
+        return None
+    return {"base_url": base_url, "api_key": api_key}
 
 
 def _extract_bedrock_credentials(
@@ -131,6 +150,34 @@ def check_lighthouse_provider_connection(provider_config_id: str) -> Dict:
             )
             _ = bedrock_client.list_foundation_models()
 
+        elif (
+            provider_cfg.provider_type
+            == LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE
+        ):
+            params = _extract_openai_compatible_params(provider_cfg)
+            if not params:
+                provider_cfg.is_active = False
+                provider_cfg.save()
+                return {
+                    "connected": False,
+                    "error": "Base URL or API key is invalid or missing",
+                }
+
+            # Test connection by hitting the models endpoint
+            headers = {"Authorization": f"Bearer {params['api_key']}"}
+            try:
+                resp = requests.get(
+                    f"{params['base_url'].rstrip('/')}/v1/models",
+                    headers=headers,
+                    timeout=15,
+                )
+                if resp.status_code >= 400:
+                    raise Exception(f"HTTP {resp.status_code}: {resp.text[:200]}")
+            except Exception as e:
+                provider_cfg.is_active = False
+                provider_cfg.save()
+                return {"connected": False, "error": str(e)}
+
         else:
             return {"connected": False, "error": "Unsupported provider type"}
 
@@ -166,6 +213,39 @@ def _fetch_openai_models(api_key: str) -> Dict[str, str]:
     models = client.models.list()
     # OpenAI uses model.id for both ID and display name
     return {m.id: m.id for m in getattr(models, "data", [])}
+
+
+def _fetch_openai_compatible_models(base_url: str, api_key: str) -> Dict[str, str]:
+    """
+    Fetch available models from an OpenAI-compatible API.
+
+    Returns a mapping of model_id -> model_name. If the provider doesn't expose
+    a models catalog, returns an empty dict.
+    """
+    headers = {"Authorization": f"Bearer {api_key}"}
+    url = f"{base_url.rstrip('/')}/v1/models"
+    resp = requests.get(url, headers=headers, timeout=15)
+    if resp.status_code >= 400:
+        raise Exception(f"HTTP {resp.status_code}: {resp.text[:200]}")
+    data = resp.json() if resp.content else {}
+    items = data.get("data", []) if isinstance(data, dict) else []
+
+    available_models: Dict[str, str] = {}
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        model_id = item.get("id")
+        if not isinstance(model_id, str) or not model_id:
+            continue
+
+        # Prefer provider-supplied human-friendly name when available
+        name_value = item.get("name")
+        if isinstance(name_value, str) and name_value:
+            available_models[model_id] = name_value
+        else:
+            available_models[model_id] = model_id
+
+    return available_models
 
 
 def _fetch_bedrock_models(bedrock_creds: Dict[str, str]) -> Dict[str, str]:
@@ -324,6 +404,22 @@ def refresh_lighthouse_provider_models(provider_config_id: str) -> Dict:
                     "error": "AWS credentials are invalid or missing",
                 }
             fetched_models = _fetch_bedrock_models(bedrock_creds)
+
+        elif (
+            provider_cfg.provider_type
+            == LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE
+        ):
+            params = _extract_openai_compatible_params(provider_cfg)
+            if not params:
+                return {
+                    "created": 0,
+                    "updated": 0,
+                    "deleted": 0,
+                    "error": "Base URL or API key is invalid or missing",
+                }
+            fetched_models = _fetch_openai_compatible_models(
+                params["base_url"], params["api_key"]
+            )
 
         else:
             return {

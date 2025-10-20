@@ -50,3 +50,20 @@ class BedrockCredentialsSerializer(serializers.Serializer):
                 "Invalid AWS region format. Expected format like 'us-east-1' or 'eu-west-2'."
             )
         return value
+
+
+class OpenAICompatibleCredentialsSerializer(serializers.Serializer):
+    """
+    Minimal serializer for OpenAI-compatible credentials.
+
+    Many OpenAI-compatible providers do not use the same key format as OpenAI.
+    We only require a non-empty API key string. Additional fields can be added later
+    without breaking existing configurations.
+    """
+
+    api_key = serializers.CharField()
+
+    def validate_api_key(self, value: str) -> str:
+        if not isinstance(value, str) or not value.strip():
+            raise serializers.ValidationError("API key is required.")
+        return value.strip()

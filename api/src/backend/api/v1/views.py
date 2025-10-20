@@ -4378,7 +4378,7 @@ class LighthouseProviderConfigViewSet(BaseRLSViewSet):
     @extend_schema(
         tags=["Lighthouse AI"],
         summary="Refresh LLM models catalog",
-        description="Fetch available models for this provider configuration and upsert into catalog. Supports OpenAI and AWS Bedrock providers.",
+        description="Fetch available models for this provider configuration and upsert into catalog. Supports OpenAI, OpenAI-compatible, and AWS Bedrock providers.",
         request=None,
         responses={202: OpenApiResponse(response=TaskSerializer)},
     )
