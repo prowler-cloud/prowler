@@ -432,10 +432,6 @@
       "source": "/projects/prowler-saas/en/latest/:slug*",
       "destination": "https://docs.prowler.pro/en/latest/:slug*"
     },
-    // {
-    //   "source": "/projects/prowler-open-source/en/latest/tutorials/prowler-app-mute-findings",
-    //   "destination": "/user-guide/tutorials/prowler-app-mute-findings"
-    // },
     {
       "source": "/projects/prowler-open-source/en/latest/tutorials/:slug*",
       "destination": "/user-guide/tutorials/:slug*"
