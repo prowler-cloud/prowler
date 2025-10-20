@@ -1,24 +1,26 @@
 ---
-title: 'Microsoft 365 Authentication in Prowler'
+title: "Microsoft 365 Authentication in Prowler"
 ---
 
 Prowler for Microsoft 365 supports multiple authentication types. Authentication methods vary between Prowler App and Prowler CLI:
 
 **Prowler App:**
 
-- [**Service Principal Application**](#service-principal-authentication-recommended) (**Recommended**)
-- **Service Principal with User Credentials** (Deprecated)
+- [**Application Certificate Authentication**](#certificate-based-authentication) (**Recommended**)
+- [**Application Client Secret Authentication**](#client-secret-authentication)
 
 **Prowler CLI:**
 
-- [**Service Principal Application**](#service-principal-authentication-recommended) (**Recommended**)
-- **Service Principal with User Credentials** (Deprecated)
-- [**Interactive browser authentication**](#interactive-browser-authentication)
+- [**Application Certificate Authentication**](#certificate-based-authentication) (**Recommended**)
+- [**Application Client Secret Authentication**](#client-secret-authentication)
+- [**Azure CLI Authentication**](#azure-cli-authentication)
+- [**Interactive Browser Authentication**](#interactive-browser-authentication)
+
 ## Required Permissions
 
 To run the full Prowler provider, including PowerShell checks, two types of permission scopes must be set in **Microsoft Entra ID**.
 
-### Service Principal Authentication Permissions (Recommended)
+### Application Permissions for App-Only Authentication
 
 When using service principal authentication, add these **Application Permissions**:
 
@@ -35,11 +37,11 @@ When using service principal authentication, add these **Application Permissions
 - `application_access` from external API `Skype and Teams Tenant Admin API`: Required for Teams PowerShell module app authentication.
 
 <Note>
-`Directory.Read.All` can be replaced with `Domain.Read.All` for more restrictive permissions, but Entra checks related to DirectoryRoles and GetUsers will not run. If using this option, you must also add the `Organization.Read.All` permission to the service principal application for authentication.
+`Directory.Read.All` can be replaced with `Domain.Read.All` for more restrictive permissions, but Entra checks related to DirectoryRoles and GetUsers will not run. If using this option, you must also add the `Organization.Read.All` permission to the application registration for authentication.
 
 </Note>
 <Note>
-This is the **recommended authentication method** because it allows running the full M365 provider including PowerShell checks, providing complete coverage of all available security checks.
+These permissions enable application-based authentication methods (client secret and certificate). Using certificate-based authentication is the recommended way to run the full M365 provider, including PowerShell checks.
 
 </Note>
 ### Browser Authentication Permissions
@@ -47,96 +49,189 @@ This is the **recommended authentication method** because it allows running the 
 When using browser authentication, permissions are delegated to the user, so the user must have the appropriate permissions rather than the application.
 
 <Warning>
-With browser authentication, you will only be able to run checks that work through MS Graph API. PowerShell module checks will not be executed.
+Browser and Azure CLI authentication methods limit scanning capabilities to checks that operate through Microsoft Graph API. Checks requiring PowerShell modules will not execute, as they need application-level permissions that cannot be delegated through browser authentication.
 
 </Warning>
 ### Step-by-Step Permission Assignment
 
-#### Create Service Principal Application
+#### Create Application Registration
 
 1. Access **Microsoft Entra ID**
 
-    ![Overview of Microsoft Entra ID](/images/providers/microsoft-entra-id.png)
+   ![Overview of Microsoft Entra ID](/images/providers/microsoft-entra-id.png)
 
 2. Navigate to "Applications" > "App registrations"
 
-    ![App Registration nav](/images/providers/app-registration-menu.png)
+   ![App Registration nav](/images/providers/app-registration-menu.png)
 
 3. Click "+ New registration", complete the form, and click "Register"
 
-    ![New Registration](/images/providers/new-registration.png)
+   ![New Registration](/images/providers/new-registration.png)
 
 4. Go to "Certificates & secrets" > "Client secrets" > "+ New client secret"
 
-    ![Certificate & Secrets nav](/images/providers/certificates-and-secrets.png)
+   ![Certificate & Secrets nav](/images/providers/certificates-and-secrets.png)
 
 5. Fill in the required fields and click "Add", then copy the generated value (this will be `AZURE_CLIENT_SECRET`)
 
-    ![New Client Secret](/images/providers/new-client-secret.png)
+   ![New Client Secret](/images/providers/new-client-secret.png)
 
 #### Grant Microsoft Graph API Permissions
 
 1. Go to App Registration > Select your Prowler App > click on "API permissions"
 
-    ![API Permission Page](/images/providers/api-permissions-page.png)
+   ![API Permission Page](/images/providers/api-permissions-page.png)
 
 2. Click "+ Add a permission" > "Microsoft Graph" > "Application permissions"
 
-    ![Add API Permission](/images/providers/add-app-api-permission.png)
+   ![Add API Permission](/images/providers/add-app-api-permission.png)
 
 3. Search and select the required permissions:
-    - `AuditLog.Read.All`: Required for Entra service
-    - `Directory.Read.All`: Required for all services
-    - `Policy.Read.All`: Required for all services
-    - `SharePointTenantSettings.Read.All`: Required for SharePoint service
 
-    ![Permission Screenshots](/images/providers/directory-permission.png)
+   - `AuditLog.Read.All`: Required for Entra service
+   - `Directory.Read.All`: Required for all services
+   - `Policy.Read.All`: Required for all services
+   - `SharePointTenantSettings.Read.All`: Required for SharePoint service
 
-    ![Application Permissions](/images/providers/app-permissions.png)
+   ![Permission Screenshots](/images/providers/directory-permission.png)
 
-4. Click "Add permissions", then click "Grant admin consent for ``<your-tenant-name>``"
+   ![Application Permissions](/images/providers/app-permissions.png)
 
-#### Grant PowerShell Module Permissions (For Service Principal Authentication)
+4. Click "Add permissions", then click "Grant admin consent for `<your-tenant-name>`"
 
+#### Grant PowerShell Module Permissions
 1. **Add Exchange API:**
 
-    - Search and select "Office 365 Exchange Online" API in **APIs my organization uses**
+   - Search and select "Office 365 Exchange Online" API in **APIs my organization uses**
 
-    ![Office 365 Exchange Online API](/images/providers/search-exchange-api.png)
+   ![Office 365 Exchange Online API](/images/providers/search-exchange-api.png)
 
-    - Select "Exchange.ManageAsApp" permission and click "Add permissions"
+   - Select "Exchange.ManageAsApp" permission and click "Add permissions"
 
-    ![Exchange.ManageAsApp Permission](/images/providers/exchange-permission.png)
+   ![Exchange.ManageAsApp Permission](/images/providers/exchange-permission.png)
 
-    - Assign `Global Reader` role to the app: Go to `Roles and administrators` > click `here` for directory level assignment
+   - Assign `Global Reader` role to the app: Go to `Roles and administrators` > click `here` for directory level assignment
 
-    ![Roles and administrators](/images/providers/here.png)
+   ![Roles and administrators](/images/providers/here.png)
 
-    - Search for `Global Reader` and assign it to your application
+   - Search for `Global Reader` and assign it to your application
 
-    ![Global Reader Role](/images/providers/global-reader-role.png)
+   ![Global Reader Role](/images/providers/global-reader-role.png)
 
 2. **Add Teams API:**
 
-    - Search and select "Skype and Teams Tenant Admin API" in **APIs my organization uses**
+   - Search and select "Skype and Teams Tenant Admin API" in **APIs my organization uses**
 
-    ![Skype and Teams Tenant Admin API](/images/providers/search-skype-teams-tenant-admin-api.png)
+   ![Skype and Teams Tenant Admin API](/images/providers/search-skype-teams-tenant-admin-api.png)
 
-    - Select "application_access" permission and click "Add permissions"
+   - Select "application_access" permission and click "Add permissions"
 
-    ![application_access Permission](/images/providers/teams-permission.png)
+   ![application_access Permission](/images/providers/teams-permission.png)
 
 3. Click "Grant admin consent for `<your-tenant-name>`" to grant admin consent
 
-    ![Grant Admin Consent](/images/providers/grant-external-api-permissions.png)
+   ![Grant Admin Consent](/images/providers/grant-external-api-permissions.png)
 
-## Service Principal Authentication (Recommended)
+Final permissions should look like this:
 
-*Available for both Prowler App and Prowler CLI*
+![Final Permissions](/images/providers/final-permissions.png)
+
+<a id="client-secret-authentication"></a>
+<a id="certificate-based-authentication"></a>
+## Application Certificate Authentication (Recommended)
+
+_Available for both Prowler App and Prowler CLI_
+
+**Authentication flag for CLI:** `--certificate-auth`
+
+Certificate-based authentication replaces the client secret with an X.509 certificate that signs Microsoft Entra ID tokens for the Prowler application registration.
+
+This is the recommended approach for production environments because it avoids long-lived secrets, supports the full provider (including PowerShell checks), and simplifies unattended automation. Microsoft also recommends certificate credentials for app-only access, see [Manage certificates for applications](https://learn.microsoft.com/en-us/entra/identity-platform/certificate-credentials).
+
+
+### Generate the Certificate
+
+The service principal needs a certificate that contains the private key locally (for Prowler) and the public key uploaded to Microsoft Entra ID. The following commands show a secure baseline workflow on macOS or Linux using OpenSSL:
+
+```console
+# 1. Create a private key (keep this file private; do not upload it to the portal)
+openssl genrsa -out prowlerm365.key 2048
+
+# 2. Create a self-signed certificate valid for two years
+openssl req -x509 -new -nodes -key prowlerm365.key -sha256 -days 730 -out prowlerm365.cer -subj "/CN=ProwlerM365Cert"
+
+# 3. Package the key and certificate into a passwordless PFX bundle for Prowler
+openssl pkcs12 -export \
+  -out prowlerm365.pfx \
+  -inkey prowlerm365.key \
+  -in prowlerm365.cer \
+  -passout pass:
+```
+
+<Warning>
+Guard `prowlerm365.key` and `prowlerm365.pfx`. Only upload the `.cer` file to the Entra ID portal. Rotate or revoke the certificate before it expires or if there is any suspicion of exposure.
+
+</Warning>
+
+If your organization uses a certificate authority, you can replace step 2 with a CSR workflow and import the signed certificate instead.
+
+### Upload the Certificate to Microsoft Entra ID
+
+1. Open **Microsoft Entra ID** > **App registrations** > your application.
+2. Go to **Certificates & secrets** > **Certificates**.
+3. Select **Upload certificate** and choose `prowlerm365.cer`.
+4. Confirm the certificate appears with the expected expiration date.
+
+After the certificate is in place, encode the PFX file so it can be stored in an environment variable (macOS/Linux example):
+
+```console
+base64 -i prowlerm365.pfx -o prowlerm365.pfx.b64
+cat prowlerm365.pfx.b64 | tr -d '\n'
+```
+
+Copy the resulting single-line Base64 string (or the contents of `prowlerm365.pfx.b64`)—you will use it in the next step.
+
+### Provide the Certificate to Prowler
+
+You can supply the private certificate to Prowler in two ways:
+
+- **Environment variables (recommended for headless execution)**
+
+  ```console
+  export AZURE_CLIENT_ID="00000000-0000-0000-0000-000000000000"
+  export AZURE_TENANT_ID="11111111-1111-1111-1111-111111111111"
+  export M365_CERTIFICATE_CONTENT="$(base64 < prowlerm365.pfx | tr -d '\n')"
+  ```
+
+  The `M365_CERTIFICATE_CONTENT` variable must contain a single-line Base64 string. Remove any line breaks or spaces before exporting.
+
+- **Local file path**
+
+  Store the PFX securely and reference it when you run the CLI:
+
+  ```console
+  python3 prowler-cli.py m365 --certificate-auth --certificate-path /secure/path/prowlerm365.pfx
+  ```
+
+  The CLI still needs `AZURE_CLIENT_ID` and `AZURE_TENANT_ID` in the environment when you use `--certificate-path`.
+
+For the **Prowler App**, paste the Base64-encoded PFX in the `certificate_content` field when you configure the provider secrets. The platform persists the encrypted certificate and supplies it during scans.
+
+<Note>
+Do not mix certificate authentication with a client secret. Provide either a certificate **or** a secret to the application registration and Prowler configuration.
+
+</Note>
+
+<a id="client-secret-authentication"></a>
+<a id="service-principal-authentication"></a>
+<a id="service-principal-authentication-recommended"></a>
+## Application Client Secret Authentication
+
+_Available for both Prowler App and Prowler CLI_
 
 **Authentication flag for CLI:** `--sp-env-auth`
 
-Authenticate using the **Service Principal Application** by configuring the following environment variables:
+Authenticate using a **Microsoft Entra application registration with a client secret** by configuring the following environment variables:
 
 ```console
 export AZURE_CLIENT_ID="XXXXXXXXX"
@@ -150,13 +245,61 @@ Refer to the [Step-by-Step Permission Assignment](#step-by-step-permission-assig
 
 If the external API permissions described in the mentioned section above are not added only checks that work through MS Graph will be executed. This means that the full provider will not be executed.
 
+This workflow is helpful for initial validation or temporary access. Plan to transition to certificate-based authentication to remove long-lived secrets and keep full provider coverage in unattended environments.
+
 <Note>
-In order to scan all the checks from M365 required permissions to the service principal application must be added. Refer to the [PowerShell Module Permissions](#grant-powershell-module-permissions-for-service-principal-authentication) section for more information.
+To scan every M365 check, ensure the required permissions are added to the application registration. Refer to the [PowerShell Module Permissions](#grant-powershell-module-permissions-for-app-only-authentication) section for more information.
 
 </Note>
+
+### Run Prowler with Certificate Authentication
+
+After the variables or path are in place, run the Microsoft 365 provider as usual:
+
+```console
+python3 prowler-cli.py m365 --certificate-auth --init-modules --log-level ERROR
+```
+
+The command above initializes PowerShell modules if needed. You can combine other standard flags (for example, `--region M365USGovernment` or custom outputs) with `--certificate-auth`.
+
+Prowler prints the certificate thumbprint during execution so you can confirm the correct credential is in use.
+
+<a id="azure-cli-authentication"></a>
+## Azure CLI Authentication
+
+_Available only for Prowler CLI_
+
+**Authentication flag for CLI:** `--az-cli-auth`
+
+Azure CLI authentication relies on the identity that is already signed in with the Azure CLI. Before running Prowler, make sure you have an active CLI session in the target tenant:
+
+```console
+az login --tenant <TENANT_ID>
+# Optional: enforce the tenant when several are available
+az account set --tenant <TENANT_ID>
+```
+
+If you prefer to reuse the same service principal that powers certificate-based authentication, authenticate it through Azure CLI instead of exporting environment variables. Azure CLI expects the certificate in PEM format; convert the PFX produced earlier and sign in:
+
+```console
+openssl pkcs12 -in prowlerm365.pfx -out prowlerm365.pem -nodes
+az login --service-principal \
+  --username <AZURE_CLIENT_ID> \
+  --password /secure/path/prowlerm365.pem \
+  --tenant <AZURE_TENANT_ID>
+```
+
+After the CLI session is authenticated, launch Prowler with the Azure CLI flag:
+
+```console
+python3 prowler-cli.py m365 --az-cli-auth
+```
+
+The Azure CLI identity must hold the same Microsoft Graph and external API permissions required for the full provider. Signing in with a user account limits the scan to delegated Microsoft Graph endpoints and skips PowerShell-based checks. Use a service principal with the necessary application permissions to keep complete coverage.
+
 ## Interactive Browser Authentication
 
-*Available only for Prowler CLI*
+_Available only for Prowler CLI_
 
 **Authentication flag:** `--browser-auth`
 
@@ -171,6 +314,7 @@ Since this is a **delegated permission** authentication method, necessary permis
 PowerShell is required to run certain M365 checks.
 
 **Supported versions:**
+
 - **PowerShell 7.4 or higher** (7.5 is recommended)
 
 #### Why Is PowerShell 7.4+ Required?
@@ -193,6 +337,7 @@ Installing PowerShell is different depending on your OS:
     ```console
     winget install --id Microsoft.PowerShell --source winget
     ```
+
   </Tab>
   <Tab title="MacOS">
     [MacOS](https://learn.microsoft.com/es-es/powershell/scripting/install/installing-powershell-on-macos?view=powershell-7.5#install-the-latest-stable-release-of-powershell): installing PowerShell on MacOS needs to have installed [brew](https://brew.sh/), once installed, simply run the command shown above, Pwsh is only supported in macOS 15 (Sequoia) x64 and Arm64, macOS 14 (Sonoma) x64 and Arm64, macOS 13 (Ventura) x64 and Arm64
@@ -202,6 +347,7 @@ Installing PowerShell is different depending on your OS:
     ```
 
     Once it's installed run `pwsh` on your terminal to verify it's working.
+
   </Tab>
   <Tab title="Linux (Ubuntu)">
     [Ubuntu](https://learn.microsoft.com/es-es/powershell/scripting/install/install-ubuntu?view=powershell-7.5#installation-via-package-repository-the-package-repository): The required version for installing PowerShell +7.4 on Ubuntu are Ubuntu 22.04 and Ubuntu 24.04.
@@ -241,6 +387,7 @@ Installing PowerShell is different depending on your OS:
     # Start PowerShell
     pwsh
     ```
+
   </Tab>
   <Tab title="Linux (Alpine)">
     [Alpine](https://learn.microsoft.com/es-es/powershell/scripting/install/install-alpine?view=powershell-7.5#installation-steps): The only supported version for installing PowerShell +7.4 on Alpine is Alpine 3.20. The unique way to install it is downloading the tar.gz package available on [PowerShell github](https://github.com/PowerShell/PowerShell/releases/download/v7.5.0/powershell-7.5.0-linux-musl-x64.tar.gz).
@@ -286,6 +433,7 @@ Installing PowerShell is different depending on your OS:
     # Start PowerShell
     pwsh
     ```
+
   </Tab>
   <Tab title="Linux (Debian)">
     [Debian](https://learn.microsoft.com/es-es/powershell/scripting/install/install-debian?view=powershell-7.5#installation-on-debian-11-or-12-via-the-package-repository): The required version for installing PowerShell +7.4 on Debian are Debian 11 and Debian 12. The recommended way to install it is downloading the package available on PMC.
@@ -324,6 +472,7 @@ Installing PowerShell is different depending on your OS:
     # Start PowerShell
     pwsh
     ```
+
   </Tab>
   <Tab title="Linux (RHEL)">
     [Rhel](https://learn.microsoft.com/es-es/powershell/scripting/install/install-rhel?view=powershell-7.5#installation-via-the-package-repository): The required version for installing PowerShell +7.4 on Red Hat are RHEL 8 and RHEL 9. The recommended way to install it is downloading the package available on PMC.
@@ -357,6 +506,7 @@ Installing PowerShell is different depending on your OS:
     # Install PowerShell
     sudo dnf install powershell -y
     ```
+
   </Tab>
   <Tab title="Docker">
     [Docker](https://learn.microsoft.com/es-es/powershell/scripting/install/powershell-in-docker?view=powershell-7.5#use-powershell-in-a-container): The following command download the latest stable versions of PowerShell:
@@ -370,6 +520,7 @@ Installing PowerShell is different depending on your OS:
     ```console
     docker run -it mcr.microsoft.com/dotnet/sdk:9.0 pwsh
     ```
+
   </Tab>
 </Tabs>
 ### Required PowerShell Modules
@@ -386,6 +537,7 @@ Example command:
 ```console
 python3 prowler-cli.py m365 --verbose --log-level ERROR --sp-env-auth --init-modules
 ```
+
 If the modules are already installed, running this command will not cause issues—it will simply verify that the necessary modules are available.
 
 <Note>
@@ -399,7 +551,6 @@ Install-Module -Name "ModuleName" -Scope AllUsers -Force
 </Note>
 #### Modules Version
 
+- [MSAL.PS](https://www.powershellgallery.com/packages/MSAL.PS/4.32.0): Required for Exchange module via application authentication.
 - [ExchangeOnlineManagement](https://www.powershellgallery.com/packages/ExchangeOnlineManagement/3.6.0) (Minimum version: 3.6.0) Required for checks across Exchange, Defender, and Purview.
 - [MicrosoftTeams](https://www.powershellgallery.com/packages/MicrosoftTeams/6.6.0) (Minimum version: 6.6.0) Required for all Teams checks.
-- [MSAL.PS](https://www.powershellgallery.com/packages/MSAL.PS/4.32.0): Required for Exchange module via application authentication.
-- [MSAL.PS](https://www.powershellgallery.com/packages/MSAL.PS/4.32.0): Required for Exchange module via application authentication.

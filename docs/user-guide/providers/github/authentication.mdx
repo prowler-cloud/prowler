@@ -144,10 +144,19 @@ GitHub Apps provide the recommended integration method for accessing multiple re
 2. **Create New GitHub App**
     - Click "New GitHub App"
     - Complete the required fields:
-        - **GitHub App name**: Unique application name
-        - **Homepage URL**: Application homepage
-        - **Webhook URL**: Webhook payload URL (optional)
-        - **Permissions**: Application permission requirements
+        - **GitHub App name**: Choose a unique, descriptive name (e.g., "Prowler Security Scanner")
+        - **Homepage URL**: Enter your organization's website or the Prowler documentation URL (e.g., `https://prowler.com` or `https://docs.prowler.com`). This is just for reference and doesn't affect functionality.
+        - **Webhook URL**: Leave blank or uncheck "Active" under Webhook. Prowler doesn't require webhooks since it performs on-demand scans rather than responding to GitHub events.
+        - **Webhook secret**: Leave blank (not needed for Prowler)
+        - **Permissions**: Configure in the next step (see below)
+
+    <Note>
+    **About Homepage URL and Webhooks**
+
+    The Homepage URL is purely informational and can be any valid URL - it's just displayed to users who view the app. Use your company website, your GitHub organization URL, or even `https://docs.prowler.com`.
+
+    Webhooks are **not required** for Prowler. Since Prowler performs on-demand security scans when you run it (rather than automatically responding to GitHub events), you can safely disable webhooks or leave the URL blank.
+    </Note>
 
 3. **Configure Permissions**
     To enable Prowler functionality, configure these permissions:

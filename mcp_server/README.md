@@ -8,39 +8,108 @@ Access the entire Prowler ecosystem through the Model Context Protocol (MCP). Th
 - **Prowler Hub**: Access to Prowler's security checks, fixers, and compliance frameworks catalog
 - **Prowler Documentation**: Search and retrieve official Prowler documentation
 
+## Quick Start with Hosted Server (Recommended)
 
-## Requirements
+**The easiest way to use Prowler MCP is through our hosted server at `https://mcp.prowler.com/mcp`**
 
-- Python 3.12+
-- Network access to `https://hub.prowler.com` (for Prowler Hub)
-- Network access to `https://prowler.mintlify.app` (for Prowler Documentation)
-- Network access to Prowler Cloud and Prowler App (Self-Managed) API (it can be Prowler Cloud API or self-hosted Prowler App API)
-- Prowler Cloud account credentials (for Prowler Cloud and Prowler App (Self-Managed) features)
+No installation required! Just configure your MCP client:
 
-## Installation
-
-### From Sources
-
-It is needed to have [uv](https://docs.astral.sh/uv/) installed.
-
-```bash
-git clone https://github.com/prowler-cloud/prowler.git
+```json
+{
+  "mcpServers": {
+    "prowler": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://mcp.prowler.com/mcp",
+        "--header",
+        "Authorization: Bearer pk_YOUR_API_KEY_HERE"
+      ]
+    }
+  }
+}
 ```
 
-### Using Docker
+**Configuration file locations:**
+- **Claude Desktop (macOS)**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Claude Desktop (Windows)**: `%AppData%\Claude\claude_desktop_config.json`
+- **Cursor**: `~/.cursor/mcp.json`
 
-Alternatively, you can build and run the MCP server using Docker:
+Get your API key at [Prowler Cloud](https://cloud.prowler.com) → Settings → API Keys
+
+> **Benefits:** Always up-to-date, no maintenance, managed by Prowler team
+
+## Local/Self-Hosted Installation
+
+If you need to run the MCP server locally or self-host it, choose one of the following installation methods. **Configuration is the same** for both managed and local installations - just point to your local server URL instead of `https://mcp.prowler.com/mcp`.
+
+### Requirements
+
+- Python 3.12+ (for source/PyPI installation)
+- Docker (for Docker installation)
+- Network access to `https://hub.prowler.com` (for Prowler Hub)
+- Network access to `https://prowler.mintlify.app` (for Prowler Documentation)
+- Network access to Prowler Cloud and Prowler App (Self-Managed) API (optional, only for Prowler Cloud/App features)
+- Prowler Cloud account credentials (only for Prowler Cloud and Prowler App features)
+
+### Installation Methods
+
+#### Option 1: Docker Hub (Recommended)
+
+Pull the official image from Docker Hub:
 
 ```bash
-# Clone the repository
+docker pull prowlercloud/prowler-mcp
+```
+
+Run in STDIO mode:
+```bash
+docker run --rm -i prowlercloud/prowler-mcp
+```
+
+Run in HTTP mode:
+```bash
+docker run --rm -p 8000:8000 \
+  prowlercloud/prowler-mcp \
+  --transport http --host 0.0.0.0 --port 8000
+```
+
+With environment variables:
+```bash
+docker run --rm -i \
+  -e PROWLER_APP_API_KEY="pk_your_api_key" \
+  -e PROWLER_API_BASE_URL="https://api.prowler.com" \
+  prowlercloud/prowler-mcp
+```
+
+**Docker Hub:** [prowlercloud/prowler-mcp](https://hub.docker.com/r/prowlercloud/prowler-mcp)
+
+#### Option 2: PyPI Package (Coming Soon)
+
+```bash
+pip install prowler-mcp-server
+prowler-mcp --help
+```
+
+#### Option 3: From Source (Development)
+
+Clone the repository and use `uv`:
+
+```bash
 git clone https://github.com/prowler-cloud/prowler.git
 cd prowler/mcp_server
+uv run prowler-mcp --help
+```
 
-# Build the Docker image
+Install [uv](https://docs.astral.sh/uv/) first if needed.
+
+#### Option 4: Build Docker Image from Source
+
+```bash
+git clone https://github.com/prowler-cloud/prowler.git
+cd prowler/mcp_server
 docker build -t prowler-mcp .
-
-# Run the container with environment variables
-docker run --rm --env-file ./.env -it prowler-mcp
+docker run --rm -i prowler-mcp
 ```
 
 ## Running
@@ -320,18 +389,60 @@ For local execution, configure your MCP client to launch the server directly. Be
 
 For HTTP mode, you can configure your MCP client to connect to a remote Prowler MCP server.
 
-**Important Limitations:**
-- HTTP mode support varies by client - some clients may not support HTTP transport yet.
-- Some MCP clients like Claude Desktop only support OAuth authentication for HTTP connections, which is not currently supported by our MCP server.
+Most MCP clients don't natively support HTTP transport with Bearer token authentication. However, you can use the `mcp-remote` proxy tool to connect any MCP client to remote HTTP servers.
 
-Example configuration for clients that support HTTP transport:
+##### Using mcp-remote Proxy (Recommended for Claude Desktop)
+
+For clients like Claude Desktop that don't support HTTP transport natively, use the `mcp-remote` npm package as a proxy:
 
 **Using API Key (Recommended):**
 ```json
 {
   "mcpServers": {
     "prowler": {
-      "url": "http://mcp.prowler.com/mcp",  // Replace with your own MCP server URL, by default when server is run in local it is http://localhost:8000/mcp
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://mcp.prowler.com/mcp",
+        "--header",
+        "Authorization: Bearer pk_your_api_key_here"
+      ]
+    }
+  }
+}
+```
+
+**Using JWT Token:**
+```json
+{
+  "mcpServers": {
+    "prowler": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://mcp.prowler.com/mcp",
+        "--header",
+        "Authorization: Bearer <your-jwt-token-here>"
+      ]
+    }
+  }
+}
+```
+
+> **Note:** Replace `https://mcp.prowler.com/mcp` with your actual MCP server URL (use `http://localhost:8000/mcp` for local deployment). The `mcp-remote` package is automatically installed by `npx` on first use.
+
+> **Info:** The `mcp-remote` tool acts as a bridge, converting STDIO protocol (used by Claude Desktop) to HTTP requests (used by the remote MCP server). Learn more at [mcp-remote on npm](https://www.npmjs.com/package/mcp-remote).
+
+##### Direct HTTP Configuration (For Compatible Clients)
+
+For clients that natively support HTTP transport with Bearer token authentication:
+
+**Using API Key:**
+```json
+{
+  "mcpServers": {
+    "prowler": {
+      "url": "https://mcp.prowler.com/mcp",
       "headers": {
         "Authorization": "Bearer pk_your_api_key_here"
       }
@@ -345,7 +456,7 @@ Example configuration for clients that support HTTP transport:
 {
   "mcpServers": {
     "prowler": {
-      "url": "http://mcp.prowler.com/mcp",  // Replace with your own MCP server URL, by default when server is run in local it is http://localhost:8000/mcp
+      "url": "https://mcp.prowler.com/mcp",
       "headers": {
         "Authorization": "Bearer <your-jwt-token-here>"
       }
@@ -353,6 +464,8 @@ Example configuration for clients that support HTTP transport:
   }
 }
 ```
+
+> **Note:** Replace `mcp.prowler.com` with your actual server hostname and adjust the port if needed (e.g., `http://localhost:8000/mcp` for local deployment).
 
 ### Claude Desktop (macOS/Windows)
 
