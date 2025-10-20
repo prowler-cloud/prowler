@@ -149,6 +149,7 @@ export class SignInPage {
     await expect(this.page).toHaveTitle(/Prowler/);
     await expect(this.logo).toBeVisible();
     await expect(this.title).toBeVisible();
+    await this.page.waitForLoadState('networkidle');
   }
 
   async verifyFormElements(): Promise<void> {
