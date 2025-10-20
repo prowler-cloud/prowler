@@ -3,12 +3,15 @@ import { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
+import { CardVariant } from "./resource-stats-card";
+
 export interface StatItem {
   icon: LucideIcon;
   label: string;
 }
 
 const variantColors = {
+  default: "#868994",
   fail: "#f54280",
   pass: "#4ade80",
   warning: "#fbbf24",
@@ -22,6 +25,7 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
+        default: "bg-[#535359]",
         fail: "bg-[#432232]",
         pass: "bg-[#204237]",
         warning: "bg-[#3d3520]",
@@ -103,7 +107,7 @@ export interface ResourceStatsCardContentProps
   badge: {
     icon: LucideIcon;
     count: number | string;
-    variant?: "fail" | "pass" | "warning" | "info";
+    variant?: CardVariant;
   };
   label: string;
   stats?: StatItem[];
