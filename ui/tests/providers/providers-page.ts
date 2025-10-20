@@ -288,6 +288,7 @@ export class ProvidersPage extends BasePage {
 
     await expect(this.page).toHaveTitle(/Prowler/);
     await expect(this.addProviderButton).toBeVisible();
+    await this.page.waitForLoadState('networkidle');
   }
 
   async verifyConnectAccountPageLoaded(): Promise<void> {
