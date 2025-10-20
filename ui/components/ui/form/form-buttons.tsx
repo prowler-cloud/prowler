@@ -8,7 +8,7 @@ import { SaveIcon } from "@/components/icons";
 import { CustomButton } from "../custom";
 
 interface FormCancelButtonProps {
-  setIsOpen: Dispatch<SetStateAction<boolean>>;
+  setIsOpen?: Dispatch<SetStateAction<boolean>>;
   onCancel?: () => void;
   children?: React.ReactNode;
   leftIcon?: React.ReactNode;
@@ -19,10 +19,11 @@ interface FormSubmitButtonProps {
   loadingText?: string;
   isDisabled?: boolean;
   rightIcon?: React.ReactNode;
+  color?: SubmitColorsType;
 }
 
 interface FormButtonsProps {
-  setIsOpen: Dispatch<SetStateAction<boolean>>;
+  setIsOpen?: Dispatch<SetStateAction<boolean>>;
   onCancel?: () => void;
   submitText?: string;
   cancelText?: string;
@@ -30,7 +31,15 @@ interface FormButtonsProps {
   isDisabled?: boolean;
   rightIcon?: React.ReactNode;
   leftIcon?: React.ReactNode;
+  submitColor?: SubmitColorsType;
 }
+
+export const SubmitColors = {
+  action: "action",
+  danger: "danger",
+} as const;
+
+export type SubmitColorsType = (typeof SubmitColors)[keyof typeof SubmitColors];
 
 const FormCancelButton = ({
   setIsOpen,
@@ -41,7 +50,7 @@ const FormCancelButton = ({
   const handleCancel = () => {
     if (onCancel) {
       onCancel();
-    } else {
+    } else if (setIsOpen) {
       setIsOpen(false);
     }
   };
@@ -53,6 +62,7 @@ const FormCancelButton = ({
       className="w-full bg-transparent"
       variant="faded"
       size="lg"
+      radius="lg"
       onPress={handleCancel}
       startContent={leftIcon}
     >
@@ -65,6 +75,7 @@ const FormSubmitButton = ({
   children = "Save",
   loadingText = "Loading",
   isDisabled = false,
+  color = "action",
   rightIcon,
 }: FormSubmitButtonProps) => {
   const { pending } = useFormStatus();
@@ -75,8 +86,9 @@ const FormSubmitButton = ({
       ariaLabel="Save"
       className="w-full"
       variant="solid"
-      color="action"
+      color={color}
       size="lg"
+      radius="lg"
       isLoading={pending}
       isDisabled={isDisabled}
       startContent={!pending && rightIcon}
@@ -88,6 +100,7 @@ const FormSubmitButton = ({
 
 export const FormButtons = ({
   setIsOpen,
+  submitColor,
   onCancel,
   submitText = "Save",
   cancelText = "Cancel",
@@ -110,6 +123,7 @@ export const FormButtons = ({
         loadingText={loadingText}
         isDisabled={isDisabled}
         rightIcon={rightIcon}
+        color={submitColor}
       >
         {submitText}
       </FormSubmitButton>
