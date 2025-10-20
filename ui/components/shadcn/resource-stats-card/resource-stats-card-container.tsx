@@ -16,7 +16,6 @@ const containerVariants = cva(
   {
     variants: {
       padding: {
-        default: "px-[19px] py-[9px]",
         sm: "px-3 py-2",
         md: "px-[19px] py-[9px]",
         lg: "px-6 py-3",
@@ -24,7 +23,7 @@ const containerVariants = cva(
       },
     },
     defaultVariants: {
-      padding: "default",
+      padding: "md",
     },
   },
 );

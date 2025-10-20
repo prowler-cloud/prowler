@@ -5,20 +5,13 @@ import { cn } from "@/lib/utils";
 
 import { ResourceStatsCardContainer } from "./resource-stats-card-container";
 import type { StatItem } from "./resource-stats-card-content";
-import { ResourceStatsCardContent } from "./resource-stats-card-content";
+import {
+  CardVariant,
+  ResourceStatsCardContent,
+} from "./resource-stats-card-content";
 import { ResourceStatsCardHeader } from "./resource-stats-card-header";
 
 export type { StatItem };
-
-export const CardVariant = {
-  default: "default",
-  fail: "fail",
-  pass: "pass",
-  warning: "warning",
-  info: "info",
-} as const;
-
-export type CardVariant = (typeof CardVariant)[keyof typeof CardVariant];
 
 // Todo: when the design system is ready, we must use the colors from the design system (semantic colors)
 // Variant styles using CVA for type safety and consistency

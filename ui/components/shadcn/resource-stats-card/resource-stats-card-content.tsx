@@ -3,12 +3,20 @@ import { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-import { CardVariant } from "./resource-stats-card";
-
 export interface StatItem {
   icon: LucideIcon;
   label: string;
 }
+
+export const CardVariant = {
+  default: "default",
+  fail: "fail",
+  pass: "pass",
+  warning: "warning",
+  info: "info",
+} as const;
+
+export type CardVariant = (typeof CardVariant)[keyof typeof CardVariant];
 
 const variantColors = {
   default: "#868994",
@@ -25,11 +33,11 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-[#535359]",
-        fail: "bg-[#432232]",
-        pass: "bg-[#204237]",
-        warning: "bg-[#3d3520]",
-        info: "bg-[#1e3a5f]",
+        [CardVariant.default]: "bg-[#535359]",
+        [CardVariant.fail]: "bg-[#432232]",
+        [CardVariant.pass]: "bg-[#204237]",
+        [CardVariant.warning]: "bg-[#3d3520]",
+        [CardVariant.info]: "bg-[#1e3a5f]",
       },
       size: {
         sm: "px-1 text-xs",
@@ -38,7 +46,7 @@ const badgeVariants = cva(
       },
     },
     defaultVariants: {
-      variant: "fail",
+      variant: CardVariant.fail,
       size: "md",
     },
   },
