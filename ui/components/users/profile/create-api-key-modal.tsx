@@ -98,7 +98,7 @@ export const CreateApiKeyModal = ({
           className="flex flex-col gap-4"
         >
           <p className="text-xs text-gray-500">
-            Learn more about API keys and best practices.{" "}
+            Need help configuring API Keys?{" "}
             <CustomLink href="https://docs.prowler.com/user-guide/providers/prowler-app-api-keys">
               Read the docs
             </CustomLink>
