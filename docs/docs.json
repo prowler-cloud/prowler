@@ -431,6 +431,10 @@
     {
       "source": "/projects/prowler-saas/en/latest/:slug*",
       "destination": "https://docs.prowler.pro/en/latest/:slug*"
+    },
+    {
+      "source": "/projects/prowler-open-source/en/latest/tutorials/:slug*",
+      "destination": "/user-guide/tutorials/:slug*"
     }
   ]
 }
