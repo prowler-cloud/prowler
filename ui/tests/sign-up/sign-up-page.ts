@@ -50,6 +50,7 @@ export class SignUpPage extends BasePage {
     await expect(this.page.getByText("Sign up", { exact: true })).toBeVisible();
     await expect(this.emailInput).toBeVisible();
     await expect(this.submitButton).toBeVisible();
+    await this.waitForPageLoad();
   }
 
   async fillName(name: string): Promise<void> {
