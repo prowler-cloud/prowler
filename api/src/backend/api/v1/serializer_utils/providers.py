@@ -105,23 +105,25 @@ from rest_framework_json_api import serializers
                         "type": "string",
                         "description": "The Azure application (client) ID for authentication in Azure AD.",
                     },
-                    "client_secret": {
-                        "type": "string",
-                        "description": "The client secret associated with the application (client) ID, providing "
-                        "secure access.",
-                    },
                     "tenant_id": {
                         "type": "string",
                         "description": "The Azure tenant ID, representing the directory where the application is "
                         "registered.",
                     },
+                    "client_secret": {
+                        "type": "string",
+                        "description": "The client secret associated with the application (client) ID, providing "
+                        "secure access.",
+                    },
                     "user": {
                         "type": "email",
-                        "description": "Deprecated: User microsoft email address.",
+                        "description": "User microsoft email address.",
+                        "deprecated": True,
                     },
                     "password": {
                         "type": "string",
-                        "description": "Deprecated: User password.",
+                        "description": "User password.",
+                        "deprecated": True,
                     },
                 },
                 "required": [
@@ -149,21 +151,11 @@ from rest_framework_json_api import serializers
                         "type": "string",
                         "description": "The certificate content in base64 format for certificate-based authentication.",
                     },
-                    "user": {
-                        "type": "email",
-                        "description": "User microsoft email address.",
-                    },
-                    "password": {
-                        "type": "string",
-                        "description": "User password.",
-                    },
                 },
                 "required": [
                     "client_id",
                     "tenant_id",
                     "certificate_content",
-                    "user",
-                    "password",
                 ],
             },
             {

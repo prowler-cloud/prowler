@@ -8,10 +8,9 @@ import { createApiKey } from "@/actions/api-keys/api-keys";
 import { useToast } from "@/components/ui";
 import { CustomInput } from "@/components/ui/custom";
 import { CustomAlertModal } from "@/components/ui/custom/custom-alert-modal";
-import { Form } from "@/components/ui/form";
+import { Form, FormButtons } from "@/components/ui/form";
 
 import { DEFAULT_EXPIRY_DAYS } from "./api-keys/constants";
-import { ModalButtons } from "./api-keys/modal-buttons";
 import { calculateExpiryDate } from "./api-keys/utils";
 
 interface CreateApiKeyModalProps {
@@ -44,8 +43,6 @@ export const CreateApiKeyModal = ({
       expiresInDays: DEFAULT_EXPIRY_DAYS,
     },
   });
-
-  const isLoading = form.formState.isSubmitting;
 
   const onSubmitClient = async (values: FormValues) => {
     try {
@@ -99,7 +96,7 @@ export const CreateApiKeyModal = ({
           onSubmit={form.handleSubmit(onSubmitClient)}
           className="flex flex-col gap-4"
         >
-          <div className="flex flex-col gap-2">
+          <div className="flex w-full justify-center gap-6">
             <CustomInput
               control={form.control}
               name="name"
@@ -127,12 +124,12 @@ export const CreateApiKeyModal = ({
             />
           </div>
 
-          <ModalButtons
+          <FormButtons
             onCancel={handleClose}
-            onSubmit={form.handleSubmit(onSubmitClient)}
-            isLoading={isLoading}
-            isDisabled={!form.formState.isValid}
             submitText="Create API Key"
+            cancelText="Cancel"
+            loadingText="Processing..."
+            isDisabled={!form.formState.isValid}
           />
         </form>
       </Form>

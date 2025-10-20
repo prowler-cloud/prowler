@@ -118,11 +118,13 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
         onClick={navigateToDetail}
       >
         <div className="flex w-full items-center gap-4">
-          <Image
-            src={getComplianceIcon(title)}
-            alt={`${title} logo`}
-            className="h-10 w-10 min-w-10 rounded-md border border-gray-300 bg-white object-contain p-1"
-          />
+          {getComplianceIcon(title) && (
+            <Image
+              src={getComplianceIcon(title)}
+              alt={`${title} logo`}
+              className="h-10 w-10 min-w-10 rounded-md border border-gray-300 bg-white object-contain p-1"
+            />
+          )}
           <div className="flex w-full flex-col">
             <h4 className="text-small mb-1 leading-5 font-bold">
               {formatTitle(title)}

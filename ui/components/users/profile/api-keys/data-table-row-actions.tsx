@@ -33,6 +33,9 @@ export function DataTableRowActions({
   onRevoke,
 }: DataTableRowActionsProps) {
   const apiKey = row.original;
+  const isRevoked = apiKey.attributes.revoked;
+  const isExpired = new Date(apiKey.attributes.expires_at) < new Date();
+  const canRevoke = !isRevoked && !isExpired;
 
   return (
     <div className="relative flex items-center justify-end gap-2">
@@ -62,23 +65,25 @@ export function DataTableRowActions({
               Edit name
             </DropdownItem>
           </DropdownSection>
-          <DropdownSection title="Danger zone">
-            <DropdownItem
-              key="revoke"
-              className="text-danger"
-              color="danger"
-              description="Revoke this API key permanently"
-              textValue="Revoke"
-              startContent={
-                <DeleteDocumentBulkIcon
-                  className={clsx(iconClasses, "!text-danger")}
-                />
-              }
-              onPress={() => onRevoke(apiKey)}
-            >
-              Revoke
-            </DropdownItem>
-          </DropdownSection>
+          {canRevoke ? (
+            <DropdownSection title="Danger zone">
+              <DropdownItem
+                key="revoke"
+                className="text-danger"
+                color="danger"
+                description="Revoke this API key permanently"
+                textValue="Revoke"
+                startContent={
+                  <DeleteDocumentBulkIcon
+                    className={clsx(iconClasses, "!text-danger")}
+                  />
+                }
+                onPress={() => onRevoke(apiKey)}
+              >
+                Revoke
+              </DropdownItem>
+            </DropdownSection>
+          ) : null}
         </DropdownMenu>
       </Dropdown>
     </div>
