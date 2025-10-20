@@ -37,7 +37,9 @@
   "Categories": [
     "internet-exposed"
   ],
-  "DependsOn": [],
+  "DependsOn": [
+    "s3_bucket_public_access"
+  ],
   "RelatedTo": [],
   "Notes": ""
 }
