@@ -24,6 +24,11 @@ jobs:
       E2E_AWS_PROVIDER_ACCESS_KEY: ${{ secrets.E2E_AWS_PROVIDER_ACCESS_KEY }}
       E2E_AWS_PROVIDER_SECRET_KEY: ${{ secrets.E2E_AWS_PROVIDER_SECRET_KEY }}
       E2E_AWS_PROVIDER_ROLE_ARN: ${{ secrets.E2E_AWS_PROVIDER_ROLE_ARN }}
+      E2E_AZURE_SUBSCRIPTION_ID: ${{ secrets.E2E_AZURE_SUBSCRIPTION_ID }}
+      E2E_AZURE_CLIENT_ID: ${{ secrets.E2E_AZURE_CLIENT_ID }}
+      E2E_AZURE_SECRET_ID: ${{ secrets.E2E_AZURE_SECRET_ID }}
+      E2E_AZURE_TENANT_ID: ${{ secrets.E2E_AZURE_TENANT_ID }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
