@@ -15,16 +15,10 @@
   "Risk": "Without **object-level read logging**, S3 access is opaque. Attackers or insiders can exfiltrate data via `GetObject` without audit trails, eroding **confidentiality** and hindering **forensics**, anomaly detection, and incident response.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.plerion.com/cloud-knowledge-base/ensure-that-object-level-logging-for-read-events-is-enabled-for-s3-bucket",
     "https://awswala.medium.com/enable-cloudtrail-data-events-logging-for-objects-in-an-s3-bucket-33cade51ae2b",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/s3-controls.html#s3-23",
-    "https://stackoverflow.com/questions/57220713/how-do-i-enable-object-level-logging-for-an-s3-bucket-using-boto3",
     "https://docs.aws.amazon.com/AmazonS3/latest/userguide/enable-cloudtrail-logging-for-s3.html",
     "https://www.plerion.com/cloud-knowledge-base/ensure-object-level-logging-for-read-events-enabled-for-s3-bucket",
-    "https://medium.com/@gangulasairam4213/enable-cloudtrail-and-s3-access-logs-on-an-s3-bucket-6a709f394f52",
-    "https://repost.aws/knowledge-center/find-cloudtrail-object-level-events",
-    "https://www.reddit.com/r/aws/comments/vl94ie/why_cant_i_get_s3_objectlevellogging_to_work_for/",
-    "https://help.drata.com/en/articles/9828791-test-226-aws-s3-object-level-logging-for-read-write-events"
   ],
   "Remediation": {
     "Code": {
