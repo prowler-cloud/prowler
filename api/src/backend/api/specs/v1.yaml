@@ -3552,7 +3552,7 @@ paths:
                         task_args: null
                         metadata: null
           description: ''
-  /api/v1/lighthouse/config:
+  /api/v1/lighthouse/configuration:
     get:
       operationId: lighthouse_config_list
       description: Retrieve current tenant-level Lighthouse AI settings. Returns a

@@ -152,7 +152,7 @@ urlpatterns = [
     ),
     # Lighthouse tenant config as singleton endpoint
     path(
-        "lighthouse/config",
+        "lighthouse/configuration",
         LighthouseTenantConfigViewSet.as_view(
             {"get": "list", "patch": "partial_update"}
         ),
