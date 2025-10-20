@@ -152,7 +152,7 @@ export const getLighthouseModels = async (providerType: string) => {
  */
 export const getTenantConfig = async () => {
   const headers = await getAuthHeaders({ contentType: false });
-  const url = new URL(`${apiBaseUrl}/lighthouse/config`);
+  const url = new URL(`${apiBaseUrl}/lighthouse/configuration`);
 
   try {
     const response = await fetch(url.toString(), {
@@ -177,7 +177,7 @@ export const updateTenantConfig = async (config: {
   business_context?: string;
 }) => {
   const headers = await getAuthHeaders({ contentType: true });
-  const url = new URL(`${apiBaseUrl}/lighthouse/config`);
+  const url = new URL(`${apiBaseUrl}/lighthouse/configuration`);
 
   try {
     const payload = {
