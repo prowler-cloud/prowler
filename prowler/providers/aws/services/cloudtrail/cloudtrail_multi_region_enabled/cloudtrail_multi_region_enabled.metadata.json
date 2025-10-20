@@ -16,9 +16,7 @@
   "Risk": "Missing coverage in any region creates **visibility gaps**.\n\nAttackers can use lesser-monitored regions to run API actions, hide **unauthorized changes**, and exfiltrate data without audit trails, weakening **detective controls**, hindering **forensics**, and delaying response (confidentiality and integrity).",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/logging-policies/logging_1#aws-console",
-    "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrailconcepts.html#cloudtrail-concepts-management-events",
-    "https://docs.prowler.com/checks/aws/logging-policies/logging_1#terraform"
+    "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrailconcepts.html#cloudtrail-concepts-management-events"
   ],
   "Remediation": {
     "Code": {
