@@ -33,7 +33,7 @@ jobs:
       E2E_M365_SECRET_ID: ${{ secrets.E2E_M365_SECRET_ID }}
       E2E_M365_TENANT_ID: ${{ secrets.E2E_M365_TENANT_ID }}
       E2E_M365_CERTIFICATE_CONTENT: ${{ secrets.E2E_M365_CERTIFICATE_CONTENT }}
-
+      E2E_NEW_PASSWORD: ${{ secrets.E2E_NEW_PASSWORD }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
