@@ -21,13 +21,13 @@ export const STATUS_COLORS = {
 export const CHART_COLORS = {
   tooltipBorder: "var(--chart-border-emphasis)",
   tooltipBackground: "var(--chart-background)",
-  textPrimary: "var(--chart-text-primary)",
+  textPrimary: "#ffffff",
   textSecondary: "var(--chart-text-secondary)",
   gridLine: "var(--chart-border-emphasis)",
-  backgroundTrack: "var(--chart-background-track)",
+  backgroundTrack: "rgba(51, 65, 85, 0.5)", // slate-700 with 50% opacity
   alertPillBg: "var(--chart-alert-bg)",
   alertPillText: "var(--chart-alert-text)",
-  defaultColor: "var(--chart-text-secondary)",
+  defaultColor: "#64748b", // slate-500
 } as const;
 
 export const CHART_DIMENSIONS = {

@@ -2,7 +2,7 @@
 @config "../tailwind.config.js";
 
 @theme {
-  /* Chart Severity Colors - Dark Theme */
+  /* Chart Severity Colors */
   --chart-info: #2e51b2;
   --chart-warning: #fdd34f;
   --chart-warning-emphasis: #ff7d19;
@@ -35,25 +35,6 @@
 
 @layer base {
   :root {
-    /* Light Theme Chart Colors */
-    --chart-info: #1e40af;
-    --chart-warning: #d97706;
-    --chart-warning-emphasis: #dc2626;
-    --chart-danger: #dc2626;
-    --chart-danger-emphasis: #991b1b;
-    --chart-success-color: #16a34a;
-    --chart-fail: #dc2626;
-    --chart-radar-primary: #9d174d;
-    --chart-text-primary: #1f2937;
-    --chart-text-secondary: #6b7280;
-    --chart-border: #d1d5db;
-    --chart-border-emphasis: #9ca3af;
-    --chart-background: #f9fafb;
-    --chart-background-track: rgba(229, 231, 235, 0.5);
-    --chart-alert-bg: #fecdd3;
-    --chart-alert-text: #be123c;
-
-    /* Chart HSL values */
     --chart-success: 146 80% 35%;
     --chart-fail: 339 90% 51%;
     --chart-muted: 45 93% 47%;
@@ -68,25 +49,6 @@
   }
 
   .dark {
-    /* Dark Theme Chart Colors */
-    --chart-info: #2e51b2;
-    --chart-warning: #fdd34f;
-    --chart-warning-emphasis: #ff7d19;
-    --chart-danger: #ff3077;
-    --chart-danger-emphasis: #971348;
-    --chart-success-color: #86da26;
-    --chart-fail: #db2b49;
-    --chart-radar-primary: #b51c80;
-    --chart-text-primary: #ffffff;
-    --chart-text-secondary: #94a3b8;
-    --chart-border: #475569;
-    --chart-border-emphasis: #334155;
-    --chart-background: #1e293b;
-    --chart-background-track: rgba(51, 65, 85, 0.5);
-    --chart-alert-bg: #432232;
-    --chart-alert-text: #f54280;
-
-    /* Chart HSL values */
     --chart-success: 146 80% 35%;
     --chart-fail: 339 90% 51%;
     --chart-muted: 45 93% 47%;
