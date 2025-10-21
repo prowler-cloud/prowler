@@ -9,14 +9,15 @@ on:
     branches:
       - "master"
       - "v5.*"
-  pull_request_target:
-    types:
-      - opened
-      - synchronize
-      - reopened
-    branches:
-      - "master"
-      - "v5.*"
+  # Leaving this commented until we find a way to run it for forks but in Prowler's context
+  # pull_request_target:
+  #   types:
+  #     - opened
+  #     - synchronize
+  #     - reopened
+  #   branches:
+  #     - "master"
+  #     - "v5.*"
 
 jobs:
   conflict-checker:
@@ -166,3 +167,9 @@ jobs:
             ✅ **Conflict Markers Resolved**
 
             All conflict markers have been successfully resolved in this pull request.
+
+      - name: Fail workflow if conflicts detected
+        if: steps.conflict-check.outputs.has_conflicts == 'true'
+        run: |
+          echo "::error::Workflow failed due to conflict markers in files: ${{ steps.conflict-check.outputs.conflict_files }}"
+          exit 1

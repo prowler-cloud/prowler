@@ -1,5 +1,5 @@
- @import "tailwindcss";
- @config "../tailwind.config.js";
+@import "tailwindcss";
+@config "../tailwind.config.js";
 
 @layer base {
   :root {
@@ -35,12 +35,17 @@
 @layer utilities {
   /* Hide scrollbar */
   .no-scrollbar {
-    scrollbar-width: none;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
   }
 
   .checkbox-update {
-     margin-right: 0.5rem;
-     background-color: var(--background);
+    margin-right: 0.5rem;
+    background-color: var(--background);
   }
 }
 
