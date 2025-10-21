@@ -13,7 +13,7 @@ import {
   ChartTooltip,
 } from "@/components/ui/chart/Chart";
 
-import { AlertPill } from "./shared/AlertPill";
+import { AlertPill } from "./shared/alert-pill";
 import { CHART_COLORS } from "./shared/constants";
 import { RadarDataPoint } from "./types";
 

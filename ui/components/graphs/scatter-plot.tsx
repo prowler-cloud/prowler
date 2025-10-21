@@ -11,8 +11,8 @@ import {
   YAxis,
 } from "recharts";
 
-import { AlertPill } from "./shared/AlertPill";
-import { ChartLegend } from "./shared/ChartLegend";
+import { AlertPill } from "./shared/alert-pill";
+import { ChartLegend } from "./shared/chart-legend";
 import { CHART_COLORS } from "./shared/constants";
 import { getSeverityColorByRiskScore } from "./shared/utils";
 

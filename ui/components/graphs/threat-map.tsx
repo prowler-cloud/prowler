@@ -16,7 +16,7 @@ import type {
   Topology,
 } from "topojson-specification";
 
-import { HorizontalBarChart } from "./HorizontalBarChart";
+import { HorizontalBarChart } from "./horizontal-bar-chart";
 import { BarDataPoint } from "./types";
 
 // Constants

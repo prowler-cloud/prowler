@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Rectangle, ResponsiveContainer, Sankey, Tooltip } from "recharts";
 
 import { CHART_COLORS } from "./shared/constants";
-import { ChartTooltip } from "./shared/ChartTooltip";
+import { ChartTooltip } from "./shared/chart-tooltip";
 
 interface SankeyNode {
   name: string;

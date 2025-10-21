@@ -1,9 +1,9 @@
-export { DonutChart } from "./DonutChart";
-export { HorizontalBarChart } from "./HorizontalBarChart";
-export { LineChart } from "./LineChart";
-export { RadarChart } from "./RadarChart";
-export { RadialChart } from "./RadialChart";
-export { SankeyChart } from "./SankeyChart";
-export { ScatterPlot } from "./ScatterPlot";
-export { ChartLegend, type ChartLegendItem } from "./shared/ChartLegend";
-export { ThreatMap } from "./ThreatMap";
+export { DonutChart } from "./donut-chart";
+export { HorizontalBarChart } from "./horizontal-bar-chart";
+export { LineChart } from "./line-chart";
+export { RadarChart } from "./radar-chart";
+export { RadialChart } from "./radial-chart";
+export { SankeyChart } from "./sankey-chart";
+export { ScatterPlot } from "./scatter-plot";
+export { ChartLegend, type ChartLegendItem } from "./shared/chart-legend";
+export { ThreatMap } from "./threat-map";
