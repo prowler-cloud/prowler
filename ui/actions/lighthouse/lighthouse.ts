@@ -264,6 +264,8 @@ export const isLighthouseConfigured = async () => {
 const getProviderDisplayName = (providerType: string): string => {
   const displayNames: Record<string, string> = {
     openai: "OpenAI",
+    bedrock: "Amazon Bedrock",
+    openai_compatible: "OpenAI Compatible",
     anthropic: "Anthropic",
     google: "Google",
     azure: "Azure OpenAI",

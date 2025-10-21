@@ -35,7 +35,15 @@ export const ConnectLLMProvider = ({
   mode = "create",
 }: ConnectLLMProviderProps) => {
   const router = useRouter();
-  const [formData, setFormData] = useState({ apiKey: "", baseUrl: "" });
+  const [openAIForm, setOpenAIForm] = useState({
+    apiKey: "",
+    baseUrl: "",
+  });
+  const [bedrockForm, setBedrockForm] = useState({
+    accessKeyId: "",
+    secretAccessKey: "",
+    region: "",
+  });
   const [isAdditionalOpen, setIsAdditionalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
@@ -44,7 +52,16 @@ export const ConnectLLMProvider = ({
     null,
   );
 
-  const providerName = "OpenAI";
+  const providerName =
+    provider === "bedrock"
+      ? "Amazon Bedrock"
+      : provider === "openai-compatible"
+        ? "OpenAI Compatible"
+        : "OpenAI";
+
+  const isBedrock = provider === "bedrock";
+  const isOpenAI = provider === "openai";
+  const isOpenAICompatible = provider === "openai-compatible";
   const isEditMode = mode === "edit";
 
   // Fetch existing provider data if in edit mode
@@ -66,9 +83,9 @@ export const ConnectLLMProvider = ({
         }
 
         const providerData = result.data.attributes;
-        // Pre-populate base URL if it exists
-        if (providerData.base_url) {
-          setFormData((prev) => ({
+        // Only pre-populate base URL for providers that support it
+        if ((isOpenAI || isOpenAICompatible) && providerData.base_url) {
+          setOpenAIForm((prev) => ({
             ...prev,
             baseUrl: providerData.base_url,
           }));
@@ -85,7 +102,7 @@ export const ConnectLLMProvider = ({
     };
 
     fetchProviderData();
-  }, [isEditMode, provider]);
+  }, [isEditMode, provider, isOpenAI, isOpenAICompatible]);
 
   // Helper to handle API results and extract data or throw error
   const unwrapResult = <T,>(result: AsyncResult<T>, fallbackMsg: string): T => {
@@ -107,27 +124,73 @@ export const ConnectLLMProvider = ({
 
       if (isEditMode) {
         // Update existing provider by type
-        if (formData.apiKey) {
-          const updateResult = await updateLighthouseProviderByType(provider, {
-            credentials: { api_key: formData.apiKey },
-            base_url: formData.baseUrl || undefined,
-          });
-          unwrapResult(updateResult, "Failed to update provider");
-        } else if (formData.baseUrl) {
-          // Update only base URL if no API key provided
-          const updateResult = await updateLighthouseProviderByType(provider, {
-            base_url: formData.baseUrl || undefined,
-          });
-          unwrapResult(updateResult, "Failed to update provider");
+        if (isBedrock) {
+          const anyProvided =
+            bedrockForm.accessKeyId ||
+            bedrockForm.secretAccessKey ||
+            bedrockForm.region;
+          if (anyProvided) {
+            if (
+              !bedrockForm.accessKeyId.trim() ||
+              !bedrockForm.secretAccessKey.trim() ||
+              !bedrockForm.region.trim()
+            ) {
+              throw new Error(
+                "All fields (Access Key ID, Secret Access Key, Region) are required.",
+              );
+            }
+            const updateResult = await updateLighthouseProviderByType(
+              provider,
+              {
+                credentials: {
+                  access_key_id: bedrockForm.accessKeyId,
+                  secret_access_key: bedrockForm.secretAccessKey,
+                  region: bedrockForm.region,
+                },
+              },
+            );
+            unwrapResult(updateResult, "Failed to update provider");
+          }
+        } else {
+          if (openAIForm.apiKey) {
+            const updateResult = await updateLighthouseProviderByType(
+              provider,
+              {
+                credentials: { api_key: openAIForm.apiKey },
+                base_url: openAIForm.baseUrl || undefined,
+              },
+            );
+            unwrapResult(updateResult, "Failed to update provider");
+          } else if (openAIForm.baseUrl) {
+            // Update only base URL if no API key provided
+            const updateResult = await updateLighthouseProviderByType(
+              provider,
+              {
+                base_url: openAIForm.baseUrl || undefined,
+              },
+            );
+            unwrapResult(updateResult, "Failed to update provider");
+          }
         }
         // providerId already set from useEffect
       } else {
         // Create new provider
-        const createResult = await createLighthouseProvider({
-          provider_type: provider,
-          credentials: { api_key: formData.apiKey },
-          base_url: formData.baseUrl || undefined,
-        });
+        const createResult = await createLighthouseProvider(
+          isBedrock
+            ? {
+                provider_type: provider,
+                credentials: {
+                  access_key_id: bedrockForm.accessKeyId,
+                  secret_access_key: bedrockForm.secretAccessKey,
+                  region: bedrockForm.region,
+                },
+              }
+            : {
+                provider_type: provider,
+                credentials: { api_key: openAIForm.apiKey },
+                base_url: openAIForm.baseUrl || undefined,
+              },
+        );
         const providerData = unwrapResult<{ id: string }>(
           createResult,
           "Failed to create provider",
@@ -136,7 +199,16 @@ export const ConnectLLMProvider = ({
       }
 
       // Test connection (only if credentials were updated or it's a new provider)
-      if (!isEditMode || formData.apiKey) {
+      if (
+        !isEditMode ||
+        (isBedrock
+          ? !!(
+              bedrockForm.accessKeyId &&
+              bedrockForm.secretAccessKey &&
+              bedrockForm.region
+            )
+          : !!(openAIForm.apiKey || openAIForm.baseUrl))
+      ) {
         const connectionResult = await testProviderConnection(providerId!);
         const connectionTaskData = unwrapResult<{ id: string }>(
           connectionResult,
@@ -184,7 +256,28 @@ export const ConnectLLMProvider = ({
     }
   };
 
-  const isFormValid = isEditMode || formData.apiKey.trim() !== "";
+  const bedrockFieldsFilled =
+    bedrockForm.accessKeyId.trim() !== "" &&
+    bedrockForm.secretAccessKey.trim() !== "" &&
+    bedrockForm.region.trim() !== "";
+
+  const anyBedrockFieldProvided = !!(
+    bedrockForm.accessKeyId ||
+    bedrockForm.secretAccessKey ||
+    bedrockForm.region
+  );
+
+  const isFormValid = isBedrock
+    ? isEditMode
+      ? anyBedrockFieldProvided
+        ? bedrockFieldsFilled
+        : true
+      : bedrockFieldsFilled
+    : isEditMode
+      ? true
+      : isOpenAICompatible
+        ? openAIForm.apiKey.trim() !== "" && openAIForm.baseUrl.trim() !== ""
+        : openAIForm.apiKey.trim() !== "";
 
   if (isFetching) {
     return (
@@ -216,61 +309,145 @@ export const ConnectLLMProvider = ({
       )}
 
       <div className="flex flex-col gap-4">
-        <div>
-          <label htmlFor="apiKey" className="mb-2 block text-sm font-medium">
-            API Key {!isEditMode && <span className="text-red-500">*</span>}
-            {isEditMode && (
-              <span className="text-xs text-gray-500">
-                (leave empty to keep existing)
-              </span>
-            )}
-          </label>
-          <input
-            id="apiKey"
-            type="password"
-            value={formData.apiKey}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, apiKey: e.target.value }))
-            }
-            placeholder={
-              isEditMode
-                ? "Enter new API key or leave empty"
-                : "Enter your API key"
-            }
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-800"
-          />
-        </div>
-
-        <Collapsible open={isAdditionalOpen} onOpenChange={setIsAdditionalOpen}>
-          <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100">
-            {isAdditionalOpen ? (
-              <ChevronDown className="h-4 w-4" />
-            ) : (
-              <ChevronRight className="h-4 w-4" />
-            )}
-            Additional Settings
-          </CollapsibleTrigger>
-          <CollapsibleContent className="mt-4">
+        {isBedrock ? (
+          <>
             <div>
               <label
-                htmlFor="baseUrl"
+                htmlFor="accessKeyId"
                 className="mb-2 block text-sm font-medium"
               >
-                Base URL
+                AWS Access Key ID{" "}
+                {!isEditMode && <span className="text-red-500">*</span>}
               </label>
               <input
-                id="baseUrl"
+                id="accessKeyId"
                 type="text"
-                value={formData.baseUrl}
+                value={bedrockForm.accessKeyId}
                 onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, baseUrl: e.target.value }))
+                  setBedrockForm((prev) => ({
+                    ...prev,
+                    accessKeyId: e.target.value,
+                  }))
                 }
-                placeholder="https://api.openai.com/v1"
+                placeholder="Enter the AWS Access Key ID"
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-800"
               />
             </div>
-          </CollapsibleContent>
-        </Collapsible>
+            <div>
+              <label
+                htmlFor="secretAccessKey"
+                className="mb-2 block text-sm font-medium"
+              >
+                AWS Secret Access Key{" "}
+                {!isEditMode && <span className="text-red-500">*</span>}
+              </label>
+              <input
+                id="secretAccessKey"
+                type="password"
+                value={bedrockForm.secretAccessKey}
+                onChange={(e) =>
+                  setBedrockForm((prev) => ({
+                    ...prev,
+                    secretAccessKey: e.target.value,
+                  }))
+                }
+                placeholder="Enter the AWS Secret Access Key"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-800"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="region"
+                className="mb-2 block text-sm font-medium"
+              >
+                AWS Region{" "}
+                {!isEditMode && <span className="text-red-500">*</span>}
+              </label>
+              <input
+                id="region"
+                type="text"
+                value={bedrockForm.region}
+                onChange={(e) =>
+                  setBedrockForm((prev) => ({
+                    ...prev,
+                    region: e.target.value,
+                  }))
+                }
+                placeholder="Enter the AWS Region"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-800"
+              />
+            </div>
+          </>
+        ) : (
+          <>
+            <div>
+              <label
+                htmlFor="apiKey"
+                className="mb-2 block text-sm font-medium"
+              >
+                API Key {!isEditMode && <span className="text-red-500">*</span>}
+                {isEditMode && (
+                  <span className="text-xs text-gray-500">
+                    (leave empty to keep existing)
+                  </span>
+                )}
+              </label>
+              <input
+                id="apiKey"
+                type="password"
+                value={openAIForm.apiKey}
+                onChange={(e) =>
+                  setOpenAIForm((prev) => ({ ...prev, apiKey: e.target.value }))
+                }
+                placeholder={
+                  isEditMode
+                    ? "Enter new API key or leave empty"
+                    : "Enter your API key"
+                }
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-800"
+              />
+            </div>
+
+            {(isOpenAI || isOpenAICompatible) && (
+              <Collapsible
+                open={isAdditionalOpen}
+                onOpenChange={setIsAdditionalOpen}
+              >
+                <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100">
+                  {isAdditionalOpen ? (
+                    <ChevronDown className="h-4 w-4" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4" />
+                  )}
+                  Additional Settings
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-4">
+                  <div>
+                    <label
+                      htmlFor="baseUrl"
+                      className="mb-2 block text-sm font-medium"
+                    >
+                      Base URL
+                    </label>
+                    <input
+                      id="baseUrl"
+                      type="text"
+                      value={openAIForm.baseUrl}
+                      onChange={(e) =>
+                        setOpenAIForm((prev) => ({
+                          ...prev,
+                          baseUrl: e.target.value,
+                        }))
+                      }
+                      placeholder="https://api.openai.com/v1"
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-800"
+                    />
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            )}
+          </>
+        )}
 
         <div className="mt-4 flex justify-end gap-4">
           <CustomButton

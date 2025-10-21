@@ -152,8 +152,9 @@ export const LLMProvidersTable = () => {
       <h2 className="mb-4 text-xl font-semibold">LLM Providers</h2>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {providers.map((provider) => {
-          const isOpenAI = provider.id === "openai";
-          const showConnect = !provider.isConnected && isOpenAI;
+          const connectable =
+            provider.id === "openai" || provider.id === "bedrock";
+          const showConnect = !provider.isConnected && connectable;
           const showConfigure = provider.isConnected;
 
           return (
