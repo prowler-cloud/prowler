@@ -1,7 +1,7 @@
 "use client";
 
+import { BreadcrumbItem, Breadcrumbs } from "@heroui/breadcrumbs";
 import { Icon } from "@iconify/react";
-import { BreadcrumbItem, Breadcrumbs } from "@nextui-org/react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { ReactNode } from "react";
@@ -109,12 +109,12 @@ export function BreadcrumbNavigation({
       {typeof icon === "string" ? (
         <Icon className="text-default-500" height={24} icon={icon} width={24} />
       ) : icon ? (
-        <div className="flex h-8 w-8 items-center justify-center [&>*]:h-full [&>*]:w-full">
+        <div className="flex h-8 w-8 items-center justify-center *:h-full *:w-full">
           {icon}
         </div>
       ) : null}
       <h1
-        className={`text-sm font-bold text-default-700 ${isLink ? "transition-colors hover:text-primary" : ""}`}
+        className={`text-default-700 text-sm font-bold ${isLink ? "hover:text-primary transition-colors" : ""}`}
       >
         {titleText}
       </h1>
@@ -146,7 +146,7 @@ export function BreadcrumbNavigation({
             ) : breadcrumb.isClickable && breadcrumb.path ? (
               <Link
                 href={buildNavigationUrl(breadcrumb.path)}
-                className="flex cursor-pointer items-center space-x-2"
+                className="flex cursor-pointer items-center gap-2"
               >
                 {breadcrumb.icon && typeof breadcrumb.icon === "string" ? (
                   <Icon
@@ -156,18 +156,18 @@ export function BreadcrumbNavigation({
                     width={24}
                   />
                 ) : breadcrumb.icon ? (
-                  <div className="flex h-6 w-6 items-center justify-center [&>*]:h-full [&>*]:w-full">
+                  <div className="flex h-6 w-6 items-center justify-center *:h-full *:w-full">
                     {breadcrumb.icon}
                   </div>
                 ) : null}
-                <span className="text-wrap text-sm font-bold text-default-700 transition-colors hover:text-primary">
+                <span className="text-default-700 hover:text-primary text-sm font-bold text-wrap transition-colors">
                   {breadcrumb.name}
                 </span>
               </Link>
             ) : breadcrumb.isClickable && breadcrumb.onClick ? (
               <button
                 onClick={breadcrumb.onClick}
-                className="flex cursor-pointer items-center space-x-2 text-wrap text-sm font-medium text-primary transition-colors hover:text-primary-600"
+                className="text-primary hover:text-primary-600 flex cursor-pointer items-center gap-2 text-sm font-medium text-wrap transition-colors"
               >
                 {breadcrumb.icon && typeof breadcrumb.icon === "string" ? (
                   <Icon
@@ -177,14 +177,14 @@ export function BreadcrumbNavigation({
                     width={24}
                   />
                 ) : breadcrumb.icon ? (
-                  <div className="flex h-6 w-6 items-center justify-center [&>*]:h-full [&>*]:w-full">
+                  <div className="flex h-6 w-6 items-center justify-center *:h-full *:w-full">
                     {breadcrumb.icon}
                   </div>
                 ) : null}
                 <span>{breadcrumb.name}</span>
               </button>
             ) : (
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-2">
                 {breadcrumb.icon && typeof breadcrumb.icon === "string" ? (
                   <Icon
                     className="text-default-500"
@@ -193,11 +193,11 @@ export function BreadcrumbNavigation({
                     width={24}
                   />
                 ) : breadcrumb.icon ? (
-                  <div className="flex h-6 w-6 items-center justify-center [&>*]:h-full [&>*]:w-full">
+                  <div className="flex h-6 w-6 items-center justify-center *:h-full *:w-full">
                     {breadcrumb.icon}
                   </div>
                 ) : null}
-                <span className="text-wrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                <span className="text-sm font-medium text-wrap text-gray-900 dark:text-gray-100">
                   {breadcrumb.name}
                 </span>
               </div>

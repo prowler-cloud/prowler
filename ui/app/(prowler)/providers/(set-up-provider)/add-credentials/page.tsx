@@ -10,15 +10,17 @@ import {
   SelectViaGCP,
 } from "@/components/providers/workflow/forms/select-credentials-type/gcp";
 import { SelectViaGitHub } from "@/components/providers/workflow/forms/select-credentials-type/github";
+import { SelectViaM365 } from "@/components/providers/workflow/forms/select-credentials-type/m365";
 import { getProviderFormType } from "@/lib/provider-helpers";
 import { ProviderType } from "@/types/providers";
 
 interface Props {
-  searchParams: { type: ProviderType; id: string; via?: string };
+  searchParams: Promise<{ type: ProviderType; id: string; via?: string }>;
 }
 
-export default function AddCredentialsPage({ searchParams }: Props) {
-  const { type: providerType, via } = searchParams;
+export default async function AddCredentialsPage({ searchParams }: Props) {
+  const resolvedSearchParams = await searchParams;
+  const { type: providerType, via } = resolvedSearchParams;
   const formType = getProviderFormType(providerType, via);
 
   switch (formType) {
@@ -27,16 +29,17 @@ export default function AddCredentialsPage({ searchParams }: Props) {
       if (providerType === "gcp") return <SelectViaGCP initialVia={via} />;
       if (providerType === "github")
         return <SelectViaGitHub initialVia={via} />;
+      if (providerType === "m365") return <SelectViaM365 initialVia={via} />;
       return null;
 
     case "credentials":
-      return <AddViaCredentialsForm searchParams={searchParams} />;
+      return <AddViaCredentialsForm searchParams={resolvedSearchParams} />;
 
     case "role":
-      return <AddViaRoleForm searchParams={searchParams} />;
+      return <AddViaRoleForm searchParams={resolvedSearchParams} />;
 
     case "service-account":
-      return <AddViaServiceAccountForm searchParams={searchParams} />;
+      return <AddViaServiceAccountForm searchParams={resolvedSearchParams} />;
 
     default:
       return null;

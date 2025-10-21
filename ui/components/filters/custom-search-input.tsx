@@ -1,8 +1,7 @@
-import { Input } from "@nextui-org/react";
-import debounce from "lodash.debounce";
+import { Input } from "@heroui/input";
 import { SearchIcon, XCircle } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import { useUrlFilters } from "@/hooks/use-url-filters";
 
@@ -10,6 +9,7 @@ export const CustomSearchInput: React.FC = () => {
   const searchParams = useSearchParams();
   const { updateFilter } = useUrlFilters();
   const [searchQuery, setSearchQuery] = useState("");
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const applySearch = useCallback(
     (query: string) => {
@@ -24,7 +24,12 @@ export const CustomSearchInput: React.FC = () => {
 
   const debouncedChangeHandler = useCallback(
     (value: string) => {
-      debounce((val) => applySearch(val), 300)(value);
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+      debounceTimeoutRef.current = setTimeout(() => {
+        applySearch(value);
+      }, 300);
     },
     [applySearch],
   );
@@ -39,11 +44,19 @@ export const CustomSearchInput: React.FC = () => {
     setSearchQuery(searchFromUrl);
   }, [searchParams]);
 
+  useEffect(() => {
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, []);
+
   return (
     <Input
       variant="flat"
       classNames={{
-        label: "tracking-tight font-light !text-default-600 text-sm !z-0 pb-1",
+        label: "tracking-tight font-light !text-default-600 text-sm z-0! pb-1",
       }}
       aria-label="Search"
       label="Search"
@@ -59,7 +72,7 @@ export const CustomSearchInput: React.FC = () => {
       endContent={
         searchQuery && (
           <button onClick={clearIconSearch} className="focus:outline-none">
-            <XCircle className="h-4 w-4 text-default-400" />
+            <XCircle className="text-default-400 h-4 w-4" />
           </button>
         )
       }

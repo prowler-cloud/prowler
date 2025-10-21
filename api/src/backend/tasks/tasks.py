@@ -34,6 +34,7 @@ from tasks.jobs.scan import (
 from tasks.utils import batched, get_next_execution_datetime
 
 from api.compliance import get_compliance_frameworks
+from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import rls_transaction
 from api.decorators import set_tenant
 from api.models import Finding, Integration, Provider, Scan, ScanSummary, StateChoices
@@ -343,70 +344,73 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
         .order_by("uid")
         .iterator()
     )
-    for batch, is_last in batched(qs, DJANGO_FINDINGS_BATCH_SIZE):
-        fos = [FindingOutput.transform_api_finding(f, prowler_provider) for f in batch]
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        for batch, is_last in batched(qs, DJANGO_FINDINGS_BATCH_SIZE):
+            fos = [
+                FindingOutput.transform_api_finding(f, prowler_provider) for f in batch
+            ]
 
-        # Outputs
-        for mode, cfg in OUTPUT_FORMATS_MAPPING.items():
-            # Skip ASFF generation if not needed
-            if mode == "json-asff" and not generate_asff:
-                continue
+            # Outputs
+            for mode, cfg in OUTPUT_FORMATS_MAPPING.items():
+                # Skip ASFF generation if not needed
+                if mode == "json-asff" and not generate_asff:
+                    continue
 
-            cls = cfg["class"]
-            suffix = cfg["suffix"]
-            extra = cfg.get("kwargs", {}).copy()
-            if mode == "html":
-                extra.update(provider=prowler_provider, stats=scan_summary)
+                cls = cfg["class"]
+                suffix = cfg["suffix"]
+                extra = cfg.get("kwargs", {}).copy()
+                if mode == "html":
+                    extra.update(provider=prowler_provider, stats=scan_summary)
 
-            writer, initialization = get_writer(
-                output_writers,
-                cls,
-                lambda cls=cls, fos=fos, suffix=suffix: cls(
-                    findings=fos,
-                    file_path=out_dir,
-                    file_extension=suffix,
-                    from_cli=False,
-                ),
-                is_last,
-            )
-            if not initialization:
-                writer.transform(fos)
-            writer.batch_write_data_to_file(**extra)
-            writer._data.clear()
+                writer, initialization = get_writer(
+                    output_writers,
+                    cls,
+                    lambda cls=cls, fos=fos, suffix=suffix: cls(
+                        findings=fos,
+                        file_path=out_dir,
+                        file_extension=suffix,
+                        from_cli=False,
+                    ),
+                    is_last,
+                )
+                if not initialization:
+                    writer.transform(fos)
+                writer.batch_write_data_to_file(**extra)
+                writer._data.clear()
 
-        # Compliance CSVs
-        for name in frameworks_avail:
-            compliance_obj = frameworks_bulk[name]
+            # Compliance CSVs
+            for name in frameworks_avail:
+                compliance_obj = frameworks_bulk[name]
 
-            klass = GenericCompliance
-            for condition, cls in COMPLIANCE_CLASS_MAP.get(provider_type, []):
-                if condition(name):
-                    klass = cls
-                    break
+                klass = GenericCompliance
+                for condition, cls in COMPLIANCE_CLASS_MAP.get(provider_type, []):
+                    if condition(name):
+                        klass = cls
+                        break
 
-            filename = f"{comp_dir}_{name}.csv"
+                filename = f"{comp_dir}_{name}.csv"
 
-            writer, initialization = get_writer(
-                compliance_writers,
-                name,
-                lambda klass=klass, fos=fos: klass(
-                    findings=fos,
-                    compliance=compliance_obj,
-                    file_path=filename,
-                    from_cli=False,
-                ),
-                is_last,
-            )
-            if not initialization:
-                writer.transform(fos, compliance_obj, name)
-            writer.batch_write_data_to_file()
-            writer._data.clear()
+                writer, initialization = get_writer(
+                    compliance_writers,
+                    name,
+                    lambda klass=klass, fos=fos: klass(
+                        findings=fos,
+                        compliance=compliance_obj,
+                        file_path=filename,
+                        from_cli=False,
+                    ),
+                    is_last,
+                )
+                if not initialization:
+                    writer.transform(fos, compliance_obj, name)
+                writer.batch_write_data_to_file()
+                writer._data.clear()
 
     compressed = _compress_output_files(out_dir)
     upload_uri = _upload_to_s3(tenant_id, compressed, scan_id)
 
     # S3 integrations (need output_directory)
-    with rls_transaction(tenant_id):
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
         s3_integrations = Integration.objects.filter(
             integrationproviderrelationship__provider_id=provider_id,
             integration_type=Integration.IntegrationChoices.AMAZON_S3,
@@ -461,7 +465,7 @@ def backfill_scan_resource_summaries_task(tenant_id: str, scan_id: str):
     return backfill_resource_scan_summaries(tenant_id=tenant_id, scan_id=scan_id)
 
 
-@shared_task(base=RLSTask, name="scan-compliance-overviews", queue="overview")
+@shared_task(base=RLSTask, name="scan-compliance-overviews", queue="compliance")
 def create_compliance_requirements_task(tenant_id: str, scan_id: str):
     """
     Creates detailed compliance requirement records for a scan.

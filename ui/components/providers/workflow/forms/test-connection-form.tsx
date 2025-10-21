@@ -1,8 +1,8 @@
 "use client";
 
+import { Checkbox } from "@heroui/checkbox";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Icon } from "@iconify/react";
-import { Checkbox } from "@nextui-org/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -25,7 +25,7 @@ import { ApiError, testConnectionFormSchema } from "@/types";
 
 import { ProviderInfo } from "../..";
 
-type FormValues = z.infer<typeof testConnectionFormSchema>;
+type FormValues = z.input<typeof testConnectionFormSchema>;
 
 export const TestConnectionForm = ({
   searchParams,
@@ -201,16 +201,16 @@ export const TestConnectionForm = ({
 
   if (isRedirecting) {
     return (
-      <div className="flex flex-col items-center justify-center space-y-6 py-12">
+      <div className="flex flex-col items-center justify-center gap-6 py-12">
         <div className="relative">
-          <div className="h-24 w-24 animate-pulse rounded-full bg-primary/20" />
-          <div className="absolute inset-0 h-24 w-24 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <div className="bg-primary/20 h-24 w-24 animate-pulse rounded-full" />
+          <div className="border-primary absolute inset-0 h-24 w-24 animate-spin rounded-full border-4 border-t-transparent" />
         </div>
         <div className="text-center">
-          <p className="text-xl font-medium text-primary">
+          <p className="text-primary text-xl font-medium">
             Scan initiated successfully
           </p>
-          <p className="mt-2 text-small font-bold text-gray-500">
+          <p className="text-small mt-2 font-bold text-gray-500">
             Redirecting to scans job details...
           </p>
         </div>
@@ -222,7 +222,7 @@ export const TestConnectionForm = ({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmitClient)}
-        className="flex flex-col space-y-4"
+        className="flex flex-col gap-4"
       >
         <div className="text-left">
           <div className="mb-2 text-xl font-medium">
@@ -230,7 +230,7 @@ export const TestConnectionForm = ({
               ? "Check connection and launch scan"
               : "Check connection"}
           </div>
-          <p className="py-2 text-small text-default-500">
+          <p className="text-small text-default-500 py-2">
             {!isUpdated
               ? "After a successful connection, a scan will automatically run every 24 hours. To run a single scan instead, select the checkbox below."
               : "A successful connection will redirect you to the providers page."}
@@ -238,7 +238,7 @@ export const TestConnectionForm = ({
         </div>
 
         {apiErrorMessage && (
-          <div className="mt-4 rounded-md bg-red-100 p-3 text-danger">
+          <div className="text-danger mt-4 rounded-md bg-red-100 p-3">
             <p>{`Provider ID ${apiErrorMessage?.toLowerCase()}. Please check and try again.`}</p>
           </div>
         )}
@@ -249,7 +249,7 @@ export const TestConnectionForm = ({
               <div className="flex items-center">
                 <Icon
                   icon="heroicons:exclamation-circle"
-                  className="h-5 w-5 text-danger"
+                  className="text-danger h-5 w-5"
                 />
               </div>
               <div className="flex items-center">
@@ -286,19 +286,19 @@ export const TestConnectionForm = ({
         )}
 
         {isUpdated && !connectionStatus?.error && (
-          <p className="py-2 text-small text-default-500">
+          <p className="text-small text-default-500 py-2">
             Check the new credentials and test the connection.
           </p>
         )}
 
         <input type="hidden" name="providerId" value={providerId} />
 
-        <div className="flex w-full justify-end sm:space-x-6">
+        <div className="flex w-full justify-end sm:gap-6">
           {apiErrorMessage ? (
             <CustomLink
               href="/providers"
               target="_self"
-              className="mr-3 flex w-fit items-center justify-center space-x-2 rounded-lg border border-solid border-gray-200 px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-700"
+              className="mr-3 flex w-fit items-center justify-center gap-2 rounded-lg border border-solid border-gray-200 px-4 py-2 hover:bg-gray-200 dark:hover:bg-gray-700"
             >
               <Icon
                 icon="icon-park-outline:close-small"
