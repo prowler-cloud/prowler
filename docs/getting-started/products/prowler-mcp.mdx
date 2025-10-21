@@ -1,0 +1,125 @@
+---
+title: "Overview"
+---
+
+**Prowler MCP Server** brings the entire Prowler ecosystem to AI assistants through the Model Context Protocol (MCP). It enables seamless integration with AI tools like Claude Desktop, Cursor, and other MCP clients, allowing interaction with Prowler's security capabilities through natural language.
+
+<Warning>
+**Preview Feature**: This MCP server is currently in preview and under active development. Features and functionality may change. We welcome your feedback—please report any issues on [GitHub](https://github.com/prowler-cloud/prowler/issues) or join our [Slack community](https://goto.prowler.com/slack) to discuss and share your thoughts.
+</Warning>
+
+## What is the Model Context Protocol?
+
+The [Model Context Protocol (MCP)](https://modelcontextprotocol.io) is an open standard developed by Anthropic that enables AI assistants to securely connect to external data sources and tools. It functions as a universal adapter enabling AI assistants to interact with various services through a standardized interface.
+
+## Key Capabilities
+
+The Prowler MCP Server provides three main integration points:
+
+### 1. Prowler Cloud and Prowler App (Self-Managed)
+
+Full access to Prowler Cloud platform and self-managed Prowler App for:
+- **Provider Management**: Create, configure, and manage cloud providers (AWS, Azure, GCP, etc.).
+- **Scan Orchestration**: Trigger on-demand scans and schedule recurring security assessments.
+- **Findings Analysis**: Query, filter, and analyze security findings across all your cloud environments.
+- **Compliance Reporting**: Generate compliance reports for various frameworks (CIS, PCI-DSS, HIPAA, etc.).
+- **Secrets Management**: Securely manage provider credentials and connection details.
+- **Processor Configuration**: Set up the [Prowler Mutelist](/user-guide/tutorials/prowler-app-mute-findings) to mute findings.
+
+### 2. Prowler Hub
+
+Access to Prowler's comprehensive security knowledge base:
+- **Security Checks Catalog**: Browse and search **over 1000 security checks** across multiple cloud providers.
+- **Check Implementation**: View the Python code that powers each security check.
+- **Automated Fixers**: Access remediation scripts for common security issues.
+- **Compliance Frameworks**: Explore mappings to **over 70 compliance standards and frameworks**.
+- **Provider Services**: View available services and checks for each cloud provider.
+
+### 3. Prowler Documentation
+
+Search and retrieve official Prowler documentation:
+- **Intelligent Search**: Full-text search across all Prowler documentation.
+- **Contextual Results**: Get relevant documentation pages with highlighted snippets.
+- **Document Retrieval**: Access complete markdown content of any documentation file.
+
+## Use Cases
+
+The Prowler MCP Server enables powerful workflows through AI assistants:
+
+**Security Operations**
+- "Show me all critical findings from my AWS production accounts"
+- "What is my compliance status for the PCI standards accross all my AWS accounts according to the latest Prowler scan results?"
+- "Register my new AWS account in Prowler and run an scheduled scan every day"
+
+**Security Research**
+- "Explain what the S3 bucket public access check does"
+- "Find all checks related to encryption at rest"
+- "What is the latest version of the CIS that Prowler is covering per provider?"
+
+**Documentation & Learning**
+- "How do I configure Prowler to scan my GCP organization?"
+- "What authentication methods does Prowler support for Azure?"
+- "How can I contribute with a new security check to Prowler?"
+
+## Deployment Options
+
+Prowler MCP Server can be used in three ways:
+
+### 1. Prowler Cloud MCP Server
+
+**Use Prowler's managed MCP server at `https://mcp.prowler.com/mcp`**
+
+- No installation required.
+- Managed and maintained by Prowler team.
+- Authentication to Prowler Cloud or Prowler App (self-managed) via API key or JWT token.
+
+### 2. Local STDIO Mode
+
+**Run the server locally on your machine**
+
+- Runs as a subprocess of your MCP client.
+- Possibility to connect to a self-hosted Prowler App (e.g. self-hosted Prowler App).
+- Authentication to Prowler Cloud or Prowler App (self-managed) via environment variables.
+- Requires Python 3.12+ or Docker.
+
+### 3. Self-Hosted HTTP Mode
+
+**Deploy your own remote MCP server**
+
+- Full control over deployment.
+- Possibility to connect to a self-hosted Prowler App (e.g. self-hosted Prowler App).
+- Authentication to Prowler App (self-managed) via API key or JWT token.
+- Requires Python 3.12+ or Docker.
+
+## Requirements
+
+Requirements vary based on deployment option:
+
+**For Prowler Cloud MCP Server:**
+- Prowler Cloud account and API key (only for Prowler Cloud/App features)
+
+**For self-hosted STDIO/HTTP Mode:**
+- Python 3.12+ or Docker
+- Network access to:
+  - `https://hub.prowler.com` (for Prowler Hub)
+  - `https://docs.prowler.com` (for Prowler Documentation)
+  - Prowler Cloud API or self-hosted Prowler App API (for Prowler Cloud/App features)
+
+<Note>
+**No Authentication Required**: Prowler Hub and Prowler Documentation features work without authentication in both deployment options. A Prowler API key is only required to access Prowler Cloud or Prowler App (Self-Managed) features.
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/getting-started/installation/prowler-mcp">
+    Install the Prowler MCP Server using uv or Docker
+  </Card>
+  <Card title="Configuration" icon="gear" href="/getting-started/basic-usage/prowler-mcp">
+    Configure your MCP client to connect to the server
+  </Card>
+</CardGroup>
+
+<Card title="Tools Reference" icon="wrench" href="/getting-started/basic-usage/prowler-mcp-tools" horizontal>
+  Explore all available tools and capabilities
+</Card>

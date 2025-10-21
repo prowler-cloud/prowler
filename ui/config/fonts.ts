@@ -1,12 +1,10 @@
-import {
-  Fira_Code as FontMono,
-  Plus_Jakarta_Sans as FontSans,
-} from "next/font/google";
+import { Fira_Code as FontMono, Inter as FontSans } from "next/font/google";
 
 export const fontSans = FontSans({
   subsets: ["latin"],
   variable: "--font-sans",
   preload: false,
+  display: "swap",
 });
 
 export const fontMono = FontMono({
