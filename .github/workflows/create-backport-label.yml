@@ -1,67 +1,76 @@
-name: Prowler - Create Backport Label
+name: 'Tools: Backport Label'
 
 on:
   release:
-    types: [published]
+    types:
+      - 'published'
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag (e.g., v5.6.0)'
+        required: true
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.release.tag_name || inputs.release_tag }}
+  cancel-in-progress: false
+
+env:
+  BACKPORT_LABEL_PREFIX: backport-to-
+  BACKPORT_LABEL_COLOR: B60205
 
 jobs:
-  create_label:
+  create-label:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
-      contents: write
+      contents: read
       issues: write
+
     steps:
-      - name: Create backport label
+      - name: Create backport label for minor releases
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
-          OWNER_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION_ONLY=${RELEASE_TAG#v} # Remove 'v' prefix if present (e.g., v3.2.0 -> 3.2.0)
+          RELEASE_TAG="${{ github.event.release.tag_name || inputs.release_tag }}"
+
+          if [ -z "$RELEASE_TAG" ]; then
+            echo "Error: No release tag provided"
+            exit 1
+          fi
+
+          echo "Processing release tag: $RELEASE_TAG"
+
+          # Remove 'v' prefix if present (e.g., v3.2.0 -> 3.2.0)
+          VERSION_ONLY="${RELEASE_TAG#v}"
 
           # Check if it's a minor version (X.Y.0)
-          if [[ "$VERSION_ONLY" =~ ^[0-9]+\.[0-9]+\.0$ ]]; then
-            echo "Release ${RELEASE_TAG} (version ${VERSION_ONLY}) is a minor version. Proceeding to create backport label."
+          if [[ "$VERSION_ONLY" =~ ^([0-9]+)\.([0-9]+)\.0$ ]]; then
+            echo "Release $RELEASE_TAG (version $VERSION_ONLY) is a minor version. Proceeding to create backport label."
 
-            TWO_DIGIT_VERSION=${VERSION_ONLY%.0} # Extract X.Y from X.Y.0 (e.g., 5.6 from 5.6.0)
+            # Extract X.Y from X.Y.0 (e.g., 5.6 from 5.6.0)
+            MAJOR="${BASH_REMATCH[1]}"
+            MINOR="${BASH_REMATCH[2]}"
+            TWO_DIGIT_VERSION="${MAJOR}.${MINOR}"
 
-            FINAL_LABEL_NAME="backport-to-v${TWO_DIGIT_VERSION}"
-            FINAL_DESCRIPTION="Backport PR to the v${TWO_DIGIT_VERSION} branch"
+            LABEL_NAME="${BACKPORT_LABEL_PREFIX}v${TWO_DIGIT_VERSION}"
+            LABEL_DESC="Backport PR to the v${TWO_DIGIT_VERSION} branch"
+            LABEL_COLOR="$BACKPORT_LABEL_COLOR"
 
-            echo "Effective label name will be: ${FINAL_LABEL_NAME}"
-            echo "Effective description will be: ${FINAL_DESCRIPTION}"
+            echo "Label name: $LABEL_NAME"
+            echo "Label description: $LABEL_DESC"
 
-            # Check if the label already exists
-            STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token ${GITHUB_TOKEN}" "https://api.github.com/repos/${OWNER_REPO}/labels/${FINAL_LABEL_NAME}")
-
-            if [ "${STATUS_CODE}" -eq 200 ]; then
-              echo "Label '${FINAL_LABEL_NAME}' already exists."
-            elif [ "${STATUS_CODE}" -eq 404 ]; then
-              echo "Label '${FINAL_LABEL_NAME}' does not exist. Creating it..."
-              # Prepare JSON data payload
-              JSON_DATA=$(printf '{"name":"%s","description":"%s","color":"B60205"}' "${FINAL_LABEL_NAME}" "${FINAL_DESCRIPTION}")
-
-              CREATE_STATUS_CODE=$(curl -s -o /tmp/curl_create_response.json -w "%{http_code}" -X POST \
-              -H "Accept: application/vnd.github.v3+json" \
-              -H "Authorization: token ${GITHUB_TOKEN}" \
-              --data "${JSON_DATA}" \
-              "https://api.github.com/repos/${OWNER_REPO}/labels")
-
-              CREATE_RESPONSE_BODY=$(cat /tmp/curl_create_response.json)
-              rm -f /tmp/curl_create_response.json
-
-              if [ "$CREATE_STATUS_CODE" -eq 201 ]; then
-                echo "Label '${FINAL_LABEL_NAME}' created successfully."
-              else
-                echo "Error creating label '${FINAL_LABEL_NAME}'. Status: $CREATE_STATUS_CODE"
-                echo "Response: $CREATE_RESPONSE_BODY"
-                exit 1
-              fi
+            # Check if label already exists
+            if gh label list --repo ${{ github.repository }} --limit 1000 | grep -q "^${LABEL_NAME}[[:space:]]"; then
+              echo "Label '$LABEL_NAME' already exists."
             else
-              echo "Error checking for label '${FINAL_LABEL_NAME}'. HTTP Status: ${STATUS_CODE}"
-              exit 1
+              echo "Label '$LABEL_NAME' does not exist. Creating it..."
+              gh label create "$LABEL_NAME" \
+                --description "$LABEL_DESC" \
+                --color "$LABEL_COLOR" \
+                --repo ${{ github.repository }}
+              echo "Label '$LABEL_NAME' created successfully."
             fi
           else
-            echo "Release ${RELEASE_TAG} (version ${VERSION_ONLY}) is not a minor version. Skipping backport label creation."
-            exit 0
+            echo "Release $RELEASE_TAG (version $VERSION_ONLY) is not a minor version. Skipping backport label creation."
           fi
