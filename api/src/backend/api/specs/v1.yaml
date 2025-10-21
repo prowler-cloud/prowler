@@ -3917,6 +3917,37 @@ paths:
               schema:
                 $ref: '#/components/schemas/OverviewSeverityResponse'
           description: ''
+  /api/v1/overviews/provider-types:
+    get:
+      operationId: overviews_provider_types_retrieve
+      description: List all provider types configured in the tenant together with
+        the number of providers registered for each type. The response respects the
+        caller's visibility over providers.
+      summary: Get provider counts by type
+      parameters:
+      - in: query
+        name: fields[provider-types-overview]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - count
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      tags:
+      - Overview
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OverviewProviderTypeResponse'
+          description: ''
   /api/v1/overviews/providers:
     get:
       operationId: overviews_providers_retrieve
@@ -11064,6 +11095,38 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/OverviewProvider'
+      required:
+      - data
+    OverviewProviderType:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - provider-types-overview
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            count:
+              type: integer
+          required:
+          - id
+          - count
+    OverviewProviderTypeResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/OverviewProviderType'
       required:
       - data
     OverviewService:

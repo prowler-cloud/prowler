@@ -162,6 +162,7 @@ from api.v1.serializers import (
     MembershipSerializer,
     OverviewFindingSerializer,
     OverviewProviderSerializer,
+    OverviewProviderTypeSerializer,
     OverviewServiceSerializer,
     OverviewSeveritySerializer,
     ProcessorCreateSerializer,
@@ -3604,6 +3605,13 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             "each provider are considered in the aggregation to ensure accurate and up-to-date insights."
         ),
     ),
+    provider_types=extend_schema(
+        summary="Get provider counts by type",
+        description=(
+            "List all provider types configured in the tenant together with the number of providers "
+            "registered for each type. The response respects the caller's visibility over providers."
+        ),
+    ),
     findings=extend_schema(
         summary="Get aggregated findings data",
         description=(
@@ -3655,6 +3663,8 @@ class OverviewViewSet(BaseRLSViewSet):
     def get_serializer_class(self):
         if self.action == "providers":
             return OverviewProviderSerializer
+        elif self.action == "provider_types":
+            return OverviewProviderTypeSerializer
         elif self.action == "findings":
             return OverviewFindingSerializer
         elif self.action == "findings_severity":
@@ -3741,6 +3751,32 @@ class OverviewViewSet(BaseRLSViewSet):
             self.get_serializer(overview, many=True).data,
             status=status.HTTP_200_OK,
         )
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_name="provider-types",
+        url_path="provider-types",
+    )
+    def provider_types(self, request):
+        tenant_id = self.request.tenant_id
+        # Ensure allowed providers are calculated for the current role
+        self.get_queryset()
+        provider_filter = (
+            {"id__in": self.allowed_providers.values_list("id", flat=True)}
+            if hasattr(self, "allowed_providers")
+            else {}
+        )
+
+        provider_type_counts = (
+            Provider.objects.filter(tenant_id=tenant_id, **provider_filter)
+            .values("provider")
+            .annotate(total_providers=Count("id"))
+            .order_by("provider")
+        )
+
+        serializer = self.get_serializer(provider_type_counts, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], url_name="findings")
     def findings(self, request):

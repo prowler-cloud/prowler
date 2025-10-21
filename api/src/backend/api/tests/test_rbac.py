@@ -649,6 +649,41 @@ class TestLimitedVisibility:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 0
 
+    def test_overviews_provider_types(
+        self,
+        authenticated_client_rbac_limited,
+        providers_fixture,
+    ):
+        response = authenticated_client_rbac_limited.get(
+            reverse("overview-provider-types")
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["id"] == "aws"
+        assert data[0]["attributes"]["count"] == 1
+
+        ProviderGroupMembership.objects.all().delete()
+
+        response = authenticated_client_rbac_limited.get(
+            reverse("overview-provider-types")
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"] == []
+
+    def test_overviews_provider_types_without_manage_providers(
+        self,
+        authenticated_client_no_permissions_rbac,
+    ):
+        response = authenticated_client_no_permissions_rbac.get(
+            reverse("overview-provider-types")
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"] == []
+
     @pytest.mark.parametrize(
         "endpoint_name",
         [

@@ -5735,6 +5735,21 @@ class TestOverviewViewSet:
         # Since we rely on completed scans, there are only 2 resources now
         assert response.json()["data"][0]["attributes"]["resources"]["total"] == 2
 
+    def test_overview_provider_types(self, authenticated_client, providers_fixture):
+        response = authenticated_client.get(reverse("overview-provider-types"))
+        assert response.status_code == status.HTTP_200_OK
+
+        data = response.json()["data"]
+        assert len(data) == 5
+        counts_by_type = {item["id"]: item["attributes"]["count"] for item in data}
+
+        assert counts_by_type["aws"] == 2
+        assert counts_by_type["gcp"] == 1
+        assert counts_by_type["azure"] == 1
+        assert counts_by_type["kubernetes"] == 1
+        assert counts_by_type["m365"] == 1
+        assert data[0]["type"] == "provider-types-overview"
+
     def test_overview_services_list_no_required_filters(
         self, authenticated_client, scan_summaries_fixture
     ):
