@@ -18,15 +18,9 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
-    "https://www.greenmarimba.com/cis-amazon-web-services/",
-    "https://www.plerion.com/cloud-knowledge-base/ensure-changes-to-network-gateways-are-monitored",
-    "https://support.icompaas.com/support/solutions/articles/62000233126-4-12-ensure-changes-to-network-gateways-are-monitored-manual-",
-    "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_12#fix---buildtime",
     "https://support.icompaas.com/support/solutions/articles/62000083807-ensure-a-log-metric-filter-and-alarm-exist-for-changes-to-network-gateways",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html",
-    "https://paper.bobylive.com/Security/CIS/CIS_Amazon_Web_Services_Foundations_Benchmark_v1_3_0.pdf",
-    "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_12",
-    "https://repost.aws/questions/QU7w3Pzih9TSuA33dTjoLNTw/estimated-cost-of-setting-up-a-log-metric-filter-and-alarm-on-cloudwatch"
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-12",
+    "https://paper.bobylive.com/Security/CIS/CIS_Amazon_Web_Services_Foundations_Benchmark_v1_3_0.pdf"
   ],
   "Remediation": {
     "Code": {
