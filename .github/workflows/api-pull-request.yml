@@ -1,20 +1,30 @@
-name: API - Pull Request
+name: 'API: Pull Request'
 
 on:
   push:
     branches:
-      - "master"
-      - "v5.*"
+      - 'master'
+      - 'v5.*'
     paths:
-      - ".github/workflows/api-pull-request.yml"
-      - "api/**"
+      - '.github/workflows/api-pull-request.yml'
+      - 'api/**'
+      - '!api/docs/**'
+      - '!api/README.md'
+      - '!api/CHANGELOG.md'
   pull_request:
     branches:
-      - "master"
-      - "v5.*"
+      - 'master'
+      - 'v5.*'
     paths:
-      - ".github/workflows/api-pull-request.yml"
-      - "api/**"
+      - '.github/workflows/api-pull-request.yml'
+      - 'api/**'
+      - '!api/docs/**'
+      - '!api/README.md'
+      - '!api/CHANGELOG.md'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   POSTGRES_HOST: localhost
@@ -29,21 +39,153 @@ env:
   VALKEY_DB: 0
   API_WORKING_DIR: ./api
   IMAGE_NAME: prowler-api
-  IGNORE_FILES: |
-    api/docs/**
-    api/README.md
-    api/CHANGELOG.md
 
 jobs:
-  test:
+  code-quality:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
     strategy:
       matrix:
-        python-version: ["3.12"]
+        python-version:
+          - '3.12'
+    defaults:
+      run:
+        working-directory: ./api
 
-    # Service containers to run with `test`
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Replace @master with current branch in pyproject.toml
+        if: github.event_name == 'pull_request' && github.base_ref == 'master'
+        run: |
+          BRANCH_NAME="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          echo "Using branch: $BRANCH_NAME"
+          sed -i "s|@master|@$BRANCH_NAME|g" pyproject.toml
+
+      - name: Install poetry
+        run: |
+          python -m pip install --upgrade pip
+          pipx install poetry==2.1.1
+
+      - name: Update SDK resolved_reference to latest commit
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        run: |
+          LATEST_COMMIT=$(curl -s "https://api.github.com/repos/prowler-cloud/prowler/commits/master" | jq -r '.sha')
+          echo "Latest commit hash: $LATEST_COMMIT"
+          sed -i '/url = "https:\/\/github\.com\/prowler-cloud\/prowler\.git"/,/resolved_reference = / {
+            s/resolved_reference = "[a-f0-9]\{40\}"/resolved_reference = "'"$LATEST_COMMIT"'"/
+          }' poetry.lock
+          echo "Updated resolved_reference:"
+          grep -A2 -B2 "resolved_reference" poetry.lock
+
+      - name: Update poetry.lock
+        run: poetry lock
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'poetry'
+
+      - name: Install Python dependencies
+        run: |
+          poetry install --no-root
+          poetry run pip list
+
+      - name: Poetry check
+        run: poetry check --lock
+
+      - name: Ruff lint
+        run: poetry run ruff check . --exclude contrib
+
+      - name: Ruff format
+        run: poetry run ruff format --check . --exclude contrib
+
+      - name: Pylint
+        run: poetry run pylint --disable=W,C,R,E -j 0 -rn -sn src/
+
+  security-scans:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        python-version:
+          - '3.12'
+    defaults:
+      run:
+        working-directory: ./api
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Replace @master with current branch in pyproject.toml
+        if: github.event_name == 'pull_request' && github.base_ref == 'master'
+        run: |
+          BRANCH_NAME="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          echo "Using branch: $BRANCH_NAME"
+          sed -i "s|@master|@$BRANCH_NAME|g" pyproject.toml
+
+      - name: Install poetry
+        run: |
+          python -m pip install --upgrade pip
+          pipx install poetry==2.1.1
+
+      - name: Update SDK resolved_reference to latest commit
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        run: |
+          LATEST_COMMIT=$(curl -s "https://api.github.com/repos/prowler-cloud/prowler/commits/master" | jq -r '.sha')
+          echo "Latest commit hash: $LATEST_COMMIT"
+          sed -i '/url = "https:\/\/github\.com\/prowler-cloud\/prowler\.git"/,/resolved_reference = / {
+            s/resolved_reference = "[a-f0-9]\{40\}"/resolved_reference = "'"$LATEST_COMMIT"'"/
+          }' poetry.lock
+          echo "Updated resolved_reference:"
+          grep -A2 -B2 "resolved_reference" poetry.lock
+
+      - name: Update poetry.lock
+        run: poetry lock
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'poetry'
+
+      - name: Install Python dependencies
+        run: |
+          poetry install --no-root
+          poetry run pip list
+
+      - name: Bandit
+        run: poetry run bandit -q -lll -x '*_test.py,./contrib/' -r .
+
+      - name: Safety
+        # 76352, 76353, 77323 come from SDK, but they cannot upgrade it yet. It does not affect API
+        # TODO: Botocore needs urllib3 1.X so we need to ignore these vulnerabilities 77744,77745. Remove this once we upgrade to urllib3 2.X
+        run: poetry run safety check --ignore 70612,66963,74429,76352,76353,77323,77744,77745
+
+      - name: Vulture
+        run: poetry run vulture --exclude "contrib,tests,conftest.py" --min-confidence 100 .
+
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        python-version:
+          - '3.12'
+    defaults:
+      run:
+        working-directory: ./api
+
     services:
-      # Label used to access the service container
       postgres:
         image: postgres
         env:
@@ -52,7 +194,6 @@ jobs:
           POSTGRES_USER: ${{ env.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
           POSTGRES_DB: ${{ env.POSTGRES_DB }}
-        # Set health checks to wait until postgres has started
         ports:
           - 5432:5432
         options: >-
@@ -66,7 +207,6 @@ jobs:
           VALKEY_HOST: ${{ env.VALKEY_HOST }}
           VALKEY_PORT: ${{ env.VALKEY_PORT }}
           VALKEY_DB: ${{ env.VALKEY_DB }}
-        # Set health checks to wait until postgres has started
         ports:
           - 6379:6379
         options: >-
@@ -76,158 +216,192 @@ jobs:
           --health-retries 5
 
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
-      - name: Test if changes are in not ignored paths
-        id: are-non-ignored-files-changed
-        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
-        with:
-          files: |
-            api/**
-            .github/workflows/api-pull-request.yml
-          files_ignore: ${{ env.IGNORE_FILES }}
-
-      - name: Replace @master with current branch in pyproject.toml - Only for pull requests to `master`
-        working-directory: ./api
-        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true' && github.event_name == 'pull_request' && github.base_ref == 'master'
+      - name: Replace @master with current branch in pyproject.toml
+        if: github.event_name == 'pull_request' && github.base_ref == 'master'
         run: |
           BRANCH_NAME="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
           echo "Using branch: $BRANCH_NAME"
           sed -i "s|@master|@$BRANCH_NAME|g" pyproject.toml
 
       - name: Install poetry
-        working-directory: ./api
-        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         run: |
           python -m pip install --upgrade pip
           pipx install poetry==2.1.1
 
-      - name: Update SDK's poetry.lock resolved_reference to latest commit - Only for push events to `master`
-        working-directory: ./api
-        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/master'
+      - name: Update SDK resolved_reference to latest commit
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         run: |
-          # Get the latest commit hash from the prowler-cloud/prowler repository
           LATEST_COMMIT=$(curl -s "https://api.github.com/repos/prowler-cloud/prowler/commits/master" | jq -r '.sha')
           echo "Latest commit hash: $LATEST_COMMIT"
-
-          # Update the resolved_reference specifically for prowler-cloud/prowler repository
           sed -i '/url = "https:\/\/github\.com\/prowler-cloud\/prowler\.git"/,/resolved_reference = / {
             s/resolved_reference = "[a-f0-9]\{40\}"/resolved_reference = "'"$LATEST_COMMIT"'"/
           }' poetry.lock
-
-          # Verify the change was made
           echo "Updated resolved_reference:"
           grep -A2 -B2 "resolved_reference" poetry.lock
 
       - name: Update poetry.lock
-        working-directory: ./api
-        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
-        run: |
-          poetry lock
+        run: poetry lock
 
       - name: Set up Python ${{ matrix.python-version }}
-        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
         with:
           python-version: ${{ matrix.python-version }}
-          cache: "poetry"
+          cache: 'poetry'
 
-      - name: Install dependencies
-        working-directory: ./api
-        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
+      - name: Install Python dependencies
         run: |
           poetry install --no-root
           poetry run pip list
-          VERSION=$(curl --silent "https://api.github.com/repos/hadolint/hadolint/releases/latest" | \
-            grep '"tag_name":' | \
-            sed -E 's/.*"v([^"]+)".*/\1/' \
-            ) && curl -L -o /tmp/hadolint "https://github.com/hadolint/hadolint/releases/download/v${VERSION}/hadolint-Linux-x86_64" \
-            && chmod +x /tmp/hadolint
 
-      - name: Poetry check
-        working-directory: ./api
-        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
-        run: |
-          poetry check --lock
-
-      - name: Lint with ruff
-        working-directory: ./api
-        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
-        run: |
-          poetry run ruff check . --exclude contrib
-
-      - name: Check Format with ruff
-        working-directory: ./api
-        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
-        run: |
-          poetry run ruff format --check . --exclude contrib
-
-      - name: Lint with pylint
-        working-directory: ./api
-        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
-        run: |
-          poetry run pylint --disable=W,C,R,E -j 0 -rn -sn src/
-
-      - name: Bandit
-        working-directory: ./api
-        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
-        run: |
-          poetry run bandit -q -lll -x '*_test.py,./contrib/' -r .
-
-      - name: Safety
-        working-directory: ./api
-        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
-        # 76352, 76353, 77323 come from SDK, but they cannot upgrade it yet. It does not affect API
-        # TODO: Botocore needs urllib3 1.X so we need to ignore these vulnerabilities 77744,77745. Remove this once we upgrade to urllib3 2.X
-        run: |
-          poetry run safety check --ignore 70612,66963,74429,76352,76353,77323,77744,77745
-
-      - name: Vulture
-        working-directory: ./api
-        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
-        run: |
-          poetry run vulture --exclude "contrib,tests,conftest.py" --min-confidence 100 .
-
-      - name: Hadolint
-        working-directory: ./api
-        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
-        run: |
-          /tmp/hadolint Dockerfile --ignore=DL3013
-
-      - name: Test with pytest
-        working-directory: ./api
-        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
-        run: |
-          poetry run pytest --cov=./src/backend --cov-report=xml src/backend
+      - name: Run tests with pytest
+        run: poetry run pytest --cov=./src/backend --cov-report=xml src/backend
 
       - name: Upload coverage reports to Codecov
-        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
           flags: api
-  test-container-build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
-      - name: Test if changes are in not ignored paths
-        id: are-non-ignored-files-changed
-        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+  dockerfile-lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Lint Dockerfile with Hadolint
+        uses: hadolint/hadolint-action@2332a7b74a6de0dda2e2221d575162eba76ba5e5 # v3.3.0
         with:
-          files: api/**
-          files_ignore: ${{ env.IGNORE_FILES }}
+          dockerfile: api/Dockerfile
+          ignore: DL3013
+
+  container-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
       - name: Set up Docker Buildx
-        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+
       - name: Build Container
-        if: steps.are-non-ignored-files-changed.outputs.any_changed == 'true'
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: ${{ env.API_WORKING_DIR }}
           push: false
-          tags: ${{ env.IMAGE_NAME }}:latest
-          outputs: type=docker
+          tags: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          outputs: type=docker,dest=/tmp/${{ env.IMAGE_NAME }}.tar
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Upload image artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: container-image
+          path: /tmp/${{ env.IMAGE_NAME }}.tar
+          retention-days: 1
+
+  container-security-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: container-build
+    permissions:
+      contents: read
+      security-events: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Download image artifact
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        with:
+          name: container-image
+          path: /tmp
+
+      - name: Load image into Docker
+        run: docker load -i /tmp/${{ env.IMAGE_NAME }}.tar
+
+      - name: Run Trivy vulnerability scan (SARIF)
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
+        with:
+          image-ref: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'
+
+      - name: Upload Trivy results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@3599b3baa15b485a2e49ef411a7a4bb2452e7f93 # v3.30.5
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+          category: 'trivy-container'
+
+      - name: Run Trivy vulnerability scan (JSON)
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
+        with:
+          image-ref: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          format: 'json'
+          output: 'trivy-report.json'
+          severity: 'CRITICAL,HIGH,MEDIUM,LOW'
+          exit-code: '0'
+
+      - name: Upload Trivy report artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: trivy-scan-report
+          path: trivy-report.json
+          retention-days: 30
+
+      - name: Generate security summary
+        id: security-check
+        run: |
+          CRITICAL=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' trivy-report.json)
+          HIGH=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH")] | length' trivy-report.json)
+          echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
+          echo "high=$HIGH" >> $GITHUB_OUTPUT
+          echo "### 🔒 Container Security Scan" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔴 Critical: $CRITICAL" >> $GITHUB_STEP_SUMMARY
+          echo "- 🟠 High: $HIGH" >> $GITHUB_STEP_SUMMARY
+
+      - name: Comment scan results on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        env:
+          IMAGE_NAME: ${{ env.IMAGE_NAME }}
+          GITHUB_SHA: ${{ github.sha }}
+        with:
+          script: |
+            const scriptPath = '.github/scripts/trivy-pr-comment.js';
+            const script = require(scriptPath);
+            const comment = script;
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Fail on critical vulnerabilities
+        if: steps.security-check.outputs.critical != '0'
+        run: |
+          echo "::error::Found ${{ steps.security-check.outputs.critical }} critical vulnerabilities"
+          echo "::warning::Please update packages or use a different base image"
+          # Uncomment the next line to make this a blocking check:
+          # exit 1
