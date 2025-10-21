@@ -60,8 +60,8 @@ const CustomLegend = ({ payload }: any) => {
 
 export function DonutChart({
   data,
-  innerRadius = 80,
-  outerRadius = 120,
+  innerRadius = 68,
+  outerRadius = 86,
   showLegend = true,
   centerLabel,
 }: DonutChartProps) {
@@ -110,7 +110,7 @@ export function DonutChart({
             innerRadius={innerRadius}
             outerRadius={outerRadius}
             strokeWidth={0}
-            paddingAngle={2}
+            paddingAngle={0}
           >
             {chartData.map((entry, index) => {
               const opacity =
@@ -144,8 +144,8 @@ export function DonutChart({
                       >
                         <tspan
                           x={viewBox.cx}
-                          y={viewBox.cy}
-                          className="fill-white text-3xl font-bold"
+                          y={(viewBox.cy || 0) - 4}
+                          className="fill-white text-2xl font-bold"
                         >
                           {formattedValue}
                         </tspan>

@@ -66,7 +66,7 @@ const badgeIconVariants = cva("", {
 });
 
 const labelTextVariants = cva(
-  "leading-6 font-semibold text-zinc-300 dark:text-zinc-300",
+  "leading-6 font-semibold text-zinc-300 dark:text-zinc-300 whitespace-nowrap",
   {
     variants: {
       size: {
