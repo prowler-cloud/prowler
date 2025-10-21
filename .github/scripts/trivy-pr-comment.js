@@ -6,6 +6,10 @@ const IMAGE_NAME = process.env.IMAGE_NAME || 'container-image';
 const GITHUB_SHA = process.env.GITHUB_SHA || 'unknown';
 const GITHUB_REPOSITORY = process.env.GITHUB_REPOSITORY || '';
 const GITHUB_RUN_ID = process.env.GITHUB_RUN_ID || '';
+const SEVERITY = process.env.SEVERITY || 'CRITICAL,HIGH,MEDIUM,LOW';
+
+// Parse severities to scan
+const scannedSeverities = SEVERITY.split(',').map(s => s.trim());
 
 // Read and parse the Trivy report
 const report = JSON.parse(fs.readFileSync(REPORT_FILE, 'utf-8'));
@@ -33,6 +37,14 @@ if (report.Results && Array.isArray(report.Results)) {
 const shortSha = GITHUB_SHA.substring(0, 7);
 const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
 
+// Severity icons and labels
+const severityConfig = {
+    CRITICAL: { icon: '🔴', label: 'Critical' },
+    HIGH: { icon: '🟠', label: 'High' },
+    MEDIUM: { icon: '🟡', label: 'Medium' },
+    LOW: { icon: '🔵', label: 'Low' }
+};
+
 let comment = '## 🔒 Container Security Scan\n\n';
 comment += `**Image:** \`${IMAGE_NAME}:${shortSha}\`\n`;
 comment += `**Last scan:** ${timestamp}\n\n`;
@@ -44,10 +56,16 @@ if (vulnCount === 0) {
     comment += '### 📊 Vulnerability Summary\n\n';
     comment += '| Severity | Count |\n';
     comment += '|----------|-------|\n';
-    comment += `| 🔴 Critical | **${vulnsByType.CRITICAL}** |\n`;
-    comment += `| 🟠 High | **${vulnsByType.HIGH}** |\n`;
-    comment += `| 🟡 Medium | **${vulnsByType.MEDIUM}** |\n`;
-    comment += `| 🔵 Low | ${vulnsByType.LOW} |\n`;
+
+    // Only show severities that were scanned
+    for (const severity of scannedSeverities) {
+        const config = severityConfig[severity];
+        const count = vulnsByType[severity] || 0;
+        const isBold = (severity === 'CRITICAL' || severity === 'HIGH') && count > 0;
+        const countDisplay = isBold ? `**${count}**` : count;
+        comment += `| ${config.icon} ${config.label} | ${countDisplay} |\n`;
+    }
+
     comment += `| **Total** | **${vulnCount}** |\n\n`;
 
     if (affectedPackages.size > 0) {

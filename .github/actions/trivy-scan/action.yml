@@ -105,23 +105,24 @@ runs:
       env:
         IMAGE_NAME: ${{ inputs.image-name }}
         GITHUB_SHA: ${{ inputs.image-tag }}
+        SEVERITY: ${{ inputs.severity }}
       with:
         script: |
           const comment = require('./.github/scripts/trivy-pr-comment.js');
-
+          
           // Unique identifier to find our comment
           const marker = '<!-- trivy-scan-comment:${{ inputs.image-name }} -->';
           const body = marker + '\n' + comment;
-
+          
           // Find existing comment
           const { data: comments } = await github.rest.issues.listComments({
             owner: context.repo.owner,
             repo: context.repo.repo,
             issue_number: context.issue.number,
           });
-
+          
           const existingComment = comments.find(c => c.body?.includes(marker));
-
+          
           if (existingComment) {
             // Update existing comment
             await github.rest.issues.updateComment({
