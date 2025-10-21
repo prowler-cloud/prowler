@@ -92,14 +92,11 @@ if (vulnCount === 0) {
 comment += '---\n';
 comment += '📋 **Resources:**\n';
 
-if (GITHUB_REPOSITORY) {
-    comment += `- [View in Security tab](https://github.com/${GITHUB_REPOSITORY}/security/code-scanning)\n`;
+if (GITHUB_REPOSITORY && GITHUB_RUN_ID) {
+    comment += `- [Download full report](https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}) (see artifacts)\n`;
 }
 
-if (GITHUB_RUN_ID) {
-    comment += `- [Download full report](../../actions/runs/${GITHUB_RUN_ID}) (see artifacts)\n`;
-}
-
+comment += '- [View in Security tab](https://github.com/' + (GITHUB_REPOSITORY || 'repository') + '/security/code-scanning)\n';
 comment += '- Scanned with [Trivy](https://github.com/aquasecurity/trivy)\n';
 
 module.exports = comment;
