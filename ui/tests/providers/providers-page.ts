@@ -123,10 +123,10 @@ export class ProvidersPage extends BasePage {
     this.accountIdInput = page.getByRole("textbox", { name: "Account ID" });
     
     // AZURE provider form inputs
-    this.subscriptionIdInput = page.getByLabel("Subscription ID");
-    this.clientIdInput = page.getByLabel("Client ID");
-    this.clientSecretInput = page.getByLabel("Client Secret");
-    this.tenantIdInput = page.getByLabel("Tenant ID");
+    this.subscriptionIdInput = page.getByRole("textbox", { name: "Subscription ID" });
+    this.clientIdInput = page.getByRole("textbox", { name: "Client ID" });
+    this.clientSecretInput = page.getByRole("textbox", { name: "Client Secret" });
+    this.tenantIdInput = page.getByRole("textbox", { name: "Tenant ID" });
     
     // Alias input
     this.aliasInput = page.getByRole("textbox", { name: "Provider alias (optional)" });
