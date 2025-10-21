@@ -1,5 +1,14 @@
 const fs = require('fs');
-const report = JSON.parse(fs.readFileSync('trivy-report.json', 'utf-8'));
+
+// Configuration from environment variables
+const REPORT_FILE = process.env.TRIVY_REPORT_FILE || 'trivy-report.json';
+const IMAGE_NAME = process.env.IMAGE_NAME || 'container-image';
+const GITHUB_SHA = process.env.GITHUB_SHA || 'unknown';
+const GITHUB_REPOSITORY = process.env.GITHUB_REPOSITORY || '';
+const GITHUB_RUN_ID = process.env.GITHUB_RUN_ID || '';
+
+// Read and parse the Trivy report
+const report = JSON.parse(fs.readFileSync(REPORT_FILE, 'utf-8'));
 
 let vulnCount = 0;
 let vulnsByType = { CRITICAL: 0, HIGH: 0, MEDIUM: 0, LOW: 0 };
@@ -21,11 +30,10 @@ if (report.Results && Array.isArray(report.Results)) {
     }
 }
 
-const imageName = process.env.IMAGE_NAME || 'prowler-api';
-const sha = process.env.GITHUB_SHA?.substring(0, 7) || 'unknown';
+const shortSha = GITHUB_SHA.substring(0, 7);
 
 let comment = '## 🔒 Container Security Scan\n\n';
-comment += `**Image:** \`${imageName}:${sha}\`\n\n`;
+comment += `**Image:** \`${IMAGE_NAME}:${shortSha}\`\n\n`;
 
 if (vulnCount === 0) {
     comment += '### ✅ No Vulnerabilities Detected\n\n';
@@ -63,8 +71,15 @@ if (vulnCount === 0) {
 
 comment += '---\n';
 comment += '📋 **Resources:**\n';
-comment += `- [View in Security tab](https://github.com/${process.env.GITHUB_REPOSITORY}/security/code-scanning)\n`;
-comment += '- [Download full report](../../actions/runs/' + process.env.GITHUB_RUN_ID + ') (see artifacts)\n';
+
+if (GITHUB_REPOSITORY) {
+    comment += `- [View in Security tab](https://github.com/${GITHUB_REPOSITORY}/security/code-scanning)\n`;
+}
+
+if (GITHUB_RUN_ID) {
+    comment += `- [Download full report](../../actions/runs/${GITHUB_RUN_ID}) (see artifacts)\n`;
+}
+
 comment += '- Scanned with [Trivy](https://github.com/aquasecurity/trivy)\n';
 
-return comment;
+module.exports = comment;

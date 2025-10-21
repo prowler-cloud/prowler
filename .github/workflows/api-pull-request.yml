@@ -300,17 +300,10 @@ jobs:
         with:
           context: ${{ env.API_WORKING_DIR }}
           push: false
+          load: true
           tags: ${{ env.IMAGE_NAME }}:${{ github.sha }}
-          outputs: type=docker,dest=/tmp/${{ env.IMAGE_NAME }}.tar
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Upload image artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: container-image
-          path: /tmp/${{ env.IMAGE_NAME }}.tar
-          retention-days: 1
 
   container-security-scan:
     runs-on: ubuntu-latest
@@ -325,83 +318,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
-      - name: Download image artifact
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+
+      - name: Rebuild container from cache
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
-          name: container-image
-          path: /tmp
+          context: ${{ env.API_WORKING_DIR }}
+          push: false
+          load: true
+          tags: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=gha
 
-      - name: Load image into Docker
-        run: docker load -i /tmp/${{ env.IMAGE_NAME }}.tar
-
-      - name: Run Trivy vulnerability scan (SARIF)
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
+      - name: Scan container with Trivy
+        uses: ./.github/actions/trivy-scan
         with:
-          image-ref: ${{ env.IMAGE_NAME }}:${{ github.sha }}
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
-          exit-code: '0'
-
-      - name: Upload Trivy results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@3599b3baa15b485a2e49ef411a7a4bb2452e7f93 # v3.30.5
-        if: always()
-        with:
-          sarif_file: 'trivy-results.sarif'
-          category: 'trivy-container'
-
-      - name: Run Trivy vulnerability scan (JSON)
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
-        with:
-          image-ref: ${{ env.IMAGE_NAME }}:${{ github.sha }}
-          format: 'json'
-          output: 'trivy-report.json'
-          severity: 'CRITICAL,HIGH,MEDIUM,LOW'
-          exit-code: '0'
-
-      - name: Upload Trivy report artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        if: always()
-        with:
-          name: trivy-scan-report
-          path: trivy-report.json
-          retention-days: 30
-
-      - name: Generate security summary
-        id: security-check
-        run: |
-          CRITICAL=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' trivy-report.json)
-          HIGH=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="HIGH")] | length' trivy-report.json)
-          echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
-          echo "high=$HIGH" >> $GITHUB_OUTPUT
-          echo "### 🔒 Container Security Scan" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- 🔴 Critical: $CRITICAL" >> $GITHUB_STEP_SUMMARY
-          echo "- 🟠 High: $HIGH" >> $GITHUB_STEP_SUMMARY
-
-      - name: Comment scan results on PR
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
-        env:
-          IMAGE_NAME: ${{ env.IMAGE_NAME }}
-          GITHUB_SHA: ${{ github.sha }}
-        with:
-          script: |
-            const scriptPath = '.github/scripts/trivy-pr-comment.js';
-            const script = require(scriptPath);
-            const comment = script;
-
-            await github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
-
-      - name: Fail on critical vulnerabilities
-        if: steps.security-check.outputs.critical != '0'
-        run: |
-          echo "::error::Found ${{ steps.security-check.outputs.critical }} critical vulnerabilities"
-          echo "::warning::Please update packages or use a different base image"
-          # Uncomment the next line to make this a blocking check:
-          # exit 1
+          image-name: ${{ env.IMAGE_NAME }}
+          image-tag: ${{ github.sha }}
+          fail-on-critical: 'false'
