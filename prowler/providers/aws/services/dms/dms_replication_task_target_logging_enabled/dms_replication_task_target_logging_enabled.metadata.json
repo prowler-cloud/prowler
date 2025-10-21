@@ -15,12 +15,9 @@
   "Risk": "Insufficient target logging limits visibility into load/apply activity, masking failures and anomalies. This risks **data integrity** (silent drift, partial loads) and **availability** (longer incident resolution), and reduces **auditability** of migration events.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/dms-controls.html",
     "https://repost.aws/knowledge-center/dms-debug-logging",
-    "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Monitoring.html#CHAP_Monitoring.ManagingLogs",
     "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Tasks.CustomizingTasks.TaskSettings.Logging.html",
     "https://stackoverflow.com/questions/46913913/aws-dms-with-cloudformation-enabling-logging-needs-a-log-group",
-    "https://bobcares.com/blog/set-up-debug-logging-for-aws-dms-task/",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/dms-controls.html#dms-7"
   ],
   "Remediation": {

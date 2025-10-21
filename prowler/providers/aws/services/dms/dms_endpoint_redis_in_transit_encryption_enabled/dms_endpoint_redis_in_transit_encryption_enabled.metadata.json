@@ -17,18 +17,13 @@
   "Risk": "Without **TLS**, traffic between DMS and Redis can be intercepted or altered, compromising **confidentiality** and **integrity**.\n\nAttackers can perform **man-in-the-middle** interception, steal auth tokens, and inject or corrupt migrated data.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://hub.powerpipe.io/mods/turbot/steampipe-mod-aws-compliance/benchmarks/control.dms_endpoint_redis_tls_enabled",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/dms-controls.html#dms-12",
-    "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Source.Redis.html",
     "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Target.Redis.html#CHAP_Target.Redis.EndpointSettings",
-    "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/ensure-aws-database-migration-service-endpoints-have-ssl-configured",
-    "https://registry.terraform.io/policies/hashicorp/nist-policy-set-for-aws-terraform/1.0.0/policy/dms-redis-tls-enabled",
-    "https://search.opentofu.org/provider/terraform-providers/aws/v5.10.0/docs/resources/dms_endpoint",
     "https://support.icompaas.com/support/solutions/articles/62000233450-ensure-encryption-in-transit-for-dms-endpoints-for-redis-oss"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "aws dms modify-endpoint --endpoint-arn <endpoint-arn> --redis-settings '{\"SslSecurityProtocol\":\"ssl-encryption\"}'",
+      "CLI": "",
       "NativeIaC": "```yaml\n# CloudFormation: Enable TLS for Redis OSS DMS endpoint\nResources:\n  <example_resource_name>:\n    Type: AWS::DMS::Endpoint\n    Properties:\n      EndpointIdentifier: <example_resource_name>\n      EndpointType: target\n      EngineName: redis\n      RedisSettings:\n        ServerName: <example_resource_name>\n        Port: 6379\n        AuthType: none\n        SslSecurityProtocol: ssl-encryption  # Critical: enables TLS for in-transit encryption\n```",
       "Other": "1. In the AWS Console, go to Database Migration Service > Endpoints\n2. Select the Redis OSS endpoint and click Modify\n3. Set SSL security protocol (Encryption in transit) to \"SSL encryption\"\n4. Save changes",
       "Terraform": "```hcl\n# Enable TLS for Redis OSS DMS endpoint\nresource \"aws_dms_endpoint\" \"<example_resource_name>\" {\n  endpoint_id   = \"<example_resource_id>\"\n  endpoint_type = \"target\"\n  engine_name   = \"redis\"\n\n  redis_settings {\n    server_name           = \"<example_resource_name>\"\n    port                  = 6379\n    auth_type             = \"none\"\n    ssl_security_protocol = \"ssl-encryption\" # Critical: enables TLS for in-transit encryption\n  }\n}\n```"

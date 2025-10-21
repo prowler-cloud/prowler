@@ -4,7 +4,6 @@
   "CheckTitle": "DMS MongoDB endpoint has an authentication mechanism enabled",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices",
-    "TTPs/Initial Access/Unauthorized Access",
     "Effects/Data Exposure"
   ],
   "ServiceName": "dms",
@@ -16,13 +15,8 @@
   "Risk": "Without authentication, unauthenticated connections can access the source, degrading **confidentiality** and **integrity**. Adversaries could read or modify migrated documents, hijack CDC, inject data, or exfiltrate records during replication.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://construct-hub-testing.dev-tools.aws.dev/packages/@aws-cdk/aws-dms/v/1.204.0/api/MongoDbSettingsProperty?lang=typescript",
     "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Source.MongoDB.html",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/dms-controls.html#dms-11",
-    "https://sdk.amazonaws.com/java/api/2.28.24/software/amazon/awssdk/services/databasemigration/model/MongoDbSettings.html",
-    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/dms_endpoint",
-    "https://www.pulumi.com/registry/packages/aws/api-docs/dms/endpoint/",
-    "https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/services/databasemigration/model/MongoDbSettings.html"
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/dms-controls.html#dms-11"
   ],
   "Remediation": {
     "Code": {

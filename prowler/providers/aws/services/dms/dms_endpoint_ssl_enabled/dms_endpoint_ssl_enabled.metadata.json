@@ -15,17 +15,13 @@
   "Risk": "Without TLS, data in transit can be read or altered, affecting:\n- **Confidentiality** via packet sniffing and credential leakage\n- **Integrity** through **MITM** tampering of migration streams\n- **Availability** from session hijack or task disruption",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://cloudcustodian.io/docs/aws/examples/dmsenforcessl.html",
-    "https://docs.aws.amazon.com/config/latest/developerguide/dms-endpoint-ssl-configured.html",
     "https://aws.amazon.com/blogs/database/configuring-ssl-encryption-on-oracle-and-postgresql-endpoints-in-aws-dms/",
     "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Security.SSL.html",
-    "https://github.com/hashicorp/terraform-provider-aws/issues/31821",
-    "https://stackoverflow.com/questions/52845923/aws-dms-can-not-use-ssl-required-mode-with-mysql",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/dms-controls.html#dms-9"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aws dms modify-endpoint --endpoint-arn <endpoint-arn> --ssl-mode require",
       "NativeIaC": "```yaml\n# CloudFormation: Set SSL on a DMS endpoint\nResources:\n  <example_resource_name>:\n    Type: AWS::DMS::Endpoint\n    Properties:\n      EndpointIdentifier: <example_resource_name>\n      EndpointType: source\n      EngineName: sqlserver\n      ServerName: <server_name>\n      Port: 1433\n      Username: <username>\n      Password: <password>\n      SslMode: require  # CRITICAL: enables SSL (not \"none\"), fixing the finding\n```",
       "Other": "1. In the AWS DMS console, go to Endpoints\n2. Select the non-compliant endpoint and choose Modify\n3. Set SSL mode to Require (or Verify-ca/Verify-full if required by your engine and certificate is available)\n4. If Verify-ca/Verify-full is selected, choose the appropriate CA certificate\n5. Save changes, then Test connection to confirm",
       "Terraform": "```hcl\n# Terraform: Set SSL on a DMS endpoint\nresource \"aws_dms_endpoint\" \"<example_resource_name>\" {\n  endpoint_id   = \"<example_resource_name>\"\n  endpoint_type = \"source\"\n  engine_name   = \"sqlserver\"\n  server_name   = \"<server_name>\"\n  port          = 1433\n  username      = \"<username>\"\n  password      = \"<password>\"\n\n  ssl_mode = \"require\" # CRITICAL: enables SSL (not \"none\"), fixing the finding\n}\n```"

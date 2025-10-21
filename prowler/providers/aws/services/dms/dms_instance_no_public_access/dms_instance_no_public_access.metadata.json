@@ -18,14 +18,13 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/securityhub/latest/userguide/dms-controls.html#dms-1",
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DMS/publicly-accessible.html#",
     "https://docs.aws.amazon.com/amazonq/detector-library/terraform/restrict-public-access-dms-terraform/",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/DMS/publicly-accessible.html",
     "https://support.icompaas.com/support/solutions/articles/62000233448-ensure-dms-instances-are-not-publicly-accessible"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "aws dms modify-replication-instance --replication-instance-arn <REPLICATION_INSTANCE_ARN> --vpc-security-group-ids <PRIVATE_SECURITY_GROUP_ID>",
+      "CLI": "",
       "NativeIaC": "```yaml\n# CloudFormation: DMS instance not publicly accessible\nResources:\n  <example_resource_name>:\n    Type: AWS::DMS::ReplicationInstance\n    Properties:\n      ReplicationInstanceClass: dms.t3.micro\n      PubliclyAccessible: false  # Critical: disables public access to prevent Internet exposure\n```",
       "Other": "1. In the AWS Console, open Database Migration Service > Replication instances and select the instance\n2. In Details > Networking, click each attached Security Group ID to open it in the EC2 console\n3. In Inbound rules, delete any rule with Source 0.0.0.0/0 or ::/0\n4. Save rules for each security group",
       "Terraform": "```hcl\n# DMS instance not publicly accessible\nresource \"aws_dms_replication_instance\" \"<example_resource_name>\" {\n  replication_instance_id    = \"<example_resource_id>\"\n  replication_instance_class = \"dms.t3.micro\"\n  publicly_accessible        = false  # Critical: disables public access to prevent Internet exposure\n}\n```"

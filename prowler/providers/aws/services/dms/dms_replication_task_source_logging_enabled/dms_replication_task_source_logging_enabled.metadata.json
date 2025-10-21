@@ -17,11 +17,7 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Monitoring.html",
     "https://repost.aws/knowledge-center/dms-debug-logging",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/dms-controls.html#dms-8",
-    "https://docs.aws.amazon.com/en_us/config/latest/developerguide/dms-replication-task-sourcedb-logging.html",
-    "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Monitoring.html#CHAP_Monitoring.ManagingLogs",
-    "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Tasks.CustomizingTasks.TaskSettings.Logging.html",
-    "https://docs.datadoghq.com/security/default_rules/def-000-4c8/"
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/dms-controls.html#dms-8"
   ],
   "Remediation": {
     "Code": {

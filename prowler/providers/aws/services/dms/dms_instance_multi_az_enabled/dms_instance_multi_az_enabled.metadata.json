@@ -16,11 +16,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_ReplicationInstance.html",
-    "https://boto3.amazonaws.com/v1/documentation/api/1.12.20/reference/services/dms.html",
-    "https://toxigon.com/insights-into-aws-dms-resiliency-and-recovery-scenarios-with-mitigations-part-1",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/DMS/multi-az.html",
-    "https://docs.aws.amazon.com/config/latest/developerguide/dms-replication-instance-multi-az-enabled.html",
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DMS/multi-az.html#"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/DMS/multi-az.html"
   ],
   "Remediation": {
     "Code": {

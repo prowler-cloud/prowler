@@ -16,12 +16,6 @@
   "Risk": "Without **automatic minor upgrades**, DMS engines can miss security patches and fixes, enabling exploitation of known flaws and instability.\n- Confidentiality: exposure via unpatched components\n- Integrity: replication errors or data drift\n- Availability: outages during migration or CDC",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://avd.aquasec.com/misconfig/aws/dms/dms-auto-minor-version-upgrade/",
-    "https://github.com/sourcefuse/terraform-aws-arc-dms",
-    "https://www.typeerror.org/docs/terraform/providers/aws/r/dms_replication_instance",
-    "https://docs.datadoghq.com/security/default_rules/def-000-847/",
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DMS/auto-minor-version-upgrade.html#",
-    "https://www.stream.security/rules/ensure-database-migration-service-dms-replication-instances-have-auto-minor-version-upgrade-feature-enabled",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/dms-controls.html#dms-6",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/DMS/auto-minor-version-upgrade.html"
   ],
