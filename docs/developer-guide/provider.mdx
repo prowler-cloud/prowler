@@ -229,7 +229,7 @@ The function returns a JSON file containing the list of regions for the provider
 
 ### Regional Service Implementation
 
-For detailed guidance on implementing services for regional services, including code examples, service architecture, and check execution patterns, see the [Regional Service Implementation](./services.md#regional-service-implementation) section in the Services documentation.
+For detailed guidance on implementing services for regional services, including code examples, service architecture, and check execution patterns, see the [Regional Service Implementation](./services#regional-service-implementation) section in the Services documentation.
 
 **Key concepts covered:**
 
@@ -783,8 +783,9 @@ class YourProviderMutelist(Mutelist):
 **Explanation:**
 Region management is essential for cloud providers that operate across multiple geographic locations. This component handles region validation and provides region-specific functionality.
 
-???+ note
-    Regions are optional, only if the provider has regions, for example Github does not have regions, but AWS does.
+<Note>
+Regions are optional, only if the provider has regions, for example Github does not have regions, but AWS does.
+</Note>
 
 **File:** `prowler/providers/<provider_name>/lib/regions/<provider_name>_regions.py`
 
@@ -1739,8 +1740,9 @@ The implementation of the mutelist is the same as the [SDK providers](#step-5-im
 **Explanation:**
 Region management is essential for cloud providers that operate across multiple geographic locations. This component handles region validation and provides region-specific functionality.
 
-???+ note
-    Regions are optional, only if the provider has regions, for example Github does not have regions, but AWS does.
+<Note>
+Regions are optional, only if the provider has regions, for example Github does not have regions, but AWS does.
+</Note>
 
 **File:** `prowler/providers/<provider_name>/lib/regions/<provider_name>_regions.py`
 
@@ -3432,6 +3434,6 @@ Use existing providers as templates, this will help you to understand better the
 
 ## Next Steps
 
-- [How to add a new Service](./services.md)
-- [How to add new Checks](./checks.md)
-- [How to contribute](./introduction.md/#contributing-to-prowler)
+- [How to add a new Service](./services)
+- [How to add new Checks](./checks)
+- [How to contribute](./introduction#contributing-to-prowler)
