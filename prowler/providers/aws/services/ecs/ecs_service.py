@@ -1,5 +1,7 @@
 from re import sub
+from types import CodeType
 from typing import Optional
+from xmlrpc import client
 
 from pydantic.v1 import BaseModel
 
@@ -127,6 +129,14 @@ class ECS(AWSService):
                         launch_type=service_desc.get("launchType", ""),
                         platform_version=service_desc.get("platformVersion", ""),
                         platform_family=service_desc.get("platformFamily", ""),
+                        role_arn=service_desc.get("roleArn"),
+                        load_balancers=service_desc.get("loadBalancers", []),
+                        service_registries=service_desc.get("serviceRegistries", []),
+                        status=service_desc.get("status"),
+                        task_definition=service_desc.get("taskDefinition"),
+                        deployment_configuration=service_desc.get("deploymentConfiguration", {}),
+                        network_configuration=service_desc.get("networkConfiguration", {}),
+                        created_by=service_desc.get("createdBy"),
                         tags=service_desc.get("tags", []),
                     )
                     for task_set in service_desc.get("taskSets", []):
@@ -221,6 +231,14 @@ class Service(BaseModel):
     platform_version: Optional[str]
     platform_family: Optional[str]
     assign_public_ip: Optional[bool]
+    role_arn: Optional[str]
+    load_balancers: Optional[list] = []
+    service_registries: Optional[list] = []
+    status: Optional[str]
+    task_definition: Optional[str]
+    deployment_configuration: Optional[dict] = {}
+    network_configuration: Optional[dict] = {}
+    created_by: Optional[str]
     tags: Optional[list] = []
 
 

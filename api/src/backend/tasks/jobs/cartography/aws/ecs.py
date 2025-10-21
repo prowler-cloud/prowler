@@ -36,14 +36,19 @@ def sync_aws_ecs(
     """
 
     clusters_region_metadata = _get_ecs_clusters_region_metadata(tenant_id, provider_id, scan_id, regions)
-    tasks_region_cluster_metadata = _get_ecs_tasks_region_cluster_metadata(tenant_id, provider_id, scan_id, regions)
+    task_definitions_region_metadata = _get_ecs_task_definitions_region_metadata(
+        tenant_id,
+        provider_id,
+        scan_id,
+        regions,
+    )
 
     # Calling our version of cartography AWS ECS sync
     return _sync(
         neo4j_session,
         account_id,
         clusters_region_metadata,
-        tasks_region_cluster_metadata,
+        task_definitions_region_metadata,
         update_tag,
         common_job_parameters,
     )
@@ -79,12 +84,12 @@ def _get_ecs_clusters_region_metadata(
     return clusters_region_metadata
 
 
-def _get_ecs_tasks_region_cluster_metadata(
+def _get_ecs_task_definitions_region_metadata(
     tenant_id: str,
     provider_id: str,
     scan_id: str,
     regions: list[str],
-) -> dict[str, dict[str, list[dict[str, Any]]]]:
+) -> dict[str, list[dict[str, Any]]]:
     """
     Getting ECS tasks metadata from Prowler DB.
     # TODO: We can't filter the tasks by cluster ARN using Prowler data
@@ -118,7 +123,7 @@ def _sync(
     neo4j_session: neo4j.Session,
     account_id: str,
     clusters_region_metadata: dict[str, list[dict[str, Any]]],
-    tasks_region_cluster_metadata: dict[str, dict[str, list[dict[str, Any]]]],
+    task_definitions_region_metadata: dict[str, list[dict[str, Any]]],
     update_tag: int,
     common_job_parameters: dict[str, Any],
 ) -> dict[str, Any]:
@@ -128,7 +133,7 @@ def _sync(
 
     for region in clusters_region_metadata.keys():
         clusters_metadata = clusters_region_metadata.get(region)
-        tasks_cluster_metadata = tasks_region_cluster_metadata.get(region, {})
+        task_definitions_metadata = task_definitions_region_metadata.get(region, [])
 
         _sync_ecs_clusters(
             neo4j_session,
@@ -147,17 +152,14 @@ def _sync(
                 update_tag,
             )
 
-            for cluster in tasks_cluster_metadata.keys():
-                tasks_metadata = tasks_cluster_metadata.get(cluster, [])
-
-                _sync_ecs_task_and_container_defns(
-                    neo4j_session,
-                    clusters_metadata,
-                    tasks_metadata,
-                    region,
-                    account_id,
-                    update_tag,
-                )
+            _sync_ecs_task_and_container_defns(
+                neo4j_session,
+                clusters_metadata,
+                task_definitions_metadata,
+                region,
+                account_id,
+                update_tag,
+            )
 
             _sync_ecs_services(
                 neo4j_session,
@@ -243,7 +245,7 @@ def _sync_ecs_container_instances(
 def _sync_ecs_task_and_container_defns(
     neo4j_session: neo4j.Session,
     cluster_metadata: dict[str, Any],
-    tasks_metadata: dict[str, Any],
+    task_definitions_metadata: list[dict[str, Any]],
     region: str,
     account_id: str,
     update_tag: int,
@@ -253,14 +255,14 @@ def _sync_ecs_task_and_container_defns(
     `cartography.intel.aws.ecs.get_ecs_tasks`, `cartography.intel.aws.ecs.transform_ecs_tasks`,
     `cartography.intel.aws.ecs._get_containers_from_tasks`, `cartography.intel.aws.ecs.get_ecs_task_definitions`
     and `cartography.intel.aws.ecs._get_container_defs_from_task_definitions`.
-    # TODO: Not implemented yet because with Prowler data we can't know the cluster ARN of a task
     """
 
     cluster_arn = cluster_metadata.get("arn")
-    tasks = []
-    containers = []  # From `tasks`
+    tasks = []  # TODO: Prowler doesn't save ECS tasks data
+    containers = []  # TODO: Prowler doesn't save ECS tasks' containers data
+
     task_definitions = []  # From `tasks`
-    container_defs = []  # From `task_definitions`
+    container_defs = cartography_ecs._get_container_defs_from_task_definitions(task_definitions)
 
     cartography_ecs.load_ecs_tasks(
         neo4j_session,
@@ -296,6 +298,37 @@ def _sync_ecs_task_and_container_defns(
     )
 
 
+def get_ecs_task_definitions(task_definitions_metadata: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """
+    Getting ECS task definitions from Prowler DB.
+    """
+
+    task_definitions = []
+    for task_definition_metadata in task_definitions_metadata:
+        task_definition = {
+            "taskDefinitionArn": task_definition_metadata.get("arn"),
+            "revision": task_definition_metadata.get("revision"),
+            "networkMode": task_definition_metadata.get("network_mode"),
+            "pidMode": task_definition_metadata.get("pid_mode"),
+            "tags": task_definition_metadata.get("tags"),
+        }
+
+        container_definitions = []
+        for container_definition in task_definition_metadata.get("container_definitions"):
+            container_definitions.append({
+                "name": container_definition.get("name"),
+                "privileged": container_definition.get("privileged"),
+                "readonlyRootFilesystem": container_definition.get("readonlyRootFilesystem"),
+                "user": container_definition.get("user"),
+                "environment": container_definition.get("environment"),
+            })
+
+        task_definition["containerDefinitions"] = container_definitions
+        task_definitions.append(task_definition)
+
+    return task_definitions
+
+
 def _sync_ecs_services(
     neo4j_session: neo4j.Session,
     cluster_metadata: dict[str, Any],
@@ -306,7 +339,7 @@ def _sync_ecs_services(
     """
     Code based on `cartography.intel.aws.ecs._sync_ecs_services` and
     `cartography.intel.aws.ecs.get_ecs_services`.
-    # TODO: A lot of fields are missing and probably some of them are too important
+    # TODO: A lot of fields are missing
     """
 
     cluster_arn = cluster_metadata.get("arn")
@@ -315,27 +348,27 @@ def _sync_ecs_services(
             "serviceArn": service.get("arn"),
             "serviceName": service.get("name"),
             "clusterArn": cluster_arn,
-            # "loadBalancers"  # TODO
-            # "serviceRegistries"  # TODO
-            # "status"  # TODO
+            "loadBalancers": service.get("load_balancers"),
+            "serviceRegistries": service.get("service_registries"),
+            "status": service.get("status"),
             # "desiredCount": # TODO
             # "runningCount": # TODO
-            "launcType": service.get("launch_type"),
+            "launchType": service.get("launch_type"),
             "platformVersion": service.get("platform_version"),
             "platformFamily": service.get("platform_family"),
-            # "taskDefinition"  # TODO
-            # "deploymentConfiguration"
+            "taskDefinition": service.get("task_definition"),
+            "deploymentConfiguration": service.get("deployment_configuration"),
             # "deployments"
-            # "roleArn"  # TODO: Important?
+            "roleArn": service.get("role_arn"),
             # "events"
             "createdAt": cluster_metadata.get("inserted_at"),
             # "placementConstraints"  # TODO
             # "placementStrategy"  # TODO
-            # "networkConfiguration"  # TODO
+            "networkConfiguration": service.get("network_configuration"),
             # "healthCheckGracePeriodSeconds"  # TODO
             # "schedulingStrategy"  # TODO
             # "deploymentController"  # TODO
-            # "createdBy"  # TODO: Important?
+            "createdBy": service.get("created_by"),
             # "enableECSManagedTags"  # TODO
             # "propagateTags"  # TODO
             # "enableExecuteCommand"  # TODO
