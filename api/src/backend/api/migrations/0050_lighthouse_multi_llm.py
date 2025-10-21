@@ -12,7 +12,6 @@ from django.db import migrations, models
 
 import api.rls
 from api.db_router import MainRouter
-from api.db_utils import rls_transaction
 
 logger = logging.getLogger(BackendLogger.API)
 
@@ -22,7 +21,6 @@ def migrate_lighthouse_configs_forward(apps, schema_editor):
     Migrate data from old LighthouseConfiguration to new multi-provider models.
     Old system: one LighthouseConfiguration per tenant (always OpenAI).
     """
-    Tenant = apps.get_model("api", "Tenant")
     LighthouseConfiguration = apps.get_model("api", "LighthouseConfiguration")
     LighthouseProviderConfiguration = apps.get_model(
         "api", "LighthouseProviderConfiguration"
@@ -34,54 +32,46 @@ def migrate_lighthouse_configs_forward(apps, schema_editor):
 
     fernet = Fernet(settings.SECRETS_ENCRYPTION_KEY.encode())
 
-    # Migrate lighthouse configuration for each tenant
-    for tenant in Tenant.objects.using(MainRouter.admin_db).all():
+    # Migrate only tenants that actually have a LighthouseConfiguration
+    for old_config in (
+        LighthouseConfiguration.objects.using(MainRouter.admin_db)
+        .select_related("tenant")
+        .all()
+    ):
+        tenant = old_config.tenant
         tenant_id = str(tenant.id)
 
         try:
-            # Use rls_transaction to set tenant context for RLS-protected tables
-            with rls_transaction(tenant_id, using=MainRouter.admin_db):
-                # Query old config for this specific tenant
-                old_config = (
-                    LighthouseConfiguration.objects.using(MainRouter.admin_db)
-                    .filter(tenant=tenant)
-                    .first()
-                )
+            # Create OpenAI provider configuration for this tenant
+            api_key_decrypted = fernet.decrypt(bytes(old_config.api_key)).decode()
+            credentials_encrypted = fernet.encrypt(
+                json.dumps({"api_key": api_key_decrypted}).encode()
+            )
+            provider_config = LighthouseProviderConfiguration.objects.using(
+                MainRouter.admin_db
+            ).create(
+                tenant=tenant,
+                provider_type="openai",
+                credentials=credentials_encrypted,
+                is_active=old_config.is_active,
+            )
 
-                if not old_config:
-                    # Skip tenants without lighthouse configuration
-                    continue
+            # Create tenant configuration from old values
+            LighthouseTenantConfiguration.objects.using(MainRouter.admin_db).create(
+                tenant=tenant,
+                business_context=old_config.business_context or "",
+                default_provider="openai",
+                default_models={"openai": old_config.model},
+            )
 
-                # Create OpenAI provider configuration for this tenant
-                api_key_decrypted = fernet.decrypt(bytes(old_config.api_key)).decode()
-                credentials_encrypted = fernet.encrypt(
-                    json.dumps({"api_key": api_key_decrypted}).encode()
-                )
-                provider_config = LighthouseProviderConfiguration.objects.using(
-                    MainRouter.admin_db
-                ).create(
-                    tenant=tenant,
-                    provider_type="openai",
-                    credentials=credentials_encrypted,
-                    is_active=old_config.is_active,
-                )
-
-                # Create tenant configuration from old values
-                LighthouseTenantConfiguration.objects.using(MainRouter.admin_db).create(
-                    tenant=tenant,
-                    business_context=old_config.business_context or "",
-                    default_provider="openai",
-                    default_models={"openai": old_config.model},
-                )
-
-                # Create initial provider model record
-                LighthouseProviderModels.objects.using(MainRouter.admin_db).create(
-                    tenant=tenant,
-                    provider_configuration=provider_config,
-                    model_id=old_config.model,
-                    model_name=old_config.model,
-                    default_parameters={},
-                )
+            # Create initial provider model record
+            LighthouseProviderModels.objects.using(MainRouter.admin_db).create(
+                tenant=tenant,
+                provider_configuration=provider_config,
+                model_id=old_config.model,
+                model_name=old_config.model,
+                default_parameters={},
+            )
 
         except Exception:
             logger.exception(
