@@ -3,7 +3,6 @@ import os
 import sys
 
 from prowler_mcp_server.lib.logger import logger
-from prowler_mcp_server.server import prowler_mcp_server
 
 
 def parse_arguments():
@@ -12,7 +11,7 @@ def parse_arguments():
     parser.add_argument(
         "--transport",
         choices=["stdio", "http"],
-        default=os.getenv("PROWLER_MCP_MODE", "stdio"),
+        default=None,
         help="Transport method (default: stdio)",
     )
     parser.add_argument(
@@ -33,6 +32,15 @@ def main():
     """Main entry point for the MCP server."""
     try:
         args = parse_arguments()
+
+        print(f"args.transport: {args.transport}")
+
+        if args.transport is None:
+            args.transport = os.getenv("PROWLER_MCP_TRANSPORT_MODE", "stdio")
+        else:
+            os.environ["PROWLER_MCP_TRANSPORT_MODE"] = args.transport
+
+        from prowler_mcp_server.server import prowler_mcp_server
 
         if args.transport == "stdio":
             prowler_mcp_server.run(transport=args.transport, show_banner=False)
