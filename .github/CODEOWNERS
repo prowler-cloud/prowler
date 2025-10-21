@@ -8,10 +8,10 @@
 /util/ @prowler-cloud/sdk
 /contrib/ @prowler-cloud/sdk
 /permissions/ @prowler-cloud/sdk
+/codecov.yml @prowler-cloud/sdk @prowler-cloud/api
 
 # API
 /api/ @prowler-cloud/api
-/codecov.yml @prowler-cloud/api
 
 # UI
 /ui/ @prowler-cloud/ui
