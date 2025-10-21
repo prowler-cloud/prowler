@@ -189,7 +189,6 @@ from api.v1.serializers import (
     ScanCreateSerializer,
     ScanReportSerializer,
     ScanSerializer,
-    ScanThreatscoreReportSerializer,
     ScanUpdateSerializer,
     ScheduleDailyCreateSerializer,
     TaskSerializer,
@@ -1598,7 +1597,7 @@ class ProviderViewSet(BaseRLSViewSet):
         tags=["Scan"],
         summary="Retrieve threatscore report",
         description="Download a specific threatscore report (e.g., 'prowler_threatscore_aws') as a PDF file.",
-        request=ScanThreatscoreReportSerializer,
+        request=None,
         responses={
             200: OpenApiResponse(
                 description="PDF file containing the threatscore report"
@@ -1672,7 +1671,6 @@ class ScanViewSet(BaseRLSViewSet):
         elif self.action == "threatscore":
             if hasattr(self, "response_serializer_class"):
                 return self.response_serializer_class
-            return ScanThreatscoreReportSerializer
         return super().get_serializer_class()
 
     def partial_update(self, request, *args, **kwargs):

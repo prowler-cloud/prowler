@@ -1,5 +1,6 @@
 import io
 import os
+from collections import defaultdict
 from pathlib import Path
 from shutil import rmtree
 
@@ -52,6 +53,510 @@ pdfmetrics.registerFont(
 logger = get_task_logger(__name__)
 
 
+def _create_pdf_styles() -> dict[str, ParagraphStyle]:
+    """
+    Create and return PDF paragraph styles used throughout the report.
+
+    Returns:
+        dict[str, ParagraphStyle]: A dictionary containing the following styles:
+            - 'title': Title style with prowler green color
+            - 'h1': Heading 1 style with blue color and background
+            - 'h2': Heading 2 style with light blue color
+            - 'h3': Heading 3 style for sub-headings
+            - 'normal': Normal text style with left indent
+            - 'normal_center': Normal text style without indent
+    """
+    styles = getSampleStyleSheet()
+    prowler_dark_green = colors.Color(0.1, 0.5, 0.2)
+
+    title_style = ParagraphStyle(
+        "CustomTitle",
+        parent=styles["Title"],
+        fontSize=24,
+        textColor=prowler_dark_green,
+        spaceAfter=20,
+        fontName="PlusJakartaSans",
+        alignment=TA_CENTER,
+    )
+
+    h1 = ParagraphStyle(
+        "CustomH1",
+        parent=styles["Heading1"],
+        fontSize=18,
+        textColor=colors.Color(0.2, 0.4, 0.6),
+        spaceBefore=20,
+        spaceAfter=12,
+        fontName="PlusJakartaSans",
+        leftIndent=0,
+        borderWidth=2,
+        borderColor=colors.Color(0.2, 0.4, 0.6),
+        borderPadding=8,
+        backColor=colors.Color(0.95, 0.97, 1.0),
+    )
+
+    h2 = ParagraphStyle(
+        "CustomH2",
+        parent=styles["Heading2"],
+        fontSize=14,
+        textColor=colors.Color(0.3, 0.5, 0.7),
+        spaceBefore=15,
+        spaceAfter=8,
+        fontName="PlusJakartaSans",
+        leftIndent=10,
+        borderWidth=1,
+        borderColor=colors.Color(0.7, 0.8, 0.9),
+        borderPadding=5,
+        backColor=colors.Color(0.98, 0.99, 1.0),
+    )
+
+    h3 = ParagraphStyle(
+        "CustomH3",
+        parent=styles["Heading3"],
+        fontSize=12,
+        textColor=colors.Color(0.4, 0.6, 0.8),
+        spaceBefore=10,
+        spaceAfter=6,
+        fontName="PlusJakartaSans",
+        leftIndent=20,
+    )
+
+    normal = ParagraphStyle(
+        "CustomNormal",
+        parent=styles["Normal"],
+        fontSize=10,
+        textColor=colors.Color(0.2, 0.2, 0.2),
+        spaceBefore=4,
+        spaceAfter=4,
+        leftIndent=30,
+        fontName="PlusJakartaSans",
+    )
+
+    normal_center = ParagraphStyle(
+        "CustomNormalCenter",
+        parent=styles["Normal"],
+        fontSize=10,
+        textColor=colors.Color(0.2, 0.2, 0.2),
+        fontName="PlusJakartaSans",
+    )
+
+    return {
+        "title": title_style,
+        "h1": h1,
+        "h2": h2,
+        "h3": h3,
+        "normal": normal,
+        "normal_center": normal_center,
+    }
+
+
+def _create_risk_component(risk_level: int, weight: int, score: int = 0) -> Table:
+    """
+    Create a visual risk component table for the PDF report.
+
+    Args:
+        risk_level (int): The risk level (0-5), where higher values indicate higher risk.
+        weight (int): The weight of the risk component.
+        score (int): The calculated score. Defaults to 0.
+
+    Returns:
+        Table: A ReportLab Table object with colored cells representing risk, weight, and score.
+    """
+    if risk_level >= 4:
+        risk_color = colors.Color(0.8, 0.2, 0.2)
+    elif risk_level >= 3:
+        risk_color = colors.Color(0.9, 0.6, 0.2)
+    elif risk_level >= 2:
+        risk_color = colors.Color(0.9, 0.9, 0.2)
+    else:
+        risk_color = colors.Color(0.2, 0.8, 0.2)
+
+    if weight <= 50:
+        weight_color = colors.Color(0.2, 0.8, 0.2)
+    elif weight <= 100:
+        weight_color = colors.Color(0.9, 0.9, 0.2)
+    else:
+        weight_color = colors.Color(0.8, 0.2, 0.2)
+
+    score_color = colors.Color(0.4, 0.4, 0.4)
+
+    data = [
+        [
+            "Risk Level:",
+            str(risk_level),
+            "Weight:",
+            str(weight),
+            "Score:",
+            str(score),
+        ]
+    ]
+
+    table = Table(
+        data,
+        colWidths=[
+            0.8 * inch,
+            0.4 * inch,
+            0.6 * inch,
+            0.4 * inch,
+            0.5 * inch,
+            0.4 * inch,
+        ],
+    )
+
+    table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (0, 0), colors.Color(0.9, 0.9, 0.9)),
+                ("BACKGROUND", (1, 0), (1, 0), risk_color),
+                ("TEXTCOLOR", (1, 0), (1, 0), colors.white),
+                ("FONTNAME", (1, 0), (1, 0), "FiraCode"),
+                ("BACKGROUND", (2, 0), (2, 0), colors.Color(0.9, 0.9, 0.9)),
+                ("BACKGROUND", (3, 0), (3, 0), weight_color),
+                ("TEXTCOLOR", (3, 0), (3, 0), colors.white),
+                ("FONTNAME", (3, 0), (3, 0), "FiraCode"),
+                ("BACKGROUND", (4, 0), (4, 0), colors.Color(0.9, 0.9, 0.9)),
+                ("BACKGROUND", (5, 0), (5, 0), score_color),
+                ("TEXTCOLOR", (5, 0), (5, 0), colors.white),
+                ("FONTNAME", (5, 0), (5, 0), "FiraCode"),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("FONTSIZE", (0, 0), (-1, -1), 10),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
+                ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+                ("TOPPADDING", (0, 0), (-1, -1), 8),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+            ]
+        )
+    )
+
+    return table
+
+
+def _create_status_component(status: str) -> Table:
+    """
+    Create a visual status component with colored background.
+
+    Args:
+        status (str): The status value (e.g., "PASS", "FAIL", "MANUAL").
+
+    Returns:
+        Table: A ReportLab Table object displaying the status with appropriate color coding.
+    """
+    if status.upper() == "PASS":
+        status_color = colors.Color(0.2, 0.8, 0.2)
+    elif status.upper() == "FAIL":
+        status_color = colors.Color(0.8, 0.2, 0.2)
+    else:
+        status_color = colors.Color(0.4, 0.4, 0.4)
+
+    data = [["State:", status.upper()]]
+
+    table = Table(data, colWidths=[0.6 * inch, 0.8 * inch])
+
+    table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (0, 0), colors.Color(0.9, 0.9, 0.9)),
+                ("FONTNAME", (0, 0), (0, 0), "PlusJakartaSans"),
+                ("BACKGROUND", (1, 0), (1, 0), status_color),
+                ("TEXTCOLOR", (1, 0), (1, 0), colors.white),
+                ("FONTNAME", (1, 0), (1, 0), "FiraCode"),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("FONTSIZE", (0, 0), (-1, -1), 12),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
+                ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+                ("TOPPADDING", (0, 0), (-1, -1), 10),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+            ]
+        )
+    )
+
+    return table
+
+
+def _create_section_score_chart(resp_reqs: list[dict], attrs_map: dict) -> io.BytesIO:
+    """
+    Create a bar chart showing compliance score by section using ThreatScore formula.
+
+    Args:
+        resp_reqs (list[dict]): List of requirement dictionaries with status and findings data.
+        attrs_map (dict): Mapping of requirement IDs to their attributes including risk level and weight.
+
+    Returns:
+        io.BytesIO: A BytesIO buffer containing the chart image in PNG format.
+    """
+    # Define expected sections
+    expected_sections = [
+        "1. IAM",
+        "2. Attack Surface",
+        "3. Logging and Monitoring",
+        "4. Encryption",
+    ]
+
+    # Initialize all expected sections with default values
+    sections_data = {
+        section: {
+            "numerator": 0,
+            "denominator": 0,
+            "has_findings": False,
+        }
+        for section in expected_sections
+    }
+
+    # Collect data from requirements
+    for req in resp_reqs:
+        req_id = req["id"]
+        attr = attrs_map.get(req_id, {})
+
+        metadata = attr.get("attributes", {}).get("req_attributes", [])
+        if metadata:
+            m = metadata[0]
+            section = getattr(m, "Section", "Unknown")
+
+            # Add section if not in expected list (for flexibility)
+            if section not in sections_data:
+                sections_data[section] = {
+                    "numerator": 0,
+                    "denominator": 0,
+                    "has_findings": False,
+                }
+
+            # Get findings data
+            passed_findings = req["attributes"].get("passed_findings", 0)
+            total_findings = req["attributes"].get("total_findings", 0)
+
+            if total_findings > 0:
+                sections_data[section]["has_findings"] = True
+                risk_level = getattr(m, "LevelOfRisk", 0)
+                weight = getattr(m, "Weight", 0)
+
+                # Calculate using ThreatScore formula from UI
+                rate_i = passed_findings / total_findings
+                rfac_i = 1 + 0.25 * risk_level
+
+                sections_data[section]["numerator"] += (
+                    rate_i * total_findings * weight * rfac_i
+                )
+                sections_data[section]["denominator"] += (
+                    total_findings * weight * rfac_i
+                )
+
+    section_names = []
+    compliance_percentages = []
+
+    for section, data in sections_data.items():
+        if data["has_findings"] and data["denominator"] > 0:
+            compliance_percentage = (data["numerator"] / data["denominator"]) * 100
+        else:
+            compliance_percentage = 100  # No findings = 100% (PASS)
+
+        section_names.append(section)
+        compliance_percentages.append(compliance_percentage)
+
+    # Sort alphabetically by section name
+    sorted_data = sorted(
+        zip(section_names, compliance_percentages),
+        key=lambda x: x[0],
+    )
+    section_names, compliance_percentages = (
+        zip(*sorted_data) if sorted_data else ([], [])
+    )
+
+    fig, ax = plt.subplots(figsize=(12, 8))
+
+    colors_list = []
+    for percentage in compliance_percentages:
+        if percentage >= 80:
+            color = "#4CAF50"
+        elif percentage >= 60:
+            color = "#8BC34A"
+        elif percentage >= 40:
+            color = "#FFEB3B"
+        elif percentage >= 20:
+            color = "#FF9800"
+        else:
+            color = "#F44336"
+        colors_list.append(color)
+
+    bars = ax.bar(section_names, compliance_percentages, color=colors_list)
+
+    ax.set_ylabel("Compliance Score (%)", fontsize=12)
+    ax.set_xlabel("Section", fontsize=12)
+    ax.set_ylim(0, 100)
+
+    for bar, percentage in zip(bars, compliance_percentages):
+        height = bar.get_height()
+        ax.text(
+            bar.get_x() + bar.get_width() / 2.0,
+            height + 1,
+            f"{percentage:.1f}%",
+            ha="center",
+            va="bottom",
+            fontweight="bold",
+        )
+
+    plt.xticks(rotation=45, ha="right")
+
+    ax.grid(True, alpha=0.3, axis="y")
+
+    plt.tight_layout()
+
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format="png", dpi=300, bbox_inches="tight")
+    buffer.seek(0)
+    plt.close()
+
+    return buffer
+
+
+def _add_pdf_footer(canvas_obj: canvas.Canvas, doc: SimpleDocTemplate) -> None:
+    """
+    Add footer with page number and branding to each page of the PDF.
+
+    Args:
+        canvas_obj (canvas.Canvas): The ReportLab canvas object for drawing.
+        doc (SimpleDocTemplate): The document template containing page information.
+    """
+    width, height = doc.pagesize
+    page_num_text = f"Page {doc.page}"
+    canvas_obj.setFont("PlusJakartaSans", 9)
+    canvas_obj.setFillColorRGB(0.4, 0.4, 0.4)
+    canvas_obj.drawString(30, 20, page_num_text)
+    powered_text = "Powered by Prowler"
+    text_width = canvas_obj.stringWidth(powered_text, "PlusJakartaSans", 9)
+    canvas_obj.drawString(width - text_width - 30, 20, powered_text)
+
+
+def _build_findings_index(
+    tenant_id: str, scan_id: str, prowler_provider
+) -> tuple[dict[str, list], dict[str, dict]]:
+    """
+    Build an index of findings by check_id to avoid O(n×m) complexity.
+
+    This function processes findings in batches to avoid loading all findings
+    into memory at once, addressing concerns about scans with very large numbers
+    of findings (e.g., 1M+).
+
+    Args:
+        tenant_id (str): The tenant ID for Row-Level Security context.
+        scan_id (str): The ID of the scan to retrieve findings for.
+        prowler_provider: The initialized Prowler provider instance.
+
+    Returns:
+        tuple[dict[str, list], dict[str, dict]]: A tuple containing:
+            - findings_by_check: Dictionary mapping check_id to list of finding objects.
+            - requirement_stats: Dictionary mapping check_id to stats dict with 'passed' and 'total' counts.
+    """
+    logger.info("Building findings index by check_id")
+    findings_by_check = defaultdict(list)
+    requirement_stats = defaultdict(lambda: {"passed": 0, "total": 0})
+
+    findings_qs = (
+        Finding.all_objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+        .order_by("uid")
+        .iterator()
+    )
+
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        for batch, is_last in batched(findings_qs, DJANGO_FINDINGS_BATCH_SIZE):
+            for finding in batch:
+                # Transform to FindingOutput
+                finding_output = FindingOutput.transform_api_finding(
+                    finding, prowler_provider
+                )
+                check_id = finding_output.check_id
+
+                # Add to index for detailed findings lookup
+                findings_by_check[check_id].append(finding_output)
+
+                # Update stats for requirement calculations
+                requirement_stats[check_id]["total"] += 1
+                if getattr(finding_output, "status", "").upper() == "PASS":
+                    requirement_stats[check_id]["passed"] += 1
+
+    logger.info(f"Built findings index with {len(findings_by_check)} unique checks")
+    return dict(findings_by_check), dict(requirement_stats)
+
+
+def _calculate_requirements_data(
+    compliance_obj, requirement_stats: dict[str, dict]
+) -> tuple[dict, list[dict]]:
+    """
+    Calculate requirement status and statistics using the findings index.
+
+    This replaces the O(n×m) nested loop with O(n) lookups using the findings index.
+
+    Args:
+        compliance_obj: The compliance framework object containing requirements.
+        requirement_stats (dict[str, dict]): Pre-built statistics mapping check_id to pass/total counts.
+
+    Returns:
+        tuple[dict, list[dict]]: A tuple containing:
+            - attrs_map: Dictionary mapping requirement IDs to their attributes.
+            - resp_reqs: List of requirement dictionaries with status and statistics.
+    """
+    attrs_map = {}
+    resp_reqs = []
+
+    for req in compliance_obj.Requirements:
+        req_id = req.Id
+        attrs_map[req_id] = {
+            "attributes": {
+                "req_attributes": getattr(req, "Attributes", []),
+                "checks": getattr(req, "Checks", []),
+            },
+            "description": getattr(req, "Description", ""),
+        }
+
+        # Calculate passed and total findings for this requirement using the index
+        req_checks = getattr(req, "Checks", [])
+        passed_findings = 0
+        total_findings = 0
+        status = "UNKNOWN"
+        description = getattr(req, "Description", "")
+
+        # Use the pre-built index instead of iterating over all findings
+        for check_id in req_checks:
+            if check_id in requirement_stats:
+                stats = requirement_stats[check_id]
+                total_findings += stats["total"]
+                passed_findings += stats["passed"]
+
+                # Set status based on first check (for backward compatibility)
+                if status == "UNKNOWN" and stats["total"] > 0:
+                    # If we have findings, set status (we'll refine below)
+                    status = "FAIL"  # Default, will be refined
+
+        # Determine overall status for the requirement
+        if total_findings > 0:
+            if passed_findings == total_findings:
+                status = "PASS"
+            elif passed_findings == 0:
+                status = "FAIL"
+            else:
+                status = "FAIL"  # Partial pass is still considered FAIL
+        else:
+            status = "MANUAL"
+
+        resp_reqs.append(
+            {
+                "id": req_id,
+                "attributes": {
+                    "framework": getattr(compliance_obj, "Framework", "N/A"),
+                    "version": getattr(compliance_obj, "Version", "N/A"),
+                    "status": status,
+                    "description": description,
+                    "passed_findings": passed_findings,
+                    "total_findings": total_findings,
+                },
+            }
+        )
+
+    return attrs_map, resp_reqs
+
+
 def generate_threatscore_report(
     tenant_id: str,
     scan_id: str,
@@ -60,95 +565,44 @@ def generate_threatscore_report(
     provider_id: str,
     only_failed: bool = True,
     min_risk_level: int = 4,
-):
+) -> None:
     """
-    Generate a PDF compliance report based on Prowler ORM objects.
+    Generate a PDF compliance report based on Prowler ThreatScore framework.
 
-    Parameters:
-    - scan_id: ID of the scan executed by Prowler.
-    - compliance_id: ID of the compliance framework (e.g., "nis2_azure").
-    - output_path: Output PDF file path (e.g., "threatscore_report.pdf").
-    - provider_id: Provider ID for the scan.
-    - only_failed: If True, only requirements with status "FAIL" will be included in the list of requirements.
-    - min_risk_level: Minimum risk level for critical failed requirements.
+    This function creates a comprehensive PDF report containing:
+    - Compliance overview and metadata
+    - Section-by-section compliance scores with charts
+    - Overall ThreatScore calculation
+    - Critical failed requirements
+    - Detailed findings for each requirement
+
+    Args:
+        tenant_id (str): The tenant ID for Row-Level Security context.
+        scan_id (str): ID of the scan executed by Prowler.
+        compliance_id (str): ID of the compliance framework (e.g., "prowler_threatscore_aws").
+        output_path (str): Output PDF file path (e.g., "/tmp/threatscore_report.pdf").
+        provider_id (str): Provider ID for the scan.
+        only_failed (bool): If True, only requirements with status "FAIL" will be included
+            in the detailed requirements section. Defaults to True.
+        min_risk_level (int): Minimum risk level for critical failed requirements. Defaults to 4.
+
+    Raises:
+        Exception: If any error occurs during PDF generation, it will be logged and re-raised.
     """
     logger.info(
         f"Generating the report for the scan {scan_id} with provider {provider_id}"
     )
     try:
-        styles = getSampleStyleSheet()
+        # Get PDF styles
+        pdf_styles = _create_pdf_styles()
+        title_style = pdf_styles["title"]
+        h1 = pdf_styles["h1"]
+        h2 = pdf_styles["h2"]
+        h3 = pdf_styles["h3"]
+        normal = pdf_styles["normal"]
+        normal_center = pdf_styles["normal_center"]
 
-        prowler_dark_green = colors.Color(0.1, 0.5, 0.2)
-
-        title_style = ParagraphStyle(
-            "CustomTitle",
-            parent=styles["Title"],
-            fontSize=24,
-            textColor=prowler_dark_green,
-            spaceAfter=20,
-            fontName="PlusJakartaSans",
-            alignment=TA_CENTER,
-        )
-
-        h1 = ParagraphStyle(
-            "CustomH1",
-            parent=styles["Heading1"],
-            fontSize=18,
-            textColor=colors.Color(0.2, 0.4, 0.6),
-            spaceBefore=20,
-            spaceAfter=12,
-            fontName="PlusJakartaSans",
-            leftIndent=0,
-            borderWidth=2,
-            borderColor=colors.Color(0.2, 0.4, 0.6),
-            borderPadding=8,
-            backColor=colors.Color(0.95, 0.97, 1.0),
-        )
-
-        h2 = ParagraphStyle(
-            "CustomH2",
-            parent=styles["Heading2"],
-            fontSize=14,
-            textColor=colors.Color(0.3, 0.5, 0.7),
-            spaceBefore=15,
-            spaceAfter=8,
-            fontName="PlusJakartaSans",
-            leftIndent=10,
-            borderWidth=1,
-            borderColor=colors.Color(0.7, 0.8, 0.9),
-            borderPadding=5,
-            backColor=colors.Color(0.98, 0.99, 1.0),
-        )
-
-        h3 = ParagraphStyle(
-            "CustomH3",
-            parent=styles["Heading3"],
-            fontSize=12,
-            textColor=colors.Color(0.4, 0.6, 0.8),
-            spaceBefore=10,
-            spaceAfter=6,
-            fontName="PlusJakartaSans",
-            leftIndent=20,
-        )
-
-        normal = ParagraphStyle(
-            "CustomNormal",
-            parent=styles["Normal"],
-            fontSize=10,
-            textColor=colors.Color(0.2, 0.2, 0.2),
-            spaceBefore=4,
-            spaceAfter=4,
-            leftIndent=30,
-            fontName="PlusJakartaSans",
-        )
-
-        normal_center = ParagraphStyle(
-            "CustomNormalCenter",
-            parent=styles["Normal"],
-            fontSize=10,
-            textColor=colors.Color(0.2, 0.2, 0.2),
-            fontName="PlusJakartaSans",
-        )
+        # Get compliance and provider information
         with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
             provider_obj = Provider.objects.get(id=provider_id)
             prowler_provider = initialize_prowler_provider(provider_obj)
@@ -161,314 +615,18 @@ def generate_threatscore_report(
             compliance_name = getattr(compliance_obj, "Name", "N/A")
             compliance_description = getattr(compliance_obj, "Description", "")
 
+        # Build findings index (fixes O(n×m) issue and memory concern)
         logger.info(f"Getting findings for scan {scan_id}")
-        findings_qs = (
-            Finding.all_objects.filter(tenant_id=tenant_id, scan_id=scan_id)
-            .order_by("uid")
-            .iterator()
+        findings_by_check, requirement_stats = _build_findings_index(
+            tenant_id, scan_id, prowler_provider
         )
-        findings = []
-        with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-            for batch, is_last in batched(findings_qs, DJANGO_FINDINGS_BATCH_SIZE):
-                fos = [
-                    FindingOutput.transform_api_finding(f, prowler_provider)
-                    for f in batch
-                ]
-                findings.extend(fos)
 
-            attrs_map = {}
-            resp_reqs = []
-            for req in compliance_obj.Requirements:
-                req_id = req.Id
-                attrs_map[req_id] = {
-                    "attributes": {
-                        "req_attributes": getattr(req, "Attributes", []),
-                        "checks": getattr(req, "Checks", []),
-                    },
-                    "description": getattr(req, "Description", ""),
-                }
+        # Calculate requirements data using the index
+        attrs_map, resp_reqs = _calculate_requirements_data(
+            compliance_obj, requirement_stats
+        )
 
-                # Calculate passed and total findings for this requirement
-                req_checks = getattr(req, "Checks", [])
-                passed_findings = 0
-                total_findings = 0
-                status = "UNKNOWN"
-                description = getattr(req, "Description", "")
-
-                for f in findings:
-                    if f.check_id in req_checks:
-                        total_findings += 1
-                        if getattr(f, "status", "").upper() == "PASS":
-                            passed_findings += 1
-                        # Set status based on the first finding (for backward compatibility)
-                        if status == "UNKNOWN":
-                            status = getattr(f, "status", "UNKNOWN")
-                            description = getattr(f, "description", description)
-
-                # Determine overall status for the requirement
-                if total_findings > 0:
-                    if passed_findings == total_findings:
-                        status = "PASS"
-                    elif passed_findings == 0:
-                        status = "FAIL"
-                    else:
-                        status = "FAIL"  # Partial pass is still considered FAIL
-                else:
-                    status = "MANUAL"
-
-                resp_reqs.append(
-                    {
-                        "id": req_id,
-                        "attributes": {
-                            "framework": compliance_framework,
-                            "version": compliance_version,
-                            "status": status,
-                            "description": description,
-                            "passed_findings": passed_findings,
-                            "total_findings": total_findings,
-                        },
-                    }
-                )
-
-        def create_risk_component(risk_level, weight, score=0):
-            """Create a visual risk component similar to the UI design"""
-            if risk_level >= 4:
-                risk_color = colors.Color(0.8, 0.2, 0.2)
-            elif risk_level >= 3:
-                risk_color = colors.Color(0.9, 0.6, 0.2)
-            elif risk_level >= 2:
-                risk_color = colors.Color(0.9, 0.9, 0.2)
-            else:
-                risk_color = colors.Color(0.2, 0.8, 0.2)
-
-            if weight <= 50:
-                weight_color = colors.Color(0.2, 0.8, 0.2)
-            elif weight <= 100:
-                weight_color = colors.Color(0.9, 0.9, 0.2)
-            else:
-                weight_color = colors.Color(0.8, 0.2, 0.2)
-
-            score_color = colors.Color(0.4, 0.4, 0.4)
-
-            data = [
-                [
-                    "Risk Level:",
-                    str(risk_level),
-                    "Weight:",
-                    str(weight),
-                    "Score:",
-                    str(score),
-                ]
-            ]
-
-            table = Table(
-                data,
-                colWidths=[
-                    0.8 * inch,
-                    0.4 * inch,
-                    0.6 * inch,
-                    0.4 * inch,
-                    0.5 * inch,
-                    0.4 * inch,
-                ],
-            )
-
-            table.setStyle(
-                TableStyle(
-                    [
-                        ("BACKGROUND", (0, 0), (0, 0), colors.Color(0.9, 0.9, 0.9)),
-                        ("BACKGROUND", (1, 0), (1, 0), risk_color),
-                        ("TEXTCOLOR", (1, 0), (1, 0), colors.white),
-                        ("FONTNAME", (1, 0), (1, 0), "FiraCode"),
-                        ("BACKGROUND", (2, 0), (2, 0), colors.Color(0.9, 0.9, 0.9)),
-                        ("BACKGROUND", (3, 0), (3, 0), weight_color),
-                        ("TEXTCOLOR", (3, 0), (3, 0), colors.white),
-                        ("FONTNAME", (3, 0), (3, 0), "FiraCode"),
-                        ("BACKGROUND", (4, 0), (4, 0), colors.Color(0.9, 0.9, 0.9)),
-                        ("BACKGROUND", (5, 0), (5, 0), score_color),
-                        ("TEXTCOLOR", (5, 0), (5, 0), colors.white),
-                        ("FONTNAME", (5, 0), (5, 0), "FiraCode"),
-                        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                        ("FONTSIZE", (0, 0), (-1, -1), 10),
-                        ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
-                        ("LEFTPADDING", (0, 0), (-1, -1), 6),
-                        ("RIGHTPADDING", (0, 0), (-1, -1), 6),
-                        ("TOPPADDING", (0, 0), (-1, -1), 8),
-                        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-                    ]
-                )
-            )
-
-            return table
-
-        def create_status_component(status):
-            """Create a visual status component with colors"""
-            if status.upper() == "PASS":
-                status_color = colors.Color(0.2, 0.8, 0.2)
-            elif status.upper() == "FAIL":
-                status_color = colors.Color(0.8, 0.2, 0.2)
-            else:
-                status_color = colors.Color(0.4, 0.4, 0.4)
-
-            data = [["State:", status.upper()]]
-
-            elements.append(Spacer(1, 0.1 * inch))
-
-            table = Table(data, colWidths=[0.6 * inch, 0.8 * inch])
-
-            table.setStyle(
-                TableStyle(
-                    [
-                        ("BACKGROUND", (0, 0), (0, 0), colors.Color(0.9, 0.9, 0.9)),
-                        ("FONTNAME", (0, 0), (0, 0), "PlusJakartaSans"),
-                        ("BACKGROUND", (1, 0), (1, 0), status_color),
-                        ("TEXTCOLOR", (1, 0), (1, 0), colors.white),
-                        ("FONTNAME", (1, 0), (1, 0), "FiraCode"),
-                        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                        ("FONTSIZE", (0, 0), (-1, -1), 12),
-                        ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
-                        ("LEFTPADDING", (0, 0), (-1, -1), 8),
-                        ("RIGHTPADDING", (0, 0), (-1, -1), 8),
-                        ("TOPPADDING", (0, 0), (-1, -1), 10),
-                        ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
-                    ]
-                )
-            )
-
-            return table
-
-        def create_section_score_chart(resp_reqs, attrs_map):
-            """Create a bar chart showing compliance score by section using ThreatScore formula"""
-            # Define expected sections
-            expected_sections = [
-                "1. IAM",
-                "2. Attack Surface",
-                "3. Logging and Monitoring",
-                "4. Encryption",
-            ]
-
-            # Initialize all expected sections with default values
-            sections_data = {
-                section: {
-                    "numerator": 0,
-                    "denominator": 0,
-                    "has_findings": False,
-                }
-                for section in expected_sections
-            }
-
-            # Collect data from requirements
-            for req in resp_reqs:
-                req_id = req["id"]
-                attr = attrs_map.get(req_id, {})
-
-                metadata = attr.get("attributes", {}).get("req_attributes", [])
-                if metadata:
-                    m = metadata[0]
-                    section = getattr(m, "Section", "Unknown")
-
-                    # Add section if not in expected list (for flexibility)
-                    if section not in sections_data:
-                        sections_data[section] = {
-                            "numerator": 0,
-                            "denominator": 0,
-                            "has_findings": False,
-                        }
-
-                    # Get findings data
-                    passed_findings = req["attributes"].get("passed_findings", 0)
-                    total_findings = req["attributes"].get("total_findings", 0)
-
-                    if total_findings > 0:
-                        sections_data[section]["has_findings"] = True
-                        risk_level = getattr(m, "LevelOfRisk", 0)
-                        weight = getattr(m, "Weight", 0)
-
-                        # Calculate using ThreatScore formula from UI
-                        rate_i = passed_findings / total_findings
-                        rfac_i = 1 + 0.25 * risk_level
-
-                        sections_data[section]["numerator"] += (
-                            rate_i * total_findings * weight * rfac_i
-                        )
-                        sections_data[section]["denominator"] += (
-                            total_findings * weight * rfac_i
-                        )
-
-            section_names = []
-            compliance_percentages = []
-
-            for section, data in sections_data.items():
-                if data["has_findings"] and data["denominator"] > 0:
-                    compliance_percentage = (
-                        data["numerator"] / data["denominator"]
-                    ) * 100
-                else:
-                    compliance_percentage = 100  # No findings = 100% (PASS)
-
-                section_names.append(section)
-                compliance_percentages.append(compliance_percentage)
-
-            # Sort alphabetically by section name
-            sorted_data = sorted(
-                zip(section_names, compliance_percentages),
-                key=lambda x: x[0],
-            )
-            section_names, compliance_percentages = (
-                zip(*sorted_data) if sorted_data else ([], [])
-            )
-
-            fig, ax = plt.subplots(figsize=(12, 8))
-
-            colors_list = []
-            for percentage in compliance_percentages:
-                if percentage >= 80:
-                    color = "#4CAF50"
-                elif percentage >= 60:
-                    color = "#8BC34A"
-                elif percentage >= 40:
-                    color = "#FFEB3B"
-                elif percentage >= 20:
-                    color = "#FF9800"
-                else:
-                    color = "#F44336"
-                colors_list.append(color)
-
-            bars = ax.bar(section_names, compliance_percentages, color=colors_list)
-
-            ax.set_ylabel("Compliance Score (%)", fontsize=12)
-            ax.set_xlabel("Section", fontsize=12)
-            ax.set_ylim(0, 100)
-
-            for bar, percentage in zip(bars, compliance_percentages):
-                height = bar.get_height()
-                ax.text(
-                    bar.get_x() + bar.get_width() / 2.0,
-                    height + 1,
-                    f"{percentage:.1f}%",
-                    ha="center",
-                    va="bottom",
-                    fontweight="bold",
-                )
-
-            plt.xticks(rotation=45, ha="right")
-
-            ax.grid(True, alpha=0.3, axis="y")
-
-            plt.tight_layout()
-
-            buffer = io.BytesIO()
-            plt.savefig(buffer, format="png", dpi=300, bbox_inches="tight")
-            buffer.seek(0)
-            plt.close()
-
-            return buffer
-
-        def get_finding_info(check_id: str):
-            return [f for f in findings if f.check_id == check_id]
-
+        # Initialize PDF document
         doc = SimpleDocTemplate(
             output_path,
             pagesize=letter,
@@ -481,6 +639,7 @@ def generate_threatscore_report(
 
         elements = []
 
+        # Add logo
         img_path = os.path.join(
             os.path.dirname(__file__), "../assets/img/prowler_logo.png"
         )
@@ -495,6 +654,7 @@ def generate_threatscore_report(
         elements.append(Paragraph("Prowler ThreatScore Report", title_style))
         elements.append(Spacer(1, 0.5 * inch))
 
+        # Add compliance information table
         info_data = [
             ["Framework:", compliance_framework],
             ["ID:", compliance_id],
@@ -526,13 +686,13 @@ def generate_threatscore_report(
         )
 
         elements.append(info_table)
-
         elements.append(PageBreak())
 
+        # Add compliance score chart
         elements.append(Paragraph("Compliance Score by Sections", h1))
         elements.append(Spacer(1, 0.2 * inch))
 
-        chart_buffer = create_section_score_chart(resp_reqs, attrs_map)
+        chart_buffer = _create_section_score_chart(resp_reqs, attrs_map)
         chart_image = Image(chart_buffer, width=7 * inch, height=5.5 * inch)
         elements.append(chart_image)
 
@@ -613,9 +773,9 @@ def generate_threatscore_report(
         )
 
         elements.append(summary_table)
-
         elements.append(PageBreak())
 
+        # Add requirements index
         elements.append(Paragraph("Requirements Index", h1))
 
         sections = {}
@@ -652,6 +812,7 @@ def generate_threatscore_report(
 
         elements.append(PageBreak())
 
+        # Add critical failed requirements section
         elements.append(Paragraph("Top Requirements by Level of Risk", h1))
         elements.append(Spacer(1, 0.1 * inch))
         elements.append(
@@ -780,6 +941,8 @@ def generate_threatscore_report(
             elements.append(critical_table)
             elements.append(Spacer(1, 0.2 * inch))
 
+            # Get styles for warning
+            styles = getSampleStyleSheet()
             warning_text = """
             <b>IMMEDIATE ACTION REQUIRED:</b><br/>
             These requirements have the highest risk levels and have failed compliance checks.
@@ -806,12 +969,13 @@ def generate_threatscore_report(
 
         elements.append(PageBreak())
 
+        # Add detailed requirements section
         def get_weight(req):
             req_id = req["id"]
             attr = attrs_map.get(req_id, {})
-            metadata = attr.get("attributes", {}).get("metadata", [])
+            metadata = attr.get("attributes", {}).get("req_attributes", [])
             if metadata:
-                return metadata[0].get("Weight", 0)
+                return getattr(metadata[0], "Weight", 0)
             return 0
 
         sorted_reqs = sorted(resp_reqs, key=get_weight, reverse=True)
@@ -829,7 +993,7 @@ def generate_threatscore_report(
 
             elements.append(Paragraph(f"{req_id}: {attr.get('description', desc)}", h1))
 
-            status_component = create_status_component(status)
+            status_component = _create_status_component(status)
             elements.append(status_component)
             elements.append(Spacer(1, 0.1 * inch))
 
@@ -860,15 +1024,19 @@ def generate_threatscore_report(
                 else:
                     score = 0
 
-                risk_component = create_risk_component(risk_level, weight, score)
+                risk_component = _create_risk_component(risk_level, weight, score)
                 elements.append(risk_component)
                 elements.append(Spacer(1, 0.1 * inch))
 
+            # Use the findings index to get findings for this requirement's checks
             checks = attr.get("attributes", {}).get("checks", [])
             for cid in checks:
                 elements.append(Paragraph(f"Check: {cid}", h2))
                 elements.append(Spacer(1, 0.1 * inch))
-                finds = get_finding_info(cid)
+
+                # Use the findings index instead of a function closure
+                finds = findings_by_check.get(cid, [])
+
                 if not finds:
                     elements.append(
                         Paragraph("- No information for this finding currently", normal)
@@ -886,13 +1054,13 @@ def generate_threatscore_report(
                     for f in finds:
                         check_meta = getattr(f, "metadata", {})
                         title = getattr(
-                            check_meta, "CheckTitle", getattr(attr, "CheckId", "")
+                            check_meta, "CheckTitle", getattr(f, "check_id", "")
                         )
                         resource_name = getattr(f, "resource_name", "")
                         if not resource_name:
                             resource_name = getattr(f, "resource_uid", "")
                         severity = getattr(check_meta, "Severity", "").capitalize()
-                        status = getattr(f, "status", "").upper()
+                        finding_status = getattr(f, "status", "").upper()
                         region = getattr(f, "region", "global")
 
                         findings_table_data.append(
@@ -900,7 +1068,7 @@ def generate_threatscore_report(
                                 Paragraph(title, normal_center),
                                 Paragraph(resource_name, normal_center),
                                 Paragraph(severity, normal_center),
-                                Paragraph(status, normal_center),
+                                Paragraph(finding_status, normal_center),
                                 Paragraph(region, normal_center),
                             ]
                         )
@@ -947,17 +1115,8 @@ def generate_threatscore_report(
 
             elements.append(PageBreak())
 
-        def add_footer(canvas: canvas.Canvas, doc):
-            width, height = doc.pagesize
-            page_num_text = f"Page {doc.page}"
-            canvas.setFont("PlusJakartaSans", 9)
-            canvas.setFillColorRGB(0.4, 0.4, 0.4)
-            canvas.drawString(30, 20, page_num_text)
-            powered_text = "Powered by Prowler"
-            text_width = canvas.stringWidth(powered_text, "PlusJakartaSans", 9)
-            canvas.drawString(width - text_width - 30, 20, powered_text)
-
-        doc.build(elements, onFirstPage=add_footer, onLaterPages=add_footer)
+        # Build the PDF
+        doc.build(elements, onFirstPage=_add_pdf_footer, onLaterPages=_add_pdf_footer)
     except Exception as e:
         logger.info(
             f"Error building the document, line {e.__traceback__.tb_lineno} -- {e}"
@@ -965,7 +1124,30 @@ def generate_threatscore_report(
         raise e
 
 
-def generate_threatscore_report_job(tenant_id: str, scan_id: str, provider_id: str):
+def generate_threatscore_report_job(
+    tenant_id: str, scan_id: str, provider_id: str
+) -> dict[str, bool | str]:
+    """
+    Job function to generate a threatscore report and upload it to S3.
+
+    This function orchestrates the complete report generation workflow:
+    1. Validates that the scan has findings
+    2. Checks provider type compatibility
+    3. Generates the output directory
+    4. Calls generate_threatscore_report to create the PDF
+    5. Uploads the PDF to S3
+    6. Cleans up temporary files
+
+    Args:
+        tenant_id (str): The tenant ID for Row-Level Security context.
+        scan_id (str): The ID of the scan to generate a report for.
+        provider_id (str): The ID of the provider used in the scan.
+
+    Returns:
+        dict[str, bool | str]: A dictionary containing:
+            - 'upload' (bool): True if the report was successfully uploaded to S3, False otherwise.
+            - 'error' (str): Error message if an exception occurred (only present on error).
+    """
     # Check if the scan has findings and get provider info
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
         if not ScanSummary.objects.filter(scan_id=scan_id).exists():
