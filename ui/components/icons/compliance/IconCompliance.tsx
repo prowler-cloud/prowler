@@ -1,5 +1,6 @@
 import AWSLogo from "./aws.svg";
 import C5Logo from "./c5.svg";
+import CCCLogo from "./ccc.svg";
 import CISLogo from "./cis.svg";
 import CISALogo from "./cisa.svg";
 import ENSLogo from "./ens.png";
@@ -38,6 +39,7 @@ const COMPLIANCE_LOGOS = {
   prowlerthreatscore: PROWLERTHREATLogo,
   nis2: NIS2Logo,
   c5: C5Logo,
+  ccc: CCCLogo,
 } as const;
 
 export const getComplianceIcon = (complianceTitle: string) => {
