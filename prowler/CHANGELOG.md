@@ -32,6 +32,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS AppStream service metadata to new format [(#8789)](https://github.com/prowler-cloud/prowler/pull/8789)
 - Update AWS API Gateway service metadata to new format [(#8788)](https://github.com/prowler-cloud/prowler/pull/8788)
 - Update AWS Athena service metadata to new format [(#8790)](https://github.com/prowler-cloud/prowler/pull/8790)
+- Update AWS CloudTrail service metadata to new format [(#8831)](https://github.com/prowler-cloud/prowler/pull/8831)
 - Update AWS Auto Scaling service metadata to new format [(#8824)](https://github.com/prowler-cloud/prowler/pull/8824)
 - Update AWS Backup service metadata to new format [(#8826)](https://github.com/prowler-cloud/prowler/pull/8826)
 - Update AWS CloudFormation service metadata to new format [(#8828)](https://github.com/prowler-cloud/prowler/pull/8828)
