@@ -1,1 +1,14 @@
 blank_issues_enabled: false
+contact_links:
+  - name: 📖 Documentation
+    url: https://docs.prowler.com
+    about: Check our comprehensive documentation for guides and tutorials
+  - name: 💬 GitHub Discussions
+    url: https://github.com/prowler-cloud/prowler/discussions
+    about: Ask questions and discuss with the community
+  - name: 🔒 Security Vulnerability
+    url: https://github.com/prowler-cloud/prowler/security/policy
+    about: Report security vulnerabilities privately
+  - name: 🌟 Prowler Community
+    url: https://prowler.com/community
+    about: Join our community for support and updates
