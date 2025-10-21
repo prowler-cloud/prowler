@@ -96,7 +96,7 @@ export function DonutChart({
   }));
 
   return (
-    <div>
+    <>
       <ChartContainer
         config={chartConfig}
         className="mx-auto aspect-square max-h-[350px]"
@@ -144,15 +144,15 @@ export function DonutChart({
                       >
                         <tspan
                           x={viewBox.cx}
-                          y={(viewBox.cy || 0) - 4}
-                          className="fill-white text-2xl font-bold"
+                          y={(viewBox.cy || 0) - 6}
+                          className="fill-zinc-300 text-2xl font-bold"
                         >
                           {formattedValue}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) + 24}
-                          className="fill-slate-400"
+                          className="fill-zinc-300 text-[14px]"
                         >
                           {centerLabel.label}
                         </tspan>
@@ -166,6 +166,6 @@ export function DonutChart({
         </PieChart>
       </ChartContainer>
       {showLegend && <CustomLegend payload={legendPayload} />}
-    </div>
+    </>
   );
 }
