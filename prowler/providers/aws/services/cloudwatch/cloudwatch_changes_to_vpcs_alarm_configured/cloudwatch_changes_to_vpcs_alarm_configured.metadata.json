@@ -14,9 +14,7 @@
   "Risk": "Without alerting on VPC changes, unauthorized or accidental edits to routes, peering, or attributes can go unnoticed, exposing private networks and enabling data exfiltration (C), lateral movement and traffic tampering (I), and outages from misrouted or bridged networks (A).",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
-    "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_14#fix---buildtime",
-    "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_14"
+    "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html"
   ],
   "Remediation": {
     "Code": {
