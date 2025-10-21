@@ -79,7 +79,7 @@
   },
   "devDependencies": {
     "@iconify/react": "5.2.1",
-    "@playwright/test": "1.53.2",
+    "@playwright/test": "1.56.1",
     "@types/node": "20.5.7",
     "@types/react": "19.1.13",
     "@types/react-dom": "19.1.9",
