@@ -15,15 +15,9 @@
   "Risk": "Escalation patterns can grant elevated entitlements, enabling:\n- Confidentiality loss via unauthorized data/secret access\n- Integrity compromise by changing IAM policies/roles\n- Availability impact by tampering with logging or resources\nThis also facilitates lateral movement and persistence.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.aistrike.com/blogs/demystifying-cloud-privilege-escalation-and-lateral-movement",
     "https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/",
-    "https://panther.com/blog/investigating-amazon-eks-privilege-escalation-with-pantherflow",
     "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-concepts.html#cloudtrail-concepts-logging-data-events",
-    "https://medium.com/infosec-ninja/aws-security-incident-response-part-6-the-iam-permission-escalation-attack-7d33f3a5d705",
-    "https://aws.plainenglish.io/aws-cloudtrail-event-cheatsheet-a-detection-engineers-guide-to-critical-api-calls-part-1-04fb1588556f",
-    "https://www.stream.security/rules/iam-user-can-execute-a-privilege-escalation-by-using-attachrolepolicy",
-    "https://signmycode.com/blog/what-is-privilege-escalation-in-aws-recommendations-to-prevent-it",
-    "https://sonraisecurity.com/access-2024/privilege-escalation-deconstructed-attacks-and-how-to-stop-them/"
+    "https://signmycode.com/blog/what-is-privilege-escalation-in-aws-recommendations-to-prevent-it"
   ],
   "Remediation": {
     "Code": {
