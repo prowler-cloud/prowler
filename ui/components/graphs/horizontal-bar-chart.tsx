@@ -26,7 +26,12 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
     <div className="w-full">
       {title && (
         <div className="mb-4">
-          <h3 className="text-lg font-semibold text-white">{title}</h3>
+          <h3
+            className="text-lg font-semibold"
+            style={{ color: "var(--chart-text-primary)" }}
+          >
+            {title}
+          </h3>
         </div>
       )}
 
@@ -48,8 +53,9 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
             >
               <div className="w-24 text-right">
                 <span
-                  className="text-sm text-white"
+                  className="text-sm"
                   style={{
+                    color: "var(--chart-text-primary)",
                     opacity: isFaded ? 0.5 : 1,
                     transition: "opacity 0.2s",
                   }}
@@ -70,26 +76,44 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
                 />
 
                 {isHovered && (
-                  <div className="absolute top-10 left-0 z-10 min-w-[200px] rounded-lg border border-slate-700 bg-slate-800 p-3 shadow-lg">
+                  <div
+                    className="absolute top-10 left-0 z-10 min-w-[200px] rounded-lg border p-3 shadow-lg"
+                    style={{
+                      backgroundColor: "var(--chart-background)",
+                      borderColor: "var(--chart-border-emphasis)",
+                    }}
+                  >
                     <div className="flex items-center gap-2">
                       <div
                         className="h-3 w-3 rounded-sm"
                         style={{ backgroundColor: barColor }}
                       />
-                      <span className="font-semibold text-white">
+                      <span
+                        className="font-semibold"
+                        style={{ color: "var(--chart-text-primary)" }}
+                      >
                         {item.value.toLocaleString()} {item.name} Risk
                       </span>
                     </div>
                     {item.newFindings !== undefined && (
                       <div className="mt-2 flex items-center gap-2">
-                        <Bell size={14} className="text-slate-400" />
-                        <span className="text-sm text-slate-400">
+                        <Bell
+                          size={14}
+                          style={{ color: "var(--chart-text-secondary)" }}
+                        />
+                        <span
+                          className="text-sm"
+                          style={{ color: "var(--chart-text-secondary)" }}
+                        >
                           {item.newFindings} New Findings
                         </span>
                       </div>
                     )}
                     {item.change !== undefined && (
-                      <p className="mt-1 text-sm text-slate-400">
+                      <p
+                        className="mt-1 text-sm"
+                        style={{ color: "var(--chart-text-secondary)" }}
+                      >
                         <span className="font-bold">
                           {item.change > 0 ? "+" : ""}
                           {item.change}%
@@ -102,14 +126,15 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
               </div>
 
               <div
-                className="flex w-40 items-center gap-2 text-sm text-white"
+                className="flex w-40 items-center gap-2 text-sm"
                 style={{
+                  color: "var(--chart-text-primary)",
                   opacity: isFaded ? 0.5 : 1,
                   transition: "opacity 0.2s",
                 }}
               >
                 <span className="font-semibold">{item.percentage}%</span>
-                <span className="text-slate-400">•</span>
+                <span style={{ color: "var(--chart-text-secondary)" }}>•</span>
                 <span className="font-bold">{item.value.toLocaleString()}</span>
               </div>
             </div>

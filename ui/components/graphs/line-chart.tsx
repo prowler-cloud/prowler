@@ -48,8 +48,16 @@ const CustomLineTooltip = ({
   const totalValue = typedPayload.reduce((sum, item) => sum + item.value, 0);
 
   return (
-    <div className="rounded-lg border border-slate-700 bg-slate-800 p-3 shadow-lg">
-      <p className="mb-3 text-xs text-slate-400">{label}</p>
+    <div
+      className="rounded-lg border p-3 shadow-lg"
+      style={{
+        backgroundColor: "var(--chart-background)",
+        borderColor: "var(--chart-border-emphasis)",
+      }}
+    >
+      <p className="mb-3 text-xs" style={{ color: "var(--chart-text-secondary)" }}>
+        {label}
+      </p>
 
       <div className="mb-3">
         <AlertPill value={totalValue} textSize="sm" />
@@ -67,18 +75,23 @@ const CustomLineTooltip = ({
                   className="h-2 w-2 rounded-full"
                   style={{ backgroundColor: item.stroke }}
                 />
-                <span className="text-sm text-white">{item.value}</span>
+                <span className="text-sm" style={{ color: "var(--chart-text-primary)" }}>
+                  {item.value}
+                </span>
               </div>
               {newFindings !== undefined && (
                 <div className="flex items-center gap-2">
-                  <Bell size={14} className="text-slate-400" />
-                  <span className="text-xs text-slate-400">
+                  <Bell size={14} style={{ color: "var(--chart-text-secondary)" }} />
+                  <span
+                    className="text-xs"
+                    style={{ color: "var(--chart-text-secondary)" }}
+                  >
                     {newFindings} New Findings
                   </span>
                 </div>
               )}
               {change !== undefined && typeof change === "number" && (
-                <p className="text-xs text-slate-400">
+                <p className="text-xs" style={{ color: "var(--chart-text-secondary)" }}>
                   <span className="font-bold">
                     {change > 0 ? "+" : ""}
                     {change}%

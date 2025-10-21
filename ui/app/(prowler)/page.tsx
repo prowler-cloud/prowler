@@ -545,28 +545,42 @@ const sampleThreatMapData = {
   ],
 };
 
-// Sample data for DonutChart
+// Sample data for DonutChart (Findings by Severity)
 const sampleDonutChartData = [
   {
-    name: "AWS",
-    value: 1840,
-    percentage: 45,
-    color: "var(--chart-provider-aws)",
+    name: "Critical",
+    value: 432,
+    percentage: 22,
+    color: "var(--chart-danger-emphasis)",
     change: 5,
   },
   {
-    name: "Azure",
-    value: 1280,
+    name: "High",
+    value: 1232,
     percentage: 32,
-    color: "var(--chart-provider-azure)",
+    color: "var(--chart-danger)",
+    change: 8,
+  },
+  {
+    name: "Medium",
+    value: 925,
+    percentage: 28,
+    color: "var(--chart-warning-emphasis)",
+    change: -3,
+  },
+  {
+    name: "Low",
+    value: 543,
+    percentage: 15,
+    color: "var(--chart-warning)",
     change: -2,
   },
   {
-    name: "Google",
-    value: 920,
-    percentage: 23,
-    color: "var(--chart-provider-google)",
-    change: 8,
+    name: "Info",
+    value: 108,
+    percentage: 3,
+    color: "var(--chart-info)",
+    change: 0,
   },
 ];
 
@@ -753,14 +767,14 @@ export default async function Home({
         <div className="col-span-12 lg:col-span-6">
           <Spacer y={16} />
           <h3 className="mb-4 text-sm font-bold uppercase">
-            Provider Distribution
+            Severity Distribution
           </h3>
           <DonutChart
             data={sampleDonutChartData}
             height={350}
             showLegend
             centerLabel={{
-              value: "4,040",
+              value: "3,240",
               label: "Total Findings",
             }}
           />

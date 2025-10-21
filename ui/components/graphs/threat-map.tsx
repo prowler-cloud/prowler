@@ -118,29 +118,41 @@ function MapTooltip({
   location: LocationPoint;
   position: { x: number; y: number };
 }) {
+  const CHART_COLORS = {
+    tooltipBorder: "var(--chart-border-emphasis)",
+    tooltipBackground: "var(--chart-background)",
+    textPrimary: "var(--chart-text-primary)",
+    textSecondary: "var(--chart-text-secondary)",
+  };
+
   return (
     <div
-      className="pointer-events-none absolute z-50 min-w-[200px] rounded-lg border border-slate-700 bg-slate-800 p-3 shadow-lg"
+      className="pointer-events-none absolute z-50 min-w-[200px] rounded-lg border p-3 shadow-lg"
       style={{
         left: `${position.x + 15}px`,
         top: `${position.y + 15}px`,
         transform: "translate(0, -50%)",
+        borderColor: CHART_COLORS.tooltipBorder,
+        backgroundColor: CHART_COLORS.tooltipBackground,
       }}
     >
       <div className="flex items-center gap-2">
-        <MapPin size={14} className="text-slate-400" />
-        <span className="text-sm font-semibold text-white">
+        <MapPin size={14} style={{ color: CHART_COLORS.textSecondary }} />
+        <span
+          className="text-sm font-semibold"
+          style={{ color: CHART_COLORS.textPrimary }}
+        >
           {location.name}
         </span>
       </div>
       <div className="mt-1 flex items-center gap-2">
         <AlertTriangle size={14} className="text-[#DB2B49]" />
-        <span className="text-sm text-white">
+        <span className="text-sm" style={{ color: CHART_COLORS.textPrimary }}>
           {location.totalFindings.toLocaleString()} Fail Findings
         </span>
       </div>
       {location.change !== undefined && (
-        <p className="mt-1 text-xs text-slate-400">
+        <p className="mt-1 text-xs" style={{ color: CHART_COLORS.textSecondary }}>
           <span className="font-bold">
             {location.change > 0 ? "+" : ""}
             {location.change}%
@@ -153,11 +165,23 @@ function MapTooltip({
 }
 
 function EmptyState() {
+  const CHART_COLORS = {
+    tooltipBorder: "var(--chart-border-emphasis)",
+    tooltipBackground: "var(--chart-background)",
+    textSecondary: "var(--chart-text-secondary)",
+  };
+
   return (
-    <div className="flex h-full min-h-[400px] items-center justify-center rounded-lg border border-slate-700 bg-slate-800 p-6">
+    <div
+      className="flex h-full min-h-[400px] items-center justify-center rounded-lg border p-6"
+      style={{
+        borderColor: CHART_COLORS.tooltipBorder,
+        backgroundColor: CHART_COLORS.tooltipBackground,
+      }}
+    >
       <div className="text-center">
-        <Info size={48} className="mx-auto mb-2 text-slate-500" />
-        <p className="text-sm text-slate-400">
+        <Info size={48} className="mx-auto mb-2" style={{ color: CHART_COLORS.textSecondary }} />
+        <p className="text-sm" style={{ color: CHART_COLORS.textSecondary }}>
           Select a location on the map to view details
         </p>
       </div>
@@ -166,10 +190,16 @@ function EmptyState() {
 }
 
 function LoadingState({ height }: { height: number }) {
+  const CHART_COLORS = {
+    textSecondary: "var(--chart-text-secondary)",
+  };
+
   return (
     <div className="flex items-center justify-center" style={{ height }}>
       <div className="text-center">
-        <div className="mb-2 text-slate-400">Loading map...</div>
+        <div className="mb-2" style={{ color: CHART_COLORS.textSecondary }}>
+          Loading map...
+        </div>
       </div>
     </div>
   );
@@ -350,17 +380,34 @@ export function ThreatMap({
     isLoadingMap,
   ]);
 
+  const CHART_COLORS = {
+    tooltipBorder: "var(--chart-border-emphasis)",
+    tooltipBackground: "var(--chart-background)",
+    textPrimary: "var(--chart-text-primary)",
+    textSecondary: "var(--chart-text-secondary)",
+  };
+
   return (
     <div className="flex w-full flex-col gap-6 lg:flex-row lg:items-start">
       {/* Map Section */}
       <div className="flex-1">
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-white">Threat Map</h3>
+          <h3
+            className="text-lg font-semibold"
+            style={{ color: CHART_COLORS.textPrimary }}
+          >
+            Threat Map
+          </h3>
           <div className="relative">
             <select
               value={selectedRegion}
               onChange={(e) => setSelectedRegion(e.target.value)}
-              className="appearance-none rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 pr-10 text-sm text-white focus:border-slate-600 focus:outline-none"
+              className="appearance-none rounded-lg border px-4 py-2 pr-10 text-sm focus:outline-none"
+              style={{
+                borderColor: CHART_COLORS.tooltipBorder,
+                backgroundColor: CHART_COLORS.tooltipBackground,
+                color: CHART_COLORS.textPrimary,
+              }}
             >
               <option value="All Regions">All Regions</option>
               {data.regions.map((region) => (
@@ -371,14 +418,19 @@ export function ThreatMap({
             </select>
             <ChevronDown
               size={16}
-              className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-slate-400"
+              className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2"
+              style={{ color: CHART_COLORS.textSecondary }}
             />
           </div>
         </div>
 
         <div
           ref={containerRef}
-          className="rounded-lg border border-slate-700 bg-slate-800/50 p-4"
+          className="rounded-lg border p-4"
+          style={{
+            borderColor: CHART_COLORS.tooltipBorder,
+            backgroundColor: CHART_COLORS.tooltipBackground,
+          }}
         >
           {isLoadingMap ? (
             <LoadingState height={dimensions.height} />
@@ -401,7 +453,10 @@ export function ThreatMap({
               </div>
               <div className="mt-4 flex items-center gap-2">
                 <div className="h-3 w-3 rounded-full bg-[#DB2B49]" />
-                <span className="text-sm text-slate-400">
+                <span
+                  className="text-sm"
+                  style={{ color: CHART_COLORS.textSecondary }}
+                >
                   {filteredLocations.length} Locations
                 </span>
               </div>
@@ -414,15 +469,27 @@ export function ThreatMap({
       <div className="w-full lg:w-[400px]">
         <div className="mb-4 h-10" />
         {selectedLocation ? (
-          <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
+          <div
+            className="rounded-lg border p-6"
+            style={{
+              borderColor: CHART_COLORS.tooltipBorder,
+              backgroundColor: CHART_COLORS.tooltipBackground,
+            }}
+          >
             <div className="mb-6">
               <div className="mb-1 flex items-center gap-2">
                 <div className="h-2 w-2 rounded-full bg-[#86DA26]" />
-                <h4 className="text-base font-semibold text-white">
+                <h4
+                  className="text-base font-semibold"
+                  style={{ color: CHART_COLORS.textPrimary }}
+                >
                   {selectedLocation.name}
                 </h4>
               </div>
-              <p className="text-sm text-slate-400">
+              <p
+                className="text-sm"
+                style={{ color: CHART_COLORS.textSecondary }}
+              >
                 {selectedLocation.totalFindings.toLocaleString()} Total Findings
               </p>
             </div>

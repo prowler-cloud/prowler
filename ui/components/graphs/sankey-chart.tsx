@@ -66,10 +66,23 @@ const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="rounded-lg border border-slate-700 bg-slate-800 p-3 shadow-lg">
-        <p className="text-sm font-semibold text-white">{data.name}</p>
+      <div
+        className="rounded-lg border p-3 shadow-lg"
+        style={{
+          borderColor: CHART_COLORS.tooltipBorder,
+          backgroundColor: CHART_COLORS.tooltipBackground,
+        }}
+      >
+        <p
+          className="text-sm font-semibold"
+          style={{ color: CHART_COLORS.textPrimary }}
+        >
+          {data.name}
+        </p>
         {data.value && (
-          <p className="text-xs text-slate-400">Value: {data.value}</p>
+          <p className="text-xs" style={{ color: CHART_COLORS.textSecondary }}>
+            Value: {data.value}
+          </p>
         )}
       </div>
     );
@@ -143,7 +156,7 @@ const CustomNode = (props: any) => {
             x={isOut ? x - 6 : x + width + 6}
             y={y + height / 2}
             fontSize="14"
-            className="fill-white stroke-white"
+            fill={CHART_COLORS.textPrimary}
           >
             {nodeName}
           </text>
@@ -152,8 +165,7 @@ const CustomNode = (props: any) => {
             x={isOut ? x - 6 : x + width + 6}
             y={y + height / 2 + 13}
             fontSize="12"
-            className="fill-slate-400 stroke-slate-400"
-            strokeOpacity="0.5"
+            fill={CHART_COLORS.textSecondary}
           >
             {payload.value}
           </text>
