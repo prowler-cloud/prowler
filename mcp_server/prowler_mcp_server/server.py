@@ -1,16 +1,15 @@
+import asyncio
 import os
 
 from fastmcp import FastMCP
 from prowler_mcp_server.lib.logger import logger
 from starlette.responses import JSONResponse
 
+prowler_mcp_server = FastMCP("prowler-mcp-server")
 
-async def setup_main_server(transport: str) -> FastMCP:
+
+async def setup_main_server():
     """Set up the main Prowler MCP server with all available integrations."""
-
-    # Initialize main Prowler MCP server
-    prowler_mcp_server = FastMCP("prowler-mcp-server")
-
     # Import Prowler Hub tools with prowler_hub_ prefix
     try:
         logger.info("Importing Prowler Hub server...")
@@ -21,11 +20,9 @@ async def setup_main_server(transport: str) -> FastMCP:
     except Exception as e:
         logger.error(f"Failed to import Prowler Hub server: {e}")
 
+    # Import Prowler App tools with prowler_app_ prefix
     try:
         logger.info("Importing Prowler App server...")
-
-        if os.getenv("PROWLER_MCP_MODE", None) is None:
-            os.environ["PROWLER_MCP_MODE"] = transport
 
         if not os.path.exists(
             os.path.join(os.path.dirname(__file__), "prowler_app", "server.py")
@@ -44,6 +41,7 @@ async def setup_main_server(transport: str) -> FastMCP:
     except Exception as e:
         logger.error(f"Failed to import Prowler App server: {e}")
 
+    # Import Prowler Documentation tools with prowler_docs_ prefix
     try:
         logger.info("Importing Prowler Documentation server...")
         from prowler_mcp_server.prowler_documentation.server import docs_mcp_server
@@ -53,9 +51,21 @@ async def setup_main_server(transport: str) -> FastMCP:
     except Exception as e:
         logger.error(f"Failed to import Prowler Documentation server: {e}")
 
-    # Add health check endpoint
-    @prowler_mcp_server.custom_route("/health", methods=["GET"])
-    async def health_check(request):
-        return JSONResponse({"status": "healthy", "service": "prowler-mcp-server"})
 
-    return prowler_mcp_server
+# Add health check endpoint
+@prowler_mcp_server.custom_route("/health", methods=["GET"])
+async def health_check() -> JSONResponse:
+    """Health check endpoint."""
+    return JSONResponse({"status": "healthy", "service": "prowler-mcp-server"})
+
+
+# Get or create the event loop
+try:
+    loop = asyncio.get_running_loop()
+    # If we have a running loop, schedule the setup as a task
+    loop.create_task(setup_main_server())
+except RuntimeError:
+    # No running loop, use asyncio.run (for standalone execution)
+    asyncio.run(setup_main_server())
+
+app = prowler_mcp_server.http_app()
