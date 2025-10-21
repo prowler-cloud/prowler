@@ -3177,6 +3177,25 @@ class YourProviderAPITestCase(APITestCase):
         self.assertEqual(response.status_code, 201)
 ```
 
+#### 2.6.1. Add your mocked provider to the tests
+
+If needed, add your mocked provider to the tests config file so you can use it on the tests.
+
+**File:** `api/src/backend/conftest.py`
+
+```python
+@pytest.fixture
+def providers_fixture(tenants_fixture):
+    tenant, *_ = tenants_fixture
+    providerX = Provider.objects.create(
+        provider="your_provider",
+        uid="your_uid",
+        alias="your_alias",
+        tenant_id=tenant.id,
+    )
+    return provider1, provider2, provider3, ... providerX
+```
+
 ### 2.7. Compliance and Output Support
 
 Add your provider to the compliance export functionality:
