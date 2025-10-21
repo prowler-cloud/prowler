@@ -19,13 +19,7 @@
     "https://docs.aws.amazon.com/cli/latest/reference/logs/associate-kms-key.html",
     "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group",
     "https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/logs/client/associate_kms_key.html",
-    "https://stackoverflow.com/questions/75877270/terraform-cloudwatch-log-group-with-kms-key",
-    "https://aquasecurity.github.io/cfsec/v0.3.2/checks/cloudwatch/log-group-customer-key/",
-    "https://docs.prowler.com/checks/aws/logging-policies/logging_21#aws-console",
     "https://support.icompaas.com/support/solutions/articles/62000233436-ensure-cloudwatch-log-groups-are-protected-by-aws-kms",
-    "https://docs.prowler.com/checks/aws/logging-policies/logging_21/",
-    "https://repost.aws/knowledge-center/cloudwatch-encrypt-log-data",
-    "https://stackzonecom.tawk.help/article/aws-config-rule-cloudwatch-log-group-encrypted",
     "https://varunmanik1.medium.com/proactively-mitigating-a-medium-severity-prowler-issue-enabling-kms-encryption-for-cloudwatch-logs-51d43416c7fc"
   ],
   "Remediation": {
