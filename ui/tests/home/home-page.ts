@@ -25,7 +25,7 @@ export class HomePage extends BasePage {
     
     // Main content elements
     this.mainContent = page.locator("main");
-    this.breadcrumbs = page.getByLabel("Breadcrumbs");
+    this.breadcrumbs = page.getByRole("navigation", { name: "Breadcrumbs" });
     this.overviewHeading = page.getByRole("heading", { name: "Overview", exact: true });
     
     // Navigation elements
