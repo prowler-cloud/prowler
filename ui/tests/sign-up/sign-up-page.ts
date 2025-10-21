@@ -32,7 +32,7 @@ export class SignUpPage extends BasePage {
     // Prefer stable name attributes to avoid label ambiguity in composed inputs
     this.nameInput = page.locator('input[name="name"]');
     this.companyInput = page.locator('input[name="company"]');
-    this.emailInput = page.getByLabel("Email");
+    this.emailInput = page.getByRole("textbox", { name: "Email" });
     this.passwordInput = page.locator('input[name="password"]');
     this.confirmPasswordInput = page.locator('input[name="confirmPassword"]');
     this.invitationTokenInput = page.locator('input[name="invitationToken"]');

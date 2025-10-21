@@ -45,8 +45,8 @@ export class SignInPage extends BasePage {
     this.homePage = new HomePage(page);
     
     // Form elements
-    this.emailInput = page.getByLabel("Email");
-    this.passwordInput = page.getByLabel("Password");
+    this.emailInput = page.getByRole("textbox", { name: "Email" });
+    this.passwordInput = page.getByRole("textbox", { name: "Password" });
     this.loginButton = page.getByRole("button", { name: "Log in" });
     this.form = page.locator("form");
     
@@ -67,7 +67,7 @@ export class SignInPage extends BasePage {
     
     // SAML specific elements
     this.samlModeTitle = page.getByRole("heading", { name: "Sign in with SAML SSO" });
-    this.samlEmailInput = page.getByLabel("Email");
+    this.samlEmailInput = page.getByRole("textbox", { name: "Email" });
   }
 
   // Navigation methods

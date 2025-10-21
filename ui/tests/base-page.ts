@@ -18,7 +18,7 @@ export abstract class BasePage {
     // Common locators that most pages share
     this.title = page.locator("h1, h2, [role='heading']").first();
     this.loadingIndicator = page.getByRole("status", { name: "Loading" });
-    this.themeToggle = page.getByLabel("Toggle theme");
+    this.themeToggle = page.getByRole("button", { name: "Toggle theme" });
   }
 
   // Common navigation methods
