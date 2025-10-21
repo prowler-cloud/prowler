@@ -158,17 +158,17 @@ export class ProvidersPage extends BasePage {
     this.accountIdInput = page.getByRole("textbox", { name: "Account ID" });
     
     // AZURE provider form inputs
-    this.azureSubscriptionIdInput = page.getByLabel("Subscription ID");
-    this.azureClientIdInput = page.getByLabel("Client ID");
-    this.azureClientSecretInput = page.getByLabel("Client Secret");
-    this.azureTenantIdInput = page.getByLabel("Tenant ID");
+    this.azureSubscriptionIdInput = page.getByRole("textbox", { name: "Subscription ID" });
+    this.azureClientIdInput = page.getByRole("textbox", { name: "Client ID" });
+    this.azureClientSecretInput = page.getByRole("textbox", { name: "Client Secret" });
+    this.azureTenantIdInput = page.getByRole("textbox", { name: "Tenant ID" });
     
     // M365 provider form inputs
-    this.m365domainIdInput = page.getByLabel("Domain ID");
-    this.m365ClientIdInput = page.getByLabel("Client ID");
-    this.m365ClientSecretInput = page.getByLabel("Client Secret");
-    this.m365TenantIdInput = page.getByLabel("Tenant ID");
-    this.m365CertificateContentInput = page.getByLabel("Certificate Content");
+    this.m365domainIdInput = page.getByRole("textbox", { name: "Domain ID" });
+    this.m365ClientIdInput = page.getByRole("textbox", { name: "Client ID" });
+    this.m365ClientSecretInput = page.getByRole("textbox", { name: "Client Secret" });
+    this.m365TenantIdInput = page.getByRole("textbox", { name: "Tenant ID" });
+    this.m365CertificateContentInput = page.getByRole("textbox", { name: "Certificate Content" });
     
     // Alias input
     this.aliasInput = page.getByRole("textbox", { name: "Provider alias (optional)" });
