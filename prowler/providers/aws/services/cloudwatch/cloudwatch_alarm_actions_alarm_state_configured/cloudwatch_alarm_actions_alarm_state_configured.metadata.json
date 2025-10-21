@@ -19,12 +19,8 @@
     "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-15",
     "https://support.icompaas.com/support/solutions/articles/62000233431-ensure-cloudwatch-alarms-have-specified-actions-configured-for-the-alarm-state",
-    "https://fig.io/manual/aws/cloudwatch/put-metric-alarm",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatch/cloudwatch-alarm-action.html",
-    "https://www.clouddefense.ai/compliance-rules/soc-2/system-operations/cloudwatch-alarm-action-enabled",
-    "https://awscli.amazonaws.com/v2/documentation/api/2.0.34/reference/cloudwatch/put-metric-alarm.html",
-    "https://hackage.haskell.org/package/amazonka-cloudwatch-1.6.1/docs/Network-AWS-CloudWatch-PutMetricAlarm.html",
-    "https://uptrace.dev/tools/cloudwatch-custom-metrics-api"
+    "https://awscli.amazonaws.com/v2/documentation/api/2.0.34/reference/cloudwatch/put-metric-alarm.html"
   ],
   "Remediation": {
     "Code": {
