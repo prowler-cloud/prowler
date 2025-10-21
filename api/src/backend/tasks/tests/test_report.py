@@ -2,12 +2,21 @@ import uuid
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import matplotlib
 import pytest
 from tasks.jobs.report import (
+    _aggregate_requirement_statistics_from_database,
+    _calculate_requirements_data_from_statistics,
+    _load_findings_for_requirement_checks,
     generate_threatscore_report,
     generate_threatscore_report_job,
 )
 from tasks.tasks import generate_threatscore_report_task
+
+from api.models import Finding, StatusChoices
+from prowler.lib.check.models import Severity
+
+matplotlib.use("Agg")  # Use non-interactive backend for tests
 
 
 @pytest.mark.django_db
@@ -188,6 +197,535 @@ class TestGenerateThreatscoreReport:
 
 
 @pytest.mark.django_db
+class TestAggregateRequirementStatistics:
+    """Test suite for _aggregate_requirement_statistics_from_database function."""
+
+    def test_aggregates_findings_correctly(self, tenants_fixture, scans_fixture):
+        """Verify correct pass/total counts per check are aggregated from database."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+
+        # Create findings with different check_ids and statuses
+        Finding.objects.create(
+            tenant_id=tenant.id,
+            scan=scan,
+            uid="finding-1",
+            check_id="check_1",
+            status=StatusChoices.PASS,
+            severity=Severity.high,
+            impact=Severity.high,
+            check_metadata={},
+            raw_result={},
+        )
+        Finding.objects.create(
+            tenant_id=tenant.id,
+            scan=scan,
+            uid="finding-2",
+            check_id="check_1",
+            status=StatusChoices.FAIL,
+            severity=Severity.high,
+            impact=Severity.high,
+            check_metadata={},
+            raw_result={},
+        )
+        Finding.objects.create(
+            tenant_id=tenant.id,
+            scan=scan,
+            uid="finding-3",
+            check_id="check_2",
+            status=StatusChoices.PASS,
+            severity=Severity.medium,
+            impact=Severity.medium,
+            check_metadata={},
+            raw_result={},
+        )
+
+        result = _aggregate_requirement_statistics_from_database(
+            str(tenant.id), str(scan.id)
+        )
+
+        assert result == {
+            "check_1": {"passed": 1, "total": 2},
+            "check_2": {"passed": 1, "total": 1},
+        }
+
+    def test_handles_empty_scan(self, tenants_fixture, scans_fixture):
+        """Return empty dict when no findings exist for the scan."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+
+        result = _aggregate_requirement_statistics_from_database(
+            str(tenant.id), str(scan.id)
+        )
+
+        assert result == {}
+
+    def test_multiple_findings_same_check(self, tenants_fixture, scans_fixture):
+        """Aggregate multiple findings for same check_id correctly."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+
+        # Create 5 findings for same check, 3 passed
+        for i in range(3):
+            Finding.objects.create(
+                tenant_id=tenant.id,
+                scan=scan,
+                uid=f"finding-pass-{i}",
+                check_id="check_same",
+                status=StatusChoices.PASS,
+                severity=Severity.medium,
+                impact=Severity.medium,
+                check_metadata={},
+                raw_result={},
+            )
+
+        for i in range(2):
+            Finding.objects.create(
+                tenant_id=tenant.id,
+                scan=scan,
+                uid=f"finding-fail-{i}",
+                check_id="check_same",
+                status=StatusChoices.FAIL,
+                severity=Severity.medium,
+                impact=Severity.medium,
+                check_metadata={},
+                raw_result={},
+            )
+
+        result = _aggregate_requirement_statistics_from_database(
+            str(tenant.id), str(scan.id)
+        )
+
+        assert result == {"check_same": {"passed": 3, "total": 5}}
+
+    def test_only_failed_findings(self, tenants_fixture, scans_fixture):
+        """Correctly count when all findings are FAIL status."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+
+        Finding.objects.create(
+            tenant_id=tenant.id,
+            scan=scan,
+            uid="finding-fail-1",
+            check_id="check_fail",
+            status=StatusChoices.FAIL,
+            severity=Severity.medium,
+            impact=Severity.medium,
+            check_metadata={},
+            raw_result={},
+        )
+        Finding.objects.create(
+            tenant_id=tenant.id,
+            scan=scan,
+            uid="finding-fail-2",
+            check_id="check_fail",
+            status=StatusChoices.FAIL,
+            severity=Severity.medium,
+            impact=Severity.medium,
+            check_metadata={},
+            raw_result={},
+        )
+
+        result = _aggregate_requirement_statistics_from_database(
+            str(tenant.id), str(scan.id)
+        )
+
+        assert result == {"check_fail": {"passed": 0, "total": 2}}
+
+    def test_mixed_statuses(self, tenants_fixture, scans_fixture):
+        """Test with PASS, FAIL, and MANUAL statuses mixed."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+
+        Finding.objects.create(
+            tenant_id=tenant.id,
+            scan=scan,
+            uid="finding-pass",
+            check_id="check_mixed",
+            status=StatusChoices.PASS,
+            severity=Severity.medium,
+            impact=Severity.medium,
+            check_metadata={},
+            raw_result={},
+        )
+        Finding.objects.create(
+            tenant_id=tenant.id,
+            scan=scan,
+            uid="finding-fail",
+            check_id="check_mixed",
+            status=StatusChoices.FAIL,
+            severity=Severity.medium,
+            impact=Severity.medium,
+            check_metadata={},
+            raw_result={},
+        )
+        Finding.objects.create(
+            tenant_id=tenant.id,
+            scan=scan,
+            uid="finding-manual",
+            check_id="check_mixed",
+            status=StatusChoices.MANUAL,
+            severity=Severity.medium,
+            impact=Severity.medium,
+            check_metadata={},
+            raw_result={},
+        )
+
+        result = _aggregate_requirement_statistics_from_database(
+            str(tenant.id), str(scan.id)
+        )
+
+        # Only PASS status is counted as passed
+        assert result == {"check_mixed": {"passed": 1, "total": 3}}
+
+
+@pytest.mark.django_db
+class TestLoadFindingsForChecks:
+    """Test suite for _load_findings_for_requirement_checks function."""
+
+    def test_loads_only_requested_checks(
+        self, tenants_fixture, scans_fixture, providers_fixture
+    ):
+        """Verify only findings for specified check_ids are loaded."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        providers_fixture[0]
+
+        # Create findings with different check_ids
+        Finding.objects.create(
+            tenant_id=tenant.id,
+            scan=scan,
+            uid="finding-1",
+            check_id="check_requested",
+            status=StatusChoices.PASS,
+            severity=Severity.medium,
+            impact=Severity.medium,
+            check_metadata={},
+            raw_result={},
+        )
+        Finding.objects.create(
+            tenant_id=tenant.id,
+            scan=scan,
+            uid="finding-2",
+            check_id="check_not_requested",
+            status=StatusChoices.FAIL,
+            severity=Severity.medium,
+            impact=Severity.medium,
+            check_metadata={},
+            raw_result={},
+        )
+
+        mock_provider = MagicMock()
+
+        with patch(
+            "tasks.jobs.report.FindingOutput.transform_api_finding"
+        ) as mock_transform:
+            mock_finding_output = MagicMock()
+            mock_finding_output.check_id = "check_requested"
+            mock_transform.return_value = mock_finding_output
+
+            result = _load_findings_for_requirement_checks(
+                str(tenant.id), str(scan.id), ["check_requested"], mock_provider
+            )
+
+            # Only one finding should be loaded
+            assert "check_requested" in result
+            assert "check_not_requested" not in result
+            assert len(result["check_requested"]) == 1
+            assert mock_transform.call_count == 1
+
+    def test_empty_check_ids_returns_empty(
+        self, tenants_fixture, scans_fixture, providers_fixture
+    ):
+        """Return empty dict when check_ids list is empty."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        mock_provider = MagicMock()
+
+        result = _load_findings_for_requirement_checks(
+            str(tenant.id), str(scan.id), [], mock_provider
+        )
+
+        assert result == {}
+
+    def test_groups_by_check_id(
+        self, tenants_fixture, scans_fixture, providers_fixture
+    ):
+        """Multiple findings for same check are grouped correctly."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+
+        # Create multiple findings for same check
+        for i in range(3):
+            Finding.objects.create(
+                tenant_id=tenant.id,
+                scan=scan,
+                uid=f"finding-{i}",
+                check_id="check_group",
+                status=StatusChoices.PASS,
+                severity=Severity.medium,
+                impact=Severity.medium,
+                check_metadata={},
+                raw_result={},
+            )
+
+        mock_provider = MagicMock()
+
+        with patch(
+            "tasks.jobs.report.FindingOutput.transform_api_finding"
+        ) as mock_transform:
+            mock_finding_output = MagicMock()
+            mock_finding_output.check_id = "check_group"
+            mock_transform.return_value = mock_finding_output
+
+            result = _load_findings_for_requirement_checks(
+                str(tenant.id), str(scan.id), ["check_group"], mock_provider
+            )
+
+            assert len(result["check_group"]) == 3
+
+    def test_transforms_to_finding_output(
+        self, tenants_fixture, scans_fixture, providers_fixture
+    ):
+        """Findings are transformed using FindingOutput.transform_api_finding."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+
+        Finding.objects.create(
+            tenant_id=tenant.id,
+            scan=scan,
+            uid="finding-transform",
+            check_id="check_transform",
+            status=StatusChoices.PASS,
+            severity=Severity.medium,
+            impact=Severity.medium,
+            check_metadata={},
+            raw_result={},
+        )
+
+        mock_provider = MagicMock()
+
+        with patch(
+            "tasks.jobs.report.FindingOutput.transform_api_finding"
+        ) as mock_transform:
+            mock_finding_output = MagicMock()
+            mock_finding_output.check_id = "check_transform"
+            mock_transform.return_value = mock_finding_output
+
+            result = _load_findings_for_requirement_checks(
+                str(tenant.id), str(scan.id), ["check_transform"], mock_provider
+            )
+
+            # Verify transform was called
+            mock_transform.assert_called_once()
+            # Verify the transformed output is in the result
+            assert result["check_transform"][0] == mock_finding_output
+
+    def test_batched_iteration(self, tenants_fixture, scans_fixture, providers_fixture):
+        """Works correctly with multiple batches of findings."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+
+        # Create enough findings to ensure batching (assuming batch size > 1)
+        for i in range(10):
+            Finding.objects.create(
+                tenant_id=tenant.id,
+                scan=scan,
+                uid=f"finding-batch-{i}",
+                check_id="check_batch",
+                status=StatusChoices.PASS,
+                severity=Severity.medium,
+                impact=Severity.medium,
+                check_metadata={},
+                raw_result={},
+            )
+
+        mock_provider = MagicMock()
+
+        with patch(
+            "tasks.jobs.report.FindingOutput.transform_api_finding"
+        ) as mock_transform:
+            mock_finding_output = MagicMock()
+            mock_finding_output.check_id = "check_batch"
+            mock_transform.return_value = mock_finding_output
+
+            result = _load_findings_for_requirement_checks(
+                str(tenant.id), str(scan.id), ["check_batch"], mock_provider
+            )
+
+            # All 10 findings should be loaded regardless of batching
+            assert len(result["check_batch"]) == 10
+            assert mock_transform.call_count == 10
+
+
+@pytest.mark.django_db
+class TestCalculateRequirementsData:
+    """Test suite for _calculate_requirements_data_from_statistics function."""
+
+    def test_requirement_status_all_pass(self):
+        """Status is PASS when all findings for requirement checks pass."""
+        mock_compliance = MagicMock()
+        mock_compliance.Framework = "TestFramework"
+        mock_compliance.Version = "1.0"
+
+        mock_requirement = MagicMock()
+        mock_requirement.Id = "req_1"
+        mock_requirement.Description = "Test requirement"
+        mock_requirement.Checks = ["check_1", "check_2"]
+        mock_requirement.Attributes = [MagicMock()]
+
+        mock_compliance.Requirements = [mock_requirement]
+
+        requirement_statistics = {
+            "check_1": {"passed": 5, "total": 5},
+            "check_2": {"passed": 3, "total": 3},
+        }
+
+        attributes_by_id, requirements_list = (
+            _calculate_requirements_data_from_statistics(
+                mock_compliance, requirement_statistics
+            )
+        )
+
+        assert len(requirements_list) == 1
+        assert requirements_list[0]["attributes"]["status"] == StatusChoices.PASS
+        assert requirements_list[0]["attributes"]["passed_findings"] == 8
+        assert requirements_list[0]["attributes"]["total_findings"] == 8
+
+    def test_requirement_status_some_fail(self):
+        """Status is FAIL when some findings fail."""
+        mock_compliance = MagicMock()
+        mock_compliance.Framework = "TestFramework"
+        mock_compliance.Version = "1.0"
+
+        mock_requirement = MagicMock()
+        mock_requirement.Id = "req_2"
+        mock_requirement.Description = "Test requirement with failures"
+        mock_requirement.Checks = ["check_3"]
+        mock_requirement.Attributes = [MagicMock()]
+
+        mock_compliance.Requirements = [mock_requirement]
+
+        requirement_statistics = {
+            "check_3": {"passed": 2, "total": 5},
+        }
+
+        attributes_by_id, requirements_list = (
+            _calculate_requirements_data_from_statistics(
+                mock_compliance, requirement_statistics
+            )
+        )
+
+        assert len(requirements_list) == 1
+        assert requirements_list[0]["attributes"]["status"] == StatusChoices.FAIL
+        assert requirements_list[0]["attributes"]["passed_findings"] == 2
+        assert requirements_list[0]["attributes"]["total_findings"] == 5
+
+    def test_requirement_status_no_findings(self):
+        """Status is MANUAL when no findings exist for requirement."""
+        mock_compliance = MagicMock()
+        mock_compliance.Framework = "TestFramework"
+        mock_compliance.Version = "1.0"
+
+        mock_requirement = MagicMock()
+        mock_requirement.Id = "req_3"
+        mock_requirement.Description = "Manual requirement"
+        mock_requirement.Checks = ["check_nonexistent"]
+        mock_requirement.Attributes = [MagicMock()]
+
+        mock_compliance.Requirements = [mock_requirement]
+
+        requirement_statistics = {}
+
+        attributes_by_id, requirements_list = (
+            _calculate_requirements_data_from_statistics(
+                mock_compliance, requirement_statistics
+            )
+        )
+
+        assert len(requirements_list) == 1
+        assert requirements_list[0]["attributes"]["status"] == StatusChoices.MANUAL
+        assert requirements_list[0]["attributes"]["passed_findings"] == 0
+        assert requirements_list[0]["attributes"]["total_findings"] == 0
+
+    def test_aggregates_multiple_checks(self):
+        """Correctly sum stats across multiple checks in requirement."""
+        mock_compliance = MagicMock()
+        mock_compliance.Framework = "TestFramework"
+        mock_compliance.Version = "1.0"
+
+        mock_requirement = MagicMock()
+        mock_requirement.Id = "req_4"
+        mock_requirement.Description = "Multi-check requirement"
+        mock_requirement.Checks = ["check_a", "check_b", "check_c"]
+        mock_requirement.Attributes = [MagicMock()]
+
+        mock_compliance.Requirements = [mock_requirement]
+
+        requirement_statistics = {
+            "check_a": {"passed": 10, "total": 15},
+            "check_b": {"passed": 5, "total": 10},
+            "check_c": {"passed": 0, "total": 5},
+        }
+
+        attributes_by_id, requirements_list = (
+            _calculate_requirements_data_from_statistics(
+                mock_compliance, requirement_statistics
+            )
+        )
+
+        assert len(requirements_list) == 1
+        # 10 + 5 + 0 = 15 passed
+        assert requirements_list[0]["attributes"]["passed_findings"] == 15
+        # 15 + 10 + 5 = 30 total
+        assert requirements_list[0]["attributes"]["total_findings"] == 30
+        # Not all passed, so should be FAIL
+        assert requirements_list[0]["attributes"]["status"] == StatusChoices.FAIL
+
+    def test_returns_correct_structure(self):
+        """Verify tuple structure and dict keys are correct."""
+        mock_compliance = MagicMock()
+        mock_compliance.Framework = "TestFramework"
+        mock_compliance.Version = "1.0"
+
+        mock_attribute = MagicMock()
+        mock_requirement = MagicMock()
+        mock_requirement.Id = "req_5"
+        mock_requirement.Description = "Structure test"
+        mock_requirement.Checks = ["check_struct"]
+        mock_requirement.Attributes = [mock_attribute]
+
+        mock_compliance.Requirements = [mock_requirement]
+
+        requirement_statistics = {"check_struct": {"passed": 1, "total": 1}}
+
+        attributes_by_id, requirements_list = (
+            _calculate_requirements_data_from_statistics(
+                mock_compliance, requirement_statistics
+            )
+        )
+
+        # Verify attributes_by_id structure
+        assert "req_5" in attributes_by_id
+        assert "attributes" in attributes_by_id["req_5"]
+        assert "description" in attributes_by_id["req_5"]
+        assert "req_attributes" in attributes_by_id["req_5"]["attributes"]
+        assert "checks" in attributes_by_id["req_5"]["attributes"]
+
+        # Verify requirements_list structure
+        assert len(requirements_list) == 1
+        req = requirements_list[0]
+        assert "id" in req
+        assert "attributes" in req
+        assert "framework" in req["attributes"]
+        assert "version" in req["attributes"]
+        assert "status" in req["attributes"]
+        assert "description" in req["attributes"]
+        assert "passed_findings" in req["attributes"]
+        assert "total_findings" in req["attributes"]
+
+
+@pytest.mark.django_db
 class TestGenerateThreatscoreReportFunction:
     def setup_method(self):
         self.scan_id = str(uuid.uuid4())
@@ -199,9 +737,9 @@ class TestGenerateThreatscoreReportFunction:
     @patch("tasks.jobs.report.initialize_prowler_provider")
     @patch("tasks.jobs.report.Provider.objects.get")
     @patch("tasks.jobs.report.Compliance.get_bulk")
-    @patch("tasks.jobs.report.Finding.all_objects.filter")
-    @patch("tasks.jobs.report.batched")
-    @patch("tasks.jobs.report.FindingOutput.transform_api_finding")
+    @patch("tasks.jobs.report._aggregate_requirement_statistics_from_database")
+    @patch("tasks.jobs.report._calculate_requirements_data_from_statistics")
+    @patch("tasks.jobs.report._load_findings_for_requirement_checks")
     @patch("tasks.jobs.report.SimpleDocTemplate")
     @patch("tasks.jobs.report.Image")
     @patch("tasks.jobs.report.Spacer")
@@ -224,13 +762,14 @@ class TestGenerateThreatscoreReportFunction:
         mock_spacer,
         mock_image,
         mock_doc_template,
-        mock_transform_finding,
-        mock_batched,
-        mock_finding_filter,
+        mock_load_findings,
+        mock_calculate_requirements,
+        mock_aggregate_statistics,
         mock_compliance_get_bulk,
         mock_provider_get,
         mock_initialize_provider,
     ):
+        """Test the updated generate_threatscore_report using new memory-efficient architecture."""
         mock_provider = MagicMock()
         mock_provider.provider = "aws"
         mock_provider_get.return_value = mock_provider
@@ -238,34 +777,79 @@ class TestGenerateThreatscoreReportFunction:
         prowler_provider = MagicMock()
         mock_initialize_provider.return_value = prowler_provider
 
+        # Mock compliance object with requirements
         mock_compliance_obj = MagicMock()
         mock_compliance_obj.Framework = "ProwlerThreatScore"
         mock_compliance_obj.Version = "1.0"
         mock_compliance_obj.Description = "Test Description"
-        mock_compliance_obj.Requirements = []
+
+        # Configure requirement with properly set numeric attributes for chart generation
+        mock_requirement = MagicMock()
+        mock_requirement.Id = "req_1"
+        mock_requirement.Description = "Test requirement"
+        mock_requirement.Checks = ["check_1"]
+
+        # Create a properly configured attribute mock with numeric values
+        mock_requirement_attr = MagicMock()
+        mock_requirement_attr.Section = "1. IAM"
+        mock_requirement_attr.SubSection = "1.1 Identity"
+        mock_requirement_attr.Title = "Test Requirement Title"
+        mock_requirement_attr.LevelOfRisk = 3
+        mock_requirement_attr.Weight = 100
+        mock_requirement_attr.AttributeDescription = "Test requirement description"
+        mock_requirement_attr.AdditionalInformation = "Additional test information"
+
+        mock_requirement.Attributes = [mock_requirement_attr]
+        mock_compliance_obj.Requirements = [mock_requirement]
+
         mock_compliance_get_bulk.return_value = {
             self.compliance_id: mock_compliance_obj
         }
 
-        mock_finding = MagicMock()
-        mock_finding.uid = "finding-1"
-        mock_finding_filter.return_value.order_by.return_value.iterator.return_value = [
-            mock_finding
+        # Mock the aggregated statistics from database
+        mock_aggregate_statistics.return_value = {"check_1": {"passed": 5, "total": 10}}
+
+        # Mock the calculated requirements data with properly configured attributes
+        mock_attributes_by_id = {
+            "req_1": {
+                "attributes": {
+                    "req_attributes": [mock_requirement_attr],
+                    "checks": ["check_1"],
+                },
+                "description": "Test requirement",
+            }
+        }
+        mock_requirements_list = [
+            {
+                "id": "req_1",
+                "attributes": {
+                    "framework": "ProwlerThreatScore",
+                    "version": "1.0",
+                    "status": StatusChoices.FAIL,
+                    "description": "Test requirement",
+                    "passed_findings": 5,
+                    "total_findings": 10,
+                },
+            }
         ]
+        mock_calculate_requirements.return_value = (
+            mock_attributes_by_id,
+            mock_requirements_list,
+        )
 
-        mock_batched.return_value = [([mock_finding], True)]
+        # Mock the on-demand loaded findings
+        mock_finding_output = MagicMock()
+        mock_finding_output.check_id = "check_1"
+        mock_finding_output.status = "FAIL"
+        mock_finding_output.metadata = MagicMock()
+        mock_finding_output.metadata.CheckTitle = "Test Check"
+        mock_finding_output.metadata.Severity = "HIGH"
+        mock_finding_output.resource_name = "test-resource"
+        mock_finding_output.region = "us-east-1"
 
-        mock_transformed_finding = MagicMock()
-        mock_transformed_finding.check_id = "check-1"
-        mock_transformed_finding.status = "FAIL"
-        mock_transformed_finding.description = "Test finding"
-        mock_transformed_finding.metadata = MagicMock()
-        mock_transformed_finding.metadata.CheckTitle = "Test Check"
-        mock_transformed_finding.metadata.Severity = "HIGH"
-        mock_transformed_finding.resource_name = "test-resource"
-        mock_transformed_finding.region = "us-east-1"
-        mock_transform_finding.return_value = mock_transformed_finding
+        mock_load_findings.return_value = {"check_1": [mock_finding_output]}
 
+        # Mock PDF generation components
         mock_doc = MagicMock()
         mock_doc_template.return_value = mock_doc
 
@@ -281,6 +865,7 @@ class TestGenerateThreatscoreReportFunction:
         mock_table.return_value = MagicMock()
         mock_table_style.return_value = MagicMock()
 
+        # Execute the function
         generate_threatscore_report(
             tenant_id=self.tenant_id,
             scan_id=self.scan_id,
@@ -291,14 +876,21 @@ class TestGenerateThreatscoreReportFunction:
             min_risk_level=4,
         )
 
+        # Verify the new workflow was followed
         mock_provider_get.assert_called_once_with(id=self.provider_id)
         mock_initialize_provider.assert_called_once_with(mock_provider)
         mock_compliance_get_bulk.assert_called_once_with("aws")
-        mock_finding_filter.assert_called_once_with(
-            tenant_id=self.tenant_id, scan_id=self.scan_id
+
+        # Verify the new functions were called in correct order with correct parameters
+        mock_aggregate_statistics.assert_called_once_with(self.tenant_id, self.scan_id)
+        mock_calculate_requirements.assert_called_once_with(
+            mock_compliance_obj, {"check_1": {"passed": 5, "total": 10}}
         )
-        mock_batched.assert_called_once()
-        mock_transform_finding.assert_called_once_with(mock_finding, prowler_provider)
+        mock_load_findings.assert_called_once_with(
+            self.tenant_id, self.scan_id, ["check_1"], prowler_provider
+        )
+
+        # Verify PDF was built
         mock_doc_template.assert_called_once()
         mock_doc.build.assert_called_once()
 

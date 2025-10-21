@@ -7,6 +7,7 @@ from shutil import rmtree
 import matplotlib.pyplot as plt
 from celery.utils.log import get_task_logger
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE, DJANGO_TMP_OUTPUT_DIRECTORY
+from django.db.models import Count, Q
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import letter
@@ -29,7 +30,7 @@ from tasks.utils import batched
 
 from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import rls_transaction
-from api.models import Finding, Provider, ScanSummary
+from api.models import Finding, Provider, ScanSummary, StatusChoices
 from api.utils import initialize_prowler_provider
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.finding import Finding as FindingOutput
@@ -276,13 +277,15 @@ def _create_status_component(status: str) -> Table:
     return table
 
 
-def _create_section_score_chart(resp_reqs: list[dict], attrs_map: dict) -> io.BytesIO:
+def _create_section_score_chart(
+    requirements_list: list[dict], attributes_by_requirement_id: dict
+) -> io.BytesIO:
     """
     Create a bar chart showing compliance score by section using ThreatScore formula.
 
     Args:
-        resp_reqs (list[dict]): List of requirement dictionaries with status and findings data.
-        attrs_map (dict): Mapping of requirement IDs to their attributes including risk level and weight.
+        requirements_list (list[dict]): List of requirement dictionaries with status and findings data.
+        attributes_by_requirement_id (dict): Mapping of requirement IDs to their attributes including risk level and weight.
 
     Returns:
         io.BytesIO: A BytesIO buffer containing the chart image in PNG format.
@@ -306,11 +309,13 @@ def _create_section_score_chart(resp_reqs: list[dict], attrs_map: dict) -> io.By
     }
 
     # Collect data from requirements
-    for req in resp_reqs:
-        req_id = req["id"]
-        attr = attrs_map.get(req_id, {})
+    for requirement in requirements_list:
+        requirement_id = requirement["id"]
+        requirement_attributes = attributes_by_requirement_id.get(requirement_id, {})
 
-        metadata = attr.get("attributes", {}).get("req_attributes", [])
+        metadata = requirement_attributes.get("attributes", {}).get(
+            "req_attributes", []
+        )
         if metadata:
             m = metadata[0]
             section = getattr(m, "Section", "Unknown")
@@ -324,8 +329,8 @@ def _create_section_score_chart(resp_reqs: list[dict], attrs_map: dict) -> io.By
                 }
 
             # Get findings data
-            passed_findings = req["attributes"].get("passed_findings", 0)
-            total_findings = req["attributes"].get("total_findings", 0)
+            passed_findings = requirement["attributes"].get("passed_findings", 0)
+            total_findings = requirement["attributes"].get("total_findings", 0)
 
             if total_findings > 0:
                 sections_data[section]["has_findings"] = True
@@ -429,132 +434,192 @@ def _add_pdf_footer(canvas_obj: canvas.Canvas, doc: SimpleDocTemplate) -> None:
     canvas_obj.drawString(width - text_width - 30, 20, powered_text)
 
 
-def _build_findings_index(
-    tenant_id: str, scan_id: str, prowler_provider
-) -> tuple[dict[str, list], dict[str, dict]]:
+def _aggregate_requirement_statistics_from_database(
+    tenant_id: str, scan_id: str
+) -> dict[str, dict[str, int]]:
     """
-    Build an index of findings by check_id to avoid O(n×m) complexity.
+    Aggregate finding statistics by check_id using database aggregation.
 
-    This function processes findings in batches to avoid loading all findings
-    into memory at once, addressing concerns about scans with very large numbers
-    of findings (e.g., 1M+).
+    This function uses Django ORM aggregation to calculate pass/fail statistics
+    entirely in the database, avoiding the need to load findings into memory.
 
     Args:
         tenant_id (str): The tenant ID for Row-Level Security context.
         scan_id (str): The ID of the scan to retrieve findings for.
+
+    Returns:
+        dict[str, dict[str, int]]: Dictionary mapping check_id to statistics:
+            - 'passed' (int): Number of passed findings for this check
+            - 'total' (int): Total number of findings for this check
+
+    Example:
+        {
+            'aws_iam_user_mfa_enabled': {'passed': 10, 'total': 15},
+            'aws_s3_bucket_public_access': {'passed': 0, 'total': 5}
+        }
+    """
+    requirement_statistics_by_check_id = {}
+
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        # Use database aggregation to calculate stats without loading findings into memory
+        aggregated_statistics_queryset = (
+            Finding.all_objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+            .values("check_id")
+            .annotate(
+                total_findings=Count("id"),
+                passed_findings=Count("id", filter=Q(status=StatusChoices.PASS)),
+            )
+        )
+
+        for aggregated_stat in aggregated_statistics_queryset:
+            check_id = aggregated_stat["check_id"]
+            requirement_statistics_by_check_id[check_id] = {
+                "passed": aggregated_stat["passed_findings"],
+                "total": aggregated_stat["total_findings"],
+            }
+
+    logger.info(
+        f"Aggregated statistics for {len(requirement_statistics_by_check_id)} unique checks"
+    )
+    return requirement_statistics_by_check_id
+
+
+def _load_findings_for_requirement_checks(
+    tenant_id: str, scan_id: str, check_ids: list[str], prowler_provider
+) -> dict[str, list[FindingOutput]]:
+    """
+    Load findings for specific check IDs on-demand.
+
+    This function loads only the findings needed for a specific set of checks,
+    minimizing memory usage by avoiding loading all findings at once. This is used
+    when generating detailed findings tables for specific requirements in the PDF.
+
+    Args:
+        tenant_id (str): The tenant ID for Row-Level Security context.
+        scan_id (str): The ID of the scan to retrieve findings for.
+        check_ids (list[str]): List of check IDs to load findings for.
         prowler_provider: The initialized Prowler provider instance.
 
     Returns:
-        tuple[dict[str, list], dict[str, dict]]: A tuple containing:
-            - findings_by_check: Dictionary mapping check_id to list of finding objects.
-            - requirement_stats: Dictionary mapping check_id to stats dict with 'passed' and 'total' counts.
-    """
-    logger.info("Building findings index by check_id")
-    findings_by_check = defaultdict(list)
-    requirement_stats = defaultdict(lambda: {"passed": 0, "total": 0})
+        dict[str, list[FindingOutput]]: Dictionary mapping check_id to list of FindingOutput objects.
 
-    findings_qs = (
-        Finding.all_objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+    Example:
+        {
+            'aws_iam_user_mfa_enabled': [FindingOutput(...), FindingOutput(...)],
+            'aws_s3_bucket_public_access': [FindingOutput(...)]
+        }
+    """
+    findings_by_check_id = defaultdict(list)
+
+    if not check_ids:
+        return dict(findings_by_check_id)
+
+    logger.info(f"Loading findings for {len(check_ids)} checks on-demand")
+
+    findings_queryset = (
+        Finding.all_objects.filter(
+            tenant_id=tenant_id, scan_id=scan_id, check_id__in=check_ids
+        )
         .order_by("uid")
         .iterator()
     )
 
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-        for batch, is_last in batched(findings_qs, DJANGO_FINDINGS_BATCH_SIZE):
-            for finding in batch:
-                # Transform to FindingOutput
+        for batch, is_last_batch in batched(
+            findings_queryset, DJANGO_FINDINGS_BATCH_SIZE
+        ):
+            for finding_model in batch:
                 finding_output = FindingOutput.transform_api_finding(
-                    finding, prowler_provider
+                    finding_model, prowler_provider
                 )
-                check_id = finding_output.check_id
+                findings_by_check_id[finding_output.check_id].append(finding_output)
 
-                # Add to index for detailed findings lookup
-                findings_by_check[check_id].append(finding_output)
+    total_findings_loaded = sum(
+        len(findings) for findings in findings_by_check_id.values()
+    )
+    logger.info(
+        f"Loaded {total_findings_loaded} findings for {len(findings_by_check_id)} checks"
+    )
 
-                # Update stats for requirement calculations
-                requirement_stats[check_id]["total"] += 1
-                if getattr(finding_output, "status", "").upper() == "PASS":
-                    requirement_stats[check_id]["passed"] += 1
-
-    logger.info(f"Built findings index with {len(findings_by_check)} unique checks")
-    return dict(findings_by_check), dict(requirement_stats)
+    return dict(findings_by_check_id)
 
 
-def _calculate_requirements_data(
-    compliance_obj, requirement_stats: dict[str, dict]
-) -> tuple[dict, list[dict]]:
+def _calculate_requirements_data_from_statistics(
+    compliance_obj, requirement_statistics_by_check_id: dict[str, dict[str, int]]
+) -> tuple[dict[str, dict], list[dict]]:
     """
-    Calculate requirement status and statistics using the findings index.
+    Calculate requirement status and statistics using pre-aggregated database statistics.
 
-    This replaces the O(n×m) nested loop with O(n) lookups using the findings index.
+    This function uses O(n) lookups with pre-aggregated statistics from the database,
+    avoiding the need to iterate over all findings for each requirement.
 
     Args:
         compliance_obj: The compliance framework object containing requirements.
-        requirement_stats (dict[str, dict]): Pre-built statistics mapping check_id to pass/total counts.
+        requirement_statistics_by_check_id (dict[str, dict[str, int]]): Pre-aggregated statistics
+            mapping check_id to {'passed': int, 'total': int} counts.
 
     Returns:
-        tuple[dict, list[dict]]: A tuple containing:
-            - attrs_map: Dictionary mapping requirement IDs to their attributes.
-            - resp_reqs: List of requirement dictionaries with status and statistics.
+        tuple[dict[str, dict], list[dict]]: A tuple containing:
+            - attributes_by_requirement_id: Dictionary mapping requirement IDs to their attributes.
+            - requirements_list: List of requirement dictionaries with status and statistics.
     """
-    attrs_map = {}
-    resp_reqs = []
+    attributes_by_requirement_id = {}
+    requirements_list = []
 
-    for req in compliance_obj.Requirements:
-        req_id = req.Id
-        attrs_map[req_id] = {
+    compliance_framework = getattr(compliance_obj, "Framework", "N/A")
+    compliance_version = getattr(compliance_obj, "Version", "N/A")
+
+    for requirement in compliance_obj.Requirements:
+        requirement_id = requirement.Id
+        requirement_description = getattr(requirement, "Description", "")
+        requirement_checks = getattr(requirement, "Checks", [])
+        requirement_attributes = getattr(requirement, "Attributes", [])
+
+        # Store requirement metadata for later use
+        attributes_by_requirement_id[requirement_id] = {
             "attributes": {
-                "req_attributes": getattr(req, "Attributes", []),
-                "checks": getattr(req, "Checks", []),
+                "req_attributes": requirement_attributes,
+                "checks": requirement_checks,
             },
-            "description": getattr(req, "Description", ""),
+            "description": requirement_description,
         }
 
-        # Calculate passed and total findings for this requirement using the index
-        req_checks = getattr(req, "Checks", [])
-        passed_findings = 0
-        total_findings = 0
-        status = "UNKNOWN"
-        description = getattr(req, "Description", "")
+        # Calculate aggregated passed and total findings for this requirement
+        total_passed_findings = 0
+        total_findings_count = 0
 
-        # Use the pre-built index instead of iterating over all findings
-        for check_id in req_checks:
-            if check_id in requirement_stats:
-                stats = requirement_stats[check_id]
-                total_findings += stats["total"]
-                passed_findings += stats["passed"]
+        for check_id in requirement_checks:
+            if check_id in requirement_statistics_by_check_id:
+                check_statistics = requirement_statistics_by_check_id[check_id]
+                total_findings_count += check_statistics["total"]
+                total_passed_findings += check_statistics["passed"]
 
-                # Set status based on first check (for backward compatibility)
-                if status == "UNKNOWN" and stats["total"] > 0:
-                    # If we have findings, set status (we'll refine below)
-                    status = "FAIL"  # Default, will be refined
-
-        # Determine overall status for the requirement
-        if total_findings > 0:
-            if passed_findings == total_findings:
-                status = "PASS"
-            elif passed_findings == 0:
-                status = "FAIL"
+        # Determine overall requirement status based on findings
+        if total_findings_count > 0:
+            if total_passed_findings == total_findings_count:
+                requirement_status = StatusChoices.PASS
             else:
-                status = "FAIL"  # Partial pass is still considered FAIL
+                # Partial pass or complete fail both count as FAIL
+                requirement_status = StatusChoices.FAIL
         else:
-            status = "MANUAL"
+            # No findings means manual review required
+            requirement_status = StatusChoices.MANUAL
 
-        resp_reqs.append(
+        requirements_list.append(
             {
-                "id": req_id,
+                "id": requirement_id,
                 "attributes": {
-                    "framework": getattr(compliance_obj, "Framework", "N/A"),
-                    "version": getattr(compliance_obj, "Version", "N/A"),
-                    "status": status,
-                    "description": description,
-                    "passed_findings": passed_findings,
-                    "total_findings": total_findings,
+                    "framework": compliance_framework,
+                    "version": compliance_version,
+                    "status": requirement_status,
+                    "description": requirement_description,
+                    "passed_findings": total_passed_findings,
+                    "total_findings": total_findings_count,
                 },
             }
         )
 
-    return attrs_map, resp_reqs
+    return attributes_by_requirement_id, requirements_list
 
 
 def generate_threatscore_report(
@@ -615,15 +680,17 @@ def generate_threatscore_report(
             compliance_name = getattr(compliance_obj, "Name", "N/A")
             compliance_description = getattr(compliance_obj, "Description", "")
 
-        # Build findings index (fixes O(n×m) issue and memory concern)
-        logger.info(f"Getting findings for scan {scan_id}")
-        findings_by_check, requirement_stats = _build_findings_index(
-            tenant_id, scan_id, prowler_provider
+        # Aggregate requirement statistics from database (memory-efficient)
+        logger.info(f"Aggregating requirement statistics for scan {scan_id}")
+        requirement_statistics_by_check_id = (
+            _aggregate_requirement_statistics_from_database(tenant_id, scan_id)
         )
 
-        # Calculate requirements data using the index
-        attrs_map, resp_reqs = _calculate_requirements_data(
-            compliance_obj, requirement_stats
+        # Calculate requirements data using aggregated statistics
+        attributes_by_requirement_id, requirements_list = (
+            _calculate_requirements_data_from_statistics(
+                compliance_obj, requirement_statistics_by_check_id
+            )
         )
 
         # Initialize PDF document
@@ -692,7 +759,9 @@ def generate_threatscore_report(
         elements.append(Paragraph("Compliance Score by Sections", h1))
         elements.append(Spacer(1, 0.2 * inch))
 
-        chart_buffer = _create_section_score_chart(resp_reqs, attrs_map)
+        chart_buffer = _create_section_score_chart(
+            requirements_list, attributes_by_requirement_id
+        )
         chart_image = Image(chart_buffer, width=7 * inch, height=5.5 * inch)
         elements.append(chart_image)
 
@@ -701,20 +770,24 @@ def generate_threatscore_report(
         denominator = 0
         has_findings = False
 
-        for req in resp_reqs:
-            req_id = req["id"]
-            attr = attrs_map.get(req_id, {})
+        for requirement in requirements_list:
+            requirement_id = requirement["id"]
+            requirement_attributes = attributes_by_requirement_id.get(
+                requirement_id, {}
+            )
 
             # Get findings data
-            passed_findings = req["attributes"].get("passed_findings", 0)
-            total_findings = req["attributes"].get("total_findings", 0)
+            passed_findings = requirement["attributes"].get("passed_findings", 0)
+            total_findings = requirement["attributes"].get("total_findings", 0)
 
             # Skip if no findings (avoid division by zero)
             if total_findings == 0:
                 continue
 
             has_findings = True
-            metadata = attr.get("attributes", {}).get("req_attributes", [])
+            metadata = requirement_attributes.get("attributes", {}).get(
+                "req_attributes", []
+            )
             if metadata and len(metadata) > 0:
                 m = metadata[0]
                 risk_level = getattr(m, "LevelOfRisk", 0)
@@ -779,8 +852,11 @@ def generate_threatscore_report(
         elements.append(Paragraph("Requirements Index", h1))
 
         sections = {}
-        for req_id, req in attrs_map.items():
-            meta = req["attributes"]["req_attributes"][0]
+        for (
+            requirement_id,
+            requirement_attributes,
+        ) in attributes_by_requirement_id.items():
+            meta = requirement_attributes["attributes"]["req_attributes"][0]
             section = getattr(meta, "Section", "N/A")
             subsection = getattr(meta, "SubSection", "N/A")
             title = getattr(meta, "Title", "N/A")
@@ -790,7 +866,7 @@ def generate_threatscore_report(
             if subsection not in sections[section]:
                 sections[section][subsection] = []
 
-            sections[section][subsection].append({"id": req_id, "title": title})
+            sections[section][subsection].append({"id": requirement_id, "title": title})
 
         section_num = 1
         for section_name, subsections in sections.items():
@@ -822,12 +898,13 @@ def generate_threatscore_report(
         )
         elements.append(Spacer(1, 0.2 * inch))
 
-        critical_reqs = []
-        for req in resp_reqs:
-            status = req["attributes"]["status"]
-            if status == "FAIL":
+        critical_failed_requirements = []
+        for requirement in requirements_list:
+            requirement_status = requirement["attributes"]["status"]
+            if requirement_status == StatusChoices.FAIL:
+                requirement_id = requirement["id"]
                 metadata = (
-                    attrs_map.get(req["id"], {})
+                    attributes_by_requirement_id.get(requirement_id, {})
                     .get("attributes", {})
                     .get("req_attributes", [{}])[0]
                 )
@@ -836,19 +913,23 @@ def generate_threatscore_report(
                     weight = getattr(metadata, "Weight", 0)
 
                     if risk_level >= min_risk_level:
-                        critical_reqs.append(
+                        critical_failed_requirements.append(
                             {
-                                "req": req,
-                                "attr": attrs_map[req["id"]],
+                                "requirement": requirement,
+                                "attributes": attributes_by_requirement_id[
+                                    requirement_id
+                                ],
                                 "risk_level": risk_level,
                                 "weight": weight,
                                 "metadata": metadata,
                             }
                         )
 
-        critical_reqs.sort(key=lambda x: (x["risk_level"], x["weight"]), reverse=True)
+        critical_failed_requirements.sort(
+            key=lambda x: (x["risk_level"], x["weight"]), reverse=True
+        )
 
-        if not critical_reqs:
+        if not critical_failed_requirements:
             elements.append(
                 Paragraph(
                     "✅ No critical failed requirements found. Great job!", normal
@@ -857,7 +938,7 @@ def generate_threatscore_report(
         else:
             elements.append(
                 Paragraph(
-                    f"Found {len(critical_reqs)} critical failed requirements that require immediate attention:",
+                    f"Found {len(critical_failed_requirements)} critical failed requirements that require immediate attention:",
                     normal,
                 )
             )
@@ -865,18 +946,22 @@ def generate_threatscore_report(
 
             table_data = [["Risk", "Weight", "Requirement ID", "Title", "Section"]]
 
-            for idx, critical_req in enumerate(critical_reqs):
-                req_id = critical_req["req"]["id"]
-                risk_level = critical_req["risk_level"]
-                weight = critical_req["weight"]
-                title = getattr(critical_req["metadata"], "Title", "N/A")
-                section = getattr(critical_req["metadata"], "Section", "N/A")
+            for idx, critical_failed_requirement in enumerate(
+                critical_failed_requirements
+            ):
+                requirement_id = critical_failed_requirement["requirement"]["id"]
+                risk_level = critical_failed_requirement["risk_level"]
+                weight = critical_failed_requirement["weight"]
+                title = getattr(critical_failed_requirement["metadata"], "Title", "N/A")
+                section = getattr(
+                    critical_failed_requirement["metadata"], "Section", "N/A"
+                )
 
                 if len(title) > 50:
                     title = title[:47] + "..."
 
                 table_data.append(
-                    [str(risk_level), str(weight), req_id, title, section]
+                    [str(risk_level), str(weight), requirement_id, title, section]
                 )
 
             critical_table = Table(
@@ -918,9 +1003,11 @@ def generate_threatscore_report(
                 )
             )
 
-            for idx, critical_req in enumerate(critical_reqs):
+            for idx, critical_failed_requirement in enumerate(
+                critical_failed_requirements
+            ):
                 row_idx = idx + 1
-                weight = critical_req["weight"]
+                weight = critical_failed_requirement["weight"]
 
                 if weight >= 150:
                     weight_color = colors.Color(0.8, 0.2, 0.2)
@@ -970,34 +1057,70 @@ def generate_threatscore_report(
         elements.append(PageBreak())
 
         # Add detailed requirements section
-        def get_weight(req):
-            req_id = req["id"]
-            attr = attrs_map.get(req_id, {})
-            metadata = attr.get("attributes", {}).get("req_attributes", [])
+        def get_weight_for_requirement(requirement_dict):
+            requirement_id = requirement_dict["id"]
+            requirement_attributes = attributes_by_requirement_id.get(
+                requirement_id, {}
+            )
+            metadata = requirement_attributes.get("attributes", {}).get(
+                "req_attributes", []
+            )
             if metadata:
                 return getattr(metadata[0], "Weight", 0)
             return 0
 
-        sorted_reqs = sorted(resp_reqs, key=get_weight, reverse=True)
+        sorted_requirements = sorted(
+            requirements_list, key=get_weight_for_requirement, reverse=True
+        )
 
         if only_failed:
-            sorted_reqs = [
-                req for req in sorted_reqs if req["attributes"]["status"] == "FAIL"
+            sorted_requirements = [
+                requirement
+                for requirement in sorted_requirements
+                if requirement["attributes"]["status"] == StatusChoices.FAIL
             ]
 
-        for req in sorted_reqs:
-            req_id = req["id"]
-            attr = attrs_map.get(req_id, {})
-            desc = req["attributes"]["description"]
-            status = req["attributes"]["status"]
+        # Collect all check IDs for requirements that will be displayed
+        # This allows us to load only the findings we actually need (memory optimization)
+        check_ids_to_load = []
+        for requirement in sorted_requirements:
+            requirement_id = requirement["id"]
+            requirement_attributes = attributes_by_requirement_id.get(
+                requirement_id, {}
+            )
+            check_ids = requirement_attributes.get("attributes", {}).get("checks", [])
+            check_ids_to_load.extend(check_ids)
 
-            elements.append(Paragraph(f"{req_id}: {attr.get('description', desc)}", h1))
+        # Load findings on-demand only for the checks that will be displayed
+        logger.info(
+            f"Loading findings on-demand for {len(sorted_requirements)} requirements"
+        )
+        findings_by_check_id = _load_findings_for_requirement_checks(
+            tenant_id, scan_id, check_ids_to_load, prowler_provider
+        )
 
-            status_component = _create_status_component(status)
+        for requirement in sorted_requirements:
+            requirement_id = requirement["id"]
+            requirement_attributes = attributes_by_requirement_id.get(
+                requirement_id, {}
+            )
+            requirement_description = requirement["attributes"]["description"]
+            requirement_status = requirement["attributes"]["status"]
+
+            elements.append(
+                Paragraph(
+                    f"{requirement_id}: {requirement_attributes.get('description', requirement_description)}",
+                    h1,
+                )
+            )
+
+            status_component = _create_status_component(requirement_status)
             elements.append(status_component)
             elements.append(Spacer(1, 0.1 * inch))
 
-            metadata = attr.get("attributes", {}).get("req_attributes", [])
+            metadata = requirement_attributes.get("attributes", {}).get(
+                "req_attributes", []
+            )
             if metadata and len(metadata) > 0:
                 m = metadata[0]
                 elements.append(Paragraph("Title: ", h3))
@@ -1019,7 +1142,7 @@ def generate_threatscore_report(
                 risk_level = getattr(m, "LevelOfRisk", 0)
                 weight = getattr(m, "Weight", 0)
 
-                if status == "PASS":
+                if requirement_status == StatusChoices.PASS:
                     score = risk_level * weight
                 else:
                     score = 0
@@ -1028,16 +1151,18 @@ def generate_threatscore_report(
                 elements.append(risk_component)
                 elements.append(Spacer(1, 0.1 * inch))
 
-            # Use the findings index to get findings for this requirement's checks
-            checks = attr.get("attributes", {}).get("checks", [])
-            for cid in checks:
-                elements.append(Paragraph(f"Check: {cid}", h2))
+            # Get findings for this requirement's checks (loaded on-demand earlier)
+            requirement_check_ids = requirement_attributes.get("attributes", {}).get(
+                "checks", []
+            )
+            for check_id in requirement_check_ids:
+                elements.append(Paragraph(f"Check: {check_id}", h2))
                 elements.append(Spacer(1, 0.1 * inch))
 
-                # Use the findings index instead of a function closure
-                finds = findings_by_check.get(cid, [])
+                # Get findings for this check (already loaded on-demand)
+                check_findings = findings_by_check_id.get(check_id, [])
 
-                if not finds:
+                if not check_findings:
                     elements.append(
                         Paragraph("- No information for this finding currently", normal)
                     )
@@ -1051,21 +1176,23 @@ def generate_threatscore_report(
                             "Region",
                         ]
                     ]
-                    for f in finds:
-                        check_meta = getattr(f, "metadata", {})
-                        title = getattr(
-                            check_meta, "CheckTitle", getattr(f, "check_id", "")
+                    for finding_output in check_findings:
+                        check_metadata = getattr(finding_output, "metadata", {})
+                        finding_title = getattr(
+                            check_metadata,
+                            "CheckTitle",
+                            getattr(finding_output, "check_id", ""),
                         )
-                        resource_name = getattr(f, "resource_name", "")
+                        resource_name = getattr(finding_output, "resource_name", "")
                         if not resource_name:
-                            resource_name = getattr(f, "resource_uid", "")
-                        severity = getattr(check_meta, "Severity", "").capitalize()
-                        finding_status = getattr(f, "status", "").upper()
-                        region = getattr(f, "region", "global")
+                            resource_name = getattr(finding_output, "resource_uid", "")
+                        severity = getattr(check_metadata, "Severity", "").capitalize()
+                        finding_status = getattr(finding_output, "status", "").upper()
+                        region = getattr(finding_output, "region", "global")
 
                         findings_table_data.append(
                             [
-                                Paragraph(title, normal_center),
+                                Paragraph(finding_title, normal_center),
                                 Paragraph(resource_name, normal_center),
                                 Paragraph(severity, normal_center),
                                 Paragraph(finding_status, normal_center),
