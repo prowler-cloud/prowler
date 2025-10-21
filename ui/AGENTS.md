@@ -974,6 +974,40 @@ export class FeaturePage extends BasePage {
 - **Clear Tags**: Use `{ tag: ['@priority', '@type', '@feature', '@test-id'] }` syntax
 - **Verification**: Explicit verification of critical outcomes
 
+#### Playwright Selector Best Practices
+
+When creating locators in Page Objects, follow this priority order for maximum reliability:
+
+**✅ Primary Selectors (Recommended):**
+
+- **`getByRole()`**: The best and most robust for all interactive elements (buttons, links, main sections)
+- **`getByLabel()`**: The best for form controls that have an associated label
+
+**⚠️ Secondary Selectors (Use Sparingly):**
+
+- **`getByText()`**: Use only when the above fail or for static text verification (headings, paragraphs, messages)
+- **Others (e.g. `getByTestId()`)**: Use only as a last resort when the above fail or are not applicable
+
+**Examples:**
+
+```typescript
+// ✅ GOOD - Using getByRole for interactive elements
+this.submitButton = page.getByRole("button", { name: "Submit" });
+this.navigationLink = page.getByRole("link", { name: "Dashboard" });
+
+// ✅ GOOD - Using getByLabel for form controls
+this.emailInput = page.getByLabel("Email");
+this.passwordInput = page.getByLabel("Password");
+
+// ⚠️ SPARINGLY - Using getByText only when necessary
+this.errorMessage = page.getByText("Invalid credentials"); // Only if no better selector exists
+this.pageTitle = page.getByText("Welcome to Prowler"); // Only for static content verification
+
+// ❌ AVOID - Using fragile selectors when better options exist
+this.submitButton = page.locator(".btn-primary"); // Use getByRole instead
+this.emailInput = page.locator("#email"); // Use getByLabel instead
+```
+
 **Tag Syntax Example:**
 
 ```typescript
