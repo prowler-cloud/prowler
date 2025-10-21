@@ -17,11 +17,6 @@
   "AdditionalURLs": [
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/DLM/ebs-snapshot-automation.html",
     "https://repost.aws/articles/ARmYgZmA8MRQi89pWd9D7eFw/how-to-create-a-automate-backup-aws-data-lifecycle-management-using-snapshots",
-    "https://repost.aws/knowledge-center/ebs-volume-data-lifecycle-policies",
-    "https://awstut.com/en/2023/03/19/introduction-to-data-lifecycle-manager-create-ebs-snapshot-ami-periodically-en/",
-    "https://www.bdrshield.com/blog/amazon-data-lifecycle-manager-part-60/",
-    "https://tutorialsdojo.com/streamlining-ebs-snapshot-management-with-amazon-data-lifecycle-manager-automation/",
-    "https://www.pluralsight.com/resources/blog/cloud/ebs-snapshot-lifecycle",
     "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/snapshot-lifecycle.html#dlm-elements"
   ],
   "Remediation": {
@@ -37,7 +32,6 @@
     }
   },
   "Categories": [
-    "resilience",
     "forensics-ready"
   ],
   "DependsOn": [],
