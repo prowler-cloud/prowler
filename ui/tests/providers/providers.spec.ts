@@ -8,6 +8,9 @@ import {
   AZUREProviderData,
   AZUREProviderCredential,
   AZURE_CREDENTIAL_OPTIONS,
+  M365ProviderData,
+  M365ProviderCredential,
+  M365_CREDENTIAL_OPTIONS,
 } from "./providers-page";
 
 test.describe.serial("Add Provider", () => {
