@@ -17,6 +17,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Oracle Cloud provider with CIS 3.0 benchmark [(#8893)](https://github.com/prowler-cloud/prowler/pull/8893)
 - Support for Atlassian Document Format (ADF) in Jira integration [(#8878)](https://github.com/prowler-cloud/prowler/pull/8878)
 - Add Common Cloud Controls for AWS, Azure and GCP [(#8000)](https://github.com/prowler-cloud/prowler/pull/8000)
+- Added validation for invalid checks, services, and categories in `load_checks_to_execute` function [(#8971)](https://github.com/prowler-cloud/prowler/pull/8971)
 
 ### Changed
 
