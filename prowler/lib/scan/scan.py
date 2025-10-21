@@ -113,6 +113,8 @@ class Scan:
                 if check not in self._bulk_checks_metadata.keys():
                     raise ScanInvalidCheckError(f"Invalid check provided: {check}.")
 
+        # TODO: Delete this
+        services = ["iam", "s3", "ecs"]
         # Validate services
         if services:
             for service in services:
