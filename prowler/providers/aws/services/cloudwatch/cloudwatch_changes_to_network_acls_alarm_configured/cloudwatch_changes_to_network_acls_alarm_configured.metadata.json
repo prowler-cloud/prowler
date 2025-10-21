@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "cloudwatch_changes_to_network_acls_alarm_configured",
-  "CheckTitle": "CloudWatch log metric filter and alarm exist for Network ACL change events",
+  "CheckTitle": "CloudWatch log metric filter and alarm exist for Network ACL (NACL) change events",
   "CheckType": [
     "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
     "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis"
@@ -18,16 +18,8 @@
     "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
     "https://www.clouddefense.ai/compliance-rules/cis-v130/monitoring/cis-v130-4-11",
     "https://support.icompaas.com/support/solutions/articles/62000084031-ensure-a-log-metric-filter-and-alarm-exist-for-changes-to-network-access-control-lists-nacl-",
-    "https://www.clouddefense.ai/compliance-rules/nist-csf-v1-1/de/log-metric-filter-network-acl",
-    "https://github.com/lincolnloop/terraform-aws-cloudwatch-alarm-controls",
     "https://trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatchLogs/network-acl-changes-alarm.html",
-    "https://asecure.cloud/a/cwalarm_nacl_changes/",
-    "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_11",
-    "https://support.icompaas.com/support/solutions/articles/62000233134-4-11-ensure-network-access-control-list-nacl-changes-are-monitored-manual-",
-    "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_11#fix---buildtime",
-    "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_11/",
-    "https://www.plerion.com/cloud-knowledge-base/ensure-network-access-control-lists-nacl-changes-are-monitored",
-    "https://www.intelligentdiscovery.io/controls/cloudwatch/cloudwatch-alarm-network-acl-change"
+    "https://support.icompaas.com/support/solutions/articles/62000233134-4-11-ensure-network-access-control-list-nacl-changes-are-monitored-manual-"
   ],
   "Remediation": {
     "Code": {
