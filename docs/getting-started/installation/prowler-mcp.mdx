@@ -182,19 +182,19 @@ Configure the server using environment variables:
 |----------|-------------|----------|---------|
 | `PROWLER_APP_API_KEY` | Prowler API key | Only for STDIO mode | - |
 | `PROWLER_API_BASE_URL` | Custom Prowler API endpoint | No | `https://api.prowler.com` |
-| `PROWLER_MCP_MODE` | Default transport mode (overwritten by `--transport` argument) | No | `stdio` |
+| `PROWLER_MCP_TRANSPORT_MODE` | Default transport mode (overwritten by `--transport` argument) | No | `stdio` |
 
 <CodeGroup>
 ```bash macOS/Linux
 export PROWLER_APP_API_KEY="pk_your_api_key_here"
 export PROWLER_API_BASE_URL="https://api.prowler.com"
-export PROWLER_MCP_MODE="http"
+export PROWLER_MCP_TRANSPORT_MODE="http"
 ```
 
 ```bash Windows PowerShell
 $env:PROWLER_APP_API_KEY="pk_your_api_key_here"
 $env:PROWLER_API_BASE_URL="https://api.prowler.com"
-$env:PROWLER_MCP_MODE="http"
+$env:PROWLER_MCP_TRANSPORT_MODE="http"
 ```
 </CodeGroup>
 
@@ -209,7 +209,7 @@ For convenience, create a `.env` file in the `mcp_server` directory:
 ```bash .env
 PROWLER_APP_API_KEY=pk_your_api_key_here
 PROWLER_API_BASE_URL=https://api.prowler.com
-PROWLER_MCP_MODE=stdio
+PROWLER_MCP_TRANSPORT_MODE=stdio
 ```
 
 When using Docker, pass the environment file:
@@ -237,6 +237,23 @@ uvicorn prowler_mcp_server.server:app --host 0.0.0.0 --port 8000
 ```
 
 For more details on production deployment options, see the [FastMCP production deployment guide](https://gofastmcp.com/deployment/http#production-deployment) and [uvicorn settings](https://www.uvicorn.org/settings/).
+
+### Entrypoint Script
+
+The source tree includes `entrypoint.sh` to simplify switching between the
+standard CLI runner and the ASGI app. The first argument selects the mode and
+any additional flags are passed straight through:
+
+```bash
+# Default CLI experience (prowler-mcp console script)
+./entrypoint.sh main --transport http --host 0.0.0.0
+
+# ASGI app via uvicorn
+./entrypoint.sh uvicorn --host 0.0.0.0 --port 9000
+```
+
+Omitting the mode defaults to `main`, matching the `prowler-mcp` console script.
+When `uvicorn` mode is selected, the script exports `PROWLER_MCP_TRANSPORT_MODE=http` automatically.
 
 ## Next Steps
 

@@ -144,11 +144,11 @@ uv run prowler-mcp --transport http
 uv run prowler-mcp --transport http --host 0.0.0.0 --port 8080
 ```
 
-For self-deployed MCP remote server, you can use also configure the server to use a custom API base URL with the environment variable `PROWLER_API_BASE_URL`; and the transport mode with the environment variable `PROWLER_MCP_MODE`.
+For self-deployed MCP remote server, you can use also configure the server to use a custom API base URL with the environment variable `PROWLER_API_BASE_URL`; and the transport mode with the environment variable `PROWLER_MCP_TRANSPORT_MODE`.
 
 ```bash
 export PROWLER_API_BASE_URL="https://api.prowler.com"
-export PROWLER_MCP_MODE="http"
+export PROWLER_MCP_TRANSPORT_MODE="http"
 ```
 
 ### Using uv directly
