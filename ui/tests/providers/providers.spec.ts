@@ -17,7 +17,7 @@ import {
 } from "./providers-page";
 import fs from "fs";
 
-test.describe.serial("AddProvider", () => {
+test.describe.serial("Add Provider", () => {
   test.describe("Add AWS Provider", () => {
     // Providers page object
     let providersPage: ProvidersPage;

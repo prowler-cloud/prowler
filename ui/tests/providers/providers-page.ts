@@ -223,7 +223,6 @@ export class ProvidersPage extends BasePage {
       name: /Connect via Credentials/i,
     });
 
-
     // Radios for selecting M365 credentials method
     this.m365StaticCredentialsRadio = page.getByRole("radio", {
       name: /App Client Secret Credentials/i,
