@@ -8,12 +8,9 @@ import {
   AZUREProviderData,
   AZUREProviderCredential,
   AZURE_CREDENTIAL_OPTIONS,
-  M365ProviderData,
-  M365ProviderCredential,
-  M365_CREDENTIAL_OPTIONS,
 } from "./providers-page";
 
-test.describe.serial("AddProvider", () => {
+test.describe.serial("Add Provider", () => {
   test.describe("Add AWS Provider", () => {
     // Providers page object
     let providersPage: ProvidersPage;
