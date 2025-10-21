@@ -4,15 +4,9 @@ on:
   release:
     types:
       - 'published'
-  workflow_dispatch:
-    inputs:
-      release_tag:
-        description: 'Release tag (e.g., v5.6.0)'
-        required: true
-        type: string
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.release.tag_name || inputs.release_tag }}
+  group: ${{ github.workflow }}-${{ github.event.release.tag_name }}
   cancel-in-progress: false
 
 env:
@@ -32,7 +26,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          RELEASE_TAG="${{ github.event.release.tag_name || inputs.release_tag }}"
+          RELEASE_TAG="${{ github.event.release.tag_name }}"
 
           if [ -z "$RELEASE_TAG" ]; then
             echo "Error: No release tag provided"
