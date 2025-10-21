@@ -33,7 +33,14 @@ class ProwlerAppAuth:
                 raise ValueError("Prowler App API key format is incorrect")
 
     def _parse_jwt(self, token: str) -> Optional[Dict]:
-        """Parse JWT token and return payload, similar to JS parseJwt function."""
+        """Parse JWT token and return payload
+
+        Args:
+            token: JWT token to parse
+
+        Returns:
+            Parsed JWT payload, or None if parsing fails
+        """
         if not token:
             return None
 
