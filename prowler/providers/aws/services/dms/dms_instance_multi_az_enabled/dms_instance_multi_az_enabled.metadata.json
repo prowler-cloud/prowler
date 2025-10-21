@@ -1,30 +1,37 @@
 {
   "Provider": "aws",
   "CheckID": "dms_instance_multi_az_enabled",
-  "CheckTitle": "Ensure DMS instances have multi az enabled.",
-  "CheckType": [],
+  "CheckTitle": "DMS replication instance has Multi-AZ enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Effects/Denial of Service"
+  ],
   "ServiceName": "dms",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:rdmsds:region:account-id:rep",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsDmsReplicationInstance",
-  "Description": "Ensure DMS instances have multi az enabled.",
-  "Risk": "Ensure that your Amazon Database Migration Service (DMS) replication instances are using Multi-AZ deployment configurations to provide High Availability (HA) through automatic failover to standby replicas in the event of a failure such as an Availability Zone (AZ) outage, an internal hardware or network outage, a software failure or in case of a planned maintenance session.",
-  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DMS/multi-az.html#",
+  "Description": "**AWS DMS replication instances** are evaluated for **Multi-AZ** configuration. Instances with `multi_az` enabled are treated as having a cross-AZ standby; those without it are identified as single-AZ.",
+  "Risk": "Without **Multi-AZ**, a single-AZ failure or maintenance event can halt migrations, causing extended downtime (**availability**) and replication gaps or rollbacks (**integrity**). Tasks may stall, increase cutover risk, and require manual recovery when the replication instance is unavailable.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/dms/latest/userguide/CHAP_ReplicationInstance.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/DMS/multi-az.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws dms modify-replication-instance --region <REGION> --replication-instance-arn arn:aws:dms:<REGION>:<ACCOUNT_ID>:rep:<REPLICATION_ID> --multi-az --apply-immediately",
-      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DMS/multi-az.html#",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DMS/multi-az.html#",
-      "Terraform": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DMS/multi-az.html#"
+      "CLI": "aws dms modify-replication-instance --replication-instance-arn arn:aws:dms:<REGION>:<ACCOUNT_ID>:rep:<REPLICATION_ID> --multi-az --apply-immediately",
+      "NativeIaC": "```yaml\n# CloudFormation: enable Multi-AZ on a DMS replication instance\nResources:\n  <example_resource_name>:\n    Type: AWS::DMS::ReplicationInstance\n    Properties:\n      ReplicationInstanceClass: dms.t3.micro\n      MultiAZ: true  # Critical: enables Multi-AZ to pass the check\n```",
+      "Other": "1. Open the AWS DMS console\n2. Go to Replication instances and select your instance\n3. Click Modify\n4. Check Multi-AZ\n5. Check Apply immediately\n6. Click Modify to save",
+      "Terraform": "```hcl\n# Enable Multi-AZ on a DMS replication instance\nresource \"aws_dms_replication_instance\" \"<example_resource_name>\" {\n  replication_instance_id   = \"<example_resource_name>\"\n  replication_instance_class = \"dms.t3.micro\"\n  multi_az                  = true  # Critical: enables Multi-AZ to pass the check\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable multi az for all DMS replication instances.",
-      "Url": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DMS/multi-az.html#"
+      "Text": "Enable **Multi-AZ** (set `multi_az` to `true`) on DMS replication instances that handle production or time-sensitive migrations to ensure redundancy and automatic failover.\n\nApply HA principles: distribute across AZs, test failover, monitor health, and plan maintenance to minimize impact.",
+      "Url": "https://hub.prowler.com/check/dms_instance_multi_az_enabled"
     }
   },
   "Categories": [
-    "redundancy"
+    "resilience"
   ],
   "DependsOn": [],
   "RelatedTo": [],
