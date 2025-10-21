@@ -120,7 +120,7 @@ export class ProvidersPage extends BasePage {
     this.githubProviderRadio = page.getByRole("radio", { name: /GitHub/i });
 
     // AWS provider form inputs
-    this.accountIdInput = page.getByLabel("Account ID");
+    this.accountIdInput = page.getByRole("textbox", { name: "Account ID" });
     
     // AZURE provider form inputs
     this.subscriptionIdInput = page.getByLabel("Subscription ID");
@@ -129,7 +129,7 @@ export class ProvidersPage extends BasePage {
     this.tenantIdInput = page.getByLabel("Tenant ID");
     
     // Alias input
-    this.aliasInput = page.getByLabel("Provider alias (optional)");
+    this.aliasInput = page.getByRole("textbox", { name: "Provider alias (optional)" });
 
     // Navigation buttons in the form (next and back)
     this.nextButton = page
@@ -155,12 +155,12 @@ export class ProvidersPage extends BasePage {
     });
 
     // Inputs for IAM Role credentials
-    this.roleArnInput = page.getByLabel("Role ARN");
-    this.externalIdInput = page.getByLabel("External ID");
+    this.roleArnInput = page.getByRole("textbox", { name: "Role ARN" });
+    this.externalIdInput = page.getByRole("textbox", { name: "External ID" });
 
     // Inputs for static credentials
-    this.accessKeyIdInput = page.getByLabel("Access Key ID");
-    this.secretAccessKeyInput = page.getByLabel("Secret Access Key");
+    this.accessKeyIdInput = page.getByRole("textbox", { name: "Access Key ID" });
+    this.secretAccessKeyInput = page.getByRole("textbox", { name: "Secret Access Key" });
 
     // Delete button
     this.deleteProviderConfirmationButton = page.locator(
