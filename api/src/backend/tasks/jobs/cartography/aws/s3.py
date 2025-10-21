@@ -69,7 +69,9 @@ def _get_s3_buckets_metadata(
     for bucket in buckets_qs:
         bucket_metadata = json.loads(bucket.metadata)
         bucket_metadata["inserted_at"] = bucket.inserted_at
-        buckets_metadata.append(bucket_metadata)
+
+        if bucket_metadata.get("name"):
+            buckets_metadata.append(bucket_metadata)
 
     return buckets_metadata
 
@@ -84,8 +86,6 @@ def _sync(
     """
     Code based on `cartography.intel.aws.s3.sync`.
     """
-
-    logger.info("Syncing AWS S3 for account '%s'", account_id)
 
     bucket_list = _get_s3_bucket_list(buckets_metadata)
     cartography_s3.load_s3_buckets(neo4j_session, bucket_list, account_id, update_tag)
@@ -106,7 +106,10 @@ def _sync(
         stat_handler=cartography_s3.stat_handler,
     )
 
-    return {"buckets": len(buckets_metadata), "notifications": len(bucket_notifications)}
+    return {
+        "buckets": len(buckets_metadata),
+        "notifications": len(bucket_notifications),
+    }
 
 
 def _get_s3_bucket_list(buckets_metadata: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
