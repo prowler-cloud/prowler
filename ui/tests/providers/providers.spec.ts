@@ -11,7 +11,11 @@ import {
   M365ProviderData,
   M365ProviderCredential,
   M365_CREDENTIAL_OPTIONS,
+  KubernetesProviderData,
+  KubernetesProviderCredential,
+  KUBERNETES_CREDENTIAL_OPTIONS,
 } from "./providers-page";
+import fs from "fs";
 
 test.describe.serial("AddProvider", () => {
   test.describe("Add AWS Provider", () => {
@@ -422,5 +426,96 @@ test.describe.serial("AddProvider", () => {
         await providersPage.verifyLoadProviderPageAfterNewProvider();
       },
     );
+  });
+
+  test.describe("Add Kubernetes Provider", () => {
+    // Providers page object
+    let providersPage: ProvidersPage;
+
+    // Test data from environment variables
+    const context = process.env.E2E_KUBERNETES_CONTEXT;
+    const kubeconfigPath = process.env.E2E_KUBERNETES_KUBECONFIG_PATH;
+
+    // Validate required environment variables
+    if (!context || !kubeconfigPath) {
+      throw new Error(
+        "E2E_KUBERNETES_CONTEXT and E2E_KUBERNETES_KUBECONFIG_PATH environment variables are not set",
+      );
+    }
+
+    // Read kubeconfig content from file
+    const kubeconfigContent = fs.readFileSync(kubeconfigPath, 'utf8');
+
+    // Verify kubeconfig file exists
+    if (!fs.existsSync(kubeconfigPath)) {
+      throw new Error(`Kubeconfig file not found at ${kubeconfigPath}`);
+    }
+
+    // Setup before each test
+    test.beforeEach(async ({ page }) => {
+      providersPage = new ProvidersPage(page);
+      // Clean up existing provider to ensure clean test state
+      await helpers.deleteProviderIfExists(page, context);
+    });
+
+    // Use admin authentication for provider management
+    test.use({ storageState: "playwright/.auth/admin_user.json" });
+
+    test(
+      "should add a new Kubernetes provider with kubeconfig context",
+      {
+        tag: [
+          "@critical",
+          "@e2e",
+          "@providers",
+          "@kubernetes",
+          "@serial",
+          "@PROVIDER-E2E-006",
+        ],
+      },
+      async ({ page }) => {
+        // Prepare test data for Kubernetes provider
+        const kubernetesProviderData: KubernetesProviderData = {
+          context: context,
+          alias: "Test E2E Kubernetes Account - Kubeconfig Context",
+        };
+
+        // Prepare static credentials
+        const kubernetesCredentials: KubernetesProviderCredential = {
+          type: KUBERNETES_CREDENTIAL_OPTIONS.KUBECONFIG_CONTENT,
+          kubeconfigContent: kubeconfigContent,
+        };
+
+        // Navigate to providers page
+        await providersPage.goto();
+        await providersPage.verifyPageLoaded();
+
+        // Start adding new provider
+        await providersPage.clickAddProvider();
+        await providersPage.verifyConnectAccountPageLoaded();
+
+        // Select Kubernetes provider
+        await providersPage.selectKubernetesProvider();
+
+        // Fill provider details
+        await providersPage.fillKubernetesProviderDetails(kubernetesProviderData);
+        await providersPage.clickNext();
+
+        // Verify credentials page is loaded
+        await providersPage.verifyKubernetesCredentialsPageLoaded();
+
+        // Fill static credentials details
+        await providersPage.fillKubernetesCredentials(kubernetesCredentials);
+        await providersPage.clickNext();
+
+        // Launch scan
+        await providersPage.verifyLaunchScanPageLoaded();
+        await providersPage.clickNext();
+
+        // Wait for redirect to provider page
+        await providersPage.verifyLoadProviderPageAfterNewProvider();
+      },
+    );
+
   });
 });

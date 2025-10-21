@@ -33,6 +33,8 @@ jobs:
       E2E_M365_SECRET_ID: ${{ secrets.E2E_M365_SECRET_ID }}
       E2E_M365_TENANT_ID: ${{ secrets.E2E_M365_TENANT_ID }}
       E2E_M365_CERTIFICATE_CONTENT: ${{ secrets.E2E_M365_CERTIFICATE_CONTENT }}
+      E2E_KUBERNETES_CONTEXT: ${{ secrets.E2E_KUBERNETES_CONTEXT }}
+      E2E_KUBERNETES_KUBECONFIG_PATH: ${{ secrets.E2E_KUBERNETES_KUBECONFIG_PATH }}
 
     steps:
       - name: Checkout repository

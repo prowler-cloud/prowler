@@ -19,6 +19,12 @@ export interface M365ProviderData {
   alias?: string;
 }
 
+// Kubernetes provider data
+export interface KubernetesProviderData {
+  context: string;
+  alias?: string;
+}
+
 // AWS credential options
 export const AWS_CREDENTIAL_OPTIONS = {
   AWS_ROLE_ARN: "role",
@@ -71,6 +77,19 @@ export interface M365ProviderCredential {
   certificateContent?:string;
 }
 
+// Kubernetes credential options
+export const KUBERNETES_CREDENTIAL_OPTIONS = {
+  KUBECONFIG_CONTENT: "kubeconfig"
+} as const;
+
+// Kubernetes credential type
+type KubernetesCredentialType = (typeof KUBERNETES_CREDENTIAL_OPTIONS)[keyof typeof KUBERNETES_CREDENTIAL_OPTIONS];
+
+// Kubernetes provider credential
+export interface KubernetesProviderCredential {
+  type: KubernetesCredentialType;
+  kubeconfigContent:string;
+} 
 
 // Providers page
 export class ProvidersPage extends BasePage {
@@ -124,6 +143,10 @@ export class ProvidersPage extends BasePage {
   readonly m365TenantIdInput: Locator;
   readonly m365CertificateContentInput: Locator;
 
+  // Kubernetes provider form elements
+  readonly kubernetesContextInput: Locator;
+  readonly kubernetesKubeconfigContentInput: Locator;
+
   // Delete button
   readonly deleteProviderConfirmationButton: Locator;
 
@@ -131,9 +154,7 @@ export class ProvidersPage extends BasePage {
     super(page);
 
     // Button to add a new cloud provider
-    this.addProviderButton = page.getByText("Add Cloud Provider", {
-      exact: true,
-    });
+    this.addProviderButton = page.getByRole("button", { name: "Add Cloud Provider", exact: true });
 
     // Table displaying existing providers
     this.providersTable = page.getByRole("table");
@@ -157,23 +178,27 @@ export class ProvidersPage extends BasePage {
     this.githubProviderRadio = page.getByRole("radio", { name: /GitHub/i });
 
     // AWS provider form inputs
-    this.accountIdInput = page.getByLabel("Account ID");
+    this.accountIdInput = page.getByRole("textbox", { name: "Account ID" });
     
     // AZURE provider form inputs
-    this.azureSubscriptionIdInput = page.getByLabel("Subscription ID");
-    this.azureClientIdInput = page.getByLabel("Client ID");
-    this.azureClientSecretInput = page.getByLabel("Client Secret");
-    this.azureTenantIdInput = page.getByLabel("Tenant ID");
+    this.azureSubscriptionIdInput = page.getByRole("textbox", { name: "Subscription ID" });
+    this.azureClientIdInput = page.getByRole("textbox", { name: "Client ID" });
+    this.azureClientSecretInput = page.getByRole("textbox", { name: "Client Secret" });
+    this.azureTenantIdInput = page.getByRole("textbox", { name: "Tenant ID" });
     
     // M365 provider form inputs
-    this.m365domainIdInput = page.getByLabel("Domain ID");
-    this.m365ClientIdInput = page.getByLabel("Client ID");
-    this.m365ClientSecretInput = page.getByLabel("Client Secret");
-    this.m365TenantIdInput = page.getByLabel("Tenant ID");
-    this.m365CertificateContentInput = page.getByLabel("Certificate Content");
+    this.m365domainIdInput = page.getByRole("textbox", { name: "Domain ID" });
+    this.m365ClientIdInput = page.getByRole("textbox", { name: "Client ID" });
+    this.m365ClientSecretInput = page.getByRole("textbox", { name: "Client Secret" });
+    this.m365TenantIdInput = page.getByRole("textbox", { name: "Tenant ID" });
+    this.m365CertificateContentInput = page.getByRole("textbox", { name: "Certificate Content" });
+
+    // Kubernetes provider form inputs
+    this.kubernetesContextInput = page.getByRole("textbox", { name: "Context" });
+    this.kubernetesKubeconfigContentInput = page.getByRole("textbox", { name: "Kubeconfig Content" });
     
     // Alias input
-    this.aliasInput = page.getByLabel("Provider alias (optional)");
+    this.aliasInput = page.getByRole("textbox", { name: "Provider alias (optional)" });
 
     // Navigation buttons in the form (next and back)
     this.nextButton = page
@@ -208,12 +233,12 @@ export class ProvidersPage extends BasePage {
     });
 
     // Inputs for IAM Role credentials
-    this.roleArnInput = page.getByLabel("Role ARN");
-    this.externalIdInput = page.getByLabel("External ID");
+    this.roleArnInput = page.getByRole("textbox", { name: "Role ARN" });
+    this.externalIdInput = page.getByRole("textbox", { name: "External ID" });
 
     // Inputs for static credentials
-    this.accessKeyIdInput = page.getByLabel("Access Key ID");
-    this.secretAccessKeyInput = page.getByLabel("Secret Access Key");
+    this.accessKeyIdInput = page.getByRole("textbox", { name: "Access Key ID" });
+    this.secretAccessKeyInput = page.getByRole("textbox", { name: "Secret Access Key" });
 
     // Delete button
     this.deleteProviderConfirmationButton = page.locator(
@@ -255,6 +280,14 @@ export class ProvidersPage extends BasePage {
     await this.waitForPageLoad();
   }
 
+  async selectKubernetesProvider(): Promise<void> {
+    // Select the Kubernetes provider
+
+    await this.kubernetesProviderRadio.click({ force: true });
+    await this.waitForPageLoad();
+  }
+
+
   async fillAWSProviderDetails(data: AWSProviderData): Promise<void> {
     // Fill the AWS provider details
 
@@ -280,6 +313,15 @@ export class ProvidersPage extends BasePage {
 
     await this.m365domainIdInput.fill(data.domainId);
 
+    if (data.alias) {
+      await this.aliasInput.fill(data.alias);
+    }
+  }
+
+  async fillKubernetesProviderDetails(data: KubernetesProviderData): Promise<void> {
+    // Fill the Kubernetes provider details
+
+    await this.kubernetesContextInput.fill(data.context);
     if (data.alias) {
       await this.aliasInput.fill(data.alias);
     }
@@ -458,6 +500,14 @@ export class ProvidersPage extends BasePage {
     }
   }
 
+  async fillKubernetesCredentials(credentials: KubernetesProviderCredential): Promise<void> {
+    // Fill the Kubernetes credentials form
+
+    if (credentials.kubeconfigContent) {
+      await this.kubernetesKubeconfigContentInput.fill(credentials.kubeconfigContent);
+    }
+  }
+
 
   async verifyPageLoaded(): Promise<void> {
     // Verify the providers page is loaded
@@ -489,6 +539,12 @@ export class ProvidersPage extends BasePage {
     await expect(this.m365CertificateCredentialsRadio).toBeVisible();
   }
 
+  async verifyKubernetesCredentialsPageLoaded(): Promise<void> {
+    // Verify the Kubernetes credentials page is loaded
+
+    await expect(this.page).toHaveTitle(/Prowler/);
+    await expect(this.kubernetesContextInput).toBeVisible();
+  }
 
 
   async verifyLaunchScanPageLoaded(): Promise<void> {
