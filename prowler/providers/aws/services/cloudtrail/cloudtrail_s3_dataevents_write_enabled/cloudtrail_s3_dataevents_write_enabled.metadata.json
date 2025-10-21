@@ -19,11 +19,8 @@
     "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/logging-data-events-with-cloudtrail.html",
     "https://docs.aws.amazon.com/AmazonS3/latest/userguide/enable-cloudtrail-logging-for-s3.html",
     "https://www.go2share.net/article/s3-bucket-logging",
-    "https://stackoverflow.com/questions/65302158/s3-object-level-events-are-not-getting-triggered",
     "https://docs.amazonaws.cn/en_us/AmazonS3/latest/userguide/cloudtrail-logging-s3-info.html",
-    "https://support.icompaas.com/support/solutions/articles/62000127071-ensure-s3-buckets-have-object-level-logging-enabled-in-cloudtrail",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/s3-controls.html#s3-22",
-    "https://repost.aws/questions/QU2FeR7kR1QQ-nmd7Lv2wwIA/access-denied-not-showing-on-cloudtrail"
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/s3-controls.html#s3-22"
   ],
   "Remediation": {
     "Code": {
