@@ -31,9 +31,11 @@ if (report.Results && Array.isArray(report.Results)) {
 }
 
 const shortSha = GITHUB_SHA.substring(0, 7);
+const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
 
 let comment = '## 🔒 Container Security Scan\n\n';
-comment += `**Image:** \`${IMAGE_NAME}:${shortSha}\`\n\n`;
+comment += `**Image:** \`${IMAGE_NAME}:${shortSha}\`\n`;
+comment += `**Last scan:** ${timestamp}\n\n`;
 
 if (vulnCount === 0) {
     comment += '### ✅ No Vulnerabilities Detected\n\n';

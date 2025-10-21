@@ -30,10 +30,6 @@ inputs:
     description: 'Days to retain the Trivy report artifact'
     required: false
     default: '2'
-  scanners:
-    description: 'Scanners to use (comma-separated: vuln,secret,config,license)'
-    required: false
-    default: 'vuln'
 
 outputs:
   critical-count:
@@ -57,7 +53,6 @@ runs:
         format: 'sarif'
         output: 'trivy-results.sarif'
         severity: 'CRITICAL,HIGH'
-        scanners: ${{ inputs.scanners }}
         exit-code: '0'
 
     - name: Upload Trivy results to GitHub Security tab
@@ -74,7 +69,6 @@ runs:
         format: 'json'
         output: 'trivy-report.json'
         severity: ${{ inputs.severity }}
-        scanners: ${{ inputs.scanners }}
         exit-code: '0'
 
     - name: Upload Trivy report artifact
@@ -115,12 +109,38 @@ runs:
         script: |
           const comment = require('./.github/scripts/trivy-pr-comment.js');
 
-          await github.rest.issues.createComment({
-            issue_number: context.issue.number,
+          // Unique identifier to find our comment
+          const marker = '<!-- trivy-scan-comment:${{ inputs.image-name }} -->';
+          const body = marker + '\n' + comment;
+
+          // Find existing comment
+          const { data: comments } = await github.rest.issues.listComments({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            body: comment
+            issue_number: context.issue.number,
           });
+
+          const existingComment = comments.find(c => c.body?.includes(marker));
+
+          if (existingComment) {
+            // Update existing comment
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: existingComment.id,
+              body: body
+            });
+            console.log('✅ Updated existing Trivy scan comment');
+          } else {
+            // Create new comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
+            console.log('✅ Created new Trivy scan comment');
+          }
 
     - name: Check for critical vulnerabilities
       if: inputs.fail-on-critical == 'true' && steps.security-check.outputs.critical != '0'
