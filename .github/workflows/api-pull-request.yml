@@ -220,3 +220,4 @@ jobs:
           image-name: ${{ env.IMAGE_NAME }}
           image-tag: ${{ github.sha }}
           fail-on-critical: 'false'
+          severity: 'CRITICAL'
