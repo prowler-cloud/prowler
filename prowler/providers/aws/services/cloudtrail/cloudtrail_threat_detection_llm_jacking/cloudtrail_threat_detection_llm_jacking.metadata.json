@@ -20,10 +20,6 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://furkangungor.medium.com/automating-anomaly-detection-in-aws-cloudtrail-logs-4efb2ad9b958",
-    "https://reinforce.awsevents.com/content/dam/reinforce/2024/slides/APS224_Deep-dive-into-Amazon-Bedrock-security-architecture.pdf",
-    "https://sysdig.com/blog/llmjacking-stolen-cloud-credentials-used-in-new-ai-attack/",
-    "https://permiso.io/blog/exploiting-hosted-models",
-    "https://www.sysdig.com/blog/build-your-aws-incident-response-playbook-with-open-source-tools",
     "https://help.sumologic.com/docs/integrations/amazon-aws/amazon-bedrock/",
     "https://dzone.com/articles/ai-powered-aws-cloudtrail-analysis-strands-agent-bedrock"
   ],
