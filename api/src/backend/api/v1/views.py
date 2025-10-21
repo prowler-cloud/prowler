@@ -84,6 +84,7 @@ from api.filters import (
     LatestFindingFilter,
     LatestResourceFilter,
     MembershipFilter,
+    OverviewProviderDetailsFilter,
     ProcessorFilter,
     ProviderFilter,
     ProviderGroupFilter,
@@ -161,6 +162,7 @@ from api.v1.serializers import (
     LighthouseConfigUpdateSerializer,
     MembershipSerializer,
     OverviewFindingSerializer,
+    OverviewProviderDetailSerializer,
     OverviewProviderSerializer,
     OverviewProviderTypeSerializer,
     OverviewServiceSerializer,
@@ -3612,6 +3614,30 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             "registered for each type. The response respects the caller's visibility over providers."
         ),
     ),
+    provider_details=extend_schema(
+        summary="List providers with metadata",
+        description=(
+            "Return the providers visible to the caller including each provider identifier, alias, and type. "
+            "Supports filtering by provider type."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name="filter[provider_type]",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="Filter by provider type (aws, azure, gcp, kubernetes, m365, github).",
+                enum=["aws", "azure", "gcp", "kubernetes", "m365", "github"],
+            ),
+            OpenApiParameter(
+                name="filter[provider_type__in]",
+                type={"type": "array", "items": {"type": "string"}},
+                location=OpenApiParameter.QUERY,
+                description="Filter by multiple provider types (comma-separated).",
+                style="form",
+                explode=False,
+            ),
+        ],
+    ),
     findings=extend_schema(
         summary="Get aggregated findings data",
         description=(
@@ -3665,6 +3691,8 @@ class OverviewViewSet(BaseRLSViewSet):
             return OverviewProviderSerializer
         elif self.action == "provider_types":
             return OverviewProviderTypeSerializer
+        elif self.action == "provider_details":
+            return OverviewProviderDetailSerializer
         elif self.action == "findings":
             return OverviewFindingSerializer
         elif self.action == "findings_severity":
@@ -3676,6 +3704,8 @@ class OverviewViewSet(BaseRLSViewSet):
     def get_filterset_class(self):
         if self.action == "providers":
             return None
+        elif self.action == "provider_details":
+            return OverviewProviderDetailsFilter
         elif self.action == "findings":
             return ScanSummaryFilter
         elif self.action == "findings_severity":
@@ -3776,6 +3806,34 @@ class OverviewViewSet(BaseRLSViewSet):
         )
 
         serializer = self.get_serializer(provider_type_counts, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_name="provider-details",
+        url_path="providers/details",
+    )
+    def provider_details(self, request):
+        tenant_id = self.request.tenant_id
+        self.get_queryset()
+        provider_filter = (
+            {"id__in": self.allowed_providers.values_list("id", flat=True)}
+            if hasattr(self, "allowed_providers")
+            else {}
+        )
+
+        providers_queryset = Provider.objects.filter(
+            tenant_id=tenant_id, **provider_filter
+        )
+
+        providers_queryset = self.filter_queryset(providers_queryset)
+
+        providers = providers_queryset.order_by("provider", "alias", "id").values(
+            "id", "alias", "provider"
+        )
+
+        serializer = self.get_serializer(providers, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], url_name="findings")

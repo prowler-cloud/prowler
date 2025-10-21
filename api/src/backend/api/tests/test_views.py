@@ -5735,6 +5735,54 @@ class TestOverviewViewSet:
         # Since we rely on completed scans, there are only 2 resources now
         assert response.json()["data"][0]["attributes"]["resources"]["total"] == 2
 
+    def test_overview_provider_details_list(
+        self, authenticated_client, providers_fixture
+    ):
+        response = authenticated_client.get(reverse("overview-provider-details"))
+        assert response.status_code == status.HTTP_200_OK
+
+        data = response.json()["data"]
+        assert len(data) == len(providers_fixture)
+        first_item = data[0]
+        assert first_item["type"] == "provider-details-overview"
+        assert first_item["id"]
+        assert "alias" in first_item["attributes"]
+        assert "provider_type" in first_item["attributes"]
+
+    def test_overview_provider_details_filters(
+        self, authenticated_client, providers_fixture
+    ):
+        response = authenticated_client.get(
+            reverse("overview-provider-details"), {"filter[provider_type]": "aws"}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 2
+        assert all(item["attributes"]["provider_type"] == "aws" for item in data)
+
+        response = authenticated_client.get(
+            reverse("overview-provider-details"),
+            {"filter[provider_type__in]": "aws,gcp"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 3
+        assert {"aws", "gcp"} >= {item["attributes"]["provider_type"] for item in data}
+
+        response = authenticated_client.get(
+            reverse("overview-provider-details"),
+            {"filter[provider_type]": "invalid"},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "errors" in response.json()
+
+        response = authenticated_client.get(
+            reverse("overview-provider-details"),
+            {"filter[provider_type__in]": "aws,invalid"},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "errors" in response.json()
+
     def test_overview_provider_types(self, authenticated_client, providers_fixture):
         response = authenticated_client.get(reverse("overview-provider-types"))
         assert response.status_code == status.HTTP_200_OK

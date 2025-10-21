@@ -2110,6 +2110,18 @@ class OverviewProviderTypeSerializer(serializers.Serializer):
         return {"version": "v1"}
 
 
+class OverviewProviderDetailSerializer(serializers.Serializer):
+    id = serializers.CharField()
+    alias = serializers.CharField(allow_blank=True, allow_null=True)
+    provider_type = serializers.CharField(source="provider")
+
+    class JSONAPIMeta:
+        resource_name = "provider-details-overview"
+
+    def get_root_meta(self, _resource, _many):
+        return {"version": "v1"}
+
+
 class OverviewFindingSerializer(serializers.Serializer):
     id = serializers.CharField(default="n/a")
     new = serializers.IntegerField()

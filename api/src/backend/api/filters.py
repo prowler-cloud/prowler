@@ -263,6 +263,19 @@ class ProviderFilter(FilterSet):
         }
 
 
+class OverviewProviderDetailsFilter(FilterSet):
+    provider_type = ChoiceFilter(
+        choices=Provider.ProviderChoices.choices, field_name="provider"
+    )
+    provider_type__in = ChoiceInFilter(
+        choices=Provider.ProviderChoices.choices, field_name="provider"
+    )
+
+    class Meta:
+        model = Provider
+        fields = []
+
+
 class ProviderRelationshipFilterSet(FilterSet):
     provider_type = ChoiceFilter(
         choices=Provider.ProviderChoices.choices, field_name="provider__provider"

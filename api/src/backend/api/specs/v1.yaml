@@ -3982,6 +3982,58 @@ paths:
               schema:
                 $ref: '#/components/schemas/OverviewProviderResponse'
           description: ''
+  /api/v1/overviews/providers/details:
+    get:
+      operationId: overviews_providers_details_retrieve
+      description: Return the providers visible to the caller including each provider
+        identifier, alias, and type. Supports filtering by provider type.
+      summary: List providers with metadata
+      parameters:
+      - in: query
+        name: fields[provider-details-overview]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - alias
+            - provider_type
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          enum:
+          - aws
+          - azure
+          - gcp
+          - github
+          - kubernetes
+          - m365
+        description: Filter by provider type (aws, azure, gcp, kubernetes, m365, github).
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Filter by multiple provider types (comma-separated).
+        explode: false
+        style: form
+      tags:
+      - Overview
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OverviewProviderDetailResponse'
+          description: ''
   /api/v1/overviews/services:
     get:
       operationId: overviews_services_retrieve
@@ -11090,6 +11142,42 @@ components:
               readOnly: true
           required:
           - id
+    OverviewProviderDetail:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - provider-details-overview
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            alias:
+              type: string
+              nullable: true
+            provider_type:
+              type: string
+          required:
+          - id
+          - alias
+          - provider_type
+    OverviewProviderDetailResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/OverviewProviderDetail'
+      required:
+      - data
     OverviewProviderResponse:
       type: object
       properties:
