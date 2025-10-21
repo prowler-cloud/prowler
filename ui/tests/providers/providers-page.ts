@@ -239,10 +239,11 @@ export class ProvidersPage extends BasePage {
     this.accessKeyIdInput = page.getByRole("textbox", { name: "Access Key ID" });
     this.secretAccessKeyInput = page.getByRole("textbox", { name: "Secret Access Key" });
 
-    // Delete button
-    this.deleteProviderConfirmationButton = page.locator(
-      'button[aria-label="Delete"]',
-    );
+    // Delete button in confirmation modal
+    this.deleteProviderConfirmationButton = page.getByRole("button", {
+      name: "Delete",
+      exact: true,
+    });
   }
 
   async goto(): Promise<void> {
@@ -365,6 +366,43 @@ export class ProvidersPage extends BasePage {
 
       await buttonByText.click();
       await this.waitForPageLoad();
+
+      // Wait for either success (redirect to scans) or error message to appear
+      // The error container has multiple p.text-danger elements, we want the first one with the technical error
+      const errorMessage = this.page.locator("p.text-danger").first();
+      
+      try {
+        // Wait up to 15 seconds for either the error message or redirect
+        await Promise.race([
+          // Wait for error message to appear
+          errorMessage.waitFor({ state: "visible", timeout: 15000 }),
+          // Wait for redirect to scans page (success case)
+          this.page.waitForURL(/\/scans/, { timeout: 15000 }),
+        ]);
+
+        // If we're still on test-connection page, check for error
+        if (/\/providers\/test-connection/.test(this.page.url())) {
+          const isErrorVisible = await errorMessage.isVisible().catch(() => false);
+          if (isErrorVisible) {
+            const errorText = await errorMessage.textContent();
+            throw new Error(
+              `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
+            );
+          }
+        }
+      } catch (error) {
+        // If timeout or other error, check if error message is present
+        const isErrorVisible = await errorMessage.isVisible().catch(() => false);
+        if (isErrorVisible) {
+          const errorText = await errorMessage.textContent();
+          throw new Error(
+            `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
+          );
+        }
+        // Re-throw original error if no error message found
+        throw error;
+      }
+
       return;
     }
 
@@ -534,8 +572,18 @@ export class ProvidersPage extends BasePage {
     // Verify the M365 credentials page is loaded
 
     await expect(this.page).toHaveTitle(/Prowler/);
-    await expect(this.m365StaticCredentialsRadio).toBeVisible();
-    await expect(this.m365CertificateCredentialsRadio).toBeVisible();
+    await expect(this.m365ClientIdInput).toBeVisible();
+    await expect(this.m365ClientSecretInput).toBeVisible();
+    await expect(this.m365TenantIdInput).toBeVisible();
+  }
+
+  async verifyM365CertificateCredentialsPageLoaded(): Promise<void> {
+    // Verify the M365 certificate credentials page is loaded
+
+    await expect(this.page).toHaveTitle(/Prowler/);
+    await expect(this.m365ClientIdInput).toBeVisible();
+    await expect(this.m365TenantIdInput).toBeVisible();
+    await expect(this.m365CertificateContentInput).toBeVisible();
   }
 
   async verifyKubernetesCredentialsPageLoaded(): Promise<void> {
@@ -559,20 +607,10 @@ export class ProvidersPage extends BasePage {
     await expect(launchScanButton).toBeVisible();
   }
 
-  async verifyProviderExists(providerUID: string): Promise<boolean> {
-    // Filter search by providerUID
-
-    await this.filterProvidersByProviderUID(providerUID);
-    // Verify if table has 1 row
-    if (!(await this.verifySingleRowForProviderUID(providerUID))) {
-      return false;
-    }
-    return true;
-  }
-
   async verifyLoadProviderPageAfterNewProvider(): Promise<void> {
     // Verify the provider page is loaded
 
+    await this.waitForPageLoad();
     await expect(this.page).toHaveTitle(/Prowler/);
     await expect(this.providersTable).toBeVisible();
   }
@@ -593,95 +631,119 @@ export class ProvidersPage extends BasePage {
     return true;
   }
 
-  async filterProvidersByProviderUID(providerUID: string): Promise<void> {
-    // Filter providers by providerUID
+  async deleteProviderIfExists(providerUID: string): Promise<void> {
+    // Delete the provider if it exists
 
-    // Go to the providers page
+    // Navigate to providers page
     await this.goto();
+    await expect(this.providersTable).toBeVisible({ timeout: 10000 });
 
-    // Verify the providers table is visible
-    await expect(this.providersTable).toBeVisible();
-
-    // Get the search input
+    // Find and use the search input to filter the table
     const searchInput = this.page.getByPlaceholder(/search|filter/i);
-    if (!searchInput) {
-      throw new Error("No search input available");
-    }
-
-    // Clear existing content and type the providerUID
-    await searchInput.fill("");
-    await searchInput.type(providerUID, { delay: 20 });
-
-    // Try to submit the filter if the input acts on Enter
-    try {
-      await searchInput.press("Enter");
-    } catch (error) {
-      // Enter press might not be needed for all UIs
-    }
-
-    // Wait for table to update
+    await expect(searchInput).toBeVisible({ timeout: 5000 });
+    
+    // Clear and search for the specific provider
+    await searchInput.clear();
+    await searchInput.fill(providerUID);
+    await searchInput.press("Enter");
+    
+    // Wait for the table to finish loading/filtering
     await this.waitForPageLoad();
-  }
+    
+    // Additional wait for React table to re-render with the server-filtered data
+    // The filtering happens on the server, but the table component needs time
+    // to process the response and update the DOM after network idle
+    await this.page.waitForTimeout(1500);
 
-  async actionDeleteProvider(providerUID: string): Promise<void> {
-    // Delete the provider
+    // Get all rows from the table
+    const allRows = this.providersTable.locator("tbody tr");
+    
+    // Helper function to check if a row is the "No results" row
+    const isNoResultsRow = async (row: Locator): Promise<boolean> => {
+      const text = await row.textContent();
+      return text?.includes("No results") || text?.includes("No data") || false;
+    };
 
-    // Filter search by providerUID
-    await this.filterProvidersByProviderUID(providerUID);
+    // Helper function to find the row with the specific UID
+    const findProviderRow = async (): Promise<Locator | null> => {
+      const count = await allRows.count();
+      
+      for (let i = 0; i < count; i++) {
+        const row = allRows.nth(i);
+        
+        // Skip "No results" rows
+        if (await isNoResultsRow(row)) {
+          continue;
+        }
+        
+        // Check if this row contains the UID in the UID column (column 3)
+        const uidCell = row.locator("td").nth(3);
+        const uidText = await uidCell.textContent();
+        
+        if (uidText?.includes(providerUID)) {
+          return row;
+        }
+      }
+      
+      return null;
+    };
 
-    // Verify the providers table is visible
-    await expect(this.providersTable).toBeVisible();
+    // Wait for filtering to complete (max 0 or 1 data rows)
+    await expect(async () => {
+      const targetRow = await findProviderRow();
+      const count = await allRows.count();
+      
+      // Count only real data rows (not "No results")
+      let dataRowCount = 0;
+      for (let i = 0; i < count; i++) {
+        if (!(await isNoResultsRow(allRows.nth(i)))) {
+          dataRowCount++;
+        }
+      }
+      
+      // Should have 0 or 1 data row
+      expect(dataRowCount).toBeLessThanOrEqual(1);
+    }).toPass({ timeout: 20000 });
 
-    // Find the first row in the filtered results
-    const firstRow = this.providersTable.locator("tbody tr").first();
+    // Find the provider row
+    const targetRow = await findProviderRow();
+    
+    if (!targetRow) {
+      // Provider not found, nothing to delete
+      // Navigate back to providers page to ensure clean state
+      await this.goto();
+      await expect(this.providersTable).toBeVisible({ timeout: 10000 });
+      return;
+    }
 
-    // Verify the first row is visible
-    await expect(firstRow).toBeVisible();
-
-    // Get button in the last cell
-    const lastCell = firstRow.locator("td").last();
-    const actionButton = lastCell.locator("button").first();
-
-    // Verify the action button is visible
+    // Find and click the action button (last cell = actions column)
+    const actionButton = targetRow.locator("td").last().locator("button").first();
+    await expect(actionButton).toBeVisible({ timeout: 5000 });
     await actionButton.click();
 
-    // Wait for the dropdown menu to appear
-    await this.page.waitForSelector('[role="menu"], [role="menuitem"]', {
-      timeout: 5000,
-    });
-
-    // Find the delete menu item
+    // Wait for dropdown menu to appear and find delete option
     const deleteMenuItem = this.page.getByRole("menuitem", {
       name: /delete.*provider/i,
     });
+    await expect(deleteMenuItem).toBeVisible({ timeout: 5000 });
+    await deleteMenuItem.click();
 
-    // Verify the delete menu item is visible
-    await expect(deleteMenuItem).toBeVisible();
+    // Wait for confirmation modal to appear
+    const modal = this.page.locator('[role="dialog"], .modal, [data-testid*="modal"]').first();
+    await expect(modal).toBeVisible({ timeout: 10000 });
 
-    // Click the delete menu item with force to handle unstable elements
-    await deleteMenuItem.click({ force: true });
+    // Find and click the delete confirmation button
+    await expect(this.deleteProviderConfirmationButton).toBeVisible({ timeout: 5000 });
+    await this.deleteProviderConfirmationButton.click();
 
-    // Wait for the delete confirmation modal to appear
-    await this.page.waitForSelector(
-      '[role="dialog"], .modal, [data-testid*="modal"]',
-      { timeout: 10000 },
-    );
+    // Wait for modal to close (this indicates deletion was initiated)
+    await expect(modal).not.toBeVisible({ timeout: 10000 });
 
-    // Find the delete confirmation button with multiple approaches
-    let deleteButton = this.deleteProviderConfirmationButton;
-
-    await expect(deleteButton).toBeVisible();
-
-    // Click the delete button with force to handle unstable elements
-    await deleteButton.click({ force: true });
-
-    // Wait for the modal to disappear and the page to update
-    const modalToCheck = this.page
-      .locator('[role="dialog"], .modal, [data-testid*="modal"]')
-      .first();
-
-    // Verify the modal is not visible
-    await expect(modalToCheck).not.toBeVisible();
+    // Wait for page to reload
     await this.waitForPageLoad();
+
+    // Navigate back to providers page to ensure clean state
+    await this.goto();
+    await expect(this.providersTable).toBeVisible({ timeout: 10000 });
   }
 }

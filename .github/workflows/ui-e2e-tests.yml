@@ -1,6 +1,9 @@
 name: UI - E2E Tests
 
 on:
+  push:
+    branches:
+      - "PROWLER-182-kubernetes-add-and-connect-the-provider"
   pull_request:
     branches:
       - master
@@ -10,6 +13,7 @@ on:
       - 'ui/**'
 
 jobs:
+
   e2e-tests:
     if: github.repository == 'prowler-cloud/prowler'
     runs-on: ubuntu-latest
@@ -33,9 +37,10 @@ jobs:
       E2E_M365_SECRET_ID: ${{ secrets.E2E_M365_SECRET_ID }}
       E2E_M365_TENANT_ID: ${{ secrets.E2E_M365_TENANT_ID }}
       E2E_M365_CERTIFICATE_CONTENT: ${{ secrets.E2E_M365_CERTIFICATE_CONTENT }}
-      E2E_KUBERNETES_CONTEXT: ${{ secrets.E2E_KUBERNETES_CONTEXT }}
-      E2E_KUBERNETES_KUBECONFIG_PATH: ${{ secrets.E2E_KUBERNETES_KUBECONFIG_PATH }}
+      E2E_KUBERNETES_CONTEXT: 'kind-kind'
+      E2E_KUBERNETES_KUBECONFIG_PATH: '/home/runner/.kube/config'
       E2E_NEW_PASSWORD: ${{ secrets.E2E_NEW_PASSWORD }}
+      
     steps:
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0

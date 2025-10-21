@@ -147,7 +147,9 @@ export async function authenticateAndSaveState(
   storagePath: string,
 ) {
   if (!email || !password) {
-    throw new Error('Email and password are required for authentication and save state');
+    throw new Error(
+      "Email and password are required for authentication and save state",
+    );
   }
 
   // Create SignInPage instance
@@ -188,10 +190,3 @@ export async function verifySessionValid(page: Page) {
   expect(session.refreshToken).toBeTruthy();
   return session;
 }
-
-export async function deleteProviderIfExists(page: Page, accountId: string) {
-  const providersPage = new ProvidersPage(page);
-  if (await providersPage.verifyProviderExists(accountId)) {  
-     await providersPage.actionDeleteProvider(accountId);
-  }
-} 

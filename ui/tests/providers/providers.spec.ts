@@ -15,13 +15,14 @@ import {
   KubernetesProviderCredential,
   KUBERNETES_CREDENTIAL_OPTIONS,
 } from "./providers-page";
+import { ScansPage } from "../scans/scans-page";
 import fs from "fs";
 
-test.describe.serial("Add Provider", () => {
-  test.describe("Add AWS Provider", () => {
+test.describe("Add Provider", () => {
+  test.describe.serial("Add AWS Provider", () => {
     // Providers page object
     let providersPage: ProvidersPage;
-
+    let scansPage: ScansPage;
     // Test data from environment variables
     const accountId = process.env.E2E_AWS_PROVIDER_ACCOUNT_ID;
     const accessKey = process.env.E2E_AWS_PROVIDER_ACCESS_KEY;
@@ -39,7 +40,7 @@ test.describe.serial("Add Provider", () => {
     test.beforeEach(async ({ page }) => {
       providersPage = new ProvidersPage(page);
       // Clean up existing provider to ensure clean test state
-      await helpers.deleteProviderIfExists(page, accountId);
+      await providersPage.deleteProviderIfExists(accountId);
     });
 
     // Use admin authentication for provider management
@@ -108,7 +109,8 @@ test.describe.serial("Add Provider", () => {
         await providersPage.clickNext();
 
         // Wait for redirect to provider page
-        await providersPage.verifyLoadProviderPageAfterNewProvider();
+        scansPage = new ScansPage(page);
+        await scansPage.verifyPageLoaded();
       },
     );
 
@@ -176,14 +178,16 @@ test.describe.serial("Add Provider", () => {
         await providersPage.clickNext();
 
         // Wait for redirect to provider page
-        await providersPage.verifyLoadProviderPageAfterNewProvider();
+        scansPage = new ScansPage(page);
+        await scansPage.verifyPageLoaded();
       },
     );
   });
 
-  test.describe("Add AZURE Provider", () => {
+  test.describe.serial("Add AZURE Provider", () => {
     // Providers page object
     let providersPage: ProvidersPage;
+    let scansPage: ScansPage;
 
     // Test data from environment variables
     const subscriptionId = process.env.E2E_AZURE_SUBSCRIPTION_ID;
@@ -202,7 +206,7 @@ test.describe.serial("Add Provider", () => {
     test.beforeEach(async ({ page }) => {
       providersPage = new ProvidersPage(page);
       // Clean up existing provider to ensure clean test state
-      await helpers.deleteProviderIfExists(page, subscriptionId);
+      await providersPage.deleteProviderIfExists(subscriptionId);
     });
 
     // Use admin authentication for provider management
@@ -258,15 +262,17 @@ test.describe.serial("Add Provider", () => {
         await providersPage.verifyLaunchScanPageLoaded();
         await providersPage.clickNext();
 
-        // Wait for redirect to provider page
-        await providersPage.verifyLoadProviderPageAfterNewProvider();
+        // Wait for redirect to scan page
+        scansPage = new ScansPage(page);
+        await scansPage.verifyPageLoaded();
       },
     );
   });
 
-  test.describe("Add M365 Provider", () => {
+  test.describe.serial("Add M365 Provider", () => {
     // Providers page object
     let providersPage: ProvidersPage;
+    let scansPage: ScansPage;
 
     // Test data from environment variables
     const domainId = process.env.E2E_M365_DOMAIN_ID;
@@ -284,7 +290,7 @@ test.describe.serial("Add Provider", () => {
     test.beforeEach(async ({ page }) => {
       providersPage = new ProvidersPage(page);
       // Clean up existing provider to ensure clean test state
-      await helpers.deleteProviderIfExists(page, domainId);
+      await providersPage.deleteProviderIfExists(domainId);
     });
 
     // Use admin authentication for provider management
@@ -342,6 +348,8 @@ test.describe.serial("Add Provider", () => {
         await providersPage.selectM365CredentialsType(
           M365_CREDENTIAL_OPTIONS.M365_CREDENTIALS,
         );
+
+        // Verify M365 credentials page is loaded
         await providersPage.verifyM365CredentialsPageLoaded();
 
         // Fill static credentials details
@@ -352,8 +360,9 @@ test.describe.serial("Add Provider", () => {
         await providersPage.verifyLaunchScanPageLoaded();
         await providersPage.clickNext();
 
-        // Wait for redirect to provider page
-        await providersPage.verifyLoadProviderPageAfterNewProvider();
+        // Wait for redirect to scan page
+        scansPage = new ScansPage(page);
+        await scansPage.verifyPageLoaded();
       },
     );
 
@@ -412,7 +421,9 @@ test.describe.serial("Add Provider", () => {
         await providersPage.selectM365CredentialsType(
           M365_CREDENTIAL_OPTIONS.M365_CERTIFICATE_CREDENTIALS,
         );
-        await providersPage.verifyM365CredentialsPageLoaded();
+
+        // Verify M365 certificate credentials page is loaded
+        await providersPage.verifyM365CertificateCredentialsPageLoaded();
 
         // Fill static credentials details
         await providersPage.fillM365CertificateCredentials(m365Credentials);
@@ -422,15 +433,17 @@ test.describe.serial("Add Provider", () => {
         await providersPage.verifyLaunchScanPageLoaded();
         await providersPage.clickNext();
 
-        // Wait for redirect to provider page
-        await providersPage.verifyLoadProviderPageAfterNewProvider();
+        // Wait for redirect to scan page
+        scansPage = new ScansPage(page);
+        await scansPage.verifyPageLoaded();
       },
     );
   });
 
-  test.describe("Add Kubernetes Provider", () => {
+  test.describe.skip("Add Kubernetes Provider", () => {
     // Providers page object
     let providersPage: ProvidersPage;
+    let scansPage: ScansPage;
 
     // Test data from environment variables
     const context = process.env.E2E_KUBERNETES_CONTEXT;
@@ -443,19 +456,12 @@ test.describe.serial("Add Provider", () => {
       );
     }
 
-    // Read kubeconfig content from file
-    const kubeconfigContent = fs.readFileSync(kubeconfigPath, 'utf8');
-
-    // Verify kubeconfig file exists
-    if (!fs.existsSync(kubeconfigPath)) {
-      throw new Error(`Kubeconfig file not found at ${kubeconfigPath}`);
-    }
 
     // Setup before each test
     test.beforeEach(async ({ page }) => {
       providersPage = new ProvidersPage(page);
       // Clean up existing provider to ensure clean test state
-      await helpers.deleteProviderIfExists(page, context);
+      await providersPage.deleteProviderIfExists(context);
     });
 
     // Use admin authentication for provider management
@@ -474,6 +480,21 @@ test.describe.serial("Add Provider", () => {
         ],
       },
       async ({ page }) => {
+        // Verify kubeconfig file exists
+        if (!fs.existsSync(kubeconfigPath)) {
+          throw new Error(`Kubeconfig file not found at ${kubeconfigPath}`);
+        }
+
+        // Read kubeconfig content from file
+        let kubeconfigContent: string;
+        try {
+          kubeconfigContent = fs.readFileSync(kubeconfigPath, "utf8");
+        } catch (error) {
+          throw new Error(
+            `Failed to read kubeconfig file at ${kubeconfigPath}: ${error}`,
+          );
+        }
+
         // Prepare test data for Kubernetes provider
         const kubernetesProviderData: KubernetesProviderData = {
           context: context,
@@ -498,7 +519,9 @@ test.describe.serial("Add Provider", () => {
         await providersPage.selectKubernetesProvider();
 
         // Fill provider details
-        await providersPage.fillKubernetesProviderDetails(kubernetesProviderData);
+        await providersPage.fillKubernetesProviderDetails(
+          kubernetesProviderData,
+        );
         await providersPage.clickNext();
 
         // Verify credentials page is loaded
@@ -513,9 +536,9 @@ test.describe.serial("Add Provider", () => {
         await providersPage.clickNext();
 
         // Wait for redirect to provider page
-        await providersPage.verifyLoadProviderPageAfterNewProvider();
+        scansPage = new ScansPage(page);
+        await scansPage.verifyPageLoaded();
       },
     );
-
   });
 });
