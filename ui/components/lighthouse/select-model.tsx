@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 import {
   getLighthouseModels,
+  getTenantConfig,
   updateTenantConfig,
 } from "@/actions/lighthouse/lighthouse";
 import { CustomButton } from "@/components/ui/custom";
@@ -62,9 +63,17 @@ export const SelectModel = ({
     setError(null);
 
     try {
+      const currentConfig = await getTenantConfig();
+      const existingDefaults =
+        currentConfig?.data?.attributes?.default_models || {};
+
+      const mergedDefaults = {
+        ...existingDefaults,
+        [provider]: selectedModel,
+      };
+
       const result = await updateTenantConfig({
-        default_models: { [provider]: selectedModel },
-        default_provider: "openai",
+        default_models: mergedDefaults,
       });
 
       if (result.errors) {
