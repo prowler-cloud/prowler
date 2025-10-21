@@ -16,17 +16,11 @@
   "Risk": "Concentrated discovery activity signals **reconnaissance** with valid credentials. Adversaries can map assets and policies to enable **privilege escalation**, target data stores for **exfiltration** (confidentiality), and identify services to disrupt (availability), supporting stealthy lateral movement.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://detection.fyi/elastic/detection-rules/integrations/aws/discovery_ec2_multiple_discovery_api_calls_via_cli/",
     "https://medium.com/falconforce/falconfriday-detecting-enumeration-in-aws-0xff25-orangecon-25-edition-4aee83651088",
-    "https://securedebug.com/aws-security-protecting-cloud-infrastructure/",
     "https://www.elastic.co/guide/en/security/8.19/aws-discovery-api-calls-via-cli-from-a-single-resource.html",
     "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-concepts.html#cloudtrail-concepts-logging-data-events",
-    "https://www.cyngular.com/resource-center/cloud-enumeration-the-stealthy-discovery-process-in-aws/",
     "https://aws.plainenglish.io/aws-cloudtrail-event-cheatsheet-a-detection-engineers-guide-to-critical-api-calls-part-1-04fb1588556f",
-    "https://www.clutchevents.co/resources/exploring-the-shadows-identifying-and-securing-undocumented-aws-apis-in-the-cloud",
-    "https://www.vectra.ai/detections/aws-ec2-enumeration",
-    "https://support.icompaas.com/support/solutions/articles/62000233455-ensure-there-are-no-potential-enumeration-threats-in-cloudtrail-",
-    "https://aws.plainenglish.io/detection-engineering-with-aws-cloudtrail-7b189fa19adb"
+    "https://support.icompaas.com/support/solutions/articles/62000233455-ensure-there-are-no-potential-enumeration-threats-in-cloudtrail-"
   ],
   "Remediation": {
     "Code": {
