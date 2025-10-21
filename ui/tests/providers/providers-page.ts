@@ -71,9 +71,7 @@ export class ProvidersPage extends BasePage {
     super(page);
 
     // Button to add a new cloud provider
-    this.addProviderButton = page.getByText("Add Cloud Provider", {
-      exact: true,
-    });
+    this.addProviderButton = page.getByRole("button", { name: "Add Cloud Provider", exact: true });
 
     // Table displaying existing providers
     this.providersTable = page.getByRole("table");
