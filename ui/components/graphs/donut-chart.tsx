@@ -5,7 +5,7 @@ import { Cell, Label, Pie, PieChart, Tooltip } from "recharts";
 
 import { ChartConfig, ChartContainer } from "@/components/ui/chart/Chart";
 
-import { ChartLegend } from "./shared/ChartLegend";
+import { ChartLegend } from "./shared/chart-legend";
 import { DonutDataPoint } from "./types";
 
 interface DonutChartProps {
@@ -24,18 +24,30 @@ const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="rounded-lg border border-slate-700 bg-slate-800 p-3 shadow-lg">
+      <div
+        className="rounded-lg border p-3 shadow-lg"
+        style={{
+          backgroundColor: "var(--chart-background)",
+          borderColor: "var(--chart-border-emphasis)",
+        }}
+      >
         <div className="flex items-center gap-2">
           <div
             className="h-3 w-3 rounded-sm"
             style={{ backgroundColor: data.color }}
           />
-          <span className="text-sm font-semibold text-white">
+          <span
+            className="text-sm font-semibold"
+            style={{ color: "var(--chart-text-primary)" }}
+          >
             {data.percentage}% {data.name}
           </span>
         </div>
         {data.change !== undefined && (
-          <p className="mt-2 text-xs text-slate-400">
+          <p
+            className="mt-2 text-xs"
+            style={{ color: "var(--chart-text-secondary)" }}
+          >
             <span className="font-bold">
               {data.change > 0 ? "+" : ""}
               {data.change}%
@@ -145,14 +157,19 @@ export function DonutChart({
                         <tspan
                           x={viewBox.cx}
                           y={viewBox.cy}
-                          className="fill-white text-3xl font-bold"
+                          className="text-3xl font-bold"
+                          style={{
+                            fill: "var(--chart-text-primary)",
+                          }}
                         >
                           {formattedValue}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) + 24}
-                          className="fill-slate-400"
+                          style={{
+                            fill: "var(--chart-text-secondary)",
+                          }}
                         >
                           {centerLabel.label}
                         </tspan>

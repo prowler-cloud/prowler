@@ -11,18 +11,11 @@ import {
   YAxis,
 } from "recharts";
 
-import { AlertPill } from "./shared/AlertPill";
-import { ChartLegend } from "./shared/ChartLegend";
+import { AlertPill } from "./shared/alert-pill";
+import { ChartLegend } from "./shared/chart-legend";
 import { CHART_COLORS } from "./shared/constants";
 import { getSeverityColorByRiskScore } from "./shared/utils";
-
-interface ScatterDataPoint {
-  x: number;
-  y: number;
-  provider: string;
-  name: string;
-  size?: number;
-}
+import type { ScatterDataPoint } from "./types";
 
 interface ScatterPlotProps {
   data: ScatterDataPoint[];
@@ -34,9 +27,9 @@ interface ScatterPlotProps {
 }
 
 const PROVIDER_COLORS = {
-  AWS: "var(--color-orange)",
-  Azure: "var(--color-cyan)",
-  Google: "var(--color-red)",
+  AWS: "var(--chart-provider-aws)",
+  Azure: "var(--chart-provider-azure)",
+  Google: "var(--chart-provider-google)",
 };
 
 const CustomTooltip = ({ active, payload }: any) => {
@@ -45,9 +38,23 @@ const CustomTooltip = ({ active, payload }: any) => {
     const severityColor = getSeverityColorByRiskScore(data.x);
 
     return (
-      <div className="rounded-lg border border-slate-700 bg-slate-800 p-3 shadow-lg">
-        <p className="text-sm font-semibold text-white">{data.name}</p>
-        <p className="mt-1 text-xs text-slate-400">
+      <div
+        className="rounded-lg border p-3 shadow-lg"
+        style={{
+          borderColor: CHART_COLORS.tooltipBorder,
+          backgroundColor: CHART_COLORS.tooltipBackground,
+        }}
+      >
+        <p
+          className="text-sm font-semibold"
+          style={{ color: CHART_COLORS.textPrimary }}
+        >
+          {data.name}
+        </p>
+        <p
+          className="mt-1 text-xs"
+          style={{ color: CHART_COLORS.textSecondary }}
+        >
           <span style={{ color: severityColor }}>{data.x}</span> Risk Score
         </p>
         <div className="mt-2">
@@ -69,7 +76,7 @@ const CustomScatterDot = ({
   const isSelected = selectedPoint?.name === payload.name;
   const size = isSelected ? 18 : 8;
   const fill = isSelected
-    ? "var(--color-success)"
+    ? "#86DA26"
     : PROVIDER_COLORS[payload.provider as keyof typeof PROVIDER_COLORS] ||
       CHART_COLORS.defaultColor;
 
@@ -79,8 +86,9 @@ const CustomScatterDot = ({
       cy={cy}
       r={size / 2}
       fill={fill}
-      stroke={isSelected ? "var(--color-success)" : "transparent"}
+      stroke={isSelected ? "#86DA26" : "transparent"}
       strokeWidth={2}
+      className={isSelected ? "drop-shadow-[0_0_8px_#86da26]" : ""}
       style={{ cursor: "pointer" }}
       onClick={() => onSelectPoint?.(payload)}
     />
