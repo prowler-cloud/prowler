@@ -53,10 +53,10 @@ jobs:
             for folder in $MONITORED_FOLDERS; do
               # Get files changed in this folder
               changed_in_folder=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | tr ' ' '\n' | grep "^${folder}/" || true)
-              
+
               if [ -n "$changed_in_folder" ]; then
                 echo "Detected changes in ${folder}/"
-                
+
                 # Check if CHANGELOG.md was updated
                 if ! echo "$changed_in_folder" | grep -q "^${folder}/CHANGELOG.md$"; then
                   echo "No changelog update found for ${folder}/"
