@@ -16,14 +16,6 @@ import type {
   Topology,
 } from "topojson-specification";
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
 import { HorizontalBarChart } from "./horizontal-bar-chart";
 import { BarDataPoint } from "./types";
 
@@ -63,13 +55,13 @@ interface LocationPoint {
   change?: number;
 }
 
-interface ThreatMapData {
+export interface MapChartData {
   locations: LocationPoint[];
   regions: string[];
 }
 
-interface ThreatMapProps {
-  data: ThreatMapData;
+export interface MapChartProps {
+  data: MapChartData;
   height?: number;
   onLocationSelect?: (location: LocationPoint | null) => void;
 }
@@ -220,10 +212,10 @@ function LoadingState({ height }: { height: number }) {
   );
 }
 
-export function ThreatMap({
+export function MapChart({
   data,
   height = MAP_CONFIG.defaultHeight,
-}: ThreatMapProps) {
+}: MapChartProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectedLocation, setSelectedLocation] =
@@ -235,7 +227,6 @@ export function ThreatMap({
     x: number;
     y: number;
   } | null>(null);
-  const [selectedRegion, setSelectedRegion] = useState<string>("All Regions");
   const [worldData, setWorldData] = useState<FeatureCollection | null>(null);
   const [isLoadingMap, setIsLoadingMap] = useState(true);
   const [dimensions, setDimensions] = useState<{
@@ -245,11 +236,6 @@ export function ThreatMap({
     width: MAP_CONFIG.defaultWidth,
     height,
   });
-
-  const filteredLocations =
-    selectedRegion === "All Regions"
-      ? data.locations
-      : data.locations.filter((loc) => loc.region === selectedRegion);
 
   // Fetch world data once on mount
   useEffect(() => {
@@ -367,7 +353,7 @@ export function ThreatMap({
     });
 
     // Unselected points first
-    filteredLocations.forEach((location) => {
+    data.locations.forEach((location) => {
       if (selectedLocation?.id !== location.id) {
         const circle = createCircle(location);
         if (circle) pointsGroup.appendChild(circle);
@@ -376,7 +362,7 @@ export function ThreatMap({
 
     // Selected point last (on top)
     if (selectedLocation) {
-      const selectedData = filteredLocations.find(
+      const selectedData = data.locations.find(
         (loc) => loc.id === selectedLocation.id,
       );
       if (selectedData) {
@@ -387,8 +373,8 @@ export function ThreatMap({
 
     svg.appendChild(pointsGroup);
   }, [
+    data.locations,
     dimensions,
-    filteredLocations,
     selectedLocation,
     hoveredLocation,
     worldData,
@@ -406,34 +392,12 @@ export function ThreatMap({
     <div className="flex w-full flex-col gap-6 lg:flex-row lg:items-start">
       {/* Map Section */}
       <div className="flex-1">
-        <div className="mb-4 flex items-center justify-between">
-          <h3
-            className="text-lg font-semibold"
-            style={{ color: CHART_COLORS.textPrimary }}
-          >
-            Threat Map
-          </h3>
-          <Select value={selectedRegion} onValueChange={setSelectedRegion}>
-            <SelectTrigger
-              className="w-full rounded-lg"
-              style={{
-                borderColor: CHART_COLORS.tooltipBorder,
-                backgroundColor: CHART_COLORS.tooltipBackground,
-                color: CHART_COLORS.textPrimary,
-              }}
-            >
-              <SelectValue placeholder="All Regions" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="All Regions">All Regions</SelectItem>
-              {data.regions.map((region) => (
-                <SelectItem key={region} value={region}>
-                  {region}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <h3
+          className="mb-4 text-lg font-semibold"
+          style={{ color: CHART_COLORS.textPrimary }}
+        >
+          Threat Map
+        </h3>
 
         <div
           ref={containerRef}
@@ -468,7 +432,7 @@ export function ThreatMap({
                   className="text-sm"
                   style={{ color: CHART_COLORS.textSecondary }}
                 >
-                  {filteredLocations.length} Locations
+                  {data.locations.length} Locations
                 </span>
               </div>
             </>
