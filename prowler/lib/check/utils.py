@@ -15,7 +15,7 @@ def recover_checks_from_provider(
     """
     try:
         # Bypass check loading for IAC provider since it uses Trivy directly
-        if provider == "iac":
+        if provider == "iac" or provider == "llm":
             return []
 
         checks = []
@@ -46,8 +46,14 @@ def recover_checks_from_provider(
 
 # List all available modules in the selected provider and service
 def list_modules(provider: str, service: str):
+    # Map CLI provider names to directory names (for cases where they differ)
+    provider_directory_map = {
+        "oci": "oraclecloud",  # OCI SDK conflict avoidance
+    }
+    provider_directory = provider_directory_map.get(provider, provider)
+
     # This module path requires the full path including "prowler."
-    module_path = f"prowler.providers.{provider}.services"
+    module_path = f"prowler.providers.{provider_directory}.services"
     if service:
         module_path += f".{service}"
     return walk_packages(

@@ -29,6 +29,7 @@ export const ProviderCredentialFields = {
   TENANT_ID: "tenant_id",
   USER: "user",
   PASSWORD: "password",
+  CERTIFICATE_CONTENT: "certificate_content",
 
   // GCP fields
   REFRESH_TOKEN: "refresh_token",
@@ -76,6 +77,7 @@ export const ErrorPointers = {
   GITHUB_APP_KEY: "/data/attributes/secret/github_app_key_content",
   REPOSITORY_URL: "/data/attributes/secret/repository_url",
   ACCESS_TOKEN: "/data/attributes/secret/access_token",
+  CERTIFICATE_CONTENT: "/data/attributes/secret/certificate_content",
 } as const;
 
 export type ErrorPointer = (typeof ErrorPointers)[keyof typeof ErrorPointers];

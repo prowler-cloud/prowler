@@ -2,12 +2,8 @@
 
 import { z } from "zod";
 
-import {
-  apiBaseUrl,
-  getAuthHeaders,
-  handleApiError,
-  handleApiResponse,
-} from "@/lib/helper";
+import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
+import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 
 export const getAllTenants = async () => {
   const headers = await getAuthHeaders({ contentType: false });
@@ -23,7 +19,7 @@ export const getAllTenants = async () => {
       throw new Error(`Failed to fetch tenants data: ${response.statusText}`);
     }
 
-    return handleApiResponse(response, "/profile");
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching tenants:", error);
     return undefined;
@@ -41,7 +37,7 @@ const editTenantFormSchema = z
     path: ["name"],
   });
 
-export async function updateTenantName(prevState: any, formData: FormData) {
+export async function updateTenantName(_prevState: any, formData: FormData) {
   const headers = await getAuthHeaders({ contentType: true });
   const formDataObject = Object.fromEntries(formData);
   const validatedData = editTenantFormSchema.safeParse(formDataObject);
@@ -80,7 +76,7 @@ export async function updateTenantName(prevState: any, formData: FormData) {
       throw new Error(`Failed to update tenant name: ${response.statusText}`);
     }
 
-    handleApiResponse(response, "/profile", false);
+    await handleApiResponse(response, "/profile", false);
     return { success: "Tenant name updated successfully!" };
   } catch (error) {
     return handleApiError(error);

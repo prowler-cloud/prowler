@@ -1,5 +1,3 @@
-import { revalidatePath } from "next/cache";
-
 import { getComplianceCsv, getExportsZip } from "@/actions/scans";
 import { getTask } from "@/actions/task";
 import { auth } from "@/auth.config";
@@ -340,45 +338,3 @@ export const permissionFormFields: PermissionInfo[] = [
     description: "Provides access to billing settings and invoices",
   },
 ];
-
-// Helper function to handle API responses consistently
-export const handleApiResponse = async (
-  response: Response,
-  pathToRevalidate?: string,
-  parse = true,
-) => {
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => null);
-    const errorDetail = errorData?.errors?.[0]?.detail;
-
-    // Special handling for server errors (500+)
-    if (response.status >= 500) {
-      throw new Error(
-        errorDetail ||
-          `Server error (${response.status}): The server encountered an error. Please try again later.`,
-      );
-    }
-
-    // Client errors (4xx)
-    throw new Error(
-      errorDetail ||
-        `Request failed (${response.status}): ${response.statusText}`,
-    );
-  }
-
-  const data = await response.json();
-
-  if (pathToRevalidate && pathToRevalidate !== "") {
-    revalidatePath(pathToRevalidate);
-  }
-
-  return parse ? parseStringify(data) : data;
-};
-
-// Helper function to handle API errors consistently
-export const handleApiError = (error: unknown): { error: string } => {
-  console.error(error);
-  return {
-    error: getErrorMessage(error),
-  };
-};

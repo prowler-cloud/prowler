@@ -4,7 +4,7 @@ import subprocess
 import sys
 import tempfile
 from os import environ
-from typing import List
+from typing import TYPE_CHECKING, List
 
 from alive_progress import alive_bar
 from colorama import Fore, Style
@@ -19,6 +19,9 @@ from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
+
+if TYPE_CHECKING:
+    from prowler.providers.common.models import Connection
 
 
 class IacProvider(Provider):
@@ -257,7 +260,9 @@ class IacProvider(Provider):
                     ) as bar:
                         try:
                             bar.title = f"-> Cloning {original_url}..."
-                            porcelain.clone(repository_url, temporary_directory, depth=1)
+                            porcelain.clone(
+                                repository_url, temporary_directory, depth=1
+                            )
                             bar.title = "-> Repository cloned successfully!"
                         except Exception as clone_error:
                             bar.title = "-> Cloning failed!"
@@ -389,7 +394,7 @@ class IacProvider(Provider):
                             logger.info(f"{line}")
 
             try:
-                output = json.loads(process.stdout)["Results"]
+                output = json.loads(process.stdout).get("Results", [])
 
                 if not output:
                     logger.warning("No findings returned from Trivy scan")
@@ -516,17 +521,17 @@ class IacProvider(Provider):
 
             if not scan_repository_url:
                 return Connection(
-                    is_connected=False,
-                    error="Repository URL is required"
+                    is_connected=False, error="Repository URL is required"
                 )
 
             # Try to clone the repository to test the connection
-            with tempfile.TemporaryDirectory() as temp_dir:
+            with tempfile.TemporaryDirectory():
                 try:
                     if oauth_app_token:
                         # If token is provided, use it for authentication
                         # Extract the domain and path from the URL
                         import re
+
                         url_pattern = r"(https?://)([^/]+)/(.+)"
                         match = re.match(url_pattern, scan_repository_url)
                         if match:
@@ -549,17 +554,17 @@ class IacProvider(Provider):
                     if "authentication" in error_msg.lower() or "401" in error_msg:
                         return Connection(
                             is_connected=False,
-                            error="Authentication failed. Please check your access token."
+                            error="Authentication failed. Please check your access token.",
                         )
                     elif "404" in error_msg or "not found" in error_msg.lower():
                         return Connection(
                             is_connected=False,
-                            error="Repository not found or not accessible."
+                            error="Repository not found or not accessible.",
                         )
                     else:
                         return Connection(
                             is_connected=False,
-                            error=f"Failed to connect to repository: {error_msg}"
+                            error=f"Failed to connect to repository: {error_msg}",
                         )
 
         except Exception as error:
@@ -567,5 +572,5 @@ class IacProvider(Provider):
                 raise
             return Connection(
                 is_connected=False,
-                error=f"Unexpected error testing connection: {str(error)}"
+                error=f"Unexpected error testing connection: {str(error)}",
             )

@@ -172,7 +172,7 @@ export const ConnectAccountForm = () => {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmitClient)}
-        className="flex flex-col space-y-4"
+        className="flex flex-col gap-4"
       >
         {/* Step 1: Provider selection */}
         {prevStep === 1 && (
@@ -211,7 +211,7 @@ export const ConnectAccountForm = () => {
           </>
         )}
         {/* Navigation buttons */}
-        <div className="flex w-full justify-end sm:space-x-6">
+        <div className="flex w-full justify-end sm:gap-6">
           {/* Show "Back" button only in Step 2 */}
           {prevStep === 2 && (
             <CustomButton

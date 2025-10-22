@@ -1,4 +1,5 @@
 import { tool } from "@langchain/core/tools";
+import { z } from "zod";
 
 import {
   getLighthouseLatestResources,
@@ -7,9 +8,19 @@ import {
 } from "@/actions/lighthouse/resources";
 import { getResourceSchema, getResourcesSchema } from "@/types/lighthouse";
 
+const parseResourcesInput = (input: unknown) =>
+  input as z.infer<typeof getResourcesSchema>;
+
 export const getResourcesTool = tool(
-  async ({ page, query, sort, filters, fields }) => {
-    return await getLighthouseResources({ page, query, sort, filters, fields });
+  async (input) => {
+    const typedInput = parseResourcesInput(input);
+    return await getLighthouseResources({
+      page: typedInput.page,
+      query: typedInput.query,
+      sort: typedInput.sort,
+      filters: typedInput.filters,
+      fields: typedInput.fields,
+    });
   },
   {
     name: "getResources",
@@ -20,8 +31,13 @@ export const getResourcesTool = tool(
 );
 
 export const getResourceTool = tool(
-  async ({ id, fields, include }) => {
-    return await getLighthouseResourceById({ id, fields, include });
+  async (input) => {
+    const typedInput = input as z.infer<typeof getResourceSchema>;
+    return await getLighthouseResourceById({
+      id: typedInput.id,
+      fields: typedInput.fields,
+      include: typedInput.include,
+    });
   },
   {
     name: "getResource",
@@ -32,13 +48,14 @@ export const getResourceTool = tool(
 );
 
 export const getLatestResourcesTool = tool(
-  async ({ page, query, sort, filters, fields }) => {
+  async (input) => {
+    const typedInput = parseResourcesInput(input);
     return await getLighthouseLatestResources({
-      page,
-      query,
-      sort,
-      filters,
-      fields,
+      page: typedInput.page,
+      query: typedInput.query,
+      sort: typedInput.sort,
+      filters: typedInput.filters,
+      fields: typedInput.fields,
     });
   },
   {

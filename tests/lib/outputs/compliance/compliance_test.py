@@ -15,6 +15,7 @@ class TestCompliance:
         check_compliance = [
             Compliance(
                 Framework="CIS",
+                Name="CIS Amazon Web Services Foundations Benchmark v1.4.0",
                 Provider="AWS",
                 Version="1.4",
                 Description="The CIS Benchmark for CIS Amazon Web Services Foundations Benchmark, v1.4.0, Level 1 and 2 provides prescriptive guidance for configuring security options for a subset of Amazon Web Services. It has an emphasis on foundational, testable, and architecture agnostic settings",
@@ -42,6 +43,7 @@ class TestCompliance:
             ),
             Compliance(
                 Framework="CIS",
+                Name="CIS Amazon Web Services Foundations Benchmark v1.5.0",
                 Provider="AWS",
                 Version="1.5",
                 Description="The CIS Amazon Web Services Foundations Benchmark provides prescriptive guidance for configuring security options for a subset of Amazon Web Services with an emphasis on foundational, testable, and architecture agnostic settings.",
@@ -95,6 +97,7 @@ class TestCompliance:
         check_compliance = [
             Compliance(
                 Framework="CIS",
+                Name="CIS Google Cloud Platform Foundation Benchmark v2.0.0",
                 Provider="GCP",
                 Version="2.0",
                 Description="This CIS Benchmark is the product of a community consensus process and consists of secure configuration guidelines developed for Google Cloud Computing Platform",
@@ -122,6 +125,7 @@ class TestCompliance:
             ),
             Compliance(
                 Framework="CIS",
+                Name="CIS Google Cloud Platform Foundation Benchmark v2.1.0",
                 Provider="GCP",
                 Version="2.1",
                 Description="This CIS Benchmark is the product of a community consensus process and consists of secure configuration guidelines developed for Google Cloud Computing Platform",
@@ -175,6 +179,7 @@ class TestCompliance:
         check_compliance = [
             Compliance(
                 Framework="CIS",
+                Name="CIS Microsoft Azure Foundations Benchmark v2.0.0",
                 Provider="Azure",
                 Version="2.0",
                 Description="This CIS Benchmark is the product of a community consensus process and consists of secure configuration guidelines developed for Azuee Platform",
@@ -202,6 +207,7 @@ class TestCompliance:
             ),
             Compliance(
                 Framework="CIS",
+                Name="CIS Microsoft Azure Foundations Benchmark v2.1.0",
                 Provider="Azure",
                 Version="2.1",
                 Description="This CIS Benchmark is the product of a community consensus process and consists of secure configuration guidelines developed for Azure Platform",
@@ -255,6 +261,7 @@ class TestCompliance:
         check_compliance = [
             Compliance(
                 Framework="CIS",
+                Name="CIS Kubernetes Benchmark v2.0.0",
                 Provider="Kubernetes",
                 Version="2.0",
                 Description="This CIS Benchmark is the product of a community consensus process and consists of secure configuration guidelines developed for Kubernetes Platform",
@@ -282,6 +289,7 @@ class TestCompliance:
             ),
             Compliance(
                 Framework="CIS",
+                Name="CIS Kubernetes Benchmark v2.1.0",
                 Provider="Kubernetes",
                 Version="2.1",
                 Description="This CIS Benchmark is the product of a community consensus process and consists of secure configuration guidelines developed for Kubernetes Platform",
@@ -335,6 +343,7 @@ class TestCompliance:
         check_compliance = [
             Compliance(
                 Framework="CIS",
+                Name="CIS GitHub Benchmark v1.0.0",
                 Provider="Github",
                 Version="1.0",
                 Description="This document provides prescriptive guidance for establishing a secure configuration posture for securing GitHub.",
@@ -382,3 +391,54 @@ class TestCompliance:
         assert get_check_compliance(finding, "github", bulk_checks_metadata) == {
             "CIS-1.0": ["1.1.11"],
         }
+
+
+class TestComplianceOutput:
+    """Test ComplianceOutput file extension parsing fix."""
+
+    def test_compliance_output_file_extension_with_dots(self):
+        """Test that ComplianceOutput correctly parses file extensions when framework names contain dots."""
+        from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
+
+        compliance = Compliance(
+            Framework="CIS",
+            Version="5.0",
+            Provider="AWS",
+            Name="CIS Amazon Web Services Foundations Benchmark v5.0",
+            Description="Test compliance framework",
+            Requirements=[],
+        )
+
+        # Test with problematic file path that contains dots in framework name
+        # This simulates the real scenario from Prowler App S3 integration
+        problematic_file_path = "output/compliance/prowler-output-123456789012-20250101120000_cis_5.0_aws.csv"
+
+        # Create GenericCompliance object with file_path (no explicit file_extension)
+        compliance_output = GenericCompliance(
+            findings=[], compliance=compliance, file_path=problematic_file_path
+        )
+
+        assert compliance_output.file_extension == ".csv"
+        assert compliance_output.file_extension != ".0_aws.csv"
+
+    def test_compliance_output_file_extension_explicit(self):
+        """Test that ComplianceOutput uses explicit file_extension when provided."""
+        from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
+
+        compliance = Compliance(
+            Framework="CIS",
+            Version="5.0",
+            Provider="AWS",
+            Name="CIS Amazon Web Services Foundations Benchmark v5.0",
+            Description="Test compliance framework",
+            Requirements=[],
+        )
+
+        compliance_output = GenericCompliance(
+            findings=[],
+            compliance=compliance,
+            file_path="output/compliance/test",
+            file_extension=".csv",
+        )
+
+        assert compliance_output.file_extension == ".csv"

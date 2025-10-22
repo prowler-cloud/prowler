@@ -1,7 +1,5 @@
 import botocore
-from boto3 import client
 from mock import patch
-from moto import mock_aws
 
 from prowler.providers.aws.services.dms.dms_service import DMS
 from tests.providers.aws.utils import (
@@ -60,6 +58,21 @@ def mock_make_api_call(self, operation_name, kwargs):
                 }
             ]
         }
+    elif operation_name == "DescribeReplicationTasks":
+        return {
+            "ReplicationTasks": [
+                {
+                    "ReplicationTaskIdentifier": "rep-task",
+                    "ReplicationTaskArn": f"arn:aws:dms:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:task:rep-task",
+                    "Status": "ready",
+                    "MigrationType": "full-load",
+                    "SourceEndpointArn": DMS_ENDPOINT_ARN,
+                    "TargetEndpointArn": DMS_ENDPOINT_ARN,
+                    "ReplicationInstanceArn": DMS_INSTANCE_ARN,
+                    "ReplicationTaskSettings": '{"Logging":{"EnableLogging":true,"LogComponents":[{"Id":"SOURCE_CAPTURE","Severity":"LOGGER_SEVERITY_DEFAULT"},{"Id":"SOURCE_UNLOAD","Severity":"LOGGER_SEVERITY_DEFAULT"}]}}',
+                }
+            ]
+        }
     elif operation_name == "ListTagsForResource":
         if kwargs["ResourceArn"] == DMS_INSTANCE_ARN:
             return {
@@ -72,6 +85,13 @@ def mock_make_api_call(self, operation_name, kwargs):
             return {
                 "TagList": [
                     {"Key": "Name", "Value": "dms-endpoint"},
+                    {"Key": "Owner", "Value": "admin"},
+                ]
+            }
+        elif "task:rep-task" in kwargs["ResourceArn"]:
+            return {
+                "TagList": [
+                    {"Key": "Name", "Value": "rep-task"},
                     {"Key": "Owner", "Value": "admin"},
                 ]
             }
@@ -152,44 +172,15 @@ class Test_DMS_Service:
             {"Key": "Owner", "Value": "admin"},
         ]
 
-    @mock_aws
     def test_describe_replication_tags(self):
-        dms_client = client("dms", region_name=AWS_REGION_US_EAST_1)
-
-        dms_client.create_replication_task(
-            ReplicationTaskIdentifier="rep-task",
-            SourceEndpointArn=DMS_ENDPOINT_ARN,
-            TargetEndpointArn=DMS_ENDPOINT_ARN,
-            MigrationType="full-load",
-            ReplicationTaskSettings="""
-                {
-                    "Logging": {
-                        "EnableLogging": true,
-                        "LogComponents": [
-                            {
-                                "Id": "SOURCE_CAPTURE",
-                                "Severity": "LOGGER_SEVERITY_DEFAULT"
-                            },
-                            {
-                                "Id": "SOURCE_UNLOAD",
-                                "Severity": "LOGGER_SEVERITY_DEFAULT"
-                            }
-                        ]
-                    }
-                }
-            """,
-            TableMappings="",
-            ReplicationInstanceArn=DMS_INSTANCE_ARN,
-        )
-
-        dms_replication_task_arn = dms_client.describe_replication_tasks()[
-            "ReplicationTasks"
-        ][0]["ReplicationTaskArn"]
-
         aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
         )
         dms = DMS(aws_provider)
+
+        dms_replication_task_arn = (
+            f"arn:aws:dms:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:task:rep-task"
+        )
 
         assert dms.replication_tasks[dms_replication_task_arn].id == "rep-task"
         assert (
@@ -209,3 +200,7 @@ class Test_DMS_Service:
             dms.replication_tasks[dms_replication_task_arn].target_endpoint_arn
             == DMS_ENDPOINT_ARN
         )
+        assert dms.replication_tasks[dms_replication_task_arn].tags == [
+            {"Key": "Name", "Value": "rep-task"},
+            {"Key": "Owner", "Value": "admin"},
+        ]

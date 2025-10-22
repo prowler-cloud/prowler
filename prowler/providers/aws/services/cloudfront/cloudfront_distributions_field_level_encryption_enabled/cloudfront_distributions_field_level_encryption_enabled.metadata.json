@@ -1,26 +1,33 @@
 {
   "Provider": "aws",
   "CheckID": "cloudfront_distributions_field_level_encryption_enabled",
-  "CheckTitle": "Check if CloudFront distributions have Field Level Encryption enabled.",
-  "CheckType": [],
+  "CheckTitle": "CloudFront distribution has Field Level Encryption enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Effects/Data Exposure"
+  ],
   "ServiceName": "cloudfront",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:cloudfront:region:account-id:distribution/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsCloudFrontDistribution",
-  "Description": "Check if CloudFront distributions have Field Level Encryption enabled.",
-  "Risk": "Allows you protect specific data throughout system processing so that only certain applications can see it.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/field-level-encryption.html",
+  "Description": "CloudFront distributions have the default cache behavior associated with **Field-Level Encryption** via `field_level_encryption_id`, targeting specified request fields for edge encryption.",
+  "Risk": "Absent **field-level encryption**, sensitive inputs (PII, payment data, credentials) may surface in origin paths, logs, or middleware in plaintext. This undermines **confidentiality**, enables data exfiltration and insider misuse, and can lead to session or account compromise if tokens are captured.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/field-level-encryption.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/field-level-encryption-enabled.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/field-level-encryption-enabled.html",
-      "Terraform": ""
+      "CLI": "aws cloudfront create-field-level-encryption-config --field-level-encryption-config file://fle-config.json && aws cloudfront get-distribution-config --id <DISTRIBUTION_ID> --output json > current-config.json && echo 'Manually edit current-config.json to add FieldLevelEncryptionId to DefaultCacheBehavior, then run:' && echo 'aws cloudfront update-distribution --id <DISTRIBUTION_ID> --distribution-config file://current-config.json --if-match $(aws cloudfront get-distribution-config --id <DISTRIBUTION_ID> --query \"ETag\" --output text)'",
+      "NativeIaC": "```yaml\n# CloudFormation: Enable Field Level Encryption on Default Cache Behavior\nResources:\n  FLEConfig:\n    Type: AWS::CloudFront::FieldLevelEncryptionConfig\n    Properties:\n      FieldLevelEncryptionConfig:\n        CallerReference: !Ref AWS::StackName\n        ContentTypeProfileConfig:\n          ForwardWhenContentTypeIsUnknown: true\n          ContentTypeProfiles:\n            Quantity: 0\n\n  <example_resource_name>:\n    Type: AWS::CloudFront::Distribution\n    Properties:\n      DistributionConfig:\n        Enabled: true\n        Origins:\n          - DomainName: \"<example_resource_name>.s3.amazonaws.com\"\n            Id: \"<example_resource_id>\"\n            S3OriginConfig: {}\n        DefaultCacheBehavior:\n          TargetOriginId: \"<example_resource_id>\"\n          ViewerProtocolPolicy: redirect-to-https\n          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6\n          FieldLevelEncryptionId: !Ref FLEConfig  # Critical: enables FLE on the default cache behavior\n```",
+      "Other": "1. In the AWS Console, go to CloudFront\n2. If you don't have a Field-level encryption configuration:\n   - In the left menu, click Public keys > Add public key (paste your RSA public key)\n   - Click Field-level encryption > Create profile (choose the public key and add fields to encrypt)\n   - Click Field-level encryption > Create configuration (set the profile as Default profile)\n3. Attach it to your distribution:\n   - Go to Distributions > select <example_resource_id>\n   - Choose Behaviors > select Default (*) > Edit\n   - Set Field-level encryption configuration to your created configuration\n   - Click Save changes and wait for deployment",
+      "Terraform": "```hcl\n# Enable Field Level Encryption on Default Cache Behavior\nresource \"aws_cloudfront_field_level_encryption_config\" \"fle\" {\n  content_type_profile_config {\n    forward_when_content_type_is_unknown = true\n  }\n}\n\nresource \"aws_cloudfront_distribution\" \"<example_resource_name>\" {\n  enabled = true\n\n  origin {\n    domain_name = \"<example_resource_name>.s3.amazonaws.com\"\n    origin_id   = \"<example_resource_id>\"\n  }\n\n  default_cache_behavior {\n    target_origin_id       = \"<example_resource_id>\"\n    viewer_protocol_policy = \"redirect-to-https\"\n    cache_policy_id        = \"658327ea-f89d-4fab-a63d-7e88639e58f6\"\n    field_level_encryption_id = aws_cloudfront_field_level_encryption_config.fle.id # Critical: enables FLE\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Check if applicable to any sensitive data. This encryption ensures that only applications that need the data—and have the credentials to decrypt it - are able to do so.",
-      "Url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/field-level-encryption.html"
+      "Text": "Enable **Field-Level Encryption** for sensitive request fields and bind it to relevant cache behaviors. Apply **least privilege** to decryption keys, rotate and monitor keys, and separate duties. As **defense in depth**, minimize data collection, avoid logging secrets, require HTTPS end-to-end, and validate inputs.",
+      "Url": "https://hub.prowler.com/check/cloudfront_distributions_field_level_encryption_enabled"
     }
   },
   "Categories": [

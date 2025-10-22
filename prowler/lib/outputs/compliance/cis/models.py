@@ -35,6 +35,8 @@ class AWSCISModel(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str
 
 
 class AzureCISModel(BaseModel):
@@ -67,6 +69,8 @@ class AzureCISModel(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str
 
 
 class M365CISModel(BaseModel):
@@ -99,6 +103,8 @@ class M365CISModel(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str
 
 
 class GCPCISModel(BaseModel):
@@ -130,6 +136,8 @@ class GCPCISModel(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str
 
 
 class KubernetesCISModel(BaseModel):
@@ -162,6 +170,8 @@ class KubernetesCISModel(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str
 
 
 class GithubCISModel(BaseModel):
@@ -193,6 +203,52 @@ class GithubCISModel(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str
+
+
+class OCICISModel(BaseModel):
+    """
+    OCICISModel generates a finding's output in OCI CIS Compliance format.
+    """
+
+    Provider: str
+    Description: str
+    TenancyId: str
+    Region: str
+    AssessmentDate: str
+    Requirements_Id: str
+    Requirements_Description: str
+    Requirements_Attributes_Section: str
+    Requirements_Attributes_SubSection: Optional[str] = None
+    Requirements_Attributes_Profile: str
+    Requirements_Attributes_AssessmentStatus: str
+    Requirements_Attributes_Description: str
+    Requirements_Attributes_RationaleStatement: str
+    Requirements_Attributes_ImpactStatement: str
+    Requirements_Attributes_RemediationProcedure: str
+    Requirements_Attributes_AuditProcedure: str
+    Requirements_Attributes_AdditionalInformation: str
+    Requirements_Attributes_DefaultValue: Optional[str] = None
+    Requirements_Attributes_References: str
+    Status: str
+    StatusExtended: str
+    ResourceId: str
+    ResourceName: str
+    CheckId: str
+    Muted: bool
+    Framework: str
+    Name: str
+
+
+# Compliance models alias for backwards compatibility
+CIS_AWS = AWSCISModel
+CIS_Azure = AzureCISModel
+CIS_GCP = GCPCISModel
+CIS_Kubernetes = KubernetesCISModel
+CIS_M365 = M365CISModel
+CIS_Github = GithubCISModel
+CIS_OCI = OCICISModel
 
 
 # TODO: Create a parent class for the common fields of CIS and have the specific classes from each provider to inherit from it.

@@ -79,14 +79,20 @@ class Test_rds_instance__no_event_subscriptions:
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_parameter_group(
             DBParameterGroupName="test",
-            DBParameterGroupFamily="default.aurora-postgresql14",
+            DBParameterGroupFamily="default.postgres14",
             Description="test parameter group",
+        )
+        conn.create_db_cluster(
+            DBClusterIdentifier="db-cluster-1",
+            Engine="postgres",
+            MasterUsername="postgres",
+            MasterUserPassword="password",
         )
         conn.create_db_instance(
             DBInstanceIdentifier="db-master-1",
             AllocatedStorage=10,
-            Engine="aurora-postgresql",
-            DBName="aurora-postgres",
+            Engine="postgres",
+            DBName="postgres",
             DBInstanceClass="db.m1.small",
             DBParameterGroupName="test",
             DBClusterIdentifier="db-cluster-1",
@@ -139,14 +145,20 @@ class Test_rds_instance__no_event_subscriptions:
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_parameter_group(
             DBParameterGroupName="test",
-            DBParameterGroupFamily="default.aurora-postgresql14",
+            DBParameterGroupFamily="default.postgres14",
             Description="test parameter group",
+        )
+        conn.create_db_cluster(
+            DBClusterIdentifier="db-cluster-1",
+            Engine="postgres",
+            MasterUsername="postgres",
+            MasterUserPassword="password",
         )
         conn.create_db_instance(
             DBInstanceIdentifier="db-master-1",
             AllocatedStorage=10,
-            Engine="aurora-postgresql",
-            DBName="aurora-postgres",
+            Engine="postgres",
+            DBName="postgres",
             DBInstanceClass="db.m1.small",
             DBParameterGroupName="test",
             DBClusterIdentifier="db-cluster-1",
@@ -197,14 +209,20 @@ class Test_rds_instance__no_event_subscriptions:
         conn = client("rds", region_name=AWS_REGION_US_EAST_1)
         conn.create_db_parameter_group(
             DBParameterGroupName="test",
-            DBParameterGroupFamily="default.aurora-postgresql14",
+            DBParameterGroupFamily="default.postgres14",
             Description="test parameter group",
+        )
+        conn.create_db_cluster(
+            DBClusterIdentifier="db-cluster-1",
+            Engine="postgres",
+            MasterUsername="postgres",
+            MasterUserPassword="password",
         )
         conn.create_db_instance(
             DBInstanceIdentifier="db-master-1",
             AllocatedStorage=10,
-            Engine="aurora-postgresql",
-            DBName="aurora-postgres",
+            Engine="postgres",
+            DBName="postgres",
             DBInstanceClass="db.m1.small",
             DBParameterGroupName="test",
             DBClusterIdentifier="db-cluster-1",

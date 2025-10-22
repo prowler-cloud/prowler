@@ -1,57 +1,73 @@
 [
   {
     "section": "dependencies",
+    "name": "@ai-sdk/langchain",
+    "from": "1.0.59",
+    "to": "1.0.59",
+    "strategy": "installed",
+    "generatedAt": "2025-10-01T11:13:12.025Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@ai-sdk/react",
+    "from": "2.0.59",
+    "to": "2.0.59",
+    "strategy": "installed",
+    "generatedAt": "2025-10-01T11:13:12.025Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@heroui/react",
+    "from": "2.8.4",
+    "to": "2.8.4",
+    "strategy": "installed",
+    "generatedAt": "2025-09-29T14:26:25.838Z"
+  },
+  {
+    "section": "dependencies",
     "name": "@hookform/resolvers",
     "from": "3.10.0",
-    "to": "3.10.0",
+    "to": "5.2.2",
     "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.548Z"
+    "generatedAt": "2025-10-01T15:09:44.056Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@langchain/core",
+    "from": "0.3.77",
+    "to": "0.3.77",
+    "strategy": "installed",
+    "generatedAt": "2025-09-23T10:22:08.630Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@langchain/langgraph",
+    "from": "0.4.9",
+    "to": "0.4.9",
+    "strategy": "installed",
+    "generatedAt": "2025-09-23T10:22:08.630Z"
   },
   {
     "section": "dependencies",
     "name": "@langchain/langgraph-supervisor",
     "from": "0.0.12",
-    "to": "0.0.12",
+    "to": "0.0.20",
     "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.548Z"
+    "generatedAt": "2025-09-23T10:22:08.630Z"
   },
   {
     "section": "dependencies",
     "name": "@langchain/openai",
     "from": "0.6.9",
-    "to": "0.6.9",
+    "to": "0.5.18",
     "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.548Z"
+    "generatedAt": "2025-09-23T10:22:08.630Z"
   },
   {
     "section": "dependencies",
     "name": "@next/third-parties",
     "from": "15.3.5",
     "to": "15.3.5",
-    "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.548Z"
-  },
-  {
-    "section": "dependencies",
-    "name": "@nextui-org/react",
-    "from": "2.4.8",
-    "to": "2.4.8",
-    "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.548Z"
-  },
-  {
-    "section": "dependencies",
-    "name": "@nextui-org/system",
-    "from": "2.2.1",
-    "to": "2.2.1",
-    "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.548Z"
-  },
-  {
-    "section": "dependencies",
-    "name": "@nextui-org/theme",
-    "from": "2.2.5",
-    "to": "2.2.5",
     "strategy": "installed",
     "generatedAt": "2025-09-10T11:50:17.548Z"
   },
@@ -137,6 +153,14 @@
   },
   {
     "section": "dependencies",
+    "name": "@tailwindcss/postcss",
+    "from": "4.1.13",
+    "to": "4.1.13",
+    "strategy": "installed",
+    "generatedAt": "2025-09-24T15:04:48.761Z"
+  },
+  {
+    "section": "dependencies",
     "name": "@tailwindcss/typography",
     "from": "0.5.16",
     "to": "0.5.16",
@@ -163,9 +187,9 @@
     "section": "dependencies",
     "name": "ai",
     "from": "4.3.16",
-    "to": "4.3.16",
+    "to": "5.0.59",
     "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.548Z"
+    "generatedAt": "2025-10-01T10:03:22.788Z"
   },
   {
     "section": "dependencies",
@@ -259,9 +283,9 @@
     "section": "dependencies",
     "name": "next",
     "from": "14.2.32",
-    "to": "14.2.32",
+    "to": "15.5.3",
     "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.548Z"
+    "generatedAt": "2025-09-23T10:22:08.630Z"
   },
   {
     "section": "dependencies",
@@ -291,17 +315,17 @@
     "section": "dependencies",
     "name": "react",
     "from": "18.3.1",
-    "to": "18.3.1",
+    "to": "19.1.1",
     "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.548Z"
+    "generatedAt": "2025-09-23T10:22:08.630Z"
   },
   {
     "section": "dependencies",
     "name": "react-dom",
     "from": "18.3.1",
-    "to": "18.3.1",
+    "to": "19.1.1",
     "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.548Z"
+    "generatedAt": "2025-09-23T10:22:08.630Z"
   },
   {
     "section": "dependencies",
@@ -377,6 +401,14 @@
   },
   {
     "section": "dependencies",
+    "name": "tw-animate-css",
+    "from": "1.4.0",
+    "to": "1.4.0",
+    "strategy": "installed",
+    "generatedAt": "2025-10-15T07:57:13.225Z"
+  },
+  {
+    "section": "dependencies",
     "name": "uuid",
     "from": "11.1.0",
     "to": "11.1.0",
@@ -387,17 +419,17 @@
     "section": "dependencies",
     "name": "zod",
     "from": "3.25.73",
-    "to": "3.25.73",
+    "to": "4.1.11",
     "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.548Z"
+    "generatedAt": "2025-10-01T09:40:25.207Z"
   },
   {
     "section": "dependencies",
     "name": "zustand",
     "from": "4.5.7",
-    "to": "4.5.7",
+    "to": "5.0.8",
     "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.548Z"
+    "generatedAt": "2025-10-01T09:40:25.207Z"
   },
   {
     "section": "devDependencies",
@@ -427,17 +459,17 @@
     "section": "devDependencies",
     "name": "@types/react",
     "from": "18.3.3",
-    "to": "18.3.3",
+    "to": "19.1.13",
     "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.554Z"
+    "generatedAt": "2025-09-23T10:22:08.630Z"
   },
   {
     "section": "devDependencies",
     "name": "@types/react-dom",
     "from": "18.3.0",
-    "to": "18.3.0",
+    "to": "19.1.9",
     "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.554Z"
+    "generatedAt": "2025-09-23T10:22:08.630Z"
   },
   {
     "section": "devDependencies",
@@ -473,6 +505,14 @@
   },
   {
     "section": "devDependencies",
+    "name": "babel-plugin-react-compiler",
+    "from": "19.1.0-rc.3",
+    "to": "19.1.0-rc.3",
+    "strategy": "installed",
+    "generatedAt": "2025-09-23T10:22:08.630Z"
+  },
+  {
+    "section": "devDependencies",
     "name": "eslint",
     "from": "8.57.1",
     "to": "8.57.1",
@@ -483,9 +523,9 @@
     "section": "devDependencies",
     "name": "eslint-config-next",
     "from": "14.2.32",
-    "to": "14.2.32",
+    "to": "15.5.3",
     "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.554Z"
+    "generatedAt": "2025-09-23T10:22:08.630Z"
   },
   {
     "section": "devDependencies",
@@ -603,9 +643,9 @@
     "section": "devDependencies",
     "name": "prettier-plugin-tailwindcss",
     "from": "0.6.13",
-    "to": "0.6.13",
+    "to": "0.6.14",
     "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.554Z"
+    "generatedAt": "2025-09-24T13:59:11.231Z"
   },
   {
     "section": "devDependencies",
@@ -619,9 +659,9 @@
     "section": "devDependencies",
     "name": "tailwindcss",
     "from": "3.4.3",
-    "to": "3.4.3",
+    "to": "4.1.13",
     "strategy": "installed",
-    "generatedAt": "2025-09-10T11:50:17.554Z"
+    "generatedAt": "2025-09-24T13:59:11.231Z"
   },
   {
     "section": "devDependencies",

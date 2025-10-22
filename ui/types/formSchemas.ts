@@ -72,7 +72,7 @@ export const awsCredentialsTypeSchema = z.object({
 export const addProviderFormSchema = z
   .object({
     providerType: z.enum(PROVIDER_TYPES, {
-      required_error: "Please select a provider type",
+      error: "Please select a provider type",
     }),
   })
   .and(
@@ -130,55 +130,56 @@ export const addCredentialsFormSchema = (
         ? {
             [ProviderCredentialFields.AWS_ACCESS_KEY_ID]: z
               .string()
-              .nonempty("AWS Access Key ID is required"),
+              .min(1, "AWS Access Key ID is required"),
             [ProviderCredentialFields.AWS_SECRET_ACCESS_KEY]: z
               .string()
-              .nonempty("AWS Secret Access Key is required"),
+              .min(1, "AWS Secret Access Key is required"),
             [ProviderCredentialFields.AWS_SESSION_TOKEN]: z.string().optional(),
           }
         : providerType === "azure"
           ? {
               [ProviderCredentialFields.CLIENT_ID]: z
                 .string()
-                .nonempty("Client ID is required"),
+                .min(1, "Client ID is required"),
               [ProviderCredentialFields.CLIENT_SECRET]: z
                 .string()
-                .nonempty("Client Secret is required"),
+                .min(1, "Client Secret is required"),
               [ProviderCredentialFields.TENANT_ID]: z
                 .string()
-                .nonempty("Tenant ID is required"),
+                .min(1, "Tenant ID is required"),
             }
           : providerType === "gcp"
             ? {
                 [ProviderCredentialFields.CLIENT_ID]: z
                   .string()
-                  .nonempty("Client ID is required"),
+                  .min(1, "Client ID is required"),
                 [ProviderCredentialFields.CLIENT_SECRET]: z
                   .string()
-                  .nonempty("Client Secret is required"),
+                  .min(1, "Client Secret is required"),
                 [ProviderCredentialFields.REFRESH_TOKEN]: z
                   .string()
-                  .nonempty("Refresh Token is required"),
+                  .min(1, "Refresh Token is required"),
               }
             : providerType === "kubernetes"
               ? {
                   [ProviderCredentialFields.KUBECONFIG_CONTENT]: z
                     .string()
-                    .nonempty("Kubeconfig Content is required"),
+                    .min(1, "Kubeconfig Content is required"),
                 }
               : providerType === "m365"
                 ? {
                     [ProviderCredentialFields.CLIENT_ID]: z
                       .string()
-                      .nonempty("Client ID is required"),
+                      .min(1, "Client ID is required"),
                     [ProviderCredentialFields.CLIENT_SECRET]: z
                       .string()
-                      .nonempty("Client Secret is required"),
+                      .optional(),
+                    [ProviderCredentialFields.CERTIFICATE_CONTENT]: z
+                      .string()
+                      .optional(),
                     [ProviderCredentialFields.TENANT_ID]: z
                       .string()
-                      .nonempty("Tenant ID is required"),
-                    [ProviderCredentialFields.USER]: z.string().optional(),
-                    [ProviderCredentialFields.PASSWORD]: z.string().optional(),
+                      .min(1, "Tenant ID is required"),
                   }
                 : providerType === "github"
                   ? {
@@ -208,23 +209,26 @@ export const addCredentialsFormSchema = (
     })
     .superRefine((data: Record<string, any>, ctx) => {
       if (providerType === "m365") {
-        const hasUser = !!data[ProviderCredentialFields.USER];
-        const hasPassword = !!data[ProviderCredentialFields.PASSWORD];
-
-        if (hasUser && !hasPassword) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "If you provide a user, you must also provide a password",
-            path: [ProviderCredentialFields.PASSWORD],
-          });
-        }
-
-        if (hasPassword && !hasUser) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "If you provide a password, you must also provide a user",
-            path: [ProviderCredentialFields.USER],
-          });
+        // Validate based on the via parameter
+        if (via === "app_client_secret") {
+          const clientSecret = data[ProviderCredentialFields.CLIENT_SECRET];
+          if (!clientSecret || clientSecret.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              message: "Client Secret is required",
+              path: [ProviderCredentialFields.CLIENT_SECRET],
+            });
+          }
+        } else if (via === "app_certificate") {
+          const certificateContent =
+            data[ProviderCredentialFields.CERTIFICATE_CONTENT];
+          if (!certificateContent || certificateContent.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              message: "Certificate Content is required",
+              path: [ProviderCredentialFields.CERTIFICATE_CONTENT],
+            });
+          }
         }
       }
 
@@ -233,7 +237,7 @@ export const addCredentialsFormSchema = (
         if (via === "personal_access_token") {
           if (!data[ProviderCredentialFields.PERSONAL_ACCESS_TOKEN]) {
             ctx.addIssue({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: "Personal Access Token is required",
               path: [ProviderCredentialFields.PERSONAL_ACCESS_TOKEN],
             });
@@ -241,7 +245,7 @@ export const addCredentialsFormSchema = (
         } else if (via === "oauth_app") {
           if (!data[ProviderCredentialFields.OAUTH_APP_TOKEN]) {
             ctx.addIssue({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: "OAuth App Token is required",
               path: [ProviderCredentialFields.OAUTH_APP_TOKEN],
             });
@@ -249,14 +253,14 @@ export const addCredentialsFormSchema = (
         } else if (via === "github_app") {
           if (!data[ProviderCredentialFields.GITHUB_APP_ID]) {
             ctx.addIssue({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: "GitHub App ID is required",
               path: [ProviderCredentialFields.GITHUB_APP_ID],
             });
           }
           if (!data[ProviderCredentialFields.GITHUB_APP_KEY]) {
             ctx.addIssue({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: "GitHub App Private Key is required",
               path: [ProviderCredentialFields.GITHUB_APP_KEY],
             });
@@ -273,7 +277,7 @@ export const addCredentialsRoleFormSchema = (providerType: string) =>
           [ProviderCredentialFields.PROVIDER_TYPE]: z.string(),
           [ProviderCredentialFields.ROLE_ARN]: z
             .string()
-            .nonempty("AWS Role ARN is required"),
+            .min(1, "AWS Role ARN is required"),
           [ProviderCredentialFields.EXTERNAL_ID]: z.string().optional(),
           [ProviderCredentialFields.AWS_ACCESS_KEY_ID]: z.string().optional(),
           [ProviderCredentialFields.AWS_SECRET_ACCESS_KEY]: z
@@ -361,8 +365,8 @@ export const editProviderFormSchema = (currentAlias: string) =>
   });
 
 export const editInviteFormSchema = z.object({
-  invitationId: z.string().uuid(),
-  invitationEmail: z.string().email(),
+  invitationId: z.uuid(),
+  invitationEmail: z.email(),
   expires_at: z.string().optional(),
   role: z.string().optional(),
 });
@@ -374,10 +378,7 @@ export const editUserFormSchema = () =>
       .min(3, { message: "The name must have at least 3 characters." })
       .max(150, { message: "The name cannot exceed 150 characters." })
       .optional(),
-    email: z
-      .string()
-      .email({ message: "Please enter a valid email address." })
-      .optional(),
+    email: z.email({ error: "Please enter a valid email address." }).optional(),
     password: z
       .string()
       .min(1, { message: "The password cannot be empty." })
@@ -407,7 +408,7 @@ export const mutedFindingsConfigFormSchema = z.object({
       const yamlValidation = validateYaml(val);
       if (!yamlValidation.isValid) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: `Invalid YAML format: ${yamlValidation.error}`,
         });
         return;
@@ -416,7 +417,7 @@ export const mutedFindingsConfigFormSchema = z.object({
       const mutelistValidation = validateMutelistYaml(val);
       if (!mutelistValidation.isValid) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: `Invalid mutelist structure: ${mutelistValidation.error}`,
         });
       }
