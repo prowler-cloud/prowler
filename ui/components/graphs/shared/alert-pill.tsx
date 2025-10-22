@@ -17,13 +17,17 @@ export function AlertPill({
 }: AlertPillProps) {
   return (
     <div className="flex items-center gap-2">
-      <div className="bg-alert-pill-bg flex items-center gap-1 rounded-full px-2 py-1">
-        <AlertTriangle size={iconSize} className="text-alert-pill-text" />
+      <div
+        className="flex items-center gap-1 rounded-full px-2 py-1"
+        style={{ backgroundColor: "var(--chart-alert-bg)" }}
+      >
+        <AlertTriangle
+          size={iconSize}
+          style={{ color: "var(--chart-alert-text)" }}
+        />
         <span
-          className={cn(
-            `text-${textSize}`,
-            "text-alert-pill-text font-semibold",
-          )}
+          className={cn(`text-${textSize}`, "font-semibold")}
+          style={{ color: "var(--chart-alert-text)" }}
         >
           {value}
         </span>
