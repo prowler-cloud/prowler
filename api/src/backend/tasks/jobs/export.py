@@ -20,10 +20,10 @@ from prowler.lib.outputs.asff.asff import ASFF
 from prowler.lib.outputs.compliance.aws_well_architected.aws_well_architected import (
     AWSWellArchitected,
 )
+from prowler.lib.outputs.compliance.c5.c5_aws import AWSC5
 from prowler.lib.outputs.compliance.ccc.ccc_aws import CCC_AWS
 from prowler.lib.outputs.compliance.ccc.ccc_azure import CCC_Azure
 from prowler.lib.outputs.compliance.ccc.ccc_gcp import CCC_GCP
-from prowler.lib.outputs.compliance.c5.c5_aws import AWSC5
 from prowler.lib.outputs.compliance.cis.cis_aws import AWSCIS
 from prowler.lib.outputs.compliance.cis.cis_azure import AzureCIS
 from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
@@ -215,12 +215,13 @@ def _upload_to_s3(tenant_id: str, zip_path: str, scan_id: str) -> str | None:
 
         # Upload the compliance directory to the S3 bucket
         compliance_dir = os.path.join(os.path.dirname(zip_path), "compliance")
-        for filename in os.listdir(compliance_dir):
-            local_path = os.path.join(compliance_dir, filename)
-            if not os.path.isfile(local_path):
-                continue
-            file_key = f"{tenant_id}/{scan_id}/compliance/{filename}"
-            s3.upload_file(Filename=local_path, Bucket=bucket, Key=file_key)
+        if os.path.exists(compliance_dir) and os.path.isdir(compliance_dir):
+            for filename in os.listdir(compliance_dir):
+                local_path = os.path.join(compliance_dir, filename)
+                if not os.path.isfile(local_path):
+                    continue
+                file_key = f"{tenant_id}/{scan_id}/compliance/{filename}"
+                s3.upload_file(Filename=local_path, Bucket=bucket, Key=file_key)
 
         return f"s3://{base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET}/{zip_key}"
     except (ClientError, NoCredentialsError, ParamValidationError, ValueError) as e:
