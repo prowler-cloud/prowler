@@ -1,6 +1,6 @@
-name: Prowler - Release Preparation
+name: 'Tools: Prepare Release'
 
-run-name: Prowler Release Preparation for ${{ inputs.prowler_version }}
+run-name: 'Prepare Release for Prowler ${{ inputs.prowler_version }}'
 
 on:
   workflow_dispatch:
@@ -10,18 +10,23 @@ on:
         required: true
         type: string
 
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.prowler_version }}
+  cancel-in-progress: false
+
 env:
-  PROWLER_VERSION: ${{ github.event.inputs.prowler_version }}
+  PROWLER_VERSION: ${{ inputs.prowler_version }}
 
 jobs:
   prepare-release:
     if: github.repository == 'prowler-cloud/prowler'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: write
       pull-requests: write
     steps:
-    - name: Checkout code
+    - name: Checkout repository
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       with:
         fetch-depth: 0
@@ -34,7 +39,7 @@ jobs:
 
     - name: Install Poetry
       run: |
-        python3 -m pip install --user poetry
+        python3 -m pip install --user poetry==2.1.1
         echo "$HOME/.local/bin" >> $GITHUB_PATH
 
     - name: Configure Git
