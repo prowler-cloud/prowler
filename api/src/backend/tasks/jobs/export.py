@@ -220,13 +220,12 @@ def _upload_to_s3(tenant_id: str, zip_path: str, scan_id: str) -> str | None:
 
         # Upload the compliance directory to the S3 bucket
         compliance_dir = os.path.join(os.path.dirname(zip_path), "compliance")
-        if os.path.exists(compliance_dir) and os.path.isdir(compliance_dir):
-            for filename in os.listdir(compliance_dir):
-                local_path = os.path.join(compliance_dir, filename)
-                if not os.path.isfile(local_path):
-                    continue
-                file_key = f"{tenant_id}/{scan_id}/compliance/{filename}"
-                s3.upload_file(Filename=local_path, Bucket=bucket, Key=file_key)
+        for filename in os.listdir(compliance_dir):
+            local_path = os.path.join(compliance_dir, filename)
+            if not os.path.isfile(local_path):
+                continue
+            file_key = f"{tenant_id}/{scan_id}/compliance/{filename}"
+            s3.upload_file(Filename=local_path, Bucket=bucket, Key=file_key)
 
         return f"s3://{base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET}/{zip_key}"
     except (ClientError, NoCredentialsError, ParamValidationError, ValueError) as e:
