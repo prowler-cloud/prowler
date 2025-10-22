@@ -148,6 +148,23 @@ export const getLighthouseModels = async (providerType: string) => {
 };
 
 /**
+ * Get only model identifiers for a provider type.
+ * Returns minimal data to the client to avoid over-serializing API payloads.
+ */
+export const getLighthouseModelIds = async (
+  providerType: string,
+): Promise<{ data?: string[]; errors?: Array<{ detail: string }> }> => {
+  const result = await getLighthouseModels(providerType);
+  if ((result as any).errors) return result as any;
+  const ids = Array.isArray((result as any).data)
+    ? (result as any).data
+        .map((m: any) => m?.attributes?.model_id)
+        .filter((v: any) => typeof v === "string")
+    : [];
+  return { data: ids };
+};
+
+/**
  * Get tenant lighthouse configuration
  */
 export const getTenantConfig = async () => {
