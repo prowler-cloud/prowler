@@ -16,7 +16,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/shared/shadcn";
+} from "@/components/ui/select";
 import { getPaginationInfo } from "@/lib";
 import { MetaDataProps } from "@/types";
 
