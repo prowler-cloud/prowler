@@ -41,7 +41,6 @@ jobs:
               "PROWLER_PR_BODY": ${{ toJson(github.event.pull_request.body) }},
               "PROWLER_PR_URL": ${{ toJson(github.event.pull_request.html_url) }},
               "PROWLER_PR_MERGED_BY": "${{ github.event.pull_request.merged_by.login }}",
-              "PROWLER_PR_AUTHOR": "${{ github.event.pull_request.user.login }}",
               "PROWLER_PR_BASE_BRANCH": "${{ github.event.pull_request.base.ref }}",
               "PROWLER_PR_HEAD_BRANCH": "${{ github.event.pull_request.head.ref }}"
             }
