@@ -7,7 +7,7 @@ import type {
   GeoJsonProperties,
   Geometry,
 } from "geojson";
-import { AlertTriangle, ChevronDown, Info, MapPin } from "lucide-react";
+import { AlertTriangle, Info, MapPin } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { feature } from "topojson-client";
 import type {
@@ -15,6 +15,14 @@ import type {
   Objects,
   Topology,
 } from "topojson-specification";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/shared/shadcn";
 
 import { HorizontalBarChart } from "./horizontal-bar-chart";
 import { BarDataPoint } from "./types";
@@ -152,7 +160,10 @@ function MapTooltip({
         </span>
       </div>
       {location.change !== undefined && (
-        <p className="mt-1 text-xs" style={{ color: CHART_COLORS.textSecondary }}>
+        <p
+          className="mt-1 text-xs"
+          style={{ color: CHART_COLORS.textSecondary }}
+        >
           <span className="font-bold">
             {location.change > 0 ? "+" : ""}
             {location.change}%
@@ -180,7 +191,11 @@ function EmptyState() {
       }}
     >
       <div className="text-center">
-        <Info size={48} className="mx-auto mb-2" style={{ color: CHART_COLORS.textSecondary }} />
+        <Info
+          size={48}
+          className="mx-auto mb-2"
+          style={{ color: CHART_COLORS.textSecondary }}
+        />
         <p className="text-sm" style={{ color: CHART_COLORS.textSecondary }}>
           Select a location on the map to view details
         </p>
@@ -398,30 +413,26 @@ export function ThreatMap({
           >
             Threat Map
           </h3>
-          <div className="relative">
-            <select
-              value={selectedRegion}
-              onChange={(e) => setSelectedRegion(e.target.value)}
-              className="appearance-none rounded-lg border px-4 py-2 pr-10 text-sm focus:outline-none"
+          <Select value={selectedRegion} onValueChange={setSelectedRegion}>
+            <SelectTrigger
+              className="w-full rounded-lg"
               style={{
                 borderColor: CHART_COLORS.tooltipBorder,
                 backgroundColor: CHART_COLORS.tooltipBackground,
                 color: CHART_COLORS.textPrimary,
               }}
             >
-              <option value="All Regions">All Regions</option>
+              <SelectValue placeholder="All Regions" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All Regions">All Regions</SelectItem>
               {data.regions.map((region) => (
-                <option key={region} value={region}>
+                <SelectItem key={region} value={region}>
                   {region}
-                </option>
+                </SelectItem>
               ))}
-            </select>
-            <ChevronDown
-              size={16}
-              className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2"
-              style={{ color: CHART_COLORS.textSecondary }}
-            />
-          </div>
+            </SelectContent>
+          </Select>
         </div>
 
         <div
@@ -502,4 +513,3 @@ export function ThreatMap({
     </div>
   );
 }
-

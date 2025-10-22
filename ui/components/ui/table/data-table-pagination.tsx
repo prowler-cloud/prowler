@@ -10,16 +10,15 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
-import { getPaginationInfo } from "@/lib";
-import { MetaDataProps } from "@/types";
-
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../select/Select";
+} from "@/components/shared/shadcn";
+import { getPaginationInfo } from "@/lib";
+import { MetaDataProps } from "@/types";
 
 interface DataTablePaginationProps {
   metadata?: MetaDataProps;

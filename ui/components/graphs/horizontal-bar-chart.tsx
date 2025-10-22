@@ -99,7 +99,7 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
                       <div className="mt-2 flex items-center gap-2">
                         <Bell
                           size={14}
-                          style={{ color: "var(--chart-text-secondary)" }}
+                          style={{ color: "var(--chart-fail)" }}
                         />
                         <span
                           className="text-sm"

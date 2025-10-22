@@ -96,7 +96,9 @@ const CustomDot = (props: any) => {
       cx={cx}
       cy={cy}
       r={isSelected ? 9 : 6}
-      fill={isSelected ? "var(--chart-success-color)" : "var(--chart-radar-primary)"}
+      fill={
+        isSelected ? "var(--chart-success-color)" : "var(--chart-radar-primary)"
+      }
       fillOpacity={1}
       className={isSelected ? "drop-shadow-[0_0_8px_#86da26]" : ""}
       style={{

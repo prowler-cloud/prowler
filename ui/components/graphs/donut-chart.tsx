@@ -44,7 +44,10 @@ const CustomTooltip = ({ active, payload }: any) => {
           </span>
         </div>
         {data.change !== undefined && (
-          <p className="mt-2 text-xs" style={{ color: "var(--chart-text-secondary)" }}>
+          <p
+            className="mt-2 text-xs"
+            style={{ color: "var(--chart-text-secondary)" }}
+          >
             <span className="font-bold">
               {data.change > 0 ? "+" : ""}
               {data.change}%

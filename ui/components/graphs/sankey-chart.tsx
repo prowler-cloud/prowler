@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { Rectangle, ResponsiveContainer, Sankey, Tooltip } from "recharts";
 
-import { CHART_COLORS } from "./shared/constants";
 import { ChartTooltip } from "./shared/chart-tooltip";
+import { CHART_COLORS } from "./shared/constants";
 
 interface SankeyNode {
   name: string;
@@ -193,8 +193,7 @@ const CustomLink = (props: any) => {
   const color = COLORS[sourceName] || CHART_COLORS.defaultColor;
   const isHidden = targetName === "";
 
-  const isHovered =
-    props.hoveredLink !== null && props.hoveredLink === index;
+  const isHovered = props.hoveredLink !== null && props.hoveredLink === index;
   const hasHoveredLink = props.hoveredLink !== null;
 
   const pathD = `

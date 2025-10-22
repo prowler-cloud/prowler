@@ -55,7 +55,10 @@ const CustomLineTooltip = ({
         borderColor: "var(--chart-border-emphasis)",
       }}
     >
-      <p className="mb-3 text-xs" style={{ color: "var(--chart-text-secondary)" }}>
+      <p
+        className="mb-3 text-xs"
+        style={{ color: "var(--chart-text-secondary)" }}
+      >
         {label}
       </p>
 
@@ -75,13 +78,19 @@ const CustomLineTooltip = ({
                   className="h-2 w-2 rounded-full"
                   style={{ backgroundColor: item.stroke }}
                 />
-                <span className="text-sm" style={{ color: "var(--chart-text-primary)" }}>
+                <span
+                  className="text-sm"
+                  style={{ color: "var(--chart-text-primary)" }}
+                >
                   {item.value}
                 </span>
               </div>
               {newFindings !== undefined && (
                 <div className="flex items-center gap-2">
-                  <Bell size={14} style={{ color: "var(--chart-text-secondary)" }} />
+                  <Bell
+                    size={14}
+                    style={{ color: "var(--chart-fail)" }}
+                  />
                   <span
                     className="text-xs"
                     style={{ color: "var(--chart-text-secondary)" }}
@@ -91,7 +100,10 @@ const CustomLineTooltip = ({
                 </div>
               )}
               {change !== undefined && typeof change === "number" && (
-                <p className="text-xs" style={{ color: "var(--chart-text-secondary)" }}>
+                <p
+                  className="text-xs"
+                  style={{ color: "var(--chart-text-secondary)" }}
+                >
                   <span className="font-bold">
                     {change > 0 ? "+" : ""}
                     {change}%
