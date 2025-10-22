@@ -12,7 +12,7 @@
    1. Prowler CLI -&gt; Run a Prowler scan using the --compliance option
    2. Prowler Cloud/App -&gt; Navigate to the compliance section to download csv outputs
 ![Download Compliance Scan](https://github.com/user-attachments/assets/42c11a60-8ce8-4c60-a663-2371199c052b)
-
+   
 
    The template supports the following CIS Benchmarks only:
 
@@ -113,3 +113,5 @@ The requirement page has the following components:
 
 ## Walkthrough Video
 [![image](https://github.com/user-attachments/assets/866642c6-43ac-4aac-83d3-bb625002da0b)](https://www.youtube.com/watch?v=lfKFkTqBxjU)
+
+

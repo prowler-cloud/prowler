@@ -34,7 +34,15 @@ class cloudstorage_bucket_lifecycle_management_enabled(Check):
                 for rule in rules:
                     action_type = rule.get("action", {}).get("type")
                     condition = rule.get("condition")
-                    if action_type and condition:
+                    if (
+                        action_type
+                        in (
+                            "Delete",
+                            "SetStorageClass",
+                            "AbortIncompleteMultipartUpload",
+                        )
+                        and condition
+                    ):
                         valid_rules.append(rule)
 
                 if valid_rules:

@@ -23,9 +23,7 @@
       "Url": "https://docs.aws.amazon.com/sagemaker/latest/dg/nbi-root-access.html"
     }
   },
-  "Categories": [
-    "gen-ai"
-  ],
+  "Categories": ["gen-ai"],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

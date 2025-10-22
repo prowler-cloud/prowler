@@ -1,6 +1,7 @@
 from drf_spectacular.utils import extend_schema_field
 
 from api.v1.serializer_utils.base import YamlOrJsonField
+
 from prowler.lib.mutelist.mutelist import mutelist_schema
 
 

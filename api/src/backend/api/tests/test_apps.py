@@ -7,11 +7,11 @@ from django.conf import settings
 
 import api.apps as api_apps_module
 from api.apps import (
+    ApiConfig,
     PRIVATE_KEY_FILE,
     PUBLIC_KEY_FILE,
     SIGNING_KEY_ENV,
     VERIFYING_KEY_ENV,
-    ApiConfig,
 )
 
 
