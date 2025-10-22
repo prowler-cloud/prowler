@@ -974,6 +974,53 @@ class HTML(Output):
             return ""
 
     @staticmethod
+    def get_oci_assessment_summary(provider: Provider) -> str:
+        """
+        get_oci_assessment_summary gets the HTML assessment summary for the OCI provider
+
+        Args:
+            provider (Provider): the OCI provider object
+
+        Returns:
+            str: HTML assessment summary for the OCI provider
+        """
+        try:
+            profile = getattr(provider.session, "profile", "default")
+            tenancy_name = getattr(provider.identity, "tenancy_name", "unknown")
+            tenancy_id = getattr(provider.identity, "tenancy_id", "unknown")
+
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            OCI Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>OCI Tenancy:</b> {tenancy_name if tenancy_name != "unknown" else tenancy_id}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            OCI Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Profile:</b> {profile}
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
     def get_assessment_summary(provider: Provider) -> str:
         """
         get_assessment_summary gets the HTML assessment summary for the provider

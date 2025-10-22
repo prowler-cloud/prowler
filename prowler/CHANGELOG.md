@@ -14,7 +14,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add C5 compliance framework for the AWS provider [(#8830)](https://github.com/prowler-cloud/prowler/pull/8830)
 - Equality validation for CheckID, filename and classname [(#8690)](https://github.com/prowler-cloud/prowler/pull/8690)
 - Improve logging for Security Hub integration [(#8608)](https://github.com/prowler-cloud/prowler/pull/8608)
+- Oracle Cloud provider with CIS 3.0 benchmark [(#8893)](https://github.com/prowler-cloud/prowler/pull/8893)
 - Support for Atlassian Document Format (ADF) in Jira integration [(#8878)](https://github.com/prowler-cloud/prowler/pull/8878)
+- Add Common Cloud Controls for AWS, Azure and GCP [(#8000)](https://github.com/prowler-cloud/prowler/pull/8000)
 
 ### Changed
 
@@ -30,12 +32,17 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS AppStream service metadata to new format [(#8789)](https://github.com/prowler-cloud/prowler/pull/8789)
 - Update AWS API Gateway service metadata to new format [(#8788)](https://github.com/prowler-cloud/prowler/pull/8788)
 - Update AWS Athena service metadata to new format [(#8790)](https://github.com/prowler-cloud/prowler/pull/8790)
+- Update AWS CloudTrail service metadata to new format [(#8831)](https://github.com/prowler-cloud/prowler/pull/8831)
 - Update AWS Auto Scaling service metadata to new format [(#8824)](https://github.com/prowler-cloud/prowler/pull/8824)
 - Update AWS Backup service metadata to new format [(#8826)](https://github.com/prowler-cloud/prowler/pull/8826)
 - Update AWS CloudFormation service metadata to new format [(#8828)](https://github.com/prowler-cloud/prowler/pull/8828)
 - Update AWS Lambda service metadata to new format [(#8825)](https://github.com/prowler-cloud/prowler/pull/8825)
+- Update AWS DLM service metadata to new format [(#8860)](https://github.com/prowler-cloud/prowler/pull/8860)
+- Update AWS DMS service metadata to new format [(#8861)](https://github.com/prowler-cloud/prowler/pull/8861)
+- Update AWS Directory Service service metadata to new format [(#8859)](https://github.com/prowler-cloud/prowler/pull/8859)
 - Update AWS CloudFront service metadata to new format [(#8829)](https://github.com/prowler-cloud/prowler/pull/8829)
 - Deprecate user authentication for M365 provider [(#8865)](https://github.com/prowler-cloud/prowler/pull/8865)
+- Update AWS EFS service metadata to new format [(#8889)](https://github.com/prowler-cloud/prowler/pull/8889)
 
 ### Fixed
 - Fix SNS topics showing empty AWS_ResourceID in Quick Inventory output [(#8762)](https://github.com/prowler-cloud/prowler/issues/8762)
@@ -44,6 +51,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add missing attributes for Mitre Attack AWS, Azure and GCP [(#8907)](https://github.com/prowler-cloud/prowler/pull/8907)
 - Fix KeyError in CloudSQL and Monitoring services in GCP provider [(#8909)](https://github.com/prowler-cloud/prowler/pull/8909)
 - Fix Value Errors in Entra service for M365 provider [(#8919)](https://github.com/prowler-cloud/prowler/pull/8919)
+- Fix ResourceName in GCP provider [(#8928)](https://github.com/prowler-cloud/prowler/pull/8928)
 
 ---
 
