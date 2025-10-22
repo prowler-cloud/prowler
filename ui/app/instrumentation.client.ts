@@ -8,6 +8,7 @@
  * For runtime-specific configs, see: sentry/sentry.server.config.ts and sentry/sentry.edge.config.ts
  */
 
+import { browserTracingIntegration } from "@sentry/browser";
 import * as Sentry from "@sentry/nextjs";
 
 const isDevelopment = process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT === "dev";
@@ -50,7 +51,7 @@ Sentry.init({
     // 📊 Performance Monitoring: Core Web Vitals + RUM
     // Tracks LCP, FID, CLS, INP
     // Real User Monitoring captures actual user experience, not synthetic tests
-    Sentry.browserTracingIntegration({
+    browserTracingIntegration({
       enableLongTask: true, // Detect tasks that block UI (>50ms)
       enableInp: true, // Interaction to Next Paint (Core Web Vital)
     }),
