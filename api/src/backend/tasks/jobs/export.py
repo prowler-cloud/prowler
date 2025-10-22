@@ -20,6 +20,10 @@ from prowler.lib.outputs.asff.asff import ASFF
 from prowler.lib.outputs.compliance.aws_well_architected.aws_well_architected import (
     AWSWellArchitected,
 )
+from prowler.lib.outputs.compliance.ccc.ccc_aws import CCC_AWS
+from prowler.lib.outputs.compliance.ccc.ccc_azure import CCC_Azure
+from prowler.lib.outputs.compliance.ccc.ccc_gcp import CCC_GCP
+from prowler.lib.outputs.compliance.c5.c5_aws import AWSC5
 from prowler.lib.outputs.compliance.cis.cis_aws import AWSCIS
 from prowler.lib.outputs.compliance.cis.cis_azure import AzureCIS
 from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
@@ -73,12 +77,15 @@ COMPLIANCE_CLASS_MAP = {
         (lambda name: name.startswith("iso27001_"), AWSISO27001),
         (lambda name: name.startswith("kisa"), AWSKISAISMSP),
         (lambda name: name == "prowler_threatscore_aws", ProwlerThreatScoreAWS),
+        (lambda name: name == "ccc_aws", CCC_AWS),
+        (lambda name: name.startswith("c5_"), AWSC5),
     ],
     "azure": [
         (lambda name: name.startswith("cis_"), AzureCIS),
         (lambda name: name == "mitre_attack_azure", AzureMitreAttack),
         (lambda name: name.startswith("ens_"), AzureENS),
         (lambda name: name.startswith("iso27001_"), AzureISO27001),
+        (lambda name: name == "ccc_azure", CCC_Azure),
         (lambda name: name == "prowler_threatscore_azure", ProwlerThreatScoreAzure),
     ],
     "gcp": [
@@ -87,6 +94,7 @@ COMPLIANCE_CLASS_MAP = {
         (lambda name: name.startswith("ens_"), GCPENS),
         (lambda name: name.startswith("iso27001_"), GCPISO27001),
         (lambda name: name == "prowler_threatscore_gcp", ProwlerThreatScoreGCP),
+        (lambda name: name == "ccc_gcp", CCC_GCP),
     ],
     "kubernetes": [
         (lambda name: name.startswith("cis_"), KubernetesCIS),
@@ -221,7 +229,7 @@ def _upload_to_s3(tenant_id: str, zip_path: str, scan_id: str) -> str | None:
 
 def _generate_output_directory(
     output_directory, prowler_provider: object, tenant_id: str, scan_id: str
-) -> tuple[str, str]:
+) -> tuple[str, str, str]:
     """
     Generate a file system path for the output directory of a prowler scan.
 
@@ -248,6 +256,7 @@ def _generate_output_directory(
         >>> _generate_output_directory("/tmp", "aws", "tenant-1234", "scan-5678")
         '/tmp/tenant-1234/aws/scan-5678/prowler-output-2023-02-15T12:34:56',
         '/tmp/tenant-1234/aws/scan-5678/compliance/prowler-output-2023-02-15T12:34:56'
+        '/tmp/tenant-1234/aws/scan-5678/threatscore/prowler-output-2023-02-15T12:34:56'
     """
     # Sanitize the prowler provider name to ensure it is a valid directory name
     prowler_provider_sanitized = re.sub(r"[^\w\-]", "-", prowler_provider)
@@ -268,4 +277,10 @@ def _generate_output_directory(
     )
     os.makedirs("/".join(compliance_path.split("/")[:-1]), exist_ok=True)
 
-    return path, compliance_path
+    threatscore_path = (
+        f"{output_directory}/{tenant_id}/{scan_id}/threatscore/prowler-output-"
+        f"{prowler_provider_sanitized}-{timestamp}"
+    )
+    os.makedirs("/".join(threatscore_path.split("/")[:-1]), exist_ok=True)
+
+    return path, compliance_path, threatscore_path

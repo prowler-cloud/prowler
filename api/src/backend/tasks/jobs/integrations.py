@@ -5,6 +5,7 @@ from celery.utils.log import get_task_logger
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE
 from tasks.utils import batched
 
+from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import rls_transaction
 from api.models import Finding, Integration, Provider
 from api.utils import initialize_prowler_integration, initialize_prowler_provider
@@ -289,7 +290,7 @@ def upload_security_hub_integration(
                 has_findings = False
                 batch_number = 0
 
-                with rls_transaction(tenant_id):
+                with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
                     qs = (
                         Finding.all_objects.filter(tenant_id=tenant_id, scan_id=scan_id)
                         .order_by("uid")

@@ -220,10 +220,31 @@ class MembershipFilter(FilterSet):
 
 
 class ProviderFilter(FilterSet):
-    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
-    updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
-    connected = BooleanFilter()
+    inserted_at = DateFilter(
+        field_name="inserted_at",
+        lookup_expr="date",
+        help_text="""Filter by date when the provider was added
+        (format: YYYY-MM-DD)""",
+    )
+    updated_at = DateFilter(
+        field_name="updated_at",
+        lookup_expr="date",
+        help_text="""Filter by date when the provider was updated
+        (format: YYYY-MM-DD)""",
+    )
+    connected = BooleanFilter(
+        help_text="""Filter by connection status. Set to True to return only
+        connected providers, or False to return only providers with failed
+        connections. If not specified, both connected and failed providers are
+        included. Providers with no connection attempt (status is null) are
+        excluded from this filter."""
+    )
     provider = ChoiceFilter(choices=Provider.ProviderChoices.choices)
+    provider__in = ChoiceInFilter(
+        field_name="provider",
+        choices=Provider.ProviderChoices.choices,
+        lookup_expr="in",
+    )
 
     class Meta:
         model = Provider
@@ -649,8 +670,16 @@ class LatestFindingFilter(CommonFindingFilters):
 
 
 class ProviderSecretFilter(FilterSet):
-    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
-    updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
+    inserted_at = DateFilter(
+        field_name="inserted_at",
+        lookup_expr="date",
+        help_text="Filter by date when the secret was added (format: YYYY-MM-DD)",
+    )
+    updated_at = DateFilter(
+        field_name="updated_at",
+        lookup_expr="date",
+        help_text="Filter by date when the secret was updated (format: YYYY-MM-DD)",
+    )
     provider = UUIDFilter(field_name="provider__id", lookup_expr="exact")
 
     class Meta:
@@ -736,6 +765,7 @@ class ComplianceOverviewFilter(FilterSet):
 class ScanSummaryFilter(FilterSet):
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
     provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
+    provider_id__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
     provider_type = ChoiceFilter(
         field_name="scan__provider__provider", choices=Provider.ProviderChoices.choices
     )

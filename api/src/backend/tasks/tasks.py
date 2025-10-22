@@ -26,6 +26,7 @@ from tasks.jobs.integrations import (
     upload_s3_integration,
     upload_security_hub_integration,
 )
+from tasks.jobs.report import generate_threatscore_report_job
 from tasks.jobs.scan import (
     aggregate_findings,
     create_compliance_requirements,
@@ -34,6 +35,7 @@ from tasks.jobs.scan import (
 from tasks.utils import batched, get_next_execution_datetime
 
 from api.compliance import get_compliance_frameworks
+from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import rls_transaction
 from api.decorators import set_tenant
 from api.models import Finding, Integration, Provider, Scan, ScanSummary, StateChoices
@@ -63,10 +65,15 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
         generate_outputs_task.si(
             scan_id=scan_id, provider_id=provider_id, tenant_id=tenant_id
         ),
-        check_integrations_task.si(
-            tenant_id=tenant_id,
-            provider_id=provider_id,
-            scan_id=scan_id,
+        group(
+            generate_threatscore_report_task.si(
+                tenant_id=tenant_id, scan_id=scan_id, provider_id=provider_id
+            ),
+            check_integrations_task.si(
+                tenant_id=tenant_id,
+                provider_id=provider_id,
+                scan_id=scan_id,
+            ),
         ),
     ).apply_async()
 
@@ -303,7 +310,7 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
 
     frameworks_bulk = Compliance.get_bulk(provider_type)
     frameworks_avail = get_compliance_frameworks(provider_type)
-    out_dir, comp_dir = _generate_output_directory(
+    out_dir, comp_dir, _ = _generate_output_directory(
         DJANGO_TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id
     )
 
@@ -343,70 +350,73 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
         .order_by("uid")
         .iterator()
     )
-    for batch, is_last in batched(qs, DJANGO_FINDINGS_BATCH_SIZE):
-        fos = [FindingOutput.transform_api_finding(f, prowler_provider) for f in batch]
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        for batch, is_last in batched(qs, DJANGO_FINDINGS_BATCH_SIZE):
+            fos = [
+                FindingOutput.transform_api_finding(f, prowler_provider) for f in batch
+            ]
 
-        # Outputs
-        for mode, cfg in OUTPUT_FORMATS_MAPPING.items():
-            # Skip ASFF generation if not needed
-            if mode == "json-asff" and not generate_asff:
-                continue
+            # Outputs
+            for mode, cfg in OUTPUT_FORMATS_MAPPING.items():
+                # Skip ASFF generation if not needed
+                if mode == "json-asff" and not generate_asff:
+                    continue
 
-            cls = cfg["class"]
-            suffix = cfg["suffix"]
-            extra = cfg.get("kwargs", {}).copy()
-            if mode == "html":
-                extra.update(provider=prowler_provider, stats=scan_summary)
+                cls = cfg["class"]
+                suffix = cfg["suffix"]
+                extra = cfg.get("kwargs", {}).copy()
+                if mode == "html":
+                    extra.update(provider=prowler_provider, stats=scan_summary)
 
-            writer, initialization = get_writer(
-                output_writers,
-                cls,
-                lambda cls=cls, fos=fos, suffix=suffix: cls(
-                    findings=fos,
-                    file_path=out_dir,
-                    file_extension=suffix,
-                    from_cli=False,
-                ),
-                is_last,
-            )
-            if not initialization:
-                writer.transform(fos)
-            writer.batch_write_data_to_file(**extra)
-            writer._data.clear()
+                writer, initialization = get_writer(
+                    output_writers,
+                    cls,
+                    lambda cls=cls, fos=fos, suffix=suffix: cls(
+                        findings=fos,
+                        file_path=out_dir,
+                        file_extension=suffix,
+                        from_cli=False,
+                    ),
+                    is_last,
+                )
+                if not initialization:
+                    writer.transform(fos)
+                writer.batch_write_data_to_file(**extra)
+                writer._data.clear()
 
-        # Compliance CSVs
-        for name in frameworks_avail:
-            compliance_obj = frameworks_bulk[name]
+            # Compliance CSVs
+            for name in frameworks_avail:
+                compliance_obj = frameworks_bulk[name]
 
-            klass = GenericCompliance
-            for condition, cls in COMPLIANCE_CLASS_MAP.get(provider_type, []):
-                if condition(name):
-                    klass = cls
-                    break
+                klass = GenericCompliance
+                for condition, cls in COMPLIANCE_CLASS_MAP.get(provider_type, []):
+                    if condition(name):
+                        klass = cls
+                        break
 
-            filename = f"{comp_dir}_{name}.csv"
+                filename = f"{comp_dir}_{name}.csv"
 
-            writer, initialization = get_writer(
-                compliance_writers,
-                name,
-                lambda klass=klass, fos=fos: klass(
-                    findings=fos,
-                    compliance=compliance_obj,
-                    file_path=filename,
-                    from_cli=False,
-                ),
-                is_last,
-            )
-            if not initialization:
-                writer.transform(fos, compliance_obj, name)
-            writer.batch_write_data_to_file()
-            writer._data.clear()
+                writer, initialization = get_writer(
+                    compliance_writers,
+                    name,
+                    lambda klass=klass, fos=fos: klass(
+                        findings=fos,
+                        compliance=compliance_obj,
+                        file_path=filename,
+                        from_cli=False,
+                    ),
+                    is_last,
+                )
+                if not initialization:
+                    writer.transform(fos, compliance_obj, name)
+                writer.batch_write_data_to_file()
+                writer._data.clear()
 
     compressed = _compress_output_files(out_dir)
     upload_uri = _upload_to_s3(tenant_id, compressed, scan_id)
 
     # S3 integrations (need output_directory)
-    with rls_transaction(tenant_id):
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
         s3_integrations = Integration.objects.filter(
             integrationproviderrelationship__provider_id=provider_id,
             integration_type=Integration.IntegrationChoices.AMAZON_S3,
@@ -612,4 +622,22 @@ def jira_integration_task(
 ):
     return send_findings_to_jira(
         tenant_id, integration_id, project_key, issue_type, finding_ids
+    )
+
+
+@shared_task(
+    base=RLSTask,
+    name="scan-threatscore-report",
+    queue="scan-reports",
+)
+def generate_threatscore_report_task(tenant_id: str, scan_id: str, provider_id: str):
+    """
+    Task to generate a threatscore report for a given scan.
+    Args:
+        tenant_id (str): The tenant identifier.
+        scan_id (str): The scan identifier.
+        provider_id (str): The provider identifier.
+    """
+    return generate_threatscore_report_job(
+        tenant_id=tenant_id, scan_id=scan_id, provider_id=provider_id
     )

@@ -2,6 +2,7 @@
 
 import uuid
 
+import django.core.validators
 import django.db.models.deletion
 import drf_simple_apikey.models
 from django.conf import settings
@@ -20,7 +21,13 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name="TenantAPIKey",
             fields=[
-                ("name", models.CharField(blank=True, max_length=255, null=True)),
+                (
+                    "name",
+                    models.CharField(
+                        max_length=255,
+                        validators=[django.core.validators.MinLengthValidator(3)],
+                    ),
+                ),
                 (
                     "expiry_date",
                     models.DateTimeField(
@@ -37,7 +44,7 @@ class Migration(migrations.Migration):
                         help_text="If the API key is revoked, entities cannot use it anymore. (This cannot be undone.)",
                     ),
                 ),
-                ("created", models.DateTimeField(auto_now=True)),
+                ("created", models.DateTimeField(auto_now_add=True, editable=False)),
                 (
                     "whitelisted_ips",
                     models.JSONField(
@@ -110,14 +117,19 @@ class Migration(migrations.Migration):
                 "constraints": [
                     models.UniqueConstraint(
                         fields=("tenant_id", "prefix"), name="unique_api_key_prefixes"
-                    )
+                    ),
+                    models.UniqueConstraint(
+                        fields=("tenant_id", "name"),
+                        name="unique_api_key_name_per_tenant",
+                    ),
                 ],
             },
         ),
         migrations.AddConstraint(
             model_name="tenantapikey",
-            constraint=api.rls.BaseSecurityConstraint(
-                name="statements_on_tenantapikey",
+            constraint=api.rls.RowLevelSecurityConstraint(
+                "tenant_id",
+                name="rls_on_tenantapikey",
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ),
