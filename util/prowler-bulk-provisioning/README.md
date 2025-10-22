@@ -73,7 +73,7 @@ This two-step approach follows the Prowler API design where providers and their 
 
 For organizations with many AWS accounts, use the included `aws_org_generator.py` script to automatically generate configuration for all accounts in your AWS Organization.
 
-**📖 Full Guide:** See [AWS_ORGANIZATIONS.md](AWS_ORGANIZATIONS.md) for complete documentation, examples, and troubleshooting.
+**📖 Full Guide:** See [AWS Organizations Bulk Provisioning Tutorial](https://docs.prowler.com/user-guide/tutorials/aws-organizations-bulk-provisioning) for complete documentation, examples, and troubleshooting.
 
 ### Prerequisites
 
