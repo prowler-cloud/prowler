@@ -84,7 +84,6 @@ from api.filters import (
     LatestFindingFilter,
     LatestResourceFilter,
     MembershipFilter,
-    OverviewProviderDetailsFilter,
     ProcessorFilter,
     ProviderFilter,
     ProviderGroupFilter,
@@ -162,9 +161,8 @@ from api.v1.serializers import (
     LighthouseConfigUpdateSerializer,
     MembershipSerializer,
     OverviewFindingSerializer,
-    OverviewProviderDetailSerializer,
+    OverviewProviderGroupedSerializer,
     OverviewProviderSerializer,
-    OverviewProviderTypeSerializer,
     OverviewServiceSerializer,
     OverviewSeveritySerializer,
     ProcessorCreateSerializer,
@@ -1436,6 +1434,7 @@ class ProviderViewSet(BaseRLSViewSet):
     ]
     # RBAC required permissions
     required_permissions = [Permissions.MANAGE_PROVIDERS]
+    allow_disable_pagination = True
 
     def set_required_permissions(self):
         """
@@ -3607,37 +3606,6 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             "each provider are considered in the aggregation to ensure accurate and up-to-date insights."
         ),
     ),
-    provider_types=extend_schema(
-        summary="Get provider counts by type",
-        description=(
-            "List all provider types configured in the tenant together with the number of providers "
-            "registered for each type. The response respects the caller's visibility over providers."
-        ),
-    ),
-    provider_details=extend_schema(
-        summary="List providers with metadata",
-        description=(
-            "Return the providers visible to the caller including each provider identifier, alias, and type. "
-            "Supports filtering by provider type."
-        ),
-        parameters=[
-            OpenApiParameter(
-                name="filter[provider_type]",
-                type=OpenApiTypes.STR,
-                location=OpenApiParameter.QUERY,
-                description="Filter by provider type (aws, azure, gcp, kubernetes, m365, github).",
-                enum=["aws", "azure", "gcp", "kubernetes", "m365", "github"],
-            ),
-            OpenApiParameter(
-                name="filter[provider_type__in]",
-                type={"type": "array", "items": {"type": "string"}},
-                location=OpenApiParameter.QUERY,
-                description="Filter by multiple provider types (comma-separated).",
-                style="form",
-                explode=False,
-            ),
-        ],
-    ),
     findings=extend_schema(
         summary="Get aggregated findings data",
         description=(
@@ -3688,11 +3656,12 @@ class OverviewViewSet(BaseRLSViewSet):
 
     def get_serializer_class(self):
         if self.action == "providers":
+            if (
+                hasattr(self, "request")
+                and self.request.query_params.get("filter[group_by]") == "provider_type"
+            ):
+                return OverviewProviderGroupedSerializer
             return OverviewProviderSerializer
-        elif self.action == "provider_types":
-            return OverviewProviderTypeSerializer
-        elif self.action == "provider_details":
-            return OverviewProviderDetailSerializer
         elif self.action == "findings":
             return OverviewFindingSerializer
         elif self.action == "findings_severity":
@@ -3704,8 +3673,6 @@ class OverviewViewSet(BaseRLSViewSet):
     def get_filterset_class(self):
         if self.action == "providers":
             return None
-        elif self.action == "provider_details":
-            return OverviewProviderDetailsFilter
         elif self.action == "findings":
             return ScanSummaryFilter
         elif self.action == "findings_severity":
@@ -3726,6 +3693,9 @@ class OverviewViewSet(BaseRLSViewSet):
     def providers(self, request):
         tenant_id = self.request.tenant_id
         queryset = self.get_queryset()
+        group_by_provider_type = (
+            self.request.query_params.get("filter[group_by]") == "provider_type"
+        )
         provider_filter = (
             {"provider__in": self.allowed_providers}
             if hasattr(self, "allowed_providers")
@@ -3755,14 +3725,17 @@ class OverviewViewSet(BaseRLSViewSet):
             )
         )
 
-        resources_aggregated = (
-            Resource.all_objects.filter(tenant_id=tenant_id)
-            .values("provider_id")
-            .annotate(total_resources=Count("id"))
-        )
-        resource_map = {
-            row["provider_id"]: row["total_resources"] for row in resources_aggregated
-        }
+        resource_map = {}
+        if not group_by_provider_type:
+            resources_aggregated = (
+                Resource.all_objects.filter(tenant_id=tenant_id)
+                .values("provider_id")
+                .annotate(total_resources=Count("id"))
+            )
+            resource_map = {
+                row["provider_id"]: row["total_resources"]
+                for row in resources_aggregated
+            }
 
         overview = []
         for row in findings_aggregated:
@@ -3777,64 +3750,50 @@ class OverviewViewSet(BaseRLSViewSet):
                 }
             )
 
+        if group_by_provider_type:
+            if hasattr(self, "allowed_providers"):
+                provider_ids = self.allowed_providers.values_list("id", flat=True)
+                providers_for_grouping = Provider.objects.filter(
+                    tenant_id=tenant_id, id__in=provider_ids
+                )
+            else:
+                providers_for_grouping = Provider.objects.filter(tenant_id=tenant_id)
+
+            provider_type_counts = {
+                row["provider"]: row["total"]
+                for row in providers_for_grouping.values("provider").annotate(
+                    total=Count("id")
+                )
+            }
+
+            grouped_overview = {}
+            for item in overview:
+                provider_type = item["provider"]
+                if provider_type not in grouped_overview:
+                    grouped_overview[provider_type] = {
+                        "provider": provider_type,
+                        "count": provider_type_counts.get(
+                            provider_type, item.get("count", 1)
+                        ),
+                        "total_findings": 0,
+                        "findings_passed": 0,
+                        "findings_failed": 0,
+                        "findings_muted": 0,
+                    }
+                aggregated = grouped_overview[provider_type]
+                aggregated["total_findings"] += item["total_findings"]
+                aggregated["findings_passed"] += item["findings_passed"]
+                aggregated["findings_failed"] += item["findings_failed"]
+                aggregated["findings_muted"] += item["findings_muted"]
+
+            overview = [
+                grouped_overview[key] for key in sorted(grouped_overview.keys())
+            ]
+
         return Response(
             self.get_serializer(overview, many=True).data,
             status=status.HTTP_200_OK,
         )
-
-    @action(
-        detail=False,
-        methods=["get"],
-        url_name="provider-types",
-        url_path="provider-types",
-    )
-    def provider_types(self, request):
-        tenant_id = self.request.tenant_id
-        # Ensure allowed providers are calculated for the current role
-        self.get_queryset()
-        provider_filter = (
-            {"id__in": self.allowed_providers.values_list("id", flat=True)}
-            if hasattr(self, "allowed_providers")
-            else {}
-        )
-
-        provider_type_counts = (
-            Provider.objects.filter(tenant_id=tenant_id, **provider_filter)
-            .values("provider")
-            .annotate(total_providers=Count("id"))
-            .order_by("provider")
-        )
-
-        serializer = self.get_serializer(provider_type_counts, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    @action(
-        detail=False,
-        methods=["get"],
-        url_name="provider-details",
-        url_path="providers/details",
-    )
-    def provider_details(self, request):
-        tenant_id = self.request.tenant_id
-        self.get_queryset()
-        provider_filter = (
-            {"id__in": self.allowed_providers.values_list("id", flat=True)}
-            if hasattr(self, "allowed_providers")
-            else {}
-        )
-
-        providers_queryset = Provider.objects.filter(
-            tenant_id=tenant_id, **provider_filter
-        )
-
-        providers_queryset = self.filter_queryset(providers_queryset)
-
-        providers = providers_queryset.order_by("provider", "alias", "id").values(
-            "id", "alias", "provider"
-        )
-
-        serializer = self.get_serializer(providers, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], url_name="findings")
     def findings(self, request):

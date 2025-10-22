@@ -3917,37 +3917,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/OverviewSeverityResponse'
           description: ''
-  /api/v1/overviews/provider-types:
-    get:
-      operationId: overviews_provider_types_retrieve
-      description: List all provider types configured in the tenant together with
-        the number of providers registered for each type. The response respects the
-        caller's visibility over providers.
-      summary: Get provider counts by type
-      parameters:
-      - in: query
-        name: fields[provider-types-overview]
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - id
-            - count
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
-        explode: false
-      tags:
-      - Overview
-      security:
-      - JWT or API Key: []
-      responses:
-        '200':
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/OverviewProviderTypeResponse'
-          description: ''
   /api/v1/overviews/providers:
     get:
       operationId: overviews_providers_retrieve
@@ -3981,58 +3950,6 @@ paths:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/OverviewProviderResponse'
-          description: ''
-  /api/v1/overviews/providers/details:
-    get:
-      operationId: overviews_providers_details_retrieve
-      description: Return the providers visible to the caller including each provider
-        identifier, alias, and type. Supports filtering by provider type.
-      summary: List providers with metadata
-      parameters:
-      - in: query
-        name: fields[provider-details-overview]
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - id
-            - alias
-            - provider_type
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
-        explode: false
-      - in: query
-        name: filter[provider_type]
-        schema:
-          type: string
-          enum:
-          - aws
-          - azure
-          - gcp
-          - github
-          - kubernetes
-          - m365
-        description: Filter by provider type (aws, azure, gcp, kubernetes, m365, github).
-      - in: query
-        name: filter[provider_type__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Filter by multiple provider types (comma-separated).
-        explode: false
-        style: form
-      tags:
-      - Overview
-      security:
-      - JWT or API Key: []
-      responses:
-        '200':
-          content:
-            application/vnd.api+json:
-              schema:
-                $ref: '#/components/schemas/OverviewProviderDetailResponse'
           description: ''
   /api/v1/overviews/services:
     get:
@@ -4837,6 +4754,50 @@ paths:
           * `github` - GitHub
       - in: query
         name: filter[provider__in]
+        schema:
+          type: array
+          items:
+            type: string
+            x-spec-enum-id: 4c1e219dad1cc0e7
+            enum:
+            - aws
+            - azure
+            - gcp
+            - github
+            - kubernetes
+            - m365
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          x-spec-enum-id: 4c1e219dad1cc0e7
+          enum:
+          - aws
+          - azure
+          - gcp
+          - github
+          - kubernetes
+          - m365
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+      - in: query
+        name: filter[provider_type__in]
         schema:
           type: array
           items:
@@ -11142,79 +11103,11 @@ components:
               readOnly: true
           required:
           - id
-    OverviewProviderDetail:
-      type: object
-      required:
-      - type
-      - id
-      additionalProperties: false
-      properties:
-        type:
-          type: string
-          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-            member is used to describe resource objects that share common attributes
-            and relationships.
-          enum:
-          - provider-details-overview
-        id: {}
-        attributes:
-          type: object
-          properties:
-            id:
-              type: string
-            alias:
-              type: string
-              nullable: true
-            provider_type:
-              type: string
-          required:
-          - id
-          - alias
-          - provider_type
-    OverviewProviderDetailResponse:
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/OverviewProviderDetail'
-      required:
-      - data
     OverviewProviderResponse:
       type: object
       properties:
         data:
           $ref: '#/components/schemas/OverviewProvider'
-      required:
-      - data
-    OverviewProviderType:
-      type: object
-      required:
-      - type
-      - id
-      additionalProperties: false
-      properties:
-        type:
-          type: string
-          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-            member is used to describe resource objects that share common attributes
-            and relationships.
-          enum:
-          - provider-types-overview
-        id: {}
-        attributes:
-          type: object
-          properties:
-            id:
-              type: string
-            count:
-              type: integer
-          required:
-          - id
-          - count
-    OverviewProviderTypeResponse:
-      type: object
-      properties:
-        data:
-          $ref: '#/components/schemas/OverviewProviderType'
       required:
       - data
     OverviewService:

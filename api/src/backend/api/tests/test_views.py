@@ -943,6 +943,74 @@ class TestProviderViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == len(providers_fixture)
 
+    def test_providers_filter_provider_type(
+        self, authenticated_client, providers_fixture
+    ):
+        response = authenticated_client.get(
+            reverse("provider-list"), {"filter[provider_type]": "aws"}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 2
+        assert all(item["attributes"]["provider"] == "aws" for item in data)
+
+    def test_providers_filter_provider_type_in(
+        self, authenticated_client, providers_fixture
+    ):
+        response = authenticated_client.get(
+            reverse("provider-list"), {"filter[provider_type__in]": "aws,gcp"}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 3
+        assert {"aws", "gcp"} >= {item["attributes"]["provider"] for item in data}
+
+    def test_providers_filter_provider_type_invalid(
+        self, authenticated_client, providers_fixture
+    ):
+        response = authenticated_client.get(
+            reverse("provider-list"), {"filter[provider_type]": "invalid"}
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_providers_disable_pagination(
+        self, authenticated_client, providers_fixture, tenants_fixture
+    ):
+        tenant, *_ = tenants_fixture
+        existing_count = Provider.objects.filter(tenant_id=tenant.id).count()
+        target_total = settings.REST_FRAMEWORK["PAGE_SIZE"] + 1
+        additional_needed = max(0, target_total - existing_count)
+
+        base_uid = 200000000000
+        for index in range(additional_needed):
+            Provider.objects.create(
+                tenant_id=tenant.id,
+                provider=Provider.ProviderChoices.AWS,
+                uid=f"{base_uid + index:012d}",
+                alias=f"aws_extra_{index}",
+            )
+
+        total_providers = Provider.objects.filter(tenant_id=tenant.id).count()
+
+        paginated_response = authenticated_client.get(reverse("provider-list"))
+        assert paginated_response.status_code == status.HTTP_200_OK
+        paginated_data = paginated_response.json()["data"]
+        assert len(paginated_data) == min(
+            settings.REST_FRAMEWORK["PAGE_SIZE"], total_providers
+        )
+        paginated_meta = paginated_response.json().get("meta", {})
+        assert "pagination" in paginated_meta
+        assert paginated_meta["pagination"]["count"] == total_providers
+
+        unpaginated_response = authenticated_client.get(
+            reverse("provider-list"), {"page[disable]": "true"}
+        )
+        assert unpaginated_response.status_code == status.HTTP_200_OK
+        unpaginated_data = unpaginated_response.json()["data"]
+        assert len(unpaginated_data) == total_providers
+        unpaginated_meta = unpaginated_response.json().get("meta", {})
+        assert "pagination" not in unpaginated_meta
+
     @pytest.mark.parametrize(
         "include_values, expected_resources",
         [
@@ -5735,68 +5803,56 @@ class TestOverviewViewSet:
         # Since we rely on completed scans, there are only 2 resources now
         assert response.json()["data"][0]["attributes"]["resources"]["total"] == 2
 
-    def test_overview_provider_details_list(
-        self, authenticated_client, providers_fixture
+    def test_overview_providers_group_by_provider_type(
+        self,
+        authenticated_client,
+        scan_summaries_fixture,
+        resources_fixture,
+        providers_fixture,
+        tenants_fixture,
     ):
-        response = authenticated_client.get(reverse("overview-provider-details"))
-        assert response.status_code == status.HTTP_200_OK
+        tenant = tenants_fixture[0]
+        provider_primary = providers_fixture[0]
 
-        data = response.json()["data"]
-        assert len(data) == len(providers_fixture)
-        first_item = data[0]
-        assert first_item["type"] == "provider-details-overview"
-        assert first_item["id"]
-        assert "alias" in first_item["attributes"]
-        assert "provider_type" in first_item["attributes"]
+        default_response = authenticated_client.get(reverse("overview-providers"))
+        assert default_response.status_code == status.HTTP_200_OK
+        default_data = default_response.json()["data"]
+        assert len(default_data) == 1
+        assert all("count" not in item["attributes"] for item in default_data)
 
-    def test_overview_provider_details_filters(
-        self, authenticated_client, providers_fixture
-    ):
-        response = authenticated_client.get(
-            reverse("overview-provider-details"), {"filter[provider_type]": "aws"}
+        expected_pass = sum(
+            item["attributes"]["findings"]["pass"] for item in default_data
         )
-        assert response.status_code == status.HTTP_200_OK
-        data = response.json()["data"]
-        assert len(data) == 2
-        assert all(item["attributes"]["provider_type"] == "aws" for item in data)
-
-        response = authenticated_client.get(
-            reverse("overview-provider-details"),
-            {"filter[provider_type__in]": "aws,gcp"},
+        expected_fail = sum(
+            item["attributes"]["findings"]["fail"] for item in default_data
         )
-        assert response.status_code == status.HTTP_200_OK
-        data = response.json()["data"]
-        assert len(data) == 3
-        assert {"aws", "gcp"} >= {item["attributes"]["provider_type"] for item in data}
-
-        response = authenticated_client.get(
-            reverse("overview-provider-details"),
-            {"filter[provider_type]": "invalid"},
+        expected_muted = sum(
+            item["attributes"]["findings"]["muted"] for item in default_data
         )
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert "errors" in response.json()
-
-        response = authenticated_client.get(
-            reverse("overview-provider-details"),
-            {"filter[provider_type__in]": "aws,invalid"},
+        expected_total_findings = sum(
+            item["attributes"]["findings"]["total"] for item in default_data
         )
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert "errors" in response.json()
 
-    def test_overview_provider_types(self, authenticated_client, providers_fixture):
-        response = authenticated_client.get(reverse("overview-provider-types"))
-        assert response.status_code == status.HTTP_200_OK
+        provider_type_count = Provider.objects.filter(
+            tenant_id=tenant.id, provider=provider_primary.provider
+        ).count()
 
-        data = response.json()["data"]
-        assert len(data) == 5
-        counts_by_type = {item["id"]: item["attributes"]["count"] for item in data}
+        grouped_response = authenticated_client.get(
+            reverse("overview-providers"), {"filter[group_by]": "provider_type"}
+        )
+        assert grouped_response.status_code == status.HTTP_200_OK
+        grouped_data = grouped_response.json()["data"]
+        assert len(grouped_data) == 1
 
-        assert counts_by_type["aws"] == 2
-        assert counts_by_type["gcp"] == 1
-        assert counts_by_type["azure"] == 1
-        assert counts_by_type["kubernetes"] == 1
-        assert counts_by_type["m365"] == 1
-        assert data[0]["type"] == "provider-types-overview"
+        aggregated_entry = grouped_data[0]
+        assert aggregated_entry["id"] == provider_primary.provider
+        attributes = aggregated_entry["attributes"]
+        assert attributes["count"] == provider_type_count
+        assert attributes["findings"]["pass"] == expected_pass
+        assert attributes["findings"]["fail"] == expected_fail
+        assert attributes["findings"]["muted"] == expected_muted
+        assert attributes["findings"]["total"] == expected_total_findings
+        assert "resources" not in attributes
 
     def test_overview_services_list_no_required_filters(
         self, authenticated_client, scan_summaries_fixture

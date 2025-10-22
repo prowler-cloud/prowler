@@ -245,6 +245,14 @@ class ProviderFilter(FilterSet):
         choices=Provider.ProviderChoices.choices,
         lookup_expr="in",
     )
+    provider_type = ChoiceFilter(
+        choices=Provider.ProviderChoices.choices, field_name="provider"
+    )
+    provider_type__in = ChoiceInFilter(
+        field_name="provider",
+        choices=Provider.ProviderChoices.choices,
+        lookup_expr="in",
+    )
 
     class Meta:
         model = Provider
@@ -261,19 +269,6 @@ class ProviderFilter(FilterSet):
                 "filter_class": CharFilter,
             },
         }
-
-
-class OverviewProviderDetailsFilter(FilterSet):
-    provider_type = ChoiceFilter(
-        choices=Provider.ProviderChoices.choices, field_name="provider"
-    )
-    provider_type__in = ChoiceInFilter(
-        choices=Provider.ProviderChoices.choices, field_name="provider"
-    )
-
-    class Meta:
-        model = Provider
-        fields = []
 
 
 class ProviderRelationshipFilterSet(FilterSet):
