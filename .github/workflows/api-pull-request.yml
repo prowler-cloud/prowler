@@ -42,6 +42,7 @@ env:
 
 jobs:
   code-quality:
+    if: github.repository == 'prowler-cloud/prowler'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -77,6 +78,7 @@ jobs:
         run: poetry run pylint --disable=W,C,R,E -j 0 -rn -sn src/
 
   security-scans:
+    if: github.repository == 'prowler-cloud/prowler'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -111,6 +113,7 @@ jobs:
         run: poetry run vulture --exclude "contrib,tests,conftest.py" --min-confidence 100 .
 
   tests:
+    if: github.repository == 'prowler-cloud/prowler'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -174,6 +177,7 @@ jobs:
           flags: api
 
   dockerfile-lint:
+    if: github.repository == 'prowler-cloud/prowler'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -190,6 +194,7 @@ jobs:
           ignore: DL3013
 
   container-build-and-scan:
+    if: github.repository == 'prowler-cloud/prowler'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
