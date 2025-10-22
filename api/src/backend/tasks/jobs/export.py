@@ -206,7 +206,12 @@ def _upload_to_s3(tenant_id: str, zip_path: str, scan_id: str) -> str | None:
         s3 = get_s3_client()
 
         # Upload the ZIP file (outputs) to the S3 bucket
-        zip_key = f"{tenant_id}/{scan_id}/{os.path.basename(zip_path)}"
+        # Preserve directory structure for threatscore and compliance subdirectories
+        zip_dir = os.path.basename(os.path.dirname(zip_path))
+        if zip_dir in ("threatscore", "compliance"):
+            zip_key = f"{tenant_id}/{scan_id}/{zip_dir}/{os.path.basename(zip_path)}"
+        else:
+            zip_key = f"{tenant_id}/{scan_id}/{os.path.basename(zip_path)}"
         s3.upload_file(
             Filename=zip_path,
             Bucket=bucket,
