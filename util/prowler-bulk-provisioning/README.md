@@ -52,10 +52,10 @@ This two-step approach follows the Prowler API design where providers and their 
 3. Get your Prowler API key:
    - **Prowler Cloud:** Create an API key at https://api.prowler.com
    - **Self-hosted Prowler App:** Create an API key in your local instance
-   - Navigate to **Profile** → **Account** → **Create API Key**
+   - Click **Profile** → **Account** → **Create API Key**
 
   ```bash
-  export PROWLER_API_KEY="pk_your-api-key-here"
+  export PROWLER_API_KEY="pk_example-api-key"
   ```
 
   For detailed instructions on creating API keys, see: https://docs.prowler.com/user-guide/providers/prowler-app-api-keys
@@ -82,7 +82,7 @@ Before using the AWS Organizations generator, deploy the ProwlerRole across all 
 
 2. Generate YAML configuration for all organization accounts:
    ```bash
-   python aws_org_generator.py -o aws-accounts.yaml --external-id your-external-id
+   python aws_org_generator.py -o aws-accounts.yaml --external-id example-external-id
    ```
 
 3. Run bulk provisioning:
@@ -147,7 +147,7 @@ python aws_org_generator.py -o aws-accounts.yaml \
 ### Environment Variables
 
 ```bash
-export PROWLER_API_KEY="pk_your-api-key-here"
+export PROWLER_API_KEY="pk_example-api-key"
 export PROWLER_API_BASE="https://api.prowler.com/api/v1"  # Optional, defaults to Prowler Cloud
 ```
 
@@ -315,8 +315,8 @@ The Prowler API supports the following authentication methods for GCP:
     # OR inline:
     # inline_json:
     #   type: "service_account"
-    #   project_id: "your-project"
-    #   private_key_id: "key-id"
+    #   project_id: "example-project"
+    #   private_key_id: "example-key-id"
     #   private_key: "-----BEGIN PRIVATE KEY-----\n..."
     #   client_email: "service-account@project.iam.gserviceaccount.com"
     #   client_id: "1234567890"
