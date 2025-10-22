@@ -7,7 +7,7 @@ import api.db_utils
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0047_remove_integration_unique_configuration_per_tenant"),
+        ("api", "0049_compliancerequirementoverview_passed_failed_findings"),
     ]
 
     operations = [
