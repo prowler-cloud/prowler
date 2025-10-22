@@ -11,8 +11,6 @@ on:
       - 'opened'
       - 'edited'
       - 'synchronize'
-    paths:
-      - '.github/workflows/conventional-commit.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
