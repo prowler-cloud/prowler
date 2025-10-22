@@ -98,7 +98,11 @@ class TestGenerateOutputs:
             ),
             patch(
                 "tasks.tasks._generate_output_directory",
-                return_value=("out-dir", "comp-dir"),
+                return_value=(
+                    "/tmp/test/out-dir",
+                    "/tmp/test/comp-dir",
+                    "/tmp/test/threat-dir",
+                ),
             ),
             patch("tasks.tasks.Scan.all_objects.filter") as mock_scan_update,
             patch("tasks.tasks.rmtree"),
@@ -126,7 +130,8 @@ class TestGenerateOutputs:
             patch("tasks.tasks.get_compliance_frameworks"),
             patch("tasks.tasks.Finding.all_objects.filter") as mock_findings,
             patch(
-                "tasks.tasks._generate_output_directory", return_value=("out", "comp")
+                "tasks.tasks._generate_output_directory",
+                return_value=("/tmp/test/out", "/tmp/test/comp", "/tmp/test/threat"),
             ),
             patch("tasks.tasks.FindingOutput._transform_findings_stats"),
             patch("tasks.tasks.FindingOutput.transform_api_finding"),
@@ -168,15 +173,35 @@ class TestGenerateOutputs:
         mock_finding_output = MagicMock()
         mock_finding_output.compliance = {"cis": ["requirement-1", "requirement-2"]}
 
+        html_writer_mock = MagicMock()
+        html_writer_mock._data = []
+        html_writer_mock.close_file = False
+        html_writer_mock.transform = MagicMock()
+        html_writer_mock.batch_write_data_to_file = MagicMock()
+
+        compliance_writer_mock = MagicMock()
+        compliance_writer_mock._data = []
+        compliance_writer_mock.close_file = False
+        compliance_writer_mock.transform = MagicMock()
+        compliance_writer_mock.batch_write_data_to_file = MagicMock()
+
+        # Create a mock class that returns our mock instance when called
+        mock_compliance_class = MagicMock(return_value=compliance_writer_mock)
+
+        mock_provider = MagicMock()
+        mock_provider.provider = "aws"
+        mock_provider.uid = "test-provider-uid"
+
         with (
             patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter,
-            patch("tasks.tasks.Provider.objects.get"),
+            patch("tasks.tasks.Provider.objects.get", return_value=mock_provider),
             patch("tasks.tasks.initialize_prowler_provider"),
             patch("tasks.tasks.Compliance.get_bulk", return_value={"cis": MagicMock()}),
             patch("tasks.tasks.get_compliance_frameworks", return_value=["cis"]),
             patch("tasks.tasks.Finding.all_objects.filter") as mock_findings,
             patch(
-                "tasks.tasks._generate_output_directory", return_value=("out", "comp")
+                "tasks.tasks._generate_output_directory",
+                return_value=("/tmp/test/out", "/tmp/test/comp", "/tmp/test/threat"),
             ),
             patch(
                 "tasks.tasks.FindingOutput._transform_findings_stats",
@@ -190,6 +215,20 @@ class TestGenerateOutputs:
             patch("tasks.tasks._upload_to_s3", return_value="s3://bucket/f.zip"),
             patch("tasks.tasks.Scan.all_objects.filter"),
             patch("tasks.tasks.rmtree"),
+            patch(
+                "tasks.tasks.OUTPUT_FORMATS_MAPPING",
+                {
+                    "html": {
+                        "class": lambda *args, **kwargs: html_writer_mock,
+                        "suffix": ".html",
+                        "kwargs": {},
+                    }
+                },
+            ),
+            patch(
+                "tasks.tasks.COMPLIANCE_CLASS_MAP",
+                {"aws": [(lambda x: True, mock_compliance_class)]},
+            ),
         ):
             mock_filter.return_value.exists.return_value = True
             mock_findings.return_value.order_by.return_value.iterator.return_value = [
@@ -197,29 +236,12 @@ class TestGenerateOutputs:
                 True,
             ]
 
-            html_writer_mock = MagicMock()
-            with (
-                patch(
-                    "tasks.tasks.OUTPUT_FORMATS_MAPPING",
-                    {
-                        "html": {
-                            "class": lambda *args, **kwargs: html_writer_mock,
-                            "suffix": ".html",
-                            "kwargs": {},
-                        }
-                    },
-                ),
-                patch(
-                    "tasks.tasks.COMPLIANCE_CLASS_MAP",
-                    {"aws": [(lambda x: True, MagicMock())]},
-                ),
-            ):
-                generate_outputs_task(
-                    scan_id=self.scan_id,
-                    provider_id=self.provider_id,
-                    tenant_id=self.tenant_id,
-                )
-                html_writer_mock.batch_write_data_to_file.assert_called_once()
+            generate_outputs_task(
+                scan_id=self.scan_id,
+                provider_id=self.provider_id,
+                tenant_id=self.tenant_id,
+            )
+            html_writer_mock.batch_write_data_to_file.assert_called_once()
 
     def test_transform_called_only_on_second_batch(self):
         raw1 = MagicMock()
@@ -256,7 +278,11 @@ class TestGenerateOutputs:
             ),
             patch(
                 "tasks.tasks._generate_output_directory",
-                return_value=("outdir", "compdir"),
+                return_value=(
+                    "/tmp/test/outdir",
+                    "/tmp/test/compdir",
+                    "/tmp/test/threatdir",
+                ),
             ),
             patch("tasks.tasks._compress_output_files", return_value="outdir.zip"),
             patch("tasks.tasks._upload_to_s3", return_value="s3://bucket/outdir.zip"),
@@ -303,12 +329,14 @@ class TestGenerateOutputs:
             def __init__(self, *args, **kwargs):
                 self.transform_calls = []
                 self._data = []
+                self.close_file = False
                 writer_instances.append(self)
 
             def transform(self, fos, comp_obj, name):
                 self.transform_calls.append((fos, comp_obj, name))
 
             def batch_write_data_to_file(self):
+                # Mock implementation - do nothing
                 pass
 
         two_batches = [
@@ -329,7 +357,11 @@ class TestGenerateOutputs:
             patch("tasks.tasks.get_compliance_frameworks", return_value=["cis"]),
             patch(
                 "tasks.tasks._generate_output_directory",
-                return_value=("outdir", "compdir"),
+                return_value=(
+                    "/tmp/test/outdir",
+                    "/tmp/test/compdir",
+                    "/tmp/test/threatdir",
+                ),
             ),
             patch("tasks.tasks.FindingOutput._transform_findings_stats"),
             patch(
@@ -368,15 +400,35 @@ class TestGenerateOutputs:
         mock_finding_output = MagicMock()
         mock_finding_output.compliance = {"cis": ["requirement-1", "requirement-2"]}
 
+        json_writer_mock = MagicMock()
+        json_writer_mock._data = []
+        json_writer_mock.close_file = False
+        json_writer_mock.transform = MagicMock()
+        json_writer_mock.batch_write_data_to_file = MagicMock()
+
+        compliance_writer_mock = MagicMock()
+        compliance_writer_mock._data = []
+        compliance_writer_mock.close_file = False
+        compliance_writer_mock.transform = MagicMock()
+        compliance_writer_mock.batch_write_data_to_file = MagicMock()
+
+        # Create a mock class that returns our mock instance when called
+        mock_compliance_class = MagicMock(return_value=compliance_writer_mock)
+
+        mock_provider = MagicMock()
+        mock_provider.provider = "aws"
+        mock_provider.uid = "test-provider-uid"
+
         with (
             patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter,
-            patch("tasks.tasks.Provider.objects.get"),
+            patch("tasks.tasks.Provider.objects.get", return_value=mock_provider),
             patch("tasks.tasks.initialize_prowler_provider"),
             patch("tasks.tasks.Compliance.get_bulk", return_value={"cis": MagicMock()}),
             patch("tasks.tasks.get_compliance_frameworks", return_value=["cis"]),
             patch("tasks.tasks.Finding.all_objects.filter") as mock_findings,
             patch(
-                "tasks.tasks._generate_output_directory", return_value=("out", "comp")
+                "tasks.tasks._generate_output_directory",
+                return_value=("/tmp/test/out", "/tmp/test/comp", "/tmp/test/threat"),
             ),
             patch(
                 "tasks.tasks.FindingOutput._transform_findings_stats",
@@ -390,6 +442,20 @@ class TestGenerateOutputs:
             patch("tasks.tasks._upload_to_s3", return_value="s3://bucket/file.zip"),
             patch("tasks.tasks.Scan.all_objects.filter"),
             patch("tasks.tasks.rmtree", side_effect=Exception("Test deletion error")),
+            patch(
+                "tasks.tasks.OUTPUT_FORMATS_MAPPING",
+                {
+                    "json": {
+                        "class": lambda *args, **kwargs: json_writer_mock,
+                        "suffix": ".json",
+                        "kwargs": {},
+                    }
+                },
+            ),
+            patch(
+                "tasks.tasks.COMPLIANCE_CLASS_MAP",
+                {"aws": [(lambda x: True, mock_compliance_class)]},
+            ),
         ):
             mock_filter.return_value.exists.return_value = True
             mock_findings.return_value.order_by.return_value.iterator.return_value = [
@@ -397,29 +463,13 @@ class TestGenerateOutputs:
                 True,
             ]
 
-            with (
-                patch(
-                    "tasks.tasks.OUTPUT_FORMATS_MAPPING",
-                    {
-                        "json": {
-                            "class": lambda *args, **kwargs: MagicMock(),
-                            "suffix": ".json",
-                            "kwargs": {},
-                        }
-                    },
-                ),
-                patch(
-                    "tasks.tasks.COMPLIANCE_CLASS_MAP",
-                    {"aws": [(lambda x: True, MagicMock())]},
-                ),
-            ):
-                with caplog.at_level("ERROR"):
-                    generate_outputs_task(
-                        scan_id=self.scan_id,
-                        provider_id=self.provider_id,
-                        tenant_id=self.tenant_id,
-                    )
-                    assert "Error deleting output files" in caplog.text
+            with caplog.at_level("ERROR"):
+                generate_outputs_task(
+                    scan_id=self.scan_id,
+                    provider_id=self.provider_id,
+                    tenant_id=self.tenant_id,
+                )
+                assert "Error deleting output files" in caplog.text
 
     @patch("tasks.tasks.rls_transaction")
     @patch("tasks.tasks.Integration.objects.filter")
@@ -435,7 +485,8 @@ class TestGenerateOutputs:
             patch("tasks.tasks.get_compliance_frameworks", return_value=[]),
             patch("tasks.tasks.Finding.all_objects.filter") as mock_findings,
             patch(
-                "tasks.tasks._generate_output_directory", return_value=("out", "comp")
+                "tasks.tasks._generate_output_directory",
+                return_value=("/tmp/test/out", "/tmp/test/comp", "/tmp/test/threat"),
             ),
             patch("tasks.tasks.FindingOutput._transform_findings_stats"),
             patch("tasks.tasks.FindingOutput.transform_api_finding"),
@@ -476,8 +527,15 @@ class TestScanCompleteTasks:
     @patch("tasks.tasks.create_compliance_requirements_task.apply_async")
     @patch("tasks.tasks.perform_scan_summary_task.si")
     @patch("tasks.tasks.generate_outputs_task.si")
+    @patch("tasks.tasks.generate_threatscore_report_task.si")
+    @patch("tasks.tasks.check_integrations_task.si")
     def test_scan_complete_tasks(
-        self, mock_outputs_task, mock_scan_summary_task, mock_compliance_tasks
+        self,
+        mock_check_integrations_task,
+        mock_threatscore_task,
+        mock_outputs_task,
+        mock_scan_summary_task,
+        mock_compliance_tasks,
     ):
         _perform_scan_complete_tasks("tenant-id", "scan-id", "provider-id")
         mock_compliance_tasks.assert_called_once_with(
@@ -491,6 +549,16 @@ class TestScanCompleteTasks:
             scan_id="scan-id",
             provider_id="provider-id",
             tenant_id="tenant-id",
+        )
+        mock_threatscore_task.assert_called_once_with(
+            tenant_id="tenant-id",
+            scan_id="scan-id",
+            provider_id="provider-id",
+        )
+        mock_check_integrations_task.assert_called_once_with(
+            tenant_id="tenant-id",
+            provider_id="provider-id",
+            scan_id="scan-id",
         )
 
 
@@ -662,7 +730,7 @@ class TestCheckIntegrationsTask:
         mock_initialize_provider.return_value = MagicMock()
         mock_compliance_bulk.return_value = {}
         mock_get_frameworks.return_value = []
-        mock_generate_dir.return_value = ("out-dir", "comp-dir")
+        mock_generate_dir.return_value = ("out-dir", "comp-dir", "threat-dir")
         mock_transform_stats.return_value = {"stats": "data"}
 
         # Mock findings
@@ -787,7 +855,7 @@ class TestCheckIntegrationsTask:
         mock_initialize_provider.return_value = MagicMock()
         mock_compliance_bulk.return_value = {}
         mock_get_frameworks.return_value = []
-        mock_generate_dir.return_value = ("out-dir", "comp-dir")
+        mock_generate_dir.return_value = ("out-dir", "comp-dir", "threat-dir")
         mock_transform_stats.return_value = {"stats": "data"}
 
         # Mock findings
@@ -903,7 +971,7 @@ class TestCheckIntegrationsTask:
         mock_initialize_provider.return_value = MagicMock()
         mock_compliance_bulk.return_value = {}
         mock_get_frameworks.return_value = []
-        mock_generate_dir.return_value = ("out-dir", "comp-dir")
+        mock_generate_dir.return_value = ("out-dir", "comp-dir", "threat-dir")
         mock_transform_stats.return_value = {"stats": "data"}
 
         # Mock findings
