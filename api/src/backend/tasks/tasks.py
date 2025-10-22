@@ -26,6 +26,7 @@ from tasks.jobs.integrations import (
     upload_s3_integration,
     upload_security_hub_integration,
 )
+from tasks.jobs.muting import mute_historical_findings
 from tasks.jobs.report import generate_threatscore_report_job
 from tasks.jobs.scan import (
     aggregate_findings,
@@ -641,3 +642,25 @@ def generate_threatscore_report_task(tenant_id: str, scan_id: str, provider_id: 
     return generate_threatscore_report_job(
         tenant_id=tenant_id, scan_id=scan_id, provider_id=provider_id
     )
+
+
+@shared_task(name="findings-mute-historical")
+def mute_historical_findings_task(tenant_id: str, mute_rule_id: str):
+    """
+    Background task to mute all historical findings matching a mute rule.
+
+    This task processes findings in batches to avoid memory issues with large datasets.
+    It updates the Finding.muted, Finding.muted_at, and Finding.muted_reason fields
+    for all findings whose UID is in the mute rule's finding_uids list.
+
+    Args:
+        tenant_id (str): The tenant ID for RLS context.
+        mute_rule_id (str): The primary key of the MuteRule to apply.
+
+    Returns:
+        dict: A dictionary containing:
+            - 'findings_muted' (int): Total number of findings muted.
+            - 'rule_id' (str): The mute rule ID.
+            - 'status' (str): Final status ('completed').
+    """
+    return mute_historical_findings(tenant_id, mute_rule_id)
