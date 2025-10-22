@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { apiBaseUrl, getAuthHeaders, getErrorMessage } from "@/lib";
+import { addScanOperation } from "@/lib/sentry-breadcrumbs";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 
 export const getScans = async ({
@@ -89,6 +90,11 @@ export const scanOnDemand = async (formData: FormData) => {
     return { error: "Provider ID is required" };
   }
 
+  addScanOperation("create", undefined, {
+    provider_id: String(providerId),
+    scan_name: scanName ? String(scanName) : undefined,
+  });
+
   const url = new URL(`${apiBaseUrl}/scans`);
 
   try {
@@ -113,8 +119,13 @@ export const scanOnDemand = async (formData: FormData) => {
       body: JSON.stringify(requestBody),
     });
 
-    return handleApiResponse(response, "/scans");
+    const result = await handleApiResponse(response, "/scans");
+    if (result?.data?.id) {
+      addScanOperation("start", result.data.id);
+    }
+    return result;
   } catch (error) {
+    addScanOperation("create");
     return handleApiError(error);
   }
 };

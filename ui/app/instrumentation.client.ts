@@ -1,31 +1,62 @@
+/**
+ * Client-side Sentry instrumentation
+ *
+ * This file is automatically loaded by Next.js in the browser via the instrumentation hook.
+ * It configures Sentry for client-side error tracking and performance monitoring.
+ *
+ * For server-side configuration, see: instrumentation.ts
+ * For runtime-specific configs, see: sentry/sentry.server.config.ts and sentry/sentry.edge.config.ts
+ */
+
 import * as Sentry from "@sentry/nextjs";
 
+const isDevelopment = process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT === "dev";
+
+/**
+ * Initialize Sentry error tracking and performance monitoring
+ *
+ * This setup includes:
+ * - Performance monitoring with Web Vitals tracking (LCP, FID, CLS, INP)
+ * - Long task detection for UI-blocking operations
+ * - Session replay to reproduce bugs
+ * - beforeSend hook to filter noise
+ */
 Sentry.init({
+  // 📍 DSN - Data Source Name (identifies your Sentry project)
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 
-  // Environment configuration
-  environment: process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT || "development",
+  // 🌍 Environment - Separate dev errors from production
+  environment: process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT || "dev",
 
-  // Performance Monitoring
-  tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
-
-  // Session Replay
-  replaysSessionSampleRate: 0.1, // 10% of sessions will be recorded
-  replaysOnErrorSampleRate: 1.0, // 100% of sessions with errors will be recorded
-
-  // Release tracking
+  // 📦 Release - Track which version has the error
   release: process.env.NEXT_PUBLIC_PROWLER_RELEASE_VERSION,
 
-  // Integrations
+  // 🐛 Debug - Detailed logs in development console
+  debug: isDevelopment,
+
+  // 📊 Sample Rates - Performance monitoring
+  // 100% in dev (test everything), 50% in production (balance visibility with costs)
+  tracesSampleRate: isDevelopment ? 1.0 : 0.5,
+  profilesSampleRate: isDevelopment ? 1.0 : 0.5,
+
+  // 🎥 Session Replay - Record user sessions
+  // 100% in dev, 50% in production (balance visibility with costs)
+  replaysSessionSampleRate: isDevelopment ? 1.0 : 0.5,
+  // Always record sessions when errors occur (100% for debugging)
+  replaysOnErrorSampleRate: 1.0,
+
+  // 🔌 Integrations
   integrations: [
-    Sentry.replayIntegration({
-      maskAllText: false,
-      blockAllMedia: false,
+    // 📊 Performance Monitoring: Core Web Vitals + RUM
+    // Tracks LCP, FID, CLS, INP
+    // Real User Monitoring captures actual user experience, not synthetic tests
+    Sentry.browserTracingIntegration({
+      enableLongTask: true, // Detect tasks that block UI (>50ms)
+      enableInp: true, // Interaction to Next Paint (Core Web Vital)
     }),
-    Sentry.browserTracingIntegration(),
   ],
 
-  // Filtering
+  // 🎣 beforeSend Hook - Filter or modify events before sending to Sentry
   ignoreErrors: [
     // Browser extensions
     "top.GLOBALS",
@@ -38,9 +69,16 @@ Sentry.init({
     "Non-Error promise rejection captured",
     // NextAuth expected errors
     "NEXT_REDIRECT",
+    // ResizeObserver errors (common browser quirk, not real bugs)
+    "ResizeObserver",
   ],
 
   beforeSend(event, hint) {
+    // Filter out noise: ResizeObserver errors (common browser quirk, not real bugs)
+    if (event.message?.includes("ResizeObserver")) {
+      return null; // Don't send to Sentry
+    }
+
     // Filter out non-actionable errors
     if (event.exception) {
       const error = hint.originalException;
@@ -70,6 +108,14 @@ Sentry.init({
       }
     }
 
-    return event;
+    return event; // Send to Sentry
   },
 });
+
+// 👤 Set user context (identifies who experienced the error)
+// In production, this will be updated after authentication
+if (isDevelopment) {
+  Sentry.setUser({
+    id: "dev-user",
+  });
+}

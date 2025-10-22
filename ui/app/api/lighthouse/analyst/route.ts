@@ -1,5 +1,5 @@
-import * as Sentry from "@sentry/nextjs";
 import { toUIMessageStream } from "@ai-sdk/langchain";
+import * as Sentry from "@sentry/nextjs";
 import { createUIMessageStreamResponse, UIMessage } from "ai";
 
 import { getLighthouseConfig } from "@/actions/lighthouse/lighthouse";

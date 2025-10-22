@@ -1,42 +1,55 @@
 import * as Sentry from "@sentry/nextjs";
 
+const isProduction = process.env.SENTRY_ENVIRONMENT === "pro";
+
+/**
+ * Server-side Sentry configuration
+ *
+ * This setup includes:
+ * - Performance monitoring for server-side operations
+ * - Error tracking for API routes and server actions
+ * - beforeSend hook to filter noise and add context
+ */
 Sentry.init({
+  // 📍 DSN - Data Source Name (identifies your Sentry project)
   dsn: process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN,
 
-  // Environment configuration
+  // 🌍 Environment configuration
   environment:
     process.env.SENTRY_ENVIRONMENT || process.env.NODE_ENV || "development",
 
-  // Performance Monitoring
-  tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
-
-  // Release tracking
+  // 📦 Release tracking
   release: process.env.SENTRY_RELEASE || process.env.NEXT_PUBLIC_SENTRY_RELEASE,
 
-  // Integrations
+  // 📊 Sample Rates - Performance monitoring
+  // 100% in dev (test everything), 50% in production (balance visibility with costs)
+  tracesSampleRate: isProduction ? 0.5 : 1.0,
+  profilesSampleRate: isProduction ? 0.5 : 1.0,
+
+  // 🔌 Integrations
   integrations: [
     Sentry.extraErrorDataIntegration({
-      depth: 5,
+      depth: 5, // Include up to 5 levels of nested objects
     }),
   ],
 
-  // Filtering - Ignore expected errors
+  // 🎣 Filter expected errors - Don't send noise to Sentry
   ignoreErrors: [
-    // NextAuth redirect errors - Expected NextAuth errors
+    // NextAuth redirect errors - Expected behavior
     "NEXT_REDIRECT",
     "NEXT_NOT_FOUND",
-    // Expected API errors - Expected HTTP errors
-    "401", // Unauthorized - Expected
-    "403", // Forbidden - Expected
-    "404", // Not Found - Expected
+    // Expected HTTP errors - Expected when users lack permissions
+    "401", // Unauthorized
+    "403", // Forbidden
+    "404", // Not Found
   ],
 
   beforeSend(event, hint) {
-    // Add server context
+    // Add server context and tag errors appropriately
     if (event.exception) {
       const error = hint.originalException;
 
-      // Tag API errors
+      // Tag API errors for better filtering in Sentry dashboard
       if (
         error &&
         typeof error === "object" &&
