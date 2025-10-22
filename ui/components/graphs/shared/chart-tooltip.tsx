@@ -53,10 +53,7 @@ export function ChartTooltip({
         </p>
       </div>
 
-      <p
-        className="mt-1 text-xs"
-        style={{ color: CHART_COLORS.textPrimary }}
-      >
+      <p className="mt-1 text-xs" style={{ color: CHART_COLORS.textPrimary }}>
         {typeof data.value === "number"
           ? data.value.toLocaleString()
           : data.value}
@@ -66,7 +63,10 @@ export function ChartTooltip({
       {data.newFindings !== undefined && data.newFindings > 0 && (
         <div className="mt-1 flex items-center gap-2">
           <Bell size={14} style={{ color: "var(--chart-fail)" }} />
-          <span className="text-xs" style={{ color: CHART_COLORS.textSecondary }}>
+          <span
+            className="text-xs"
+            style={{ color: CHART_COLORS.textSecondary }}
+          >
             {data.newFindings} New Findings
           </span>
         </div>
@@ -75,7 +75,10 @@ export function ChartTooltip({
       {data.new !== undefined && data.new > 0 && (
         <div className="mt-1 flex items-center gap-2">
           <Bell size={14} style={{ color: "var(--chart-fail)" }} />
-          <span className="text-xs" style={{ color: CHART_COLORS.textSecondary }}>
+          <span
+            className="text-xs"
+            style={{ color: CHART_COLORS.textSecondary }}
+          >
             {data.new} New
           </span>
         </div>
@@ -84,14 +87,20 @@ export function ChartTooltip({
       {data.muted !== undefined && data.muted > 0 && (
         <div className="mt-1 flex items-center gap-2">
           <VolumeX size={14} style={{ color: CHART_COLORS.textSecondary }} />
-          <span className="text-xs" style={{ color: CHART_COLORS.textSecondary }}>
+          <span
+            className="text-xs"
+            style={{ color: CHART_COLORS.textSecondary }}
+          >
             {data.muted} Muted
           </span>
         </div>
       )}
 
       {data.change !== undefined && (
-        <p className="mt-1 text-xs" style={{ color: CHART_COLORS.textSecondary }}>
+        <p
+          className="mt-1 text-xs"
+          style={{ color: CHART_COLORS.textSecondary }}
+        >
           <span className="font-bold">
             {data.change > 0 ? "+" : ""}
             {data.change}%
@@ -146,7 +155,10 @@ export function MultiSeriesChartTooltip({
             {entry.value}
           </span>
           {entry.payload[`${entry.dataKey}_change`] && (
-            <span className="text-xs" style={{ color: CHART_COLORS.textSecondary }}>
+            <span
+              className="text-xs"
+              style={{ color: CHART_COLORS.textSecondary }}
+            >
               ({entry.payload[`${entry.dataKey}_change`] > 0 ? "+" : ""}
               {entry.payload[`${entry.dataKey}_change`]}%)
             </span>

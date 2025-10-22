@@ -87,10 +87,7 @@ const CustomLineTooltip = ({
               </div>
               {newFindings !== undefined && (
                 <div className="flex items-center gap-2">
-                  <Bell
-                    size={14}
-                    style={{ color: "var(--chart-fail)" }}
-                  />
+                  <Bell size={14} style={{ color: "var(--chart-fail)" }} />
                   <span
                     className="text-xs"
                     style={{ color: "var(--chart-text-secondary)" }}

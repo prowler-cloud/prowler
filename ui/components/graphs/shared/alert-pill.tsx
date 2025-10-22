@@ -21,7 +21,10 @@ export function AlertPill({
         className="flex items-center gap-1 rounded-full px-2 py-1"
         style={{ backgroundColor: "var(--chart-alert-bg)" }}
       >
-        <AlertTriangle size={iconSize} style={{ color: "var(--chart-alert-text)" }} />
+        <AlertTriangle
+          size={iconSize}
+          style={{ color: "var(--chart-alert-text)" }}
+        />
         <span
           className={cn(`text-${textSize}`, "font-semibold")}
           style={{ color: "var(--chart-alert-text)" }}
