@@ -19,6 +19,7 @@ import {
   KubernetesCredentials,
   M365CertificateCredentials,
   M365ClientSecretCredentials,
+  OCICredentials,
   ProviderType,
 } from "@/types";
 
@@ -34,6 +35,8 @@ import {
 import { AzureCredentialsForm } from "./via-credentials/azure-credentials-form";
 import { GitHubCredentialsForm } from "./via-credentials/github-credentials-form";
 import { KubernetesCredentialsForm } from "./via-credentials/k8s-credentials-form";
+import { M365CredentialsForm } from "./via-credentials/m365-credentials-form";
+import { OracleCloudCredentialsForm } from "./via-credentials/oraclecloud-credentials-form";
 
 type BaseCredentialsFormProps = {
   providerType: ProviderType;
@@ -146,6 +149,11 @@ export const BaseCredentialsForm = ({
           <GitHubCredentialsForm
             control={form.control}
             credentialsType={searchParamsObj.get("via") || undefined}
+          />
+        )}
+        {providerType === "oci" && (
+          <OracleCloudCredentialsForm
+            control={form.control as unknown as Control<OCICredentials>}
           />
         )}
 

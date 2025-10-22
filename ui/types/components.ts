@@ -248,13 +248,23 @@ export type KubernetesCredentials = {
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
+export type OCICredentials = {
+  [ProviderCredentialFields.OCI_USER]: string;
+  [ProviderCredentialFields.OCI_FINGERPRINT]: string;
+  [ProviderCredentialFields.OCI_KEY_CONTENT]: string;
+  [ProviderCredentialFields.OCI_REGION]: string;
+  [ProviderCredentialFields.OCI_PASS_PHRASE]?: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
 export type CredentialsFormSchema =
   | AWSCredentials
   | AzureCredentials
   | GCPDefaultCredentials
   | GCPServiceAccountKey
   | KubernetesCredentials
-  | M365Credentials;
+  | M365Credentials
+  | OCICredentials;
 
 export interface SearchParamsProps {
   [key: string]: string | string[] | undefined;

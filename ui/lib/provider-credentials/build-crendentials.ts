@@ -197,10 +197,49 @@ export const buildGitHubSecret = (formData: FormData) => {
   return {};
 };
 
+export const buildOracleCloudSecret = (formData: FormData, providerUid?: string) => {
+  const keyContent = getFormValue(
+    formData,
+    ProviderCredentialFields.OCI_KEY_CONTENT,
+  ) as string;
+
+  // Base64 encode the key content for the backend
+  // Use btoa with proper UTF-8 encoding to handle all characters
+  const encodedKeyContent = keyContent
+    ? btoa(unescape(encodeURIComponent(keyContent)))
+    : "";
+
+  const secret = {
+    [ProviderCredentialFields.OCI_USER]: getFormValue(
+      formData,
+      ProviderCredentialFields.OCI_USER,
+    ),
+    [ProviderCredentialFields.OCI_FINGERPRINT]: getFormValue(
+      formData,
+      ProviderCredentialFields.OCI_FINGERPRINT,
+    ),
+    [ProviderCredentialFields.OCI_KEY_CONTENT]: encodedKeyContent,
+    [ProviderCredentialFields.OCI_TENANCY]: providerUid || getFormValue(
+      formData,
+      ProviderCredentialFields.OCI_TENANCY,
+    ),
+    [ProviderCredentialFields.OCI_REGION]: getFormValue(
+      formData,
+      ProviderCredentialFields.OCI_REGION,
+    ),
+    [ProviderCredentialFields.OCI_PASS_PHRASE]: getFormValue(
+      formData,
+      ProviderCredentialFields.OCI_PASS_PHRASE,
+    ),
+  };
+  return filterEmptyValues(secret);
+};
+
 // Main function to build secret configuration
 export const buildSecretConfig = (
   formData: FormData,
   providerType: ProviderType,
+  providerUid?: string,
 ) => {
   const isRole = formData.get(ProviderCredentialFields.ROLE_ARN) !== null;
   const isServiceAccount =
@@ -230,6 +269,10 @@ export const buildSecretConfig = (
     github: () => ({
       secretType: "static",
       secret: buildGitHubSecret(formData),
+    }),
+    oci: () => ({
+      secretType: "static",
+      secret: buildOracleCloudSecret(formData, providerUid),
     }),
   };
 
