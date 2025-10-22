@@ -7,6 +7,7 @@ import {
   AttributesData,
   Framework,
   Requirement,
+  REQUIREMENT_STATUS,
   RequirementsData,
   RequirementStatus,
   ThreatAttributesMetadata,
@@ -52,9 +53,11 @@ export const mapComplianceData = (
     const weight = attrs.Weight;
     const attributeDescription = attrs.AttributeDescription;
     const additionalInformation = attrs.AdditionalInformation;
+    const passedFindings = requirementData.attributes.passed_findings || 0;
+    const totalFindings = requirementData.attributes.total_findings || 0;
 
     // Calculate score: if PASS = levelOfRisk * weight, if FAIL = 0
-    const score = status === "PASS" ? levelOfRisk * weight : 0;
+    const score = status === REQUIREMENT_STATUS.PASS ? levelOfRisk * weight : 0;
 
     // Find or create framework using common helper
     const framework = findOrCreateFramework(frameworks, frameworkName);
@@ -72,15 +75,17 @@ export const mapComplianceData = (
       description: description,
       status: finalStatus,
       check_ids: checks,
-      pass: finalStatus === "PASS" ? 1 : 0,
-      fail: finalStatus === "FAIL" ? 1 : 0,
-      manual: finalStatus === "MANUAL" ? 1 : 0,
+      pass: finalStatus === REQUIREMENT_STATUS.PASS ? 1 : 0,
+      fail: finalStatus === REQUIREMENT_STATUS.FAIL ? 1 : 0,
+      manual: finalStatus === REQUIREMENT_STATUS.MANUAL ? 1 : 0,
       title: title,
       levelOfRisk: levelOfRisk,
       weight: weight,
       score: score,
       attributeDescription: attributeDescription,
       additionalInformation: additionalInformation,
+      passedFindings: passedFindings,
+      totalFindings: totalFindings,
     };
 
     control.requirements.push(requirement);
@@ -97,9 +102,10 @@ export const mapComplianceData = (
       category.fail = 0;
       category.manual = 0;
 
-      // Calculate total score for this section and maximum possible score
-      let totalSectionScore = 0;
-      let maxPossibleSectionScore = 0;
+      // Calculate ThreatScore using the new formula
+      let numerator = 0;
+      let denominator = 0;
+      let hasFindings = false;
 
       category.controls.forEach((control) => {
         control.pass = 0;
@@ -109,13 +115,25 @@ export const mapComplianceData = (
         control.requirements.forEach((requirement) => {
           updateCounters(control, requirement.status);
 
-          // Add to total section score (actual score obtained)
-          totalSectionScore += (requirement.score as number) || 0;
+          // Extract values for ThreatScore calculation
+          const pass_i = (requirement.passedFindings as number) || 0;
+          const total_i = (requirement.totalFindings as number) || 0;
 
-          // Add to maximum possible score (weight * levelOfRisk for each requirement)
+          // Skip if no findings (avoid division by zero)
+          if (total_i === 0) return;
+
+          hasFindings = true;
+          const rate_i = pass_i / total_i;
+          const weight_i = (requirement.weight as number) || 1;
           const levelOfRisk = (requirement.levelOfRisk as number) || 0;
-          const weight = (requirement.weight as number) || 0;
-          maxPossibleSectionScore += levelOfRisk * weight;
+
+          // Map levelOfRisk to risk factor (rfac_i)
+          // Formula: rfac_i = 1 + (k * levelOfRisk) where k = 0.25
+          const rfac_i = 1 + 0.25 * levelOfRisk;
+
+          // Accumulate weighted values
+          numerator += rate_i * total_i * weight_i * rfac_i;
+          denominator += total_i * weight_i * rfac_i;
         });
 
         category.pass += control.pass;
@@ -123,10 +141,12 @@ export const mapComplianceData = (
         category.manual += control.manual;
       });
 
-      // Calculate percentualScore for this section: (suma de scores obtenidos / suma de weight * levelOfRisk) * 100
-      const percentualScore =
-        maxPossibleSectionScore > 0
-          ? (totalSectionScore / maxPossibleSectionScore) * 100
+      // Calculate ThreatScore (percentualScore) for this section
+      // If no findings exist, consider it 100% (PASS)
+      const percentualScore = !hasFindings
+        ? 100
+        : denominator > 0
+          ? (numerator / denominator) * 100
           : 0;
 
       // Add percentualScore to category (we can extend the type or use a custom property)

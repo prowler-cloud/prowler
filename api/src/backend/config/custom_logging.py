@@ -48,6 +48,10 @@ class NDJSONFormatter(logging.Formatter):
             log_record["user_id"] = record.user_id
         if hasattr(record, "tenant_id"):
             log_record["tenant_id"] = record.tenant_id
+        if hasattr(record, "api_key_prefix"):
+            log_record["api_key_prefix"] = (
+                record.api_key_prefix if record.api_key_prefix != "N/A" else None
+            )
         if hasattr(record, "method"):
             log_record["method"] = record.method
         if hasattr(record, "path"):
@@ -90,6 +94,9 @@ class HumanReadableFormatter(logging.Formatter):
         # Add REST API extra fields
         if hasattr(record, "user_id"):
             log_components.append(f"({record.user_id})")
+        if hasattr(record, "api_key_prefix"):
+            if record.api_key_prefix != "N/A":
+                log_components.append(f"(API-Key {record.api_key_prefix})")
         if hasattr(record, "tenant_id"):
             log_components.append(f"[{record.tenant_id}]")
         if hasattr(record, "method"):

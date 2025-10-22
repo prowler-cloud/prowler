@@ -1,13 +1,11 @@
 import * as Sentry from "@sentry/nextjs";
-import { LangChainAdapter, Message } from "ai";
+import { toUIMessageStream } from "@ai-sdk/langchain";
+import { createUIMessageStreamResponse, UIMessage } from "ai";
 
 import { getLighthouseConfig } from "@/actions/lighthouse/lighthouse";
 import { getErrorMessage } from "@/lib/helper";
 import { getCurrentDataSection } from "@/lib/lighthouse/data";
-import {
-  convertLangChainMessageToVercelMessage,
-  convertVercelMessageToLangChainMessage,
-} from "@/lib/lighthouse/utils";
+import { convertVercelMessageToLangChainMessage } from "@/lib/lighthouse/utils";
 import { initLighthouseWorkflow } from "@/lib/lighthouse/workflow";
 import { SentryErrorSource, SentryErrorType } from "@/sentry";
 
@@ -16,7 +14,7 @@ export async function POST(req: Request) {
     const {
       messages,
     }: {
-      messages: Message[];
+      messages: UIMessage[];
     } = await req.json();
 
     if (!messages) {
@@ -34,14 +32,19 @@ export async function POST(req: Request) {
     const currentData = await getCurrentDataSection();
 
     // Add context messages at the beginning
-    const contextMessages: Message[] = [];
+    const contextMessages: UIMessage[] = [];
 
     // Add business context if available
     if (businessContext) {
       contextMessages.push({
         id: "business-context",
         role: "assistant",
-        content: `Business Context Information:\n${businessContext}`,
+        parts: [
+          {
+            type: "text",
+            text: `Business Context Information:\n${businessContext}`,
+          },
+        ],
       });
     }
 
@@ -50,7 +53,12 @@ export async function POST(req: Request) {
       contextMessages.push({
         id: "current-data",
         role: "assistant",
-        content: currentData,
+        parts: [
+          {
+            type: "text",
+            text: currentData,
+          },
+        ],
       });
     }
 
@@ -63,7 +71,7 @@ export async function POST(req: Request) {
       {
         messages: processedMessages
           .filter(
-            (message: Message) =>
+            (message: UIMessage) =>
               message.role === "user" || message.role === "assistant",
           )
           .map(convertVercelMessageToLangChainMessage),
@@ -77,12 +85,12 @@ export async function POST(req: Request) {
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          for await (const { event, data, tags } of agentStream) {
+          for await (const streamEvent of agentStream) {
+            const { event, data, tags } = streamEvent;
             if (event === "on_chat_model_stream") {
               if (data.chunk.content && !!tags && tags.includes("supervisor")) {
-                const chunk = data.chunk;
-                const aiMessage = convertLangChainMessageToVercelMessage(chunk);
-                controller.enqueue(aiMessage);
+                // Pass the raw LangChain stream event - toUIMessageStream will handle conversion
+                controller.enqueue(streamEvent);
               }
             }
           }
@@ -107,17 +115,16 @@ export async function POST(req: Request) {
             },
           });
 
-          controller.enqueue({
-            id: "error-" + Date.now(),
-            role: "assistant",
-            content: `[LIGHTHOUSE_ANALYST_ERROR]: ${errorMessage}`,
-          });
+          controller.enqueue(`[LIGHTHOUSE_ANALYST_ERROR]: ${errorMessage}`);
           controller.close();
         }
       },
     });
 
-    return LangChainAdapter.toDataStreamResponse(stream);
+    // Convert LangChain stream to UI message stream and return as SSE response
+    return createUIMessageStreamResponse({
+      stream: toUIMessageStream(stream),
+    });
   } catch (error) {
     console.error("Error in POST request:", error);
 

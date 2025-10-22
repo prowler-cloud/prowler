@@ -1,12 +1,285 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.13.0
+  version: 1.14.0
   description: |-
     Prowler API specification.
 
     This file is auto-generated.
 paths:
+  /api/v1/api-keys:
+    get:
+      operationId: api_keys_list
+      description: Retrieve a list of API keys for the tenant, with filtering support.
+      summary: List API keys
+      parameters:
+      - in: query
+        name: fields[api-keys]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - prefix
+            - expires_at
+            - revoked
+            - inserted_at
+            - last_used_at
+            - entity
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[expires_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[expires_at__gte]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[expires_at__lte]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[name]
+        schema:
+          type: string
+      - in: query
+        name: filter[name__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[prefix]
+        schema:
+          type: string
+      - in: query
+        name: filter[prefix__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[revoked]
+        schema:
+          type: boolean
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - entity
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - -name
+            - prefix
+            - -prefix
+            - revoked
+            - -revoked
+            - inserted_at
+            - -inserted_at
+            - expires_at
+            - -expires_at
+        explode: false
+      tags:
+      - API Keys
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTenantApiKeyList'
+          description: ''
+    post:
+      operationId: api_keys_create
+      description: Create a new API key for the tenant.
+      summary: Create a new API key
+      tags:
+      - API Keys
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/TenantApiKeyCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TenantApiKeyCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TenantApiKeyCreateRequest'
+        required: true
+      security:
+      - JWT or API Key: []
+      responses:
+        '201':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/TenantApiKeyCreateResponse'
+          description: ''
+  /api/v1/api-keys/{id}:
+    get:
+      operationId: api_keys_retrieve
+      description: Fetch detailed information about a specific API key by its ID.
+      summary: Retrieve API key details
+      parameters:
+      - in: query
+        name: fields[api-keys]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - prefix
+            - expires_at
+            - revoked
+            - inserted_at
+            - last_used_at
+            - entity
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this tenant api key.
+        required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - entity
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      tags:
+      - API Keys
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/TenantApiKeyResponse'
+          description: ''
+    patch:
+      operationId: api_keys_partial_update
+      description: Modify certain fields of an existing API key without affecting
+        other settings.
+      summary: Partially update an API key
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this tenant api key.
+        required: true
+      tags:
+      - API Keys
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/PatchedTenantApiKeyUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTenantApiKeyUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTenantApiKeyUpdateRequest'
+        required: true
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/TenantApiKeyUpdateResponse'
+          description: ''
+  /api/v1/api-keys/{id}/revoke:
+    delete:
+      operationId: api_keys_revoke_destroy
+      description: Revoke an API key by its ID. This action is irreversible and will
+        prevent the key from being used.
+      summary: Revoke an API key
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this tenant api key.
+        required: true
+      tags:
+      - API Keys
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OpenApiResponseResponse'
+          description: API key was successfully revoked
   /api/v1/compliance-overviews:
     get:
       operationId: compliance_overviews_list
@@ -135,7 +408,7 @@ paths:
       tags:
       - Compliance Overview
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -182,6 +455,7 @@ paths:
             type: string
             enum:
             - id
+            - compliance_name
             - framework_description
             - name
             - framework
@@ -200,7 +474,7 @@ paths:
       tags:
       - Compliance Overview
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -236,7 +510,7 @@ paths:
       tags:
       - Compliance Overview
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -385,7 +659,7 @@ paths:
       tags:
       - Compliance Overview
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -891,7 +1165,7 @@ paths:
       tags:
       - Finding
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -953,7 +1227,7 @@ paths:
       tags:
       - Finding
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -1394,7 +1668,7 @@ paths:
       tags:
       - Finding
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       deprecated: true
       responses:
         '200':
@@ -1816,7 +2090,7 @@ paths:
       tags:
       - Finding
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -2262,7 +2536,7 @@ paths:
       tags:
       - Finding
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -2658,7 +2932,7 @@ paths:
       tags:
       - Finding
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -2810,7 +3084,7 @@ paths:
       tags:
       - Integration
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -2838,7 +3112,7 @@ paths:
               $ref: '#/components/schemas/IntegrationCreateRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '201':
           content:
@@ -2888,7 +3162,7 @@ paths:
               $ref: '#/components/schemas/IntegrationJiraDispatchRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '202':
           content:
@@ -2958,7 +3232,7 @@ paths:
       tags:
       - Integration
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -2994,7 +3268,7 @@ paths:
               $ref: '#/components/schemas/PatchedIntegrationUpdateRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -3017,7 +3291,7 @@ paths:
       tags:
       - Integration
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '204':
           description: No response body
@@ -3037,7 +3311,7 @@ paths:
       tags:
       - Integration
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '202':
           content:
@@ -3081,7 +3355,7 @@ paths:
               $ref: '#/components/schemas/InvitationAcceptRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '201':
           content:
@@ -3154,7 +3428,7 @@ paths:
       tags:
       - Lighthouse AI
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -3181,7 +3455,7 @@ paths:
               $ref: '#/components/schemas/LighthouseConfigCreateRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '201':
           content:
@@ -3215,7 +3489,7 @@ paths:
               $ref: '#/components/schemas/PatchedLighthouseConfigUpdateRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -3236,7 +3510,7 @@ paths:
       tags:
       - Lighthouse AI
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '204':
           description: No response body
@@ -3255,7 +3529,7 @@ paths:
       tags:
       - Lighthouse AI
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '202':
           content:
@@ -3337,6 +3611,16 @@ paths:
         schema:
           type: string
           format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[provider_type]
         schema:
@@ -3445,7 +3729,7 @@ paths:
       tags:
       - Overview
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -3504,6 +3788,16 @@ paths:
         schema:
           type: string
           format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[provider_type]
         schema:
@@ -3615,7 +3909,7 @@ paths:
       tags:
       - Overview
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -3649,7 +3943,7 @@ paths:
       tags:
       - Overview
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -3706,6 +4000,16 @@ paths:
         schema:
           type: string
           format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[provider_type]
         schema:
@@ -3796,7 +4100,7 @@ paths:
       tags:
       - Overview
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -3892,7 +4196,7 @@ paths:
       tags:
       - Processor
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -3920,7 +4224,7 @@ paths:
               $ref: '#/components/schemas/ProcessorCreateRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '201':
           content:
@@ -3959,7 +4263,7 @@ paths:
       tags:
       - Processor
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -3995,7 +4299,7 @@ paths:
               $ref: '#/components/schemas/PatchedProcessorUpdateRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -4018,7 +4322,7 @@ paths:
       tags:
       - Processor
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '204':
           description: No response body
@@ -4148,7 +4452,7 @@ paths:
       tags:
       - Provider Group
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -4176,7 +4480,7 @@ paths:
               $ref: '#/components/schemas/ProviderGroupCreateRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '201':
           content:
@@ -4217,7 +4521,7 @@ paths:
       tags:
       - Provider Group
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -4253,7 +4557,7 @@ paths:
               $ref: '#/components/schemas/PatchedProviderGroupUpdateRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -4276,7 +4580,7 @@ paths:
       tags:
       - Provider Group
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '204':
           description: No response body
@@ -4301,7 +4605,7 @@ paths:
               $ref: '#/components/schemas/ProviderGroupMembershipRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '204':
           description: Relationship created successfully
@@ -4327,7 +4631,7 @@ paths:
               $ref: '#/components/schemas/PatchedProviderGroupMembershipRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '204':
           description: Relationship updated successfully
@@ -4339,7 +4643,7 @@ paths:
       tags:
       - Provider Group
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '204':
           description: Relationship deleted successfully
@@ -4390,6 +4694,12 @@ paths:
         name: filter[connected]
         schema:
           type: boolean
+        description: |-
+          Filter by connection status. Set to True to return only
+                  connected providers, or False to return only providers with failed
+                  connections. If not specified, both connected and failed providers are
+                  included. Providers with no connection attempt (status is null) are
+                  excluded from this filter.
       - in: query
         name: filter[id]
         schema:
@@ -4410,6 +4720,9 @@ paths:
         schema:
           type: string
           format: date
+        description: |-
+          Filter by date when the provider was added
+                  (format: YYYY-MM-DD)
       - in: query
         name: filter[inserted_at__gte]
         schema:
@@ -4445,7 +4758,23 @@ paths:
           type: array
           items:
             type: string
-        description: Multiple values may be separated by commas.
+            x-spec-enum-id: 4c1e219dad1cc0e7
+            enum:
+            - aws
+            - azure
+            - gcp
+            - github
+            - kubernetes
+            - m365
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
         explode: false
         style: form
       - name: filter[search]
@@ -4476,6 +4805,9 @@ paths:
         schema:
           type: string
           format: date
+        description: |-
+          Filter by date when the provider was updated
+                  (format: YYYY-MM-DD)
       - in: query
         name: filter[updated_at__gte]
         schema:
@@ -4534,7 +4866,7 @@ paths:
       tags:
       - Provider
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -4562,7 +4894,7 @@ paths:
               $ref: '#/components/schemas/ProviderCreateRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '201':
           content:
@@ -4616,7 +4948,7 @@ paths:
       tags:
       - Provider
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -4652,7 +4984,7 @@ paths:
               $ref: '#/components/schemas/PatchedProviderUpdateRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -4675,7 +5007,7 @@ paths:
       tags:
       - Provider
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '202':
           content:
@@ -4715,7 +5047,7 @@ paths:
       tags:
       - Provider
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '202':
           content:
@@ -4766,6 +5098,7 @@ paths:
         schema:
           type: string
           format: date
+        description: 'Filter by date when the secret was added (format: YYYY-MM-DD)'
       - in: query
         name: filter[name]
         schema:
@@ -4790,6 +5123,7 @@ paths:
         schema:
           type: string
           format: date
+        description: 'Filter by date when the secret was updated (format: YYYY-MM-DD)'
       - name: page[number]
         required: false
         in: query
@@ -4821,7 +5155,7 @@ paths:
       tags:
       - Provider
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -4849,7 +5183,7 @@ paths:
               $ref: '#/components/schemas/ProviderSecretCreateRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '201':
           content:
@@ -4888,7 +5222,7 @@ paths:
       tags:
       - Provider
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -4923,7 +5257,7 @@ paths:
               $ref: '#/components/schemas/PatchedProviderSecretUpdateRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -4945,7 +5279,7 @@ paths:
       tags:
       - Provider
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '204':
           description: No response body
@@ -5262,7 +5596,7 @@ paths:
       tags:
       - Resource
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -5322,7 +5656,7 @@ paths:
       tags:
       - Resource
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -5582,7 +5916,7 @@ paths:
       tags:
       - Resource
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -5869,7 +6203,7 @@ paths:
       tags:
       - Resource
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -6108,7 +6442,7 @@ paths:
       tags:
       - Resource
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -6278,7 +6612,7 @@ paths:
       tags:
       - Role
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -6305,7 +6639,7 @@ paths:
               $ref: '#/components/schemas/RoleCreateRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '201':
           content:
@@ -6353,7 +6687,7 @@ paths:
       tags:
       - Role
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -6363,8 +6697,10 @@ paths:
           description: ''
     patch:
       operationId: roles_partial_update
-      description: Update certain fields of an existing role's information without
-        affecting other fields.
+      description: Update selected fields on an existing role. When changing the `users`
+        relationship of a role that grants MANAGE_ACCOUNT, the API blocks attempts
+        that would leave the tenant without any MANAGE_ACCOUNT assignees and prevents
+        callers from removing their own assignment to that role.
       summary: Partially update a role
       parameters:
       - in: path
@@ -6389,7 +6725,7 @@ paths:
               $ref: '#/components/schemas/PatchedRoleUpdateRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -6399,7 +6735,8 @@ paths:
           description: ''
     delete:
       operationId: roles_destroy
-      description: Remove a role from the system by their ID.
+      description: Delete the specified role. The API rejects deletion of the last
+        role in the tenant that grants MANAGE_ACCOUNT.
       summary: Delete a role
       parameters:
       - in: path
@@ -6412,7 +6749,7 @@ paths:
       tags:
       - Role
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '204':
           description: No response body
@@ -6437,7 +6774,7 @@ paths:
               $ref: '#/components/schemas/RoleProviderGroupRelationshipRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '204':
           description: Relationship created successfully
@@ -6463,7 +6800,7 @@ paths:
               $ref: '#/components/schemas/PatchedRoleProviderGroupRelationshipRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '204':
           description: Relationship updated successfully
@@ -6475,7 +6812,7 @@ paths:
       tags:
       - Role
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '204':
           description: Relationship deleted successfully
@@ -6541,7 +6878,7 @@ paths:
       tags:
       - SAML
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -6569,7 +6906,7 @@ paths:
               $ref: '#/components/schemas/SAMLConfigurationRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '201':
           content:
@@ -6608,7 +6945,7 @@ paths:
       tags:
       - SAML
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -6644,7 +6981,7 @@ paths:
               $ref: '#/components/schemas/PatchedSAMLConfigurationRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -6668,7 +7005,7 @@ paths:
       tags:
       - SAML
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '204':
           description: No response body
@@ -6954,7 +7291,7 @@ paths:
       tags:
       - Scan
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -6986,7 +7323,7 @@ paths:
               $ref: '#/components/schemas/ScanCreateRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '202':
           content:
@@ -7061,7 +7398,7 @@ paths:
       tags:
       - Scan
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -7097,7 +7434,7 @@ paths:
               $ref: '#/components/schemas/PatchedScanUpdateRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -7140,7 +7477,7 @@ paths:
       tags:
       - Scan
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           description: CSV file containing the compliance report
@@ -7173,7 +7510,7 @@ paths:
       tags:
       - Scan
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           description: Report obtained successfully
@@ -7205,7 +7542,7 @@ paths:
               $ref: '#/components/schemas/ScheduleDailyCreateRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '202':
           content:
@@ -7320,7 +7657,7 @@ paths:
       tags:
       - Task
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -7361,7 +7698,7 @@ paths:
       tags:
       - Task
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -7385,7 +7722,7 @@ paths:
       tags:
       - Task
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '202':
           content:
@@ -7507,7 +7844,7 @@ paths:
       tags:
       - Tenant
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -7535,7 +7872,7 @@ paths:
               $ref: '#/components/schemas/TenantRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '201':
           content:
@@ -7571,7 +7908,7 @@ paths:
       tags:
       - Tenant
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -7607,7 +7944,7 @@ paths:
               $ref: '#/components/schemas/PatchedTenantRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -7630,7 +7967,7 @@ paths:
       tags:
       - Tenant
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '204':
           description: No response body
@@ -7703,7 +8040,7 @@ paths:
       tags:
       - Tenant
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -7735,7 +8072,7 @@ paths:
       tags:
       - Tenant
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '204':
           description: No response body
@@ -7914,7 +8251,7 @@ paths:
       tags:
       - Invitation
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -7943,7 +8280,7 @@ paths:
               $ref: '#/components/schemas/InvitationCreateRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '201':
           content:
@@ -7985,7 +8322,7 @@ paths:
       tags:
       - Invitation
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -8020,7 +8357,7 @@ paths:
               $ref: '#/components/schemas/PatchedInvitationUpdateRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -8042,7 +8379,7 @@ paths:
       tags:
       - Invitation
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '204':
           description: No response body
@@ -8067,7 +8404,7 @@ paths:
               $ref: '#/components/schemas/TokenRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       - {}
       responses:
         '200':
@@ -8097,7 +8434,7 @@ paths:
               $ref: '#/components/schemas/TokenRefreshRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       - {}
       responses:
         '200':
@@ -8127,7 +8464,7 @@ paths:
               $ref: '#/components/schemas/TokenSwitchTenantRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -8220,6 +8557,7 @@ paths:
             type: string
             enum:
             - roles
+            - memberships
         description: include query parameter to allow the client to customize which
           related resources should be returned.
         explode: false
@@ -8258,7 +8596,7 @@ paths:
       tags:
       - User
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -8293,7 +8631,7 @@ paths:
               $ref: '#/components/schemas/UserCreateRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       - {}
       responses:
         '201':
@@ -8339,13 +8677,14 @@ paths:
             type: string
             enum:
             - roles
+            - memberships
         description: include query parameter to allow the client to customize which
           related resources should be returned.
         explode: false
       tags:
       - User
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -8380,7 +8719,7 @@ paths:
               $ref: '#/components/schemas/PatchedUserUpdateRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -8403,7 +8742,7 @@ paths:
       tags:
       - User
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '204':
           description: No response body
@@ -8428,7 +8767,7 @@ paths:
               $ref: '#/components/schemas/UserRoleRelationshipRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '204':
           description: Relationship created successfully
@@ -8437,7 +8776,8 @@ paths:
     patch:
       operationId: users_relationships_roles_partial_update
       description: Update the user-roles relationship information without affecting
-        other fields.
+        other fields. If the update would remove MANAGE_ACCOUNT from the last remaining
+        user in the tenant, the API rejects the request with a 400 response.
       summary: Partially update a user-roles relationship
       tags:
       - User
@@ -8454,18 +8794,22 @@ paths:
               $ref: '#/components/schemas/PatchedUserRoleRelationshipRequest'
         required: true
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '204':
           description: Relationship updated successfully
     delete:
       operationId: users_relationships_roles_destroy
       description: Remove the user-roles relationship from the system by their ID.
+        If removing MANAGE_ACCOUNT would take it away from the last remaining user
+        in the tenant, the API rejects the request with a 400 response. Users also
+        cannot delete their own role assignments; attempting to do so returns a 400
+        response.
       summary: Delete a user-roles relationship
       tags:
       - User
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '204':
           description: Relationship deleted successfully
@@ -8569,7 +8913,7 @@ paths:
       tags:
       - User
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -8614,7 +8958,7 @@ paths:
       tags:
       - User
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -8652,13 +8996,14 @@ paths:
             type: string
             enum:
             - roles
+            - memberships
         description: include query parameter to allow the client to customize which
           related resources should be returned.
         explode: false
       tags:
       - User
       security:
-      - jwtAuth: []
+      - JWT or API Key: []
       responses:
         '200':
           content:
@@ -8728,6 +9073,8 @@ components:
           properties:
             id:
               type: string
+            compliance_name:
+              type: string
             framework_description:
               type: string
             name:
@@ -8741,6 +9088,7 @@ components:
             attributes: {}
           required:
           - id
+          - compliance_name
           - framework_description
           - name
           - framework
@@ -10600,7 +10948,7 @@ components:
       type: object
       properties:
         data:
-          $ref: '#/components/schemas/ComplianceOverviewMetadata'
+          $ref: '#/components/schemas/TenantApiKey'
       required:
       - data
     OverviewFinding:
@@ -10954,6 +11302,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Task'
+      required:
+      - data
+    PaginatedTenantApiKeyList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TenantApiKey'
       required:
       - data
     PaginatedTenantList:
@@ -11683,26 +12040,47 @@ components:
                         type: string
                         description: The Azure application (client) ID for authentication
                           in Azure AD.
-                      client_secret:
-                        type: string
-                        description: The client secret associated with the application
-                          (client) ID, providing secure access.
                       tenant_id:
                         type: string
                         description: The Azure tenant ID, representing the directory
                           where the application is registered.
+                      client_secret:
+                        type: string
+                        description: The client secret associated with the application
+                          (client) ID, providing secure access.
                       user:
                         type: email
                         description: User microsoft email address.
+                        deprecated: true
                       password:
                         type: string
                         description: User password.
+                        deprecated: true
                     required:
                     - client_id
                     - client_secret
                     - tenant_id
                     - user
                     - password
+                  - type: object
+                    title: M365 Certificate Credentials
+                    properties:
+                      client_id:
+                        type: string
+                        description: The Azure application (client) ID for authentication
+                          in Azure AD.
+                      tenant_id:
+                        type: string
+                        description: The Azure tenant ID, representing the directory
+                          where the application is registered.
+                      certificate_content:
+                        type: string
+                        description: The certificate content in base64 format for
+                          certificate-based authentication.
+                    required:
+                    - client_id
+                    - tenant_id
+                    - certificate_content
                   - type: object
                     title: GCP Static Credentials
                     properties:
@@ -11824,6 +12202,8 @@ components:
                 alias:
                   type: string
                   nullable: true
+                  description: Human readable name to identify the provider, e.g.
+                    'Production AWS Account', 'Dev Environment'
                   maxLength: 100
                   minLength: 3
       required:
@@ -12077,6 +12457,85 @@ components:
                   nullable: true
                   maxLength: 100
                   minLength: 3
+      required:
+      - data
+    PatchedTenantApiKeyUpdateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - id
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - api-keys
+            id:
+              type: string
+              format: uuid
+            attributes:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 3
+                  maxLength: 100
+                prefix:
+                  type: string
+                  readOnly: true
+                  minLength: 1
+                  description: Unique prefix to identify the API key
+                expires_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                inserted_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                last_used_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                  nullable: true
+                  description: Last time this API key was used for authentication
+              required:
+              - name
+            relationships:
+              type: object
+              properties:
+                entity:
+                  type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        type:
+                          type: string
+                          enum:
+                          - users
+                          title: Resource Type Name
+                          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                            member is used to describe resource objects that share
+                            common attributes and relationships.
+                      required:
+                      - id
+                      - type
+                  required:
+                  - data
+                  description: The identifier of the related object.
+                  title: Resource Identifier
+                  readOnly: true
+                  nullable: true
       required:
       - data
     PatchedTenantRequest:
@@ -12788,6 +13247,8 @@ components:
             alias:
               type: string
               nullable: true
+              description: Human readable name to identify the provider, e.g. 'Production
+                AWS Account', 'Dev Environment'
               maxLength: 100
               minLength: 3
             provider:
@@ -12799,17 +13260,21 @@ components:
               - m365
               - github
               type: string
+              x-spec-enum-id: 4c1e219dad1cc0e7
               description: |-
+                Type of provider to create.
+
                 * `aws` - AWS
                 * `azure` - Azure
                 * `gcp` - GCP
                 * `kubernetes` - Kubernetes
                 * `m365` - M365
                 * `github` - GitHub
-              x-spec-enum-id: 4c1e219dad1cc0e7
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
+              description: Unique identifier for the provider, set by the provider,
+                e.g. AWS account ID, Azure subscription ID, GCP project ID, etc.
               maxLength: 250
               minLength: 3
           required:
@@ -12836,6 +13301,8 @@ components:
                 alias:
                   type: string
                   nullable: true
+                  description: Human readable name to identify the provider, e.g.
+                    'Production AWS Account', 'Dev Environment'
                   maxLength: 100
                   minLength: 3
                 provider:
@@ -12847,18 +13314,22 @@ components:
                   - m365
                   - github
                   type: string
+                  x-spec-enum-id: 4c1e219dad1cc0e7
                   description: |-
+                    Type of provider to create.
+
                     * `aws` - AWS
                     * `azure` - Azure
                     * `gcp` - GCP
                     * `kubernetes` - Kubernetes
                     * `m365` - M365
                     * `github` - GitHub
-                  x-spec-enum-id: 4c1e219dad1cc0e7
                 uid:
                   type: string
                   minLength: 3
                   title: Unique identifier for the provider, set by the provider
+                  description: Unique identifier for the provider, set by the provider,
+                    e.g. AWS account ID, Azure subscription ID, GCP project ID, etc.
                   maxLength: 250
               required:
               - uid
@@ -13456,26 +13927,47 @@ components:
                     type: string
                     description: The Azure application (client) ID for authentication
                       in Azure AD.
-                  client_secret:
-                    type: string
-                    description: The client secret associated with the application
-                      (client) ID, providing secure access.
                   tenant_id:
                     type: string
                     description: The Azure tenant ID, representing the directory where
                       the application is registered.
+                  client_secret:
+                    type: string
+                    description: The client secret associated with the application
+                      (client) ID, providing secure access.
                   user:
                     type: email
                     description: User microsoft email address.
+                    deprecated: true
                   password:
                     type: string
                     description: User password.
+                    deprecated: true
                 required:
                 - client_id
                 - client_secret
                 - tenant_id
                 - user
                 - password
+              - type: object
+                title: M365 Certificate Credentials
+                properties:
+                  client_id:
+                    type: string
+                    description: The Azure application (client) ID for authentication
+                      in Azure AD.
+                  tenant_id:
+                    type: string
+                    description: The Azure tenant ID, representing the directory where
+                      the application is registered.
+                  certificate_content:
+                    type: string
+                    description: The certificate content in base64 format for certificate-based
+                      authentication.
+                required:
+                - client_id
+                - tenant_id
+                - certificate_content
               - type: object
                 title: GCP Static Credentials
                 properties:
@@ -13704,26 +14196,47 @@ components:
                         type: string
                         description: The Azure application (client) ID for authentication
                           in Azure AD.
-                      client_secret:
-                        type: string
-                        description: The client secret associated with the application
-                          (client) ID, providing secure access.
                       tenant_id:
                         type: string
                         description: The Azure tenant ID, representing the directory
                           where the application is registered.
+                      client_secret:
+                        type: string
+                        description: The client secret associated with the application
+                          (client) ID, providing secure access.
                       user:
                         type: email
                         description: User microsoft email address.
+                        deprecated: true
                       password:
                         type: string
                         description: User password.
+                        deprecated: true
                     required:
                     - client_id
                     - client_secret
                     - tenant_id
                     - user
                     - password
+                  - type: object
+                    title: M365 Certificate Credentials
+                    properties:
+                      client_id:
+                        type: string
+                        description: The Azure application (client) ID for authentication
+                          in Azure AD.
+                      tenant_id:
+                        type: string
+                        description: The Azure tenant ID, representing the directory
+                          where the application is registered.
+                      certificate_content:
+                        type: string
+                        description: The certificate content in base64 format for
+                          certificate-based authentication.
+                    required:
+                    - client_id
+                    - tenant_id
+                    - certificate_content
                   - type: object
                     title: GCP Static Credentials
                     properties:
@@ -13968,26 +14481,47 @@ components:
                     type: string
                     description: The Azure application (client) ID for authentication
                       in Azure AD.
-                  client_secret:
-                    type: string
-                    description: The client secret associated with the application
-                      (client) ID, providing secure access.
                   tenant_id:
                     type: string
                     description: The Azure tenant ID, representing the directory where
                       the application is registered.
+                  client_secret:
+                    type: string
+                    description: The client secret associated with the application
+                      (client) ID, providing secure access.
                   user:
                     type: email
                     description: User microsoft email address.
+                    deprecated: true
                   password:
                     type: string
                     description: User password.
+                    deprecated: true
                 required:
                 - client_id
                 - client_secret
                 - tenant_id
                 - user
                 - password
+              - type: object
+                title: M365 Certificate Credentials
+                properties:
+                  client_id:
+                    type: string
+                    description: The Azure application (client) ID for authentication
+                      in Azure AD.
+                  tenant_id:
+                    type: string
+                    description: The Azure tenant ID, representing the directory where
+                      the application is registered.
+                  certificate_content:
+                    type: string
+                    description: The certificate content in base64 format for certificate-based
+                      authentication.
+                required:
+                - client_id
+                - tenant_id
+                - certificate_content
               - type: object
                 title: GCP Static Credentials
                 properties:
@@ -15219,6 +15753,333 @@ components:
               description: A related resource object from type memberships
               title: memberships
               readOnly: true
+    TenantApiKey:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - api-keys
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            name:
+              type: string
+              maxLength: 100
+              minLength: 3
+            prefix:
+              type: string
+              readOnly: true
+              description: Unique prefix to identify the API key
+            expires_at:
+              type: string
+              format: date-time
+              readOnly: true
+            revoked:
+              type: boolean
+              description: If the API key is revoked, entities cannot use it anymore.
+                (This cannot be undone.)
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            last_used_at:
+              type: string
+              format: date-time
+              nullable: true
+              description: Last time this API key was used for authentication
+          required:
+          - name
+        relationships:
+          type: object
+          properties:
+            entity:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - users
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              nullable: true
+    TenantApiKeyCreate:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - api-keys
+        attributes:
+          type: object
+          properties:
+            name:
+              type: string
+              maxLength: 100
+              minLength: 3
+            prefix:
+              type: string
+              readOnly: true
+              description: Unique prefix to identify the API key
+            expires_at:
+              type: string
+              format: date-time
+            revoked:
+              type: boolean
+              readOnly: true
+              description: If the API key is revoked, entities cannot use it anymore.
+                (This cannot be undone.)
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            last_used_at:
+              type: string
+              format: date-time
+              readOnly: true
+              nullable: true
+              description: Last time this API key was used for authentication
+            api_key:
+              type: string
+              readOnly: true
+          required:
+          - name
+        relationships:
+          type: object
+          properties:
+            entity:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - users
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              readOnly: true
+              nullable: true
+    TenantApiKeyCreateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - api-keys
+            attributes:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 3
+                  maxLength: 100
+                prefix:
+                  type: string
+                  readOnly: true
+                  minLength: 1
+                  description: Unique prefix to identify the API key
+                expires_at:
+                  type: string
+                  format: date-time
+                revoked:
+                  type: boolean
+                  readOnly: true
+                  description: If the API key is revoked, entities cannot use it anymore.
+                    (This cannot be undone.)
+                inserted_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                last_used_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                  nullable: true
+                  description: Last time this API key was used for authentication
+                api_key:
+                  type: string
+                  readOnly: true
+              required:
+              - name
+            relationships:
+              type: object
+              properties:
+                entity:
+                  type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        type:
+                          type: string
+                          enum:
+                          - users
+                          title: Resource Type Name
+                          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                            member is used to describe resource objects that share
+                            common attributes and relationships.
+                      required:
+                      - id
+                      - type
+                  required:
+                  - data
+                  description: The identifier of the related object.
+                  title: Resource Identifier
+                  readOnly: true
+                  nullable: true
+      required:
+      - data
+    TenantApiKeyCreateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/TenantApiKeyCreate'
+      required:
+      - data
+    TenantApiKeyResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/TenantApiKey'
+      required:
+      - data
+    TenantApiKeyUpdate:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - api-keys
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            name:
+              type: string
+              maxLength: 100
+              minLength: 3
+            prefix:
+              type: string
+              readOnly: true
+              description: Unique prefix to identify the API key
+            expires_at:
+              type: string
+              format: date-time
+              readOnly: true
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            last_used_at:
+              type: string
+              format: date-time
+              readOnly: true
+              nullable: true
+              description: Last time this API key was used for authentication
+          required:
+          - name
+        relationships:
+          type: object
+          properties:
+            entity:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - users
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              readOnly: true
+              nullable: true
+    TenantApiKeyUpdateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/TenantApiKeyUpdate'
+      required:
+      - data
     TenantRequest:
       type: object
       properties:
@@ -15553,59 +16414,49 @@ components:
               type: object
               properties:
                 data:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        format: uuid
-                        title: Resource Identifier
-                        description: The identifier of the related object.
-                      type:
-                        type: string
-                        enum:
-                        - memberships
-                        title: Resource Type Name
-                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-                          member is used to describe resource objects that share common
-                          attributes and relationships.
-                    required:
-                    - id
-                    - type
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    type:
+                      type: string
+                      enum:
+                      - memberships
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
               required:
               - data
-              description: A related resource object from type memberships
-              title: memberships
+              description: The identifier of the related object.
+              title: Resource Identifier
               readOnly: true
             roles:
               type: object
               properties:
                 data:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        format: uuid
-                        title: Resource Identifier
-                        description: The identifier of the related object.
-                      type:
-                        type: string
-                        enum:
-                        - roles
-                        title: Resource Type Name
-                        description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
-                          member is used to describe resource objects that share common
-                          attributes and relationships.
-                    required:
-                    - id
-                    - type
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    type:
+                      type: string
+                      enum:
+                      - roles
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
               required:
               - data
-              description: A related resource object from type roles
-              title: roles
+              description: The identifier of the related object.
+              title: Resource Identifier
               readOnly: true
     UserCreate:
       type: object
@@ -15771,10 +16622,12 @@ components:
       required:
       - data
   securitySchemes:
-    jwtAuth:
+    JWT or API Key:
       type: http
       scheme: bearer
       bearerFormat: JWT
+      description: Supports both JWT Bearer tokens and API Key authentication. Use
+        `Bearer <token>` for JWT or `Api-Key <key>` for API keys.
 tags:
 - name: User
   description: Endpoints for managing user accounts.
@@ -15827,3 +16680,6 @@ tags:
 - name: SAML
   description: Endpoints for Single Sign-On authentication management via SAML for
     seamless user authentication.
+- name: API Keys
+  description: Endpoints for API keys management. These can be used as an alternative
+    to JWT authorization.

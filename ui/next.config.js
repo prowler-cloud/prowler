@@ -23,7 +23,14 @@ const nextConfig = {
   ...(process.env.NODE_ENV === "production" &&
     !process.env.CI && {
       output: "standalone",
+      outputFileTracingRoot: __dirname,
     }),
+  experimental: {
+    reactCompiler: true,
+  },
+  turbopack: {
+    root: __dirname,
+  },
   async headers() {
     return [
       {
