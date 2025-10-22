@@ -67,7 +67,7 @@ export const CheckFindings = ({
       </CardHeader>
 
       {/* DonutChart Content */}
-      <CardContent>
+      <CardContent className="space-y-4">
         <div className="mx-auto max-h-[200px] max-w-[200px]">
           <DonutChart
             data={donutData}
@@ -80,47 +80,47 @@ export const CheckFindings = ({
             }}
           />
         </div>
-      </CardContent>
 
-      {/* Footer with ResourceStatsCards */}
-      <div className="flex rounded-xl border border-[rgba(38,38,38,0.7)] bg-[rgba(23,23,23,0.5)] px-[19px] py-[9px] backdrop-blur-[46px]">
-        <ResourceStatsCard
-          containerless
-          badge={{
-            icon: TriangleAlert,
-            count: failFindingsData.total,
-            variant: CardVariant.fail,
-          }}
-          label="Fail Findings"
-          stats={[
-            { icon: Bell, label: `${failFindingsData.new} New` },
-            { icon: BellOff, label: `${failFindingsData.muted} Muted` },
-          ]}
-          className="flex-1"
-        />
+        {/* Footer with ResourceStatsCards */}
+        <div className="flex rounded-xl border border-[rgba(38,38,38,0.7)] bg-[rgba(23,23,23,0.5)] px-[19px] py-[9px] backdrop-blur-[46px]">
+          <ResourceStatsCard
+            containerless
+            badge={{
+              icon: TriangleAlert,
+              count: failFindingsData.total,
+              variant: CardVariant.fail,
+            }}
+            label="Fail Findings"
+            stats={[
+              { icon: Bell, label: `${failFindingsData.new} New` },
+              { icon: BellOff, label: `${failFindingsData.muted} Muted` },
+            ]}
+            className="flex-1"
+          />
 
-        <div className="flex items-center justify-center px-[46px]">
-          <div
-            className="h-full w-px"
-            style={{ backgroundColor: "rgba(39, 39, 42, 1)" }}
+          <div className="flex items-center justify-center px-[46px]">
+            <div
+              className="h-full w-px"
+              style={{ backgroundColor: "rgba(39, 39, 42, 1)" }}
+            />
+          </div>
+
+          <ResourceStatsCard
+            containerless
+            badge={{
+              icon: ShieldCheck,
+              count: passFindingsData.total,
+              variant: CardVariant.pass,
+            }}
+            label="Pass Findings"
+            stats={[
+              { icon: Bell, label: `${passFindingsData.new} New` },
+              { icon: BellOff, label: `${passFindingsData.muted} Muted` },
+            ]}
+            className="flex-1"
           />
         </div>
-
-        <ResourceStatsCard
-          containerless
-          badge={{
-            icon: ShieldCheck,
-            count: passFindingsData.total,
-            variant: CardVariant.pass,
-          }}
-          label="Pass Findings"
-          stats={[
-            { icon: Bell, label: `${passFindingsData.new} New` },
-            { icon: BellOff, label: `${passFindingsData.muted} Muted` },
-          ]}
-          className="flex-1"
-        />
-      </div>
+      </CardContent>
     </BaseCard>
   );
 };
