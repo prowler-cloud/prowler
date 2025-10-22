@@ -6,7 +6,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "../ui/select/Select";
 
 interface MapRegionFilterProps {
   regions: string[];
@@ -28,7 +28,7 @@ export function MapRegionFilter({
   return (
     <Select value={selectedRegion} onValueChange={onRegionChange}>
       <SelectTrigger
-        className="w-full rounded-lg"
+        className="min-w-[200px] rounded-lg"
         style={{
           borderColor: chartColors.tooltipBorder,
           backgroundColor: chartColors.tooltipBackground,
