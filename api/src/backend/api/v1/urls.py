@@ -18,6 +18,7 @@ from api.v1.views import (
     InvitationViewSet,
     LighthouseConfigViewSet,
     MembershipViewSet,
+    MuteRuleViewSet,
     OverviewViewSet,
     ProcessorViewSet,
     ProviderGroupProvidersRelationshipView,
@@ -34,12 +35,12 @@ from api.v1.views import (
     ScheduleViewSet,
     SchemaView,
     TaskViewSet,
+    TenantApiKeyViewSet,
     TenantFinishACSView,
     TenantMembersViewSet,
     TenantViewSet,
     UserRoleRelationshipView,
     UserViewSet,
-    TenantApiKeyViewSet,
 )
 
 router = routers.DefaultRouter(trailing_slash=False)
@@ -67,6 +68,7 @@ router.register(
     basename="lighthouseconfiguration",
 )
 router.register(r"api-keys", TenantApiKeyViewSet, basename="api-key")
+router.register(r"mute-rules", MuteRuleViewSet, basename="mute-rule")
 
 tenants_router = routers.NestedSimpleRouter(router, r"tenants", lookup="tenant")
 tenants_router.register(
