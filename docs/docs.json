@@ -114,7 +114,8 @@
                 "group": "Tutorials",
                 "pages": [
                   "user-guide/tutorials/prowler-app-sso-entra",
-                  "user-guide/tutorials/bulk-provider-provisioning"
+                  "user-guide/tutorials/bulk-provider-provisioning",
+                  "user-guide/tutorials/aws-organizations-bulk-provisioning"
                 ]
               }
             ]
