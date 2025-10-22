@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
   ResourceStatsCard,
+  StatsContainer,
 } from "@/components/shadcn";
 import { CardVariant } from "@/components/shadcn/card/resource-stats-card/resource-stats-card-content";
 
@@ -34,14 +35,22 @@ export const CheckFindings = ({
   const totalFindings = failFindingsData.total + passFindingsData.total;
 
   // Calculate percentages
-  const failPercentage = (
-    (failFindingsData.total / totalFindings) *
-    100
-  ).toFixed(1);
-  const passPercentage = (
-    (passFindingsData.total / totalFindings) *
-    100
-  ).toFixed(1);
+  const failPercentage = Math.round(
+    (failFindingsData.total / totalFindings) * 100,
+  );
+  const passPercentage = Math.round(
+    (passFindingsData.total / totalFindings) * 100,
+  );
+
+  // Calculate change percentages (new findings as percentage change)
+  const failChange =
+    failFindingsData.total > 0
+      ? Math.round((failFindingsData.new / failFindingsData.total) * 100)
+      : 0;
+  const passChange =
+    passFindingsData.total > 0
+      ? Math.round((passFindingsData.new / passFindingsData.total) * 100)
+      : 0;
 
   // Mock data for DonutChart
   const donutData: DonutDataPoint[] = [
@@ -50,12 +59,14 @@ export const CheckFindings = ({
       value: failFindingsData.total,
       color: "#f43f5e", // Rose-500
       percentage: Number(failPercentage),
+      change: Number(failChange),
     },
     {
       name: "Pass Findings",
       value: passFindingsData.total,
       color: "#4ade80", // Green-400
       percentage: Number(passPercentage),
+      change: Number(passChange),
     },
   ];
 
@@ -82,7 +93,7 @@ export const CheckFindings = ({
         </div>
 
         {/* Footer with ResourceStatsCards */}
-        <div className="flex rounded-xl border border-[rgba(38,38,38,0.7)] bg-[rgba(23,23,23,0.5)] px-[19px] py-[9px] backdrop-blur-[46px]">
+        <StatsContainer>
           <ResourceStatsCard
             containerless
             badge={{
@@ -99,10 +110,7 @@ export const CheckFindings = ({
           />
 
           <div className="flex items-center justify-center px-[46px]">
-            <div
-              className="h-full w-px"
-              style={{ backgroundColor: "rgba(39, 39, 42, 1)" }}
-            />
+            <div className="h-full w-px bg-slate-300 dark:bg-[rgba(39,39,42,1)]" />
           </div>
 
           <ResourceStatsCard
@@ -119,7 +127,7 @@ export const CheckFindings = ({
             ]}
             className="flex-1"
           />
-        </div>
+        </StatsContainer>
       </CardContent>
     </BaseCard>
   );

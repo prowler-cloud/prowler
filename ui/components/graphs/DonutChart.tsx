@@ -21,32 +21,39 @@ interface DonutChartProps {
 }
 
 const CustomTooltip = ({ active, payload }: any) => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload;
-    return (
-      <div className="rounded-lg border border-slate-700 bg-slate-800 p-3 shadow-lg">
-        <div className="flex items-center gap-2">
-          <div
-            className="h-3 w-3 rounded-sm"
-            style={{ backgroundColor: data.color }}
-          />
-          <span className="text-sm font-semibold text-white">
-            {data.percentage}% {data.name}
-          </span>
-        </div>
-        {data.change !== undefined && (
-          <p className="mt-2 text-xs text-slate-400">
-            <span className="font-bold">
-              {data.change > 0 ? "+" : ""}
-              {data.change}%
-            </span>{" "}
-            Since last scan
-          </p>
-        )}
+  if (!active || !payload || !payload.length) return null;
+
+  const entry = payload[0];
+  const name = entry.name;
+  const percentage = entry.payload?.percentage;
+  const color = entry.color || entry.payload?.color;
+  const change = entry.payload?.change;
+
+  return (
+    <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-lg dark:border-slate-600 dark:bg-slate-800">
+      <div className="flex items-center gap-1">
+        <div
+          className="h-3 w-3 rounded-sm"
+          style={{ backgroundColor: color }}
+        />
+        <span className="text-sm font-semibold text-slate-600 dark:text-zinc-300">
+          {percentage}%
+        </span>
+        <span>{name}</span>
       </div>
-    );
-  }
-  return null;
+      <p className="mt-1 text-xs text-slate-600 dark:text-zinc-300">
+        {change !== undefined && (
+          <>
+            <span className="font-bold">
+              {change > 0 ? "+" : ""}
+              {change}%
+            </span>
+            <span> Since Last Scan</span>
+          </>
+        )}
+      </p>
+    </div>
+  );
 };
 
 const CustomLegend = ({ payload }: any) => {
@@ -144,15 +151,21 @@ export function DonutChart({
                       >
                         <tspan
                           x={viewBox.cx}
-                          y={(viewBox.cy || 0) - 6}
-                          className="fill-zinc-300 text-2xl font-bold"
+                          y={viewBox.cy}
+                          className="text-3xl font-bold text-black dark:text-white"
+                          style={{
+                            fill: "currentColor",
+                          }}
                         >
                           {formattedValue}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) + 24}
-                          className="fill-zinc-300 text-[14px]"
+                          className="text-black dark:text-white"
+                          style={{
+                            fill: "currentColor",
+                          }}
                         >
                           {centerLabel.label}
                         </tspan>

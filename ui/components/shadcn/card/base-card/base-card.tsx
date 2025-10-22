@@ -7,7 +7,8 @@ import { Card } from "../card";
 const baseCardVariants = cva("", {
   variants: {
     variant: {
-      default: "border-zinc-900 bg-stone-950",
+      default:
+        "border-slate-200 bg-white dark:border-zinc-900 dark:bg-stone-950",
     },
   },
   defaultVariants: {
