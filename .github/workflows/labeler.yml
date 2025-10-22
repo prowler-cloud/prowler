@@ -1,17 +1,29 @@
-name: Prowler - PR Labeler
+name: 'Tools: PR Labeler'
 
 on:
-    pull_request_target:
-      branches:
-        - "master"
-        - "v3"
-        - "v4.*"
+  pull_request_target:
+    branches:
+      - 'master'
+      - 'v5.*'
+    types:
+      - 'opened'
+      - 'reopened'
+      - 'synchronize'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   labeler:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
       pull-requests: write
-    runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/labeler@634933edcd8ababfe52f92936142cc22ac488b1b # v6.0.1
+      - name: Apply labels to PR
+        uses: actions/labeler@634933edcd8ababfe52f92936142cc22ac488b1b # v6.0.1
+        with:
+          sync-labels: true

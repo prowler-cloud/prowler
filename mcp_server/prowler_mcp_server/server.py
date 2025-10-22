@@ -2,6 +2,7 @@ import asyncio
 import os
 
 from fastmcp import FastMCP
+from prowler_mcp_server import __version__
 from prowler_mcp_server.lib.logger import logger
 from starlette.responses import JSONResponse
 
@@ -54,9 +55,11 @@ async def setup_main_server():
 
 # Add health check endpoint
 @prowler_mcp_server.custom_route("/health", methods=["GET"])
-async def health_check() -> JSONResponse:
+async def health_check(request) -> JSONResponse:
     """Health check endpoint."""
-    return JSONResponse({"status": "healthy", "service": "prowler-mcp-server"})
+    return JSONResponse(
+        {"status": "healthy", "service": "prowler-mcp-server", "version": __version__}
+    )
 
 
 # Get or create the event loop

@@ -13,7 +13,7 @@ import {
   ChartTooltip,
 } from "@/components/ui/chart/Chart";
 
-import { AlertPill } from "./shared/AlertPill";
+import { AlertPill } from "./shared/alert-pill";
 import { CHART_COLORS } from "./shared/constants";
 import { RadarDataPoint } from "./types";
 
@@ -28,7 +28,7 @@ interface RadarChartProps {
 const chartConfig = {
   value: {
     label: "Findings",
-    color: "var(--color-magenta)",
+    color: "var(--chart-radar-primary)",
   },
 } satisfies ChartConfig;
 
@@ -36,15 +36,27 @@ const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const data = payload[0];
     return (
-      <div className="rounded-lg border border-slate-700 bg-slate-800 p-3 shadow-lg">
-        <p className="text-sm font-semibold text-white">
+      <div
+        className="rounded-lg border p-3 shadow-lg"
+        style={{
+          borderColor: CHART_COLORS.tooltipBorder,
+          backgroundColor: CHART_COLORS.tooltipBackground,
+        }}
+      >
+        <p
+          className="text-sm font-semibold"
+          style={{ color: CHART_COLORS.textPrimary }}
+        >
           {data.payload.category}
         </p>
         <div className="mt-1">
           <AlertPill value={data.value} />
         </div>
         {data.payload.change !== undefined && (
-          <p className="mt-1 text-xs text-slate-400">
+          <p
+            className="mt-1 text-xs"
+            style={{ color: CHART_COLORS.textSecondary }}
+          >
             <span className="font-bold">
               {data.payload.change > 0 ? "+" : ""}
               {data.payload.change}%
@@ -84,8 +96,11 @@ const CustomDot = (props: any) => {
       cx={cx}
       cy={cy}
       r={isSelected ? 9 : 6}
-      fill={isSelected ? "var(--color-success)" : "var(--color-purple-dark)"}
+      fill={
+        isSelected ? "var(--chart-success-color)" : "var(--chart-radar-primary)"
+      }
       fillOpacity={1}
+      className={isSelected ? "drop-shadow-[0_0_8px_#86da26]" : ""}
       style={{
         cursor: onSelectPoint ? "pointer" : "default",
         pointerEvents: "all",
@@ -117,7 +132,7 @@ export function RadarChart({
         <PolarGrid strokeOpacity={0.3} />
         <Radar
           dataKey={dataKey}
-          fill="var(--color-magenta)"
+          fill="var(--chart-radar-primary)"
           fillOpacity={0.2}
           activeDot={false}
           dot={
@@ -135,7 +150,7 @@ export function RadarChart({
                 }
               : {
                   r: 6,
-                  fill: "var(--color-purple-dark)",
+                  fill: "var(--chart-radar-primary)",
                   fillOpacity: 1,
                 }
           }
