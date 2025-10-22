@@ -62,7 +62,7 @@ pip install -r requirements-aws-org.txt
 
 ### AWS Credentials Setup
 
-Configure AWS credentials with Organizations access. Typically this requires:
+Configure AWS credentials with Organizations read access:
 
 * **Management account credentials**, or
 * **Delegated administrator account** with `organizations:ListAccounts` permission
@@ -83,20 +83,6 @@ Required IAM permissions:
     }
   ]
 }
-```
-
-Configure credentials using one of these methods:
-
-```bash
-# Method 1: AWS CLI configure
-aws configure
-
-# Method 2: Environment variables
-export AWS_ACCESS_KEY_ID=your-key-id
-export AWS_SECRET_ACCESS_KEY=your-secret-key
-
-# Method 3: Use AWS profile
-export AWS_PROFILE=org-management
 ```
 
 ### Prowler API Key Setup
