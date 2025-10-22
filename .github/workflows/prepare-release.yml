@@ -19,7 +19,7 @@ env:
 
 jobs:
   prepare-release:
-    if: github.repository == 'prowler-cloud/prowler'
+    if: github.event_name == 'workflow_dispatch' && github.repository == 'prowler-cloud/prowler'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -44,10 +44,10 @@ jobs:
 
     - name: Configure Git
       run: |
-        git config --global user.name "prowler-bot"
-        git config --global user.email "179230569+prowler-bot@users.noreply.github.com"
+        git config --global user.name 'prowler-bot'
+        git config --global user.email '179230569+prowler-bot@users.noreply.github.com'
 
-    - name: Parse version and determine branch
+    - name: Parse version and read changelogs
       run: |
         # Validate version format (reusing pattern from sdk-bump-version.yml)
         if [[ $PROWLER_VERSION =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
@@ -124,7 +124,7 @@ jobs:
           exit 1
         fi
 
-    - name: Extract changelog entries
+    - name: Extract and combine changelog entries
       run: |
         set -e
 
@@ -250,7 +250,7 @@ jobs:
         echo "Combined changelog preview:"
         cat combined_changelog.md
 
-    - name: Checkout existing branch for patch release
+    - name: Checkout release branch for patch release
       if: ${{ env.PATCH_VERSION != '0' }}
       run: |
         echo "Patch release detected, checking out existing branch $BRANCH_NAME..."
@@ -265,7 +265,7 @@ jobs:
           exit 1
         fi
 
-    - name: Verify version in pyproject.toml
+    - name: Verify SDK version in pyproject.toml
       run: |
         CURRENT_VERSION=$(grep '^version = ' pyproject.toml | sed -E 's/version = "([^"]+)"/\1/' | tr -d '[:space:]')
         PROWLER_VERSION_TRIMMED=$(echo "$PROWLER_VERSION" | tr -d '[:space:]')
@@ -275,7 +275,7 @@ jobs:
         fi
         echo "✓ pyproject.toml version: $CURRENT_VERSION"
 
-    - name: Verify version in prowler/config/config.py
+    - name: Verify SDK version in prowler/config/config.py
       run: |
         CURRENT_VERSION=$(grep '^prowler_version = ' prowler/config/config.py | sed -E 's/prowler_version = "([^"]+)"/\1/' | tr -d '[:space:]')
         PROWLER_VERSION_TRIMMED=$(echo "$PROWLER_VERSION" | tr -d '[:space:]')
@@ -285,7 +285,7 @@ jobs:
         fi
         echo "✓ prowler/config/config.py version: $CURRENT_VERSION"
 
-    - name: Verify version in api/pyproject.toml
+    - name: Verify API version in api/pyproject.toml
       if: ${{ env.HAS_API_CHANGES == 'true' }}
       run: |
         CURRENT_API_VERSION=$(grep '^version = ' api/pyproject.toml | sed -E 's/version = "([^"]+)"/\1/' | tr -d '[:space:]')
@@ -296,7 +296,7 @@ jobs:
         fi
         echo "✓ api/pyproject.toml version: $CURRENT_API_VERSION"
 
-    - name: Verify prowler dependency in api/pyproject.toml
+    - name: Verify API prowler dependency in api/pyproject.toml
       if: ${{ env.PATCH_VERSION != '0' && env.HAS_API_CHANGES == 'true' }}
       run: |
         CURRENT_PROWLER_REF=$(grep 'prowler @ git+https://github.com/prowler-cloud/prowler.git@' api/pyproject.toml | sed -E 's/.*@([^"]+)".*/\1/' | tr -d '[:space:]')
@@ -307,7 +307,7 @@ jobs:
         fi
         echo "✓ api/pyproject.toml prowler dependency: $CURRENT_PROWLER_REF"
 
-    - name: Verify version in api/src/backend/api/v1/views.py
+    - name: Verify API version in api/src/backend/api/v1/views.py
       if: ${{ env.HAS_API_CHANGES == 'true' }}
       run: |
         CURRENT_API_VERSION=$(grep 'spectacular_settings.VERSION = ' api/src/backend/api/v1/views.py | sed -E 's/.*spectacular_settings.VERSION = "([^"]+)".*/\1/' | tr -d '[:space:]')
@@ -318,7 +318,7 @@ jobs:
         fi
         echo "✓ api/src/backend/api/v1/views.py version: $CURRENT_API_VERSION"
 
-    - name: Checkout existing release branch for minor release
+    - name: Checkout release branch for minor release
       if: ${{ env.PATCH_VERSION == '0' }}
       run: |
         echo "Minor release detected (patch = 0), checking out existing branch $BRANCH_NAME..."
@@ -330,7 +330,7 @@ jobs:
           exit 1
         fi
 
-    - name: Prepare prowler dependency update for minor release
+    - name: Update API prowler dependency for minor release
       if: ${{ env.PATCH_VERSION == '0' }}
       run: |
         CURRENT_PROWLER_REF=$(grep 'prowler @ git+https://github.com/prowler-cloud/prowler.git@' api/pyproject.toml | sed -E 's/.*@([^"]+)".*/\1/' | tr -d '[:space:]')
@@ -367,7 +367,7 @@ jobs:
 
         echo "✓ Prepared prowler dependency update to: $UPDATED_PROWLER_REF"
 
-    - name: Create Pull Request against release branch
+    - name: Create PR for API dependency update
       if: ${{ env.PATCH_VERSION == '0' }}
       uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
       with:
