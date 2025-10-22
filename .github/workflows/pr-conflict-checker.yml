@@ -1,7 +1,7 @@
 name: 'Tools: PR Conflict Checker'
 
 on:
-  pull_request:
+  pull_request_target:
     types:
       - 'opened'
       - 'synchronize'
@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  conflict-checker:
+  check-conflicts:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
