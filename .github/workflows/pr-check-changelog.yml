@@ -1,0 +1,103 @@
+name: 'Tools: Check Changelog'
+
+on:
+  pull_request:
+    types:
+      - 'opened'
+      - 'synchronize'
+      - 'reopened'
+      - 'labeled'
+      - 'unlabeled'
+    branches:
+      - 'master'
+      - 'v5.*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  check-changelog:
+    if: contains(github.event.pull_request.labels.*.name, 'no-changelog') == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      MONITORED_FOLDERS: 'api ui prowler mcp_server'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        with:
+          files: |
+            api/**
+            ui/**
+            prowler/**
+            mcp_server/**
+
+      - name: Check for folder changes and changelog presence
+        id: check-folders
+        run: |
+          missing_changelogs=""
+
+          # Check api folder
+          if [[ "${{ steps.changed-files.outputs.any_changed }}" == "true" ]]; then
+            for folder in $MONITORED_FOLDERS; do
+              # Get files changed in this folder
+              changed_in_folder=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | tr ' ' '\n' | grep "^${folder}/" || true)
+              
+              if [ -n "$changed_in_folder" ]; then
+                echo "Detected changes in ${folder}/"
+                
+                # Check if CHANGELOG.md was updated
+                if ! echo "$changed_in_folder" | grep -q "^${folder}/CHANGELOG.md$"; then
+                  echo "No changelog update found for ${folder}/"
+                  missing_changelogs="${missing_changelogs}- \`${folder}\`"$'\n'
+                fi
+              fi
+            done
+          fi
+
+          {
+            echo "missing_changelogs<<EOF"
+            echo -e "${missing_changelogs}"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
+      - name: Find existing changelog comment
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        id: find-comment
+        uses: peter-evans/find-comment@b30e6a3c0ed37e7c023ccd3f1db5c6c0b0c23aad # v4.0.0
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: '<!-- changelog-check -->'
+
+      - name: Update PR comment with changelog status
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4.0.0
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          edit-mode: replace
+          body: |
+            <!-- changelog-check -->
+            ${{ steps.check-folders.outputs.missing_changelogs != '' && format('⚠️ **Changes detected in the following folders without a corresponding update to the `CHANGELOG.md`:**
+
+            {0}
+
+            Please add an entry to the corresponding `CHANGELOG.md` file to maintain a clear history of changes.', steps.check-folders.outputs.missing_changelogs) || '✅ All necessary `CHANGELOG.md` files have been updated.' }}
+
+      - name: Fail if changelog is missing
+        if: steps.check-folders.outputs.missing_changelogs != ''
+        run: |
+          echo "::error::Missing changelog updates in some folders"
+          exit 1
