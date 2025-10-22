@@ -21,4 +21,4 @@ jobs:
         uses: agenthunt/conventional-commit-checker-action@9e552d650d0e205553ec7792d447929fc78e012b # v2.0.0
         with:
             pr-title-regex: '^(feat|fix|docs|style|refactor|perf|test|chore|build|ci|revert)(\([^)]+\))?!?: .+'
-                             
+

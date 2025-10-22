@@ -34,12 +34,12 @@ from api.v1.views import (
     ScheduleViewSet,
     SchemaView,
     TaskViewSet,
+    TenantApiKeyViewSet,
     TenantFinishACSView,
     TenantMembersViewSet,
     TenantViewSet,
     UserRoleRelationshipView,
     UserViewSet,
-    TenantApiKeyViewSet,
 )
 
 router = routers.DefaultRouter(trailing_slash=False)

@@ -31,7 +31,6 @@ class TestCloudStorageBucketLifecycleManagementEnabled:
             cloudstorage_client.project_ids = [GCP_PROJECT_ID]
             cloudstorage_client.region = GCP_US_CENTER1_LOCATION
 
-            # Bucket sin lifecycle rules
             cloudstorage_client.buckets = [
                 Bucket(
                     name="no-lifecycle",
@@ -41,7 +40,7 @@ class TestCloudStorageBucketLifecycleManagementEnabled:
                     public=False,
                     retention_policy=None,
                     project_id=GCP_PROJECT_ID,
-                    lifecycle_rules=[],  # sin reglas
+                    lifecycle_rules=[],
                 )
             ]
 
@@ -82,7 +81,6 @@ class TestCloudStorageBucketLifecycleManagementEnabled:
             cloudstorage_client.project_ids = [GCP_PROJECT_ID]
             cloudstorage_client.region = GCP_US_CENTER1_LOCATION
 
-            # Regla mínima: Delete after 30 days
             cloudstorage_client.buckets = [
                 Bucket(
                     name="delete-rule",
@@ -135,7 +133,6 @@ class TestCloudStorageBucketLifecycleManagementEnabled:
             cloudstorage_client.project_ids = [GCP_PROJECT_ID]
             cloudstorage_client.region = GCP_US_CENTER1_LOCATION
 
-            # Dos reglas: transición (SetStorageClass) + borrado (Delete)
             cloudstorage_client.buckets = [
                 Bucket(
                     name="transition-delete",
@@ -169,5 +166,58 @@ class TestCloudStorageBucketLifecycleManagementEnabled:
             )
             assert result[0].resource_id == "transition-delete"
             assert result[0].resource_name == "transition-delete"
+            assert result[0].location == GCP_US_CENTER1_LOCATION
+            assert result[0].project_id == GCP_PROJECT_ID
+
+    def test_bucket_with_invalid_lifecycle_rules(self):
+        cloudstorage_client = mock.MagicMock()
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_lifecycle_management_enabled.cloudstorage_bucket_lifecycle_management_enabled.cloudstorage_client",
+                new=cloudstorage_client,
+            ),
+        ):
+            from prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_lifecycle_management_enabled.cloudstorage_bucket_lifecycle_management_enabled import (
+                cloudstorage_bucket_lifecycle_management_enabled,
+            )
+            from prowler.providers.gcp.services.cloudstorage.cloudstorage_service import (
+                Bucket,
+            )
+
+            cloudstorage_client.project_ids = [GCP_PROJECT_ID]
+            cloudstorage_client.region = GCP_US_CENTER1_LOCATION
+
+            cloudstorage_client.buckets = [
+                Bucket(
+                    name="invalid-rules",
+                    id="invalid-rules",
+                    region=GCP_US_CENTER1_LOCATION,
+                    uniform_bucket_level_access=True,
+                    public=False,
+                    retention_policy=None,
+                    project_id=GCP_PROJECT_ID,
+                    lifecycle_rules=[
+                        {"action": {}, "condition": {"age": 30}},
+                        {"action": {"type": "Delete"}, "condition": {}},
+                    ],
+                )
+            ]
+
+            check = cloudstorage_bucket_lifecycle_management_enabled()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"Bucket {cloudstorage_client.buckets[0].name} has lifecycle rules configured but none are valid."
+            )
+            assert result[0].resource_id == "invalid-rules"
+            assert result[0].resource_name == "invalid-rules"
             assert result[0].location == GCP_US_CENTER1_LOCATION
             assert result[0].project_id == GCP_PROJECT_ID
