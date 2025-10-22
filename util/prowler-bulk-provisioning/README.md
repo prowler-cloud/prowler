@@ -49,24 +49,16 @@ This two-step approach follows the Prowler API design where providers and their 
    pip install -r requirements.txt
    ```
 
-3. Get your Prowler API token:
-   - **Prowler Cloud:** Generate token at https://api.prowler.com
-   - **Self-hosted Prowler App:** Generate token in your local instance
+3. Get your Prowler API key:
+   - **Prowler Cloud:** Create an API key at https://api.prowler.com
+   - **Self-hosted Prowler App:** Create an API key in your local instance
+   - Navigate to **Profile** → **Account** → **Create API Key**
 
   ```bash
-  export PROWLER_API_TOKEN=$(curl --location 'https://api.prowler.com/api/v1/tokens' \
-    --header 'Content-Type: application/vnd.api+json' \
-    --header 'Accept: application/vnd.api+json' \
-    --data-raw '{
-      "data": {
-        "type": "tokens",
-        "attributes": {
-          "email": "your@email.com",
-          "password": "your-password"
-        }
-      }
-    }' | jq -r .data.attributes.access)
+  export PROWLER_API_KEY="pk_your-api-key-here"
   ```
+
+  For detailed instructions on creating API keys, see: https://docs.prowler.com/user-guide/providers/prowler-app-api-keys
 
 
 ## AWS Organizations Integration
@@ -155,7 +147,7 @@ python aws_org_generator.py -o aws-accounts.yaml \
 ### Environment Variables
 
 ```bash
-export PROWLER_API_TOKEN="your-prowler-token"
+export PROWLER_API_KEY="pk_your-api-key-here"
 export PROWLER_API_BASE="https://api.prowler.com/api/v1"  # Optional, defaults to Prowler Cloud
 ```
 
@@ -250,7 +242,7 @@ python prowler_bulk_provisioning.py providers.yaml \
 |--------|-------------|---------|
 | `input_file` | YAML file with provider entries | Required |
 | `--base-url` | API base URL | `https://api.prowler.com/api/v1` |
-| `--token` | Bearer token | `PROWLER_API_TOKEN` env var |
+| `--api-key` | Prowler API key | `PROWLER_API_KEY` env var |
 | `--providers-endpoint` | Providers API endpoint | `/providers` |
 | `--concurrency` | Number of concurrent requests | `5` |
 | `--timeout` | Per-request timeout in seconds | `60` |
@@ -461,10 +453,10 @@ python prowler_bulk_provisioning.py providers.yaml --dry-run
 
 ### Common Issues
 
-1. **Invalid API Token**
+1. **Invalid API Key**
    ```
    Error: 401 Unauthorized
-   Solution: Check your PROWLER_API_TOKEN or --token parameter
+   Solution: Check your PROWLER_API_KEY environment variable or --api-key parameter
    ```
 
 2. **Network Timeouts**

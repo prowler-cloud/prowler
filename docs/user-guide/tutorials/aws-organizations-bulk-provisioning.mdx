@@ -30,8 +30,9 @@ The AWS Organizations Bulk Provisioning tool simplifies multi-account onboarding
 * Python 3.7 or higher
 * AWS credentials with Organizations read access
 * ProwlerRole (or custom role) deployed across all target accounts
-* Prowler API token (from Prowler Cloud or self-hosted Prowler App)
+* Prowler API key (from Prowler Cloud or self-hosted Prowler App)
     * For self-hosted Prowler App, remember to [point to your API base URL](./bulk-provider-provisioning#custom-api-endpoints)
+    * Learn how to create API keys: [Prowler App API Keys](../providers/prowler-app-api-keys)
 
 ### Deploying ProwlerRole Across AWS Organizations
 
@@ -98,30 +99,23 @@ export AWS_SECRET_ACCESS_KEY=your-secret-key
 export AWS_PROFILE=org-management
 ```
 
-### Prowler API Token Setup
+### Prowler API Key Setup
 
-Configure your Prowler API token:
-
-```bash
-export PROWLER_API_TOKEN="your-prowler-api-token"
-```
-
-To obtain an API token programmatically:
+Configure your Prowler API key:
 
 ```bash
-export PROWLER_API_TOKEN=$(curl --location 'https://api.prowler.com/api/v1/tokens' \
-  --header 'Content-Type: application/vnd.api+json' \
-  --header 'Accept: application/vnd.api+json' \
-  --data-raw '{
-    "data": {
-      "type": "tokens",
-      "attributes": {
-        "email": "your@email.com",
-        "password": "your-password"
-      }
-    }
-  }' | jq -r .data.attributes.access)
+export PROWLER_API_KEY="pk_your-api-key-here"
 ```
+
+To create an API key:
+
+1. Log into Prowler Cloud or Prowler App
+2. Navigate to **Profile** → **Account**
+3. Click **Create API Key**
+4. Provide a descriptive name and optionally set an expiration date
+5. Copy the generated API key (it will only be shown once)
+
+For detailed instructions, see: [Prowler App API Keys](../providers/prowler-app-api-keys)
 
 ## Basic Usage
 
@@ -345,8 +339,8 @@ python aws_org_generator.py \
     Provision all accounts to Prowler Cloud or Prowler App:
 
     ```bash
-    # Set Prowler API credentials
-    export PROWLER_API_TOKEN="your-prowler-api-token"
+    # Set Prowler API key
+    export PROWLER_API_KEY="pk_your-api-key-here"
 
     # Run bulk provisioning with connection testing
     python prowler_bulk_provisioning.py aws-org-accounts.yaml
