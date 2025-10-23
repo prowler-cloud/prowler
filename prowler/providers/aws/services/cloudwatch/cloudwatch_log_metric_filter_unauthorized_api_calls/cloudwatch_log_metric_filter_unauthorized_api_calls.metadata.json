@@ -19,13 +19,8 @@
     "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
     "https://asecure.cloud/a/unauthorized_api_calls/",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatchLogs/authorization-failures-alarm.html",
-    "https://docs.fugue.co/FG_R00055.html",
-    "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_1/",
     "https://www.tenable.com/policies/[type]/AC_AWS_0559",
     "https://www.intelligentdiscovery.io/controls/cloudwatch/cloudwatch-unauthorized-api-calls",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html",
-    "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_1",
-    "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_1#fix---buildtime",
     "https://support.icompaas.com/support/solutions/articles/62000083561-ensure-a-log-metric-filter-and-alarm-exist-for-unauthorized-api-calls"
   ],
   "Remediation": {
