@@ -19,15 +19,8 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
-    "https://docs.securestate.vmware.com/rule-docs/monitor-console-auth-failures/",
-    "https://asecure.cloud/a/failed_console_logins/",
-    "https://docs.aws.amazon.com/es_es/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
     "https://www.intelligentdiscovery.io/controls/cloudwatch/cloudwatch-alarm-signin-failures",
-    "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_6",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatchLogs/console-sign-in-failures-alarm.html",
-    "https://www.qloudx.com/monitor-alert-for-failed-authentication-attempts-to-your-aws-account/",
-    "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_6#fix---buildtime",
-    "https://plerion.com/resources/cloud-knowledge-base/aws/ensure-a-log-metric-filter-and-alarm-exist-for-aws-management-console-authentication-failures",
     "https://newsletter.simpleaws.dev/p/cloudtrail-cloudwatch-logs-login-detection-alert"
   ],
   "Remediation": {
