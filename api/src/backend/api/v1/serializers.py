@@ -1,3 +1,4 @@
+import base64
 import json
 from datetime import datetime, timedelta, timezone
 
@@ -315,6 +316,23 @@ class UserSerializer(BaseSerializerV1):
             if self._can_view_relationships(instance)
             else Membership.objects.none()
         )
+
+
+class UserIncludeSerializer(UserSerializer):
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "name",
+            "email",
+            "company_name",
+            "date_joined",
+            "roles",
+        ]
+
+    included_serializers = {
+        "roles": "api.v1.serializers.RoleIncludeSerializer",
+    }
 
 
 class UserCreateSerializer(BaseWriteSerializer):
@@ -1378,10 +1396,38 @@ class AzureProviderSecret(serializers.Serializer):
 
 class M365ProviderSecret(serializers.Serializer):
     client_id = serializers.CharField()
-    client_secret = serializers.CharField()
+    client_secret = serializers.CharField(required=False)
     tenant_id = serializers.CharField()
     user = serializers.EmailField(required=False)
     password = serializers.CharField(required=False)
+    certificate_content = serializers.CharField(required=False)
+
+    def validate(self, attrs):
+        if attrs.get("client_secret") and attrs.get("certificate_content"):
+            raise serializers.ValidationError(
+                "You cannot provide both client_secret and certificate_content."
+            )
+        if not attrs.get("client_secret") and not attrs.get("certificate_content"):
+            raise serializers.ValidationError(
+                "You must provide either client_secret or certificate_content."
+            )
+        return super().validate(attrs)
+
+    def validate_certificate_content(self, certificate_content):
+        """Validate that M365 certificate content is valid base64 encoded data."""
+        if certificate_content:
+            try:
+                base64.b64decode(certificate_content, validate=True)
+            except Exception as e:
+                raise ValidationError(
+                    {
+                        "certificate_content": [
+                            f"The provided certificate content is not valid base64 encoded data: {str(e)}"
+                        ]
+                    },
+                    code="m365-certificate-content",
+                )
+        return certificate_content
 
     class Meta:
         resource_name = "provider-secrets"
@@ -1972,6 +2018,17 @@ class ComplianceOverviewDetailSerializer(serializers.Serializer):
 
     class JSONAPIMeta:
         resource_name = "compliance-requirements-details"
+
+
+class ComplianceOverviewDetailThreatscoreSerializer(ComplianceOverviewDetailSerializer):
+    """
+    Serializer for detailed compliance requirement information for Threatscore.
+
+    Includes additional fields specific to the Threatscore framework.
+    """
+
+    passed_findings = serializers.IntegerField()
+    total_findings = serializers.IntegerField()
 
 
 class ComplianceOverviewAttributesSerializer(serializers.Serializer):
@@ -2779,6 +2836,10 @@ class TenantApiKeySerializer(RLSSerializer):
             "entity",
         ]
 
+    included_serializers = {
+        "entity": "api.v1.serializers.UserIncludeSerializer",
+    }
+
 
 class TenantApiKeyCreateSerializer(RLSSerializer, BaseWriteSerializer):
     """Serializer for creating new API keys."""
@@ -2810,6 +2871,13 @@ class TenantApiKeyCreateSerializer(RLSSerializer, BaseWriteSerializer):
             "last_used_at": {"read_only": True},
             "api_key": {"read_only": True},
         }
+
+    def validate_name(self, value):
+        """Validate that the name is unique within the tenant."""
+        tenant_id = self.context.get("tenant_id")
+        if TenantAPIKey.objects.filter(tenant_id=tenant_id, name=value).exists():
+            raise ValidationError("An API key with this name already exists.")
+        return value
 
     def get_api_key(self, obj):
         """Return the raw API key if it was stored during creation."""
@@ -2852,3 +2920,14 @@ class TenantApiKeyUpdateSerializer(RLSSerializer, BaseWriteSerializer):
             "inserted_at": {"read_only": True},
             "last_used_at": {"read_only": True},
         }
+
+    def validate_name(self, value):
+        """Validate that the name is unique within the tenant, excluding current instance."""
+        tenant_id = self.context.get("tenant_id")
+        if (
+            TenantAPIKey.objects.filter(tenant_id=tenant_id, name=value)
+            .exclude(id=self.instance.id)
+            .exists()
+        ):
+            raise ValidationError("An API key with this name already exists.")
+        return value

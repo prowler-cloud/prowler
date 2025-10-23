@@ -14,9 +14,7 @@
   "Risk": "Without DRS enabled or any prior jobs, workloads are **unprotected and untested**, undermining **availability**.\nDuring outages or ransomware, recovery may be delayed or fail, increasing RTO/RPO, causing **data loss** and prolonged downtime.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/drs/latest/userguide/getting-started.html",
     "https://aws.amazon.com/blogs/storage/cross-region-disaster-recovery-using-aws-elastic-disaster-recovery/",
-    "https://docs.aws.amazon.com/drs/latest/userguide/what-is-drs.html",
     "https://docs.aws.amazon.com/drs/latest/userguide/quick-start-guide-gs.html",
     "https://aws.amazon.com/disaster-recovery/",
     "https://docs.aws.amazon.com/drs/latest/userguide/recovery-job.html"
