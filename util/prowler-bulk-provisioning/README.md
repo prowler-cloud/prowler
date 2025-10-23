@@ -19,6 +19,7 @@ A Python script to bulk-provision cloud providers in Prowler Cloud/App via REST 
 - **Flexible Authentication:** Supports various authentication methods per provider
 - **Error Handling:** Comprehensive error reporting and validation
 - **Connection Testing:** Built-in provider connection verification
+- **AWS Organizations Support:** Automated YAML generation for all accounts in an AWS Organization
 
 ## How It Works
 
@@ -48,32 +49,105 @@ This two-step approach follows the Prowler API design where providers and their 
    pip install -r requirements.txt
    ```
 
-3. Get your Prowler API token:
-   - **Prowler Cloud:** Generate token at https://api.prowler.com
-   - **Self-hosted Prowler App:** Generate token in your local instance
+3. Get your Prowler API key:
+   - **Prowler Cloud:** Create an API key at https://api.prowler.com
+   - **Self-hosted Prowler App:** Create an API key in your local instance
+   - Click **Profile** → **Account** → **Create API Key**
 
   ```bash
-  export PROWLER_API_TOKEN=$(curl --location 'https://api.prowler.com/api/v1/tokens' \
-    --header 'Content-Type: application/vnd.api+json' \
-    --header 'Accept: application/vnd.api+json' \
-    --data-raw '{
-      "data": {
-        "type": "tokens",
-        "attributes": {
-          "email": "your@email.com",
-          "password": "your-password"
-        }
-      }
-    }' | jq -r .data.attributes.access)
+  export PROWLER_API_KEY="pk_example-api-key"
   ```
 
+  For detailed instructions on creating API keys, see: https://docs.prowler.com/user-guide/providers/prowler-app-api-keys
+
+
+## AWS Organizations Integration
+
+For organizations with many AWS accounts, use the included `aws_org_generator.py` script to automatically generate configuration for all accounts in your AWS Organization.
+
+**📖 Full Guide:** See [AWS Organizations Bulk Provisioning Tutorial](https://docs.prowler.com/user-guide/tutorials/aws-organizations-bulk-provisioning) for complete documentation, examples, and troubleshooting.
+
+### Prerequisites
+
+Before using the AWS Organizations generator, deploy the ProwlerRole across all accounts using CloudFormation StackSets:
+
+**Documentation:** [Deploying Prowler IAM Roles Across AWS Organizations](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/aws/organizations/#deploying-prowler-iam-roles-across-aws-organizations)
+
+### Quick Start
+
+1. Install additional dependencies:
+   ```bash
+   pip install -r requirements-aws-org.txt
+   ```
+
+2. Generate YAML configuration for all organization accounts:
+   ```bash
+   python aws_org_generator.py -o aws-accounts.yaml --external-id example-external-id
+   ```
+
+3. Run bulk provisioning:
+   ```bash
+   python prowler_bulk_provisioning.py aws-accounts.yaml
+   ```
+
+### AWS Organizations Generator Options
+
+```bash
+python aws_org_generator.py -o aws-accounts.yaml \
+  --role-name ProwlerRole \
+  --external-id my-external-id \
+  --exclude 123456789012 \
+  --profile org-management
+```
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `-o, --output` | Output YAML file path | `aws-org-accounts.yaml` |
+| `--role-name` | IAM role name across accounts | `ProwlerRole` |
+| `--external-id` | External ID for role assumption | None (recommended) |
+| `--session-name` | Session name for role assumption | None |
+| `--duration-seconds` | Session duration in seconds | None |
+| `--alias-format` | Alias template: `{name}`, `{id}`, `{email}` | `{name}` |
+| `--exclude` | Comma-separated account IDs to exclude | None |
+| `--include` | Comma-separated account IDs to include | None |
+| `--profile` | AWS CLI profile name | Default credentials |
+| `--region` | AWS region | `us-east-1` |
+| `--dry-run` | Print to stdout without writing | `False` |
+
+### Examples
+
+**Generate config for all accounts with custom external ID:**
+```bash
+python aws_org_generator.py -o aws-accounts.yaml --external-id prowler-2024-abc123
+```
+
+**Exclude management account:**
+```bash
+python aws_org_generator.py -o aws-accounts.yaml \
+  --external-id prowler-ext-id \
+  --exclude 123456789012
+```
+
+**Use specific AWS profile:**
+```bash
+python aws_org_generator.py -o aws-accounts.yaml \
+  --profile org-admin \
+  --external-id prowler-ext-id
+```
+
+**Custom alias format:**
+```bash
+python aws_org_generator.py -o aws-accounts.yaml \
+  --alias-format "{name}-{id}" \
+  --external-id prowler-ext-id
+```
 
 ## Configuration
 
 ### Environment Variables
 
 ```bash
-export PROWLER_API_TOKEN="your-prowler-token"
+export PROWLER_API_KEY="pk_example-api-key"
 export PROWLER_API_BASE="https://api.prowler.com/api/v1"  # Optional, defaults to Prowler Cloud
 ```
 
@@ -168,7 +242,7 @@ python prowler_bulk_provisioning.py providers.yaml \
 |--------|-------------|---------|
 | `input_file` | YAML file with provider entries | Required |
 | `--base-url` | API base URL | `https://api.prowler.com/api/v1` |
-| `--token` | Bearer token | `PROWLER_API_TOKEN` env var |
+| `--api-key` | Prowler API key | `PROWLER_API_KEY` env var |
 | `--providers-endpoint` | Providers API endpoint | `/providers` |
 | `--concurrency` | Number of concurrent requests | `5` |
 | `--timeout` | Per-request timeout in seconds | `60` |
@@ -241,8 +315,8 @@ The Prowler API supports the following authentication methods for GCP:
     # OR inline:
     # inline_json:
     #   type: "service_account"
-    #   project_id: "your-project"
-    #   private_key_id: "key-id"
+    #   project_id: "example-project"
+    #   private_key_id: "example-key-id"
     #   private_key: "-----BEGIN PRIVATE KEY-----\n..."
     #   client_email: "service-account@project.iam.gserviceaccount.com"
     #   client_id: "1234567890"
@@ -379,10 +453,10 @@ python prowler_bulk_provisioning.py providers.yaml --dry-run
 
 ### Common Issues
 
-1. **Invalid API Token**
+1. **Invalid API Key**
    ```
    Error: 401 Unauthorized
-   Solution: Check your PROWLER_API_TOKEN or --token parameter
+   Solution: Check your PROWLER_API_KEY environment variable or --api-key parameter
    ```
 
 2. **Network Timeouts**

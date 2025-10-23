@@ -1,0 +1,410 @@
+name: 'Tools: Prepare Release'
+
+run-name: 'Prepare Release for Prowler ${{ inputs.prowler_version }}'
+
+on:
+  workflow_dispatch:
+    inputs:
+      prowler_version:
+        description: 'Prowler version to release (e.g., 5.9.0)'
+        required: true
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ inputs.prowler_version }}
+  cancel-in-progress: false
+
+env:
+  PROWLER_VERSION: ${{ inputs.prowler_version }}
+
+jobs:
+  prepare-release:
+    if: github.event_name == 'workflow_dispatch' && github.repository == 'prowler-cloud/prowler'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
+
+    - name: Set up Python
+      uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+      with:
+        python-version: '3.12'
+
+    - name: Install Poetry
+      run: |
+        python3 -m pip install --user poetry==2.1.1
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+    - name: Configure Git
+      run: |
+        git config --global user.name 'prowler-bot'
+        git config --global user.email '179230569+prowler-bot@users.noreply.github.com'
+
+    - name: Parse version and read changelogs
+      run: |
+        # Validate version format (reusing pattern from sdk-bump-version.yml)
+        if [[ $PROWLER_VERSION =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+          MAJOR_VERSION=${BASH_REMATCH[1]}
+          MINOR_VERSION=${BASH_REMATCH[2]}
+          PATCH_VERSION=${BASH_REMATCH[3]}
+
+          # Export version components to environment
+          echo "MAJOR_VERSION=${MAJOR_VERSION}" >> "${GITHUB_ENV}"
+          echo "MINOR_VERSION=${MINOR_VERSION}" >> "${GITHUB_ENV}"
+          echo "PATCH_VERSION=${PATCH_VERSION}" >> "${GITHUB_ENV}"
+
+          # Determine branch name (format: v5.9)
+          BRANCH_NAME="v${MAJOR_VERSION}.${MINOR_VERSION}"
+          echo "BRANCH_NAME=${BRANCH_NAME}" >> "${GITHUB_ENV}"
+
+          # Function to extract the latest version from changelog
+          extract_latest_version() {
+            local changelog_file="$1"
+            if [ -f "$changelog_file" ]; then
+              # Extract the first version entry (most recent) from changelog
+              # Format: ## [version] (1.2.3) or ## [vversion] (v1.2.3)
+              local version=$(grep -m 1 '^## \[' "$changelog_file" | sed 's/^## \[\(.*\)\].*/\1/' | sed 's/^v//' | tr -d '[:space:]')
+              echo "$version"
+            else
+              echo ""
+            fi
+          }
+
+          # Read actual versions from changelogs (source of truth)
+          UI_VERSION=$(extract_latest_version "ui/CHANGELOG.md")
+          API_VERSION=$(extract_latest_version "api/CHANGELOG.md")
+          SDK_VERSION=$(extract_latest_version "prowler/CHANGELOG.md")
+          MCP_VERSION=$(extract_latest_version "mcp_server/CHANGELOG.md")
+
+          echo "UI_VERSION=${UI_VERSION}" >> "${GITHUB_ENV}"
+          echo "API_VERSION=${API_VERSION}" >> "${GITHUB_ENV}"
+          echo "SDK_VERSION=${SDK_VERSION}" >> "${GITHUB_ENV}"
+          echo "MCP_VERSION=${MCP_VERSION}" >> "${GITHUB_ENV}"
+
+          if [ -n "$UI_VERSION" ]; then
+            echo "Read UI version from changelog: $UI_VERSION"
+          else
+            echo "Warning: No UI version found in ui/CHANGELOG.md"
+          fi
+
+          if [ -n "$API_VERSION" ]; then
+            echo "Read API version from changelog: $API_VERSION"
+          else
+            echo "Warning: No API version found in api/CHANGELOG.md"
+          fi
+
+          if [ -n "$SDK_VERSION" ]; then
+            echo "Read SDK version from changelog: $SDK_VERSION"
+          else
+            echo "Warning: No SDK version found in prowler/CHANGELOG.md"
+          fi
+
+          if [ -n "$MCP_VERSION" ]; then
+            echo "Read MCP version from changelog: $MCP_VERSION"
+          else
+            echo "Warning: No MCP version found in mcp_server/CHANGELOG.md"
+          fi
+
+          echo "Prowler version: $PROWLER_VERSION"
+          echo "Branch name: $BRANCH_NAME"
+          echo "UI version: $UI_VERSION"
+          echo "API version: $API_VERSION"
+          echo "SDK version: $SDK_VERSION"
+          echo "MCP version: $MCP_VERSION"
+          echo "Is minor release: $([ $PATCH_VERSION -eq 0 ] && echo 'true' || echo 'false')"
+        else
+          echo "Invalid version syntax: '$PROWLER_VERSION' (must be N.N.N)" >&2
+          exit 1
+        fi
+
+    - name: Extract and combine changelog entries
+      run: |
+        set -e
+
+        # Function to extract changelog for a specific version
+        extract_changelog() {
+          local file="$1"
+          local version="$2"
+          local output_file="$3"
+
+          if [ ! -f "$file" ]; then
+            echo "Warning: $file not found, skipping..."
+            touch "$output_file"
+            return
+          fi
+
+          # Extract changelog section for this version
+          awk -v version="$version" '
+            /^## \[v?'"$version"'\]/ { found=1; next }
+            found && /^## \[v?[0-9]+\.[0-9]+\.[0-9]+\]/ { found=0 }
+            found && !/^## \[v?'"$version"'\]/ { print }
+          ' "$file" > "$output_file"
+
+          # Remove --- separators
+          sed -i '/^---$/d' "$output_file"
+
+          # Remove trailing empty lines
+          sed -i '/^$/d' "$output_file"
+        }
+
+        # Calculate expected versions for this release
+        if [[ $PROWLER_VERSION =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
+          EXPECTED_UI_VERSION="1.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}"
+          EXPECTED_API_VERSION="1.$((${BASH_REMATCH[2]} + 1)).${BASH_REMATCH[3]}"
+
+          echo "Expected UI version for this release: $EXPECTED_UI_VERSION"
+          echo "Expected API version for this release: $EXPECTED_API_VERSION"
+        fi
+
+        # Determine if components have changes for this specific release
+        # UI has changes if its current version matches what we expect for this release
+        if [ -n "$UI_VERSION" ] && [ "$UI_VERSION" = "$EXPECTED_UI_VERSION" ]; then
+          echo "HAS_UI_CHANGES=true" >> $GITHUB_ENV
+          echo "✓ UI changes detected - version matches expected: $UI_VERSION"
+          extract_changelog "ui/CHANGELOG.md" "$UI_VERSION" "ui_changelog.md"
+        else
+          echo "HAS_UI_CHANGES=false" >> $GITHUB_ENV
+          echo "ℹ No UI changes for this release (current: $UI_VERSION, expected: $EXPECTED_UI_VERSION)"
+          touch "ui_changelog.md"
+        fi
+
+        # API has changes if its current version matches what we expect for this release
+        if [ -n "$API_VERSION" ] && [ "$API_VERSION" = "$EXPECTED_API_VERSION" ]; then
+          echo "HAS_API_CHANGES=true" >> $GITHUB_ENV
+          echo "✓ API changes detected - version matches expected: $API_VERSION"
+          extract_changelog "api/CHANGELOG.md" "$API_VERSION" "api_changelog.md"
+        else
+          echo "HAS_API_CHANGES=false" >> $GITHUB_ENV
+          echo "ℹ No API changes for this release (current: $API_VERSION, expected: $EXPECTED_API_VERSION)"
+          touch "api_changelog.md"
+        fi
+
+        # SDK has changes if its current version matches the input version
+        if [ -n "$SDK_VERSION" ] && [ "$SDK_VERSION" = "$PROWLER_VERSION" ]; then
+          echo "HAS_SDK_CHANGES=true" >> $GITHUB_ENV
+          echo "✓ SDK changes detected - version matches input: $SDK_VERSION"
+          extract_changelog "prowler/CHANGELOG.md" "$PROWLER_VERSION" "prowler_changelog.md"
+        else
+          echo "HAS_SDK_CHANGES=false" >> $GITHUB_ENV
+          echo "ℹ No SDK changes for this release (current: $SDK_VERSION, input: $PROWLER_VERSION)"
+          touch "prowler_changelog.md"
+        fi
+
+        # MCP has changes if the changelog references this Prowler version
+        # Check if the changelog contains "(Prowler X.Y.Z)" or "(Prowler UNRELEASED)"
+        if [ -f "mcp_server/CHANGELOG.md" ]; then
+          MCP_PROWLER_REF=$(grep -m 1 "^## \[.*\] (Prowler" mcp_server/CHANGELOG.md | sed -E 's/.*\(Prowler ([^)]+)\).*/\1/' | tr -d '[:space:]')
+          if [ "$MCP_PROWLER_REF" = "$PROWLER_VERSION" ] || [ "$MCP_PROWLER_REF" = "UNRELEASED" ]; then
+            echo "HAS_MCP_CHANGES=true" >> $GITHUB_ENV
+            echo "✓ MCP changes detected - Prowler reference: $MCP_PROWLER_REF (version: $MCP_VERSION)"
+            extract_changelog "mcp_server/CHANGELOG.md" "$MCP_VERSION" "mcp_changelog.md"
+          else
+            echo "HAS_MCP_CHANGES=false" >> $GITHUB_ENV
+            echo "ℹ No MCP changes for this release (Prowler reference: $MCP_PROWLER_REF, input: $PROWLER_VERSION)"
+            touch "mcp_changelog.md"
+          fi
+        else
+          echo "HAS_MCP_CHANGES=false" >> $GITHUB_ENV
+          echo "ℹ No MCP changelog found"
+          touch "mcp_changelog.md"
+        fi
+
+        # Combine changelogs in order: UI, API, SDK, MCP
+        > combined_changelog.md
+
+        if [ "$HAS_UI_CHANGES" = "true" ] && [ -s "ui_changelog.md" ]; then
+          echo "## UI" >> combined_changelog.md
+          echo "" >> combined_changelog.md
+          cat ui_changelog.md >> combined_changelog.md
+          echo "" >> combined_changelog.md
+        fi
+
+        if [ "$HAS_API_CHANGES" = "true" ] && [ -s "api_changelog.md" ]; then
+          echo "## API" >> combined_changelog.md
+          echo "" >> combined_changelog.md
+          cat api_changelog.md >> combined_changelog.md
+          echo "" >> combined_changelog.md
+        fi
+
+        if [ "$HAS_SDK_CHANGES" = "true" ] && [ -s "prowler_changelog.md" ]; then
+          echo "## SDK" >> combined_changelog.md
+          echo "" >> combined_changelog.md
+          cat prowler_changelog.md >> combined_changelog.md
+          echo "" >> combined_changelog.md
+        fi
+
+        if [ "$HAS_MCP_CHANGES" = "true" ] && [ -s "mcp_changelog.md" ]; then
+          echo "## MCP" >> combined_changelog.md
+          echo "" >> combined_changelog.md
+          cat mcp_changelog.md >> combined_changelog.md
+          echo "" >> combined_changelog.md
+        fi
+
+        echo "Combined changelog preview:"
+        cat combined_changelog.md
+
+    - name: Checkout release branch for patch release
+      if: ${{ env.PATCH_VERSION != '0' }}
+      run: |
+        echo "Patch release detected, checking out existing branch $BRANCH_NAME..."
+        if git show-ref --verify --quiet "refs/heads/$BRANCH_NAME"; then
+          echo "Branch $BRANCH_NAME exists locally, checking out..."
+          git checkout "$BRANCH_NAME"
+        elif git show-ref --verify --quiet "refs/remotes/origin/$BRANCH_NAME"; then
+          echo "Branch $BRANCH_NAME exists remotely, checking out..."
+          git checkout -b "$BRANCH_NAME" "origin/$BRANCH_NAME"
+        else
+          echo "ERROR: Branch $BRANCH_NAME should exist for patch release $PROWLER_VERSION"
+          exit 1
+        fi
+
+    - name: Verify SDK version in pyproject.toml
+      run: |
+        CURRENT_VERSION=$(grep '^version = ' pyproject.toml | sed -E 's/version = "([^"]+)"/\1/' | tr -d '[:space:]')
+        PROWLER_VERSION_TRIMMED=$(echo "$PROWLER_VERSION" | tr -d '[:space:]')
+        if [ "$CURRENT_VERSION" != "$PROWLER_VERSION_TRIMMED" ]; then
+          echo "ERROR: Version mismatch in pyproject.toml (expected: '$PROWLER_VERSION_TRIMMED', found: '$CURRENT_VERSION')"
+          exit 1
+        fi
+        echo "✓ pyproject.toml version: $CURRENT_VERSION"
+
+    - name: Verify SDK version in prowler/config/config.py
+      run: |
+        CURRENT_VERSION=$(grep '^prowler_version = ' prowler/config/config.py | sed -E 's/prowler_version = "([^"]+)"/\1/' | tr -d '[:space:]')
+        PROWLER_VERSION_TRIMMED=$(echo "$PROWLER_VERSION" | tr -d '[:space:]')
+        if [ "$CURRENT_VERSION" != "$PROWLER_VERSION_TRIMMED" ]; then
+          echo "ERROR: Version mismatch in prowler/config/config.py (expected: '$PROWLER_VERSION_TRIMMED', found: '$CURRENT_VERSION')"
+          exit 1
+        fi
+        echo "✓ prowler/config/config.py version: $CURRENT_VERSION"
+
+    - name: Verify API version in api/pyproject.toml
+      if: ${{ env.HAS_API_CHANGES == 'true' }}
+      run: |
+        CURRENT_API_VERSION=$(grep '^version = ' api/pyproject.toml | sed -E 's/version = "([^"]+)"/\1/' | tr -d '[:space:]')
+        API_VERSION_TRIMMED=$(echo "$API_VERSION" | tr -d '[:space:]')
+        if [ "$CURRENT_API_VERSION" != "$API_VERSION_TRIMMED" ]; then
+          echo "ERROR: API version mismatch in api/pyproject.toml (expected: '$API_VERSION_TRIMMED', found: '$CURRENT_API_VERSION')"
+          exit 1
+        fi
+        echo "✓ api/pyproject.toml version: $CURRENT_API_VERSION"
+
+    - name: Verify API prowler dependency in api/pyproject.toml
+      if: ${{ env.PATCH_VERSION != '0' && env.HAS_API_CHANGES == 'true' }}
+      run: |
+        CURRENT_PROWLER_REF=$(grep 'prowler @ git+https://github.com/prowler-cloud/prowler.git@' api/pyproject.toml | sed -E 's/.*@([^"]+)".*/\1/' | tr -d '[:space:]')
+        BRANCH_NAME_TRIMMED=$(echo "$BRANCH_NAME" | tr -d '[:space:]')
+        if [ "$CURRENT_PROWLER_REF" != "$BRANCH_NAME_TRIMMED" ]; then
+          echo "ERROR: Prowler dependency mismatch in api/pyproject.toml (expected: '$BRANCH_NAME_TRIMMED', found: '$CURRENT_PROWLER_REF')"
+          exit 1
+        fi
+        echo "✓ api/pyproject.toml prowler dependency: $CURRENT_PROWLER_REF"
+
+    - name: Verify API version in api/src/backend/api/v1/views.py
+      if: ${{ env.HAS_API_CHANGES == 'true' }}
+      run: |
+        CURRENT_API_VERSION=$(grep 'spectacular_settings.VERSION = ' api/src/backend/api/v1/views.py | sed -E 's/.*spectacular_settings.VERSION = "([^"]+)".*/\1/' | tr -d '[:space:]')
+        API_VERSION_TRIMMED=$(echo "$API_VERSION" | tr -d '[:space:]')
+        if [ "$CURRENT_API_VERSION" != "$API_VERSION_TRIMMED" ]; then
+          echo "ERROR: API version mismatch in views.py (expected: '$API_VERSION_TRIMMED', found: '$CURRENT_API_VERSION')"
+          exit 1
+        fi
+        echo "✓ api/src/backend/api/v1/views.py version: $CURRENT_API_VERSION"
+
+    - name: Checkout release branch for minor release
+      if: ${{ env.PATCH_VERSION == '0' }}
+      run: |
+        echo "Minor release detected (patch = 0), checking out existing branch $BRANCH_NAME..."
+        if git show-ref --verify --quiet "refs/remotes/origin/$BRANCH_NAME"; then
+          echo "Branch $BRANCH_NAME exists remotely, checking out..."
+          git checkout -b "$BRANCH_NAME" "origin/$BRANCH_NAME"
+        else
+          echo "ERROR: Branch $BRANCH_NAME should exist for minor release $PROWLER_VERSION. Please create it manually first."
+          exit 1
+        fi
+
+    - name: Update API prowler dependency for minor release
+      if: ${{ env.PATCH_VERSION == '0' }}
+      run: |
+        CURRENT_PROWLER_REF=$(grep 'prowler @ git+https://github.com/prowler-cloud/prowler.git@' api/pyproject.toml | sed -E 's/.*@([^"]+)".*/\1/' | tr -d '[:space:]')
+        BRANCH_NAME_TRIMMED=$(echo "$BRANCH_NAME" | tr -d '[:space:]')
+
+        # Create a temporary branch for the PR from the minor version branch
+        TEMP_BRANCH="update-api-dependency-$BRANCH_NAME_TRIMMED-$(date +%s)"
+        echo "TEMP_BRANCH=$TEMP_BRANCH" >> $GITHUB_ENV
+
+        # Create temp branch from the current minor version branch
+        git checkout -b "$TEMP_BRANCH"
+
+        # Minor release: update the dependency to use the release branch
+        echo "Updating prowler dependency from '$CURRENT_PROWLER_REF' to '$BRANCH_NAME_TRIMMED'"
+        sed -i "s|prowler @ git+https://github.com/prowler-cloud/prowler.git@[^\"]*\"|prowler @ git+https://github.com/prowler-cloud/prowler.git@$BRANCH_NAME_TRIMMED\"|" api/pyproject.toml
+
+        # Verify the change was made
+        UPDATED_PROWLER_REF=$(grep 'prowler @ git+https://github.com/prowler-cloud/prowler.git@' api/pyproject.toml | sed -E 's/.*@([^"]+)".*/\1/' | tr -d '[:space:]')
+        if [ "$UPDATED_PROWLER_REF" != "$BRANCH_NAME_TRIMMED" ]; then
+          echo "ERROR: Failed to update prowler dependency in api/pyproject.toml"
+          exit 1
+        fi
+
+        # Update poetry lock file
+        echo "Updating poetry.lock file..."
+        cd api
+        poetry lock
+        cd ..
+
+        # Commit and push the temporary branch
+        git add api/pyproject.toml api/poetry.lock
+        git commit -m "chore(api): update prowler dependency to $BRANCH_NAME_TRIMMED for release $PROWLER_VERSION"
+        git push origin "$TEMP_BRANCH"
+
+        echo "✓ Prepared prowler dependency update to: $UPDATED_PROWLER_REF"
+
+    - name: Create PR for API dependency update
+      if: ${{ env.PATCH_VERSION == '0' }}
+      uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
+      with:
+        token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
+        branch: ${{ env.TEMP_BRANCH }}
+        base: ${{ env.BRANCH_NAME }}
+        title: "chore(api): Update prowler dependency to ${{ env.BRANCH_NAME }} for release ${{ env.PROWLER_VERSION }}"
+        body: |
+          ### Description
+
+          Updates the API prowler dependency for release ${{ env.PROWLER_VERSION }}.
+
+          **Changes:**
+          - Updates `api/pyproject.toml` prowler dependency from `@master` to `@${{ env.BRANCH_NAME }}`
+          - Updates `api/poetry.lock` file with resolved dependencies
+
+          This PR should be merged into the `${{ env.BRANCH_NAME }}` release branch.
+
+          ### License
+
+          By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.
+        author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
+        labels: |
+          component/api
+          no-changelog
+
+    - name: Create draft release
+      uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836 # v2.3.3
+      with:
+        tag_name: ${{ env.PROWLER_VERSION }}
+        name: Prowler ${{ env.PROWLER_VERSION }}
+        body_path: combined_changelog.md
+        draft: true
+        target_commitish: ${{ env.BRANCH_NAME }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Clean up temporary files
+      run: |
+        rm -f prowler_changelog.md api_changelog.md ui_changelog.md mcp_changelog.md combined_changelog.md
