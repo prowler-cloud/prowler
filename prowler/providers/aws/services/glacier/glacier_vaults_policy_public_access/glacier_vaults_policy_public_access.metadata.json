@@ -1,26 +1,35 @@
 {
   "Provider": "aws",
   "CheckID": "glacier_vaults_policy_public_access",
-  "CheckTitle": "Check if S3 Glacier vaults have policies which allow access to everyone.",
-  "CheckType": [],
+  "CheckTitle": "S3 Glacier vault has no policy or its policy does not allow access to everyone",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Data Exposure",
+    "TTPs/Initial Access/Unauthorized Access"
+  ],
   "ServiceName": "glacier",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:glacier:region:account-id:vaults/vault-name",
+  "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "Other",
-  "Description": "Ensure CodeArtifact internal packages do not allow external public source publishing.",
-  "Risk": "Vaults accessible to everyone could expose sensitive data to bad actors.",
-  "RelatedUrl": "https://docs.aws.amazon.com/amazonglacier/latest/dev/access-control-overview.html",
+  "Description": "**Glacier vault** access policy is evaluated for exposure to **public principals**. The finding highlights `Allow` statements that grant access to `Principal: '*'` (including wildcard forms), and notes when a vault lacks a policy.",
+  "Risk": "Publicly grantable vault access undermines **confidentiality** and **integrity**. Anyone could list, retrieve, or delete archives, leading to data exposure or loss. Attackers may also trigger large retrieval operations, degrading **availability** and driving unexpected costs.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/amazonglacier/latest/dev/access-control-overview.html",
+    "https://docs.prowler.com/checks/aws/general-policies/ensure-glacier-vault-access-policy-is-not-public-by-only-allowing-specific-services-or-principals-to-access-it#terraform"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-glacier-vault-access-policy-is-not-public-by-only-allowing-specific-services-or-principals-to-access-it#terraform"
+      "CLI": "aws glacier delete-vault-access-policy --account-id <ACCOUNT_ID> --vault-name <VAULT_NAME>",
+      "NativeIaC": "```yaml\n# CloudFormation: Glacier vault without an access policy (no public access)\nResources:\n  <example_resource_name>:\n    Type: AWS::Glacier::Vault\n    Properties:\n      VaultName: <example_resource_name>\n      # AccessPolicy omitted to remove any public access and pass the check\n```",
+      "Other": "1. In AWS Console, open Amazon S3 Glacier (Classic)\n2. Go to Vaults and select the target vault\n3. Open the Access policy tab and click Edit\n4. Remove the policy (clear all content) or delete it\n5. Save changes",
+      "Terraform": "```hcl\n# Glacier vault with no access policy (not public)\nresource \"aws_glacier_vault\" \"<example_resource_name>\" {\n  name = \"<example_resource_name>\"\n  # access_policy omitted to remove any public access and pass the check\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure vault policy does not have principle as *.",
-      "Url": "https://docs.aws.amazon.com/amazonglacier/latest/dev/access-control-overview.html"
+      "Text": "Enforce **least privilege** on vault policies: restrict to specific AWS accounts or roles, avoid `Principal: '*'`, and grant only necessary actions. Apply **defense in depth** with **Vault Lock** for immutable retention and continuous review and monitoring of access to prevent broad or unintended exposure.",
+      "Url": "https://hub.prowler.com/check/glacier_vaults_policy_public_access"
     }
   },
   "Categories": [
