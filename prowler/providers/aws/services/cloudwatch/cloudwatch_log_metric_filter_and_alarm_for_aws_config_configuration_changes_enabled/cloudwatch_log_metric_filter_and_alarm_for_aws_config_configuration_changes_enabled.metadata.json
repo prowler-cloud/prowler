@@ -16,9 +16,7 @@
   "Risk": "Without alerting on **AWS Config changes**, actions like `StopConfigurationRecorder` or `DeleteDeliveryChannel` can silently suspend recording and delivery.\n\nThis degrades the **integrity** and **availability** of configuration audit data, enabling undetected changes and delaying incident response.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
-    "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_9",
-    "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_9#fix---buildtime"
+    "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html"
   ],
   "Remediation": {
     "Code": {
