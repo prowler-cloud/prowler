@@ -14,7 +14,9 @@
   "Risk": "Repository-controlled buildspecs let unreviewed changes run in CI, endangering **integrity** (tampered artifacts), **confidentiality** (secret leakage), and **availability** (resource abuse). Attackers can weaponize PRs to execute code and pivot via the build role.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/codebuild/latest/userguide/security.html"
+    "https://docs.aws.amazon.com/codebuild/latest/userguide/security.html",
+    "https://support.icompaas.com/support/solutions/articles/62000229579-ensure-codebuild-project-with-an-user-controlled-buildspec",
+    "https://docs.aws.amazon.com/codebuild/latest/userguide/change-project.html"
   ],
   "Remediation": {
     "Code": {
