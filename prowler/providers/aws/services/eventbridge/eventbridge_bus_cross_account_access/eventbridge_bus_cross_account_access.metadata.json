@@ -1,29 +1,42 @@
 {
   "Provider": "aws",
   "CheckID": "eventbridge_bus_cross_account_access",
-  "CheckTitle": "Ensure that AWS EventBridge event buses do not allow unknown cross-account access for delivery of events.",
-  "CheckType": [],
+  "CheckTitle": "AWS EventBridge event bus does not allow cross-account access",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "TTPs/Initial Access/Unauthorized Access",
+    "Effects/Data Exposure"
+  ],
   "ServiceName": "eventbridge",
-  "SubServiceName": "eventbus",
-  "ResourceIdTemplate": "arn:partition:events:region:account-id:event-bus/resource-id",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEventsEventbus",
-  "Description": "Ensure that AWS EventBridge event buses do not allow unknown cross-account access for delivery of events.",
-  "Risk": "If an AWS EventBridge event bus allows unknown cross-account access for delivery of events, it can lead to unauthorized access to the event bus and its events.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/CWE_GettingStarted.html",
+  "Description": "**EventBridge event bus** has a **resource policy** that grants **cross-account event delivery** to principals outside the account, including broad or public access.\n\nFocus is on buses whose policies permit external accounts to send events.",
+  "Risk": "**Cross-account event injection** can erode **integrity** and **availability**. Spoofed events may trigger rules and invoke downstream targets, causing unintended actions, data exposure via targets, lateral movement through over-privileged roles, and cost or service disruption from event floods.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatchEvents/event-bus-cross-account-access.html",
+    "https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/CWE_GettingStarted.html",
+    "https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/CloudWatchEvents-CrossAccountEventDelivery.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aws events remove-permission --event-bus-name <event_bus_name> --statement-id <statement_id>",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatchEvents/event-bus-cross-account-access.html",
-      "Terraform": ""
+      "NativeIaC": "```yaml\n# CloudFormation: restrict EventBridge event bus to same account only\nResources:\n  <example_resource_name>:\n    Type: AWS::Events::EventBusPolicy\n    Properties:\n      StatementId: <example_resource_id>\n      Action: events:PutEvents\n      Principal: !Ref AWS::AccountId  # Critical: allows only this AWS account, blocking cross-account access\n      EventBusName: <example_resource_name>\n```",
+      "Other": "1. In the AWS Console, go to Amazon EventBridge > Event buses\n2. Select the event bus (<event_bus_name>)\n3. Open the Permissions tab and click Edit\n4. Remove any statements that grant access to other accounts, an organization, or \"*\"\n5. Save changes",
+      "Terraform": "```hcl\n# Terraform: restrict EventBridge event bus to same account only\nresource \"aws_cloudwatch_event_permission\" \"<example_resource_name>\" {\n  statement_id   = \"<example_resource_id>\"\n  action         = \"events:PutEvents\"\n  principal      = \"<example_resource_id>\" # Critical: set to your own AWS account ID to block cross-account access\n  event_bus_name = \"<example_resource_name>\"\n}\n```"
     },
     "Recommendation": {
-      "Text": "To remediate this issue, remove the unknown cross-account access for delivery of events from the AWS EventBridge event bus.",
-      "Url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/CloudWatchEvents-CrossAccountEventDelivery.html"
+      "Text": "Apply **least privilege** on the event bus resource policy: allow only specific account IDs or org scope (e.g., `aws:PrincipalOrgID`) and avoid wildcard `Principal` or `*`.\n\nConstrain rules to trusted senders using the `account` field and vetted sources, and add monitoring/throttling for **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/eventbridge_bus_cross_account_access"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access",
+    "trust-boundaries"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

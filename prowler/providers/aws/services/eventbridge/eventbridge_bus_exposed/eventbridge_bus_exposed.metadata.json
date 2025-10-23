@@ -1,26 +1,37 @@
 {
   "Provider": "aws",
   "CheckID": "eventbridge_bus_exposed",
-  "CheckTitle": "Ensure that your AWS EventBridge event bus is not exposed to everyone",
-  "CheckType": [],
+  "CheckTitle": "AWS EventBridge event bus policy does not allow public access",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "TTPs/Initial Access/Unauthorized Access"
+  ],
   "ServiceName": "eventbridge",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEventsEventbus",
-  "Description": "Ensure that your AWS EventBridge event bus is not exposed to everyone.",
-  "Risk": "If your AWS EventBridge event bus is exposed to everyone, unauthorized users can access your event bus and potentially view or modify your events.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/CWE_GettingStarted.html",
+  "Description": "EventBridge event bus resource policy is evaluated for **public access**, such as a `Principal: \"*\"` or overly broad conditions that allow any AWS account to publish events or manage rules on the bus.",
+  "Risk": "Publicly accessible event buses enable **event injection** and unauthorized rule changes, undermining **integrity** and enabling **lateral movement**. Attackers can trigger downstream targets, causing **data exposure**, service disruption, and unexpected **costs** through high-volume events.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/CloudWatchEvents-CrossAccountEventDelivery.html",
+    "https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/CWE_GettingStarted.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatchEvents/event-bus-exposed.html",
+    "https://avd.aquasec.com/misconfig/aws/eventbridge/event-bus-public-access/",
+    "https://aws.amazon.com/blogs/compute/simplifying-cross-account-access-with-amazon-eventbridge-resource-policies/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aws events remove-permission --event-bus-name <event_bus_name> --statement-id <statement_id>",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatchEvents/event-bus-exposed.html",
-      "Terraform": ""
+      "NativeIaC": "```yaml\n# CloudFormation: restrict EventBridge event bus access to a specific account (not public)\nResources:\n  <example_resource_name>:\n    Type: AWS::Events::EventBusPolicy\n    Properties:\n      StatementId: AllowSpecificAccount\n      Action: events:PutEvents\n      Principal: arn:aws:iam::<example_account_id>:root  # CRITICAL: limit access to a specific AWS account to prevent public access\n      # Omitting EventBusName applies this to the default event bus\n```",
+      "Other": "1. Open the AWS Console and go to EventBridge > Event buses\n2. Select the target event bus and open the Permissions tab\n3. Click Edit policy\n4. Remove any statement where Principal is \"*\" or AWS is \"*\"\n5. If needed, add a statement allowing only your trusted account ID as Principal (arn:aws:iam::<ACCOUNT_ID>:root)\n6. Save changes",
+      "Terraform": "```hcl\nresource \"aws_cloudwatch_event_bus_policy\" \"<example_resource_name>\" {\n  # CRITICAL: Principal is a specific AWS account, not \"*\", preventing public access\n  policy = <<POLICY\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [{\n    \"Sid\": \"AllowSpecificAccount\",\n    \"Effect\": \"Allow\",\n    \"Principal\": {\"AWS\": \"arn:aws:iam::<example_account_id>:root\"},\n    \"Action\": \"events:PutEvents\",\n    \"Resource\": \"arn:aws:events:<example_region>:<example_account_id>:event-bus/default\"\n  }]\n}\nPOLICY\n}\n```"
     },
     "Recommendation": {
-      "Text": "To restrict access to your AWS EventBridge event bus, remove the permission that allows everyone to access it.",
-      "Url": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/CloudWatchEvents-CrossAccountEventDelivery.html"
+      "Text": "Apply **least privilege** resource policies: limit principals to specific accounts or your organization, and constrain actions and event attributes (e.g., `source`, `detail-type`). Avoid `Principal: \"*\"`.\n\nUse **defense in depth** with rule patterns that include the expected `account`. Monitor policy changes and bus activity.",
+      "Url": "https://hub.prowler.com/check/eventbridge_bus_exposed"
     }
   },
   "Categories": [
