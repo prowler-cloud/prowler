@@ -1,4 +1,5 @@
 import { Page, expect } from "@playwright/test";
+import { SignInPage, SignInCredentials } from "./page-objects/sign-in-page";
 
 export const ERROR_MESSAGES = {
   INVALID_CREDENTIALS: "Invalid email or password",
@@ -100,7 +101,7 @@ export async function logout(page: Page) {
 }
 
 export async function verifyLogoutSuccess(page: Page) {
-  await expect(page).toHaveURL("/sign-in");
+  await expect(page).toHaveURL(/\/sign-in/);
   await expect(page.getByText("Sign in", { exact: true })).toBeVisible();
 }
 
@@ -136,4 +137,41 @@ export async function waitForPageLoad(page: Page) {
 
 export async function verifyDashboardRoute(page: Page) {
   await expect(page).toHaveURL("/");
+}
+
+export async function authenticateAndSaveState(
+  page: Page,
+  email: string,
+  password: string,
+  storagePath: string,
+) {
+  if (!email || !password) {
+    throw new Error('Email and password are required for authentication and save state');
+  }
+
+  // Create SignInPage instance
+  const signInPage = new SignInPage(page);
+  const credentials: SignInCredentials = { email, password };
+
+  // Perform authentication steps using Page Object Model
+  await signInPage.goto();
+  await signInPage.login(credentials);
+  await signInPage.verifySuccessfulLogin();
+
+  // Save authentication state
+  await page.context().storageState({ path: storagePath });
+}
+
+export async function getSession(page: Page) {
+  const response = await page.request.get("/api/auth/session");
+  return response.json();
+}
+
+export async function verifySessionValid(page: Page) {
+  const session = await getSession(page);
+  expect(session).toBeTruthy();
+  expect(session.user).toBeTruthy();
+  expect(session.accessToken).toBeTruthy();
+  expect(session.refreshToken).toBeTruthy();
+  return session;
 }
