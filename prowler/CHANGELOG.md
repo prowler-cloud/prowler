@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [v5.13.0] (Prowler UNRELEASED)
+## [v5.13.0] (Prowler v5.13.0)
 
 ### Added
 - Support for AdditionalURLs in outputs [(#8651)](https://github.com/prowler-cloud/prowler/pull/8651)
