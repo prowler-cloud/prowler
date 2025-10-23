@@ -2689,6 +2689,55 @@ class TestScanViewSet:
             == "There is a problem with credentials."
         )
 
+    @patch("api.v1.views.ScanViewSet._get_task_status")
+    @patch("api.v1.views.get_s3_client")
+    @patch("api.v1.views.env.str")
+    def test_threatscore_s3_wildcard(
+        self,
+        mock_env_str,
+        mock_get_s3_client,
+        mock_get_task_status,
+        authenticated_client,
+        scans_fixture,
+    ):
+        """
+        When the threatscore endpoint is called with an S3 output_location,
+        the view should list objects in S3 using wildcard pattern matching,
+        retrieve the matching PDF file, and return it with HTTP 200 and proper headers.
+        """
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+        bucket = "test-bucket"
+        zip_key = "tenant-id/scan-id/prowler-output-foo.zip"
+        scan.output_location = f"s3://{bucket}/{zip_key}"
+        scan.save()
+
+        pdf_key = os.path.join(
+            os.path.dirname(zip_key),
+            "threatscore",
+            "prowler-output-123_threatscore_report.pdf",
+        )
+
+        mock_s3_client = Mock()
+        mock_s3_client.list_objects_v2.return_value = {"Contents": [{"Key": pdf_key}]}
+        mock_s3_client.get_object.return_value = {"Body": io.BytesIO(b"pdf-bytes")}
+
+        mock_env_str.return_value = bucket
+        mock_get_s3_client.return_value = mock_s3_client
+        mock_get_task_status.return_value = None
+
+        url = reverse("scan-threatscore", kwargs={"pk": scan.id})
+        response = authenticated_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response["Content-Type"] == "application/pdf"
+        assert response["Content-Disposition"].endswith(
+            '"prowler-output-123_threatscore_report.pdf"'
+        )
+        assert response.content == b"pdf-bytes"
+        mock_s3_client.list_objects_v2.assert_called_once()
+        mock_s3_client.get_object.assert_called_once_with(Bucket=bucket, Key=pdf_key)
+
     def test_report_s3_success(self, authenticated_client, scans_fixture, monkeypatch):
         """
         When output_location is an S3 URL and the S3 client returns the file successfully,
