@@ -4,7 +4,7 @@ import { getFindingsByStatus } from "@/actions/overview/overview";
 import { ContentLayout } from "@/components/ui";
 import { SearchParamsProps } from "@/types";
 
-import { CheckFindings } from "./components/check-findings";
+import { FindingsTabs } from "./components/findings-tabs";
 
 const FILTER_PREFIX = "filter[";
 
@@ -35,14 +35,14 @@ export default async function NewOverviewPage({
             </div>
           }
         >
-          <SSRCheckFindings searchParams={resolvedSearchParams} />
+          <SSRFindingsTabs searchParams={resolvedSearchParams} />
         </Suspense>
       </div>
     </ContentLayout>
   );
 }
 
-const SSRCheckFindings = async ({
+const SSRFindingsTabs = async ({
   searchParams,
 }: {
   searchParams: SearchParamsProps | undefined | null;
@@ -71,7 +71,7 @@ const SSRCheckFindings = async ({
   const mutedTotal = muted_new + muted_changed;
 
   return (
-    <CheckFindings
+    <FindingsTabs
       failFindingsData={{
         total: fail,
         new: fail_new,
