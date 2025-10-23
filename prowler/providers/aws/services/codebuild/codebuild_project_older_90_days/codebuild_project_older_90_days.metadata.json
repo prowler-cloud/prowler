@@ -19,7 +19,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "aws codebuild start-build --project-name <example_resource_name>",
+      "CLI": "",
       "NativeIaC": "",
       "Other": "1. Open the AWS Console and go to CodeBuild\n2. In Build projects, select the project\n3. Click Start build, then confirm Start build\n4. Wait for the build to start to update the last invoked time",
       "Terraform": ""
