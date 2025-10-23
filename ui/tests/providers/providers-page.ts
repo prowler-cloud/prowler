@@ -84,10 +84,10 @@ export class ProvidersPage extends BasePage {
   readonly secretAccessKeyInput: Locator;
 
   // AZURE provider form elements
-  readonly subscriptionIdInput: Locator;
-  readonly clientIdInput: Locator;
-  readonly clientSecretInput: Locator;
-  readonly tenantIdInput: Locator;
+  readonly azureSubscriptionIdInput: Locator;
+  readonly azureClientIdInput: Locator;
+  readonly azureClientSecretInput: Locator;
+  readonly azureTenantIdInput: Locator;
 
   // Delete button
   readonly deleteProviderConfirmationButton: Locator;
@@ -123,11 +123,11 @@ export class ProvidersPage extends BasePage {
     this.accountIdInput = page.getByRole("textbox", { name: "Account ID" });
     
     // AZURE provider form inputs
-    this.subscriptionIdInput = page.getByRole("textbox", { name: "Subscription ID" });
-    this.clientIdInput = page.getByRole("textbox", { name: "Client ID" });
-    this.clientSecretInput = page.getByRole("textbox", { name: "Client Secret" });
-    this.tenantIdInput = page.getByRole("textbox", { name: "Tenant ID" });
-    
+    this.azureSubscriptionIdInput = page.getByRole("textbox", { name: "Subscription ID" });
+    this.azureClientIdInput = page.getByRole("textbox", { name: "Client ID" });
+    this.azureClientSecretInput = page.getByRole("textbox", { name: "Client Secret" });
+    this.azureTenantIdInput = page.getByRole("textbox", { name: "Tenant ID" });
+
     // Alias input
     this.aliasInput = page.getByRole("textbox", { name: "Provider alias (optional)" });
 
@@ -196,7 +196,6 @@ export class ProvidersPage extends BasePage {
     await this.waitForPageLoad();
   }
   
-
   async fillAWSProviderDetails(data: AWSProviderData): Promise<void> {
     // Fill the AWS provider details
 
@@ -210,7 +209,7 @@ export class ProvidersPage extends BasePage {
   async fillAZUREProviderDetails(data: AZUREProviderData): Promise<void> {
     // Fill the AWS provider details
 
-    await this.subscriptionIdInput.fill(data.subscriptionId);
+    await this.azureSubscriptionIdInput.fill(data.subscriptionId);
 
     if (data.alias) {
       await this.aliasInput.fill(data.alias);
@@ -374,16 +373,15 @@ export class ProvidersPage extends BasePage {
     // Fill the azure credentials form
 
     if (credentials.clientId) {
-      await this.clientIdInput.fill(credentials.clientId);
+      await this.azureClientIdInput.fill(credentials.clientId);
     }
     if (credentials.clientSecret) {
-      await this.clientSecretInput.fill(credentials.clientSecret);
+      await this.azureClientSecretInput.fill(credentials.clientSecret);
     }
     if (credentials.tenantId) {
-      await this.tenantIdInput.fill(credentials.tenantId);
+      await this.azureTenantIdInput.fill(credentials.tenantId);
     }
   }
-
 
   async verifyPageLoaded(): Promise<void> {
     // Verify the providers page is loaded
