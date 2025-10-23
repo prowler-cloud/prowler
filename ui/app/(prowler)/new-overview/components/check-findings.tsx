@@ -11,7 +11,7 @@ import {
   CardTitle,
   CardVariant,
   ResourceStatsCard,
-  StatsContainer,
+  ResourceStatsCardContainer,
 } from "@/components/shadcn";
 
 interface CheckFindingsProps {
@@ -93,7 +93,7 @@ export const CheckFindings = ({
         </div>
 
         {/* Footer with ResourceStatsCards */}
-        <StatsContainer className="flex w-full flex-col items-center justify-center gap-4 md:w-[480px] md:flex-row md:items-start md:justify-between">
+        <ResourceStatsCardContainer className="flex w-full flex-col items-start justify-center gap-4 sm:flex-row md:w-[480px] md:justify-between">
           <ResourceStatsCard
             containerless
             badge={{
@@ -114,8 +114,8 @@ export const CheckFindings = ({
             className="flex-1"
           />
 
-          <div className="flex w-full items-center justify-center md:w-auto md:self-stretch md:px-[46px]">
-            <div className="h-px w-full bg-slate-300 md:h-full md:w-px dark:bg-[rgba(39,39,42,1)]" />
+          <div className="flex w-full items-center justify-center sm:w-auto sm:self-stretch sm:px-[46px]">
+            <div className="h-px w-full bg-slate-300 sm:h-full sm:w-px dark:bg-[rgba(39,39,42,1)]" />
           </div>
 
           <ResourceStatsCard
@@ -137,7 +137,7 @@ export const CheckFindings = ({
             }
             className="flex-1"
           />
-        </StatsContainer>
+        </ResourceStatsCardContainer>
       </CardContent>
     </BaseCard>
   );
