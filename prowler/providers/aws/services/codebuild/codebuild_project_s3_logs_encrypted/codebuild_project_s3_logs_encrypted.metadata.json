@@ -19,8 +19,7 @@
     "https://docs.aws.amazon.com/codebuild/latest/userguide/change-project.html#change-project-console-logs",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/codebuild-controls.html#codebuild-3",
     "https://support.icompaas.com/support/solutions/articles/62000233685-ensure-s3-logs-for-codebuild-projects-are-encrypted-at-rest",
-    "https://hub.powerpipe.io/mods/turbot/steampipe-mod-aws-compliance/benchmarks/control.codebuild_project_s3_logs_encryption_enabled",
-    "https://www.reddit.com/r/aws/comments/lzqyyh/is_s3_default_encryption_alone_enough_to/"
+    "https://hub.powerpipe.io/mods/turbot/steampipe-mod-aws-compliance/benchmarks/control.codebuild_project_s3_logs_encryption_enabled"
   ],
   "Remediation": {
     "Code": {
