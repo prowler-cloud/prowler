@@ -16,16 +16,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
-    "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_4",
-    "https://d1.awsstatic.com/whitepapers/compliance/AWS_CIS_Foundations_Benchmark.pdf",
-    "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_4#fix---buildtime",
-    "https://www.tenable.com/audits/items/CIS_Amazon_Web_Services_Foundations_v1.4.0_L1.audit:e0ef4a74942065c75a52b20381cbdc89",
-    "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/cis-aws-foundations-benchmark.html",
-    "https://github.com/virtualjj/cis-aws-benchmark-section-3-monitoring-remediate",
     "https://www.clouddefense.ai/compliance-rules/cis-v140/monitoring/cis-v140-4-4",
-    "https://asecure.cloud/p/monitoring_cis_benchmark/",
     "https://www.intelligentdiscovery.io/controls/cloudwatch/cloudwatch-alarm-iam-policy-change"
   ],
   "Remediation": {
