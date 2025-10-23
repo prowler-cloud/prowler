@@ -2,6 +2,13 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [v5.14.0] (Prowler UNRELEASED)
+
+### Changed
+- Update AWS CodeArtifact service metadata to new format [(#8850)](https://github.com/prowler-cloud/prowler/pull/8850)
+
+---
+
 ## [v5.13.0] (Prowler v5.13.0)
 
 ### Added
