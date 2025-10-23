@@ -65,11 +65,32 @@ export const ProviderTypeSelector = ({
 
   const handleValueChange = (value: string) => {
     const params = new URLSearchParams(searchParams.toString());
+
+    // Update provider_type
     if (value) {
       params.set("filter[provider_type]", value);
     } else {
       params.delete("filter[provider_type]");
     }
+
+    // Auto-select account(s) based on the chosen provider type
+    if (value) {
+      const candidates = providers.filter(
+        (p) => p.attributes.connection?.connected && p.attributes.provider === (value as ProviderType),
+      );
+
+      if (candidates.length === 1) {
+        // If there is only one connected account for this type, select it
+        params.set("filter[provider_id__in]", candidates[0].id);
+      } else {
+        // Otherwise, clear existing account selection to avoid invalid combinations
+        params.delete("filter[provider_id__in]");
+      }
+    } else {
+      // Clearing provider type should also clear selected accounts
+      params.delete("filter[provider_id__in]");
+    }
+
     router.push(`?${params.toString()}`, { scroll: false });
   };
 
