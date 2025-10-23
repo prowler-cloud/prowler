@@ -14,8 +14,8 @@
   "Risk": "Using repos from **untrusted GitHub orgs** can let external workflows assume the project role and obtain AWS credentials.\n- Confidentiality: data/secrets exfiltration\n- Integrity: unauthorized changes\n- Availability: build abuse or service disruption",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://hackingthe.cloud/aws/post_exploitation/codebuild_github_runner_persistence/",
     "https://medium.com/@adan.alvarez/gaining-long-term-aws-access-with-codebuild-and-github-873324638784",
+    "https://paul-hands-phd.medium.com/using-aws-codebuild-to-set-up-github-continuous-integration-19b92efbd094",
     "https://docs.aws.amazon.com/codebuild/latest/userguide/connections-github-app.html",
     "https://docs.aws.amazon.com/codebuild/latest/userguide/auth-and-access-control-iam-identity-based-access-control.html"
   ],
