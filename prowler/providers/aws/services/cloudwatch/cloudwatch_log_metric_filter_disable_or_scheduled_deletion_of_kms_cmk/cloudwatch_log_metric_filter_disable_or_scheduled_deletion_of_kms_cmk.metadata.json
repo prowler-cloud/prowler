@@ -16,9 +16,7 @@
   "Risk": "Missing alerts on **CMK disablement or scheduled deletion** undermines **availability** and **integrity**: encrypted data may become undecryptable, backups unusable, and recovery impossible. Attackers or insiders can change key states unnoticed, causing outages and irreversible data loss.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
-    "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_7#fix---buildtime",
-    "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_7"
+    "https://docs.aws.amazon.com/kms/latest/developerguide/deleting-keys-creating-cloudwatch-alarm.html"
   ],
   "Remediation": {
     "Code": {
