@@ -1,3 +1,4 @@
+import fnmatch
 import glob
 import logging
 import os
@@ -1775,7 +1776,18 @@ class ScanViewSet(BaseRLSViewSet):
                         status=status.HTTP_502_BAD_GATEWAY,
                     )
                 contents = resp.get("Contents", [])
-                keys = [obj["Key"] for obj in contents if obj["Key"].endswith(suffix)]
+                keys = []
+                for obj in contents:
+                    key = obj["Key"]
+                    key_basename = os.path.basename(key)
+                    if any(ch in suffix for ch in ("*", "?", "[")):
+                        if fnmatch.fnmatch(key_basename, suffix):
+                            keys.append(key)
+                    elif key_basename == suffix:
+                        keys.append(key)
+                    elif key.endswith(suffix):
+                        # Backward compatibility if suffix already includes directories
+                        keys.append(key)
                 if not keys:
                     return Response(
                         {
