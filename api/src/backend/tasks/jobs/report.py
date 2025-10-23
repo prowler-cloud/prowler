@@ -1317,7 +1317,12 @@ def generate_threatscore_report_job(
         min_risk_level=4,
     )
 
-    upload_uri = _upload_to_s3(tenant_id, pdf_path, scan_id)
+    upload_uri = _upload_to_s3(
+        tenant_id,
+        scan_id,
+        pdf_path,
+        f"threatscore/{Path(pdf_path).name}",
+    )
     if upload_uri:
         try:
             rmtree(Path(pdf_path).parent, ignore_errors=True)
