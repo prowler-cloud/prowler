@@ -2,7 +2,6 @@ from prowler.lib.check.models import Check, CheckReportM365
 from prowler.providers.m365.services.entra.entra_client import entra_client
 from prowler.providers.m365.services.entra.entra_service import (
     AdminRoles,
-    AuthenticationStrength,
     ConditionalAccessPolicyState,
 )
 
@@ -47,7 +46,25 @@ class entra_admin_users_phishing_resistant_mfa_enabled(Check):
             if (
                 policy.grant_controls.authentication_strength is not None
                 and policy.grant_controls.authentication_strength
-                == AuthenticationStrength.PHISHING_RESISTANT_MFA
+                != "Multifactor authentication"
+                and policy.grant_controls.authentication_strength != "Passwordless MFA"
+                and policy.grant_controls.authentication_strength
+                != "Phishing-resistant MFA"
+            ):
+                report = CheckReportM365(
+                    metadata=self.metadata(),
+                    resource=policy,
+                    resource_name=policy.display_name,
+                    resource_id=policy.id,
+                )
+                report.status = "MANUAL"
+                report.status_extended = f"Conditional Access Policy '{policy.display_name}' has a custom authentication strength, review it is Phishing-resistant MFA."
+                continue
+
+            if (
+                policy.grant_controls.authentication_strength is not None
+                and policy.grant_controls.authentication_strength
+                == "Phishing-resistant MFA"
             ):
                 report = CheckReportM365(
                     metadata=self.metadata(),
