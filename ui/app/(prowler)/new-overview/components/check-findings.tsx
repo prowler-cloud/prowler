@@ -2,7 +2,7 @@
 
 import { Bell, BellOff, ShieldCheck, TriangleAlert } from "lucide-react";
 
-import { DonutChart } from "@/components/graphs/DonutChart";
+import { DonutChart } from "@/components/graphs/donut-chart";
 import { DonutDataPoint } from "@/components/graphs/types";
 import {
   BaseCard,
