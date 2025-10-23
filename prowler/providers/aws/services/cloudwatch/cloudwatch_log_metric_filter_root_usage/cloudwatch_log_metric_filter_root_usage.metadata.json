@@ -18,13 +18,9 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
-    "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_3",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatchLogs/root-account-usage-alarm.html",
     "https://asecure.cloud/a/root_account_login/",
-    "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_3#fix---buildtime",
     "https://support.icompaas.com/support/solutions/articles/62000083624-ensure-a-log-metric-filter-and-alarm-exist-for-usage-of-root-account",
-    "https://menendezjaume.com/post/monitor-notify-aws-cloudtrail-cloudwatch-sns/",
-    "https://repost.aws/knowledge-center/cloudwatch-monitor-cloudtrail-events",
     "https://www.intelligentdiscovery.io/controls/cloudwatch/cloudwatch-alarm-root-account-usage",
     "https://aws.amazon.com/blogs/security/how-to-receive-notifications-when-your-aws-accounts-root-access-keys-are-used/",
     "https://www.tenable.com/audits/items/CIS_Amazon_Web_Services_Foundations_v1.5.0_L1.audit:000adfb028a1475075a6b5d2117f53f4"
