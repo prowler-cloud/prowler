@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import {
   buildListClassName,
   buildTriggerClassName,
-  TABS_STYLES,
+  CONTENT_STYLES,
 } from "./tabs.constants";
 
 function Tabs({
@@ -57,7 +57,7 @@ function TabsContent({
   return (
     <TabsPrimitive.Content
       data-slot="tabs-content"
-      className={cn(TABS_STYLES.content, className)}
+      className={cn(CONTENT_STYLES, className)}
       {...props}
     />
   );
