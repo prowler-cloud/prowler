@@ -1,26 +1,38 @@
 {
   "Provider": "aws",
   "CheckID": "emr_cluster_account_public_block_enabled",
-  "CheckTitle": "EMR Account Public Access Block enabled.",
-  "CheckType": [],
+  "CheckTitle": "EMR account has Block Public Access enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
   "ServiceName": "emr",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:emr:region:account-id",
+  "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "AwsAccount",
-  "Description": "EMR Account Public Access Block enabled.",
-  "Risk": "EMR Clusters must have Account Public Access Block enabled.",
-  "RelatedUrl": "https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-block-public-access.html",
+  "ResourceType": "Other",
+  "Description": "Amazon EMR account-level **Block Public Access** configuration is assessed per Region. When `BlockPublicSecurityGroupRules` is enabled, clusters cannot use security groups that allow inbound public sources (`0.0.0.0/0`, `::/0`) except on permitted ports.",
+  "Risk": "Public EMR-facing rules enable Internet reachability to cluster nodes and UIs, inviting brute force and remote exploits.\n\nAttackers can exfiltrate job data, alter processing, or pivot into the VPC, degrading **confidentiality**, **integrity**, and **availability** through data theft, tampering, and service disruption.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://asecure.cloud/a/configure_emr_block_public_access/",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EMR/block-public-access.html",
+    "https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/emr/client/put_block_public_access_configuration.html",
+    "https://support.icompaas.com/support/solutions/articles/62000233371-ensure-emr-account-public-access-block-is-enabled",
+    "https://fig.io/manual/aws/emr/put-block-public-access-configuration",
+    "https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-block-public-access.html",
+    "https://github.com/cloudmatos/matos/tree/master/remediations/aws/emr/block-emr-public-access"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://github.com/cloudmatos/matos/tree/master/remediations/aws/emr/block-emr-public-access",
-      "Terraform": ""
+      "CLI": "aws emr put-block-public-access-configuration --block-public-access-configuration BlockPublicSecurityGroupRules=true",
+      "NativeIaC": "```yaml\n# CloudFormation: Enable EMR Block Public Access (account/Region level)\nResources:\n  EmrBpaRole:\n    Type: AWS::IAM::Role\n    Properties:\n      AssumeRolePolicyDocument:\n        Version: '2012-10-17'\n        Statement:\n          - Effect: Allow\n            Principal:\n              Service: lambda.amazonaws.com\n            Action: sts:AssumeRole\n      Policies:\n        - PolicyName: EmrBpaPut\n          PolicyDocument:\n            Version: '2012-10-17'\n            Statement:\n              - Effect: Allow\n                Action: elasticmapreduce:PutBlockPublicAccessConfiguration\n                Resource: \"*\"\n\n  EmrBpaFunction:\n    Type: AWS::Lambda::Function\n    Properties:\n      Role: !GetAtt EmrBpaRole.Arn\n      Runtime: python3.12\n      Handler: index.handler\n      Code:\n        ZipFile: |\n          import boto3, json, urllib.request\n          def handler(event, context):\n              try:\n                  boto3.client('emr').put_block_public_access_configuration(\n                      BlockPublicAccessConfiguration={\n                          'BlockPublicSecurityGroupRules': True  # CRITICAL: enables EMR Block Public Access\n                      }\n                  )\n                  status='SUCCESS'\n              except Exception:\n                  status='FAILED'\n              body=json.dumps({\n                  'Status': status,\n                  'PhysicalResourceId': 'EmrBPA',  # respond to CFN\n                  'StackId': event['StackId'],\n                  'RequestId': event['RequestId'],\n                  'LogicalResourceId': event['LogicalResourceId']\n              }).encode()\n              req=urllib.request.Request(event['ResponseURL'], data=body, method='PUT')\n              req.add_header('content-type','')\n              req.add_header('content-length',str(len(body)))\n              urllib.request.urlopen(req)\n\n  EmrBpa:\n    Type: Custom::EmrBpa\n    Properties:\n      ServiceToken: !GetAtt EmrBpaFunction.Arn  # Invokes Lambda to apply the setting\n```",
+      "Other": "1. In the AWS Console, go to Amazon EMR\n2. Select the target Region (top-right)\n3. In the left menu under \"EMR on EC2\", click \"Block public access\"\n4. Click \"Edit\" and choose \"Turn on\"\n5. Click \"Save\"",
+      "Terraform": "```hcl\n# Enable EMR Block Public Access (account/Region level)\nresource \"aws_emr_block_public_access_configuration\" \"example_resource_name\" {\n  block_public_security_group_rules = true  # CRITICAL: enables Block Public Access\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable EMR Account Public Access Block.",
-      "Url": "https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-block-public-access.html"
+      "Text": "Keep EMR **Block Public Access** enabled and minimize exceptions; allow only required ports and restrict sources.\n\nApply **least privilege** on security groups, place clusters in private subnets, and use bastion hosts or Session Manager. Combine with **VPC** controls and monitoring for **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/emr_cluster_account_public_block_enabled"
     }
   },
   "Categories": [
