@@ -10,7 +10,7 @@
   "ResourceType": "GitHubOrganization",
   "Description": "Ensure the organization's base repository permission for members is set to 'read' or 'none' to minimize risk.",
   "Risk": "If base repository permissions allow 'write' or 'admin' by default, organization members may unintentionally gain excessive privileges across repositories, increasing the risk of unauthorized changes or accidental modifications.",
-  "RelatedUrl": "https://docs.github.com/en/organizations/managing-access-to-your-organizations-repositories/managing-base-permissions-for-an-organization",
+  "RelatedUrl": "https://docs.github.com/en/organizations/managing-user-access-to-your-organizations-repositories/managing-repository-roles/setting-base-permissions-for-an-organization",
   "Remediation": {
     "Code": {
       "CLI": "",
