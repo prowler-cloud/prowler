@@ -1,0 +1,30 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "firewall_challenge_passage_configured",
+  "CheckTitle": "Ensure Challenge Passage is configured appropriately",
+  "CheckType": [],
+  "ServiceName": "firewall",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "Zone",
+  "Description": "This check ensures that Challenge Passage (challenge TTL) is configured to an appropriate value (recommended: 1 hour / 3600 seconds) to reduce friction for verified visitors while maintaining a security window.",
+  "Risk": "Setting Challenge Passage too short causes excessive challenges for legitimate users, degrading experience. Setting it too long may allow attackers more time to exploit compromised sessions.",
+  "RelatedUrl": "https://developers.cloudflare.com/waf/tools/challenge-passage/",
+  "Remediation": {
+    "Code": {
+      "CLI": "cloudflare firewall challenge-ttl set --zone-id <zone_id> --ttl 3600",
+      "NativeIaC": "",
+      "Other": "https://dash.cloudflare.com/ -> Select Zone -> Security -> Settings -> Challenge Passage -> Set to 1 hour",
+      "Terraform": "resource \"cloudflare_zone_settings_override\" \"example\" {\n  zone_id = var.zone_id\n  settings {\n    challenge_ttl = 3600\n  }\n}"
+    },
+    "Recommendation": {
+      "Text": "Set Challenge Passage to 1 hour (3600 seconds) for all Cloudflare zones to balance security with user experience.",
+      "Url": "https://developers.cloudflare.com/waf/tools/challenge-passage/"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Challenge Passage determines how long a visitor who passes a challenge can access the site without being challenged again."
+}

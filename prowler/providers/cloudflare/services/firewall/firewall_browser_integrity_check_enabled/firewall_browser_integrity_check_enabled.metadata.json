@@ -1,0 +1,32 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "firewall_browser_integrity_check_enabled",
+  "CheckTitle": "Ensure Browser Integrity Check is enabled to filter malicious traffic",
+  "CheckType": [],
+  "ServiceName": "firewall",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Zone",
+  "Description": "This check ensures that Browser Integrity Check is enabled for Cloudflare zones to filter malicious traffic based on HTTP header anomalies and known attack patterns.",
+  "Risk": "Without Browser Integrity Check enabled, malicious bots and automated tools with suspicious HTTP headers can access your site, increasing the risk of attacks.",
+  "RelatedUrl": "https://developers.cloudflare.com/waf/tools/browser-integrity-check/",
+  "Remediation": {
+    "Code": {
+      "CLI": "cloudflare firewall browser-check enable --zone-id <zone_id>",
+      "NativeIaC": "",
+      "Other": "https://dash.cloudflare.com/ -> Select Zone -> Security -> Settings -> Browser Integrity Check -> Enable",
+      "Terraform": "resource \"cloudflare_zone_settings_override\" \"example\" {\n  zone_id = var.zone_id\n  settings {\n    browser_check = \"on\"\n  }\n}"
+    },
+    "Recommendation": {
+      "Text": "Enable Browser Integrity Check for all Cloudflare zones to filter malicious traffic based on HTTP header anomalies.",
+      "Url": "https://developers.cloudflare.com/waf/tools/browser-integrity-check/"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Browser Integrity Check may occasionally block legitimate traffic from older browsers or automated tools. Monitor and adjust if needed."
+}

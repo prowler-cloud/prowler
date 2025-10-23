@@ -1,0 +1,32 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "ssl_always_use_https",
+  "CheckTitle": "Ensure 'Always Use HTTPS' is enabled",
+  "CheckType": [],
+  "ServiceName": "ssl",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "zone_id",
+  "Severity": "medium",
+  "ResourceType": "Zone",
+  "Description": "This check ensures that 'Always Use HTTPS' is enabled for Cloudflare zones to automatically redirect all HTTP requests to HTTPS, ensuring all traffic is encrypted.",
+  "Risk": "Without 'Always Use HTTPS' enabled, visitors may access the website over unencrypted HTTP connections, exposing sensitive data to interception and man-in-the-middle attacks.",
+  "RelatedUrl": "https://developers.cloudflare.com/ssl/edge-certificates/additional-options/always-use-https/",
+  "Remediation": {
+    "Code": {
+      "CLI": "curl -X PATCH \"https://api.cloudflare.com/v4/zones/<zone_id>/settings/always_use_https\" -H \"Authorization: Bearer <api_token>\" -H \"Content-Type: application/json\" -d '{\"value\":\"on\"}'",
+      "NativeIaC": "",
+      "Other": "https://dash.cloudflare.com/ -> Select Zone -> SSL/TLS -> Edge Certificates -> Always Use HTTPS -> On",
+      "Terraform": "resource \"cloudflare_zone_settings_override\" \"example\" {\n  zone_id = var.zone_id\n  settings {\n    always_use_https = \"on\"\n  }\n}"
+    },
+    "Recommendation": {
+      "Text": "Enable 'Always Use HTTPS' for all Cloudflare zones to ensure all traffic is encrypted and secure.",
+      "Url": "https://developers.cloudflare.com/ssl/edge-certificates/additional-options/always-use-https/"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This setting redirects all HTTP requests to HTTPS using a 301 permanent redirect."
+}

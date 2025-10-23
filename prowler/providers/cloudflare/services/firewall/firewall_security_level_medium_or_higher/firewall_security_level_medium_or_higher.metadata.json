@@ -1,0 +1,32 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "firewall_security_level_medium_or_higher",
+  "CheckTitle": "Ensure Security Level is set to Medium or higher",
+  "CheckType": [],
+  "ServiceName": "firewall",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Zone",
+  "Description": "This check ensures that Security Level is set to Medium or higher for Cloudflare zones to balance protection with user accessibility by filtering suspicious traffic.",
+  "Risk": "Setting Security Level too low (off, essentially off, or low) may allow malicious traffic to reach your origin server, increasing the risk of attacks.",
+  "RelatedUrl": "https://developers.cloudflare.com/waf/tools/security-level/",
+  "Remediation": {
+    "Code": {
+      "CLI": "cloudflare firewall security-level set --zone-id <zone_id> --level medium",
+      "NativeIaC": "",
+      "Other": "https://dash.cloudflare.com/ -> Select Zone -> Security -> Settings -> Security Level -> Set to Medium or higher",
+      "Terraform": "resource \"cloudflare_zone_settings_override\" \"example\" {\n  zone_id = var.zone_id\n  settings {\n    security_level = \"medium\"\n  }\n}"
+    },
+    "Recommendation": {
+      "Text": "Set Security Level to Medium for all Cloudflare zones. Adjust to High or Under Attack during active attacks.",
+      "Url": "https://developers.cloudflare.com/waf/tools/security-level/"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Security Level can be temporarily increased to High or Under Attack during active attacks, but Medium is recommended for normal operation."
+}

@@ -1,0 +1,33 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "ssl_hsts_enabled",
+  "CheckTitle": "Ensure HSTS (HTTP Strict Transport Security) is enabled with recommended max-age",
+  "CheckType": [],
+  "ServiceName": "ssl",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Zone",
+  "Description": "This check ensures that HSTS (HTTP Strict Transport Security) is enabled for Cloudflare zones with a recommended max-age of at least 6 months (15768000 seconds) to prevent SSL stripping and man-in-the-middle attacks.",
+  "Risk": "Without HSTS enabled, browsers may initially connect over HTTP, making the connection vulnerable to SSL stripping attacks where an attacker downgrades the connection to unencrypted HTTP.",
+  "RelatedUrl": "https://developers.cloudflare.com/ssl/edge-certificates/additional-options/http-strict-transport-security/",
+  "Remediation": {
+    "Code": {
+      "CLI": "cloudflare ssl hsts enable --zone-id <zone_id> --max-age 31536000",
+      "NativeIaC": "",
+      "Other": "https://dash.cloudflare.com/ -> Select Zone -> SSL/TLS -> Edge Certificates -> Enable HSTS",
+      "Terraform": "resource \"cloudflare_zone_settings_override\" \"example\" {\n  zone_id = var.zone_id\n  settings {\n    security_header {\n      enabled = true\n      max_age = 31536000\n      include_subdomains = true\n      preload = true\n    }\n  }\n}"
+    },
+    "Recommendation": {
+      "Text": "Enable HSTS for all Cloudflare zones with a max-age of at least 6 months (15768000 seconds) to prevent SSL stripping attacks.",
+      "Url": "https://developers.cloudflare.com/ssl/edge-certificates/additional-options/http-strict-transport-security/"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "HSTS requires HTTPS to be properly configured. Ensure all resources are accessible via HTTPS before enabling HSTS with a long max-age."
+}

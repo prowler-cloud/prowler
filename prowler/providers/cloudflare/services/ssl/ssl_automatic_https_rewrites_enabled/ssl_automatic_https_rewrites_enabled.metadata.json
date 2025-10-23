@@ -1,0 +1,32 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "ssl_automatic_https_rewrites_enabled",
+  "CheckTitle": "Ensure Automatic HTTPS Rewrites is enabled to resolve mixed content issues",
+  "CheckType": [],
+  "ServiceName": "ssl",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Zone",
+  "Description": "This check ensures that Automatic HTTPS Rewrites is enabled for Cloudflare zones to automatically rewrite insecure HTTP links to secure HTTPS links, resolving mixed content issues and enhancing site security.",
+  "Risk": "Without Automatic HTTPS Rewrites, pages may contain mixed content (HTTP resources loaded over HTTPS pages), which browsers block or warn about, degrading user experience and security.",
+  "RelatedUrl": "https://developers.cloudflare.com/ssl/edge-certificates/additional-options/automatic-https-rewrites/",
+  "Remediation": {
+    "Code": {
+      "CLI": "cloudflare ssl automatic-https-rewrites enable --zone-id <zone_id>",
+      "NativeIaC": "",
+      "Other": "https://dash.cloudflare.com/ -> Select Zone -> SSL/TLS -> Edge Certificates -> Enable Automatic HTTPS Rewrites",
+      "Terraform": "resource \"cloudflare_zone_settings_override\" \"example\" {\n  zone_id = var.zone_id\n  settings {\n    automatic_https_rewrites = \"on\"\n  }\n}"
+    },
+    "Recommendation": {
+      "Text": "Enable Automatic HTTPS Rewrites for all Cloudflare zones to prevent mixed content warnings and ensure all resources load securely.",
+      "Url": "https://developers.cloudflare.com/ssl/edge-certificates/additional-options/automatic-https-rewrites/"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This feature works best when combined with Always Use HTTPS to ensure the entire site is served over HTTPS."
+}

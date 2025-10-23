@@ -302,6 +302,17 @@ class Provider(ABC):
                         fixer_config=fixer_config,
                         use_instance_principal=arguments.use_instance_principal,
                     )
+                elif "cloudflare" in provider_class_name.lower():
+                    provider_class(
+                        api_token=arguments.api_token,
+                        api_key=arguments.api_key,
+                        api_email=arguments.api_email,
+                        account_ids=arguments.account_id,
+                        zone_ids=arguments.zone_id,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
 
         except TypeError as error:
             logger.critical(

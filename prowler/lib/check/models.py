@@ -695,6 +695,37 @@ class CheckReportGithub(Check_Report):
 
 
 @dataclass
+class CheckReportCloudflare(Check_Report):
+    """Contains the Cloudflare Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    zone_name: str
+
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        resource_name: str = None,
+        resource_id: str = None,
+        zone_name: str = None,
+    ) -> None:
+        """Initialize the Cloudflare Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource. Defaults to None.
+            resource_name: The name of the resource related with the finding.
+            resource_id: The id of the resource related with the finding.
+            zone_name: The zone name of the resource related with the finding.
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = resource_name or getattr(resource, "name", "")
+        self.resource_id = resource_id or getattr(resource, "id", "")
+        self.zone_name = zone_name or getattr(resource, "zone_name", "")
+
+
+@dataclass
 class CheckReportM365(Check_Report):
     """Contains the M365 Check's finding information."""
 

@@ -1,0 +1,32 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "ssl_opportunistic_encryption_enabled",
+  "CheckTitle": "Ensure Opportunistic Encryption is enabled for HTTP/2 benefits",
+  "CheckType": [],
+  "ServiceName": "ssl",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "Zone",
+  "Description": "This check ensures that Opportunistic Encryption is enabled for Cloudflare zones to provide HTTP/2 benefits over encrypted connections, even for visitors using HTTP.",
+  "Risk": "Without Opportunistic Encryption, HTTP visitors cannot benefit from HTTP/2 performance improvements such as multiplexing and server push.",
+  "RelatedUrl": "https://developers.cloudflare.com/ssl/edge-certificates/additional-options/opportunistic-encryption/",
+  "Remediation": {
+    "Code": {
+      "CLI": "cloudflare ssl opportunistic-encryption enable --zone-id <zone_id>",
+      "NativeIaC": "",
+      "Other": "https://dash.cloudflare.com/ -> Select Zone -> SSL/TLS -> Edge Certificates -> Enable Opportunistic Encryption",
+      "Terraform": "resource \"cloudflare_zone_settings_override\" \"example\" {\n  zone_id = var.zone_id\n  settings {\n    opportunistic_encryption = \"on\"\n  }\n}"
+    },
+    "Recommendation": {
+      "Text": "Enable Opportunistic Encryption for all Cloudflare zones to provide HTTP/2 benefits to all visitors.",
+      "Url": "https://developers.cloudflare.com/ssl/edge-certificates/additional-options/opportunistic-encryption/"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Opportunistic Encryption allows HTTP/2 over TLS for HTTP visitors, providing performance benefits without requiring HTTPS."
+}

@@ -1,0 +1,32 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "dns_dnssec_enabled",
+  "CheckTitle": "Ensure DNSSEC is enabled to prevent DNS spoofing",
+  "CheckType": [],
+  "ServiceName": "dns",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Zone",
+  "Description": "This check ensures that DNSSEC (DNS Security Extensions) is enabled for Cloudflare zones to prevent DNS spoofing attacks and ensure data integrity by cryptographically signing DNS records.",
+  "Risk": "Without DNSSEC enabled, attackers can perform DNS spoofing (cache poisoning) attacks, redirecting users to malicious sites and intercepting sensitive information.",
+  "RelatedUrl": "https://developers.cloudflare.com/dns/dnssec/",
+  "Remediation": {
+    "Code": {
+      "CLI": "cloudflare dns dnssec enable --zone-id <zone_id>",
+      "NativeIaC": "",
+      "Other": "https://dash.cloudflare.com/ -> Select Zone -> DNS -> Settings -> DNSSEC -> Enable DNSSEC",
+      "Terraform": "resource \"cloudflare_zone_dnssec\" \"example\" {\n  zone_id = var.zone_id\n}"
+    },
+    "Recommendation": {
+      "Text": "Enable DNSSEC for all Cloudflare zones to prevent DNS spoofing and ensure DNS data integrity. After enabling, add DS records to your domain registrar.",
+      "Url": "https://developers.cloudflare.com/dns/dnssec/"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "After enabling DNSSEC in Cloudflare, you must add the DS records to your domain registrar for DNSSEC to function properly."
+}
