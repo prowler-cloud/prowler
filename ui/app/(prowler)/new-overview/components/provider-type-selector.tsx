@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
 
 import {
   AWSProviderBadge,
@@ -60,30 +59,40 @@ export const ProviderTypeSelector = ({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const currentProvider = searchParams.get("filter[provider_type]") || "";
-  const [open, setOpen] = useState(false);
+  const currentProviders = searchParams.get("filter[provider_type__in]") || "";
+  const selectedTypes = currentProviders
+    ? currentProviders.split(",").filter(Boolean)
+    : [];
 
-  const handleValueChange = (value: string) => {
+  const handleMultiValueChange = (values: string[]) => {
     const params = new URLSearchParams(searchParams.toString());
 
-    // Update provider_type
-    if (value) {
-      params.set("filter[provider_type]", value);
+    // Update provider_type__in
+    if (values.length > 0) {
+      params.set("filter[provider_type__in]", values.join(","));
     } else {
-      params.delete("filter[provider_type]");
+      params.delete("filter[provider_type__in]");
     }
 
-    // Auto-select account(s) based on the chosen provider type
-    if (value) {
+    // Auto-select account(s) based on the chosen provider types
+    if (values.length > 0) {
       const candidates = providers.filter(
-        (p) => p.attributes.connection?.connected && p.attributes.provider === (value as ProviderType),
+        (p) =>
+          p.attributes.connection?.connected &&
+          values.includes(p.attributes.provider),
       );
 
       if (candidates.length === 1) {
-        // If there is only one connected account for this type, select it
+        // If there is only one connected account for selected types, select it
         params.set("filter[provider_id__in]", candidates[0].id);
+      } else if (candidates.length > 1) {
+        // Multiple candidates: auto-select all accounts from selected provider types
+        params.set(
+          "filter[provider_id__in]",
+          candidates.map((c) => c.id).join(","),
+        );
       } else {
-        // Otherwise, clear existing account selection to avoid invalid combinations
+        // No candidates: clear account selection
         params.delete("filter[provider_id__in]");
       }
     } else {
@@ -101,47 +110,42 @@ export const ProviderTypeSelector = ({
         .map((p) => p.attributes.provider),
     ),
   ) as ProviderType[];
-  const selectedValue = availableTypes.includes(currentProvider as ProviderType)
-    ? currentProvider
-    : "";
+
+  const selectedLabel = () => {
+    if (selectedTypes.length === 0) return null; // placeholder visible
+    if (selectedTypes.length === 1) {
+      const providerType = selectedTypes[0] as ProviderType;
+      return (
+        <span className="flex items-center gap-2">
+          {PROVIDER_DATA[providerType].icon}
+          <span>{PROVIDER_DATA[providerType].label}</span>
+        </span>
+      );
+    }
+    return (
+      <span className="truncate">
+        {selectedTypes.length} providers selected
+      </span>
+    );
+  };
 
   return (
     <Select
-      allowDeselect
-      value={selectedValue}
-      onValueChange={handleValueChange}
-      open={open}
-      onOpenChange={setOpen}
+      multiple
+      selectedValues={selectedTypes}
+      onMultiValueChange={handleMultiValueChange}
     >
       <SelectTrigger>
         <SelectValue
           placeholder="All providers"
-          aria-label="Select a provider type"
+          aria-label="Select provider types"
         >
-          {currentProvider &&
-            PROVIDER_DATA[currentProvider as ProviderType] && (
-              <span className="flex items-center gap-2">
-                {PROVIDER_DATA[currentProvider as ProviderType].icon}
-                <span>
-                  {PROVIDER_DATA[currentProvider as ProviderType].label}
-                </span>
-              </span>
-            )}
+          {selectedLabel()}
         </SelectValue>
       </SelectTrigger>
       <SelectContent>
         {availableTypes.map((providerType) => (
-          <SelectItem
-            key={providerType}
-            value={providerType}
-            onPointerDown={(e) => {
-              if (selectedValue === providerType) {
-                e.preventDefault();
-                handleValueChange("");
-                setOpen(false);
-              }
-            }}
-          >
+          <SelectItem key={providerType} value={providerType}>
             {PROVIDER_DATA[providerType].icon}
             <span>{PROVIDER_DATA[providerType].label}</span>
           </SelectItem>

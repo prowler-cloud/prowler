@@ -1,8 +1,6 @@
 "use client";
 
-import { CheckIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
 
 import {
   AWSProviderBadge,
@@ -37,34 +35,54 @@ interface AccountsSelectorProps {
 export function AccountsSelector({ providers }: AccountsSelectorProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [open, setOpen] = useState(false);
 
   const current = searchParams.get("filter[provider_id__in]") || "";
-  const selectedType = (searchParams.get("filter[provider_type]") || "") as
-    | ProviderType
-    | "";
+  const selectedTypes = searchParams.get("filter[provider_type__in]") || "";
+  const selectedTypesList = selectedTypes
+    ? selectedTypes.split(",").filter(Boolean)
+    : [];
   const selectedIds = current ? current.split(",").filter(Boolean) : [];
   const visibleProviders = providers
     .filter((p) => p.attributes.connection?.connected)
     .filter((p) =>
-      selectedType ? p.attributes.provider === selectedType : true,
+      selectedTypesList.length > 0
+        ? selectedTypesList.includes(p.attributes.provider)
+        : true,
     );
 
-  const updateQuery = (ids: string[]) => {
+  const handleMultiValueChange = (ids: string[]) => {
     const params = new URLSearchParams(searchParams.toString());
     if (ids.length > 0) {
       params.set("filter[provider_id__in]", ids.join(","));
     } else {
       params.delete("filter[provider_id__in]");
     }
-    router.push(`?${params.toString()}`, { scroll: false });
-  };
 
-  const toggleId = (id: string) => {
-    const next = new Set(selectedIds);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    updateQuery(Array.from(next));
+    // Auto-deselect provider types that no longer have any selected accounts
+    if (selectedTypesList.length > 0) {
+      // Get provider types of currently selected accounts
+      const selectedProviders = providers.filter((p) => ids.includes(p.id));
+      const selectedProviderTypes = new Set(
+        selectedProviders.map((p) => p.attributes.provider),
+      );
+
+      // Keep only provider types that still have selected accounts
+      const remainingProviderTypes = selectedTypesList.filter((type) =>
+        selectedProviderTypes.has(type as ProviderType),
+      );
+
+      // Update provider_type__in filter
+      if (remainingProviderTypes.length > 0) {
+        params.set(
+          "filter[provider_type__in]",
+          remainingProviderTypes.join(","),
+        );
+      } else {
+        params.delete("filter[provider_type__in]");
+      }
+    }
+
+    router.push(`?${params.toString()}`, { scroll: false });
   };
 
   const selectedLabel = () => {
@@ -81,10 +99,9 @@ export function AccountsSelector({ providers }: AccountsSelectorProps) {
 
   return (
     <Select
-      open={open}
-      onOpenChange={setOpen}
-      value=""
-      onValueChange={() => {}}
+      multiple
+      selectedValues={selectedIds}
+      onMultiValueChange={handleMultiValueChange}
     >
       <SelectTrigger>
         <SelectValue placeholder="All accounts">{selectedLabel()}</SelectValue>
@@ -93,26 +110,11 @@ export function AccountsSelector({ providers }: AccountsSelectorProps) {
         {visibleProviders.map((p) => {
           const id = p.id;
           const displayName = p.attributes.alias || p.attributes.uid;
-          const isSelected = selectedIds.includes(id);
           const icon = PROVIDER_ICON[p.attributes.provider as ProviderType];
           return (
-            <SelectItem
-              key={id}
-              value={id}
-              // Toggle selection without closing or changing radix value
-              onPointerDown={(e) => {
-                e.preventDefault();
-                toggleId(id);
-              }}
-              className={isSelected ? "bg-slate-100 dark:bg-slate-700/50" : ""}
-            >
-              <span className="flex w-full items-center justify-between gap-3">
-                <span className="flex min-w-0 items-center gap-2">
-                  {icon}
-                  <span className="truncate">{displayName}</span>
-                </span>
-                {isSelected && <CheckIcon className="size-5 text-white" />}
-              </span>
+            <SelectItem key={id} value={id}>
+              {icon}
+              <span className="truncate">{displayName}</span>
             </SelectItem>
           );
         })}

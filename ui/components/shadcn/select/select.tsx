@@ -2,33 +2,72 @@
 
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
+import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+// Context for managing multi-select state
+type SelectContextValue = {
+  multiple?: boolean;
+  selectedValues?: string[];
+  onMultiValueChange?: (values: string[]) => void;
+};
+
+const SelectContext = React.createContext<SelectContextValue>({});
+
 function Select({
   allowDeselect = false,
+  multiple = false,
   value,
   onValueChange,
+  selectedValues = [],
+  onMultiValueChange,
   ...props
 }: Omit<React.ComponentProps<typeof SelectPrimitive.Root>, "onValueChange"> & {
   allowDeselect?: boolean;
+  multiple?: boolean;
+  selectedValues?: string[];
   onValueChange?: (value: string) => void;
+  onMultiValueChange?: (values: string[]) => void;
 }) {
   const handleValueChange = (nextValue: string) => {
-    if (allowDeselect && typeof value === "string" && value === nextValue) {
+    if (multiple && onMultiValueChange) {
+      // Multi-select: toggle the value
+      const newValues = selectedValues.includes(nextValue)
+        ? selectedValues.filter((v) => v !== nextValue)
+        : [...selectedValues, nextValue];
+      onMultiValueChange(newValues);
+    } else if (
+      allowDeselect &&
+      typeof value === "string" &&
+      value === nextValue
+    ) {
+      // Single-select with deselect
       onValueChange?.("");
     } else {
+      // Single-select
       onValueChange?.(nextValue);
     }
   };
 
+  const contextValue = React.useMemo(
+    () => ({
+      multiple,
+      selectedValues,
+      onMultiValueChange,
+    }),
+    [multiple, selectedValues, onMultiValueChange],
+  );
+
   return (
-    <SelectPrimitive.Root
-      data-slot="select"
-      value={value}
-      onValueChange={handleValueChange}
-      {...props}
-    />
+    <SelectContext.Provider value={contextValue}>
+      <SelectPrimitive.Root
+        data-slot="select"
+        value={multiple ? "" : value}
+        onValueChange={handleValueChange}
+        {...props}
+      />
+    </SelectContext.Provider>
   );
 }
 
@@ -39,9 +78,31 @@ function SelectGroup({
 }
 
 function SelectValue({
+  placeholder,
+  children,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Value>) {
-  return <SelectPrimitive.Value data-slot="select-value" {...props} />;
+  const { multiple, selectedValues } = React.useContext(SelectContext);
+
+  // For multi-select, render custom children or placeholder
+  if (multiple) {
+    return (
+      <span data-slot="select-value">
+        {selectedValues && selectedValues.length > 0 ? children : placeholder}
+      </span>
+    );
+  }
+
+  // For single-select, use default Radix behavior
+  return (
+    <SelectPrimitive.Value
+      data-slot="select-value"
+      placeholder={placeholder}
+      {...props}
+    >
+      {children}
+    </SelectPrimitive.Value>
+  );
 }
 
 function SelectTrigger({
@@ -57,7 +118,7 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "border-input data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex w-full items-center justify-between gap-2 rounded-xl border px-4 py-3 text-base leading-7 whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-slate-600 disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-[52px] data-[size=sm]:h-10 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 dark:border-[#262626] dark:bg-[#171717] [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-6",
+        "border-input data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex w-full items-center justify-between gap-2 rounded-lg border px-4 py-3 text-base leading-7 whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-slate-600 disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-[52px] data-[size=sm]:h-10 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 dark:border-[#262626] dark:bg-[#171717] [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-6",
         className,
       )}
       {...props}
@@ -82,7 +143,7 @@ function SelectContent({
       <SelectPrimitive.Content
         data-slot="select-content"
         className={cn(
-          "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-50 max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-xl border bg-white shadow-md dark:border-[#262626] dark:bg-[#171717]",
+          "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-50 max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-lg border bg-white shadow-md dark:border-[#262626] dark:bg-[#171717]",
           position === "popper" &&
             "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
           className,
@@ -123,25 +184,36 @@ function SelectLabel({
 function SelectItem({
   className,
   children,
+  value,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Item>) {
+  const { multiple, selectedValues } = React.useContext(SelectContext);
+  const isSelected = multiple && selectedValues?.includes(value);
+
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
+      value={value}
       className={cn(
         "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex w-full cursor-pointer items-center gap-2 rounded-lg py-2.5 pr-10 pl-3 text-base outline-hidden select-none hover:bg-slate-700/50 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
         className,
       )}
       {...props}
     >
-      <span className="absolute right-3 flex size-4 items-center justify-center">
-        <SelectPrimitive.ItemIndicator>
-          <CheckIcon className="size-5" />
-        </SelectPrimitive.ItemIndicator>
-      </span>
       <SelectPrimitive.ItemText asChild>
-        <span className="flex items-center gap-2">{children}</span>
+        <span className="flex min-w-0 items-center gap-2">{children}</span>
       </SelectPrimitive.ItemText>
+      <span className="absolute right-3 flex size-4 items-center justify-center">
+        {multiple ? (
+          // Multi-select: show check when selected
+          isSelected && <CheckIcon className="size-5 text-white" />
+        ) : (
+          // Single-select: use radix indicator
+          <SelectPrimitive.ItemIndicator>
+            <CheckIcon className="size-5" />
+          </SelectPrimitive.ItemIndicator>
+        )}
+      </span>
     </SelectPrimitive.Item>
   );
 }

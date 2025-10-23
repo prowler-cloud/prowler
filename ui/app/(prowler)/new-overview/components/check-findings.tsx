@@ -9,10 +9,10 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardVariant,
   ResourceStatsCard,
   StatsContainer,
 } from "@/components/shadcn";
-import { CardVariant } from "@/components/shadcn/card/resource-stats-card/resource-stats-card-content";
 
 interface CheckFindingsProps {
   failFindingsData: {
