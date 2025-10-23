@@ -240,7 +240,7 @@ def _get_inline_resource_policy_data(resource_data: list[dict[str, Any]]) -> dic
 
     for resource in resource_data:
         inline_policies[resource.get("Arn")] = {
-            policy_name: None  # TODO: The policy document statement is missing
+            policy_name: {}  # TODO: The policy document statement is missing
             for policy_name in resource.get("InlinePolicies", [])
         }
 
@@ -282,7 +282,7 @@ def _get_resource_managed_policy_data(resource_data: list[dict[str, Any]]) -> di
 
     for resource in resource_data:
         attached_policies[resource.get("Arn")] = {
-            policy.get("PolicyArn"): None  # TODO: The policy default version document statement is missing
+            policy.get("PolicyArn"): {}  # TODO: The policy default version document statement is missing
             for policy in resource.get("AttachedPolicies", [])
         }
 
@@ -465,6 +465,9 @@ def _get_roles_metadata(
     roles_metadata = []
     for role in roles_qs:
         role_metadata = json.loads(role.metadata)
+        if not role_metadata.get("name"):
+            continue
+
         role_metadata["inserted_at"] = role.inserted_at
         roles_metadata.append(role_metadata)
 

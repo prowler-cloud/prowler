@@ -1,3 +1,5 @@
+from operator import ne
+from cartography.intel import create_indexes as cartography_indexes
 from celery.utils.log import get_task_logger
 from neo4j import GraphDatabase
 
@@ -21,7 +23,7 @@ def cartography_sync_scan(
     with GraphDatabase.driver("bolt://neo4j:7687", auth=("neo4j", "neo4j_password")) as driver:
         with driver.session() as neo4j_session:
 
-            # TODO: Add `cartography.intel.create_indexes.run` here, before `sync_aws`
+            cartography_indexes.run(neo4j_session, None)
 
             return sync_aws(  # TODO: Depending on the provider type use the appropriate sync function
                 tenant_id=tenant_id,
@@ -30,4 +32,4 @@ def cartography_sync_scan(
                 neo4j_session=neo4j_session,
             )
 
-            # TODO: Add `cartography.intel.analysis.run` here, after `sync_aws`
+            # TODO: Check if we need to add `cartography.intel.analysis.run` here, after `sync_aws`

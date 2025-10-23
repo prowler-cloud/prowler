@@ -156,6 +156,16 @@ def _get_and_load_s3_bucket_details(
         parsed_policy = None  # TODO
         parsed_statements = None  # TODO
 
+        parsed_acls = _parse_s3_bucket_acl(bucket_metadata, account_id)
+        if parsed_acls is not None:
+            acls.append(parsed_acls)
+
+        parsed_policy = _parse_s3_bucket_policy(bucket_metadata)
+        if parsed_policy is not None:
+            policies.append(parsed_policy)
+
+        # TODO: More work
+
         parsed_encryption = _parse_s3_bucket_encryption(bucket_metadata)
         if parsed_encryption is not None:
             encryption_configs.append(parsed_encryption)
@@ -190,10 +200,46 @@ def _get_and_load_s3_bucket_details(
     cartography_s3._set_default_values(neo4j_session, account_id)
 
 
+def _parse_s3_bucket_acl(bucket_metadata: dict[str, Any], account_id: str) -> dict[str, Any] | None:
+    """
+    Code based on `cartography.intel.aws.s3.parse_acl`.
+    # TODO: Key `EmailAddress` is not implemented yet
+    """
+
+    if not bucket_metadata.get("acl_grantees"):
+        return None
+
+    acl = {
+        "Grants": [],
+        "Owner": {
+            "ID": bucket_metadata.get("owner_id"),
+            "DisplayName": None,
+        }
+    }
+
+    for grantee in bucket_metadata.get("acl_grantees"):
+        acl["Grants"].append({
+            "Grantee": {
+                "DisplayName": grantee.get("display_name"),
+                # "EmailAddress"  # TODO: Grantee.EmailAddress
+                "ID": grantee.get("ID"),
+                "Type": grantee.get("type"),
+                "URI": grantee.get("URI"),
+            },
+            "Permission": grantee.get("permission"),
+        })
+
+    return cartography_s3.parse_acl(bucket_metadata.get("name"), bucket_metadata.get("acl_grantees"), account_id)
+
+
+def _parse_s3_bucket_policy(bucket_metadata: dict[str, Any]) -> dict[str, Any] | None:
+    return None  # TODO
+
+
 def _parse_s3_bucket_encryption(bucket_metadata: dict[str, Any]) -> dict[str, Any] | None:
     """
     Code based on `cartography.intel.aws.s3.parse_encryption`.
-    # TODO: Keys `encryption_key_id` and `bucket_key_enabled` are implemented yet.
+    # TODO: Keys `encryption_key_id` and `bucket_key_enabled` are not implemented yet
     """
 
     if not bucket_metadata.get("encryption"):

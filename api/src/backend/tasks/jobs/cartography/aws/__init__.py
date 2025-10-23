@@ -3,6 +3,8 @@ from typing import Any
 
 import neo4j
 
+from cartography.intel import aws as cartography_aws
+
 from api.db_utils import rls_transaction
 from api.models import Provider, ResourceScanSummary
 from tasks.jobs.cartography.aws.s3 import sync_aws_s3
@@ -29,13 +31,10 @@ def sync_aws(
     common_job_parameters = {"UPDATE_TAG": update_tag, "AWS_ID": account_id}
 
     return {
-        # "iam": sync_aws_iam(tenant_id, provider_id, account_id, scan_id, regions, neo4j_session, update_tag, common_job_parameters),  # noqa: E501
+        "iam": sync_aws_iam(tenant_id, provider_id, account_id, scan_id, regions, neo4j_session, update_tag, common_job_parameters),  # noqa: E501
         "s3": sync_aws_s3(tenant_id, provider_id, account_id, scan_id, regions, neo4j_session, update_tag, common_job_parameters),  # noqa: E501
         "ecs": sync_aws_ecs(tenant_id, provider_id, account_id, scan_id, regions, neo4j_session, update_tag, common_job_parameters),  # noqa: E501
     }
-
-    # TODO: Add `cartography.intel.aws._perform_aws_analysis` here, after all the sync functions
-
 
 def get_aws_provider_account_id(tenant_id: str, provider_id: str) -> str:
     """
