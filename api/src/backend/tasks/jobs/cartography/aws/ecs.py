@@ -1,10 +1,8 @@
-from asyncio import tasks
 import json
 
 from collections import defaultdict
 from typing import Any
 
-from httpx import get
 import neo4j
 
 from cartography.intel.aws import ecs as cartography_ecs
@@ -91,8 +89,7 @@ def _get_ecs_task_definitions_region_metadata(
     regions: list[str],
 ) -> dict[str, list[dict[str, Any]]]:
     """
-    Getting ECS tasks metadata from Prowler DB.
-    # TODO: We can't filter the tasks by cluster ARN using Prowler data
+    Getting ECS task definitions metadata from Prowler DB.
     """
 
     with rls_transaction(tenant_id):
@@ -110,9 +107,7 @@ def _get_ecs_task_definitions_region_metadata(
     for task_definition in task_definitions_qs:
         task_metadata = json.loads(task_definition.metadata)
         task_metadata["inserted_at"] = task_definition.inserted_at
-        task_definitions_region_metadata[
-            task_metadata.get("region")
-        ].append(task_metadata)
+        task_definitions_region_metadata[task_metadata.get("region")].append(task_metadata)
 
     return task_definitions_region_metadata
 
@@ -203,8 +198,24 @@ def _sync_ecs_clusters(
     update_tag: int,
 ) -> None:
     """
-    Code based on `cartography.intel.aws.ecs._sync_ecs_cluster_arns` and
-    `cartography.intel.aws.ecs.get_ecs_clusters`.
+    Code based on `cartography.intel.aws.ecs._sync_ecs_cluster_arns`.
+    """
+
+    clusters = _get_ecs_clusters(clusters_metadata)
+    cartography_ecs.load_ecs_clusters(
+        neo4j_session,
+        clusters,
+        region,
+        account_id,
+        update_tag,
+    )
+
+    return clusters
+
+
+def _get_ecs_clusters(clusters_metadata: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """
+    Code based on `cartography.intel.aws.ecs.get_ecs_clusters`.
     # TODO: There are missing fields to implement
     """
 
@@ -229,14 +240,6 @@ def _sync_ecs_clusters(
             # "defaultCapacityProviderStrategy"  # TODO
         })
 
-    cartography_ecs.load_ecs_clusters(
-        neo4j_session,
-        clusters,
-        region,
-        account_id,
-        update_tag,
-    )
-
     return clusters
 
 
@@ -250,7 +253,7 @@ def _sync_ecs_container_instances(
     """
     Code based on `cartography.intel.aws.ecs._sync_ecs_container_instances` and
     `cartography.intel.aws.ecs.get_ecs_container_instances`.
-    # TODO: Container instances data is missing from Prowler DB
+    # TODO: AWS ECS Container instances data is missing from Prowler DB
     """
 
     cluster_arn = cluster_metadata.get("arn")
@@ -284,10 +287,10 @@ def _sync_ecs_task_and_container_defns(
     """
 
     cluster_arn = cluster_metadata.get("arn")
-    tasks = []  # TODO: Prowler doesn't save ECS tasks data
-    containers = []  # TODO: Prowler doesn't save ECS tasks' containers data
+    tasks = []  # TODO: Prowler doesn't save AWS ECS tasks data
+    containers = []  # TODO: Prowler doesn't save AWS ECS tasks' containers data
 
-    task_definitions = get_ecs_task_definitions(task_definitions_metadata)
+    task_definitions = _get_ecs_task_definitions(task_definitions_metadata)
     container_defs = cartography_ecs._get_container_defs_from_task_definitions(task_definitions)
 
     cartography_ecs.load_ecs_tasks(
@@ -326,7 +329,7 @@ def _sync_ecs_task_and_container_defns(
     return tasks, containers, task_definitions, container_defs
 
 
-def get_ecs_task_definitions(task_definitions_metadata: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _get_ecs_task_definitions(task_definitions_metadata: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """
     Getting ECS task definitions from Prowler DB.
     """
@@ -365,17 +368,35 @@ def _sync_ecs_services(
     update_tag: int,
 ) -> None:
     """
-    Code based on `cartography.intel.aws.ecs._sync_ecs_services` and
-    `cartography.intel.aws.ecs.get_ecs_services`.
-    # TODO: A lot of fields are missing
+    Code based on `cartography.intel.aws.ecs._sync_ecs_services`.
     """
 
     cluster_arn = cluster_metadata.get("arn")
-    services = [
+    services = _get_ecs_services(cluster_metadata)
+
+    cartography_ecs.load_ecs_services(
+        neo4j_session,
+        cluster_arn,
+        services,
+        region,
+        account_id,
+        update_tag,
+    )
+
+    return services
+
+
+def _get_ecs_services(cluster_metadata: dict[str, Any]) -> list[dict[str, Any]]:
+    """
+    Code based on `cartography.intel.aws.ecs.get_ecs_services`.
+    # TODO: A lot of fields are missing
+    """
+
+    return [
         {
             "serviceArn": service.get("arn"),
             "serviceName": service.get("name"),
-            "clusterArn": cluster_arn,
+            "clusterArn": cluster_metadata.get("arn"),
             "loadBalancers": service.get("load_balancers"),
             "serviceRegistries": service.get("service_registries"),
             "status": service.get("status"),
@@ -404,14 +425,3 @@ def _sync_ecs_services(
         }
         for service in cluster_metadata.get("services").values()
     ]
-
-    cartography_ecs.load_ecs_services(
-        neo4j_session,
-        cluster_arn,
-        services,
-        region,
-        account_id,
-        update_tag,
-    )
-
-    return services

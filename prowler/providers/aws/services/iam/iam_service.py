@@ -926,6 +926,7 @@ class IAM(AWSService):
                         self.access_keys_metadata[(user.name, user.arn)] = response[
                             "AccessKeyMetadata"
                         ]
+                        user.access_keys_metadata = response["AccessKeyMetadata"]
                 except ClientError as error:
                     if error.response["Error"]["Code"] == "NoSuchEntity":
                         logger.warning(
@@ -1068,6 +1069,7 @@ class User(BaseModel):
     console_access: Optional[bool]
     attached_policies: list[dict] = []
     inline_policies: list[str] = []
+    access_keys_metadata: Optional[list[dict]] = []
     tags: Optional[list]
 
 

@@ -4146,8 +4146,8 @@ tzlocal = "5.3.1"
 [package.source]
 type = "git"
 url = "https://github.com/prowler-cloud/prowler.git"
-reference = "master"
-resolved_reference = "a52697bfdfee83d14a49c11dcbe96888b5cd767e"
+reference = "PROWLER-253-extract-aws-data-from-prowler-database-and-transform-it-to-be-ingested-by-cartography"
+resolved_reference = "66008e8e9ee39265c273b409b7ff6be214255d9a"
 
 [[package]]
 name = "psutil"
@@ -6259,4 +6259,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.13"
-content-hash = "03442fd4673006c5a74374f90f53621fd1c9d117279fe6cc0355ef833eb7f9bb"
+content-hash = "533a5e0e733df594dd591b8af7910562e8d4cd032ed1850aa454c5eb298f5748"
