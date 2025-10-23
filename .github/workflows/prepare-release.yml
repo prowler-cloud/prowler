@@ -150,8 +150,8 @@ jobs:
           # Remove --- separators
           sed -i '/^---$/d' "$output_file"
 
-          # Remove trailing empty lines
-          sed -i '/^$/d' "$output_file"
+          # Remove only trailing empty lines (not all empty lines)
+          sed -i -e :a -e '/^\s*$/d;N;ba' "$output_file"
         }
 
         # Calculate expected versions for this release
@@ -245,6 +245,11 @@ jobs:
           echo "" >> combined_changelog.md
           cat mcp_changelog.md >> combined_changelog.md
           echo "" >> combined_changelog.md
+        fi
+
+        # Add fallback message if no changelogs were added
+        if [ ! -s combined_changelog.md ]; then
+          echo "No component changes detected for this release." >> combined_changelog.md
         fi
 
         echo "Combined changelog preview:"
