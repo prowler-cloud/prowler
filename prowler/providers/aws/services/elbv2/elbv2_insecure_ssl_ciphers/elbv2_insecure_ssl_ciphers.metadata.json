@@ -1,28 +1,36 @@
 {
   "Provider": "aws",
   "CheckID": "elbv2_insecure_ssl_ciphers",
-  "CheckTitle": "Check if Elastic Load Balancers have insecure SSL ciphers.",
+  "CheckTitle": "ELBv2 load balancer uses a secure SSL policy on HTTPS listeners",
   "CheckType": [
-    "Data Protection"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "Software and Configuration Checks/Industry and Regulatory Standards/PCI-DSS"
   ],
   "ServiceName": "elbv2",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsElbv2LoadBalancer",
-  "Description": "Check if Elastic Load Balancers have insecure SSL ciphers.",
-  "Risk": "Using insecure ciphers could affect privacy of in transit information.",
+  "Description": "**ELBv2 HTTPS listeners** are assessed for use of **strong TLS policies**. Listeners whose `ssl_policy` is not in the approved set (TLS 1.2/1.3-focused policies) may include weak protocols or ciphers.",
+  "Risk": "Legacy or weak ciphers enable **downgrade** and **man-in-the-middle** attacks, allowing decryption of sessions, credential theft, and request tampering. This undermines **confidentiality** and **integrity** of data in transit and can expose cookies or tokens for **account takeover**.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html#describe-ssl-policies",
+    "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_43#terraform",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/security-policy.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws elbv2 modify-listener --listener-arn <lb_arn> --ssl-policy ELBSecurityPolicy-TLS13-1-2-Ext2-2021-06",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/security-policy.html",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_43#terraform"
+      "CLI": "aws elbv2 modify-listener --listener-arn <listener_arn> --ssl-policy ELBSecurityPolicy-TLS13-1-2-2021-06",
+      "NativeIaC": "```yaml\n# CloudFormation: Set a secure SSL policy on an HTTPS listener\nResources:\n  <example_resource_name>:\n    Type: AWS::ElasticLoadBalancingV2::Listener\n    Properties:\n      LoadBalancerArn: <example_resource_arn>\n      Protocol: HTTPS\n      Port: 443\n      DefaultActions:\n        - Type: forward\n          TargetGroupArn: <example_resource_arn>\n      Certificates:\n        - CertificateArn: <example_certificate_arn>\n      SslPolicy: ELBSecurityPolicy-TLS13-1-2-2021-06  # FIX: uses an approved secure policy to eliminate insecure ciphers\n```",
+      "Other": "1. In the AWS Console, go to EC2 > Load Balancers\n2. Select the load balancer and open the Listeners tab\n3. Select the HTTPS listener and choose Edit\n4. Set Security policy to ELBSecurityPolicy-TLS13-1-2-2021-06 (or any approved policy)\n5. Save changes",
+      "Terraform": "```hcl\n# Terraform: Ensure HTTPS listener uses a secure SSL policy\nresource \"aws_lb_listener\" \"<example_resource_name>\" {\n  load_balancer_arn = \"<example_resource_arn>\"\n  port              = 443\n  protocol          = \"HTTPS\"\n  ssl_policy        = \"ELBSecurityPolicy-TLS13-1-2-2021-06\" # FIX: approved secure policy\n  certificate_arn   = \"<example_certificate_arn>\"\n\n  default_action {\n    type             = \"forward\"\n    target_group_arn = \"<example_resource_arn>\"\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Use a Security policy with ciphers that are as strong as possible. Drop legacy and insecure ciphers.",
-      "Url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html#describe-ssl-policies"
+      "Text": "Enforce **modern TLS** on load balancer listeners:\n- Use AWS recommended policies like `ELBSecurityPolicy-TLS13-1-2-2021-06`\n- Disable TLS 1.0/1.1 and weak ciphers; prefer suites with **forward secrecy**\n- Periodically review and update policies\n\nApply **defense in depth** with strict client access and **least privilege** for changes.",
+      "Url": "https://hub.prowler.com/check/elbv2_insecure_ssl_ciphers"
     }
   },
   "Categories": [

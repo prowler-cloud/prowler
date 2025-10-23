@@ -1,31 +1,47 @@
 {
   "Provider": "aws",
   "CheckID": "elbv2_desync_mitigation_mode",
-  "CheckTitle": "Check whether the Application Load Balancer is configured with strictest desync mitigation mode, if not check if at least is configured with the drop_invalid_header_fields attribute",
+  "CheckTitle": "Application Load Balancer has desync mitigation mode set to strictest or defensive, or drops invalid header fields",
   "CheckType": [
-    "Data Protection"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "TTPs/Initial Access",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "elbv2",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsElbv2LoadBalancer",
-  "Description": "Check whether the Application Load Balancer is configured with strictest desync mitigation mode, if not check if at least is configured with the drop_invalid_header_fields attribute",
-  "Risk": "HTTP Desync issues can lead to request smuggling and make your applications vulnerable to request queue or cache poisoning, which could lead to credential hijacking or execution of unauthorized commands.",
-  "RelatedUrl": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html#desync-mitigation-mode",
+  "Description": "**Application Load Balancer** settings are reviewed for **HTTP desync protections**. It evaluates `routing.http.desync_mitigation_mode` for `strictest` or `defensive`; when neither is configured, it checks `routing.http.drop_invalid_header_fields.enabled` is `true` as a compensating control.",
+  "Risk": "Lacking robust desync mitigation enables inconsistent HTTP parsing and **request smuggling**:\n- **Confidentiality**: token theft, data exfiltration\n- **Integrity**: cache/queue poisoning, unauthorized actions\n- **Availability**: backend exhaustion and outages\n\nOnly dropping invalid headers reduces but does not eliminate this exposure.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/elb-controls.html#elb-12",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/drop-invalid-header-fields-enabled.html",
+    "https://support.icompaas.com/support/solutions/articles/62000233515-ensure-the-application-load-balancer-is-configured-with-strictest-desync-mitigation-mode",
+    "https://docs.compose-x.io/syntax/compose_x/elbv2.html",
+    "https://github.com/terraform-aws-modules/terraform-aws-alb",
+    "https://docs.firetail.ai/docs/findings/aws-alb-desync-not-defensive-or-strictest/",
+    "https://repost.aws/questions/QUPAjkIW8eQl-MvW_A6UWTeA/i-want-to-allow-underscore-https-header-in-load-balancer",
+    "https://aws.amazon.com/about-aws/whats-new/2020/08/application-and-classic-load-balancers-adding-defense-in-depth-with-introduction-of-desync-mitigation-mode/",
+    "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html#desync-mitigation-mode"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws elbv2 modify-load-balancer-attributes --load-balancer-arn <alb arn> --attributes Key=routing.http.desync_mitigation_mode,Value=<defensive/strictest>",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/elb-controls.html#elb-12",
-      "Terraform": ""
+      "CLI": "aws elbv2 modify-load-balancer-attributes --load-balancer-arn <ALB_ARN> --attributes Key=routing.http.desync_mitigation_mode,Value=strictest",
+      "NativeIaC": "```yaml\n# CloudFormation: Set ALB desync mitigation mode\nResources:\n  <example_resource_name>:\n    Type: AWS::ElasticLoadBalancingV2::LoadBalancer\n    Properties:\n      Type: application\n      Subnets:\n        - <example_subnet_id1>\n        - <example_subnet_id2>\n      LoadBalancerAttributes:\n        - Key: routing.http.desync_mitigation_mode  # Critical: enforce strictest/defensive desync mitigation to pass the check\n          Value: strictest\n```",
+      "Other": "1. Open the AWS Console and go to EC2 > Load Balancers\n2. Select your Application Load Balancer\n3. Choose Actions > Edit attributes (or the Attributes tab > Edit)\n4. Set Desync mitigation mode to Strictest (or Defensive)\n5. Save changes",
+      "Terraform": "```hcl\n# Terraform: Set ALB desync mitigation mode\nresource \"aws_lb\" \"<example_resource_name>\" {\n  name    = \"<example_resource_name>\"\n  subnets = [\"<example_subnet_id1>\", \"<example_subnet_id2>\"]\n\n  desync_mitigation_mode = \"strictest\" # Critical: enforce strictest/defensive desync mitigation to pass the check\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure Application Load Balancer is configured with strictest desync mitigation mode or with the drop_invalid_header_fields attribute enabled",
-      "Url": "https://aws.amazon.com/about-aws/whats-new/2020/08/application-and-classic-load-balancers-adding-defense-in-depth-with-introduction-of-desync-mitigation-mode/"
+      "Text": "Set ALBs to `desync_mitigation_mode`=`strictest` (*or* `defensive` if compatibility is required) and keep `routing.http.drop_invalid_header_fields.enabled`=`true`.\n\nApply **defense in depth**: validate RFC-compliant requests, roll out changes gradually with monitoring, and enforce **least privilege** on downstream services.",
+      "Url": "https://hub.prowler.com/check/elbv2_desync_mitigation_mode"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

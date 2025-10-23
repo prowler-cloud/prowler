@@ -1,28 +1,40 @@
 {
   "Provider": "aws",
   "CheckID": "elbv2_ssl_listeners",
-  "CheckTitle": "Check if Elastic Load Balancers have SSL listeners.",
+  "CheckTitle": "ELBv2 Application Load Balancer listeners use HTTPS or redirect HTTP to HTTPS",
   "CheckType": [
-    "Data Protection"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "elbv2",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsElbv2LoadBalancer",
-  "Description": "Check if Elastic Load Balancers have SSL listeners.",
-  "Risk": "Clear text communication could affect privacy of information in transit.",
-  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/elb-controls.html#elb-1",
+  "Description": "**Application Load Balancer listeners** are assessed for **encrypted ingress**: either only `HTTPS` listeners are present, or any `HTTP` listener redirects to `HTTPS`.",
+  "Risk": "Exposed `HTTP` paths allow traffic to travel in plaintext, enabling interception, credential theft, session hijacking, and response tampering. This weakens confidentiality and integrity and makes **MITM** on public or shared networks feasible.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/checks/aws/networking-policies/networking_36#aws-ec2-console",
+    "https://stackoverflow.com/questions/59397703/aws-eb-config-file-redirect-http-to-https",
+    "https://jvlewis.dev/how-to-redirect-http-to-https-using-only-aws-application-load-balancer-d46a583cd248",
+    "https://fuzzyblog.io/blog/aws/2017/02/03/redirecting-http-to-https-with-aws-and-elb.html",
+    "https://docs.amazonaws.cn/en_us/config/latest/developerguide/alb-http-to-https-redirection-check.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/elb-controls.html#elb-1",
+    "https://docs.aws.amazon.com/config/latest/developerguide/alb-http-to-https-redirection-check.html",
+    "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws elbv2 create-listener --load-balancer-arn <lb_arn> --protocol HTTPS --port 443 --ssl-policy <ssl_policy> --certificates CertificateArn=<certificate_arn>,IsDefault=true",
-      "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/aws/networking-policies/networking_36#aws-ec2-console",
-      "Terraform": ""
+      "CLI": "aws elbv2 modify-listener --listener-arn <listener_arn> --default-actions '[{\"Type\":\"redirect\",\"RedirectConfig\":{\"Protocol\":\"HTTPS\",\"Port\":\"443\",\"StatusCode\":\"HTTP_301\"}}]'",
+      "NativeIaC": "```yaml\n# CloudFormation: Redirect HTTP listener to HTTPS\nResources:\n  <example_resource_name>:\n    Type: AWS::ElasticLoadBalancingV2::Listener\n    Properties:\n      LoadBalancerArn: <example_resource_id>\n      Protocol: HTTP\n      Port: 80\n      DefaultActions:\n        - Type: redirect\n          RedirectConfig:\n            Protocol: HTTPS  # Critical: redirect HTTP to HTTPS\n            Port: '443'      # Critical: target HTTPS port\n            StatusCode: HTTP_301  # Critical: enforce redirect\n```",
+      "Other": "1. Open the EC2 console and go to Load Balancers\n2. Select the Application Load Balancer and open the Listeners tab\n3. Select the HTTP:80 listener and choose Edit (or View/edit rules)\n4. Set the default action to Redirect to, Protocol: HTTPS, Port: 443, Status code: HTTP_301\n5. Save changes",
+      "Terraform": "```hcl\n# Terraform: Redirect HTTP listener to HTTPS\nresource \"aws_lb_listener\" \"<example_resource_name>\" {\n  load_balancer_arn = \"<example_resource_id>\"\n  protocol          = \"HTTP\"\n  port              = 80\n\n  default_action {\n    type = \"redirect\"\n    redirect {\n      protocol   = \"HTTPS\"   # Critical: redirect to HTTPS\n      port       = \"443\"     # Critical: target HTTPS port\n      status_code = \"HTTP_301\" # Critical: enforce redirect\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Scan for Load Balancers with HTTP or TCP listeners and understand the reason for each of them. Check if the listener can be implemented as TLS instead.",
-      "Url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html"
+      "Text": "Enforce **TLS everywhere**: use `HTTPS` listeners and make all `HTTP` listeners redirect to `HTTPS` only. Do not forward plaintext. Apply **defense in depth** with strong TLS policies and managed certificates, and consider `HSTS` to prevent users from reaching `http`.",
+      "Url": "https://hub.prowler.com/check/elbv2_ssl_listeners"
     }
   },
   "Categories": [
