@@ -46,6 +46,7 @@ from api.models import (
     SAMLConfiguration,
     SAMLToken,
     Scan,
+    ScanSummary,
     StateChoices,
     Task,
     TenantAPIKey,
@@ -5765,6 +5766,171 @@ class TestOverviewViewSet:
 
         assert service1_data["attributes"]["muted"] == 1
         assert service2_data["attributes"]["muted"] == 0
+
+    def test_overview_findings_provider_id_in_filter(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        tenant = tenants_fixture[0]
+        provider1, provider2, *_ = providers_fixture
+
+        scan1 = Scan.objects.create(
+            name="scan-one",
+            provider=provider1,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+        scan2 = Scan.objects.create(
+            name="scan-two",
+            provider=provider2,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan1,
+            check_id="check-provider-one",
+            service="service-a",
+            severity="high",
+            region="region-a",
+            _pass=5,
+            fail=1,
+            muted=2,
+            total=8,
+            new=5,
+            changed=2,
+            unchanged=1,
+            fail_new=1,
+            fail_changed=0,
+            pass_new=3,
+            pass_changed=2,
+            muted_new=1,
+            muted_changed=1,
+        )
+
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan2,
+            check_id="check-provider-two",
+            service="service-b",
+            severity="medium",
+            region="region-b",
+            _pass=2,
+            fail=3,
+            muted=1,
+            total=6,
+            new=3,
+            changed=2,
+            unchanged=1,
+            fail_new=2,
+            fail_changed=1,
+            pass_new=1,
+            pass_changed=1,
+            muted_new=1,
+            muted_changed=0,
+        )
+
+        single_response = authenticated_client.get(
+            reverse("overview-findings"),
+            {"filter[provider_id__in]": str(provider1.id)},
+        )
+        assert single_response.status_code == status.HTTP_200_OK
+        single_attributes = single_response.json()["data"]["attributes"]
+        assert single_attributes["pass"] == 5
+        assert single_attributes["fail"] == 1
+        assert single_attributes["muted"] == 2
+        assert single_attributes["total"] == 8
+
+        combined_response = authenticated_client.get(
+            reverse("overview-findings"),
+            {"filter[provider_id__in]": f"{provider1.id},{provider2.id}"},
+        )
+        assert combined_response.status_code == status.HTTP_200_OK
+        combined_attributes = combined_response.json()["data"]["attributes"]
+        assert combined_attributes["pass"] == 7
+        assert combined_attributes["fail"] == 4
+        assert combined_attributes["muted"] == 3
+        assert combined_attributes["total"] == 14
+
+    def test_overview_findings_severity_provider_id_in_filter(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        tenant = tenants_fixture[0]
+        provider1, provider2, *_ = providers_fixture
+
+        scan1 = Scan.objects.create(
+            name="severity-scan-one",
+            provider=provider1,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+        scan2 = Scan.objects.create(
+            name="severity-scan-two",
+            provider=provider2,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan1,
+            check_id="severity-check-one",
+            service="service-a",
+            severity="high",
+            region="region-a",
+            _pass=4,
+            fail=4,
+            muted=0,
+            total=8,
+        )
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan1,
+            check_id="severity-check-two",
+            service="service-a",
+            severity="medium",
+            region="region-b",
+            _pass=2,
+            fail=2,
+            muted=0,
+            total=4,
+        )
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan2,
+            check_id="severity-check-three",
+            service="service-b",
+            severity="critical",
+            region="region-c",
+            _pass=1,
+            fail=2,
+            muted=0,
+            total=3,
+        )
+
+        single_response = authenticated_client.get(
+            reverse("overview-findings_severity"),
+            {"filter[provider_id__in]": str(provider1.id)},
+        )
+        assert single_response.status_code == status.HTTP_200_OK
+        single_attributes = single_response.json()["data"]["attributes"]
+        assert single_attributes["high"] == 8
+        assert single_attributes["medium"] == 4
+        assert single_attributes["critical"] == 0
+
+        combined_response = authenticated_client.get(
+            reverse("overview-findings_severity"),
+            {"filter[provider_id__in]": f"{provider1.id},{provider2.id}"},
+        )
+        assert combined_response.status_code == status.HTTP_200_OK
+        combined_attributes = combined_response.json()["data"]["attributes"]
+        assert combined_attributes["high"] == 8
+        assert combined_attributes["medium"] == 4
+        assert combined_attributes["critical"] == 3
 
 
 @pytest.mark.django_db

@@ -3,6 +3,7 @@ import { Bell, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { TooltipData } from "../types";
+import { CHART_COLORS } from "./constants";
 
 interface ChartTooltipProps {
   active?: boolean;
@@ -27,7 +28,13 @@ export function ChartTooltip({
   const color = payload[0].color || data.color;
 
   return (
-    <div className="min-w-[200px] rounded-lg border border-slate-200 bg-white p-3 shadow-lg dark:border-slate-600 dark:bg-slate-800">
+    <div
+      className="min-w-[200px] rounded-lg border border-slate-200 bg-white p-3 shadow-lg dark:border-slate-600 dark:bg-slate-800"
+      style={{
+        borderColor: CHART_COLORS.tooltipBorder,
+        backgroundColor: CHART_COLORS.tooltipBackground,
+      }}
+    >
       <div className="flex items-center gap-2">
         {showColorIndicator && color && (
           <div
