@@ -9,12 +9,14 @@ import {
   AZUREProviderCredential,
   AZURE_CREDENTIAL_OPTIONS,
 } from "./providers-page";
+import { ScansPage } from "../scans/scans-page";
+import fs from "fs";
 
-test.describe.serial("Add Provider", () => {
-  test.describe("Add AWS Provider", () => {
+test.describe("Add Provider", () => {
+  test.describe.serial("Add AWS Provider", () => {
     // Providers page object
     let providersPage: ProvidersPage;
-
+    let scansPage: ScansPage;
     // Test data from environment variables
     const accountId = process.env.E2E_AWS_PROVIDER_ACCOUNT_ID;
     const accessKey = process.env.E2E_AWS_PROVIDER_ACCESS_KEY;
@@ -32,7 +34,7 @@ test.describe.serial("Add Provider", () => {
     test.beforeEach(async ({ page }) => {
       providersPage = new ProvidersPage(page);
       // Clean up existing provider to ensure clean test state
-      await helpers.deleteProviderIfExists(page, accountId);
+      await providersPage.deleteProviderIfExists(accountId);
     });
 
     // Use admin authentication for provider management
@@ -101,7 +103,8 @@ test.describe.serial("Add Provider", () => {
         await providersPage.clickNext();
 
         // Wait for redirect to provider page
-        await providersPage.verifyLoadProviderPageAfterNewProvider();
+        scansPage = new ScansPage(page);
+        await scansPage.verifyPageLoaded();
       },
     );
 
@@ -169,14 +172,16 @@ test.describe.serial("Add Provider", () => {
         await providersPage.clickNext();
 
         // Wait for redirect to provider page
-        await providersPage.verifyLoadProviderPageAfterNewProvider();
+        scansPage = new ScansPage(page);
+        await scansPage.verifyPageLoaded();
       },
     );
   });
 
-  test.describe("Add AZURE Provider", () => {
+  test.describe.serial("Add AZURE Provider", () => {
     // Providers page object
     let providersPage: ProvidersPage;
+    let scansPage: ScansPage;
 
     // Test data from environment variables
     const subscriptionId = process.env.E2E_AZURE_SUBSCRIPTION_ID;
@@ -195,7 +200,7 @@ test.describe.serial("Add Provider", () => {
     test.beforeEach(async ({ page }) => {
       providersPage = new ProvidersPage(page);
       // Clean up existing provider to ensure clean test state
-      await helpers.deleteProviderIfExists(page, subscriptionId);
+      await providersPage.deleteProviderIfExists(subscriptionId);
     });
 
     // Use admin authentication for provider management
@@ -251,8 +256,9 @@ test.describe.serial("Add Provider", () => {
         await providersPage.verifyLaunchScanPageLoaded();
         await providersPage.clickNext();
 
-        // Wait for redirect to provider page
-        await providersPage.verifyLoadProviderPageAfterNewProvider();
+        // Wait for redirect to scan page
+        scansPage = new ScansPage(page);
+        await scansPage.verifyPageLoaded();
       },
     );
   });
