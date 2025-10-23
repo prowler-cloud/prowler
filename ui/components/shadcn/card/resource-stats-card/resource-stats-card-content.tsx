@@ -33,11 +33,11 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        [CardVariant.default]: "bg-[#535359]",
-        [CardVariant.fail]: "bg-[#432232]",
-        [CardVariant.pass]: "bg-[#204237]",
-        [CardVariant.warning]: "bg-[#3d3520]",
-        [CardVariant.info]: "bg-[#1e3a5f]",
+        [CardVariant.default]: "bg-slate-100 dark:bg-[#535359]",
+        [CardVariant.fail]: "bg-red-100 dark:bg-[#432232]",
+        [CardVariant.pass]: "bg-green-100 dark:bg-[#204237]",
+        [CardVariant.warning]: "bg-amber-100 dark:bg-[#3d3520]",
+        [CardVariant.info]: "bg-blue-100 dark:bg-[#1e3a5f]",
       },
       size: {
         sm: "px-1 text-xs",
@@ -66,7 +66,7 @@ const badgeIconVariants = cva("", {
 });
 
 const labelTextVariants = cva(
-  "leading-6 font-semibold text-zinc-300 dark:text-zinc-300",
+  "leading-6 font-semibold text-slate-900 dark:text-zinc-300 whitespace-nowrap",
   {
     variants: {
       size: {
@@ -81,7 +81,7 @@ const labelTextVariants = cva(
   },
 );
 
-const statIconVariants = cva("text-zinc-300 dark:text-zinc-300", {
+const statIconVariants = cva("text-slate-600 dark:text-zinc-300", {
   variants: {
     size: {
       sm: "h-2.5 w-2.5",
@@ -95,7 +95,7 @@ const statIconVariants = cva("text-zinc-300 dark:text-zinc-300", {
 });
 
 const statLabelVariants = cva(
-  "leading-5 font-medium text-zinc-300 dark:text-zinc-300",
+  "leading-5 font-medium text-slate-700 dark:text-zinc-300",
   {
     variants: {
       size: {

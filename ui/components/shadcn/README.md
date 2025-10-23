@@ -4,13 +4,18 @@ This directory contains all shadcn/ui based components for the Prowler applicati
 
 ## Directory Structure
 
+Example of a custom component:
+
 ```
 shadcn/
-├── card.tsx                    # shadcn Card component
-├── resource-stats-card/        # Custom ResourceStatsCard built on shadcn
-│   ├── resource-stats-card.tsx
-│   ├── resource-stats-card.example.tsx
-│   └── index.ts
+├── card/
+│   ├── base-card/
+│   │   ├── base-card.tsx
+│   ├── card/
+│   │   ├── card.tsx
+│   └── resource-stats-card/
+│       ├── resource-stats-card.tsx
+│       ├── resource-stats-card.example.tsx
 ├── index.ts                    # Barrel exports
 └── README.md
 ```
