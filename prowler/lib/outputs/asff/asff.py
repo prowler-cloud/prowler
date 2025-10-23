@@ -4,7 +4,7 @@ from typing import Optional
 
 from pydantic.v1 import BaseModel, validator
 
-from prowler.config.config import prowler_version, timestamp_utc
+from prowler.config.config import get_timestamp_utc, prowler_version
 from prowler.lib.logger import logger
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.output import Output
@@ -60,7 +60,7 @@ class ASFF(Output):
                 # https://docs.aws.amazon.com/securityhub/1.0/APIReference/API_Compliance.html
                 if finding.status == "MANUAL":
                     continue
-                timestamp = timestamp_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+                timestamp = get_timestamp_utc().strftime("%Y-%m-%dT%H:%M:%SZ")
 
                 associated_standards, compliance_summary = ASFF.format_compliance(
                     finding.compliance
