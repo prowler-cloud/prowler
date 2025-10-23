@@ -188,10 +188,3 @@ export async function verifySessionValid(page: Page) {
   expect(session.refreshToken).toBeTruthy();
   return session;
 }
-
-export async function deleteProviderIfExists(page: Page, accountId: string) {
-  const providersPage = new ProvidersPage(page);
-  if (await providersPage.verifyProviderExists(accountId)) {  
-     await providersPage.actionDeleteProvider(accountId);
-  }
-} 
