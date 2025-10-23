@@ -49,12 +49,17 @@ from prowler.lib.outputs.asff.asff import ASFF
 from prowler.lib.outputs.compliance.aws_well_architected.aws_well_architected import (
     AWSWellArchitected,
 )
+from prowler.lib.outputs.compliance.ccc.ccc_aws import CCC_AWS
+from prowler.lib.outputs.compliance.ccc.ccc_azure import CCC_Azure
+from prowler.lib.outputs.compliance.ccc.ccc_gcp import CCC_GCP
+from prowler.lib.outputs.compliance.c5.c5_aws import AWSC5
 from prowler.lib.outputs.compliance.cis.cis_aws import AWSCIS
 from prowler.lib.outputs.compliance.cis.cis_azure import AzureCIS
 from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
 from prowler.lib.outputs.compliance.cis.cis_github import GithubCIS
 from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
 from prowler.lib.outputs.compliance.cis.cis_m365 import M365CIS
+from prowler.lib.outputs.compliance.cis.cis_oci import OCICIS
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
 from prowler.lib.outputs.compliance.ens.ens_aws import AWSENS
 from prowler.lib.outputs.compliance.ens.ens_azure import AzureENS
@@ -107,6 +112,7 @@ from prowler.providers.llm.models import LLMOutputOptions
 from prowler.providers.m365.models import M365OutputOptions
 from prowler.providers.mongodbatlas.models import MongoDBAtlasOutputOptions
 from prowler.providers.nhn.models import NHNOutputOptions
+from prowler.providers.oraclecloud.models import OCIOutputOptions
 
 
 def prowler():
@@ -326,6 +332,10 @@ def prowler():
         output_options = IACOutputOptions(args, bulk_checks_metadata)
     elif provider == "llm":
         output_options = LLMOutputOptions(args, bulk_checks_metadata)
+    elif provider == "oci":
+        output_options = OCIOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
 
     # Run the quick inventory for the provider if available
     if hasattr(args, "quick_inventory") and args.quick_inventory:
@@ -554,6 +564,33 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(prowler_threatscore)
                 prowler_threatscore.batch_write_data_to_file()
+            elif compliance_name.startswith("ccc_"):
+
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+
+                ccc_aws = CCC_AWS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+
+                generated_outputs["compliance"].append(ccc_aws)
+                ccc_aws.batch_write_data_to_file()
+            elif compliance_name == "c5_aws":
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                c5 = AWSC5(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(c5)
+                c5.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -633,6 +670,18 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(prowler_threatscore)
                 prowler_threatscore.batch_write_data_to_file()
+            elif compliance_name.startswith("ccc_"):
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                ccc_azure = CCC_Azure(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(ccc_azure)
+                ccc_azure.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -712,6 +761,18 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(prowler_threatscore)
                 prowler_threatscore.batch_write_data_to_file()
+            elif compliance_name.startswith("ccc_"):
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                ccc_gcp = CCC_GCP(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(ccc_gcp)
+                ccc_gcp.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -871,6 +932,34 @@ def prowler():
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     create_file_descriptor=True,
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(generic_compliance)
+                generic_compliance.batch_write_data_to_file()
+
+    elif provider == "oci":
+        for compliance_name in input_compliance_frameworks:
+            if compliance_name.startswith("cis_"):
+                # Generate CIS Finding Object
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                cis = OCICIS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(cis)
+                cis.batch_write_data_to_file()
+            else:
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                generic_compliance = GenericCompliance(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
                     file_path=filename,
                 )
                 generated_outputs["compliance"].append(generic_compliance)

@@ -1,3 +1,4 @@
+import fnmatch
 import glob
 import logging
 import os
@@ -142,6 +143,7 @@ from api.v1.mixins import PaginateByPkMixin, TaskManagementMixin
 from api.v1.serializers import (
     ComplianceOverviewAttributesSerializer,
     ComplianceOverviewDetailSerializer,
+    ComplianceOverviewDetailThreatscoreSerializer,
     ComplianceOverviewMetadataSerializer,
     ComplianceOverviewSerializer,
     FindingDynamicFilterSerializer,
@@ -665,36 +667,48 @@ class TenantFinishACSView(FinishACSView):
             .get(email_domain=email_domain)
             .tenant
         )
-        role_name = (
-            extra.get("userType", ["no_permissions"])[0].strip()
-            if extra.get("userType")
-            else "no_permissions"
+
+        # Check if tenant has only one user with MANAGE_ACCOUNT role
+        users_with_manage_account = (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(role__manage_account=True, tenant_id=tenant.id)
+            .values("user")
+            .distinct()
+            .count()
         )
-        try:
-            role = Role.objects.using(MainRouter.admin_db).get(
-                name=role_name, tenant=tenant
+
+        # Only apply role mapping from userType if tenant does NOT have exactly one user with MANAGE_ACCOUNT
+        if users_with_manage_account != 1:
+            role_name = (
+                extra.get("userType", ["no_permissions"])[0].strip()
+                if extra.get("userType")
+                else "no_permissions"
             )
-        except Role.DoesNotExist:
-            role = Role.objects.using(MainRouter.admin_db).create(
-                name=role_name,
-                tenant=tenant,
-                manage_users=False,
-                manage_account=False,
-                manage_billing=False,
-                manage_providers=False,
-                manage_integrations=False,
-                manage_scans=False,
-                unlimited_visibility=False,
+            try:
+                role = Role.objects.using(MainRouter.admin_db).get(
+                    name=role_name, tenant=tenant
+                )
+            except Role.DoesNotExist:
+                role = Role.objects.using(MainRouter.admin_db).create(
+                    name=role_name,
+                    tenant=tenant,
+                    manage_users=False,
+                    manage_account=False,
+                    manage_billing=False,
+                    manage_providers=False,
+                    manage_integrations=False,
+                    manage_scans=False,
+                    unlimited_visibility=False,
+                )
+            UserRoleRelationship.objects.using(MainRouter.admin_db).filter(
+                user=user,
+                tenant_id=tenant.id,
+            ).delete()
+            UserRoleRelationship.objects.using(MainRouter.admin_db).create(
+                user=user,
+                role=role,
+                tenant_id=tenant.id,
             )
-        UserRoleRelationship.objects.using(MainRouter.admin_db).filter(
-            user=user,
-            tenant_id=tenant.id,
-        ).delete()
-        UserRoleRelationship.objects.using(MainRouter.admin_db).create(
-            user=user,
-            role=role,
-            tenant_id=tenant.id,
-        )
         membership, _ = Membership.objects.using(MainRouter.admin_db).get_or_create(
             user=user,
             tenant=tenant,
@@ -1580,6 +1594,25 @@ class ProviderViewSet(BaseRLSViewSet):
         },
         request=None,
     ),
+    threatscore=extend_schema(
+        tags=["Scan"],
+        summary="Retrieve threatscore report",
+        description="Download a specific threatscore report (e.g., 'prowler_threatscore_aws') as a PDF file.",
+        request=None,
+        responses={
+            200: OpenApiResponse(
+                description="PDF file containing the threatscore report"
+            ),
+            202: OpenApiResponse(description="The task is in progress"),
+            401: OpenApiResponse(
+                description="API key missing or user not Authenticated"
+            ),
+            403: OpenApiResponse(description="There is a problem with credentials"),
+            404: OpenApiResponse(
+                description="The scan has no threatscore reports, or the threatscore report generation task has not started yet"
+            ),
+        },
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
@@ -1636,6 +1669,9 @@ class ScanViewSet(BaseRLSViewSet):
             if hasattr(self, "response_serializer_class"):
                 return self.response_serializer_class
             return ScanComplianceReportSerializer
+        elif self.action == "threatscore":
+            if hasattr(self, "response_serializer_class"):
+                return self.response_serializer_class
         return super().get_serializer_class()
 
     def partial_update(self, request, *args, **kwargs):
@@ -1740,7 +1776,18 @@ class ScanViewSet(BaseRLSViewSet):
                         status=status.HTTP_502_BAD_GATEWAY,
                     )
                 contents = resp.get("Contents", [])
-                keys = [obj["Key"] for obj in contents if obj["Key"].endswith(suffix)]
+                keys = []
+                for obj in contents:
+                    key = obj["Key"]
+                    key_basename = os.path.basename(key)
+                    if any(ch in suffix for ch in ("*", "?", "[")):
+                        if fnmatch.fnmatch(key_basename, suffix):
+                            keys.append(key)
+                    elif key_basename == suffix:
+                        keys.append(key)
+                    elif key.endswith(suffix):
+                        # Backward compatibility if suffix already includes directories
+                        keys.append(key)
                 if not keys:
                     return Response(
                         {
@@ -1866,6 +1913,45 @@ class ScanViewSet(BaseRLSViewSet):
 
         content, filename = loader
         return self._serve_file(content, filename, "text/csv")
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_name="threatscore",
+    )
+    def threatscore(self, request, pk=None):
+        scan = self.get_object()
+        running_resp = self._get_task_status(scan)
+        if running_resp:
+            return running_resp
+
+        if not scan.output_location:
+            return Response(
+                {
+                    "detail": "The scan has no reports, or the threatscore report generation task has not started yet."
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if scan.output_location.startswith("s3://"):
+            bucket = env.str("DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET", "")
+            key_prefix = scan.output_location.removeprefix(f"s3://{bucket}/")
+            prefix = os.path.join(
+                os.path.dirname(key_prefix),
+                "threatscore",
+                "*_threatscore_report.pdf",
+            )
+            loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
+        else:
+            base = os.path.dirname(scan.output_location)
+            pattern = os.path.join(base, "threatscore", "*_threatscore_report.pdf")
+            loader = self._load_file(pattern, s3=False)
+
+        if isinstance(loader, Response):
+            return loader
+
+        content, filename = loader
+        return self._serve_file(content, filename, "application/pdf")
 
     def create(self, request, *args, **kwargs):
         input_serializer = self.get_serializer(data=request.data)
@@ -3436,15 +3522,16 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             )
         filtered_queryset = self.filter_queryset(self.get_queryset())
 
-        all_requirements = (
-            filtered_queryset.values(
-                "requirement_id", "framework", "version", "description"
-            )
-            .distinct()
-            .annotate(
-                total_instances=Count("id"),
-                manual_count=Count("id", filter=Q(requirement_status="MANUAL")),
-            )
+        all_requirements = filtered_queryset.values(
+            "requirement_id",
+            "framework",
+            "version",
+            "description",
+        ).annotate(
+            total_instances=Count("id"),
+            manual_count=Count("id", filter=Q(requirement_status="MANUAL")),
+            passed_findings_sum=Sum("passed_findings"),
+            total_findings_sum=Sum("total_findings"),
         )
 
         passed_instances = (
@@ -3463,6 +3550,8 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             total_instances = requirement["total_instances"]
             passed_count = passed_counts.get(requirement_id, 0)
             is_manual = requirement["manual_count"] == total_instances
+            passed_findings = requirement["passed_findings_sum"] or 0
+            total_findings = requirement["total_findings_sum"] or 0
             if is_manual:
                 requirement_status = "MANUAL"
             elif passed_count == total_instances:
@@ -3477,10 +3566,19 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                     "version": requirement["version"],
                     "description": requirement["description"],
                     "status": requirement_status,
+                    "passed_findings": passed_findings,
+                    "total_findings": total_findings,
                 }
             )
 
-        serializer = self.get_serializer(requirements_summary, many=True)
+        # Use different serializer for threatscore framework
+        if "threatscore" not in compliance_id:
+            serializer = self.get_serializer(requirements_summary, many=True)
+        else:
+            serializer = ComplianceOverviewDetailThreatscoreSerializer(
+                requirements_summary, many=True
+            )
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], url_name="attributes")
