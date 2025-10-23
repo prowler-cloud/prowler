@@ -1,15 +1,15 @@
 "use client";
 
-import * as React from "react";
-import { Suspense } from "react";
+import type { ComponentType, ReactNode } from "react";
+import { Suspense, useState } from "react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./tabs";
 
 export interface TabItem {
   id: string;
   label: string;
-  icon?: React.ReactNode;
-  content: React.ComponentType<{ isActive: boolean }>;
+  icon?: ReactNode;
+  content: ComponentType<{ isActive: boolean }>;
   contentProps?: Record<string, unknown>;
 }
 
@@ -52,7 +52,7 @@ export function GenericTabs({
   contentClassName,
   onTabChange,
 }: GenericTabsProps) {
-  const [activeTab, setActiveTab] = React.useState<string>(
+  const [activeTab, setActiveTab] = useState<string>(
     defaultTabId || tabs[0]?.id || "",
   );
 
