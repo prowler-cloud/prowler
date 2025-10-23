@@ -17,14 +17,7 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
     "https://support.icompaas.com/support/solutions/articles/62000086674-ensure-a-log-metric-filter-and-alarm-exist-for-s3-bucket-policy-changes",
-    "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_8",
-    "https://github.com/teerth04/ticket/issues/1419",
-    "https://www.tenable.com/audits/items/CIS_Amazon_Web_Services_Foundations_v5.0.0_L1.audit:8101350d6907e07863ac6748689b3e12",
-    "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_8#fix---buildtime",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html",
-    "https://paper.bobylive.com/Security/CIS/CIS_Amazon_Web_Services_Foundations_Benchmark_v1_3_0.pdf",
-    "https://library.tf/modules/trussworks/cloudtrail-alarms/aws/latest",
-    "https://repost.aws/questions/QU7w3Pzih9TSuA33dTjoLNTw/estimated-cost-of-setting-up-a-log-metric-filter-and-alarm-on-cloudwatch"
+    "https://www.tenable.com/audits/items/CIS_Amazon_Web_Services_Foundations_v5.0.0_L1.audit:8101350d6907e07863ac6748689b3e12"
   ],
   "Remediation": {
     "Code": {
