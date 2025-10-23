@@ -90,9 +90,6 @@ class Scan:
             except ValueError:
                 raise ScanInvalidStatusError(f"Invalid status provided: {s}.")
 
-        # Load bulk compliance frameworks
-        self._bulk_compliance_frameworks = Compliance.get_bulk(provider.type)
-
         # Special setup for IaC provider - override inputs to work with traditional flow
         if provider.type == "iac":
             # IaC doesn't use traditional Prowler checks, so clear all input parameters
@@ -102,7 +99,10 @@ class Scan:
             excluded_checks = None
             excluded_services = None
             self._bulk_checks_metadata = {}
+            self._bulk_compliance_frameworks = {}
         else:
+            # Load bulk compliance frameworks
+            self._bulk_compliance_frameworks = Compliance.get_bulk(provider.type)
             # Get bulk checks metadata for the provider
             self._bulk_checks_metadata = CheckMetadata.get_bulk(provider.type)
             # Complete checks metadata with the compliance framework specification
