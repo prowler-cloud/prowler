@@ -6,3 +6,4 @@ export * from "./card/resource-stats-card/resource-stats-card-content";
 export * from "./card/resource-stats-card/resource-stats-card-divider";
 export * from "./card/resource-stats-card/resource-stats-card-header";
 export * from "./card/stats-container";
+export * from "./selector/selector";
