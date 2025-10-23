@@ -18,17 +18,11 @@
   "Risk": "Short log retention erodes audit evidence. Adversaries can wait out the window, creating gaps in detection, forensics, and compliance reporting. This degrades the **availability** of historical logs and the **integrity** of incident timelines.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.thecloudplaybook.com/p/tcp-46-mastering-cloudwatch-retention",
     "https://trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatchLogs/cloudwatch-logs-retention-period.html",
-    "https://docs.prowler.com/checks/aws/logging-policies/logging_13#terraform",
     "https://boto3.amazonaws.com/v1/documentation/api/1.26.93/reference/services/logs/client/put_retention_policy.html",
-    "https://www.cloudthat.com/resources/blog/automating-amazon-cloudwatch-log-retention-with-aws-lambda-and-amazon-eventbridge/",
     "https://medium.com/pareture/aws-cloudwatch-log-group-retention-periods-bb8a2fb9c358",
-    "https://stackoverflow.com/questions/46094657/what-is-the-default-retention-period-for-loggroup-in-cloud-watch",
     "https://www.blinkops.com/blog/cloudwatch-retention",
-    "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/AWS_Logs.html",
-    "https://docs.prowler.com/checks/aws/logging-policies/logging_13",
-    "https://www.reddit.com/r/aws/comments/1g0oa3x/cloudwatch_log_group_management_log_retention/"
+    "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/AWS_Logs.html"
   ],
   "Remediation": {
     "Code": {
