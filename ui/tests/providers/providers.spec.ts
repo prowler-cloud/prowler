@@ -440,7 +440,7 @@ test.describe("Add Provider", () => {
     );
   });
 
-  test.describe.skip("Add Kubernetes Provider", () => {
+  test.describe.serial("Add Kubernetes Provider", () => {
     // Providers page object
     let providersPage: ProvidersPage;
     let scansPage: ScansPage;
