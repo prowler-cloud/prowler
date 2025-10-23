@@ -2099,6 +2099,37 @@ class OverviewProviderSerializer(serializers.Serializer):
         }
 
 
+class OverviewProviderGroupedSerializer(serializers.Serializer):
+    id = serializers.CharField(source="provider")
+    count = serializers.IntegerField(default=1)
+    findings = serializers.SerializerMethodField(read_only=True)
+
+    class JSONAPIMeta:
+        resource_name = "providers-overview"
+
+    def get_root_meta(self, _resource, _many):
+        return {"version": "v1"}
+
+    @extend_schema_field(
+        {
+            "type": "object",
+            "properties": {
+                "pass": {"type": "integer"},
+                "fail": {"type": "integer"},
+                "muted": {"type": "integer"},
+                "total": {"type": "integer"},
+            },
+        }
+    )
+    def get_findings(self, obj):
+        return {
+            "pass": obj["findings_passed"],
+            "fail": obj["findings_failed"],
+            "muted": obj["findings_muted"],
+            "total": obj["total_findings"],
+        }
+
+
 class OverviewFindingSerializer(serializers.Serializer):
     id = serializers.CharField(default="n/a")
     new = serializers.IntegerField()

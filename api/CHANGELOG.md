@@ -2,6 +2,12 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.15.0] (Prowler UNRELEASED)
+
+### Added
+- Extended `GET /api/v1/providers` with provider-type filters and optional pagination disable to support the new Overview filters [(#8975)](https://github.com/prowler-cloud/prowler/pull/8975)
+- Added aggregated provider-type data to `GET /api/v1/overviews/providers` behind `filter[group_by]=provider_type` [(#8975)](https://github.com/prowler-cloud/prowler/pull/8975)
+
 ## [1.14.0] (Prowler UNRELEASED)
 
 ### Added

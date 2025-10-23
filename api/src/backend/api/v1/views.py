@@ -161,6 +161,7 @@ from api.v1.serializers import (
     LighthouseConfigUpdateSerializer,
     MembershipSerializer,
     OverviewFindingSerializer,
+    OverviewProviderGroupedSerializer,
     OverviewProviderSerializer,
     OverviewServiceSerializer,
     OverviewSeveritySerializer,
@@ -1433,6 +1434,7 @@ class ProviderViewSet(BaseRLSViewSet):
     ]
     # RBAC required permissions
     required_permissions = [Permissions.MANAGE_PROVIDERS]
+    allow_disable_pagination = True
 
     def set_required_permissions(self):
         """
@@ -3715,6 +3717,11 @@ class OverviewViewSet(BaseRLSViewSet):
 
     def get_serializer_class(self):
         if self.action == "providers":
+            if (
+                hasattr(self, "request")
+                and self.request.query_params.get("filter[group_by]") == "provider_type"
+            ):
+                return OverviewProviderGroupedSerializer
             return OverviewProviderSerializer
         elif self.action == "findings":
             return OverviewFindingSerializer
@@ -3747,6 +3754,9 @@ class OverviewViewSet(BaseRLSViewSet):
     def providers(self, request):
         tenant_id = self.request.tenant_id
         queryset = self.get_queryset()
+        group_by_provider_type = (
+            self.request.query_params.get("filter[group_by]") == "provider_type"
+        )
         provider_filter = (
             {"provider__in": self.allowed_providers}
             if hasattr(self, "allowed_providers")
@@ -3776,14 +3786,17 @@ class OverviewViewSet(BaseRLSViewSet):
             )
         )
 
-        resources_aggregated = (
-            Resource.all_objects.filter(tenant_id=tenant_id)
-            .values("provider_id")
-            .annotate(total_resources=Count("id"))
-        )
-        resource_map = {
-            row["provider_id"]: row["total_resources"] for row in resources_aggregated
-        }
+        resource_map = {}
+        if not group_by_provider_type:
+            resources_aggregated = (
+                Resource.all_objects.filter(tenant_id=tenant_id)
+                .values("provider_id")
+                .annotate(total_resources=Count("id"))
+            )
+            resource_map = {
+                row["provider_id"]: row["total_resources"]
+                for row in resources_aggregated
+            }
 
         overview = []
         for row in findings_aggregated:
@@ -3797,6 +3810,46 @@ class OverviewViewSet(BaseRLSViewSet):
                     "findings_muted": row["findings_muted"],
                 }
             )
+
+        if group_by_provider_type:
+            if hasattr(self, "allowed_providers"):
+                provider_ids = self.allowed_providers.values_list("id", flat=True)
+                providers_for_grouping = Provider.objects.filter(
+                    tenant_id=tenant_id, id__in=provider_ids
+                )
+            else:
+                providers_for_grouping = Provider.objects.filter(tenant_id=tenant_id)
+
+            provider_type_counts = {
+                row["provider"]: row["total"]
+                for row in providers_for_grouping.values("provider").annotate(
+                    total=Count("id")
+                )
+            }
+
+            grouped_overview = {}
+            for item in overview:
+                provider_type = item["provider"]
+                if provider_type not in grouped_overview:
+                    grouped_overview[provider_type] = {
+                        "provider": provider_type,
+                        "count": provider_type_counts.get(
+                            provider_type, item.get("count", 1)
+                        ),
+                        "total_findings": 0,
+                        "findings_passed": 0,
+                        "findings_failed": 0,
+                        "findings_muted": 0,
+                    }
+                aggregated = grouped_overview[provider_type]
+                aggregated["total_findings"] += item["total_findings"]
+                aggregated["findings_passed"] += item["findings_passed"]
+                aggregated["findings_failed"] += item["findings_failed"]
+                aggregated["findings_muted"] += item["findings_muted"]
+
+            overview = [
+                grouped_overview[key] for key in sorted(grouped_overview.keys())
+            ]
 
         return Response(
             self.get_serializer(overview, many=True).data,
