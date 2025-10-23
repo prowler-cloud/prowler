@@ -17,16 +17,8 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
     "https://support.icompaas.com/support/solutions/articles/62000084030-ensure-a-log-metric-filter-and-alarm-exist-for-security-group-changes",
-    "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_10#fix---buildtime",
-    "https://www.ibm.com/docs/en/data-gate-on-cloud?topic=information-creating-cloudwatch-alarms",
-    "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/MonitoringLogData.html",
     "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Alarm-On-Logs.html",
-    "https://asecure.cloud/a/cwalarm_securitygroup_changes/",
-    "https://docs.bridgecrew.io/docs/monitoring_10",
-    "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html",
-    "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_10/",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html",
-    "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_10"
+    "https://asecure.cloud/a/cwalarm_securitygroup_changes/"
   ],
   "Remediation": {
     "Code": {
