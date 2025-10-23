@@ -1,5 +1,4 @@
 import { test } from "@playwright/test";
-import * as helpers from "../helpers";
 import {
   ProvidersPage,
   AWSProviderData,
@@ -13,7 +12,6 @@ import {
   M365_CREDENTIAL_OPTIONS,
 } from "./providers-page";
 import { ScansPage } from "../scans/scans-page";
-import fs from "fs";
 
 test.describe("Add Provider", () => {
   test.describe.serial("Add AWS Provider", () => {
@@ -266,9 +264,10 @@ test.describe("Add Provider", () => {
     );
   });
 
-  test.describe("Add M365 Provider", () => {
+  test.describe.serial("Add M365 Provider", () => {
     // Providers page object
     let providersPage: ProvidersPage;
+    let scansPage: ScansPage;
 
     // Test data from environment variables
     const domainId = process.env.E2E_M365_DOMAIN_ID;
@@ -286,7 +285,7 @@ test.describe("Add Provider", () => {
     test.beforeEach(async ({ page }) => {
       providersPage = new ProvidersPage(page);
       // Clean up existing provider to ensure clean test state
-      await helpers.deleteProviderIfExists(page, domainId);
+      await providersPage.deleteProviderIfExists(domainId);
     });
 
     // Use admin authentication for provider management
@@ -344,6 +343,8 @@ test.describe("Add Provider", () => {
         await providersPage.selectM365CredentialsType(
           M365_CREDENTIAL_OPTIONS.M365_CREDENTIALS,
         );
+
+        // Verify M365 credentials page is loaded
         await providersPage.verifyM365CredentialsPageLoaded();
 
         // Fill static credentials details
@@ -354,8 +355,9 @@ test.describe("Add Provider", () => {
         await providersPage.verifyLaunchScanPageLoaded();
         await providersPage.clickNext();
 
-        // Wait for redirect to provider page
-        await providersPage.verifyLoadProviderPageAfterNewProvider();
+        // Wait for redirect to scan page
+        scansPage = new ScansPage(page);
+        await scansPage.verifyPageLoaded();
       },
     );
 
@@ -414,7 +416,9 @@ test.describe("Add Provider", () => {
         await providersPage.selectM365CredentialsType(
           M365_CREDENTIAL_OPTIONS.M365_CERTIFICATE_CREDENTIALS,
         );
-        await providersPage.verifyM365CredentialsPageLoaded();
+
+        // Verify M365 certificate credentials page is loaded
+        await providersPage.verifyM365CertificateCredentialsPageLoaded();
 
         // Fill static credentials details
         await providersPage.fillM365CertificateCredentials(m365Credentials);
@@ -424,9 +428,11 @@ test.describe("Add Provider", () => {
         await providersPage.verifyLaunchScanPageLoaded();
         await providersPage.clickNext();
 
-        // Wait for redirect to provider page
-        await providersPage.verifyLoadProviderPageAfterNewProvider();
+        // Wait for redirect to scan page
+        scansPage = new ScansPage(page);
+        await scansPage.verifyPageLoaded();
       },
     );
   });
+
 });
