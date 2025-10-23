@@ -80,14 +80,21 @@ export const buildAzureSecret = (formData: FormData) => {
 
 export const buildM365Secret = (formData: FormData) => {
   const secret = {
-    ...buildAzureSecret(formData),
-    [ProviderCredentialFields.USER]: getFormValue(
+    [ProviderCredentialFields.CLIENT_ID]: getFormValue(
       formData,
-      ProviderCredentialFields.USER,
+      ProviderCredentialFields.CLIENT_ID,
     ),
-    [ProviderCredentialFields.PASSWORD]: getFormValue(
+    [ProviderCredentialFields.TENANT_ID]: getFormValue(
       formData,
-      ProviderCredentialFields.PASSWORD,
+      ProviderCredentialFields.TENANT_ID,
+    ),
+    [ProviderCredentialFields.CLIENT_SECRET]: getFormValue(
+      formData,
+      ProviderCredentialFields.CLIENT_SECRET,
+    ),
+    [ProviderCredentialFields.CERTIFICATE_CONTENT]: getFormValue(
+      formData,
+      ProviderCredentialFields.CERTIFICATE_CONTENT,
     ),
   };
   return filterEmptyValues(secret);

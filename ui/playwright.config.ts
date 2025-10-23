@@ -96,6 +96,12 @@ export default defineConfig({
       name: "sign-up",
       testMatch: "sign-up.spec.ts",
     },
+    // This project runs the providers test suite
+    {
+      name: "providers",
+      testMatch: "providers.spec.ts",
+      dependencies: ["admin.auth.setup"],
+    },
   ],
 
   webServer: {
