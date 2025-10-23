@@ -15,10 +15,6 @@
   "Risk": "Missing **connection/location redundancy** creates a **single point of failure**, degrading **availability**. A router, fiber, or site outage can sever private paths to AWS, stalling app traffic, data replication, and admin access, leading to timeouts or extended downtime until alternate paths are restored.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.amazonaws.cn/en/directconnect/resiliency-recommendation/",
-    "https://www.coresite.com/blog/how-to-configure-network-with-aws-direct-connect",
-    "https://tutorialsdojo.com/aws-direct-connect/",
-    "https://www.examtopics.com/discussions/amazon/view/35678-exam-aws-certified-solutions-architect-associate-saa-c02/",
     "https://docs.aws.amazon.com/awssupport/latest/user/fault-tolerance-checks.html#amazon-direct-connect-location-resiliency",
     "https://repost.aws/knowledge-center/direct-connect-physical-redundancy",
     "https://aws.amazon.com/directconnect/resiliency-recommendation/"
@@ -26,7 +22,7 @@
   "Remediation": {
     "Code": {
       "CLI": "aws directconnect create-connection --region <REGION> --location <NEW_DX_LOCATION_CODE> --bandwidth 1Gbps --connection-name <example_resource_name>",
-      "NativeIaC": "```yaml\n# CloudFormation: add a second Direct Connect connection in a different location\nResources:\n  DXConnection:\n    Type: AWS::DirectConnect::Connection\n    Properties:\n      ConnectionName: \"<example_resource_name>\"\n      Bandwidth: \"1Gbps\"\n      Location: \"<NEW_DX_LOCATION_CODE>\"  # Critical: use a different DX location in this Region to add location redundancy\n```",
+      "NativeIaC": "",
       "Other": "1. In the AWS Console, go to Direct Connect > Connections\n2. Click Create connection\n3. Region: select the Region where the existing connection resides\n4. Name: enter <example_resource_name>\n5. Location: select a different Direct Connect location than your existing connection\n6. Bandwidth: choose a supported value (e.g., 1 Gbps)\n7. Click Create connection",
       "Terraform": "```hcl\n# Create an additional Direct Connect connection in a different location\nresource \"aws_dx_connection\" \"example\" {\n  name      = \"<example_resource_name>\"\n  bandwidth = \"1Gbps\"\n  location  = \"<NEW_DX_LOCATION_CODE>\" # Critical: choose a different DX location in the same Region to achieve location redundancy\n}\n```"
     },
