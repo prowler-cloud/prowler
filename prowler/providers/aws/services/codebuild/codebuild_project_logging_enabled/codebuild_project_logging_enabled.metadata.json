@@ -17,12 +17,7 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/codebuild/latest/userguide/change-project.html#change-project-console-logs",
     "https://codefresh.io/learn/devops-tools/aws-codebuild-the-basics-and-a-quick-tutorial/",
-    "https://repost.aws/questions/QU84Xhxh1CTeWWrlq5-4m82g/codebuild-build-failed-with-no-log-generated",
-    "https://ashadali.medium.com/lab-master-continuous-integration-with-aws-codebuild-and-docker-build-test-and-automate-3bcd6ea9c7ff",
     "https://asecure.cloud/a/cfgrule_codebuild-project-logging-enabled/",
-    "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-logging-policies/bc-aws-314",
-    "https://www.whizlabs.com/labs/create-codebuild-build-project-and-get-the-output-in-cloudwatch-logs",
-    "https://www.artillery.io/docs/cicd/aws-codebuild",
     "https://support.icompaas.com/support/solutions/articles/62000233680-ensure-that-codebuild-projects-have-s3-or-cloudwatch-logging-enabled",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/codebuild-controls.html#codebuild-4"
   ],
