@@ -1,5 +1,5 @@
 import { test } from "@playwright/test";
-import * as helpers from "../helpers";
+import { ScansPage } from "../scans/scans-page";
 import {
   ProvidersPage,
   AWSProviderData,
@@ -9,10 +9,9 @@ import {
 
 
 test.describe.serial("Add AWS Provider", () => {
-
   // Providers page object
   let providersPage: ProvidersPage;
-
+  let scansPage: ScansPage;
   // Test data from environment variables
   const accountId = process.env.E2E_AWS_PROVIDER_ACCOUNT_ID;
   const accessKey = process.env.E2E_AWS_PROVIDER_ACCESS_KEY;
@@ -30,20 +29,25 @@ test.describe.serial("Add AWS Provider", () => {
   test.beforeEach(async ({ page }) => {
     providersPage = new ProvidersPage(page);
     // Clean up existing provider to ensure clean test state
-    await helpers.deleteProviderIfExists(page, accountId);
+    await providersPage.deleteProviderIfExists(accountId);
   });
 
   // Use admin authentication for provider management
   test.use({ storageState: "playwright/.auth/admin_user.json" });
 
-
   test(
     "should add a new AWS provider with static credentials",
     {
-      tag: ["@critical", "@e2e", "@providers", "@aws", "@serial", "@PROVIDER-E2E-001"],
+      tag: [
+        "@critical",
+        "@e2e",
+        "@providers",
+        "@aws",
+        "@serial",
+        "@PROVIDER-E2E-001",
+      ],
     },
     async ({ page }) => {
-
       // Validate required environment variables
       if (!accountId || !accessKey || !secretKey) {
         throw new Error(
@@ -80,7 +84,9 @@ test.describe.serial("Add AWS Provider", () => {
       await providersPage.clickNext();
 
       // Select static credentials type
-      await providersPage.selectCredentialsType(AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS);
+      await providersPage.selectCredentialsType(
+        AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS,
+      );
       await providersPage.verifyCredentialsPageLoaded();
 
       // Fill static credentials
@@ -92,17 +98,24 @@ test.describe.serial("Add AWS Provider", () => {
       await providersPage.clickNext();
 
       // Wait for redirect to provider page
-      await providersPage.verifyLoadProviderPageAfterNewProvider();
-    }
-  )
+      scansPage = new ScansPage(page);
+      await scansPage.verifyPageLoaded();
+    },
+  );
 
   test(
     "should add a new AWS provider with assume role credentials with Access Key and Secret Key",
     {
-      tag: ["@critical", "@e2e", "@providers", "@aws","@serial", "@PROVIDER-E2E-002"],
+      tag: [
+        "@critical",
+        "@e2e",
+        "@providers",
+        "@aws",
+        "@serial",
+        "@PROVIDER-E2E-002",
+      ],
     },
     async ({ page }) => {
-
       // Validate required environment variables
       if (!accountId || !accessKey || !secretKey || !roleArn) {
         throw new Error(
@@ -140,7 +153,9 @@ test.describe.serial("Add AWS Provider", () => {
       await providersPage.clickNext();
 
       // Select role credentials type
-      await providersPage.selectCredentialsType(AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN);
+      await providersPage.selectCredentialsType(
+        AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN,
+      );
       await providersPage.verifyCredentialsPageLoaded();
 
       // Fill role credentials
@@ -152,7 +167,9 @@ test.describe.serial("Add AWS Provider", () => {
       await providersPage.clickNext();
 
       // Wait for redirect to provider page
-      await providersPage.verifyLoadProviderPageAfterNewProvider();
-    }
+      scansPage = new ScansPage(page);
+      await scansPage.verifyPageLoaded();
+    },
   );
-}); 
+});
+
