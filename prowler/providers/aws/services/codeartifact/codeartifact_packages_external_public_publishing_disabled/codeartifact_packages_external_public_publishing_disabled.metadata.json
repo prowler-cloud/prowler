@@ -15,14 +15,9 @@
   "Risk": "Allowing upstream on internal packages enables **dependency confusion**: public repos can supply higher versions to builds, leading to malicious code execution and package tampering. This threatens **integrity**, exposes secrets and data (**confidentiality**), and may disrupt pipelines and services (**availability**).",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://repost.aws/questions/QURD7aFNj_R9-8odJY5mfgrw/npm-publish-for-a-package-to-aws-codeartifact-repo-fails-with-error-the-provided-package-is-configured-to-block-new-version-publishes",
-    "https://stackoverflow.com/questions/72985669/npm-publish-for-a-package-to-aws-codeartifact-repo-fails-with-error-the-provide",
     "https://noise.getoto.net/2022/07/15/tighten-your-package-security-with-codeartifact-package-origin-control-toolkit/",
     "https://docs.aws.amazon.com/codeartifact/latest/ug/package-origin-controls.html",
-    "https://repost.aws/es/questions/QURD7aFNj_R9-8odJY5mfgrw/npm-publish-for-a-package-to-aws-codeartifact-repo-fails-with-error-the-provided-package-is-configured-to-block-new-version-publishes",
     "https://newstar.cloud/blog/improve-the-security-of-your-software-supply-chain-with-amazon-codeartifact-package-group-configuration/",
-    "https://classic.yarnpkg.com/en/package/@aws-sdk/client-codeartifact",
-    "https://noise.getoto.net/tag/aws-codeartifact/",
     "https://zego.engineering/dependency-confusion-in-aws-codeartifact-86b9ff68963d"
   ],
   "Remediation": {
