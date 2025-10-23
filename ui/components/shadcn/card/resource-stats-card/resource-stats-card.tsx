@@ -111,7 +111,7 @@ export const ResourceStatsCard = ({
         {header && <ResourceStatsCardHeader {...header} size={resolvedSize} />}
         {emptyState ? (
           <div className="flex h-[51px] w-full flex-col items-center justify-center">
-            <p className="text-center text-sm leading-5 font-medium text-zinc-300 dark:text-zinc-300">
+            <p className="text-center text-sm leading-5 font-medium text-slate-600 dark:text-zinc-300">
               {emptyState.message}
             </p>
           </div>
@@ -141,7 +141,7 @@ export const ResourceStatsCard = ({
       {header && <ResourceStatsCardHeader {...header} size={resolvedSize} />}
       {emptyState ? (
         <div className="flex h-[51px] w-full flex-col items-center justify-center">
-          <p className="text-center text-sm leading-5 font-medium text-zinc-300 dark:text-zinc-300">
+          <p className="text-center text-sm leading-5 font-medium text-slate-600 dark:text-zinc-300">
             {emptyState.message}
           </p>
         </div>
