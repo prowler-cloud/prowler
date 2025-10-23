@@ -18,10 +18,7 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
     "https://support.icompaas.com/support/solutions/articles/62000228348-ensure-a-log-metric-filter-and-alarm-exist-for-aws-organizations-changes",
-    "https://gsl.dome9.com/D9.AWS.AAA.93.html",
-    "https://repost.aws/questions/QUHpHFtqpiQ-uMO0OZaeoB_Q/security-hub-findings-with-organizations",
     "https://www.plerion.com/cloud-knowledge-base/ensure-aws-organizations-changes-are-monitored",
-    "https://shisho.dev/docs/g/managed/standards/aws-cis-v1.5.0/",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatchLogs/organizations-changes-alarm.html"
   ],
   "Remediation": {
