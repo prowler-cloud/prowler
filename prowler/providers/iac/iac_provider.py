@@ -4,7 +4,7 @@ import subprocess
 import sys
 import tempfile
 from os import environ
-from typing import List
+from typing import TYPE_CHECKING, List
 
 from alive_progress import alive_bar
 from colorama import Fore, Style
@@ -19,6 +19,9 @@ from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
+
+if TYPE_CHECKING:
+    from prowler.providers.common.models import Connection
 
 
 class IacProvider(Provider):
@@ -242,20 +245,39 @@ class IacProvider(Provider):
             logger.info(
                 f"Cloning repository {original_url} into {temporary_directory}..."
             )
-            with alive_bar(
-                ctrl_c=False,
-                bar="blocks",
-                spinner="classic",
-                stats=False,
-                enrich_print=False,
-            ) as bar:
-                try:
-                    bar.title = f"-> Cloning {original_url}..."
+
+            # Check if we're in an environment with a TTY
+            # Celery workers and other non-interactive environments don't have TTY
+            #   and cannot use the alive_bar
+            try:
+                if sys.stdout.isatty():
+                    with alive_bar(
+                        ctrl_c=False,
+                        bar="blocks",
+                        spinner="classic",
+                        stats=False,
+                        enrich_print=False,
+                    ) as bar:
+                        try:
+                            bar.title = f"-> Cloning {original_url}..."
+                            porcelain.clone(
+                                repository_url, temporary_directory, depth=1
+                            )
+                            bar.title = "-> Repository cloned successfully!"
+                        except Exception as clone_error:
+                            bar.title = "-> Cloning failed!"
+                            raise clone_error
+                else:
+                    # No TTY, just clone without progress bar
+                    logger.info(f"Cloning {original_url}...")
                     porcelain.clone(repository_url, temporary_directory, depth=1)
-                    bar.title = "-> Repository cloned successfully!"
-                except Exception as clone_error:
-                    bar.title = "-> Cloning failed!"
-                    raise clone_error
+                    logger.info("Repository cloned successfully!")
+            except (AttributeError, OSError):
+                # Fallback if isatty() check fails
+                logger.info(f"Cloning {original_url}...")
+                porcelain.clone(repository_url, temporary_directory, depth=1)
+                logger.info("Repository cloned successfully!")
+
             return temporary_directory
         except Exception as error:
             logger.critical(
@@ -302,25 +324,47 @@ class IacProvider(Provider):
             ]
             if exclude_path:
                 trivy_command.extend(["--skip-dirs", ",".join(exclude_path)])
-            with alive_bar(
-                ctrl_c=False,
-                bar="blocks",
-                spinner="classic",
-                stats=False,
-                enrich_print=False,
-            ) as bar:
-                try:
-                    bar.title = f"-> Running IaC scan on {directory} ..."
-                    # Run Trivy with JSON output
+
+            # Check if we're in an environment with a TTY
+            try:
+                if sys.stdout.isatty():
+                    with alive_bar(
+                        ctrl_c=False,
+                        bar="blocks",
+                        spinner="classic",
+                        stats=False,
+                        enrich_print=False,
+                    ) as bar:
+                        try:
+                            bar.title = f"-> Running IaC scan on {directory} ..."
+                            # Run Trivy with JSON output
+                            process = subprocess.run(
+                                trivy_command,
+                                capture_output=True,
+                                text=True,
+                            )
+                            bar.title = "-> Scan completed!"
+                        except Exception as error:
+                            bar.title = "-> Scan failed!"
+                            raise error
+                else:
+                    # No TTY, just run without progress bar
+                    logger.info(f"Running Trivy scan on {directory}...")
                     process = subprocess.run(
                         trivy_command,
                         capture_output=True,
                         text=True,
                     )
-                    bar.title = "-> Scan completed!"
-                except Exception as error:
-                    bar.title = "-> Scan failed!"
-                    raise error
+                    logger.info("Trivy scan completed!")
+            except (AttributeError, OSError):
+                # Fallback if isatty() check fails
+                logger.info(f"Running Trivy scan on {directory}...")
+                process = subprocess.run(
+                    trivy_command,
+                    capture_output=True,
+                    text=True,
+                )
+                logger.info("Trivy scan completed!")
             # Log Trivy's stderr output with preserved log levels
             if process.stderr:
                 for line in process.stderr.strip().split("\n"):
@@ -434,3 +478,99 @@ class IacProvider(Provider):
         )
 
         print_boxes(report_lines, report_title)
+
+    @staticmethod
+    def test_connection(
+        scan_repository_url: str = None,
+        oauth_app_token: str = None,
+        access_token: str = None,
+        raise_on_exception: bool = True,
+        provider_id: str = None,
+    ) -> "Connection":
+        """Test connection to IaC repository.
+
+        Test the connection to the IaC repository using the provided credentials.
+
+        Args:
+            scan_repository_url (str): Repository URL to scan.
+            oauth_app_token (str): OAuth App token for authentication.
+            access_token (str): Access token for authentication (alias for oauth_app_token).
+            raise_on_exception (bool): Flag indicating whether to raise an exception if the connection fails.
+            provider_id (str): The provider ID, in this case it's the repository URL.
+
+        Returns:
+            Connection: Connection object with success status or error information.
+
+        Raises:
+            Exception: If failed to test the connection to the repository.
+
+        Examples:
+            >>> IacProvider.test_connection(scan_repository_url="https://github.com/user/repo")
+            Connection(is_connected=True)
+        """
+        from prowler.providers.common.models import Connection
+
+        try:
+            # If provider_id is provided and scan_repository_url is not, use provider_id as the repository URL
+            if provider_id and not scan_repository_url:
+                scan_repository_url = provider_id
+
+            # Handle both oauth_app_token and access_token parameters
+            if access_token and not oauth_app_token:
+                oauth_app_token = access_token
+
+            if not scan_repository_url:
+                return Connection(
+                    is_connected=False, error="Repository URL is required"
+                )
+
+            # Try to clone the repository to test the connection
+            with tempfile.TemporaryDirectory():
+                try:
+                    if oauth_app_token:
+                        # If token is provided, use it for authentication
+                        # Extract the domain and path from the URL
+                        import re
+
+                        url_pattern = r"(https?://)([^/]+)/(.+)"
+                        match = re.match(url_pattern, scan_repository_url)
+                        if match:
+                            protocol, domain, path = match.groups()
+                            # Construct URL with token
+                            auth_url = f"{protocol}x-access-token:{oauth_app_token}@{domain}/{path}"
+                        else:
+                            auth_url = scan_repository_url
+                    else:
+                        # Public repository
+                        auth_url = scan_repository_url
+
+                    # Use dulwich to test the connection
+                    porcelain.ls_remote(auth_url)
+
+                    return Connection(is_connected=True)
+
+                except Exception as e:
+                    error_msg = str(e)
+                    if "authentication" in error_msg.lower() or "401" in error_msg:
+                        return Connection(
+                            is_connected=False,
+                            error="Authentication failed. Please check your access token.",
+                        )
+                    elif "404" in error_msg or "not found" in error_msg.lower():
+                        return Connection(
+                            is_connected=False,
+                            error="Repository not found or not accessible.",
+                        )
+                    else:
+                        return Connection(
+                            is_connected=False,
+                            error=f"Failed to connect to repository: {error_msg}",
+                        )
+
+        except Exception as error:
+            if raise_on_exception:
+                raise
+            return Connection(
+                is_connected=False,
+                error=f"Unexpected error testing connection: {str(error)}",
+            )

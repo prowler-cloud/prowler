@@ -197,6 +197,20 @@ export const buildGitHubSecret = (formData: FormData) => {
   return {};
 };
 
+export const buildIacSecret = (formData: FormData) => {
+  const secret = {
+    [ProviderCredentialFields.REPOSITORY_URL]: getFormValue(
+      formData,
+      ProviderCredentialFields.REPOSITORY_URL,
+    ),
+    [ProviderCredentialFields.ACCESS_TOKEN]: getFormValue(
+      formData,
+      ProviderCredentialFields.ACCESS_TOKEN,
+    ),
+  };
+  return filterEmptyValues(secret);
+};
+
 // Main function to build secret configuration
 export const buildSecretConfig = (
   formData: FormData,
@@ -230,6 +244,10 @@ export const buildSecretConfig = (
     github: () => ({
       secretType: "static",
       secret: buildGitHubSecret(formData),
+    }),
+    iac: () => ({
+      secretType: "static",
+      secret: buildIacSecret(formData),
     }),
   };
 
