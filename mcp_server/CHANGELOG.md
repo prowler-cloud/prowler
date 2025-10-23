@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler MCP Server** are documented in this file.
 
-## [0.1.0] (Prowler Prowler 5.13.0)
+## [0.1.0] (Prowler 5.13.0)
 
 ### Added
 - Initial release of Prowler MCP Server [(#8695)](https://github.com/prowler-cloud/prowler/pull/8695)
