@@ -39,6 +39,12 @@ secrets-*/
 # JUnit Reports
 junit-reports/
 
+# Test and coverage artifacts
+*_coverage.xml
+pytest_*.xml
+.coverage
+htmlcov/
+
 # VSCode files
 .vscode/
 
