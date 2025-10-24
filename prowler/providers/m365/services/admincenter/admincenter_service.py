@@ -12,6 +12,18 @@ class AdminCenter(M365Service):
     def __init__(self, provider: M365Provider):
         super().__init__(provider)
 
+        identity = getattr(provider, "identity", None)
+        self.audited_domain = (
+            getattr(identity, "tenant_domain", "Unknown domain")
+            if identity
+            else "Unknown domain"
+        )
+        self.audited_tenant = (
+            getattr(identity, "tenant_id", "Unknown tenant")
+            if identity
+            else "Unknown tenant"
+        )
+
         self.organization_config = None
         self.sharing_policy = None
         if self.powershell:
@@ -45,13 +57,13 @@ class AdminCenter(M365Service):
             asyncio.gather(
                 self._get_directory_roles(),
                 self._get_groups(),
-                self._get_domains(),
+                self._get_password_policy(),
             )
         )
 
         self.directory_roles = attributes[0]
         self.groups = attributes[1]
-        self.domains = attributes[2]
+        self.password_policy = attributes[2]
 
         if created_loop:
             asyncio.set_event_loop(None)
@@ -192,34 +204,31 @@ class AdminCenter(M365Service):
             )
         return groups
 
-    async def _get_domains(self):
-        logger.info("M365 - Getting domains...")
-        domains = {}
+    async def _get_password_policy(self):
+        logger.info("M365 - Getting password policy...")
+        password_policy = None
         try:
+            logger.info("M365 - Getting domains...")
             domains_list = await self.client.domains.get()
-            domains.update({})
-            for domain in domains_list.value:
-                if domain:
-                    password_validity_period = getattr(
-                        domain, "password_validity_period_in_days", None
-                    )
-                    if password_validity_period is None:
-                        password_validity_period = 0
+            for domain in getattr(domains_list, "value", []) or []:
+                if not domain:
+                    continue
+                password_validity_period = getattr(
+                    domain, "password_validity_period_in_days", None
+                )
+                if password_validity_period is None:
+                    password_validity_period = 0
 
-                    domains.update(
-                        {
-                            domain.id: Domain(
-                                id=domain.id,
-                                password_validity_period=password_validity_period,
-                            )
-                        }
-                    )
+                password_policy = PasswordPolicy(
+                    password_validity_period=password_validity_period,
+                )
+                break
 
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        return domains
+        return password_policy
 
 
 class User(BaseModel):
@@ -242,8 +251,7 @@ class Group(BaseModel):
     visibility: Optional[str]
 
 
-class Domain(BaseModel):
-    id: str
+class PasswordPolicy(BaseModel):
     password_validity_period: int
 
 
