@@ -1,0 +1,37 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "ecs_instance_ssh_access_restricted",
+  "CheckTitle": "Check for Unrestricted SSH Access",
+  "CheckType": [
+    "Security",
+    "Network"
+  ],
+  "ServiceName": "ecs",
+  "SubServiceName": "security_group",
+  "ResourceIdTemplate": "arn:acs:ecs:region:account-id:security-group/sg-id",
+  "Severity": "high",
+  "ResourceType": "AlibabaCloud::ECS::SecurityGroup",
+  "Description": "Ensure ECS security groups do not allow unrestricted SSH access (port 22) from the internet (0.0.0.0/0). Unrestricted SSH access increases the risk of unauthorized access, brute force attacks, and potential security breaches.",
+  "Risk": "Allowing unrestricted SSH access from the internet can expose instances to brute force attacks, unauthorized access attempts, and potential compromise. Attackers can scan for open SSH ports and attempt to gain unauthorized access to instances.",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/ECS/unrestricted-ssh-access.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun ecs ModifySecurityGroupRule --SecurityGroupId <sg-id> --IpProtocol tcp --PortRange 22/22 --SourceCidrIp <your-ip>/32",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "resource \"alicloud_security_group_rule\" \"allow_ssh_from_specific_ip\" {\n  type              = \"ingress\"\n  ip_protocol       = \"tcp\"\n  port_range        = \"22/22\"\n  security_group_id = alicloud_security_group.group.id\n  cidr_ip           = \"203.0.113.0/24\"\n}"
+    },
+    "Recommendation": {
+      "Text": "Restrict SSH access to specific trusted IP addresses or IP ranges. Implement a bastion host or VPN for secure remote access. Consider using Alibaba Cloud's Session Manager for instance access without opening SSH ports.",
+      "Url": "https://www.alibabacloud.com/help/en/ecs/user-guide/security-groups-overview"
+    }
+  },
+  "Categories": [
+    "internet-exposed",
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check examines security group rules to identify unrestricted SSH access. It is recommended to use the principle of least privilege and only allow SSH access from known, trusted IP addresses.",
+  "Compliance": []
+}

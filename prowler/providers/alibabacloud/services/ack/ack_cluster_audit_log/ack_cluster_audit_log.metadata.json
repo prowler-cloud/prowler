@@ -1,0 +1,19 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "ack_cluster_audit_log",
+  "CheckTitle": "Check ACK Audit Logging",
+  "CheckType": [],
+  "ServiceName": "ack",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "medium",
+  "ResourceType": "Cluster",
+  "Description": "Checks ACK Audit Logging.",
+  "Risk": "",
+  "RelatedUrl": "",
+  "Remediation": {"Code": {"CLI": "", "NativeIaC": "", "Other": "", "Terraform": ""}, "Recommendation": {"Text": "", "Url": ""}},
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

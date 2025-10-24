@@ -1,0 +1,22 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "sls_logstore_encryption_enabled",
+  "CheckTitle": "Ensure SLS Logstore has encryption enabled",
+  "CheckType": [],
+  "ServiceName": "sls",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "high",
+  "ResourceType": "Logstore",
+  "Description": "Ensures that SLS logstores have encryption enabled to protect log data at rest.",
+  "Risk": "Unencrypted logstores expose sensitive log data to unauthorized access if storage is compromised.",
+  "RelatedUrl": "https://www.alibabacloud.com/help/en/sls/user-guide/encrypt-data",
+  "Remediation": {
+    "Code": {"CLI": "", "NativeIaC": "", "Other": "", "Terraform": ""},
+    "Recommendation": {"Text": "Enable encryption for all SLS logstores to protect log data at rest.", "Url": "https://www.alibabacloud.com/help/en/sls/user-guide/encrypt-data"}
+  },
+  "Categories": ["encryption"],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

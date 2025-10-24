@@ -1,0 +1,32 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "oss_bucket_transfer_acceleration",
+  "CheckTitle": "Check if OSS buckets have transfer acceleration enabled",
+  "CheckType": [],
+  "ServiceName": "oss",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "informational",
+  "ResourceType": "Bucket",
+  "Description": "Checks if OSS buckets have transfer acceleration enabled for improved global data transfer performance. Transfer acceleration uses optimized network paths for faster uploads/downloads from distant locations.",
+  "Risk": "Without transfer acceleration, data transfers from distant geographic locations may be slower, impacting user experience and operational efficiency.",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/OSS/bucket-transfer-acceleration.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable transfer acceleration for OSS buckets that serve global users. Go to OSS Console > Buckets, select the bucket, and enable transfer acceleration.",
+      "Url": "https://www.alibabacloud.com/help/en/oss/user-guide/transfer-acceleration"
+    }
+  },
+  "Categories": [
+    "trustworthy-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This is an informational check. Transfer acceleration has additional costs."
+}

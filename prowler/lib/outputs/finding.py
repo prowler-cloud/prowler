@@ -337,6 +337,21 @@ class Finding(BaseModel):
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["region"] = check_output.region
 
+            elif provider.type == "alibabacloud":
+                output_data["auth_method"] = (
+                    "STS Token" if get_nested_attribute(provider, 'session.credentials.security_token')
+                    else "AccessKey"
+                )
+                output_data["account_uid"] = get_nested_attribute(
+                    provider, "identity.account_id"
+                )
+                output_data["account_name"] = get_nested_attribute(
+                    provider, "identity.account_name"
+                )
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_arn
+                output_data["region"] = check_output.region
+
             # check_output Unique ID
             # TODO: move this to a function
             # TODO: in Azure, GCP and K8s there are findings without resource_name

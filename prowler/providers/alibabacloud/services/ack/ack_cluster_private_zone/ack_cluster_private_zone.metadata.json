@@ -1,0 +1,19 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "ack_cluster_private_zone",
+  "CheckTitle": "Check ACK Private Zone",
+  "CheckType": [],
+  "ServiceName": "ack",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "low",
+  "ResourceType": "Cluster",
+  "Description": "Checks ACK Private Zone.",
+  "Risk": "",
+  "RelatedUrl": "",
+  "Remediation": {"Code": {"CLI": "", "NativeIaC": "", "Other": "", "Terraform": ""}, "Recommendation": {"Text": "", "Url": ""}},
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

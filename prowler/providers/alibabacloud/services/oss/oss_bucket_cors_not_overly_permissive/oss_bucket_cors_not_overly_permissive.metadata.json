@@ -1,0 +1,32 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "oss_bucket_cors_not_overly_permissive",
+  "CheckTitle": "Ensure OSS bucket CORS rules are not overly permissive",
+  "CheckType": [],
+  "ServiceName": "oss",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "medium",
+  "ResourceType": "Bucket",
+  "Description": "Ensures that OSS bucket CORS (Cross-Origin Resource Sharing) rules are not overly permissive. Overly permissive CORS rules can allow unauthorized websites to access bucket resources.",
+  "Risk": "Overly permissive CORS rules allowing all origins (*) can enable malicious websites to access bucket resources, potentially leading to data leakage or unauthorized operations.",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/OSS/bucket-cors.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Update CORS rules to allow only specific trusted origins instead of '*'. Go to OSS Console > Buckets, select the bucket, and configure CORS rules with specific allowed origins.",
+      "Url": "https://www.alibabacloud.com/help/en/oss/user-guide/cors"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,0 +1,32 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "oss_bucket_default_encryption_kms",
+  "CheckTitle": "Ensure OSS buckets use KMS for default encryption",
+  "CheckType": [],
+  "ServiceName": "oss",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "low",
+  "ResourceType": "Bucket",
+  "Description": "Ensures that OSS buckets use KMS (Key Management Service) for encryption instead of AES256. KMS provides better key management, rotation, and audit capabilities compared to AES256.",
+  "Risk": "Using AES256 encryption instead of KMS means missing out on centralized key management, automatic key rotation, and comprehensive audit logging capabilities.",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/OSS/bucket-encryption-kms.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Update OSS bucket encryption to use KMS instead of AES256. Go to OSS Console > Buckets, select the bucket, and configure server-side encryption with KMS.",
+      "Url": "https://www.alibabacloud.com/help/en/oss/user-guide/server-side-encryption"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "KMS encryption may have additional costs compared to AES256."
+}

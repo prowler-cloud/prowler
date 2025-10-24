@@ -1,0 +1,33 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "oss_bucket_public_access_blocked",
+  "CheckTitle": "Ensure OSS buckets block public access",
+  "CheckType": [],
+  "ServiceName": "oss",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "critical",
+  "ResourceType": "Bucket",
+  "Description": "Ensures that OSS buckets block public access to prevent unauthorized data exposure. Public buckets can be accessed by anyone on the internet, potentially exposing sensitive data.",
+  "Risk": "Public OSS buckets expose data to anyone on the internet, potentially leading to data breaches, unauthorized access to sensitive information, compliance violations, and reputational damage.",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/OSS/bucket-public-access.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure OSS bucket ACL to block public access. Go to OSS Console > Buckets, select the bucket, and set ACL to 'Private'. Use bucket policies and RAM policies to grant access instead of public ACLs.",
+      "Url": "https://www.alibabacloud.com/help/en/oss/user-guide/bucket-acl"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

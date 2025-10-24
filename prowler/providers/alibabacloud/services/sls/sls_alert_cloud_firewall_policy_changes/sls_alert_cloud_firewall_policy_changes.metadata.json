@@ -1,0 +1,32 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "sls_alert_cloud_firewall_policy_changes",
+  "CheckTitle": "Ensure alert is configured for cloud firewall policy changes",
+  "CheckType": [],
+  "ServiceName": "sls",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "high",
+  "ResourceType": "Alert",
+  "Description": "Ensures that an alert is configured in SLS to monitor and notify on Cloud Firewall policy changes.",
+  "Risk": "Unauthorized firewall policy changes can expose resources to network attacks or unauthorized access.",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/cloud-firewall-policy-changes-alert.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create and enable an alert in SLS to monitor cloud firewall policy changes from ActionTrail logs.",
+      "Url": "https://www.alibabacloud.com/help/en/sls/user-guide/create-an-alert-rule"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check looks for enabled alerts that monitor cloud firewall policy changes."
+}

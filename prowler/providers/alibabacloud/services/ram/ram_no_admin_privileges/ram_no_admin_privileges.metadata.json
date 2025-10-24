@@ -1,0 +1,25 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "ram_no_admin_privileges",
+  "CheckTitle": "Ensure RAM users do not have unnecessary administrative privileges",
+  "CheckType": [],
+  "ServiceName": "ram",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "high",
+  "ResourceType": "User",
+  "Description": "Ensures that RAM users do not have administrative privileges unless absolutely necessary.",
+  "Risk": "Users with administrative privileges have unrestricted access, increasing the risk of accidental or malicious damage.",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/RAM/admin-privileges.html",
+  "Remediation": {
+    "Code": {"CLI": "", "NativeIaC": "", "Other": "", "Terraform": ""},
+    "Recommendation": {
+      "Text": "Remove administrative policies from RAM users and grant only necessary permissions.",
+      "Url": "https://www.alibabacloud.com/help/en/ram/user-guide/grant-permissions-to-a-ram-user"
+    }
+  },
+  "Categories": ["identity-and-access"],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

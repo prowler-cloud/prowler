@@ -1,0 +1,22 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "sls_logstore_retention_period",
+  "CheckTitle": "Ensure SLS Logstore has sufficient log retention period",
+  "CheckType": [],
+  "ServiceName": "sls",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "medium",
+  "ResourceType": "Logstore",
+  "Description": "Ensures that the SLS Logstore log retention period is set for 365 days or greater.",
+  "Risk": "Insufficient log retention prevents long-term security analysis and may violate compliance requirements.",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/sufficient-log-retention-period.html",
+  "Remediation": {
+    "Code": {"CLI": "", "NativeIaC": "", "Other": "", "Terraform": ""},
+    "Recommendation": {"Text": "Set logstore retention period to at least 365 days.", "Url": ""}
+  },
+  "Categories": ["logging"],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,0 +1,22 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "sls_logstore_web_tracking_disabled",
+  "CheckTitle": "Ensure SLS Logstore has web tracking disabled",
+  "CheckType": [],
+  "ServiceName": "sls",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "medium",
+  "ResourceType": "Logstore",
+  "Description": "Ensures that SLS logstores have web tracking disabled to prevent unauthenticated log write access.",
+  "Risk": "Web tracking allows anyone to write logs to the logstore without authentication, potentially leading to log pollution or information disclosure.",
+  "RelatedUrl": "https://www.alibabacloud.com/help/en/sls/user-guide/use-web-tracking-to-collect-logs",
+  "Remediation": {
+    "Code": {"CLI": "", "NativeIaC": "", "Other": "", "Terraform": ""},
+    "Recommendation": {"Text": "Disable web tracking for logstores unless specifically required. Use authenticated methods for log collection.", "Url": "https://www.alibabacloud.com/help/en/sls/user-guide/use-web-tracking-to-collect-logs"}
+  },
+  "Categories": ["internet-exposed"],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Web tracking should only be enabled for specific use cases like frontend application logging where authentication is not feasible."
+}

@@ -1,0 +1,32 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "oss_bucket_logging_enabled",
+  "CheckTitle": "Ensure OSS buckets have access logging enabled",
+  "CheckType": [],
+  "ServiceName": "oss",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "medium",
+  "ResourceType": "Bucket",
+  "Description": "Ensures that OSS buckets have access logging enabled for audit and compliance purposes. Access logs provide detailed records of requests made to the bucket.",
+  "Risk": "Without access logging, it is difficult to track access patterns, detect unauthorized access attempts, or investigate security incidents. This can lead to compliance violations and delayed incident response.",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/OSS/bucket-logging.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable access logging for OSS buckets. Go to OSS Console > Buckets, select the bucket, and configure logging with a target bucket for log storage.",
+      "Url": "https://www.alibabacloud.com/help/en/oss/user-guide/logging"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

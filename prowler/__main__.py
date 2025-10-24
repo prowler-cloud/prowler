@@ -113,6 +113,7 @@ from prowler.providers.m365.models import M365OutputOptions
 from prowler.providers.mongodbatlas.models import MongoDBAtlasOutputOptions
 from prowler.providers.nhn.models import NHNOutputOptions
 from prowler.providers.oraclecloud.models import OCIOutputOptions
+from prowler.providers.alibabacloud.models import AlibabaCloudOutputOptions
 
 
 def prowler():
@@ -334,6 +335,10 @@ def prowler():
         output_options = LLMOutputOptions(args, bulk_checks_metadata)
     elif provider == "oci":
         output_options = OCIOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "alibabacloud":
+        output_options = AlibabaCloudOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
 

@@ -1,0 +1,32 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "ram_root_mfa_enabled",
+  "CheckTitle": "Ensure MFA is enabled for the root account",
+  "CheckType": [],
+  "ServiceName": "ram",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "high",
+  "ResourceType": "Account",
+  "Description": "Ensures that multi-factor authentication (MFA) is enabled for the root account. The root account has unrestricted access to all resources in the Alibaba Cloud account. MFA adds an extra layer of protection on top of the username and password.",
+  "Risk": "Without MFA enabled, the root account is vulnerable to unauthorized access if credentials are compromised. This could lead to complete account takeover and access to all resources.",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/RAM/root-mfa.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable MFA for the root account through the Alibaba Cloud console. Go to RAM Console > Settings > Security Settings and enable MFA for the root account.",
+      "Url": "https://www.alibabacloud.com/help/en/ram/user-guide/enable-an-mfa-device-for-an-alibaba-cloud-account"
+    }
+  },
+  "Categories": [
+    "identity-and-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
