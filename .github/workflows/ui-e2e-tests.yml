@@ -36,7 +36,7 @@ jobs:
       E2E_M365_CERTIFICATE_CONTENT: ${{ secrets.E2E_M365_CERTIFICATE_CONTENT }}
       E2E_KUBERNETES_CONTEXT: 'kind-kind'
       E2E_KUBERNETES_KUBECONFIG_PATH: /home/runner/.kube/config
-      E2E_NEW_PASSWORD: ${{ secrets.E2E_NEW_PASSWORD }}
+      E2E_NEW_USER_PASSWORD: ${{ secrets.E2E_NEW_USER_PASSWORD }}
       
     steps:
       - name: Checkout repository
