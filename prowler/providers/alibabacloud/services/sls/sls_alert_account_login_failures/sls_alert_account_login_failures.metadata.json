@@ -1,0 +1,22 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "sls_alert_account_login_failures",
+  "CheckTitle": "Ensure alert is configured for account login failures",
+  "CheckType": [],
+  "ServiceName": "sls",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "medium",
+  "ResourceType": "Alert",
+  "Description": "Ensures that an alert is configured in SLS to monitor and notify on account login failures.",
+  "Risk": "Without monitoring login failures, brute force attacks and unauthorized access attempts may go undetected.",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/account-login-failures-alert.html",
+  "Remediation": {
+    "Code": {"CLI": "", "NativeIaC": "", "Other": "", "Terraform": ""},
+    "Recommendation": {"Text": "Create and enable an alert in SLS to monitor account login failures from ActionTrail logs.", "Url": "https://www.alibabacloud.com/help/en/sls/user-guide/create-an-alert-rule"}
+  },
+  "Categories": ["logging"],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check looks for enabled alerts that monitor failed login attempts to detect potential brute force attacks."
+}

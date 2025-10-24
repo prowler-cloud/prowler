@@ -1,0 +1,25 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "sls_alert_oss_bucket_authority_changes",
+  "CheckTitle": "Ensure alert is configured for OSS bucket authority changes",
+  "CheckType": [],
+  "ServiceName": "sls",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "high",
+  "ResourceType": "Alert",
+  "Description": "Ensures that an alert is configured in SLS to monitor and notify on OSS bucket authority changes.",
+  "Risk": "Unauthorized bucket authority changes can expose sensitive data to public access or unauthorized users.",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/oss-bucket-authority-changes-alert.html",
+  "Remediation": {
+    "Code": {"CLI": "", "NativeIaC": "", "Other": "", "Terraform": ""},
+    "Recommendation": {
+      "Text": "Create and enable an alert in SLS to monitor OSS bucket authority changes from ActionTrail logs.",
+      "Url": "https://www.alibabacloud.com/help/en/sls/user-guide/create-an-alert-rule"
+    }
+  },
+  "Categories": ["logging"],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check looks for enabled alerts that monitor OSS bucket authority changes. Authority changes differ from permission changes."
+}

@@ -1,0 +1,19 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "ack_cluster_encryption",
+  "CheckTitle": "Check ACK Encryption",
+  "CheckType": [],
+  "ServiceName": "ack",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "high",
+  "ResourceType": "Cluster",
+  "Description": "Checks ACK Encryption.",
+  "Risk": "",
+  "RelatedUrl": "",
+  "Remediation": {"Code": {"CLI": "", "NativeIaC": "", "Other": "", "Terraform": ""}, "Recommendation": {"Text": "", "Url": ""}},
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

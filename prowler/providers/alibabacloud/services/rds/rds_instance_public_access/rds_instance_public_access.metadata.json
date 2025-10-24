@@ -1,0 +1,19 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "rds_instance_public_access",
+  "CheckTitle": "Check RDS Public Access",
+  "CheckType": [],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "high",
+  "ResourceType": "DBInstance",
+  "Description": "Checks RDS Public Access.",
+  "Risk": "",
+  "RelatedUrl": "",
+  "Remediation": {"Code": {"CLI": "", "NativeIaC": "", "Other": "", "Terraform": ""}, "Recommendation": {"Text": "", "Url": ""}},
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

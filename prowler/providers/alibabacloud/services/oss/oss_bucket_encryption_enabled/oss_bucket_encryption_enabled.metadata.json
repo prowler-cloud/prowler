@@ -1,0 +1,32 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "oss_bucket_encryption_enabled",
+  "CheckTitle": "Ensure OSS buckets have encryption enabled",
+  "CheckType": [],
+  "ServiceName": "oss",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "high",
+  "ResourceType": "Bucket",
+  "Description": "Ensures that OSS buckets have server-side encryption enabled to protect data at rest. Encryption protects sensitive data from unauthorized access.",
+  "Risk": "Unencrypted data at rest is vulnerable to unauthorized access if storage media is compromised. Encryption ensures data confidentiality even if physical access is obtained.",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/OSS/bucket-encryption.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable server-side encryption for OSS buckets. Go to OSS Console > Buckets, select the bucket, and enable server-side encryption with AES256 or KMS.",
+      "Url": "https://www.alibabacloud.com/help/en/oss/user-guide/server-side-encryption"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,0 +1,32 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "sls_alert_oss_bucket_permission_changes",
+  "CheckTitle": "Ensure alert is configured for oss bucket permission changes",
+  "CheckType": [],
+  "ServiceName": "sls",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "high",
+  "ResourceType": "Alert",
+  "Description": "Ensures that an alert is configured in SLS to monitor and notify on OSS bucket permission changes.",
+  "Risk": "Unauthorized bucket permission changes can expose sensitive data to public access or unauthorized users.",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/oss-bucket-permission-changes-alert.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create and enable an alert in SLS to monitor oss bucket permission changes from ActionTrail logs.",
+      "Url": "https://www.alibabacloud.com/help/en/sls/user-guide/create-an-alert-rule"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check looks for enabled alerts that monitor oss bucket permission changes."
+}

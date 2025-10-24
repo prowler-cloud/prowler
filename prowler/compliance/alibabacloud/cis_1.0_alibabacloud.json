@@ -1,0 +1,56 @@
+{
+  "Framework": "CIS",
+  "Provider": "alibabacloud",
+  "Version": "1.0",
+  "Description": "CIS Alibaba Cloud Foundations Benchmark",
+  "Requirements": [
+    {
+      "Id": "2.1",
+      "Description": "Ensure that encryption is enabled for ECS disks",
+      "Attributes": [
+        {
+          "Section": "2. Storage",
+          "SubSection": "2.1 ECS Disk Encryption",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "ECS disk encryption provides an additional layer of security by encrypting data stored on ECS instances. This helps protect sensitive data from unauthorized access if the physical storage media is compromised or if snapshots are inadvertently shared.",
+          "RationaleStatement": "Encrypting data at rest reduces the risk of unauthorized access to sensitive information stored on ECS disks. Without encryption, data stored on disks is vulnerable if an attacker gains physical access to the storage media or if disk snapshots are exposed.",
+          "ImpactStatement": "Enabling encryption may have a minimal performance impact on disk I/O operations. Additionally, encrypted disks cannot be converted to unencrypted disks, so this decision should be made during the initial disk creation or through migration.",
+          "RemediationProcedure": "To enable encryption on new ECS disks:\n1. Create a KMS key in the Alibaba Cloud KMS console\n2. When creating a new ECS disk, enable the 'Encrypted' option\n3. Select the KMS key to use for encryption\n\nFor existing unencrypted disks:\n1. Create a snapshot of the unencrypted disk\n2. Create a new encrypted disk from the snapshot using a KMS key\n3. Detach the old disk and attach the new encrypted disk\n4. Delete the old unencrypted disk and snapshot",
+          "AuditProcedure": "Using the Prowler CLI: prowler alibabacloud --checks ecs_disk_encryption_enabled\n\nUsing the Alibaba Cloud Console:\n1. Log in to the ECS console\n2. Navigate to Storage & Snapshots > Disks\n3. For each disk, check the 'Encrypted' column\n4. Verify that all disks show 'Yes' for encryption",
+          "AdditionalInformation": "References:\n- Alibaba Cloud ECS Disk Encryption: https://www.alibabacloud.com/help/en/ecs/user-guide/encryption-overview\n- Alibaba Cloud KMS: https://www.alibabacloud.com/help/en/kms/",
+          "References": [
+            "https://www.alibabacloud.com/help/en/ecs/user-guide/encryption-overview"
+          ]
+        }
+      ],
+      "Checks": [
+        "ecs_disk_encryption_enabled"
+      ]
+    },
+    {
+      "Id": "4.1",
+      "Description": "Ensure no security groups allow ingress from 0.0.0.0/0 to port 22",
+      "Attributes": [
+        {
+          "Section": "4. Networking",
+          "SubSection": "4.1 Security Groups",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Security groups should restrict SSH access (port 22) to specific trusted IP addresses rather than allowing access from the entire internet (0.0.0.0/0). Unrestricted SSH access increases the attack surface and risk of unauthorized access.",
+          "RationaleStatement": "Allowing unrestricted SSH access from the internet exposes ECS instances to brute force attacks, unauthorized access attempts, and potential compromise. Attackers routinely scan the internet for open SSH ports to exploit weak credentials or known vulnerabilities.",
+          "ImpactStatement": "Restricting SSH access to specific IP addresses or ranges may require maintaining an allowlist of trusted IPs. Organizations should implement bastion hosts, VPN access, or use Alibaba Cloud's Session Manager for secure remote access without exposing SSH ports to the internet.",
+          "RemediationProcedure": "To restrict SSH access:\n1. Identify the trusted IP addresses or ranges that require SSH access\n2. In the ECS console, navigate to Network & Security > Security Groups\n3. Select the security group\n4. Find the rule allowing 0.0.0.0/0 access to port 22\n5. Modify the rule to specify the trusted IP address or range\n6. Consider implementing a bastion host or VPN for centralized access control",
+          "AuditProcedure": "Using the Prowler CLI: prowler alibabacloud --checks ecs_instance_ssh_access_restricted\n\nUsing the Alibaba Cloud Console:\n1. Log in to the ECS console\n2. Navigate to Network & Security > Security Groups\n3. For each security group, review the inbound rules\n4. Verify that no rule allows access from 0.0.0.0/0 to port 22",
+          "AdditionalInformation": "Best practices:\n- Use bastion hosts or jump servers for SSH access\n- Implement VPN or Direct Connect for secure remote access\n- Consider using Alibaba Cloud Session Manager\n- Enable Multi-Factor Authentication (MFA) for SSH access\n- Regularly review and update security group rules\n\nReferences:\n- Alibaba Cloud Security Groups: https://www.alibabacloud.com/help/en/ecs/user-guide/security-groups-overview",
+          "References": [
+            "https://www.alibabacloud.com/help/en/ecs/user-guide/security-groups-overview"
+          ]
+        }
+      ],
+      "Checks": [
+        "ecs_instance_ssh_access_restricted"
+      ]
+    }
+  ]
+}

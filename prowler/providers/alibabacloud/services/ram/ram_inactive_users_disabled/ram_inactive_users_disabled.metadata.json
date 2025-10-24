@@ -1,0 +1,25 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "ram_inactive_users_disabled",
+  "CheckTitle": "Ensure inactive RAM users are disabled",
+  "CheckType": [],
+  "ServiceName": "ram",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "medium",
+  "ResourceType": "User",
+  "Description": "Ensures that inactive RAM users (90+ days without login) are disabled or removed.",
+  "Risk": "Inactive accounts pose security risks as they may have outdated permissions or be compromised without detection.",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/RAM/inactive-users.html",
+  "Remediation": {
+    "Code": {"CLI": "", "NativeIaC": "", "Other": "", "Terraform": ""},
+    "Recommendation": {
+      "Text": "Disable or remove RAM users that have been inactive for 90+ days.",
+      "Url": "https://www.alibabacloud.com/help/en/ram/user-guide/manage-ram-users"
+    }
+  },
+  "Categories": ["identity-and-access"],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

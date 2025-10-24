@@ -302,6 +302,23 @@ class Provider(ABC):
                         fixer_config=fixer_config,
                         use_instance_principal=arguments.use_instance_principal,
                     )
+                elif "alibabacloud" in provider_class_name.lower():
+                    provider_class(
+                        access_key_id=arguments.access_key_id,
+                        access_key_secret=arguments.access_key_secret,
+                        security_token=arguments.security_token,
+                        region_ids=arguments.region_ids,
+                        filter_regions=arguments.filter_regions,
+                        ram_role_arn=arguments.ram_role_arn,
+                        ram_session_name=arguments.ram_session_name,
+                        ram_session_duration=arguments.ram_session_duration,
+                        ram_external_id=arguments.ram_external_id,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                        resource_tags=arguments.resource_tags,
+                        resource_ids=arguments.resource_ids,
+                    )
 
         except TypeError as error:
             logger.critical(

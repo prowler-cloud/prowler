@@ -1,0 +1,19 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "ecs_instance_public_ip",
+  "CheckTitle": "Ensure ECS instances do not have unnecessary public IPs",
+  "CheckType": [],
+  "ServiceName": "ecs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "medium",
+  "ResourceType": "Instance",
+  "Description": "Ensures ECS instances do not have unnecessary public IP addresses.",
+  "Risk": "Public IP addresses increase attack surface.",
+  "RelatedUrl": "",
+  "Remediation": {"Code": {"CLI": "", "NativeIaC": "", "Other": "", "Terraform": ""}, "Recommendation": {"Text": "Use EIP or NAT Gateway instead.", "Url": ""}},
+  "Categories": ["internet-exposed"],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

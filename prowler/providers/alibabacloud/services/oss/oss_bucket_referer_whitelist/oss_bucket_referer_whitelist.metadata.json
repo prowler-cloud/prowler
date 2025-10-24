@@ -1,0 +1,32 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "oss_bucket_referer_whitelist",
+  "CheckTitle": "Ensure OSS buckets have referer whitelist configured",
+  "CheckType": [],
+  "ServiceName": "oss",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "low",
+  "ResourceType": "Bucket",
+  "Description": "Ensures that OSS buckets have referer whitelist configured and do not allow empty referers. Referer whitelisting prevents hotlinking and unauthorized access from unknown sources.",
+  "Risk": "Without referer whitelist, buckets can be accessed from any source, potentially leading to bandwidth theft through hotlinking and unauthorized access to resources.",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/OSS/bucket-referer.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure referer whitelist for OSS buckets and disable empty referers. Go to OSS Console > Buckets, select the bucket, and configure referer whitelist with trusted domains.",
+      "Url": "https://www.alibabacloud.com/help/en/oss/user-guide/hotlink-protection"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

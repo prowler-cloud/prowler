@@ -1,0 +1,32 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "actiontrail_trail_enabled",
+  "CheckTitle": "Ensure at least one ActionTrail trail is enabled",
+  "CheckType": [],
+  "ServiceName": "actiontrail",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "high",
+  "ResourceType": "Trail",
+  "Description": "Ensures that at least one ActionTrail trail is enabled to log API activity for security auditing. ActionTrail records API calls and events for compliance, security analysis, and troubleshooting.",
+  "Risk": "Without ActionTrail enabled, there is no audit log of API activity, making it impossible to track changes, detect unauthorized access, or investigate security incidents. This can lead to compliance violations and delayed incident response.",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/ActionTrail/trail-enabled.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable at least one ActionTrail trail. Go to ActionTrail Console and create/enable a trail to log API activity across all regions.",
+      "Url": "https://www.alibabacloud.com/help/en/actiontrail/latest/create-a-trail-to-deliver-events-to-oss"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
