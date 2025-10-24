@@ -37,18 +37,26 @@ jobs:
       E2E_M365_SECRET_ID: ${{ secrets.E2E_M365_SECRET_ID }}
       E2E_M365_TENANT_ID: ${{ secrets.E2E_M365_TENANT_ID }}
       E2E_M365_CERTIFICATE_CONTENT: ${{ secrets.E2E_M365_CERTIFICATE_CONTENT }}
-      E2E_KUBERNETES_CONTEXT: ${{ secrets.E2E_KUBERNETES_CONTEXT }}
+      E2E_KUBERNETES_CONTEXT: 'kind-kind'
       E2E_KUBERNETES_KUBECONFIG_PATH: /home/runner/.kube/config
-      E2E_KUBERNETES_KUBECONFIG: ${{ secrets.E2E_KUBERNETES_KUBECONFIG }}
       E2E_NEW_PASSWORD: ${{ secrets.E2E_NEW_PASSWORD }}
       
     steps:
-      - name: create kubeconfig file
-        run: |
-          mkdir -p /home/runner/.kube
-          echo "$E2E_KUBERNETES_KUBECONFIG" > /home/runner/.kube/config
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - name: Create k8s Kind Cluster
+        uses: helm/kind-action@v1
+      - name: Modify kubeconfig
+        run: |
+            # Modify the kubeconfig to use the kind cluster server to https://kind-control-plane:6443 
+            # from worker service into docker-compose.yml
+            kubectl config set-cluster kind-kind --server=https://kind-control-plane:6443
+      - name: Add network kind to docker compose  
+        run: |
+          # Add the network kind to the docker compose to interconnect to kind cluster
+          yq -i '.networks.kind.external = true' docker-compose.yml
+          # Add network kind to worker service and default network too
+          yq -i '.services.worker.networks = ["kind","default"]' docker-compose.yml
       - name: Fix API data directory permissions
         run: docker run --rm -v $(pwd)/_data/api:/data alpine chown -R 1000:1000 /data
       - name: Start API services
