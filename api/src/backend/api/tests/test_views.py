@@ -35,6 +35,9 @@ from api.db_router import MainRouter
 from api.models import (
     Integration,
     Invitation,
+    LighthouseProviderConfiguration,
+    LighthouseProviderModels,
+    LighthouseTenantConfiguration,
     Membership,
     Processor,
     Provider,
@@ -8703,3 +8706,483 @@ class TestTenantApiKeyViewSet:
         # Verify error object structure
         error = response_data["errors"][0]
         assert "detail" in error or "title" in error
+
+
+@pytest.mark.django_db
+class TestLighthouseTenantConfigViewSet:
+    """Test Lighthouse tenant configuration endpoint (singleton pattern)"""
+
+    def test_lighthouse_tenant_config_create_via_patch(self, authenticated_client):
+        """Test creating a tenant config successfully via PATCH (upsert)"""
+        payload = {
+            "data": {
+                "type": "lighthouse-config",
+                "attributes": {
+                    "business_context": "Test business context for security analysis",
+                    "default_provider": "",
+                    "default_models": {},
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("lighthouse-config"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert (
+            data["attributes"]["business_context"]
+            == "Test business context for security analysis"
+        )
+        assert data["attributes"]["default_provider"] == ""
+        assert data["attributes"]["default_models"] == {}
+
+    def test_lighthouse_tenant_config_upsert_behavior(self, authenticated_client):
+        """Test that PATCH creates config if not exists and updates if exists (upsert)"""
+        payload = {
+            "data": {
+                "type": "lighthouse-config",
+                "attributes": {
+                    "business_context": "First config",
+                },
+            }
+        }
+
+        # First PATCH creates the config
+        response = authenticated_client.patch(
+            reverse("lighthouse-config"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        first_data = response.json()["data"]
+        assert first_data["attributes"]["business_context"] == "First config"
+
+        # Second PATCH updates the same config (not creating a duplicate)
+        payload["data"]["attributes"]["business_context"] = "Updated config"
+        response = authenticated_client.patch(
+            reverse("lighthouse-config"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert response.status_code == status.HTTP_200_OK
+        second_data = response.json()["data"]
+        assert second_data["attributes"]["business_context"] == "Updated config"
+        # Verify it's the same config (same ID)
+        assert first_data["id"] == second_data["id"]
+
+    @patch("openai.OpenAI")
+    def test_lighthouse_tenant_config_retrieve(
+        self, mock_openai_client, authenticated_client, tenants_fixture
+    ):
+        """Test retrieving the singleton tenant config with proper provider and model validation"""
+
+        # Mock OpenAI client and models response
+        mock_models_response = Mock()
+        mock_models_response.data = [
+            Mock(id="gpt-4o"),
+            Mock(id="gpt-4o-mini"),
+            Mock(id="gpt-5"),
+        ]
+        mock_openai_client.return_value.models.list.return_value = mock_models_response
+
+        # Create OpenAI provider configuration
+        provider_config = LighthouseProviderConfiguration.objects.create(
+            tenant_id=tenants_fixture[0].id,
+            provider_type="openai",
+            credentials=b'{"api_key": "sk-test1234567890T3BlbkFJtest1234567890"}',
+            is_active=True,
+        )
+
+        # Create provider models (simulating refresh)
+        LighthouseProviderModels.objects.create(
+            tenant_id=tenants_fixture[0].id,
+            provider_configuration=provider_config,
+            model_id="gpt-4o",
+            default_parameters={},
+        )
+        LighthouseProviderModels.objects.create(
+            tenant_id=tenants_fixture[0].id,
+            provider_configuration=provider_config,
+            model_id="gpt-4o-mini",
+            default_parameters={},
+        )
+
+        # Create tenant configuration with valid provider and model
+        config = LighthouseTenantConfiguration.objects.create(
+            tenant_id=tenants_fixture[0].id,
+            business_context="Test context",
+            default_provider="openai",
+            default_models={"openai": "gpt-4o"},
+        )
+
+        # Retrieve and verify the configuration
+        response = authenticated_client.get(reverse("lighthouse-config"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data["id"] == str(config.id)
+        assert data["attributes"]["business_context"] == "Test context"
+        assert data["attributes"]["default_provider"] == "openai"
+        assert data["attributes"]["default_models"] == {"openai": "gpt-4o"}
+
+    def test_lighthouse_tenant_config_retrieve_not_found(self, authenticated_client):
+        """Test GET when config doesn't exist returns 404"""
+        response = authenticated_client.get(reverse("lighthouse-config"))
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert "not found" in response.json()["errors"][0]["detail"].lower()
+
+    def test_lighthouse_tenant_config_partial_update(
+        self, authenticated_client, tenants_fixture
+    ):
+        """Test updating tenant config fields"""
+        from api.models import LighthouseTenantConfiguration
+
+        # Create config first
+        config = LighthouseTenantConfiguration.objects.create(
+            tenant_id=tenants_fixture[0].id,
+            business_context="Original context",
+            default_provider="",
+            default_models={},
+        )
+
+        # Update it
+        payload = {
+            "data": {
+                "type": "lighthouse-config",
+                "attributes": {
+                    "business_context": "Updated context for cloud security",
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("lighthouse-config"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+        # Verify update
+        config.refresh_from_db()
+        assert config.business_context == "Updated context for cloud security"
+
+    def test_lighthouse_tenant_config_update_invalid_provider(
+        self, authenticated_client, tenants_fixture
+    ):
+        """Test validation fails when default_provider is not configured and active"""
+        from api.models import LighthouseTenantConfiguration
+
+        # Create config first
+        LighthouseTenantConfiguration.objects.create(
+            tenant_id=tenants_fixture[0].id,
+            business_context="Test",
+        )
+
+        # Try to set invalid provider
+        payload = {
+            "data": {
+                "type": "lighthouse-config",
+                "attributes": {
+                    "default_provider": "nonexistent-provider",
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("lighthouse-config"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "provider" in response.json()["errors"][0]["detail"].lower()
+
+    def test_lighthouse_tenant_config_update_invalid_json_format(
+        self, authenticated_client, tenants_fixture
+    ):
+        """Test that invalid JSON payload is rejected"""
+        from api.models import LighthouseTenantConfiguration
+
+        # Create config first
+        LighthouseTenantConfiguration.objects.create(
+            tenant_id=tenants_fixture[0].id,
+            business_context="Test",
+        )
+
+        # Send invalid JSON
+        response = authenticated_client.patch(
+            reverse("lighthouse-config"),
+            data="invalid json",
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+@pytest.mark.django_db
+class TestLighthouseProviderConfigViewSet:
+    """Tests for LighthouseProviderConfiguration create validations"""
+
+    def test_invalid_provider_type(self, authenticated_client):
+        """Add invalid provider (testprovider) should error"""
+        payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "testprovider",
+                    "credentials": {"api_key": "sk-testT3BlbkFJkey"},
+                },
+            }
+        }
+        resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_openai_missing_credentials(self, authenticated_client):
+        """OpenAI provider without credentials should error"""
+        payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "openai",
+                },
+            }
+        }
+        resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+
+    @pytest.mark.parametrize(
+        "credentials",
+        [
+            {},  # empty credentials
+            {"token": "sk-testT3BlbkFJkey"},  # wrong key name
+            {"api_key": "ks-invalid-format"},  # wrong format
+        ],
+    )
+    def test_openai_invalid_credentials(self, authenticated_client, credentials):
+        """OpenAI provider with invalid credentials should error"""
+        payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "openai",
+                    "credentials": credentials,
+                },
+            }
+        }
+        resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_openai_valid_credentials_success(self, authenticated_client):
+        """OpenAI provider with valid sk-xxx format should succeed"""
+        valid_key = "sk-abc123T3BlbkFJxyz456"
+        payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "openai",
+                    "credentials": {"api_key": valid_key},
+                },
+            }
+        }
+        resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp.status_code == status.HTTP_201_CREATED
+        data = resp.json()["data"]
+
+        masked_creds = data["attributes"].get("credentials")
+        assert masked_creds is not None
+        assert "api_key" in masked_creds
+        assert masked_creds["api_key"] == ("*" * len(valid_key))
+
+    def test_openai_provider_duplicate_per_tenant(self, authenticated_client):
+        """If an OpenAI provider exists for tenant, creating again should error"""
+        valid_key = "sk-dup123T3BlbkFJdup456"
+        payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "openai",
+                    "credentials": {"api_key": valid_key},
+                },
+            }
+        }
+        # First creation succeeds
+        resp1 = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp1.status_code == status.HTTP_201_CREATED
+
+        # Second creation should fail with validation error
+        resp2 = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp2.status_code == status.HTTP_400_BAD_REQUEST
+        assert "already exists" in str(resp2.json()).lower()
+
+    def test_openai_patch_base_url_and_is_active(self, authenticated_client):
+        """After creating, should be able to patch base_url and is_active"""
+        valid_key = "sk-patch123T3BlbkFJpatch456"
+        create_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "openai",
+                    "credentials": {"api_key": valid_key},
+                },
+            }
+        }
+        create_resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=create_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert create_resp.status_code == status.HTTP_201_CREATED
+        provider_id = create_resp.json()["data"]["id"]
+
+        patch_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "id": provider_id,
+                "attributes": {
+                    "base_url": "https://api.example.com/v1",
+                    "is_active": False,
+                },
+            }
+        }
+        patch_resp = authenticated_client.patch(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id}),
+            data=patch_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert patch_resp.status_code == status.HTTP_200_OK
+        updated = patch_resp.json()["data"]["attributes"]
+        assert updated["base_url"] == "https://api.example.com/v1"
+        assert updated["is_active"] is False
+
+    def test_openai_patch_invalid_credentials(self, authenticated_client):
+        """PATCH with invalid credentials.api_key should error (400)"""
+        valid_key = "sk-ok123T3BlbkFJok456"
+        create_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "openai",
+                    "credentials": {"api_key": valid_key},
+                },
+            }
+        }
+        create_resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=create_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert create_resp.status_code == status.HTTP_201_CREATED
+        provider_id = create_resp.json()["data"]["id"]
+
+        # Try patch with invalid api_key format
+        patch_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "id": provider_id,
+                "attributes": {
+                    "credentials": {"api_key": "ks-invalid-format"},
+                },
+            }
+        }
+        patch_resp = authenticated_client.patch(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id}),
+            data=patch_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert patch_resp.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_openai_get_masking_and_fields_filter(self, authenticated_client):
+        valid_key = "sk-get123T3BlbkFJget456"
+        create_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "openai",
+                    "credentials": {"api_key": valid_key},
+                },
+            }
+        }
+        create_resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=create_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert create_resp.status_code == status.HTTP_201_CREATED
+        provider_id = create_resp.json()["data"]["id"]
+
+        # Default GET should return masked credentials
+        get_resp = authenticated_client.get(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id})
+        )
+        assert get_resp.status_code == status.HTTP_200_OK
+        masked = get_resp.json()["data"]["attributes"]["credentials"]["api_key"]
+        assert masked == ("*" * len(valid_key))
+
+        # Fields filter should return decrypted credentials structure
+        get_full = authenticated_client.get(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id})
+            + "?fields[lighthouse-providers]=credentials"
+        )
+        assert get_full.status_code == status.HTTP_200_OK
+        creds = get_full.json()["data"]["attributes"]["credentials"]
+        assert creds["api_key"] == valid_key
+
+    def test_delete_provider_updates_tenant_defaults(
+        self, authenticated_client, tenants_fixture
+    ):
+        """Deleting a provider config should clear tenant default_provider and its default_model entry."""
+
+        tenant = tenants_fixture[0]
+
+        # Create provider configuration to delete
+        provider = LighthouseProviderConfiguration.objects.create(
+            tenant_id=tenant.id,
+            provider_type="openai",
+            credentials=b'{"api_key":"sk-test123T3BlbkFJ"}',
+            is_active=True,
+        )
+
+        # Seed tenant defaults referencing the provider we will delete
+        cfg = LighthouseTenantConfiguration.objects.create(
+            tenant_id=tenant.id,
+            business_context="Test",
+            default_provider="openai",
+            default_models={"openai": "gpt-4o", "other": "model-x"},
+        )
+
+        # Delete via API and validate response
+        url = reverse("lighthouse-providers-detail", kwargs={"pk": str(provider.id)})
+        resp = authenticated_client.delete(url)
+        assert resp.status_code in (
+            status.HTTP_204_NO_CONTENT,
+            status.HTTP_200_OK,
+        )
+
+        # Tenant defaults should be updated
+        cfg.refresh_from_db()
+        assert cfg.default_provider == ""
+        assert "openai" not in cfg.default_models
+
+        # Unrelated entries should remain untouched
+        assert cfg.default_models.get("other") == "model-x"
