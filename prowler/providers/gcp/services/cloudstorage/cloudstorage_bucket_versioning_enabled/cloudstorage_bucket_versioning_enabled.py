@@ -25,6 +25,6 @@ class cloudstorage_bucket_versioning_enabled(Check):
                 report.status_extended = (
                     f"Bucket {bucket.name} has Object Versioning enabled."
                 )
-                
+
             findings.append(report)
         return findings
