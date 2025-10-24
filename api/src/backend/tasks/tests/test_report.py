@@ -85,6 +85,12 @@ class TestGenerateThreatscoreReport:
             only_failed=True,
             min_risk_level=4,
         )
+        mock_upload.assert_called_once_with(
+            self.tenant_id,
+            self.scan_id,
+            "/tmp/threatscore_path_threatscore_report.pdf",
+            "threatscore/threatscore_path_threatscore_report.pdf",
+        )
         mock_rmtree.assert_called_once_with(
             Path("/tmp/threatscore_path_threatscore_report.pdf").parent,
             ignore_errors=True,
