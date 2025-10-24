@@ -1,0 +1,32 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "firewall_waf_enabled",
+  "CheckTitle": "Ensure Web Application Firewall (WAF) is enabled",
+  "CheckType": [],
+  "ServiceName": "firewall",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "zone_id",
+  "Severity": "high",
+  "ResourceType": "Zone",
+  "Description": "This check ensures that Web Application Firewall (WAF) is enabled for Cloudflare zones to protect against common web application attacks such as SQL injection, cross-site scripting (XSS), and other OWASP Top 10 vulnerabilities.",
+  "Risk": "Without WAF enabled, web applications are vulnerable to common attacks that could lead to data breaches, service disruptions, or unauthorized access.",
+  "RelatedUrl": "https://developers.cloudflare.com/waf/",
+  "Remediation": {
+    "Code": {
+      "CLI": "cloudflare firewall waf enable --zone-id <zone_id>",
+      "NativeIaC": "",
+      "Other": "https://dash.cloudflare.com/ -> Select Zone -> Security -> WAF -> Enable",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable Web Application Firewall (WAF) for all Cloudflare zones to protect against common web application attacks.",
+      "Url": "https://developers.cloudflare.com/waf/managed-rules/"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "WAF is available on Pro, Business, and Enterprise plans. Free plans have limited WAF capabilities."
+}

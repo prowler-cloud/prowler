@@ -1,0 +1,32 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "ssl_tls_1_3_enabled",
+  "CheckTitle": "Ensure TLS 1.3 is enabled for enhanced security and performance",
+  "CheckType": [],
+  "ServiceName": "ssl",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Zone",
+  "Description": "This check ensures that TLS 1.3 is enabled for Cloudflare zones to activate the latest TLS protocol, which streamlines the TLS handshake, enhances security, and reduces connection time.",
+  "Risk": "Without TLS 1.3 enabled, connections use older TLS versions which have longer handshake times and may be vulnerable to known attacks.",
+  "RelatedUrl": "https://developers.cloudflare.com/ssl/edge-certificates/additional-options/tls-13/",
+  "Remediation": {
+    "Code": {
+      "CLI": "cloudflare ssl tls-1-3 enable --zone-id <zone_id>",
+      "NativeIaC": "",
+      "Other": "https://dash.cloudflare.com/ -> Select Zone -> SSL/TLS -> Edge Certificates -> Enable TLS 1.3",
+      "Terraform": "resource \"cloudflare_zone_settings_override\" \"example\" {\n  zone_id = var.zone_id\n  settings {\n    tls_1_3 = \"on\"\n  }\n}"
+    },
+    "Recommendation": {
+      "Text": "Enable TLS 1.3 for all Cloudflare zones to take advantage of improved security and performance.",
+      "Url": "https://developers.cloudflare.com/ssl/edge-certificates/additional-options/tls-13/"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "TLS 1.3 is supported by modern browsers and provides significant security and performance improvements."
+}
