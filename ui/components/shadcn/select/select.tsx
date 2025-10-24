@@ -1,8 +1,8 @@
 "use client";
 
 import * as SelectPrimitive from "@radix-ui/react-select";
-import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
-import * as React from "react";
+import { CheckIcon, ChevronDownIcon, ChevronUpIcon, X } from "lucide-react";
+import { createContext, useContext } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -13,7 +13,7 @@ type SelectContextValue = {
   onMultiValueChange?: (values: string[]) => void;
 };
 
-const SelectContext = React.createContext<SelectContextValue>({});
+const SelectContext = createContext<SelectContextValue>({});
 
 function Select({
   allowDeselect = false,
@@ -50,14 +50,11 @@ function Select({
     }
   };
 
-  const contextValue = React.useMemo(
-    () => ({
-      multiple,
-      selectedValues,
-      onMultiValueChange,
-    }),
-    [multiple, selectedValues, onMultiValueChange],
-  );
+  const contextValue = {
+    multiple,
+    selectedValues,
+    onMultiValueChange,
+  };
 
   return (
     <SelectContext.Provider value={contextValue}>
@@ -82,7 +79,7 @@ function SelectValue({
   children,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Value>) {
-  const { multiple, selectedValues } = React.useContext(SelectContext);
+  const { multiple, selectedValues } = useContext(SelectContext);
 
   // For multi-select, render custom children or placeholder
   if (multiple) {
@@ -113,6 +110,17 @@ function SelectTrigger({
 }: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
   size?: "sm" | "default";
 }) {
+  const { multiple, selectedValues, onMultiValueChange } =
+    useContext(SelectContext);
+  const hasSelection = multiple && selectedValues && selectedValues.length > 0;
+
+  const handleClear = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onMultiValueChange) {
+      onMultiValueChange([]);
+    }
+  };
+
   return (
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
@@ -124,9 +132,28 @@ function SelectTrigger({
       {...props}
     >
       {children}
-      <SelectPrimitive.Icon asChild>
-        <ChevronDownIcon className="size-6 text-slate-950 dark:text-white" />
-      </SelectPrimitive.Icon>
+      <div className="flex items-center gap-1">
+        {hasSelection && (
+          <span
+            role="button"
+            tabIndex={0}
+            onClick={handleClear}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handleClear(e as unknown as React.MouseEvent);
+              }
+            }}
+            className="pointer-events-auto cursor-pointer rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:outline-none"
+            aria-label="Clear selection"
+          >
+            <X className="size-4 text-slate-950 dark:text-white" />
+          </span>
+        )}
+        <SelectPrimitive.Icon asChild>
+          <ChevronDownIcon className="size-6 text-slate-950 dark:text-white" />
+        </SelectPrimitive.Icon>
+      </div>
     </SelectPrimitive.Trigger>
   );
 }
@@ -187,7 +214,7 @@ function SelectItem({
   value,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Item>) {
-  const { multiple, selectedValues } = React.useContext(SelectContext);
+  const { multiple, selectedValues } = useContext(SelectContext);
   const isSelected = multiple && selectedValues?.includes(value);
 
   return (
