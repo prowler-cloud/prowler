@@ -20,6 +20,7 @@ class Test_sharepoint_external_sharing_managed:
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_m365_provider(),
             ),
+            mock.patch("prowler.providers.m365.lib.service.service.M365PowerShell"),
             mock.patch(
                 "prowler.providers.m365.services.sharepoint.sharepoint_external_sharing_managed.sharepoint_external_sharing_managed.sharepoint_client",
                 new=sharepoint_client,
@@ -66,6 +67,7 @@ class Test_sharepoint_external_sharing_managed:
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_m365_provider(),
             ),
+            mock.patch("prowler.providers.m365.lib.service.service.M365PowerShell"),
             mock.patch(
                 "prowler.providers.m365.services.sharepoint.sharepoint_external_sharing_managed.sharepoint_external_sharing_managed.sharepoint_client",
                 new=sharepoint_client,
@@ -112,6 +114,7 @@ class Test_sharepoint_external_sharing_managed:
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_m365_provider(),
             ),
+            mock.patch("prowler.providers.m365.lib.service.service.M365PowerShell"),
             mock.patch(
                 "prowler.providers.m365.services.sharepoint.sharepoint_external_sharing_managed.sharepoint_external_sharing_managed.sharepoint_client",
                 new=sharepoint_client,
@@ -158,6 +161,7 @@ class Test_sharepoint_external_sharing_managed:
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_m365_provider(),
             ),
+            mock.patch("prowler.providers.m365.lib.service.service.M365PowerShell"),
             mock.patch(
                 "prowler.providers.m365.services.sharepoint.sharepoint_external_sharing_managed.sharepoint_external_sharing_managed.sharepoint_client",
                 new=sharepoint_client,
@@ -252,6 +256,7 @@ class Test_sharepoint_external_sharing_managed:
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_m365_provider(),
             ),
+            mock.patch("prowler.providers.m365.lib.service.service.M365PowerShell"),
             mock.patch(
                 "prowler.providers.m365.services.sharepoint.sharepoint_external_sharing_managed.sharepoint_external_sharing_managed.sharepoint_client",
                 new=sharepoint_client,

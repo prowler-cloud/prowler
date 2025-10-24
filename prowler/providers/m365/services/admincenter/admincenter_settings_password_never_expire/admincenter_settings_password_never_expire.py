@@ -7,11 +7,11 @@ from prowler.providers.m365.services.admincenter.admincenter_client import (
 
 
 class admincenter_settings_password_never_expire(Check):
-    """Check if domains have a 'Password never expires' policy.
+    """Check if the tenant enforces a 'Password never expires' policy.
 
-    This check verifies whether the password policy for each domain is set to never expire.
-    If the domain password validity period is set to `2147483647`, the policy is considered to
-    have 'password never expires'.
+    This check verifies whether the tenant-wide password policy (surfaced through the first
+    domain returned by Microsoft 365) is set to never expire. If the password validity period
+    is set to `2147483647`, the policy is considered to have 'password never expires'.
 
     Attributes:
         metadata: Metadata associated with the check (inherited from Check).
@@ -20,30 +20,33 @@ class admincenter_settings_password_never_expire(Check):
     def execute(self) -> List[CheckReportM365]:
         """Execute the check for password never expires policy.
 
-        This method iterates over all domains and checks if the password validity period is set
-        to `2147483647`, indicating that passwords for users in the domain never expire.
+        This method inspects the tenant-level password validity configuration (exposed through
+        the first available domain) and checks if the password validity period is set to
+        `2147483647`, indicating that passwords for users in the domain never expire.
 
         Returns:
             List[CheckReportM365]: A list of reports indicating whether the domain's password
             policy is set to never expire.
         """
         findings = []
-        for domain in admincenter_client.domains.values():
+        password_policy = getattr(admincenter_client, "password_policy", None)
+        domain_name = getattr(admincenter_client, "audited_domain", "Unknown domain")
+        if password_policy:
             report = CheckReportM365(
                 self.metadata(),
-                resource=domain,
-                resource_name=domain.id,
-                resource_id=domain.id,
+                resource=password_policy,
+                resource_name=domain_name,
+                resource_id=domain_name,
             )
             report.status = "FAIL"
             report.status_extended = (
-                f"Domain {domain.id} does not have a Password never expires policy."
+                f"Domain {domain_name} does not have a Password never expires policy."
             )
 
-            if domain.password_validity_period == 2147483647:
+            if password_policy.password_validity_period == 2147483647:
                 report.status = "PASS"
                 report.status_extended = (
-                    f"Domain {domain.id} Password policy is set to never expire."
+                    f"Domain {domain_name} Password policy is set to never expire."
                 )
 
             findings.append(report)

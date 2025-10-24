@@ -20,6 +20,7 @@ class Test_sharepoint_guest_sharing_restricted:
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_m365_provider(),
             ),
+            mock.patch("prowler.providers.m365.lib.service.service.M365PowerShell"),
             mock.patch(
                 "prowler.providers.m365.services.sharepoint.sharepoint_guest_sharing_restricted.sharepoint_guest_sharing_restricted.sharepoint_client",
                 new=sharepoint_client,
@@ -65,6 +66,7 @@ class Test_sharepoint_guest_sharing_restricted:
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_m365_provider(),
             ),
+            mock.patch("prowler.providers.m365.lib.service.service.M365PowerShell"),
             mock.patch(
                 "prowler.providers.m365.services.sharepoint.sharepoint_guest_sharing_restricted.sharepoint_guest_sharing_restricted.sharepoint_client",
                 new=sharepoint_client,
@@ -112,6 +114,7 @@ class Test_sharepoint_guest_sharing_restricted:
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_m365_provider(),
             ),
+            mock.patch("prowler.providers.m365.lib.service.service.M365PowerShell"),
             mock.patch(
                 "prowler.providers.m365.services.sharepoint.sharepoint_guest_sharing_restricted.sharepoint_guest_sharing_restricted.sharepoint_client",
                 new=sharepoint_client,

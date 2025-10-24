@@ -1,5 +1,4 @@
 from unittest import mock
-from uuid import uuid4
 
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 
@@ -15,6 +14,7 @@ class Test_admincenter_settings_password_never_expire:
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_m365_provider(),
             ),
+            mock.patch("prowler.providers.m365.lib.service.service.M365PowerShell"),
             mock.patch(
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
@@ -27,7 +27,7 @@ class Test_admincenter_settings_password_never_expire:
                 admincenter_settings_password_never_expire,
             )
 
-            admincenter_client.domains = {}
+            admincenter_client.password_policy = None
 
             check = admincenter_settings_password_never_expire()
             result = check.execute()
@@ -43,6 +43,7 @@ class Test_admincenter_settings_password_never_expire:
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_m365_provider(),
             ),
+            mock.patch("prowler.providers.m365.lib.service.service.M365PowerShell"),
             mock.patch(
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
@@ -52,17 +53,15 @@ class Test_admincenter_settings_password_never_expire:
             ),
         ):
             from prowler.providers.m365.services.admincenter.admincenter_service import (
-                Domain,
+                PasswordPolicy,
             )
             from prowler.providers.m365.services.admincenter.admincenter_settings_password_never_expire.admincenter_settings_password_never_expire import (
                 admincenter_settings_password_never_expire,
             )
 
-            id_domain = str(uuid4())
-
-            admincenter_client.domains = {
-                id_domain: Domain(id=id_domain, password_validity_period=5),
-            }
+            admincenter_client.password_policy = PasswordPolicy(
+                password_validity_period=5
+            )
 
             check = admincenter_settings_password_never_expire()
             result = check.execute()
@@ -70,11 +69,11 @@ class Test_admincenter_settings_password_never_expire:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Domain {id_domain} does not have a Password never expires policy."
+                == f"Domain {DOMAIN} does not have a Password never expires policy."
             )
-            assert result[0].resource == admincenter_client.domains[id_domain].dict()
-            assert result[0].resource_name == id_domain
-            assert result[0].resource_id == id_domain
+            assert result[0].resource == admincenter_client.password_policy.dict()
+            assert result[0].resource_name == DOMAIN
+            assert result[0].resource_id == DOMAIN
             assert result[0].location == "global"
 
     def test_admincenter_password_not_expire(self):
@@ -87,6 +86,7 @@ class Test_admincenter_settings_password_never_expire:
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_m365_provider(),
             ),
+            mock.patch("prowler.providers.m365.lib.service.service.M365PowerShell"),
             mock.patch(
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
             ),
@@ -96,17 +96,15 @@ class Test_admincenter_settings_password_never_expire:
             ),
         ):
             from prowler.providers.m365.services.admincenter.admincenter_service import (
-                Domain,
+                PasswordPolicy,
             )
             from prowler.providers.m365.services.admincenter.admincenter_settings_password_never_expire.admincenter_settings_password_never_expire import (
                 admincenter_settings_password_never_expire,
             )
 
-            id_domain = str(uuid4())
-
-            admincenter_client.domains = {
-                id_domain: Domain(id=id_domain, password_validity_period=2147483647),
-            }
+            admincenter_client.password_policy = PasswordPolicy(
+                password_validity_period=2147483647
+            )
 
             check = admincenter_settings_password_never_expire()
             result = check.execute()
@@ -114,9 +112,9 @@ class Test_admincenter_settings_password_never_expire:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Domain {id_domain} Password policy is set to never expire."
+                == f"Domain {DOMAIN} Password policy is set to never expire."
             )
-            assert result[0].resource == admincenter_client.domains[id_domain].dict()
-            assert result[0].resource_name == id_domain
-            assert result[0].resource_id == id_domain
+            assert result[0].resource == admincenter_client.password_policy.dict()
+            assert result[0].resource_name == DOMAIN
+            assert result[0].resource_id == DOMAIN
             assert result[0].location == "global"
