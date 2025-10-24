@@ -4,7 +4,6 @@
   "CheckTitle": "DynamoDB table resource-based policy does not allow cross-account access",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices",
-    "Industry and Regulatory Standards/AWS Foundational Security Best Practices",
     "TTPs/Initial Access/Unauthorized Access",
     "Effects/Data Exposure"
   ],
@@ -19,12 +18,7 @@
   "AdditionalURLs": [
     "https://support.icompaas.com/support/solutions/articles/62000233614-ensure-dynamodb-tables-should-not-be-accessible-from-other-aws-accounts",
     "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/access-control-resource-based.html",
-    "https://medium.com/theburningmonk-com/dynamodb-now-supports-resource-based-policies-but-is-that-a-good-idea-9e8b708e91eb",
-    "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/rbac-bpa-rbp.html",
-    "https://learnthecontent.com/exam/aws/tutorial-aws-certified-security-specialty-scs-c02/s/designing-resource-policies-to-restrict-access-to-authorized-users-for-example-s3-bucket-policies-dynamodb-policies",
-    "https://stackoverflow.com/questions/75489403/grant-cross-account-access-to-dynamodb-table-without-using-stsassumerole",
-    "https://runebook.dev/en/aws/dynamodb/PutResourcePolicy",
-    "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/rbac-cross-account-access.html"
+    "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/rbac-bpa-rbp.html"
   ],
   "Remediation": {
     "Code": {
@@ -39,8 +33,7 @@
     }
   },
   "Categories": [
-    "trust-boundaries",
-    "identity-access"
+    "trust-boundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],

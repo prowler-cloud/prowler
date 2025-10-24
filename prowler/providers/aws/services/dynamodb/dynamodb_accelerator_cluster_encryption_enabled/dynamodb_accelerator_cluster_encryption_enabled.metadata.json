@@ -18,14 +18,12 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DAXEncryptionAtRest.html",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/DAX/encryption-enabled.html",
-    "https://docs.amazonaws.cn/en_us/amazondynamodb/latest/developerguide/DAXEncryptionAtRest.html",
-    "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_23#terraform",
     "https://docs.aws.amazon.com/prescriptive-guidance/latest/encryption-best-practices/dynamodb.html"
   ],
   "Remediation": {
     "Code": {
       "CLI": "aws dax create-cluster --cluster-name <example_resource_name> --node-type <NODE_TYPE> --replication-factor 1 --iam-role-arn <example_resource_id> --sse-specification Enabled=true",
-      "NativeIaC": "```yaml\nResources:\n  DaxCluster:\n    Type: AWS::DAX::Cluster\n    Properties:\n      ClusterName: <example_resource_name>\n      NodeType: <NODE_TYPE>\n      ReplicationFactor: 1\n      IamRoleArn: <example_resource_id>\n      SSESpecification:           # Critical: enables encryption at rest\n        SSEEnabled: true          # Encrypts DAX cluster data at rest\n```",
+      "NativeIaC": "```yaml\nResources:\n  DaxCluster:\n    Type: AWS::DAX::Cluster\n    Properties:\n      ClusterName: <example_resource_name>\n      NodeType: <NODE_TYPE>\n      ReplicationFactor: 1\n      IAMRoleARN: <example_resource_id>\n      SSESpecification:           # Critical: enables encryption at rest\n        SSEEnabled: true          # Encrypts DAX cluster data at rest\n```",
       "Other": "1. In the AWS console, open **DynamoDB** > under **DAX**, choose **Clusters** > **Create cluster**\n2. Enter a name and choose a node type\n3. In **Encryption**, select **Enable encryption**\n4. Choose the IAM role and required networking, then click **Launch cluster**\n5. If replacing an existing unencrypted cluster: point your application to the new cluster endpoint, then delete the old cluster",
       "Terraform": "```hcl\nresource \"aws_dax_cluster\" \"example\" {\n  cluster_name       = \"<example_resource_name>\"\n  node_type          = \"<NODE_TYPE>\"\n  replication_factor = 1\n  iam_role_arn       = \"<example_resource_id>\"\n\n  # Critical: enables encryption at rest\n  server_side_encryption {\n    enabled = true  # Encrypts DAX cluster data at rest\n  }\n}\n```"
     },

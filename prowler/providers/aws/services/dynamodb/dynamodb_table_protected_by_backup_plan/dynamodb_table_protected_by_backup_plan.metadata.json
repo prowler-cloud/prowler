@@ -16,12 +16,8 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/aws-backup/latest/devguide/assigning-resources.html",
-    "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/backuprestore_HowItWorksAWS.html",
     "https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/CreateBackupAWS.html",
-    "https://medium.com/@rolinh036/implement-a-backup-strategy-for-aws-dynamodb-tables-5604b4a05ed1",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/dynamodb-controls.html#dynamodb-4",
-    "https://aws.amazon.com/blogs/database/set-up-scheduled-backups-for-amazon-dynamodb-using-aws-backup/",
-    "https://aws.amazon.com/blogs/database/part-2-set-up-scheduled-backups-for-amazon-dynamodb-using-aws-backup/"
+    "https://aws.amazon.com/blogs/database/set-up-scheduled-backups-for-amazon-dynamodb-using-aws-backup/"
   ],
   "Remediation": {
     "Code": {
