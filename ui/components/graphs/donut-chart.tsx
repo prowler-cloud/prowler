@@ -94,11 +94,25 @@ export function DonutChart({
     change: item.change,
   }));
 
-  const legendPayload = chartData.map((entry) => ({
-    value: entry.name,
+  const total = chartData.reduce((sum, d) => sum + (Number(d.value) || 0), 0);
+  const isEmpty = total <= 0;
+
+  const emptyData = [
+    {
+      name: "No data",
+      value: 1,
+      fill: "var(--chart-border-emphasis)",
+      color: "var(--chart-border-emphasis)",
+      percentage: 0,
+      change: undefined,
+    },
+  ];
+
+  const legendPayload = (isEmpty ? emptyData : chartData).map((entry) => ({
+    value: isEmpty ? "No data" : entry.name,
     color: entry.color,
     payload: {
-      percentage: entry.percentage,
+      percentage: isEmpty ? 0 : entry.percentage,
     },
   }));
 
@@ -109,9 +123,9 @@ export function DonutChart({
         className="mx-auto aspect-square max-h-[350px]"
       >
         <PieChart>
-          <Tooltip content={<CustomTooltip />} />
+          {!isEmpty && <Tooltip content={<CustomTooltip />} />}
           <Pie
-            data={chartData}
+            data={isEmpty ? emptyData : chartData}
             dataKey="value"
             nameKey="name"
             innerRadius={innerRadius}
@@ -119,7 +133,7 @@ export function DonutChart({
             strokeWidth={0}
             paddingAngle={0}
           >
-            {chartData.map((entry, index) => {
+            {(isEmpty ? emptyData : chartData).map((entry, index) => {
               const opacity =
                 hoveredIndex === null ? 1 : hoveredIndex === index ? 1 : 0.5;
               return (
@@ -133,14 +147,18 @@ export function DonutChart({
                 />
               );
             })}
-            {centerLabel && (
+            {(centerLabel || isEmpty) && (
               <Label
                 content={({ viewBox }) => {
                   if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                    const centerValue = centerLabel ? centerLabel.value : 0;
+                    const centerText = centerLabel
+                      ? centerLabel.label
+                      : "No data";
                     const formattedValue =
-                      typeof centerLabel.value === "number"
-                        ? centerLabel.value.toLocaleString()
-                        : centerLabel.value;
+                      typeof centerValue === "number"
+                        ? centerValue.toLocaleString()
+                        : centerValue;
 
                     return (
                       <text
@@ -151,8 +169,8 @@ export function DonutChart({
                       >
                         <tspan
                           x={viewBox.cx}
-                          y={viewBox.cy}
-                          className="text-3xl font-bold text-black dark:text-white"
+                          y={(viewBox.cy || 0) - 6}
+                          className="text-2xl font-bold text-zinc-800 dark:text-zinc-300"
                           style={{
                             fill: "currentColor",
                           }}
@@ -162,12 +180,12 @@ export function DonutChart({
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) + 24}
-                          className="text-black dark:text-white"
+                          className="text-xs text-zinc-800 dark:text-zinc-400"
                           style={{
                             fill: "currentColor",
                           }}
                         >
-                          {centerLabel.label}
+                          {centerText}
                         </tspan>
                       </text>
                     );

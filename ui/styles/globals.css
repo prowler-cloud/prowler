@@ -20,7 +20,7 @@
   /* Chart Provider Colors */
   --chart-provider-aws: #ff9900;
   --chart-provider-azure: #00bcd4;
-  --chart-provider-google: #EA4335;
+  --chart-provider-google: #ea4335;
 
   /* Chart UI Colors - Dark Theme (defaults) */
   --chart-text-primary: #ffffff;
@@ -102,6 +102,19 @@
 }
 
 @layer utilities {
+  /* Screen reader only - visually hidden but accessible */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
   /* Hide scrollbar */
   .no-scrollbar {
     scrollbar-width: none; /* Firefox */
@@ -125,7 +138,6 @@
     transform-box: fill-box;
     transform-origin: center;
   }
-
 }
 
 @layer base {

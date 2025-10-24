@@ -9,10 +9,10 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardVariant,
   ResourceStatsCard,
-  StatsContainer,
+  ResourceStatsCardContainer,
 } from "@/components/shadcn";
-import { CardVariant } from "@/components/shadcn/card/resource-stats-card/resource-stats-card-content";
 
 interface CheckFindingsProps {
   failFindingsData: {
@@ -93,7 +93,7 @@ export const CheckFindings = ({
         </div>
 
         {/* Footer with ResourceStatsCards */}
-        <StatsContainer>
+        <ResourceStatsCardContainer className="flex w-full flex-col items-start justify-center gap-4 sm:flex-row md:w-[480px] md:justify-between">
           <ResourceStatsCard
             containerless
             badge={{
@@ -106,11 +106,16 @@ export const CheckFindings = ({
               { icon: Bell, label: `${failFindingsData.new} New` },
               { icon: BellOff, label: `${failFindingsData.muted} Muted` },
             ]}
+            emptyState={
+              failFindingsData.total === 0
+                ? { message: "No failed findings to display" }
+                : undefined
+            }
             className="flex-1"
           />
 
-          <div className="flex items-center justify-center px-[46px]">
-            <div className="h-full w-px bg-slate-300 dark:bg-[rgba(39,39,42,1)]" />
+          <div className="flex w-full items-center justify-center sm:w-auto sm:self-stretch sm:px-[46px]">
+            <div className="h-px w-full bg-slate-300 sm:h-full sm:w-px dark:bg-[rgba(39,39,42,1)]" />
           </div>
 
           <ResourceStatsCard
@@ -125,9 +130,14 @@ export const CheckFindings = ({
               { icon: Bell, label: `${passFindingsData.new} New` },
               { icon: BellOff, label: `${passFindingsData.muted} Muted` },
             ]}
+            emptyState={
+              passFindingsData.total === 0
+                ? { message: "No passed findings to display" }
+                : undefined
+            }
             className="flex-1"
           />
-        </StatsContainer>
+        </ResourceStatsCardContainer>
       </CardContent>
     </BaseCard>
   );
