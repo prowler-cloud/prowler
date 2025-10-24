@@ -4399,6 +4399,8 @@ class TenantApiKeyViewSet(BaseRLSViewSet):
         description="Create a new mute rule by providing finding IDs, name, and reason. "
         "The rule will immediately mute the selected findings and launch a background task "
         "to mute all historical findings with matching UIDs.",
+        request=MuteRuleCreateSerializer,
+        responses={202: OpenApiResponse(response=TaskSerializer)},
     ),
     partial_update=extend_schema(
         tags=["Mute Rules"],
@@ -4459,12 +4461,19 @@ class MuteRuleViewSet(BaseRLSViewSet):
         )
 
         # Launch background task for historical muting
-        mute_historical_findings_task.apply_async(
-            kwargs={"tenant_id": tenant_id, "mute_rule_id": str(mute_rule.id)}
-        )
+        with transaction.atomic():
+            task = mute_historical_findings_task.apply_async(
+                kwargs={"tenant_id": tenant_id, "mute_rule_id": str(mute_rule.id)}
+            )
 
-        # Return the created mute rule using the read serializer
-        read_serializer = MuteRuleSerializer(
-            mute_rule, context=self.get_serializer_context()
+        prowler_task = Task.objects.get(id=task.id)
+        serializer = TaskSerializer(prowler_task)
+        return Response(
+            data=serializer.data,
+            status=status.HTTP_202_ACCEPTED,
+            headers={
+                "Content-Location": reverse(
+                    "task-detail", kwargs={"pk": prowler_task.id}
+                )
+            },
         )
-        return Response(data=read_serializer.data, status=status.HTTP_201_CREATED)

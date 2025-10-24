@@ -3002,6 +3002,7 @@ class MuteRuleCreateSerializer(RLSSerializer, BaseWriteSerializer):
             "id": {"read_only": True},
             "inserted_at": {"read_only": True},
             "updated_at": {"read_only": True},
+            "is_active": {"read_only": True},
             "created_by": {"read_only": True},
         }
 
@@ -3020,7 +3021,7 @@ class MuteRuleCreateSerializer(RLSSerializer, BaseWriteSerializer):
         tenant_id = self.context.get("tenant_id")
 
         # Check that all findings exist and belong to this tenant
-        findings = Finding.objects.filter(tenant_id=tenant_id, id__in=value)
+        findings = Finding.all_objects.filter(tenant_id=tenant_id, id__in=value)
         found_ids = set(findings.values_list("id", flat=True))
         provided_ids = set(value)
 
@@ -3043,7 +3044,7 @@ class MuteRuleCreateSerializer(RLSSerializer, BaseWriteSerializer):
             return data
 
         # Convert finding IDs to UIDs
-        findings = Finding.objects.filter(id__in=finding_ids, tenant_id=tenant_id)
+        findings = Finding.all_objects.filter(id__in=finding_ids, tenant_id=tenant_id)
         finding_uids = list(findings.values_list("uid", flat=True))
 
         # Check for overlaps with existing active rules
