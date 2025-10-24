@@ -97,28 +97,59 @@ export function AccountsSelector({ providers }: AccountsSelectorProps) {
     );
   };
 
+  const filterDescription =
+    selectedTypesList.length > 0
+      ? `Showing accounts for ${selectedTypesList.join(", ")} providers`
+      : "All connected cloud provider accounts";
+
   return (
-    <Select
-      multiple
-      selectedValues={selectedIds}
-      onMultiValueChange={handleMultiValueChange}
-    >
-      <SelectTrigger>
-        <SelectValue placeholder="All accounts">{selectedLabel()}</SelectValue>
-      </SelectTrigger>
-      <SelectContent align="start">
-        {visibleProviders.map((p) => {
-          const id = p.id;
-          const displayName = p.attributes.alias || p.attributes.uid;
-          const icon = PROVIDER_ICON[p.attributes.provider as ProviderType];
-          return (
-            <SelectItem key={id} value={id}>
-              {icon}
-              <span className="truncate">{displayName}</span>
-            </SelectItem>
-          );
-        })}
-      </SelectContent>
-    </Select>
+    <div className="relative">
+      <label
+        htmlFor="accounts-selector"
+        className="sr-only"
+        id="accounts-label"
+      >
+        Filter by cloud provider account. {filterDescription}. Select one or
+        more accounts to view findings.
+      </label>
+      <Select
+        multiple
+        selectedValues={selectedIds}
+        onMultiValueChange={handleMultiValueChange}
+        ariaLabel="Cloud provider accounts filter"
+      >
+        <SelectTrigger id="accounts-selector" aria-labelledby="accounts-label">
+          <SelectValue placeholder="All accounts">
+            {selectedLabel()}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent align="start">
+          {visibleProviders.length > 0 ? (
+            visibleProviders.map((p) => {
+              const id = p.id;
+              const displayName = p.attributes.alias || p.attributes.uid;
+              const providerType = p.attributes.provider as ProviderType;
+              const icon = PROVIDER_ICON[providerType];
+              return (
+                <SelectItem
+                  key={id}
+                  value={id}
+                  aria-label={`${displayName} account (${providerType.toUpperCase()})`}
+                >
+                  <span aria-hidden="true">{icon}</span>
+                  <span className="truncate">{displayName}</span>
+                </SelectItem>
+              );
+            })
+          ) : (
+            <div className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
+              {selectedTypesList.length > 0
+                ? "No accounts available for selected providers"
+                : "No connected accounts available"}
+            </div>
+          )}
+        </SelectContent>
+      </Select>
+    </div>
   );
 }

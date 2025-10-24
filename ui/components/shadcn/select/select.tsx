@@ -2,7 +2,7 @@
 
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon, X } from "lucide-react";
-import { createContext, useContext } from "react";
+import { createContext, useContext, useId } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -11,6 +11,8 @@ type SelectContextValue = {
   multiple?: boolean;
   selectedValues?: string[];
   onMultiValueChange?: (values: string[]) => void;
+  ariaLabel?: string;
+  liveRegionId?: string;
 };
 
 const SelectContext = createContext<SelectContextValue>({});
@@ -22,6 +24,7 @@ function Select({
   onValueChange,
   selectedValues = [],
   onMultiValueChange,
+  ariaLabel,
   ...props
 }: Omit<React.ComponentProps<typeof SelectPrimitive.Root>, "onValueChange"> & {
   allowDeselect?: boolean;
@@ -29,7 +32,10 @@ function Select({
   selectedValues?: string[];
   onValueChange?: (value: string) => void;
   onMultiValueChange?: (values: string[]) => void;
+  ariaLabel?: string;
 }) {
+  const liveRegionId = useId();
+
   const handleValueChange = (nextValue: string) => {
     if (multiple && onMultiValueChange) {
       // Multi-select: toggle the value
@@ -54,6 +60,8 @@ function Select({
     multiple,
     selectedValues,
     onMultiValueChange,
+    ariaLabel,
+    liveRegionId,
   };
 
   return (
@@ -64,6 +72,20 @@ function Select({
         onValueChange={handleValueChange}
         {...props}
       />
+      {/* Live region for screen reader announcements */}
+      {multiple && (
+        <div
+          id={liveRegionId}
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          className="sr-only"
+        >
+          {selectedValues.length > 0
+            ? `${selectedValues.length} ${selectedValues.length === 1 ? "item" : "items"} selected`
+            : "No items selected"}
+        </div>
+      )}
     </SelectContext.Provider>
   );
 }
@@ -110,7 +132,7 @@ function SelectTrigger({
 }: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
   size?: "sm" | "default";
 }) {
-  const { multiple, selectedValues, onMultiValueChange } =
+  const { multiple, selectedValues, onMultiValueChange, ariaLabel } =
     useContext(SelectContext);
   const hasSelection = multiple && selectedValues && selectedValues.length > 0;
 
@@ -121,12 +143,16 @@ function SelectTrigger({
     }
   };
 
+  const clearButtonLabel = `Clear ${ariaLabel || "selection"}${hasSelection ? ` (${selectedValues.length} selected)` : ""}`;
+
   return (
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
       data-size={size}
+      aria-label={ariaLabel}
+      aria-multiselectable={multiple ? "true" : undefined}
       className={cn(
-        "border-input data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex w-full items-center justify-between gap-2 rounded-lg border border-slate-400 px-4 py-3 text-base leading-7 whitespace-nowrap text-slate-950 shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-slate-600 disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-[52px] data-[size=sm]:h-10 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 dark:border-[#262626] dark:bg-[#171717] dark:text-white [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-6",
+        "border-input data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex w-full items-center justify-between gap-2 rounded-lg border border-slate-400 px-4 py-3 text-base leading-7 whitespace-nowrap text-slate-950 shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-slate-600 focus-visible:ring-2 focus-visible:ring-slate-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-[52px] data-[size=sm]:h-10 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 dark:border-[#262626] dark:bg-[#171717] dark:text-white dark:focus-visible:ring-slate-400 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-6",
         className,
       )}
       {...props}
@@ -136,22 +162,29 @@ function SelectTrigger({
         {hasSelection && (
           <span
             role="button"
-            tabIndex={0}
+            tabIndex={-1}
             onClick={handleClear}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
+                e.stopPropagation();
                 handleClear(e as unknown as React.MouseEvent);
               }
             }}
-            className="pointer-events-auto cursor-pointer rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:outline-none"
-            aria-label="Clear selection"
+            className="pointer-events-auto cursor-pointer rounded-sm p-0.5 opacity-70 transition-opacity hover:opacity-100 focus:opacity-100 focus:ring-2 focus:ring-slate-600 focus:ring-offset-2 focus:outline-none dark:focus:ring-slate-400"
+            aria-label={clearButtonLabel}
           >
-            <X className="size-4 text-slate-950 dark:text-white" />
+            <X
+              className="size-4 text-slate-950 dark:text-white"
+              aria-hidden="true"
+            />
           </span>
         )}
         <SelectPrimitive.Icon asChild>
-          <ChevronDownIcon className="size-6 text-slate-950 dark:text-white" />
+          <ChevronDownIcon
+            className="size-6 text-slate-950 dark:text-white"
+            aria-hidden="true"
+          />
         </SelectPrimitive.Icon>
       </div>
     </SelectPrimitive.Trigger>
@@ -182,7 +215,7 @@ function SelectContent({
         <SelectScrollUpButton />
         <SelectPrimitive.Viewport
           className={cn(
-            "p-3",
+            "flex flex-col gap-1 p-3",
             position === "popper" &&
               "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)] scroll-my-1",
           )}
@@ -221,8 +254,12 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot="select-item"
       value={value}
+      aria-selected={multiple ? isSelected : undefined}
+      aria-checked={multiple ? isSelected : undefined}
+      role={multiple ? "option" : undefined}
       className={cn(
-        "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex w-full cursor-pointer items-center gap-2 rounded-lg py-2.5 pr-10 pl-3 text-base outline-hidden select-none hover:bg-slate-200 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 dark:hover:bg-slate-700/50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
+        "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex w-full cursor-pointer items-center gap-2 rounded-lg py-2.5 pr-10 pl-3 text-base outline-hidden select-none hover:bg-slate-200 focus:ring-2 focus:ring-slate-600 focus:ring-inset data-[disabled]:pointer-events-none data-[disabled]:opacity-50 dark:hover:bg-slate-700/50 dark:focus:ring-slate-400 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
+        isSelected && "bg-slate-100 dark:bg-slate-800/50",
         className,
       )}
       {...props}
@@ -230,7 +267,10 @@ function SelectItem({
       <SelectPrimitive.ItemText asChild>
         <span className="flex min-w-0 items-center gap-2">{children}</span>
       </SelectPrimitive.ItemText>
-      <span className="absolute right-3 flex size-4 items-center justify-center">
+      <span
+        className="absolute right-3 flex size-4 items-center justify-center"
+        aria-hidden="true"
+      >
         {multiple ? (
           // Multi-select: show check when selected
           isSelected && (

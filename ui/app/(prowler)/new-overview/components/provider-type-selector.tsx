@@ -130,27 +130,50 @@ export const ProviderTypeSelector = ({
   };
 
   return (
-    <Select
-      multiple
-      selectedValues={selectedTypes}
-      onMultiValueChange={handleMultiValueChange}
-    >
-      <SelectTrigger>
-        <SelectValue
-          placeholder="All providers"
-          aria-label="Select provider types"
+    <div className="relative">
+      <label
+        htmlFor="provider-type-selector"
+        className="sr-only"
+        id="provider-type-label"
+      >
+        Filter by cloud provider type. Select one or more providers to view
+        findings.
+      </label>
+      <Select
+        multiple
+        selectedValues={selectedTypes}
+        onMultiValueChange={handleMultiValueChange}
+        ariaLabel="Cloud provider type filter"
+      >
+        <SelectTrigger
+          id="provider-type-selector"
+          aria-labelledby="provider-type-label"
         >
-          {selectedLabel()}
-        </SelectValue>
-      </SelectTrigger>
-      <SelectContent>
-        {availableTypes.map((providerType) => (
-          <SelectItem key={providerType} value={providerType}>
-            {PROVIDER_DATA[providerType].icon}
-            <span>{PROVIDER_DATA[providerType].label}</span>
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+          <SelectValue placeholder="All providers">
+            {selectedLabel()}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {availableTypes.length > 0 ? (
+            availableTypes.map((providerType) => (
+              <SelectItem
+                key={providerType}
+                value={providerType}
+                aria-label={`${PROVIDER_DATA[providerType].label} provider`}
+              >
+                <span aria-hidden="true">
+                  {PROVIDER_DATA[providerType].icon}
+                </span>
+                <span>{PROVIDER_DATA[providerType].label}</span>
+              </SelectItem>
+            ))
+          ) : (
+            <div className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
+              No connected providers available
+            </div>
+          )}
+        </SelectContent>
+      </Select>
+    </div>
   );
 };
