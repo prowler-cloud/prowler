@@ -46,11 +46,13 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Create k8s Kind Cluster
         uses: helm/kind-action@v1
+        with:
+          name: kind
       - name: Modify kubeconfig
         run: |
             # Modify the kubeconfig to use the kind cluster server to https://kind-control-plane:6443 
             # from worker service into docker-compose.yml
-            kubectl config set-cluster kind-kind --server=https://kind-control-plane:6443
+            kubectl config set-cluster kind --server=https://kind-control-plane:6443
             kubectl config view 
       - name: Add network kind to docker compose  
         run: |
