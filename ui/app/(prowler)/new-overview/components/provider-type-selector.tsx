@@ -74,31 +74,9 @@ export const ProviderTypeSelector = ({
       params.delete("filter[provider_type__in]");
     }
 
-    // Auto-select account(s) based on the chosen provider types
-    if (values.length > 0) {
-      const candidates = providers.filter(
-        (p) =>
-          p.attributes.connection?.connected &&
-          values.includes(p.attributes.provider),
-      );
-
-      if (candidates.length === 1) {
-        // If there is only one connected account for selected types, select it
-        params.set("filter[provider_id__in]", candidates[0].id);
-      } else if (candidates.length > 1) {
-        // Multiple candidates: auto-select all accounts from selected provider types
-        params.set(
-          "filter[provider_id__in]",
-          candidates.map((c) => c.id).join(","),
-        );
-      } else {
-        // No candidates: clear account selection
-        params.delete("filter[provider_id__in]");
-      }
-    } else {
-      // Clearing provider type should also clear selected accounts
-      params.delete("filter[provider_id__in]");
-    }
+    // Clear account selection when changing provider types
+    // User should manually select accounts if they want to filter by specific accounts
+    params.delete("filter[provider_id__in]");
 
     router.push(`?${params.toString()}`, { scroll: false });
   };
