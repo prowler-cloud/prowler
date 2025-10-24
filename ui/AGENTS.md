@@ -13,7 +13,33 @@
 
 ## Critical Architecture Rules (Non-Negotiable)
 
-### 1. TypeScript Type Patterns (Required)
+### 1. React Imports (Required)
+
+**NEVER** import React with `import * as React`. Instead, import only what you need:
+
+**❌ DON'T:**
+
+```typescript
+import * as React from "react";
+import React, { useState } from "react";
+```
+
+**✅ DO:**
+
+```typescript
+import { useState, useEffect } from "react";
+```
+
+**When you need nothing from React (e.g., only using JSX):**
+
+```typescript
+// No React import needed - JSX works without it in modern Next.js
+export function MyComponent() {
+  return <div>Hello</div>;
+}
+```
+
+### 2. TypeScript Type Patterns (Required)
 
 When defining union types for options, ALWAYS create a const object first, then extract the type:
 
