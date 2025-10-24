@@ -52,7 +52,7 @@ jobs:
         run: |
             # Modify the kubeconfig to use the kind cluster server to https://kind-control-plane:6443 
             # from worker service into docker-compose.yml
-            kubectl config set-cluster kind --server=https://kind-control-plane:6443
+            kubectl config set-cluster kind-kind --server=https://kind-control-plane:6443
             kubectl config view 
       - name: Add network kind to docker compose  
         run: |
