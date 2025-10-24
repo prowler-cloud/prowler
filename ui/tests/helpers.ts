@@ -147,7 +147,9 @@ export async function authenticateAndSaveState(
   storagePath: string,
 ) {
   if (!email || !password) {
-    throw new Error('Email and password are required for authentication and save state');
+    throw new Error(
+      "Email and password are required for authentication and save state",
+    );
   }
 
   // Create SignInPage instance

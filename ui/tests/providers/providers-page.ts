@@ -19,6 +19,12 @@ export interface M365ProviderData {
   alias?: string;
 }
 
+// Kubernetes provider data
+export interface KubernetesProviderData {
+  context: string;
+  alias?: string;
+}
+
 // AWS credential options
 export const AWS_CREDENTIAL_OPTIONS = {
   AWS_ROLE_ARN: "role",
@@ -70,6 +76,20 @@ export interface M365ProviderCredential {
   tenantId:string;
   certificateContent?:string;
 }
+
+// Kubernetes credential options
+export const KUBERNETES_CREDENTIAL_OPTIONS = {
+  KUBECONFIG_CONTENT: "kubeconfig"
+} as const;
+
+// Kubernetes credential type
+type KubernetesCredentialType = (typeof KUBERNETES_CREDENTIAL_OPTIONS)[keyof typeof KUBERNETES_CREDENTIAL_OPTIONS];
+
+// Kubernetes provider credential
+export interface KubernetesProviderCredential {
+  type: KubernetesCredentialType;
+  kubeconfigContent:string;
+} 
 
 // Providers page
 export class ProvidersPage extends BasePage {
@@ -123,6 +143,10 @@ export class ProvidersPage extends BasePage {
   readonly m365TenantIdInput: Locator;
   readonly m365CertificateContentInput: Locator;
 
+  // Kubernetes provider form elements
+  readonly kubernetesContextInput: Locator;
+  readonly kubernetesKubeconfigContentInput: Locator;
+
   // Delete button
   readonly deleteProviderConfirmationButton: Locator;
 
@@ -168,6 +192,10 @@ export class ProvidersPage extends BasePage {
     this.m365ClientSecretInput = page.getByRole("textbox", { name: "Client Secret" });
     this.m365TenantIdInput = page.getByRole("textbox", { name: "Tenant ID" });
     this.m365CertificateContentInput = page.getByRole("textbox", { name: "Certificate Content" });
+
+    // Kubernetes provider form inputs
+    this.kubernetesContextInput = page.getByRole("textbox", { name: "Context" });
+    this.kubernetesKubeconfigContentInput = page.getByRole("textbox", { name: "Kubeconfig Content" });
     
     // Alias input
     this.aliasInput = page.getByRole("textbox", { name: "Provider alias (optional)" });
@@ -252,6 +280,13 @@ export class ProvidersPage extends BasePage {
     await this.waitForPageLoad();
   }
 
+  async selectKubernetesProvider(): Promise<void> {
+    // Select the Kubernetes provider
+
+    await this.kubernetesProviderRadio.click({ force: true });
+    await this.waitForPageLoad();
+  }
+
 
   async fillAWSProviderDetails(data: AWSProviderData): Promise<void> {
     // Fill the AWS provider details
@@ -278,6 +313,15 @@ export class ProvidersPage extends BasePage {
 
     await this.m365domainIdInput.fill(data.domainId);
 
+    if (data.alias) {
+      await this.aliasInput.fill(data.alias);
+    }
+  }
+
+  async fillKubernetesProviderDetails(data: KubernetesProviderData): Promise<void> {
+    // Fill the Kubernetes provider details
+
+    await this.kubernetesContextInput.fill(data.context);
     if (data.alias) {
       await this.aliasInput.fill(data.alias);
     }
@@ -493,6 +537,15 @@ export class ProvidersPage extends BasePage {
     }
   }
 
+  async fillKubernetesCredentials(credentials: KubernetesProviderCredential): Promise<void> {
+    // Fill the Kubernetes credentials form
+
+    if (credentials.kubeconfigContent) {
+      await this.kubernetesKubeconfigContentInput.fill(credentials.kubeconfigContent);
+    }
+  }
+
+
   async verifyPageLoaded(): Promise<void> {
     // Verify the providers page is loaded
 
@@ -532,6 +585,14 @@ export class ProvidersPage extends BasePage {
     await expect(this.m365TenantIdInput).toBeVisible();
     await expect(this.m365CertificateContentInput).toBeVisible();
   }
+
+  async verifyKubernetesCredentialsPageLoaded(): Promise<void> {
+    // Verify the Kubernetes credentials page is loaded
+
+    await expect(this.page).toHaveTitle(/Prowler/);
+    await expect(this.kubernetesContextInput).toBeVisible();
+  }
+
 
   async verifyLaunchScanPageLoaded(): Promise<void> {
     // Verify the launch scan page is loaded
