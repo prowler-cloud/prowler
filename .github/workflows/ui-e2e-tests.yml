@@ -1,9 +1,6 @@
 name: UI - E2E Tests
 
 on:
-  push:
-    branches:
-      - "PROWLER-182-kubernetes-add-and-connect-the-provider"
   pull_request:
     branches:
       - master
