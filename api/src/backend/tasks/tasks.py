@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from shutil import rmtree
@@ -30,6 +31,7 @@ from tasks.jobs.lighthouse_providers import (
     check_lighthouse_provider_connection,
     refresh_lighthouse_provider_models,
 )
+from tasks.jobs.report import generate_threatscore_report_job
 from tasks.jobs.scan import (
     aggregate_findings,
     create_compliance_requirements,
@@ -68,10 +70,15 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
         generate_outputs_task.si(
             scan_id=scan_id, provider_id=provider_id, tenant_id=tenant_id
         ),
-        check_integrations_task.si(
-            tenant_id=tenant_id,
-            provider_id=provider_id,
-            scan_id=scan_id,
+        group(
+            generate_threatscore_report_task.si(
+                tenant_id=tenant_id, scan_id=scan_id, provider_id=provider_id
+            ),
+            check_integrations_task.si(
+                tenant_id=tenant_id,
+                provider_id=provider_id,
+                scan_id=scan_id,
+            ),
         ),
     ).apply_async()
 
@@ -308,7 +315,7 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
 
     frameworks_bulk = Compliance.get_bulk(provider_type)
     frameworks_avail = get_compliance_frameworks(provider_type)
-    out_dir, comp_dir = _generate_output_directory(
+    out_dir, comp_dir, _ = _generate_output_directory(
         DJANGO_TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id
     )
 
@@ -411,7 +418,24 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
                 writer._data.clear()
 
     compressed = _compress_output_files(out_dir)
-    upload_uri = _upload_to_s3(tenant_id, compressed, scan_id)
+
+    upload_uri = _upload_to_s3(
+        tenant_id,
+        scan_id,
+        compressed,
+        os.path.basename(compressed),
+    )
+
+    compliance_dir_path = Path(comp_dir).parent
+    if compliance_dir_path.exists():
+        for artifact_path in sorted(compliance_dir_path.iterdir()):
+            if artifact_path.is_file():
+                _upload_to_s3(
+                    tenant_id,
+                    scan_id,
+                    str(artifact_path),
+                    f"compliance/{artifact_path.name}",
+                )
 
     # S3 integrations (need output_directory)
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
@@ -638,4 +662,22 @@ def jira_integration_task(
 ):
     return send_findings_to_jira(
         tenant_id, integration_id, project_key, issue_type, finding_ids
+    )
+
+
+@shared_task(
+    base=RLSTask,
+    name="scan-threatscore-report",
+    queue="scan-reports",
+)
+def generate_threatscore_report_task(tenant_id: str, scan_id: str, provider_id: str):
+    """
+    Task to generate a threatscore report for a given scan.
+    Args:
+        tenant_id (str): The tenant identifier.
+        scan_id (str): The scan identifier.
+        provider_id (str): The provider identifier.
+    """
+    return generate_threatscore_report_job(
+        tenant_id=tenant_id, scan_id=scan_id, provider_id=provider_id
     )

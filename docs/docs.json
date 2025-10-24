@@ -114,7 +114,8 @@
                 "group": "Tutorials",
                 "pages": [
                   "user-guide/tutorials/prowler-app-sso-entra",
-                  "user-guide/tutorials/bulk-provider-provisioning"
+                  "user-guide/tutorials/bulk-provider-provisioning",
+                  "user-guide/tutorials/aws-organizations-bulk-provisioning"
                 ]
               }
             ]
@@ -405,14 +406,6 @@
       "destination": "/user-guide/providers/gcp/getting-started-gcp"
     },
     {
-      "source": "/projects/prowler-open-source/en/latest/tutorials/prowler-app",
-      "destination": "/user-guide/tutorials/prowler-app#step-4-4%3A-kubernetes-credentials%3A"
-    },
-    {
-      "source": "/projects/prowler-open-source/en/latest/tutorials/prowler-app/#step-3-add-a-provider",
-      "destination": "/user-guide/tutorials/prowler-app#step-3-add-a-provider"
-    },
-    {
       "source": "/projects/prowler-open-source/en/latest/tutorials/microsoft365/getting-started-m365",
       "destination": "/user-guide/providers/microsoft365/getting-started-m365"
     },
@@ -431,6 +424,10 @@
     {
       "source": "/projects/prowler-saas/en/latest/:slug*",
       "destination": "https://docs.prowler.pro/en/latest/:slug*"
+    },
+    {
+      "source": "/projects/prowler-open-source/en/latest/tutorials/:slug*",
+      "destination": "/user-guide/tutorials/:slug*"
     }
   ]
 }
