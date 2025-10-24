@@ -1,13 +1,11 @@
 import json
 
-from collections import defaultdict
 from typing import Any
 
 import neo4j
 
 from cartography.intel.aws import iam as cartography_iam
 from celery.utils.log import get_task_logger
-from openai import containers
 
 from api.db_utils import rls_transaction
 from api.models import Resource, ResourceScanSummary
@@ -66,7 +64,7 @@ def _sync(
         update_tag,
     )
 
-    _sync_users(
+    users = _sync_users(
         tenant_id,
         provider_id,
         account_id,
@@ -76,7 +74,7 @@ def _sync(
         update_tag,
     )
 
-    _sync_groups(
+    groups = _sync_groups(
         tenant_id,
         provider_id,
         account_id,
@@ -86,7 +84,7 @@ def _sync(
         update_tag,
     )
 
-    _sync_roles(
+    roles = _sync_roles(
         tenant_id,
         provider_id,
         account_id,
@@ -103,7 +101,7 @@ def _sync(
         common_job_parameters,
     )
 
-    _sync_user_access_keys(
+    access_keys = _sync_user_access_keys(
         tenant_id,
         provider_id,
         account_id,
@@ -125,7 +123,12 @@ def _sync(
         stat_handler=cartography_iam.stat_handler,
     )
 
-    return {}
+    return {
+        "users": len(users),
+        "groups": len(groups),
+        "roles": len(roles),
+        "access_keys": len(access_keys),
+    }
 
 def _sync_users(
     tenant_id: str,
@@ -143,6 +146,8 @@ def _sync_users(
     cartography_iam.load_users(neo4j_session, transformed_user_data, account_id, update_tag)
     _sync_inline_policies(user_data["Users"], neo4j_session, update_tag, account_id)
     _sync_managed_policies(user_data["Users"], neo4j_session, update_tag, account_id)
+
+    return user_data["Users"]
 
 
 def _get_user_list_data(
@@ -312,6 +317,8 @@ def _sync_groups(
 
     _sync_managed_policies(group_data["Groups"], neo4j_session, update_tag, account_id)
 
+    return group_data["Groups"]
+
 
 def _get_group_list_data(
     tenant_id: str,
@@ -409,6 +416,8 @@ def _sync_roles(
 
     _sync_managed_policies(roles_data["Roles"], neo4j_session, update_tag, account_id)
 
+    return roles_data["Roles"]
+
 
 def _get_role_list_data(
     tenant_id: str,
@@ -491,15 +500,19 @@ def _sync_user_access_keys(
     user_data = _get_user_list_data(tenant_id, provider_id, scan_id, regions)
     user_access_keys = _pretransform_access_keys(user_data["Users"])
     access_key_data = cartography_iam.transform_access_keys(user_access_keys)
+
     cartography_iam.load_access_keys(
         neo4j_session, access_key_data, update_tag, account_id
     )
+
     cartography_iam.GraphJob.from_node_schema(
         cartography_iam.AccountAccessKeySchema(),
         common_job_parameters,
     ).run(
         neo4j_session,
     )
+
+    return access_key_data
 
 
 def _pretransform_access_keys(users: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:

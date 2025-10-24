@@ -136,15 +136,11 @@ def _get_and_load_s3_bucket_details(
 ) -> None:
     """
     Code based on `cartography.intel.aws.s3.get_s3_bucket_details` and `cartography.intel.aws.s3.load_s3_details`.
-    # TODO: Versions of the next functions are not implemented yet:
-        - `cartography.intel.aws.s3.parse_acl`.
-        - `cartography.intel.aws.s3.parse_policy` and
-          `cartography.intel.aws.s3.parse_policy_statements` as a single function, if not two.
     """
 
-    acls: list[dict[str, Any]] = []  # TODO
-    policies: list[dict[str, Any]] = []  # TODO
-    statements: list[dict[str, Any]] = []  # TODO
+    acls: list[dict[str, Any]] = []
+    policies: list[dict[str, Any]] = []
+    statements: list[dict[str, Any]] = []
     encryption_configs: list[dict[str, Any]] = []
     versioning_configs: list[dict[str, Any]] = []
     public_access_block_configs: list[dict[str, Any]] = []
@@ -152,19 +148,17 @@ def _get_and_load_s3_bucket_details(
     bucket_logging_configs: list[dict[str, Any]] = []
 
     for bucket_metadata in buckets_metadata:
-        parsed_acls = None  # TODO
-        parsed_policy = None  # TODO
-        parsed_statements = None  # TODO
-
         parsed_acls = _parse_s3_bucket_acl(bucket_metadata, account_id)
         if parsed_acls is not None:
-            acls.append(parsed_acls)
+            acls.extend(parsed_acls)
 
         parsed_policy = _parse_s3_bucket_policy(bucket_metadata)
         if parsed_policy is not None:
             policies.append(parsed_policy)
 
-        # TODO: More work
+        parsed_statements = _parse_s3_bucket_policy_statements(bucket_metadata)
+        if parsed_statements is not None:
+            statements.extend(parsed_statements)
 
         parsed_encryption = _parse_s3_bucket_encryption(bucket_metadata)
         if parsed_encryption is not None:
@@ -229,11 +223,33 @@ def _parse_s3_bucket_acl(bucket_metadata: dict[str, Any], account_id: str) -> di
             "Permission": grantee.get("permission"),
         })
 
-    return cartography_s3.parse_acl(bucket_metadata.get("name"), bucket_metadata.get("acl_grantees"), account_id)
+    return cartography_s3.parse_acl(acl, bucket_metadata.get("name"), account_id)
 
 
 def _parse_s3_bucket_policy(bucket_metadata: dict[str, Any]) -> dict[str, Any] | None:
-    return None  # TODO
+    """
+    Code based on `cartography.intel.aws.s3.parse_policy`.
+    """
+    if not bucket_metadata.get("policy"):
+        return None
+
+    policy = {
+        "Policy": json.dumps(bucket_metadata.get("policy")),
+    }
+    return cartography_s3.parse_policy(bucket_metadata.get("name"), policy)
+
+
+def _parse_s3_bucket_policy_statements(bucket_metadata: dict[str, Any]) -> list[dict[str, Any]] | None:
+    """
+    Code based on `cartography.intel.aws.s3.parse_policy_statements`.
+    """
+    if not bucket_metadata.get("policy"):
+        return None
+
+    policy = {
+        "Policy": json.dumps(bucket_metadata.get("policy")),
+    }
+    return cartography_s3.parse_policy_statements(bucket_metadata.get("name"), policy)
 
 
 def _parse_s3_bucket_encryption(bucket_metadata: dict[str, Any]) -> dict[str, Any] | None:
@@ -303,7 +319,6 @@ def _parse_s3_bucket_bucket_logging(bucket_metadata: dict[str, Any]) -> dict[str
 def _parse_s3_notifications(buckets_metadata: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """
     Code based on `cartography.intel.aws.s3.parse_notification_configuration`.
-    # TODO: Do a deeper check of this function
     """
 
     notifications: list[dict[str, Any]] = []

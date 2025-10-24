@@ -7,7 +7,6 @@ import neo4j
 
 from cartography.intel.aws import ecs as cartography_ecs
 from celery.utils.log import get_task_logger
-from openai import containers
 
 from api.db_utils import rls_transaction
 from api.models import Resource, ResourceScanSummary
