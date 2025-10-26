@@ -3008,14 +3008,18 @@ class LighthouseProviderConfigSerializer(RLSSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        # Support JSON:API fields filter: fields[lighthouse-providers]=credentials
+        # Support JSON:API fields filter: fields[lighthouse-providers]=credentials,base_url
         fields_param = self.context.get("request", None) and self.context[
             "request"
         ].query_params.get("fields[lighthouse-providers]", "")
 
         creds = instance.credentials_decoded
 
-        if fields_param == "credentials":
+        requested_fields = (
+            [f.strip() for f in fields_param.split(",")] if fields_param else []
+        )
+
+        if "credentials" in requested_fields:
             # Return full decrypted credentials JSON
             data["credentials"] = creds
         else:
