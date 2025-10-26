@@ -226,12 +226,22 @@ export const updateTenantConfig = async (config: {
 };
 
 /**
- * Get API key from the default provider (or first active provider)
+ * Get credentials and configuration from the specified provider (or first active provider)
+ * Returns an object containing:
+ * - credentials: varies by provider type
+ *   - OpenAI: { api_key: string }
+ *   - Bedrock: { access_key_id: string, secret_access_key: string, region: string }
+ *   - OpenAI Compatible: { api_key: string }
+ * - base_url: string | undefined (for OpenAI Compatible providers)
  */
-export const getProviderApiKey = async (providerType?: string) => {
+export const getProviderCredentials = async (
+  providerType?: string,
+): Promise<{ credentials: Record<string, any>; base_url?: string }> => {
   const headers = await getAuthHeaders({ contentType: false });
   let url: string;
 
+  // Note: fields[lighthouse-providers]=credentials is required to get decrypted credentials
+  // base_url is not sensitive and is returned by default
   if (providerType) {
     url = `${apiBaseUrl}/lighthouse/providers?filter[provider_type]=${providerType}&filter[is_active]=true&fields[lighthouse-providers]=credentials`;
   } else {
@@ -247,13 +257,17 @@ export const getProviderApiKey = async (providerType?: string) => {
     const data = await response.json();
 
     if (data?.data && data.data.length > 0) {
-      return data.data[0].attributes.credentials?.api_key || "";
+      const provider = data.data[0].attributes;
+      return {
+        credentials: provider.credentials || {},
+        base_url: provider.base_url,
+      };
     }
 
-    return "";
+    return { credentials: {} };
   } catch (error) {
-    console.error("[Server] Error in getProviderApiKey:", error);
-    return "";
+    console.error("[Server] Error in getProviderCredentials:", error);
+    return { credentials: {} };
   }
 };
 

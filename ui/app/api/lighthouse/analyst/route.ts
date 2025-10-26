@@ -15,9 +15,11 @@ export async function POST(req: Request) {
     const {
       messages,
       model,
+      provider,
     }: {
       messages: UIMessage[];
       model?: string;
+      provider?: string;
     } = await req.json();
 
     if (!messages) {
@@ -72,6 +74,7 @@ export async function POST(req: Request) {
     // Prepare runtime config with client-provided model
     const runtimeConfig: RuntimeConfig = {
       model,
+      provider,
     };
 
     const app = await initLighthouseWorkflow(runtimeConfig);

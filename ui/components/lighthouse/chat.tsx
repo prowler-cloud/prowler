@@ -185,6 +185,7 @@ export const Chat = ({
         credentials: "same-origin",
         body: () => ({
           model: selectedModelRef.current.modelId,
+          provider: selectedModelRef.current.providerId,
         }),
       }),
       experimental_throttle: 100,
