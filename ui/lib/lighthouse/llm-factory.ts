@@ -1,3 +1,4 @@
+import { ChatBedrockConverse } from "@langchain/aws";
 import { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import { ChatOpenAI } from "@langchain/openai";
 
@@ -50,7 +51,27 @@ export function createLLM(config: LLMConfig): BaseChatModel {
       });
 
     case "bedrock":
-      throw new Error("Provider bedrock not yet implemented");
+      if (
+        !config.credentials.access_key_id ||
+        !config.credentials.secret_access_key ||
+        !config.credentials.region
+      ) {
+        throw new Error(
+          "Bedrock provider requires access_key_id, secret_access_key, and region",
+        );
+      }
+      return new ChatBedrockConverse({
+        model: config.model,
+        region: config.credentials.region,
+        credentials: {
+          accessKeyId: config.credentials.access_key_id,
+          secretAccessKey: config.credentials.secret_access_key,
+        },
+        streaming: config.streaming,
+        tags: config.tags,
+        maxTokens: config.modelParams?.maxTokens,
+        temperature: config.modelParams?.temperature,
+      });
 
     default:
       throw new Error(`Unknown provider type: ${config.provider}`);

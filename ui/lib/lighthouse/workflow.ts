@@ -85,7 +85,7 @@ export async function initLighthouseWorkflow(runtimeConfig?: RuntimeConfig) {
     model: modelId,
     credentials,
     baseUrl,
-    streaming: false,
+    streaming: true,
     tags: ["agent"],
     modelParams,
   });
