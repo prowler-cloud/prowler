@@ -10,6 +10,11 @@ import {
 } from "@/actions/lighthouse/lighthouse";
 import { CustomButton } from "@/components/ui/custom";
 
+import {
+  getProviderIdByType,
+  refreshModelsInBackground,
+} from "./llm-provider-utils";
+
 interface SelectModelProps {
   provider: string;
   mode?: string;
@@ -34,11 +39,18 @@ export const SelectModel = ({
   const [error, setError] = useState<string | null>(null);
   const isEditMode = mode === "edit";
 
-  const fetchModels = async () => {
+  const fetchModels = async (triggerRefresh: boolean = false) => {
     setIsLoading(true);
     setError(null);
 
     try {
+      // If triggerRefresh is true, trigger background job to refetch models from LLM provider API
+      if (triggerRefresh) {
+        const providerId = await getProviderIdByType(provider);
+        await refreshModelsInBackground(providerId);
+      }
+
+      // Fetch models from database
       const result = await getLighthouseModelIds(provider);
 
       if (result.errors) {
@@ -128,7 +140,7 @@ export const SelectModel = ({
           </p>
         </div>
         <button
-          onClick={fetchModels}
+          onClick={() => fetchModels(true)}
           disabled={isLoading}
           className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-800"
           aria-label="Refresh models"

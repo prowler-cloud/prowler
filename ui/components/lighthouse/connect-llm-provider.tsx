@@ -7,18 +7,14 @@ import { useEffect, useState } from "react";
 import {
   createLighthouseProvider,
   getLighthouseProviderByType,
-  refreshProviderModels,
-  testProviderConnection,
   updateLighthouseProviderByType,
 } from "@/actions/lighthouse/lighthouse";
-import { getTask } from "@/actions/task/tasks";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
-import { checkTaskStatus } from "@/lib/helper";
 
 import {
   getCollapsibleFields,
@@ -29,6 +25,7 @@ import {
 import {
   isProviderFormValid,
   shouldTestConnection,
+  testAndRefreshModels,
 } from "./llm-provider-utils";
 
 interface ConnectLLMProviderProps {
@@ -174,47 +171,6 @@ export const ConnectLLMProvider = ({
     }
   };
 
-  // Test connection and refresh models
-  const testAndRefreshModels = async (providerId: string) => {
-    // Test connection
-    setConnectionPhase("Verifying");
-    const connectionResult = await testProviderConnection(providerId);
-    const connectionTaskData = unwrapResult<{ id: string }>(
-      connectionResult,
-      "Failed to start connection test",
-    );
-
-    const connectionStatus = await checkTaskStatus(connectionTaskData.id);
-    if (!connectionStatus.completed) {
-      throw new Error(connectionStatus.error || "Connection test failed");
-    }
-
-    const connectionTask = await getTask(connectionTaskData.id);
-    const { connected, error: connectionError } =
-      connectionTask.data.attributes.result;
-    if (!connected) {
-      throw new Error(connectionError || "Connection test failed");
-    }
-
-    // Refresh models
-    setConnectionPhase("Loading models");
-    const modelsResult = await refreshProviderModels(providerId);
-    const modelsTaskData = unwrapResult<{ id: string }>(
-      modelsResult,
-      "Failed to start model refresh",
-    );
-
-    const modelsStatus = await checkTaskStatus(modelsTaskData.id);
-    if (!modelsStatus.completed) {
-      throw new Error(modelsStatus.error || "Model refresh failed");
-    }
-
-    const modelsTask = await getTask(modelsTaskData.id);
-    if (modelsTask.data.attributes.result.error) {
-      throw new Error(modelsTask.data.attributes.result.error);
-    }
-  };
-
   // Main handler for connect/update
   const handleConnect = async () => {
     if (!providerConfig) return;
@@ -229,7 +185,9 @@ export const ConnectLLMProvider = ({
 
       // Step 2: Test connection only if credentials were provided
       if (shouldTestConnection(provider, formData)) {
+        setConnectionPhase("Verifying");
         await testAndRefreshModels(providerId);
+        setConnectionPhase("Loading models");
       }
 
       // Step 3: Navigate to model selection
