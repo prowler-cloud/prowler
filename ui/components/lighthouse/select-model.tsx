@@ -66,15 +66,28 @@ export const SelectModel = ({
       const currentConfig = await getTenantConfig();
       const existingDefaults =
         currentConfig?.data?.attributes?.default_models || {};
+      const existingDefaultProvider =
+        currentConfig?.data?.attributes?.default_provider || "";
 
       const mergedDefaults = {
         ...existingDefaults,
         [provider]: selectedModel,
       };
 
-      const result = await updateTenantConfig({
+      // Prepare update payload
+      const updatePayload: {
+        default_models: Record<string, string>;
+        default_provider?: string;
+      } = {
         default_models: mergedDefaults,
-      });
+      };
+
+      // Set this provider as default if no default provider is currently set
+      if (!existingDefaultProvider) {
+        updatePayload.default_provider = provider;
+      }
+
+      const result = await updateTenantConfig(updatePayload);
 
       if (result.errors) {
         throw new Error(
