@@ -4,7 +4,7 @@ import { Icon } from "@iconify/react";
 import { useEffect, useState } from "react";
 
 import {
-  getLighthouseModels,
+  getLighthouseModelIds,
   getTenantConfig,
   updateTenantConfig,
 } from "@/actions/lighthouse/lighthouse";
@@ -16,6 +16,11 @@ interface SelectModelProps {
   onSelect: () => void;
 }
 
+interface Model {
+  id: string;
+  name: string;
+}
+
 export const SelectModel = ({
   provider,
   mode = "create",
@@ -24,7 +29,7 @@ export const SelectModel = ({
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [models, setModels] = useState<string[]>([]);
+  const [models, setModels] = useState<Model[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
   const isEditMode = mode === "edit";
@@ -34,15 +39,14 @@ export const SelectModel = ({
     setError(null);
 
     try {
-      const result = await getLighthouseModels(provider);
+      const result = await getLighthouseModelIds(provider);
 
       if (result.errors) {
         throw new Error(result.errors[0]?.detail || "Failed to fetch models");
       }
 
-      const modelIds =
-        result.data?.map((model: any) => model.attributes.model_id) || [];
-      setModels(modelIds);
+      const models = result.data || [];
+      setModels(models);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
       setModels([]);
@@ -104,8 +108,10 @@ export const SelectModel = ({
   };
 
   // Filter models based on search query
-  const filteredModels = models.filter((model) =>
-    model.toLowerCase().includes(searchQuery.toLowerCase()),
+  const filteredModels = models.filter(
+    (model) =>
+      model.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      model.id.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
@@ -180,25 +186,25 @@ export const SelectModel = ({
         <div className="max-h-[calc(100vh-380px)] overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-700">
           {filteredModels.map((model) => (
             <label
-              key={model}
-              htmlFor={`model-${provider}-${model}`}
-              aria-label={model}
+              key={model.id}
+              htmlFor={`model-${provider}-${model.id}`}
+              aria-label={model.name}
               className={`block cursor-pointer border-b border-gray-200 px-6 py-4 transition-colors last:border-b-0 dark:border-gray-700 ${
-                selectedModel === model
+                selectedModel === model.id
                   ? "bg-blue-50 dark:bg-blue-900/20"
                   : "hover:bg-gray-50 dark:hover:bg-gray-800"
               }`}
             >
               <div className="flex items-center gap-4">
                 <input
-                  id={`model-${provider}-${model}`}
+                  id={`model-${provider}-${model.id}`}
                   name="model"
                   type="radio"
-                  checked={selectedModel === model}
-                  onChange={() => setSelectedModel(model)}
+                  checked={selectedModel === model.id}
+                  onChange={() => setSelectedModel(model.id)}
                   className="h-4 w-4 cursor-pointer"
                 />
-                <span className="text-sm font-medium">{model}</span>
+                <span className="text-sm font-medium">{model.name}</span>
               </div>
             </label>
           ))}

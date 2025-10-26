@@ -6,7 +6,7 @@ import { ChevronDown, Copy, Plus, RotateCcw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Streamdown } from "streamdown";
 
-import { getLighthouseModels } from "@/actions/lighthouse/lighthouse";
+import { getLighthouseModelIds } from "@/actions/lighthouse/lighthouse";
 import { Action, Actions } from "@/components/lighthouse/ai-elements/actions";
 import {
   DropdownMenu,
@@ -139,7 +139,7 @@ export const Chat = ({
     });
 
     try {
-      const response = await getLighthouseModels(providerId);
+      const response = await getLighthouseModelIds(providerId);
 
       if (response.errors) {
         console.error(
@@ -150,11 +150,8 @@ export const Chat = ({
       }
 
       if (response.data && Array.isArray(response.data)) {
-        // Transform the API response to our model format
-        const models: Model[] = response.data.map((item: any) => ({
-          id: item.attributes.model_id,
-          name: item.attributes.model_id,
-        }));
+        // Use the model data directly from the API
+        const models: Model[] = response.data;
 
         // Update the provider's models
         setProviders((prev) =>

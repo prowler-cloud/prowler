@@ -148,20 +148,26 @@ export const getLighthouseModels = async (providerType: string) => {
 };
 
 /**
- * Get only model identifiers for a provider type.
+ * Get only model identifiers and names for a provider type.
  * Returns minimal data to the client to avoid over-serializing API payloads.
  */
 export const getLighthouseModelIds = async (
   providerType: string,
-): Promise<{ data?: string[]; errors?: Array<{ detail: string }> }> => {
+): Promise<{
+  data?: Array<{ id: string; name: string }>;
+  errors?: Array<{ detail: string }>;
+}> => {
   const result = await getLighthouseModels(providerType);
   if ((result as any).errors) return result as any;
-  const ids = Array.isArray((result as any).data)
+  const models = Array.isArray((result as any).data)
     ? (result as any).data
-        .map((m: any) => m?.attributes?.model_id)
-        .filter((v: any) => typeof v === "string")
+        .map((m: any) => ({
+          id: m?.attributes?.model_id,
+          name: m?.attributes?.model_name || m?.attributes?.model_id,
+        }))
+        .filter((v: any) => typeof v.id === "string")
     : [];
-  return { data: ids };
+  return { data: models };
 };
 
 /**
@@ -452,7 +458,9 @@ export const getLighthouseProvidersConfig = async () => {
             if (data.data && data.data.length > 0) {
               defaultModel = {
                 id: data.data[0].attributes.model_id,
-                name: data.data[0].attributes.model_id, // Use model_id as display name for now
+                name:
+                  data.data[0].attributes.model_name ||
+                  data.data[0].attributes.model_id,
               };
             }
           } catch (error) {
