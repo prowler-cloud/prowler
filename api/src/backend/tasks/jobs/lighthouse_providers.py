@@ -164,10 +164,11 @@ def check_lighthouse_provider_connection(provider_config_id: str) -> Dict:
                 }
 
             # Test connection by hitting the models endpoint
+            # Note: base_url should include version (e.g., https://openrouter.ai/api/v1)
             headers = {"Authorization": f"Bearer {params['api_key']}"}
             try:
                 resp = requests.get(
-                    f"{params['base_url'].rstrip('/')}/v1/models",
+                    f"{params['base_url'].rstrip('/')}/models",
                     headers=headers,
                     timeout=15,
                 )
@@ -221,9 +222,11 @@ def _fetch_openai_compatible_models(base_url: str, api_key: str) -> Dict[str, st
 
     Returns a mapping of model_id -> model_name. If the provider doesn't expose
     a models catalog, returns an empty dict.
+
+    Note: base_url should include version (e.g., https://openrouter.ai/api/v1)
     """
     headers = {"Authorization": f"Bearer {api_key}"}
-    url = f"{base_url.rstrip('/')}/v1/models"
+    url = f"{base_url.rstrip('/')}/models"
     resp = requests.get(url, headers=headers, timeout=15)
     if resp.status_code >= 400:
         raise Exception(f"HTTP {resp.status_code}: {resp.text[:200]}")
