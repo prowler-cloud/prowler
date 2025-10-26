@@ -27,8 +27,8 @@ import {
   hasCollapsibleFields,
 } from "./llm-provider-registry";
 import {
+  isProviderFormValid,
   shouldTestConnection,
-  validateLLMCredentials,
 } from "./llm-provider-utils";
 
 interface ConnectLLMProviderProps {
@@ -273,7 +273,7 @@ export const ConnectLLMProvider = ({
   const mainFields = getMainFields(provider);
   const collapsibleFields = getCollapsibleFields(provider);
   const hasCollapsible = hasCollapsibleFields(provider);
-  const isFormValid = validateLLMCredentials(provider, formData, isEditMode);
+  const isFormValid = isProviderFormValid(provider, formData, isEditMode);
 
   // Button text configuration
   const buttonText = {

@@ -4,7 +4,7 @@ import { getProviderConfig } from "./llm-provider-registry";
 
 export type LLMCredentialsFormData = Record<string, string>;
 
-export const validateLLMCredentials = (
+export const isProviderFormValid = (
   providerId: string,
   formData: LLMCredentialsFormData,
   isEditMode: boolean = false,
@@ -16,7 +16,7 @@ export const validateLLMCredentials = (
   }
 
   if (isEditMode) {
-    return config.fields.some((field) => formData[field.name]?.trim());
+    return true;
   }
 
   return config.fields
