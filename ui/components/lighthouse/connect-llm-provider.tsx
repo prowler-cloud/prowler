@@ -60,6 +60,7 @@ export const ConnectLLMProvider = ({
   const [existingProviderId, setExistingProviderId] = useState<string | null>(
     null,
   );
+  const [connectionPhase, setConnectionPhase] = useState<string>("");
 
   // Fetch existing provider data in edit mode
   useEffect(() => {
@@ -176,6 +177,7 @@ export const ConnectLLMProvider = ({
   // Test connection and refresh models
   const testAndRefreshModels = async (providerId: string) => {
     // Test connection
+    setConnectionPhase("Verifying");
     const connectionResult = await testProviderConnection(providerId);
     const connectionTaskData = unwrapResult<{ id: string }>(
       connectionResult,
@@ -195,6 +197,7 @@ export const ConnectLLMProvider = ({
     }
 
     // Refresh models
+    setConnectionPhase("Loading models");
     const modelsResult = await refreshProviderModels(providerId);
     const modelsTaskData = unwrapResult<{ id: string }>(
       modelsResult,
@@ -218,6 +221,7 @@ export const ConnectLLMProvider = ({
 
     setIsLoading(true);
     setError(null);
+    setConnectionPhase("Connecting");
 
     try {
       // Step 1: Create or update provider
@@ -236,6 +240,7 @@ export const ConnectLLMProvider = ({
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setIsLoading(false);
+      setConnectionPhase("");
     }
   };
 
@@ -269,6 +274,41 @@ export const ConnectLLMProvider = ({
   const collapsibleFields = getCollapsibleFields(provider);
   const hasCollapsible = hasCollapsibleFields(provider);
   const isFormValid = validateLLMCredentials(provider, formData, isEditMode);
+
+  // Button text configuration
+  const buttonText = {
+    connect: {
+      idle: "Connect",
+      connecting: "Connecting...",
+      verifying: "Verifying...",
+      loadingModels: "Loading models...",
+    },
+    edit: {
+      idle: "Continue",
+      updating: "Updating...",
+    },
+  };
+
+  // Determine current button text
+  const getButtonText = () => {
+    if (!isLoading) {
+      return isEditMode ? buttonText.edit.idle : buttonText.connect.idle;
+    }
+
+    if (isEditMode) {
+      return buttonText.edit.updating;
+    }
+
+    // Connect mode - use connectionPhase if available
+    switch (connectionPhase) {
+      case "Verifying":
+        return buttonText.connect.verifying;
+      case "Loading models":
+        return buttonText.connect.loadingModels;
+      default:
+        return buttonText.connect.connecting;
+    }
+  };
 
   return (
     <div className="flex w-full flex-col gap-6">
@@ -386,13 +426,7 @@ export const ConnectLLMProvider = ({
             isDisabled={!isFormValid}
             onPress={handleConnect}
           >
-            {isLoading
-              ? isEditMode
-                ? "Updating..."
-                : "Connecting..."
-              : isEditMode
-                ? "Continue"
-                : "Connect"}
+            {getButtonText()}
           </CustomButton>
         </div>
       </div>
