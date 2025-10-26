@@ -9,6 +9,8 @@ import {
 } from "@/actions/lighthouse/lighthouse";
 import { CustomButton } from "@/components/ui/custom";
 
+import { getAllProviders } from "./llm-provider-registry";
+
 type LLMProvider = {
   id: string;
   provider: string;
@@ -20,27 +22,6 @@ type LLMProvider = {
   isDefaultProvider: boolean;
 };
 
-const providerInfo: Record<
-  string,
-  { name: string; description: string; icon: string }
-> = {
-  openai: {
-    name: "OpenAI",
-    description: "Industry-leading GPT models for general-purpose AI",
-    icon: "simple-icons:openai",
-  },
-  bedrock: {
-    name: "Amazon Bedrock",
-    description: "AWS-managed AI with Claude, Llama, Titan & more",
-    icon: "simple-icons:amazonwebservices",
-  },
-  "openai-compatible": {
-    name: "OpenAI Compatible",
-    description: "Connect to custom OpenAI-compatible endpoints",
-    icon: "simple-icons:openai",
-  },
-};
-
 export const LLMProvidersTable = () => {
   const [providers, setProviders] = useState<LLMProvider[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -49,7 +30,7 @@ export const LLMProvidersTable = () => {
     const fetchProviders = async () => {
       setIsLoading(true);
       try {
-        // Fetch connected providers
+        // Fetch connected providers from API
         const result = await getLighthouseProviders();
         const connectedProviders = new Map<string, any>();
 
@@ -66,41 +47,37 @@ export const LLMProvidersTable = () => {
         const defaultProvider =
           configResult.data?.attributes?.default_provider || "";
 
-        // Build the full provider list
-        const allProviders: LLMProvider[] = Object.entries(providerInfo).map(
-          ([id, info]) => {
-            const connected = connectedProviders.get(id);
-            const defaultModel = defaultModels[id] || "";
+        // Build provider list from registry
+        const allProviders: LLMProvider[] = getAllProviders().map((config) => {
+          const connected = connectedProviders.get(config.id);
+          const defaultModel = defaultModels[config.id] || "";
 
-            return {
-              id,
-              provider: info.name,
-              description: info.description,
-              icon: info.icon,
-              defaultModel,
-              isConnected: !!connected,
-              isActive: connected?.attributes?.is_active || false,
-              isDefaultProvider: id === defaultProvider,
-            };
-          },
-        );
+          return {
+            id: config.id,
+            provider: config.name,
+            description: config.description,
+            icon: config.icon,
+            defaultModel,
+            isConnected: !!connected,
+            isActive: connected?.attributes?.is_active || false,
+            isDefaultProvider: config.id === defaultProvider,
+          };
+        });
 
         setProviders(allProviders);
       } catch (error) {
         console.error("Failed to fetch providers:", error);
-        // Fallback to showing all providers as not connected
-        const allProviders: LLMProvider[] = Object.entries(providerInfo).map(
-          ([id, info]) => ({
-            id,
-            provider: info.name,
-            description: info.description,
-            icon: info.icon,
-            defaultModel: "",
-            isConnected: false,
-            isActive: false,
-            isDefaultProvider: false,
-          }),
-        );
+        // Fallback to showing all providers from registry as not connected
+        const allProviders: LLMProvider[] = getAllProviders().map((config) => ({
+          id: config.id,
+          provider: config.name,
+          description: config.description,
+          icon: config.icon,
+          defaultModel: "",
+          isConnected: false,
+          isActive: false,
+          isDefaultProvider: false,
+        }));
         setProviders(allProviders);
       } finally {
         setIsLoading(false);
@@ -152,9 +129,8 @@ export const LLMProvidersTable = () => {
       <h2 className="mb-4 text-xl font-semibold">LLM Providers</h2>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {providers.map((provider) => {
-          const connectable =
-            provider.id === "openai" || provider.id === "bedrock";
-          const showConnect = !provider.isConnected && connectable;
+          // Show Connect button if not connected, Configure if connected
+          const showConnect = !provider.isConnected;
           const showConfigure = provider.isConnected;
 
           return (
@@ -162,6 +138,7 @@ export const LLMProvidersTable = () => {
               key={provider.id}
               className="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900"
             >
+              {/* Header */}
               <div className="flex items-center gap-3">
                 <Icon icon={provider.icon} width={40} height={40} />
                 <div className="flex flex-1 flex-col">
@@ -181,6 +158,7 @@ export const LLMProvidersTable = () => {
                 </div>
               </div>
 
+              {/* Status and Model Info */}
               <div className="flex-grow space-y-3">
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -213,6 +191,7 @@ export const LLMProvidersTable = () => {
                 )}
               </div>
 
+              {/* Action Button */}
               {showConnect && (
                 <CustomButton
                   asLink={`/lighthouse/config/connect?provider=${provider.id}`}
@@ -236,19 +215,6 @@ export const LLMProvidersTable = () => {
                   className="w-full"
                 >
                   Configure
-                </CustomButton>
-              )}
-
-              {!showConnect && !showConfigure && (
-                <CustomButton
-                  ariaLabel={`Connect ${provider.provider}`}
-                  variant="solid"
-                  color="action"
-                  size="md"
-                  isDisabled
-                  className="w-full"
-                >
-                  Coming Soon
                 </CustomButton>
               )}
             </div>

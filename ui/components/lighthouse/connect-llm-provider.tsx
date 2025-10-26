@@ -20,6 +20,17 @@ import {
 import { CustomButton } from "@/components/ui/custom";
 import { checkTaskStatus } from "@/lib/helper";
 
+import {
+  getCollapsibleFields,
+  getMainFields,
+  getProviderConfig,
+  hasCollapsibleFields,
+} from "./llm-provider-registry";
+import {
+  shouldTestConnection,
+  validateLLMCredentials,
+} from "./llm-provider-utils";
+
 interface ConnectLLMProviderProps {
   provider: string;
   mode?: string;
@@ -30,20 +41,18 @@ type AsyncResult<T = any> = {
   errors?: Array<{ detail: string }>;
 };
 
+type FormData = Record<string, string>;
+
 export const ConnectLLMProvider = ({
   provider,
   mode = "create",
 }: ConnectLLMProviderProps) => {
   const router = useRouter();
-  const [openAIForm, setOpenAIForm] = useState({
-    apiKey: "",
-    baseUrl: "",
-  });
-  const [bedrockForm, setBedrockForm] = useState({
-    accessKeyId: "",
-    secretAccessKey: "",
-    region: "",
-  });
+  const providerConfig = getProviderConfig(provider);
+  const isEditMode = mode === "edit";
+
+  // State
+  const [formData, setFormData] = useState<FormData>({});
   const [isAdditionalOpen, setIsAdditionalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
@@ -52,28 +61,15 @@ export const ConnectLLMProvider = ({
     null,
   );
 
-  const providerName =
-    provider === "bedrock"
-      ? "Amazon Bedrock"
-      : provider === "openai-compatible"
-        ? "OpenAI Compatible"
-        : "OpenAI";
-
-  const isBedrock = provider === "bedrock";
-  const isOpenAI = provider === "openai";
-  const isOpenAICompatible = provider === "openai-compatible";
-  const isEditMode = mode === "edit";
-
-  // Fetch existing provider data if in edit mode
+  // Fetch existing provider data in edit mode
   useEffect(() => {
-    const fetchProviderData = async () => {
-      if (!isEditMode) return;
+    if (!isEditMode || !providerConfig) return;
 
+    const fetchProviderData = async () => {
       setIsFetching(true);
       setError(null);
 
       try {
-        // Lookup by provider type
         const result = await getLighthouseProviderByType(provider);
 
         if (result.errors) {
@@ -83,16 +79,17 @@ export const ConnectLLMProvider = ({
         }
 
         const providerData = result.data.attributes;
-        // Only pre-populate base URL for providers that support it
-        if ((isOpenAI || isOpenAICompatible) && providerData.base_url) {
-          setOpenAIForm((prev) => ({
+
+        // Pre-populate non-credential fields (like base_url)
+        const collapsibleFields = getCollapsibleFields(provider);
+        if (collapsibleFields.length > 0 && providerData.base_url) {
+          setFormData((prev) => ({
             ...prev,
-            baseUrl: providerData.base_url,
+            base_url: providerData.base_url,
           }));
           setIsAdditionalOpen(true);
         }
 
-        // Store ID internally only
         setExistingProviderId(result.data.id);
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err));
@@ -102,9 +99,9 @@ export const ConnectLLMProvider = ({
     };
 
     fetchProviderData();
-  }, [isEditMode, provider, isOpenAI, isOpenAICompatible]);
+  }, [isEditMode, provider, providerConfig]);
 
-  // Helper to handle API results and extract data or throw error
+  // Helper: Extract data from API result or throw error
   const unwrapResult = <T,>(result: AsyncResult<T>, fallbackMsg: string): T => {
     if (result.errors) {
       throw new Error(result.errors[0]?.detail || fallbackMsg);
@@ -115,137 +112,123 @@ export const ConnectLLMProvider = ({
     return result.data;
   };
 
+  // Build API payload from form data
+  const buildPayload = (): Record<string, any> => {
+    if (!providerConfig) return {};
+
+    const payload: Record<string, any> = {};
+
+    // Separate credential and non-credential fields
+    const credentialFields = providerConfig.fields.filter(
+      (f) => f.requiresConnectionTest,
+    );
+    const nonCredentialFields = providerConfig.fields.filter(
+      (f) => !f.requiresConnectionTest,
+    );
+
+    // Build credentials object if any credential field has a value
+    const credentials: Record<string, string> = {};
+    credentialFields.forEach((field) => {
+      if (formData[field.name]) {
+        credentials[field.name] = formData[field.name];
+      }
+    });
+
+    if (Object.keys(credentials).length > 0) {
+      payload.credentials = credentials;
+    }
+
+    // Add non-credential fields to root level
+    nonCredentialFields.forEach((field) => {
+      if (formData[field.name]) {
+        payload[field.name] = formData[field.name];
+      }
+    });
+
+    return payload;
+  };
+
+  // Create or update provider
+  const saveProvider = async (): Promise<string> => {
+    const payload = buildPayload();
+
+    if (isEditMode) {
+      // Update existing provider
+      if (Object.keys(payload).length > 0) {
+        await updateLighthouseProviderByType(provider, payload);
+      }
+      return existingProviderId!;
+    } else {
+      // Create new provider
+      const createResult = await createLighthouseProvider({
+        provider_type: provider,
+        credentials: payload.credentials || {},
+        ...(payload.base_url && { base_url: payload.base_url }),
+      });
+      const providerData = unwrapResult<{ id: string }>(
+        createResult,
+        "Failed to create provider",
+      );
+      return providerData.id;
+    }
+  };
+
+  // Test connection and refresh models
+  const testAndRefreshModels = async (providerId: string) => {
+    // Test connection
+    const connectionResult = await testProviderConnection(providerId);
+    const connectionTaskData = unwrapResult<{ id: string }>(
+      connectionResult,
+      "Failed to start connection test",
+    );
+
+    const connectionStatus = await checkTaskStatus(connectionTaskData.id);
+    if (!connectionStatus.completed) {
+      throw new Error(connectionStatus.error || "Connection test failed");
+    }
+
+    const connectionTask = await getTask(connectionTaskData.id);
+    const { connected, error: connectionError } =
+      connectionTask.data.attributes.result;
+    if (!connected) {
+      throw new Error(connectionError || "Connection test failed");
+    }
+
+    // Refresh models
+    const modelsResult = await refreshProviderModels(providerId);
+    const modelsTaskData = unwrapResult<{ id: string }>(
+      modelsResult,
+      "Failed to start model refresh",
+    );
+
+    const modelsStatus = await checkTaskStatus(modelsTaskData.id);
+    if (!modelsStatus.completed) {
+      throw new Error(modelsStatus.error || "Model refresh failed");
+    }
+
+    const modelsTask = await getTask(modelsTaskData.id);
+    if (modelsTask.data.attributes.result.error) {
+      throw new Error(modelsTask.data.attributes.result.error);
+    }
+  };
+
+  // Main handler for connect/update
   const handleConnect = async () => {
+    if (!providerConfig) return;
+
     setIsLoading(true);
     setError(null);
 
     try {
-      let providerId = existingProviderId;
+      // Step 1: Create or update provider
+      const providerId = await saveProvider();
 
-      if (isEditMode) {
-        // Update existing provider by type
-        if (isBedrock) {
-          const anyProvided =
-            bedrockForm.accessKeyId ||
-            bedrockForm.secretAccessKey ||
-            bedrockForm.region;
-          if (anyProvided) {
-            if (
-              !bedrockForm.accessKeyId.trim() ||
-              !bedrockForm.secretAccessKey.trim() ||
-              !bedrockForm.region.trim()
-            ) {
-              throw new Error(
-                "All fields (Access Key ID, Secret Access Key, Region) are required.",
-              );
-            }
-            const updateResult = await updateLighthouseProviderByType(
-              provider,
-              {
-                credentials: {
-                  access_key_id: bedrockForm.accessKeyId,
-                  secret_access_key: bedrockForm.secretAccessKey,
-                  region: bedrockForm.region,
-                },
-              },
-            );
-            unwrapResult(updateResult, "Failed to update provider");
-          }
-        } else {
-          if (openAIForm.apiKey) {
-            const updateResult = await updateLighthouseProviderByType(
-              provider,
-              {
-                credentials: { api_key: openAIForm.apiKey },
-                base_url: openAIForm.baseUrl || undefined,
-              },
-            );
-            unwrapResult(updateResult, "Failed to update provider");
-          } else if (openAIForm.baseUrl) {
-            // Update only base URL if no API key provided
-            const updateResult = await updateLighthouseProviderByType(
-              provider,
-              {
-                base_url: openAIForm.baseUrl || undefined,
-              },
-            );
-            unwrapResult(updateResult, "Failed to update provider");
-          }
-        }
-        // providerId already set from useEffect
-      } else {
-        // Create new provider
-        const createResult = await createLighthouseProvider(
-          isBedrock
-            ? {
-                provider_type: provider,
-                credentials: {
-                  access_key_id: bedrockForm.accessKeyId,
-                  secret_access_key: bedrockForm.secretAccessKey,
-                  region: bedrockForm.region,
-                },
-              }
-            : {
-                provider_type: provider,
-                credentials: { api_key: openAIForm.apiKey },
-                base_url: openAIForm.baseUrl || undefined,
-              },
-        );
-        const providerData = unwrapResult<{ id: string }>(
-          createResult,
-          "Failed to create provider",
-        );
-        providerId = providerData.id;
+      // Step 2: Test connection only if credentials were provided
+      if (shouldTestConnection(provider, formData)) {
+        await testAndRefreshModels(providerId);
       }
 
-      // Test connection (only if credentials were updated or it's a new provider)
-      if (
-        !isEditMode ||
-        (isBedrock
-          ? !!(
-              bedrockForm.accessKeyId &&
-              bedrockForm.secretAccessKey &&
-              bedrockForm.region
-            )
-          : !!(openAIForm.apiKey || openAIForm.baseUrl))
-      ) {
-        const connectionResult = await testProviderConnection(providerId!);
-        const connectionTaskData = unwrapResult<{ id: string }>(
-          connectionResult,
-          "Failed to start connection test",
-        );
-
-        const connectionStatus = await checkTaskStatus(connectionTaskData.id);
-        if (!connectionStatus.completed) {
-          throw new Error(connectionStatus.error || "Connection test failed");
-        }
-
-        const connectionTask = await getTask(connectionTaskData.id);
-        const { connected, error: connectionError } =
-          connectionTask.data.attributes.result;
-        if (!connected) {
-          throw new Error(connectionError || "Connection test failed");
-        }
-
-        // Refresh models (only if connection was tested)
-        const modelsResult = await refreshProviderModels(providerId!);
-        const modelsTaskData = unwrapResult<{ id: string }>(
-          modelsResult,
-          "Failed to start model refresh",
-        );
-
-        const modelsStatus = await checkTaskStatus(modelsTaskData.id);
-        if (!modelsStatus.completed) {
-          throw new Error(modelsStatus.error || "Model refresh failed");
-        }
-
-        const modelsTask = await getTask(modelsTaskData.id);
-        if (modelsTask.data.attributes.result.error) {
-          throw new Error(modelsTask.data.attributes.result.error);
-        }
-      }
-
-      // Success - navigate to model selection
+      // Step 3: Navigate to model selection
       router.push(
         `/lighthouse/config/select-model?provider=${provider}${isEditMode ? "&mode=edit" : ""}`,
       );
@@ -256,28 +239,20 @@ export const ConnectLLMProvider = ({
     }
   };
 
-  const bedrockFieldsFilled =
-    bedrockForm.accessKeyId.trim() !== "" &&
-    bedrockForm.secretAccessKey.trim() !== "" &&
-    bedrockForm.region.trim() !== "";
+  const handleFieldChange = (fieldName: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [fieldName]: value }));
+  };
 
-  const anyBedrockFieldProvided = !!(
-    bedrockForm.accessKeyId ||
-    bedrockForm.secretAccessKey ||
-    bedrockForm.region
-  );
-
-  const isFormValid = isBedrock
-    ? isEditMode
-      ? anyBedrockFieldProvided
-        ? bedrockFieldsFilled
-        : true
-      : bedrockFieldsFilled
-    : isEditMode
-      ? true
-      : isOpenAICompatible
-        ? openAIForm.apiKey.trim() !== "" && openAIForm.baseUrl.trim() !== ""
-        : openAIForm.apiKey.trim() !== "";
+  // Early returns for error/loading states
+  if (!providerConfig) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <div className="text-sm text-red-600 dark:text-red-400">
+          Provider configuration not found: {provider}
+        </div>
+      </div>
+    );
+  }
 
   if (isFetching) {
     return (
@@ -289,166 +264,109 @@ export const ConnectLLMProvider = ({
     );
   }
 
+  // Computed values
+  const mainFields = getMainFields(provider);
+  const collapsibleFields = getCollapsibleFields(provider);
+  const hasCollapsible = hasCollapsibleFields(provider);
+  const isFormValid = validateLLMCredentials(provider, formData, isEditMode);
+
   return (
     <div className="flex w-full flex-col gap-6">
+      {/* Header */}
       <div>
         <h2 className="mb-2 text-xl font-semibold">
-          {isEditMode ? `Update ${providerName}` : `Connect to ${providerName}`}
+          {isEditMode
+            ? `Update ${providerConfig.name}`
+            : `Connect to ${providerConfig.name}`}
         </h2>
         <p className="text-sm text-gray-600 dark:text-gray-300">
           {isEditMode
-            ? `Update your API credentials or settings for ${providerName}.`
-            : `Enter your API credentials to connect to ${providerName}.`}
+            ? `Update your API credentials or settings for ${providerConfig.name}.`
+            : `Enter your API credentials to connect to ${providerConfig.name}.`}
         </p>
       </div>
 
+      {/* Error message */}
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         </div>
       )}
 
+      {/* Form */}
       <div className="flex flex-col gap-4">
-        {isBedrock ? (
-          <>
-            <div>
-              <label
-                htmlFor="accessKeyId"
-                className="mb-2 block text-sm font-medium"
-              >
-                AWS Access Key ID{" "}
-                {!isEditMode && <span className="text-red-500">*</span>}
-              </label>
-              <input
-                id="accessKeyId"
-                type="text"
-                value={bedrockForm.accessKeyId}
-                onChange={(e) =>
-                  setBedrockForm((prev) => ({
-                    ...prev,
-                    accessKeyId: e.target.value,
-                  }))
-                }
-                placeholder="Enter the AWS Access Key ID"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-800"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="secretAccessKey"
-                className="mb-2 block text-sm font-medium"
-              >
-                AWS Secret Access Key{" "}
-                {!isEditMode && <span className="text-red-500">*</span>}
-              </label>
-              <input
-                id="secretAccessKey"
-                type="password"
-                value={bedrockForm.secretAccessKey}
-                onChange={(e) =>
-                  setBedrockForm((prev) => ({
-                    ...prev,
-                    secretAccessKey: e.target.value,
-                  }))
-                }
-                placeholder="Enter the AWS Secret Access Key"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-800"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="region"
-                className="mb-2 block text-sm font-medium"
-              >
-                AWS Region{" "}
-                {!isEditMode && <span className="text-red-500">*</span>}
-              </label>
-              <input
-                id="region"
-                type="text"
-                value={bedrockForm.region}
-                onChange={(e) =>
-                  setBedrockForm((prev) => ({
-                    ...prev,
-                    region: e.target.value,
-                  }))
-                }
-                placeholder="Enter the AWS Region"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-800"
-              />
-            </div>
-          </>
-        ) : (
-          <>
-            <div>
-              <label
-                htmlFor="apiKey"
-                className="mb-2 block text-sm font-medium"
-              >
-                API Key {!isEditMode && <span className="text-red-500">*</span>}
-                {isEditMode && (
-                  <span className="text-xs text-gray-500">
-                    (leave empty to keep existing)
-                  </span>
-                )}
-              </label>
-              <input
-                id="apiKey"
-                type="password"
-                value={openAIForm.apiKey}
-                onChange={(e) =>
-                  setOpenAIForm((prev) => ({ ...prev, apiKey: e.target.value }))
-                }
-                placeholder={
-                  isEditMode
-                    ? "Enter new API key or leave empty"
-                    : "Enter your API key"
-                }
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-800"
-              />
-            </div>
+        {/* Main fields */}
+        {mainFields.map((field) => (
+          <div key={field.name}>
+            <label
+              htmlFor={field.name}
+              className="mb-2 block text-sm font-medium"
+            >
+              {field.label}{" "}
+              {!isEditMode && field.required && (
+                <span className="text-red-500">*</span>
+              )}
+              {isEditMode && (
+                <span className="text-xs text-gray-500">
+                  (leave empty to keep existing)
+                </span>
+              )}
+            </label>
+            <input
+              id={field.name}
+              type={field.type}
+              value={formData[field.name] || ""}
+              onChange={(e) => handleFieldChange(field.name, e.target.value)}
+              placeholder={
+                isEditMode
+                  ? `Enter new ${field.label.toLowerCase()} or leave empty`
+                  : field.placeholder
+              }
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-800"
+            />
+          </div>
+        ))}
 
-            {(isOpenAI || isOpenAICompatible) && (
-              <Collapsible
-                open={isAdditionalOpen}
-                onOpenChange={setIsAdditionalOpen}
-              >
-                <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100">
-                  {isAdditionalOpen ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4" />
-                  )}
-                  Additional Settings
-                </CollapsibleTrigger>
-                <CollapsibleContent className="mt-4">
-                  <div>
-                    <label
-                      htmlFor="baseUrl"
-                      className="mb-2 block text-sm font-medium"
-                    >
-                      Base URL
-                    </label>
-                    <input
-                      id="baseUrl"
-                      type="text"
-                      value={openAIForm.baseUrl}
-                      onChange={(e) =>
-                        setOpenAIForm((prev) => ({
-                          ...prev,
-                          baseUrl: e.target.value,
-                        }))
-                      }
-                      placeholder="https://api.openai.com/v1"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-800"
-                    />
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-            )}
-          </>
+        {/* Collapsible fields */}
+        {hasCollapsible && (
+          <Collapsible
+            open={isAdditionalOpen}
+            onOpenChange={setIsAdditionalOpen}
+          >
+            <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100">
+              {isAdditionalOpen ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+              Additional Settings
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-4">
+              {collapsibleFields.map((field) => (
+                <div key={field.name}>
+                  <label
+                    htmlFor={field.name}
+                    className="mb-2 block text-sm font-medium"
+                  >
+                    {field.label}
+                  </label>
+                  <input
+                    id={field.name}
+                    type={field.type}
+                    value={formData[field.name] || ""}
+                    onChange={(e) =>
+                      handleFieldChange(field.name, e.target.value)
+                    }
+                    placeholder={field.placeholder}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-800"
+                  />
+                </div>
+              ))}
+            </CollapsibleContent>
+          </Collapsible>
         )}
 
+        {/* Actions */}
         <div className="mt-4 flex justify-end gap-4">
           <CustomButton
             ariaLabel="Cancel"

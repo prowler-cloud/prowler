@@ -7,6 +7,8 @@ import React from "react";
 
 import { VerticalSteps } from "@/components/providers/workflow/vertical-steps";
 
+import { getProviderConfig } from "../llm-provider-registry";
+
 const steps = [
   {
     title: "Enter Credentials",
@@ -43,14 +45,11 @@ export const WorkflowConnectLLM = () => {
   const mode = searchParams.get("mode");
   const isEditMode = mode === "edit";
 
-  const providerName =
-    providerParam === "openai"
-      ? "OpenAI"
-      : providerParam === "bedrock"
-        ? "Amazon Bedrock"
-        : providerParam === "openai-compatible"
-          ? "OpenAI Compatible"
-          : "LLM Provider";
+  // Get provider name from registry
+  const providerConfig = providerParam
+    ? getProviderConfig(providerParam)
+    : null;
+  const providerName = providerConfig?.name || "LLM Provider";
 
   return (
     <section className="max-w-sm">
