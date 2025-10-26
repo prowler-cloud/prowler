@@ -95,7 +95,7 @@ export const LLM_PROVIDER_REGISTRY: Record<string, LLMProviderConfig> = {
         name: "base_url",
         type: "text",
         label: "Base URL",
-        placeholder: "https://api.example.com/v1",
+        placeholder: "https://openrouter.ai/api/v1",
         required: true,
         requiresConnectionTest: false,
       },

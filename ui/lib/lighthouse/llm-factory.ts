@@ -30,7 +30,7 @@ export function createLLM(config: LLMConfig): BaseChatModel {
     case "openai":
       return new ChatOpenAI({
         modelName: config.model,
-        openAIApiKey: config.credentials.api_key,
+        apiKey: config.credentials.api_key,
         streaming: config.streaming,
         tags: config.tags,
         maxTokens: config.modelParams?.maxTokens,
@@ -40,7 +40,7 @@ export function createLLM(config: LLMConfig): BaseChatModel {
     case "openai_compatible":
       return new ChatOpenAI({
         modelName: config.model,
-        openAIApiKey: config.credentials.api_key,
+        apiKey: config.credentials.api_key,
         configuration: {
           baseURL: config.baseUrl,
         },

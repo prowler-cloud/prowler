@@ -243,9 +243,9 @@ export const getProviderCredentials = async (
   // Note: fields[lighthouse-providers]=credentials is required to get decrypted credentials
   // base_url is not sensitive and is returned by default
   if (providerType) {
-    url = `${apiBaseUrl}/lighthouse/providers?filter[provider_type]=${providerType}&filter[is_active]=true&fields[lighthouse-providers]=credentials`;
+    url = `${apiBaseUrl}/lighthouse/providers?filter[provider_type]=${providerType}&filter[is_active]=true&fields[lighthouse-providers]=credentials,base_url`;
   } else {
-    url = `${apiBaseUrl}/lighthouse/providers?filter[is_active]=true&fields[lighthouse-providers]=credentials`;
+    url = `${apiBaseUrl}/lighthouse/providers?filter[is_active]=true&fields[lighthouse-providers]=credentials,base_url`;
   }
 
   try {
