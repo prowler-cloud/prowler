@@ -4,9 +4,13 @@ import "@/styles/globals.css";
 
 import { Spacer } from "@heroui/spacer";
 import { Icon } from "@iconify/react";
-import { useSearchParams } from "next/navigation";
-import React, { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import React, { useEffect, useState } from "react";
 
+import {
+  getTenantConfig,
+  updateTenantConfig,
+} from "@/actions/lighthouse/lighthouse";
 import { DeleteLLMProviderForm } from "@/components/lighthouse/forms/delete-llm-provider-form";
 import { WorkflowConnectLLM } from "@/components/lighthouse/workflow";
 import { NavigationHeader } from "@/components/ui";
@@ -17,11 +21,37 @@ interface ConnectLLMLayoutProps {
 }
 
 export default function ConnectLLMLayout({ children }: ConnectLLMLayoutProps) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const mode = searchParams.get("mode");
   const provider = searchParams.get("provider") || "";
   const isEditMode = mode === "edit";
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDefaultProvider, setIsDefaultProvider] = useState(false);
+
+  // Check if current provider is the default
+  useEffect(() => {
+    const checkDefaultProvider = async () => {
+      if (!provider) return;
+
+      try {
+        const config = await getTenantConfig();
+        const defaultProvider = config.data?.attributes?.default_provider || "";
+        setIsDefaultProvider(provider === defaultProvider);
+      } catch (error) {
+        console.error("Error checking default provider:", error);
+      }
+    };
+
+    checkDefaultProvider();
+  }, [provider]);
+
+  const handleSetDefault = async () => {
+    await updateTenantConfig({
+      default_provider: provider,
+    });
+    router.push("/lighthouse/config");
+  };
 
   return (
     <>
@@ -50,18 +80,35 @@ export default function ConnectLLMLayout({ children }: ConnectLLMLayoutProps) {
         <div className="order-2 my-auto lg:col-span-5 lg:col-start-6">
           {isEditMode && provider && (
             <>
-              <CustomButton
-                ariaLabel="Delete Provider"
-                variant="bordered"
-                color="danger"
-                size="sm"
-                startContent={
-                  <Icon icon="heroicons:trash" className="h-4 w-4" />
-                }
-                onPress={() => setIsDeleteOpen(true)}
-              >
-                Delete Provider
-              </CustomButton>
+              <div className="flex flex-wrap gap-2">
+                {!isDefaultProvider && (
+                  <CustomButton
+                    ariaLabel="Set as Default Provider"
+                    variant="bordered"
+                    color="success"
+                    size="sm"
+                    startContent={
+                      <Icon icon="heroicons:star" className="h-4 w-4" />
+                    }
+                    onPress={handleSetDefault}
+                  >
+                    Set as Default
+                  </CustomButton>
+                )}
+
+                <CustomButton
+                  ariaLabel="Delete Provider"
+                  variant="bordered"
+                  color="danger"
+                  size="sm"
+                  startContent={
+                    <Icon icon="heroicons:trash" className="h-4 w-4" />
+                  }
+                  onPress={() => setIsDeleteOpen(true)}
+                >
+                  Delete Provider
+                </CustomButton>
+              </div>
               <Spacer y={4} />
             </>
           )}
