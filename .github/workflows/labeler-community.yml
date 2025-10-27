@@ -12,26 +12,23 @@ jobs:
       pull-requests: write
 
     steps:
-      - uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
-        with:
-          script: |
-            // Get the author association from the event
-            const association = context.payload.pull_request?.author_association ||
-                              context.payload.issue?.author_association;
+      - name: Label community contributors
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Fetch fresh PR data to get current author_association
+          ASSOCIATION=$(gh api /repos/${{ github.repository }}/pulls/${{ github.event.number }} --jq '.author_association')
+          AUTHOR=$(gh api /repos/${{ github.repository }}/pulls/${{ github.event.number }} --jq '.user.login')
 
-            // Members have associations like: OWNER, MEMBER, COLLABORATOR
-            // Non-members have: CONTRIBUTOR, FIRST_TIME_CONTRIBUTOR, FIRST_TIMER, NONE
-            const memberAssociations = ['OWNER', 'MEMBER', 'COLLABORATOR'];
+          echo "Author: $AUTHOR, Association: $ASSOCIATION"
 
-            if (!memberAssociations.includes(association)) {
-              await github.rest.issues.addLabels({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                labels: ['community']
-              });
-
-              console.log(`Added 'community' label for ${association} contributor`);
-            } else {
-              console.log(`Skipped labeling for ${association}`);
-            }
+          # Members have associations like: OWNER, MEMBER, COLLABORATOR
+          # Non-members have: CONTRIBUTOR, FIRST_TIME_CONTRIBUTOR, FIRST_TIMER, NONE
+          if [[ "$ASSOCIATION" != "OWNER" && "$ASSOCIATION" != "MEMBER" && "$ASSOCIATION" != "COLLABORATOR" ]]; then
+            gh api /repos/${{ github.repository }}/issues/${{ github.event.number }}/labels \
+              -X POST \
+              -f labels[]='community'
+            echo "Added 'community' label for $ASSOCIATION contributor"
+          else
+            echo "Skipped labeling for $ASSOCIATION"
+          fi
