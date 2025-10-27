@@ -4,7 +4,7 @@ import subprocess
 import sys
 import tempfile
 from os import environ
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Generator, List
 
 from alive_progress import alive_bar
 from colorama import Fore, Style
@@ -297,7 +297,10 @@ class IacProvider(Provider):
             scan_dir = self.scan_path
 
         try:
-            reports = self.run_scan(scan_dir, self.scanners, self.exclude_path)
+            # Collect all batches from the generator
+            reports = []
+            for batch in self.run_scan(scan_dir, self.scanners, self.exclude_path):
+                reports.extend(batch)
         finally:
             if temp_dir:
                 logger.info(f"Removing temporary directory {temp_dir}...")
@@ -307,7 +310,7 @@ class IacProvider(Provider):
 
     def run_scan(
         self, directory: str, scanners: list[str], exclude_path: list[str]
-    ) -> List[CheckReportIAC]:
+    ) -> Generator[List[CheckReportIAC], None, None]:
         try:
             logger.info(f"Running IaC scan on {directory} ...")
             trivy_command = [
@@ -398,14 +401,15 @@ class IacProvider(Provider):
 
                 if not output:
                     logger.warning("No findings returned from Trivy scan")
-                    return []
+                    return
             except Exception as error:
                 logger.critical(
                     f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
                 )
                 sys.exit(1)
 
-            reports = []
+            batch = []
+            batch_size = 100
 
             # Process all trivy findings
             for finding in output:
@@ -415,27 +419,44 @@ class IacProvider(Provider):
                     report = self._process_finding(
                         misconfiguration, finding["Target"], finding["Type"]
                     )
-                    reports.append(report)
+                    batch.append(report)
+                    if len(batch) >= batch_size:
+                        yield batch
+                        batch = []
+
                 # Process Vulnerabilities
                 for vulnerability in finding.get("Vulnerabilities", []):
                     report = self._process_finding(
                         vulnerability, finding["Target"], finding["Type"]
                     )
-                    reports.append(report)
+                    batch.append(report)
+                    if len(batch) >= batch_size:
+                        yield batch
+                        batch = []
+
                 # Process Secrets
                 for secret in finding.get("Secrets", []):
                     report = self._process_finding(
                         secret, finding["Target"], finding["Class"]
                     )
-                    reports.append(report)
+                    batch.append(report)
+                    if len(batch) >= batch_size:
+                        yield batch
+                        batch = []
+
                 # Process Licenses
                 for license in finding.get("Licenses", []):
                     report = self._process_finding(
                         license, finding["Target"], finding["Type"]
                     )
-                    reports.append(report)
+                    batch.append(report)
+                    if len(batch) >= batch_size:
+                        yield batch
+                        batch = []
 
-            return reports
+            # Yield any remaining findings in the last batch
+            if batch:
+                yield batch
 
         except Exception as error:
             if "No such file or directory: 'trivy'" in str(error):
