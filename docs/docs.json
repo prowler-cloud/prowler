@@ -98,7 +98,7 @@
                 ]
               },
               "user-guide/tutorials/prowler-app-rbac",
-              "user-guide/providers/prowler-app-api-keys",
+              "user-guide/tutorials/prowler-app-api-keys",
               "user-guide/tutorials/prowler-app-mute-findings",
               {
                 "group": "Integrations",
@@ -114,7 +114,8 @@
                 "group": "Tutorials",
                 "pages": [
                   "user-guide/tutorials/prowler-app-sso-entra",
-                  "user-guide/tutorials/bulk-provider-provisioning"
+                  "user-guide/tutorials/bulk-provider-provisioning",
+                  "user-guide/tutorials/aws-organizations-bulk-provisioning"
                 ]
               }
             ]
