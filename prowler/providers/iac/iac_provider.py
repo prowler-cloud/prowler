@@ -176,7 +176,7 @@ class IacProvider(Provider):
                 "Severity": finding["Severity"],
                 "ResourceType": "iac",
                 "Description": finding_description,
-                "Risk": "",
+                "Risk": "This provider has not defined a risk for this check.",
                 "RelatedUrl": finding.get("PrimaryURL", ""),
                 "Remediation": {
                     "Code": {
