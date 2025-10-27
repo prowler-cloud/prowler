@@ -5,7 +5,7 @@ from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.github.lib.service.service import GithubService
-from prowler.providers.github.models import GithubAppIdentityInfo, GithubIdentityInfo
+from prowler.providers.github.models import GithubAppIdentityInfo
 
 
 class Organization(GithubService):
