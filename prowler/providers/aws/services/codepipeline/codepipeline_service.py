@@ -160,5 +160,5 @@ class Pipeline(BaseModel):
     name: str
     arn: str
     region: str
-    source: Optional[Source]
+    source: Optional[Source] = None
     tags: Optional[list] = []
