@@ -1,9 +1,13 @@
-name: SDK - Bump Version
+name: 'SDK: Bump Version'
 
 on:
   release:
-    types: [published]
+    types:
+      - 'published'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
 
 env:
   PROWLER_VERSION: ${{ github.event.release.tag_name }}
@@ -11,10 +15,14 @@ env:
 
 jobs:
   bump-version:
-    name: Bump Version
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Get Prowler version
         shell: bash
@@ -69,78 +77,76 @@ jobs:
             exit 1
           fi
 
-      - name: Bump versions in files
+      - name: Bump versions in files for master branch
         run: |
-            echo "Using PROWLER_VERSION=$PROWLER_VERSION"
-            echo "Using BUMP_VERSION_TO=$BUMP_VERSION_TO"
+          echo "Bumping to version: $BUMP_VERSION_TO"
+          echo "Target branch: $TARGET_BRANCH"
 
-            set -e
+          set -e
 
-            echo "Bumping version in pyproject.toml ..."
-            sed -i "s|version = \"${PROWLER_VERSION}\"|version = \"${BUMP_VERSION_TO}\"|" pyproject.toml
+          sed -i "s|version = \"${PROWLER_VERSION}\"|version = \"${BUMP_VERSION_TO}\"|" pyproject.toml
+          sed -i "s|prowler_version = \"${PROWLER_VERSION}\"|prowler_version = \"${BUMP_VERSION_TO}\"|" prowler/config/config.py
+          sed -i "s|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${PROWLER_VERSION}|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${BUMP_VERSION_TO}|" .env
 
-            echo "Bumping version in prowler/config/config.py ..."
-            sed -i "s|prowler_version = \"${PROWLER_VERSION}\"|prowler_version = \"${BUMP_VERSION_TO}\"|" prowler/config/config.py
+          echo "Files modified:"
+          git --no-pager diff
 
-            echo "Bumping version in .env ..."
-            sed -i "s|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${PROWLER_VERSION}|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${BUMP_VERSION_TO}|" .env
-
-            git --no-pager diff
-
-      - name: Create Pull Request
+      - name: Create PR for version bump to master
         uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
         with:
-            author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
-            token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
-            base: ${{ env.TARGET_BRANCH }}
-            commit-message: "chore(release): Bump version to v${{ env.BUMP_VERSION_TO }}"
-            branch: "version-bump-to-v${{ env.BUMP_VERSION_TO }}"
-            title: "chore(release): Bump version to v${{ env.BUMP_VERSION_TO }}"
-            labels: no-changelog
-            body: |
-              ### Description
+          author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
+          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
+          base: ${{ env.TARGET_BRANCH }}
+          commit-message: 'chore(release): Bump version to v${{ env.BUMP_VERSION_TO }}'
+          branch: version-bump-to-v${{ env.BUMP_VERSION_TO }}
+          title: 'chore(release): Bump version to v${{ env.BUMP_VERSION_TO }}'
+          labels: no-changelog
+          body: |
+            ### Description
 
-              Bump Prowler version to v${{ env.BUMP_VERSION_TO }}
+            Bump Prowler version to v${{ env.BUMP_VERSION_TO }} after releasing v${{ env.PROWLER_VERSION }}.
 
-              ### License
+            ### License
 
-              By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.
+            By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.
 
-      - name: Handle patch version for minor release
+      - name: Checkout version branch for patch bump
+        if: env.FIX_VERSION == '0'
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ env.VERSION_BRANCH }}
+
+      - name: Bump versions in files for version branch
         if: env.FIX_VERSION == '0'
         run: |
-            echo "Using PROWLER_VERSION=$PROWLER_VERSION"
-            echo "Using PATCH_VERSION_TO=$PATCH_VERSION_TO"
+          echo "Bumping to version: $PATCH_VERSION_TO"
+          echo "Target branch: $VERSION_BRANCH"
 
-            set -e
+          set -e
 
-            echo "Bumping version in pyproject.toml ..."
-            sed -i "s|version = \"${PROWLER_VERSION}\"|version = \"${PATCH_VERSION_TO}\"|" pyproject.toml
+          sed -i "s|version = \"${PROWLER_VERSION}\"|version = \"${PATCH_VERSION_TO}\"|" pyproject.toml
+          sed -i "s|prowler_version = \"${PROWLER_VERSION}\"|prowler_version = \"${PATCH_VERSION_TO}\"|" prowler/config/config.py
+          sed -i "s|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${PROWLER_VERSION}|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${PATCH_VERSION_TO}|" .env
 
-            echo "Bumping version in prowler/config/config.py ..."
-            sed -i "s|prowler_version = \"${PROWLER_VERSION}\"|prowler_version = \"${PATCH_VERSION_TO}\"|" prowler/config/config.py
+          echo "Files modified:"
+          git --no-pager diff
 
-            echo "Bumping version in .env ..."
-            sed -i "s|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${PROWLER_VERSION}|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${PATCH_VERSION_TO}|" .env
-
-            git --no-pager diff
-
-      - name: Create Pull Request for patch version
+      - name: Create PR for patch version bump to version branch
         if: env.FIX_VERSION == '0'
         uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
         with:
-            author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
-            token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
-            base: ${{ env.VERSION_BRANCH }}
-            commit-message: "chore(release): Bump version to v${{ env.PATCH_VERSION_TO }}"
-            branch: "version-bump-to-v${{ env.PATCH_VERSION_TO }}"
-            title: "chore(release): Bump version to v${{ env.PATCH_VERSION_TO }}"
-            labels: no-changelog
-            body: |
-              ### Description
+          author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
+          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
+          base: ${{ env.VERSION_BRANCH }}
+          commit-message: 'chore(release): Bump version to v${{ env.PATCH_VERSION_TO }}'
+          branch: version-bump-to-v${{ env.PATCH_VERSION_TO }}
+          title: 'chore(release): Bump version to v${{ env.PATCH_VERSION_TO }}'
+          labels: no-changelog
+          body: |
+            ### Description
 
-              Bump Prowler version to v${{ env.PATCH_VERSION_TO }}
+            Bump Prowler version to v${{ env.PATCH_VERSION_TO }} in version branch after releasing v${{ env.PROWLER_VERSION }}.
 
-              ### License
+            ### License
 
-              By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.
+            By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.
