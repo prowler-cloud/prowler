@@ -323,3 +323,60 @@
 - Requires valid Kubernetes cluster with accessible kubeconfig
 - Kubeconfig must have sufficient permissions for security scanning
 - Test validates that kubeconfig content goes to the correct field (not the context field)
+
+---
+
+## Test Case: `PROVIDER-E2E-007` - Add GCP Provider with Service Account Key
+
+**Priority:** `critical`
+
+**Tags:**
+
+- type → @e2e, @serial
+- feature → @providers
+- provider → @gcp
+
+**Description/Objective:** Validates the complete flow of adding a new GCP provider using service account key authentication
+
+**Preconditions:**
+
+- Admin user authentication required (admin.auth.setup setup)
+- Environment variables configured: E2E_GCP_PROJECT_ID, E2E_GCP_BASE64_SERVICE_ACCOUNT_KEY
+- Remove any existing provider with the same Project ID before starting the test
+- This test must be run serially and never in parallel with other tests, as it requires the Project ID not to be already registered beforehand.
+
+### Flow Steps:
+
+1. Navigate to providers page
+2. Click "Add Provider" button
+3. Select GCP provider type
+4. Fill provider details (project ID and alias)
+5. Select service account credentials type
+6. Fill GCP service account key credentials
+7. Launch initial scan
+8. Verify redirect to provider management page
+
+### Expected Result:
+
+- GCP provider successfully added with service account key
+- Initial scan launched successfully
+- User redirected to provider details page
+
+### Key verification points:
+
+- Provider page loads correctly
+- Connect account page displays GCP option
+- Provider details form accepts project ID and alias
+- Service account credentials page loads with service account key field
+- Service account key is properly filled in the correct field
+- Launch scan page appears
+- Successful redirect to provider page after scan launch
+
+### Notes:
+
+- Test uses environment variables for GCP project ID and service account key
+- Service account key is provided as base64 encoded JSON content
+- Provider cleanup performed before each test to ensure clean state
+- Requires valid GCP project with service account having appropriate permissions
+- Service account must have sufficient permissions for security scanning
+- Test validates that service account key goes to the correct field

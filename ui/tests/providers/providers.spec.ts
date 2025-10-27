@@ -14,6 +14,9 @@ import {
   KubernetesProviderData,
   KubernetesProviderCredential,
   KUBERNETES_CREDENTIAL_OPTIONS,
+  GCPProviderData,
+  GCPProviderCredential,
+  GCP_CREDENTIAL_OPTIONS,
 } from "./providers-page";
 import { ScansPage } from "../scans/scans-page";
 import fs from "fs";
@@ -536,6 +539,110 @@ test.describe("Add Provider", () => {
         await providersPage.clickNext();
 
         // Wait for redirect to provider page
+        scansPage = new ScansPage(page);
+        await scansPage.verifyPageLoaded();
+      },
+    );
+  });
+
+  test.describe.serial("Add GCP Provider", () => {
+    // Providers page object
+    let providersPage: ProvidersPage;
+    let scansPage: ScansPage;
+
+    // Test data from environment variables
+    const projectId = process.env.E2E_GCP_PROJECT_ID;
+
+    // Validate required environment variables
+    if (!projectId ) {
+      throw new Error(
+        "E2E_GCP_PROJECT_ID environment variable is not set",
+      );
+    }
+
+    // Setup before each test
+    test.beforeEach(async ({ page }) => {
+      providersPage = new ProvidersPage(page);
+      // Clean up existing provider to ensure clean test state
+      await providersPage.deleteProviderIfExists(projectId);
+    });
+
+    // Use admin authentication for provider management
+    test.use({ storageState: "playwright/.auth/admin_user.json" });
+
+    test(
+      "should add a new GCP provider with service account key",
+      {
+        tag: [
+          "@critical",
+          "@e2e",
+          "@providers",
+          "@gcp",
+          "@serial",
+          "@PROVIDER-E2E-007",
+        ],
+      },
+      async ({ page }) => {
+        // Validate required environment variables
+        const serviceAccountKeyB64 = process.env.E2E_GCP_BASE64_SERVICE_ACCOUNT_KEY;
+
+        // Verify service account key is base64 encoded
+        if (!serviceAccountKeyB64) {
+          throw new Error("E2E_GCP_BASE64_SERVICE_ACCOUNT_KEY environment variable is not set");
+        }
+        
+        // Decode service account key from base64
+        const serviceAccountKey = Buffer.from(serviceAccountKeyB64, 'base64').toString('utf8');
+
+        // Verify service account key is valid JSON
+        if (!JSON.parse(serviceAccountKey)) {
+          throw new Error("Invalid service account key format");
+        }
+
+        // Prepare test data for GCP provider
+        const gcpProviderData: GCPProviderData = {
+          projectId: projectId,
+          alias: "Test E2E GCP Account - Service Account Key",
+        };
+
+        // Prepare static credentials
+        const gcpCredentials: GCPProviderCredential = {
+          type: GCP_CREDENTIAL_OPTIONS.GCP_SERVICE_ACCOUNT,
+          serviceAccountKey: serviceAccountKey
+        };
+
+        // Navigate to providers page
+        await providersPage.goto();
+        await providersPage.verifyPageLoaded();
+
+        // Start adding new provider
+        await providersPage.clickAddProvider();
+        await providersPage.verifyConnectAccountPageLoaded();
+
+        // Select M365 provider
+        await providersPage.selectGCPProvider();
+
+        // Fill provider details
+        await providersPage.fillGCPProviderDetails(gcpProviderData);
+        await providersPage.clickNext();
+
+        // Select static credentials type
+        await providersPage.selectGCPCredentialsType(
+          GCP_CREDENTIAL_OPTIONS.GCP_SERVICE_ACCOUNT,
+        );
+
+        // Verify GCP service account page is loaded
+        await providersPage.verifyGCPServiceAccountPageLoaded();
+
+        // Fill static service account key details
+        await providersPage.fillGCPServiceAccountKeyCredentials(gcpCredentials);
+        await providersPage.clickNext();
+
+        // Launch scan
+        await providersPage.verifyLaunchScanPageLoaded();
+        await providersPage.clickNext();
+
+        // Wait for redirect to scan page
         scansPage = new ScansPage(page);
         await scansPage.verifyPageLoaded();
       },

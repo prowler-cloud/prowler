@@ -25,6 +25,12 @@ export interface KubernetesProviderData {
   alias?: string;
 }
 
+// GCP provider data
+export interface GCPProviderData {
+  projectId: string;
+  alias?: string;
+}
+
 // AWS credential options
 export const AWS_CREDENTIAL_OPTIONS = {
   AWS_ROLE_ARN: "role",
@@ -91,6 +97,20 @@ export interface KubernetesProviderCredential {
   kubeconfigContent:string;
 } 
 
+// GCP  credential options
+export const GCP_CREDENTIAL_OPTIONS = {
+  GCP_SERVICE_ACCOUNT: "service_account"
+} as const;
+
+// GCP credential type
+type GCPCredentialType = (typeof GCP_CREDENTIAL_OPTIONS)[keyof typeof GCP_CREDENTIAL_OPTIONS];
+
+// GCP provider credential
+export interface GCPProviderCredential {
+  type: GCPCredentialType;
+  serviceAccountKey:string;
+}
+
 // Providers page
 export class ProvidersPage extends BasePage {
 
@@ -147,6 +167,11 @@ export class ProvidersPage extends BasePage {
   readonly kubernetesContextInput: Locator;
   readonly kubernetesKubeconfigContentInput: Locator;
 
+  // GCP provider form elements
+  readonly gcpProjectIdInput: Locator;
+  readonly gcpServiceAccountKeyInput: Locator;
+  readonly gcpServiceAccountRadio: Locator;
+
   // Delete button
   readonly deleteProviderConfirmationButton: Locator;
 
@@ -197,6 +222,10 @@ export class ProvidersPage extends BasePage {
     this.kubernetesContextInput = page.getByRole("textbox", { name: "Context" });
     this.kubernetesKubeconfigContentInput = page.getByRole("textbox", { name: "Kubeconfig Content" });
     
+    // GCP provider form inputs
+    this.gcpProjectIdInput = page.getByRole("textbox", { name: "Project ID" });
+    this.gcpServiceAccountKeyInput = page.getByRole("textbox", { name: "Service Account Key" });
+
     // Alias input
     this.aliasInput = page.getByRole("textbox", { name: "Provider alias (optional)" });
 
@@ -229,6 +258,11 @@ export class ProvidersPage extends BasePage {
     });
     this.m365CertificateCredentialsRadio = page.getByRole("radio", {
       name: /App Certificate Credentials/i,
+    });
+
+    // Radios for selecting GCP credentials method
+    this.gcpServiceAccountRadio = page.getByRole("radio", {
+      name: /Service Account Key/i,
     });
 
     // Inputs for IAM Role credentials
@@ -287,6 +321,13 @@ export class ProvidersPage extends BasePage {
     await this.waitForPageLoad();
   }
 
+  async selectGCPProvider(): Promise<void> {
+    // Select the GCP provider
+
+    await this.gcpProviderRadio.click({ force: true });
+    await this.waitForPageLoad();
+  }
+
 
   async fillAWSProviderDetails(data: AWSProviderData): Promise<void> {
     // Fill the AWS provider details
@@ -322,6 +363,15 @@ export class ProvidersPage extends BasePage {
     // Fill the Kubernetes provider details
 
     await this.kubernetesContextInput.fill(data.context);
+    if (data.alias) {
+      await this.aliasInput.fill(data.alias);
+    }
+  }
+
+  async fillGCPProviderDetails(data: GCPProviderData): Promise<void> {
+    // Fill the GCP provider details
+
+    await this.gcpProjectIdInput.fill(data.projectId);
     if (data.alias) {
       await this.aliasInput.fill(data.alias);
     }
@@ -464,6 +514,19 @@ export class ProvidersPage extends BasePage {
     await this.waitForPageLoad();
   }
 
+  async selectGCPCredentialsType(type: GCPCredentialType): Promise<void> {
+    // Ensure we are on the add-credentials page where the selector exists
+
+    await expect(this.page).toHaveURL(/\/providers\/add-credentials/);
+    if (type === GCP_CREDENTIAL_OPTIONS.GCP_SERVICE_ACCOUNT) {
+      await this.gcpServiceAccountRadio.click({ force: true });
+    } else {
+      throw new Error(`Invalid GCP credential type: ${type}`);
+    }
+    // Wait for the page to load
+    await this.waitForPageLoad();
+  }
+
   async fillRoleCredentials(credentials: AWSProviderCredential): Promise<void> {
     // Fill the role credentials form
     
@@ -545,6 +608,13 @@ export class ProvidersPage extends BasePage {
     }
   }
 
+  async fillGCPServiceAccountKeyCredentials(credentials: GCPProviderCredential): Promise<void> {
+    // Fill the GCP credentials form
+
+    if (credentials.serviceAccountKey) {
+      await this.gcpServiceAccountKeyInput.fill(credentials.serviceAccountKey);
+    }
+  }
 
   async verifyPageLoaded(): Promise<void> {
     // Verify the providers page is loaded
@@ -591,6 +661,13 @@ export class ProvidersPage extends BasePage {
 
     await expect(this.page).toHaveTitle(/Prowler/);
     await expect(this.kubernetesContextInput).toBeVisible();
+  }
+
+  async verifyGCPServiceAccountPageLoaded(): Promise<void> {
+    // Verify the GCP service account page is loaded
+
+    await expect(this.page).toHaveTitle(/Prowler/);
+    await expect(this.gcpServiceAccountKeyInput).toBeVisible();
   }
 
 
