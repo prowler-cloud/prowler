@@ -1,10 +1,11 @@
 import json
+import re
 import shutil
 import subprocess
 import sys
 import tempfile
 from os import environ
-from typing import TYPE_CHECKING, Generator, List
+from typing import Generator, List
 
 from alive_progress import alive_bar
 from colorama import Fore, Style
@@ -17,11 +18,8 @@ from prowler.config.config import (
 from prowler.lib.check.models import CheckReportIAC
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
-from prowler.providers.common.models import Audit_Metadata
+from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
-
-if TYPE_CHECKING:
-    from prowler.providers.common.models import Connection
 
 
 class IacProvider(Provider):
@@ -529,8 +527,6 @@ class IacProvider(Provider):
             >>> IacProvider.test_connection(scan_repository_url="https://github.com/user/repo")
             Connection(is_connected=True)
         """
-        from prowler.providers.common.models import Connection
-
         try:
             # If provider_id is provided and scan_repository_url is not, use provider_id as the repository URL
             if provider_id and not scan_repository_url:
@@ -551,8 +547,6 @@ class IacProvider(Provider):
                     if oauth_app_token:
                         # If token is provided, use it for authentication
                         # Extract the domain and path from the URL
-                        import re
-
                         url_pattern = r"(https?://)([^/]+)/(.+)"
                         match = re.match(url_pattern, scan_repository_url)
                         if match:
