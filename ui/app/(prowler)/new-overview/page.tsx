@@ -1,10 +1,14 @@
 import { Suspense } from "react";
 
-import { getFindingsByStatus } from "@/actions/overview/overview";
+import {
+  getFindingsBySeverity,
+  getFindingsByStatus,
+} from "@/actions/overview/overview";
 import { ContentLayout } from "@/components/ui";
 import { SearchParamsProps } from "@/types";
 
 import { CheckFindings } from "./components/check-findings";
+import { RiskSeverityChart } from "./components/risk-severity-chart";
 
 const FILTER_PREFIX = "filter[";
 
@@ -27,15 +31,25 @@ export default async function NewOverviewPage({
 
   return (
     <ContentLayout title="New Overview" icon="lucide:square-chart-gantt">
-      <div className="flex min-h-[60vh] items-center justify-center p-6">
+      <div className="grid gap-6 p-6 md:grid-cols-2">
         <Suspense
           fallback={
-            <div className="flex h-[400px] w-full max-w-md items-center justify-center rounded-xl border border-zinc-900 bg-stone-950">
+            <div className="flex h-[400px] w-full items-center justify-center rounded-xl border border-zinc-900 bg-stone-950">
               <p className="text-zinc-400">Loading...</p>
             </div>
           }
         >
           <SSRCheckFindings searchParams={resolvedSearchParams} />
+        </Suspense>
+
+        <Suspense
+          fallback={
+            <div className="flex h-[400px] w-full items-center justify-center rounded-xl border border-zinc-900 bg-stone-950">
+              <p className="text-zinc-400">Loading...</p>
+            </div>
+          }
+        >
+          <SSRRiskSeverityChart searchParams={resolvedSearchParams} />
         </Suspense>
       </div>
     </ContentLayout>
@@ -81,6 +95,44 @@ const SSRCheckFindings = async ({
         total: pass,
         new: pass_new,
         muted: mutedTotal,
+      }}
+    />
+  );
+};
+
+const SSRRiskSeverityChart = async ({
+  searchParams,
+}: {
+  searchParams: SearchParamsProps | undefined | null;
+}) => {
+  const filters = pickFilterParams(searchParams);
+
+  const findingsBySeverity = await getFindingsBySeverity({ filters });
+
+  if (!findingsBySeverity) {
+    return (
+      <div className="flex h-[400px] w-full items-center justify-center rounded-xl border border-zinc-900 bg-stone-950">
+        <p className="text-zinc-400">Failed to load severity data</p>
+      </div>
+    );
+  }
+
+  const {
+    critical = 0,
+    high = 0,
+    medium = 0,
+    low = 0,
+    informational = 0,
+  } = findingsBySeverity?.data?.attributes || {};
+
+  return (
+    <RiskSeverityChart
+      severityData={{
+        critical,
+        high,
+        medium,
+        low,
+        informational,
       }}
     />
   );

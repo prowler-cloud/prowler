@@ -23,9 +23,9 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
   });
 
   return (
-    <div className="w-full">
+    <div className="w-full space-y-6">
       {title && (
-        <div className="mb-4">
+        <div>
           <h3
             className="text-lg font-semibold"
             style={{ color: "var(--chart-text-primary)" }}
@@ -47,13 +47,14 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
           return (
             <div
               key={index}
-              className="relative flex items-center gap-4"
+              className="flex items-center gap-6"
               onMouseEnter={() => setHoveredIndex(index)}
               onMouseLeave={() => setHoveredIndex(null)}
             >
-              <div className="w-24 text-right">
+              {/* Label */}
+              <div className="w-20 shrink-0">
                 <span
-                  className="text-sm"
+                  className="text-sm font-medium"
                   style={{
                     color: "var(--chart-text-primary)",
                     opacity: isFaded ? 0.5 : 1,
@@ -64,24 +65,23 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
                 </span>
               </div>
 
+              {/* Bar - flexible */}
               <div className="relative flex-1">
-                <div className="absolute inset-0 h-8 w-full rounded-lg bg-slate-700/50" />
-                <div
-                  className="relative h-8 rounded-lg transition-all duration-300"
-                  style={{
-                    width: `${item.percentage || (item.value / Math.max(...data.map((d) => d.value))) * 100}%`,
-                    backgroundColor: barColor,
-                    opacity: isFaded ? 0.5 : 1,
-                  }}
-                />
+                <div className="absolute inset-0 h-[22px] w-full rounded-xl bg-[#FAFAFA] dark:bg-black" />
+                {item.value > 0 && (
+                  <div
+                    className="relative h-[22px] rounded-[4px] border border-black/10 transition-all duration-300"
+                    style={{
+                      width: `${item.percentage || (item.value / Math.max(...data.map((d) => d.value))) * 100}%`,
+                      backgroundColor: barColor,
+                      opacity: isFaded ? 0.5 : 1,
+                    }}
+                  />
+                )}
 
                 {isHovered && (
                   <div
-                    className="absolute top-10 left-0 z-10 min-w-[200px] rounded-lg border p-3 shadow-lg"
-                    style={{
-                      backgroundColor: "var(--chart-background)",
-                      borderColor: "var(--chart-border-emphasis)",
-                    }}
+                    className="absolute top-10 left-0 z-10 min-w-[200px] rounded-[12px] border border-[rgba(38,38,38,0.70)] bg-white p-3 shadow-lg backdrop-blur-[46px] dark:border-[rgba(38,38,38,0.70)] dark:bg-[rgba(23,23,23,0.50)]"
                   >
                     <div className="flex items-center gap-2">
                       <div
@@ -125,16 +125,17 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
                 )}
               </div>
 
+              {/* Percentage and Count */}
               <div
-                className="flex w-40 items-center gap-2 text-sm"
+                className="flex w-[90px] shrink-0 items-center gap-2 text-sm"
                 style={{
                   color: "var(--chart-text-primary)",
                   opacity: isFaded ? 0.5 : 1,
                   transition: "opacity 0.2s",
                 }}
               >
-                <span className="font-semibold">{item.percentage}%</span>
-                <span style={{ color: "var(--chart-text-secondary)" }}>•</span>
+                <span className="w-[26px] text-right font-medium">{item.percentage}%</span>
+                <span className="font-medium" style={{ color: "var(--chart-text-secondary)" }}>•</span>
                 <span className="font-bold">{item.value.toLocaleString()}</span>
               </div>
             </div>
