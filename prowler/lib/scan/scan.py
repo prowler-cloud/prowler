@@ -331,9 +331,14 @@ class Scan:
                         )
                         findings.append(finding)
 
+                    # Filter the findings by the status
+                    if self._status:
+                        findings = [f for f in findings if f.status in self._status]
+
                     # Update progress and yield findings
                     self._number_of_checks_completed = 1
                     self._number_of_checks_to_execute = 1
+
                     yield (100.0, findings)
 
                     # Calculate duration
