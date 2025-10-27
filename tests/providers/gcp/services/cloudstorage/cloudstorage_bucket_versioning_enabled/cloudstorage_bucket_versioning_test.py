@@ -112,52 +112,52 @@ class TestCloudStorageBucketVersioningEnabled:
 
     def test_bucket_without_versioning_configured_treated_as_disabled(self):
 
-            cloudstorage_client = mock.MagicMock()
+        cloudstorage_client = mock.MagicMock()
 
-            with (
-                mock.patch(
-                    "prowler.providers.common.provider.Provider.get_global_provider",
-                    return_value=set_mocked_gcp_provider(),
-                ),
-                mock.patch(
-                    "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_versioning_enabled.cloudstorage_bucket_versioning_enabled.cloudstorage_client",
-                    new=cloudstorage_client,
-                ),
-            ):
-                from prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_versioning_enabled.cloudstorage_bucket_versioning_enabled import (
-                    cloudstorage_bucket_versioning_enabled,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_versioning_enabled.cloudstorage_bucket_versioning_enabled.cloudstorage_client",
+                new=cloudstorage_client,
+            ),
+        ):
+            from prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_versioning_enabled.cloudstorage_bucket_versioning_enabled import (
+                cloudstorage_bucket_versioning_enabled,
+            )
+            from prowler.providers.gcp.services.cloudstorage.cloudstorage_service import (
+                Bucket,
+            )
+
+            cloudstorage_client.project_ids = [GCP_PROJECT_ID]
+            cloudstorage_client.region = GCP_US_CENTER1_LOCATION
+
+            cloudstorage_client.buckets = [
+                Bucket(
+                    name="no-versioning-config",
+                    id="no-versioning-config",
+                    region=GCP_US_CENTER1_LOCATION,
+                    uniform_bucket_level_access=True,
+                    public=False,
+                    retention_policy=None,
+                    project_id=GCP_PROJECT_ID,
+                    lifecycle_rules=[],
+                    versioning_enabled=False,
                 )
-                from prowler.providers.gcp.services.cloudstorage.cloudstorage_service import (
-                    Bucket,
-                )
+            ]
 
-                cloudstorage_client.project_ids = [GCP_PROJECT_ID]
-                cloudstorage_client.region = GCP_US_CENTER1_LOCATION
+            check = cloudstorage_bucket_versioning_enabled()
+            result = check.execute()
 
-                cloudstorage_client.buckets = [
-                    Bucket(
-                        name="no-versioning-config",
-                        id="no-versioning-config",
-                        region=GCP_US_CENTER1_LOCATION,
-                        uniform_bucket_level_access=True,
-                        public=False,
-                        retention_policy=None,
-                        project_id=GCP_PROJECT_ID,
-                        lifecycle_rules=[],
-                        versioning_enabled=False,
-                    )
-                ]
-
-                check = cloudstorage_bucket_versioning_enabled()
-                result = check.execute()
-
-                assert len(result) == 1
-                assert result[0].status == "FAIL"
-                assert (
-                    result[0].status_extended
-                    == f"Bucket {cloudstorage_client.buckets[0].name} does not have Object Versioning enabled."
-                )
-                assert result[0].resource_id == "no-versioning-config"
-                assert result[0].resource_name == "no-versioning-config"
-                assert result[0].location == GCP_US_CENTER1_LOCATION
-                assert result[0].project_id == GCP_PROJECT_ID
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"Bucket {cloudstorage_client.buckets[0].name} does not have Object Versioning enabled."
+            )
+            assert result[0].resource_id == "no-versioning-config"
+            assert result[0].resource_name == "no-versioning-config"
+            assert result[0].location == GCP_US_CENTER1_LOCATION
+            assert result[0].project_id == GCP_PROJECT_ID
