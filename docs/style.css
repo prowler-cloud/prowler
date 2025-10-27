@@ -1,0 +1,15 @@
+.version-badge-container {
+    margin: 0;
+    padding: 0;
+}
+
+.version-badge:hover {
+    box-shadow: 0 2px 8px 0 rgba(160, 132, 252, 0.1);
+    transform: translateY(-1px) scale(1.03);
+}
+
+.dark .version-badge {
+    color: #f1f5f9;
+    background: #334155;
+    border: 1px solid #64748b;
+}
