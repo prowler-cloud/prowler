@@ -1,3 +1,17 @@
-name: "UI - CodeQL Config"
+name: 'UI: CodeQL Config'
 paths:
-  - "ui/"
+  - 'ui/'
+
+paths-ignore:
+  - 'ui/node_modules/**'
+  - 'ui/.next/**'
+  - 'ui/out/**'
+  - 'ui/tests/**'
+  - 'ui/**/*.test.ts'
+  - 'ui/**/*.test.tsx'
+  - 'ui/**/*.spec.ts'
+  - 'ui/**/*.spec.tsx'
+  - 'ui/**/*.md'
+
+queries:
+  - uses: security-and-quality
