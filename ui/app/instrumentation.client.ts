@@ -19,7 +19,6 @@ const isDevelopment = process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT === "dev";
  * This setup includes:
  * - Performance monitoring with Web Vitals tracking (LCP, FID, CLS, INP)
  * - Long task detection for UI-blocking operations
- * - Session replay to reproduce bugs
  * - beforeSend hook to filter noise
  */
 Sentry.init({
@@ -39,12 +38,6 @@ Sentry.init({
   // 100% in dev (test everything), 50% in production (balance visibility with costs)
   tracesSampleRate: isDevelopment ? 1.0 : 0.5,
   profilesSampleRate: isDevelopment ? 1.0 : 0.5,
-
-  // 🎥 Session Replay - Record user sessions
-  // 100% in dev, 50% in production (balance visibility with costs)
-  replaysSessionSampleRate: isDevelopment ? 1.0 : 0.5,
-  // Always record sessions when errors occur (100% for debugging)
-  replaysOnErrorSampleRate: 1.0,
 
   // 🔌 Integrations
   integrations: [
