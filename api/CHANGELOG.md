@@ -2,6 +2,11 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.15.0] (Prowler UNRELEASED)
+
+### Added
+- Support for configuring multiple LLM providers [(#8772)](https://github.com/prowler-cloud/prowler/pull/8772)
+
 ## [1.14.0] (Prowler 5.13.0)
 
 ### Added
@@ -14,7 +19,6 @@ All notable changes to the **Prowler API** are documented in this file.
 - Support for `passed_findings` and `total_findings` fields in compliance requirement overview for accurate Prowler ThreatScore calculation [(#8582)](https://github.com/prowler-cloud/prowler/pull/8582)
 - PDF reporting for Prowler ThreatScore [(#8867)](https://github.com/prowler-cloud/prowler/pull/8867)
 - Database read replica support [(#8869)](https://github.com/prowler-cloud/prowler/pull/8869)
-- Support for configuring multiple LLM providers [(#8772)](https://github.com/prowler-cloud/prowler/pull/8772)
 - Support Common Cloud Controls for AWS, Azure and GCP [(#8000)](https://github.com/prowler-cloud/prowler/pull/8000)
 - Add `provider_id__in` filter support to findings and findings severity overview endpoints [(#8951)](https://github.com/prowler-cloud/prowler/pull/8951)
 
