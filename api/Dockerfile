@@ -5,6 +5,9 @@ LABEL maintainer="https://github.com/prowler-cloud/api"
 ARG POWERSHELL_VERSION=7.5.0
 ENV POWERSHELL_VERSION=${POWERSHELL_VERSION}
 
+ARG TRIVY_VERSION=0.66.0
+ENV TRIVY_VERSION=${TRIVY_VERSION}
+
 # hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
@@ -37,7 +40,6 @@ RUN ARCH=$(uname -m) && \
     rm /tmp/powershell.tar.gz
 
 # Install Trivy for IaC scanning
-ARG TRIVY_VERSION=0.66.0
 RUN ARCH=$(uname -m) && \
     if [ "$ARCH" = "x86_64" ]; then \
         TRIVY_ARCH="Linux-64bit" ; \
