@@ -1,2 +1,1 @@
 """Check package."""
-pass
