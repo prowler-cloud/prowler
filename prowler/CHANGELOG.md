@@ -20,6 +20,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Improve Provider documentation guide [(#8430)](https://github.com/prowler-cloud/prowler/pull/8430)
 - `cloudstorage_bucket_lifecycle_management_enabled` check for GCP provider [(#8936)](https://github.com/prowler-cloud/prowler/pull/8936)
 - `cloudstorage_bucket_versioning_enabled` check for GCP provider [(#9014)](https://github.com/prowler-cloud/prowler/pull/9014)
+- `cloudstorage_bucket_soft_delete_enabled` check for GCP provider [(#9028)](https://github.com/prowler-cloud/prowler/pull/9028)
+
 
 
 ### Changed

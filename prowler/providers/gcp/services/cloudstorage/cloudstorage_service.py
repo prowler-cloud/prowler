@@ -39,7 +39,18 @@ class CloudStorage(GCPService):
                             if isinstance(rules, list):
                                 lifecycle_rules = rules
 
-                        versioning_enabled = bucket.get("versioning", {}).get("enabled", False)
+                        versioning_enabled = bucket.get("versioning", {}).get(
+                            "enabled", False
+                        )
+
+                        soft_delete_enabled = False
+                        soft_delete_policy = bucket.get("softDeletePolicy")
+                        if isinstance(soft_delete_policy, dict):
+                            retention = soft_delete_policy.get(
+                                "retentionDurationSeconds"
+                            )
+                            if isinstance(retention, int) and retention > 0:
+                                soft_delete_enabled = True
 
                         self.buckets.append(
                             Bucket(
@@ -54,6 +65,7 @@ class CloudStorage(GCPService):
                                 project_id=project_id,
                                 lifecycle_rules=lifecycle_rules,
                                 versioning_enabled=versioning_enabled,
+                                soft_delete_enabled=soft_delete_enabled,
                             )
                         )
 
@@ -76,3 +88,4 @@ class Bucket(BaseModel):
     retention_policy: Optional[dict] = None
     lifecycle_rules: Optional[list[dict]] = None
     versioning_enabled: Optional[bool] = False
+    soft_delete_enabled: Optional[bool] = False
