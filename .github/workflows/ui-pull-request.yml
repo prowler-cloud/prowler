@@ -30,34 +30,7 @@ env:
   NODE_VERSION: '20.x'
 
 jobs:
-  code-quality:
-    if: github.repository == 'prowler-cloud/prowler'
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    permissions:
-      contents: read
-    defaults:
-      run:
-        working-directory: ./ui
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-
-      - name: Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: './ui/package-lock.json'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run healthcheck
-        run: npm run healthcheck
-
-  tests:
+  code-quality-and-build:
     if: github.repository == 'prowler-cloud/prowler'
     runs-on: ubuntu-latest
     timeout-minutes: 20
