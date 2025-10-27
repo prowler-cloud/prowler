@@ -6,6 +6,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Added
 - GitHub provider check `organization_default_repository_permission_strict` [(#8785)](https://github.com/prowler-cloud/prowler/pull/8785)
+- Update AWS Direct Connect service metadata to new format [(#8855)](https://github.com/prowler-cloud/prowler/pull/8855)
 
 ## [v5.13.0] (Prowler v5.13.0)
 
@@ -44,7 +45,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS Backup service metadata to new format [(#8826)](https://github.com/prowler-cloud/prowler/pull/8826)
 - Update AWS CloudFormation service metadata to new format [(#8828)](https://github.com/prowler-cloud/prowler/pull/8828)
 - Update AWS Lambda service metadata to new format [(#8825)](https://github.com/prowler-cloud/prowler/pull/8825)
-- Update AWS Direct Connect service metadata to new format [(#8855)](https://github.com/prowler-cloud/prowler/pull/8855)
 - Update AWS DLM service metadata to new format [(#8860)](https://github.com/prowler-cloud/prowler/pull/8860)
 - Update AWS DMS service metadata to new format [(#8861)](https://github.com/prowler-cloud/prowler/pull/8861)
 - Update AWS Directory Service service metadata to new format [(#8859)](https://github.com/prowler-cloud/prowler/pull/8859)
