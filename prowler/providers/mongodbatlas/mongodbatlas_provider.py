@@ -292,6 +292,7 @@ class MongodbatlasProvider(Provider):
         atlas_public_key: str = "",
         atlas_private_key: str = "",
         raise_on_exception: bool = True,
+        provider_id: str = None,
     ) -> Connection:
         """
         Test connection to MongoDB Atlas
@@ -300,6 +301,7 @@ class MongodbatlasProvider(Provider):
             atlas_public_key: MongoDB Atlas API public key
             atlas_private_key: MongoDB Atlas API private key
             raise_on_exception: Whether to raise exceptions
+            provider_id: MongoDB Atlas project ID to validate access (optional)
 
         Returns:
             Connection: Connection status
@@ -312,6 +314,11 @@ class MongodbatlasProvider(Provider):
 
             MongodbatlasProvider.setup_identity(session)
 
+            if provider_id:
+                MongodbatlasProvider._validate_project_access(
+                    session=session, project_id=provider_id
+                )
+
             return Connection(is_connected=True)
 
         except Exception as error:
@@ -321,3 +328,38 @@ class MongodbatlasProvider(Provider):
             if raise_on_exception:
                 raise error
             return Connection(error=error)
+
+    @staticmethod
+    def _validate_project_access(session: MongoDBAtlasSession, project_id: str) -> None:
+        """Verify the provided project id is accessible for the current credentials."""
+        try:
+            import requests
+            from requests.auth import HTTPDigestAuth
+
+            auth = HTTPDigestAuth(session.public_key, session.private_key)
+            headers = {
+                "Accept": "application/vnd.atlas.2023-01-01+json",
+                "Content-Type": "application/json",
+            }
+
+            response = requests.get(
+                f"{session.base_url}/groups/{project_id}",
+                auth=auth,
+                headers=headers,
+                timeout=30,
+            )
+
+            if response.status_code == 404:
+                raise MongoDBAtlasIdentityError(
+                    message=f"MongoDB Atlas project '{project_id}' not found.",
+                    file=os.path.basename(__file__),
+                )
+
+            response.raise_for_status()
+        except MongoDBAtlasIdentityError:
+            raise
+        except Exception as error:
+            logger.critical(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            raise MongoDBAtlasIdentityError(original_exception=error)

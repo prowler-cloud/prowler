@@ -1353,6 +1353,8 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 serializer = KubernetesProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.M365.value:
                 serializer = M365ProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.MONGODBATLAS.value:
+                serializer = MongoDBAtlasProviderSecret(data=secret)
             else:
                 raise serializers.ValidationError(
                     {"provider": f"Provider type not supported {provider_type}"}
@@ -1444,6 +1446,14 @@ class GCPProviderSecret(serializers.Serializer):
 
 class GCPServiceAccountProviderSecret(serializers.Serializer):
     service_account_key = serializers.JSONField()
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
+class MongoDBAtlasProviderSecret(serializers.Serializer):
+    atlas_public_key = serializers.CharField()
+    atlas_private_key = serializers.CharField()
 
     class Meta:
         resource_name = "provider-secrets"

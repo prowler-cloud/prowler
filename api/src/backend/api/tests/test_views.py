@@ -1067,6 +1067,11 @@ class TestProviderViewSet:
                     "uid": "a12345678901234567890123456789012345678",
                     "alias": "Long Username",
                 },
+                {
+                    "provider": "mongodbatlas",
+                    "uid": "64b1d3c0e4b03b1234567890",
+                    "alias": "Atlas Project",
+                },
             ]
         ),
     )
@@ -1214,6 +1219,24 @@ class TestProviderViewSet:
                         "alias": "test",
                     },
                     "github-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "mongodbatlas",
+                        "uid": "1234",
+                        "alias": "test",
+                    },
+                    "mongodbatlas-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "mongodbatlas",
+                        "uid": "64b1d3c0e4b03b123456789g",
+                        "alias": "test",
+                    },
+                    "mongodbatlas-uid",
                     "uid",
                 ),
             ]
@@ -1386,13 +1409,13 @@ class TestProviderViewSet:
                 ("provider", "aws", 2),
                 ("provider.in", "azure,gcp", 2),
                 ("uid", "123456789012", 1),
-                ("uid.icontains", "1", 5),
+                ("uid.icontains", "1", 6),
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
-                ("inserted_at", TODAY, 6),
-                ("inserted_at.gte", "2024-01-01", 6),
+                ("inserted_at", TODAY, 7),
+                ("inserted_at.gte", "2024-01-01", 7),
                 ("inserted_at.lte", "2024-01-01", 0),
-                ("updated_at.gte", "2024-01-01", 6),
+                ("updated_at.gte", "2024-01-01", 7),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
         ),
@@ -1895,6 +1918,15 @@ class TestProviderSecretViewSet:
                     "password": "supersecret",
                 },
             ),
+            # MongoDB Atlas credentials
+            (
+                Provider.ProviderChoices.MONGODBATLAS.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "atlas_public_key": "public-key",
+                    "atlas_private_key": "private-key",
+                },
+            ),
         ],
     )
     def test_provider_secrets_create_valid(
@@ -1951,6 +1983,15 @@ class TestProviderSecretViewSet:
                     },
                     "required",
                     "secret/aws_access_key_id",
+                ),
+                (
+                    {
+                        "name": "testing",
+                        "secret_type": "static",
+                        "secret": {"atlas_public_key": "value"},
+                    },
+                    "required",
+                    "secret/atlas_private_key",
                 ),
                 (
                     {

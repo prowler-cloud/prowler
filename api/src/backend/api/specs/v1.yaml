@@ -875,6 +875,7 @@ paths:
           - azure
           - gcp
           - github
+          - mongodbatlas
           - kubernetes
           - m365
         description: |-
@@ -884,6 +885,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -896,6 +898,7 @@ paths:
             - azure
             - gcp
             - github
+            - mongodbatlas
             - kubernetes
             - m365
         description: |-
@@ -907,6 +910,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
         explode: false
         style: form
       - in: query
@@ -1402,6 +1406,7 @@ paths:
           - azure
           - gcp
           - github
+          - mongodbatlas
           - kubernetes
           - m365
         description: |-
@@ -1411,6 +1416,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -1423,6 +1429,7 @@ paths:
             - azure
             - gcp
             - github
+            - mongodbatlas
             - kubernetes
             - m365
         description: |-
@@ -1434,6 +1441,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
         explode: false
         style: form
       - in: query
@@ -1837,6 +1845,7 @@ paths:
           - azure
           - gcp
           - github
+          - mongodbatlas
           - kubernetes
           - m365
         description: |-
@@ -1846,6 +1855,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -1858,6 +1868,7 @@ paths:
             - azure
             - gcp
             - github
+            - mongodbatlas
             - kubernetes
             - m365
         description: |-
@@ -1869,6 +1880,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
         explode: false
         style: form
       - in: query
@@ -2270,6 +2282,7 @@ paths:
           - azure
           - gcp
           - github
+          - mongodbatlas
           - kubernetes
           - m365
         description: |-
@@ -2279,6 +2292,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -2291,6 +2305,7 @@ paths:
             - azure
             - gcp
             - github
+            - mongodbatlas
             - kubernetes
             - m365
         description: |-
@@ -2302,6 +2317,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
         explode: false
         style: form
       - in: query
@@ -2691,6 +2707,7 @@ paths:
           - azure
           - gcp
           - github
+          - mongodbatlas
           - kubernetes
           - m365
         description: |-
@@ -2700,6 +2717,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -2712,6 +2730,7 @@ paths:
             - azure
             - gcp
             - github
+            - mongodbatlas
             - kubernetes
             - m365
         description: |-
@@ -2723,6 +2742,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
         explode: false
         style: form
       - in: query
@@ -3631,6 +3651,7 @@ paths:
           - azure
           - gcp
           - github
+          - mongodbatlas
           - kubernetes
           - m365
         description: |-
@@ -3640,6 +3661,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -3652,6 +3674,7 @@ paths:
             - azure
             - gcp
             - github
+            - mongodbatlas
             - kubernetes
             - m365
         description: |-
@@ -3663,6 +3686,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
         explode: false
         style: form
       - in: query
@@ -3808,6 +3832,7 @@ paths:
           - azure
           - gcp
           - github
+          - mongodbatlas
           - kubernetes
           - m365
         description: |-
@@ -3817,6 +3842,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -3829,6 +3855,7 @@ paths:
             - azure
             - gcp
             - github
+            - mongodbatlas
             - kubernetes
             - m365
         description: |-
@@ -3840,6 +3867,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
         explode: false
         style: form
       - in: query
@@ -4020,6 +4048,7 @@ paths:
           - azure
           - gcp
           - github
+          - mongodbatlas
           - kubernetes
           - m365
         description: |-
@@ -4029,6 +4058,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -4041,6 +4071,7 @@ paths:
             - azure
             - gcp
             - github
+            - mongodbatlas
             - kubernetes
             - m365
         description: |-
@@ -4052,6 +4083,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
         explode: false
         style: form
       - in: query
@@ -4743,6 +4775,7 @@ paths:
           - azure
           - gcp
           - github
+          - mongodbatlas
           - kubernetes
           - m365
         description: |-
@@ -4752,6 +4785,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
       - in: query
         name: filter[provider__in]
         schema:
@@ -4764,6 +4798,7 @@ paths:
             - azure
             - gcp
             - github
+            - mongodbatlas
             - kubernetes
             - m365
         description: |-
@@ -4775,6 +4810,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
         explode: false
         style: form
       - name: filter[search]
@@ -5378,6 +5414,7 @@ paths:
           - azure
           - gcp
           - github
+          - mongodbatlas
           - kubernetes
           - m365
         description: |-
@@ -5387,6 +5424,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -5399,6 +5437,7 @@ paths:
             - azure
             - gcp
             - github
+            - mongodbatlas
             - kubernetes
             - m365
         description: |-
@@ -5410,6 +5449,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
         explode: false
         style: form
       - in: query
@@ -5743,6 +5783,7 @@ paths:
           - azure
           - gcp
           - github
+          - mongodbatlas
           - kubernetes
           - m365
         description: |-
@@ -5752,6 +5793,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -5764,6 +5806,7 @@ paths:
             - azure
             - gcp
             - github
+            - mongodbatlas
             - kubernetes
             - m365
         description: |-
@@ -5775,6 +5818,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
         explode: false
         style: form
       - in: query
@@ -6009,6 +6053,7 @@ paths:
           - azure
           - gcp
           - github
+          - mongodbatlas
           - kubernetes
           - m365
         description: |-
@@ -6018,6 +6063,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -6030,6 +6076,7 @@ paths:
             - azure
             - gcp
             - github
+            - mongodbatlas
             - kubernetes
             - m365
         description: |-
@@ -6041,6 +6088,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
         explode: false
         style: form
       - in: query
@@ -6281,6 +6329,7 @@ paths:
           - azure
           - gcp
           - github
+          - mongodbatlas
           - kubernetes
           - m365
         description: |-
@@ -6290,6 +6339,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -6302,6 +6352,7 @@ paths:
             - azure
             - gcp
             - github
+            - mongodbatlas
             - kubernetes
             - m365
         description: |-
@@ -6313,6 +6364,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
         explode: false
         style: form
       - in: query
@@ -7116,6 +7168,7 @@ paths:
           - azure
           - gcp
           - github
+          - mongodbatlas
           - kubernetes
           - m365
         description: |-
@@ -7125,6 +7178,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -7137,6 +7191,7 @@ paths:
             - azure
             - gcp
             - github
+            - mongodbatlas
             - kubernetes
             - m365
         description: |-
@@ -7148,6 +7203,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
         explode: false
         style: form
       - in: query
@@ -12132,7 +12188,7 @@ components:
                         type: string
                         description: GitHub OAuth App token for authentication.
                     required:
-                    - oauth_app_token
+                  - oauth_app_token
                   - type: object
                     title: GitHub App Credentials
                     properties:
@@ -12145,6 +12201,18 @@ components:
                     required:
                     - github_app_id
                     - github_app_key
+                  - type: object
+                    title: MongoDB Atlas API Key
+                    properties:
+                      atlas_public_key:
+                        type: string
+                        description: MongoDB Atlas API public key.
+                      atlas_private_key:
+                        type: string
+                        description: MongoDB Atlas API private key.
+                    required:
+                    - atlas_public_key
+                    - atlas_private_key
                   writeOnly: true
               required:
               - secret
@@ -13139,6 +13207,7 @@ components:
               - kubernetes
               - m365
               - github
+              - mongodbatlas
               type: string
               description: |-
                 * `aws` - AWS
@@ -13147,6 +13216,7 @@ components:
                 * `kubernetes` - Kubernetes
                 * `m365` - M365
                 * `github` - GitHub
+                * `mongodbatlas` - MongoDB Atlas
               x-spec-enum-id: 4c1e219dad1cc0e7
             uid:
               type: string
@@ -13259,6 +13329,7 @@ components:
               - kubernetes
               - m365
               - github
+              - mongodbatlas
               type: string
               x-spec-enum-id: 4c1e219dad1cc0e7
               description: |-
@@ -13270,6 +13341,7 @@ components:
                 * `kubernetes` - Kubernetes
                 * `m365` - M365
                 * `github` - GitHub
+                * `mongodbatlas` - MongoDB Atlas
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -13313,6 +13385,7 @@ components:
                   - kubernetes
                   - m365
                   - github
+                  - mongodbatlas
                   type: string
                   x-spec-enum-id: 4c1e219dad1cc0e7
                   description: |-
@@ -13324,6 +13397,7 @@ components:
                     * `kubernetes` - Kubernetes
                     * `m365` - M365
                     * `github` - GitHub
+                    * `mongodbatlas` - MongoDB Atlas
                 uid:
                   type: string
                   minLength: 3

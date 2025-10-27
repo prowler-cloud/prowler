@@ -239,6 +239,21 @@ from rest_framework_json_api import serializers
                 },
                 "required": ["github_app_id", "github_app_key"],
             },
+            {
+                "type": "object",
+                "title": "MongoDB Atlas API Key",
+                "properties": {
+                    "atlas_public_key": {
+                        "type": "string",
+                        "description": "MongoDB Atlas API public key.",
+                    },
+                    "atlas_private_key": {
+                        "type": "string",
+                        "description": "MongoDB Atlas API private key.",
+                    },
+                },
+                "required": ["atlas_public_key", "atlas_private_key"],
+            },
         ]
     }
 )

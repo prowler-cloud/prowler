@@ -284,6 +284,7 @@ class Provider(RowLevelSecurityProtectedModel):
         KUBERNETES = "kubernetes", _("Kubernetes")
         M365 = "m365", _("M365")
         GITHUB = "github", _("GitHub")
+        MONGODBATLAS = "mongodbatlas", _("MongoDB Atlas")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -351,6 +352,15 @@ class Provider(RowLevelSecurityProtectedModel):
                 detail="GitHub provider ID must be a valid GitHub username or organization name (1-39 characters, "
                 "starting with alphanumeric, containing only alphanumeric characters and hyphens).",
                 code="github-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_mongodbatlas_uid(value):
+        if not re.match(r"^[0-9a-fA-F]{24}$", value):
+            raise ModelValidationError(
+                detail="MongoDB Atlas project ID must be a 24-character hexadecimal string.",
+                code="mongodbatlas-uid",
                 pointer="/data/attributes/uid",
             )
 
