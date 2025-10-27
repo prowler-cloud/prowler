@@ -60,7 +60,7 @@ export const RiskSeverityChart = ({ severityData }: RiskSeverityChartProps) => {
   ];
 
   return (
-    <BaseCard className="flex flex-col">
+    <BaseCard className="flex h-full flex-col">
       <CardHeader>
         <CardTitle>Risk Severity</CardTitle>
       </CardHeader>

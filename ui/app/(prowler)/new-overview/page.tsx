@@ -31,7 +31,7 @@ export default async function NewOverviewPage({
 
   return (
     <ContentLayout title="New Overview" icon="lucide:square-chart-gantt">
-      <div className="grid gap-6 p-6 md:grid-cols-2">
+      <div className="grid auto-rows-fr gap-6 p-6 md:grid-cols-2">
         <Suspense
           fallback={
             <div className="flex h-[400px] w-full items-center justify-center rounded-xl border border-zinc-900 bg-stone-950">
