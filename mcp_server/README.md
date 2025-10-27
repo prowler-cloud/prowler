@@ -144,11 +144,11 @@ uv run prowler-mcp --transport http
 uv run prowler-mcp --transport http --host 0.0.0.0 --port 8080
 ```
 
-For self-deployed MCP remote server, you can use also configure the server to use a custom API base URL with the environment variable `PROWLER_API_BASE_URL`; and the transport mode with the environment variable `PROWLER_MCP_MODE`.
+For self-deployed MCP remote server, you can use also configure the server to use a custom API base URL with the environment variable `PROWLER_API_BASE_URL`; and the transport mode with the environment variable `PROWLER_MCP_TRANSPORT_MODE`.
 
 ```bash
 export PROWLER_API_BASE_URL="https://api.prowler.com"
-export PROWLER_MCP_MODE="http"
+export PROWLER_MCP_TRANSPORT_MODE="http"
 ```
 
 ### Using uv directly
@@ -189,6 +189,16 @@ docker run --rm --env-file ./.env -p 8000:8000 -it prowler-mcp --transport http 
 # Run on custom port
 docker run --rm --env-file ./.env -p 8080:8080 -it prowler-mcp --transport http --host 0.0.0.0 --port 8080
 ```
+
+## Production Deployment
+
+For production deployments that require customization, it is recommended to use the ASGI application that can be found in `prowler_mcp_server.server`. This can be run with uvicorn:
+
+```bash
+uvicorn prowler_mcp_server.server:app --host 0.0.0.0 --port 8000
+```
+
+For more details on production deployment options, see the [FastMCP production deployment guide](https://gofastmcp.com/deployment/http#production-deployment) and [uvicorn settings](https://www.uvicorn.org/settings/).
 
 ## Command Line Arguments
 
@@ -482,6 +492,10 @@ If you want to have it globally available, add the example server to Cursor's co
 
 If you want to have it only for the current project, add the example server to the project's root in a new `.cursor/mcp.json` file.
 
+## Documentation
+
+For detailed documentation about the Prowler MCP Server, including guides, tutorials, and use cases, visit the [official Prowler documentation](https://docs.prowler.com).
+
 ## License
 
-This project follows the repository’s main license. See the [LICENSE](../LICENSE) file at the repository root.
+This project follows the repository's main license. See the [LICENSE](../LICENSE) file at the repository root.

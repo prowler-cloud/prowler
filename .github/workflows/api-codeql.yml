@@ -1,36 +1,34 @@
-# For most projects, this workflow file will not need changing; you simply need
-# to commit it to your repository.
-#
-# You may wish to alter this file to override the set of languages analyzed,
-# or to provide custom queries or build logic.
-#
-# ******** NOTE ********
-# We have attempted to detect the languages in your repository. Please check
-# the `language` matrix defined below to confirm you have the correct set of
-# supported CodeQL languages.
-#
-name: API - CodeQL
+name: 'API: CodeQL'
 
 on:
   push:
     branches:
-      - "master"
-      - "v5.*"
+      - 'master'
+      - 'v5.*'
     paths:
-      - "api/**"
+      - 'api/**'
+      - '.github/workflows/api-codeql.yml'
+      - '.github/codeql/api-codeql-config.yml'
   pull_request:
     branches:
-      - "master"
-      - "v5.*"
+      - 'master'
+      - 'v5.*'
     paths:
-      - "api/**"
+      - 'api/**'
+      - '.github/workflows/api-codeql.yml'
+      - '.github/codeql/api-codeql-config.yml'
   schedule:
     - cron: '00 12 * * *'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   analyze:
-    name: Analyze
+    name: CodeQL Security Analysis
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       actions: read
       contents: read
@@ -39,21 +37,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'python' ]
-        # Learn more about CodeQL language support at https://aka.ms/codeql-docs/language-support
+        language:
+          - 'python'
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
-    # Initializes the CodeQL tools for scanning.
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@3599b3baa15b485a2e49ef411a7a4bb2452e7f93 # v3.30.5
-      with:
-        languages: ${{ matrix.language }}
-        config-file: ./.github/codeql/api-codeql-config.yml
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@3599b3baa15b485a2e49ef411a7a4bb2452e7f93 # v3.30.5
+        with:
+          languages: ${{ matrix.language }}
+          config-file: ./.github/codeql/api-codeql-config.yml
 
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@3599b3baa15b485a2e49ef411a7a4bb2452e7f93 # v3.30.5
-      with:
-        category: "/language:${{matrix.language}}"
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@3599b3baa15b485a2e49ef411a7a4bb2452e7f93 # v3.30.5
+        with:
+          category: '/language:${{ matrix.language }}'
