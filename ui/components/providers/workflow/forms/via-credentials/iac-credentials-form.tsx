@@ -15,20 +15,9 @@ export const IacCredentialsForm = ({
           Connect via Repository
         </div>
         <div className="text-default-500 text-sm">
-          Please provide the repository URL to scan for Infrastructure as Code
-          files.
+          Provide an access token if the repository is private (optional).
         </div>
       </div>
-      <CustomInput
-        control={control}
-        name="repository_url"
-        label="Repository URL"
-        labelPlacement="inside"
-        placeholder="https://github.com/user/repo or https://github.com/user/repo.git"
-        variant="bordered"
-        isRequired
-        isInvalid={!!control._formState.errors.repository_url}
-      />
       <CustomInput
         control={control}
         name="access_token"

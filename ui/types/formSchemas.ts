@@ -200,7 +200,7 @@ export const addCredentialsFormSchema = (
                     ? {
                         [ProviderCredentialFields.REPOSITORY_URL]: z
                           .string()
-                          .nonempty("Repository URL is required"),
+                          .optional(),
                         [ProviderCredentialFields.ACCESS_TOKEN]: z
                           .string()
                           .optional(),
