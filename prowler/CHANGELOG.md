@@ -2,6 +2,24 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+<<<<<<< HEAD
+=======
+## [v5.14.0] (Prowler UNRELEASED)
+
+### Added
+- GitHub provider check `organization_default_repository_permission_strict` [(#8785)](https://github.com/prowler-cloud/prowler/pull/8785)
+
+---
+
+## [v5.13.1] (Prowler UNRELEASED)
+
+### Fixed
+- Add `resource_name` for checks under `logging` for the GCP provider [(#9023)](https://github.com/prowler-cloud/prowler/pull/9023)
+
+
+---
+
+>>>>>>> e694b0f63 (fix(gcp): set unknown for resource name under metric resources (#9023))
 ## [v5.13.0] (Prowler v5.13.0)
 
 ### Added
