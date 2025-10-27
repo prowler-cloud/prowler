@@ -1,15 +1,8 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import { lazy, Suspense } from "react";
 
-import {
-  AWSProviderBadge,
-  AzureProviderBadge,
-  GCPProviderBadge,
-  GitHubProviderBadge,
-  KS8ProviderBadge,
-  M365ProviderBadge,
-} from "@/components/icons/providers-badge";
 import {
   Select,
   SelectContent,
@@ -19,33 +12,70 @@ import {
 } from "@/components/shadcn";
 import { type ProviderProps, ProviderType } from "@/types/providers";
 
+const AWSProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.AWSProviderBadge,
+  })),
+);
+const AzureProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.AzureProviderBadge,
+  })),
+);
+const GCPProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.GCPProviderBadge,
+  })),
+);
+const KS8ProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.KS8ProviderBadge,
+  })),
+);
+const M365ProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.M365ProviderBadge,
+  })),
+);
+const GitHubProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.GitHubProviderBadge,
+  })),
+);
+
+type IconProps = { width: number; height: number };
+
+const IconPlaceholder = ({ width, height }: IconProps) => (
+  <div style={{ width, height }} />
+);
+
 const PROVIDER_DATA: Record<
   ProviderType,
-  { label: string; icon: React.ReactNode }
+  { label: string; icon: React.ComponentType<IconProps> }
 > = {
   aws: {
     label: "Amazon Web Services",
-    icon: <AWSProviderBadge width={24} height={24} />,
+    icon: AWSProviderBadge,
   },
   azure: {
     label: "Microsoft Azure",
-    icon: <AzureProviderBadge width={24} height={24} />,
+    icon: AzureProviderBadge,
   },
   gcp: {
     label: "Google Cloud Platform",
-    icon: <GCPProviderBadge width={24} height={24} />,
+    icon: GCPProviderBadge,
   },
   kubernetes: {
     label: "Kubernetes",
-    icon: <KS8ProviderBadge width={24} height={24} />,
+    icon: KS8ProviderBadge,
   },
   m365: {
     label: "Microsoft 365",
-    icon: <M365ProviderBadge width={24} height={24} />,
+    icon: M365ProviderBadge,
   },
   github: {
     label: "GitHub",
-    icon: <GitHubProviderBadge width={24} height={24} />,
+    icon: GitHubProviderBadge,
   },
 };
 
@@ -89,13 +119,22 @@ export const ProviderTypeSelector = ({
     ),
   ) as ProviderType[];
 
+  const renderIcon = (providerType: ProviderType) => {
+    const IconComponent = PROVIDER_DATA[providerType].icon;
+    return (
+      <Suspense fallback={<IconPlaceholder width={24} height={24} />}>
+        <IconComponent width={24} height={24} />
+      </Suspense>
+    );
+  };
+
   const selectedLabel = () => {
     if (selectedTypes.length === 0) return null; // placeholder visible
     if (selectedTypes.length === 1) {
       const providerType = selectedTypes[0] as ProviderType;
       return (
         <span className="flex items-center gap-2">
-          {PROVIDER_DATA[providerType].icon}
+          {renderIcon(providerType)}
           <span>{PROVIDER_DATA[providerType].label}</span>
         </span>
       );
@@ -139,9 +178,7 @@ export const ProviderTypeSelector = ({
                 value={providerType}
                 aria-label={`${PROVIDER_DATA[providerType].label} provider`}
               >
-                <span aria-hidden="true">
-                  {PROVIDER_DATA[providerType].icon}
-                </span>
+                <span aria-hidden="true">{renderIcon(providerType)}</span>
                 <span>{PROVIDER_DATA[providerType].label}</span>
               </SelectItem>
             ))

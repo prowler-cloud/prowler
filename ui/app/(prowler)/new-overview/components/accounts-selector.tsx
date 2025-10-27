@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import { ReactNode } from "react";
 
 import {
   AWSProviderBadge,
@@ -19,7 +20,7 @@ import {
 } from "@/components/shadcn";
 import type { ProviderProps, ProviderType } from "@/types/providers";
 
-const PROVIDER_ICON: Record<ProviderType, React.ReactNode> = {
+const PROVIDER_ICON: Record<ProviderType, ReactNode> = {
   aws: <AWSProviderBadge width={18} height={18} />,
   azure: <AzureProviderBadge width={18} height={18} />,
   gcp: <GCPProviderBadge width={18} height={18} />,
