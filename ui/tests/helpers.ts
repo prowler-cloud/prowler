@@ -1,6 +1,5 @@
 import { Page, expect } from "@playwright/test";
 import { SignInPage, SignInCredentials } from "./sign-in/sign-in-page";
-import { ProvidersPage } from "./providers/providers-page";
 
 export const ERROR_MESSAGES = {
   INVALID_CREDENTIALS: "Invalid email or password",
