@@ -38,7 +38,7 @@ class codepipeline_project_repo_private(Check):
                 and pipeline.source.type == "CodeStarSourceConnection"
                 and pipeline.source.repository_id
             ):
-                report = Check_Report_AWS(self.metadata())
+                report = Check_Report_AWS(self.metadata(), resource=pipeline)
                 report.region = pipeline.region
                 report.resource_id = pipeline.name
                 report.resource_arn = pipeline.arn
