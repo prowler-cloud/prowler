@@ -1,23 +1,30 @@
 from prowler.lib.check.models import Check, Check_Report_AlibabaCloud
-from prowler.providers.alibabacloud.services.securitycenter.securitycenter_client import securitycenter_client
+from prowler.providers.alibabacloud.lib.check.check_utils import (
+    GenericAlibabaCloudResource,
+)
+from prowler.providers.alibabacloud.services.securitycenter.securitycenter_client import (
+    securitycenter_client,
+)
+
 
 class securitycenter_anti_ransomware(Check):
     def execute(self):
         findings = []
-        report = Check_Report_AlibabaCloud(metadata=self.metadata(), resource=type('obj', (object,), {
-            'id': 'security-center', 'name': 'Security Center', 
-            'arn': f"acs:securitycenter::{securitycenter_client.account_id}:config", 'region': 'global'
-        })())
-        report.account_uid = securitycenter_client.account_id
-        report.region = "global"
-        report.resource_id = "security-center"
-        report.resource_arn = f"acs:securitycenter::{securitycenter_client.account_id}:config"
-        
+        resource = GenericAlibabaCloudResource(
+            id="security-center",
+            name="Security Center",
+            arn=f"acs:securitycenter::{securitycenter_client.account_id}:config",
+            region="global",
+        )
+        report = Check_Report_AlibabaCloud(metadata=self.metadata(), resource=resource)
+        report.status = "FAIL"
+        report.status_extended = (
+            "Security Center anti-ransomware protection is not enabled."
+        )
         if securitycenter_client.config.anti_ransomware:
             report.status = "PASS"
-            report.status_extended = "Security Center anti-ransomware protection is enabled."
-        else:
-            report.status = "FAIL"
-            report.status_extended = "Security Center anti-ransomware protection is not enabled."
+            report.status_extended = (
+                "Security Center anti-ransomware protection is enabled."
+            )
         findings.append(report)
         return findings

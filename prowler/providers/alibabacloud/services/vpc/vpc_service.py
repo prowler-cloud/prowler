@@ -5,7 +5,6 @@ This module provides the service class for Alibaba Cloud Virtual Private Cloud (
 """
 
 from dataclasses import dataclass
-from typing import Optional
 
 from prowler.lib.logger import logger
 from prowler.providers.alibabacloud.lib.service.service import AlibabaCloudService
@@ -14,6 +13,7 @@ from prowler.providers.alibabacloud.lib.service.service import AlibabaCloudServi
 @dataclass
 class VPC:
     """VPC"""
+
     vpc_id: str
     vpc_name: str
     arn: str
@@ -30,6 +30,7 @@ class VPC:
 @dataclass
 class VSwitch:
     """VSwitch (Subnet)"""
+
     vswitch_id: str
     vswitch_name: str
     arn: str
@@ -47,6 +48,7 @@ class VSwitch:
 @dataclass
 class FlowLog:
     """VPC Flow Log"""
+
     flow_log_id: str
     flow_log_name: str
     arn: str
@@ -65,6 +67,7 @@ class FlowLog:
 @dataclass
 class NetworkACL:
     """Network ACL"""
+
     network_acl_id: str
     network_acl_name: str
     arn: str
@@ -111,22 +114,58 @@ class VPC_Service(AlibabaCloudService):
         """Describe all VPCs"""
         for region in self.regions:
             try:
-                # TODO: Implement actual SDK call
-                # Placeholder: Create sample VPC for demonstration
-                vpc_id = f"vpc-demo-{region}"
-                arn = self.generate_resource_arn("vpc", vpc_id, region)
+                from alibabacloud_tea_openapi import models as openapi_models
+                from alibabacloud_vpc20160428 import models
+                from alibabacloud_vpc20160428.client import Client as VpcClient
 
-                vpc = VPC(
-                    vpc_id=vpc_id,
-                    vpc_name=f"demo-vpc-{region}",
-                    arn=arn,
-                    region=region,
-                    cidr_block="172.16.0.0/12",
-                    status="Available",
-                    is_default=False
+                # Create client configuration
+                config = openapi_models.Config(
+                    access_key_id=self.provider.session.credentials.access_key_id,
+                    access_key_secret=self.provider.session.credentials.access_key_secret,
+                    region_id=region,
                 )
 
-                self.vpcs[arn] = vpc
+                if self.provider.session.credentials.security_token:
+                    config.security_token = (
+                        self.provider.session.credentials.security_token
+                    )
+
+                # Create VPC client
+                client = VpcClient(config)
+
+                # Describe VPCs
+                request = models.DescribeVpcsRequest(page_size=50, region_id=region)
+                response = client.describe_vpcs(request)
+
+                # Process VPCs
+                if response.body.vpcs and response.body.vpcs.vpc:
+                    for vpc_data in response.body.vpcs.vpc:
+                        vpc_id = vpc_data.vpc_id
+                        arn = self.generate_resource_arn("vpc", vpc_id, region)
+
+                        vpc = VPC(
+                            vpc_id=vpc_id,
+                            vpc_name=vpc_data.vpc_name if vpc_data.vpc_name else vpc_id,
+                            arn=arn,
+                            region=region,
+                            cidr_block=(
+                                vpc_data.cidr_block if vpc_data.cidr_block else ""
+                            ),
+                            status=vpc_data.status if vpc_data.status else "",
+                            is_default=(
+                                vpc_data.is_default
+                                if hasattr(vpc_data, "is_default")
+                                else False
+                            ),
+                            creation_time=(
+                                vpc_data.creation_time if vpc_data.creation_time else ""
+                            ),
+                        )
+
+                        self.vpcs[arn] = vpc
+                        logger.info(f"Found VPC: {vpc_id} in {region}")
+                else:
+                    logger.info(f"No VPCs found in {region}")
 
             except Exception as error:
                 self._handle_api_error(error, "DescribeVpcs", region)
@@ -135,9 +174,76 @@ class VPC_Service(AlibabaCloudService):
         """Describe all VPC Flow Logs"""
         for region in self.regions:
             try:
-                # TODO: Implement actual SDK call
-                # Placeholder: No flow logs (will trigger check failure)
-                pass
+                from alibabacloud_tea_openapi import models as openapi_models
+                from alibabacloud_vpc20160428 import models
+                from alibabacloud_vpc20160428.client import Client as VpcClient
+
+                # Create client configuration
+                config = openapi_models.Config(
+                    access_key_id=self.provider.session.credentials.access_key_id,
+                    access_key_secret=self.provider.session.credentials.access_key_secret,
+                    region_id=region,
+                )
+
+                if self.provider.session.credentials.security_token:
+                    config.security_token = (
+                        self.provider.session.credentials.security_token
+                    )
+
+                # Create VPC client
+                client = VpcClient(config)
+
+                # Describe Flow Logs
+                request = models.DescribeFlowLogsRequest(page_size=50, region_id=region)
+                response = client.describe_flow_logs(request)
+
+                # Process Flow Logs
+                if response.body.flow_logs and response.body.flow_logs.flow_log:
+                    for flow_log_data in response.body.flow_logs.flow_log:
+                        flow_log_id = flow_log_data.flow_log_id
+                        arn = self.generate_resource_arn("flowlog", flow_log_id, region)
+
+                        flow_log = FlowLog(
+                            flow_log_id=flow_log_id,
+                            flow_log_name=(
+                                flow_log_data.flow_log_name
+                                if flow_log_data.flow_log_name
+                                else flow_log_id
+                            ),
+                            arn=arn,
+                            region=region,
+                            resource_type=(
+                                flow_log_data.resource_type
+                                if hasattr(flow_log_data, "resource_type")
+                                else ""
+                            ),
+                            resource_id=(
+                                flow_log_data.resource_id
+                                if hasattr(flow_log_data, "resource_id")
+                                else ""
+                            ),
+                            traffic_type=(
+                                flow_log_data.traffic_type
+                                if hasattr(flow_log_data, "traffic_type")
+                                else "All"
+                            ),
+                            project_name=(
+                                flow_log_data.project_name
+                                if hasattr(flow_log_data, "project_name")
+                                else ""
+                            ),
+                            log_store_name=(
+                                flow_log_data.log_store_name
+                                if hasattr(flow_log_data, "log_store_name")
+                                else ""
+                            ),
+                            status=flow_log_data.status if flow_log_data.status else "",
+                        )
+
+                        self.flow_logs[arn] = flow_log
+                        logger.info(f"Found Flow Log: {flow_log_id} in {region}")
+                else:
+                    logger.info(f"No Flow Logs found in {region}")
 
             except Exception as error:
                 self._handle_api_error(error, "DescribeFlowLogs", region)

@@ -10,6 +10,9 @@ Compliance: CIS Alibaba Cloud Foundations Benchmark
 """
 
 from prowler.lib.check.models import Check, Check_Report_AlibabaCloud
+from prowler.providers.alibabacloud.lib.check.check_utils import (
+    GenericAlibabaCloudResource,
+)
 from prowler.providers.alibabacloud.services.ram.ram_client import ram_client
 
 
@@ -21,12 +24,13 @@ class ram_root_access_keys_absent(Check):
         findings = []
 
         # Create a report for the root account
-        report = Check_Report_AlibabaCloud(metadata=self.metadata(), resource=type('obj', (object,), {
-            'id': 'root-account',
-            'name': 'Root Account',
-            'arn': f"acs:ram::{ram_client.account_id}:root",
-            'region': 'global'
-        })())
+        resource = GenericAlibabaCloudResource(
+            id="root-account",
+            name="Root Account",
+            arn=f"acs:ram::{ram_client.account_id}:root",
+            region="global",
+        )
+        report = Check_Report_AlibabaCloud(metadata=self.metadata(), resource=resource)
 
         report.account_uid = ram_client.account_id
         report.region = "global"
@@ -35,7 +39,9 @@ class ram_root_access_keys_absent(Check):
 
         if not ram_client.root_has_access_keys:
             report.status = "PASS"
-            report.status_extended = "Root account does not have any active access keys."
+            report.status_extended = (
+                "Root account does not have any active access keys."
+            )
         else:
             report.status = "FAIL"
             report.status_extended = "Root account has active access keys. Remove all access keys from the root account and use RAM users instead."

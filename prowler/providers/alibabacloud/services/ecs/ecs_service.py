@@ -176,38 +176,120 @@ class ECS(AlibabaCloudService):
 
         for region in self.regions:
             try:
-                # TODO: Implement actual Alibaba Cloud SDK call
-                # from alibabacloud_ecs20140526.client import Client
-                # from alibabacloud_ecs20140526.models import DescribeInstancesRequest
-                #
-                # client = self._create_regional_client(region)
-                # request = DescribeInstancesRequest()
-                # response = client.describe_instances(request)
-                #
-                # for instance_data in response.body.instances.instance:
-                #     instance = self._parse_instance(instance_data, region)
-                #     self.instances[instance.arn] = instance
+                from alibabacloud_ecs20140526 import models
+                from alibabacloud_ecs20140526.client import Client as EcsClient
+                from alibabacloud_tea_openapi import models as openapi_models
 
-                # Placeholder: Create sample instance for demonstration
-                instance_id = f"i-{region}-sample123"
-                arn = self.generate_resource_arn("instance", instance_id, region)
-
-                instance = Instance(
-                    id=instance_id,
-                    name=f"sample-instance-{region}",
-                    arn=arn,
-                    region=region,
-                    status="Running",
-                    instance_type="ecs.t6-c1m1.large",
-                    public_ip="192.0.2.1",
-                    private_ip="10.0.1.10",
-                    security_groups=["sg-sample123"],
-                    vpc_id="vpc-sample123",
-                    zone_id=f"{region}-a",
+                # Create client configuration
+                config = openapi_models.Config(
+                    access_key_id=self.provider.session.credentials.access_key_id,
+                    access_key_secret=self.provider.session.credentials.access_key_secret,
+                    region_id=region,
                 )
 
-                self.instances[arn] = instance
-                logger.info(f"Found ECS instance: {instance_id} in {region}")
+                # Add security token if present (for STS)
+                if self.provider.session.credentials.security_token:
+                    config.security_token = (
+                        self.provider.session.credentials.security_token
+                    )
+
+                # Create ECS client
+                client = EcsClient(config)
+
+                # Describe instances
+                request = models.DescribeInstancesRequest(
+                    page_size=100, region_id=region
+                )
+                response = client.describe_instances(request)
+
+                # Process instances
+                if response.body.instances and response.body.instances.instance:
+                    for instance_data in response.body.instances.instance:
+                        instance_id = instance_data.instance_id
+                        arn = self.generate_resource_arn(
+                            "instance", instance_id, region
+                        )
+
+                        # Get public IP
+                        public_ip = None
+                        if (
+                            instance_data.public_ip_address
+                            and instance_data.public_ip_address.ip_address
+                        ):
+                            public_ip = (
+                                instance_data.public_ip_address.ip_address[0]
+                                if instance_data.public_ip_address.ip_address
+                                else None
+                            )
+                        elif (
+                            instance_data.eip_address
+                            and instance_data.eip_address.ip_address
+                        ):
+                            public_ip = instance_data.eip_address.ip_address
+
+                        # Get private IP
+                        private_ip = ""
+                        if (
+                            instance_data.vpc_attributes
+                            and instance_data.vpc_attributes.private_ip_address
+                        ):
+                            private_ip = (
+                                instance_data.vpc_attributes.private_ip_address.ip_address[
+                                    0
+                                ]
+                                if instance_data.vpc_attributes.private_ip_address.ip_address
+                                else ""
+                            )
+
+                        # Get security groups
+                        security_groups = []
+                        if (
+                            instance_data.security_group_ids
+                            and instance_data.security_group_ids.security_group_id
+                        ):
+                            security_groups = (
+                                instance_data.security_group_ids.security_group_id
+                            )
+
+                        # Get VPC ID
+                        vpc_id = (
+                            instance_data.vpc_attributes.vpc_id
+                            if instance_data.vpc_attributes
+                            else ""
+                        )
+
+                        # Get tags
+                        tags = {}
+                        if instance_data.tags and instance_data.tags.tag:
+                            for tag in instance_data.tags.tag:
+                                tags[tag.tag_key] = tag.tag_value
+
+                        instance = Instance(
+                            id=instance_id,
+                            name=instance_data.instance_name or instance_id,
+                            arn=arn,
+                            region=region,
+                            status=instance_data.status,
+                            instance_type=instance_data.instance_type,
+                            public_ip=public_ip,
+                            private_ip=private_ip,
+                            security_groups=security_groups,
+                            vpc_id=vpc_id,
+                            zone_id=instance_data.zone_id,
+                            image_id=instance_data.image_id,
+                            tags=tags,
+                            created_time=instance_data.creation_time,
+                            expired_time=(
+                                instance_data.expired_time
+                                if hasattr(instance_data, "expired_time")
+                                else ""
+                            ),
+                        )
+
+                        self.instances[arn] = instance
+                        logger.info(f"Found ECS instance: {instance_id} in {region}")
+                else:
+                    logger.info(f"No ECS instances found in {region}")
 
             except Exception as error:
                 self._handle_api_error(error, "DescribeInstances", region)
@@ -222,27 +304,71 @@ class ECS(AlibabaCloudService):
 
         for region in self.regions:
             try:
-                # TODO: Implement actual Alibaba Cloud SDK call
-                # Placeholder: Create sample disk for demonstration
-                disk_id = f"d-{region}-sample456"
-                arn = self.generate_resource_arn("disk", disk_id, region)
+                from alibabacloud_ecs20140526 import models
+                from alibabacloud_ecs20140526.client import Client as EcsClient
+                from alibabacloud_tea_openapi import models as openapi_models
 
-                disk = Disk(
-                    id=disk_id,
-                    name=f"sample-disk-{region}",
-                    arn=arn,
-                    region=region,
-                    disk_type="data",
-                    category="cloud_essd",
-                    size=100,
-                    encrypted=False,  # This will be checked
-                    status="In_use",
-                    instance_id=f"i-{region}-sample123",
-                    zone_id=f"{region}-a",
+                # Create client configuration
+                config = openapi_models.Config(
+                    access_key_id=self.provider.session.credentials.access_key_id,
+                    access_key_secret=self.provider.session.credentials.access_key_secret,
+                    region_id=region,
                 )
 
-                self.disks[arn] = disk
-                logger.info(f"Found ECS disk: {disk_id} in {region}")
+                if self.provider.session.credentials.security_token:
+                    config.security_token = (
+                        self.provider.session.credentials.security_token
+                    )
+
+                # Create ECS client
+                client = EcsClient(config)
+
+                # Describe disks
+                request = models.DescribeDisksRequest(page_size=100, region_id=region)
+                response = client.describe_disks(request)
+
+                # Process disks
+                if response.body.disks and response.body.disks.disk:
+                    for disk_data in response.body.disks.disk:
+                        disk_id = disk_data.disk_id
+                        arn = self.generate_resource_arn("disk", disk_id, region)
+
+                        # Get tags
+                        tags = {}
+                        if disk_data.tags and disk_data.tags.tag:
+                            for tag in disk_data.tags.tag:
+                                tags[tag.tag_key] = tag.tag_value
+
+                        disk = Disk(
+                            id=disk_id,
+                            name=disk_data.disk_name or disk_id,
+                            arn=arn,
+                            region=region,
+                            disk_type=disk_data.type if disk_data.type else "",
+                            category=disk_data.category if disk_data.category else "",
+                            size=disk_data.size if disk_data.size else 0,
+                            encrypted=(
+                                disk_data.encrypted
+                                if hasattr(disk_data, "encrypted")
+                                else False
+                            ),
+                            kms_key_id=(
+                                disk_data.kms_key_id
+                                if hasattr(disk_data, "kms_key_id")
+                                else None
+                            ),
+                            status=disk_data.status if disk_data.status else "",
+                            instance_id=(
+                                disk_data.instance_id if disk_data.instance_id else None
+                            ),
+                            zone_id=disk_data.zone_id if disk_data.zone_id else "",
+                            tags=tags,
+                        )
+
+                        self.disks[arn] = disk
+                        logger.info(f"Found ECS disk: {disk_id} in {region}")
+                else:
+                    logger.info(f"No ECS disks found in {region}")
 
             except Exception as error:
                 self._handle_api_error(error, "DescribeDisks", region)
@@ -257,37 +383,114 @@ class ECS(AlibabaCloudService):
 
         for region in self.regions:
             try:
-                # TODO: Implement actual Alibaba Cloud SDK call
-                # Placeholder: Create sample security group
-                sg_id = f"sg-{region}-sample789"
-                arn = self.generate_resource_arn("security-group", sg_id, region)
+                from alibabacloud_ecs20140526 import models
+                from alibabacloud_ecs20140526.client import Client as EcsClient
+                from alibabacloud_tea_openapi import models as openapi_models
 
-                # Sample security group with unrestricted SSH access (for check demonstration)
-                security_group = SecurityGroup(
-                    id=sg_id,
-                    name=f"sample-sg-{region}",
-                    arn=arn,
-                    region=region,
-                    vpc_id="vpc-sample123",
-                    description="Sample security group",
-                    rules=[
-                        {
-                            "direction": "ingress",
-                            "protocol": "tcp",
-                            "port_range": "22/22",
-                            "source": "0.0.0.0/0",  # Unrestricted SSH!
-                        },
-                        {
-                            "direction": "ingress",
-                            "protocol": "tcp",
-                            "port_range": "443/443",
-                            "source": "10.0.0.0/8",
-                        },
-                    ],
+                # Create client configuration
+                config = openapi_models.Config(
+                    access_key_id=self.provider.session.credentials.access_key_id,
+                    access_key_secret=self.provider.session.credentials.access_key_secret,
+                    region_id=region,
                 )
 
-                self.security_groups[arn] = security_group
-                logger.info(f"Found security group: {sg_id} in {region}")
+                if self.provider.session.credentials.security_token:
+                    config.security_token = (
+                        self.provider.session.credentials.security_token
+                    )
+
+                # Create ECS client
+                client = EcsClient(config)
+
+                # Describe security groups
+                request = models.DescribeSecurityGroupsRequest(
+                    page_size=100, region_id=region
+                )
+                response = client.describe_security_groups(request)
+
+                # Process security groups
+                if (
+                    response.body.security_groups
+                    and response.body.security_groups.security_group
+                ):
+                    for sg_data in response.body.security_groups.security_group:
+                        sg_id = sg_data.security_group_id
+                        arn = self.generate_resource_arn(
+                            "security-group", sg_id, region
+                        )
+
+                        # Get tags
+                        tags = {}
+                        if sg_data.tags and sg_data.tags.tag:
+                            for tag in sg_data.tags.tag:
+                                tags[tag.tag_key] = tag.tag_value
+
+                        # Get security group rules
+                        rules = []
+                        try:
+                            rules_request = (
+                                models.DescribeSecurityGroupAttributeRequest(
+                                    security_group_id=sg_id, region_id=region
+                                )
+                            )
+                            rules_response = client.describe_security_group_attribute(
+                                rules_request
+                            )
+
+                            # Process ingress rules
+                            if (
+                                rules_response.body.permissions
+                                and rules_response.body.permissions.permission
+                            ):
+                                for perm in rules_response.body.permissions.permission:
+                                    rule = {
+                                        "direction": (
+                                            perm.direction
+                                            if perm.direction
+                                            else "ingress"
+                                        ),
+                                        "protocol": (
+                                            perm.ip_protocol if perm.ip_protocol else ""
+                                        ),
+                                        "port_range": (
+                                            perm.port_range if perm.port_range else ""
+                                        ),
+                                        "source": (
+                                            perm.source_cidr_ip
+                                            if hasattr(perm, "source_cidr_ip")
+                                            and perm.source_cidr_ip
+                                            else ""
+                                        ),
+                                        "source_group_id": (
+                                            perm.source_group_id
+                                            if hasattr(perm, "source_group_id")
+                                            and perm.source_group_id
+                                            else ""
+                                        ),
+                                    }
+                                    rules.append(rule)
+                        except Exception as rules_error:
+                            logger.warning(
+                                f"Could not retrieve rules for security group {sg_id}: {rules_error}"
+                            )
+
+                        security_group = SecurityGroup(
+                            id=sg_id,
+                            name=sg_data.security_group_name or sg_id,
+                            arn=arn,
+                            region=region,
+                            vpc_id=sg_data.vpc_id if sg_data.vpc_id else "",
+                            description=(
+                                sg_data.description if sg_data.description else ""
+                            ),
+                            rules=rules,
+                            tags=tags,
+                        )
+
+                        self.security_groups[arn] = security_group
+                        logger.info(f"Found security group: {sg_id} in {region}")
+                else:
+                    logger.info(f"No security groups found in {region}")
 
             except Exception as error:
                 self._handle_api_error(error, "DescribeSecurityGroups", region)

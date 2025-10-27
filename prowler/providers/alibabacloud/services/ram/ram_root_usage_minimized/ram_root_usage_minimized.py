@@ -8,8 +8,12 @@ Risk Level: MEDIUM
 Compliance: CIS Alibaba Cloud Foundations Benchmark
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime
+
 from prowler.lib.check.models import Check, Check_Report_AlibabaCloud
+from prowler.providers.alibabacloud.lib.check.check_utils import (
+    GenericAlibabaCloudResource,
+)
 from prowler.providers.alibabacloud.services.ram.ram_client import ram_client
 
 
@@ -20,12 +24,13 @@ class ram_root_usage_minimized(Check):
         """Execute the ram_root_usage_minimized check"""
         findings = []
 
-        report = Check_Report_AlibabaCloud(metadata=self.metadata(), resource=type('obj', (object,), {
-            'id': 'root-account',
-            'name': 'Root Account',
-            'arn': f"acs:ram::{ram_client.account_id}:root",
-            'region': 'global'
-        })())
+        resource = GenericAlibabaCloudResource(
+            id="root-account",
+            name="Root Account",
+            arn=f"acs:ram::{ram_client.account_id}:root",
+            region="global",
+        )
+        report = Check_Report_AlibabaCloud(metadata=self.metadata(), resource=resource)
 
         report.account_uid = ram_client.account_id
         report.region = "global"
@@ -34,8 +39,12 @@ class ram_root_usage_minimized(Check):
 
         if ram_client.root_last_activity:
             try:
-                last_activity = datetime.fromisoformat(ram_client.root_last_activity.replace('Z', '+00:00'))
-                days_since_activity = (datetime.now(last_activity.tzinfo) - last_activity).days
+                last_activity = datetime.fromisoformat(
+                    ram_client.root_last_activity.replace("Z", "+00:00")
+                )
+                days_since_activity = (
+                    datetime.now(last_activity.tzinfo) - last_activity
+                ).days
 
                 if days_since_activity >= 90:
                     report.status = "PASS"

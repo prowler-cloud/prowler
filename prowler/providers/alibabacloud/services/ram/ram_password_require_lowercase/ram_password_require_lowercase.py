@@ -9,6 +9,9 @@ Compliance: CIS Alibaba Cloud Foundations Benchmark
 """
 
 from prowler.lib.check.models import Check, Check_Report_AlibabaCloud
+from prowler.providers.alibabacloud.lib.check.check_utils import (
+    GenericAlibabaCloudResource,
+)
 from prowler.providers.alibabacloud.services.ram.ram_client import ram_client
 
 
@@ -19,12 +22,13 @@ class ram_password_require_lowercase(Check):
         """Execute the ram_password_require_lowercase check"""
         findings = []
 
-        report = Check_Report_AlibabaCloud(metadata=self.metadata(), resource=type('obj', (object,), {
-            'id': 'password-policy',
-            'name': 'RAM Password Policy',
-            'arn': f"acs:ram::{ram_client.account_id}:password-policy",
-            'region': 'global'
-        })())
+        resource = GenericAlibabaCloudResource(
+            id="password-policy",
+            name="RAM Password Policy",
+            arn=f"acs:ram::{ram_client.account_id}:password-policy",
+            region="global",
+        )
+        report = Check_Report_AlibabaCloud(metadata=self.metadata(), resource=resource)
 
         report.account_uid = ram_client.account_id
         report.region = "global"
@@ -33,7 +37,9 @@ class ram_password_require_lowercase(Check):
 
         if ram_client.password_policy and ram_client.password_policy.require_lowercase:
             report.status = "PASS"
-            report.status_extended = "RAM password policy requires at least one lowercase letter."
+            report.status_extended = (
+                "RAM password policy requires at least one lowercase letter."
+            )
         else:
             report.status = "FAIL"
             report.status_extended = "RAM password policy does not require lowercase letters. Enable the lowercase letter requirement to increase password complexity."

@@ -5,7 +5,6 @@ This module provides the base class for all Alibaba Cloud service implementation
 """
 
 import threading
-from typing import Any, Dict, List
 
 from prowler.lib.logger import logger
 
@@ -70,7 +69,7 @@ class AlibabaCloudService:
         for thread in threads:
             thread.join()
 
-    def _create_regional_client(self, region: str, endpoint_override: str = None):
+    def _create_regional_client(self, region: str, _endpoint_override: str = None):
         """
         Create a regional Alibaba Cloud SDK client
 
@@ -79,7 +78,7 @@ class AlibabaCloudService:
 
         Args:
             region: Region identifier
-            endpoint_override: Optional endpoint override URL
+            _endpoint_override: Optional endpoint override URL (unused in base)
 
         Returns:
             SDK client instance for the specified region
@@ -109,7 +108,6 @@ class AlibabaCloudService:
         Args:
             resource: Resource identifier or object
         """
-        pass
 
     def _handle_api_error(self, error: Exception, operation: str, region: str = None):
         """

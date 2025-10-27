@@ -339,15 +339,20 @@ class Finding(BaseModel):
 
             elif provider.type == "alibabacloud":
                 output_data["auth_method"] = (
-                    "STS Token" if get_nested_attribute(provider, 'session.credentials.security_token')
+                    "STS Token"
+                    if get_nested_attribute(
+                        provider, "session.credentials.security_token"
+                    )
                     else "AccessKey"
                 )
                 output_data["account_uid"] = get_nested_attribute(
                     provider, "identity.account_id"
                 )
-                output_data["account_name"] = get_nested_attribute(
-                    provider, "identity.account_name"
-                )
+                # Use account_name if available, otherwise use account_id
+                account_name = get_nested_attribute(provider, "identity.account_name")
+                if not account_name:
+                    account_name = get_nested_attribute(provider, "identity.account_id")
+                output_data["account_name"] = account_name
                 output_data["resource_name"] = check_output.resource_name
                 output_data["resource_uid"] = check_output.resource_arn
                 output_data["region"] = check_output.region
