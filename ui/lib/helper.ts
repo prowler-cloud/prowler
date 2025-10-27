@@ -1,4 +1,8 @@
-import { getComplianceCsv, getExportsZip } from "@/actions/scans";
+import {
+  getComplianceCsv,
+  getExportsZip,
+  getThreatScorePdf,
+} from "@/actions/scans";
 import { getTask } from "@/actions/task";
 import { auth } from "@/auth.config";
 import { useToast } from "@/components/ui";
@@ -137,13 +141,15 @@ export const downloadScanZip = async (
   }
 };
 
-export const downloadComplianceCsv = async (
-  scanId: string,
-  complianceId: string,
+/**
+ * Generic function to download a file from base64 data
+ */
+const downloadFile = async (
+  result: any,
+  outputType: string,
+  successMessage: string,
   toast: ReturnType<typeof useToast>["toast"],
 ): Promise<void> => {
-  const result = await getComplianceCsv(scanId, complianceId);
-
   if (result?.pending) {
     toast({
       title: "The report is still being generated",
@@ -160,7 +166,7 @@ export const downloadComplianceCsv = async (
         bytes[i] = binaryString.charCodeAt(i);
       }
 
-      const blob = new Blob([bytes], { type: "text/csv" });
+      const blob = new Blob([bytes], { type: outputType });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -172,7 +178,7 @@ export const downloadComplianceCsv = async (
 
       toast({
         title: "Download Complete",
-        description: "The compliance report has been downloaded successfully.",
+        description: successMessage,
       });
     } catch (error) {
       toast({
@@ -199,6 +205,33 @@ export const downloadComplianceCsv = async (
     title: "Download Failed",
     description: "Unexpected response. Please try again later.",
   });
+};
+
+export const downloadComplianceCsv = async (
+  scanId: string,
+  complianceId: string,
+  toast: ReturnType<typeof useToast>["toast"],
+): Promise<void> => {
+  const result = await getComplianceCsv(scanId, complianceId);
+  await downloadFile(
+    result,
+    "text/csv",
+    "The compliance report has been downloaded successfully.",
+    toast,
+  );
+};
+
+export const downloadThreatScorePdf = async (
+  scanId: string,
+  toast: ReturnType<typeof useToast>["toast"],
+): Promise<void> => {
+  const result = await getThreatScorePdf(scanId);
+  await downloadFile(
+    result,
+    "application/pdf",
+    "The ThreatScore PDF report has been downloaded successfully.",
+    toast,
+  );
 };
 
 export const isGoogleOAuthEnabled =
