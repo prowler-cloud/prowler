@@ -208,9 +208,11 @@ Compliance frameworks are defined as JSON files mapping checks to requirements:
 
 ```json
 {
-  "Framework": "CIS_2.0_AWS",
-  "Provider": "aws",
-  "Version": "2.0.0",
+  "Framework": "CIS",
+  "Name": "CIS Amazon Web Services Foundations Benchmark v2.0.0",
+  "Version": "2.0",
+  "Provider": "AWS",
+  "Description": "The CIS Amazon Web Services Foundations Benchmark provides prescriptive guidance for configuring security options for a subset of Amazon Web Services with an emphasis on foundational, testable, and architecture agnostic settings.",
   "Requirements": [
     {
       "Id": "1.1",
