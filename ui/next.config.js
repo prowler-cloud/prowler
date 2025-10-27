@@ -13,8 +13,23 @@ const cspHeader = `
   style-src 'self' 'unsafe-inline';
   frame-src 'self' https://js.stripe.com https://www.googletagmanager.com;
   frame-ancestors 'none';
-  report-uri https://o0.ingest.sentry.io/api/0/security/?sentry_key=${process.env.NEXT_PUBLIC_SENTRY_DSN?.split('@')[0]?.split('//')[1]};
+  report-to csp-endpoint;
 `;
+
+// Get Sentry CSP report endpoint if DSN is configured
+const getSentryReportEndpoint = () => {
+  if (!process.env.NEXT_PUBLIC_SENTRY_DSN) return null;
+  try {
+    const sentryKey = process.env.NEXT_PUBLIC_SENTRY_DSN.split("@")[0]?.split(
+      "//",
+    )[1];
+    return sentryKey
+      ? `https://o0.ingest.sentry.io/api/0/security/?sentry_key=${sentryKey}`
+      : null;
+  } catch {
+    return null;
+  }
+};
 
 const nextConfig = {
   poweredByHeader: false,
@@ -31,23 +46,38 @@ const nextConfig = {
     root: __dirname,
   },
   async headers() {
+    const sentryEndpoint = getSentryReportEndpoint();
+    const headers = [
+      {
+        key: "Content-Security-Policy",
+        value: cspHeader.replace(/\n/g, ""),
+      },
+      {
+        key: "X-Content-Type-Options",
+        value: "nosniff",
+      },
+      {
+        key: "Referrer-Policy",
+        value: "strict-origin-when-cross-origin",
+      },
+    ];
+
+    // Add Report-To header if Sentry is configured
+    if (sentryEndpoint) {
+      headers.push({
+        key: "Report-To",
+        value: JSON.stringify({
+          group: "csp-endpoint",
+          max_age: 10886400,
+          endpoints: [{ url: sentryEndpoint }],
+        }),
+      });
+    }
+
     return [
       {
         source: "/(.*)",
-        headers: [
-          {
-            key: "Content-Security-Policy",
-            value: cspHeader.replace(/\n/g, ""),
-          },
-          {
-            key: "X-Content-Type-Options",
-            value: "nosniff",
-          },
-          {
-            key: "Referrer-Policy",
-            value: "strict-origin-when-cross-origin",
-          },
-        ],
+        headers,
       },
     ];
   },
