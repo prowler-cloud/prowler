@@ -1,4 +1,5 @@
 import datetime
+from datetime import timezone
 from types import SimpleNamespace
 from typing import Generator
 
@@ -25,6 +26,7 @@ from prowler.lib.scan.exceptions.exceptions import (
 )
 from prowler.providers.common.models import Audit_Metadata, ProviderOutputOptions
 from prowler.providers.common.provider import Provider
+from prowler.providers.iac.iac_provider import IacProvider
 
 
 class Scan:
@@ -289,8 +291,6 @@ class Scan:
             # Special handling for IaC provider
             if self._provider.type == "iac":
                 # IaC provider doesn't use regular checks, it runs Trivy directly
-                from prowler.providers.iac.iac_provider import IacProvider
-
                 if isinstance(self._provider, IacProvider):
                     logger.info("Running IaC scan with Trivy...")
                     # Run the IaC scan
@@ -298,10 +298,6 @@ class Scan:
 
                     # Convert IaC reports to Finding objects
                     findings = []
-                    from datetime import timezone
-
-                    from prowler.lib.outputs.common import Status
-                    from prowler.lib.outputs.finding import Finding
 
                     for report in iac_reports:
                         # Generate unique UID for the finding
