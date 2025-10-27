@@ -70,7 +70,6 @@ jobs:
           committer: 'github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>'
           commit-message: 'feat(aws): update regions for AWS services'
           branch: 'aws-regions-update-${{ github.run_number }}'
-          delete-branch: true
           title: 'feat(aws): Update regions for AWS services'
           labels: |
             status/waiting-for-revision
