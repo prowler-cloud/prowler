@@ -8,6 +8,7 @@ import {
   AzureProviderBadge,
   GCPProviderBadge,
   GitHubProviderBadge,
+  IacProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
 } from "@/components/icons/providers-badge";
@@ -37,6 +38,8 @@ export const ProvidersOverview = ({
         return <KS8ProviderBadge width={30} height={30} />;
       case "github":
         return <GitHubProviderBadge width={30} height={30} />;
+      case "iac":
+        return <IacProviderBadge width={30} height={30} />;
       default:
         return null;
     }
