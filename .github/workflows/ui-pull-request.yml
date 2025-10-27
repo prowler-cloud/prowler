@@ -1,65 +1,145 @@
-name: UI - Pull Request
+name: 'UI: Pull Request'
 
 on:
   push:
     branches:
-      - "master"
-      - "v5.*"
-    paths:
-      - ".github/workflows/ui-pull-request.yml"
-      - "ui/**"
-  pull_request:
-    branches:
-      - master
-      - "v5.*"
+      - 'master'
+      - 'v5.*'
     paths:
       - 'ui/**'
+      - '.github/workflows/ui-pull-request.yml'
+      - '!ui/CHANGELOG.md'
+      - '!ui/README.md'
+  pull_request:
+    branches:
+      - 'master'
+      - 'v5.*'
+    paths:
+      - 'ui/**'
+      - '.github/workflows/ui-pull-request.yml'
+      - '!ui/CHANGELOG.md'
+      - '!ui/README.md'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   UI_WORKING_DIR: ./ui
   IMAGE_NAME: prowler-ui
+  NODE_VERSION: '20.x'
 
 jobs:
-  test-and-coverage:
+  code-quality:
+    if: github.repository == 'prowler-cloud/prowler'
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        node-version: [20.x]
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: ./ui
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
         with:
-          persist-credentials: false
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
-        with:
-          node-version: ${{ matrix.node-version }}
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
           cache-dependency-path: './ui/package-lock.json'
+
       - name: Install dependencies
-        working-directory: ./ui
         run: npm ci
-      - name: Run Healthcheck
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Check TypeScript types
+        run: npm run type-check
+
+  tests:
+    if: github.repository == 'prowler-cloud/prowler'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    defaults:
+      run:
         working-directory: ./ui
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: './ui/package-lock.json'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run healthcheck
         run: npm run healthcheck
-      - name: Build the application
-        working-directory: ./ui
+
+      - name: Build application
         run: npm run build
 
-  test-container-build:
+  dockerfile-lint:
+    if: github.repository == 'prowler-cloud/prowler'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Lint Dockerfile with Hadolint
+        uses: hadolint/hadolint-action@2332a7b74a6de0dda2e2221d575162eba76ba5e5 # v3.3.0
+        with:
+          dockerfile: ui/Dockerfile
+          ignore: DL3018
+
+  container-build-and-scan:
+    if: github.repository == 'prowler-cloud/prowler'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
-      - name: Build Container
+
+      - name: Build UI container
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: ${{ env.UI_WORKING_DIR }}
-          # Always build using `prod` target
           target: prod
           push: false
-          tags: ${{ env.IMAGE_NAME }}:latest
-          outputs: type=docker
+          load: true
+          tags: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           build-args: |
             NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_51LwpXXXX
+
+      - name: Scan UI container with Trivy
+        uses: ./.github/actions/trivy-scan
+        with:
+          image-name: ${{ env.IMAGE_NAME }}
+          image-tag: ${{ github.sha }}
+          fail-on-critical: 'false'
+          severity: 'CRITICAL'
