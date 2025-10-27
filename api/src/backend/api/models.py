@@ -220,6 +220,8 @@ class Membership(models.Model):
 
 class TenantAPIKey(AbstractAPIKey, RowLevelSecurityProtectedModel):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    name = models.CharField(max_length=100, validators=[MinLengthValidator(3)])
+    created = models.DateTimeField(auto_now_add=True, editable=False)
     prefix = models.CharField(
         max_length=11,
         unique=True,
@@ -254,6 +256,10 @@ class TenantAPIKey(AbstractAPIKey, RowLevelSecurityProtectedModel):
             models.UniqueConstraint(
                 fields=("tenant_id", "prefix"),
                 name="unique_api_key_prefixes",
+            ),
+            models.UniqueConstraint(
+                fields=("tenant_id", "name"),
+                name="unique_api_key_name_per_tenant",
             ),
         ]
 

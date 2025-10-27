@@ -35,6 +35,7 @@ export const SignInForm = ({
 
   useEffect(() => {
     const samlError = searchParams.get("sso_saml_failed");
+    const sessionError = searchParams.get("error");
 
     if (samlError) {
       setTimeout(() => {
@@ -43,6 +44,37 @@ export const SignInForm = ({
           title: "SAML Authentication Error",
           description:
             "An error occurred while attempting to login via your Identity Provider (IdP). Please check your IdP configuration.",
+        });
+      }, 100);
+    }
+
+    if (sessionError) {
+      setTimeout(() => {
+        const errorMessages: Record<
+          string,
+          { title: string; description: string }
+        > = {
+          RefreshAccessTokenError: {
+            title: "Session Expired",
+            description:
+              "Your session has expired. Please sign in again to continue.",
+          },
+          MissingRefreshToken: {
+            title: "Session Error",
+            description:
+              "There was a problem with your session. Please sign in again.",
+          },
+        };
+
+        const errorConfig = errorMessages[sessionError] || {
+          title: "Authentication Error",
+          description: "Please sign in again to continue.",
+        };
+
+        toast({
+          variant: "destructive",
+          title: errorConfig.title,
+          description: errorConfig.description,
         });
       }, 100);
     }

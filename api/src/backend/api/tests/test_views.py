@@ -46,6 +46,7 @@ from api.models import (
     SAMLConfiguration,
     SAMLToken,
     Scan,
+    ScanSummary,
     StateChoices,
     Task,
     TenantAPIKey,
@@ -1870,17 +1871,7 @@ class TestProviderSecretViewSet:
                     "kubeconfig_content": "kubeconfig-content",
                 },
             ),
-            # M365 with STATIC secret - no user or password
-            (
-                Provider.ProviderChoices.M365.value,
-                ProviderSecret.TypeChoices.STATIC,
-                {
-                    "client_id": "client-id",
-                    "client_secret": "client-secret",
-                    "tenant_id": "tenant-id",
-                },
-            ),
-            # M365 with user only
+            # M365 client secret credentials
             (
                 Provider.ProviderChoices.M365.value,
                 ProviderSecret.TypeChoices.STATIC,
@@ -1889,27 +1880,17 @@ class TestProviderSecretViewSet:
                     "client_secret": "client-secret",
                     "tenant_id": "tenant-id",
                     "user": "test@domain.com",
-                },
-            ),
-            # M365 with password only
-            (
-                Provider.ProviderChoices.M365.value,
-                ProviderSecret.TypeChoices.STATIC,
-                {
-                    "client_id": "client-id",
-                    "client_secret": "client-secret",
-                    "tenant_id": "tenant-id",
                     "password": "supersecret",
                 },
             ),
-            # M365 with user and password
+            # M365 certificate credentials (valid base64)
             (
                 Provider.ProviderChoices.M365.value,
                 ProviderSecret.TypeChoices.STATIC,
                 {
                     "client_id": "client-id",
-                    "client_secret": "client-secret",
                     "tenant_id": "tenant-id",
+                    "certificate_content": "VGVzdCBjZXJ0aWZpY2F0ZSBjb250ZW50",
                     "user": "test@domain.com",
                     "password": "supersecret",
                 },
@@ -2278,6 +2259,50 @@ class TestProviderSecretViewSet:
             content_type="application/vnd.api+json",
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_m365_provider_secrets_invalid_certificate_base64(
+        self, authenticated_client, providers_fixture
+    ):
+        """Test M365 provider secret creation with invalid base64 certificate content"""
+        # Find M365 provider from fixture
+        m365_provider = None
+        for provider in providers_fixture:
+            if provider.provider == Provider.ProviderChoices.M365.value:
+                m365_provider = provider
+                break
+
+        assert m365_provider is not None, "M365 provider not found in fixture"
+
+        data = {
+            "data": {
+                "type": "provider-secrets",
+                "attributes": {
+                    "name": "M365 Certificate Invalid Base64",
+                    "secret_type": "static",
+                    "secret": {
+                        "client_id": "client-id",
+                        "tenant_id": "tenant-id",
+                        "certificate_content": "invalid-base64-content!@#$%",
+                        "user": "test@domain.com",
+                        "password": "supersecret",
+                    },
+                },
+                "relationships": {
+                    "provider": {
+                        "data": {"type": "providers", "id": str(m365_provider.id)}
+                    }
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("providersecret-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "certificate content is not valid base64 encoded data" in str(
+            response.json()
+        )
 
 
 @pytest.mark.django_db
@@ -2663,6 +2688,55 @@ class TestScanViewSet:
             response.json()["errors"]["detail"]
             == "There is a problem with credentials."
         )
+
+    @patch("api.v1.views.ScanViewSet._get_task_status")
+    @patch("api.v1.views.get_s3_client")
+    @patch("api.v1.views.env.str")
+    def test_threatscore_s3_wildcard(
+        self,
+        mock_env_str,
+        mock_get_s3_client,
+        mock_get_task_status,
+        authenticated_client,
+        scans_fixture,
+    ):
+        """
+        When the threatscore endpoint is called with an S3 output_location,
+        the view should list objects in S3 using wildcard pattern matching,
+        retrieve the matching PDF file, and return it with HTTP 200 and proper headers.
+        """
+        scan = scans_fixture[0]
+        scan.state = StateChoices.COMPLETED
+        bucket = "test-bucket"
+        zip_key = "tenant-id/scan-id/prowler-output-foo.zip"
+        scan.output_location = f"s3://{bucket}/{zip_key}"
+        scan.save()
+
+        pdf_key = os.path.join(
+            os.path.dirname(zip_key),
+            "threatscore",
+            "prowler-output-123_threatscore_report.pdf",
+        )
+
+        mock_s3_client = Mock()
+        mock_s3_client.list_objects_v2.return_value = {"Contents": [{"Key": pdf_key}]}
+        mock_s3_client.get_object.return_value = {"Body": io.BytesIO(b"pdf-bytes")}
+
+        mock_env_str.return_value = bucket
+        mock_get_s3_client.return_value = mock_s3_client
+        mock_get_task_status.return_value = None
+
+        url = reverse("scan-threatscore", kwargs={"pk": scan.id})
+        response = authenticated_client.get(url)
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response["Content-Type"] == "application/pdf"
+        assert response["Content-Disposition"].endswith(
+            '"prowler-output-123_threatscore_report.pdf"'
+        )
+        assert response.content == b"pdf-bytes"
+        mock_s3_client.list_objects_v2.assert_called_once()
+        mock_s3_client.get_object.assert_called_once_with(Bucket=bucket, Key=pdf_key)
 
     def test_report_s3_success(self, authenticated_client, scans_fixture, monkeypatch):
         """
@@ -5742,6 +5816,171 @@ class TestOverviewViewSet:
         assert service1_data["attributes"]["muted"] == 1
         assert service2_data["attributes"]["muted"] == 0
 
+    def test_overview_findings_provider_id_in_filter(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        tenant = tenants_fixture[0]
+        provider1, provider2, *_ = providers_fixture
+
+        scan1 = Scan.objects.create(
+            name="scan-one",
+            provider=provider1,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+        scan2 = Scan.objects.create(
+            name="scan-two",
+            provider=provider2,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan1,
+            check_id="check-provider-one",
+            service="service-a",
+            severity="high",
+            region="region-a",
+            _pass=5,
+            fail=1,
+            muted=2,
+            total=8,
+            new=5,
+            changed=2,
+            unchanged=1,
+            fail_new=1,
+            fail_changed=0,
+            pass_new=3,
+            pass_changed=2,
+            muted_new=1,
+            muted_changed=1,
+        )
+
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan2,
+            check_id="check-provider-two",
+            service="service-b",
+            severity="medium",
+            region="region-b",
+            _pass=2,
+            fail=3,
+            muted=1,
+            total=6,
+            new=3,
+            changed=2,
+            unchanged=1,
+            fail_new=2,
+            fail_changed=1,
+            pass_new=1,
+            pass_changed=1,
+            muted_new=1,
+            muted_changed=0,
+        )
+
+        single_response = authenticated_client.get(
+            reverse("overview-findings"),
+            {"filter[provider_id__in]": str(provider1.id)},
+        )
+        assert single_response.status_code == status.HTTP_200_OK
+        single_attributes = single_response.json()["data"]["attributes"]
+        assert single_attributes["pass"] == 5
+        assert single_attributes["fail"] == 1
+        assert single_attributes["muted"] == 2
+        assert single_attributes["total"] == 8
+
+        combined_response = authenticated_client.get(
+            reverse("overview-findings"),
+            {"filter[provider_id__in]": f"{provider1.id},{provider2.id}"},
+        )
+        assert combined_response.status_code == status.HTTP_200_OK
+        combined_attributes = combined_response.json()["data"]["attributes"]
+        assert combined_attributes["pass"] == 7
+        assert combined_attributes["fail"] == 4
+        assert combined_attributes["muted"] == 3
+        assert combined_attributes["total"] == 14
+
+    def test_overview_findings_severity_provider_id_in_filter(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        tenant = tenants_fixture[0]
+        provider1, provider2, *_ = providers_fixture
+
+        scan1 = Scan.objects.create(
+            name="severity-scan-one",
+            provider=provider1,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+        scan2 = Scan.objects.create(
+            name="severity-scan-two",
+            provider=provider2,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan1,
+            check_id="severity-check-one",
+            service="service-a",
+            severity="high",
+            region="region-a",
+            _pass=4,
+            fail=4,
+            muted=0,
+            total=8,
+        )
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan1,
+            check_id="severity-check-two",
+            service="service-a",
+            severity="medium",
+            region="region-b",
+            _pass=2,
+            fail=2,
+            muted=0,
+            total=4,
+        )
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan2,
+            check_id="severity-check-three",
+            service="service-b",
+            severity="critical",
+            region="region-c",
+            _pass=1,
+            fail=2,
+            muted=0,
+            total=3,
+        )
+
+        single_response = authenticated_client.get(
+            reverse("overview-findings_severity"),
+            {"filter[provider_id__in]": str(provider1.id)},
+        )
+        assert single_response.status_code == status.HTTP_200_OK
+        single_attributes = single_response.json()["data"]["attributes"]
+        assert single_attributes["high"] == 8
+        assert single_attributes["medium"] == 4
+        assert single_attributes["critical"] == 0
+
+        combined_response = authenticated_client.get(
+            reverse("overview-findings_severity"),
+            {"filter[provider_id__in]": f"{provider1.id},{provider2.id}"},
+        )
+        assert combined_response.status_code == status.HTTP_200_OK
+        combined_attributes = combined_response.json()["data"]["attributes"]
+        assert combined_attributes["high"] == 8
+        assert combined_attributes["medium"] == 4
+        assert combined_attributes["critical"] == 3
+
 
 @pytest.mark.django_db
 class TestScheduleViewSet:
@@ -5781,10 +6020,12 @@ class TestScheduleViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
+    @patch("tasks.beat.perform_scheduled_scan_task.apply_async")
     @patch("api.v1.views.Task.objects.get")
     def test_schedule_daily_already_scheduled(
         self,
         mock_task_get,
+        mock_apply_async,
         authenticated_client,
         providers_fixture,
         tasks_fixture,
@@ -5792,6 +6033,7 @@ class TestScheduleViewSet:
         provider, *_ = providers_fixture
         prowler_task = tasks_fixture[0]
         mock_task_get.return_value = prowler_task
+        mock_apply_async.return_value.id = prowler_task.id
         json_payload = {
             "provider_id": str(provider.id),
         }
@@ -7712,8 +7954,6 @@ class TestTenantApiKeyViewSet:
         (
             [
                 {"name": "New API Key"},
-                {"name": ""},
-                {},
             ]
         ),
     )
@@ -7754,6 +7994,18 @@ class TestTenantApiKeyViewSet:
                     {"name": "Invalid Expiry", "expires_at": "not-a-date"},
                     "expires_at",
                 ),
+                (
+                    {"name": ""},
+                    "name",
+                ),
+                (
+                    {},
+                    "name",
+                ),
+                (
+                    {"name": "AB"},  # Too short (min length is 3)
+                    "name",
+                ),
             ]
         ),
     )
@@ -7781,6 +8033,58 @@ class TestTenantApiKeyViewSet:
             response.json()["errors"][0]["source"]["pointer"]
             == f"/data/attributes/{error_pointer}"
         )
+
+    def test_api_keys_create_duplicate_name(
+        self, authenticated_client, api_keys_fixture
+    ):
+        """Test creating an API key with a duplicate name fails."""
+        # Use the name of an existing API key
+        existing_name = api_keys_fixture[0].name
+        data = {
+            "data": {
+                "type": "api-keys",
+                "attributes": {
+                    "name": existing_name,
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("api-key-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "errors" in response.json()
+        error_detail = response.json()["errors"][0]["detail"]
+        assert "already exists" in error_detail.lower()
+
+    def test_api_keys_update_duplicate_name(
+        self, authenticated_client, api_keys_fixture
+    ):
+        """Test updating an API key with a duplicate name fails."""
+        # Get two different API keys
+        first_api_key = api_keys_fixture[0]
+        second_api_key = api_keys_fixture[1]
+
+        # Try to update the second API key to have the same name as the first one
+        data = {
+            "data": {
+                "type": "api-keys",
+                "id": str(second_api_key.id),
+                "attributes": {
+                    "name": first_api_key.name,
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("api-key-detail", kwargs={"pk": second_api_key.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "errors" in response.json()
+        error_detail = response.json()["errors"][0]["detail"]
+        assert "already exists" in error_detail.lower()
 
     def test_api_keys_create_multiple_unique_prefixes(
         self, authenticated_client, api_keys_fixture
@@ -7858,6 +8162,27 @@ class TestTenantApiKeyViewSet:
         # Verify in database
         api_key.refresh_from_db()
         assert api_key.revoked is True
+
+    def test_api_keys_revoke_preserves_created_field(
+        self, authenticated_client, api_keys_fixture
+    ):
+        """Test that revoking an API key preserves the created timestamp."""
+        api_key = api_keys_fixture[0]  # Not revoked
+        assert api_key.revoked is False
+
+        # Record the original created timestamp
+        original_created = api_key.created
+
+        response = authenticated_client.delete(
+            reverse("api-key-revoke", kwargs={"pk": api_key.id})
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+        # Verify in database
+        api_key.refresh_from_db()
+        assert api_key.revoked is True
+        # Verify created field has not changed
+        assert api_key.created == original_created
 
     def test_api_keys_revoke_already_revoked(
         self, authenticated_client, api_keys_fixture
@@ -8232,6 +8557,10 @@ class TestTenantApiKeyViewSet:
         included_user = response_data["included"][0]
         assert included_user["type"] == "users"
         assert included_user["id"] == str(api_key.entity.id)
+
+        # Refresh entity from database to get current state
+        # (in case other tests modified the shared session-scoped user fixture)
+        api_key.entity.refresh_from_db()
 
         # Verify UserIncludeSerializer fields are present
         user_attrs = included_user["attributes"]

@@ -600,6 +600,46 @@ class Check_Report_GCP(Check_Report):
 
 
 @dataclass
+class Check_Report_OCI(Check_Report):
+    """Contains the OCI Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    compartment_id: str
+    region: str
+
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        region: str = None,
+        resource_name: str = None,
+        resource_id: str = None,
+        compartment_id: str = None,
+    ) -> None:
+        """Initialize the OCI Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource. Defaults to None.
+            region: The region of the resource.
+            resource_name: The name of the resource related with the finding.
+            resource_id: The OCID of the resource related with the finding.
+            compartment_id: The compartment OCID of the resource.
+        """
+        super().__init__(metadata, resource)
+        self.resource_id = (
+            resource_id
+            or getattr(resource, "id", None)
+            or getattr(resource, "name", None)
+            or ""
+        )
+        self.resource_name = resource_name or getattr(resource, "name", "")
+        self.compartment_id = compartment_id or getattr(resource, "compartment_id", "")
+        self.region = region or getattr(resource, "region", "")
+
+
+@dataclass
 class Check_Report_Kubernetes(Check_Report):
     # TODO change class name to CheckReportKubernetes
     """Contains the Kubernetes Check's finding information."""

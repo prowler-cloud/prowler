@@ -3612,6 +3612,16 @@ paths:
           type: string
           format: uuid
       - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_type]
         schema:
           type: string
@@ -3778,6 +3788,16 @@ paths:
         schema:
           type: string
           format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[provider_type]
         schema:
@@ -3980,6 +4000,16 @@ paths:
         schema:
           type: string
           format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[provider_type]
         schema:
@@ -12010,26 +12040,47 @@ components:
                         type: string
                         description: The Azure application (client) ID for authentication
                           in Azure AD.
-                      client_secret:
-                        type: string
-                        description: The client secret associated with the application
-                          (client) ID, providing secure access.
                       tenant_id:
                         type: string
                         description: The Azure tenant ID, representing the directory
                           where the application is registered.
+                      client_secret:
+                        type: string
+                        description: The client secret associated with the application
+                          (client) ID, providing secure access.
                       user:
                         type: email
                         description: User microsoft email address.
+                        deprecated: true
                       password:
                         type: string
                         description: User password.
+                        deprecated: true
                     required:
                     - client_id
                     - client_secret
                     - tenant_id
                     - user
                     - password
+                  - type: object
+                    title: M365 Certificate Credentials
+                    properties:
+                      client_id:
+                        type: string
+                        description: The Azure application (client) ID for authentication
+                          in Azure AD.
+                      tenant_id:
+                        type: string
+                        description: The Azure tenant ID, representing the directory
+                          where the application is registered.
+                      certificate_content:
+                        type: string
+                        description: The certificate content in base64 format for
+                          certificate-based authentication.
+                    required:
+                    - client_id
+                    - tenant_id
+                    - certificate_content
                   - type: object
                     title: GCP Static Credentials
                     properties:
@@ -12433,8 +12484,8 @@ components:
               properties:
                 name:
                   type: string
-                  nullable: true
-                  maxLength: 255
+                  minLength: 3
+                  maxLength: 100
                 prefix:
                   type: string
                   readOnly: true
@@ -12454,6 +12505,8 @@ components:
                   readOnly: true
                   nullable: true
                   description: Last time this API key was used for authentication
+              required:
+              - name
             relationships:
               type: object
               properties:
@@ -13874,26 +13927,47 @@ components:
                     type: string
                     description: The Azure application (client) ID for authentication
                       in Azure AD.
-                  client_secret:
-                    type: string
-                    description: The client secret associated with the application
-                      (client) ID, providing secure access.
                   tenant_id:
                     type: string
                     description: The Azure tenant ID, representing the directory where
                       the application is registered.
+                  client_secret:
+                    type: string
+                    description: The client secret associated with the application
+                      (client) ID, providing secure access.
                   user:
                     type: email
                     description: User microsoft email address.
+                    deprecated: true
                   password:
                     type: string
                     description: User password.
+                    deprecated: true
                 required:
                 - client_id
                 - client_secret
                 - tenant_id
                 - user
                 - password
+              - type: object
+                title: M365 Certificate Credentials
+                properties:
+                  client_id:
+                    type: string
+                    description: The Azure application (client) ID for authentication
+                      in Azure AD.
+                  tenant_id:
+                    type: string
+                    description: The Azure tenant ID, representing the directory where
+                      the application is registered.
+                  certificate_content:
+                    type: string
+                    description: The certificate content in base64 format for certificate-based
+                      authentication.
+                required:
+                - client_id
+                - tenant_id
+                - certificate_content
               - type: object
                 title: GCP Static Credentials
                 properties:
@@ -14122,26 +14196,47 @@ components:
                         type: string
                         description: The Azure application (client) ID for authentication
                           in Azure AD.
-                      client_secret:
-                        type: string
-                        description: The client secret associated with the application
-                          (client) ID, providing secure access.
                       tenant_id:
                         type: string
                         description: The Azure tenant ID, representing the directory
                           where the application is registered.
+                      client_secret:
+                        type: string
+                        description: The client secret associated with the application
+                          (client) ID, providing secure access.
                       user:
                         type: email
                         description: User microsoft email address.
+                        deprecated: true
                       password:
                         type: string
                         description: User password.
+                        deprecated: true
                     required:
                     - client_id
                     - client_secret
                     - tenant_id
                     - user
                     - password
+                  - type: object
+                    title: M365 Certificate Credentials
+                    properties:
+                      client_id:
+                        type: string
+                        description: The Azure application (client) ID for authentication
+                          in Azure AD.
+                      tenant_id:
+                        type: string
+                        description: The Azure tenant ID, representing the directory
+                          where the application is registered.
+                      certificate_content:
+                        type: string
+                        description: The certificate content in base64 format for
+                          certificate-based authentication.
+                    required:
+                    - client_id
+                    - tenant_id
+                    - certificate_content
                   - type: object
                     title: GCP Static Credentials
                     properties:
@@ -14386,26 +14481,47 @@ components:
                     type: string
                     description: The Azure application (client) ID for authentication
                       in Azure AD.
-                  client_secret:
-                    type: string
-                    description: The client secret associated with the application
-                      (client) ID, providing secure access.
                   tenant_id:
                     type: string
                     description: The Azure tenant ID, representing the directory where
                       the application is registered.
+                  client_secret:
+                    type: string
+                    description: The client secret associated with the application
+                      (client) ID, providing secure access.
                   user:
                     type: email
                     description: User microsoft email address.
+                    deprecated: true
                   password:
                     type: string
                     description: User password.
+                    deprecated: true
                 required:
                 - client_id
                 - client_secret
                 - tenant_id
                 - user
                 - password
+              - type: object
+                title: M365 Certificate Credentials
+                properties:
+                  client_id:
+                    type: string
+                    description: The Azure application (client) ID for authentication
+                      in Azure AD.
+                  tenant_id:
+                    type: string
+                    description: The Azure tenant ID, representing the directory where
+                      the application is registered.
+                  certificate_content:
+                    type: string
+                    description: The certificate content in base64 format for certificate-based
+                      authentication.
+                required:
+                - client_id
+                - tenant_id
+                - certificate_content
               - type: object
                 title: GCP Static Credentials
                 properties:
@@ -15659,8 +15775,8 @@ components:
           properties:
             name:
               type: string
-              nullable: true
-              maxLength: 255
+              maxLength: 100
+              minLength: 3
             prefix:
               type: string
               readOnly: true
@@ -15682,6 +15798,8 @@ components:
               format: date-time
               nullable: true
               description: Last time this API key was used for authentication
+          required:
+          - name
         relationships:
           type: object
           properties:
@@ -15728,8 +15846,8 @@ components:
           properties:
             name:
               type: string
-              nullable: true
-              maxLength: 255
+              maxLength: 100
+              minLength: 3
             prefix:
               type: string
               readOnly: true
@@ -15755,6 +15873,8 @@ components:
             api_key:
               type: string
               readOnly: true
+          required:
+          - name
         relationships:
           type: object
           properties:
@@ -15805,8 +15925,8 @@ components:
               properties:
                 name:
                   type: string
-                  nullable: true
-                  maxLength: 255
+                  minLength: 3
+                  maxLength: 100
                 prefix:
                   type: string
                   readOnly: true
@@ -15833,6 +15953,8 @@ components:
                 api_key:
                   type: string
                   readOnly: true
+              required:
+              - name
             relationships:
               type: object
               properties:
@@ -15900,8 +16022,8 @@ components:
           properties:
             name:
               type: string
-              nullable: true
-              maxLength: 255
+              maxLength: 100
+              minLength: 3
             prefix:
               type: string
               readOnly: true
@@ -15920,6 +16042,8 @@ components:
               readOnly: true
               nullable: true
               description: Last time this API key was used for authentication
+          required:
+          - name
         relationships:
           type: object
           properties:

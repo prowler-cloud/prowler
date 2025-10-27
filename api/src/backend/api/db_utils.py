@@ -6,11 +6,13 @@ from datetime import datetime, timedelta, timezone
 
 from django.conf import settings
 from django.contrib.auth.models import BaseUserManager
-from django.db import connection, models, transaction
+from django.db import DEFAULT_DB_ALIAS, connection, connections, models, transaction
 from django_celery_beat.models import PeriodicTask
 from psycopg2 import connect as psycopg2_connect
 from psycopg2.extensions import AsIs, new_type, register_adapter, register_type
 from rest_framework_json_api.serializers import ValidationError
+
+from api.db_router import get_read_db_alias, reset_read_db_alias, set_read_db_alias
 
 DB_USER = settings.DATABASES["default"]["USER"] if not settings.TESTING else "test"
 DB_PASSWORD = (
@@ -49,7 +51,11 @@ def psycopg_connection(database_alias: str):
 
 
 @contextmanager
-def rls_transaction(value: str, parameter: str = POSTGRES_TENANT_VAR):
+def rls_transaction(
+    value: str,
+    parameter: str = POSTGRES_TENANT_VAR,
+    using: str | None = None,
+):
     """
     Creates a new database transaction setting the given configuration value for Postgres RLS. It validates the
     if the value is a valid UUID.
@@ -57,16 +63,32 @@ def rls_transaction(value: str, parameter: str = POSTGRES_TENANT_VAR):
     Args:
         value (str): Database configuration parameter value.
         parameter (str): Database configuration parameter name, by default is 'api.tenant_id'.
+        using (str | None): Optional database alias to run the transaction against. Defaults to the
+            active read alias (if any) or Django's default connection.
     """
-    with transaction.atomic():
-        with connection.cursor() as cursor:
-            try:
-                # just in case the value is a UUID object
-                uuid.UUID(str(value))
-            except ValueError:
-                raise ValidationError("Must be a valid UUID")
-            cursor.execute(SET_CONFIG_QUERY, [parameter, value])
-            yield cursor
+    requested_alias = using or get_read_db_alias()
+    db_alias = requested_alias or DEFAULT_DB_ALIAS
+    if db_alias not in connections:
+        db_alias = DEFAULT_DB_ALIAS
+
+    router_token = None
+    try:
+        if db_alias != DEFAULT_DB_ALIAS:
+            router_token = set_read_db_alias(db_alias)
+
+        with transaction.atomic(using=db_alias):
+            conn = connections[db_alias]
+            with conn.cursor() as cursor:
+                try:
+                    # just in case the value is a UUID object
+                    uuid.UUID(str(value))
+                except ValueError:
+                    raise ValidationError("Must be a valid UUID")
+                cursor.execute(SET_CONFIG_QUERY, [parameter, value])
+                yield cursor
+    finally:
+        if router_token is not None:
+            reset_read_db_alias(router_token)
 
 
 class CustomUserManager(BaseUserManager):
