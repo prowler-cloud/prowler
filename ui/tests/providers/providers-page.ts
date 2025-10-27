@@ -31,6 +31,12 @@ export interface GCPProviderData {
   alias?: string;
 }
 
+// GitHub provider data
+export interface GitHubProviderData {
+  username: string;
+  alias?: string;
+}
+
 // AWS credential options
 export const AWS_CREDENTIAL_OPTIONS = {
   AWS_ROLE_ARN: "role",
@@ -97,7 +103,7 @@ export interface KubernetesProviderCredential {
   kubeconfigContent:string;
 } 
 
-// GCP  credential options
+// GCP credential options
 export const GCP_CREDENTIAL_OPTIONS = {
   GCP_SERVICE_ACCOUNT: "service_account"
 } as const;
@@ -110,6 +116,24 @@ export interface GCPProviderCredential {
   type: GCPCredentialType;
   serviceAccountKey:string;
 }
+
+// GitHub credential options
+export const GITHUB_CREDENTIAL_OPTIONS = {
+  GITHUB_PERSONAL_ACCESS_TOKEN: "personal_access_token",
+  GITHUB_ORGANIZATION_ACCESS_TOKEN: "organization_access_token", 
+  GITHUB_APP: "github_app"
+} as const;
+
+// GitHub credential type
+type GitHubCredentialType = (typeof GITHUB_CREDENTIAL_OPTIONS)[keyof typeof GITHUB_CREDENTIAL_OPTIONS];
+
+// GitHub provider personal access token credential
+export interface GitHubProviderCredential {
+  type: GitHubCredentialType;
+  personalAccessToken?:string;
+  githubAppId?:string;
+  githubAppPrivateKey?:string;
+} 
 
 // Providers page
 export class ProvidersPage extends BasePage {
@@ -142,6 +166,10 @@ export class ProvidersPage extends BasePage {
   readonly m365StaticCredentialsRadio: Locator;
   readonly m365CertificateCredentialsRadio: Locator;
 
+  // GitHub credentials type selection
+  readonly githubPersonalAccessTokenRadio: Locator;
+  readonly githubAppCredentialsRadio: Locator;
+
   // AWS role credentials form
   readonly roleArnInput: Locator;
   readonly externalIdInput: Locator;
@@ -171,6 +199,12 @@ export class ProvidersPage extends BasePage {
   readonly gcpProjectIdInput: Locator;
   readonly gcpServiceAccountKeyInput: Locator;
   readonly gcpServiceAccountRadio: Locator;
+
+  // GitHub provider form elements
+  readonly githubUsernameInput: Locator;
+  readonly githubAppIdInput: Locator;
+  readonly githubAppPrivateKeyInput: Locator;
+  readonly githubPersonalAccessTokenInput: Locator;
 
   // Delete button
   readonly deleteProviderConfirmationButton: Locator;
@@ -226,6 +260,13 @@ export class ProvidersPage extends BasePage {
     this.gcpProjectIdInput = page.getByRole("textbox", { name: "Project ID" });
     this.gcpServiceAccountKeyInput = page.getByRole("textbox", { name: "Service Account Key" });
 
+    // GitHub provider form inputs
+    this.githubUsernameInput = page.getByRole("textbox", { name: "Username" });
+    this.githubPersonalAccessTokenInput = page.getByRole("textbox", { name: "Personal Access Token" });
+    this.githubAppIdInput = page.getByRole("textbox", { name: "GitHub App ID" });
+    this.githubAppPrivateKeyInput = page.getByRole("textbox", { name: "GitHub App Private Key" });
+
+
     // Alias input
     this.aliasInput = page.getByRole("textbox", { name: "Provider alias (optional)" });
 
@@ -263,6 +304,14 @@ export class ProvidersPage extends BasePage {
     // Radios for selecting GCP credentials method
     this.gcpServiceAccountRadio = page.getByRole("radio", {
       name: /Service Account Key/i,
+    });
+
+    // Radios for selecting GitHub credentials method
+    this.githubPersonalAccessTokenRadio = page.getByRole("radio", {
+      name: /Personal Access Token/i,
+    });
+    this.githubAppCredentialsRadio = page.getByRole("radio", {
+      name: /GitHub App/i,
     });
 
     // Inputs for IAM Role credentials
@@ -328,6 +377,13 @@ export class ProvidersPage extends BasePage {
     await this.waitForPageLoad();
   }
 
+  async selectGitHubProvider(): Promise<void> {
+    // Select the GitHub provider
+
+    await this.githubProviderRadio.click({ force: true });
+    await this.waitForPageLoad();
+  }
+
 
   async fillAWSProviderDetails(data: AWSProviderData): Promise<void> {
     // Fill the AWS provider details
@@ -372,6 +428,15 @@ export class ProvidersPage extends BasePage {
     // Fill the GCP provider details
 
     await this.gcpProjectIdInput.fill(data.projectId);
+    if (data.alias) {
+      await this.aliasInput.fill(data.alias);
+    }
+  }
+
+  async fillGitHubProviderDetails(data: GitHubProviderData): Promise<void> {
+    // Fill the GitHub provider details
+
+    await this.githubUsernameInput.fill(data.username);
     if (data.alias) {
       await this.aliasInput.fill(data.alias);
     }
@@ -527,6 +592,21 @@ export class ProvidersPage extends BasePage {
     await this.waitForPageLoad();
   }
 
+  async selectGitHubCredentialsType(type: GitHubCredentialType): Promise<void> {
+    // Ensure we are on the add-credentials page where the selector exists
+
+    await expect(this.page).toHaveURL(/\/providers\/add-credentials/);
+    if (type === GITHUB_CREDENTIAL_OPTIONS.GITHUB_PERSONAL_ACCESS_TOKEN) {
+      await this.githubPersonalAccessTokenRadio.click({ force: true });
+    } else if (type === GITHUB_CREDENTIAL_OPTIONS.GITHUB_APP) {
+      await this.githubAppCredentialsRadio.click({ force: true });
+    } else {
+      throw new Error(`Invalid GitHub credential type: ${type}`);
+    }
+    // Wait for the page to load
+    await this.waitForPageLoad();
+  }
+
   async fillRoleCredentials(credentials: AWSProviderCredential): Promise<void> {
     // Fill the role credentials form
     
@@ -616,6 +696,25 @@ export class ProvidersPage extends BasePage {
     }
   }
 
+  async fillGitHubPersonalAccessTokenCredentials(credentials: GitHubProviderCredential): Promise<void> {
+    // Fill the GitHub personal access token credentials form
+
+    if (credentials.personalAccessToken) {
+      await this.githubPersonalAccessTokenInput.fill(credentials.personalAccessToken);
+    }
+  }
+
+  async fillGitHubAppCredentials(credentials: GitHubProviderCredential): Promise<void> {
+    // Fill the GitHub app credentials form
+
+    if (credentials.githubAppId) {
+      await this.githubAppIdInput.fill(credentials.githubAppId);
+    }
+    if (credentials.githubAppPrivateKey) {
+      await this.githubAppPrivateKeyInput.fill(credentials.githubAppPrivateKey);
+    }
+  }
+
   async verifyPageLoaded(): Promise<void> {
     // Verify the providers page is loaded
 
@@ -670,6 +769,20 @@ export class ProvidersPage extends BasePage {
     await expect(this.gcpServiceAccountKeyInput).toBeVisible();
   }
 
+  async verifyGitHubPersonalAccessTokenPageLoaded(): Promise<void> {
+    // Verify the GitHub personal access token page is loaded
+
+    await expect(this.page).toHaveTitle(/Prowler/);
+    await expect(this.githubPersonalAccessTokenInput).toBeVisible();
+  }
+
+  async verifyGitHubAppPageLoaded(): Promise<void> {
+    // Verify the GitHub app page is loaded
+
+    await expect(this.page).toHaveTitle(/Prowler/);
+    await expect(this.githubAppIdInput).toBeVisible();
+    await expect(this.githubAppPrivateKeyInput).toBeVisible();
+  }
 
   async verifyLaunchScanPageLoaded(): Promise<void> {
     // Verify the launch scan page is loaded

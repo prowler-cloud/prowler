@@ -380,3 +380,173 @@
 - Requires valid GCP project with service account having appropriate permissions
 - Service account must have sufficient permissions for security scanning
 - Test validates that service account key goes to the correct field
+- Test uses base64 encoded environment variables for GCP service account key
+
+---
+
+## Test Case: `PROVIDER-E2E-008` - Add GitHub Provider with Personal Access Token
+
+**Priority:** `critical`
+
+**Tags:**
+
+- type → @e2e, @serial
+- feature → @providers
+- provider → @github
+
+**Description/Objective:** Validates the complete flow of adding a new GitHub provider using personal access token authentication for a user account
+
+**Preconditions:**
+
+- Admin user authentication required (admin.auth.setup setup)
+- Environment variables configured: E2E_GITHUB_USERNAME, E2E_GITHUB_PERSONAL_ACCESS_TOKEN
+- Remove any existing provider with the same Username before starting the test
+- This test must be run serially and never in parallel with other tests, as it requires the Username not to be already registered beforehand.
+
+### Flow Steps:
+
+1. Navigate to providers page
+2. Click "Add Provider" button
+3. Select GitHub provider type
+4. Fill provider details (username and alias)
+5. Select personal access token credentials type
+6. Fill GitHub personal access token credentials
+7. Launch initial scan
+8. Verify redirect to provider management page
+
+### Expected Result:
+
+- GitHub provider successfully added with personal access token
+- Initial scan launched successfully
+- User redirected to provider details page
+
+### Key verification points:
+
+- Provider page loads correctly
+- Connect account page displays GitHub option
+- Provider details form accepts username and alias
+- Personal access token credentials page loads with token field
+- Personal access token is properly filled in the correct field
+- Launch scan page appears
+- Successful redirect to provider page after scan launch
+
+### Notes:
+
+- Test uses environment variables for GitHub username and personal access token
+- Provider cleanup performed before each test to ensure clean state
+- Requires valid GitHub account with personal access token
+- Personal access token must have sufficient permissions for security scanning
+- Test validates that personal access token goes to the correct field
+
+---
+
+## Test Case: `PROVIDER-E2E-009` - Add GitHub Provider with GitHub App
+
+**Priority:** `critical`
+
+**Tags:**
+
+- type → @e2e, @serial
+- feature → @providers
+- provider → @github
+
+**Description/Objective:** Validates the complete flow of adding a new GitHub provider using GitHub App authentication for a user account
+
+**Preconditions:**
+
+- Admin user authentication required (admin.auth.setup setup)
+- Environment variables configured: E2E_GITHUB_USERNAME, E2E_GITHUB_APP_ID, E2E_GITHUB_BASE64_APP_PRIVATE_KEY
+- Remove any existing provider with the same Username before starting the test
+- This test must be run serially and never in parallel with other tests, as it requires the Username not to be already registered beforehand.
+
+### Flow Steps:
+
+1. Navigate to providers page
+2. Click "Add Provider" button
+3. Select GitHub provider type
+4. Fill provider details (username and alias)
+5. Select GitHub App credentials type
+6. Fill GitHub App credentials (App ID and private key)
+7. Launch initial scan
+8. Verify redirect to provider management page
+
+### Expected Result:
+
+- GitHub provider successfully added with GitHub App credentials
+- Initial scan launched successfully
+- User redirected to provider details page
+
+### Key verification points:
+
+- Provider page loads correctly
+- Connect account page displays GitHub option
+- Provider details form accepts username and alias
+- GitHub App credentials page loads with App ID and private key fields
+- GitHub App credentials are properly filled in the correct fields
+- Launch scan page appears
+- Successful redirect to provider page after scan launch
+
+### Notes:
+
+- Test uses environment variables for GitHub username, App ID, and base64 encoded private key
+- Private key is base64 encoded and must be decoded before use
+- Provider cleanup performed before each test to ensure clean state
+- Requires valid GitHub App with App ID and private key
+- GitHub App must have sufficient permissions for security scanning
+- Test validates that GitHub App credentials go to the correct fields
+
+---
+
+## Test Case: `PROVIDER-E2E-010` - Add GitHub Provider with Organization Personal Access Token
+
+**Priority:** `critical`
+
+**Tags:**
+
+- type → @e2e, @serial
+- feature → @providers
+- provider → @github
+
+**Description/Objective:** Validates the complete flow of adding a new GitHub provider using organization personal access token authentication
+
+**Preconditions:**
+
+- Admin user authentication required (admin.auth.setup setup)
+- Environment variables configured: E2E_GITHUB_ORGANIZATION, E2E_GITHUB_ORGANIZATION_ACCESS_TOKEN
+- Remove any existing provider with the same Organization name before starting the test
+- This test must be run serially and never in parallel with other tests, as it requires the Organization name not to be already registered beforehand.
+
+### Flow Steps:
+
+1. Navigate to providers page
+2. Click "Add Provider" button
+3. Select GitHub provider type
+4. Fill provider details (organization name and alias)
+5. Select personal access token credentials type
+6. Fill GitHub organization personal access token credentials
+7. Launch initial scan
+8. Verify redirect to provider management page
+
+### Expected Result:
+
+- GitHub provider successfully added with organization personal access token
+- Initial scan launched successfully
+- User redirected to provider details page
+
+### Key verification points:
+
+- Provider page loads correctly
+- Connect account page displays GitHub option
+- Provider details form accepts organization name and alias
+- Personal access token credentials page loads with token field
+- Organization personal access token is properly filled in the correct field
+- Launch scan page appears
+- Successful redirect to provider page after scan launch
+
+### Notes:
+
+- Test uses environment variables for GitHub organization name and organization access token
+- Provider cleanup performed before each test to ensure clean state
+- Requires valid GitHub organization with organization access token
+- Organization access token must have sufficient permissions for security scanning
+- Test validates that organization personal access token goes to the correct field

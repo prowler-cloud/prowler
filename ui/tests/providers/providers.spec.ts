@@ -17,6 +17,9 @@ import {
   GCPProviderData,
   GCPProviderCredential,
   GCP_CREDENTIAL_OPTIONS,
+  GitHubProviderData,
+  GitHubProviderCredential,
+  GITHUB_CREDENTIAL_OPTIONS,
 } from "./providers-page";
 import { ScansPage } from "../scans/scans-page";
 import fs from "fs";
@@ -554,10 +557,8 @@ test.describe("Add Provider", () => {
     const projectId = process.env.E2E_GCP_PROJECT_ID;
 
     // Validate required environment variables
-    if (!projectId ) {
-      throw new Error(
-        "E2E_GCP_PROJECT_ID environment variable is not set",
-      );
+    if (!projectId) {
+      throw new Error("E2E_GCP_PROJECT_ID environment variable is not set");
     }
 
     // Setup before each test
@@ -584,15 +585,21 @@ test.describe("Add Provider", () => {
       },
       async ({ page }) => {
         // Validate required environment variables
-        const serviceAccountKeyB64 = process.env.E2E_GCP_BASE64_SERVICE_ACCOUNT_KEY;
+        const serviceAccountKeyB64 =
+          process.env.E2E_GCP_BASE64_SERVICE_ACCOUNT_KEY;
 
         // Verify service account key is base64 encoded
         if (!serviceAccountKeyB64) {
-          throw new Error("E2E_GCP_BASE64_SERVICE_ACCOUNT_KEY environment variable is not set");
+          throw new Error(
+            "E2E_GCP_BASE64_SERVICE_ACCOUNT_KEY environment variable is not set",
+          );
         }
-        
+
         // Decode service account key from base64
-        const serviceAccountKey = Buffer.from(serviceAccountKeyB64, 'base64').toString('utf8');
+        const serviceAccountKey = Buffer.from(
+          serviceAccountKeyB64,
+          "base64",
+        ).toString("utf8");
 
         // Verify service account key is valid JSON
         if (!JSON.parse(serviceAccountKey)) {
@@ -608,7 +615,7 @@ test.describe("Add Provider", () => {
         // Prepare static credentials
         const gcpCredentials: GCPProviderCredential = {
           type: GCP_CREDENTIAL_OPTIONS.GCP_SERVICE_ACCOUNT,
-          serviceAccountKey: serviceAccountKey
+          serviceAccountKey: serviceAccountKey,
         };
 
         // Navigate to providers page
@@ -647,5 +654,283 @@ test.describe("Add Provider", () => {
         await scansPage.verifyPageLoaded();
       },
     );
+  });
+
+  test.describe.serial("Add GitHub Provider", () => {
+    // Providers page object
+    let providersPage: ProvidersPage;
+    let scansPage: ScansPage;
+
+    test.describe("Add GitHub provider with username", () => {
+      // Test data from environment variables
+      const username = process.env.E2E_GITHUB_USERNAME;
+
+      // Validate required environment variables
+      if (!username) {
+        throw new Error("E2E_GITHUB_USERNAME environment variable is not set");
+      }
+
+      // Setup before each test
+      test.beforeEach(async ({ page }) => {
+        providersPage = new ProvidersPage(page);
+        // Clean up existing provider to ensure clean test state
+        await providersPage.deleteProviderIfExists(username);
+      });
+
+      // Use admin authentication for provider management
+      test.use({ storageState: "playwright/.auth/admin_user.json" });
+
+      test(
+        "should add a new GitHub provider with personal access token",
+        {
+          tag: [
+            "@critical",
+            "@e2e",
+            "@providers",
+            "@github",
+            "@serial",
+            "@PROVIDER-E2E-008",
+          ],
+        },
+        async ({ page }) => {
+          // Validate required environment variables
+          const personalAccessToken =
+            process.env.E2E_GITHUB_PERSONAL_ACCESS_TOKEN;
+
+          // Verify username and personal access token are set in environment variables
+          if (!personalAccessToken) {
+            throw new Error(
+              "E2E_GITHUB_PERSONAL_ACCESS_TOKEN environment variables are not set",
+            );
+          }
+
+          // Prepare test data for GitHub provider
+          const githubProviderData: GitHubProviderData = {
+            username: username,
+            alias: "Test E2E GitHub Account - Personal Access Token",
+          };
+
+          // Prepare personal access token credentials
+          const githubCredentials: GitHubProviderCredential = {
+            type: GITHUB_CREDENTIAL_OPTIONS.GITHUB_PERSONAL_ACCESS_TOKEN,
+            personalAccessToken: personalAccessToken,
+          };
+
+          // Navigate to providers page
+          await providersPage.goto();
+          await providersPage.verifyPageLoaded();
+
+          // Start adding new provider
+          await providersPage.clickAddProvider();
+          await providersPage.verifyConnectAccountPageLoaded();
+
+          // Select GitHub provider
+          await providersPage.selectGitHubProvider();
+
+          // Fill provider details
+          await providersPage.fillGitHubProviderDetails(githubProviderData);
+          await providersPage.clickNext();
+
+          // Select GitHub personal access token credentials type
+          await providersPage.selectGitHubCredentialsType(
+            GITHUB_CREDENTIAL_OPTIONS.GITHUB_PERSONAL_ACCESS_TOKEN,
+          );
+
+          // Verify GitHub personal access token page is loaded
+          await providersPage.verifyGitHubPersonalAccessTokenPageLoaded();
+
+          // Fill static personal access token details
+          await providersPage.fillGitHubPersonalAccessTokenCredentials(
+            githubCredentials,
+          );
+          await providersPage.clickNext();
+
+          // Launch scan
+          await providersPage.verifyLaunchScanPageLoaded();
+          await providersPage.clickNext();
+
+          // Wait for redirect to scan page
+          scansPage = new ScansPage(page);
+          await scansPage.verifyPageLoaded();
+        },
+      );
+      test(
+        "should add a new GitHub provider with github app",
+        {
+          tag: [
+            "@critical",
+            "@e2e",
+            "@providers",
+            "@github",
+            "@serial",
+            "@PROVIDER-E2E-009",
+          ],
+        },
+        async ({ page }) => {
+          // Validate required environment variables
+          const githubAppId =
+            process.env.E2E_GITHUB_APP_ID;
+          const githubAppPrivateKeyB64 =
+            process.env.E2E_GITHUB_BASE64_APP_PRIVATE_KEY;
+
+          // Verify github app id and private key are set in environment variables
+          if (!githubAppId || !githubAppPrivateKeyB64) {
+            throw new Error(
+              "E2E_GITHUB_APP_ID and E2E_GITHUB_APP_PRIVATE_KEY environment variables are not set",
+            );
+          }
+          // Decode github app private key from base64
+          const githubAppPrivateKey = Buffer.from(
+            githubAppPrivateKeyB64,
+            "base64",
+          ).toString("utf8");
+
+          // Prepare test data for GitHub provider
+          const githubProviderData: GitHubProviderData = {
+            username: username,
+            alias: "Test E2E GitHub Account - GitHub App",
+          };
+
+          // Prepare github app credentials
+          const githubCredentials: GitHubProviderCredential = {
+            type: GITHUB_CREDENTIAL_OPTIONS.GITHUB_APP,
+            githubAppId: githubAppId,
+            githubAppPrivateKey: githubAppPrivateKey,
+          };
+
+          // Navigate to providers page
+          await providersPage.goto();
+          await providersPage.verifyPageLoaded();
+
+          // Start adding new provider
+          await providersPage.clickAddProvider();
+          await providersPage.verifyConnectAccountPageLoaded();
+
+          // Select GitHub provider
+          await providersPage.selectGitHubProvider();
+
+          // Fill provider details
+          await providersPage.fillGitHubProviderDetails(githubProviderData);
+          await providersPage.clickNext();
+
+          // Select static github app credentials type
+          await providersPage.selectGitHubCredentialsType(
+            GITHUB_CREDENTIAL_OPTIONS.GITHUB_APP,
+          );
+
+          // Verify GitHub github app page is loaded
+          await providersPage.verifyGitHubAppPageLoaded();
+
+          // Fill static github app credentials details
+          await providersPage.fillGitHubAppCredentials(
+            githubCredentials,
+          );
+          await providersPage.clickNext();
+
+          // Launch scan
+          await providersPage.verifyLaunchScanPageLoaded();
+          await providersPage.clickNext();
+
+          // Wait for redirect to scan page
+          scansPage = new ScansPage(page);
+          await scansPage.verifyPageLoaded();
+        },
+      );
+    });
+    test.describe("Add GitHub provider with organization", () => {
+      // Test data from environment variables
+      const organization = process.env.E2E_GITHUB_ORGANIZATION;
+
+      // Validate required environment variables
+      if (!organization) {
+        throw new Error(
+          "E2E_GITHUB_ORGANIZATION environment variable is not set",
+        );
+      }
+
+      // Setup before each test
+      test.beforeEach(async ({ page }) => {
+        providersPage = new ProvidersPage(page);
+        // Clean up existing provider to ensure clean test state
+        await providersPage.deleteProviderIfExists(organization);
+      });
+
+      // Use admin authentication for provider management
+      test.use({ storageState: "playwright/.auth/admin_user.json" });
+      test(
+        "should add a new GitHub provider with organization personal access token",
+        {
+          tag: [
+            "@critical",
+            "@e2e",
+            "@providers",
+            "@github",
+            "@serial",
+            "@PROVIDER-E2E-010",
+          ],
+        },
+        async ({ page }) => {
+          // Validate required environment variables
+          const organizationAccessToken =
+            process.env.E2E_GITHUB_ORGANIZATION_ACCESS_TOKEN;
+
+          // Verify username and personal access token are set in environment variables
+          if (!organizationAccessToken) {
+            throw new Error(
+              "E2E_GITHUB_ORGANIZATION_ACCESS_TOKEN environment variables are not set",
+            );
+          }
+
+          // Prepare test data for GitHub provider
+          const githubProviderData: GitHubProviderData = {
+            username: organization,
+            alias: "Test E2E GitHub Account - Organization Access Token",
+          };
+
+          // Prepare personal access token credentials
+          const githubCredentials: GitHubProviderCredential = {
+            type: GITHUB_CREDENTIAL_OPTIONS.GITHUB_PERSONAL_ACCESS_TOKEN,
+            personalAccessToken: organizationAccessToken,
+          };
+
+          // Navigate to providers page
+          await providersPage.goto();
+          await providersPage.verifyPageLoaded();
+
+          // Start adding new provider
+          await providersPage.clickAddProvider();
+          await providersPage.verifyConnectAccountPageLoaded();
+
+          // Select GitHub provider
+          await providersPage.selectGitHubProvider();
+
+          // Fill provider details
+          await providersPage.fillGitHubProviderDetails(githubProviderData);
+          await providersPage.clickNext();
+
+          // Select GitHub organization personal access token credentials type
+          await providersPage.selectGitHubCredentialsType(
+            GITHUB_CREDENTIAL_OPTIONS.GITHUB_PERSONAL_ACCESS_TOKEN,
+          );
+
+          // Verify GitHub personal access token page is loaded
+          await providersPage.verifyGitHubPersonalAccessTokenPageLoaded();
+
+          // Fill static personal access token details
+          await providersPage.fillGitHubPersonalAccessTokenCredentials(
+            githubCredentials,
+          );
+          await providersPage.clickNext();
+
+          // Launch scan
+          await providersPage.verifyLaunchScanPageLoaded();
+          await providersPage.clickNext();
+
+          // Wait for redirect to scan page
+          scansPage = new ScansPage(page);
+          await scansPage.verifyPageLoaded();
+        },
+      );
+    });
   });
 });
