@@ -2,6 +2,11 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [v5.14.0] (Prowler UNRELEASED)
+
+### Added
+- GitHub provider check `organization_default_repository_permission_strict` [(#8785)](https://github.com/prowler-cloud/prowler/pull/8785)
+
 ## [v5.13.0] (Prowler v5.13.0)
 
 ### Added
@@ -11,7 +16,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - LLM provider using `promptfoo` [(#8555)](https://github.com/prowler-cloud/prowler/pull/8555)
 - Documentation for renaming checks [(#8717)](https://github.com/prowler-cloud/prowler/pull/8717)
 - Add explicit "name" field for each compliance framework and include "FRAMEWORK" and "NAME" in CSV output [(#7920)](https://github.com/prowler-cloud/prowler/pull/7920)
-- GitHub provider check `organization_default_repository_permission_strict` to ensure organization base permissions are set to 'read' or 'none' (CIS GitHub 1.3.8) [(#8662)](https://github.com/prowler-cloud/prowler/issues/8662)
 - Add C5 compliance framework for the AWS provider [(#8830)](https://github.com/prowler-cloud/prowler/pull/8830)
 - Equality validation for CheckID, filename and classname [(#8690)](https://github.com/prowler-cloud/prowler/pull/8690)
 - Improve logging for Security Hub integration [(#8608)](https://github.com/prowler-cloud/prowler/pull/8608)
