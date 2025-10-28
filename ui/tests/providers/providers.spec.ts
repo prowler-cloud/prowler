@@ -1,5 +1,5 @@
 import { test } from "@playwright/test";
-import * as helpers from "../helpers";
+import { ScansPage } from "../scans/scans-page";
 import {
   ProvidersPage,
   AWSProviderData,
