@@ -18,7 +18,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add `resource_name` for checks under `logging` for the GCP provider [(#9023)](https://github.com/prowler-cloud/prowler/pull/9023)
 - Fix `ec2_instance_with_outdated_ami` check to handle None AMIs [(#9046)](https://github.com/prowler-cloud/prowler/pull/9046)
 
-
 ---
 
 ## [v5.13.0] (Prowler v5.13.0)
