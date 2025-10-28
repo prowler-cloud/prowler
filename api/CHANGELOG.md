@@ -9,6 +9,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - New endpoint to retrieve the number of providers grouped by provider type [(#8975)](https://github.com/prowler-cloud/prowler/pull/8975)
 - Support for configuring multiple LLM providers [(#8772)](https://github.com/prowler-cloud/prowler/pull/8772)
 - Support for Oracle Cloud Infrastructure (OCI) provider [(#8927)](https://github.com/prowler-cloud/prowler/pull/8927)
+- Support muting findings based on simple rules with custom reason [(#9051)](https://github.com/prowler-cloud/prowler/pull/9051)
 
 ## [1.14.0] (Prowler 5.13.0)
 
