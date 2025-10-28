@@ -36,7 +36,7 @@ class TestMuteHistoricalFindings:
             tenant_id=tenant.id,
             name="Test Mute Rule",
             reason="Testing mute functionality",
-            is_active=True,
+            enabled=True,
             created_by=test_user,
             finding_uids=[finding.uid],
         )
@@ -81,7 +81,7 @@ class TestMuteHistoricalFindings:
             tenant_id=tenant_id,
             name="Test Multiple Findings Mute Rule",
             reason="Testing batch muting",
-            is_active=True,
+            enabled=True,
             created_by=test_user,
             finding_uids=finding_uids,
         )
@@ -100,7 +100,7 @@ class TestMuteHistoricalFindings:
             tenant_id=tenant_id,
             name="Test Already Muted Rule",
             reason="Testing already muted findings",
-            is_active=True,
+            enabled=True,
             created_by=test_user,
             finding_uids=[already_muted_finding.uid],
         )
@@ -173,7 +173,7 @@ class TestMuteHistoricalFindings:
             tenant_id=tenant_id,
             name="Test Mixed Findings Rule",
             reason="Testing mixed muted/unmuted findings",
-            is_active=True,
+            enabled=True,
             created_by=test_user,
             finding_uids=all_uids,
         )
@@ -218,7 +218,7 @@ class TestMuteHistoricalFindings:
             tenant_id=tenant_id,
             name="Test Batch Processing Rule",
             reason="Testing batch processing functionality",
-            is_active=True,
+            enabled=True,
             created_by=test_user,
             finding_uids=finding_uids,
         )
@@ -366,7 +366,7 @@ class TestMuteHistoricalFindings:
             tenant_id=tenant_id,
             name="Test No Match Rule",
             reason="Testing no matching findings",
-            is_active=True,
+            enabled=True,
             created_by=test_user,
             finding_uids=[
                 "nonexistent_uid_1",
@@ -471,7 +471,7 @@ class TestMuteHistoricalFindings:
             tenant_id=tenant_id,
             name="Test Partial Match Rule",
             reason="Testing partial matching",
-            is_active=True,
+            enabled=True,
             created_by=test_user,
             finding_uids=all_uids,
         )
@@ -502,7 +502,7 @@ class TestMuteHistoricalFindings:
             tenant_id=tenant_id,
             name="Test Empty UIDs Rule",
             reason="Testing empty UIDs",
-            is_active=True,
+            enabled=True,
             created_by=test_user,
             finding_uids=[],
         )

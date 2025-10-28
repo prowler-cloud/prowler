@@ -302,11 +302,11 @@ def perform_prowler_scan(
             logger.error(f"Error processing mutelist rules: {e}")
             mutelist_processor = None
 
-    # Load active mute rules for this tenant
+    # Load enabled mute rules for this tenant
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
         try:
             active_mute_rules = MuteRule.objects.filter(
-                tenant_id=tenant_id, is_active=True
+                tenant_id=tenant_id, enabled=True
             ).values_list("finding_uids", "reason")
 
             mute_rules_cache = {}

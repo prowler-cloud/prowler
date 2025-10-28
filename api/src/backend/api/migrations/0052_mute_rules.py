@@ -48,9 +48,9 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    "is_active",
+                    "enabled",
                     models.BooleanField(
-                        default=True, help_text="Whether this rule is currently active"
+                        default=True, help_text="Whether this rule is currently enabled"
                     ),
                 ),
                 (

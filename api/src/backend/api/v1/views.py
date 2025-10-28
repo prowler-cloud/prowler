@@ -4743,7 +4743,7 @@ class TenantApiKeyViewSet(BaseRLSViewSet):
     partial_update=extend_schema(
         tags=["Mute Rules"],
         summary="Partially update a mute rule",
-        description="Update certain fields of an existing mute rule (e.g., name, reason, is_active).",
+        description="Update certain fields of an existing mute rule (e.g., name, reason, enabled).",
         request=MuteRuleUpdateSerializer,
         responses={200: MuteRuleSerializer},
     ),
@@ -4762,7 +4762,7 @@ class MuteRuleViewSet(BaseRLSViewSet):
     ordering = ["-inserted_at"]
     ordering_fields = [
         "name",
-        "is_active",
+        "enabled",
         "inserted_at",
         "updated_at",
     ]

@@ -3370,7 +3370,7 @@ class MuteRuleSerializer(RLSSerializer):
             "updated_at",
             "name",
             "reason",
-            "is_active",
+            "enabled",
             "created_by",
             "finding_uids",
         ]
@@ -3407,7 +3407,7 @@ class MuteRuleCreateSerializer(RLSSerializer, BaseWriteSerializer):
             "updated_at",
             "name",
             "reason",
-            "is_active",
+            "enabled",
             "created_by",
             "finding_ids",
             "finding_uids",
@@ -3416,7 +3416,7 @@ class MuteRuleCreateSerializer(RLSSerializer, BaseWriteSerializer):
             "id": {"read_only": True},
             "inserted_at": {"read_only": True},
             "updated_at": {"read_only": True},
-            "is_active": {"read_only": True},
+            "enabled": {"read_only": True},
             "created_by": {"read_only": True},
         }
 
@@ -3461,8 +3461,8 @@ class MuteRuleCreateSerializer(RLSSerializer, BaseWriteSerializer):
         findings = Finding.all_objects.filter(id__in=finding_ids, tenant_id=tenant_id)
         finding_uids = list(set(findings.values_list("uid", flat=True)))
 
-        # Check for overlaps with existing active rules
-        existing_rules = MuteRule.objects.filter(tenant_id=tenant_id, is_active=True)
+        # Check for overlaps with existing enabled rules
+        existing_rules = MuteRule.objects.filter(tenant_id=tenant_id, enabled=True)
 
         for rule in existing_rules:
             overlap = set(finding_uids) & set(rule.finding_uids)
@@ -3492,8 +3492,6 @@ class MuteRuleCreateSerializer(RLSSerializer, BaseWriteSerializer):
 class MuteRuleUpdateSerializer(BaseWriteSerializer):
     """
     Serializer for updating MuteRule instances.
-
-    Only allows updating name, reason, and is_active. Finding UIDs cannot be changed.
     """
 
     class Meta:
@@ -3502,13 +3500,13 @@ class MuteRuleUpdateSerializer(BaseWriteSerializer):
             "id",
             "name",
             "reason",
-            "is_active",
+            "enabled",
         ]
         extra_kwargs = {
             "id": {"read_only": True},
             "name": {"required": False},
             "reason": {"required": False},
-            "is_active": {"required": False},
+            "enabled": {"required": False},
         }
 
     def validate_name(self, value):

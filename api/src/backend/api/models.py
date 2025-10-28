@@ -1954,8 +1954,8 @@ class MuteRule(RowLevelSecurityProtectedModel):
         max_length=500,
         help_text="Reason for muting",
     )
-    is_active = models.BooleanField(
-        default=True, help_text="Whether this rule is currently active"
+    enabled = models.BooleanField(
+        default=True, help_text="Whether this rule is currently enabled"
     )
 
     # Audit fields

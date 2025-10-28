@@ -994,7 +994,7 @@ class MuteRuleFilter(FilterSet):
             "id": ["exact", "in"],
             "name": ["exact", "icontains"],
             "reason": ["icontains"],
-            "is_active": ["exact"],
+            "enabled": ["exact"],
             "inserted_at": ["gte", "lte"],
             "updated_at": ["gte", "lte"],
         }

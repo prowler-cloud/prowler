@@ -9386,7 +9386,7 @@ class TestMuteRuleViewSet:
         assert data["id"] == str(mute_rule.id)
         assert data["attributes"]["name"] == mute_rule.name
         assert data["attributes"]["reason"] == mute_rule.reason
-        assert data["attributes"]["is_active"] == mute_rule.is_active
+        assert data["attributes"]["enabled"] == mute_rule.enabled
         assert "finding_uids" in data["attributes"]
         assert "inserted_at" in data["attributes"]
         assert "updated_at" in data["attributes"]
@@ -9408,8 +9408,8 @@ class TestMuteRuleViewSet:
                 ("name", "Test Rule 1", 1),
                 ("name.icontains", "rule", 2),
                 ("reason.icontains", "security", 1),
-                ("is_active", True, 1),
-                ("is_active", False, 1),
+                ("enabled", True, 1),
+                ("enabled", False, 1),
             ]
         ),
     )
@@ -9661,10 +9661,10 @@ class TestMuteRuleViewSet:
         mute_rules_fixture,
         findings_fixture,
     ):
-        """Test that inactive rules don't prevent new rules with same UIDs."""
-        # mute_rules_fixture[1] is inactive
-        # Deactivate the active rule first
-        mute_rules_fixture[0].is_active = False
+        """Test that disabled rules don't prevent new rules with same UIDs."""
+        # mute_rules_fixture[1] is disabled
+        # Disable the enabled rule first
+        mute_rules_fixture[0].enabled = False
         mute_rules_fixture[0].save()
 
         finding_ids = [str(findings_fixture[0].id)]
@@ -9804,19 +9804,17 @@ class TestMuteRuleViewSet:
         mute_rule.refresh_from_db()
         assert mute_rule.reason == "Updated reason for muting"
 
-    def test_mute_rules_update_is_active(
-        self, authenticated_client, mute_rules_fixture
-    ):
-        """Test deactivating a mute rule."""
+    def test_mute_rules_update_enabled(self, authenticated_client, mute_rules_fixture):
+        """Test disabling a mute rule."""
         mute_rule = mute_rules_fixture[0]
-        assert mute_rule.is_active is True
+        assert mute_rule.enabled is True
 
         data = {
             "data": {
                 "type": "mute-rules",
                 "id": str(mute_rule.id),
                 "attributes": {
-                    "is_active": False,
+                    "enabled": False,
                 },
             }
         }
@@ -9827,10 +9825,10 @@ class TestMuteRuleViewSet:
         )
         assert response.status_code == status.HTTP_200_OK
         response_data = response.json()["data"]
-        assert response_data["attributes"]["is_active"] is False
+        assert response_data["attributes"]["enabled"] is False
 
         mute_rule.refresh_from_db()
-        assert mute_rule.is_active is False
+        assert mute_rule.enabled is False
 
     def test_mute_rules_update_duplicate_name(
         self, authenticated_client, mute_rules_fixture

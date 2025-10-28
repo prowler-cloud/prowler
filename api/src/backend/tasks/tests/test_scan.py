@@ -786,7 +786,7 @@ class TestPerformScan:
                 tenant_id=tenant_id,
                 name="Production Exception Rule",
                 reason=mute_rule_reason,
-                is_active=True,
+                enabled=True,
                 finding_uids=[finding_uid_1, finding_uid_2],
             )
 
@@ -900,7 +900,7 @@ class TestPerformScan:
                 tenant_id=tenant_id,
                 name="Inactive Rule",
                 reason="Should not apply",
-                is_active=False,
+                enabled=False,
                 finding_uids=[finding_uid],
             )
 
@@ -986,7 +986,7 @@ class TestPerformScan:
                 tenant_id=tenant_id,
                 name="Manual Mute Rule",
                 reason="Muted by manual rule",
-                is_active=True,
+                enabled=True,
                 finding_uids=[finding_uid],
             )
 
@@ -1078,7 +1078,7 @@ class TestPerformScan:
                 tenant_id=tenant_id,
                 name="Bulk Mute Rule",
                 reason=mute_rule_reason,
-                is_active=True,
+                enabled=True,
                 finding_uids=finding_uids,
             )
 
@@ -1254,7 +1254,7 @@ class TestPerformScan:
                 tenant_id=tenant_id,
                 name="Timestamp Test Rule",
                 reason="Testing timestamp",
-                is_active=True,
+                enabled=True,
                 finding_uids=[finding_uid],
             )
 

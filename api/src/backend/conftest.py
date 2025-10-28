@@ -1432,12 +1432,12 @@ def mute_rules_fixture(tenants_fixture, create_test_user, findings_fixture):
     tenant = tenants_fixture[0]
     user = create_test_user
 
-    # Create two mute rules: one active, one inactive
+    # Create two mute rules: one enabled, one disabled
     mute_rule1 = MuteRule.objects.create(
         tenant_id=tenant.id,
         name="Test Rule 1",
         reason="Security exception for testing",
-        is_active=True,
+        enabled=True,
         created_by=user,
         finding_uids=[findings_fixture[0].uid],
     )
@@ -1446,7 +1446,7 @@ def mute_rules_fixture(tenants_fixture, create_test_user, findings_fixture):
         tenant_id=tenant.id,
         name="Test Rule 2",
         reason="Compliance exception approved",
-        is_active=False,
+        enabled=False,
         created_by=user,
         finding_uids=[findings_fixture[1].uid],
     )
