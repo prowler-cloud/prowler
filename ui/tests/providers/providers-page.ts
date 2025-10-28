@@ -9,6 +9,7 @@ export interface AWSProviderData {
   externalId?: string;
   accessKeyId?: string;
   secretAccessKey?: string;
+}
   
 // AZURE provider data
 export interface AZUREProviderData {
