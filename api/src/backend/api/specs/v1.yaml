@@ -3951,6 +3951,37 @@ paths:
               schema:
                 $ref: '#/components/schemas/OverviewProviderResponse'
           description: ''
+  /api/v1/overviews/providers/count:
+    get:
+      operationId: overviews_providers_count_retrieve
+      description: Retrieve the number of providers grouped by provider type. This
+        endpoint counts every provider in the tenant, including those without completed
+        scans.
+      summary: Get provider counts grouped by type
+      parameters:
+      - in: query
+        name: fields[providers-count-overview]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - count
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      tags:
+      - Overview
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OverviewProviderCountResponse'
+          description: ''
   /api/v1/overviews/services:
     get:
       operationId: overviews_services_retrieve
@@ -11103,6 +11134,38 @@ components:
               readOnly: true
           required:
           - id
+    OverviewProviderCount:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - providers-count-overview
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            count:
+              type: integer
+          required:
+          - id
+          - count
+    OverviewProviderCountResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/OverviewProviderCount'
+      required:
+      - data
     OverviewProviderResponse:
       type: object
       properties:

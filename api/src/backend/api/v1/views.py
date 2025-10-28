@@ -3682,8 +3682,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         summary="Get provider counts grouped by type",
         description=(
             "Retrieve the number of providers grouped by provider type. "
-            "This endpoint counts every provider in the tenant, including those without completed scans, "
-            "and respects role-based visibility."
+            "This endpoint counts every provider in the tenant, including those without completed scans."
         ),
     ),
     findings=extend_schema(
