@@ -7,7 +7,6 @@ from prowler.providers.m365.services.entra.entra_service import (
     AdminConsentPolicy,
     AdminRoles,
     ApplicationsConditions,
-    AuthenticationStrength,
     AuthorizationPolicy,
     AuthPolicyRoles,
     ConditionalAccessGrantControl,
@@ -75,7 +74,7 @@ async def mock_entra_get_conditional_access_policies(_):
                     ConditionalAccessGrantControl.COMPLIANT_DEVICE,
                 ],
                 operator=GrantControlOperator.OR,
-                authentication_strength=AuthenticationStrength.PHISHING_RESISTANT_MFA,
+                authentication_strength="Phishing-resistant MFA",
             ),
             session_controls=SessionControls(
                 persistent_browser=PersistentBrowser(
@@ -226,7 +225,7 @@ class Test_Entra_Service:
                         ConditionalAccessGrantControl.COMPLIANT_DEVICE,
                     ],
                     operator=GrantControlOperator.OR,
-                    authentication_strength=AuthenticationStrength.PHISHING_RESISTANT_MFA,
+                    authentication_strength="Phishing-resistant MFA",
                 ),
                 session_controls=SessionControls(
                     persistent_browser=PersistentBrowser(

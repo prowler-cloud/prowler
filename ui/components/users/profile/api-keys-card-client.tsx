@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { CustomButton } from "@/components/ui/custom/custom-button";
+import { CustomLink } from "@/components/ui/custom/custom-link";
 import { DataTable } from "@/components/ui/table";
 import { MetaDataProps } from "@/types";
 
@@ -70,7 +71,12 @@ export const ApiKeysCardClient = ({
         <CardHeader className="flex flex-row items-center justify-between gap-2">
           <div className="flex flex-col gap-1">
             <h4 className="text-lg font-bold">API Keys</h4>
-            <p className="text-xs">Manage API keys for programmatic access</p>
+            <p className="text-xs text-gray-500">
+              Manage API keys for programmatic access.{" "}
+              <CustomLink href="https://docs.prowler.com/user-guide/providers/prowler-app-api-keys">
+                Read the docs
+              </CustomLink>
+            </p>
           </div>
           <CustomButton
             ariaLabel="Create new API key"
