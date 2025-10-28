@@ -1,0 +1,440 @@
+---
+title: "Lab 8: Prowler SaaS Platform"
+description: "Explore Prowler Cloud's managed platform with advanced features, team collaboration, and continuous monitoring"
+---
+
+<Note>
+**Tags:** `workshop` `prowler-cloud` `saas` `intermediate` `platform` `collaboration`
+</Note>
+
+# Lab 8: Prowler SaaS Platform
+
+Learn to use Prowler Cloud, the managed SaaS platform that provides advanced security monitoring, team collaboration, compliance dashboards, and AI-powered security insights.
+
+## Prerequisites
+
+* Completion of previous labs (recommended but not required)
+* Prowler Cloud account (free trial available)
+* Cloud provider accounts (AWS, Azure, or GCP)
+* Basic understanding of Prowler concepts
+
+**Estimated Time:** 60 minutes
+
+## Lab Objectives
+
+By completing this lab, you will:
+
+* Set up Prowler Cloud account
+* Connect cloud providers to Prowler Cloud
+* Navigate the Prowler Cloud interface
+* Use team collaboration features
+* Leverage AI-powered security insights
+* Configure continuous monitoring and alerts
+* Generate executive compliance reports
+
+## Step 1: Create Prowler Cloud Account
+
+Sign up for Prowler Cloud:
+
+1. Visit [https://cloud.prowler.com](https://cloud.prowler.com)
+2. Click "Start Free Trial"
+3. Choose authentication method:
+   * Email/password
+   * Google authentication
+   * GitHub authentication
+   * SSO (for enterprise plans)
+4. Verify email address
+5. Complete onboarding wizard
+
+<Note>
+[Note: Screenshot of slide 115 showing Prowler Cloud signup - to be added]
+</Note>
+
+## Step 2: Connect Your First Cloud Provider
+
+**Connect AWS Account:**
+
+1. Navigate to "Providers" in Prowler Cloud
+2. Click "Add Provider"
+3. Select "AWS"
+4. Choose connection method:
+   * **CloudFormation Stack** (recommended)
+   * **Manual IAM Role**
+5. Deploy CloudFormation template
+6. Copy Role ARN and External ID
+7. Test connection
+8. Click "Save"
+
+**CloudFormation Stack Deployment:**
+```bash
+aws cloudformation create-stack \
+    --stack-name prowler-integration \
+    --template-url https://prowler-public.s3.amazonaws.com/prowler-role.yaml \
+    --parameters ParameterKey=ExternalId,ParameterValue=<your-external-id> \
+    --capabilities CAPABILITY_NAMED_IAM
+```
+
+<Note>
+[Note: Screenshot of slide 118 showing provider connection - to be added]
+</Note>
+
+<Tip>
+The CloudFormation template creates a read-only IAM role with the minimum permissions required for Prowler scans.
+</Tip>
+
+## Step 3: Run Your First Cloud Scan
+
+Initiate a security scan:
+
+1. Go to "Scans" page
+2. Click "New Scan"
+3. Select provider(s) to scan
+4. Choose scan type:
+   * **Quick Scan:** Essential security checks
+   * **Full Scan:** Comprehensive assessment
+   * **Compliance Scan:** Framework-specific validation
+5. Click "Start Scan"
+
+Monitor scan progress:
+* Real-time progress indicator
+* Checks completed
+* Resources discovered
+* Findings identified
+
+<Note>
+[Note: Screenshot of slide 121 showing scan execution - to be added]
+</Note>
+
+## Step 4: Explore the Findings Dashboard
+
+Navigate findings dashboard:
+
+**Overview Statistics:**
+* Total findings by severity
+* Compliance score
+* Trend over time
+* Top affected services
+
+**Filtering Options:**
+* Severity (Critical, High, Medium, Low)
+* Status (Open, In Progress, Resolved)
+* Cloud provider
+* Service
+* Compliance framework
+* Resource tags
+
+**Finding Details:**
+* Detailed description
+* Affected resources
+* Risk assessment
+* Remediation steps
+* Related compliance requirements
+
+<Note>
+[Note: Screenshot of slide 124 showing findings dashboard - to be added]
+</Note>
+
+## Step 5: Use AI-Powered Security Insights
+
+Leverage Prowler Lighthouse AI features:
+
+**AI Security Assistant:**
+1. Click "Lighthouse" in navigation
+2. Ask questions about your security posture:
+   * "What are my critical security risks?"
+   * "Show me publicly exposed resources"
+   * "How can I improve my compliance score?"
+   * "What encryption issues exist?"
+
+**AI Remediation Guidance:**
+* Select any finding
+* Click "AI Remediation"
+* Review generated remediation steps
+* Get customized code/CLI commands
+* Apply fixes with confidence
+
+**AI Threat Analysis:**
+* Identifies attack patterns
+* Correlates related findings
+* Suggests priority order for remediation
+* Explains security impact
+
+<Note>
+[Note: Screenshot of slide 127 showing Lighthouse AI - to be added]
+</Note>
+
+## Step 6: Configure Team Collaboration
+
+Set up team access and workflows:
+
+**Invite Team Members:**
+1. Go to "Settings" → "Team"
+2. Click "Invite Member"
+3. Enter email address
+4. Assign role:
+   * **Admin:** Full access
+   * **Editor:** Scan and remediate
+   * **Viewer:** Read-only access
+5. Send invitation
+
+**Assign Findings:**
+1. Select findings
+2. Click "Assign"
+3. Choose team member
+4. Add due date
+5. Add comments/notes
+
+**Workflow States:**
+* Open → New finding
+* In Progress → Being investigated/fixed
+* Resolved → Remediated
+* False Positive → Not applicable
+* Risk Accepted → Acknowledged but not fixed
+
+<Note>
+[Note: Screenshot of slide 130 showing team collaboration - to be added]
+</Note>
+
+## Step 7: Configure Continuous Monitoring
+
+Set up automated scanning:
+
+**Scheduled Scans:**
+1. Go to "Scans" → "Schedules"
+2. Click "Create Schedule"
+3. Configure:
+   * Name: "Daily Security Scan"
+   * Frequency: Daily, Weekly, or Custom cron
+   * Time: 2:00 AM UTC
+   * Providers: Select all
+   * Notification preferences
+4. Save schedule
+
+**Real-Time Monitoring:**
+* Enable CloudTrail integration
+* Receive alerts for security events
+* Detect configuration drift
+* Identify new resources
+
+<Tip>
+Schedule scans during off-peak hours to minimize performance impact on your cloud APIs.
+</Tip>
+
+## Step 8: Configure Alerts and Notifications
+
+Set up security alerts:
+
+**Alert Rules:**
+1. Navigate to "Alerts"
+2. Click "Create Alert Rule"
+3. Define conditions:
+   * Finding severity ≥ High
+   * Compliance score drops below 80%
+   * New critical findings discovered
+   * Public exposure detected
+4. Choose notification channels:
+   * Email
+   * Slack
+   * Microsoft Teams
+   * PagerDuty
+   * Webhooks
+5. Save rule
+
+**Slack Integration:**
+1. Go to "Integrations" → "Slack"
+2. Click "Connect to Slack"
+3. Authorize Prowler app
+4. Select channel for notifications
+5. Configure alert preferences
+
+<Note>
+[Note: Screenshot of slide 134 showing alert configuration - to be added]
+</Note>
+
+## Step 9: Generate Compliance Reports
+
+Create compliance reports for auditors:
+
+**Compliance Dashboard:**
+1. Navigate to "Compliance"
+2. View compliance scores by framework:
+   * CIS Benchmarks
+   * PCI-DSS
+   * HIPAA
+   * SOC2
+   * ISO 27001
+3. Drill down into requirements
+4. View evidence for each control
+
+**Export Reports:**
+1. Select compliance framework
+2. Click "Generate Report"
+3. Choose format:
+   * PDF (executive summary)
+   * Excel (detailed findings)
+   * CSV (raw data)
+4. Schedule recurring reports:
+   * Weekly status updates
+   * Monthly compliance reports
+   * Quarterly audit packages
+
+**Report Customization:**
+* Add company logo
+* Include executive summary
+* Filter by business unit
+* Show remediation progress
+* Include trend analysis
+
+<Note>
+[Note: Screenshot of slide 137 showing compliance reports - to be added]
+</Note>
+
+## Step 10: Multi-Account and Multi-Cloud Management
+
+Manage multiple cloud environments:
+
+**Add Multiple Providers:**
+1. Connect AWS accounts (dev, staging, production)
+2. Connect Azure subscriptions
+3. Connect GCP projects
+4. Organize with tags/labels
+
+**Provider Groups:**
+1. Create provider groups:
+   * Production environments
+   * Development environments
+   * By business unit
+   * By geographic region
+2. Run group-wide scans
+3. Generate consolidated reports
+
+**Cross-Cloud Insights:**
+* Compare security posture across providers
+* Identify configuration inconsistencies
+* Standardize security policies
+* Track multi-cloud compliance
+
+<Note>
+[Note: Screenshot of slide 140 showing multi-cloud management - to be added]
+</Note>
+
+## Step 11: Advanced Features
+
+Explore advanced Prowler Cloud capabilities:
+
+**Custom Checks:**
+* Create organization-specific security policies
+* Define custom compliance requirements
+* Share with team
+
+**API Access:**
+* Programmatic access to findings
+* Integrate with internal tools
+* Automate workflows
+
+**RBAC (Role-Based Access Control):**
+* Fine-grained permissions
+* Provider-level access control
+* Audit logging
+
+**Security Integrations:**
+* AWS Security Hub
+* Jira
+* ServiceNow
+* Splunk
+* Custom webhooks
+
+## Verification Steps
+
+Confirm successful lab completion:
+
+1. Prowler Cloud account created
+2. Cloud provider(s) connected
+3. Security scan completed
+4. Findings dashboard explored
+5. AI insights leveraged
+6. Team collaboration configured
+7. Continuous monitoring set up
+8. Compliance reports generated
+
+## Expected Outcomes
+
+After completing this lab, you should:
+
+* Understand Prowler Cloud platform capabilities
+* Be able to connect and scan cloud providers
+* Know how to use AI-powered insights
+* Have configured team collaboration
+* Be able to generate compliance reports
+* Have set up continuous monitoring
+
+## Prowler Cloud vs. Prowler CLI
+
+**Prowler Cloud Advantages:**
+* Managed infrastructure (no installation)
+* Web-based interface
+* Team collaboration features
+* AI-powered insights (Lighthouse)
+* Continuous monitoring
+* Historical trend analysis
+* Executive dashboards
+* Built-in integrations
+* Scheduled scans
+* Role-based access control
+
+**Prowler CLI Advantages:**
+* Self-hosted (on-premises)
+* No data leaves your environment
+* Scriptable and automatable
+* Free and open source
+* Custom integrations
+* Offline scanning
+
+<Tip>
+Many organizations use both: Prowler CLI for automated CI/CD pipelines and Prowler Cloud for centralized visibility and team collaboration.
+</Tip>
+
+## Troubleshooting
+
+**Issue:** Cannot connect cloud provider
+* **Solution:** Verify IAM role permissions and trust relationship, check External ID
+
+**Issue:** Scan fails or times out
+* **Solution:** Check provider credentials are valid, ensure APIs are not rate-limited
+
+**Issue:** No findings appearing
+* **Solution:** Verify scan completed successfully, check filtering settings
+
+**Issue:** Alert notifications not received
+* **Solution:** Verify integration configuration, check notification channel settings
+
+## Workshop Completion
+
+Congratulations on completing the Prowler Workshop! You have learned:
+
+* Prowler CLI installation and basic usage
+* Threat detection techniques
+* Custom check development
+* Multi-cloud security (AWS, Azure, GCP)
+* Compliance automation
+* Security tool integrations
+* Prowler Cloud platform capabilities
+
+## Next Steps
+
+Continue your Prowler journey:
+
+* Join the [Prowler Community](https://goto.prowler.com/slack)
+* Contribute to [Prowler Open Source](https://github.com/prowler-cloud/prowler)
+* Explore [Prowler Hub](https://hub.prowler.com) for checks and frameworks
+* Read the [Prowler Documentation](https://docs.prowler.com)
+* Follow [Prowler on Twitter](https://twitter.com/prowlercloud)
+* Subscribe to [Prowler YouTube](https://www.youtube.com/@prowlercloud)
+
+## Additional Resources
+
+* [Prowler Cloud Documentation](/getting-started/products/prowler-cloud)
+* [Prowler Cloud Pricing](/getting-started/products/prowler-cloud-pricing)
+* [AWS Marketplace Listing](/getting-started/products/prowler-cloud-aws-marketplace)
+* [Prowler API Reference](/getting-started/goto/prowler-api-reference)
+* [Prowler Lighthouse AI](/user-guide/tutorials/prowler-app-lighthouse)

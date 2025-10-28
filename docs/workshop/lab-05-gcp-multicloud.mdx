@@ -1,0 +1,377 @@
+---
+title: "Lab 5: Multi-Cloud Security with Prowler (GCP)"
+description: "Complete your multi-cloud security coverage by adding Google Cloud Platform assessments"
+---
+
+<Note>
+**Tags:** `workshop` `gcp` `multi-cloud` `intermediate` `authentication`
+</Note>
+
+# Lab 5: Multi-Cloud Security with Prowler (GCP)
+
+Learn to secure Google Cloud Platform environments and achieve comprehensive multi-cloud security coverage with Prowler.
+
+## Prerequisites
+
+* Prowler CLI installed ([Lab 1](/workshop/lab-01-getting-started))
+* Active GCP project
+* Google Cloud SDK (gcloud) installed
+* GCP account with appropriate permissions (Viewer role minimum)
+* Basic understanding of GCP services
+
+**Estimated Time:** 45 minutes
+
+## Lab Objectives
+
+By completing this lab, you will:
+
+* Configure GCP authentication for Prowler
+* Run security assessments on GCP projects
+* Understand GCP-specific security checks
+* Achieve comprehensive multi-cloud security coverage (AWS, Azure, GCP)
+* Implement unified security policies across cloud providers
+
+## Step 1: Install Google Cloud SDK
+
+Install gcloud CLI if not already present:
+
+**macOS:**
+```bash
+brew install google-cloud-sdk
+```
+
+**Linux:**
+```bash
+curl https://sdk.cloud.google.com | bash
+exec -l $SHELL
+```
+
+**Windows:**
+Download and install from: https://cloud.google.com/sdk/docs/install
+
+Verify installation:
+```bash
+gcloud --version
+```
+
+## Step 2: Authenticate to GCP
+
+Initialize gcloud and authenticate:
+
+```bash
+gcloud init
+```
+
+This prompts you to:
+1. Log in to your Google account
+2. Select or create a GCP project
+3. Configure default region/zone (optional)
+
+Verify authentication:
+```bash
+gcloud auth list
+```
+
+Display active project:
+```bash
+gcloud config get-value project
+```
+
+<Note>
+[Note: Screenshot of slide 60 showing GCP authentication - to be added]
+</Note>
+
+## Step 3: Configure Application Default Credentials
+
+Prowler uses Application Default Credentials (ADC):
+
+```bash
+gcloud auth application-default login
+```
+
+This creates credentials file at:
+* **Linux/macOS:** `~/.config/gcloud/application_default_credentials.json`
+* **Windows:** `%APPDATA%\gcloud\application_default_credentials.json`
+
+## Step 4: Set Up Service Account (Optional)
+
+For automated scans, create a service account:
+
+```bash
+# Create service account
+gcloud iam service-accounts create prowler-scanner \
+    --display-name="Prowler Security Scanner"
+
+# Get project ID
+PROJECT_ID=$(gcloud config get-value project)
+
+# Grant Viewer role
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:prowler-scanner@${PROJECT_ID}.iam.gserviceaccount.com" \
+    --role="roles/viewer"
+
+# Generate key file
+gcloud iam service-accounts keys create ~/prowler-credentials.json \
+    --iam-account=prowler-scanner@${PROJECT_ID}.iam.gserviceaccount.com
+```
+
+<Warning>
+Store service account key files securely. These provide programmatic access to your GCP project.
+</Warning>
+
+Use service account credentials:
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS=~/prowler-credentials.json
+```
+
+## Step 5: Run Your First GCP Scan
+
+Execute Prowler against GCP:
+
+```bash
+prowler gcp
+```
+
+This command:
+* Uses Application Default Credentials (or service account)
+* Scans the active project
+* Runs all GCP security checks
+* Generates output in multiple formats
+
+<Note>
+GCP scans typically take 5-10 minutes depending on resource count.
+</Note>
+
+<Note>
+[Note: Screenshot of slide 65 showing GCP scan execution - to be added]
+</Note>
+
+## Step 6: Scan Specific GCP Projects
+
+Scan a specific project:
+
+```bash
+prowler gcp --project-id my-project-id
+```
+
+Scan multiple projects:
+```bash
+prowler gcp --project-id project-1 project-2 project-3
+```
+
+## Step 7: Scan Specific GCP Services
+
+Run targeted scans for specific services:
+
+```bash
+prowler gcp --services storage compute iam
+```
+
+This focuses on:
+* Cloud Storage buckets
+* Compute Engine instances
+* IAM policies and permissions
+
+## Step 8: Analyze GCP Security Findings
+
+Review GCP-specific security checks:
+
+**Cloud Storage Security:**
+* Buckets not publicly accessible
+* Uniform bucket-level access enabled
+* Encryption at rest enabled
+* Versioning enabled
+
+**Compute Engine Security:**
+* OS Login enabled
+* Serial port access disabled
+* Shielded VMs enabled
+* IP forwarding disabled
+
+**IAM Security:**
+* Service accounts with minimal permissions
+* No primitive roles (Owner, Editor, Viewer) assigned to users
+* Service account keys rotated regularly
+* Cloud Identity-Aware Proxy (IAP) enabled
+
+Open the HTML report:
+```bash
+open output/prowler-output-gcp-*.html
+```
+
+<Note>
+[Note: Screenshot of slide 69 showing GCP findings report - to be added]
+</Note>
+
+## Step 9: Multi-Cloud Security Overview
+
+You now have security coverage across three major cloud providers:
+
+Create a comprehensive multi-cloud report directory:
+
+```bash
+mkdir -p multi-cloud-security-reports
+cp output/prowler-output-aws-*.json multi-cloud-security-reports/
+cp output/prowler-output-azure-*.json multi-cloud-security-reports/
+cp output/prowler-output-gcp-*.json multi-cloud-security-reports/
+```
+
+Compare security posture metrics:
+
+```bash
+# Count findings by provider
+echo "AWS findings:"
+jq '.findings | length' multi-cloud-security-reports/prowler-output-aws-*.json
+
+echo "Azure findings:"
+jq '.findings | length' multi-cloud-security-reports/prowler-output-azure-*.json
+
+echo "GCP findings:"
+jq '.findings | length' multi-cloud-security-reports/prowler-output-gcp-*.json
+```
+
+## Step 10: GCP-Specific Remediation
+
+Example remediations for common GCP findings:
+
+**Enable uniform bucket-level access:**
+```bash
+gsutil uniformbucketlevelaccess set on gs://bucket-name
+```
+
+**Disable public access to bucket:**
+```bash
+gsutil iam ch -d allUsers gs://bucket-name
+gsutil iam ch -d allAuthenticatedUsers gs://bucket-name
+```
+
+**Enable OS Login on project:**
+```bash
+gcloud compute project-info add-metadata \
+    --metadata enable-oslogin=TRUE
+```
+
+**Disable serial port access:**
+```bash
+gcloud compute instances add-metadata instance-name \
+    --metadata serial-port-enable=FALSE
+```
+
+**Remove primitive role binding:**
+```bash
+gcloud projects remove-iam-policy-binding PROJECT_ID \
+    --member='user:email@example.com' \
+    --role='roles/editor'
+```
+
+## Step 11: Scan GCP Organization
+
+If you have organization-level access:
+
+```bash
+prowler gcp --organization-id org-id
+```
+
+This scans all projects within the organization.
+
+<Tip>
+Organization-level scanning requires `resourcemanager.organizations.get` permission at the organization level.
+</Tip>
+
+<Note>
+[Note: Screenshot of slide 74 showing organization scan - to be added]
+</Note>
+
+## Step 12: Multi-Cloud Security Strategy
+
+Establish consistent security controls across clouds:
+
+**Identity and Access:**
+* Enforce MFA across all providers
+* Implement least privilege access
+* Regular access reviews
+* Centralized identity management
+
+**Data Protection:**
+* Encryption at rest and in transit
+* Regular backups
+* Data retention policies
+* Access logging enabled
+
+**Network Security:**
+* Zero-trust network architecture
+* Network segmentation
+* DDoS protection
+* Traffic inspection
+
+**Monitoring and Compliance:**
+* Centralized logging
+* Security information and event management (SIEM)
+* Regular compliance scans
+* Automated remediation where possible
+
+## Verification Steps
+
+Confirm successful lab completion:
+
+1. Google Cloud SDK installed and authenticated
+2. First GCP scan completed successfully
+3. GCP security findings reviewed
+4. Service-specific scans executed
+5. Multi-cloud reports collected (AWS, Azure, GCP)
+6. GCP-specific remediations understood
+
+## Expected Outcomes
+
+After completing this lab, you should:
+
+* Be able to authenticate Prowler with GCP
+* Understand GCP security checks
+* Know how to scan multiple projects and organizations
+* Have achieved multi-cloud security coverage
+* Be familiar with GCP-specific remediation commands
+
+## Common GCP Security Findings
+
+**Cloud Storage:**
+* Buckets with public access
+* Uniform bucket-level access not enabled
+* Versioning disabled
+* Logging not configured
+
+**Compute Engine:**
+* OS Login not enabled
+* Legacy metadata endpoints enabled
+* Serial port access enabled
+* IP forwarding enabled on instances
+
+**IAM:**
+* Primitive roles assigned to users
+* Service account keys not rotated
+* Over-permissive service accounts
+* No organization policies enforced
+
+## Troubleshooting
+
+**Issue:** GCP authentication fails
+* **Solution:** Run `gcloud auth application-default login` and ensure project is set
+
+**Issue:** Permission errors during scan
+* **Solution:** Ensure account has Viewer role at project or organization level
+
+**Issue:** Project not found
+* **Solution:** Verify project ID with `gcloud projects list` and check it's active
+
+**Issue:** API not enabled errors
+* **Solution:** Enable required APIs: `gcloud services enable cloudresourcemanager.googleapis.com`
+
+## Next Steps
+
+Continue to [Lab 6: Compliance as Code with Prowler](/workshop/lab-06-compliance-as-code) to learn how to automate compliance reporting across all cloud providers.
+
+## Additional Resources
+
+* [GCP Getting Started Guide](/user-guide/providers/gcp/getting-started-gcp)
+* [GCP Authentication Methods](/user-guide/providers/gcp/authentication)
+* [GCP Projects Management](/user-guide/providers/gcp/projects)
+* [GCP Organization Scanning](/user-guide/providers/gcp/organization)

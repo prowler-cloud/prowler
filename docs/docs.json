@@ -252,6 +252,25 @@
         ]
       },
       {
+        "tab": "Workshop",
+        "groups": [
+          {
+            "group": "Hands-On Labs",
+            "pages": [
+              "workshop/introduction",
+              "workshop/lab-01-getting-started",
+              "workshop/lab-02-threat-detection",
+              "workshop/lab-03-custom-checks",
+              "workshop/lab-04-azure-multicloud",
+              "workshop/lab-05-gcp-multicloud",
+              "workshop/lab-06-compliance-as-code",
+              "workshop/lab-07-integrations",
+              "workshop/lab-08-prowler-saas"
+            ]
+          }
+        ]
+      },
+      {
         "tab": "Developer Guide",
         "groups": [
           {

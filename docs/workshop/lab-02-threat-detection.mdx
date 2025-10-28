@@ -1,0 +1,263 @@
+---
+title: "Lab 2: Threat Detection with Prowler"
+description: "Identify and analyze security threats in AWS environments using Prowler's threat detection capabilities"
+---
+
+<Note>
+**Tags:** `workshop` `aws` `threat-detection` `intermediate` `security`
+</Note>
+
+# Lab 2: Threat Detection with Prowler
+
+Learn to identify security threats, exposed resources, and potential attack vectors in AWS environments using Prowler's threat detection features.
+
+## Prerequisites
+
+* Completion of [Lab 1: Getting Started with Prowler CLI](/workshop/lab-01-getting-started)
+* AWS account with resources (EC2 instances, S3 buckets, security groups)
+* Prowler CLI installed and configured
+* Basic understanding of AWS security concepts
+
+**Estimated Time:** 45 minutes
+
+## Lab Objectives
+
+By completing this lab, you will:
+
+* Understand Prowler's threat detection capabilities
+* Identify publicly exposed resources
+* Detect insecure configurations
+* Analyze CloudTrail events for suspicious activity
+* Prioritize security findings by risk
+
+## Step 1: Understanding Threat Detection Checks
+
+Prowler includes checks that identify:
+
+* Public exposure (S3 buckets, EC2 instances, RDS databases)
+* Insecure network configurations (security groups, NACLs)
+* Weak encryption settings
+* Suspicious IAM permissions
+* CloudTrail anomalies
+
+List threat detection checks:
+
+```bash
+prowler aws --list-checks | grep -i "public\|exposed\|open"
+```
+
+## Step 2: Scan for Publicly Exposed Resources
+
+Run a scan focusing on public exposure:
+
+```bash
+prowler aws --checks s3_bucket_public_access ec2_instance_public_ip rds_instance_publicly_accessible
+```
+
+This identifies:
+* S3 buckets with public access
+* EC2 instances with public IPs
+* RDS databases accessible from the internet
+
+<Note>
+[Note: Screenshot of slide 17 showing public exposure findings - to be added]
+</Note>
+
+## Step 3: Analyze Security Group Misconfigurations
+
+Security groups control network access. Scan for insecure rules:
+
+```bash
+prowler aws --services ec2 --checks ec2_securitygroup*
+```
+
+Look for findings related to:
+* `0.0.0.0/0` ingress rules (any IP can connect)
+* Open high-risk ports (22, 3389, 3306, 5432)
+* Overly permissive egress rules
+
+Example vulnerable security group:
+```
+Port 22 (SSH) open to 0.0.0.0/0
+Port 3389 (RDP) open to 0.0.0.0/0
+```
+
+<Warning>
+Security groups with `0.0.0.0/0` on sensitive ports expose resources to the entire internet and should be restricted immediately.
+</Warning>
+
+## Step 4: Check for Unencrypted Data
+
+Scan for unencrypted storage and data transmission:
+
+```bash
+prowler aws --checks s3_bucket_default_encryption ebs_volume_encryption rds_instance_storage_encrypted
+```
+
+Key checks:
+* S3 bucket default encryption disabled
+* EBS volumes without encryption
+* RDS instances with unencrypted storage
+
+<Note>
+[Note: Screenshot of slide 20 showing encryption findings - to be added]
+</Note>
+
+## Step 5: CloudTrail Threat Detection
+
+Enable CloudTrail event analysis to detect suspicious activity:
+
+```bash
+prowler aws --services cloudtrail
+```
+
+Prowler checks for:
+* CloudTrail disabled in regions
+* Log file validation disabled
+* S3 bucket not encrypted
+* CloudWatch logging not configured
+
+<Tip>
+CloudTrail provides audit logs of API calls. Proper configuration is essential for threat detection and incident response.
+</Tip>
+
+## Step 6: Analyze IAM Security Risks
+
+Identify IAM misconfigurations that could lead to privilege escalation:
+
+```bash
+prowler aws --services iam --severity critical high
+```
+
+Look for:
+* Root account usage
+* IAM users without MFA
+* Overly permissive IAM policies (e.g., `*:*`)
+* Inactive credentials not rotated
+
+Example critical finding:
+```
+IAM user with administrative privileges without MFA enabled
+```
+
+## Step 7: Generate a Threat-Focused Report
+
+Create a filtered report with only security threats:
+
+```bash
+prowler aws --severity critical high --status FAIL -o html json
+```
+
+This generates reports containing only:
+* Critical and high-severity findings
+* Failed checks (PASS checks excluded)
+
+Review the HTML report:
+
+```bash
+open output/prowler-output-*.html
+```
+
+<Note>
+[Note: Screenshot of slide 25 showing threat-focused report - to be added]
+</Note>
+
+## Step 8: Prioritize Findings
+
+Categorize findings by risk level:
+
+**Critical Priority (Address Immediately):**
+* S3 buckets with public write access
+* Root account without MFA
+* Database instances publicly accessible
+* Security groups open to `0.0.0.0/0` on sensitive ports
+
+**High Priority (Address Soon):**
+* Unencrypted storage volumes
+* CloudTrail logging disabled
+* IAM users without MFA
+* Overly permissive IAM policies
+
+**Medium Priority (Address as Resources Allow):**
+* Old access keys not rotated
+* S3 bucket logging disabled
+* VPC flow logs not enabled
+
+## Step 9: Export Findings for Remediation
+
+Export findings to CSV for tracking:
+
+```bash
+prowler aws --severity critical high --status FAIL -o csv
+```
+
+Share the CSV with your security team for remediation tracking.
+
+## Verification Steps
+
+Confirm successful lab completion:
+
+1. Identified publicly exposed resources
+2. Detected insecure security group configurations
+3. Found unencrypted data storage
+4. Reviewed CloudTrail security settings
+5. Analyzed IAM security risks
+6. Generated threat-focused reports
+7. Prioritized findings by risk level
+
+## Expected Outcomes
+
+After completing this lab, you should:
+
+* Understand common AWS security threats
+* Know how to identify exposed resources
+* Be able to prioritize security findings
+* Have generated threat detection reports
+
+## Remediation Examples
+
+**Example 1: Remove public access from S3 bucket**
+```bash
+aws s3api put-public-access-block \
+    --bucket my-bucket \
+    --public-access-block-configuration \
+    "BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true"
+```
+
+**Example 2: Restrict security group rule**
+```bash
+aws ec2 revoke-security-group-ingress \
+    --group-id sg-12345678 \
+    --protocol tcp \
+    --port 22 \
+    --cidr 0.0.0.0/0
+```
+
+**Example 3: Enable S3 bucket encryption**
+```bash
+aws s3api put-bucket-encryption \
+    --bucket my-bucket \
+    --server-side-encryption-configuration \
+    '{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]}'
+```
+
+## Troubleshooting
+
+**Issue:** Too many findings to review
+* **Solution:** Use `--severity critical high` to focus on the most important issues first
+
+**Issue:** Don't understand a finding
+* **Solution:** Use `--describe-check <check-id>` to get detailed information
+
+**Issue:** Need to share findings with team
+* **Solution:** Export to CSV or JSON and use collaboration tools
+
+## Next Steps
+
+Continue to [Lab 3: Custom Checks with Prowler](/workshop/lab-03-custom-checks) to learn how to create organization-specific security checks.
+
+## Additional Resources
+
+* [AWS Threat Detection Guide](/user-guide/providers/aws/threat-detection)
+* [Security Best Practices](/user-guide/providers/aws/getting-started-aws)
+* [Prowler Check Reference](https://hub.prowler.com)

@@ -1,0 +1,465 @@
+---
+title: "Lab 6: Compliance as Code with Prowler"
+description: "Automate compliance reporting and validation against industry standards and regulatory frameworks"
+---
+
+<Note>
+**Tags:** `workshop` `aws` `compliance` `intermediate` `automation` `frameworks`
+</Note>
+
+# Lab 6: Compliance as Code with Prowler
+
+Learn to automate compliance validation and reporting against industry standards such as CIS, PCI-DSS, HIPAA, and custom compliance frameworks.
+
+## Prerequisites
+
+* Completion of [Lab 1: Getting Started with Prowler CLI](/workshop/lab-01-getting-started)
+* AWS account with resources
+* Prowler CLI installed and configured
+* Understanding of compliance frameworks (CIS, PCI-DSS, HIPAA)
+
+**Estimated Time:** 50 minutes
+
+## Lab Objectives
+
+By completing this lab, you will:
+
+* Understand compliance frameworks in Prowler
+* Generate compliance reports for industry standards
+* Validate compliance status programmatically
+* Create custom compliance frameworks
+* Automate compliance reporting in CI/CD pipelines
+
+## Step 1: List Available Compliance Frameworks
+
+View all supported compliance frameworks:
+
+```bash
+prowler aws --list-compliance
+```
+
+This displays frameworks such as:
+* CIS AWS Foundations Benchmark (multiple versions)
+* PCI-DSS v4.0
+* HIPAA
+* SOC2
+* GDPR
+* ISO 27001
+* NIST 800-53
+* AWS Foundational Security Best Practices
+* Custom frameworks
+
+<Note>
+[Note: Screenshot of slide 78 showing compliance frameworks list - to be added]
+</Note>
+
+## Step 2: Run CIS Benchmark Compliance Scan
+
+Execute a CIS AWS Foundations Benchmark scan:
+
+```bash
+prowler aws --compliance cis_2.0_aws
+```
+
+This command:
+* Runs only checks mapped to CIS Benchmark v2.0
+* Generates a compliance report
+* Shows compliance percentage
+* Identifies non-compliant controls
+
+Review compliance summary:
+```bash
+open output/compliance/prowler-compliance-cis_2.0_aws-*.html
+```
+
+<Note>
+[Note: Screenshot of slide 80 showing CIS compliance report - to be added]
+</Note>
+
+## Step 3: Analyze Compliance Requirements
+
+Understanding compliance report structure:
+
+**Requirement ID:** Control identifier (e.g., 1.1, 1.2)
+**Requirement Description:** What the control validates
+**Status:** PASS or FAIL
+**Related Checks:** Prowler checks that map to this requirement
+**Resources Affected:** Specific resources that failed
+
+Example CIS requirement:
+
+```
+ID: 1.4
+Description: Ensure no root account access key exists
+Status: FAIL
+Checks: iam_root_user_no_access_keys
+Resources: Root account has 1 active access key
+```
+
+## Step 4: Generate Multiple Compliance Reports
+
+Run scans for multiple frameworks:
+
+```bash
+prowler aws --compliance cis_2.0_aws pci_dss_v4.0_aws hipaa_aws
+```
+
+This generates three separate compliance reports:
+* `prowler-compliance-cis_2.0_aws-*.html`
+* `prowler-compliance-pci_dss_v4.0_aws-*.html`
+* `prowler-compliance-hipaa_aws-*.html`
+
+Compare compliance posture across frameworks:
+```bash
+grep "Compliance Status" output/compliance/*.html
+```
+
+## Step 5: Export Compliance Data
+
+Export compliance results to JSON for automation:
+
+```bash
+prowler aws --compliance cis_2.0_aws -o json-ocsf
+```
+
+The JSON output includes:
+* Compliance score (percentage)
+* Passed requirements
+* Failed requirements
+* Resource-level details
+* Remediation guidance
+
+Query compliance status programmatically:
+```bash
+jq '.compliance.cis_2.0_aws.score' output/prowler-output-*.json-ocsf
+```
+
+<Note>
+[Note: Screenshot of slide 84 showing JSON compliance output - to be added]
+</Note>
+
+## Step 6: Create a Custom Compliance Framework
+
+Create a custom framework for organization-specific requirements:
+
+Create `custom_compliance.json`:
+
+```json
+{
+  "Framework": "custom_security_baseline",
+  "Version": "1.0",
+  "Provider": "aws",
+  "Description": "Organization Security Baseline Requirements",
+  "Requirements": [
+    {
+      "Id": "1.1",
+      "Description": "S3 buckets must have encryption enabled",
+      "Attributes": [
+        {
+          "Section": "Data Protection",
+          "SubSection": "Encryption at Rest",
+          "Type": "automated",
+          "Service": "s3"
+        }
+      ],
+      "Checks": [
+        "s3_bucket_default_encryption",
+        "s3_bucket_secure_transport_policy"
+      ]
+    },
+    {
+      "Id": "1.2",
+      "Description": "CloudTrail must be enabled in all regions",
+      "Attributes": [
+        {
+          "Section": "Logging and Monitoring",
+          "SubSection": "Audit Logging",
+          "Type": "automated",
+          "Service": "cloudtrail"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_log_file_validation_enabled"
+      ]
+    },
+    {
+      "Id": "2.1",
+      "Description": "IAM users must have MFA enabled",
+      "Attributes": [
+        {
+          "Section": "Identity and Access Management",
+          "SubSection": "Multi-Factor Authentication",
+          "Type": "automated",
+          "Service": "iam"
+        }
+      ],
+      "Checks": [
+        "iam_user_mfa_enabled_console_access",
+        "iam_root_mfa_enabled"
+      ]
+    },
+    {
+      "Id": "3.1",
+      "Description": "Security groups must not allow unrestricted access",
+      "Attributes": [
+        {
+          "Section": "Network Security",
+          "SubSection": "Firewall Rules",
+          "Type": "automated",
+          "Service": "ec2"
+        }
+      ],
+      "Checks": [
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389"
+      ]
+    }
+  ]
+}
+```
+
+Save to `prowler/compliance/aws/`:
+```bash
+cp custom_compliance.json ~/.prowler/compliance/aws/
+```
+
+## Step 7: Run Custom Compliance Framework
+
+Execute scan against custom framework:
+
+```bash
+prowler aws --compliance-framework custom_compliance.json
+```
+
+Or if placed in Prowler's compliance directory:
+```bash
+prowler aws --compliance custom_security_baseline
+```
+
+Review custom compliance report:
+```bash
+open output/compliance/prowler-compliance-custom_security_baseline-*.html
+```
+
+<Note>
+[Note: Screenshot of slide 88 showing custom compliance report - to be added]
+</Note>
+
+## Step 8: Compliance Reporting for Audits
+
+Generate audit-ready compliance reports:
+
+```bash
+prowler aws \
+    --compliance cis_2.0_aws \
+    -o html csv json \
+    --output-directory ./audit-reports-$(date +%Y%m%d)
+```
+
+This creates:
+* HTML report for human review
+* CSV for spreadsheet analysis
+* JSON for programmatic processing
+
+Package for auditors:
+```bash
+tar -czf compliance-audit-$(date +%Y%m%d).tar.gz audit-reports-*
+```
+
+## Step 9: Automate Compliance Validation
+
+Create a compliance validation script:
+
+Create `compliance-check.sh`:
+
+```bash
+#!/bin/bash
+
+# Configuration
+COMPLIANCE_FRAMEWORK="cis_2.0_aws"
+REQUIRED_SCORE=85
+OUTPUT_DIR="./compliance-reports"
+
+# Run Prowler
+prowler aws \
+    --compliance $COMPLIANCE_FRAMEWORK \
+    -o json \
+    --output-directory $OUTPUT_DIR
+
+# Extract compliance score
+SCORE=$(jq -r ".compliance.${COMPLIANCE_FRAMEWORK}.score" \
+    $OUTPUT_DIR/prowler-output-*.json | head -1)
+
+echo "Compliance Score: ${SCORE}%"
+
+# Validate compliance threshold
+if (( $(echo "$SCORE >= $REQUIRED_SCORE" | bc -l) )); then
+    echo "✓ Compliance check PASSED (score: ${SCORE}% >= ${REQUIRED_SCORE}%)"
+    exit 0
+else
+    echo "✗ Compliance check FAILED (score: ${SCORE}% < ${REQUIRED_SCORE}%)"
+    exit 1
+fi
+```
+
+Make executable:
+```bash
+chmod +x compliance-check.sh
+```
+
+Run validation:
+```bash
+./compliance-check.sh
+```
+
+## Step 10: Integrate with CI/CD Pipeline
+
+Example GitHub Actions workflow:
+
+Create `.github/workflows/compliance-check.yml`:
+
+```yaml
+name: Compliance Validation
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Daily at midnight
+  workflow_dispatch:
+
+jobs:
+  prowler-compliance:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Prowler
+        run: pip install prowler
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Run compliance scan
+        run: |
+          prowler aws \
+            --compliance cis_2.0_aws \
+            -o html json \
+            --output-directory ./reports
+
+      - name: Upload compliance reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: compliance-reports
+          path: ./reports/
+
+      - name: Check compliance threshold
+        run: |
+          SCORE=$(jq -r '.compliance.cis_2.0_aws.score' reports/prowler-output-*.json)
+          if (( $(echo "$SCORE < 85" | bc -l) )); then
+            echo "Compliance score ${SCORE}% is below threshold"
+            exit 1
+          fi
+```
+
+<Note>
+[Note: Screenshot of slide 92 showing CI/CD integration - to be added]
+</Note>
+
+## Step 11: Continuous Compliance Monitoring
+
+Implement continuous compliance monitoring:
+
+**Daily Scans:**
+* Schedule automated scans
+* Track compliance trends over time
+* Alert on compliance score drops
+
+**Drift Detection:**
+* Compare current state vs. baseline
+* Identify new non-compliant resources
+* Generate remediation tickets automatically
+
+**Compliance Dashboard:**
+* Visualize compliance status
+* Track remediation progress
+* Generate executive reports
+
+## Verification Steps
+
+Confirm successful lab completion:
+
+1. Listed available compliance frameworks
+2. Generated CIS compliance report
+3. Created multiple framework reports
+4. Built custom compliance framework
+5. Automated compliance validation
+6. Integrated compliance checks in CI/CD
+
+## Expected Outcomes
+
+After completing this lab, you should:
+
+* Understand Prowler compliance capabilities
+* Be able to generate compliance reports
+* Know how to create custom frameworks
+* Have automated compliance validation
+* Be ready for audit processes
+
+## Compliance Framework Mapping
+
+Common frameworks supported:
+
+**AWS:**
+* CIS AWS Foundations Benchmark v1.4, v1.5, v2.0, v3.0
+* AWS Foundational Security Best Practices
+* PCI-DSS v4.0
+* HIPAA
+* SOC2
+* GDPR
+* ISO 27001
+* NIST 800-53
+* FedRAMP
+* ENS (Spanish National Security Scheme)
+
+**Azure:**
+* CIS Microsoft Azure Foundations Benchmark
+* Azure Security Benchmark
+
+**GCP:**
+* CIS Google Cloud Platform Foundation Benchmark
+
+## Troubleshooting
+
+**Issue:** Compliance framework not found
+* **Solution:** Use `--list-compliance` to see exact framework names
+
+**Issue:** Low compliance score
+* **Solution:** Review failed checks and prioritize remediation by severity
+
+**Issue:** Missing compliance report
+* **Solution:** Check `output/compliance/` directory for framework-specific reports
+
+**Issue:** Custom framework not loading
+* **Solution:** Validate JSON syntax and ensure file is in correct directory
+
+## Next Steps
+
+Continue to [Lab 7: Integrations with Prowler](/workshop/lab-07-integrations) to learn how to integrate Prowler with AWS Security Hub and other security tools.
+
+## Additional Resources
+
+* [Compliance Reporting Guide](/user-guide/cli/tutorials/compliance)
+* [Compliance Frameworks Documentation](/user-guide/cli/tutorials/compliance)
+* [Custom Compliance Framework Guide](/developer-guide/security-compliance-framework)
+* [Prowler Hub Compliance Frameworks](https://hub.prowler.com/compliance)

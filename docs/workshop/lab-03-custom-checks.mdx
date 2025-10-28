@@ -1,0 +1,359 @@
+---
+title: "Lab 3: Custom Checks with Prowler"
+description: "Create organization-specific security checks and customize Prowler for your security requirements"
+---
+
+<Note>
+**Tags:** `workshop` `aws` `custom-checks` `advanced` `development`
+</Note>
+
+# Lab 3: Custom Checks with Prowler
+
+Learn to create custom security checks tailored to your organization's specific security policies and compliance requirements.
+
+## Prerequisites
+
+* Completion of [Lab 1: Getting Started with Prowler CLI](/workshop/lab-01-getting-started)
+* Prowler CLI installed from source (for custom check development)
+* Python 3.9 or higher
+* Basic Python programming knowledge
+* Understanding of AWS SDK (boto3)
+* Text editor or IDE (VS Code, PyCharm)
+
+**Estimated Time:** 60 minutes
+
+## Lab Objectives
+
+By completing this lab, you will:
+
+* Understand Prowler's check structure
+* Create a custom security check
+* Test and validate custom checks
+* Use custom check metadata
+* Integrate custom checks into scans
+
+## Step 1: Install Prowler from Source
+
+To develop custom checks, install Prowler from source:
+
+```bash
+git clone https://github.com/prowler-cloud/prowler
+cd prowler
+pip install poetry
+poetry install
+```
+
+Activate the virtual environment:
+
+```bash
+poetry shell
+```
+
+Verify installation:
+
+```bash
+prowler -v
+```
+
+<Note>
+[Note: Screenshot of slide 29 showing source installation - to be added]
+</Note>
+
+## Step 2: Understand Check Structure
+
+Prowler checks are Python files located in:
+```
+prowler/providers/<provider>/services/<service>/
+```
+
+Example check structure:
+```
+prowler/providers/aws/services/s3/s3_bucket_custom_check/
+├── s3_bucket_custom_check.py           # Check logic
+└── s3_bucket_custom_check.metadata.json # Check metadata
+```
+
+## Step 3: Create a Custom Check Directory
+
+Create a custom check to verify S3 buckets have specific naming conventions:
+
+```bash
+mkdir -p prowler/providers/aws/services/s3/s3_bucket_naming_convention
+cd prowler/providers/aws/services/s3/s3_bucket_naming_convention
+```
+
+## Step 4: Write the Check Logic
+
+Create `s3_bucket_naming_convention.py`:
+
+```python
+from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.providers.aws.services.s3.s3_client import s3_client
+
+class s3_bucket_naming_convention(Check):
+    def execute(self):
+        findings = []
+        # Define your organization's naming pattern
+        naming_pattern = "company-"
+
+        for bucket in s3_client.buckets:
+            report = Check_Report_AWS(self.metadata())
+            report.region = bucket.region
+            report.resource_id = bucket.name
+            report.resource_arn = bucket.arn
+            report.resource_tags = bucket.tags
+
+            # Check if bucket name follows naming convention
+            if bucket.name.startswith(naming_pattern):
+                report.status = "PASS"
+                report.status_extended = f"S3 bucket {bucket.name} follows naming convention."
+            else:
+                report.status = "FAIL"
+                report.status_extended = f"S3 bucket {bucket.name} does not follow naming convention (should start with '{naming_pattern}')."
+
+            findings.append(report)
+
+        return findings
+```
+
+<Tip>
+Customize the `naming_pattern` variable to match your organization's requirements (e.g., "prod-", "dev-", "projectname-").
+</Tip>
+
+## Step 5: Create Check Metadata
+
+Create `s3_bucket_naming_convention.metadata.json`:
+
+```json
+{
+  "Provider": "aws",
+  "CheckID": "s3_bucket_naming_convention",
+  "CheckTitle": "Check if S3 buckets follow naming convention",
+  "CheckType": ["Software and Configuration Checks"],
+  "ServiceName": "s3",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:s3:::bucket_name",
+  "Severity": "low",
+  "ResourceType": "AwsS3Bucket",
+  "Description": "Ensure S3 buckets follow the organization's naming convention for consistency and management.",
+  "Risk": "S3 buckets not following naming conventions may lead to management difficulties and confusion.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "Rename the S3 bucket to follow the organization's naming convention or update bucket policies.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure all S3 buckets follow the defined naming convention for your organization.",
+      "Url": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/bucketnamingrules.html"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This is a custom check created for organization-specific requirements."
+}
+```
+
+<Note>
+[Note: Screenshot of slide 33 showing metadata structure - to be added]
+</Note>
+
+## Step 6: Test the Custom Check
+
+Run only your custom check:
+
+```bash
+prowler aws --checks s3_bucket_naming_convention
+```
+
+Review the output to verify:
+* Check executes without errors
+* Findings are generated for each S3 bucket
+* Status is correct (PASS/FAIL) based on naming convention
+
+## Step 7: Create a Custom Check for EC2 Instance Tags
+
+Create another custom check to enforce EC2 tagging policies:
+
+```bash
+mkdir -p prowler/providers/aws/services/ec2/ec2_instance_required_tags
+cd prowler/providers/aws/services/ec2/ec2_instance_required_tags
+```
+
+Create `ec2_instance_required_tags.py`:
+
+```python
+from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.providers.aws.services.ec2.ec2_client import ec2_client
+
+class ec2_instance_required_tags(Check):
+    def execute(self):
+        findings = []
+        # Define required tags
+        required_tags = ["Environment", "Owner", "CostCenter"]
+
+        for instance in ec2_client.instances:
+            report = Check_Report_AWS(self.metadata())
+            report.region = instance.region
+            report.resource_id = instance.id
+            report.resource_arn = instance.arn
+            report.resource_tags = instance.tags
+
+            # Get instance tag keys
+            instance_tag_keys = [tag["Key"] for tag in instance.tags] if instance.tags else []
+
+            # Check if all required tags are present
+            missing_tags = [tag for tag in required_tags if tag not in instance_tag_keys]
+
+            if not missing_tags:
+                report.status = "PASS"
+                report.status_extended = f"EC2 instance {instance.id} has all required tags."
+            else:
+                report.status = "FAIL"
+                report.status_extended = f"EC2 instance {instance.id} is missing required tags: {', '.join(missing_tags)}."
+
+            findings.append(report)
+
+        return findings
+```
+
+Create `ec2_instance_required_tags.metadata.json`:
+
+```json
+{
+  "Provider": "aws",
+  "CheckID": "ec2_instance_required_tags",
+  "CheckTitle": "Check if EC2 instances have required tags",
+  "CheckType": ["Software and Configuration Checks"],
+  "ServiceName": "ec2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:aws:ec2:region:account-id:instance/instance-id",
+  "Severity": "medium",
+  "ResourceType": "AwsEc2Instance",
+  "Description": "Ensure EC2 instances have required tags for proper resource management and cost allocation.",
+  "Risk": "EC2 instances without required tags may lead to difficulties in cost tracking, ownership identification, and resource management.",
+  "RelatedUrl": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Tags.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aws ec2 create-tags --resources <instance-id> --tags Key=Environment,Value=<value> Key=Owner,Value=<value> Key=CostCenter,Value=<value>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "resource \"aws_ec2_tag\" \"example\" {\n  resource_id = aws_instance.example.id\n  key         = \"Environment\"\n  value       = \"Production\"\n}"
+    },
+    "Recommendation": {
+      "Text": "Add the required tags (Environment, Owner, CostCenter) to all EC2 instances.",
+      "Url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Tags.html"
+    }
+  },
+  "Categories": [
+    "tagging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Customize the required_tags list in the check code to match your organization's tagging policy."
+}
+```
+
+## Step 8: Test Multiple Custom Checks
+
+Run both custom checks together:
+
+```bash
+prowler aws --checks s3_bucket_naming_convention ec2_instance_required_tags
+```
+
+## Step 9: Create a Custom Checks Group
+
+Create a file to group your custom checks:
+
+Create `prowler/config/custom_checks.yaml`:
+
+```yaml
+custom-checks:
+  - s3_bucket_naming_convention
+  - ec2_instance_required_tags
+```
+
+Run all custom checks:
+
+```bash
+prowler aws --checks-file prowler/config/custom_checks.yaml
+```
+
+<Note>
+[Note: Screenshot of slide 38 showing custom checks output - to be added]
+</Note>
+
+## Step 10: Validate Check Metadata
+
+Prowler includes metadata validation. Ensure your metadata follows guidelines:
+
+```bash
+python -m prowler.lib.check.check_metadata_validator
+```
+
+This validates:
+* Required metadata fields are present
+* Severity values are valid
+* URLs are properly formatted
+* JSON structure is correct
+
+## Verification Steps
+
+Confirm successful lab completion:
+
+1. Prowler installed from source
+2. Custom S3 naming convention check created
+3. Custom EC2 tagging check created
+4. Both checks execute successfully
+5. Metadata files are properly formatted
+6. Custom checks grouped for easy execution
+
+## Expected Outcomes
+
+After completing this lab, you should:
+
+* Understand Prowler's check architecture
+* Be able to create custom security checks
+* Know how to write check metadata
+* Be capable of testing and validating checks
+* Have created reusable custom security policies
+
+## Best Practices for Custom Checks
+
+1. **Follow naming conventions:** Use descriptive check IDs (e.g., `service_resource_requirement`)
+2. **Set appropriate severity:** Match severity to the security impact
+3. **Provide clear descriptions:** Help users understand what the check validates
+4. **Include remediation guidance:** Provide actionable steps to fix findings
+5. **Test thoroughly:** Verify checks work across different AWS regions and account configurations
+6. **Document assumptions:** Note any specific requirements or limitations
+
+## Troubleshooting
+
+**Issue:** Check not found when running
+* **Solution:** Ensure the check directory and files follow the correct naming convention and location
+
+**Issue:** Import errors in check code
+* **Solution:** Verify you're using the Poetry virtual environment (`poetry shell`)
+
+**Issue:** Metadata validation fails
+* **Solution:** Review the metadata format against Prowler's schema requirements
+
+**Issue:** Check returns no findings
+* **Solution:** Add print statements or use a debugger to verify the service client has data
+
+## Next Steps
+
+Continue to [Lab 4: Multi-Cloud Security with Prowler (Azure)](/workshop/lab-04-azure-multicloud) to extend security monitoring to Azure environments.
+
+## Additional Resources
+
+* [Custom Checks Development Guide](/developer-guide/checks)
+* [Check Metadata Guidelines](/developer-guide/check-metadata-guidelines)
+* [Prowler Development Documentation](/developer-guide/introduction)
+* [Prowler Check Kreator](/user-guide/cli/tutorials/prowler-check-kreator)

@@ -1,0 +1,346 @@
+---
+title: "Lab 4: Multi-Cloud Security with Prowler (Azure)"
+description: "Extend security monitoring to Azure environments using Prowler's multi-cloud capabilities"
+---
+
+<Note>
+**Tags:** `workshop` `azure` `multi-cloud` `intermediate` `authentication`
+</Note>
+
+# Lab 4: Multi-Cloud Security with Prowler (Azure)
+
+Learn to secure Azure environments using Prowler's multi-cloud security assessment capabilities.
+
+## Prerequisites
+
+* Prowler CLI installed ([Lab 1](/workshop/lab-01-getting-started))
+* Active Azure subscription
+* Azure CLI installed
+* Azure account with appropriate permissions (Reader role minimum)
+* Basic understanding of Azure services
+
+**Estimated Time:** 45 minutes
+
+## Lab Objectives
+
+By completing this lab, you will:
+
+* Configure Azure authentication for Prowler
+* Run security assessments on Azure subscriptions
+* Understand Azure-specific security checks
+* Compare security findings across cloud providers
+* Implement multi-cloud security strategies
+
+## Step 1: Install Azure CLI
+
+Install Azure CLI if not already present:
+
+**macOS:**
+```bash
+brew install azure-cli
+```
+
+**Linux:**
+```bash
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+```
+
+**Windows:**
+```powershell
+winget install Microsoft.AzureCLI
+```
+
+Verify installation:
+```bash
+az --version
+```
+
+## Step 2: Authenticate to Azure
+
+Sign in to Azure:
+
+```bash
+az login
+```
+
+This opens a browser window for authentication.
+
+Verify authentication:
+```bash
+az account show
+```
+
+Expected output:
+```json
+{
+  "id": "12345678-1234-1234-1234-123456789012",
+  "name": "My Subscription",
+  "tenantId": "87654321-4321-4321-4321-210987654321",
+  "state": "Enabled"
+}
+```
+
+<Note>
+[Note: Screenshot of slide 43 showing Azure authentication - to be added]
+</Note>
+
+## Step 3: List Azure Subscriptions
+
+If you have multiple subscriptions, list them:
+
+```bash
+az account list --output table
+```
+
+Set the active subscription:
+```bash
+az account set --subscription "subscription-id"
+```
+
+## Step 4: Configure Azure Service Principal (Optional)
+
+For automated scans, create a service principal:
+
+```bash
+az ad sp create-for-rbac --name "prowler-scanner" --role Reader --scopes /subscriptions/{subscription-id}
+```
+
+This returns:
+```json
+{
+  "appId": "app-id",
+  "displayName": "prowler-scanner",
+  "password": "password",
+  "tenant": "tenant-id"
+}
+```
+
+<Warning>
+Store service principal credentials securely. These provide programmatic access to your Azure subscription.
+</Warning>
+
+Export credentials as environment variables:
+```bash
+export AZURE_CLIENT_ID="app-id"
+export AZURE_CLIENT_SECRET="password"
+export AZURE_TENANT_ID="tenant-id"
+export AZURE_SUBSCRIPTION_ID="subscription-id"
+```
+
+## Step 5: Run Your First Azure Scan
+
+Execute Prowler against Azure:
+
+```bash
+prowler azure
+```
+
+This command:
+* Uses Azure CLI credentials (or service principal if configured)
+* Scans the active subscription
+* Runs all Azure security checks
+* Generates output in multiple formats
+
+<Note>
+Azure scans typically take 5-10 minutes depending on resource count.
+</Note>
+
+<Note>
+[Note: Screenshot of slide 47 showing Azure scan execution - to be added]
+</Note>
+
+## Step 6: Scan Specific Azure Services
+
+Run targeted scans for specific services:
+
+```bash
+prowler azure --services storage network
+```
+
+This focuses on:
+* Azure Storage accounts
+* Virtual networks
+* Network security groups
+
+## Step 7: Analyze Azure Security Findings
+
+Review Azure-specific security checks:
+
+**Storage Account Security:**
+* Public blob access disabled
+* Secure transfer required (HTTPS)
+* Storage encryption enabled
+* Soft delete enabled
+
+**Network Security:**
+* Network security groups properly configured
+* No overly permissive rules
+* DDoS protection enabled
+* Network watcher enabled
+
+**Identity and Access:**
+* Multi-factor authentication enabled
+* Conditional access policies configured
+* Privileged identity management enabled
+
+Open the HTML report:
+```bash
+open output/prowler-output-azure-*.html
+```
+
+<Note>
+[Note: Screenshot of slide 50 showing Azure findings report - to be added]
+</Note>
+
+## Step 8: Compare AWS and Azure Security Posture
+
+If you completed Lab 1, compare security findings:
+
+**AWS findings:**
+```bash
+cat output/prowler-output-aws-*.csv | wc -l
+```
+
+**Azure findings:**
+```bash
+cat output/prowler-output-azure-*.csv | wc -l
+```
+
+Key comparison metrics:
+* Total findings by severity
+* Service coverage
+* Compliance status
+* Resource exposure
+
+## Step 9: Multi-Cloud Security Dashboard
+
+Generate a combined security view:
+
+Create a directory for multi-cloud reports:
+```bash
+mkdir -p multi-cloud-reports
+cp output/prowler-output-aws-*.json multi-cloud-reports/
+cp output/prowler-output-azure-*.json multi-cloud-reports/
+```
+
+<Tip>
+Use Prowler Cloud or custom dashboards to visualize multi-cloud security posture in a unified interface.
+</Tip>
+
+## Step 10: Azure-Specific Remediation
+
+Example remediations for common Azure findings:
+
+**Enable secure transfer for storage account:**
+```bash
+az storage account update \
+    --name mystorageaccount \
+    --resource-group myresourcegroup \
+    --https-only true
+```
+
+**Enable storage encryption:**
+```bash
+az storage account update \
+    --name mystorageaccount \
+    --resource-group myresourcegroup \
+    --encryption-services blob
+```
+
+**Disable public blob access:**
+```bash
+az storage account update \
+    --name mystorageaccount \
+    --resource-group myresourcegroup \
+    --allow-blob-public-access false
+```
+
+**Update network security group rule:**
+```bash
+az network nsg rule update \
+    --resource-group myresourcegroup \
+    --nsg-name mynsg \
+    --name mynsgrule \
+    --source-address-prefixes 10.0.0.0/16
+```
+
+## Step 11: Scan Multiple Azure Subscriptions
+
+Scan all subscriptions in your tenant:
+
+```bash
+prowler azure --subscription-ids subscription-id-1 subscription-id-2
+```
+
+Or scan all accessible subscriptions:
+```bash
+prowler azure --az-cli-auth
+```
+
+<Note>
+[Note: Screenshot of slide 56 showing multi-subscription scan - to be added]
+</Note>
+
+## Verification Steps
+
+Confirm successful lab completion:
+
+1. Azure CLI installed and authenticated
+2. First Azure scan completed successfully
+3. Azure security findings reviewed
+4. Service-specific scans executed
+5. Multi-cloud comparison performed
+6. Azure-specific remediations understood
+
+## Expected Outcomes
+
+After completing this lab, you should:
+
+* Be able to authenticate Prowler with Azure
+* Understand Azure security checks
+* Know how to scan multiple subscriptions
+* Have compared security posture across AWS and Azure
+* Be familiar with Azure-specific remediation commands
+
+## Common Azure Security Findings
+
+**Storage Accounts:**
+* Public blob access enabled
+* Secure transfer (HTTPS) not required
+* Storage encryption disabled
+* Logging not configured
+
+**Virtual Networks:**
+* Network security groups allow 0.0.0.0/0 access
+* DDoS protection not enabled
+* Network watcher not configured
+
+**Identity:**
+* MFA not enabled for all users
+* Guest users have excessive permissions
+* Password policies are weak
+
+## Troubleshooting
+
+**Issue:** Azure authentication fails
+* **Solution:** Run `az login` and ensure you have the correct subscription selected
+
+**Issue:** Permission errors during scan
+* **Solution:** Ensure your account or service principal has Reader role at subscription level
+
+**Issue:** Subscription not found
+* **Solution:** Verify subscription ID with `az account list` and check it's enabled
+
+**Issue:** Slow scan performance
+* **Solution:** Use `--services` flag to scan specific services instead of all
+
+## Next Steps
+
+Continue to [Lab 5: Multi-Cloud Security with Prowler (GCP)](/workshop/lab-05-gcp-multicloud) to add Google Cloud Platform to your multi-cloud security monitoring.
+
+## Additional Resources
+
+* [Azure Getting Started Guide](/user-guide/providers/azure/getting-started-azure)
+* [Azure Authentication Methods](/user-guide/providers/azure/authentication)
+* [Create Prowler Service Principal](/user-guide/providers/azure/create-prowler-service-principal)
+* [Azure Subscriptions Management](/user-guide/providers/azure/subscriptions)

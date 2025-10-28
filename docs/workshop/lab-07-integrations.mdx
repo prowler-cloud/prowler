@@ -1,0 +1,425 @@
+---
+title: "Lab 7: Integrations with Prowler"
+description: "Integrate Prowler findings with AWS Security Hub and other security tools for centralized security management"
+---
+
+<Note>
+**Tags:** `workshop` `aws` `integrations` `intermediate` `security-hub` `automation`
+</Note>
+
+# Lab 7: Integrations with Prowler
+
+Learn to integrate Prowler with AWS Security Hub and other security tools to centralize security findings and automate remediation workflows.
+
+## Prerequisites
+
+* Completion of [Lab 1: Getting Started with Prowler CLI](/workshop/lab-01-getting-started)
+* AWS account with Security Hub enabled
+* IAM permissions for Security Hub operations
+* Prowler CLI installed and configured
+* Basic understanding of AWS Security Hub
+
+**Estimated Time:** 45 minutes
+
+## Lab Objectives
+
+By completing this lab, you will:
+
+* Enable AWS Security Hub integration
+* Send Prowler findings to Security Hub
+* Understand finding formats and mapping
+* Configure automated finding synchronization
+* Integrate with third-party security tools
+* Implement centralized security dashboards
+
+## Step 1: Enable AWS Security Hub
+
+Enable Security Hub in your AWS account:
+
+**Via AWS Console:**
+1. Navigate to AWS Security Hub
+2. Click "Go to Security Hub"
+3. Click "Enable Security Hub"
+
+**Via AWS CLI:**
+```bash
+aws securityhub enable-security-hub
+```
+
+Verify Security Hub is enabled:
+```bash
+aws securityhub get-enabled-standards
+```
+
+<Note>
+[Note: Screenshot of slide 96 showing Security Hub enablement - to be added]
+</Note>
+
+## Step 2: Configure IAM Permissions
+
+Ensure your IAM role/user has Security Hub permissions:
+
+Required permissions:
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "securityhub:BatchImportFindings",
+        "securityhub:GetFindings"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+Create and attach policy:
+```bash
+aws iam create-policy \
+    --policy-name ProwlerSecurityHubIntegration \
+    --policy-document file://securityhub-policy.json
+
+aws iam attach-user-policy \
+    --user-name prowler-user \
+    --policy-arn arn:aws:iam::ACCOUNT_ID:policy/ProwlerSecurityHubIntegration
+```
+
+## Step 3: Run Prowler with Security Hub Integration
+
+Execute Prowler and send findings to Security Hub:
+
+```bash
+prowler aws --security-hub
+```
+
+This command:
+* Runs all security checks
+* Transforms findings to AWS Security Finding Format (ASFF)
+* Sends findings to Security Hub via `BatchImportFindings` API
+* Generates local reports
+
+<Warning>
+Security Hub has API rate limits. For large environments, findings are sent in batches automatically.
+</Warning>
+
+<Note>
+[Note: Screenshot of slide 99 showing Prowler sending findings to Security Hub - to be added]
+</Note>
+
+## Step 4: View Findings in Security Hub
+
+Navigate to AWS Security Hub console and review Prowler findings:
+
+**Filter by Product:**
+1. Go to "Findings" in Security Hub
+2. Add filter: `Product name is Prowler`
+3. Review findings by severity
+
+**View Finding Details:**
+* Severity (CRITICAL, HIGH, MEDIUM, LOW, INFORMATIONAL)
+* Affected resource
+* Compliance framework mapping
+* Remediation guidance
+* Workflow status
+
+<Note>
+[Note: Screenshot of slide 101 showing Security Hub findings view - to be added]
+</Note>
+
+## Step 5: Understanding ASFF Mapping
+
+Prowler findings are mapped to AWS Security Finding Format:
+
+**Prowler Status → Security Hub Compliance Status:**
+* PASS → PASSED
+* FAIL → FAILED
+* MANUAL → NOT_AVAILABLE
+
+**Prowler Severity → Security Hub Severity:**
+* critical → CRITICAL (90-100)
+* high → HIGH (70-89)
+* medium → MEDIUM (40-69)
+* low → LOW (1-39)
+* informational → INFORMATIONAL (0)
+
+Example ASFF finding structure:
+```json
+{
+  "SchemaVersion": "2018-10-08",
+  "Id": "prowler-aws/account/region/check/resource",
+  "ProductArn": "arn:aws:securityhub:region::product/prowler/prowler",
+  "GeneratorId": "prowler-check-id",
+  "AwsAccountId": "123456789012",
+  "Types": ["Software and Configuration Checks"],
+  "CreatedAt": "2024-01-01T00:00:00.000Z",
+  "UpdatedAt": "2024-01-01T00:00:00.000Z",
+  "Severity": {
+    "Label": "HIGH"
+  },
+  "Title": "Check title",
+  "Description": "Check description",
+  "Resources": [
+    {
+      "Type": "AwsS3Bucket",
+      "Id": "arn:aws:s3:::bucket-name"
+    }
+  ],
+  "Compliance": {
+    "Status": "FAILED"
+  }
+}
+```
+
+## Step 6: Update Existing Findings
+
+Run subsequent scans to update Security Hub findings:
+
+```bash
+prowler aws --security-hub
+```
+
+Prowler automatically:
+* Updates existing findings (same resource, same check)
+* Marks remediated issues as PASSED
+* Creates new findings for new resources
+* Archives findings for deleted resources
+
+## Step 7: Regional Security Hub Integration
+
+Send findings to Security Hub in specific regions:
+
+```bash
+prowler aws --security-hub --region us-east-1 us-west-2
+```
+
+Or enable aggregation in a single region:
+
+```bash
+# Configure finding aggregator in Security Hub
+aws securityhub create-finding-aggregator \
+    --region-linking-mode ALL_REGIONS
+```
+
+<Tip>
+Use Security Hub finding aggregation to centralize findings from multiple regions in a single dashboard.
+</Tip>
+
+## Step 8: Filter Findings Sent to Security Hub
+
+Send only critical and high-severity findings:
+
+```bash
+prowler aws --security-hub --severity critical high
+```
+
+Send findings for specific compliance frameworks:
+
+```bash
+prowler aws --security-hub --compliance cis_2.0_aws
+```
+
+## Step 9: Integrate with S3 for Long-Term Storage
+
+Store Prowler reports in S3 alongside Security Hub integration:
+
+```bash
+prowler aws \
+    --security-hub \
+    -o html json csv \
+    --output-bucket-no-assume s3://my-security-reports-bucket
+```
+
+This enables:
+* Long-term retention of historical reports
+* Compliance audit trails
+* Trend analysis over time
+* Cost-effective storage
+
+Configure S3 bucket lifecycle policies:
+```bash
+aws s3api put-bucket-lifecycle-configuration \
+    --bucket my-security-reports-bucket \
+    --lifecycle-configuration file://lifecycle.json
+```
+
+`lifecycle.json`:
+```json
+{
+  "Rules": [
+    {
+      "Id": "ArchiveOldReports",
+      "Status": "Enabled",
+      "Transitions": [
+        {
+          "Days": 90,
+          "StorageClass": "GLACIER"
+        }
+      ],
+      "Expiration": {
+        "Days": 365
+      },
+      "Filter": {
+        "Prefix": "prowler-reports/"
+      }
+    }
+  ]
+}
+```
+
+<Note>
+[Note: Screenshot of slide 107 showing S3 integration - to be added]
+</Note>
+
+## Step 10: Integrate with Third-Party Tools
+
+**Send to Slack:**
+```bash
+prowler aws --security-hub | \
+    jq -r '.findings[] | select(.status=="FAIL" and .severity=="critical")' | \
+    curl -X POST -H 'Content-type: application/json' \
+    --data @- https://hooks.slack.com/services/YOUR/WEBHOOK/URL
+```
+
+**Send to Jira:**
+Create Jira tickets for critical findings using Jira API:
+
+```bash
+#!/bin/bash
+JIRA_URL="https://your-domain.atlassian.net"
+JIRA_API_TOKEN="your-api-token"
+JIRA_PROJECT="SEC"
+
+# Extract critical findings
+FINDINGS=$(prowler aws -o json-ocsf | \
+    jq '.findings[] | select(.status=="FAIL" and .severity=="critical")')
+
+# Create Jira tickets
+echo "$FINDINGS" | jq -c '.' | while read finding; do
+    TITLE=$(echo $finding | jq -r '.check_title')
+    DESCRIPTION=$(echo $finding | jq -r '.status_extended')
+
+    curl -X POST "$JIRA_URL/rest/api/2/issue" \
+        -H "Authorization: Bearer $JIRA_API_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d "{
+            \"fields\": {
+                \"project\": {\"key\": \"$JIRA_PROJECT\"},
+                \"summary\": \"$TITLE\",
+                \"description\": \"$DESCRIPTION\",
+                \"issuetype\": {\"name\": \"Task\"}
+            }
+        }"
+done
+```
+
+**Send to Splunk:**
+```bash
+prowler aws -o json-ocsf | \
+    curl -k https://splunk-server:8088/services/collector/event \
+    -H "Authorization: Splunk YOUR-HEC-TOKEN" \
+    -d @-
+```
+
+## Step 11: Automate Security Hub Updates
+
+Create a Lambda function to run Prowler periodically:
+
+**Lambda Function (Python):**
+```python
+import subprocess
+import boto3
+
+def lambda_handler(event, context):
+    # Run Prowler with Security Hub integration
+    result = subprocess.run(
+        ['prowler', 'aws', '--security-hub'],
+        capture_output=True,
+        text=True
+    )
+
+    return {
+        'statusCode': 200,
+        'body': f'Prowler scan completed. Output: {result.stdout}'
+    }
+```
+
+**Schedule with EventBridge:**
+```bash
+aws events put-rule \
+    --name DailyProwlerScan \
+    --schedule-expression "cron(0 2 * * ? *)"
+
+aws events put-targets \
+    --rule DailyProwlerScan \
+    --targets "Id"="1","Arn"="arn:aws:lambda:region:account:function:ProwlerScanFunction"
+```
+
+<Note>
+[Note: Screenshot of slide 111 showing automated integration - to be added]
+</Note>
+
+## Verification Steps
+
+Confirm successful lab completion:
+
+1. AWS Security Hub enabled
+2. Prowler findings sent to Security Hub
+3. Findings visible in Security Hub console
+4. Subsequent scans update existing findings
+5. S3 integration configured for report storage
+6. Third-party integration examples tested
+
+## Expected Outcomes
+
+After completing this lab, you should:
+
+* Understand Security Hub integration
+* Know how to send findings to Security Hub
+* Be able to configure automated synchronization
+* Have integrated with S3 for storage
+* Be familiar with third-party tool integrations
+
+## Security Hub Benefits
+
+**Centralized Security:**
+* Aggregate findings from multiple tools
+* Unified view across AWS accounts and regions
+* Compliance dashboard
+
+**Automated Workflows:**
+* Trigger remediation workflows
+* Create incidents automatically
+* Integrate with SIEM tools
+
+**Prioritization:**
+* Filter by severity and compliance status
+* Track remediation progress
+* Generate executive reports
+
+## Troubleshooting
+
+**Issue:** Security Hub not enabled
+* **Solution:** Run `aws securityhub enable-security-hub` to enable
+
+**Issue:** Permission denied sending findings
+* **Solution:** Ensure IAM role has `securityhub:BatchImportFindings` permission
+
+**Issue:** Findings not appearing in Security Hub
+* **Solution:** Check Prowler output for errors, verify region configuration
+
+**Issue:** Rate limit errors
+* **Solution:** Prowler batches findings automatically; retry if transient failures occur
+
+## Next Steps
+
+Continue to [Lab 8: Prowler SaaS Platform](/workshop/lab-08-prowler-saas) to explore the managed Prowler Cloud platform with advanced features.
+
+## Additional Resources
+
+* [Security Hub Integration Guide](/user-guide/providers/aws/securityhub)
+* [S3 Integration Guide](/user-guide/providers/aws/s3)
+* [Integrations Documentation](/user-guide/cli/tutorials/integrations)
+* [AWS Security Hub Documentation](https://docs.aws.amazon.com/securityhub/)

@@ -1,0 +1,203 @@
+---
+title: "Lab 1: Getting Started with Prowler CLI"
+description: "Install Prowler CLI and run your first cloud security assessment on AWS"
+---
+
+<Note>
+**Tags:** `workshop` `aws` `getting-started` `beginner` `cli`
+</Note>
+
+# Lab 1: Getting Started with Prowler CLI
+
+Learn to install Prowler CLI and perform your first cloud security assessment on AWS.
+
+## Prerequisites
+
+* AWS account with active resources
+* AWS CLI installed and configured
+* IAM credentials with appropriate permissions (see [AWS Authentication](/user-guide/providers/aws/authentication))
+* Python 3.9 or higher
+* Basic command-line experience
+
+**Estimated Time:** 30 minutes
+
+## Lab Objectives
+
+By completing this lab, you will:
+
+* Install Prowler CLI using pip
+* Configure AWS credentials for Prowler
+* Execute your first security scan
+* Understand Prowler's output formats
+* Review security findings
+
+## Step 1: Install Prowler CLI
+
+Install Prowler using pip:
+
+```bash
+pip install prowler
+```
+
+Verify the installation:
+
+```bash
+prowler -v
+```
+
+Expected output:
+```
+Prowler X.X.X
+```
+
+<Tip>
+For alternative installation methods (Docker, from source), see [Prowler CLI Installation](/getting-started/installation/prowler-cli).
+</Tip>
+
+## Step 2: Configure AWS Credentials
+
+Ensure AWS credentials are configured. Prowler uses the same credential chain as AWS CLI.
+
+Verify credentials:
+
+```bash
+aws sts get-caller-identity
+```
+
+Expected output:
+```json
+{
+    "UserId": "AIDACKCEVSQ6C2EXAMPLE",
+    "Account": "123456789012",
+    "Arn": "arn:aws:iam::123456789012:user/username"
+}
+```
+
+<Note>
+[Note: Screenshot of slide 8 showing AWS credential verification - to be added]
+</Note>
+
+## Step 3: Run Your First Scan
+
+Execute a basic Prowler scan:
+
+```bash
+prowler aws
+```
+
+This command:
+* Scans all enabled AWS regions
+* Runs all available security checks
+* Generates output in the current directory
+
+<Note>
+The scan may take 5-15 minutes depending on the number of resources in your AWS account.
+</Note>
+
+## Step 4: Understanding the Output
+
+Prowler generates multiple output formats in the `output` directory:
+
+* **CSV:** Detailed findings (`prowler-output-*.csv`)
+* **JSON:** Machine-readable format (`prowler-output-*.json`)
+* **HTML:** Human-readable report (`prowler-output-*.html`)
+
+Review the HTML report:
+
+```bash
+open output/prowler-output-*.html
+```
+
+<Note>
+[Note: Screenshot of slide 10 showing HTML report - to be added]
+</Note>
+
+## Step 5: Analyze Security Findings
+
+Examine the findings structure in the HTML report:
+
+* **Status:** PASS, FAIL, or MANUAL
+* **Severity:** critical, high, medium, low, informational
+* **Service:** AWS service affected (e.g., S3, IAM, EC2)
+* **Check ID:** Unique identifier for each check
+* **Region:** AWS region where the resource exists
+* **Resource:** Specific resource ARN or identifier
+
+Example finding structure:
+
+```json
+{
+  "Status": "FAIL",
+  "Severity": "high",
+  "Service": "s3",
+  "CheckID": "s3_bucket_public_access",
+  "Region": "us-east-1",
+  "Resource": "arn:aws:s3:::my-bucket"
+}
+```
+
+## Step 6: Filter Scan by Service
+
+Run a targeted scan for specific AWS services:
+
+```bash
+prowler aws --services s3 iam
+```
+
+This scans only S3 and IAM services, reducing execution time.
+
+## Step 7: Run Checks by Severity
+
+Scan for critical and high-severity findings only:
+
+```bash
+prowler aws --severity critical high
+```
+
+This focuses on the most important security issues.
+
+<Note>
+[Note: Screenshot of slide 13 showing severity filtering - to be added]
+</Note>
+
+## Verification Steps
+
+Confirm successful lab completion:
+
+1. Prowler CLI installed and version verified
+2. AWS credentials properly configured
+3. First scan completed successfully
+4. Output files generated in the `output` directory
+5. HTML report reviewed and findings understood
+6. Filtered scans executed by service and severity
+
+## Expected Outcomes
+
+After completing this lab, you should have:
+
+* Working Prowler CLI installation
+* Understanding of basic Prowler commands
+* Knowledge of output formats
+* Ability to run targeted scans
+* Familiarity with finding severity levels
+
+## Troubleshooting
+
+**Issue:** `prowler: command not found`
+* **Solution:** Ensure Python's bin directory is in your PATH, or use `python3 -m prowler`
+
+**Issue:** AWS credentials error
+* **Solution:** Run `aws configure` to set up credentials, or use environment variables
+
+**Issue:** Scan takes too long
+* **Solution:** Use `--services` to scan specific services or `--regions` to limit regions
+
+## Next Steps
+
+Continue to [Lab 2: Threat Detection with Prowler](/workshop/lab-02-threat-detection) to learn about identifying security threats in your AWS environment.
+
+## Additional Resources
+
+* [Prowler CLI Documentation](/getting-started/basic-usage/prowler-cli)
+* [AWS Authentication Methods](/user-guide/providers/aws/authentication)
+* [Output Formats](/user-guide/cli/tutorials/reporting)
