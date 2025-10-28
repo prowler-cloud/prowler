@@ -4760,18 +4760,13 @@ class MuteRuleViewSet(BaseRLSViewSet):
 
         # Launch background task for historical muting
         with transaction.atomic():
-            task = mute_historical_findings_task.apply_async(
+            mute_historical_findings_task.apply_async(
                 kwargs={"tenant_id": tenant_id, "mute_rule_id": str(mute_rule.id)}
             )
 
-        prowler_task = Task.objects.get(id=task.id)
-        serializer = TaskSerializer(prowler_task)
+        # Return the created mute rule
+        serializer = self.get_serializer(mute_rule)
         return Response(
             data=serializer.data,
-            status=status.HTTP_202_ACCEPTED,
-            headers={
-                "Content-Location": reverse(
-                    "task-detail", kwargs={"pk": prowler_task.id}
-                )
-            },
+            status=status.HTTP_201_CREATED,
         )

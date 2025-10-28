@@ -33,6 +33,7 @@ from rest_framework.response import Response
 from api.compliance import get_compliance_frameworks
 from api.db_router import MainRouter
 from api.models import (
+    Finding,
     Integration,
     Invitation,
     LighthouseProviderConfiguration,
@@ -59,6 +60,8 @@ from api.models import (
 from api.rls import Tenant
 from api.v1.serializers import TokenSerializer
 from api.v1.views import ComplianceOverviewViewSet, TenantFinishACSView
+from prowler.lib.check.models import Severity
+from prowler.lib.outputs.finding import Status
 
 
 class TestViewSet:
@@ -9315,24 +9318,15 @@ class TestMuteRuleViewSet:
         assert len(data) == 2
         assert data[0]["id"] == str(mute_rules_fixture[first_index].id)
 
-    @patch("api.v1.views.Task.objects.get")
     @patch("tasks.tasks.mute_historical_findings_task.apply_async")
     def test_mute_rules_create_valid(
         self,
         mock_task,
-        mock_task_get,
         authenticated_client,
         findings_fixture,
         create_test_user,
-        tasks_fixture,
     ):
         """Test creating a valid mute rule."""
-        prowler_task = tasks_fixture[0]
-        task_mock = Mock()
-        task_mock.id = prowler_task.id
-        mock_task.return_value = task_mock
-        mock_task_get.return_value = prowler_task
-
         finding_ids = [str(findings_fixture[0].id)]
         data = {
             "data": {
@@ -9349,9 +9343,13 @@ class TestMuteRuleViewSet:
             data=json.dumps(data),
             content_type="application/vnd.api+json",
         )
-        assert response.status_code == status.HTTP_202_ACCEPTED
-        assert "Content-Location" in response.headers
-        assert response.headers["Content-Location"] == f"/api/v1/tasks/{task_mock.id}"
+        assert response.status_code == status.HTTP_201_CREATED
+
+        # Verify response contains the created mute rule
+        response_data = response.json()["data"]
+        assert response_data["type"] == "mute-rules"
+        assert response_data["attributes"]["name"] == "New Mute Rule"
+        assert response_data["attributes"]["reason"] == "Security exception approved"
 
         # Verify the finding was immediately muted
         from api.models import Finding
@@ -9364,23 +9362,14 @@ class TestMuteRuleViewSet:
         # Verify background task was called
         mock_task.assert_called_once()
 
-    @patch("api.v1.views.Task.objects.get")
     @patch("tasks.tasks.mute_historical_findings_task.apply_async")
     def test_mute_rules_create_converts_finding_ids_to_uids(
         self,
         mock_task,
-        mock_task_get,
         authenticated_client,
         findings_fixture,
-        tasks_fixture,
     ):
         """Test that finding_ids are converted to finding UIDs."""
-        prowler_task = tasks_fixture[0]
-        task_mock = Mock()
-        task_mock.id = prowler_task.id
-        mock_task.return_value = task_mock
-        mock_task_get.return_value = prowler_task
-
         finding_ids = [str(findings_fixture[0].id), str(findings_fixture[1].id)]
         data = {
             "data": {
@@ -9397,7 +9386,7 @@ class TestMuteRuleViewSet:
             data=json.dumps(data),
             content_type="application/vnd.api+json",
         )
-        assert response.status_code == status.HTTP_202_ACCEPTED
+        assert response.status_code == status.HTTP_201_CREATED
 
         # Verify finding_uids contains the UIDs, not IDs
         from api.models import MuteRule
@@ -9408,6 +9397,76 @@ class TestMuteRuleViewSet:
             findings_fixture[1].uid,
         ]
         assert set(mute_rule.finding_uids) == set(expected_uids)
+
+    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    def test_mute_rules_deduplicates_uids(
+        self,
+        mock_task,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        scans_fixture,
+    ):
+        """Test that multiple findings with same UID result in only one UID in the rule."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+
+        shared_uid = "prowler-aws-dedupe-test-001"
+
+        finding1 = Finding.objects.create(
+            tenant=tenant,
+            uid=shared_uid,
+            scan=scan,
+            status=Status.FAIL,
+            status_extended="test",
+            severity=Severity.high,
+            impact=Severity.high,
+            check_id="test_check",
+            check_metadata={"CheckId": "test_check"},
+            raw_result={},
+        )
+
+        finding2 = Finding.objects.create(
+            tenant=tenant,
+            uid=shared_uid,
+            scan=scan,
+            status=Status.FAIL,
+            status_extended="test",
+            severity=Severity.high,
+            impact=Severity.high,
+            check_id="test_check",
+            check_metadata={"CheckId": "test_check"},
+            raw_result={},
+        )
+
+        finding_ids = [str(finding1.id), str(finding2.id)]
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": "Dedupe Test Rule",
+                    "reason": "Testing UID deduplication",
+                    "finding_ids": finding_ids,
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+
+        from api.models import MuteRule
+
+        mute_rule = MuteRule.objects.get(name="Dedupe Test Rule")
+        assert len(mute_rule.finding_uids) == 1
+        assert mute_rule.finding_uids[0] == shared_uid
+
+        finding1.refresh_from_db()
+        finding2.refresh_from_db()
+        assert finding1.muted is True
+        assert finding2.muted is True
 
     @patch("tasks.tasks.mute_historical_findings_task.apply_async")
     def test_mute_rules_create_overlap_detection_active(
@@ -9442,24 +9501,15 @@ class TestMuteRuleViewSet:
             "already muted" in error_detail.lower() or "overlap" in error_detail.lower()
         )
 
-    @patch("api.v1.views.Task.objects.get")
     @patch("tasks.tasks.mute_historical_findings_task.apply_async")
     def test_mute_rules_create_no_overlap_with_inactive(
         self,
         mock_task,
-        mock_task_get,
         authenticated_client,
         mute_rules_fixture,
         findings_fixture,
-        tasks_fixture,
     ):
         """Test that inactive rules don't prevent new rules with same UIDs."""
-        prowler_task = tasks_fixture[0]
-        task_mock = Mock()
-        task_mock.id = prowler_task.id
-        mock_task.return_value = task_mock
-        mock_task_get.return_value = prowler_task
-
         # mute_rules_fixture[1] is inactive
         # Deactivate the active rule first
         mute_rules_fixture[0].is_active = False
@@ -9481,7 +9531,7 @@ class TestMuteRuleViewSet:
             data=json.dumps(data),
             content_type="application/vnd.api+json",
         )
-        assert response.status_code == status.HTTP_202_ACCEPTED
+        assert response.status_code == status.HTTP_201_CREATED
 
     def test_mute_rules_create_invalid_empty_finding_ids(self, authenticated_client):
         """Test creating mute rule with empty finding_ids fails."""

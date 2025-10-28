@@ -3431,9 +3431,9 @@ class MuteRuleCreateSerializer(RLSSerializer, BaseWriteSerializer):
         if not finding_ids:
             return data
 
-        # Convert finding IDs to UIDs
+        # Convert finding IDs to UIDs (deduplicate in case multiple findings have same UID)
         findings = Finding.all_objects.filter(id__in=finding_ids, tenant_id=tenant_id)
-        finding_uids = list(findings.values_list("uid", flat=True))
+        finding_uids = list(set(findings.values_list("uid", flat=True)))
 
         # Check for overlaps with existing active rules
         existing_rules = MuteRule.objects.filter(tenant_id=tenant_id, is_active=True)
