@@ -23,6 +23,7 @@ from conftest import (
     today_after_n_days,
 )
 from django.conf import settings
+from django.db.models import Count
 from django.http import JsonResponse
 from django.test import RequestFactory
 from django.urls import reverse
@@ -5861,40 +5862,12 @@ class TestOverviewViewSet:
         tenants_fixture,
     ):
         tenant = tenants_fixture[0]
-        provider_primary = providers_fixture[0]
 
         default_response = authenticated_client.get(reverse("overview-providers"))
         assert default_response.status_code == status.HTTP_200_OK
         default_data = default_response.json()["data"]
         assert len(default_data) == 1
         assert all("count" not in item["attributes"] for item in default_data)
-
-        def build_uid(provider_type):
-            if provider_type == Provider.ProviderChoices.AWS:
-                return "000000000999"
-            elif provider_type == Provider.ProviderChoices.AZURE:
-                return str(uuid4())
-            elif provider_type == Provider.ProviderChoices.GCP:
-                return "projectx"
-            elif provider_type == Provider.ProviderChoices.KUBERNETES:
-                return "cluster-1234"
-            elif provider_type == Provider.ProviderChoices.M365:
-                return "extra.example.com"
-            elif provider_type == Provider.ProviderChoices.GITHUB:
-                return "github-extra"
-            return "generic-uid"
-
-        Provider.objects.create(
-            tenant=tenant,
-            provider=provider_primary.provider,
-            uid=build_uid(provider_primary.provider),
-            alias=f"{provider_primary.provider}-extra",
-        )
-
-        provider_type_count = Provider.objects.filter(
-            tenant_id=tenant.id, provider=provider_primary.provider
-        ).count()
-
         grouped_response = authenticated_client.get(reverse("overview-providers-count"))
         assert grouped_response.status_code == status.HTTP_200_OK
         grouped_data = grouped_response.json()["data"]
@@ -5903,8 +5876,14 @@ class TestOverviewViewSet:
         aggregated = {
             entry["id"]: entry["attributes"]["count"] for entry in grouped_data
         }
-        assert provider_primary.provider in aggregated
-        assert aggregated[provider_primary.provider] == provider_type_count
+        db_counts = (
+            Provider.objects.filter(tenant_id=tenant.id, is_deleted=False)
+            .values("provider")
+            .annotate(count=Count("id"))
+        )
+        expected = {row["provider"]: row["count"] for row in db_counts}
+
+        assert aggregated == expected
         for entry in grouped_data:
             assert "findings" not in entry["attributes"]
 
