@@ -139,7 +139,7 @@ from api.utils import (
     validate_invitation,
 )
 from api.uuid_utils import datetime_to_uuid7, uuid7_start
-from api.v1.mixins import PaginateByPkMixin, TaskManagementMixin
+from api.v1.mixins import DisablePaginationMixin, PaginateByPkMixin, TaskManagementMixin
 from api.v1.serializers import (
     ComplianceOverviewAttributesSerializer,
     ComplianceOverviewDetailSerializer,
@@ -162,7 +162,7 @@ from api.v1.serializers import (
     LighthouseConfigUpdateSerializer,
     MembershipSerializer,
     OverviewFindingSerializer,
-    OverviewProviderGroupedSerializer,
+    OverviewProviderCountSerializer,
     OverviewProviderSerializer,
     OverviewServiceSerializer,
     OverviewSeveritySerializer,
@@ -1418,7 +1418,7 @@ class ProviderGroupProvidersRelationshipView(RelationshipView, BaseRLSViewSet):
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
-class ProviderViewSet(BaseRLSViewSet):
+class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
     queryset = Provider.objects.all()
     serializer_class = ProviderSerializer
     http_method_names = ["get", "post", "patch", "delete"]
@@ -1435,7 +1435,6 @@ class ProviderViewSet(BaseRLSViewSet):
     ]
     # RBAC required permissions
     required_permissions = [Permissions.MANAGE_PROVIDERS]
-    allow_disable_pagination = True
 
     def set_required_permissions(self):
         """
@@ -3679,6 +3678,14 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             "each provider are considered in the aggregation to ensure accurate and up-to-date insights."
         ),
     ),
+    providers_count=extend_schema(
+        summary="Get provider counts grouped by type",
+        description=(
+            "Retrieve the number of providers grouped by provider type. "
+            "This endpoint counts every provider in the tenant, including those without completed scans, "
+            "and respects role-based visibility."
+        ),
+    ),
     findings=extend_schema(
         summary="Get aggregated findings data",
         description=(
@@ -3729,12 +3736,9 @@ class OverviewViewSet(BaseRLSViewSet):
 
     def get_serializer_class(self):
         if self.action == "providers":
-            if (
-                hasattr(self, "request")
-                and self.request.query_params.get("filter[group_by]") == "provider_type"
-            ):
-                return OverviewProviderGroupedSerializer
             return OverviewProviderSerializer
+        elif self.action == "providers_count":
+            return OverviewProviderCountSerializer
         elif self.action == "findings":
             return OverviewFindingSerializer
         elif self.action == "findings_severity":
@@ -3766,9 +3770,6 @@ class OverviewViewSet(BaseRLSViewSet):
     def providers(self, request):
         tenant_id = self.request.tenant_id
         queryset = self.get_queryset()
-        group_by_provider_type = (
-            self.request.query_params.get("filter[group_by]") == "provider_type"
-        )
         provider_filter = (
             {"provider__in": self.allowed_providers}
             if hasattr(self, "allowed_providers")
@@ -3798,17 +3799,14 @@ class OverviewViewSet(BaseRLSViewSet):
             )
         )
 
-        resource_map = {}
-        if not group_by_provider_type:
-            resources_aggregated = (
-                Resource.all_objects.filter(tenant_id=tenant_id)
-                .values("provider_id")
-                .annotate(total_resources=Count("id"))
-            )
-            resource_map = {
-                row["provider_id"]: row["total_resources"]
-                for row in resources_aggregated
-            }
+        resources_aggregated = (
+            Resource.all_objects.filter(tenant_id=tenant_id)
+            .values("provider_id")
+            .annotate(total_resources=Count("id"))
+        )
+        resource_map = {
+            row["provider_id"]: row["total_resources"] for row in resources_aggregated
+        }
 
         overview = []
         for row in findings_aggregated:
@@ -3823,46 +3821,36 @@ class OverviewViewSet(BaseRLSViewSet):
                 }
             )
 
-        if group_by_provider_type:
-            if hasattr(self, "allowed_providers"):
-                provider_ids = self.allowed_providers.values_list("id", flat=True)
-                providers_for_grouping = Provider.objects.filter(
-                    tenant_id=tenant_id, id__in=provider_ids
+        return Response(
+            self.get_serializer(overview, many=True).data,
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="providers/count",
+        url_name="providers-count",
+    )
+    def providers_count(self, request):
+        tenant_id = self.request.tenant_id
+        providers_qs = Provider.objects.filter(tenant_id=tenant_id)
+
+        if hasattr(self, "allowed_providers"):
+            allowed_ids = list(self.allowed_providers.values_list("id", flat=True))
+            if not allowed_ids:
+                overview = []
+                return Response(
+                    self.get_serializer(overview, many=True).data,
+                    status=status.HTTP_200_OK,
                 )
-            else:
-                providers_for_grouping = Provider.objects.filter(tenant_id=tenant_id)
+            providers_qs = providers_qs.filter(id__in=allowed_ids)
 
-            provider_type_counts = {
-                row["provider"]: row["total"]
-                for row in providers_for_grouping.values("provider").annotate(
-                    total=Count("id")
-                )
-            }
-
-            grouped_overview = {}
-            for item in overview:
-                provider_type = item["provider"]
-                if provider_type not in grouped_overview:
-                    grouped_overview[provider_type] = {
-                        "provider": provider_type,
-                        "count": provider_type_counts.get(
-                            provider_type, item.get("count", 1)
-                        ),
-                        "total_findings": 0,
-                        "findings_passed": 0,
-                        "findings_failed": 0,
-                        "findings_muted": 0,
-                    }
-                aggregated = grouped_overview[provider_type]
-                aggregated["total_findings"] += item["total_findings"]
-                aggregated["findings_passed"] += item["findings_passed"]
-                aggregated["findings_failed"] += item["findings_failed"]
-                aggregated["findings_muted"] += item["findings_muted"]
-
-            overview = [
-                grouped_overview[key] for key in sorted(grouped_overview.keys())
-            ]
-
+        overview = (
+            providers_qs.values("provider")
+            .annotate(count=Count("id"))
+            .order_by("provider")
+        )
         return Response(
             self.get_serializer(overview, many=True).data,
             status=status.HTTP_200_OK,

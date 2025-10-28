@@ -20,9 +20,6 @@ class BaseViewSet(ModelViewSet):
     authentication_classes = [CombinedJWTOrAPIKeyAuthentication]
     required_permissions = []
     permission_classes = [permissions.IsAuthenticated, HasPermissions]
-    allow_disable_pagination = False
-    disable_pagination_query_param = "page[disable]"
-    disable_pagination_truthy_values = {"true"}
     filter_backends = [
         filters.QueryParameterValidationFilter,
         filters.OrderingFilter,
@@ -35,19 +32,6 @@ class BaseViewSet(ModelViewSet):
 
     ordering_fields = "__all__"
     ordering = ["id"]
-
-    def should_disable_pagination(self) -> bool:
-        if not self.allow_disable_pagination or not hasattr(self, "request"):
-            return False
-        value = self.request.query_params.get(self.disable_pagination_query_param)
-        if value is None:
-            return False
-        return str(value).lower() in self.disable_pagination_truthy_values
-
-    def paginate_queryset(self, queryset):
-        if self.should_disable_pagination():
-            return None
-        return super().paginate_queryset(queryset)
 
     def _get_request_db_alias(self, request):
         if request is None:

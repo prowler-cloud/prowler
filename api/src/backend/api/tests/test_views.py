@@ -5852,7 +5852,7 @@ class TestOverviewViewSet:
         # Since we rely on completed scans, there are only 2 resources now
         assert response.json()["data"][0]["attributes"]["resources"]["total"] == 2
 
-    def test_overview_providers_group_by_provider_type(
+    def test_overview_providers_count(
         self,
         authenticated_client,
         scan_summaries_fixture,
@@ -5869,39 +5869,44 @@ class TestOverviewViewSet:
         assert len(default_data) == 1
         assert all("count" not in item["attributes"] for item in default_data)
 
-        expected_pass = sum(
-            item["attributes"]["findings"]["pass"] for item in default_data
-        )
-        expected_fail = sum(
-            item["attributes"]["findings"]["fail"] for item in default_data
-        )
-        expected_muted = sum(
-            item["attributes"]["findings"]["muted"] for item in default_data
-        )
-        expected_total_findings = sum(
-            item["attributes"]["findings"]["total"] for item in default_data
+        def build_uid(provider_type):
+            if provider_type == Provider.ProviderChoices.AWS:
+                return "000000000999"
+            elif provider_type == Provider.ProviderChoices.AZURE:
+                return str(uuid4())
+            elif provider_type == Provider.ProviderChoices.GCP:
+                return "projectx"
+            elif provider_type == Provider.ProviderChoices.KUBERNETES:
+                return "cluster-1234"
+            elif provider_type == Provider.ProviderChoices.M365:
+                return "extra.example.com"
+            elif provider_type == Provider.ProviderChoices.GITHUB:
+                return "github-extra"
+            return "generic-uid"
+
+        Provider.objects.create(
+            tenant=tenant,
+            provider=provider_primary.provider,
+            uid=build_uid(provider_primary.provider),
+            alias=f"{provider_primary.provider}-extra",
         )
 
         provider_type_count = Provider.objects.filter(
             tenant_id=tenant.id, provider=provider_primary.provider
         ).count()
 
-        grouped_response = authenticated_client.get(
-            reverse("overview-providers"), {"filter[group_by]": "provider_type"}
-        )
+        grouped_response = authenticated_client.get(reverse("overview-providers-count"))
         assert grouped_response.status_code == status.HTTP_200_OK
         grouped_data = grouped_response.json()["data"]
-        assert len(grouped_data) == 1
+        assert len(grouped_data) >= 1
 
-        aggregated_entry = grouped_data[0]
-        assert aggregated_entry["id"] == provider_primary.provider
-        attributes = aggregated_entry["attributes"]
-        assert attributes["count"] == provider_type_count
-        assert attributes["findings"]["pass"] == expected_pass
-        assert attributes["findings"]["fail"] == expected_fail
-        assert attributes["findings"]["muted"] == expected_muted
-        assert attributes["findings"]["total"] == expected_total_findings
-        assert "resources" not in attributes
+        aggregated = {
+            entry["id"]: entry["attributes"]["count"] for entry in grouped_data
+        }
+        assert provider_primary.provider in aggregated
+        assert aggregated[provider_primary.provider] == provider_type_count
+        for entry in grouped_data:
+            assert "findings" not in entry["attributes"]
 
     def test_overview_services_list_no_required_filters(
         self, authenticated_client, scan_summaries_fixture
