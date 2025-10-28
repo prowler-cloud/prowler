@@ -1,13 +1,17 @@
 import { Suspense } from "react";
 
-import { getFindingsByStatus } from "@/actions/overview/overview";
+import {
+  getFindingsBySeverity,
+  getFindingsByStatus,
+} from "@/actions/overview/overview";
 import { getProviders } from "@/actions/providers";
 import { ContentLayout } from "@/components/ui";
 import { SearchParamsProps } from "@/types";
 
 import { AccountsSelector } from "./components/accounts-selector";
-import { CheckFindings } from "./components/check-findings";
 import { ProviderTypeSelector } from "./components/provider-type-selector";
+import { RiskSeverityChart } from "./components/risk-severity-chart";
+import { StatusChart } from "./components/status-chart";
 
 const FILTER_PREFIX = "filter[";
 
@@ -35,15 +39,25 @@ export default async function NewOverviewPage({
         <ProviderTypeSelector providers={providersData?.data ?? []} />
         <AccountsSelector providers={providersData?.data ?? []} />
       </div>
-      <div className="flex flex-col gap-6 md:flex-row">
+      <div className="grid auto-rows-fr gap-6 md:grid-cols-2">
         <Suspense
           fallback={
-            <div className="flex h-[400px] w-full max-w-md items-center justify-center rounded-xl border border-zinc-900 bg-stone-950">
+            <div className="flex h-[400px] w-full items-center justify-center rounded-xl border border-zinc-900 bg-stone-950">
               <p className="text-zinc-400">Loading...</p>
             </div>
           }
         >
           <SSRCheckFindings searchParams={resolvedSearchParams} />
+        </Suspense>
+
+        <Suspense
+          fallback={
+            <div className="flex h-[400px] w-full items-center justify-center rounded-xl border border-zinc-900 bg-stone-950">
+              <p className="text-zinc-400">Loading...</p>
+            </div>
+          }
+        >
+          <SSRRiskSeverityChart searchParams={resolvedSearchParams} />
         </Suspense>
       </div>
     </ContentLayout>
@@ -79,7 +93,7 @@ const SSRCheckFindings = async ({
   const mutedTotal = muted_new + muted_changed;
 
   return (
-    <CheckFindings
+    <StatusChart
       failFindingsData={{
         total: fail,
         new: fail_new,
@@ -90,6 +104,42 @@ const SSRCheckFindings = async ({
         new: pass_new,
         muted: mutedTotal,
       }}
+    />
+  );
+};
+
+const SSRRiskSeverityChart = async ({
+  searchParams,
+}: {
+  searchParams: SearchParamsProps | undefined | null;
+}) => {
+  const filters = pickFilterParams(searchParams);
+
+  const findingsBySeverity = await getFindingsBySeverity({ filters });
+
+  if (!findingsBySeverity) {
+    return (
+      <div className="flex h-[400px] w-full items-center justify-center rounded-xl border border-zinc-900 bg-stone-950">
+        <p className="text-zinc-400">Failed to load severity data</p>
+      </div>
+    );
+  }
+
+  const {
+    critical = 0,
+    high = 0,
+    medium = 0,
+    low = 0,
+    informational = 0,
+  } = findingsBySeverity?.data?.attributes || {};
+
+  return (
+    <RiskSeverityChart
+      critical={critical}
+      high={high}
+      medium={medium}
+      low={low}
+      informational={informational}
     />
   );
 };
