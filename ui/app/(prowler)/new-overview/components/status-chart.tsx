@@ -13,6 +13,7 @@ import {
   ResourceStatsCard,
   ResourceStatsCardContainer,
 } from "@/components/shadcn";
+import { calculatePercentage } from "@/lib/utils";
 
 interface StatusChartProps {
   failFindingsData: {
@@ -35,22 +36,24 @@ export const StatusChart = ({
   const totalFindings = failFindingsData.total + passFindingsData.total;
 
   // Calculate percentages
-  const failPercentage = Math.round(
-    (failFindingsData.total / totalFindings) * 100,
+  const failPercentage = calculatePercentage(
+    failFindingsData.total,
+    totalFindings,
   );
-  const passPercentage = Math.round(
-    (passFindingsData.total / totalFindings) * 100,
+  const passPercentage = calculatePercentage(
+    passFindingsData.total,
+    totalFindings,
   );
 
   // Calculate change percentages (new findings as percentage change)
-  const failChange =
-    failFindingsData.total > 0
-      ? Math.round((failFindingsData.new / failFindingsData.total) * 100)
-      : 0;
-  const passChange =
-    passFindingsData.total > 0
-      ? Math.round((passFindingsData.new / passFindingsData.total) * 100)
-      : 0;
+  const failChange = calculatePercentage(
+    failFindingsData.new,
+    failFindingsData.total,
+  );
+  const passChange = calculatePercentage(
+    passFindingsData.new,
+    passFindingsData.total,
+  );
 
   // Mock data for DonutChart
   const donutData: DonutDataPoint[] = [

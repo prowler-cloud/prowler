@@ -8,54 +8,52 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/shadcn";
+import { calculatePercentage } from "@/lib/utils";
 
 interface RiskSeverityChartProps {
-  severityData: {
-    critical: number;
-    high: number;
-    medium: number;
-    low: number;
-    informational: number;
-  };
+  critical: number;
+  high: number;
+  medium: number;
+  low: number;
+  informational: number;
 }
 
-export const RiskSeverityChart = ({ severityData }: RiskSeverityChartProps) => {
+export const RiskSeverityChart = ({
+  critical,
+  high,
+  medium,
+  low,
+  informational,
+}: RiskSeverityChartProps) => {
   // Calculate total findings
-  const totalFindings =
-    severityData.critical +
-    severityData.high +
-    severityData.medium +
-    severityData.low +
-    severityData.informational;
+  const totalFindings = critical + high + medium + low + informational;
 
   // Transform data to BarDataPoint format
   const chartData: BarDataPoint[] = [
     {
       name: "Critical",
-      value: severityData.critical,
-      percentage: Math.round((severityData.critical / totalFindings) * 100),
+      value: critical,
+      percentage: calculatePercentage(critical, totalFindings),
     },
     {
       name: "High",
-      value: severityData.high,
-      percentage: Math.round((severityData.high / totalFindings) * 100),
+      value: high,
+      percentage: calculatePercentage(high, totalFindings),
     },
     {
       name: "Medium",
-      value: severityData.medium,
-      percentage: Math.round((severityData.medium / totalFindings) * 100),
+      value: medium,
+      percentage: calculatePercentage(medium, totalFindings),
     },
     {
       name: "Low",
-      value: severityData.low,
-      percentage: Math.round((severityData.low / totalFindings) * 100),
+      value: low,
+      percentage: calculatePercentage(low, totalFindings),
     },
     {
       name: "Info",
-      value: severityData.informational,
-      percentage: Math.round(
-        (severityData.informational / totalFindings) * 100,
-      ),
+      value: informational,
+      percentage: calculatePercentage(informational, totalFindings),
     },
   ];
 

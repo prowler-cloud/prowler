@@ -135,13 +135,11 @@ const SSRRiskSeverityChart = async ({
 
   return (
     <RiskSeverityChart
-      severityData={{
-        critical,
-        high,
-        medium,
-        low,
-        informational,
-      }}
+      critical={critical}
+      high={high}
+      medium={medium}
+      low={low}
+      informational={informational}
     />
   );
 };
