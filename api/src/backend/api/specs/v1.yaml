@@ -4327,26 +4327,11 @@ paths:
       security:
       - JWT or API Key: []
       responses:
-        '202':
+        '201':
           content:
             application/vnd.api+json:
               schema:
-                $ref: '#/components/schemas/TaskResponse'
-              examples:
-                Task queued:
-                  summary: Task queued
-                  value:
-                    data:
-                      type: tasks
-                      id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
-                      attributes:
-                        inserted_at: '2019-08-24T14:15:22Z'
-                        completed_at: '2019-08-24T14:15:22Z'
-                        name: string
-                        state: available
-                        result: null
-                        task_args: null
-                        metadata: null
+                $ref: '#/components/schemas/MuteRuleCreateResponse'
           description: ''
   /api/v1/mute-rules/{id}:
     get:
@@ -12438,6 +12423,90 @@ components:
               description: The identifier of the related object.
               title: Resource Identifier
               nullable: true
+    MuteRuleCreate:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - mute-rules
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+            name:
+              type: string
+              description: Human-readable name for this rule
+              maxLength: 100
+              minLength: 3
+            reason:
+              type: string
+              description: Reason for muting
+              minLength: 3
+              maxLength: 500
+            enabled:
+              type: boolean
+              readOnly: true
+              description: Whether this rule is currently enabled
+            finding_ids:
+              type: array
+              items:
+                type: string
+                format: uuid
+              writeOnly: true
+              description: List of Finding IDs to mute (will be converted to UIDs)
+            finding_uids:
+              type: array
+              items:
+                type: string
+              readOnly: true
+              description: List of finding UIDs that are muted by this rule
+          required:
+          - name
+          - reason
+          - finding_ids
+        relationships:
+          type: object
+          properties:
+            created_by:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - users
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              readOnly: true
+              nullable: true
     MuteRuleCreateRequest:
       type: object
       properties:
@@ -12526,6 +12595,13 @@ components:
                   title: Resource Identifier
                   readOnly: true
                   nullable: true
+      required:
+      - data
+    MuteRuleCreateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/MuteRuleCreate'
       required:
       - data
     MuteRuleResponse:

@@ -4738,7 +4738,6 @@ class TenantApiKeyViewSet(BaseRLSViewSet):
         "The rule will immediately mute the selected findings and launch a background task "
         "to mute all historical findings with matching UIDs.",
         request=MuteRuleCreateSerializer,
-        responses={202: OpenApiResponse(response=TaskSerializer)},
     ),
     partial_update=extend_schema(
         tags=["Mute Rules"],
