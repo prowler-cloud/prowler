@@ -2105,6 +2105,17 @@ class OverviewProviderSerializer(serializers.Serializer):
         }
 
 
+class OverviewProviderCountSerializer(serializers.Serializer):
+    id = serializers.CharField(source="provider")
+    count = serializers.IntegerField()
+
+    class JSONAPIMeta:
+        resource_name = "providers-count-overview"
+
+    def get_root_meta(self, _resource, _many):
+        return {"version": "v1"}
+
+
 class OverviewFindingSerializer(serializers.Serializer):
     id = serializers.CharField(default="n/a")
     new = serializers.IntegerField()
