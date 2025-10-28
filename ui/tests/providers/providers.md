@@ -1,7 +1,7 @@
 ### E2E Tests: AWS Provider Management
 
 **Suite ID:** `PROVIDER-E2E`
-**Feature:** AWS Provider Management - Add and configure AWS cloud providers with different authentication methods
+**Feature:** AWS Provider Management.
 
 ---
 

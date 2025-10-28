@@ -102,6 +102,12 @@ export default defineConfig({
       testMatch: "providers.spec.ts",
       dependencies: ["admin.auth.setup"],
     },
+    // This project runs the invitations test suite
+    {
+      name: "invitations",
+      testMatch: "invitations.spec.ts",
+      dependencies: ["admin.auth.setup"],
+    },
   ],
 
   webServer: {
