@@ -12,7 +12,6 @@ import api.rls
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("api", "0050_lighthouse_multi_llm"),
     ]
