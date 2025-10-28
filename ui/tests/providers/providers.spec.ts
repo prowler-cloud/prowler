@@ -12,7 +12,6 @@ import {
   M365ProviderCredential,
   M365_CREDENTIAL_OPTIONS,
 } from "./providers-page";
-import { ScansPage } from "../scans/scans-page";
 
 test.describe("Add Provider", () => {
   test.describe.serial("Add AWS Provider", () => {
