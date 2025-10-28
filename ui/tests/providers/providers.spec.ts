@@ -9,8 +9,6 @@ import {
   AZUREProviderCredential,
   AZURE_CREDENTIAL_OPTIONS,
 } from "./providers-page";
-import { ScansPage } from "../scans/scans-page";
-import fs from "fs";
 
 test.describe("Add Provider", () => {
   test.describe.serial("Add AWS Provider", () => {
