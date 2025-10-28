@@ -90,7 +90,7 @@ services:
       - NEO4J_server_memory_heap_initial__size=1G
       - NEO4J_server_memory_heap_max__size=1G
       # Auth:
-      - NEO4J_AUTH=neo4j/neo4j
+      - NEO4J_AUTH=neo4j/neo4j_password
       # Add APOC and GDS:
       - apoc.export.file.enabled=true
       - apoc.import.file.enabled=true

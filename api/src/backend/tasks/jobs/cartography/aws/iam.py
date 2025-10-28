@@ -10,11 +10,7 @@ from celery.utils.log import get_task_logger
 from api.db_utils import rls_transaction
 from api.models import Resource, ResourceScanSummary
 
-# TODO: Do the rigth logging setup
-# logger = get_task_logger(__name__)
-import logging
-from config.custom_logging import BackendLogger
-logger = logging.getLogger(BackendLogger.API)
+logger = get_task_logger(__name__)
 
 
 def sync_aws_iam(

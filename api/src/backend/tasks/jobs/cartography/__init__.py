@@ -1,5 +1,3 @@
-from operator import ne
-
 from celery.utils.log import get_task_logger
 from neo4j import GraphDatabase
 

@@ -7,11 +7,7 @@ from cartography.intel import aws as cartography_aws
 # from cartography.intel.aws import resourcegroupstaggingapi as cartography_resourcegroupstaggingapi
 from celery.utils.log import get_task_logger
 
-# TODO: Do the rigth logging setup
-# logger = get_task_logger(__name__)
-import logging
-from config.custom_logging import BackendLogger
-logger = logging.getLogger(BackendLogger.API)
+logger = get_task_logger(__name__)
 
 
 def perform_aws_analysis(
