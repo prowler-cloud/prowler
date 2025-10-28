@@ -1,28 +1,41 @@
 {
   "Provider": "aws",
   "CheckID": "elbv2_internet_facing",
-  "CheckTitle": "Check for internet facing Elastic Load Balancers.",
+  "CheckTitle": "Application Load Balancer is not publicly accessible (no inbound TCP from 0.0.0.0/0 or ::/0)",
   "CheckType": [
-    "Data Protection"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "TTPs/Initial Access"
   ],
   "ServiceName": "elbv2",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsElbv2LoadBalancer",
-  "Description": "Check for internet facing Elastic Load Balancers.",
-  "Risk": "Publicly accessible load balancers could expose sensitive data to bad actors.",
+  "Description": "**ELBv2 Application Load Balancers** configured as `internet-facing` are assessed for exposure by reviewing attached **security groups**.\n\nInbound TCP rules that allow `0.0.0.0/0` or `::/0` indicate unrestricted internet reachability.",
+  "Risk": "**Unrestricted ALB access** lets any client reach exposed endpoints, enabling **credential stuffing**, automated scanning, and **web exploits**.\n\nImpacts:\n- Confidentiality: data exfiltration\n- Integrity: unauthorized changes\n- Availability: increased attack surface and **DoS** potential",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://dev.to/aws-builders/deploying-a-highly-available-3-tier-architecture-in-aws-5fmi",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELB/internet-facing-load-balancers.html",
+    "https://docs.aws.amazon.com/waf/latest/developerguide/web-acl-associating-aws-resource.html",
+    "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-application-load-balancer.html",
+    "http://chinomsoikwuagwu.com/2020/02/14/AWS-Load-Balancers_How-they-work-and-differences-between-them/",
+    "https://cloudrekeno.hashnode.dev/deploying-an-application-using-3-tier-architecture-on-aws-a-step-by-step-guide",
+    "https://stackoverflow.com/questions/33657832/what-is-the-difference-between-the-internal-and-external-load-balancer-in-aws",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/internet-facing-load-balancers.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/internet-facing-load-balancers.html",
-      "Terraform": ""
+      "NativeIaC": "```yaml\n# CloudFormation Security Group for ALB with no public (0.0.0.0/0 or ::/0) TCP ingress\nResources:\n  <example_resource_name>:\n    Type: AWS::EC2::SecurityGroup\n    Properties:\n      GroupDescription: ALB SG restricted ingress\n      VpcId: \"<example_resource_id>\"\n      SecurityGroupIngress:\n        - IpProtocol: tcp\n          FromPort: 80\n          ToPort: 80\n          CidrIp: 10.0.0.0/8  # Critical: restricts inbound to private CIDR, preventing public access\n```",
+      "Other": "1. In AWS Console, go to EC2 > Load Balancers and select the ALB\n2. In the Description tab, note the attached Security Group and open it\n3. Click Edit inbound rules\n4. Delete any TCP rule with Source 0.0.0.0/0 or ::/0\n5. If access is needed, add only specific private CIDRs or trusted security groups\n6. Click Save rules",
+      "Terraform": "```hcl\n# Security Group for ALB with no public (0.0.0.0/0 or ::/0) TCP ingress\nresource \"aws_security_group\" \"<example_resource_name>\" {\n  name   = \"alb-restricted-sg\"\n  vpc_id = \"<example_resource_id>\"\n\n  ingress {\n    from_port   = 80\n    to_port     = 80\n    protocol    = \"tcp\"\n    cidr_blocks = [\"10.0.0.0/8\"] # Critical: restricts inbound to private CIDR, preventing public access\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure the load balancer should be publicly accessible. If publicly exposed ensure a WAF ACL is implemented.",
-      "Url": "https://docs.aws.amazon.com/waf/latest/developerguide/web-acl-associating-aws-resource.html"
+      "Text": "Enforce **least privilege** on security groups: avoid `0.0.0.0/0`; allow only trusted CIDRs or upstream services.\n\nUse an `internal` load balancer for non-public apps.\n\nFor public endpoints, layer **WAF** rules, strict TLS, and rate limiting; consider **CloudFront/Shield** for defense in depth and reduced direct exposure.",
+      "Url": "https://hub.prowler.com/check/elbv2_internet_facing"
     }
   },
   "Categories": [

@@ -1,31 +1,40 @@
 {
   "Provider": "aws",
   "CheckID": "elbv2_deletion_protection",
-  "CheckTitle": "Check if Elastic Load Balancers have deletion protection enabled.",
+  "CheckTitle": "ELBv2 load balancer has deletion protection enabled",
   "CheckType": [
-    "Data Protection"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Denial of Service"
   ],
   "ServiceName": "elbv2",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsElbv2LoadBalancer",
-  "Description": "Check if Elastic Load Balancers have deletion protection enabled.",
-  "Risk": "If deletion protection is not enabled, the resource is not protected against deletion.",
+  "Description": "**ELBv2 load balancers** with **deletion protection** (`deletion_protection.enabled`) are resistant to deletion through standard APIs.\n\nThe assessment determines whether this attribute is enabled on each load balancer.",
+  "Risk": "Without **deletion protection**, a user or automated process can delete the load balancer, cutting off service endpoints and breaking routing, harming **availability**.\n\nMalicious or mistaken deletes enable **DoS**, disrupt blue/green rollbacks, and increase incident recovery time.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html#deletion-protection",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/deletion-protection.html",
+    "https://docs.prowler.com/checks/aws/general-policies/bc_aws_networking_62#terraform"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aws elbv2 modify-load-balancer-attributes --load-balancer-arn <lb_arn> --attributes Key=deletion_protection.enabled,Value=true",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/deletion-protection.html",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_networking_62#terraform"
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::ElasticLoadBalancingV2::LoadBalancer\n    Properties:\n      Subnets:\n        - <example_subnet_id_1>\n        - <example_subnet_id_2>\n      LoadBalancerAttributes:\n        - Key: deletion_protection.enabled  # Critical: enable deletion protection\n          Value: \"true\"                   # Ensures the LB cannot be deleted accidentally\n```",
+      "Other": "1. In the AWS Console, go to EC2 > Load Balancers (under Load Balancing)\n2. Select the target load balancer\n3. Open the Attributes tab and click Edit attributes\n4. Enable Deletion protection\n5. Click Save changes",
+      "Terraform": "```hcl\nresource \"aws_lb\" \"<example_resource_name>\" {\n  subnets = [\"<example_subnet_id_1>\", \"<example_subnet_id_2>\"]\n\n  enable_deletion_protection = true # Critical: enables deletion protection to pass the check\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable deletion protection attribute, this is not enabled by default.",
-      "Url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html#deletion-protection"
+      "Text": "Enable **deletion protection** for production and other critical load balancers.\n\nEnforce **least privilege** to restrict delete actions, apply governance (tags and policy guardrails) for protected assets, and require **change control** with approvals. *For pipelines*, add checks that block deletion of protected resources.",
+      "Url": "https://hub.prowler.com/check/elbv2_deletion_protection"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
