@@ -4174,7 +4174,7 @@ paths:
             - updated_at
             - name
             - reason
-            - is_active
+            - enabled
             - created_by
             - finding_uids
         description: endpoint return only specific fields in the response on a per-type
@@ -4185,6 +4185,10 @@ paths:
         schema:
           type: string
           format: uuid
+      - in: query
+        name: filter[enabled]
+        schema:
+          type: boolean
       - in: query
         name: filter[id]
         schema:
@@ -4215,10 +4219,6 @@ paths:
         schema:
           type: string
           format: date-time
-      - in: query
-        name: filter[is_active]
-        schema:
-          type: boolean
       - in: query
         name: filter[name]
         schema:
@@ -4286,8 +4286,8 @@ paths:
             enum:
             - name
             - -name
-            - is_active
-            - -is_active
+            - enabled
+            - -enabled
             - inserted_at
             - -inserted_at
             - updated_at
@@ -4365,7 +4365,7 @@ paths:
             - updated_at
             - name
             - reason
-            - is_active
+            - enabled
             - created_by
             - finding_uids
         description: endpoint return only specific fields in the response on a per-type
@@ -4403,7 +4403,7 @@ paths:
     patch:
       operationId: mute_rules_partial_update
       description: Update certain fields of an existing mute rule (e.g., name, reason,
-        is_active).
+        enabled).
       summary: Partially update a mute rule
       parameters:
       - in: path
@@ -5732,7 +5732,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4c1e219dad1cc0e7
+          x-spec-enum-id: 6f034074d7104650
           enum:
           - aws
           - azure
@@ -5740,6 +5740,7 @@ paths:
           - github
           - kubernetes
           - m365
+          - oci
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -5747,13 +5748,14 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4c1e219dad1cc0e7
+            x-spec-enum-id: 6f034074d7104650
             enum:
             - aws
             - azure
@@ -5761,6 +5763,7 @@ paths:
             - github
             - kubernetes
             - m365
+            - oci
         description: |-
           Multiple values may be separated by commas.
 
@@ -5770,6 +5773,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - name: filter[search]
@@ -12394,9 +12398,9 @@ components:
               description: Reason for muting
               minLength: 3
               maxLength: 500
-            is_active:
+            enabled:
               type: boolean
-              description: Whether this rule is currently active
+              description: Whether this rule is currently enabled
             finding_uids:
               type: array
               items:
@@ -12471,10 +12475,10 @@ components:
                   minLength: 3
                   description: Reason for muting
                   maxLength: 500
-                is_active:
+                enabled:
                   type: boolean
                   readOnly: true
-                  description: Whether this rule is currently active
+                  description: Whether this rule is currently enabled
                 finding_ids:
                   type: array
                   items:
@@ -13438,9 +13442,9 @@ components:
                   minLength: 3
                   description: Reason for muting
                   maxLength: 500
-                is_active:
+                enabled:
                   type: boolean
-                  description: Whether this rule is currently active
+                  description: Whether this rule is currently enabled
       required:
       - data
     PatchedProcessorUpdateRequest:
