@@ -7,6 +7,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🔄 Changed
 
 - Upgrade React to version 19.2.0 [(#9039)](https://github.com/prowler-cloud/prowler/pull/9039)
+- Add support for Oracle Cloud Infrastructure (OCI) provider [(#8984)](https://github.com/prowler-cloud/prowler/pull/8984)
 
 ---
 
