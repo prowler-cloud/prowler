@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from shutil import rmtree
@@ -25,6 +26,10 @@ from tasks.jobs.integrations import (
     send_findings_to_jira,
     upload_s3_integration,
     upload_security_hub_integration,
+)
+from tasks.jobs.lighthouse_providers import (
+    check_lighthouse_provider_connection,
+    refresh_lighthouse_provider_models,
 )
 from tasks.jobs.muting import mute_historical_findings
 from tasks.jobs.report import generate_threatscore_report_job
@@ -414,7 +419,24 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
                 writer._data.clear()
 
     compressed = _compress_output_files(out_dir)
-    upload_uri = _upload_to_s3(tenant_id, compressed, scan_id)
+
+    upload_uri = _upload_to_s3(
+        tenant_id,
+        scan_id,
+        compressed,
+        os.path.basename(compressed),
+    )
+
+    compliance_dir_path = Path(comp_dir).parent
+    if compliance_dir_path.exists():
+        for artifact_path in sorted(compliance_dir_path.iterdir()):
+            if artifact_path.is_file():
+                _upload_to_s3(
+                    tenant_id,
+                    scan_id,
+                    str(artifact_path),
+                    f"compliance/{artifact_path.name}",
+                )
 
     # S3 integrations (need output_directory)
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
@@ -505,6 +527,24 @@ def check_lighthouse_connection_task(lighthouse_config_id: str, tenant_id: str =
             - 'available_models' (list): List of available models if connection is successful.
     """
     return check_lighthouse_connection(lighthouse_config_id=lighthouse_config_id)
+
+
+@shared_task(base=RLSTask, name="lighthouse-provider-connection-check")
+@set_tenant
+def check_lighthouse_provider_connection_task(
+    provider_config_id: str, tenant_id: str | None = None
+) -> dict:
+    """Task wrapper to validate provider credentials and set is_active."""
+    return check_lighthouse_provider_connection(provider_config_id=provider_config_id)
+
+
+@shared_task(base=RLSTask, name="lighthouse-provider-models-refresh")
+@set_tenant
+def refresh_lighthouse_provider_models_task(
+    provider_config_id: str, tenant_id: str | None = None
+) -> dict:
+    """Task wrapper to refresh provider models catalog for the given configuration."""
+    return refresh_lighthouse_provider_models(provider_config_id=provider_config_id)
 
 
 @shared_task(name="integration-check")

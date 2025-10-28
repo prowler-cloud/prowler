@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
                 (
                     "name",
                     models.CharField(
-                        max_length=255,
+                        max_length=100,
                         validators=[django.core.validators.MinLengthValidator(3)],
                     ),
                 ),
