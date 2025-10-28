@@ -1458,13 +1458,25 @@ class TestProviderViewSet:
                 ("provider", "aws", 2),
                 ("provider.in", "azure,gcp", 2),
                 ("uid", "123456789012", 1),
-                ("uid.icontains", "1", 5),
+                (
+                    "uid.icontains",
+                    "1",
+                    6,
+                ),  # Updated: includes OCI provider with "1" in UID
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
-                ("inserted_at", TODAY, 6),
-                ("inserted_at.gte", "2024-01-01", 6),
+                ("inserted_at", TODAY, 7),  # Updated: 7 providers now (added OCI)
+                (
+                    "inserted_at.gte",
+                    "2024-01-01",
+                    7,
+                ),  # Updated: 7 providers now (added OCI)
                 ("inserted_at.lte", "2024-01-01", 0),
-                ("updated_at.gte", "2024-01-01", 6),
+                (
+                    "updated_at.gte",
+                    "2024-01-01",
+                    7,
+                ),  # Updated: 7 providers now (added OCI)
                 ("updated_at.lte", "2024-01-01", 0),
             ]
         ),
@@ -1965,6 +1977,43 @@ class TestProviderSecretViewSet:
                     "certificate_content": "VGVzdCBjZXJ0aWZpY2F0ZSBjb250ZW50",
                     "user": "test@domain.com",
                     "password": "supersecret",
+                },
+            ),
+            # OCI with API key credentials (with key_content)
+            (
+                Provider.ProviderChoices.OCI.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
+                    "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
+                    "key_content": "-----BEGIN RSA PRIVATE KEY-----\ntest-key-content\n-----END RSA PRIVATE KEY-----",
+                    "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
+                    "region": "us-ashburn-1",
+                },
+            ),
+            # OCI with API key credentials (with key_file)
+            (
+                Provider.ProviderChoices.OCI.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
+                    "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
+                    "key_file": "/path/to/oci_api_key.pem",
+                    "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
+                    "region": "us-ashburn-1",
+                },
+            ),
+            # OCI with API key credentials (with passphrase)
+            (
+                Provider.ProviderChoices.OCI.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
+                    "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
+                    "key_content": "-----BEGIN RSA PRIVATE KEY-----\ntest-encrypted-key\n-----END RSA PRIVATE KEY-----",
+                    "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
+                    "region": "us-ashburn-1",
+                    "pass_phrase": "my-secure-passphrase",
                 },
             ),
         ],
