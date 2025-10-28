@@ -2,22 +2,6 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-<<<<<<< HEAD
-=======
-## [v5.14.0] (Prowler UNRELEASED)
-
-### Added
-- GitHub provider check `organization_default_repository_permission_strict` [(#8785)](https://github.com/prowler-cloud/prowler/pull/8785)
-- `codepipeline_project_repo_private` check for AWS provider [(#5915)](https://github.com/prowler-cloud/prowler/pull/5915)
-- `cloudstorage_bucket_versioning_enabled` check for GCP provider [(#9014)](https://github.com/prowler-cloud/prowler/pull/9014)
-
-### Changed
-- Update AWS Direct Connect service metadata to new format [(#8855)](https://github.com/prowler-cloud/prowler/pull/8855)
-- Update AWS DRS service metadata to new format [(#8870)](https://github.com/prowler-cloud/prowler/pull/8870)
-- Update AWS DynamoDB service metadata to new format [(#8871)](https://github.com/prowler-cloud/prowler/pull/8871)
-
----
-
 ## [v5.13.1] (Prowler UNRELEASED)
 
 ### Fixed
@@ -27,7 +11,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
->>>>>>> 63169289b (fix(ec2): AttributeError in `ec2_instance_with_outdated_ami` check (#9046))
 ## [v5.13.0] (Prowler v5.13.0)
 
 ### Added
