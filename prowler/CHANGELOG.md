@@ -2,6 +2,24 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [v5.14.0] (Prowler UNRELEASED)
+
+### Added
+- GitHub provider check `organization_default_repository_permission_strict` [(#8785)](https://github.com/prowler-cloud/prowler/pull/8785)
+- Update AWS Direct Connect service metadata to new format [(#8855)](https://github.com/prowler-cloud/prowler/pull/8855)
+- Update AWS DRS service metadata to new format [(#8870)](https://github.com/prowler-cloud/prowler/pull/8870)
+- `codepipeline_project_repo_private` check for AWS provider [(#5915)](https://github.com/prowler-cloud/prowler/pull/5915)
+
+---
+
+## [v5.13.1] (Prowler UNRELEASED)
+
+### Fixed
+- Add `resource_name` for checks under `logging` for the GCP provider [(#9023)](https://github.com/prowler-cloud/prowler/pull/9023)
+
+
+---
+
 ## [v5.13.0] (Prowler v5.13.0)
 
 ### Added

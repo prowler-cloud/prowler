@@ -17,6 +17,9 @@ from api.v1.views import (
     InvitationAcceptViewSet,
     InvitationViewSet,
     LighthouseConfigViewSet,
+    LighthouseProviderConfigViewSet,
+    LighthouseProviderModelsViewSet,
+    LighthouseTenantConfigViewSet,
     MembershipViewSet,
     OverviewViewSet,
     ProcessorViewSet,
@@ -34,12 +37,12 @@ from api.v1.views import (
     ScheduleViewSet,
     SchemaView,
     TaskViewSet,
+    TenantApiKeyViewSet,
     TenantFinishACSView,
     TenantMembersViewSet,
     TenantViewSet,
     UserRoleRelationshipView,
     UserViewSet,
-    TenantApiKeyViewSet,
 )
 
 router = routers.DefaultRouter(trailing_slash=False)
@@ -67,6 +70,16 @@ router.register(
     basename="lighthouseconfiguration",
 )
 router.register(r"api-keys", TenantApiKeyViewSet, basename="api-key")
+router.register(
+    r"lighthouse/providers",
+    LighthouseProviderConfigViewSet,
+    basename="lighthouse-providers",
+)
+router.register(
+    r"lighthouse/models",
+    LighthouseProviderModelsViewSet,
+    basename="lighthouse-models",
+)
 
 tenants_router = routers.NestedSimpleRouter(router, r"tenants", lookup="tenant")
 tenants_router.register(
@@ -136,6 +149,14 @@ urlpatterns = [
             {"post": "create", "patch": "partial_update", "delete": "destroy"}
         ),
         name="provider_group-providers-relationship",
+    ),
+    # Lighthouse tenant config as singleton endpoint
+    path(
+        "lighthouse/configuration",
+        LighthouseTenantConfigViewSet.as_view(
+            {"get": "list", "patch": "partial_update"}
+        ),
+        name="lighthouse-config",
     ),
     # API endpoint to start SAML SSO flow
     path(
