@@ -75,7 +75,8 @@ export const OracleCloudCredentialsForm = ({
         isInvalid={!!control._formState.errors.pass_phrase}
       />
       <div className="text-default-400 text-xs">
-        Paste the raw content of your OCI private key file (PEM format). The key will be automatically encoded for secure transmission.
+        Paste the raw content of your OCI private key file (PEM format). The key
+        will be automatically encoded for secure transmission.
       </div>
     </>
   );

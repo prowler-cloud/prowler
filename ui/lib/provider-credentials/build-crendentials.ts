@@ -213,7 +213,10 @@ const base64Encode = (str: string): string => {
   return btoa(binaryString);
 };
 
-export const buildOracleCloudSecret = (formData: FormData, providerUid?: string) => {
+export const buildOracleCloudSecret = (
+  formData: FormData,
+  providerUid?: string,
+) => {
   const keyContent = getFormValue(
     formData,
     ProviderCredentialFields.OCI_KEY_CONTENT,
@@ -233,10 +236,9 @@ export const buildOracleCloudSecret = (formData: FormData, providerUid?: string)
       ProviderCredentialFields.OCI_FINGERPRINT,
     ),
     [ProviderCredentialFields.OCI_KEY_CONTENT]: encodedKeyContent,
-    [ProviderCredentialFields.OCI_TENANCY]: providerUid || getFormValue(
-      formData,
-      ProviderCredentialFields.OCI_TENANCY,
-    ),
+    [ProviderCredentialFields.OCI_TENANCY]:
+      providerUid ||
+      getFormValue(formData, ProviderCredentialFields.OCI_TENANCY),
     [ProviderCredentialFields.OCI_REGION]: getFormValue(
       formData,
       ProviderCredentialFields.OCI_REGION,

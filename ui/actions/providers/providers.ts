@@ -139,7 +139,11 @@ export const addCredentialsProvider = async (formData: FormData) => {
   ) as string | undefined;
 
   try {
-    const { secretType, secret } = buildSecretConfig(formData, providerType, providerUid);
+    const { secretType, secret } = buildSecretConfig(
+      formData,
+      providerType,
+      providerUid,
+    );
 
     const response = await fetch(url.toString(), {
       method: "POST",
