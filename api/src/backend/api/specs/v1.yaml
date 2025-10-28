@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.14.0
+  version: 1.15.0
   description: |-
     Prowler API specification.
 
@@ -3429,6 +3429,7 @@ paths:
       - Lighthouse AI
       security:
       - JWT or API Key: []
+      deprecated: true
       responses:
         '200':
           content:
@@ -3456,6 +3457,7 @@ paths:
         required: true
       security:
       - JWT or API Key: []
+      deprecated: true
       responses:
         '201':
           content:
@@ -3490,6 +3492,7 @@ paths:
         required: true
       security:
       - JWT or API Key: []
+      deprecated: true
       responses:
         '200':
           content:
@@ -3511,6 +3514,7 @@ paths:
       - Lighthouse AI
       security:
       - JWT or API Key: []
+      deprecated: true
       responses:
         '204':
           description: No response body
@@ -3525,6 +3529,587 @@ paths:
         name: id
         schema:
           type: string
+        required: true
+      tags:
+      - Lighthouse AI
+      security:
+      - JWT or API Key: []
+      deprecated: true
+      responses:
+        '202':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+              examples:
+                Task queued:
+                  summary: Task queued
+                  value:
+                    data:
+                      type: tasks
+                      id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                      attributes:
+                        inserted_at: '2019-08-24T14:15:22Z'
+                        completed_at: '2019-08-24T14:15:22Z'
+                        name: string
+                        state: available
+                        result: null
+                        task_args: null
+                        metadata: null
+          description: ''
+  /api/v1/lighthouse/configuration:
+    get:
+      operationId: lighthouse_configuration_list
+      description: Retrieve current tenant-level Lighthouse AI settings. Returns a
+        single configuration object.
+      summary: Get Lighthouse AI Tenant config
+      parameters:
+      - in: query
+        name: fields[lighthouse-config]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - business_context
+            - default_provider
+            - default_models
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+            - business_context
+            - -business_context
+            - default_provider
+            - -default_provider
+            - default_models
+            - -default_models
+            - url
+            - -url
+        explode: false
+      tags:
+      - Lighthouse AI
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLighthouseTenantConfigList'
+          description: ''
+    patch:
+      operationId: lighthouse_configuration_partial_update
+      description: Update tenant-level settings. Validates that the default provider
+        is configured and active and that default model IDs exist for the chosen providers.
+        Auto-creates configuration if it doesn't exist.
+      summary: Update Lighthouse AI Tenant config
+      tags:
+      - Lighthouse AI
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/PatchedLighthouseTenantConfigUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLighthouseTenantConfigUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLighthouseTenantConfigUpdateRequest'
+        required: true
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/LighthouseTenantConfigUpdateResponse'
+          description: ''
+  /api/v1/lighthouse/models:
+    get:
+      operationId: lighthouse_models_list
+      description: List available LLM models per configured provider for the current
+        tenant.
+      summary: List all LLM models
+      parameters:
+      - in: query
+        name: fields[LighthouseProviderModels]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - provider_configuration
+            - model_id
+            - model_name
+            - default_parameters
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[model_id]
+        schema:
+          type: string
+      - in: query
+        name: filter[model_id__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[model_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          x-spec-enum-id: 80350f3ab09becd9
+          enum:
+          - openai
+        description: |-
+          LLM provider name
+
+          * `openai` - OpenAI
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            x-spec-enum-id: 80350f3ab09becd9
+            enum:
+            - openai
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `openai` - OpenAI
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+            - provider_configuration
+            - -provider_configuration
+            - model_id
+            - -model_id
+            - model_name
+            - -model_name
+            - default_parameters
+            - -default_parameters
+            - url
+            - -url
+        explode: false
+      tags:
+      - Lighthouse AI
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLighthouseProviderModelsList'
+          description: ''
+  /api/v1/lighthouse/models/{id}:
+    get:
+      operationId: lighthouse_models_retrieve
+      description: Get details for a specific LLM model.
+      summary: Retrieve LLM model details
+      parameters:
+      - in: query
+        name: fields[LighthouseProviderModels]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - provider_configuration
+            - model_id
+            - model_name
+            - default_parameters
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this lighthouse provider models.
+        required: true
+      tags:
+      - Lighthouse AI
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/LighthouseProviderModelsResponse'
+          description: ''
+  /api/v1/lighthouse/providers:
+    get:
+      operationId: lighthouse_providers_list
+      description: Retrieve all LLM provider configurations for the current tenant
+      summary: List all LLM provider configs
+      parameters:
+      - in: query
+        name: fields[lighthouse-providers]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - provider_type
+            - base_url
+            - is_active
+            - credentials
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[is_active]
+        schema:
+          type: boolean
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          x-spec-enum-id: 80350f3ab09becd9
+          enum:
+          - openai
+        description: |-
+          LLM provider name
+
+          * `openai` - OpenAI
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            x-spec-enum-id: 80350f3ab09becd9
+            enum:
+            - openai
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `openai` - OpenAI
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+            - provider_type
+            - -provider_type
+            - base_url
+            - -base_url
+            - is_active
+            - -is_active
+            - credentials
+            - -credentials
+            - url
+            - -url
+        explode: false
+      tags:
+      - Lighthouse AI
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLighthouseProviderConfigList'
+          description: ''
+    post:
+      operationId: lighthouse_providers_create
+      description: Create a per-tenant configuration for an LLM provider. Only one
+        configuration per provider type is allowed per tenant.
+      summary: Create LLM provider config
+      tags:
+      - Lighthouse AI
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/LighthouseProviderConfigCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LighthouseProviderConfigCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LighthouseProviderConfigCreateRequest'
+        required: true
+      security:
+      - JWT or API Key: []
+      responses:
+        '201':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/LighthouseProviderConfigCreateResponse'
+          description: ''
+  /api/v1/lighthouse/providers/{id}:
+    get:
+      operationId: lighthouse_providers_retrieve
+      description: Get details for a specific provider configuration in the current
+        tenant.
+      summary: Retrieve LLM provider config
+      parameters:
+      - in: query
+        name: fields[lighthouse-providers]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - provider_type
+            - base_url
+            - is_active
+            - credentials
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this lighthouse provider configuration.
+        required: true
+      tags:
+      - Lighthouse AI
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/LighthouseProviderConfigResponse'
+          description: ''
+    patch:
+      operationId: lighthouse_providers_partial_update
+      description: Partially update a provider configuration (e.g., base_url, is_active).
+      summary: Update LLM provider config
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this lighthouse provider configuration.
+        required: true
+      tags:
+      - Lighthouse AI
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/PatchedLighthouseProviderConfigUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLighthouseProviderConfigUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLighthouseProviderConfigUpdateRequest'
+        required: true
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/LighthouseProviderConfigUpdateResponse'
+          description: ''
+    delete:
+      operationId: lighthouse_providers_destroy
+      description: Delete a provider configuration. Any tenant defaults that reference
+        this provider are cleared during deletion.
+      summary: Delete LLM provider config
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this lighthouse provider configuration.
+        required: true
+      tags:
+      - Lighthouse AI
+      security:
+      - JWT or API Key: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/lighthouse/providers/{id}/connection:
+    post:
+      operationId: lighthouse_providers_connection_create
+      description: Validate provider credentials asynchronously and toggle is_active.
+      summary: Check LLM provider connection
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this lighthouse provider configuration.
+        required: true
+      tags:
+      - Lighthouse AI
+      security:
+      - JWT or API Key: []
+      responses:
+        '202':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+              examples:
+                Task queued:
+                  summary: Task queued
+                  value:
+                    data:
+                      type: tasks
+                      id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                      attributes:
+                        inserted_at: '2019-08-24T14:15:22Z'
+                        completed_at: '2019-08-24T14:15:22Z'
+                        name: string
+                        state: available
+                        result: null
+                        task_args: null
+                        metadata: null
+          description: ''
+  /api/v1/lighthouse/providers/{id}/refresh-models:
+    post:
+      operationId: lighthouse_providers_refresh_models_create
+      description: Fetch available models for this provider configuration and upsert
+        into catalog.
+      summary: Refresh LLM models catalog
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this lighthouse provider configuration.
         required: true
       tags:
       - Lighthouse AI
@@ -10928,6 +11513,337 @@ components:
           $ref: '#/components/schemas/LighthouseConfigUpdate'
       required:
       - data
+    LighthouseProviderConfig:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - lighthouse-providers
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+            provider_type:
+              enum:
+              - openai
+              type: string
+              x-spec-enum-id: 80350f3ab09becd9
+              description: |-
+                LLM provider name
+
+                * `openai` - OpenAI
+            base_url:
+              type: string
+              format: uri
+              nullable: true
+              maxLength: 200
+            is_active:
+              type: boolean
+              readOnly: true
+            credentials:
+              readOnly: true
+          required:
+          - provider_type
+    LighthouseProviderConfigCreate:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - lighthouse-providers
+        attributes:
+          type: object
+          properties:
+            provider_type:
+              enum:
+              - openai
+              type: string
+              x-spec-enum-id: 80350f3ab09becd9
+              description: |-
+                LLM provider name
+
+                * `openai` - OpenAI
+            base_url:
+              type: string
+              format: uri
+              nullable: true
+              maxLength: 200
+            credentials:
+              writeOnly: true
+            is_active:
+              type: boolean
+          required:
+          - provider_type
+          - credentials
+    LighthouseProviderConfigCreateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - lighthouse-providers
+            attributes:
+              type: object
+              properties:
+                provider_type:
+                  enum:
+                  - openai
+                  type: string
+                  x-spec-enum-id: 80350f3ab09becd9
+                  description: |-
+                    LLM provider name
+
+                    * `openai` - OpenAI
+                base_url:
+                  type: string
+                  format: uri
+                  nullable: true
+                  maxLength: 200
+                credentials:
+                  writeOnly: true
+                is_active:
+                  type: boolean
+              required:
+              - provider_type
+              - credentials
+      required:
+      - data
+    LighthouseProviderConfigCreateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/LighthouseProviderConfigCreate'
+      required:
+      - data
+    LighthouseProviderConfigResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/LighthouseProviderConfig'
+      required:
+      - data
+    LighthouseProviderConfigUpdate:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - lighthouse-providers
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            provider_type:
+              enum:
+              - openai
+              type: string
+              x-spec-enum-id: 80350f3ab09becd9
+              readOnly: true
+              description: |-
+                LLM provider name
+
+                * `openai` - OpenAI
+            base_url:
+              type: string
+              format: uri
+              nullable: true
+              maxLength: 200
+            credentials:
+              writeOnly: true
+            is_active:
+              type: boolean
+    LighthouseProviderConfigUpdateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/LighthouseProviderConfigUpdate'
+      required:
+      - data
+    LighthouseProviderModels:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - LighthouseProviderModels
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+            model_id:
+              type: string
+              maxLength: 100
+            model_name:
+              type: string
+              maxLength: 100
+            default_parameters: {}
+          required:
+          - model_id
+          - model_name
+        relationships:
+          type: object
+          properties:
+            provider_configuration:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - lighthouse-providers
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              readOnly: true
+    LighthouseProviderModelsResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/LighthouseProviderModels'
+      required:
+      - data
+    LighthouseTenantConfig:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - lighthouse-config
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+            business_context:
+              type: string
+            default_provider:
+              type: string
+              maxLength: 50
+            default_models: {}
+            url:
+              type: string
+              readOnly: true
+    LighthouseTenantConfigUpdate:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - lighthouse-config
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            business_context:
+              type: string
+            default_provider:
+              type: string
+              maxLength: 50
+            default_models: {}
+    LighthouseTenantConfigUpdateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/LighthouseTenantConfigUpdate'
+      required:
+      - data
     Membership:
       type: object
       required:
@@ -11319,6 +12235,33 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/LighthouseConfig'
+      required:
+      - data
+    PaginatedLighthouseProviderConfigList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LighthouseProviderConfig'
+      required:
+      - data
+    PaginatedLighthouseProviderModelsList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LighthouseProviderModels'
+      required:
+      - data
+    PaginatedLighthouseTenantConfigList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LighthouseTenantConfig'
       required:
       - data
     PaginatedMembershipList:
@@ -11780,6 +12723,81 @@ components:
                 is_active:
                   type: boolean
                   readOnly: true
+      required:
+      - data
+    PatchedLighthouseProviderConfigUpdateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - id
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - lighthouse-providers
+            id:
+              type: string
+              format: uuid
+            attributes:
+              type: object
+              properties:
+                provider_type:
+                  enum:
+                  - openai
+                  type: string
+                  x-spec-enum-id: 80350f3ab09becd9
+                  readOnly: true
+                  description: |-
+                    LLM provider name
+
+                    * `openai` - OpenAI
+                base_url:
+                  type: string
+                  format: uri
+                  nullable: true
+                  maxLength: 200
+                credentials:
+                  writeOnly: true
+                is_active:
+                  type: boolean
+      required:
+      - data
+    PatchedLighthouseTenantConfigUpdateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - id
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - lighthouse-config
+            id:
+              type: string
+              format: uuid
+            attributes:
+              type: object
+              properties:
+                business_context:
+                  type: string
+                default_provider:
+                  type: string
+                  maxLength: 50
+                default_models: {}
       required:
       - data
     PatchedProcessorUpdateRequest:

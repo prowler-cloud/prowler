@@ -7,6 +7,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ### Added
 - Extend `GET /api/v1/providers` with provider-type filters and optional pagination disable to support the new Overview filters [(#8975)](https://github.com/prowler-cloud/prowler/pull/8975)
 - New endpoint to retrieve the number of providers grouped by provider type [(#8975)](https://github.com/prowler-cloud/prowler/pull/8975)
+- Support for configuring multiple LLM providers [(#8772)](https://github.com/prowler-cloud/prowler/pull/8772)
 
 ## [1.14.0] (Prowler 5.13.0)
 
