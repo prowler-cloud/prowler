@@ -78,6 +78,36 @@ services:
       timeout: 5s
       retries: 3
 
+  neo4j:
+    image: neo4j:2025.09.0-community-bullseye
+    hostname: "neo4j"
+    volumes:
+      - ./_data/neo4j:/data
+    environment:
+      # Raise memory limits:
+      - NEO4J_server_memory_pagecache_size=1G
+      - NEO4J_server_memory_heap_initial__size=1G
+      - NEO4J_server_memory_heap_max__size=1G
+      # Auth:
+      - NEO4J_AUTH=neo4j/neo4j_password
+      # Add APOC and GDS:
+      - apoc.export.file.enabled=true
+      - apoc.import.file.enabled=true
+      - apoc.import.file.use_neo4j_config=true
+      - NEO4J_PLUGINS=["graph-data-science", "apoc"]
+      - NEO4J_dbms_security_procedures_allowlist=gds.*, apoc.*
+      - NEO4J_dbms_security_procedures_unrestricted=gds.*, apoc.*
+      # Networking:
+      - dbms.connector.bolt.listen_address=0.0.0.0:7687
+    ports:
+      - 7474:7474
+      - 7687:7687
+    healthcheck:
+        test: ["CMD", "wget", "--no-verbose", "http://localhost:7474"]
+        interval: 10s
+        timeout: 10s
+        retries: 10
+
   worker-dev:
     build:
       context: ./api
