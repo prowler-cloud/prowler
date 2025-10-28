@@ -197,6 +197,22 @@ export const buildGitHubSecret = (formData: FormData) => {
   return {};
 };
 
+/**
+ * Utility function to safely encode a string to base64
+ * Handles UTF-8 characters properly without using deprecated APIs
+ */
+const base64Encode = (str: string): string => {
+  if (!str) return "";
+  // Convert string to UTF-8 bytes, then to base64
+  const utf8Bytes = new TextEncoder().encode(str);
+  // Convert Uint8Array to binary string without spread operator
+  let binaryString = "";
+  for (let i = 0; i < utf8Bytes.length; i++) {
+    binaryString += String.fromCharCode(utf8Bytes[i]);
+  }
+  return btoa(binaryString);
+};
+
 export const buildOracleCloudSecret = (formData: FormData, providerUid?: string) => {
   const keyContent = getFormValue(
     formData,
@@ -204,10 +220,8 @@ export const buildOracleCloudSecret = (formData: FormData, providerUid?: string)
   ) as string;
 
   // Base64 encode the key content for the backend
-  // Use btoa with proper UTF-8 encoding to handle all characters
-  const encodedKeyContent = keyContent
-    ? btoa(unescape(encodeURIComponent(keyContent)))
-    : "";
+  // Uses modern TextEncoder API to properly handle UTF-8 characters
+  const encodedKeyContent = base64Encode(keyContent);
 
   const secret = {
     [ProviderCredentialFields.OCI_USER]: getFormValue(

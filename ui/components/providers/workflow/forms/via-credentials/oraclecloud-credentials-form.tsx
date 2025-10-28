@@ -1,6 +1,7 @@
 import { Control } from "react-hook-form";
 
 import { CustomInput, CustomTextarea } from "@/components/ui/custom";
+import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { OCICredentials } from "@/types";
 
 export const OracleCloudCredentialsForm = ({
@@ -20,7 +21,7 @@ export const OracleCloudCredentialsForm = ({
       </div>
       <CustomInput
         control={control}
-        name="user"
+        name={ProviderCredentialFields.OCI_USER}
         type="text"
         label="User OCID"
         labelPlacement="inside"
@@ -31,7 +32,7 @@ export const OracleCloudCredentialsForm = ({
       />
       <CustomInput
         control={control}
-        name="fingerprint"
+        name={ProviderCredentialFields.OCI_FINGERPRINT}
         type="text"
         label="Fingerprint"
         labelPlacement="inside"
@@ -42,7 +43,7 @@ export const OracleCloudCredentialsForm = ({
       />
       <CustomInput
         control={control}
-        name="region"
+        name={ProviderCredentialFields.OCI_REGION}
         type="text"
         label="Region"
         labelPlacement="inside"
@@ -53,7 +54,7 @@ export const OracleCloudCredentialsForm = ({
       />
       <CustomTextarea
         control={control}
-        name="key_content"
+        name={ProviderCredentialFields.OCI_KEY_CONTENT}
         label="Private Key Content"
         labelPlacement="inside"
         placeholder="-----BEGIN RSA PRIVATE KEY-----&#10;MIIEpAIBAAKCAQEA...&#10;-----END RSA PRIVATE KEY-----"
@@ -64,7 +65,7 @@ export const OracleCloudCredentialsForm = ({
       />
       <CustomInput
         control={control}
-        name="pass_phrase"
+        name={ProviderCredentialFields.OCI_PASS_PHRASE}
         type="password"
         label="Passphrase (Optional)"
         labelPlacement="inside"

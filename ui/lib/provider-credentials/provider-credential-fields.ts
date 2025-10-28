@@ -13,6 +13,7 @@ export const ProviderCredentialFields = {
   PROVIDER_ID: "providerId",
   PROVIDER_TYPE: "providerType",
   PROVIDER_ALIAS: "providerAlias",
+  PROVIDER_UID: "providerUid",
 
   // AWS fields
   AWS_ACCESS_KEY_ID: "aws_access_key_id",

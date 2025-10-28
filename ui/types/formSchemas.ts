@@ -276,7 +276,6 @@ export const addCredentialsFormSchema = (
           }
         }
       }
-
     });
 
 export const addCredentialsRoleFormSchema = (providerType: string) =>

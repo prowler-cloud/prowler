@@ -133,21 +133,12 @@ export const addCredentialsProvider = async (formData: FormData) => {
     formData,
     ProviderCredentialFields.PROVIDER_TYPE,
   ) as ProviderType;
+  const providerUid = getFormValue(
+    formData,
+    ProviderCredentialFields.PROVIDER_UID,
+  ) as string | undefined;
 
   try {
-    // For OCI, fetch the provider to get its UID (tenancy OCID)
-    let providerUid: string | undefined;
-    if (providerType === "oci") {
-      const providerResponse = await fetch(
-        `${apiBaseUrl}/providers/${providerId}`,
-        { headers: await getAuthHeaders({ contentType: false }) },
-      );
-      if (providerResponse.ok) {
-        const providerData = await providerResponse.json();
-        providerUid = providerData.data?.attributes?.uid;
-      }
-    }
-
     const { secretType, secret } = buildSecretConfig(formData, providerType, providerUid);
 
     const response = await fetch(url.toString(), {
