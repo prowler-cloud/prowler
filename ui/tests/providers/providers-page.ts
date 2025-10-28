@@ -5,8 +5,11 @@ import { BasePage } from "../base-page";
 export interface AWSProviderData {
   accountId: string;
   alias?: string;
-}
-
+  roleArn?: string;
+  externalId?: string;
+  accessKeyId?: string;
+  secretAccessKey?: string;
+  
 // AZURE provider data
 export interface AZUREProviderData {
   subscriptionId: string;
@@ -232,7 +235,7 @@ export class ProvidersPage extends BasePage {
   }
 
   async selectAWSProvider(): Promise<void> {
-    
+
     // Prefer label-based click for radios, force if overlay intercepts
     await this.awsProviderRadio.click({ force: true });
     await this.waitForPageLoad();

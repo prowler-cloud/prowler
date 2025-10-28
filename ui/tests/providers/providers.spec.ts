@@ -1,4 +1,5 @@
 import { test } from "@playwright/test";
+import { ScansPage } from "../scans/scans-page";
 import {
   ProvidersPage,
   AWSProviderData,
