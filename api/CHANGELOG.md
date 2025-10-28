@@ -2,6 +2,11 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.15.0] (Prowler UNRELEASED)
+
+### Added
+- Support for configuring multiple LLM providers [(#8772)](https://github.com/prowler-cloud/prowler/pull/8772)
+
 ## [1.14.0] (Prowler 5.13.0)
 
 ### Added

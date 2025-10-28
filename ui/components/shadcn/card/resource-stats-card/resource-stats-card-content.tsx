@@ -3,20 +3,12 @@ import { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
+import { CardVariant } from "../card";
+
 export interface StatItem {
   icon: LucideIcon;
   label: string;
 }
-
-export const CardVariant = {
-  default: "default",
-  fail: "fail",
-  pass: "pass",
-  warning: "warning",
-  info: "info",
-} as const;
-
-export type CardVariant = (typeof CardVariant)[keyof typeof CardVariant];
 
 const variantColors = {
   default: "#868994",
