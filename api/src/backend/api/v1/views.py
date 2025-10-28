@@ -321,7 +321,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.14.0"
+        spectacular_settings.VERSION = "1.15.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -4350,7 +4350,7 @@ class LighthouseProviderConfigViewSet(BaseRLSViewSet):
     @extend_schema(
         tags=["Lighthouse AI"],
         summary="Check LLM provider connection",
-        description="Validate provider credentials asynchronously and toggle is_active. Supports OpenAI and AWS Bedrock providers.",
+        description="Validate provider credentials asynchronously and toggle is_active.",
         request=None,
         responses={202: OpenApiResponse(response=TaskSerializer)},
     )

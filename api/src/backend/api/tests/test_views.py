@@ -9148,6 +9148,45 @@ class TestLighthouseProviderConfigViewSet:
         creds = get_full.json()["data"]["attributes"]["credentials"]
         assert creds["api_key"] == valid_key
 
+    def test_delete_provider_updates_tenant_defaults(
+        self, authenticated_client, tenants_fixture
+    ):
+        """Deleting a provider config should clear tenant default_provider and its default_model entry."""
+
+        tenant = tenants_fixture[0]
+
+        # Create provider configuration to delete
+        provider = LighthouseProviderConfiguration.objects.create(
+            tenant_id=tenant.id,
+            provider_type="openai",
+            credentials=b'{"api_key":"sk-test123T3BlbkFJ"}',
+            is_active=True,
+        )
+
+        # Seed tenant defaults referencing the provider we will delete
+        cfg = LighthouseTenantConfiguration.objects.create(
+            tenant_id=tenant.id,
+            business_context="Test",
+            default_provider="openai",
+            default_models={"openai": "gpt-4o", "other": "model-x"},
+        )
+
+        # Delete via API and validate response
+        url = reverse("lighthouse-providers-detail", kwargs={"pk": str(provider.id)})
+        resp = authenticated_client.delete(url)
+        assert resp.status_code in (
+            status.HTTP_204_NO_CONTENT,
+            status.HTTP_200_OK,
+        )
+
+        # Tenant defaults should be updated
+        cfg.refresh_from_db()
+        assert cfg.default_provider == ""
+        assert "openai" not in cfg.default_models
+
+        # Unrelated entries should remain untouched
+        assert cfg.default_models.get("other") == "model-x"
+
     @pytest.mark.parametrize(
         "credentials",
         [

@@ -1,7 +1,7 @@
 import { Page, Locator, expect } from "@playwright/test";
+import { BasePage } from "../base-page";
 
-export class HomePage {
-  readonly page: Page;
+export class HomePage extends BasePage {
   
   // Main content elements
   readonly mainContent: Locator;
@@ -18,15 +18,14 @@ export class HomePage {
   readonly overviewSection: Locator;
   
   // UI elements
-  readonly themeToggle: Locator;
   readonly logo: Locator;
 
   constructor(page: Page) {
-    this.page = page;
+    super(page);
     
     // Main content elements
     this.mainContent = page.locator("main");
-    this.breadcrumbs = page.getByLabel("Breadcrumbs");
+    this.breadcrumbs = page.getByRole("navigation", { name: "Breadcrumbs" });
     this.overviewHeading = page.getByRole("heading", { name: "Overview", exact: true });
     
     // Navigation elements
@@ -39,18 +38,12 @@ export class HomePage {
     this.overviewSection = page.locator('[data-testid="overview-section"]');
     
     // UI elements
-    this.themeToggle = page.getByLabel("Toggle theme");
     this.logo = page.locator('svg[width="300"]');
   }
 
   // Navigation methods
   async goto(): Promise<void> {
-    await this.page.goto("/");
-    await this.waitForPageLoad();
-  }
-
-  async waitForPageLoad(): Promise<void> {
-    await this.page.waitForLoadState("networkidle");
+    await super.goto("/");
   }
 
   // Verification methods
@@ -58,7 +51,6 @@ export class HomePage {
     await expect(this.page).toHaveURL("/");
     await expect(this.mainContent).toBeVisible();
     await expect(this.overviewHeading).toBeVisible();
-    await this.waitForPageLoad();
   }
 
   async verifyBreadcrumbs(): Promise<void> {
@@ -94,26 +86,12 @@ export class HomePage {
   }
 
   // Utility methods
-  async refresh(): Promise<void> {
-    await this.page.reload();
-    await this.waitForPageLoad();
-  }
-
-  async goBack(): Promise<void> {
-    await this.page.goBack();
-    await this.waitForPageLoad();
-  }
 
   // Accessibility methods
   async verifyKeyboardNavigation(): Promise<void> {
     // Test tab navigation through main elements
     await this.page.keyboard.press("Tab");
     await expect(this.themeToggle).toBeFocused();
-  }
-
-  // Wait methods
-  async waitForRedirect(expectedUrl: string): Promise<void> {
-    await this.page.waitForURL(expectedUrl);
   }
 
   async waitForContentLoad(): Promise<void> {

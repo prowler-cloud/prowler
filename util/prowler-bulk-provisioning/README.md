@@ -58,7 +58,7 @@ This two-step approach follows the Prowler API design where providers and their 
   export PROWLER_API_KEY="pk_example-api-key"
   ```
 
-  For detailed instructions on creating API keys, see: https://docs.prowler.com/user-guide/providers/prowler-app-api-keys
+  For detailed instructions on creating API keys, see: https://docs.prowler.com/user-guide/tutorials/prowler-app-api-keys
 
 
 ## AWS Organizations Integration
