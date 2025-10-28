@@ -3707,26 +3707,34 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 80350f3ab09becd9
+          x-spec-enum-id: 30bc523cb9ec0e8b
           enum:
+          - bedrock
           - openai
+          - openai_compatible
         description: |-
           LLM provider name
 
           * `openai` - OpenAI
+          * `bedrock` - AWS Bedrock
+          * `openai_compatible` - OpenAI Compatible
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 80350f3ab09becd9
+            x-spec-enum-id: 30bc523cb9ec0e8b
             enum:
+            - bedrock
             - openai
+            - openai_compatible
         description: |-
           Multiple values may be separated by commas.
 
           * `openai` - OpenAI
+          * `bedrock` - AWS Bedrock
+          * `openai_compatible` - OpenAI Compatible
         explode: false
         style: form
       - name: filter[search]
@@ -3856,26 +3864,34 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 80350f3ab09becd9
+          x-spec-enum-id: 30bc523cb9ec0e8b
           enum:
+          - bedrock
           - openai
+          - openai_compatible
         description: |-
           LLM provider name
 
           * `openai` - OpenAI
+          * `bedrock` - AWS Bedrock
+          * `openai_compatible` - OpenAI Compatible
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 80350f3ab09becd9
+            x-spec-enum-id: 30bc523cb9ec0e8b
             enum:
+            - bedrock
             - openai
+            - openai_compatible
         description: |-
           Multiple values may be separated by commas.
 
           * `openai` - OpenAI
+          * `bedrock` - AWS Bedrock
+          * `openai_compatible` - OpenAI Compatible
         explode: false
         style: form
       - name: filter[search]
@@ -4101,7 +4117,7 @@ paths:
     post:
       operationId: lighthouse_providers_refresh_models_create
       description: Fetch available models for this provider configuration and upsert
-        into catalog.
+        into catalog. Supports OpenAI, OpenAI-compatible, and AWS Bedrock providers.
       summary: Refresh LLM models catalog
       parameters:
       - in: path
@@ -11469,12 +11485,16 @@ components:
             provider_type:
               enum:
               - openai
+              - bedrock
+              - openai_compatible
               type: string
-              x-spec-enum-id: 80350f3ab09becd9
+              x-spec-enum-id: 30bc523cb9ec0e8b
               description: |-
                 LLM provider name
 
                 * `openai` - OpenAI
+                * `bedrock` - AWS Bedrock
+                * `openai_compatible` - OpenAI Compatible
             base_url:
               type: string
               format: uri
@@ -11506,12 +11526,16 @@ components:
             provider_type:
               enum:
               - openai
+              - bedrock
+              - openai_compatible
               type: string
-              x-spec-enum-id: 80350f3ab09becd9
+              x-spec-enum-id: 30bc523cb9ec0e8b
               description: |-
                 LLM provider name
 
                 * `openai` - OpenAI
+                * `bedrock` - AWS Bedrock
+                * `openai_compatible` - OpenAI Compatible
             base_url:
               type: string
               format: uri
@@ -11546,12 +11570,16 @@ components:
                 provider_type:
                   enum:
                   - openai
+                  - bedrock
+                  - openai_compatible
                   type: string
-                  x-spec-enum-id: 80350f3ab09becd9
+                  x-spec-enum-id: 30bc523cb9ec0e8b
                   description: |-
                     LLM provider name
 
                     * `openai` - OpenAI
+                    * `bedrock` - AWS Bedrock
+                    * `openai_compatible` - OpenAI Compatible
                 base_url:
                   type: string
                   format: uri
@@ -11603,13 +11631,17 @@ components:
             provider_type:
               enum:
               - openai
+              - bedrock
+              - openai_compatible
               type: string
-              x-spec-enum-id: 80350f3ab09becd9
+              x-spec-enum-id: 30bc523cb9ec0e8b
               readOnly: true
               description: |-
                 LLM provider name
 
                 * `openai` - OpenAI
+                * `bedrock` - AWS Bedrock
+                * `openai_compatible` - OpenAI Compatible
             base_url:
               type: string
               format: uri
@@ -12644,13 +12676,17 @@ components:
                 provider_type:
                   enum:
                   - openai
+                  - bedrock
+                  - openai_compatible
                   type: string
-                  x-spec-enum-id: 80350f3ab09becd9
+                  x-spec-enum-id: 30bc523cb9ec0e8b
                   readOnly: true
                   description: |-
                     LLM provider name
 
                     * `openai` - OpenAI
+                    * `bedrock` - AWS Bedrock
+                    * `openai_compatible` - OpenAI Compatible
                 base_url:
                   type: string
                   format: uri
