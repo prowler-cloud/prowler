@@ -72,13 +72,11 @@ export const CheckFindings = ({
 
   return (
     <BaseCard>
-      {/* Header */}
       <CardHeader>
         <CardTitle>Check Findings</CardTitle>
       </CardHeader>
 
-      {/* DonutChart Content */}
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-2">
         <div className="mx-auto max-h-[200px] max-w-[200px]">
           <DonutChart
             data={donutData}
@@ -92,8 +90,7 @@ export const CheckFindings = ({
           />
         </div>
 
-        {/* Footer with ResourceStatsCards */}
-        <ResourceStatsCardContainer className="flex w-full flex-col items-start justify-center gap-4 sm:flex-row md:w-[480px] md:justify-between">
+        <ResourceStatsCardContainer className="flex w-full flex-col items-start justify-center gap-4 lg:flex-row lg:justify-between">
           <ResourceStatsCard
             containerless
             badge={{
@@ -111,11 +108,11 @@ export const CheckFindings = ({
                 ? { message: "No failed findings to display" }
                 : undefined
             }
-            className="flex-1"
+            className="w-full lg:min-w-0 lg:flex-1"
           />
 
-          <div className="flex w-full items-center justify-center sm:w-auto sm:self-stretch sm:px-[46px]">
-            <div className="h-px w-full bg-slate-300 sm:h-full sm:w-px dark:bg-[rgba(39,39,42,1)]" />
+          <div className="flex w-full items-center justify-center lg:w-auto lg:self-stretch">
+            <div className="h-px w-full bg-slate-300 lg:h-full lg:w-px dark:bg-[rgba(39,39,42,1)]" />
           </div>
 
           <ResourceStatsCard
@@ -135,7 +132,7 @@ export const CheckFindings = ({
                 ? { message: "No passed findings to display" }
                 : undefined
             }
-            className="flex-1"
+            className="w-full lg:min-w-0 lg:flex-1"
           />
         </ResourceStatsCardContainer>
       </CardContent>
