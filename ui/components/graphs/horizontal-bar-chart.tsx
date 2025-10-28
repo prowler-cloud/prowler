@@ -93,45 +93,39 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
                 )}
 
                 {isHovered && (
-                  <div className="absolute top-10 left-0 z-10 min-w-[200px] rounded-[12px] border border-[rgba(38,38,38,0.70)] bg-white p-3 shadow-lg backdrop-blur-[46px] dark:border-[rgba(38,38,38,0.70)] dark:bg-[rgba(23,23,23,0.50)]">
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="h-3 w-3 rounded-sm"
-                        style={{ backgroundColor: barColor }}
-                      />
-                      <span
-                        className="font-semibold"
-                        style={{ color: "var(--chart-text-primary)" }}
-                      >
-                        {item.value.toLocaleString()} {item.name} Risk
-                      </span>
-                    </div>
-                    {item.newFindings !== undefined && (
-                      <div className="mt-2 flex items-center gap-2">
-                        <Bell
-                          size={14}
-                          style={{ color: "var(--chart-fail)" }}
+                  <div className="absolute left-0 top-10 z-10 rounded-xl border border-slate-200 bg-white px-3 py-1.5 shadow-lg dark:border-[#202020] dark:bg-[#121110]">
+                    <div className="flex flex-col gap-0.5">
+                      {/* Title with color chip */}
+                      <div className="flex items-center gap-1">
+                        <div
+                          className="size-3 shrink-0 rounded"
+                          style={{ backgroundColor: barColor }}
                         />
-                        <span
-                          className="text-sm"
-                          style={{ color: "var(--chart-text-secondary)" }}
-                        >
-                          {item.newFindings} New Findings
-                        </span>
+                        <p className="text-sm font-medium leading-5 text-slate-900 dark:text-[#f4f4f5]">
+                          {item.value.toLocaleString()} {item.name} Risk
+                        </p>
                       </div>
-                    )}
-                    {item.change !== undefined && (
-                      <p
-                        className="mt-1 text-sm"
-                        style={{ color: "var(--chart-text-secondary)" }}
-                      >
-                        <span className="font-bold">
-                          {item.change > 0 ? "+" : ""}
-                          {item.change}%
-                        </span>{" "}
-                        Since Last Scan
-                      </p>
-                    )}
+
+                      {/* New Findings row */}
+                      {item.newFindings !== undefined && (
+                        <div className="flex items-center gap-1">
+                          <Bell size={12} className="shrink-0 text-slate-600 dark:text-[#d4d4d8]" />
+                          <p className="text-sm font-medium leading-5 text-slate-600 dark:text-[#d4d4d8]">
+                            {item.newFindings} New Findings
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Change percentage row */}
+                      {item.change !== undefined && (
+                        <div className="flex items-start">
+                          <p className="text-sm font-medium leading-5 text-slate-600 dark:text-[#d4d4d8]">
+                            {item.change > 0 ? "+" : ""}
+                            {item.change}% Since last scan
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
