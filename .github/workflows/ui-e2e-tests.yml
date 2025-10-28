@@ -18,6 +18,12 @@ jobs:
       AUTH_TRUST_HOST: true
       NEXTAUTH_URL: 'http://localhost:3000'
       NEXT_PUBLIC_API_BASE_URL: 'http://localhost:8080/api/v1'
+      E2E_ADMIN_USER: ${{ secrets.E2E_ADMIN_USER }}
+      E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+      E2E_AWS_PROVIDER_ACCOUNT_ID: ${{ secrets.E2E_AWS_PROVIDER_ACCOUNT_ID }}
+      E2E_AWS_PROVIDER_ACCESS_KEY: ${{ secrets.E2E_AWS_PROVIDER_ACCESS_KEY }}
+      E2E_AWS_PROVIDER_SECRET_KEY: ${{ secrets.E2E_AWS_PROVIDER_SECRET_KEY }}
+      E2E_AWS_PROVIDER_ROLE_ARN: ${{ secrets.E2E_AWS_PROVIDER_ROLE_ARN }}
       E2E_NEW_PASSWORD: ${{ secrets.E2E_NEW_PASSWORD }}
     steps:
       - name: Checkout repository
