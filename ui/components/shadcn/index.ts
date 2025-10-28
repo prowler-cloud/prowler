@@ -5,7 +5,6 @@ export * from "./card/resource-stats-card/resource-stats-card-container";
 export * from "./card/resource-stats-card/resource-stats-card-content";
 export * from "./card/resource-stats-card/resource-stats-card-divider";
 export * from "./card/resource-stats-card/resource-stats-card-header";
-export * from "./card/stats-container";
+export * from "./select/select";
 export * from "./tabs/generic-tabs";
 export * from "./tabs/tabs";
-export * from "./select/select";
