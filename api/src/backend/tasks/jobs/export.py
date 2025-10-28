@@ -187,18 +187,21 @@ def get_s3_client():
     return s3_client
 
 
-def _upload_to_s3(tenant_id: str, zip_path: str, scan_id: str) -> str | None:
+def _upload_to_s3(
+    tenant_id: str, scan_id: str, local_path: str, relative_key: str
+) -> str | None:
     """
-    Upload the specified ZIP file to an S3 bucket.
-    If the S3 bucket environment variables are not configured,
-    the function returns None without performing an upload.
+    Upload a local artifact to an S3 bucket under the tenant/scan prefix.
+
     Args:
-        tenant_id (str): The tenant identifier, used as part of the S3 key prefix.
-        zip_path (str): The local file system path to the ZIP file to be uploaded.
-        scan_id (str): The scan identifier, used as part of the S3 key prefix.
+        tenant_id (str): The tenant identifier used as the first segment of the S3 key.
+        scan_id (str): The scan identifier used as the second segment of the S3 key.
+        local_path (str): Filesystem path to the artifact to upload.
+        relative_key (str): Object key relative to `<tenant_id>/<scan_id>/`.
+
     Returns:
-        str: The S3 URI of the uploaded file (e.g., "s3://<bucket>/<key>") if successful.
-        None: If the required environment variables for the S3 bucket are not set.
+        str | None: S3 URI of the uploaded artifact, or None if the upload is skipped.
+
     Raises:
         botocore.exceptions.ClientError: If the upload attempt to S3 fails for any reason.
     """
@@ -206,34 +209,26 @@ def _upload_to_s3(tenant_id: str, zip_path: str, scan_id: str) -> str | None:
     if not bucket:
         return
 
+    if not relative_key:
+        return
+
+    if not os.path.isfile(local_path):
+        return
+
     try:
         s3 = get_s3_client()
 
-        # Upload the ZIP file (outputs) to the S3 bucket
-        zip_key = f"{tenant_id}/{scan_id}/{os.path.basename(zip_path)}"
-        s3.upload_file(
-            Filename=zip_path,
-            Bucket=bucket,
-            Key=zip_key,
-        )
+        s3_key = f"{tenant_id}/{scan_id}/{relative_key}"
+        s3.upload_file(Filename=local_path, Bucket=bucket, Key=s3_key)
 
-        # Upload the compliance directory to the S3 bucket
-        compliance_dir = os.path.join(os.path.dirname(zip_path), "compliance")
-        for filename in os.listdir(compliance_dir):
-            local_path = os.path.join(compliance_dir, filename)
-            if not os.path.isfile(local_path):
-                continue
-            file_key = f"{tenant_id}/{scan_id}/compliance/{filename}"
-            s3.upload_file(Filename=local_path, Bucket=bucket, Key=file_key)
-
-        return f"s3://{base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET}/{zip_key}"
+        return f"s3://{base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET}/{s3_key}"
     except (ClientError, NoCredentialsError, ParamValidationError, ValueError) as e:
         logger.error(f"S3 upload failed: {str(e)}")
 
 
 def _generate_output_directory(
     output_directory, prowler_provider: object, tenant_id: str, scan_id: str
-) -> tuple[str, str]:
+) -> tuple[str, str, str]:
     """
     Generate a file system path for the output directory of a prowler scan.
 
@@ -260,6 +255,7 @@ def _generate_output_directory(
         >>> _generate_output_directory("/tmp", "aws", "tenant-1234", "scan-5678")
         '/tmp/tenant-1234/aws/scan-5678/prowler-output-2023-02-15T12:34:56',
         '/tmp/tenant-1234/aws/scan-5678/compliance/prowler-output-2023-02-15T12:34:56'
+        '/tmp/tenant-1234/aws/scan-5678/threatscore/prowler-output-2023-02-15T12:34:56'
     """
     # Sanitize the prowler provider name to ensure it is a valid directory name
     prowler_provider_sanitized = re.sub(r"[^\w\-]", "-", prowler_provider)
@@ -280,4 +276,10 @@ def _generate_output_directory(
     )
     os.makedirs("/".join(compliance_path.split("/")[:-1]), exist_ok=True)
 
-    return path, compliance_path
+    threatscore_path = (
+        f"{output_directory}/{tenant_id}/{scan_id}/threatscore/prowler-output-"
+        f"{prowler_provider_sanitized}-{timestamp}"
+    )
+    os.makedirs("/".join(threatscore_path.split("/")[:-1]), exist_ok=True)
+
+    return path, compliance_path, threatscore_path
