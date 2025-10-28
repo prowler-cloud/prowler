@@ -16,7 +16,17 @@ interface HorizontalBarChartProps {
 export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-  const sortedData = [...data].sort((a, b) => {
+  const total = data.reduce((sum, d) => sum + (Number(d.value) || 0), 0);
+  const isEmpty = total <= 0;
+
+  const emptyData: BarDataPoint[] = [
+    { name: "Critical", value: 1, percentage: 100 },
+    { name: "High", value: 1, percentage: 100 },
+    { name: "Medium", value: 1, percentage: 100 },
+    { name: "Low", value: 1, percentage: 100 },
+  ];
+
+  const sortedData = (isEmpty ? emptyData : [...data]).sort((a, b) => {
     const orderA = SEVERITY_ORDER[a.name as keyof typeof SEVERITY_ORDER] ?? 999;
     const orderB = SEVERITY_ORDER[b.name as keyof typeof SEVERITY_ORDER] ?? 999;
     return orderA - orderB;
@@ -37,19 +47,20 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
 
       <div className="space-y-6">
         {sortedData.map((item, index) => {
-          const isHovered = hoveredIndex === index;
-          const isFaded = hoveredIndex !== null && !isHovered;
-          const barColor =
-            item.color ||
-            getSeverityColorByName(item.name) ||
-            CHART_COLORS.defaultColor;
+          const isHovered = !isEmpty && hoveredIndex === index;
+          const isFaded = !isEmpty && hoveredIndex !== null && !isHovered;
+          const barColor = isEmpty
+            ? CHART_COLORS.gridLine
+            : item.color ||
+              getSeverityColorByName(item.name) ||
+              CHART_COLORS.defaultColor;
 
           return (
             <div
               key={index}
               className="flex items-center gap-6"
-              onMouseEnter={() => setHoveredIndex(index)}
-              onMouseLeave={() => setHoveredIndex(null)}
+              onMouseEnter={() => !isEmpty && setHoveredIndex(index)}
+              onMouseLeave={() => !isEmpty && setHoveredIndex(null)}
             >
               {/* Label */}
               <div className="w-20 shrink-0">
@@ -68,11 +79,13 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
               {/* Bar - flexible */}
               <div className="relative flex-1">
                 <div className="absolute inset-0 h-[22px] w-full rounded-xl bg-[#FAFAFA] dark:bg-black" />
-                {item.value > 0 && (
+                {(item.value > 0 || isEmpty) && (
                   <div
                     className="relative h-[22px] rounded-[4px] border border-black/10 transition-all duration-300"
                     style={{
-                      width: `${item.percentage || (item.value / Math.max(...data.map((d) => d.value))) * 100}%`,
+                      width: isEmpty
+                        ? `${item.percentage}%`
+                        : `${item.percentage || (item.value / Math.max(...data.map((d) => d.value))) * 100}%`,
                       backgroundColor: barColor,
                       opacity: isFaded ? 0.5 : 1,
                     }}
@@ -80,9 +93,7 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
                 )}
 
                 {isHovered && (
-                  <div
-                    className="absolute top-10 left-0 z-10 min-w-[200px] rounded-[12px] border border-[rgba(38,38,38,0.70)] bg-white p-3 shadow-lg backdrop-blur-[46px] dark:border-[rgba(38,38,38,0.70)] dark:bg-[rgba(23,23,23,0.50)]"
-                  >
+                  <div className="absolute top-10 left-0 z-10 min-w-[200px] rounded-[12px] border border-[rgba(38,38,38,0.70)] bg-white p-3 shadow-lg backdrop-blur-[46px] dark:border-[rgba(38,38,38,0.70)] dark:bg-[rgba(23,23,23,0.50)]">
                     <div className="flex items-center gap-2">
                       <div
                         className="h-3 w-3 rounded-sm"
@@ -134,9 +145,18 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
                   transition: "opacity 0.2s",
                 }}
               >
-                <span className="w-[26px] text-right font-medium">{item.percentage}%</span>
-                <span className="font-medium" style={{ color: "var(--chart-text-secondary)" }}>•</span>
-                <span className="font-bold">{item.value.toLocaleString()}</span>
+                <span className="w-[26px] text-right font-medium">
+                  {isEmpty ? "0" : item.percentage}%
+                </span>
+                <span
+                  className="font-medium"
+                  style={{ color: "var(--chart-text-secondary)" }}
+                >
+                  •
+                </span>
+                <span className="font-bold">
+                  {isEmpty ? "0" : item.value.toLocaleString()}
+                </span>
               </div>
             </div>
           );
