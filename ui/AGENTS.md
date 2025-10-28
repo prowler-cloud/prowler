@@ -1181,6 +1181,38 @@ Each test documentation file (`{page-name}.md`) should follow this structured fo
 - Follow The Scope Rule strictly - used by 2+ features = shared, 1 feature = local
 - Update feature docs and `ui/CHANGELOG.md` when behavior changes
 
+### Documentation Links Pattern (Integrations Only)
+
+For integration features (e.g., API Keys, SAML, S3) that have dedicated documentation, include "Read the docs" links in both the main card/component and related modals:
+
+**Main Card Header** (e.g., API Keys card):
+```tsx
+<p className="text-xs text-gray-500">
+  Manage API keys for programmatic access.{" "}
+  <CustomLink href="https://docs.prowler.com/user-guide/providers/prowler-app-api-keys">
+    Read the docs
+  </CustomLink>
+</p>
+```
+
+**Modal/Form** (e.g., Create API Key modal):
+```tsx
+<p className="text-xs text-gray-500">
+  Need help configuring API Keys?{" "}
+  <CustomLink href="https://docs.prowler.com/user-guide/providers/prowler-app-api-keys">
+    Read the docs
+  </CustomLink>
+</p>
+```
+
+**Rules:**
+- **Only apply to integration components** (API Keys, SAML, S3, Security Hub, etc.)
+- Use the same documentation URL across related components
+- Tailor the helper text to the component context (card = general, modal = action-specific)
+- Apply `text-xs text-gray-500` styling for consistency
+- Place the link in a `<p>` tag or description area within the component
+- Always use `CustomLink` component for documentation links
+
 ## Environment Configuration
 
 ### Required Environment Variables
