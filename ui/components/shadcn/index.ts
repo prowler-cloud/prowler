@@ -8,3 +8,4 @@ export * from "./card/resource-stats-card/resource-stats-card-header";
 export * from "./card/stats-container";
 export * from "./tabs/generic-tabs";
 export * from "./tabs/tabs";
+export * from "./select/select";

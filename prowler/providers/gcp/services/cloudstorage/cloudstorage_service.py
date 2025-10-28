@@ -39,6 +39,10 @@ class CloudStorage(GCPService):
                             if isinstance(rules, list):
                                 lifecycle_rules = rules
 
+                        versioning_enabled = bucket.get("versioning", {}).get(
+                            "enabled", False
+                        )
+
                         self.buckets.append(
                             Bucket(
                                 name=bucket["name"],
@@ -51,6 +55,7 @@ class CloudStorage(GCPService):
                                 retention_policy=bucket.get("retentionPolicy"),
                                 project_id=project_id,
                                 lifecycle_rules=lifecycle_rules,
+                                versioning_enabled=versioning_enabled,
                             )
                         )
 
@@ -72,3 +77,4 @@ class Bucket(BaseModel):
     project_id: str
     retention_policy: Optional[dict] = None
     lifecycle_rules: Optional[list[dict]] = None
+    versioning_enabled: Optional[bool] = False
