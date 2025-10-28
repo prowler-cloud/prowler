@@ -14,7 +14,7 @@ import {
   ResourceStatsCardContainer,
 } from "@/components/shadcn";
 
-interface CheckFindingsProps {
+interface StatusChartProps {
   failFindingsData: {
     total: number;
     new: number;
@@ -27,10 +27,10 @@ interface CheckFindingsProps {
   };
 }
 
-export const CheckFindings = ({
+export const StatusChart = ({
   failFindingsData,
   passFindingsData,
-}: CheckFindingsProps) => {
+}: StatusChartProps) => {
   // Calculate total findings
   const totalFindings = failFindingsData.total + passFindingsData.total;
 

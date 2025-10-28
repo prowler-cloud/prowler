@@ -9,9 +9,9 @@ import { ContentLayout } from "@/components/ui";
 import { SearchParamsProps } from "@/types";
 
 import { AccountsSelector } from "./components/accounts-selector";
-import { CheckFindings } from "./components/check-findings";
 import { ProviderTypeSelector } from "./components/provider-type-selector";
 import { RiskSeverityChart } from "./components/risk-severity-chart";
+import { StatusChart } from "./components/status-chart";
 
 const FILTER_PREFIX = "filter[";
 
@@ -93,7 +93,7 @@ const SSRCheckFindings = async ({
   const mutedTotal = muted_new + muted_changed;
 
   return (
-    <CheckFindings
+    <StatusChart
       failFindingsData={{
         total: fail,
         new: fail_new,

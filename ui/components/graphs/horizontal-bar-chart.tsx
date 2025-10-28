@@ -93,7 +93,7 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
                 )}
 
                 {isHovered && (
-                  <div className="absolute left-0 top-10 z-10 rounded-xl border border-slate-200 bg-white px-3 py-1.5 shadow-lg dark:border-[#202020] dark:bg-[#121110]">
+                  <div className="absolute top-10 left-0 z-10 rounded-xl border border-slate-200 bg-white px-3 py-1.5 shadow-lg dark:border-[#202020] dark:bg-[#121110]">
                     <div className="flex flex-col gap-0.5">
                       {/* Title with color chip */}
                       <div className="flex items-center gap-1">
@@ -101,7 +101,7 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
                           className="size-3 shrink-0 rounded"
                           style={{ backgroundColor: barColor }}
                         />
-                        <p className="text-sm font-medium leading-5 text-slate-900 dark:text-[#f4f4f5]">
+                        <p className="text-sm leading-5 font-medium text-slate-900 dark:text-[#f4f4f5]">
                           {item.value.toLocaleString()} {item.name} Risk
                         </p>
                       </div>
@@ -109,8 +109,11 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
                       {/* New Findings row */}
                       {item.newFindings !== undefined && (
                         <div className="flex items-center gap-1">
-                          <Bell size={12} className="shrink-0 text-slate-600 dark:text-[#d4d4d8]" />
-                          <p className="text-sm font-medium leading-5 text-slate-600 dark:text-[#d4d4d8]">
+                          <Bell
+                            size={12}
+                            className="shrink-0 text-slate-600 dark:text-[#d4d4d8]"
+                          />
+                          <p className="text-sm leading-5 font-medium text-slate-600 dark:text-[#d4d4d8]">
                             {item.newFindings} New Findings
                           </p>
                         </div>
@@ -119,7 +122,7 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
                       {/* Change percentage row */}
                       {item.change !== undefined && (
                         <div className="flex items-start">
-                          <p className="text-sm font-medium leading-5 text-slate-600 dark:text-[#d4d4d8]">
+                          <p className="text-sm leading-5 font-medium text-slate-600 dark:text-[#d4d4d8]">
                             {item.change > 0 ? "+" : ""}
                             {item.change}% Since last scan
                           </p>
