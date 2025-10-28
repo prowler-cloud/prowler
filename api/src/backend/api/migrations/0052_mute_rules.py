@@ -13,7 +13,7 @@ import api.rls
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0050_lighthouse_multi_llm"),
+        ("api", "0051_oraclecloud_provider"),
     ]
 
     operations = [
