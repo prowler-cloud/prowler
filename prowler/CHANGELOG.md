@@ -16,6 +16,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS DRS service metadata to new format [(#8870)](https://github.com/prowler-cloud/prowler/pull/8870)
 - Update AWS DynamoDB service metadata to new format [(#8871)](https://github.com/prowler-cloud/prowler/pull/8871)
 
+### Fixed
+- Update `resource_id` for admincenter service and avoid unnecessary msgraph requests [(#9019)](https://github.com/prowler-cloud/prowler/pull/9019)
+
 ---
 
 ## [v5.13.1] (Prowler UNRELEASED)
