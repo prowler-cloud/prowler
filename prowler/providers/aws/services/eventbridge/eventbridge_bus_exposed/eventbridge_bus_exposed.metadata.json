@@ -19,7 +19,6 @@
     "https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/CloudWatchEvents-CrossAccountEventDelivery.html",
     "https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/CWE_GettingStarted.html",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatchEvents/event-bus-exposed.html",
-    "https://avd.aquasec.com/misconfig/aws/eventbridge/event-bus-public-access/",
     "https://aws.amazon.com/blogs/compute/simplifying-cross-account-access-with-amazon-eventbridge-resource-policies/"
   ],
   "Remediation": {
