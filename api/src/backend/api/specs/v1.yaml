@@ -5433,7 +5433,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4c1e219dad1cc0e7
+          x-spec-enum-id: 6f034074d7104650
           enum:
           - aws
           - azure
@@ -5441,6 +5441,7 @@ paths:
           - github
           - kubernetes
           - m365
+          - oci
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -5448,13 +5449,14 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4c1e219dad1cc0e7
+            x-spec-enum-id: 6f034074d7104650
             enum:
             - aws
             - azure
@@ -5462,6 +5464,7 @@ paths:
             - github
             - kubernetes
             - m365
+            - oci
         description: |-
           Multiple values may be separated by commas.
 
@@ -5471,6 +5474,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - name: filter[search]
@@ -8237,6 +8241,72 @@ paths:
         '404':
           description: The scan has no reports, or the report generation task has
             not started yet
+  /api/v1/scans/{id}/threatscore:
+    get:
+      operationId: scans_threatscore_retrieve
+      description: Download a specific threatscore report (e.g., 'prowler_threatscore_aws')
+        as a PDF file.
+      summary: Retrieve threatscore report
+      parameters:
+      - in: query
+        name: fields[scans]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - trigger
+            - state
+            - unique_resource_count
+            - progress
+            - duration
+            - provider
+            - task
+            - inserted_at
+            - started_at
+            - completed_at
+            - scheduled_at
+            - next_scan_at
+            - processor
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scan.
+        required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      tags:
+      - Scan
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          description: PDF file containing the threatscore report
+        '202':
+          description: The task is in progress
+        '401':
+          description: API key missing or user not Authenticated
+        '403':
+          description: There is a problem with credentials
+        '404':
+          description: The scan has no threatscore reports, or the threatscore report
+            generation task has not started yet
   /api/v1/schedules/daily:
     post:
       operationId: schedules_daily_create

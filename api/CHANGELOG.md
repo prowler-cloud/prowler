@@ -10,6 +10,11 @@ All notable changes to the **Prowler API** are documented in this file.
 - Support for configuring multiple LLM providers [(#8772)](https://github.com/prowler-cloud/prowler/pull/8772)
 - Support for Oracle Cloud Infrastructure (OCI) provider [(#8927)](https://github.com/prowler-cloud/prowler/pull/8927)
 
+## [1.14.1] (Prowler 5.13.1)
+
+### Fixed
+- `/api/v1/overviews/providers` collapses data by provider type so the UI receives a single aggregated record per cloud family even when multiple accounts exist [(#9053)](https://github.com/prowler-cloud/prowler/pull/9053)
+
 ## [1.14.0] (Prowler 5.13.0)
 
 ### Added
