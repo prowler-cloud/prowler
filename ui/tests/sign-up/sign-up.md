@@ -1,7 +1,7 @@
 ### E2E Tests: User Sign-Up
 
 **Suite ID:** `SIGNUP-E2E`
-**Feature:** New user registration flow.
+**Feature:** New user registration.
 
 ---
 
