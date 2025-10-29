@@ -48,20 +48,7 @@ jobs:
       - name: Update AWS services regions
         run: python util/update_aws_services_regions.py
 
-      - name: Check for changes
-        id: check-changes
-        run: |
-          if git diff --quiet; then
-            echo "has_changes=false" >> "${GITHUB_OUTPUT}"
-            echo "No changes detected in AWS regions data"
-          else
-            echo "has_changes=true" >> "${GITHUB_OUTPUT}"
-            echo "Changes detected:"
-            git diff --stat
-          fi
-
       - name: Create pull request
-        if: steps.check-changes.outputs.has_changes == 'true'
         id: create-pr
         uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
         with:
@@ -94,15 +81,10 @@ jobs:
             By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.
 
       - name: PR creation result
-        if: steps.check-changes.outputs.has_changes == 'true'
         run: |
           if [[ "${{ steps.create-pr.outputs.pull-request-number }}" ]]; then
             echo "✓ Pull request #${{ steps.create-pr.outputs.pull-request-number }} created successfully"
             echo "URL: ${{ steps.create-pr.outputs.pull-request-url }}"
           else
-            echo "ℹ Pull request already exists or no action needed"
+            echo "✓ No changes detected - AWS regions are up to date"
           fi
-
-      - name: No changes detected
-        if: steps.check-changes.outputs.has_changes == 'false'
-        run: echo "✓ AWS regions are up to date, no pull request needed"
