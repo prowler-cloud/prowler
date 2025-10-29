@@ -11,8 +11,9 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.django.production")
 import django  # noqa: E402
 
 django.setup()
-from config.django.production import LOGGING as DJANGO_LOGGERS, DEBUG  # noqa: E402
 from config.custom_logging import BackendLogger  # noqa: E402
+from config.django.production import DEBUG
+from config.django.production import LOGGING as DJANGO_LOGGERS  # noqa: E402
 
 BIND_ADDRESS = env("DJANGO_BIND_ADDRESS", default="127.0.0.1")
 PORT = env("DJANGO_PORT", default=8000)

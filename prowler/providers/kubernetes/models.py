@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 
 from kubernetes import client
-
 from prowler.config.config import output_file_timestamp
 from prowler.providers.common.models import ProviderOutputOptions
 
