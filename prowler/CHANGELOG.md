@@ -9,6 +9,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add OCI mapping to scan and check classes [(#8927)](https://github.com/prowler-cloud/prowler/pull/8927)
 - `codepipeline_project_repo_private` check for AWS provider [(#5915)](https://github.com/prowler-cloud/prowler/pull/5915)
 - `cloudstorage_bucket_versioning_enabled` check for GCP provider [(#9014)](https://github.com/prowler-cloud/prowler/pull/9014)
+- `cloudstorage_bucket_soft_delete_enabled` check for GCP provider [(#9028)](https://github.com/prowler-cloud/prowler/pull/9028)
 
 ### Changed
 - Update AWS Direct Connect service metadata to new format [(#8855)](https://github.com/prowler-cloud/prowler/pull/8855)
@@ -43,10 +44,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add Common Cloud Controls for AWS, Azure and GCP [(#8000)](https://github.com/prowler-cloud/prowler/pull/8000)
 - Improve Provider documentation guide [(#8430)](https://github.com/prowler-cloud/prowler/pull/8430)
 - `cloudstorage_bucket_lifecycle_management_enabled` check for GCP provider [(#8936)](https://github.com/prowler-cloud/prowler/pull/8936)
-- `cloudstorage_bucket_versioning_enabled` check for GCP provider [(#9014)](https://github.com/prowler-cloud/prowler/pull/9014)
-- `cloudstorage_bucket_soft_delete_enabled` check for GCP provider [(#9028)](https://github.com/prowler-cloud/prowler/pull/9028)
-
-
 
 ### Changed
 

@@ -8,6 +8,28 @@ from tests.providers.gcp.gcp_fixtures import (
 
 
 class TestCloudStorageBucketSoftDeleteEnabled:
+    def test_no_buckets(self):
+        cloudstorage_client = mock.MagicMock()
+        cloudstorage_client.buckets = []
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_soft_delete_enabled.cloudstorage_bucket_soft_delete_enabled.cloudstorage_client",
+                new=cloudstorage_client,
+            ),
+        ):
+            from prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_soft_delete_enabled.cloudstorage_bucket_soft_delete_enabled import (
+                cloudstorage_bucket_soft_delete_enabled,
+            )
+
+            check = cloudstorage_bucket_soft_delete_enabled()
+            result = check.execute()
+            assert len(result) == 0
+
     def test_bucket_with_soft_delete_disabled(self):
         cloudstorage_client = mock.MagicMock()
 
@@ -146,7 +168,6 @@ class TestCloudStorageBucketSoftDeleteEnabled:
                     project_id=GCP_PROJECT_ID,
                     lifecycle_rules=[],
                     versioning_enabled=False,
-                    soft_delete_enabled=False,
                 )
             ]
 

@@ -12,7 +12,8 @@
   "Risk": "Buckets without Soft Delete enabled are at higher risk of irreversible data loss caused by accidental or unauthorized deletions, since deleted objects cannot be recovered once removed.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://cloud.google.com/storage/docs/soft-delete"
+    "https://cloud.google.com/storage/docs/soft-delete",
+    "https://cloud.google.com/blog/products/storage-data-transfer/understanding-cloud-storages-new-soft-delete-feature"
   ],
   "Remediation": {
     "Code": {

@@ -49,7 +49,7 @@ class CloudStorage(GCPService):
                             retention = soft_delete_policy.get(
                                 "retentionDurationSeconds"
                             )
-                            if isinstance(retention, int) and retention > 0:
+                            if retention and int(retention) > 0:
                                 soft_delete_enabled = True
 
                         self.buckets.append(
