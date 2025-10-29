@@ -7,8 +7,6 @@ on:
     types:
       - 'labeled'
       - 'closed'
-    paths:
-      - '.github/workflows/backport.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}

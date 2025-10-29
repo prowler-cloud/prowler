@@ -89,6 +89,18 @@ export default defineConfig({
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
+      testMatch: "auth-login.spec.ts",
+    },
+    // This project runs the sign-up test suite
+    {
+      name: "sign-up",
+      testMatch: "sign-up.spec.ts",
+    },
+    // This project runs the providers test suite
+    {
+      name: "providers",
+      testMatch: "providers.spec.ts",
+      dependencies: ["admin.auth.setup"],
     },
   ],
 

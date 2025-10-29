@@ -3,12 +3,10 @@ import { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
+import { CardVariant } from "../card";
 import { ResourceStatsCardContainer } from "./resource-stats-card-container";
 import type { StatItem } from "./resource-stats-card-content";
-import {
-  CardVariant,
-  ResourceStatsCardContent,
-} from "./resource-stats-card-content";
+import { ResourceStatsCardContent } from "./resource-stats-card-content";
 import { ResourceStatsCardHeader } from "./resource-stats-card-header";
 
 export type { StatItem };
