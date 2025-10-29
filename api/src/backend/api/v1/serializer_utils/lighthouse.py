@@ -13,6 +13,28 @@ class OpenAICredentialsSerializer(serializers.Serializer):
             raise serializers.ValidationError("Invalid OpenAI API key format.")
         return value
 
+    def to_internal_value(self, data):
+        """Check for unknown fields before DRF filters them out."""
+        if not isinstance(data, dict):
+            raise serializers.ValidationError(
+                {"non_field_errors": ["Credentials must be an object"]}
+            )
+
+        allowed_fields = set(self.fields.keys())
+        provided_fields = set(data.keys())
+        extra_fields = provided_fields - allowed_fields
+
+        if extra_fields:
+            raise serializers.ValidationError(
+                {
+                    "non_field_errors": [
+                        f"Unknown fields in credentials: {', '.join(sorted(extra_fields))}"
+                    ]
+                }
+            )
+
+        return super().to_internal_value(data)
+
 
 class BedrockCredentialsSerializer(serializers.Serializer):
     """
@@ -52,6 +74,28 @@ class BedrockCredentialsSerializer(serializers.Serializer):
             )
         return value
 
+    def to_internal_value(self, data):
+        """Check for unknown fields before DRF filters them out."""
+        if not isinstance(data, dict):
+            raise serializers.ValidationError(
+                {"non_field_errors": ["Credentials must be an object"]}
+            )
+
+        allowed_fields = set(self.fields.keys())
+        provided_fields = set(data.keys())
+        extra_fields = provided_fields - allowed_fields
+
+        if extra_fields:
+            raise serializers.ValidationError(
+                {
+                    "non_field_errors": [
+                        f"Unknown fields in credentials: {', '.join(sorted(extra_fields))}"
+                    ]
+                }
+            )
+
+        return super().to_internal_value(data)
+
 
 class OpenAICompatibleCredentialsSerializer(serializers.Serializer):
     """
@@ -68,6 +112,28 @@ class OpenAICompatibleCredentialsSerializer(serializers.Serializer):
         if not isinstance(value, str) or not value.strip():
             raise serializers.ValidationError("API key is required.")
         return value.strip()
+
+    def to_internal_value(self, data):
+        """Check for unknown fields before DRF filters them out."""
+        if not isinstance(data, dict):
+            raise serializers.ValidationError(
+                {"non_field_errors": ["Credentials must be an object"]}
+            )
+
+        allowed_fields = set(self.fields.keys())
+        provided_fields = set(data.keys())
+        extra_fields = provided_fields - allowed_fields
+
+        if extra_fields:
+            raise serializers.ValidationError(
+                {
+                    "non_field_errors": [
+                        f"Unknown fields in credentials: {', '.join(sorted(extra_fields))}"
+                    ]
+                }
+            )
+
+        return super().to_internal_value(data)
 
 
 @extend_schema_field(
