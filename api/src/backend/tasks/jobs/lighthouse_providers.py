@@ -174,6 +174,13 @@ def check_lighthouse_provider_connection(provider_config_id: str) -> Dict:
                 )
                 if resp.status_code >= 400:
                     raise Exception(f"HTTP {resp.status_code}: {resp.text[:200]}")
+
+                # Verify the response content type is application/json
+                content_type = resp.headers.get("Content-Type", "")
+                if "application/json" not in content_type:
+                    raise Exception(
+                        f"Invalid content type: expected 'application/json', got '{content_type}'"
+                    )
             except Exception as e:
                 provider_cfg.is_active = False
                 provider_cfg.save()
