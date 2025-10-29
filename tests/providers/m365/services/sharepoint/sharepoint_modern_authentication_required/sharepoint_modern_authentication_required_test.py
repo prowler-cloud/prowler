@@ -48,7 +48,7 @@ class Test_sharepoint_modern_authentication_required:
             assert result[0].status_extended == (
                 "Microsoft 365 SharePoint does not allow access to apps that don't use modern authentication."
             )
-            assert result[0].resource_id == DOMAIN
+            assert result[0].resource_id == "sharepointSettings"
             assert result[0].location == "global"
             assert result[0].resource_name == "SharePoint Settings"
             assert result[0].resource == sharepoint_client.settings.dict()
@@ -96,7 +96,7 @@ class Test_sharepoint_modern_authentication_required:
             assert result[0].status_extended == (
                 "Microsoft 365 SharePoint allows access to apps that don't use modern authentication."
             )
-            assert result[0].resource_id == DOMAIN
+            assert result[0].resource_id == "sharepointSettings"
             assert result[0].location == "global"
             assert result[0].resource_name == "SharePoint Settings"
             assert result[0].resource == sharepoint_client.settings.dict()
