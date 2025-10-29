@@ -139,3 +139,20 @@ jobs:
           image-tag: ${{ github.sha }}
           fail-on-critical: 'false'
           severity: 'CRITICAL'
+
+  # This job aggregates all the jobs above and is the one that should be marked as required in branch protection
+  ui-checks-pass:
+    if: github.repository == 'prowler-cloud/prowler' && always()
+    needs:
+      - check-changes
+      - code-quality-and-build
+      - dockerfile-lint
+      - container-build-and-scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Decide whether all checks passed
+        uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # v1.2.2
+        with:
+          allowed-skips: code-quality-and-build, dockerfile-lint, container-build-and-scan
+          jobs: ${{ toJSON(needs) }}
