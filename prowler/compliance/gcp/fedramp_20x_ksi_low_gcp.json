@@ -106,21 +106,26 @@
     },
     {
       "Id": "ksi-inr",
-      "Name": "KSI-INR: Incident Reporting",
-      "Description": "A secure cloud service offering will document, report, and analyze security incidents to ensure regulatory compliance and continuous security improvement",
+      "Name": "KSI-INR: Incident Response",
+      "Description": "A secure cloud service offering will respond to incidents according to FedRAMP requirements and cloud service provider policies",
       "Attributes": [
         {
           "ItemId": "ksi-inr",
-          "Section": "Incident Reporting",
+          "Section": "Incident Response",
           "Service": "gcp"
         }
       ],
       "Checks": [
         "iam_organization_essential_contacts_configured",
+        "iam_account_access_approval_enabled",
         "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
         "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
         "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
-        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled"
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
       ]
     },
     {
@@ -174,7 +179,11 @@
       "Checks": [
         "iam_cloud_asset_inventory_enabled",
         "iam_organization_essential_contacts_configured",
-        "compute_project_os_login_enabled"
+        "iam_audit_logs_enabled",
+        "compute_project_os_login_enabled",
+        "compute_instance_serial_ports_in_use",
+        "compute_instance_block_project_wide_ssh_keys_disabled",
+        "logging_sink_created"
       ]
     },
     {
@@ -190,7 +199,9 @@
       ],
       "Checks": [
         "cloudsql_instance_automated_backups",
-        "cloudstorage_bucket_log_retention_policy_lock"
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "cloudstorage_bucket_versioning_enabled",
+        "cloudstorage_bucket_lifecycle_management_enabled"
       ]
     },
     {
@@ -249,7 +260,65 @@
       "Checks": [
         "artifacts_container_analysis_enabled",
         "gcr_container_scanning_enabled",
-        "compute_public_address_shodan"
+        "compute_public_address_shodan",
+        "cloudsql_instance_automated_backups",
+        "iam_sa_user_managed_key_rotate_90_days",
+        "iam_service_account_unused"
+      ]
+    },
+    {
+      "Id": "ksi-ced-03",
+      "Name": "KSI-CED-03: Role-Specific Training",
+      "Description": "Require role-specific training for development and engineering staff covering best practices for delivering secure software",
+      "Attributes": [
+        {
+          "ItemId": "ksi-ced-03",
+          "Section": "Cybersecurity Education",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "iam_organization_essential_contacts_configured",
+        "iam_account_access_approval_enabled",
+        "iam_audit_logs_enabled"
+      ]
+    },
+    {
+      "Id": "ksi-iam-07",
+      "Name": "KSI-IAM-07: Account Lifecycle Management",
+      "Description": "Securely manage the lifecycle and privileges of all accounts, roles, and groups",
+      "Attributes": [
+        {
+          "ItemId": "ksi-iam-07",
+          "Section": "Identity and Access Management",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "apikeys_key_rotated_in_90_days",
+        "iam_sa_user_managed_key_rotate_90_days",
+        "iam_sa_user_managed_key_unused",
+        "iam_service_account_unused",
+        "compute_instance_default_service_account_in_use"
+      ]
+    },
+    {
+      "Id": "ksi-mla-07",
+      "Name": "KSI-MLA-07: Monitoring and Logging Inventory",
+      "Description": "Maintain a list of information resources and event types that will be monitored, logged, and audited",
+      "Attributes": [
+        {
+          "ItemId": "ksi-mla-07",
+          "Section": "Monitoring, Logging, and Auditing",
+          "Service": "gcp"
+        }
+      ],
+      "Checks": [
+        "iam_audit_logs_enabled",
+        "iam_cloud_asset_inventory_enabled",
+        "logging_sink_created",
+        "compute_subnet_flow_logs_enabled",
+        "compute_network_dns_logging_enabled"
       ]
     }
   ]

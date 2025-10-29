@@ -133,12 +133,12 @@
     },
     {
       "Id": "ksi-inr",
-      "Name": "KSI-INR: Incident Reporting",
-      "Description": "A secure cloud service offering will document, report, and analyze security incidents to ensure regulatory compliance and continuous security improvement",
+      "Name": "KSI-INR: Incident Response",
+      "Description": "A secure cloud service offering will respond to incidents according to FedRAMP requirements and cloud service provider policies",
       "Attributes": [
         {
           "ItemId": "ksi-inr",
-          "Section": "Incident Reporting",
+          "Section": "Incident Response",
           "Service": "azure"
         }
       ],
@@ -253,10 +253,12 @@
         "sqlserver_database_long_term_geo_redundant_backup",
         "sqlserver_database_retention_policy_exceeds_90_days",
         "storage_default_storage_account_encrypted_with_cmk_not_stored_in_storage_account",
+        "storage_geo_redundant_enabled",
         "storage_infrastructure_encryption_is_enabled",
         "storage_soft_delete_containers_enabled",
         "storage_soft_delete_enabled",
-        "vm_backup_enabled"
+        "vm_backup_enabled",
+        "vm_sufficient_daily_backup_retention_period"
       ]
     },
     {
@@ -326,6 +328,63 @@
         "vm_endpoint_protection_installed",
         "vm_os_update_system_updates",
         "vm_security_patch_assessment"
+      ]
+    },
+    {
+      "Id": "ksi-ced-03",
+      "Name": "KSI-CED-03: Role-Specific Training",
+      "Description": "Require role-specific training for development and engineering staff covering best practices for delivering secure software",
+      "Attributes": [
+        {
+          "ItemId": "ksi-ced-03",
+          "Section": "Cybersecurity Education",
+          "Service": "azure"
+        }
+      ],
+      "Checks": [
+        "defender_additional_email_configured_with_a_security_contact",
+        "defender_ensure_notify_emails_to_owners",
+        "policy_ensure_asc_for_servers_is_enabled"
+      ]
+    },
+    {
+      "Id": "ksi-iam-07",
+      "Name": "KSI-IAM-07: Account Lifecycle Management",
+      "Description": "Securely manage the lifecycle and privileges of all accounts, roles, and groups",
+      "Attributes": [
+        {
+          "ItemId": "ksi-iam-07",
+          "Section": "Identity and Access Management",
+          "Service": "azure"
+        }
+      ],
+      "Checks": [
+        "entra_non_privileged_user_has_mfa",
+        "entra_privileged_user_has_mfa",
+        "entra_user_with_vm_access_has_mfa",
+        "iam_custom_role_has_permissions_to_administer_resource_locks",
+        "iam_role_user_access_admin_restricted",
+        "app_function_identity_is_configured",
+        "vm_managed_identity_enabled"
+      ]
+    },
+    {
+      "Id": "ksi-mla-07",
+      "Name": "KSI-MLA-07: Monitoring and Logging Inventory",
+      "Description": "Maintain a list of information resources and event types that will be monitored, logged, and audited",
+      "Attributes": [
+        {
+          "ItemId": "ksi-mla-07",
+          "Section": "Monitoring, Logging, and Auditing",
+          "Service": "azure"
+        }
+      ],
+      "Checks": [
+        "monitor_log_profile_all_categories",
+        "monitor_log_profile_all_regions",
+        "monitor_log_profile_captures_all_activities",
+        "monitor_diagnostic_setting_deployed_for_all_resources",
+        "network_watcher_enabled"
       ]
     }
   ]
