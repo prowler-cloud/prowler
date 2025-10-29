@@ -20,6 +20,7 @@ import {
   KubernetesCredentials,
   M365CertificateCredentials,
   M365ClientSecretCredentials,
+  OCICredentials,
   ProviderType,
 } from "@/types";
 
@@ -36,10 +37,12 @@ import { AzureCredentialsForm } from "./via-credentials/azure-credentials-form";
 import { GitHubCredentialsForm } from "./via-credentials/github-credentials-form";
 import { IacCredentialsForm } from "./via-credentials/iac-credentials-form";
 import { KubernetesCredentialsForm } from "./via-credentials/k8s-credentials-form";
+import { OracleCloudCredentialsForm } from "./via-credentials/oraclecloud-credentials-form";
 
 type BaseCredentialsFormProps = {
   providerType: ProviderType;
   providerId: string;
+  providerUid?: string;
   onSubmit: (formData: FormData) => Promise<any>;
   successNavigationUrl: string;
   submitButtonText?: string;
@@ -49,6 +52,7 @@ type BaseCredentialsFormProps = {
 export const BaseCredentialsForm = ({
   providerType,
   providerId,
+  providerUid,
   onSubmit,
   successNavigationUrl,
   submitButtonText = "Next",
@@ -86,6 +90,13 @@ export const BaseCredentialsForm = ({
           name={ProviderCredentialFields.PROVIDER_TYPE}
           value={providerType}
         />
+        {providerUid && (
+          <input
+            type="hidden"
+            name={ProviderCredentialFields.PROVIDER_UID}
+            value={providerUid}
+          />
+        )}
 
         <ProviderTitleDocs providerType={providerType} />
 
@@ -153,6 +164,11 @@ export const BaseCredentialsForm = ({
         {providerType === "iac" && (
           <IacCredentialsForm
             control={form.control as unknown as Control<IacCredentials>}
+          />
+        )}
+        {providerType === "oci" && (
+          <OracleCloudCredentialsForm
+            control={form.control as unknown as Control<OCICredentials>}
           />
         )}
 

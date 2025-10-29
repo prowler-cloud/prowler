@@ -13,6 +13,7 @@ export const ProviderCredentialFields = {
   PROVIDER_ID: "providerId",
   PROVIDER_TYPE: "providerType",
   PROVIDER_ALIAS: "providerAlias",
+  PROVIDER_UID: "providerUid",
 
   // AWS fields
   AWS_ACCESS_KEY_ID: "aws_access_key_id",
@@ -47,6 +48,15 @@ export const ProviderCredentialFields = {
   // IaC fields
   REPOSITORY_URL: "repository_url",
   ACCESS_TOKEN: "access_token",
+
+  // OCI fields
+  OCI_USER: "user",
+  OCI_FINGERPRINT: "fingerprint",
+  OCI_KEY_FILE: "key_file",
+  OCI_KEY_CONTENT: "key_content",
+  OCI_TENANCY: "tenancy",
+  OCI_REGION: "region",
+  OCI_PASS_PHRASE: "pass_phrase",
 } as const;
 
 // Type for credential field values
@@ -78,6 +88,13 @@ export const ErrorPointers = {
   REPOSITORY_URL: "/data/attributes/secret/repository_url",
   ACCESS_TOKEN: "/data/attributes/secret/access_token",
   CERTIFICATE_CONTENT: "/data/attributes/secret/certificate_content",
+  OCI_USER: "/data/attributes/secret/user",
+  OCI_FINGERPRINT: "/data/attributes/secret/fingerprint",
+  OCI_KEY_FILE: "/data/attributes/secret/key_file",
+  OCI_KEY_CONTENT: "/data/attributes/secret/key_content",
+  OCI_TENANCY: "/data/attributes/secret/tenancy",
+  OCI_REGION: "/data/attributes/secret/region",
+  OCI_PASS_PHRASE: "/data/attributes/secret/pass_phrase",
 } as const;
 
 export type ErrorPointer = (typeof ErrorPointers)[keyof typeof ErrorPointers];

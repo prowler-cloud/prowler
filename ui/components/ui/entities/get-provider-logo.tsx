@@ -8,6 +8,7 @@ import {
   IacProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
+  OracleCloudProviderBadge,
 } from "@/components/icons/providers-badge";
 import { ProviderType } from "@/types";
 
@@ -27,6 +28,8 @@ export const getProviderLogo = (provider: ProviderType) => {
       return <GitHubProviderBadge width={35} height={35} />;
     case "iac":
       return <IacProviderBadge width={35} height={35} />;
+    case "oci":
+      return <OracleCloudProviderBadge width={35} height={35} />;
     default:
       return null;
   }
@@ -48,6 +51,8 @@ export const getProviderName = (provider: ProviderType): string => {
       return "GitHub";
     case "iac":
       return "Infrastructure as Code";
+    case "oci":
+      return "Oracle Cloud Infrastructure";
     default:
       return "Unknown Provider";
   }

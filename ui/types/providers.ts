@@ -6,6 +6,7 @@ export const PROVIDER_TYPES = [
   "m365",
   "github",
   "iac",
+  "oci",
 ] as const;
 
 export type ProviderType = (typeof PROVIDER_TYPES)[number];

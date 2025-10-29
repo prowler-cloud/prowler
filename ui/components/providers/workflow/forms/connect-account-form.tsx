@@ -56,6 +56,11 @@ const getProviderFieldDetails = (providerType?: ProviderType) => {
         label: "Repository URL",
         placeholder: "e.g. https://github.com/user/repo",
       };
+    case "oci":
+      return {
+        label: "Tenancy OCID",
+        placeholder: "e.g. ocid1.tenancy.oc1..aaaaaaa...",
+      };
     default:
       return {
         label: "Provider UID",

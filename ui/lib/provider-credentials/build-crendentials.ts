@@ -211,10 +211,65 @@ export const buildIacSecret = (formData: FormData) => {
   return filterEmptyValues(secret);
 };
 
+/**
+ * Utility function to safely encode a string to base64
+ * Handles UTF-8 characters properly without using deprecated APIs
+ */
+const base64Encode = (str: string): string => {
+  if (!str) return "";
+  // Convert string to UTF-8 bytes, then to base64
+  const utf8Bytes = new TextEncoder().encode(str);
+  // Convert Uint8Array to binary string without spread operator
+  let binaryString = "";
+  for (let i = 0; i < utf8Bytes.length; i++) {
+    binaryString += String.fromCharCode(utf8Bytes[i]);
+  }
+  return btoa(binaryString);
+};
+
+export const buildOracleCloudSecret = (
+  formData: FormData,
+  providerUid?: string,
+) => {
+  const keyContent = getFormValue(
+    formData,
+    ProviderCredentialFields.OCI_KEY_CONTENT,
+  ) as string;
+
+  // Base64 encode the key content for the backend
+  // Uses modern TextEncoder API to properly handle UTF-8 characters
+  const encodedKeyContent = base64Encode(keyContent);
+
+  const secret = {
+    [ProviderCredentialFields.OCI_USER]: getFormValue(
+      formData,
+      ProviderCredentialFields.OCI_USER,
+    ),
+    [ProviderCredentialFields.OCI_FINGERPRINT]: getFormValue(
+      formData,
+      ProviderCredentialFields.OCI_FINGERPRINT,
+    ),
+    [ProviderCredentialFields.OCI_KEY_CONTENT]: encodedKeyContent,
+    [ProviderCredentialFields.OCI_TENANCY]:
+      providerUid ||
+      getFormValue(formData, ProviderCredentialFields.OCI_TENANCY),
+    [ProviderCredentialFields.OCI_REGION]: getFormValue(
+      formData,
+      ProviderCredentialFields.OCI_REGION,
+    ),
+    [ProviderCredentialFields.OCI_PASS_PHRASE]: getFormValue(
+      formData,
+      ProviderCredentialFields.OCI_PASS_PHRASE,
+    ),
+  };
+  return filterEmptyValues(secret);
+};
+
 // Main function to build secret configuration
 export const buildSecretConfig = (
   formData: FormData,
   providerType: ProviderType,
+  providerUid?: string,
 ) => {
   const isRole = formData.get(ProviderCredentialFields.ROLE_ARN) !== null;
   const isServiceAccount =
@@ -248,6 +303,10 @@ export const buildSecretConfig = (
     iac: () => ({
       secretType: "static",
       secret: buildIacSecret(formData),
+    }),
+    oci: () => ({
+      secretType: "static",
+      secret: buildOracleCloudSecret(formData, providerUid),
     }),
   };
 

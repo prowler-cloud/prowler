@@ -11,6 +11,7 @@ import {
   IacProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
+  OracleCloudProviderBadge,
 } from "@/components/icons/providers-badge";
 import { CustomButton } from "@/components/ui/custom/custom-button";
 import { ProviderOverviewProps } from "@/types";
@@ -40,6 +41,8 @@ export const ProvidersOverview = ({
         return <GitHubProviderBadge width={30} height={30} />;
       case "iac":
         return <IacProviderBadge width={30} height={30} />;
+      case "oci":
+        return <OracleCloudProviderBadge width={30} height={30} />;
       default:
         return null;
     }
@@ -53,6 +56,7 @@ export const ProvidersOverview = ({
     kubernetes: "Kubernetes",
     github: "GitHub",
     iac: "IaC",
+    oci: "OCI",
   };
 
   const providers = PROVIDER_TYPES.map((providerType) => ({

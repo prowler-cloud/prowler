@@ -14,6 +14,7 @@ import {
   CustomProviderInputIac,
   CustomProviderInputKubernetes,
   CustomProviderInputM365,
+  CustomProviderInputOracleCloud,
 } from "./custom-provider-inputs";
 
 const providerDisplayData: Record<
@@ -47,6 +48,10 @@ const providerDisplayData: Record<
   iac: {
     label: "Infrastructure as Code",
     component: <CustomProviderInputIac />,
+  },
+  oci: {
+    label: "Oracle Cloud Infrastructure",
+    component: <CustomProviderInputOracleCloud />,
   },
 };
 

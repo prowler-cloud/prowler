@@ -7,6 +7,11 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🚀 Added
 
 - IaC (Infrastructure as Code) provider support for scanning remote repositories [(#8751)](https://github.com/prowler-cloud/prowler/pull/8751)
+- Support for Oracle Cloud Infrastructure (OCI) provider [(#8984)](https://github.com/prowler-cloud/prowler/pull/8984)
+
+### 🔄 Changed
+
+- Upgrade React to version 19.2.0 [(#9039)](https://github.com/prowler-cloud/prowler/pull/9039)
 
 ---
 

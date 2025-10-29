@@ -18,6 +18,7 @@ const providerTypeLabels: Record<ProviderType, string> = {
   kubernetes: "Kubernetes",
   github: "GitHub",
   iac: "Infrastructure as Code",
+  oci: "Oracle Cloud Infrastructure",
 };
 
 interface EnhancedProviderSelectorProps {

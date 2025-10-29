@@ -37,6 +37,11 @@ export const getProviderHelpText = (provider: string) => {
         text: "Need help scanning your Infrastructure as Code repository?",
         link: "https://goto.prowler.com/provider-iac",
       };
+    case "oci":
+      return {
+        text: "Need help connecting your Oracle Cloud account?",
+        link: "https://goto.prowler.com/provider-oci",
+      };
     default:
       return {
         text: "How to setup a provider?",

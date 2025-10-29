@@ -133,6 +133,10 @@ export const addCredentialsProvider = async (formData: FormData) => {
     formData,
     ProviderCredentialFields.PROVIDER_TYPE,
   ) as ProviderType;
+  const providerUid = getFormValue(
+    formData,
+    ProviderCredentialFields.PROVIDER_UID,
+  ) as string | undefined;
 
   try {
     // For IaC provider, fetch the provider data to get the repository URL from uid
@@ -153,7 +157,11 @@ export const addCredentialsProvider = async (formData: FormData) => {
       }
     }
 
-    const { secretType, secret } = buildSecretConfig(formData, providerType);
+    const { secretType, secret } = buildSecretConfig(
+      formData,
+      providerType,
+      providerUid,
+    );
 
     const response = await fetch(url.toString(), {
       method: "POST",
