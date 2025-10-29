@@ -1,0 +1,56 @@
+# Simple Prowler Provider Configuration Example
+#
+# This is a minimal example showing the basic required fields for each provider type.
+# Use this as a starting point and refer to providers.yaml for complete examples.
+
+# AWS with IAM Role (Recommended)
+- provider: aws
+  uid: "123456789012"
+  alias: "my-aws-account"
+  auth_method: role
+  credentials:
+    role_arn: "arn:aws:iam::123456789012:role/ProwlerScan"
+
+# Azure with Service Principal
+- provider: azure
+  uid: "00000000-1111-2222-3333-444444444444"
+  alias: "my-azure-subscription"
+  auth_method: service_principal
+  credentials:
+    tenant_id: "tenant-id-here"
+    client_id: "client-id-here"
+    client_secret: "client-secret-here"
+
+# GCP with Service Account
+- provider: gcp
+  uid: "my-gcp-project"
+  alias: "my-gcp-project"
+  auth_method: service_account_json
+  credentials:
+    service_account_key_json_path: "/path/to/service-account-key.json"
+
+# Kubernetes with kubeconfig
+- provider: kubernetes
+  uid: "my-cluster-context"
+  alias: "my-k8s-cluster"
+  auth_method: kubeconfig
+  credentials:
+    kubeconfig_path: "~/.kube/config"
+
+# Microsoft 365 with Service Principal
+- provider: m365
+  uid: "company.onmicrosoft.com"
+  alias: "my-m365-tenant"
+  auth_method: service_principal
+  credentials:
+    tenant_id: "tenant-id-here"
+    client_id: "client-id-here"
+    client_secret: "client-secret-here"
+
+# GitHub with Personal Access Token
+- provider: github
+  uid: "my-organization"
+  alias: "my-github-org"
+  auth_method: personal_access_token
+  credentials:
+    token: "ghp_token_here"

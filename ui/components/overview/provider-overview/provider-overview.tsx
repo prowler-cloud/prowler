@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardBody } from "@nextui-org/react";
+import { Card, CardBody } from "@heroui/card";
 
 import { AddIcon } from "@/components/icons/Icons";
 import {
@@ -10,6 +10,7 @@ import {
   GitHubProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
+  OracleCloudProviderBadge,
 } from "@/components/icons/providers-badge";
 import { CustomButton } from "@/components/ui/custom/custom-button";
 import { ProviderOverviewProps } from "@/types";
@@ -37,6 +38,8 @@ export const ProvidersOverview = ({
         return <KS8ProviderBadge width={30} height={30} />;
       case "github":
         return <GitHubProviderBadge width={30} height={30} />;
+      case "oci":
+        return <OracleCloudProviderBadge width={30} height={30} />;
       default:
         return null;
     }
@@ -49,6 +52,7 @@ export const ProvidersOverview = ({
     gcp: "GCP",
     kubernetes: "Kubernetes",
     github: "GitHub",
+    oci: "OCI",
   };
 
   const providers = PROVIDER_TYPES.map((providerType) => ({
@@ -58,7 +62,7 @@ export const ProvidersOverview = ({
 
   if (!providersOverview || !Array.isArray(providersOverview.data)) {
     return (
-      <Card className="h-full dark:bg-prowler-blue-400">
+      <Card className="dark:bg-prowler-blue-400 h-full">
         <CardBody>
           <div className="my-auto grid grid-cols-1 gap-3">
             <div className="grid grid-cols-4 border-b pb-2 text-xs font-semibold">
@@ -106,7 +110,7 @@ export const ProvidersOverview = ({
   }
 
   return (
-    <Card className="h-full dark:bg-prowler-blue-400">
+    <Card className="dark:bg-prowler-blue-400 h-full">
       <CardBody>
         <div className="my-auto grid grid-cols-1 gap-3">
           <div className="grid grid-cols-4 border-b pb-2 text-xs font-semibold">

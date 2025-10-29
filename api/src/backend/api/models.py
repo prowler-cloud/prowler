@@ -22,6 +22,8 @@ from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 from django_celery_beat.models import PeriodicTask
 from django_celery_results.models import TaskResult
+from drf_simple_apikey.crypto import get_crypto
+from drf_simple_apikey.models import AbstractAPIKey, AbstractAPIKeyManager
 from psqlextra.manager import PostgresManager
 from psqlextra.models import PostgresPartitionedModel
 from psqlextra.types import PostgresPartitioningMethod
@@ -42,6 +44,7 @@ from api.db_utils import (
     StateEnumField,
     StatusEnumField,
     enum_to_choices,
+    generate_api_key_prefix,
     generate_random_token,
     one_week_from_now,
 )
@@ -72,6 +75,15 @@ class StatusChoices(models.TextChoices):
     FAIL = "FAIL", _("Fail")
     PASS = "PASS", _("Pass")
     MANUAL = "MANUAL", _("Manual")
+
+
+class OverviewStatusChoices(models.TextChoices):
+    """
+    Status filters allowed in overview/severity endpoints.
+    """
+
+    FAIL = "FAIL", _("Fail")
+    PASS = "PASS", _("Pass")
 
 
 class StateChoices(models.TextChoices):
@@ -114,6 +126,17 @@ class ActiveProviderManager(models.Manager):
 class ActiveProviderPartitionedManager(PostgresManager, ActiveProviderManager):
     def get_queryset(self):
         return super().get_queryset().filter(self.active_provider_filter())
+
+
+class TenantAPIKeyManager(AbstractAPIKeyManager):
+    separator = "."
+
+    def assign_api_key(self, obj) -> str:
+        payload = {"_pk": str(obj.pk), "_exp": obj.expiry_date.timestamp()}
+        key = get_crypto().generate(payload)
+
+        prefixed_key = f"{obj.prefix}{self.separator}{key}"
+        return prefixed_key
 
 
 class User(AbstractBaseUser):
@@ -195,6 +218,61 @@ class Membership(models.Model):
         resource_name = "memberships"
 
 
+class TenantAPIKey(AbstractAPIKey, RowLevelSecurityProtectedModel):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    name = models.CharField(max_length=100, validators=[MinLengthValidator(3)])
+    created = models.DateTimeField(auto_now_add=True, editable=False)
+    prefix = models.CharField(
+        max_length=11,
+        unique=True,
+        default=generate_api_key_prefix,
+        editable=False,
+        help_text="Unique prefix to identify the API key",
+    )
+    last_used_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Last time this API key was used for authentication",
+    )
+    entity = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="user_api_keys",
+    )
+
+    objects = TenantAPIKeyManager()
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "api_keys"
+
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+            models.UniqueConstraint(
+                fields=("tenant_id", "prefix"),
+                name="unique_api_key_prefixes",
+            ),
+            models.UniqueConstraint(
+                fields=("tenant_id", "name"),
+                name="unique_api_key_name_per_tenant",
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "prefix"], name="api_keys_tenant_prefix_idx"
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "api-keys"
+
+
 class Provider(RowLevelSecurityProtectedModel):
     objects = ActiveProviderManager()
     all_objects = models.Manager()
@@ -206,6 +284,7 @@ class Provider(RowLevelSecurityProtectedModel):
         KUBERNETES = "kubernetes", _("Kubernetes")
         M365 = "m365", _("M365")
         GITHUB = "github", _("GitHub")
+        OCI = "oci", _("Oracle Cloud Infrastructure")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -273,6 +352,18 @@ class Provider(RowLevelSecurityProtectedModel):
                 detail="GitHub provider ID must be a valid GitHub username or organization name (1-39 characters, "
                 "starting with alphanumeric, containing only alphanumeric characters and hyphens).",
                 code="github-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_oci_uid(value):
+        if not re.match(
+            r"^ocid1\.([a-z0-9_-]+)\.([a-z0-9_-]+)\.([a-z0-9_-]*)\.([a-z0-9]+)$", value
+        ):
+            raise ModelValidationError(
+                detail="Oracle Cloud Infrastructure provider ID must be a valid tenancy OCID in the format: "
+                "ocid1.<resource_type>.<realm>.<region>.<unique_id>",
+                code="oci-uid",
                 pointer="/data/attributes/uid",
             )
 
@@ -1221,6 +1312,8 @@ class ComplianceRequirementOverview(RowLevelSecurityProtectedModel):
     passed_checks = models.IntegerField(default=0)
     failed_checks = models.IntegerField(default=0)
     total_checks = models.IntegerField(default=0)
+    passed_findings = models.IntegerField(default=0)
+    total_findings = models.IntegerField(default=0)
 
     scan = models.ForeignKey(
         Scan,
@@ -1372,10 +1465,6 @@ class Integration(RowLevelSecurityProtectedModel):
         db_table = "integrations"
 
         constraints = [
-            models.UniqueConstraint(
-                fields=("configuration", "tenant"),
-                name="unique_configuration_per_tenant",
-            ),
             RowLevelSecurityConstraint(
                 field="tenant_id",
                 name="rls_on_%(class)s",
@@ -1752,6 +1841,10 @@ class LighthouseConfiguration(RowLevelSecurityProtectedModel):
         GPT_4O = "gpt-4o", _("GPT-4o Default")
         GPT_4O_MINI_2024_07_18 = "gpt-4o-mini-2024-07-18", _("GPT-4o Mini v2024-07-18")
         GPT_4O_MINI = "gpt-4o-mini", _("GPT-4o Mini Default")
+        GPT_5_2025_08_07 = "gpt-5-2025-08-07", _("GPT-5 v2025-08-07")
+        GPT_5 = "gpt-5", _("GPT-5 Default")
+        GPT_5_MINI_2025_08_07 = "gpt-5-mini-2025-08-07", _("GPT-5 Mini v2025-08-07")
+        GPT_5_MINI = "gpt-5-mini", _("GPT-5 Mini Default")
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
@@ -1793,22 +1886,6 @@ class LighthouseConfiguration(RowLevelSecurityProtectedModel):
     def clean(self):
         super().clean()
 
-        # Validate temperature
-        if not 0 <= self.temperature <= 1:
-            raise ModelValidationError(
-                detail="Temperature must be between 0 and 1",
-                code="invalid_temperature",
-                pointer="/data/attributes/temperature",
-            )
-
-        # Validate max_tokens
-        if not 500 <= self.max_tokens <= 5000:
-            raise ModelValidationError(
-                detail="Max tokens must be between 500 and 5000",
-                code="invalid_max_tokens",
-                pointer="/data/attributes/max_tokens",
-            )
-
     @property
     def api_key_decoded(self):
         """Return the decrypted API key, or None if unavailable or invalid."""
@@ -1830,15 +1907,6 @@ class LighthouseConfiguration(RowLevelSecurityProtectedModel):
         if not value:
             raise ModelValidationError(
                 detail="API key is required",
-                code="invalid_api_key",
-                pointer="/data/attributes/api_key",
-            )
-
-        # Validate OpenAI API key format
-        openai_key_pattern = r"^sk-[\w-]+T3BlbkFJ[\w-]+$"
-        if not re.match(openai_key_pattern, value):
-            raise ModelValidationError(
-                detail="Invalid OpenAI API key format.",
                 code="invalid_api_key",
                 pointer="/data/attributes/api_key",
             )
@@ -1904,3 +1972,184 @@ class Processor(RowLevelSecurityProtectedModel):
 
     class JSONAPIMeta:
         resource_name = "processors"
+
+
+class LighthouseProviderConfiguration(RowLevelSecurityProtectedModel):
+    """
+    Per-tenant configuration for an LLM provider (credentials, base URL, activation).
+
+    One configuration per provider type per tenant.
+    """
+
+    class LLMProviderChoices(models.TextChoices):
+        OPENAI = "openai", _("OpenAI")
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    provider_type = models.CharField(
+        max_length=50,
+        choices=LLMProviderChoices.choices,
+        help_text="LLM provider name",
+    )
+
+    # For OpenAI-compatible providers
+    base_url = models.URLField(blank=True, null=True)
+
+    # Encrypted JSON for provider-specific auth
+    credentials = models.BinaryField(
+        blank=False, null=False, help_text="Encrypted JSON credentials for the provider"
+    )
+
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.get_provider_type_display()} ({self.tenant_id})"
+
+    def clean(self):
+        super().clean()
+
+    @property
+    def credentials_decoded(self):
+        if not self.credentials:
+            return None
+        try:
+            decrypted_data = fernet.decrypt(bytes(self.credentials))
+            return json.loads(decrypted_data.decode())
+        except (InvalidToken, json.JSONDecodeError) as e:
+            logger.warning("Failed to decrypt provider credentials: %s", e)
+            return None
+        except Exception as e:
+            logger.exception(
+                "Unexpected error while decrypting provider credentials: %s", e
+            )
+            return None
+
+    @credentials_decoded.setter
+    def credentials_decoded(self, value):
+        """
+        Set and encrypt credentials (assumes serializer performed validation).
+        """
+        if not value:
+            raise ModelValidationError(
+                detail="Credentials are required",
+                code="invalid_credentials",
+                pointer="/data/attributes/credentials",
+            )
+        self.credentials = fernet.encrypt(json.dumps(value).encode())
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "lighthouse_provider_configurations"
+
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+            models.UniqueConstraint(
+                fields=["tenant_id", "provider_type"],
+                name="unique_provider_config_per_tenant",
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "provider_type"],
+                name="lh_pc_tenant_type_idx",
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "lighthouse-providers"
+
+
+class LighthouseTenantConfiguration(RowLevelSecurityProtectedModel):
+    """
+    Tenant-level Lighthouse settings (business context and defaults).
+    One record per tenant.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    business_context = models.TextField(blank=True, default="")
+
+    # Preferred provider key (e.g., "openai", "bedrock", "openai_compatible")
+    default_provider = models.CharField(max_length=50, blank=True)
+
+    # Mapping of provider -> model id, e.g., {"openai": "gpt-4o", "bedrock": "anthropic.claude-v2"}
+    default_models = models.JSONField(default=dict, blank=True)
+
+    def __str__(self):
+        return f"Lighthouse Tenant Config for {self.tenant_id}"
+
+    def clean(self):
+        super().clean()
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "lighthouse_tenant_config"
+
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+            models.UniqueConstraint(
+                fields=["tenant_id"], name="unique_tenant_lighthouse_config"
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "lighthouse-config"
+
+
+class LighthouseProviderModels(RowLevelSecurityProtectedModel):
+    """
+    Per-tenant, per-provider configuration list of available LLM models.
+    RLS-protected; populated via provider API using tenant-scoped credentials.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    # Scope to a specific provider configuration within a tenant
+    provider_configuration = models.ForeignKey(
+        LighthouseProviderConfiguration,
+        on_delete=models.CASCADE,
+        related_name="available_models",
+    )
+    model_id = models.CharField(max_length=100)
+
+    # Human-friendly model name
+    model_name = models.CharField(max_length=100)
+
+    # Model-specific default parameters (e.g., temperature, max_tokens)
+    default_parameters = models.JSONField(default=dict, blank=True)
+
+    def __str__(self):
+        return f"{self.provider_configuration.provider_type}:{self.model_id} ({self.tenant_id})"
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "lighthouse_provider_models"
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+            models.UniqueConstraint(
+                fields=["tenant_id", "provider_configuration", "model_id"],
+                name="unique_provider_model_per_configuration",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "provider_configuration"],
+                name="lh_prov_models_cfg_idx",
+            ),
+        ]

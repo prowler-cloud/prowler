@@ -27,6 +27,7 @@ from tests.providers.github.github_fixtures import (
     ACCOUNT_URL,
     APP_ID,
     APP_KEY,
+    APP_NAME,
     OAUTH_TOKEN,
     PAT_TOKEN,
 )
@@ -135,6 +136,8 @@ class TestGitHubProvider:
                 "prowler.providers.github.github_provider.GithubProvider.setup_identity",
                 return_value=GithubAppIdentityInfo(
                     app_id=APP_ID,
+                    app_name=APP_NAME,
+                    installations=["test-org"],
                 ),
             ),
         ):
@@ -147,7 +150,9 @@ class TestGitHubProvider:
 
             assert provider._type == "github"
             assert provider.session == GithubSession(token="", id=APP_ID, key=APP_KEY)
-            assert provider.identity == GithubAppIdentityInfo(app_id=APP_ID)
+            assert provider.identity == GithubAppIdentityInfo(
+                app_id=APP_ID, app_name=APP_NAME, installations=["test-org"]
+            )
             assert provider._audit_config == {
                 "inactive_not_archived_days_threshold": 180,
             }
@@ -206,7 +211,9 @@ class TestGitHubProvider:
             ),
             patch(
                 "prowler.providers.github.github_provider.GithubProvider.setup_identity",
-                return_value=GithubAppIdentityInfo(app_id=APP_ID),
+                return_value=GithubAppIdentityInfo(
+                    app_id=APP_ID, app_name=APP_NAME, installations=["test-org"]
+                ),
             ),
         ):
             connection = GithubProvider.test_connection(

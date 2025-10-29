@@ -146,8 +146,24 @@ class Provider(ABC):
     @staticmethod
     def init_global_provider(arguments: Namespace) -> None:
         try:
+            # Map CLI provider names to directory names (for cases where they differ)
+            provider_directory_map = {
+                "oci": "oraclecloud",  # oci SDK conflict avoidance
+            }
+            # Map CLI provider names to provider file names (for cases where they differ)
+            provider_file_map = {
+                "oci": "oci",  # oraclecloud directory but oci_provider.py file
+            }
+
+            provider_directory = provider_directory_map.get(
+                arguments.provider, arguments.provider
+            )
+            provider_file = provider_file_map.get(
+                arguments.provider, arguments.provider
+            )
+
             provider_class_path = (
-                f"{providers_path}.{arguments.provider}.{arguments.provider}_provider"
+                f"{providers_path}.{provider_directory}.{provider_file}_provider"
             )
             provider_class_name = f"{arguments.provider.capitalize()}Provider"
             provider_class = getattr(
@@ -202,6 +218,7 @@ class Provider(ABC):
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
+                        skip_api_check=arguments.skip_api_check,
                     )
                 elif "kubernetes" in provider_class_name.lower():
                     provider_class(
@@ -219,7 +236,6 @@ class Provider(ABC):
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         sp_env_auth=arguments.sp_env_auth,
-                        env_auth=arguments.env_auth,
                         az_cli_auth=arguments.az_cli_auth,
                         browser_auth=arguments.browser_auth,
                         certificate_auth=arguments.certificate_auth,
@@ -252,13 +268,39 @@ class Provider(ABC):
                     provider_class(
                         scan_path=arguments.scan_path,
                         scan_repository_url=arguments.scan_repository_url,
-                        frameworks=arguments.frameworks,
+                        scanners=arguments.scanners,
                         exclude_path=arguments.exclude_path,
                         config_path=arguments.config_file,
                         fixer_config=fixer_config,
                         github_username=arguments.github_username,
                         personal_access_token=arguments.personal_access_token,
                         oauth_app_token=arguments.oauth_app_token,
+                    )
+                elif "llm" in provider_class_name.lower():
+                    provider_class(
+                        max_concurrency=arguments.max_concurrency,
+                        config_path=arguments.config_file,
+                        fixer_config=fixer_config,
+                    )
+                elif "mongodbatlas" in provider_class_name.lower():
+                    provider_class(
+                        atlas_public_key=arguments.atlas_public_key,
+                        atlas_private_key=arguments.atlas_private_key,
+                        atlas_project_id=arguments.atlas_project_id,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
+                elif "oci" in provider_class_name.lower():
+                    provider_class(
+                        oci_config_file=arguments.oci_config_file,
+                        profile=arguments.profile,
+                        region=arguments.region,
+                        compartment_ids=arguments.compartment_id,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                        use_instance_principal=arguments.use_instance_principal,
                     )
 
         except TypeError as error:

@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from shutil import rmtree
@@ -21,7 +22,16 @@ from tasks.jobs.export import (
     _generate_output_directory,
     _upload_to_s3,
 )
-from tasks.jobs.integrations import upload_s3_integration
+from tasks.jobs.integrations import (
+    send_findings_to_jira,
+    upload_s3_integration,
+    upload_security_hub_integration,
+)
+from tasks.jobs.lighthouse_providers import (
+    check_lighthouse_provider_connection,
+    refresh_lighthouse_provider_models,
+)
+from tasks.jobs.report import generate_threatscore_report_job
 from tasks.jobs.scan import (
     aggregate_findings,
     create_compliance_requirements,
@@ -30,6 +40,7 @@ from tasks.jobs.scan import (
 from tasks.utils import batched, get_next_execution_datetime
 
 from api.compliance import get_compliance_frameworks
+from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import rls_transaction
 from api.decorators import set_tenant
 from api.models import Finding, Integration, Provider, Scan, ScanSummary, StateChoices
@@ -59,9 +70,15 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
         generate_outputs_task.si(
             scan_id=scan_id, provider_id=provider_id, tenant_id=tenant_id
         ),
-        check_integrations_task.si(
-            tenant_id=tenant_id,
-            provider_id=provider_id,
+        group(
+            generate_threatscore_report_task.si(
+                tenant_id=tenant_id, scan_id=scan_id, provider_id=provider_id
+            ),
+            check_integrations_task.si(
+                tenant_id=tenant_id,
+                provider_id=provider_id,
+                scan_id=scan_id,
+            ),
         ),
     ).apply_async()
 
@@ -298,7 +315,7 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
 
     frameworks_bulk = Compliance.get_bulk(provider_type)
     frameworks_avail = get_compliance_frameworks(provider_type)
-    out_dir, comp_dir = _generate_output_directory(
+    out_dir, comp_dir, _ = _generate_output_directory(
         DJANGO_TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id
     )
 
@@ -323,67 +340,105 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
         ScanSummary.objects.filter(scan_id=scan_id)
     )
 
-    qs = Finding.all_objects.filter(scan_id=scan_id).order_by("uid").iterator()
-    for batch, is_last in batched(qs, DJANGO_FINDINGS_BATCH_SIZE):
-        fos = [FindingOutput.transform_api_finding(f, prowler_provider) for f in batch]
+    # Check if we need to generate ASFF output for AWS providers with SecurityHub integration
+    generate_asff = False
+    if provider_type == "aws":
+        security_hub_integrations = Integration.objects.filter(
+            integrationproviderrelationship__provider_id=provider_id,
+            integration_type=Integration.IntegrationChoices.AWS_SECURITY_HUB,
+            enabled=True,
+        )
+        generate_asff = security_hub_integrations.exists()
 
-        # Outputs
-        for mode, cfg in OUTPUT_FORMATS_MAPPING.items():
-            cls = cfg["class"]
-            suffix = cfg["suffix"]
-            extra = cfg.get("kwargs", {}).copy()
-            if mode == "html":
-                extra.update(provider=prowler_provider, stats=scan_summary)
+    qs = (
+        Finding.all_objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+        .order_by("uid")
+        .iterator()
+    )
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        for batch, is_last in batched(qs, DJANGO_FINDINGS_BATCH_SIZE):
+            fos = [
+                FindingOutput.transform_api_finding(f, prowler_provider) for f in batch
+            ]
 
-            writer, initialization = get_writer(
-                output_writers,
-                cls,
-                lambda cls=cls, fos=fos, suffix=suffix: cls(
-                    findings=fos,
-                    file_path=out_dir,
-                    file_extension=suffix,
-                    from_cli=False,
-                ),
-                is_last,
-            )
-            if not initialization:
-                writer.transform(fos)
-            writer.batch_write_data_to_file(**extra)
-            writer._data.clear()
+            # Outputs
+            for mode, cfg in OUTPUT_FORMATS_MAPPING.items():
+                # Skip ASFF generation if not needed
+                if mode == "json-asff" and not generate_asff:
+                    continue
 
-        # Compliance CSVs
-        for name in frameworks_avail:
-            compliance_obj = frameworks_bulk[name]
+                cls = cfg["class"]
+                suffix = cfg["suffix"]
+                extra = cfg.get("kwargs", {}).copy()
+                if mode == "html":
+                    extra.update(provider=prowler_provider, stats=scan_summary)
 
-            klass = GenericCompliance
-            for condition, cls in COMPLIANCE_CLASS_MAP.get(provider_type, []):
-                if condition(name):
-                    klass = cls
-                    break
+                writer, initialization = get_writer(
+                    output_writers,
+                    cls,
+                    lambda cls=cls, fos=fos, suffix=suffix: cls(
+                        findings=fos,
+                        file_path=out_dir,
+                        file_extension=suffix,
+                        from_cli=False,
+                    ),
+                    is_last,
+                )
+                if not initialization:
+                    writer.transform(fos)
+                writer.batch_write_data_to_file(**extra)
+                writer._data.clear()
 
-            filename = f"{comp_dir}_{name}.csv"
+            # Compliance CSVs
+            for name in frameworks_avail:
+                compliance_obj = frameworks_bulk[name]
 
-            writer, initialization = get_writer(
-                compliance_writers,
-                name,
-                lambda klass=klass, fos=fos: klass(
-                    findings=fos,
-                    compliance=compliance_obj,
-                    file_path=filename,
-                    from_cli=False,
-                ),
-                is_last,
-            )
-            if not initialization:
-                writer.transform(fos, compliance_obj, name)
-            writer.batch_write_data_to_file()
-            writer._data.clear()
+                klass = GenericCompliance
+                for condition, cls in COMPLIANCE_CLASS_MAP.get(provider_type, []):
+                    if condition(name):
+                        klass = cls
+                        break
+
+                filename = f"{comp_dir}_{name}.csv"
+
+                writer, initialization = get_writer(
+                    compliance_writers,
+                    name,
+                    lambda klass=klass, fos=fos: klass(
+                        findings=fos,
+                        compliance=compliance_obj,
+                        file_path=filename,
+                        from_cli=False,
+                    ),
+                    is_last,
+                )
+                if not initialization:
+                    writer.transform(fos, compliance_obj, name)
+                writer.batch_write_data_to_file()
+                writer._data.clear()
 
     compressed = _compress_output_files(out_dir)
-    upload_uri = _upload_to_s3(tenant_id, compressed, scan_id)
+
+    upload_uri = _upload_to_s3(
+        tenant_id,
+        scan_id,
+        compressed,
+        os.path.basename(compressed),
+    )
+
+    compliance_dir_path = Path(comp_dir).parent
+    if compliance_dir_path.exists():
+        for artifact_path in sorted(compliance_dir_path.iterdir()):
+            if artifact_path.is_file():
+                _upload_to_s3(
+                    tenant_id,
+                    scan_id,
+                    str(artifact_path),
+                    f"compliance/{artifact_path.name}",
+                )
 
     # S3 integrations (need output_directory)
-    with rls_transaction(tenant_id):
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
         s3_integrations = Integration.objects.filter(
             integrationproviderrelationship__provider_id=provider_id,
             integration_type=Integration.IntegrationChoices.AMAZON_S3,
@@ -438,7 +493,7 @@ def backfill_scan_resource_summaries_task(tenant_id: str, scan_id: str):
     return backfill_resource_scan_summaries(tenant_id=tenant_id, scan_id=scan_id)
 
 
-@shared_task(base=RLSTask, name="scan-compliance-overviews", queue="overview")
+@shared_task(base=RLSTask, name="scan-compliance-overviews", queue="compliance")
 def create_compliance_requirements_task(tenant_id: str, scan_id: str):
     """
     Creates detailed compliance requirement records for a scan.
@@ -473,18 +528,38 @@ def check_lighthouse_connection_task(lighthouse_config_id: str, tenant_id: str =
     return check_lighthouse_connection(lighthouse_config_id=lighthouse_config_id)
 
 
+@shared_task(base=RLSTask, name="lighthouse-provider-connection-check")
+@set_tenant
+def check_lighthouse_provider_connection_task(
+    provider_config_id: str, tenant_id: str | None = None
+) -> dict:
+    """Task wrapper to validate provider credentials and set is_active."""
+    return check_lighthouse_provider_connection(provider_config_id=provider_config_id)
+
+
+@shared_task(base=RLSTask, name="lighthouse-provider-models-refresh")
+@set_tenant
+def refresh_lighthouse_provider_models_task(
+    provider_config_id: str, tenant_id: str | None = None
+) -> dict:
+    """Task wrapper to refresh provider models catalog for the given configuration."""
+    return refresh_lighthouse_provider_models(provider_config_id=provider_config_id)
+
+
 @shared_task(name="integration-check")
-def check_integrations_task(tenant_id: str, provider_id: str):
+def check_integrations_task(tenant_id: str, provider_id: str, scan_id: str = None):
     """
     Check and execute all configured integrations for a provider.
 
     Args:
         tenant_id (str): The tenant identifier
         provider_id (str): The provider identifier
+        scan_id (str, optional): The scan identifier for integrations that need scan data
     """
     logger.info(f"Checking integrations for provider {provider_id}")
 
     try:
+        integration_tasks = []
         with rls_transaction(tenant_id):
             integrations = Integration.objects.filter(
                 integrationproviderrelationship__provider_id=provider_id,
@@ -495,7 +570,16 @@ def check_integrations_task(tenant_id: str, provider_id: str):
                 logger.info(f"No integrations configured for provider {provider_id}")
                 return {"integrations_processed": 0}
 
-        integration_tasks = []
+            # Security Hub integration
+            security_hub_integrations = integrations.filter(
+                integration_type=Integration.IntegrationChoices.AWS_SECURITY_HUB
+            )
+            if security_hub_integrations.exists():
+                integration_tasks.append(
+                    security_hub_integration_task.s(
+                        tenant_id=tenant_id, provider_id=provider_id, scan_id=scan_id
+                    )
+                )
 
         # TODO: Add other integration types here
         # slack_integrations = integrations.filter(
@@ -541,3 +625,59 @@ def s3_integration_task(
         output_directory (str): Path to the directory containing output files
     """
     return upload_s3_integration(tenant_id, provider_id, output_directory)
+
+
+@shared_task(
+    base=RLSTask,
+    name="integration-security-hub",
+    queue="integrations",
+)
+def security_hub_integration_task(
+    tenant_id: str,
+    provider_id: str,
+    scan_id: str,
+):
+    """
+    Process Security Hub integrations for a provider.
+
+    Args:
+        tenant_id (str): The tenant identifier
+        provider_id (str): The provider identifier
+        scan_id (str): The scan identifier
+    """
+    return upload_security_hub_integration(tenant_id, provider_id, scan_id)
+
+
+@shared_task(
+    base=RLSTask,
+    name="integration-jira",
+    queue="integrations",
+)
+def jira_integration_task(
+    tenant_id: str,
+    integration_id: str,
+    project_key: str,
+    issue_type: str,
+    finding_ids: list[str],
+):
+    return send_findings_to_jira(
+        tenant_id, integration_id, project_key, issue_type, finding_ids
+    )
+
+
+@shared_task(
+    base=RLSTask,
+    name="scan-threatscore-report",
+    queue="scan-reports",
+)
+def generate_threatscore_report_task(tenant_id: str, scan_id: str, provider_id: str):
+    """
+    Task to generate a threatscore report for a given scan.
+    Args:
+        tenant_id (str): The tenant identifier.
+        scan_id (str): The scan identifier.
+        provider_id (str): The provider identifier.
+    """
+    return generate_threatscore_report_job(
+        tenant_id=tenant_id, scan_id=scan_id, provider_id=provider_id
+    )

@@ -6,17 +6,21 @@ from django.db.models import Subquery
 from rest_framework.exceptions import NotFound, ValidationError
 
 from api.db_router import MainRouter
+from api.db_utils import rls_transaction
 from api.exceptions import InvitationTokenExpiredException
 from api.models import Integration, Invitation, Processor, Provider, Resource
 from api.v1.serializers import FindingMetadataSerializer
+from prowler.lib.outputs.jira.jira import Jira, JiraBasicAuthError
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.lib.s3.s3 import S3
+from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.common.models import Connection
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.github.github_provider import GithubProvider
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
 from prowler.providers.m365.m365_provider import M365Provider
+from prowler.providers.oraclecloud.oci_provider import OciProvider
 
 
 class CustomOAuth2Client(OAuth2Client):
@@ -64,6 +68,7 @@ def return_prowler_provider(
     | GithubProvider
     | KubernetesProvider
     | M365Provider
+    | OciProvider
 ]:
     """Return the Prowler provider class based on the given provider type.
 
@@ -71,7 +76,7 @@ def return_prowler_provider(
         provider (Provider): The provider object containing the provider type and associated secrets.
 
     Returns:
-        AwsProvider | AzureProvider | GcpProvider | GithubProvider | KubernetesProvider | M365Provider: The corresponding provider class.
+        AwsProvider | AzureProvider | GcpProvider | GithubProvider | KubernetesProvider | M365Provider | OciProvider: The corresponding provider class.
 
     Raises:
         ValueError: If the provider type specified in `provider.provider` is not supported.
@@ -89,6 +94,8 @@ def return_prowler_provider(
             prowler_provider = M365Provider
         case Provider.ProviderChoices.GITHUB.value:
             prowler_provider = GithubProvider
+        case Provider.ProviderChoices.OCI.value:
+            prowler_provider = OciProvider
         case _:
             raise ValueError(f"Provider type {provider.provider} not supported")
     return prowler_provider
@@ -119,6 +126,12 @@ def get_prowler_provider_kwargs(
         }
     elif provider.provider == Provider.ProviderChoices.KUBERNETES.value:
         prowler_provider_kwargs = {**prowler_provider_kwargs, "context": provider.uid}
+    elif provider.provider == Provider.ProviderChoices.GITHUB.value:
+        if provider.uid:
+            prowler_provider_kwargs = {
+                **prowler_provider_kwargs,
+                "organizations": [provider.uid],
+            }
 
     if mutelist_processor:
         mutelist_content = mutelist_processor.configuration.get("Mutelist", {})
@@ -138,6 +151,7 @@ def initialize_prowler_provider(
     | GithubProvider
     | KubernetesProvider
     | M365Provider
+    | OciProvider
 ):
     """Initialize a Prowler provider instance based on the given provider type.
 
@@ -146,8 +160,8 @@ def initialize_prowler_provider(
         mutelist_processor (Processor): The mutelist processor object containing the mutelist configuration.
 
     Returns:
-        AwsProvider | AzureProvider | GcpProvider | GithubProvider | KubernetesProvider | M365Provider: An instance of the corresponding provider class
-            (`AwsProvider`, `AzureProvider`, `GcpProvider`, `GithubProvider`, `KubernetesProvider` or `M365Provider`) initialized with the
+        AwsProvider | AzureProvider | GcpProvider | GithubProvider | KubernetesProvider | M365Provider | OciProvider: An instance of the corresponding provider class
+            (`AwsProvider`, `AzureProvider`, `GcpProvider`, `GithubProvider`, `KubernetesProvider`, `M365Provider` or `OciProvider`) initialized with the
             provider's secrets.
     """
     prowler_provider = return_prowler_provider(provider)
@@ -192,13 +206,53 @@ def prowler_integration_connection_test(integration: Integration) -> Connection:
             raise_on_exception=False,
         )
     # TODO: It is possible that we can unify the connection test for all integrations, but need refactoring
-    # to avoid code duplication. Actually the AWS integrations are similar, so SecurityHub and S3 can be unified making some changes in the SDK.
+    # to avoid code duplication. Actually the AWS integrations are similar, so SecurityHub and S3 can be unified
+    # making some changes in the SDK.
     elif (
         integration.integration_type == Integration.IntegrationChoices.AWS_SECURITY_HUB
     ):
-        pass
+        # Get the provider associated with this integration
+        provider_relationship = integration.integrationproviderrelationship_set.first()
+        if not provider_relationship:
+            return Connection(
+                is_connected=False, error="No provider associated with this integration"
+            )
+
+        credentials = (
+            integration.credentials
+            if integration.credentials
+            else provider_relationship.provider.secret.secret
+        )
+        connection = SecurityHub.test_connection(
+            aws_account_id=provider_relationship.provider.uid,
+            raise_on_exception=False,
+            **credentials,
+        )
+
+        # Only save regions if connection is successful
+        if connection.is_connected:
+            regions_status = {r: True for r in connection.enabled_regions}
+            regions_status.update({r: False for r in connection.disabled_regions})
+
+            # Save regions information in the integration configuration
+            integration.configuration["regions"] = regions_status
+            integration.save()
+        else:
+            # Reset regions information if connection fails
+            integration.configuration["regions"] = {}
+            integration.save()
+
+        return connection
     elif integration.integration_type == Integration.IntegrationChoices.JIRA:
-        pass
+        jira_connection = Jira.test_connection(
+            **integration.credentials,
+            raise_on_exception=False,
+        )
+        project_keys = jira_connection.projects if jira_connection.is_connected else {}
+        with rls_transaction(str(integration.tenant_id)):
+            integration.configuration["projects"] = project_keys
+            integration.save()
+        return jira_connection
     elif integration.integration_type == Integration.IntegrationChoices.SLACK:
         pass
     else:
@@ -298,3 +352,17 @@ def get_findings_metadata_no_aggregations(tenant_id: str, filtered_queryset):
     serializer.is_valid(raise_exception=True)
 
     return serializer.data
+
+
+def initialize_prowler_integration(integration: Integration) -> Jira:
+    # TODO Refactor other integrations to use this function
+    if integration.integration_type == Integration.IntegrationChoices.JIRA:
+        try:
+            return Jira(**integration.credentials)
+        except JiraBasicAuthError as jira_auth_error:
+            with rls_transaction(str(integration.tenant_id)):
+                integration.configuration["projects"] = {}
+                integration.connected = False
+                integration.connection_last_checked_at = datetime.now(tz=timezone.utc)
+                integration.save()
+            raise jira_auth_error

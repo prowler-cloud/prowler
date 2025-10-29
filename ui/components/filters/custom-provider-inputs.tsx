@@ -7,6 +7,7 @@ import {
   GitHubProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
+  OracleCloudProviderBadge,
 } from "../icons/providers-badge";
 
 export const CustomProviderInputAWS = () => {
@@ -59,6 +60,15 @@ export const CustomProviderInputGitHub = () => {
     <div className="flex items-center gap-x-2">
       <GitHubProviderBadge width={25} height={25} />
       <p className="text-sm">GitHub</p>
+    </div>
+  );
+};
+
+export const CustomProviderInputOracleCloud = () => {
+  return (
+    <div className="flex items-center gap-x-2">
+      <OracleCloudProviderBadge width={25} height={25} />
+      <p className="text-sm">Oracle Cloud Infrastructure</p>
     </div>
   );
 };

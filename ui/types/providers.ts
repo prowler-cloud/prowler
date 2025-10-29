@@ -5,6 +5,7 @@ export const PROVIDER_TYPES = [
   "kubernetes",
   "m365",
   "github",
+  "oci",
 ] as const;
 
 export type ProviderType = (typeof PROVIDER_TYPES)[number];
@@ -58,6 +59,11 @@ export interface ProviderEntity {
   provider: ProviderType;
   uid: string;
   alias: string | null;
+}
+
+export interface ProviderConnectionStatus {
+  label: string;
+  value: string;
 }
 
 export interface ProviderOverviewProps {

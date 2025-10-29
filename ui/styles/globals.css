@@ -1,9 +1,59 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+@theme {
+  /* Chart Severity Colors - Dark Theme */
+  --chart-info: #3C8DFF;
+  --chart-warning: #FDFBD4;
+  --chart-warning-emphasis: #FEC94D;
+  --chart-danger: #F77852;
+  --chart-danger-emphasis: #FF006A;
+
+  /* Chart Status Colors */
+  --chart-success-color: #86da26;
+  --chart-fail: #db2b49;
+
+  /* Chart Radar Colors */
+  --chart-radar-primary: #b51c80;
+  --chart-radar-primary-rgb: 181 28 128;
+
+  /* Chart Provider Colors */
+  --chart-provider-aws: #ff9900;
+  --chart-provider-azure: #00bcd4;
+  --chart-provider-google: #ea4335;
+
+  /* Chart UI Colors - Dark Theme (defaults) */
+  --chart-text-primary: #ffffff;
+  --chart-text-secondary: #94a3b8;
+  --chart-border: #475569;
+  --chart-border-emphasis: #334155;
+  --chart-background: #1e293b;
+
+  /* Chart Alert Colors */
+  --chart-alert-bg: #432232;
+  --chart-alert-text: #f54280;
+}
 
 @layer base {
   :root {
+    /* Light Theme Chart Colors */
+    --chart-info: #3C8DFF;
+    --chart-warning: #FDFBD4;
+    --chart-warning-emphasis: #FEC94D;
+    --chart-danger: #F77852;
+    --chart-danger-emphasis: #FF006A;
+    --chart-success-color: #16a34a;
+    --chart-fail: #dc2626;
+    --chart-radar-primary: #9d174d;
+    --chart-text-primary: #1f2937;
+    --chart-text-secondary: #6b7280;
+    --chart-border: #d1d5db;
+    --chart-border-emphasis: #9ca3af;
+    --chart-background: #f9fafb;
+    --chart-alert-bg: #fecdd3;
+    --chart-alert-text: #be123c;
+
+    /* Chart HSL values */
     --chart-success: 146 80% 35%;
     --chart-fail: 339 90% 51%;
     --chart-muted: 45 93% 47%;
@@ -18,6 +68,24 @@
   }
 
   .dark {
+    /* Dark Theme Chart Colors */
+    --chart-info: #3C8DFF;
+    --chart-warning: #FDFBD4;
+    --chart-warning-emphasis: #FEC94D;
+    --chart-danger: #F77852;
+    --chart-danger-emphasis: #FF006A;
+    --chart-success-color: #86da26;
+    --chart-fail: #db2b49;
+    --chart-radar-primary: #b51c80;
+    --chart-text-primary: #ffffff;
+    --chart-text-secondary: #94a3b8;
+    --chart-border: #475569;
+    --chart-border-emphasis: #334155;
+    --chart-background: #1e293b;
+    --chart-alert-bg: #432232;
+    --chart-alert-text: #f54280;
+
+    /* Chart HSL values */
     --chart-success: 146 80% 35%;
     --chart-fail: 339 90% 51%;
     --chart-muted: 45 93% 47%;
@@ -34,21 +102,48 @@
 }
 
 @layer utilities {
+  /* Screen reader only - visually hidden but accessible */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
   /* Hide scrollbar */
   .no-scrollbar {
-    scrollbar-width: none;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
   }
 
   .checkbox-update {
-    @apply mr-2 bg-background;
+    margin-right: 0.5rem;
+    background-color: var(--background);
   }
 }
 
 @layer components {
   .animate-download-icon polyline,
   .animate-download-icon line {
-    @apply animate-drop-arrow;
+    animation: dropArrow 0.6s ease-out infinite;
     transform-box: fill-box;
     transform-origin: center;
+  }
+}
+
+@layer base {
+  /* is set to default by tailwind 4 */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
   }
 }

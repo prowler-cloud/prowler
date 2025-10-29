@@ -1,4 +1,5 @@
-import { Button, CircularProgress } from "@nextui-org/react";
+import { Button } from "@heroui/button";
+import { CircularProgress } from "@heroui/progress";
 import type { PressEvent } from "@react-types/shared";
 import clsx from "clsx";
 import Link from "next/link";
@@ -85,7 +86,7 @@ export const CustomButton = React.forwardRef<
   ) => (
     <Button
       as={asLink ? Link : undefined}
-      href={asLink}
+      {...(asLink && { href: asLink })}
       target={target}
       type={type}
       aria-label={ariaLabel}

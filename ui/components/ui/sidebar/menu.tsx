@@ -1,6 +1,6 @@
 "use client";
 
-import { Divider } from "@nextui-org/react";
+import { Divider } from "@heroui/divider";
 import { Ellipsis, LogOut } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -69,11 +69,13 @@ const hideMenuItems = (menuGroups: GroupProps[], labelsToHide: string[]) => {
 export const Menu = ({ isOpen }: { isOpen: boolean }) => {
   const pathname = usePathname();
   const { permissions } = useAuth();
-  const { hasProviders, openMutelistModal } = useUIStore();
+  const { hasProviders, openMutelistModal, requestMutelistModalOpen } =
+    useUIStore();
   const menuList = getMenuList({
     pathname,
     hasProviders,
     openMutelistModal,
+    requestMutelistModalOpen,
   });
 
   const labelsToHide = MENU_HIDE_RULES.filter((rule) =>
@@ -97,15 +99,15 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
           {isOpen ? "Launch Scan" : <AddIcon size={20} />}
         </CustomButton>
       </div>
-      <ScrollArea className="[&>div>div[style]]:!block">
+      <ScrollArea className="[&>div>div[style]]:block!">
         <nav className="mt-2 h-full w-full lg:mt-6">
-          <ul className="flex min-h-[calc(100vh-16px-60px-40px-16px-32px-40px-32px-44px)] flex-col items-start space-y-1 px-2 lg:min-h-[calc(100vh-16px-60px-40px-16px-64px-16px-41px)]">
+          <ul className="flex min-h-[calc(100vh-16px-60px-40px-16px-32px-40px-32px-44px)] flex-col items-start gap-1 px-2 lg:min-h-[calc(100vh-16px-60px-40px-16px-64px-16px-41px)]">
             {filteredMenuList.map(({ groupLabel, menus }, index) => (
               <li
                 className={cn(
                   "w-full",
                   groupLabel ? "pt-2" : "",
-                  "last:!mt-auto",
+                  index === filteredMenuList.length - 2 && "mt-auto!",
                 )}
                 key={index}
               >
@@ -138,8 +140,9 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                     active,
                     submenus,
                     defaultOpen,
+                    target,
+                    tooltip,
                   } = menu;
-
                   return !submenus || submenus.length === 0 ? (
                     <div className="w-full" key={index}>
                       <TooltipProvider disableHoverableContent>
@@ -156,7 +159,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                               className="mb-1 h-8 w-full justify-start"
                               asChild
                             >
-                              <Link href={href}>
+                              <Link href={href} target={target}>
                                 <span
                                   className={cn(isOpen === false ? "" : "mr-4")}
                                 >
@@ -175,9 +178,9 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                               </Link>
                             </Button>
                           </TooltipTrigger>
-                          {isOpen === false && (
+                          {tooltip && (
                             <TooltipContent side="right">
-                              {label}
+                              {tooltip}
                             </TooltipContent>
                           )}
                         </Tooltip>

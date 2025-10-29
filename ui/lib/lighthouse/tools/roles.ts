@@ -1,11 +1,18 @@
 import { tool } from "@langchain/core/tools";
+import { z } from "zod";
 
 import { getRoleInfoById, getRoles } from "@/actions/roles";
 import { getRoleSchema, getRolesSchema } from "@/types/lighthouse";
 
 export const getRolesTool = tool(
-  async ({ page, query, sort, filters }) => {
-    return await getRoles({ page, query, sort, filters });
+  async (input) => {
+    const typedInput = input as z.infer<typeof getRolesSchema>;
+    return await getRoles({
+      page: typedInput.page,
+      query: typedInput.query,
+      sort: typedInput.sort,
+      filters: typedInput.filters,
+    });
   },
   {
     name: "getRoles",
@@ -15,8 +22,9 @@ export const getRolesTool = tool(
 );
 
 export const getRoleTool = tool(
-  async ({ id }) => {
-    return await getRoleInfoById(id);
+  async (input) => {
+    const typedInput = input as z.infer<typeof getRoleSchema>;
+    return await getRoleInfoById(typedInput.id);
   },
   {
     name: "getRole",

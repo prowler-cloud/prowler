@@ -2,6 +2,7 @@ from colorama import Fore, Style
 from tabulate import tabulate
 
 from prowler.config.config import orange_color
+from prowler.lib.check.compliance_models import Compliance
 
 
 def get_prowler_threatscore_table(
@@ -23,9 +24,12 @@ def get_prowler_threatscore_table(
     fail_count = []
     muted_count = []
     pillars = {}
+    generic_score = 0
+    max_generic_score = 0
+    counted_findings_generic = []
     score_per_pillar = {}
     max_score_per_pillar = {}
-    counted_findings = []
+    counted_findings_per_pillar = {}
     for index, finding in enumerate(findings):
         check = bulk_checks_metadata[finding.check_metadata.CheckID]
         check_compliances = check.Compliance
@@ -39,12 +43,17 @@ def get_prowler_threatscore_table(
                             [
                                 pillar in score_per_pillar.keys(),
                                 pillar in max_score_per_pillar.keys(),
+                                pillar in counted_findings_per_pillar.keys(),
                             ]
                         ):
                             score_per_pillar[pillar] = 0
                             max_score_per_pillar[pillar] = 0
+                            counted_findings_per_pillar[pillar] = []
 
-                        if index not in counted_findings:
+                        if (
+                            index not in counted_findings_per_pillar[pillar]
+                            and not finding.muted
+                        ):
                             if finding.status == "PASS":
                                 score_per_pillar[pillar] += (
                                     attribute.LevelOfRisk * attribute.Weight
@@ -52,7 +61,7 @@ def get_prowler_threatscore_table(
                             max_score_per_pillar[pillar] += (
                                 attribute.LevelOfRisk * attribute.Weight
                             )
-                            counted_findings.append(index)
+                            counted_findings_per_pillar[pillar].append(index)
 
                         if pillar not in pillars:
                             pillars[pillar] = {"FAIL": 0, "PASS": 0, "Muted": 0}
@@ -68,6 +77,27 @@ def get_prowler_threatscore_table(
                             elif finding.status == "PASS" and index not in pass_count:
                                 pass_count.append(index)
                                 pillars[pillar]["PASS"] += 1
+
+                        # Generic score
+                        if index not in counted_findings_generic and not finding.muted:
+                            if finding.status == "PASS":
+                                generic_score += (
+                                    attribute.LevelOfRisk * attribute.Weight
+                                )
+                            max_generic_score += (
+                                attribute.LevelOfRisk * attribute.Weight
+                            )
+                            counted_findings_generic.append(index)
+
+    no_findings_pillars = []
+    bulk_compliance = Compliance.get_bulk(provider=compliance.Provider.lower()).get(
+        compliance_framework
+    )
+    for requirement in bulk_compliance.Requirements:
+        for attribute in requirement.Attributes:
+            pillar = attribute.Section
+            if pillar not in pillars.keys() and pillar not in no_findings_pillars:
+                no_findings_pillars.append(pillar)
 
     pillars = dict(sorted(pillars.items()))
     for pillar in pillars:
@@ -87,6 +117,16 @@ def get_prowler_threatscore_table(
         pillar_table["Muted"].append(
             f"{orange_color}{pillars[pillar]['Muted']}{Style.RESET_ALL}"
         )
+
+    for pillar in no_findings_pillars:
+        pillar_table["Provider"].append(compliance.Provider)
+        pillar_table["Pillar"].append(pillar)
+        pillar_table["Score"].append(f"{Style.BRIGHT}{Fore.GREEN}100%{Style.RESET_ALL}")
+        pillar_table["Status"].append(f"{Fore.GREEN}PASS{Style.RESET_ALL}")
+        pillar_table["Muted"].append(f"{orange_color}0{Style.RESET_ALL}")
+
+    # Sort table by pillars
+    pillar_table["Pillar"] = sorted(pillar_table["Pillar"])
 
     if (
         len(fail_count) + len(pass_count) + len(muted_count) > 1
@@ -108,7 +148,9 @@ def get_prowler_threatscore_table(
                 print(
                     f"\nFramework {Fore.YELLOW}{compliance_framework.upper()}{Style.RESET_ALL} Results:"
                 )
-
+                print(
+                    f"\nGeneric Threat Score: {generic_score / max_generic_score * 100:.2f}%"
+                )
                 print(
                     tabulate(
                         pillar_table,

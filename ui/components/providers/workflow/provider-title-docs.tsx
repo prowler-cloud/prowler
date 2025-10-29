@@ -13,7 +13,7 @@ export const ProviderTitleDocs = ({
 }) => {
   return (
     <div className="flex flex-col gap-y-2">
-      <div className="flex space-x-4">
+      <div className="flex gap-4">
         {providerType && getProviderLogo(providerType as ProviderType)}
         <span className="text-lg font-semibold">
           {providerType
@@ -22,7 +22,7 @@ export const ProviderTitleDocs = ({
         </span>
       </div>
       <div className="flex items-end gap-x-2">
-        <p className="text-sm text-default-500">
+        <p className="text-default-500 text-sm">
           {getProviderHelpText(providerType as string).text}
         </p>
         <CustomLink

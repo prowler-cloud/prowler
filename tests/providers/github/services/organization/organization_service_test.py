@@ -45,11 +45,13 @@ class Test_Organization_Scoping:
         self.mock_org1.id = 1
         self.mock_org1.login = "test-org1"
         self.mock_org1.two_factor_requirement_enabled = True
+        self.mock_org1.default_repository_permission = None
 
         self.mock_org2 = MagicMock()
         self.mock_org2.id = 2
         self.mock_org2.login = "test-org2"
         self.mock_org2.two_factor_requirement_enabled = False
+        self.mock_org2.default_repository_permission = None
 
         self.mock_user = MagicMock()
         self.mock_user.id = 100
@@ -63,7 +65,12 @@ class Test_Organization_Scoping:
 
         mock_client = MagicMock()
         mock_user = MagicMock()
-        mock_user.get_orgs.return_value = [self.mock_org1, self.mock_org2]
+        mock_orgs = MagicMock()
+        mock_orgs.totalCount = 2
+        mock_orgs.__iter__ = MagicMock(
+            return_value=iter([self.mock_org1, self.mock_org2])
+        )
+        mock_user.get_orgs.return_value = mock_orgs
         mock_client.get_user.return_value = mock_user
 
         with patch(
@@ -80,6 +87,124 @@ class Test_Organization_Scoping:
             assert 2 in orgs
             assert orgs[1].name == "test-org1"
             assert orgs[2].name == "test-org2"
+
+    def test_no_organizations_found_for_user(self):
+        """Test that when user has no organizations, empty dict is returned"""
+        provider = set_mocked_github_provider()
+        provider.repositories = []
+        provider.organizations = []
+
+        mock_client = MagicMock()
+        mock_user = MagicMock()
+        mock_orgs = MagicMock()
+        mock_orgs.totalCount = 0
+        mock_user.get_orgs.return_value = mock_orgs
+        mock_client.get_user.return_value = mock_user
+
+        with patch(
+            "prowler.providers.github.services.organization.organization_service.GithubService.__init__"
+        ):
+            organization_service = Organization(provider)
+            organization_service.clients = [mock_client]
+            organization_service.provider = provider
+
+            orgs = organization_service._list_organizations()
+
+            assert len(orgs) == 0
+
+    def test_github_app_organization_scoping(self):
+        """Test GitHub App organization listing"""
+        from prowler.providers.github.models import GithubAppIdentityInfo
+
+        provider = set_mocked_github_provider()
+        provider.repositories = []
+        provider.organizations = []
+        # Set GitHub App identity
+        provider.identity = GithubAppIdentityInfo(
+            app_id="test-app-id",
+            app_name="test-app",
+            installations=["test-org1", "test-org2"],
+        )
+
+        mock_client = MagicMock()
+        mock_orgs = MagicMock()
+        mock_orgs.totalCount = 2
+        mock_orgs.__iter__ = MagicMock(
+            return_value=iter([self.mock_org1, self.mock_org2])
+        )
+        mock_client.get_organizations.return_value = mock_orgs
+
+        with patch(
+            "prowler.providers.github.services.organization.organization_service.GithubService.__init__"
+        ):
+            organization_service = Organization(provider)
+            organization_service.clients = [mock_client]
+            organization_service.provider = provider
+
+            orgs = organization_service._list_organizations()
+
+            assert len(orgs) == 2
+            assert 1 in orgs
+            assert 2 in orgs
+            assert orgs[1].name == "test-org1"
+            assert orgs[2].name == "test-org2"
+
+    def test_github_app_no_organizations_found(self):
+        """Test GitHub App when no organizations are accessible"""
+        from prowler.providers.github.models import GithubAppIdentityInfo
+
+        provider = set_mocked_github_provider()
+        provider.repositories = []
+        provider.organizations = []
+        # Set GitHub App identity
+        provider.identity = GithubAppIdentityInfo(
+            app_id="test-app-id", app_name="test-app", installations=[]
+        )
+
+        mock_client = MagicMock()
+        mock_orgs = MagicMock()
+        mock_orgs.totalCount = 0
+        mock_client.get_organizations.return_value = mock_orgs
+
+        with patch(
+            "prowler.providers.github.services.organization.organization_service.GithubService.__init__"
+        ):
+            organization_service = Organization(provider)
+            organization_service.clients = [mock_client]
+            organization_service.provider = provider
+
+            orgs = organization_service._list_organizations()
+
+            assert len(orgs) == 0
+
+    def test_base_permission_extraction(self):
+        """Test that base_permission is populated from organization's default_repository_permission"""
+        provider = set_mocked_github_provider()
+        provider.repositories = []
+        provider.organizations = ["test-org1"]
+
+        mock_client = MagicMock()
+        # Organization with default_repository_permission set to "read"
+        org_with_perm = MagicMock()
+        org_with_perm.id = 1
+        org_with_perm.login = "test-org1"
+        org_with_perm.two_factor_requirement_enabled = True
+        org_with_perm.default_repository_permission = "read"
+        mock_client.get_organization.return_value = org_with_perm
+
+        with patch(
+            "prowler.providers.github.services.organization.organization_service.GithubService.__init__"
+        ):
+            organization_service = Organization(provider)
+            organization_service.clients = [mock_client]
+            organization_service.provider = provider
+
+            orgs = organization_service._list_organizations()
+
+            assert len(orgs) == 1
+            assert 1 in orgs
+            assert orgs[1].name == "test-org1"
+            assert orgs[1].base_permission == "read"
 
     def test_specific_organization_scoping(self):
         """Test that only specified organizations are returned"""
@@ -193,11 +318,13 @@ class Test_Organization_Scoping:
         mock_owner_org.id = 1
         mock_owner_org.login = "owner1"
         mock_owner_org.two_factor_requirement_enabled = True
+        mock_owner_org.default_repository_permission = None
 
         mock_specific_org = MagicMock()
         mock_specific_org.id = 2
         mock_specific_org.login = "specific-org"
         mock_specific_org.two_factor_requirement_enabled = False
+        mock_specific_org.default_repository_permission = None
 
         mock_client.get_organization.side_effect = [
             mock_owner_org,
@@ -299,6 +426,7 @@ class Test_Organization_ErrorHandling:
         self.mock_org1.id = 1
         self.mock_org1.login = "test-org1"
         self.mock_org1.two_factor_requirement_enabled = True
+        self.mock_org1.default_repository_permission = None
 
     def test_github_api_error_handling(self):
         """Test that GitHub API errors are handled properly"""

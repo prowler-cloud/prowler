@@ -1,13 +1,10 @@
 import os
-import platform
 
 from prowler.lib.logger import logger
 from prowler.lib.powershell.powershell import PowerShellSession
 from prowler.providers.m365.exceptions.exceptions import (
     M365CertificateCreationError,
     M365GraphConnectionError,
-    M365UserCredentialsError,
-    M365UserNotBelongingToTenantError,
 )
 from prowler.providers.m365.lib.jwt.jwt_decoder import decode_jwt, decode_msal_token
 from prowler.providers.m365.models import M365Credentials, M365IdentityInfo
@@ -76,10 +73,9 @@ class M365PowerShell(PowerShellSession):
         """
         Initialize PowerShell credential object for Microsoft 365 authentication.
 
-        Supports three authentication methods:
-        1. User authentication (username/password) - Will be deprecated in September 2025
-        2. Application authentication (client_id/client_secret)
-        3. Certificate authentication (certificate_content in base64/application_id)
+        Supports two authentication methods:
+        1. Application authentication (client_id/client_secret)
+        2. Certificate authentication (certificate_content in base64/client_id)
 
         Args:
             credentials (M365Credentials): The credentials object containing
@@ -115,22 +111,6 @@ class M365PowerShell(PowerShellSession):
             self.execute(f'$tenantID = "{sanitized_tenant_id}"')
             self.execute(f'$tenantDomain = "{credentials.tenant_domains[0]}"')
 
-        # User Auth (Will be deprecated in September 2025)
-        elif credentials.user and credentials.passwd:
-            credentials.encrypted_passwd = self.encrypt_password(credentials.passwd)
-
-            # Sanitize user and password
-            sanitized_user = self.sanitize(credentials.user)
-            sanitized_encrypted_passwd = self.sanitize(credentials.encrypted_passwd)
-
-            # Securely convert encrypted password to SecureString
-            self.execute(f'$user = "{sanitized_user}"')
-            self.execute(
-                f'$secureString = "{sanitized_encrypted_passwd}" | ConvertTo-SecureString'
-            )
-            self.execute(
-                "$credential = New-Object System.Management.Automation.PSCredential ($user, $secureString)"
-            )
         else:
             # Application Auth
             self.execute(f'$clientID = "{credentials.client_id}"')
@@ -143,51 +123,13 @@ class M365PowerShell(PowerShellSession):
                 '$graphToken = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$tenantID/oauth2/v2.0/token" -Method POST -Body $graphtokenBody | Select-Object -ExpandProperty Access_Token'
             )
 
-    def encrypt_password(self, password: str) -> str:
-        """
-        Encrypts a password using Windows CryptProtectData on Windows systems
-        or UTF-16LE encoding on other systems.
-
-        Args:
-        password (str): The password to encrypt
-
-        Returns:
-        str: The encrypted password in hexadecimal format
-
-        Raises:
-        ValueError: If password is None or empty
-        """
-        try:
-            if platform.system() == "Windows":
-                import win32crypt
-
-                encrypted_blob = win32crypt.CryptProtectData(
-                    password.encode("utf-16le"), None, None, None, None, 0
-                )
-
-                encrypted_bytes = encrypted_blob
-                if isinstance(encrypted_blob, tuple):
-                    encrypted_bytes = encrypted_blob[1]
-                elif hasattr(encrypted_blob, "data"):
-                    encrypted_bytes = encrypted_blob.data
-
-                return encrypted_bytes.hex()
-
-            else:
-                return password.encode("utf-16le").hex()
-        except Exception as error:
-            raise Exception(
-                f"[{os.path.basename(__file__)}] Error encrypting password: {str(error)}"
-            )
-
     def test_credentials(self, credentials: M365Credentials) -> bool:
         """
         Test Microsoft 365 credentials by attempting to authenticate against Entra ID.
 
-        Supports testing three authentication methods:
-        1. User authentication (username/password)
-        2. Application authentication (client_id/client_secret)
-        3. Certificate authentication (certificate_content in base64/application_id)
+        Supports testing two authentication methods:
+        1. Application authentication (client_id/client_secret)
+        2. Certificate authentication (certificate_content in base64/client_id)
 
         Args:
             credentials (M365Credentials): The credentials object containing
@@ -203,50 +145,6 @@ class M365PowerShell(PowerShellSession):
                 return True
             except Exception as e:
                 logger.error(f"Exchange Online Certificate connection failed: {e}")
-
-        # Test User Auth
-        elif credentials.user and credentials.passwd:
-            self.execute(
-                f'$securePassword = "{credentials.encrypted_passwd}" | ConvertTo-SecureString'  # encrypted password already sanitized
-            )
-            self.execute(
-                f'$credential = New-Object System.Management.Automation.PSCredential("{self.sanitize(credentials.user)}", $securePassword)'
-            )
-
-            user_domain = credentials.user.split("@")[1]
-            if not any(
-                user_domain.endswith(domain)
-                for domain in self.tenant_identity.tenant_domains
-            ):
-                raise M365UserNotBelongingToTenantError(
-                    file=os.path.basename(__file__),
-                    message=f"The user domain {user_domain} does not match any of the tenant domains: {', '.join(self.tenant_identity.tenant_domains)}",
-                )
-
-            # Validate credentials
-            # Test Exchange Online connection
-            result = self.execute("Connect-ExchangeOnline -Credential $credential")
-            if "https://aka.ms/exov3-module" not in result:
-                if "AADSTS" in result:  # Entra Security Token Service Error
-                    raise M365UserCredentialsError(
-                        file=os.path.basename(__file__),
-                        message=result,
-                    )
-                # Test Microsoft Teams connection
-                result = self.execute("Connect-MicrosoftTeams -Credential $credential")
-                if self.tenant_identity.user not in result:
-                    if "AADSTS" in result:  # Entra Security Token Service Error
-                        raise M365UserCredentialsError(
-                            file=os.path.basename(__file__),
-                            message=result,
-                        )
-                    else:  # Unknown error, could be a permission issue or modules not installed
-                        raise M365UserCredentialsError(
-                            file=os.path.basename(__file__),
-                            message=f"Error connecting to PowerShell modules: {result if result else 'Unknown error'}",
-                        )
-
-            return True
 
         else:
             # Test Microsoft Graph connection
@@ -317,21 +215,6 @@ class M365PowerShell(PowerShellSession):
             return False
         return True
 
-    def test_teams_user_connection(self) -> bool:
-        """Test Microsoft Teams API connection using user authentication and raise exception if it fails."""
-        result = self.execute("Connect-MicrosoftTeams -Credential $credential")
-        if self.tenant_identity.user not in result:
-            logger.error(f"Microsoft Teams User Auth connection failed: {result}.")
-            return False
-
-        connection = self.execute("Get-CsTeamsClientConfiguration")
-        if not connection:
-            logger.error(
-                "Microsoft Teams User Auth connection failed: Please check your permissions and try again."
-            )
-            return False
-        return True
-
     def test_exchange_connection(self) -> bool:
         """Test Exchange Online API connection and raise exception if it fails."""
         try:
@@ -368,30 +251,14 @@ class M365PowerShell(PowerShellSession):
             return False
         return True
 
-    def test_exchange_user_connection(self) -> bool:
-        """Test Exchange Online API connection using user authentication and raise exception if it fails."""
-        result = self.execute("Connect-ExchangeOnline -Credential $credential")
-        if "https://aka.ms/exov3-module" not in result:
-            logger.error(f"Exchange Online User Auth connection failed: {result}.")
-            return False
-
-        connection = self.execute("Get-OrganizationConfig")
-        if not connection:
-            logger.error(
-                "Exchange Online User Auth connection failed: Please check your permissions and try again."
-            )
-            return False
-        return True
-
     def connect_microsoft_teams(self) -> dict:
         """
         Connect to Microsoft Teams Module PowerShell Module.
 
         Establishes a connection to Microsoft Teams using the initialized credentials.
-        Supports three authentication methods:
-        1. User authentication (username/password)
-        2. Application authentication (client_id/client_secret)
-        3. Certificate authentication (certificate_content in base64/application_id)
+        Supports two authentication methods:
+        1. Application authentication (client_id/client_secret)
+        2. Certificate authentication (certificate_content in base64/client_id)
 
         Returns:
             dict: Connection status information in JSON format.
@@ -402,12 +269,8 @@ class M365PowerShell(PowerShellSession):
         # Certificate Auth
         if self.execute("Write-Output $certificate") != "":
             return self.test_teams_certificate_connection()
-        # User Auth
-        if self.execute("Write-Output $credential") != "":
-            return self.test_teams_user_connection()
         # Application Auth
-        else:
-            return self.test_teams_connection()
+        return self.test_teams_connection()
 
     def get_teams_settings(self) -> dict:
         """
@@ -494,10 +357,9 @@ class M365PowerShell(PowerShellSession):
         Connect to Exchange Online PowerShell Module.
 
         Establishes a connection to Exchange Online using the initialized credentials.
-        Supports three authentication methods:
-        1. User authentication (username/password)
-        2. Application authentication (client_id/client_secret)
-        3. Certificate authentication (certificate_content in base64/application_id)
+        Supports two authentication methods:
+        1. Application authentication (client_id/client_secret)
+        2. Certificate authentication (certificate_content in base64/client_id)
 
         Returns:
             dict: Connection status information in JSON format.
@@ -508,12 +370,8 @@ class M365PowerShell(PowerShellSession):
         # Certificate Auth
         if self.execute("Write-Output $certificate") != "":
             return self.test_exchange_certificate_connection()
-        # User Auth
-        if self.execute("Write-Output $credential") != "":
-            return self.test_exchange_user_connection()
         # Application Auth
-        else:
-            return self.test_exchange_connection()
+        return self.test_exchange_connection()
 
     def get_audit_log_config(self) -> dict:
         """
@@ -981,6 +839,20 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute("Get-SharingPolicy | ConvertTo-Json", json_parse=True)
+
+    def get_user_account_status(self) -> dict:
+        """
+        Get User Account Status.
+
+        Retrieves the current user account status settings for Exchange Online.
+
+        Returns:
+            dict: User account status settings in JSON format.
+        """
+        return self.execute(
+            "$dict=@{}; Get-User -ResultSize Unlimited | ForEach-Object { $dict[$_.Id] = @{ AccountDisabled = $_.AccountDisabled } }; $dict | ConvertTo-Json",
+            json_parse=True,
+        )
 
 
 # This function is used to install the required M365 PowerShell modules in Docker containers

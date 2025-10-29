@@ -1,31 +1,39 @@
 {
   "Provider": "aws",
   "CheckID": "config_recorder_all_regions_enabled",
-  "CheckTitle": "Ensure AWS Config is enabled in all regions.",
+  "CheckTitle": "AWS Config recorder is enabled and not in failure state or disabled",
   "CheckType": [
-    "Logging and Monitoring"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
   ],
   "ServiceName": "config",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:access-recorder:region:account-id:recorder/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
-  "Description": "Ensure AWS Config is enabled in all regions.",
-  "Risk": "The AWS configuration item history captured by AWS Config enables security analysis, resource change tracking and compliance auditing.",
-  "RelatedUrl": "https://aws.amazon.com/blogs/mt/aws-config-best-practices/",
+  "Description": "**AWS accounts** have **AWS Config recorders** active and healthy in each Region. It identifies Regions with no recorder, a disabled recorder, or a recorder in a failure state.",
+  "Risk": "**Gaps in Config recording** create **blind spots**. Changes in unmonitored Regions aren't captured, weakening **integrity** and **auditability**. Adversaries can alter resources or stage assets unnoticed, enabling misconfigurations and delaying **incident response**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://repost.aws/es/questions/QUGcgeerhcTamRkwgdwh_tLQ/enable-aws-config",
+    "https://www.tenable.com/audits/items/CIS_Amazon_Web_Services_Foundations_v1.5.0_L2.audit:6a5136528bd329139e5969f8f1e5ffbc",
+    "https://aws.amazon.com/blogs/mt/aws-config-best-practices/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws configservice subscribe --s3-bucket <S3_BUCKET> --sns-topic <TOPIC_ARN>--iam-role <ROLE_ARN> ",
-      "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/aws/logging-policies/logging_5-enable-aws-config-regions",
-      "Terraform": "https://docs.prowler.com/checks/aws/logging-policies/logging_5-enable-aws-config-regions#terraform"
+      "CLI": "",
+      "NativeIaC": "```yaml\nResources:\n  example_resource_recorder:\n    Type: AWS::Config::ConfigurationRecorder\n    Properties:\n      Name: example_resource\n      RoleARN: !Sub arn:aws:iam::${AWS::AccountId}:role/aws-service-role/config.amazonaws.com/AWSServiceRoleForConfig\n\n  example_resource_channel:\n    Type: AWS::Config::DeliveryChannel\n    Properties:\n      S3BucketName: example_resource\n\n  example_resource_status:\n    Type: AWS::Config::ConfigurationRecorderStatus\n    Properties:\n      Name: example_resource\n      Recording: true  # This line fixes the security issue\n    DependsOn:\n      - example_resource_channel\n```",
+      "Other": "1. In the AWS Console, go to Config\n2. Click Set up AWS Config (or Settings)\n3. Select a resource recording option (any) and choose an existing S3 bucket for delivery\n4. Keep the default AWSServiceRoleForConfig role\n5. Click Confirm/Turn on to start recording\n6. Verify on the Settings page that Status shows Recording and not Failure",
+      "Terraform": "```hcl\nresource \"aws_iam_service_linked_role\" \"example_resource\" {\n  aws_service_name = \"config.amazonaws.com\"\n}\n\nresource \"aws_config_configuration_recorder\" \"example_resource\" {\n  name     = \"example_resource\"\n  role_arn = aws_iam_service_linked_role.example_resource.arn\n}\n\nresource \"aws_config_delivery_channel\" \"example_resource\" {\n  s3_bucket_name = \"example_resource\"\n}\n\nresource \"aws_config_configuration_recorder_status\" \"example_resource\" {\n  name         = aws_config_configuration_recorder.example_resource.name\n  is_recording = true  # This line fixes the security issue\n  depends_on   = [aws_config_delivery_channel.example_resource]\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended to enable AWS Config in all regions.",
-      "Url": "https://aws.amazon.com/blogs/mt/aws-config-best-practices/"
+      "Text": "Enable **AWS Config** in every Region with continuous recording and maintain healthy recorder status.",
+      "Url": "https://hub.prowler.com/check/config_recorder_all_regions_enabled"
     }
   },
   "Categories": [
+    "logging",
     "forensics-ready"
   ],
   "DependsOn": [],

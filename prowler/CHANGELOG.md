@@ -2,22 +2,166 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [v5.11.0] (Prowler UNRELEASED)
+## [v5.14.0] (Prowler UNRELEASED)
+
+### Added
+- GitHub provider check `organization_default_repository_permission_strict` [(#8785)](https://github.com/prowler-cloud/prowler/pull/8785)
+- Add OCI mapping to scan and check classes [(#8927)](https://github.com/prowler-cloud/prowler/pull/8927)
+- `codepipeline_project_repo_private` check for AWS provider [(#5915)](https://github.com/prowler-cloud/prowler/pull/5915)
+- `cloudstorage_bucket_versioning_enabled` check for GCP provider [(#9014)](https://github.com/prowler-cloud/prowler/pull/9014)
+
+### Changed
+- Update AWS Direct Connect service metadata to new format [(#8855)](https://github.com/prowler-cloud/prowler/pull/8855)
+- Update AWS DRS service metadata to new format [(#8870)](https://github.com/prowler-cloud/prowler/pull/8870)
+- Update AWS DynamoDB service metadata to new format [(#8871)](https://github.com/prowler-cloud/prowler/pull/8871)
+
+---
+
+## [v5.13.1] (Prowler UNRELEASED)
+
+### Fixed
+- Add `resource_name` for checks under `logging` for the GCP provider [(#9023)](https://github.com/prowler-cloud/prowler/pull/9023)
+- Fix `ec2_instance_with_outdated_ami` check to handle None AMIs [(#9046)](https://github.com/prowler-cloud/prowler/pull/9046)
+- Handle timestamp when transforming compliance findings in CCC [(#9042)](https://github.com/prowler-cloud/prowler/pull/9042)
+
+---
+
+## [v5.13.0] (Prowler v5.13.0)
+
+### Added
+- Support for AdditionalURLs in outputs [(#8651)](https://github.com/prowler-cloud/prowler/pull/8651)
+- Support for markdown metadata fields in Dashboard [(#8667)](https://github.com/prowler-cloud/prowler/pull/8667)
+- `ec2_instance_with_outdated_ami` check for AWS provider [(#6910)](https://github.com/prowler-cloud/prowler/pull/6910)
+- LLM provider using `promptfoo` [(#8555)](https://github.com/prowler-cloud/prowler/pull/8555)
+- Documentation for renaming checks [(#8717)](https://github.com/prowler-cloud/prowler/pull/8717)
+- Add explicit "name" field for each compliance framework and include "FRAMEWORK" and "NAME" in CSV output [(#7920)](https://github.com/prowler-cloud/prowler/pull/7920)
+- Add C5 compliance framework for the AWS provider [(#8830)](https://github.com/prowler-cloud/prowler/pull/8830)
+- Equality validation for CheckID, filename and classname [(#8690)](https://github.com/prowler-cloud/prowler/pull/8690)
+- Improve logging for Security Hub integration [(#8608)](https://github.com/prowler-cloud/prowler/pull/8608)
+- Oracle Cloud provider with CIS 3.0 benchmark [(#8893)](https://github.com/prowler-cloud/prowler/pull/8893)
+- Support for Atlassian Document Format (ADF) in Jira integration [(#8878)](https://github.com/prowler-cloud/prowler/pull/8878)
+- Add Common Cloud Controls for AWS, Azure and GCP [(#8000)](https://github.com/prowler-cloud/prowler/pull/8000)
+- Improve Provider documentation guide [(#8430)](https://github.com/prowler-cloud/prowler/pull/8430)
+- `cloudstorage_bucket_lifecycle_management_enabled` check for GCP provider [(#8936)](https://github.com/prowler-cloud/prowler/pull/8936)
+
+### Changed
+
+- Update AWS Neptune service metadata to new format [(#8494)](https://github.com/prowler-cloud/prowler/pull/8494)
+- Update AWS Config service metadata to new format [(#8641)](https://github.com/prowler-cloud/prowler/pull/8641)
+- Update AWS Account service metadata to new format [(#8715)](https://github.com/prowler-cloud/prowler/pull/8715)
+- Update AWS AccessAnalyzer service metadata to new format [(#8688)](https://github.com/prowler-cloud/prowler/pull/8688)
+- Update AWS Api Gateway V2 service metadata to new format [(#8719)](https://github.com/prowler-cloud/prowler/pull/8719)
+- Update AWS AppSync service metadata to new format [(#8721)](https://github.com/prowler-cloud/prowler/pull/8721)
+- Update AWS ACM service metadata to new format [(#8716)](https://github.com/prowler-cloud/prowler/pull/8716)
+- HTML output now properly renders markdown syntax in Risk and Recommendation fields [(#8727)](https://github.com/prowler-cloud/prowler/pull/8727)
+- Update `moto` dependency from 5.0.28 to 5.1.11 [(#7100)](https://github.com/prowler-cloud/prowler/pull/7100)
+- Update AWS AppStream service metadata to new format [(#8789)](https://github.com/prowler-cloud/prowler/pull/8789)
+- Update AWS API Gateway service metadata to new format [(#8788)](https://github.com/prowler-cloud/prowler/pull/8788)
+- Update AWS Athena service metadata to new format [(#8790)](https://github.com/prowler-cloud/prowler/pull/8790)
+- Update AWS CloudTrail service metadata to new format [(#8831)](https://github.com/prowler-cloud/prowler/pull/8831)
+- Update AWS Auto Scaling service metadata to new format [(#8824)](https://github.com/prowler-cloud/prowler/pull/8824)
+- Update AWS Backup service metadata to new format [(#8826)](https://github.com/prowler-cloud/prowler/pull/8826)
+- Update AWS CloudFormation service metadata to new format [(#8828)](https://github.com/prowler-cloud/prowler/pull/8828)
+- Update AWS Lambda service metadata to new format [(#8825)](https://github.com/prowler-cloud/prowler/pull/8825)
+- Update AWS DLM service metadata to new format [(#8860)](https://github.com/prowler-cloud/prowler/pull/8860)
+- Update AWS DMS service metadata to new format [(#8861)](https://github.com/prowler-cloud/prowler/pull/8861)
+- Update AWS Directory Service service metadata to new format [(#8859)](https://github.com/prowler-cloud/prowler/pull/8859)
+- Update AWS CloudFront service metadata to new format [(#8829)](https://github.com/prowler-cloud/prowler/pull/8829)
+- Deprecate user authentication for M365 provider [(#8865)](https://github.com/prowler-cloud/prowler/pull/8865)
+- Update AWS EFS service metadata to new format [(#8889)](https://github.com/prowler-cloud/prowler/pull/8889)
+
+### Fixed
+- Fix SNS topics showing empty AWS_ResourceID in Quick Inventory output [(#8762)](https://github.com/prowler-cloud/prowler/issues/8762)
+- Fix HTML Markdown output for long strings [(#8803)](https://github.com/prowler-cloud/prowler/pull/8803)
+- Prowler ThreatScore scoring calculation CLI [(#8582)](https://github.com/prowler-cloud/prowler/pull/8582)
+- Add missing attributes for Mitre Attack AWS, Azure and GCP [(#8907)](https://github.com/prowler-cloud/prowler/pull/8907)
+- Fix KeyError in CloudSQL and Monitoring services in GCP provider [(#8909)](https://github.com/prowler-cloud/prowler/pull/8909)
+- Fix Value Errors in Entra service for M365 provider [(#8919)](https://github.com/prowler-cloud/prowler/pull/8919)
+- Fix ResourceName in GCP provider [(#8928)](https://github.com/prowler-cloud/prowler/pull/8928)
+- Fix KeyError in `elb_ssl_listeners_use_acm_certificate` check and handle None cluster version in `eks_cluster_uses_a_supported_version` check [(#8791)](https://github.com/prowler-cloud/prowler/pull/8791)
+- Fix file extension parsing for compliance reports [(#8791)](https://github.com/prowler-cloud/prowler/pull/8791)
+- Added user pagination to Entra and Admincenter services [(#8858)](https://github.com/prowler-cloud/prowler/pull/8858)
+
+---
+
+## [v5.12.1] (Prowler v5.12.1)
+
+### Fixed
+- Replaced old check id with new ones for compliance files [(#8682)](https://github.com/prowler-cloud/prowler/pull/8682)
+- `firehose_stream_encrypted_at_rest` check false positives and new api call in kafka service [(#8599)](https://github.com/prowler-cloud/prowler/pull/8599)
+- Replace defender rules policies key to use old name [(#8702)](https://github.com/prowler-cloud/prowler/pull/8702)
+
+---
+
+## [v5.12.0] (Prowler v5.12.0)
+
+### Added
+- Add more fields for the Jira ticket and handle custom fields errors [(#8601)](https://github.com/prowler-cloud/prowler/pull/8601)
+- Support labels on Jira tickets [(#8603)](https://github.com/prowler-cloud/prowler/pull/8603)
+- Add finding url and tenant info inside Jira tickets [(#8607)](https://github.com/prowler-cloud/prowler/pull/8607)
+- Get Jira Project's metadata [(#8630)](https://github.com/prowler-cloud/prowler/pull/8630)
+- Get Jira projects from test_connection [(#8634)](https://github.com/prowler-cloud/prowler/pull/8634)
+- `AdditionalUrls` field in CheckMetadata [(#8590)](https://github.com/prowler-cloud/prowler/pull/8590)
+- Support color for MANUAL finidngs in Jira tickets [(#8642)](https://github.com/prowler-cloud/prowler/pull/8642)
+- `--excluded-checks-file` flag [(#8301)](https://github.com/prowler-cloud/prowler/pull/8301)
+- Send finding in Jira integration with the needed values [(#8648)](https://github.com/prowler-cloud/prowler/pull/8648)
+- Add language enforcement for Jira requests [(#8674)](https://github.com/prowler-cloud/prowler/pull/8674)
+- MongoDB Atlas provider with 10 security checks [(#8312)](https://github.com/prowler-cloud/prowler/pull/8312)
+  - `clusters_authentication_enabled` - Ensure clusters have authentication enabled
+  - `clusters_backup_enabled` - Ensure clusters have backup enabled
+  - `clusters_encryption_at_rest_enabled` - Ensure clusters have encryption at rest enabled
+  - `clusters_tls_enabled` - Ensure clusters have TLS authentication required
+  - `organizations_api_access_list_required` - Ensure organization requires API access list
+  - `organizations_mfa_required` - Ensure organization requires MFA
+  - `organizations_security_contact_defined` - Ensure organization has security contact defined
+  - `organizations_service_account_secrets_expiration` - Ensure organization has maximum period expiration for service account secrets
+  - `projects_auditing_enabled` - Ensure database auditing is enabled
+  - `projects_network_access_list_exposed_to_internet` - Ensure project network access list is not exposed to internet
+
+### Changed
+- Rename ftp and mongo checks to follow pattern `ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_*` [(#8293)](https://github.com/prowler-cloud/prowler/pull/8293)
+
+### Fixed
+- Renamed `AdditionalUrls` to `AdditionalURLs` field in CheckMetadata [(#8639)](https://github.com/prowler-cloud/prowler/pull/8639)
+- TypeError from Python 3.9 in Security Hub module by updating type annotations [(#8619)](https://github.com/prowler-cloud/prowler/pull/8619)
+- KeyError when SecurityGroups field is missing in MemoryDB check [(#8666)](https://github.com/prowler-cloud/prowler/pull/8666)
+- NoneType error in Opensearch, Firehose and Cognito checks [(#8670)](https://github.com/prowler-cloud/prowler/pull/8670)
+
+---
+
+## [v5.11.0] (Prowler v5.11.0)
 
 ### Added
 - FedRAMP 20x Key Security Indicators (KSI) compliance framework for AWS, Azure, and GCP providers [(#8512)](https://github.com/prowler-cloud/prowler/pull/8512)
 - Certificate authentication for M365 provider [(#8404)](https://github.com/prowler-cloud/prowler/pull/8404)
 - `vm_sufficient_daily_backup_retention_period` check for Azure provider [(#8200)](https://github.com/prowler-cloud/prowler/pull/8200)
 - `vm_jit_access_enabled` check for Azure provider [(#8202)](https://github.com/prowler-cloud/prowler/pull/8202)
+- Bedrock AgentCore privilege escalation combination for AWS provider [(#8526)](https://github.com/prowler-cloud/prowler/pull/8526)
+- Add User Email and APP name/installations information in GitHub provider [(#8501)](https://github.com/prowler-cloud/prowler/pull/8501)
+- Remove standalone iam:PassRole from privesc detection and add missing patterns [(#8530)](https://github.com/prowler-cloud/prowler/pull/8530)
+- Support session/profile/role/static credentials in Security Hub integration [(#8539)](https://github.com/prowler-cloud/prowler/pull/8539)
+- `eks_cluster_deletion_protection_enabled` check for AWS provider [(#8536)](https://github.com/prowler-cloud/prowler/pull/8536)
+- ECS privilege escalation patterns (StartTask and RunTask) for AWS provider [(#8541)](https://github.com/prowler-cloud/prowler/pull/8541)
+- Resource Explorer enumeration v2 API actions in `cloudtrail_threat_detection_enumeration` check [(#8557)](https://github.com/prowler-cloud/prowler/pull/8557)
+- `apim_threat_detection_llm_jacking` check for Azure provider [(#8571)](https://github.com/prowler-cloud/prowler/pull/8571)
+- GCP `--skip-api-check` command line flag [(#8575)](https://github.com/prowler-cloud/prowler/pull/8575)
 
 ### Changed
 - Refine kisa isms-p compliance mapping [(#8479)](https://github.com/prowler-cloud/prowler/pull/8479)
+- Improve AWS Security Hub region check using multiple threads [(#8365)](https://github.com/prowler-cloud/prowler/pull/8365)
 
 ### Fixed
+- Resource metadata error in `s3_bucket_shadow_resource_vulnerability` check [(#8572)](https://github.com/prowler-cloud/prowler/pull/8572)
+- GitHub App authentication through API fails with auth_method validation error [(#8587)](https://github.com/prowler-cloud/prowler/pull/8587)
+- AWS resource-arn filtering [(#8533)](https://github.com/prowler-cloud/prowler/pull/8533)
+- GitHub App authentication for GitHub provider [(#8529)](https://github.com/prowler-cloud/prowler/pull/8529)
+- List all accessible organizations in GitHub provider [(#8535)](https://github.com/prowler-cloud/prowler/pull/8535)
+- Only evaluate enabled accounts in `entra_users_mfa_capable` check [(#8544)](https://github.com/prowler-cloud/prowler/pull/8544)
+- GitHub Personal Access Token authentication fails without `user:email` scope [(#8580)](https://github.com/prowler-cloud/prowler/pull/8580)
 
 ---
 
-## [v5.10.2] (Prowler UNRELEASED)
+## [v5.10.2] (Prowler v5.10.2)
 
 ### Fixed
 - Order requirements by ID in Prowler ThreatScore AWS compliance framework [(#8495)](https://github.com/prowler-cloud/prowler/pull/8495)
@@ -50,6 +194,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - GitHub repository and organization scoping support with `--repository/respositories` and `--organization/organizations` flags [(#8329)](https://github.com/prowler-cloud/prowler/pull/8329)
 - GCP provider retry configuration [(#8412)](https://github.com/prowler-cloud/prowler/pull/8412)
 - `s3_bucket_shadow_resource_vulnerability` check for AWS provider [(#8398)](https://github.com/prowler-cloud/prowler/pull/8398)
+- Use `trivy` as engine for IaC provider [(#8466)](https://github.com/prowler-cloud/prowler/pull/8466)
 
 ### Changed
 - Handle some AWS errors as warnings instead of errors [(#8347)](https://github.com/prowler-cloud/prowler/pull/8347)
