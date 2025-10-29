@@ -1,0 +1,26 @@
+name: Community PR labelling
+
+on:
+  # We need "write" permissions on the PR to be able to add a label.
+  pull_request_target: # We need this to have labelling permissions. There are no user inputs here, so we should be fine.
+    types:
+      - opened
+
+permissions: {}
+
+jobs:
+  label-if-community:
+    name: Add 'community' label if the PR is from a community contributor
+    if: github.event.pull_request.author_association != 'MEMBER' && github.event.pull_request.author_association != 'OWNER'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write # to write the label
+
+    steps:
+      - name: Add the 'community' label
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Adding 'community' label to the PR"
+          gh pr edit "$PR_NUMBER" --add-label community

@@ -1,5 +1,6 @@
 import React from "react";
 
+import { getProvider } from "@/actions/providers/providers";
 import {
   AddViaCredentialsForm,
   AddViaRoleForm,
@@ -20,8 +21,19 @@ interface Props {
 
 export default async function AddCredentialsPage({ searchParams }: Props) {
   const resolvedSearchParams = await searchParams;
-  const { type: providerType, via } = resolvedSearchParams;
+  const { type: providerType, via, id: providerId } = resolvedSearchParams;
   const formType = getProviderFormType(providerType, via);
+
+  // Fetch provider data to get the UID (needed for OCI)
+  let providerUid: string | undefined;
+  if (providerId) {
+    const formData = new FormData();
+    formData.append("id", providerId);
+    const providerResponse = await getProvider(formData);
+    if (providerResponse.success && providerResponse.data) {
+      providerUid = providerResponse.data.attributes?.uid;
+    }
+  }
 
   switch (formType) {
     case "selector":
@@ -33,13 +45,28 @@ export default async function AddCredentialsPage({ searchParams }: Props) {
       return null;
 
     case "credentials":
-      return <AddViaCredentialsForm searchParams={resolvedSearchParams} />;
+      return (
+        <AddViaCredentialsForm
+          searchParams={resolvedSearchParams}
+          providerUid={providerUid}
+        />
+      );
 
     case "role":
-      return <AddViaRoleForm searchParams={resolvedSearchParams} />;
+      return (
+        <AddViaRoleForm
+          searchParams={resolvedSearchParams}
+          providerUid={providerUid}
+        />
+      );
 
     case "service-account":
-      return <AddViaServiceAccountForm searchParams={resolvedSearchParams} />;
+      return (
+        <AddViaServiceAccountForm
+          searchParams={resolvedSearchParams}
+          providerUid={providerUid}
+        />
+      );
 
     default:
       return null;

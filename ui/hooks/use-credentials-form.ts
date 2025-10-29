@@ -155,6 +155,15 @@ export const useCredentialsForm = ({
           };
         }
         return baseDefaults;
+      case "oci":
+        return {
+          ...baseDefaults,
+          [ProviderCredentialFields.OCI_USER]: "",
+          [ProviderCredentialFields.OCI_FINGERPRINT]: "",
+          [ProviderCredentialFields.OCI_KEY_CONTENT]: "",
+          [ProviderCredentialFields.OCI_REGION]: "",
+          [ProviderCredentialFields.OCI_PASS_PHRASE]: "",
+        };
       default:
         return baseDefaults;
     }
