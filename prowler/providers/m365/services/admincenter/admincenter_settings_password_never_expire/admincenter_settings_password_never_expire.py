@@ -30,7 +30,6 @@ class admincenter_settings_password_never_expire(Check):
         """
         findings = []
         password_policy = getattr(admincenter_client, "password_policy", None)
-        domain_name = getattr(admincenter_client, "audited_domain", "Unknown domain")
         if password_policy:
             report = CheckReportM365(
                 self.metadata(),
@@ -40,13 +39,13 @@ class admincenter_settings_password_never_expire(Check):
             )
             report.status = "FAIL"
             report.status_extended = (
-                f"Domain {domain_name} does not have a Password never expires policy."
+                "Tenant Password policy does not have a Password never expires policy."
             )
 
             if password_policy.password_validity_period == 2147483647:
                 report.status = "PASS"
                 report.status_extended = (
-                    f"Domain {domain_name} Password policy is set to never expire."
+                    "Tenant Password policy is set to never expire."
                 )
 
             findings.append(report)

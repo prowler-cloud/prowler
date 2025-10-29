@@ -69,11 +69,11 @@ class Test_admincenter_settings_password_never_expire:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Domain {DOMAIN} does not have a Password never expires policy."
+                == "Tenant Password policy does not have a Password never expires policy."
             )
             assert result[0].resource == admincenter_client.password_policy.dict()
-            assert result[0].resource_name == DOMAIN
-            assert result[0].resource_id == DOMAIN
+            assert result[0].resource_name == "Password Policy"
+            assert result[0].resource_id == "passwordPolicy"
             assert result[0].location == "global"
 
     def test_admincenter_password_not_expire(self):
@@ -112,9 +112,9 @@ class Test_admincenter_settings_password_never_expire:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Domain {DOMAIN} Password policy is set to never expire."
+                == "Tenant Password policy is set to never expire."
             )
             assert result[0].resource == admincenter_client.password_policy.dict()
-            assert result[0].resource_name == DOMAIN
-            assert result[0].resource_id == DOMAIN
+            assert result[0].resource_name == "Password Policy"
+            assert result[0].resource_id == "passwordPolicy"
             assert result[0].location == "global"
