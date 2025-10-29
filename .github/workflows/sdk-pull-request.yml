@@ -154,7 +154,7 @@ jobs:
     needs: check-changes
     if: github.repository == 'prowler-cloud/prowler' && needs.check-changes.outputs.sdk-changed == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 120
     permissions:
       contents: read
     strategy:
