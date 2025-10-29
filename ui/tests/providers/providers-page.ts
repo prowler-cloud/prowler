@@ -439,6 +439,7 @@ export class ProvidersPage extends BasePage {
     // Fill the GitHub provider details
 
     await this.githubUsernameInput.fill(data.username);
+    
     if (data.alias) {
       await this.aliasInput.fill(data.alias);
     }
@@ -607,6 +608,7 @@ export class ProvidersPage extends BasePage {
     // Ensure we are on the add-credentials page where the selector exists
 
     await expect(this.page).toHaveURL(/\/providers\/add-credentials/);
+
     if (type === GITHUB_CREDENTIAL_OPTIONS.GITHUB_PERSONAL_ACCESS_TOKEN) {
       await this.githubPersonalAccessTokenRadio.click({ force: true });
     } else if (type === GITHUB_CREDENTIAL_OPTIONS.GITHUB_APP) {
