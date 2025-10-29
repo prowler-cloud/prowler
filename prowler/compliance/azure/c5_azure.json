@@ -73,7 +73,13 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_policy_guest_invite_only_for_admin_roles",
+        "iam_custom_role_has_permissions_to_administer_resource_locks",
+        "iam_role_user_access_admin_restricted",
+        "iam_subscription_roles_owner_custom_not_created"
+      ]
     },
     {
       "Id": "OIS-02.02B",
@@ -87,7 +93,13 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_policy_default_users_cannot_create_security_groups",
+        "iam_custom_role_has_permissions_to_administer_resource_locks",
+        "iam_role_user_access_admin_restricted",
+        "iam_subscription_roles_owner_custom_not_created"
+      ]
     },
     {
       "Id": "OIS-02.03B",
@@ -213,7 +225,11 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "iam_custom_role_has_permissions_to_administer_resource_locks",
+        "iam_role_user_access_admin_restricted",
+        "iam_subscription_roles_owner_custom_not_created"
+      ]
     },
     {
       "Id": "OIS-04.02B",
@@ -269,7 +285,15 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_policy_default_users_cannot_create_security_groups",
+        "entra_policy_guest_invite_only_for_admin_roles",
+        "entra_policy_user_consent_for_verified_apps",
+        "iam_custom_role_has_permissions_to_administer_resource_locks",
+        "entra_global_admin_in_less_than_five_users",
+        "sqlserver_azuread_administrator_enabled"
+      ]
     },
     {
       "Id": "OIS-04.02AC",
@@ -283,7 +307,13 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted"
+      ]
     },
     {
       "Id": "OIS-05.01B",
@@ -297,7 +327,19 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_delete_sqlserver_fr",
+        "monitor_alert_service_health_exists"
+      ]
     },
     {
       "Id": "OIS-05.02B",
@@ -325,7 +367,19 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_delete_sqlserver_fr",
+        "monitor_alert_service_health_exists"
+      ]
     },
     {
       "Id": "OIS-06.01B",
@@ -381,7 +435,11 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "storage_ensure_encryption_with_customer_managed_keys",
+        "storage_infrastructure_encryption_is_enabled",
+        "storage_secure_transfer_required_is_enabled"
+      ]
     },
     {
       "Id": "OIS-08.03B",
@@ -451,7 +509,21 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_delete_sqlserver_fr",
+        "monitor_alert_service_health_exists",
+        "keyvault_logging_enabled",
+        "app_http_logs_enabled"
+      ]
     },
     {
       "Id": "OIS-08.08B",
@@ -465,7 +537,10 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "defender_ensure_notify_alerts_severity_is_high",
+        "monitor_alert_service_health_exists"
+      ]
     },
     {
       "Id": "OIS-08.09B",
@@ -633,7 +708,13 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_policy_guest_users_access_restrictions",
+        "entra_user_with_vm_access_has_mfa",
+        "iam_custom_role_has_permissions_to_administer_resource_locks",
+        "iam_role_user_access_admin_restricted"
+      ]
     },
     {
       "Id": "SP-01.05B",
@@ -1011,7 +1092,19 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_delete_sqlserver_fr",
+        "monitor_alert_service_health_exists"
+      ]
     },
     {
       "Id": "HR-03.03AC",
@@ -1067,7 +1160,10 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "monitor_diagnostic_setting_with_appropriate_categories",
+        "monitor_diagnostic_settings_exists"
+      ]
     },
     {
       "Id": "HR-04.02B",
@@ -1277,7 +1373,17 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "app_http_logs_enabled",
+        "defender_auto_provisioning_log_analytics_agent_vms_on",
+        "keyvault_logging_enabled",
+        "mysql_flexible_server_audit_log_connection_activated",
+        "mysql_flexible_server_audit_log_enabled",
+        "network_flow_log_captured_sent",
+        "postgresql_flexible_server_log_checkpoints_on",
+        "postgresql_flexible_server_log_connections_on",
+        "postgresql_flexible_server_log_disconnections_on"
+      ]
     },
     {
       "Id": "AM-01.02AC",
@@ -1543,7 +1649,9 @@
           "ComplementaryCriteria": "Cloud service customers ensure through suitable controls that the need for protection of the information that can be processed or stored with the cloud service is adequately determined. Cloud service customers ensure through suitable controls that the information processed or stored with the cloud service is protected against tampering, copying, modifying, redirecting or deleting in accordance with its protection needs."
         }
       ],
-      "Checks": []
+      "Checks": [
+        "storage_blob_versioning_is_enabled"
+      ]
     },
     {
       "Id": "AM-09.02B",
@@ -1627,7 +1735,20 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_delete_sqlserver_fr",
+        "monitor_alert_service_health_exists",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted"
+      ]
     },
     {
       "Id": "AM-09.04AC",
@@ -1641,7 +1762,19 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_delete_sqlserver_fr",
+        "monitor_alert_service_health_exists"
+      ]
     },
     {
       "Id": "AM-10.01B",
@@ -1893,7 +2026,9 @@
           "ComplementaryCriteria": "Cloud service customers ensure through suitable controls that the existing redundancy model of the cloud service provider and the evidence for the verification of the model comply with their own requirements for the availability and reliability of the cloud service."
         }
       ],
-      "Checks": []
+      "Checks": [
+        "storage_geo_redundant_enabled"
+      ]
     },
     {
       "Id": "PS-02.01AS",
@@ -1907,7 +2042,9 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "storage_geo_redundant_enabled"
+      ]
     },
     {
       "Id": "PS-02.02B",
@@ -1921,7 +2058,9 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "storage_geo_redundant_enabled"
+      ]
     },
     {
       "Id": "PS-02.02AS",
@@ -1935,7 +2074,9 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "storage_geo_redundant_enabled"
+      ]
     },
     {
       "Id": "PS-02.03B",
@@ -1977,7 +2118,26 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "monitor_alert_delete_public_ip_address_rule",
+        "aks_clusters_public_access_disabled",
+        "app_function_access_keys_configured",
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_policy_guest_users_access_restrictions",
+        "entra_user_with_vm_access_has_mfa",
+        "iam_role_user_access_admin_restricted",
+        "keyvault_access_only_through_private_endpoints",
+        "network_http_internet_access_restricted",
+        "network_rdp_internet_access_restricted",
+        "network_ssh_internet_access_restricted",
+        "network_udp_internet_access_restricted",
+        "postgresql_flexible_server_allow_access_services_disabled",
+        "storage_account_key_access_disabled",
+        "storage_blob_public_access_level_is_disabled",
+        "storage_default_network_access_rule_is_denied",
+        "storage_ensure_azure_services_are_trusted_to_access_is_enabled",
+        "vm_jit_access_enabled"
+      ]
     },
     {
       "Id": "PS-03.03B",
@@ -2439,7 +2599,34 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "defender_additional_email_configured_with_a_security_contact",
+        "defender_assessments_vm_endpoint_protection_installed",
+        "defender_attack_path_notifications_properly_configured",
+        "defender_auto_provisioning_log_analytics_agent_vms_on",
+        "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
+        "defender_container_images_resolved_vulnerabilities",
+        "defender_container_images_scan_enabled",
+        "defender_ensure_defender_for_app_services_is_on",
+        "defender_ensure_defender_for_arm_is_on",
+        "defender_ensure_defender_for_azure_sql_databases_is_on",
+        "defender_ensure_defender_for_containers_is_on",
+        "defender_ensure_defender_for_cosmosdb_is_on",
+        "defender_ensure_defender_for_databases_is_on",
+        "defender_ensure_defender_for_dns_is_on",
+        "defender_ensure_defender_for_keyvault_is_on",
+        "defender_ensure_defender_for_os_relational_databases_is_on",
+        "defender_ensure_defender_for_server_is_on",
+        "defender_ensure_defender_for_sql_servers_is_on",
+        "defender_ensure_defender_for_storage_is_on",
+        "defender_ensure_iot_hub_defender_is_on",
+        "defender_ensure_mcas_is_enabled",
+        "defender_ensure_notify_alerts_severity_is_high",
+        "defender_ensure_notify_emails_to_owners",
+        "defender_ensure_system_updates_are_applied",
+        "defender_ensure_wdatp_is_enabled",
+        "sqlserver_microsoft_defender_enabled"
+      ]
     },
     {
       "Id": "OPS-05.01B",
@@ -2453,7 +2640,24 @@
           "ComplementaryCriteria": "Cloud service customers ensure through suitable controls that the layers of the cloud service which they are responsible for have security products in place to detect and remove malware."
         }
       ],
-      "Checks": []
+      "Checks": [
+        "defender_additional_email_configured_with_a_security_contact",
+        "defender_attack_path_notifications_properly_configured",
+        "defender_container_images_scan_enabled",
+        "defender_ensure_mcas_is_enabled",
+        "defender_ensure_system_updates_are_applied",
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_delete_sqlserver_fr",
+        "monitor_alert_service_health_exists"
+      ]
     },
     {
       "Id": "OPS-05.02B",
@@ -2467,7 +2671,17 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "defender_additional_email_configured_with_a_security_contact",
+        "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
+        "defender_ensure_system_updates_are_applied",
+        "app_ensure_python_version_is_latest",
+        "app_ensure_java_version_is_latest",
+        "app_ensure_php_version_is_latest",
+        "app_function_latest_runtime_version",
+        "mysql_flexible_server_minimum_tls_version_12",
+        "sqlserver_recommended_minimal_tls_version"
+      ]
     },
     {
       "Id": "OPS-05.01AS",
@@ -2481,7 +2695,17 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "defender_additional_email_configured_with_a_security_contact",
+        "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
+        "defender_ensure_system_updates_are_applied",
+        "app_ensure_python_version_is_latest",
+        "app_ensure_java_version_is_latest",
+        "app_ensure_php_version_is_latest",
+        "app_function_latest_runtime_version",
+        "mysql_flexible_server_minimum_tls_version_12",
+        "sqlserver_recommended_minimal_tls_version"
+      ]
     },
     {
       "Id": "OPS-05.01AC",
@@ -2523,7 +2747,23 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_delete_sqlserver_fr",
+        "monitor_alert_service_health_exists",
+        "monitor_diagnostic_setting_with_appropriate_categories",
+        "monitor_diagnostic_settings_exists",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "monitor_storage_account_with_activity_logs_is_private"
+      ]
     },
     {
       "Id": "OPS-05.04AC",
@@ -2551,7 +2791,12 @@
           "ComplementaryCriteria": "Cloud service customers ensure through suitable controls that the contractual agreements made with the cloud service provider regarding the scope, frequency and duration of data retention meet business requirements. The business requirements are assessed as part of the business impact analysis (cf. BCM-02)."
         }
       ],
-      "Checks": []
+      "Checks": [
+        "postgresql_flexible_server_log_retention_days_greater_3",
+        "sqlserver_auditing_retention_90_days",
+        "vm_backup_enabled",
+        "vm_sufficient_daily_backup_retention_period"
+      ]
     },
     {
       "Id": "OPS-07.01B",
@@ -2565,7 +2810,13 @@
           "ComplementaryCriteria": "Cloud service customers ensure through suitable controls that the backup of data within their area of responsibility is monitored by technical and organisational measures."
         }
       ],
-      "Checks": []
+      "Checks": [
+        "sqlserver_tde_encrypted_with_cmk",
+        "vm_backup_enabled",
+        "vm_ensure_attached_disks_encrypted_with_cmk",
+        "vm_ensure_unattached_disks_encrypted_with_cmk",
+        "vm_sufficient_daily_backup_retention_period"
+      ]
     },
     {
       "Id": "OPS-07.02B",
@@ -2733,7 +2984,10 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "vm_backup_enabled",
+        "storage_blob_versioning_is_enabled"
+      ]
     },
     {
       "Id": "OPS-09.03B",
@@ -2845,7 +3099,10 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "monitor_storage_account_with_activity_logs_is_private"
+      ]
     },
     {
       "Id": "OPS-11.02AC",
@@ -2859,7 +3116,34 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_delete_sqlserver_fr",
+        "monitor_alert_service_health_exists",
+        "monitor_diagnostic_setting_with_appropriate_categories",
+        "monitor_diagnostic_settings_exists",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "monitor_storage_account_with_activity_logs_is_private",
+        "app_http_logs_enabled",
+        "defender_auto_provisioning_log_analytics_agent_vms_on",
+        "keyvault_logging_enabled",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "monitor_storage_account_with_activity_logs_is_private",
+        "mysql_flexible_server_audit_log_connection_activated",
+        "mysql_flexible_server_audit_log_enabled",
+        "network_flow_log_captured_sent",
+        "postgresql_flexible_server_log_checkpoints_on",
+        "postgresql_flexible_server_log_connections_on",
+        "postgresql_flexible_server_log_disconnections_on"
+      ]
     },
     {
       "Id": "OPS-12.01B",
@@ -2873,7 +3157,17 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_service_health_exists",
+        "monitor_diagnostic_setting_with_appropriate_categories",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "monitor_storage_account_with_activity_logs_is_private",
+        "postgresql_flexible_server_log_retention_days_greater_3",
+        "network_flow_log_more_than_90_days",
+        "sqlserver_auditing_retention_90_days",
+        "vm_sufficient_daily_backup_retention_period"
+      ]
     },
     {
       "Id": "OPS-13.01B",
@@ -2887,7 +3181,19 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_delete_sqlserver_fr",
+        "monitor_alert_service_health_exists"
+      ]
     },
     {
       "Id": "OPS-13.02B",
@@ -2901,7 +3207,20 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_delete_sqlserver_fr",
+        "monitor_alert_service_health_exists",
+        "sqlserver_va_scan_reports_configured"
+      ]
     },
     {
       "Id": "OPS-13.03B",
@@ -2915,7 +3234,13 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "monitor_storage_account_with_activity_logs_is_private",
+        "vm_ensure_attached_disks_encrypted_with_cmk",
+        "vm_ensure_unattached_disks_encrypted_with_cmk",
+        "sqlserver_tde_encrypted_with_cmk"
+      ]
     },
     {
       "Id": "OPS-13.01AC",
@@ -2957,7 +3282,14 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_sqlserver_fr"
+      ]
     },
     {
       "Id": "OPS-14.01B",
@@ -2971,7 +3303,9 @@
           "ComplementaryCriteria": "Cloud service customers ensure through suitable controls that they actively request the customer-specific portion of the cloud service derived data that consists of log data, if required."
         }
       ],
-      "Checks": []
+      "Checks": [
+        "monitor_storage_account_with_activity_logs_cmk_encrypted"
+      ]
     },
     {
       "Id": "OPS-14.02B",
@@ -2985,7 +3319,12 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "network_flow_log_more_than_90_days",
+        "postgresql_flexible_server_log_retention_days_greater_3",
+        "sqlserver_auditing_retention_90_days",
+        "vm_sufficient_daily_backup_retention_period"
+      ]
     },
     {
       "Id": "OPS-14.03B",
@@ -2999,7 +3338,13 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "sqlserver_tde_encrypted_with_cmk",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "monitor_storage_account_with_activity_logs_is_private",
+        "sqlserver_tde_encryption_enabled",
+        "storage_ensure_encryption_with_customer_managed_keys"
+      ]
     },
     {
       "Id": "OPS-14.01AC",
@@ -3027,7 +3372,19 @@
           "ComplementaryCriteria": "Cloud service customers ensure through suitable controls that unique user IDs are assigned which allow a corresponding analysis in the event of an incident."
         }
       ],
-      "Checks": []
+      "Checks": [
+        "app_http_logs_enabled",
+        "defender_auto_provisioning_log_analytics_agent_vms_on",
+        "keyvault_logging_enabled",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "monitor_storage_account_with_activity_logs_is_private",
+        "mysql_flexible_server_audit_log_connection_activated",
+        "mysql_flexible_server_audit_log_enabled",
+        "network_flow_log_captured_sent",
+        "postgresql_flexible_server_log_checkpoints_on",
+        "postgresql_flexible_server_log_connections_on",
+        "postgresql_flexible_server_log_disconnections_on"
+      ]
     },
     {
       "Id": "OPS-15.02B",
@@ -3041,7 +3398,19 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "app_http_logs_enabled",
+        "defender_auto_provisioning_log_analytics_agent_vms_on",
+        "keyvault_logging_enabled",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "monitor_storage_account_with_activity_logs_is_private",
+        "mysql_flexible_server_audit_log_connection_activated",
+        "mysql_flexible_server_audit_log_enabled",
+        "network_flow_log_captured_sent",
+        "postgresql_flexible_server_log_checkpoints_on",
+        "postgresql_flexible_server_log_connections_on",
+        "postgresql_flexible_server_log_disconnections_on"
+      ]
     },
     {
       "Id": "OPS-15.03B",
@@ -3055,7 +3424,21 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "app_http_logs_enabled",
+        "defender_auto_provisioning_log_analytics_agent_vms_on",
+        "keyvault_logging_enabled",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "monitor_storage_account_with_activity_logs_is_private",
+        "mysql_flexible_server_audit_log_connection_activated",
+        "mysql_flexible_server_audit_log_enabled",
+        "network_flow_log_captured_sent",
+        "network_flow_log_more_than_90_days",
+        "postgresql_flexible_server_log_checkpoints_on",
+        "postgresql_flexible_server_log_connections_on",
+        "postgresql_flexible_server_log_disconnections_on",
+        "postgresql_flexible_server_log_retention_days_greater_3"
+      ]
     },
     {
       "Id": "OPS-15.01AC",
@@ -3069,7 +3452,21 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "app_http_logs_enabled",
+        "defender_auto_provisioning_log_analytics_agent_vms_on",
+        "keyvault_logging_enabled",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "monitor_storage_account_with_activity_logs_is_private",
+        "mysql_flexible_server_audit_log_connection_activated",
+        "mysql_flexible_server_audit_log_enabled",
+        "network_flow_log_captured_sent",
+        "network_flow_log_more_than_90_days",
+        "postgresql_flexible_server_log_checkpoints_on",
+        "postgresql_flexible_server_log_connections_on",
+        "postgresql_flexible_server_log_disconnections_on",
+        "postgresql_flexible_server_log_retention_days_greater_3"
+      ]
     },
     {
       "Id": "OPS-15.02AC",
@@ -3083,7 +3480,9 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "monitor_storage_account_with_activity_logs_cmk_encrypted"
+      ]
     },
     {
       "Id": "OPS-16.01B",
@@ -3097,7 +3496,13 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_user_with_vm_access_has_mfa",
+        "iam_custom_role_has_permissions_to_administer_resource_locks",
+        "iam_role_user_access_admin_restricted",
+        "storage_ensure_azure_services_are_trusted_to_access_is_enabled"
+      ]
     },
     {
       "Id": "OPS-16.02B",
@@ -3167,7 +3572,9 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "monitor_storage_account_with_activity_logs_cmk_encrypted"
+      ]
     },
     {
       "Id": "OPS-18.01B",
@@ -3195,7 +3602,12 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "defender_container_images_resolved_vulnerabilities",
+        "defender_ensure_notify_alerts_severity_is_high",
+        "defender_ensure_notify_emails_to_owners",
+        "defender_ensure_system_updates_are_applied"
+      ]
     },
     {
       "Id": "OPS-18.03B",
@@ -3209,7 +3621,12 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "defender_container_images_resolved_vulnerabilities",
+        "defender_ensure_notify_alerts_severity_is_high",
+        "defender_ensure_notify_emails_to_owners",
+        "defender_ensure_system_updates_are_applied"
+      ]
     },
     {
       "Id": "OPS-18.04B",
@@ -3475,7 +3892,18 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "defender_auto_provisioning_log_analytics_agent_vms_on",
+        "defender_ensure_notify_alerts_severity_is_high",
+        "defender_ensure_wdatp_is_enabled",
+        "sqlserver_recommended_minimal_tls_version",
+        "mysql_flexible_server_minimum_tls_version_12",
+        "app_ensure_python_version_is_latest",
+        "app_ensure_java_version_is_latest",
+        "app_ensure_php_version_is_latest",
+        "storage_ensure_minimum_tls_version_12",
+        "storage_smb_protocol_version_is_latest"
+      ]
     },
     {
       "Id": "OPS-23.02B",
@@ -3657,7 +4085,11 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "defender_container_images_resolved_vulnerabilities",
+        "defender_container_images_scan_enabled",
+        "vm_ensure_using_approved_images"
+      ]
     },
     {
       "Id": "OPS-26.04B",
@@ -3685,7 +4117,20 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "app_http_logs_enabled",
+        "defender_auto_provisioning_log_analytics_agent_vms_on",
+        "keyvault_logging_enabled",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "monitor_storage_account_with_activity_logs_is_private",
+        "mysql_flexible_server_audit_log_connection_activated",
+        "mysql_flexible_server_audit_log_enabled",
+        "network_flow_log_captured_sent",
+        "postgresql_flexible_server_log_checkpoints_on",
+        "postgresql_flexible_server_log_connections_on",
+        "postgresql_flexible_server_log_disconnections_on",
+        "postgresql_flexible_server_log_retention_days_greater_3"
+      ]
     },
     {
       "Id": "OPS-26.01AS",
@@ -3699,7 +4144,23 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_delete_sqlserver_fr",
+        "monitor_alert_service_health_exists",
+        "monitor_diagnostic_setting_with_appropriate_categories",
+        "monitor_diagnostic_settings_exists",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "monitor_storage_account_with_activity_logs_is_private"
+      ]
     },
     {
       "Id": "OPS-26.06B",
@@ -3713,7 +4174,19 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_delete_sqlserver_fr",
+        "monitor_alert_service_health_exists"
+      ]
     },
     {
       "Id": "OPS-27.01B",
@@ -3727,7 +4200,13 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "defender_ensure_system_updates_are_applied",
+        "app_function_latest_runtime_version",
+        "app_ensure_php_version_is_latest",
+        "app_ensure_java_version_is_latest",
+        "app_ensure_python_version_is_latest"
+      ]
     },
     {
       "Id": "OPS-28.01B",
@@ -3867,7 +4346,13 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "keyvault_key_rotation_enabled",
+        "storage_key_rotation_90_days",
+        "sqlserver_recommended_minimal_tls_version",
+        "sqlserver_tde_encrypted_with_cmk",
+        "sqlserver_tde_encryption_enabled"
+      ]
     },
     {
       "Id": "OPS-31.03B",
@@ -3923,7 +4408,15 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "containerregistry_admin_user_disabled",
+        "containerregistry_not_publicly_accessible",
+        "containerregistry_uses_private_link",
+        "defender_container_images_resolved_vulnerabilities",
+        "defender_container_images_scan_enabled",
+        "defender_ensure_defender_for_containers_is_on",
+        "storage_blob_public_access_level_is_disabled"
+      ]
     },
     {
       "Id": "OPS-32.02B",
@@ -3965,7 +4458,14 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "storage_blob_versioning_is_enabled",
+        "defender_ensure_system_updates_are_applied",
+        "app_ensure_java_version_is_latest",
+        "app_ensure_php_version_is_latest",
+        "app_ensure_python_version_is_latest",
+        "app_function_latest_runtime_version"
+      ]
     },
     {
       "Id": "OPS-33.03B",
@@ -4021,7 +4521,15 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_policy_guest_invite_only_for_admin_roles",
+        "entra_policy_guest_users_access_restrictions",
+        "entra_user_with_vm_access_has_mfa",
+        "iam_custom_role_has_permissions_to_administer_resource_locks",
+        "iam_role_user_access_admin_restricted",
+        "iam_subscription_roles_owner_custom_not_created"
+      ]
     },
     {
       "Id": "IAM-01.02B",
@@ -4147,7 +4655,10 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "storage_ensure_encryption_with_customer_managed_keys",
+        "app_function_access_keys_configured"
+      ]
     },
     {
       "Id": "IAM-03.04B",
@@ -4175,7 +4686,12 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "monitor_alert_delete_policy_assignment",
+        "app_ensure_auth_is_set_up",
+        "storage_default_to_entra_authorization_enabled",
+        "vm_linux_enforce_ssh_authentication"
+      ]
     },
     {
       "Id": "IAM-03.02AC",
@@ -4287,7 +4803,13 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "entra_policy_guest_invite_only_for_admin_roles",
+        "iam_custom_role_has_permissions_to_administer_resource_locks",
+        "entra_global_admin_in_less_than_five_users",
+        "iam_role_user_access_admin_restricted",
+        "containerregistry_admin_user_disabled"
+      ]
     },
     {
       "Id": "IAM-05.01B",
@@ -4371,7 +4893,16 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_policy_guest_users_access_restrictions",
+        "entra_user_with_vm_access_has_mfa",
+        "iam_custom_role_has_permissions_to_administer_resource_locks",
+        "iam_role_user_access_admin_restricted",
+        "entra_policy_ensure_default_user_cannot_create_tenants",
+        "entra_policy_guest_invite_only_for_admin_roles",
+        "sqlserver_azuread_administrator_enabled"
+      ]
     },
     {
       "Id": "IAM-06.02B",
@@ -4385,7 +4916,17 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_policy_guest_users_access_restrictions",
+        "entra_user_with_vm_access_has_mfa",
+        "iam_custom_role_has_permissions_to_administer_resource_locks",
+        "iam_role_user_access_admin_restricted",
+        "entra_policy_ensure_default_user_cannot_create_tenants",
+        "entra_policy_guest_invite_only_for_admin_roles",
+        "sqlserver_azuread_administrator_enabled",
+        "iam_subscription_roles_owner_custom_not_created"
+      ]
     },
     {
       "Id": "IAM-06.03B",
@@ -4427,7 +4968,23 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_delete_sqlserver_fr",
+        "monitor_alert_service_health_exists",
+        "monitor_diagnostic_setting_with_appropriate_categories",
+        "monitor_diagnostic_settings_exists",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "monitor_storage_account_with_activity_logs_is_private"
+      ]
     },
     {
       "Id": "IAM-06.06B",
@@ -4441,7 +4998,19 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_alert_delete_sqlserver_fr",
+        "monitor_alert_service_health_exists"
+      ]
     },
     {
       "Id": "IAM-06.07B",
@@ -4483,7 +5052,11 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_privileged_user_has_mfa",
+        "entra_user_with_vm_access_has_mfa"
+      ]
     },
     {
       "Id": "IAM-06.01AC",
@@ -4581,7 +5154,10 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "monitor_storage_account_with_activity_logs_is_private",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted"
+      ]
     },
     {
       "Id": "IAM-07.02AS",
@@ -4721,7 +5297,13 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_privileged_user_has_mfa",
+        "entra_user_with_vm_access_has_mfa",
+        "iam_role_user_access_admin_restricted",
+        "vm_jit_access_enabled"
+      ]
     },
     {
       "Id": "IAM-08.03B",
@@ -4763,7 +5345,14 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_policy_guest_users_access_restrictions",
+        "entra_policy_user_consent_for_verified_apps",
+        "entra_user_with_vm_access_has_mfa",
+        "keyvault_key_rotation_enabled",
+        "storage_key_rotation_90_days"
+      ]
     },
     {
       "Id": "IAM-08.06B",
@@ -4777,7 +5366,13 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "databricks_workspace_cmk_encryption_enabled",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "sqlserver_tde_encrypted_with_cmk",
+        "vm_ensure_attached_disks_encrypted_with_cmk",
+        "vm_ensure_unattached_disks_encrypted_with_cmk"
+      ]
     },
     {
       "Id": "IAM-08.07B",
@@ -4833,7 +5428,10 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_user_with_vm_access_has_mfa"
+      ]
     },
     {
       "Id": "IAM-09.03B",
@@ -4847,7 +5445,9 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "storage_ensure_minimum_tls_version_12"
+      ]
     },
     {
       "Id": "IAM-09.04B",
@@ -4917,7 +5517,11 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_non_privileged_user_has_mfa",
+        "entra_user_with_vm_access_has_mfa"
+      ]
     },
     {
       "Id": "IAM-09.02AC",
@@ -4945,7 +5549,34 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "aisearch_service_not_publicly_accessible",
+        "aks_clusters_public_access_disabled",
+        "app_function_access_keys_configured",
+        "app_function_ftps_deployment_disabled",
+        "app_function_not_publicly_accessible",
+        "containerregistry_not_publicly_accessible",
+        "containerregistry_uses_private_link",
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_policy_guest_users_access_restrictions",
+        "entra_user_with_vm_access_has_mfa",
+        "iam_role_user_access_admin_restricted",
+        "keyvault_access_only_through_private_endpoints",
+        "network_http_internet_access_restricted",
+        "network_rdp_internet_access_restricted",
+        "network_ssh_internet_access_restricted",
+        "network_udp_internet_access_restricted",
+        "postgresql_flexible_server_allow_access_services_disabled",
+        "sqlserver_unrestricted_inbound_access",
+        "storage_account_key_access_disabled",
+        "storage_blob_public_access_level_is_disabled",
+        "storage_default_network_access_rule_is_denied",
+        "storage_ensure_azure_services_are_trusted_to_access_is_enabled",
+        "storage_ensure_private_endpoints_in_storage_accounts",
+        "vm_jit_access_enabled",
+        "postgresql_flexible_server_log_connections_on",
+        "postgresql_flexible_server_log_disconnections_on"
+      ]
     },
     {
       "Id": "IAM-10.02B",
@@ -4959,7 +5590,32 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "aisearch_service_not_publicly_accessible",
+        "aks_clusters_public_access_disabled",
+        "app_function_access_keys_configured",
+        "app_function_ftps_deployment_disabled",
+        "app_function_not_publicly_accessible",
+        "containerregistry_not_publicly_accessible",
+        "containerregistry_uses_private_link",
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_policy_guest_users_access_restrictions",
+        "entra_user_with_vm_access_has_mfa",
+        "iam_role_user_access_admin_restricted",
+        "keyvault_access_only_through_private_endpoints",
+        "network_http_internet_access_restricted",
+        "network_rdp_internet_access_restricted",
+        "network_ssh_internet_access_restricted",
+        "network_udp_internet_access_restricted",
+        "postgresql_flexible_server_allow_access_services_disabled",
+        "sqlserver_unrestricted_inbound_access",
+        "storage_account_key_access_disabled",
+        "storage_blob_public_access_level_is_disabled",
+        "storage_default_network_access_rule_is_denied",
+        "storage_ensure_azure_services_are_trusted_to_access_is_enabled",
+        "storage_ensure_private_endpoints_in_storage_accounts",
+        "vm_jit_access_enabled"
+      ]
     },
     {
       "Id": "CRY-01.01B",
@@ -5057,7 +5713,10 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "storage_key_rotation_90_days",
+        "keyvault_key_rotation_enabled"
+      ]
     },
     {
       "Id": "CRY-04.01B",
@@ -5071,7 +5730,20 @@
           "ComplementaryCriteria": "Cloud service customers ensure through suitable controls for those parts of the cloud service under their responsibility that their data is transmitted over encrypted connections in accordance with the respective protection requirements."
         }
       ],
-      "Checks": []
+      "Checks": [
+        "storage_key_rotation_90_days",
+        "keyvault_key_rotation_enabled",
+        "sqlserver_tde_encrypted_with_cmk",
+        "sqlserver_tde_encryption_enabled",
+        "vm_ensure_unattached_disks_encrypted_with_cmk",
+        "entra_conditional_access_policy_require_mfa_for_management_app",
+        "app_minimum_tls_version_12",
+        "mysql_flexible_server_minimum_tls_version_12",
+        "sqlserver_recommended_minimal_tls_version",
+        "storage_ensure_minimum_tls_version_12",
+        "sqlserver_tde_encrypted_with_cmk",
+        "sqlserver_tde_encryption_enabled"
+      ]
     },
     {
       "Id": "CRY-04.01AS",
@@ -5085,7 +5757,20 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "storage_key_rotation_90_days",
+        "keyvault_key_rotation_enabled",
+        "sqlserver_tde_encrypted_with_cmk",
+        "sqlserver_tde_encryption_enabled",
+        "vm_ensure_unattached_disks_encrypted_with_cmk",
+        "entra_conditional_access_policy_require_mfa_for_management_app",
+        "app_minimum_tls_version_12",
+        "mysql_flexible_server_minimum_tls_version_12",
+        "sqlserver_recommended_minimal_tls_version",
+        "storage_ensure_minimum_tls_version_12",
+        "sqlserver_tde_encrypted_with_cmk",
+        "sqlserver_tde_encryption_enabled"
+      ]
     },
     {
       "Id": "CRY-05.01B",
@@ -5099,7 +5784,10 @@
           "ComplementaryCriteria": "Cloud service customers ensure through suitable controls for those parts of the cloud service under their responsibility (e.g. virtual machines within an IaaS solution), that their data is encrypted during storage in accordance with the respective protection requirements."
         }
       ],
-      "Checks": []
+      "Checks": [
+        "databricks_workspace_cmk_encryption_enabled",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted"
+      ]
     },
     {
       "Id": "CRY-05.02B",
@@ -5113,7 +5801,14 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "storage_ensure_encryption_with_customer_managed_keys",
+        "databricks_workspace_cmk_encryption_enabled",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "sqlserver_tde_encrypted_with_cmk",
+        "vm_ensure_attached_disks_encrypted_with_cmk",
+        "vm_ensure_unattached_disks_encrypted_with_cmk"
+      ]
     },
     {
       "Id": "CRY-05.03B",
@@ -5155,7 +5850,9 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "databricks_workspace_cmk_encryption_enabled"
+      ]
     },
     {
       "Id": "CRY-06.01B",
@@ -5169,7 +5866,10 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "storage_ensure_encryption_with_customer_managed_keys",
+        "storage_infrastructure_encryption_is_enabled"
+      ]
     },
     {
       "Id": "CRY-07.01B",
@@ -5183,7 +5883,10 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "keyvault_key_rotation_enabled",
+        "storage_key_rotation_90_days"
+      ]
     },
     {
       "Id": "CRY-08.01B",
@@ -5225,7 +5928,10 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "keyvault_key_rotation_enabled",
+        "storage_key_rotation_90_days"
+      ]
     },
     {
       "Id": "CRY-10.01B",
@@ -5239,7 +5945,19 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "defender_ensure_defender_for_keyvault_is_on",
+        "keyvault_access_only_through_private_endpoints",
+        "keyvault_key_expiration_set_in_non_rbac",
+        "keyvault_key_rotation_enabled",
+        "keyvault_logging_enabled",
+        "keyvault_non_rbac_secret_expiration_set",
+        "keyvault_private_endpoints",
+        "keyvault_rbac_enabled",
+        "keyvault_rbac_key_expiration_set",
+        "keyvault_rbac_secret_expiration_set",
+        "keyvault_recoverable"
+      ]
     },
     {
       "Id": "CRY-10.01AC",
@@ -5253,7 +5971,19 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "defender_ensure_defender_for_keyvault_is_on",
+        "keyvault_access_only_through_private_endpoints",
+        "keyvault_key_expiration_set_in_non_rbac",
+        "keyvault_key_rotation_enabled",
+        "keyvault_logging_enabled",
+        "keyvault_non_rbac_secret_expiration_set",
+        "keyvault_private_endpoints",
+        "keyvault_rbac_enabled",
+        "keyvault_rbac_key_expiration_set",
+        "keyvault_rbac_secret_expiration_set",
+        "keyvault_recoverable"
+      ]
     },
     {
       "Id": "CRY-11.01B",
@@ -5267,7 +5997,15 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "keyvault_key_expiration_set_in_non_rbac",
+        "keyvault_key_rotation_enabled",
+        "keyvault_logging_enabled",
+        "keyvault_non_rbac_secret_expiration_set",
+        "keyvault_private_endpoints",
+        "keyvault_rbac_key_expiration_set",
+        "keyvault_rbac_secret_expiration_set"
+      ]
     },
     {
       "Id": "CRY-12.01B",
@@ -5323,7 +6061,13 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "keyvault_key_expiration_set_in_non_rbac",
+        "keyvault_key_rotation_enabled",
+        "keyvault_non_rbac_secret_expiration_set",
+        "keyvault_rbac_enabled",
+        "keyvault_rbac_secret_expiration_set"
+      ]
     },
     {
       "Id": "CRY-15.01B",
@@ -5365,7 +6109,9 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "keyvault_recoverable"
+      ]
     },
     {
       "Id": "CRY-17.01B",
@@ -5407,7 +6153,11 @@
           "ComplementaryCriteria": "Cloud service customers ensure through suitable controls that their agreements with the cloud service provider include robust procedures and technical safeguards for the secure handling of customer-managed cryptographic keys. Cloud service customers ensure that these procedures address the secure integration of their keys into the cloud environment, comprehensive logging of all activities related to their keys, and clearly defined access control mechanisms to restrict access solely to authorised users."
         }
       ],
-      "Checks": []
+      "Checks": [
+        "storage_ensure_encryption_with_customer_managed_keys",
+        "keyvault_logging_enabled",
+        "keyvault_rbac_enabled"
+      ]
     },
     {
       "Id": "CRY-20.01B",
@@ -5505,7 +6255,11 @@
           "ComplementaryCriteria": "Cloud service customers ensure through suitable controls that the virtual networks within the cloud service for which they are responsible are designed, configured and documented in accordance with their network security requirements (e.g. logical segmentation of the cloud service customer's organisational units)."
         }
       ],
-      "Checks": []
+      "Checks": [
+        "network_rdp_internet_access_restricted",
+        "network_ssh_internet_access_restricted",
+        "network_udp_internet_access_restricted"
+      ]
     },
     {
       "Id": "COS-03.02B",
@@ -5519,7 +6273,14 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "postgresql_flexible_server_log_connections_on",
+        "postgresql_flexible_server_log_disconnections_on",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_create_update_public_ip_address_rule"
+      ]
     },
     {
       "Id": "COS-03.03B",
@@ -5743,7 +6504,16 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "cosmosdb_account_firewall_use_selected_networks",
+        "sqlserver_recommended_minimal_tls_version",
+        "sqlserver_tde_encrypted_with_cmk",
+        "sqlserver_tde_encryption_enabled",
+        "app_minimum_tls_version_12",
+        "mysql_flexible_server_minimum_tls_version_12",
+        "sqlserver_recommended_minimal_tls_version",
+        "storage_ensure_minimum_tls_version_12"
+      ]
     },
     {
       "Id": "PI-01.01B",
@@ -5785,7 +6555,14 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "vm_scaleset_associated_with_load_balancer",
+        "cosmosdb_account_firewall_use_selected_networks",
+        "network_http_internet_access_restricted",
+        "network_ssh_internet_access_restricted",
+        "network_rdp_internet_access_restricted",
+        "network_udp_internet_access_restricted"
+      ]
     },
     {
       "Id": "PI-01.02AC",
@@ -5883,7 +6660,10 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "storage_ensure_file_shares_soft_delete_is_enabled",
+        "storage_ensure_soft_delete_is_enabled"
+      ]
     },
     {
       "Id": "PI-03.03B",
@@ -5967,7 +6747,12 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "app_ensure_java_version_is_latest",
+        "app_ensure_php_version_is_latest",
+        "app_ensure_python_version_is_latest",
+        "app_function_latest_runtime_version"
+      ]
     },
     {
       "Id": "DEV-02.01AC",
@@ -5981,7 +6766,9 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "apim_threat_detection_llm_jacking"
+      ]
     },
     {
       "Id": "DEV-02.02AC",
@@ -6205,7 +6992,25 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "app_http_logs_enabled",
+        "defender_auto_provisioning_log_analytics_agent_vms_on",
+        "keyvault_logging_enabled",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "monitor_storage_account_with_activity_logs_is_private",
+        "mysql_flexible_server_audit_log_connection_activated",
+        "mysql_flexible_server_audit_log_enabled",
+        "network_flow_log_captured_sent",
+        "network_flow_log_more_than_90_days",
+        "postgresql_flexible_server_log_checkpoints_on",
+        "postgresql_flexible_server_log_connections_on",
+        "postgresql_flexible_server_log_disconnections_on",
+        "postgresql_flexible_server_log_retention_days_greater_3"
+      ]
     },
     {
       "Id": "DEV-08.01AC",
@@ -6387,7 +7192,12 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "keyvault_key_expiration_set_in_non_rbac",
+        "keyvault_non_rbac_secret_expiration_set",
+        "keyvault_private_endpoints",
+        "keyvault_rbac_secret_expiration_set"
+      ]
     },
     {
       "Id": "DEV-13.01B",
@@ -6877,7 +7687,10 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "defender_ensure_notify_emails_to_owners",
+        "defender_additional_email_configured_with_a_security_contact"
+      ]
     },
     {
       "Id": "SIM-01.01AC",
@@ -6947,7 +7760,11 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "defender_additional_email_configured_with_a_security_contact",
+        "defender_auto_provisioning_log_analytics_agent_vms_on",
+        "defender_ensure_notify_alerts_severity_is_high"
+      ]
     },
     {
       "Id": "SIM-03.02B",
@@ -7017,7 +7834,26 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "monitor_storage_account_with_activity_logs_is_private",
+        "app_http_logs_enabled",
+        "defender_auto_provisioning_log_analytics_agent_vms_on",
+        "keyvault_logging_enabled",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "monitor_storage_account_with_activity_logs_is_private",
+        "mysql_flexible_server_audit_log_connection_activated",
+        "mysql_flexible_server_audit_log_enabled",
+        "network_flow_log_captured_sent",
+        "network_flow_log_more_than_90_days",
+        "postgresql_flexible_server_log_checkpoints_on",
+        "postgresql_flexible_server_log_connections_on",
+        "postgresql_flexible_server_log_disconnections_on",
+        "postgresql_flexible_server_log_retention_days_greater_3"
+      ]
     },
     {
       "Id": "SIM-03.07B",
@@ -7031,7 +7867,26 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "monitor_storage_account_with_activity_logs_is_private",
+        "app_http_logs_enabled",
+        "defender_auto_provisioning_log_analytics_agent_vms_on",
+        "keyvault_logging_enabled",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "monitor_storage_account_with_activity_logs_is_private",
+        "mysql_flexible_server_audit_log_connection_activated",
+        "mysql_flexible_server_audit_log_enabled",
+        "network_flow_log_captured_sent",
+        "network_flow_log_more_than_90_days",
+        "postgresql_flexible_server_log_checkpoints_on",
+        "postgresql_flexible_server_log_connections_on",
+        "postgresql_flexible_server_log_disconnections_on",
+        "postgresql_flexible_server_log_retention_days_greater_3"
+      ]
     },
     {
       "Id": "SIM-03.01AC",
@@ -7241,7 +8096,16 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "vm_backup_enabled",
+        "vm_ensure_attached_disks_encrypted_with_cmk",
+        "vm_ensure_unattached_disks_encrypted_with_cmk",
+        "vm_sufficient_daily_backup_retention_period",
+        "defender_additional_email_configured_with_a_security_contact",
+        "defender_ensure_notify_alerts_severity_is_high",
+        "defender_ensure_notify_emails_to_owners",
+        "databricks_workspace_cmk_encryption_enabled"
+      ]
     },
     {
       "Id": "BCM-01.02B",
@@ -7675,7 +8539,9 @@
           "ComplementaryCriteria": "Cloud service customers ensure through suitable controls that such notifications are received and legally checked according to their own specifications and possibilities."
         }
       ],
-      "Checks": []
+      "Checks": [
+        "defender_additional_email_configured_with_a_security_contact"
+      ]
     },
     {
       "Id": "INQ-03.01B",
@@ -8039,7 +8905,25 @@
           "ComplementaryCriteria": "If the cloud service is equipped with error handling and logging mechanisms, cloud service customers must activate these and configure them according to defined requirements. The cloud service customer must incorporate his own information security management for this purpose."
         }
       ],
-      "Checks": []
+      "Checks": [
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "monitor_storage_account_with_activity_logs_is_private",
+        "app_http_logs_enabled",
+        "defender_auto_provisioning_log_analytics_agent_vms_on",
+        "keyvault_logging_enabled",
+        "monitor_storage_account_with_activity_logs_cmk_encrypted",
+        "mysql_flexible_server_audit_log_connection_activated",
+        "mysql_flexible_server_audit_log_enabled",
+        "network_flow_log_captured_sent",
+        "network_flow_log_more_than_90_days",
+        "postgresql_flexible_server_log_checkpoints_on",
+        "postgresql_flexible_server_log_connections_on",
+        "postgresql_flexible_server_log_disconnections_on",
+        "postgresql_flexible_server_log_retention_days_greater_3"
+      ]
     },
     {
       "Id": "PSS-04.02B",
@@ -8081,7 +8965,9 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "monitor_storage_account_with_activity_logs_cmk_encrypted"
+      ]
     },
     {
       "Id": "PSS-04.05B",
@@ -8123,7 +9009,12 @@
           "ComplementaryCriteria": "Cloud service customers ensure through suitable controls that the authentication mechanisms offered by the cloud service are used in accordance with the customer's identity and authorisation management requirements."
         }
       ],
-      "Checks": []
+      "Checks": [
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_non_privileged_user_has_mfa",
+        "entra_privileged_user_has_mfa",
+        "entra_user_with_vm_access_has_mfa"
+      ]
     },
     {
       "Id": "PSS-05.02B",
@@ -8137,7 +9028,10 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_privileged_user_has_mfa"
+      ]
     },
     {
       "Id": "PSS-05.01AC",
@@ -8207,7 +9101,19 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "defender_ensure_defender_for_keyvault_is_on",
+        "keyvault_access_only_through_private_endpoints",
+        "keyvault_key_expiration_set_in_non_rbac",
+        "keyvault_key_rotation_enabled",
+        "keyvault_logging_enabled",
+        "keyvault_non_rbac_secret_expiration_set",
+        "keyvault_private_endpoints",
+        "keyvault_rbac_enabled",
+        "keyvault_rbac_key_expiration_set",
+        "keyvault_rbac_secret_expiration_set",
+        "keyvault_recoverable"
+      ]
     },
     {
       "Id": "PSS-08.01B",
@@ -8333,7 +9239,13 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_policy_guest_invite_only_for_admin_roles",
+        "entra_policy_guest_users_access_restrictions",
+        "iam_custom_role_has_permissions_to_administer_resource_locks",
+        "iam_role_user_access_admin_restricted"
+      ]
     },
     {
       "Id": "PSS-10.01B",
@@ -8375,7 +9287,13 @@
           "ComplementaryCriteria": "Cloud service customers ensure through suitable controls that the images of virtual machines or containers they operate with the cloud service comply with their information security management requirements and that the results of the integrity checks at startup and at runtime are processed according to these requirements."
         }
       ],
-      "Checks": []
+      "Checks": [
+        "containerregistry_admin_user_disabled",
+        "containerregistry_not_publicly_accessible",
+        "containerregistry_uses_private_link",
+        "defender_container_images_scan_enabled",
+        "vm_ensure_using_approved_images"
+      ]
     },
     {
       "Id": "PSS-11.01AC",
@@ -8421,7 +9339,7 @@
     },
     {
       "Id": "PSS-12.02B",
-      "Description": "Processing and storage of cloud service customer data data within the service organisations of the cloud service provider also adheres to the regions selected by the cloud service customer.",
+      "Description": "Processing and storage of cloud service customer data within the service organisations of the cloud service provider also adheres to the regions selected by the cloud service customer.",
       "Attributes": [
         {
           "Section": "Product Safety and Security (PSS)",
@@ -8529,7 +9447,9 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "entra_trusted_named_locations_exists"
+      ]
     },
     {
       "Id": "PSS-12.03AC",
@@ -8543,7 +9463,9 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "entra_trusted_named_locations_exists"
+      ]
     }
   ]
 }
