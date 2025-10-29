@@ -104,23 +104,20 @@ export function ThreatScore({
           </div>
           {/* Overlaid Text (centered) */}
           <div className="absolute top-[75%] left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-            <p className="text-[14px] text-nowrap text-slate-900 dark:text-zinc-300">
+            <p className="text-sm text-nowrap text-slate-900 dark:text-zinc-300">
               {config.label}
             </p>
           </div>
         </div>
 
         {/* Info Box */}
-        <div className="flex-1 rounded-xl border border-slate-300 bg-[#F8FAFC80] px-3 py-2 backdrop-blur-[46px] dark:border-[rgba(38,38,38,0.70)] dark:bg-[rgba(23,23,23,0.50)]">
-          <div className="flex flex-col gap-1.5">
+        <div className="flex-1 rounded-xl border border-slate-300 bg-[#F8FAFC80] px-3 py-[9px] backdrop-blur-[46px] dark:border-[rgba(38,38,38,0.70)] dark:bg-[rgba(23,23,23,0.50)]">
+          <div className="flex flex-col gap-1.5 text-sm leading-6 text-zinc-800 dark:text-zinc-300">
             {/* Improvement Message */}
             {improvement !== undefined && improvement !== 0 && (
               <div className="flex items-center gap-1">
-                <ThumbsUp
-                  size={14}
-                  className="text-slate-600 dark:text-zinc-300"
-                />
-                <p className="text-sm leading-5 font-medium text-slate-700 dark:text-zinc-300">
+                <ThumbsUp size={14} className="flex-shrink-0" />
+                <p>
                   Threat score has {improvement > 0 ? "improved" : "decreased"}{" "}
                   by {Math.abs(improvement)}%.
                 </p>
@@ -132,20 +129,17 @@ export function ThreatScore({
               <div className="flex items-start gap-1">
                 <MessageCircleWarning
                   size={14}
-                  className="mt-1 text-slate-600 dark:text-zinc-300"
+                  className="mt-1 flex-shrink-0"
                 />
-                <p className="flex-1 text-sm leading-5 font-medium text-slate-700 dark:text-zinc-300">
+                <p>
                   Major gaps include {gaps.slice(0, 2).join(", ")}
-                  {gaps.length > 2 && ` y ${gaps.length - 2} más`}.
+                  {gaps.length > 2 && ` & ${gaps.length - 2} more...`}.
                 </p>
               </div>
             )}
 
             {/* View Remediation Plan Button */}
-            <button
-              onClick={onViewRemediationPlan}
-              className="mt-0.5 flex items-center justify-center rounded-xl border-4 border-transparent px-4 py-0.5"
-            >
+            <button onClick={onViewRemediationPlan}>
               <span className="text-sm font-medium text-blue-600 dark:text-blue-300">
                 View Remediation Plan
               </span>
