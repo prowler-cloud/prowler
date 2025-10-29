@@ -16,9 +16,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS DRS service metadata to new format [(#8870)](https://github.com/prowler-cloud/prowler/pull/8870)
 - Update AWS DynamoDB service metadata to new format [(#8871)](https://github.com/prowler-cloud/prowler/pull/8871)
 
-### Fixed
-- Update `resource_id` for admincenter service and avoid unnecessary msgraph requests [(#9019)](https://github.com/prowler-cloud/prowler/pull/9019)
-
 ---
 
 ## [v5.13.1] (Prowler UNRELEASED)
@@ -27,6 +24,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add `resource_name` for checks under `logging` for the GCP provider [(#9023)](https://github.com/prowler-cloud/prowler/pull/9023)
 - Fix `ec2_instance_with_outdated_ami` check to handle None AMIs [(#9046)](https://github.com/prowler-cloud/prowler/pull/9046)
 - Handle timestamp when transforming compliance findings in CCC [(#9042)](https://github.com/prowler-cloud/prowler/pull/9042)
+- Update `resource_id` for admincenter service and avoid unnecessary msgraph requests [(#9019)](https://github.com/prowler-cloud/prowler/pull/9019)
 
 ---
 
