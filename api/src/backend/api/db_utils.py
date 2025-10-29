@@ -45,7 +45,6 @@ POSTGRES_TENANT_VAR = "api.tenant_id"
 POSTGRES_USER_VAR = "api.user_id"
 
 SET_CONFIG_QUERY = "SELECT set_config(%s, %s::text, TRUE);"
-CONNECTION_HEALTHCHECK_QUERY = "SELECT 1;"
 
 
 @contextmanager
