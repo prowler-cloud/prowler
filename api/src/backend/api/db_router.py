@@ -47,13 +47,6 @@ class MainRouter:
     def allow_migrate(self, db, app_label, model_name=None, **hints):  # noqa: F841
         return db == self.admin_db
 
-    # def allow_relation(self, obj1, obj2, **hints):  # noqa: F841
-    #     # Allow relations when both objects originate from allowed connectors
-    #     allowed_dbs = {self.default_db, self.admin_db}
-    #     if {obj1._state.db, obj2._state.db} <= allowed_dbs:
-    #         return True
-    #     return None
-
     def allow_relation(self, obj1, obj2, **hints):  # noqa: F841
         # Allow relations when both objects originate from allowed connectors
         allowed_dbs = {self.default_db, self.admin_db, self.replica_db}

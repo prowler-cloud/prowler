@@ -14,6 +14,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### Fixed
 - `/api/v1/overviews/providers` collapses data by provider type so the UI receives a single aggregated record per cloud family even when multiple accounts exist [(#9053)](https://github.com/prowler-cloud/prowler/pull/9053)
+- Security Hub integrations stop failing when they read relationships via the replica by allowing replica relations and saving updates through the primary [(#9080)](https://github.com/prowler-cloud/prowler/pull/9080)
 
 ## [1.14.0] (Prowler 5.13.0)
 
