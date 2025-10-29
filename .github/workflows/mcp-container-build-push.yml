@@ -16,7 +16,7 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
   # Tags
@@ -100,8 +100,16 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+  trigger-deployment:
+    if: github.event_name == 'push'
+    needs: [setup, container-build-push]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+
+    steps:
       - name: Trigger MCP deployment
-        if: github.event_name == 'push'
         uses: peter-evans/repository-dispatch@5fc4efd1a4797ddb68ffd0714a238564e4cc0e6f # v4.0.0
         with:
           token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
