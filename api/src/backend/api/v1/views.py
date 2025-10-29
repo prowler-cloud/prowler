@@ -1547,28 +1547,27 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
             },
         )
 
-
-@extend_schema(
-    tags=["Provider"],
-    summary="Sync resources to Cartography",
-    description=(
-        "Synchronous endpoint to trigger Cartography sync without full validation. "
-        "Intended for development/testing; a Celery-driven integration may replace this later."
-    ),
-    request=None,
-    responses={200: OpenApiResponse(description="Sync completed successfully")},
-)
-@action(detail=True, methods=["post"], url_name="cartography_launch_scan")
-def cartography_launch_scan(self, request, pk=None):
-    get_object_or_404(Provider, pk=pk)
-
-    # Cleaning input
-    provider_id = pk
-
-    result = cartography_scan.run(
-        provider_id=provider_id,
+    @extend_schema(
+        tags=["Provider"],
+        summary="Launch Cartography scan",
+        description=(
+            "Synchronous endpoint to trigger Cartography sync. "
+            "Intended for development/testing; a Celery-driven integration will replace this later."
+        ),
+        request=None,
+        responses={200: OpenApiResponse(description="Sync completed successfully")},
     )
-    return Response(data={"result": result}, status=status.HTTP_201_CREATED)
+    @action(detail=True, methods=["post"], url_name="cartography_launch_scan")
+    def cartography_launch_scan(self, request, pk=None):
+        get_object_or_404(Provider, pk=pk)
+
+        # Cleaning input
+        provider_id = pk
+
+        result = cartography_scan.run(
+            provider_id=provider_id,
+        )
+        return Response(data={"result": result}, status=status.HTTP_201_CREATED)
 
 
 @extend_schema_view(
