@@ -9,12 +9,13 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardVariant,
   ResourceStatsCard,
-  StatsContainer,
+  ResourceStatsCardContainer,
 } from "@/components/shadcn";
-import { CardVariant } from "@/components/shadcn/card/resource-stats-card/resource-stats-card-content";
+import { calculatePercentage } from "@/lib/utils";
 
-interface CheckFindingsProps {
+interface StatusChartProps {
   failFindingsData: {
     total: number;
     new: number;
@@ -27,30 +28,32 @@ interface CheckFindingsProps {
   };
 }
 
-export const CheckFindings = ({
+export const StatusChart = ({
   failFindingsData,
   passFindingsData,
-}: CheckFindingsProps) => {
+}: StatusChartProps) => {
   // Calculate total findings
   const totalFindings = failFindingsData.total + passFindingsData.total;
 
   // Calculate percentages
-  const failPercentage = Math.round(
-    (failFindingsData.total / totalFindings) * 100,
+  const failPercentage = calculatePercentage(
+    failFindingsData.total,
+    totalFindings,
   );
-  const passPercentage = Math.round(
-    (passFindingsData.total / totalFindings) * 100,
+  const passPercentage = calculatePercentage(
+    passFindingsData.total,
+    totalFindings,
   );
 
   // Calculate change percentages (new findings as percentage change)
-  const failChange =
-    failFindingsData.total > 0
-      ? Math.round((failFindingsData.new / failFindingsData.total) * 100)
-      : 0;
-  const passChange =
-    passFindingsData.total > 0
-      ? Math.round((passFindingsData.new / passFindingsData.total) * 100)
-      : 0;
+  const failChange = calculatePercentage(
+    failFindingsData.new,
+    failFindingsData.total,
+  );
+  const passChange = calculatePercentage(
+    passFindingsData.new,
+    passFindingsData.total,
+  );
 
   // Mock data for DonutChart
   const donutData: DonutDataPoint[] = [
@@ -72,13 +75,11 @@ export const CheckFindings = ({
 
   return (
     <BaseCard>
-      {/* Header */}
       <CardHeader>
         <CardTitle>Check Findings</CardTitle>
       </CardHeader>
 
-      {/* DonutChart Content */}
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-2">
         <div className="mx-auto max-h-[200px] max-w-[200px]">
           <DonutChart
             data={donutData}
@@ -92,8 +93,7 @@ export const CheckFindings = ({
           />
         </div>
 
-        {/* Footer with ResourceStatsCards */}
-        <StatsContainer>
+        <ResourceStatsCardContainer className="flex w-full flex-col items-start justify-center gap-4 lg:flex-row lg:justify-between">
           <ResourceStatsCard
             containerless
             badge={{
@@ -106,11 +106,16 @@ export const CheckFindings = ({
               { icon: Bell, label: `${failFindingsData.new} New` },
               { icon: BellOff, label: `${failFindingsData.muted} Muted` },
             ]}
-            className="flex-1"
+            emptyState={
+              failFindingsData.total === 0
+                ? { message: "No failed findings to display" }
+                : undefined
+            }
+            className="w-full lg:min-w-0 lg:flex-1"
           />
 
-          <div className="flex items-center justify-center px-[46px]">
-            <div className="h-full w-px bg-slate-300 dark:bg-[rgba(39,39,42,1)]" />
+          <div className="flex w-full items-center justify-center lg:w-auto lg:self-stretch">
+            <div className="h-px w-full bg-slate-300 lg:h-full lg:w-px dark:bg-[rgba(39,39,42,1)]" />
           </div>
 
           <ResourceStatsCard
@@ -125,9 +130,14 @@ export const CheckFindings = ({
               { icon: Bell, label: `${passFindingsData.new} New` },
               { icon: BellOff, label: `${passFindingsData.muted} Muted` },
             ]}
-            className="flex-1"
+            emptyState={
+              passFindingsData.total === 0
+                ? { message: "No passed findings to display" }
+                : undefined
+            }
+            className="w-full lg:min-w-0 lg:flex-1"
           />
-        </StatsContainer>
+        </ResourceStatsCardContainer>
       </CardContent>
     </BaseCard>
   );
