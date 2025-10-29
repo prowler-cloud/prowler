@@ -35,8 +35,8 @@ class admincenter_settings_password_never_expire(Check):
             report = CheckReportM365(
                 self.metadata(),
                 resource=password_policy,
-                resource_name=domain_name,
-                resource_id=domain_name,
+                resource_name="Password Policy",
+                resource_id="passwordPolicy",
             )
             report.status = "FAIL"
             report.status_extended = (

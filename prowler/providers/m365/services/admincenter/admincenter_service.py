@@ -12,18 +12,6 @@ class AdminCenter(M365Service):
     def __init__(self, provider: M365Provider):
         super().__init__(provider)
 
-        identity = getattr(provider, "identity", None)
-        self.audited_domain = (
-            getattr(identity, "tenant_domain", "Unknown domain")
-            if identity
-            else "Unknown domain"
-        )
-        self.audited_tenant = (
-            getattr(identity, "tenant_id", "Unknown tenant")
-            if identity
-            else "Unknown tenant"
-        )
-
         self.organization_config = None
         self.sharing_policy = None
         if self.powershell:
