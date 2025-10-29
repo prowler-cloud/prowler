@@ -72,6 +72,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Deprecate user authentication for M365 provider [(#8865)](https://github.com/prowler-cloud/prowler/pull/8865)
 - Update AWS EFS service metadata to new format [(#8889)](https://github.com/prowler-cloud/prowler/pull/8889)
 - Update AWS FMS service metadata to new format [(#9005)](https://github.com/prowler-cloud/prowler/pull/9005)
+- Update AWS FSx service metadata to new format [(#9006)](https://github.com/prowler-cloud/prowler/pull/9006)
 - Update AWS Glacier service metadata to new format [(#9007)](https://github.com/prowler-cloud/prowler/pull/9007)
 
 
