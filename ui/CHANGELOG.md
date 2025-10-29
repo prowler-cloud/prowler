@@ -9,10 +9,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Upgrade React to version 19.2.0 [(#9039)](https://github.com/prowler-cloud/prowler/pull/9039)
 - Add support for Oracle Cloud Infrastructure (OCI) provider [(#8984)](https://github.com/prowler-cloud/prowler/pull/8984)
 
-### 🐞 Fixed
-
-- Auto-populate OCI tenancy OCID from provider UID to avoid duplicate input in credentials form [(#9074)](https://github.com/prowler-cloud/prowler/pull/9074)
-
 ---
 
 ## [1.13.0] (Prowler v5.13.0)

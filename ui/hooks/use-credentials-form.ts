@@ -1,7 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 
 import { useFormServerErrors } from "@/hooks/use-form-server-errors";
@@ -182,15 +181,6 @@ export const useCredentialsForm = ({
     reValidateMode: "onChange",
     criteriaMode: "all", // Show all errors for each field
   });
-
-  // Update tenancy field when providerUid becomes available (for OCI)
-  useEffect(() => {
-    if (providerType === "oci" && providerUid) {
-      form.setValue(ProviderCredentialFields.OCI_TENANCY as any, providerUid, {
-        shouldValidate: true,
-      });
-    }
-  }, [providerUid, providerType, form]);
 
   const { handleServerResponse } = useFormServerErrors(
     form,
