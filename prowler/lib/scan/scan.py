@@ -421,14 +421,10 @@ class Scan:
             # Update the scan duration when all checks are completed
             self._duration = int((datetime.datetime.now() - start_time).total_seconds())
         except Exception as error:
-            if check_name:
-                logger.error(
-                    f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
-            else:
-                logger.error(
-                    f"Scan error - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
+            check_name = check_name or "Scan error"
+            logger.error(
+                f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def get_completed_services(self) -> set[str]:
         """
