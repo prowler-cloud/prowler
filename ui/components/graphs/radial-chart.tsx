@@ -32,7 +32,7 @@ export function RadialChart({
   endAngle = -270,
   hasDots = false,
 }: RadialChartProps) {
-  // Calcular el barSize real basado en la diferencia
+  // Calculate the real barSize based on the difference
   const barSize = outerRadius - innerRadius;
   const data = [
     {
