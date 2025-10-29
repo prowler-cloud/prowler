@@ -16,9 +16,7 @@
   "Risk": "**Publicly reachable EMR nodes** expose admin UIs and SSH to the Internet, enabling brute force and service exploits. A compromised primary node can alter jobs and exfiltrate data from S3/HDFS, degrading **confidentiality** and **integrity**, and disrupt workloads, impacting **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://aws.amazon.com/about-aws/whats-new/2015/12/launch-amazon-emr-clusters-in-amazon-vpc-private-subnets/",
     "https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-plan-vpc-subnet.html",
-    "https://support.icompaas.com/support/solutions/articles/62000233361-ensure-emr-clusters-do-not-have-public-ips-assigned",
     "https://aws.amazon.com/blogs/aws/new-launch-amazon-emr-clusters-in-private-subnets/",
     "https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-block-public-access.html",
     "https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-clusters-in-a-vpc.html",

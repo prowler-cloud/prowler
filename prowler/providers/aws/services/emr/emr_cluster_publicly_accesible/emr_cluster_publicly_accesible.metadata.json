@@ -16,11 +16,7 @@
   "Risk": "**Open Internet ingress** to EMR nodes enables direct access to services and UIs, facilitating brute force, RCE, and data theft. Adversaries can pivot inside the VPC, alter jobs and outputs (**integrity**), exfiltrate datasets (**confidentiality**), or abuse compute for mining, degrading **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.icompaas.com/support/solutions/articles/62000233371-ensure-emr-account-public-access-block-is-enabled",
-    "https://docs.prowler.com/checks/aws/networking-policies/ensure-that-amazon-emr-clusters-security-groups-are-not-open-to-the-world#terraform",
-    "https://stackoverflow.com/questions/44234374/what-does-0-0-0-0-0-and-0-mean",
     "https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-block-public-access.html",
-    "https://www.restack.io/p/distributed-ai-training-answer-aws-emr-cluster-cat-ai"
   ],
   "Remediation": {
     "Code": {

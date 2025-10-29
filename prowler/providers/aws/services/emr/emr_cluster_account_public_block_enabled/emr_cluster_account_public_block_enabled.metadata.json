@@ -15,11 +15,7 @@
   "Risk": "Public EMR-facing rules enable Internet reachability to cluster nodes and UIs, inviting brute force and remote exploits.\n\nAttackers can exfiltrate job data, alter processing, or pivot into the VPC, degrading **confidentiality**, **integrity**, and **availability** through data theft, tampering, and service disruption.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://asecure.cloud/a/configure_emr_block_public_access/",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EMR/block-public-access.html",
-    "https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/emr/client/put_block_public_access_configuration.html",
-    "https://support.icompaas.com/support/solutions/articles/62000233371-ensure-emr-account-public-access-block-is-enabled",
-    "https://fig.io/manual/aws/emr/put-block-public-access-configuration",
     "https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-block-public-access.html",
     "https://github.com/cloudmatos/matos/tree/master/remediations/aws/emr/block-emr-public-access"
   ],
