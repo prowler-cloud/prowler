@@ -5,8 +5,12 @@ import { BasePage } from "../base-page";
 export interface AWSProviderData {
   accountId: string;
   alias?: string;
+  roleArn?: string;
+  externalId?: string;
+  accessKeyId?: string;
+  secretAccessKey?: string;
 }
-
+  
 // AZURE provider data
 export interface AZUREProviderData {
   subscriptionId: string;
@@ -294,7 +298,7 @@ export class ProvidersPage extends BasePage {
   }
 
   async selectAWSProvider(): Promise<void> {
-    
+
     // Prefer label-based click for radios, force if overlay intercepts
     await this.awsProviderRadio.click({ force: true });
     await this.waitForPageLoad();
@@ -375,6 +379,7 @@ export class ProvidersPage extends BasePage {
     await this.gcpProjectIdInput.fill(data.projectId);
 
     if (data.alias) {
+
       await this.aliasInput.fill(data.alias);
     }
   }
@@ -716,6 +721,7 @@ export class ProvidersPage extends BasePage {
 
     // Verify the number of matching rows is 1
     const count = await matchingRows.count();
+
     if (count !== 1) return false;
     return true;
   }
@@ -751,6 +757,7 @@ export class ProvidersPage extends BasePage {
     // Helper function to check if a row is the "No results" row
     const isNoResultsRow = async (row: Locator): Promise<boolean> => {
       const text = await row.textContent();
+
       return text?.includes("No results") || text?.includes("No data") || false;
     };
 

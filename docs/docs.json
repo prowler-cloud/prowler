@@ -98,7 +98,7 @@
                 ]
               },
               "user-guide/tutorials/prowler-app-rbac",
-              "user-guide/providers/prowler-app-api-keys",
+              "user-guide/tutorials/prowler-app-api-keys",
               "user-guide/tutorials/prowler-app-mute-findings",
               {
                 "group": "Integrations",
@@ -114,7 +114,8 @@
                 "group": "Tutorials",
                 "pages": [
                   "user-guide/tutorials/prowler-app-sso-entra",
-                  "user-guide/tutorials/bulk-provider-provisioning"
+                  "user-guide/tutorials/bulk-provider-provisioning",
+                  "user-guide/tutorials/aws-organizations-bulk-provisioning"
                 ]
               }
             ]
@@ -403,14 +404,6 @@
     {
       "source": "/projects/prowler-open-source/en/latest/tutorials/gcp/getting-started-gcp",
       "destination": "/user-guide/providers/gcp/getting-started-gcp"
-    },
-    {
-      "source": "/projects/prowler-open-source/en/latest/tutorials/prowler-app",
-      "destination": "/user-guide/tutorials/prowler-app#step-4-4%3A-kubernetes-credentials%3A"
-    },
-    {
-      "source": "/projects/prowler-open-source/en/latest/tutorials/prowler-app/#step-3-add-a-provider",
-      "destination": "/user-guide/tutorials/prowler-app#step-3-add-a-provider"
     },
     {
       "source": "/projects/prowler-open-source/en/latest/tutorials/microsoft365/getting-started-m365",

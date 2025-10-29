@@ -1,5 +1,5 @@
 import { test } from "@playwright/test";
-import * as helpers from "../helpers";
+import { ScansPage } from "../scans/scans-page";
 import {
   ProvidersPage,
   AWSProviderData,
@@ -18,7 +18,6 @@ import {
   GCPProviderCredential,
   GCP_CREDENTIAL_OPTIONS,
 } from "./providers-page";
-import { ScansPage } from "../scans/scans-page";
 import fs from "fs";
 
 test.describe("Add Provider", () => {
