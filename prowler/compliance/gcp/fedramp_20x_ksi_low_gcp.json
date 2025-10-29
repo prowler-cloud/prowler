@@ -1,8 +1,8 @@
 {
-  "Framework": "FedRAMP-20x-KSI",
+  "Framework": "FedRAMP-20x-KSI-Low",
   "Version": "25.05C",
   "Provider": "GCP",
-  "Description": "FedRAMP 20x Key Security Indicators (KSIs) represent core security indicators for cloud service providers, focusing on automation, continuous monitoring, and cloud-native security principles per FedRAMP 20x Phase One pilot requirements.",
+  "Description": "FedRAMP 20x Key Security Indicators (KSIs) Low Impact Level represent core security indicators for cloud service providers, focusing on automation, continuous monitoring, and cloud-native security principles per FedRAMP 20x Phase One pilot requirements for Low impact systems.",
   "Requirements": [
     {
       "Id": "ksi-ced",
@@ -12,7 +12,6 @@
         {
           "ItemId": "ksi-ced",
           "Section": "Cybersecurity Education",
-          "NistControls": "at-2, at-2.2, at-2.3, at-4",
           "Service": "gcp"
         }
       ],
@@ -29,7 +28,6 @@
         {
           "ItemId": "ksi-cmt",
           "Section": "Change Management",
-          "NistControls": "au-2, cm-2, cm-3, cm-4, cm-5, cm-6, cm-7, cm-8, cm-9, si-2, si-3",
           "Service": "gcp"
         }
       ],
@@ -56,7 +54,6 @@
         {
           "ItemId": "ksi-cna",
           "Section": "Cloud Native Architecture",
-          "NistControls": "ac-17.3, ca-9, cm-2, sc-5, sc-7",
           "Service": "gcp"
         }
       ],
@@ -88,7 +85,6 @@
         {
           "ItemId": "ksi-iam",
           "Section": "Identity and Access Management",
-          "NistControls": "ac-2, ac-3, ac-4, ac-6, ia-2, ia-5, ia-8",
           "Service": "gcp"
         }
       ],
@@ -116,7 +112,6 @@
         {
           "ItemId": "ksi-inr",
           "Section": "Incident Reporting",
-          "NistControls": "ir-4, ir-6",
           "Service": "gcp"
         }
       ],
@@ -136,7 +131,6 @@
         {
           "ItemId": "ksi-mla",
           "Section": "Monitoring, Logging, and Auditing",
-          "NistControls": "au-2, ca-7, ra-5",
           "Service": "gcp"
         }
       ],
@@ -174,7 +168,6 @@
         {
           "ItemId": "ksi-piy",
           "Section": "Policy and Inventory",
-          "NistControls": "cm-8, pl-2",
           "Service": "gcp"
         }
       ],
@@ -192,7 +185,6 @@
         {
           "ItemId": "ksi-rpl",
           "Section": "Recovery Planning",
-          "NistControls": "cp-2, cp-9, cp-10",
           "Service": "gcp"
         }
       ],
@@ -209,7 +201,6 @@
         {
           "ItemId": "ksi-svc",
           "Section": "Service Configuration",
-          "NistControls": "sc-7, sc-13, cm-6",
           "Service": "gcp"
         }
       ],
@@ -252,7 +243,6 @@
         {
           "ItemId": "ksi-tpr",
           "Section": "Third-Party Information Resources",
-          "NistControls": "sa-9, ra-5",
           "Service": "gcp"
         }
       ],

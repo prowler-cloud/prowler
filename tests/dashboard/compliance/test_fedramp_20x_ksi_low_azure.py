@@ -1,6 +1,6 @@
 import pandas as pd
 
-from dashboard.compliance.fedramp_20x_ksi_azure import get_table
+from dashboard.compliance.fedramp_20x_ksi_low_azure import get_table
 
 
 class TestFedRAMP20xKSIAzure:
