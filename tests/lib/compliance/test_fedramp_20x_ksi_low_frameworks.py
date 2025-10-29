@@ -61,7 +61,7 @@ class TestFedRAMP20xKSIFrameworks:
             data = json.load(f)
             requirement_ids = [req["Id"] for req in data["Requirements"]]
 
-            # Check for all 10 KSI requirements
+            # Check for all 13 KSI requirements (10 original + 3 Phase Two)
             expected_ksis = [
                 "ksi-ced",
                 "ksi-cmt",
@@ -73,6 +73,9 @@ class TestFedRAMP20xKSIFrameworks:
                 "ksi-rpl",
                 "ksi-svc",
                 "ksi-tpr",
+                "ksi-ced-03",
+                "ksi-iam-07",
+                "ksi-mla-07",
             ]
 
             for ksi in expected_ksis:
@@ -84,7 +87,7 @@ class TestFedRAMP20xKSIFrameworks:
             data = json.load(f)
             requirement_ids = [req["Id"] for req in data["Requirements"]]
 
-            # Check for all 10 KSI requirements
+            # Check for all 13 KSI requirements (10 original + 3 Phase Two)
             expected_ksis = [
                 "ksi-ced",
                 "ksi-cmt",
@@ -96,6 +99,9 @@ class TestFedRAMP20xKSIFrameworks:
                 "ksi-rpl",
                 "ksi-svc",
                 "ksi-tpr",
+                "ksi-ced-03",
+                "ksi-iam-07",
+                "ksi-mla-07",
             ]
 
             for ksi in expected_ksis:
@@ -107,7 +113,7 @@ class TestFedRAMP20xKSIFrameworks:
             data = json.load(f)
             requirement_ids = [req["Id"] for req in data["Requirements"]]
 
-            # Check for all 10 KSI requirements
+            # Check for all 13 KSI requirements (10 original + 3 Phase Two)
             expected_ksis = [
                 "ksi-ced",
                 "ksi-cmt",
@@ -119,6 +125,9 @@ class TestFedRAMP20xKSIFrameworks:
                 "ksi-rpl",
                 "ksi-svc",
                 "ksi-tpr",
+                "ksi-ced-03",
+                "ksi-iam-07",
+                "ksi-mla-07",
             ]
 
             for ksi in expected_ksis:

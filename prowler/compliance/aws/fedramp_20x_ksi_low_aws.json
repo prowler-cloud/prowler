@@ -41,6 +41,12 @@
         "cloudwatch_changes_to_network_gateways_alarm_configured",
         "cloudwatch_changes_to_network_route_tables_alarm_configured",
         "cloudwatch_changes_to_vpcs_alarm_configured",
+        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_aws_organizations_changes",
+        "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
+        "cloudwatch_log_metric_filter_policy_changes",
+        "cloudwatch_log_metric_filter_security_group_changes",
         "config_recorder_all_regions_enabled",
         "ec2_instance_managed_by_ssm",
         "ec2_instance_older_than_specific_days",
@@ -70,6 +76,10 @@
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_default_restrict_traffic",
         "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+        "eks_cluster_network_policy_enabled",
+        "eks_cluster_not_publicly_accessible",
+        "eks_cluster_private_nodes_enabled",
+        "eks_cluster_uses_a_supported_version",
         "elb_cross_zone_load_balancing_enabled",
         "elbv2_alb_multi_az_scheme",
         "elbv2_waf_acl_attached",
@@ -122,23 +132,29 @@
     },
     {
       "Id": "ksi-inr",
-      "Name": "KSI-INR: Incident Reporting",
-      "Description": "A secure cloud service offering will document, report, and analyze security incidents to ensure regulatory compliance and continuous security improvement",
+      "Name": "KSI-INR: Incident Response",
+      "Description": "A secure cloud service offering will respond to incidents according to FedRAMP requirements and cloud service provider policies",
       "Attributes": [
         {
           "ItemId": "ksi-inr",
-          "Section": "Incident Reporting",
+          "Section": "Incident Response",
           "Service": "aws"
         }
       ],
       "Checks": [
-        "guardduty_is_enabled",
-        "guardduty_no_high_severity_findings",
-        "guardduty_s3_protection_enabled",
+        "guardduty_centrally_managed",
+        "guardduty_ec2_malware_protection_enabled",
+        "guardduty_eks_audit_log_enabled",
         "guardduty_eks_protection_enabled",
-        "guardduty_rds_protection_enabled",
+        "guardduty_eks_runtime_monitoring_enabled",
+        "guardduty_is_enabled",
         "guardduty_lambda_protection_enabled",
         "guardduty_malware_protection_enabled",
+        "guardduty_no_high_severity_findings",
+        "guardduty_rds_protection_enabled",
+        "guardduty_s3_protection_enabled",
+        "inspector2_is_enabled",
+        "inspector2_active_findings_exist",
         "securityhub_enabled",
         "sns_topics_kms_encryption_at_rest_enabled"
       ]
@@ -191,9 +207,12 @@
       ],
       "Checks": [
         "config_recorder_all_regions_enabled",
+        "config_recorder_using_aws_service_role",
         "ec2_instance_managed_by_ssm",
         "organizations_account_part_of_organizations",
+        "organizations_delegated_administrators",
         "organizations_scp_check_deny_regions",
+        "organizations_tags_policies_enabled_and_attached",
         "resourceexplorer_indexes_found",
         "ssm_managed_instance_compliance_association_compliant",
         "trustedadvisor_premium_support_plan_subscribed"
@@ -287,13 +306,73 @@
         }
       ],
       "Checks": [
-        "ecr_repositories_scan_vulnerabilities_in_latest_image",
+        "ecr_registry_scan_images_on_push_enabled",
+        "ecr_repositories_lifecycle_policy_enabled",
+        "ecr_repositories_not_publicly_accessible",
         "ecr_repositories_scan_on_push_enabled",
-        "inspector2_is_enabled",
+        "ecr_repositories_scan_vulnerabilities_in_latest_image",
+        "ecr_repositories_tag_immutability",
         "inspector2_active_findings_exist",
+        "inspector2_is_enabled",
         "awslambda_function_using_supported_runtimes",
         "ssm_managed_compliant_patching",
         "trustedadvisor_premium_support_plan_subscribed"
+      ]
+    },
+    {
+      "Id": "ksi-ced-03",
+      "Name": "KSI-CED-03: Role-Specific Training",
+      "Description": "Require role-specific training for development and engineering staff covering best practices for delivering secure software",
+      "Attributes": [
+        {
+          "ItemId": "ksi-ced-03",
+          "Section": "Cybersecurity Education",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "config_recorder_all_regions_enabled",
+        "organizations_account_part_of_organizations",
+        "securityhub_enabled"
+      ]
+    },
+    {
+      "Id": "ksi-iam-07",
+      "Name": "KSI-IAM-07: Account Lifecycle Management",
+      "Description": "Securely manage the lifecycle and privileges of all accounts, roles, and groups",
+      "Attributes": [
+        {
+          "ItemId": "ksi-iam-07",
+          "Section": "Identity and Access Management",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "iam_no_root_access_key",
+        "iam_policy_attached_only_to_group_or_roles",
+        "iam_rotate_access_key_90_days",
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused",
+        "organizations_delegated_administrators"
+      ]
+    },
+    {
+      "Id": "ksi-mla-07",
+      "Name": "KSI-MLA-07: Monitoring and Logging Inventory",
+      "Description": "Maintain a list of information resources and event types that will be monitored, logged, and audited",
+      "Attributes": [
+        {
+          "ItemId": "ksi-mla-07",
+          "Section": "Monitoring, Logging, and Auditing",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_multi_region_enabled",
+        "cloudwatch_log_group_retention_policy_specific_days_enabled",
+        "config_recorder_all_regions_enabled",
+        "inspector2_is_enabled",
+        "resourceexplorer_indexes_found"
       ]
     }
   ]
