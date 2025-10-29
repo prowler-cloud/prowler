@@ -1,5 +1,6 @@
 {
   "Framework": "FedRAMP-20x-KSI-Low",
+  "Name": "FedRAMP 20x Key Security Indicators (KSIs) - Low Impact Level v25.05C",
   "Version": "25.05C",
   "Provider": "GCP",
   "Description": "FedRAMP 20x Key Security Indicators (KSIs) Low Impact Level represent core security indicators for cloud service providers, focusing on automation, continuous monitoring, and cloud-native security principles per FedRAMP 20x Phase One pilot requirements for Low impact systems.",
