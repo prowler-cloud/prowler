@@ -2,6 +2,10 @@
   "Provider": "aws",
   "CheckID": "eks_cluster_not_publicly_accessible",
   "CheckTitle": "EKS cluster endpoint is not publicly accessible from 0.0.0.0/0",
+  "CheckAliases": [
+    "eks_endpoints_not_publicly_accessible",
+    "eks_control_plane_endpoint_access_restricted"
+  ],
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
     "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
@@ -17,12 +21,8 @@
   "Risk": "An openly reachable API endpoint enables Internet-wide probing, brute force, and enumeration, increasing exposure to RBAC misconfigurations or API flaws. Successful access can drive secret exfiltration (confidentiality), workload tampering (integrity), and control-plane disruption or scaling abuse (availability, cost).",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/eks/latest/userguide/cluster-endpoint.html",
     "https://docs.aws.amazon.com/eks/latest/eksctl/vpc-cluster-access.html",
-    "https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-eks-cluster-resourcesvpcconfig.html",
-    "https://repost.aws/knowledge-center/eks-lock-api-access-ip-addresses",
     "https://docs.aws.amazon.com/eks/latest/userguide/config-cluster-endpoint.html",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/eks-controls.html#eks-1",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EKS/endpoint-access.html"
   ],
   "Remediation": {
@@ -43,9 +43,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "CheckAliases": [
-    "eks_endpoints_not_publicly_accessible",
-    "eks_control_plane_endpoint_access_restricted"
-  ]
+  "Notes": ""
 }

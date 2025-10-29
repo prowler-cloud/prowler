@@ -15,12 +15,7 @@
   "Risk": "Without **NetworkPolicy**, pods can communicate freely, enabling **lateral movement**, **data exfiltration**, and abuse of internal services. Unrestricted east-west traffic undermines confidentiality and integrity and enlarges the blast radius of a single compromised pod.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/kubernetes-policies-1/bc_aws_kubernetes_1#terraform",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/EKS/security-groups.html",
-    "https://medium.com/@priyanka28/restricting-k8s-services-access-on-amazon-eks-part-ix-7d75c97c9f3e",
-    "https://readmedium.com/aws-workshops-diy-eks-workshop-12-kubernetes-networking-w-amazon-vpc-cni-network-policies-0a0d51dc55cd",
-    "https://www.linkedin.com/pulse/advanced-networking-kubernetes-calico-network-policies-heidi-ni-37bic",
-    "https://kommunity.com/cloud-turkiye/events/using-network-policies-with-vpc-cni-on-amazon-eks-d8f14272",
     "https://docs.aws.amazon.com/eks/latest/userguide/eks-networking-add-ons.html",
     "https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html"
   ],
