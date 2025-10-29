@@ -75,7 +75,6 @@ export function ThreatScore({
   score,
   improvement,
   gaps = [],
-  onViewRemediationPlan,
 }: ThreatScoreProps) {
   const threatLevel = getThreatLevel(score);
   const config = THREAT_LEVEL_CONFIG[threatLevel];
@@ -95,11 +94,12 @@ export function ThreatScore({
               label="Score"
               color={config.chartColor}
               backgroundColor="rgba(100, 100, 100, 0.2)"
-              height={200}
+              height={206}
               innerRadius={90}
               outerRadius={115}
               startAngle={200}
               endAngle={-20}
+              hasDots
             />
           </div>
           {/* Overlaid Text (centered) */}
@@ -139,7 +139,7 @@ export function ThreatScore({
             )}
 
             {/* View Remediation Plan Button */}
-            <button onClick={onViewRemediationPlan}>
+            <button onClick={() => {}}>
               <span className="text-sm font-medium text-blue-600 dark:text-blue-300">
                 View Remediation Plan
               </span>
