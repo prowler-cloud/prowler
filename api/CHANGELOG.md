@@ -14,6 +14,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### Fixed
 - `/api/v1/overviews/providers` collapses data by provider type so the UI receives a single aggregated record per cloud family even when multiple accounts exist [(#9053)](https://github.com/prowler-cloud/prowler/pull/9053)
+- Added retry logic to database transactions to handle Aurora read replica connection failures during scale-down events [(#9064)](https://github.com/prowler-cloud/prowler/pull/9064)
 
 ## [1.14.0] (Prowler 5.13.0)
 
