@@ -248,6 +248,7 @@ export const buildOracleCloudSecret = (
       ProviderCredentialFields.OCI_PASS_PHRASE,
     ),
   };
+
   return filterEmptyValues(secret);
 };
 
