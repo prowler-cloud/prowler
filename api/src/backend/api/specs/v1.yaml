@@ -869,7 +869,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4c1e219dad1cc0e7
+          x-spec-enum-id: 6f034074d7104650
           enum:
           - aws
           - azure
@@ -877,6 +877,7 @@ paths:
           - github
           - kubernetes
           - m365
+          - oci
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -884,13 +885,14 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4c1e219dad1cc0e7
+            x-spec-enum-id: 6f034074d7104650
             enum:
             - aws
             - azure
@@ -898,6 +900,7 @@ paths:
             - github
             - kubernetes
             - m365
+            - oci
         description: |-
           Multiple values may be separated by commas.
 
@@ -907,6 +910,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -1396,7 +1400,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4c1e219dad1cc0e7
+          x-spec-enum-id: 6f034074d7104650
           enum:
           - aws
           - azure
@@ -1404,6 +1408,7 @@ paths:
           - github
           - kubernetes
           - m365
+          - oci
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -1411,13 +1416,14 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4c1e219dad1cc0e7
+            x-spec-enum-id: 6f034074d7104650
             enum:
             - aws
             - azure
@@ -1425,6 +1431,7 @@ paths:
             - github
             - kubernetes
             - m365
+            - oci
         description: |-
           Multiple values may be separated by commas.
 
@@ -1434,6 +1441,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -1831,7 +1839,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4c1e219dad1cc0e7
+          x-spec-enum-id: 6f034074d7104650
           enum:
           - aws
           - azure
@@ -1839,6 +1847,7 @@ paths:
           - github
           - kubernetes
           - m365
+          - oci
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -1846,13 +1855,14 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4c1e219dad1cc0e7
+            x-spec-enum-id: 6f034074d7104650
             enum:
             - aws
             - azure
@@ -1860,6 +1870,7 @@ paths:
             - github
             - kubernetes
             - m365
+            - oci
         description: |-
           Multiple values may be separated by commas.
 
@@ -1869,6 +1880,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -2264,7 +2276,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4c1e219dad1cc0e7
+          x-spec-enum-id: 6f034074d7104650
           enum:
           - aws
           - azure
@@ -2272,6 +2284,7 @@ paths:
           - github
           - kubernetes
           - m365
+          - oci
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -2279,13 +2292,14 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4c1e219dad1cc0e7
+            x-spec-enum-id: 6f034074d7104650
             enum:
             - aws
             - azure
@@ -2293,6 +2307,7 @@ paths:
             - github
             - kubernetes
             - m365
+            - oci
         description: |-
           Multiple values may be separated by commas.
 
@@ -2302,6 +2317,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -2685,7 +2701,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4c1e219dad1cc0e7
+          x-spec-enum-id: 6f034074d7104650
           enum:
           - aws
           - azure
@@ -2693,6 +2709,7 @@ paths:
           - github
           - kubernetes
           - m365
+          - oci
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -2700,13 +2717,14 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4c1e219dad1cc0e7
+            x-spec-enum-id: 6f034074d7104650
             enum:
             - aws
             - azure
@@ -2714,6 +2732,7 @@ paths:
             - github
             - kubernetes
             - m365
+            - oci
         description: |-
           Multiple values may be separated by commas.
 
@@ -2723,6 +2742,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -4226,7 +4246,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4c1e219dad1cc0e7
+          x-spec-enum-id: 6f034074d7104650
           enum:
           - aws
           - azure
@@ -4234,6 +4254,7 @@ paths:
           - github
           - kubernetes
           - m365
+          - oci
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -4241,13 +4262,14 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4c1e219dad1cc0e7
+            x-spec-enum-id: 6f034074d7104650
             enum:
             - aws
             - azure
@@ -4255,6 +4277,7 @@ paths:
             - github
             - kubernetes
             - m365
+            - oci
         description: |-
           Multiple values may be separated by commas.
 
@@ -4264,6 +4287,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -4403,7 +4427,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4c1e219dad1cc0e7
+          x-spec-enum-id: 6f034074d7104650
           enum:
           - aws
           - azure
@@ -4411,6 +4435,7 @@ paths:
           - github
           - kubernetes
           - m365
+          - oci
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -4418,13 +4443,14 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4c1e219dad1cc0e7
+            x-spec-enum-id: 6f034074d7104650
             enum:
             - aws
             - azure
@@ -4432,6 +4458,7 @@ paths:
             - github
             - kubernetes
             - m365
+            - oci
         description: |-
           Multiple values may be separated by commas.
 
@@ -4441,6 +4468,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -4552,6 +4580,37 @@ paths:
               schema:
                 $ref: '#/components/schemas/OverviewProviderResponse'
           description: ''
+  /api/v1/overviews/providers/count:
+    get:
+      operationId: overviews_providers_count_retrieve
+      description: Retrieve the number of providers grouped by provider type. This
+        endpoint counts every provider in the tenant, including those without completed
+        scans.
+      summary: Get provider counts grouped by type
+      parameters:
+      - in: query
+        name: fields[providers-count-overview]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - count
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      tags:
+      - Overview
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OverviewProviderCountResponse'
+          description: ''
   /api/v1/overviews/services:
     get:
       operationId: overviews_services_retrieve
@@ -4615,7 +4674,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4c1e219dad1cc0e7
+          x-spec-enum-id: 6f034074d7104650
           enum:
           - aws
           - azure
@@ -4623,6 +4682,7 @@ paths:
           - github
           - kubernetes
           - m365
+          - oci
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -4630,13 +4690,14 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4c1e219dad1cc0e7
+            x-spec-enum-id: 6f034074d7104650
             enum:
             - aws
             - azure
@@ -4644,6 +4705,7 @@ paths:
             - github
             - kubernetes
             - m365
+            - oci
         description: |-
           Multiple values may be separated by commas.
 
@@ -4653,6 +4715,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -5338,7 +5401,7 @@ paths:
         name: filter[provider]
         schema:
           type: string
-          x-spec-enum-id: 4c1e219dad1cc0e7
+          x-spec-enum-id: 6f034074d7104650
           enum:
           - aws
           - azure
@@ -5346,6 +5409,7 @@ paths:
           - github
           - kubernetes
           - m365
+          - oci
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -5353,13 +5417,14 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4c1e219dad1cc0e7
+            x-spec-enum-id: 6f034074d7104650
             enum:
             - aws
             - azure
@@ -5367,6 +5432,7 @@ paths:
             - github
             - kubernetes
             - m365
+            - oci
         description: |-
           Multiple values may be separated by commas.
 
@@ -5376,6 +5442,55 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          x-spec-enum-id: 6f034074d7104650
+          enum:
+          - aws
+          - azure
+          - gcp
+          - github
+          - kubernetes
+          - m365
+          - oci
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            x-spec-enum-id: 6f034074d7104650
+            enum:
+            - aws
+            - azure
+            - gcp
+            - github
+            - kubernetes
+            - m365
+            - oci
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - name: filter[search]
@@ -5973,7 +6088,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4c1e219dad1cc0e7
+          x-spec-enum-id: 6f034074d7104650
           enum:
           - aws
           - azure
@@ -5981,6 +6096,7 @@ paths:
           - github
           - kubernetes
           - m365
+          - oci
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -5988,13 +6104,14 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4c1e219dad1cc0e7
+            x-spec-enum-id: 6f034074d7104650
             enum:
             - aws
             - azure
@@ -6002,6 +6119,7 @@ paths:
             - github
             - kubernetes
             - m365
+            - oci
         description: |-
           Multiple values may be separated by commas.
 
@@ -6011,6 +6129,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -6338,7 +6457,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4c1e219dad1cc0e7
+          x-spec-enum-id: 6f034074d7104650
           enum:
           - aws
           - azure
@@ -6346,6 +6465,7 @@ paths:
           - github
           - kubernetes
           - m365
+          - oci
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -6353,13 +6473,14 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4c1e219dad1cc0e7
+            x-spec-enum-id: 6f034074d7104650
             enum:
             - aws
             - azure
@@ -6367,6 +6488,7 @@ paths:
             - github
             - kubernetes
             - m365
+            - oci
         description: |-
           Multiple values may be separated by commas.
 
@@ -6376,6 +6498,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -6604,7 +6727,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4c1e219dad1cc0e7
+          x-spec-enum-id: 6f034074d7104650
           enum:
           - aws
           - azure
@@ -6612,6 +6735,7 @@ paths:
           - github
           - kubernetes
           - m365
+          - oci
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -6619,13 +6743,14 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4c1e219dad1cc0e7
+            x-spec-enum-id: 6f034074d7104650
             enum:
             - aws
             - azure
@@ -6633,6 +6758,7 @@ paths:
             - github
             - kubernetes
             - m365
+            - oci
         description: |-
           Multiple values may be separated by commas.
 
@@ -6642,6 +6768,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -6876,7 +7003,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4c1e219dad1cc0e7
+          x-spec-enum-id: 6f034074d7104650
           enum:
           - aws
           - azure
@@ -6884,6 +7011,7 @@ paths:
           - github
           - kubernetes
           - m365
+          - oci
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -6891,13 +7019,14 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4c1e219dad1cc0e7
+            x-spec-enum-id: 6f034074d7104650
             enum:
             - aws
             - azure
@@ -6905,6 +7034,7 @@ paths:
             - github
             - kubernetes
             - m365
+            - oci
         description: |-
           Multiple values may be separated by commas.
 
@@ -6914,6 +7044,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -7711,7 +7842,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4c1e219dad1cc0e7
+          x-spec-enum-id: 6f034074d7104650
           enum:
           - aws
           - azure
@@ -7719,6 +7850,7 @@ paths:
           - github
           - kubernetes
           - m365
+          - oci
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -7726,13 +7858,14 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4c1e219dad1cc0e7
+            x-spec-enum-id: 6f034074d7104650
             enum:
             - aws
             - azure
@@ -7740,6 +7873,7 @@ paths:
             - github
             - kubernetes
             - m365
+            - oci
         description: |-
           Multiple values may be separated by commas.
 
@@ -7749,6 +7883,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -8122,6 +8257,72 @@ paths:
         '404':
           description: The scan has no reports, or the report generation task has
             not started yet
+  /api/v1/scans/{id}/threatscore:
+    get:
+      operationId: scans_threatscore_retrieve
+      description: Download a specific threatscore report (e.g., 'prowler_threatscore_aws')
+        as a PDF file.
+      summary: Retrieve threatscore report
+      parameters:
+      - in: query
+        name: fields[scans]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - trigger
+            - state
+            - unique_resource_count
+            - progress
+            - duration
+            - provider
+            - task
+            - inserted_at
+            - started_at
+            - completed_at
+            - scheduled_at
+            - next_scan_at
+            - processor
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scan.
+        required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      tags:
+      - Scan
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          description: PDF file containing the threatscore report
+        '202':
+          description: The task is in progress
+        '401':
+          description: API key missing or user not Authenticated
+        '403':
+          description: There is a problem with credentials
+        '404':
+          description: The scan has no threatscore reports, or the threatscore report
+            generation task has not started yet
   /api/v1/schedules/daily:
     post:
       operationId: schedules_daily_create
@@ -12007,6 +12208,38 @@ components:
               readOnly: true
           required:
           - id
+    OverviewProviderCount:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - providers-count-overview
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            count:
+              type: integer
+          required:
+          - id
+          - count
+    OverviewProviderCountResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/OverviewProviderCount'
+      required:
+      - data
     OverviewProviderResponse:
       type: object
       properties:
@@ -13199,6 +13432,39 @@ components:
                     required:
                     - github_app_id
                     - github_app_key
+                  - type: object
+                    title: Oracle Cloud Infrastructure (OCI) API Key Credentials
+                    properties:
+                      user:
+                        type: string
+                        description: The OCID of the user to authenticate with.
+                      fingerprint:
+                        type: string
+                        description: The fingerprint of the API signing key.
+                      key_file:
+                        type: string
+                        description: The path to the private key file for API signing.
+                          Either key_file or key_content must be provided.
+                      key_content:
+                        type: string
+                        description: The content of the private key for API signing
+                          (base64 encoded). Either key_file or key_content must be
+                          provided.
+                      tenancy:
+                        type: string
+                        description: The OCID of the tenancy.
+                      region:
+                        type: string
+                        description: The OCI region identifier (e.g., us-ashburn-1,
+                          us-phoenix-1).
+                      pass_phrase:
+                        type: string
+                        description: The passphrase for the private key, if encrypted.
+                    required:
+                    - user
+                    - fingerprint
+                    - tenancy
+                    - region
                   writeOnly: true
               required:
               - secret
@@ -14193,6 +14459,7 @@ components:
               - kubernetes
               - m365
               - github
+              - oci
               type: string
               description: |-
                 * `aws` - AWS
@@ -14201,7 +14468,8 @@ components:
                 * `kubernetes` - Kubernetes
                 * `m365` - M365
                 * `github` - GitHub
-              x-spec-enum-id: 4c1e219dad1cc0e7
+                * `oci` - Oracle Cloud Infrastructure
+              x-spec-enum-id: 6f034074d7104650
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -14313,8 +14581,9 @@ components:
               - kubernetes
               - m365
               - github
+              - oci
               type: string
-              x-spec-enum-id: 4c1e219dad1cc0e7
+              x-spec-enum-id: 6f034074d7104650
               description: |-
                 Type of provider to create.
 
@@ -14324,6 +14593,7 @@ components:
                 * `kubernetes` - Kubernetes
                 * `m365` - M365
                 * `github` - GitHub
+                * `oci` - Oracle Cloud Infrastructure
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -14367,8 +14637,9 @@ components:
                   - kubernetes
                   - m365
                   - github
+                  - oci
                   type: string
-                  x-spec-enum-id: 4c1e219dad1cc0e7
+                  x-spec-enum-id: 6f034074d7104650
                   description: |-
                     Type of provider to create.
 
@@ -14378,6 +14649,7 @@ components:
                     * `kubernetes` - Kubernetes
                     * `m365` - M365
                     * `github` - GitHub
+                    * `oci` - Oracle Cloud Infrastructure
                 uid:
                   type: string
                   minLength: 3
@@ -15086,6 +15358,37 @@ components:
                 required:
                 - github_app_id
                 - github_app_key
+              - type: object
+                title: Oracle Cloud Infrastructure (OCI) API Key Credentials
+                properties:
+                  user:
+                    type: string
+                    description: The OCID of the user to authenticate with.
+                  fingerprint:
+                    type: string
+                    description: The fingerprint of the API signing key.
+                  key_file:
+                    type: string
+                    description: The path to the private key file for API signing.
+                      Either key_file or key_content must be provided.
+                  key_content:
+                    type: string
+                    description: The content of the private key for API signing (base64
+                      encoded). Either key_file or key_content must be provided.
+                  tenancy:
+                    type: string
+                    description: The OCID of the tenancy.
+                  region:
+                    type: string
+                    description: The OCI region identifier (e.g., us-ashburn-1, us-phoenix-1).
+                  pass_phrase:
+                    type: string
+                    description: The passphrase for the private key, if encrypted.
+                required:
+                - user
+                - fingerprint
+                - tenancy
+                - region
               writeOnly: true
           required:
           - secret_type
@@ -15355,6 +15658,39 @@ components:
                     required:
                     - github_app_id
                     - github_app_key
+                  - type: object
+                    title: Oracle Cloud Infrastructure (OCI) API Key Credentials
+                    properties:
+                      user:
+                        type: string
+                        description: The OCID of the user to authenticate with.
+                      fingerprint:
+                        type: string
+                        description: The fingerprint of the API signing key.
+                      key_file:
+                        type: string
+                        description: The path to the private key file for API signing.
+                          Either key_file or key_content must be provided.
+                      key_content:
+                        type: string
+                        description: The content of the private key for API signing
+                          (base64 encoded). Either key_file or key_content must be
+                          provided.
+                      tenancy:
+                        type: string
+                        description: The OCID of the tenancy.
+                      region:
+                        type: string
+                        description: The OCI region identifier (e.g., us-ashburn-1,
+                          us-phoenix-1).
+                      pass_phrase:
+                        type: string
+                        description: The passphrase for the private key, if encrypted.
+                    required:
+                    - user
+                    - fingerprint
+                    - tenancy
+                    - region
                   writeOnly: true
               required:
               - secret_type
@@ -15640,6 +15976,37 @@ components:
                 required:
                 - github_app_id
                 - github_app_key
+              - type: object
+                title: Oracle Cloud Infrastructure (OCI) API Key Credentials
+                properties:
+                  user:
+                    type: string
+                    description: The OCID of the user to authenticate with.
+                  fingerprint:
+                    type: string
+                    description: The fingerprint of the API signing key.
+                  key_file:
+                    type: string
+                    description: The path to the private key file for API signing.
+                      Either key_file or key_content must be provided.
+                  key_content:
+                    type: string
+                    description: The content of the private key for API signing (base64
+                      encoded). Either key_file or key_content must be provided.
+                  tenancy:
+                    type: string
+                    description: The OCID of the tenancy.
+                  region:
+                    type: string
+                    description: The OCI region identifier (e.g., us-ashburn-1, us-phoenix-1).
+                  pass_phrase:
+                    type: string
+                    description: The passphrase for the private key, if encrypted.
+                required:
+                - user
+                - fingerprint
+                - tenancy
+                - region
               writeOnly: true
           required:
           - secret

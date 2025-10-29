@@ -13,6 +13,7 @@ import {
   CustomProviderInputGitHub,
   CustomProviderInputKubernetes,
   CustomProviderInputM365,
+  CustomProviderInputOracleCloud,
 } from "./custom-provider-inputs";
 
 const providerDisplayData: Record<
@@ -42,6 +43,10 @@ const providerDisplayData: Record<
   github: {
     label: "GitHub",
     component: <CustomProviderInputGitHub />,
+  },
+  oci: {
+    label: "Oracle Cloud Infrastructure",
+    component: <CustomProviderInputOracleCloud />,
   },
 };
 
