@@ -5,7 +5,7 @@ from celery.utils.log import get_task_logger
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE
 from tasks.utils import batched
 
-from api.db_router import READ_REPLICA_ALIAS
+from api.db_router import READ_REPLICA_ALIAS, MainRouter
 from api.db_utils import rls_transaction
 from api.models import Finding, Integration, Provider
 from api.utils import initialize_prowler_integration, initialize_prowler_provider
@@ -208,7 +208,7 @@ def get_security_hub_client_from_integration(
             regions_status[region] = region in connection.enabled_regions
 
         # Save regions information in the integration configuration
-        with rls_transaction(tenant_id):
+        with rls_transaction(tenant_id, using=MainRouter.default_db):
             integration.configuration["regions"] = regions_status
             integration.save()
 
@@ -223,7 +223,7 @@ def get_security_hub_client_from_integration(
         return True, security_hub
     else:
         # Reset regions information if connection fails
-        with rls_transaction(tenant_id):
+        with rls_transaction(tenant_id, using=MainRouter.default_db):
             integration.configuration["regions"] = {}
             integration.save()
 
@@ -334,8 +334,11 @@ def upload_security_hub_integration(
                                         f"Security Hub connection failed for integration {integration.id}: "
                                         f"{security_hub.error}"
                                     )
-                                    integration.connected = False
-                                    integration.save()
+                                    with rls_transaction(
+                                        tenant_id, using=MainRouter.default_db
+                                    ):
+                                        integration.connected = False
+                                        integration.save()
                                     break  # Skip this integration
 
                                 security_hub_client = security_hub
