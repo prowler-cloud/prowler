@@ -61,6 +61,7 @@ from api.v1.serializer_utils.integrations import (
 )
 from api.v1.serializer_utils.lighthouse import (
     BedrockCredentialsSerializer,
+    LighthouseCredentialsField,
     OpenAICompatibleCredentialsSerializer,
     OpenAICredentialsSerializer,
 )
@@ -3079,7 +3080,12 @@ class LighthouseProviderConfigCreateSerializer(RLSSerializer, BaseWriteSerialize
     Accepts credentials as JSON; stored encrypted via credentials_decoded.
     """
 
-    credentials = serializers.JSONField(write_only=True, required=True)
+    credentials = LighthouseCredentialsField(write_only=True, required=True)
+    base_url = serializers.URLField(
+        required=False,
+        allow_null=True,
+        help_text="Base URL for the LLM provider API. Required for 'openai_compatible' provider type.",
+    )
 
     class Meta:
         model = LighthouseProviderConfiguration
@@ -3091,7 +3097,10 @@ class LighthouseProviderConfigCreateSerializer(RLSSerializer, BaseWriteSerialize
         ]
         extra_kwargs = {
             "is_active": {"required": False},
-            "base_url": {"required": False, "allow_null": True},
+            "provider_type": {
+                "help_text": "LLM provider type. Determines which credential format to use. "
+                "See 'credentials' field documentation for provider-specific requirements."
+            },
         }
 
     def create(self, validated_data):
@@ -3165,7 +3174,12 @@ class LighthouseProviderConfigUpdateSerializer(BaseWriteSerializer):
     Update serializer for LighthouseProviderConfiguration.
     """
 
-    credentials = serializers.JSONField(write_only=True, required=False)
+    credentials = LighthouseCredentialsField(write_only=True, required=False)
+    base_url = serializers.URLField(
+        required=False,
+        allow_null=True,
+        help_text="Base URL for the LLM provider API. Required for 'openai_compatible' provider type.",
+    )
 
     class Meta:
         model = LighthouseProviderConfiguration
@@ -3179,7 +3193,6 @@ class LighthouseProviderConfigUpdateSerializer(BaseWriteSerializer):
         extra_kwargs = {
             "id": {"read_only": True},
             "provider_type": {"read_only": True},
-            "base_url": {"required": False, "allow_null": True},
             "is_active": {"required": False},
         }
 

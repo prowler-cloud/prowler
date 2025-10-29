@@ -1,5 +1,6 @@
 import re
 
+from drf_spectacular.utils import extend_schema_field
 from rest_framework_json_api import serializers
 
 
@@ -67,3 +68,61 @@ class OpenAICompatibleCredentialsSerializer(serializers.Serializer):
         if not isinstance(value, str) or not value.strip():
             raise serializers.ValidationError("API key is required.")
         return value.strip()
+
+
+@extend_schema_field(
+    {
+        "oneOf": [
+            {
+                "type": "object",
+                "title": "OpenAI Credentials",
+                "properties": {
+                    "api_key": {
+                        "type": "string",
+                        "description": "OpenAI API key. Must start with 'sk-' followed by alphanumeric characters, "
+                        "hyphens, or underscores.",
+                        "pattern": "^sk-[\\w-]+$",
+                    }
+                },
+                "required": ["api_key"],
+            },
+            {
+                "type": "object",
+                "title": "AWS Bedrock Credentials",
+                "properties": {
+                    "access_key_id": {
+                        "type": "string",
+                        "description": "AWS access key ID.",
+                        "pattern": "^AKIA[0-9A-Z]{16}$",
+                    },
+                    "secret_access_key": {
+                        "type": "string",
+                        "description": "AWS secret access key.",
+                        "pattern": "^[A-Za-z0-9/+=]{40}$",
+                    },
+                    "region": {
+                        "type": "string",
+                        "description": "AWS region identifier where Bedrock is available. Examples: us-east-1, "
+                        "us-west-2, eu-west-1, ap-northeast-1.",
+                        "pattern": "^[a-z]{2}-[a-z]+-\\d+$",
+                    },
+                },
+                "required": ["access_key_id", "secret_access_key", "region"],
+            },
+            {
+                "type": "object",
+                "title": "OpenAI Compatible Credentials",
+                "properties": {
+                    "api_key": {
+                        "type": "string",
+                        "description": "API key for OpenAI-compatible provider. The format varies by provider. "
+                        "Note: The 'base_url' field (separate from credentials) is required when using this provider type.",
+                    }
+                },
+                "required": ["api_key"],
+            },
+        ]
+    }
+)
+class LighthouseCredentialsField(serializers.JSONField):
+    pass
