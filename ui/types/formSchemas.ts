@@ -110,6 +110,11 @@ export const addProviderFormSchema = z
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
         providerUid: z.string(),
       }),
+      z.object({
+        providerType: z.literal("oci"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z.string(),
+      }),
     ]),
   );
 
@@ -191,7 +196,25 @@ export const addCredentialsFormSchema = (
                         .string()
                         .optional(),
                     }
-                  : {}),
+                  : providerType === "oci"
+                    ? {
+                        [ProviderCredentialFields.OCI_USER]: z
+                          .string()
+                          .min(1, "User OCID is required"),
+                        [ProviderCredentialFields.OCI_FINGERPRINT]: z
+                          .string()
+                          .min(1, "Fingerprint is required"),
+                        [ProviderCredentialFields.OCI_KEY_CONTENT]: z
+                          .string()
+                          .min(1, "Private Key Content is required"),
+                        [ProviderCredentialFields.OCI_REGION]: z
+                          .string()
+                          .min(1, "Region is required"),
+                        [ProviderCredentialFields.OCI_PASS_PHRASE]: z
+                          .union([z.string(), z.literal("")])
+                          .optional(),
+                      }
+                    : {}),
     })
     .superRefine((data: Record<string, any>, ctx) => {
       if (providerType === "m365") {

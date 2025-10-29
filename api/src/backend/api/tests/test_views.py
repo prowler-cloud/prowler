@@ -23,6 +23,7 @@ from conftest import (
     today_after_n_days,
 )
 from django.conf import settings
+from django.db.models import Count
 from django.http import JsonResponse
 from django.test import RequestFactory
 from django.urls import reverse
@@ -44,6 +45,7 @@ from api.models import (
     ProviderGroup,
     ProviderGroupMembership,
     ProviderSecret,
+    Resource,
     Role,
     RoleProviderGroupRelationship,
     SAMLConfiguration,
@@ -946,6 +948,74 @@ class TestProviderViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == len(providers_fixture)
 
+    def test_providers_filter_provider_type(
+        self, authenticated_client, providers_fixture
+    ):
+        response = authenticated_client.get(
+            reverse("provider-list"), {"filter[provider_type]": "aws"}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 2
+        assert all(item["attributes"]["provider"] == "aws" for item in data)
+
+    def test_providers_filter_provider_type_in(
+        self, authenticated_client, providers_fixture
+    ):
+        response = authenticated_client.get(
+            reverse("provider-list"), {"filter[provider_type__in]": "aws,gcp"}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 3
+        assert {"aws", "gcp"} >= {item["attributes"]["provider"] for item in data}
+
+    def test_providers_filter_provider_type_invalid(
+        self, authenticated_client, providers_fixture
+    ):
+        response = authenticated_client.get(
+            reverse("provider-list"), {"filter[provider_type]": "invalid"}
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_providers_disable_pagination(
+        self, authenticated_client, providers_fixture, tenants_fixture
+    ):
+        tenant, *_ = tenants_fixture
+        existing_count = Provider.objects.filter(tenant_id=tenant.id).count()
+        target_total = settings.REST_FRAMEWORK["PAGE_SIZE"] + 1
+        additional_needed = max(0, target_total - existing_count)
+
+        base_uid = 200000000000
+        for index in range(additional_needed):
+            Provider.objects.create(
+                tenant_id=tenant.id,
+                provider=Provider.ProviderChoices.AWS,
+                uid=f"{base_uid + index:012d}",
+                alias=f"aws_extra_{index}",
+            )
+
+        total_providers = Provider.objects.filter(tenant_id=tenant.id).count()
+
+        paginated_response = authenticated_client.get(reverse("provider-list"))
+        assert paginated_response.status_code == status.HTTP_200_OK
+        paginated_data = paginated_response.json()["data"]
+        assert len(paginated_data) == min(
+            settings.REST_FRAMEWORK["PAGE_SIZE"], total_providers
+        )
+        paginated_meta = paginated_response.json().get("meta", {})
+        assert "pagination" in paginated_meta
+        assert paginated_meta["pagination"]["count"] == total_providers
+
+        unpaginated_response = authenticated_client.get(
+            reverse("provider-list"), {"page[disable]": "true"}
+        )
+        assert unpaginated_response.status_code == status.HTTP_200_OK
+        unpaginated_data = unpaginated_response.json()["data"]
+        assert len(unpaginated_data) == total_providers
+        unpaginated_meta = unpaginated_response.json().get("meta", {})
+        assert "pagination" not in unpaginated_meta
+
     @pytest.mark.parametrize(
         "include_values, expected_resources",
         [
@@ -1389,13 +1459,25 @@ class TestProviderViewSet:
                 ("provider", "aws", 2),
                 ("provider.in", "azure,gcp", 2),
                 ("uid", "123456789012", 1),
-                ("uid.icontains", "1", 5),
+                (
+                    "uid.icontains",
+                    "1",
+                    6,
+                ),  # Updated: includes OCI provider with "1" in UID
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
-                ("inserted_at", TODAY, 6),
-                ("inserted_at.gte", "2024-01-01", 6),
+                ("inserted_at", TODAY, 7),  # Updated: 7 providers now (added OCI)
+                (
+                    "inserted_at.gte",
+                    "2024-01-01",
+                    7,
+                ),  # Updated: 7 providers now (added OCI)
                 ("inserted_at.lte", "2024-01-01", 0),
-                ("updated_at.gte", "2024-01-01", 6),
+                (
+                    "updated_at.gte",
+                    "2024-01-01",
+                    7,
+                ),  # Updated: 7 providers now (added OCI)
                 ("updated_at.lte", "2024-01-01", 0),
             ]
         ),
@@ -1896,6 +1978,43 @@ class TestProviderSecretViewSet:
                     "certificate_content": "VGVzdCBjZXJ0aWZpY2F0ZSBjb250ZW50",
                     "user": "test@domain.com",
                     "password": "supersecret",
+                },
+            ),
+            # OCI with API key credentials (with key_content)
+            (
+                Provider.ProviderChoices.OCI.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
+                    "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
+                    "key_content": "-----BEGIN RSA PRIVATE KEY-----\ntest-key-content\n-----END RSA PRIVATE KEY-----",
+                    "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
+                    "region": "us-ashburn-1",
+                },
+            ),
+            # OCI with API key credentials (with key_file)
+            (
+                Provider.ProviderChoices.OCI.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
+                    "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
+                    "key_file": "/path/to/oci_api_key.pem",
+                    "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
+                    "region": "us-ashburn-1",
+                },
+            ),
+            # OCI with API key credentials (with passphrase)
+            (
+                Provider.ProviderChoices.OCI.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
+                    "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
+                    "key_content": "-----BEGIN RSA PRIVATE KEY-----\ntest-encrypted-key\n-----END RSA PRIVATE KEY-----",
+                    "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
+                    "region": "us-ashburn-1",
+                    "pass_phrase": "my-secure-passphrase",
                 },
             ),
         ],
@@ -5784,8 +5903,96 @@ class TestOverviewViewSet:
         assert response.json()["data"][0]["attributes"]["findings"]["pass"] == 2
         assert response.json()["data"][0]["attributes"]["findings"]["fail"] == 1
         assert response.json()["data"][0]["attributes"]["findings"]["muted"] == 1
-        # Since we rely on completed scans, there are only 2 resources now
-        assert response.json()["data"][0]["attributes"]["resources"]["total"] == 2
+        # Aggregated resources include all AWS providers present in the tenant
+        assert response.json()["data"][0]["attributes"]["resources"]["total"] == 3
+
+    def test_overview_providers_aggregates_same_provider_type(
+        self,
+        authenticated_client,
+        scan_summaries_fixture,
+        resources_fixture,
+        providers_fixture,
+        tenants_fixture,
+    ):
+        tenant = tenants_fixture[0]
+        _provider1, provider2, *_ = providers_fixture
+
+        scan = Scan.objects.create(
+            name="overview scan aws account 2",
+            provider=provider2,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan,
+            check_id="check-aws-two",
+            service="service-extra",
+            severity="medium",
+            region="region-extra",
+            _pass=3,
+            fail=2,
+            muted=1,
+            total=6,
+        )
+
+        Resource.objects.create(
+            tenant_id=tenant.id,
+            provider=provider2,
+            uid="arn:aws:ec2:us-west-2:123456789013:instance/i-aggregation",
+            name="Aggregated Instance",
+            region="us-west-2",
+            service="ec2",
+            type="prowler-test",
+        )
+
+        response = authenticated_client.get(reverse("overview-providers"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        attributes = data[0]["attributes"]
+
+        assert attributes["findings"]["total"] == 10
+        assert attributes["findings"]["pass"] == 5
+        assert attributes["findings"]["fail"] == 3
+        assert attributes["findings"]["muted"] == 2
+        assert attributes["resources"]["total"] == 4
+
+    def test_overview_providers_count(
+        self,
+        authenticated_client,
+        scan_summaries_fixture,
+        resources_fixture,
+        providers_fixture,
+        tenants_fixture,
+    ):
+        tenant = tenants_fixture[0]
+
+        default_response = authenticated_client.get(reverse("overview-providers"))
+        assert default_response.status_code == status.HTTP_200_OK
+        default_data = default_response.json()["data"]
+        assert len(default_data) == 1
+        assert all("count" not in item["attributes"] for item in default_data)
+        grouped_response = authenticated_client.get(reverse("overview-providers-count"))
+        assert grouped_response.status_code == status.HTTP_200_OK
+        grouped_data = grouped_response.json()["data"]
+        assert len(grouped_data) >= 1
+
+        aggregated = {
+            entry["id"]: entry["attributes"]["count"] for entry in grouped_data
+        }
+        db_counts = (
+            Provider.objects.filter(tenant_id=tenant.id, is_deleted=False)
+            .values("provider")
+            .annotate(count=Count("id"))
+        )
+        expected = {row["provider"]: row["count"] for row in db_counts}
+
+        assert aggregated == expected
+        for entry in grouped_data:
+            assert "findings" not in entry["attributes"]
 
     def test_overview_services_list_no_required_filters(
         self, authenticated_client, scan_summaries_fixture

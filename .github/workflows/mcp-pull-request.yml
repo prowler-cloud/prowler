@@ -8,8 +8,6 @@ on:
     paths:
       - '.github/workflows/mcp-pull-request.yml'
       - 'mcp_server/**'
-      - '!mcp_server/README.md'
-      - '!mcp_server/CHANGELOG.md'
   pull_request:
     branches:
       - 'master'
@@ -17,8 +15,6 @@ on:
     paths:
       - '.github/workflows/mcp-pull-request.yml'
       - 'mcp_server/**'
-      - '!mcp_server/README.md'
-      - '!mcp_server/CHANGELOG.md'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -29,8 +25,36 @@ env:
   IMAGE_NAME: prowler-mcp
 
 jobs:
-  dockerfile-lint:
+  check-changes:
     if: github.repository == 'prowler-cloud/prowler'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      mcp-changed: ${{ steps.filter.outputs.mcp }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Check for MCP changes
+        id: filter
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        with:
+          files_ignore: |
+            mcp_server/README.md
+            mcp_server/CHANGELOG.md
+
+      - name: Set output
+        id: set-output
+        run: |
+          if [[ "${{ steps.filter.outputs.any_changed }}" == "true" ]]; then
+            echo "mcp=true" >> $GITHUB_OUTPUT
+          else
+            echo "mcp=false" >> $GITHUB_OUTPUT
+          fi
+
+  dockerfile-lint:
+    needs: check-changes
+    if: github.repository == 'prowler-cloud/prowler' && needs.check-changes.outputs.mcp-changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -46,7 +70,8 @@ jobs:
           dockerfile: mcp_server/Dockerfile
 
   container-build-and-scan:
-    if: github.repository == 'prowler-cloud/prowler'
+    needs: check-changes
+    if: github.repository == 'prowler-cloud/prowler' && needs.check-changes.outputs.mcp-changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:

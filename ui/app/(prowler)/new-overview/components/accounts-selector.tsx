@@ -10,6 +10,7 @@ import {
   GitHubProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
+  OracleCloudProviderBadge,
 } from "@/components/icons/providers-badge";
 import {
   Select,
@@ -27,6 +28,7 @@ const PROVIDER_ICON: Record<ProviderType, ReactNode> = {
   kubernetes: <KS8ProviderBadge width={18} height={18} />,
   m365: <M365ProviderBadge width={18} height={18} />,
   github: <GitHubProviderBadge width={18} height={18} />,
+  oci: <OracleCloudProviderBadge width={18} height={18} />,
 };
 
 interface AccountsSelectorProps {
