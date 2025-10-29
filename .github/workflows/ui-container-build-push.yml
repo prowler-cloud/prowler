@@ -79,7 +79,6 @@ jobs:
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.short-sha }}
           labels: |
             org.opencontainers.image.title=Prowler UI
-            org.opencontainers.image.description=Next.js frontend application for Prowler
             org.opencontainers.image.vendor=ProwlerPro, Inc.
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
@@ -101,7 +100,6 @@ jobs:
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.STABLE_TAG }}
           labels: |
             org.opencontainers.image.title=Prowler UI
-            org.opencontainers.image.description=Next.js frontend application for Prowler
             org.opencontainers.image.vendor=ProwlerPro, Inc.
             org.opencontainers.image.version=${{ env.RELEASE_TAG }}
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
