@@ -419,6 +419,7 @@ export class ProvidersPage extends BasePage {
     // Fill the Kubernetes provider details
 
     await this.kubernetesContextInput.fill(data.context);
+
     if (data.alias) {
       await this.aliasInput.fill(data.alias);
     }
@@ -428,6 +429,7 @@ export class ProvidersPage extends BasePage {
     // Fill the GCP provider details
 
     await this.gcpProjectIdInput.fill(data.projectId);
+
     if (data.alias) {
       await this.aliasInput.fill(data.alias);
     }
@@ -437,6 +439,7 @@ export class ProvidersPage extends BasePage {
     // Fill the GitHub provider details
 
     await this.githubUsernameInput.fill(data.username);
+    
     if (data.alias) {
       await this.aliasInput.fill(data.alias);
     }
@@ -460,6 +463,7 @@ export class ProvidersPage extends BasePage {
     if (/\/providers\/add-credentials/.test(url)) {
       // Some UI implementations use "Save" instead of "Next" for primary action
       const saveBtn = this.saveButton;
+
       if (await saveBtn.count()) {
         await saveBtn.click();
         await this.waitForPageLoad();
@@ -475,6 +479,7 @@ export class ProvidersPage extends BasePage {
 
     // If on the "test-connection" step, click the "Launch scan" button
     if (/\/providers\/test-connection/.test(url)) {
+
       const buttonByText = this.page
         .locator("button")
         .filter({ hasText: "Launch scan" });
@@ -498,8 +503,10 @@ export class ProvidersPage extends BasePage {
         // If we're still on test-connection page, check for error
         if (/\/providers\/test-connection/.test(this.page.url())) {
           const isErrorVisible = await errorMessage.isVisible().catch(() => false);
+
           if (isErrorVisible) {
             const errorText = await errorMessage.textContent();
+
             throw new Error(
               `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
             );
@@ -508,8 +515,11 @@ export class ProvidersPage extends BasePage {
       } catch (error) {
         // If timeout or other error, check if error message is present
         const isErrorVisible = await errorMessage.isVisible().catch(() => false);
+
         if (isErrorVisible) {
+
           const errorText = await errorMessage.textContent();
+
           throw new Error(
             `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
           );
@@ -553,6 +563,7 @@ export class ProvidersPage extends BasePage {
     // Ensure we are on the add-credentials page where the selector exists
 
     await expect(this.page).toHaveURL(/\/providers\/add-credentials/);
+
     if (type === AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN) {
       await this.roleCredentialsRadio.click({ force: true });
     } else if (type === AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS) {
@@ -568,6 +579,7 @@ export class ProvidersPage extends BasePage {
     // Ensure we are on the add-credentials page where the selector exists
 
     await expect(this.page).toHaveURL(/\/providers\/add-credentials/);
+
     if (type === M365_CREDENTIAL_OPTIONS.M365_CREDENTIALS) {
       await this.m365StaticCredentialsRadio.click({ force: true });
     } else if (type === M365_CREDENTIAL_OPTIONS.M365_CERTIFICATE_CREDENTIALS) {
@@ -596,6 +608,7 @@ export class ProvidersPage extends BasePage {
     // Ensure we are on the add-credentials page where the selector exists
 
     await expect(this.page).toHaveURL(/\/providers\/add-credentials/);
+
     if (type === GITHUB_CREDENTIAL_OPTIONS.GITHUB_PERSONAL_ACCESS_TOKEN) {
       await this.githubPersonalAccessTokenRadio.click({ force: true });
     } else if (type === GITHUB_CREDENTIAL_OPTIONS.GITHUB_APP) {
@@ -794,6 +807,7 @@ export class ProvidersPage extends BasePage {
     const launchScanButton = this.page
       .locator("button")
       .filter({ hasText: "Launch scan" });
+
     await expect(launchScanButton).toBeVisible();
   }
 
@@ -830,6 +844,7 @@ export class ProvidersPage extends BasePage {
 
     // Find and use the search input to filter the table
     const searchInput = this.page.getByPlaceholder(/search|filter/i);
+
     await expect(searchInput).toBeVisible({ timeout: 5000 });
     
     // Clear and search for the specific provider
@@ -847,7 +862,7 @@ export class ProvidersPage extends BasePage {
 
     // Get all rows from the table
     const allRows = this.providersTable.locator("tbody tr");
-    
+
     // Helper function to check if a row is the "No results" row
     const isNoResultsRow = async (row: Locator): Promise<boolean> => {
       const text = await row.textContent();
@@ -908,6 +923,7 @@ export class ProvidersPage extends BasePage {
 
     // Find and click the action button (last cell = actions column)
     const actionButton = targetRow.locator("td").last().locator("button").first();
+
     await expect(actionButton).toBeVisible({ timeout: 5000 });
     await actionButton.click();
 
@@ -915,11 +931,13 @@ export class ProvidersPage extends BasePage {
     const deleteMenuItem = this.page.getByRole("menuitem", {
       name: /delete.*provider/i,
     });
+
     await expect(deleteMenuItem).toBeVisible({ timeout: 5000 });
     await deleteMenuItem.click();
 
     // Wait for confirmation modal to appear
     const modal = this.page.locator('[role="dialog"], .modal, [data-testid*="modal"]').first();
+    
     await expect(modal).toBeVisible({ timeout: 10000 });
 
     // Find and click the delete confirmation button
