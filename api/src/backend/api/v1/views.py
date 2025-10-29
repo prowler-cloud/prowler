@@ -1,5 +1,6 @@
 import fnmatch
 import glob
+import json
 import logging
 import os
 from datetime import datetime, timedelta, timezone
@@ -60,11 +61,13 @@ from tasks.tasks import (
     backfill_scan_resource_summaries_task,
     check_integration_connection_task,
     check_lighthouse_connection_task,
+    check_lighthouse_provider_connection_task,
     check_provider_connection_task,
     delete_provider_task,
     delete_tenant_task,
     jira_integration_task,
     perform_scan_task,
+    refresh_lighthouse_provider_models_task,
 )
 
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
@@ -84,6 +87,8 @@ from api.filters import (
     InvitationFilter,
     LatestFindingFilter,
     LatestResourceFilter,
+    LighthouseProviderConfigFilter,
+    LighthouseProviderModelsFilter,
     MembershipFilter,
     ProcessorFilter,
     ProviderFilter,
@@ -106,6 +111,9 @@ from api.models import (
     Integration,
     Invitation,
     LighthouseConfiguration,
+    LighthouseProviderConfiguration,
+    LighthouseProviderModels,
+    LighthouseTenantConfiguration,
     Membership,
     Processor,
     Provider,
@@ -139,7 +147,7 @@ from api.utils import (
     validate_invitation,
 )
 from api.uuid_utils import datetime_to_uuid7, uuid7_start
-from api.v1.mixins import PaginateByPkMixin, TaskManagementMixin
+from api.v1.mixins import DisablePaginationMixin, PaginateByPkMixin, TaskManagementMixin
 from api.v1.serializers import (
     ComplianceOverviewAttributesSerializer,
     ComplianceOverviewDetailSerializer,
@@ -160,8 +168,15 @@ from api.v1.serializers import (
     LighthouseConfigCreateSerializer,
     LighthouseConfigSerializer,
     LighthouseConfigUpdateSerializer,
+    LighthouseProviderConfigCreateSerializer,
+    LighthouseProviderConfigSerializer,
+    LighthouseProviderConfigUpdateSerializer,
+    LighthouseProviderModelsSerializer,
+    LighthouseTenantConfigSerializer,
+    LighthouseTenantConfigUpdateSerializer,
     MembershipSerializer,
     OverviewFindingSerializer,
+    OverviewProviderCountSerializer,
     OverviewProviderSerializer,
     OverviewServiceSerializer,
     OverviewSeveritySerializer,
@@ -307,7 +322,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.14.0"
+        spectacular_settings.VERSION = "1.15.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -1417,7 +1432,7 @@ class ProviderGroupProvidersRelationshipView(RelationshipView, BaseRLSViewSet):
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
-class ProviderViewSet(BaseRLSViewSet):
+class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
     queryset = Provider.objects.all()
     serializer_class = ProviderSerializer
     http_method_names = ["get", "post", "patch", "delete"]
@@ -3677,6 +3692,13 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             "each provider are considered in the aggregation to ensure accurate and up-to-date insights."
         ),
     ),
+    providers_count=extend_schema(
+        summary="Get provider counts grouped by type",
+        description=(
+            "Retrieve the number of providers grouped by provider type. "
+            "This endpoint counts every provider in the tenant, including those without completed scans."
+        ),
+    ),
     findings=extend_schema(
         summary="Get aggregated findings data",
         description=(
@@ -3728,6 +3750,8 @@ class OverviewViewSet(BaseRLSViewSet):
     def get_serializer_class(self):
         if self.action == "providers":
             return OverviewProviderSerializer
+        elif self.action == "providers_count":
+            return OverviewProviderCountSerializer
         elif self.action == "findings":
             return OverviewFindingSerializer
         elif self.action == "findings_severity":
@@ -3776,10 +3800,7 @@ class OverviewViewSet(BaseRLSViewSet):
 
         findings_aggregated = (
             queryset.filter(scan_id__in=latest_scan_ids)
-            .values(
-                "scan__provider_id",
-                provider=F("scan__provider__provider"),
-            )
+            .values(provider=F("scan__provider__provider"))
             .annotate(
                 findings_passed=Coalesce(Sum("_pass"), 0),
                 findings_failed=Coalesce(Sum("fail"), 0),
@@ -3788,13 +3809,16 @@ class OverviewViewSet(BaseRLSViewSet):
             )
         )
 
-        resources_aggregated = (
-            Resource.all_objects.filter(tenant_id=tenant_id)
-            .values("provider_id")
-            .annotate(total_resources=Count("id"))
-        )
+        resources_queryset = Resource.all_objects.filter(tenant_id=tenant_id)
+        if hasattr(self, "allowed_providers"):
+            resources_queryset = resources_queryset.filter(
+                provider__in=self.allowed_providers
+            )
+        resources_aggregated = resources_queryset.values(
+            provider_type=F("provider__provider")
+        ).annotate(total_resources=Count("id"))
         resource_map = {
-            row["provider_id"]: row["total_resources"] for row in resources_aggregated
+            row["provider_type"]: row["total_resources"] for row in resources_aggregated
         }
 
         overview = []
@@ -3802,7 +3826,7 @@ class OverviewViewSet(BaseRLSViewSet):
             overview.append(
                 {
                     "provider": row["provider"],
-                    "total_resources": resource_map.get(row["scan__provider_id"], 0),
+                    "total_resources": resource_map.get(row["provider"], 0),
                     "total_findings": row["total_findings"],
                     "findings_passed": row["findings_passed"],
                     "findings_failed": row["findings_failed"],
@@ -3810,6 +3834,36 @@ class OverviewViewSet(BaseRLSViewSet):
                 }
             )
 
+        return Response(
+            self.get_serializer(overview, many=True).data,
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="providers/count",
+        url_name="providers-count",
+    )
+    def providers_count(self, request):
+        tenant_id = self.request.tenant_id
+        providers_qs = Provider.objects.filter(tenant_id=tenant_id)
+
+        if hasattr(self, "allowed_providers"):
+            allowed_ids = list(self.allowed_providers.values_list("id", flat=True))
+            if not allowed_ids:
+                overview = []
+                return Response(
+                    self.get_serializer(overview, many=True).data,
+                    status=status.HTTP_200_OK,
+                )
+            providers_qs = providers_qs.filter(id__in=allowed_ids)
+
+        overview = (
+            providers_qs.values("provider")
+            .annotate(count=Count("id"))
+            .order_by("provider")
+        )
         return Response(
             self.get_serializer(overview, many=True).data,
             status=status.HTTP_200_OK,
@@ -4177,21 +4231,25 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
         tags=["Lighthouse AI"],
         summary="List all Lighthouse AI configurations",
         description="Retrieve a list of all Lighthouse AI configurations.",
+        deprecated=True,
     ),
     create=extend_schema(
         tags=["Lighthouse AI"],
         summary="Create a new Lighthouse AI configuration",
         description="Create a new Lighthouse AI configuration with the specified details.",
+        deprecated=True,
     ),
     partial_update=extend_schema(
         tags=["Lighthouse AI"],
         summary="Partially update a Lighthouse AI configuration",
         description="Update certain fields of an existing Lighthouse AI configuration.",
+        deprecated=True,
     ),
     destroy=extend_schema(
         tags=["Lighthouse AI"],
         summary="Delete a Lighthouse AI configuration",
         description="Remove a Lighthouse AI configuration by its ID.",
+        deprecated=True,
     ),
     connection=extend_schema(
         tags=["Lighthouse AI"],
@@ -4199,6 +4257,7 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
         description="Verify the connection to the OpenAI API for a specific Lighthouse AI configuration.",
         request=None,
         responses={202: OpenApiResponse(response=TaskSerializer)},
+        deprecated=True,
     ),
 )
 class LighthouseConfigViewSet(BaseRLSViewSet):
@@ -4247,6 +4306,273 @@ class LighthouseConfigViewSet(BaseRLSViewSet):
                 )
             },
         )
+
+
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Lighthouse AI"],
+        summary="List all LLM provider configs",
+        description="Retrieve all LLM provider configurations for the current tenant",
+    ),
+    retrieve=extend_schema(
+        tags=["Lighthouse AI"],
+        summary="Retrieve LLM provider config",
+        description="Get details for a specific provider configuration in the current tenant.",
+    ),
+    create=extend_schema(
+        tags=["Lighthouse AI"],
+        summary="Create LLM provider config",
+        description="Create a per-tenant configuration for an LLM provider. Only one configuration per provider type is allowed per tenant.",
+    ),
+    partial_update=extend_schema(
+        tags=["Lighthouse AI"],
+        summary="Update LLM provider config",
+        description="Partially update a provider configuration (e.g., base_url, is_active).",
+    ),
+    destroy=extend_schema(
+        tags=["Lighthouse AI"],
+        summary="Delete LLM provider config",
+        description="Delete a provider configuration. Any tenant defaults that reference this provider are cleared during deletion.",
+    ),
+)
+class LighthouseProviderConfigViewSet(BaseRLSViewSet):
+    queryset = LighthouseProviderConfiguration.objects.all()
+    serializer_class = LighthouseProviderConfigSerializer
+    http_method_names = ["get", "post", "patch", "delete"]
+    filterset_class = LighthouseProviderConfigFilter
+
+    def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return LighthouseProviderConfiguration.objects.none()
+        return LighthouseProviderConfiguration.objects.filter(
+            tenant_id=self.request.tenant_id
+        )
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return LighthouseProviderConfigCreateSerializer
+        elif self.action == "partial_update":
+            return LighthouseProviderConfigUpdateSerializer
+        elif self.action in ["connection", "refresh_models"]:
+            return TaskSerializer
+        return super().get_serializer_class()
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        read_serializer = LighthouseProviderConfigSerializer(
+            instance, context=self.get_serializer_context()
+        )
+        headers = self.get_success_headers(read_serializer.data)
+        return Response(
+            data=read_serializer.data,
+            status=status.HTTP_201_CREATED,
+            headers=headers,
+        )
+
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(
+            instance,
+            data=request.data,
+            partial=True,
+            context=self.get_serializer_context(),
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        read_serializer = LighthouseProviderConfigSerializer(
+            instance, context=self.get_serializer_context()
+        )
+        return Response(data=read_serializer.data, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        tags=["Lighthouse AI"],
+        summary="Check LLM provider connection",
+        description="Validate provider credentials asynchronously and toggle is_active.",
+        request=None,
+        responses={202: OpenApiResponse(response=TaskSerializer)},
+    )
+    @action(detail=True, methods=["post"], url_name="connection")
+    def connection(self, request, pk=None):
+        instance = self.get_object()
+        if (
+            instance.provider_type
+            != LighthouseProviderConfiguration.LLMProviderChoices.OPENAI
+        ):
+            return Response(
+                data={
+                    "errors": [{"detail": "Only 'openai' provider supported in MVP"}]
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        with transaction.atomic():
+            task = check_lighthouse_provider_connection_task.delay(
+                provider_config_id=str(instance.id), tenant_id=self.request.tenant_id
+            )
+
+        prowler_task = Task.objects.get(id=task.id)
+        serializer = TaskSerializer(prowler_task)
+        return Response(
+            data=serializer.data,
+            status=status.HTTP_202_ACCEPTED,
+            headers={
+                "Content-Location": reverse(
+                    "task-detail", kwargs={"pk": prowler_task.id}
+                )
+            },
+        )
+
+    @extend_schema(
+        tags=["Lighthouse AI"],
+        summary="Refresh LLM models catalog",
+        description="Fetch available models for this provider configuration and upsert into catalog.",
+        request=None,
+        responses={202: OpenApiResponse(response=TaskSerializer)},
+    )
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="refresh-models",
+        url_name="refresh-models",
+    )
+    def refresh_models(self, request, pk=None):
+        instance = self.get_object()
+        if (
+            instance.provider_type
+            != LighthouseProviderConfiguration.LLMProviderChoices.OPENAI
+        ):
+            return Response(
+                data={
+                    "errors": [{"detail": "Only 'openai' provider supported in MVP"}]
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        with transaction.atomic():
+            task = refresh_lighthouse_provider_models_task.delay(
+                provider_config_id=str(instance.id), tenant_id=self.request.tenant_id
+            )
+
+        prowler_task = Task.objects.get(id=task.id)
+        serializer = TaskSerializer(prowler_task)
+        return Response(
+            data=serializer.data,
+            status=status.HTTP_202_ACCEPTED,
+            headers={
+                "Content-Location": reverse(
+                    "task-detail", kwargs={"pk": prowler_task.id}
+                )
+            },
+        )
+
+
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Lighthouse AI"],
+        summary="Get Lighthouse AI Tenant config",
+        description="Retrieve current tenant-level Lighthouse AI settings. Returns a single configuration object.",
+    ),
+    partial_update=extend_schema(
+        tags=["Lighthouse AI"],
+        summary="Update Lighthouse AI Tenant config",
+        description="Update tenant-level settings. Validates that the default provider is configured and active and that default model IDs exist for the chosen providers. Auto-creates configuration if it doesn't exist.",
+    ),
+)
+class LighthouseTenantConfigViewSet(BaseRLSViewSet):
+    """
+    Singleton endpoint for tenant-level Lighthouse AI configuration.
+
+    This viewset implements a true singleton pattern:
+    - GET returns the single configuration object (or 404 if not found)
+    - PATCH updates/creates the configuration (upsert semantics)
+    - No ID is required in the URL
+    """
+
+    queryset = LighthouseTenantConfiguration.objects.all()
+    serializer_class = LighthouseTenantConfigSerializer
+    http_method_names = ["get", "patch"]
+
+    def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return LighthouseTenantConfiguration.objects.none()
+        return LighthouseTenantConfiguration.objects.filter(
+            tenant_id=self.request.tenant_id
+        )
+
+    def get_serializer_class(self):
+        if self.action == "partial_update":
+            return LighthouseTenantConfigUpdateSerializer
+        return super().get_serializer_class()
+
+    def get_object(self):
+        """Retrieve the singleton instance for the current tenant."""
+        obj = LighthouseTenantConfiguration.objects.filter(
+            tenant_id=self.request.tenant_id
+        ).first()
+        if obj is None:
+            raise NotFound("Tenant Lighthouse configuration not found")
+        self.check_object_permissions(self.request, obj)
+        return obj
+
+    def list(self, request, *args, **kwargs):
+        """GET endpoint for singleton - returns single object, not an array."""
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+    def partial_update(self, request, *args, **kwargs):
+        """PATCH endpoint for singleton - no pk required. Auto-creates if not exists."""
+        # Auto-create tenant config if it doesn't exist (upsert semantics)
+        instance, created = LighthouseTenantConfiguration.objects.get_or_create(
+            tenant_id=self.request.tenant_id,
+            defaults={},
+        )
+
+        # Extract attributes from JSON:API payload
+        try:
+            payload = json.loads(request.body)
+            attributes = payload.get("data", {}).get("attributes", {})
+        except (json.JSONDecodeError, AttributeError):
+            raise ValidationError("Invalid JSON:API payload")
+
+        serializer = self.get_serializer(instance, data=attributes, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        read_serializer = LighthouseTenantConfigSerializer(
+            instance, context=self.get_serializer_context()
+        )
+        return Response(read_serializer.data, status=status.HTTP_200_OK)
+
+
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Lighthouse AI"],
+        summary="List all LLM models",
+        description="List available LLM models per configured provider for the current tenant.",
+    ),
+    retrieve=extend_schema(
+        tags=["Lighthouse AI"],
+        summary="Retrieve LLM model details",
+        description="Get details for a specific LLM model.",
+    ),
+)
+class LighthouseProviderModelsViewSet(BaseRLSViewSet):
+    queryset = LighthouseProviderModels.objects.all()
+    serializer_class = LighthouseProviderModelsSerializer
+    filterset_class = LighthouseProviderModelsFilter
+    # Expose as read-only catalog collection
+    http_method_names = ["get"]
+
+    def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return LighthouseProviderModels.objects.none()
+        return LighthouseProviderModels.objects.filter(tenant_id=self.request.tenant_id)
+
+    def get_serializer_class(self):
+        return super().get_serializer_class()
 
 
 @extend_schema_view(
