@@ -23,6 +23,12 @@ export interface M365ProviderData {
   alias?: string;
 }
 
+// Kubernetes provider data
+export interface KubernetesProviderData {
+  context: string;
+  alias?: string;
+}
+
 // AWS credential options
 export const AWS_CREDENTIAL_OPTIONS = {
   AWS_ROLE_ARN: "role",
@@ -74,6 +80,20 @@ export interface M365ProviderCredential {
   tenantId:string;
   certificateContent?:string;
 }
+
+// Kubernetes credential options
+export const KUBERNETES_CREDENTIAL_OPTIONS = {
+  KUBECONFIG_CONTENT: "kubeconfig"
+} as const;
+
+// Kubernetes credential type
+type KubernetesCredentialType = (typeof KUBERNETES_CREDENTIAL_OPTIONS)[keyof typeof KUBERNETES_CREDENTIAL_OPTIONS];
+
+// Kubernetes provider credential
+export interface KubernetesProviderCredential {
+  type: KubernetesCredentialType;
+  kubeconfigContent:string;
+} 
 
 // Providers page
 export class ProvidersPage extends BasePage {
@@ -127,6 +147,10 @@ export class ProvidersPage extends BasePage {
   readonly m365TenantIdInput: Locator;
   readonly m365CertificateContentInput: Locator;
 
+  // Kubernetes provider form elements
+  readonly kubernetesContextInput: Locator;
+  readonly kubernetesKubeconfigContentInput: Locator;
+
   // Delete button
   readonly deleteProviderConfirmationButton: Locator;
 
@@ -172,6 +196,10 @@ export class ProvidersPage extends BasePage {
     this.m365ClientSecretInput = page.getByRole("textbox", { name: "Client Secret" });
     this.m365TenantIdInput = page.getByRole("textbox", { name: "Tenant ID" });
     this.m365CertificateContentInput = page.getByRole("textbox", { name: "Certificate Content" });
+
+    // Kubernetes provider form inputs
+    this.kubernetesContextInput = page.getByRole("textbox", { name: "Context" });
+    this.kubernetesKubeconfigContentInput = page.getByRole("textbox", { name: "Kubeconfig Content" });
     
     // Alias input
     this.aliasInput = page.getByRole("textbox", { name: "Provider alias (optional)" });
@@ -256,6 +284,13 @@ export class ProvidersPage extends BasePage {
     await this.waitForPageLoad();
   }
 
+  async selectKubernetesProvider(): Promise<void> {
+    // Select the Kubernetes provider
+
+    await this.kubernetesProviderRadio.click({ force: true });
+    await this.waitForPageLoad();
+  }
+
 
   async fillAWSProviderDetails(data: AWSProviderData): Promise<void> {
     // Fill the AWS provider details
@@ -287,6 +322,17 @@ export class ProvidersPage extends BasePage {
     }
   }
 
+  async fillKubernetesProviderDetails(data: KubernetesProviderData): Promise<void> {
+    // Fill the Kubernetes provider details
+
+    await this.kubernetesContextInput.fill(data.context);
+
+    if (data.alias) {
+
+      await this.aliasInput.fill(data.alias);
+    }
+  }
+
   async clickNext(): Promise<void> {
     // The wizard interface may use different labels for its primary action button on each step.
     // This function determines which button to click depending on the current URL and page content.
@@ -305,6 +351,7 @@ export class ProvidersPage extends BasePage {
     if (/\/providers\/add-credentials/.test(url)) {
       // Some UI implementations use "Save" instead of "Next" for primary action
       const saveBtn = this.saveButton;
+
       if (await saveBtn.count()) {
         await saveBtn.click();
         await this.waitForPageLoad();
@@ -353,6 +400,7 @@ export class ProvidersPage extends BasePage {
       } catch (error) {
         // If timeout or other error, check if error message is present
         const isErrorVisible = await errorMessage.isVisible().catch(() => false);
+
         if (isErrorVisible) {
           const errorText = await errorMessage.textContent();
           throw new Error(
@@ -398,6 +446,7 @@ export class ProvidersPage extends BasePage {
     // Ensure we are on the add-credentials page where the selector exists
 
     await expect(this.page).toHaveURL(/\/providers\/add-credentials/);
+
     if (type === AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN) {
       await this.roleCredentialsRadio.click({ force: true });
     } else if (type === AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS) {
@@ -413,6 +462,7 @@ export class ProvidersPage extends BasePage {
     // Ensure we are on the add-credentials page where the selector exists
 
     await expect(this.page).toHaveURL(/\/providers\/add-credentials/);
+
     if (type === M365_CREDENTIAL_OPTIONS.M365_CREDENTIALS) {
       await this.m365StaticCredentialsRadio.click({ force: true });
     } else if (type === M365_CREDENTIAL_OPTIONS.M365_CERTIFICATE_CREDENTIALS) {
@@ -497,6 +547,15 @@ export class ProvidersPage extends BasePage {
     }
   }
 
+  async fillKubernetesCredentials(credentials: KubernetesProviderCredential): Promise<void> {
+    // Fill the Kubernetes credentials form
+
+    if (credentials.kubeconfigContent) {
+      await this.kubernetesKubeconfigContentInput.fill(credentials.kubeconfigContent);
+    }
+  }
+
+
   async verifyPageLoaded(): Promise<void> {
     // Verify the providers page is loaded
 
@@ -537,6 +596,14 @@ export class ProvidersPage extends BasePage {
     await expect(this.m365CertificateContentInput).toBeVisible();
   }
 
+  async verifyKubernetesCredentialsPageLoaded(): Promise<void> {
+    // Verify the Kubernetes credentials page is loaded
+
+    await expect(this.page).toHaveTitle(/Prowler/);
+    await expect(this.kubernetesContextInput).toBeVisible();
+  }
+
+
   async verifyLaunchScanPageLoaded(): Promise<void> {
     // Verify the launch scan page is loaded
 
@@ -547,6 +614,7 @@ export class ProvidersPage extends BasePage {
     const launchScanButton = this.page
       .locator("button")
       .filter({ hasText: "Launch scan" });
+
     await expect(launchScanButton).toBeVisible();
   }
 
@@ -570,6 +638,7 @@ export class ProvidersPage extends BasePage {
 
     // Verify the number of matching rows is 1
     const count = await matchingRows.count();
+
     if (count !== 1) return false;
     return true;
   }
@@ -604,6 +673,7 @@ export class ProvidersPage extends BasePage {
     // Helper function to check if a row is the "No results" row
     const isNoResultsRow = async (row: Locator): Promise<boolean> => {
       const text = await row.textContent();
+
       return text?.includes("No results") || text?.includes("No data") || false;
     };
 
@@ -661,6 +731,7 @@ export class ProvidersPage extends BasePage {
 
     // Find and click the action button (last cell = actions column)
     const actionButton = targetRow.locator("td").last().locator("button").first();
+
     await expect(actionButton).toBeVisible({ timeout: 5000 });
     await actionButton.click();
 
@@ -668,11 +739,13 @@ export class ProvidersPage extends BasePage {
     const deleteMenuItem = this.page.getByRole("menuitem", {
       name: /delete.*provider/i,
     });
+
     await expect(deleteMenuItem).toBeVisible({ timeout: 5000 });
     await deleteMenuItem.click();
 
     // Wait for confirmation modal to appear
     const modal = this.page.locator('[role="dialog"], .modal, [data-testid*="modal"]').first();
+    
     await expect(modal).toBeVisible({ timeout: 10000 });
 
     // Find and click the delete confirmation button
