@@ -137,7 +137,6 @@ jobs:
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.LATEST_TAG }}
           labels: |
             org.opencontainers.image.title=Prowler
-            org.opencontainers.image.description=Open Source Security tool for AWS, Azure, GCP and Kubernetes
             org.opencontainers.image.vendor=ProwlerPro, Inc.
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
@@ -161,7 +160,6 @@ jobs:
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.STABLE_TAG }}
           labels: |
             org.opencontainers.image.title=Prowler
-            org.opencontainers.image.description=Open Source Security tool for AWS, Azure, GCP and Kubernetes
             org.opencontainers.image.vendor=ProwlerPro, Inc.
             org.opencontainers.image.version=${{ env.PROWLER_VERSION }}
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
