@@ -71,6 +71,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS CloudFront service metadata to new format [(#8829)](https://github.com/prowler-cloud/prowler/pull/8829)
 - Deprecate user authentication for M365 provider [(#8865)](https://github.com/prowler-cloud/prowler/pull/8865)
 - Update AWS EFS service metadata to new format [(#8889)](https://github.com/prowler-cloud/prowler/pull/8889)
+- Update AWS EMR service metadata to new format [(#9002)](https://github.com/prowler-cloud/prowler/pull/9002)
 - Update AWS EventBridge service metadata to new format [(#9003)](https://github.com/prowler-cloud/prowler/pull/9003)
 - Update AWS Firehose service metadata to new format [(#9004)](https://github.com/prowler-cloud/prowler/pull/9004)
 - Update AWS FMS service metadata to new format [(#9005)](https://github.com/prowler-cloud/prowler/pull/9005)
