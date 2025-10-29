@@ -6,6 +6,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### Added
 - Support for configuring multiple LLM providers [(#8772)](https://github.com/prowler-cloud/prowler/pull/8772)
+- Support C5 compliance framework for Azure provider [(#9081)](https://github.com/prowler-cloud/prowler/pull/9081)
 
 ## [1.14.0] (Prowler 5.13.0)
 
