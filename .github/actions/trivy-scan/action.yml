@@ -45,9 +45,14 @@ outputs:
 runs:
   using: 'composite'
   steps:
+<<<<<<< HEAD
     - name: Run Trivy vulnerability scan (SARIF)
       if: inputs.upload-sarif == 'true'
       uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # v0.33.1
+=======
+    - name: Cache Trivy vulnerability database
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+>>>>>>> 456712a0e (chore(github): fix trivy action (#9066))
       with:
         image-ref: ${{ inputs.image-name }}:${{ inputs.image-tag }}
         format: 'sarif'
