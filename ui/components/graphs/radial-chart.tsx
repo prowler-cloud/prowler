@@ -65,10 +65,10 @@ export function RadialChart({
         />
         <text
           x="50%"
-          y="50%"
+          y="40%"
           textAnchor="middle"
           dominantBaseline="middle"
-          className="text-4xl font-bold"
+          className="text-2xl font-bold"
           style={{
             fill: "var(--chart-text-primary)",
           }}
