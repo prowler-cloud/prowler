@@ -82,12 +82,12 @@ export class InvitationsPage extends BasePage {
 
     // Prefer ARIA role option inside listbox
     const option = this.page.getByRole("option", { name: new RegExp(`^${role}$`, "i") });
+
     if (await option.count()) {
       await option.first().click();
     } else {
       throw new Error(`Role option ${role} not found`);
     }
-
     // Ensure the combobox now shows the chosen value
     await expect(this.roleSelect).toContainText(new RegExp(role, "i"));
   }
@@ -104,6 +104,7 @@ export class InvitationsPage extends BasePage {
 
     // Get the share url text content
     const text = await this.shareUrl.textContent();
+    
     if (!text) {
       throw new Error("Share url not found");
     }
