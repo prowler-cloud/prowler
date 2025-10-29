@@ -7,7 +7,7 @@ import api.db_utils
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0049_compliancerequirementoverview_passed_failed_findings"),
+        ("api", "0051_oraclecloud_provider"),
     ]
 
     operations = [
@@ -22,6 +22,7 @@ class Migration(migrations.Migration):
                     ("kubernetes", "Kubernetes"),
                     ("m365", "M365"),
                     ("github", "GitHub"),
+                    ("oci", "Oracle Cloud Infrastructure"),
                     ("iac", "IaC"),
                 ],
                 default="aws",
