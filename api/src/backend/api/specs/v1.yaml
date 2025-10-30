@@ -4737,10 +4737,7 @@ paths:
         name: filter[provider]
         schema:
           type: string
-<<<<<<< HEAD
           x-spec-enum-id: 4c1e219dad1cc0e7
-=======
-          x-spec-enum-id: 6f034074d7104650
           enum:
           - aws
           - azure
@@ -4748,7 +4745,6 @@ paths:
           - github
           - kubernetes
           - m365
-          - oci
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -4756,14 +4752,13 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 6f034074d7104650
+            x-spec-enum-id: 4c1e219dad1cc0e7
             enum:
             - aws
             - azure
@@ -4771,7 +4766,6 @@ paths:
             - github
             - kubernetes
             - m365
-            - oci
         description: |-
           Multiple values may be separated by commas.
 
@@ -4781,56 +4775,6 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
-        explode: false
-        style: form
-      - in: query
-        name: filter[provider_type]
-        schema:
-          type: string
-          x-spec-enum-id: 6f034074d7104650
->>>>>>> 6c3494582 (feat(api): enhance overview provider aggregation and resource counting (#9053))
-          enum:
-          - aws
-          - azure
-          - gcp
-          - github
-          - kubernetes
-          - m365
-          - oci
-        description: |-
-          * `aws` - AWS
-          * `azure` - Azure
-          * `gcp` - GCP
-          * `kubernetes` - Kubernetes
-          * `m365` - M365
-          * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
-      - in: query
-        name: filter[provider__in]
-        schema:
-          type: array
-          items:
-            type: string
-            x-spec-enum-id: 6f034074d7104650
-            enum:
-            - aws
-            - azure
-            - gcp
-            - github
-            - kubernetes
-            - m365
-            - oci
-        description: |-
-          Multiple values may be separated by commas.
-
-          * `aws` - AWS
-          * `azure` - Azure
-          * `gcp` - GCP
-          * `kubernetes` - Kubernetes
-          * `m365` - M365
-          * `github` - GitHub
-          * `oci` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - name: filter[search]
