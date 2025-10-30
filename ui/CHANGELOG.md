@@ -4,6 +4,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ## [1.13.1] (Unreleased)
 
+### 🚀 Added
+
+- RSS feeds support [(#9109)](https://github.com/prowler-cloud/prowler/pull/9109)
+
 ### 🔄 Changed
 
 - Upgrade React to version 19.2.0 [(#9039)](https://github.com/prowler-cloud/prowler/pull/9039)
