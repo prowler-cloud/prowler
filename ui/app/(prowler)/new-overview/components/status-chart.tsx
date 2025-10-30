@@ -5,10 +5,6 @@ import { Bell, BellOff, ShieldCheck, TriangleAlert } from "lucide-react";
 import { DonutChart } from "@/components/graphs/donut-chart";
 import { DonutDataPoint } from "@/components/graphs/types";
 import {
-  BaseCard,
-  CardContent,
-  CardHeader,
-  CardTitle,
   CardVariant,
   ResourceStatsCard,
   ResourceStatsCardContainer,
@@ -74,71 +70,65 @@ export const StatusChart = ({
   ];
 
   return (
-    <BaseCard>
-      <CardHeader>
-        <CardTitle>Check Findings</CardTitle>
-      </CardHeader>
+    <div className="space-y-2">
+      <div className="mx-auto max-h-[200px] max-w-[200px]">
+        <DonutChart
+          data={donutData}
+          showLegend={false}
+          innerRadius={66}
+          outerRadius={86}
+          centerLabel={{
+            value: totalFindings.toLocaleString(),
+            label: "Total Findings",
+          }}
+        />
+      </div>
 
-      <CardContent className="space-y-2">
-        <div className="mx-auto max-h-[200px] max-w-[200px]">
-          <DonutChart
-            data={donutData}
-            showLegend={false}
-            innerRadius={66}
-            outerRadius={86}
-            centerLabel={{
-              value: totalFindings.toLocaleString(),
-              label: "Total Findings",
-            }}
-          />
+      <ResourceStatsCardContainer className="flex w-full flex-col items-start justify-center gap-4 lg:flex-row lg:justify-between">
+        <ResourceStatsCard
+          containerless
+          badge={{
+            icon: TriangleAlert,
+            count: failFindingsData.total,
+            variant: CardVariant.fail,
+          }}
+          label="Fail Findings"
+          stats={[
+            { icon: Bell, label: `${failFindingsData.new} New` },
+            { icon: BellOff, label: `${failFindingsData.muted} Muted` },
+          ]}
+          emptyState={
+            failFindingsData.total === 0
+              ? { message: "No failed findings to display" }
+              : undefined
+          }
+          className="w-full lg:min-w-0 lg:flex-1"
+        />
+
+        <div className="flex w-full items-center justify-center lg:w-auto lg:self-stretch">
+          <div className="h-px w-full bg-slate-300 lg:h-full lg:w-px dark:bg-[rgba(39,39,42,1)]" />
         </div>
 
-        <ResourceStatsCardContainer className="flex w-full flex-col items-start justify-center gap-4 lg:flex-row lg:justify-between">
-          <ResourceStatsCard
-            containerless
-            badge={{
-              icon: TriangleAlert,
-              count: failFindingsData.total,
-              variant: CardVariant.fail,
-            }}
-            label="Fail Findings"
-            stats={[
-              { icon: Bell, label: `${failFindingsData.new} New` },
-              { icon: BellOff, label: `${failFindingsData.muted} Muted` },
-            ]}
-            emptyState={
-              failFindingsData.total === 0
-                ? { message: "No failed findings to display" }
-                : undefined
-            }
-            className="w-full lg:min-w-0 lg:flex-1"
-          />
-
-          <div className="flex w-full items-center justify-center lg:w-auto lg:self-stretch">
-            <div className="h-px w-full bg-slate-300 lg:h-full lg:w-px dark:bg-[rgba(39,39,42,1)]" />
-          </div>
-
-          <ResourceStatsCard
-            containerless
-            badge={{
-              icon: ShieldCheck,
-              count: passFindingsData.total,
-              variant: CardVariant.pass,
-            }}
-            label="Pass Findings"
-            stats={[
-              { icon: Bell, label: `${passFindingsData.new} New` },
-              { icon: BellOff, label: `${passFindingsData.muted} Muted` },
-            ]}
-            emptyState={
-              passFindingsData.total === 0
-                ? { message: "No passed findings to display" }
-                : undefined
-            }
-            className="w-full lg:min-w-0 lg:flex-1"
-          />
-        </ResourceStatsCardContainer>
-      </CardContent>
-    </BaseCard>
+        <ResourceStatsCard
+          containerless
+          badge={{
+            icon: ShieldCheck,
+            count: passFindingsData.total,
+            variant: CardVariant.pass,
+          }}
+          label="Pass Findings"
+          stats={[
+            { icon: Bell, label: `${passFindingsData.new} New` },
+            { icon: BellOff, label: `${passFindingsData.muted} Muted` },
+          ]}
+          emptyState={
+            passFindingsData.total === 0
+              ? { message: "No passed findings to display" }
+              : undefined
+          }
+          className="w-full lg:min-w-0 lg:flex-1"
+        />
+      </ResourceStatsCardContainer>
+    </div>
   );
 };
