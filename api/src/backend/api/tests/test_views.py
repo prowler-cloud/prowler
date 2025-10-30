@@ -9589,6 +9589,65 @@ class TestLighthouseProviderConfigViewSet:
         assert creds["secret_access_key"] == new_credentials["secret_access_key"]
         assert creds["region"] == new_credentials["region"]
 
+    def test_bedrock_partial_credential_update(self, authenticated_client):
+        """Test partial update of Bedrock credentials (e.g., only region)"""
+        # Create provider with full credentials
+        initial_credentials = {
+            "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+            "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+            "region": "us-east-1",
+        }
+        create_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "bedrock",
+                    "credentials": initial_credentials,
+                },
+            }
+        }
+        create_resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=create_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert create_resp.status_code == status.HTTP_201_CREATED
+        provider_id = create_resp.json()["data"]["id"]
+
+        # Update only the region field
+        partial_update = {
+            "region": "eu-west-1",
+        }
+        patch_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "id": provider_id,
+                "attributes": {
+                    "credentials": partial_update,
+                },
+            }
+        }
+        patch_resp = authenticated_client.patch(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id}),
+            data=patch_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert patch_resp.status_code == status.HTTP_200_OK
+
+        # Verify credentials with fields filter - region should be updated, keys preserved
+        get_full = authenticated_client.get(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id})
+            + "?fields[lighthouse-providers]=credentials"
+        )
+        assert get_full.status_code == status.HTTP_200_OK
+        creds = get_full.json()["data"]["attributes"]["credentials"]
+
+        # Original keys should be preserved
+        assert creds["access_key_id"] == initial_credentials["access_key_id"]
+        assert creds["secret_access_key"] == initial_credentials["secret_access_key"]
+        # Region should be updated
+        assert creds["region"] == "eu-west-1"
+
     @pytest.mark.parametrize(
         "attributes",
         [
