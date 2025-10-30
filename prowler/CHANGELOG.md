@@ -16,6 +16,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS DRS service metadata to new format [(#8870)](https://github.com/prowler-cloud/prowler/pull/8870)
 - C5 compliance framework for Azure provider [(#9081)](https://github.com/prowler-cloud/prowler/pull/9081)
 - Update AWS DynamoDB service metadata to new format [(#8871)](https://github.com/prowler-cloud/prowler/pull/8871)
+- Update AWS CloudWatch service metadata to new format [(#8848)](https://github.com/prowler-cloud/prowler/pull/8848)
 - Update AWS EMR service metadata to new format [(#9002)](https://github.com/prowler-cloud/prowler/pull/9002)
 - Update AWS EKS service metadata to new format [(#8890)](https://github.com/prowler-cloud/prowler/pull/8890)
 - Update AWS ElastiCache service metadata to new format [(#8933)](https://github.com/prowler-cloud/prowler/pull/8933)
