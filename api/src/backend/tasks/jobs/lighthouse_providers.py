@@ -2,7 +2,6 @@ from typing import Dict
 
 import boto3
 import openai
-import requests
 from botocore.exceptions import BotoCoreError, ClientError
 from celery.utils.log import get_task_logger
 
@@ -163,28 +162,13 @@ def check_lighthouse_provider_connection(provider_config_id: str) -> Dict:
                     "error": "Base URL or API key is invalid or missing",
                 }
 
-            # Test connection by hitting the models endpoint
+            # Test connection using OpenAI SDK with custom base_url
             # Note: base_url should include version (e.g., https://openrouter.ai/api/v1)
-            headers = {"Authorization": f"Bearer {params['api_key']}"}
-            try:
-                resp = requests.get(
-                    f"{params['base_url'].rstrip('/')}/models",
-                    headers=headers,
-                    timeout=15,
-                )
-                if resp.status_code >= 400:
-                    raise Exception(f"HTTP {resp.status_code}: {resp.text[:200]}")
-
-                # Verify the response content type is application/json
-                content_type = resp.headers.get("Content-Type", "")
-                if "application/json" not in content_type:
-                    raise Exception(
-                        f"Invalid content type: expected 'application/json', got '{content_type}'"
-                    )
-            except Exception as e:
-                provider_cfg.is_active = False
-                provider_cfg.save()
-                return {"connected": False, "error": str(e)}
+            client = openai.OpenAI(
+                api_key=params["api_key"],
+                base_url=params["base_url"],
+            )
+            _ = client.models.list()
 
         else:
             return {"connected": False, "error": "Unsupported provider type"}
@@ -225,33 +209,23 @@ def _fetch_openai_models(api_key: str) -> Dict[str, str]:
 
 def _fetch_openai_compatible_models(base_url: str, api_key: str) -> Dict[str, str]:
     """
-    Fetch available models from an OpenAI-compatible API.
+    Fetch available models from an OpenAI-compatible API using the OpenAI SDK.
 
-    Returns a mapping of model_id -> model_name. If the provider doesn't expose
-    a models catalog, returns an empty dict.
+    Returns a mapping of model_id -> model_name. Prefers the 'name' attribute
+    if available (e.g., from OpenRouter), otherwise falls back to 'id'.
 
     Note: base_url should include version (e.g., https://openrouter.ai/api/v1)
     """
-    headers = {"Authorization": f"Bearer {api_key}"}
-    url = f"{base_url.rstrip('/')}/models"
-    resp = requests.get(url, headers=headers, timeout=15)
-    if resp.status_code >= 400:
-        raise Exception(f"HTTP {resp.status_code}: {resp.text[:200]}")
-    data = resp.json() if resp.content else {}
-    items = data.get("data", []) if isinstance(data, dict) else []
+    client = openai.OpenAI(api_key=api_key, base_url=base_url)
+    models = client.models.list()
 
     available_models: Dict[str, str] = {}
-    for item in items:
-        if not isinstance(item, dict):
-            continue
-        model_id = item.get("id")
-        if not isinstance(model_id, str) or not model_id:
-            continue
-
+    for model in models.data:
+        model_id = model.id
         # Prefer provider-supplied human-friendly name when available
-        name_value = item.get("name")
-        if isinstance(name_value, str) and name_value:
-            available_models[model_id] = name_value
+        name = getattr(model, "name", None)
+        if name:
+            available_models[model_id] = name
         else:
             available_models[model_id] = model_id
 
