@@ -1,29 +1,38 @@
 {
   "Provider": "m365",
   "CheckID": "purview_audit_log_search_enabled",
-  "CheckTitle": "Ensure Purview audit log search is enabled",
+  "CheckTitle": "Purview audit log search is enabled",
   "CheckType": [],
   "ServiceName": "purview",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "critical",
-  "ResourceType": "Purview Settings",
-  "Description": "Ensure Purview audit log search is enabled.",
-  "Risk": "Disabling Microsoft 365 audit log search can hinder the ability to track and monitor user and admin activities, making it harder to detect suspicious behavior, security incidents, or compliance violations. This can result in undetected breaches and inability to respond to incidents effectively.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/purview/audit-search?tabs=microsoft-purview-portal",
+  "ResourceType": "",
+  "Description": "Microsoft Purview tenant setting for **audit log search** is assessed to confirm unified audit log ingestion (`UnifiedAuditLogIngestionEnabled`), which records user and admin activities and makes them searchable.",
+  "Risk": "Without **audit log ingestion/search**, activity trails are missing or delayed, reducing visibility and accountability.\n- Data exfiltration and privilege abuse go undetected (confidentiality/integrity)\n- Incident response and forensics fail due to absent evidence, increasing dwell time",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/purview/audit-search",
+    "https://compliance.microsoft.com.",
+    "https://www.tenable.com/audits/items/CIS_Microsoft_365_v1.5.0_E3_Level_1.audit:63d04d00b1e7ed175c72ae6c2e2c80ea",
+    "https://www.tenable.com/audits/items/CIS_Microsoft_365_v2.0.0_E3_Level_1.audit:4fdccb74c65ae6e0849ae23f74122e96",
+    "https://learn.microsoft.com/en-us/purview/audit-search?tabs=microsoft-purview-portal",
+    "https://learn.microsoft.com/en-us/purview/audit-log-enable-disable"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "Set-AdminAuditLogConfig -UnifiedAuditLogIngestionEnabled $true",
       "NativeIaC": "",
-      "Other": "1. Navigate to Microsoft Purview https://compliance.microsoft.com. 2. Select Audit to open the audit search. 3. Click Start recording user and admin activity next to the information warning at the top. 4. Click Yes on the dialog box to confirm.",
+      "Other": "1. Go to https://compliance.microsoft.com and sign in with an admin account\n2. Open Solutions > Audit\n3. Click Start recording user and admin activity\n4. Click Yes to confirm",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure that Microsoft 365 audit log search is enabled to maintain a comprehensive record of user and admin activities. This will help improve security monitoring, support compliance needs, and provide critical insights for responding to incidents.",
-      "Url": "https://learn.microsoft.com/en-us/purview/audit-search?tabs=microsoft-purview-portal"
+      "Text": "Enable and keep **audit log search** on (`UnifiedAuditLogIngestionEnabled=true`). Apply **least privilege** to audit roles, set retention aligned to sensitivity, forward logs to a SIEM for **defense in depth**, and routinely review and alert on audit events. *Avoid disabling auditing even when using third-party tools.*",
+      "Url": "https://hub.prowler.com/check/purview_audit_log_search_enabled"
     }
   },
   "Categories": [
+    "logging",
     "e3"
   ],
   "DependsOn": [],
