@@ -6,6 +6,7 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 
 from celery.utils.log import get_task_logger
+from config.env import env
 from django.conf import settings
 from django.contrib.auth.models import BaseUserManager
 from django.db import (
@@ -43,6 +44,9 @@ DB_PROWLER_PASSWORD = (
 TASK_RUNNER_DB_TABLE = "django_celery_results_taskresult"
 POSTGRES_TENANT_VAR = "api.tenant_id"
 POSTGRES_USER_VAR = "api.user_id"
+
+REPLICA_MAX_ATTEMPTS = env.int("POSTGRES_REPLICA_MAX_ATTEMPTS", default=3)
+REPLICA_RETRY_BASE_DELAY = env.float("POSTGRES_REPLICA_RETRY_BASE_DELAY", default=0.5)
 
 SET_CONFIG_QUERY = "SELECT set_config(%s, %s::text, TRUE);"
 
@@ -89,7 +93,7 @@ def rls_transaction(
 
     alias = db_alias
     is_replica = READ_REPLICA_ALIAS and alias == READ_REPLICA_ALIAS
-    max_attempts = 3 if is_replica else 1
+    max_attempts = REPLICA_MAX_ATTEMPTS if is_replica else 1
 
     for attempt in range(1, max_attempts + 1):
         router_token = None
@@ -123,7 +127,7 @@ def rls_transaction(
                 raise
 
             # Retry with exponential backoff
-            delay = 0.5 * (2 ** (attempt - 1))
+            delay = REPLICA_RETRY_BASE_DELAY * (2 ** (attempt - 1))
             logger.info(
                 f"RLS transaction failed on replica (attempt {attempt}/{max_attempts}), "
                 f"retrying in {delay}s. Error: {e}"
