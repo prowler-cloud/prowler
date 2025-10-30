@@ -54,6 +54,7 @@ class Finding(BaseModel):
     compliance: dict = Field(default_factory=dict)
     prowler_version: str = prowler_version
     raw: dict = Field(default_factory=dict)
+    enrichment: Optional[dict] = None
 
     @property
     def provider(self) -> str:
@@ -360,6 +361,18 @@ class Finding(BaseModel):
                 logger.error(
                     f"Check {check_output.check_metadata.CheckID} has no resource_name."
                 )
+
+            # Include enrichment data if available
+            if hasattr(check_output, "enrichment") and check_output.enrichment:
+                # Convert enrichment object to dict for JSON serialization
+                if hasattr(check_output.enrichment, "to_dict"):
+                    output_data["enrichment"] = check_output.enrichment.to_dict()
+                elif isinstance(check_output.enrichment, dict):
+                    output_data["enrichment"] = check_output.enrichment
+                else:
+                    logger.warning(
+                        f"Enrichment data for check {check_output.check_metadata.CheckID} is not a dict or FindingEnrichment object"
+                    )
 
             return cls(**output_data)
         except ValidationError as validation_error:

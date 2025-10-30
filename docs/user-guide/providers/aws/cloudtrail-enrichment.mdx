@@ -1,0 +1,250 @@
+---
+title: CloudTrail Finding Enrichment
+---
+
+# CloudTrail Finding Enrichment
+
+Prowler enriches security findings with CloudTrail timeline data after the scan completes, providing context about **who** created vulnerable resources, **when** they were created, and **what** changes were made.
+
+<Note>
+Enrichment runs **after** the scan completes, ensuring no performance impact on check execution. Each unique resource is queried only once, even if it appears in multiple findings.
+</Note>
+
+## Quick Start
+
+```bash
+# Enable enrichment for all findings
+prowler aws --enrich-findings
+
+# Enrich only critical/high severity findings
+prowler aws --enrich-findings --enrich-severities critical high
+
+# Customize lookback period (default: 90 days, max: 90)
+prowler aws --enrich-findings --cloudtrail-lookback-days 30
+```
+
+## Prerequisites
+
+**IAM Permissions:**
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Action": "cloudtrail:LookupEvents",
+    "Resource": "*"
+  }]
+}
+```
+
+**Requirements:**
+- CloudTrail enabled in your AWS account
+- Management events logged (default)
+- Events retained for 90 days in Event History
+
+## Configuration Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--enrich-findings` | Disabled | Enable CloudTrail enrichment |
+| `--cloudtrail-lookback-days` | 90 | Days to search for events (max 90) |
+| `--enrich-severities` | All | Filter by severity: `critical`, `high`, `medium`, `low`, `informational` |
+
+**Example:**
+```bash
+prowler aws --enrich-findings \
+  --services s3 ec2 rds \
+  --enrich-severities critical high \
+  --cloudtrail-lookback-days 30
+```
+
+<Note>
+Enrichment retrieves **ALL** CloudTrail events for each resource in the specified time period (no event limit). This ensures complete timeline visibility.
+</Note>
+
+## Output Formats
+
+Enrichment data appears in all output formats:
+
+**JSON (OCSF)** - `unmapped.enrichment` field:
+```json
+{
+  "unmapped": {
+    "enrichment": {
+      "created_by": "admin@company.com",
+      "created_at": "2025-10-15T14:23:45+00:00",
+      "last_modified_by": "admin@company.com",
+      "last_modified_at": "2025-10-17T10:30:00+00:00",
+      "resource_age_days": 8,
+      "timeline": [
+        {
+          "timestamp": "2025-10-15T14:23:45+00:00",
+          "event_type": "s3_bucket_created",
+          "principal": "admin@company.com",
+          "message": "S3 bucket created: my-bucket"
+        },
+        {
+          "timestamp": "2025-10-17T10:30:00+00:00",
+          "event_type": "s3_bucket_policy_changed",
+          "principal": "admin@company.com",
+          "message": "⚠️ S3 bucket policy ALLOWS PUBLIC ACCESS"
+        }
+      ]
+    }
+  }
+}
+```
+
+**CSV** - `CLOUDTRAIL_TIMELINE` column with summary:
+```
+Created by: admin@company.com | Created: 2025-10-15T14:23:45+00:00 | Modified by: admin@company.com | Modified: 2025-10-17T10:30:00+00:00 | Age: 8 days | Events: 5
+```
+
+**HTML** - `CloudTrail Timeline` column with same summary format
+
+## Supported Services
+
+**20 AWS services** with **141 CloudTrail event types** covering **385+ Prowler checks** (~57% of AWS checks):
+
+| Service | Resources | Events |
+|---------|-----------|--------|
+| **EC2** | Instances, AMIs, Security Groups, Volumes, Snapshots, ENIs | 11 |
+| **IAM** | Users, Roles, Policies, Access Keys | 11 |
+| **S3** | Buckets, Policies | 10 |
+| **VPC** | VPCs, Subnets, Route Tables, Security Groups, NACLs, Endpoints | 13 |
+| **KMS** | Keys, Grants | 12 |
+| **CloudWatch** | Alarms, Log Groups | 9 |
+| **EBS** | Volumes, Snapshots, Encryption | 8 |
+| **RDS** | Instances, Clusters, Snapshots | 7 |
+| **Lambda** | Functions, Permissions, URLs | 7 |
+| **Secrets Manager** | Secrets, Rotation | 7 |
+| **ECR** | Repositories, Images, Policies | 7 |
+| **ECS** | Clusters, Services, Tasks | 7 |
+| **CloudTrail** | Trails, Event Selectors | 6 |
+| **ELBv2** | Load Balancers, Target Groups | 6 |
+| **DynamoDB** | Tables, Backups | 5 |
+| **SNS** | Topics, Subscriptions | 5 |
+| **SQS** | Queues, Policies | 4 |
+
+<Tip>
+More services added regularly. See [GitHub](https://github.com/prowler-cloud/prowler) for updates.
+</Tip>
+
+## Console Output
+
+During scan:
+```
+Executing 64 checks, please wait...
+-> Scanning s3 service
+-> Scanning rds service
+-> Scan completed!
+
+Starting CloudTrail enrichment...
+-> Enriching 45 unique resources |████████████████████| 45/45 [100%] in 2:15
+
+CloudTrail Enrichment Summary:
+  ✨ Enriched 45/100 findings (45.0%)
+```
+
+## Enrichment Data Fields
+
+**Attribution:**
+- `created_by` - Principal who created the resource
+- `created_at` - ISO 8601 timestamp of creation
+- `last_modified_by` - Principal who last modified
+- `last_modified_at` - Timestamp of last modification
+- `resource_age_days` - Resource age in days
+
+**Timeline Events:**
+- `timestamp` - When the event occurred
+- `event_type` - CloudTrail event type
+- `principal` - Who performed the action
+- `message` - Human-readable description with warnings
+
+**Security Warnings:**
+
+Timeline messages include automatic security flags:
+- ⚠️ PUBLIC ACCESS - Resources made publicly accessible
+- ⚠️ ENCRYPTION DISABLED - Encryption turned off
+- ⚠️ LOGGING DISABLED - Auditing disabled
+- ⚠️ ROTATION DISABLED - Key/secret rotation disabled
+- ⚠️ KEY DELETION - Encryption key deletion scheduled
+- ⚠️ TRAIL DELETED - CloudTrail logging stopped
+
+Examples:
+```
+"⚠️ S3 bucket policy ALLOWS PUBLIC ACCESS: my-bucket"
+"⚠️ KMS KEY DELETION SCHEDULED: key-123 (7 days)"
+"⚠️ SECRET ROTATION DISABLED: prod-db-password"
+```
+
+## How It Works
+
+**Post-Scan Enrichment:**
+1. Scan completes and collects all findings
+2. Resources are deduplicated (each queried once)
+3. Correct regional CloudTrail client used per resource
+4. Enrichment data applied to all matching findings
+5. Summary displayed with statistics
+
+**Benefits:**
+- No performance impact on scan execution
+- Dramatically reduced API calls (one per unique resource)
+- Automatic deduplication across multiple checks
+- Uses correct regional CloudTrail endpoints
+
+**Optimization Tips:**
+```bash
+# Filter by severity to reduce enrichment scope
+--enrich-severities critical high
+
+# Reduce time range for faster queries
+--cloudtrail-lookback-days 30
+
+# Target specific services
+--services s3 rds ec2
+```
+
+<Note>
+CloudTrail `LookupEvents` API is free for 90-day event history. Large scans may require multiple API calls, but deduplication minimizes redundant queries.
+</Note>
+
+## Troubleshooting
+
+**No Enrichment Data:**
+1. Verify CloudTrail is enabled: `aws cloudtrail describe-trails`
+2. Check IAM permissions: `cloudtrail:LookupEvents`
+3. Resources older than 90 days won't have events in Event History
+4. Verify management events are logged in CloudTrail
+
+**Permission Errors:**
+```
+ERROR: AccessDeniedException
+```
+Add `cloudtrail:LookupEvents` to your IAM role/user.
+
+**Throttling:**
+```
+ERROR: Rate exceeded
+```
+CloudTrail has 2 req/sec limit. The post-scan enrichment with deduplication minimizes this issue, but for very large scans consider:
+- Use `--enrich-severities critical high` to reduce scope
+- Scan fewer services with `--services s3 rds`
+- Reduce time range with `--cloudtrail-lookback-days 30`
+
+## Use Cases
+
+**Incident Response** - Find who created a public S3 bucket:
+```bash
+prowler aws --checks s3_bucket_public_access --enrich-findings --status FAIL
+```
+
+**Compliance Audit** - Report showing when critical issues were introduced:
+```bash
+prowler aws --enrich-findings --enrich-severities critical --output-formats html csv
+```
+
+**Security Review** - Analyze recent RDS changes:
+```bash
+prowler aws --services rds --enrich-findings --cloudtrail-lookback-days 30
+```

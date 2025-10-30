@@ -383,6 +383,105 @@ def run_fixer(check_findings: list) -> int:
         )
 
 
+def _enrich_findings_post_scan(findings: list, output_options: Any) -> dict:
+    """
+    Enriches findings after scan completes using CloudTrail events.
+    Deduplicates resources to avoid redundant API calls.
+
+    Args:
+        findings: List of all findings from the scan
+        global_provider: Provider instance
+        output_options: Output configuration options
+
+    Returns:
+        dict: Statistics about enrichment (total_enriched, total_checked)
+    """
+    try:
+        from prowler.providers.aws.services.cloudtrail.lib.enrichment.cloudtrail_enricher import (
+            CloudTrailEnricher,
+        )
+
+        print(f"\n{Style.BRIGHT}Starting CloudTrail enrichment...{Style.RESET_ALL}")
+
+        lookback_days = output_options.cloudtrail_lookback_days
+        enrich_severities = (
+            output_options.enrich_severities
+            if hasattr(output_options, "enrich_severities")
+            else None
+        )
+
+        # Initialize enricher
+        enricher = CloudTrailEnricher(
+            lookback_days=lookback_days,
+        )
+
+        # Deduplicate resources: group findings by resource_id
+        resource_findings_map = {}  # {resource_id: [(finding, region), ...]}
+
+        for finding in findings:
+            # Apply severity filter
+            if enrich_severities:
+                severity = finding.check_metadata.get("Severity")
+                if severity not in enrich_severities:
+                    continue
+
+            resource_id = finding.resource_id
+            region = finding.region
+
+            if resource_id not in resource_findings_map:
+                resource_findings_map[resource_id] = []
+            resource_findings_map[resource_id].append((finding, region))
+
+        # Enrich each unique resource once using correct regional client
+        enrichment_cache = {}  # {resource_id: enrichment_data}
+        total_checked = len(resource_findings_map)
+        total_enriched = 0
+
+        # Use progress bar for enrichment
+        with alive_bar(
+            total_checked,
+            ctrl_c=False,
+            bar="smooth",
+            spinner="dots_waves",
+            title=f"-> Enriching {total_checked} unique resources",
+        ) as bar:
+            for resource_id, finding_list in resource_findings_map.items():
+                # Get first finding with this resource
+                first_finding, _ = finding_list[0]
+
+                try:
+                    # Enrich the finding
+                    enrichment = enricher.enrich_finding(first_finding)
+
+                    if (
+                        enrichment
+                        and hasattr(first_finding, "enrichment")
+                        and first_finding.enrichment
+                    ):
+                        enrichment_cache[resource_id] = first_finding.enrichment
+                        total_enriched += 1
+
+                except Exception as e:
+                    logger.debug(f"Could not enrich resource {resource_id}: {e}")
+
+                bar()
+
+        # Apply enrichment to all findings with the same resource
+        for resource_id, enrichment_data in enrichment_cache.items():
+            if resource_id in resource_findings_map:
+                for finding, _ in resource_findings_map[resource_id]:
+                    finding.enrichment = enrichment_data
+
+        return {"total_enriched": total_enriched, "total_checked": total_checked}
+
+    except ImportError as e:
+        logger.error(f"Failed to import CloudTrail enricher: {e}")
+        return {"total_enriched": 0, "total_checked": 0}
+    except Exception as e:
+        logger.error(f"Failed to enrich findings: {e}")
+        return {"total_enriched": 0, "total_checked": 0}
+
+
 def execute_checks(
     checks_to_execute: list,
     global_provider: Any,
@@ -403,6 +502,13 @@ def execute_checks(
         expected_checks=checks_to_execute,
         completed_checks=0,
         audit_progress=0,
+    )
+
+    # Check if enrichment is enabled (will be done post-scan)
+    enrich_findings = (
+        hasattr(output_options, "enrich_findings")
+        and output_options.enrich_findings
+        and global_provider.type == "aws"
     )
 
     # Refactor(CLI): This needs to be moved somewhere in the CLI
@@ -459,6 +565,7 @@ def execute_checks(
                     custom_checks_metadata,
                     output_options,
                 )
+
                 report(check_findings, global_provider, output_options)
                 all_findings.extend(check_findings)
 
@@ -489,6 +596,14 @@ def execute_checks(
             messages.append(
                 f"Scanning unused services and resources: {Fore.YELLOW}{global_provider.scan_unused_services}{Style.RESET_ALL}"
             )
+            if enrich_findings:
+                messages.append(
+                    f"CloudTrail enrichment: {Fore.YELLOW}Enabled (lookback: {output_options.cloudtrail_lookback_days} days){Style.RESET_ALL}"
+                )
+            else:
+                messages.append(
+                    f"CloudTrail enrichment: {Fore.YELLOW}Disabled{Style.RESET_ALL}"
+                )
         report_title = (
             f"{Style.BRIGHT}Using the following configuration:{Style.RESET_ALL}"
         )
@@ -565,6 +680,23 @@ def execute_checks(
                 bar()
             bar.title = f"-> {Fore.GREEN}Scan completed!{Style.RESET_ALL}"
 
+    # Post-scan enrichment (if enabled)
+    if enrich_findings and all_findings:
+        enrichment_stats = _enrich_findings_post_scan(all_findings, output_options)
+        # Show enrichment summary
+        if enrichment_stats:
+            total_enriched = enrichment_stats["total_enriched"]
+            total_checked = enrichment_stats["total_checked"]
+            if total_checked > 0:
+                enrichment_percentage = (total_enriched / total_checked) * 100
+                print(
+                    f"\n{Style.BRIGHT}CloudTrail Enrichment Summary:{Style.RESET_ALL}"
+                )
+                print(
+                    f"  ✨ Enriched {Fore.GREEN}{total_enriched}{Style.RESET_ALL}/{total_checked} findings "
+                    f"({Fore.CYAN}{enrichment_percentage:.1f}%{Style.RESET_ALL})"
+                )
+
     return all_findings
 
 
@@ -602,7 +734,7 @@ def execute(
 
         # Execute the check
         check_findings = []
-        logger.debug(f"Executing check: {check.CheckID}")
+        logger.info(f"Executing check: {check.CheckID}")
         try:
             check_findings = check.execute()
         except Exception as error:
