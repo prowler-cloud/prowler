@@ -88,7 +88,7 @@ export function ThreatScore({
       <CardContent className="space-y-2">
         {/* Radial Chart */}
         <div className="relative mx-auto h-[150px] w-full max-w-[250px]">
-          <div className="absolute top-0 left-1/2 h-full w-full -translate-x-1/2">
+          <div className="absolute top-0 left-1/2 z-10 h-full w-full -translate-x-1/2">
             <RadialChart
               percentage={score}
               label="Score"
@@ -100,10 +100,16 @@ export function ThreatScore({
               startAngle={200}
               endAngle={-20}
               hasDots
+              tooltipData={[
+                { name: "IAM", value: 10, color: "#ef4444" },
+                { name: "Encryption", value: 92, color: "#22c55e" },
+                { name: "Attack Surface", value: 82, color: "#22c55e" },
+                { name: "Logging & Monitoring", value: 10, color: "#ef4444" },
+              ]}
             />
           </div>
           {/* Overlaid Text (centered) */}
-          <div className="absolute top-[75%] left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
+          <div className="pointer-events-none absolute top-[75%] left-1/2 z-0 -translate-x-1/2 -translate-y-1/2 text-center">
             <p className="text-sm text-nowrap text-slate-900 dark:text-zinc-300">
               {config.label}
             </p>
