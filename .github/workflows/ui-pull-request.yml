@@ -8,8 +8,6 @@ on:
     paths:
       - 'ui/**'
       - '.github/workflows/ui-pull-request.yml'
-      - '!ui/CHANGELOG.md'
-      - '!ui/README.md'
   pull_request:
     branches:
       - 'master'
@@ -17,8 +15,6 @@ on:
     paths:
       - 'ui/**'
       - '.github/workflows/ui-pull-request.yml'
-      - '!ui/CHANGELOG.md'
-      - '!ui/README.md'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -30,8 +26,36 @@ env:
   NODE_VERSION: '20.x'
 
 jobs:
-  code-quality-and-build:
+  check-changes:
     if: github.repository == 'prowler-cloud/prowler'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      ui-changed: ${{ steps.filter.outputs.ui }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Check for UI changes
+        id: filter
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        with:
+          files_ignore: |
+            ui/CHANGELOG.md
+            ui/README.md
+
+      - name: Set output
+        id: set-output
+        run: |
+          if [[ "${{ steps.filter.outputs.any_changed }}" == "true" ]]; then
+            echo "ui=true" >> $GITHUB_OUTPUT
+          else
+            echo "ui=false" >> $GITHUB_OUTPUT
+          fi
+
+  code-quality-and-build:
+    needs: check-changes
+    if: github.repository == 'prowler-cloud/prowler' && needs.check-changes.outputs.ui-changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -61,7 +85,8 @@ jobs:
         run: npm run build
 
   dockerfile-lint:
-    if: github.repository == 'prowler-cloud/prowler'
+    needs: check-changes
+    if: github.repository == 'prowler-cloud/prowler' && needs.check-changes.outputs.ui-changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -78,7 +103,8 @@ jobs:
           ignore: DL3018
 
   container-build-and-scan:
-    if: github.repository == 'prowler-cloud/prowler'
+    needs: check-changes
+    if: github.repository == 'prowler-cloud/prowler' && needs.check-changes.outputs.ui-changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
