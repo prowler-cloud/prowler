@@ -20,6 +20,7 @@ jobs:
       - name: Add the 'community' label
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           echo "Adding 'community' label to the PR"
           gh pr edit "$PR_NUMBER" --add-label community
