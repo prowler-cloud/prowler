@@ -27,10 +27,7 @@
       "Url": "https://hub.prowler.com/check/artifacts_container_analysis_enabled"
     }
   },
-  "Categories": [
-    "vulnerabilities",
-    "software-supply-chain"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "By default, AR Container Analysis is disabled."
