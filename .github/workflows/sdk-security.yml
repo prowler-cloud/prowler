@@ -1,0 +1,86 @@
+name: 'SDK: Security'
+
+on:
+  push:
+    branches:
+      - 'master'
+      - 'v5.*'
+    paths:
+      - 'prowler/**'
+      - 'tests/**'
+      - 'pyproject.toml'
+      - 'poetry.lock'
+      - '.github/workflows/sdk-security.yml'
+  pull_request:
+    branches:
+      - 'master'
+      - 'v5.*'
+    paths:
+      - 'prowler/**'
+      - 'tests/**'
+      - 'pyproject.toml'
+      - 'poetry.lock'
+      - '.github/workflows/sdk-security.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sdk-security-scans:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Check for SDK changes
+        id: check-changes
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        with:
+          files_ignore: |
+            prowler/CHANGELOG.md
+            docs/**
+            permissions/**
+            api/**
+            ui/**
+            dashboard/**
+            mcp_server/**
+            README.md
+            mkdocs.yml
+            .backportrc.json
+            .env
+            docker-compose*
+            examples/**
+            .gitignore
+            contrib/**
+
+      - name: Install Poetry
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: pipx install poetry==2.1.1
+
+      - name: Set up Python 3.12
+        if: steps.check-changes.outputs.any_changed == 'true'
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: '3.12'
+          cache: 'poetry'
+
+      - name: Install dependencies
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: poetry install --no-root
+
+      - name: Security scan with Bandit
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: poetry run bandit -q -lll -x '*_test.py,./contrib/,./api/,./ui' -r .
+
+      - name: Security scan with Safety
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: poetry run safety check --ignore 70612 -r pyproject.toml
+
+      - name: Dead code detection with Vulture
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: poetry run vulture --exclude "contrib,api,ui" --min-confidence 100 .
