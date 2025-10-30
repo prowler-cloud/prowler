@@ -1,0 +1,32 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "ram_root_access_keys_absent",
+  "CheckTitle": "Ensure root account does not have active access keys",
+  "CheckType": [],
+  "ServiceName": "ram",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "critical",
+  "ResourceType": "Account",
+  "Description": "Ensures that the root account does not have any active access keys. The root account has unrestricted access to all resources. Using access keys for the root account increases the risk of credential exposure.",
+  "Risk": "Root account access keys provide unrestricted access to all resources. If these keys are compromised, attackers gain complete control over the account, potentially leading to data breaches, resource deletion, or unauthorized access to sensitive information.",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/RAM/root-access-keys.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Delete all access keys associated with the root account. Use RAM users with appropriate permissions instead of the root account for day-to-day operations.",
+      "Url": "https://www.alibabacloud.com/help/en/ram/user-guide/create-an-accesskey-pair"
+    }
+  },
+  "Categories": [
+    "identity-and-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

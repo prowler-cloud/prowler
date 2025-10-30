@@ -1,0 +1,32 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "oss_bucket_versioning_enabled",
+  "CheckTitle": "Ensure OSS buckets have versioning enabled",
+  "CheckType": [],
+  "ServiceName": "oss",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "medium",
+  "ResourceType": "Bucket",
+  "Description": "Ensures that OSS buckets have versioning enabled to protect against accidental deletions and overwrites. Versioning allows recovery of objects from accidental deletion or overwrite.",
+  "Risk": "Without versioning, accidental deletion or overwrite of objects cannot be recovered, potentially leading to permanent data loss.",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/OSS/bucket-versioning.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable versioning for OSS buckets. Go to OSS Console > Buckets, select the bucket, and enable versioning.",
+      "Url": "https://www.alibabacloud.com/help/en/oss/user-guide/versioning"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

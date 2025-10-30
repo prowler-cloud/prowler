@@ -1,0 +1,32 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "ram_user_policy_via_groups",
+  "CheckTitle": "Ensure RAM users receive permissions through groups",
+  "CheckType": [],
+  "ServiceName": "ram",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "low",
+  "ResourceType": "User",
+  "Description": "Ensures that RAM users receive permissions only through group membership, not through directly attached policies. Using groups makes permission management easier and more consistent across users with similar roles.",
+  "Risk": "Directly attaching policies to individual users makes permission management difficult and increases the risk of misconfiguration or inconsistent permissions across users with similar roles.",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/RAM/user-policy-via-groups.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Remove directly attached policies from RAM users and add users to appropriate groups instead. Create groups with the required policies and add users to these groups.",
+      "Url": "https://www.alibabacloud.com/help/en/ram/user-guide/create-a-ram-user-group"
+    }
+  },
+  "Categories": [
+    "identity-and-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,0 +1,32 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "actiontrail_trail_logs_all_events",
+  "CheckTitle": "Ensure ActionTrail trails log all events (read and write)",
+  "CheckType": [],
+  "ServiceName": "actiontrail",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "medium",
+  "ResourceType": "Trail",
+  "Description": "Ensures that ActionTrail trails are configured to log both read and write events. Logging all events provides complete audit coverage for security analysis and compliance.",
+  "Risk": "Logging only write events means read-only API calls are not recorded, potentially missing important security events such as unauthorized data access attempts or reconnaissance activities.",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/ActionTrail/trail-log-all-events.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Update ActionTrail trails to log all events. Go to ActionTrail Console, select the trail, and configure it to log both read and write events.",
+      "Url": "https://www.alibabacloud.com/help/en/actiontrail/latest/create-a-trail-to-deliver-events-to-oss"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
