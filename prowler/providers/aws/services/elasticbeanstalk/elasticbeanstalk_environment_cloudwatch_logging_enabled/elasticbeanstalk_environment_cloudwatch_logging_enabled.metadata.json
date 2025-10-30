@@ -15,14 +15,9 @@
   "Risk": "Without **centralized logging** to CloudWatch, logs may be lost during rotation or instance termination, delaying detection and response. Attackers can delete local logs to evade audits, hiding evidence of web attacks or config tampering and undermining **confidentiality**, **integrity**, and **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/AWSHowTo.cloudwatchlogs.html#AWSHowTo.cloudwatchlogs.streaming",
     "https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/AWSHowTo.cloudwatchlogs.html",
-    "https://ajithp.com/2017/12/10/setting-up-cloudwatch-for-custom-logs-in-aws-elasticbeanstalk/",
-    "https://repost.aws/questions/QUeK_m98obT7uang3eJCt0IA/how-to-stream-custom-logs-to-cloudwatch-using-elastic-beanstalk",
     "https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/environments-cfg-logging.html",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticbeanstalk-controls.html#elasticbeanstalk-3",
-    "https://repost.aws/knowledge-center/elastic-beanstalk-cloudwatch-streaming",
-    "https://docs.aws.amazon.com/config/latest/developerguide/elastic-beanstalk-logs-to-cloudwatch.html"
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticbeanstalk-controls.html#elasticbeanstalk-3"
   ],
   "Remediation": {
     "Code": {
