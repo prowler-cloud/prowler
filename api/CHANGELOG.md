@@ -10,6 +10,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - Support for configuring multiple LLM providers [(#8772)](https://github.com/prowler-cloud/prowler/pull/8772)
 - Support C5 compliance framework for Azure provider [(#9081)](https://github.com/prowler-cloud/prowler/pull/9081)
 - Support for Oracle Cloud Infrastructure (OCI) provider [(#8927)](https://github.com/prowler-cloud/prowler/pull/8927)
+- Added `metadata`, `details`, and `partition` attributes to the `ResourceSerializer`. [(#9098)](https://github.com/prowler-cloud/prowler/pull/9098)
 
 ## [1.14.1] (Prowler 5.13.1)
 
