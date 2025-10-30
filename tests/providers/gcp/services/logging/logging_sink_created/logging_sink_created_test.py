@@ -211,3 +211,128 @@ class Test_logging_sink_created:
                 result[0].status_extended
                 == f"There are no logging sinks to export copies of all the log entries in project {GCP_PROJECT_ID}."
             )
+
+    def test_project_not_in_projects_dict(self):
+        """Test that project not in projects dict uses None and fallback name"""
+        logging_client = MagicMock()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            patch(
+                "prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created.logging_client",
+                new=logging_client,
+            ),
+        ):
+            from prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created import (
+                logging_sink_created,
+            )
+
+            logging_client.project_ids = [GCP_PROJECT_ID]
+            logging_client.region = GCP_EU1_LOCATION
+            logging_client.sinks = []
+            # Project is in project_ids but NOT in projects dict
+            logging_client.projects = {}
+
+            check = logging_sink_created()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].resource_name == "GCP Project"
+            assert result[0].resource_id == GCP_PROJECT_ID
+            assert result[0].project_id == GCP_PROJECT_ID
+            assert result[0].location == GCP_EU1_LOCATION
+
+    def test_sink_with_none_name(self):
+        """Test that sink with None name uses fallback 'Logging Sink'"""
+        logging_client = MagicMock()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            patch(
+                "prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created.logging_client",
+                new=logging_client,
+            ),
+        ):
+            from prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created import (
+                logging_sink_created,
+            )
+
+            # Create a MagicMock sink object with name=None
+            sink = MagicMock()
+            sink.name = None
+            sink.filter = "all"
+            sink.project_id = GCP_PROJECT_ID
+
+            logging_client.project_ids = [GCP_PROJECT_ID]
+            logging_client.region = GCP_EU1_LOCATION
+            logging_client.sinks = [sink]
+            logging_client.projects = {
+                GCP_PROJECT_ID: GCPProject(
+                    id=GCP_PROJECT_ID,
+                    number="123456789012",
+                    name="test",
+                    labels={},
+                    lifecycle_state="ACTIVE",
+                )
+            }
+
+            check = logging_sink_created()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert result[0].resource_name == "Logging Sink"
+            assert result[0].resource_id == "unknown"
+            assert result[0].project_id == GCP_PROJECT_ID
+            assert result[0].location == GCP_EU1_LOCATION
+            assert "unknown" in result[0].status_extended
+
+    def test_sink_with_missing_name_attribute(self):
+        """Test that sink without name attribute uses fallback 'Logging Sink'"""
+        logging_client = MagicMock()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            patch(
+                "prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created.logging_client",
+                new=logging_client,
+            ),
+        ):
+            from prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created import (
+                logging_sink_created,
+            )
+
+            # Create a MagicMock sink object without name attribute
+            sink = MagicMock(spec=["filter", "project_id"])
+            sink.filter = "all"
+            sink.project_id = GCP_PROJECT_ID
+
+            logging_client.project_ids = [GCP_PROJECT_ID]
+            logging_client.region = GCP_EU1_LOCATION
+            logging_client.sinks = [sink]
+            logging_client.projects = {
+                GCP_PROJECT_ID: GCPProject(
+                    id=GCP_PROJECT_ID,
+                    number="123456789012",
+                    name="test",
+                    labels={},
+                    lifecycle_state="ACTIVE",
+                )
+            }
+
+            check = logging_sink_created()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert result[0].resource_name == "Logging Sink"
+            assert result[0].resource_id == "unknown"
+            assert result[0].project_id == GCP_PROJECT_ID
+            assert result[0].location == GCP_EU1_LOCATION
