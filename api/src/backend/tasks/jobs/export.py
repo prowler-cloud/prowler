@@ -21,6 +21,7 @@ from prowler.lib.outputs.compliance.aws_well_architected.aws_well_architected im
     AWSWellArchitected,
 )
 from prowler.lib.outputs.compliance.c5.c5_aws import AWSC5
+from prowler.lib.outputs.compliance.c5.c5_azure import AzureC5
 from prowler.lib.outputs.compliance.ccc.ccc_aws import CCC_AWS
 from prowler.lib.outputs.compliance.ccc.ccc_azure import CCC_Azure
 from prowler.lib.outputs.compliance.ccc.ccc_gcp import CCC_GCP
@@ -88,6 +89,7 @@ COMPLIANCE_CLASS_MAP = {
         (lambda name: name.startswith("iso27001_"), AzureISO27001),
         (lambda name: name == "ccc_azure", CCC_Azure),
         (lambda name: name == "prowler_threatscore_azure", ProwlerThreatScoreAzure),
+        (lambda name: name == "c5_azure", AzureC5),
     ],
     "gcp": [
         (lambda name: name.startswith("cis_"), GCPCIS),

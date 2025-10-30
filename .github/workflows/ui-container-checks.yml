@@ -1,4 +1,4 @@
-name: 'UI: Pull Request'
+name: 'UI: Container Checks'
 
 on:
   push:
@@ -7,18 +7,14 @@ on:
       - 'v5.*'
     paths:
       - 'ui/**'
-      - '.github/workflows/ui-pull-request.yml'
-      - '!ui/CHANGELOG.md'
-      - '!ui/README.md'
+      - '.github/workflows/ui-container-checks.yml'
   pull_request:
     branches:
       - 'master'
       - 'v5.*'
     paths:
       - 'ui/**'
-      - '.github/workflows/ui-pull-request.yml'
-      - '!ui/CHANGELOG.md'
-      - '!ui/README.md'
+      - '.github/workflows/ui-container-checks.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -27,41 +23,9 @@ concurrency:
 env:
   UI_WORKING_DIR: ./ui
   IMAGE_NAME: prowler-ui
-  NODE_VERSION: '20.x'
 
 jobs:
-  code-quality-and-build:
-    if: github.repository == 'prowler-cloud/prowler'
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    permissions:
-      contents: read
-    defaults:
-      run:
-        working-directory: ./ui
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-
-      - name: Setup Node.js ${{ env.NODE_VERSION }}
-        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: './ui/package-lock.json'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run healthcheck
-        run: npm run healthcheck
-
-      - name: Build application
-        run: npm run build
-
-  dockerfile-lint:
-    if: github.repository == 'prowler-cloud/prowler'
+  ui-dockerfile-lint:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -71,14 +35,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
+      - name: Check if Dockerfile changed
+        id: dockerfile-changed
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        with:
+          files: ui/Dockerfile
+
       - name: Lint Dockerfile with Hadolint
+        if: steps.dockerfile-changed.outputs.any_changed == 'true'
         uses: hadolint/hadolint-action@2332a7b74a6de0dda2e2221d575162eba76ba5e5 # v3.3.0
         with:
           dockerfile: ui/Dockerfile
           ignore: DL3018
 
-  container-build-and-scan:
-    if: github.repository == 'prowler-cloud/prowler'
+  ui-container-build-and-scan:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -90,10 +60,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
+      - name: Check for UI changes
+        id: check-changes
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        with:
+          files_ignore: |
+            ui/CHANGELOG.md
+            ui/README.md
+
       - name: Set up Docker Buildx
+        if: steps.check-changes.outputs.any_changed == 'true'
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
 
       - name: Build UI container
+        if: steps.check-changes.outputs.any_changed == 'true'
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: ${{ env.UI_WORKING_DIR }}
@@ -107,6 +87,7 @@ jobs:
             NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_51LwpXXXX
 
       - name: Scan UI container with Trivy
+        if: github.repository == 'prowler-cloud/prowler' && steps.check-changes.outputs.any_changed == 'true'
         uses: ./.github/actions/trivy-scan
         with:
           image-name: ${{ env.IMAGE_NAME }}
