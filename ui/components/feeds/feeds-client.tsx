@@ -3,6 +3,7 @@
 import { formatDistanceToNow, parseISO } from "date-fns";
 import { BellRing, ExternalLink } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 import type { FeedItem, ParsedFeed } from "@/actions/feeds";
 import { Badge } from "@/components/shadcn";
@@ -12,6 +13,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu/dropdown-menu";
+import { hasNewFeeds, markFeedsAsSeen } from "@/lib/feeds-storage";
 import { cn } from "@/lib/utils";
 
 import { Button } from "../ui/button/button";
@@ -25,8 +27,29 @@ export function FeedsClient({ feedData, error }: FeedsClientProps) {
   const { items, totalCount } = feedData;
   const hasFeeds = totalCount > 0 && !error;
 
+  // State to track if there are new unseen feeds
+  const [hasUnseenFeeds, setHasUnseenFeeds] = useState(false);
+
+  // Check for new feeds on mount
+  useEffect(() => {
+    if (hasFeeds) {
+      const currentFeedIds = items.map((item) => item.id);
+      const isNew = hasNewFeeds(currentFeedIds);
+      setHasUnseenFeeds(isNew);
+    }
+  }, [hasFeeds, items]);
+
+  // Mark feeds as seen when dropdown opens
+  const handleOpenChange = (open: boolean) => {
+    if (open && hasFeeds) {
+      const currentFeedIds = items.map((item) => item.id);
+      markFeedsAsSeen(currentFeedIds);
+      setHasUnseenFeeds(false);
+    }
+  };
+
   return (
-    <DropdownMenu>
+    <DropdownMenu onOpenChange={handleOpenChange}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
@@ -34,9 +57,11 @@ export function FeedsClient({ feedData, error }: FeedsClientProps) {
         >
           <BellRing
             size={18}
-            className={cn(hasFeeds && "animate-pulse text-[#86da26]")}
+            className={cn(
+              hasFeeds && hasUnseenFeeds && "animate-pulse text-[#86da26]",
+            )}
           />
-          {hasFeeds && (
+          {hasFeeds && hasUnseenFeeds && (
             <span className="absolute top-0 right-0 flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#86da26] opacity-75"></span>
               <span className="relative inline-flex h-2 w-2 rounded-full bg-[#86da26]"></span>
