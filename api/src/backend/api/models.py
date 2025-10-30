@@ -2104,7 +2104,7 @@ class LighthouseTenantConfiguration(RowLevelSecurityProtectedModel):
         ]
 
     class JSONAPIMeta:
-        resource_name = "lighthouse-config"
+        resource_name = "lighthouse-configuration"
 
 
 class LighthouseProviderModels(RowLevelSecurityProtectedModel):
@@ -2153,3 +2153,6 @@ class LighthouseProviderModels(RowLevelSecurityProtectedModel):
                 name="lh_prov_models_cfg_idx",
             ),
         ]
+
+    class JSONAPIMeta:
+        resource_name = "lighthouse-models"
