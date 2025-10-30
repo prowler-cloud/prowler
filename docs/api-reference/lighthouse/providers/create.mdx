@@ -1,0 +1,21 @@
+---
+title: "Create Lighthouse Provider"
+api: "POST /api/v1/lighthouse/providers"
+description: "Add AI provider for Lighthouse."
+---
+
+Configure an LLM provider.
+
+## Request Body
+\`\`\`json
+{
+  "data": {
+    "type": "lighthouse-providers",
+    "attributes": {
+      "provider_type": "openai",
+      "api_key": "sk-...",
+      "name": "OpenAI Production"
+    }
+  }
+}
+\`\`\`

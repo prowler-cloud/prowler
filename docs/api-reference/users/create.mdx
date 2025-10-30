@@ -1,0 +1,20 @@
+---
+title: "Create User"
+api: "POST /api/v1/users"
+description: "Invite a new user to the tenant."
+---
+
+Create and invite a new user.
+
+## Request Body
+\`\`\`json
+{
+  "data": {
+    "type": "users",
+    "attributes": {
+      "email": "user@example.com",
+      "name": "John Doe"
+    }
+  }
+}
+\`\`\`

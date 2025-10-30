@@ -1,0 +1,19 @@
+---
+title: "List Tenant Invitations"
+api: "GET /api/v1/tenants/invitations"
+description: "Retrieve pending invitations for the current tenant."
+---
+
+View all pending invitations sent from your tenant to other users.
+
+## Example Request
+
+```bash
+curl -X GET "https://api.prowler.com/api/v1/tenants/invitations" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/vnd.api+json"
+```
+
+## Response
+
+Returns a list of pending invitations.

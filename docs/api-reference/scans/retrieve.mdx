@@ -1,0 +1,29 @@
+---
+title: "Retrieve Scan"
+api: "GET /api/v1/scans/{id}"
+description: "Fetch detailed information about a specific scan."
+---
+
+Retrieve detailed information about a specific security scan including its results and metadata.
+
+## Path Parameters
+
+- `id` (required) - UUID of the scan to retrieve
+
+## Query Parameters
+
+### Field Selection
+
+- `fields[scans]` - Specify which fields to return
+
+## Example Request
+
+```bash
+curl -X GET "https://api.prowler.com/api/v1/scans/{id}" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json"
+```
+
+## Response
+
+Returns the scan details including findings summary, duration, and status.

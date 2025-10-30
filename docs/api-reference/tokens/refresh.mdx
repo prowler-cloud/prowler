@@ -1,0 +1,43 @@
+---
+title: "Refresh JWT Token"
+api: "POST /api/v1/tokens/refresh"
+description: "Refresh an expired JWT token."
+---
+
+Use a refresh token to obtain a new JWT access token without re-authenticating.
+
+## Request Body
+
+```json
+{
+  "data": {
+    "type": "tokens",
+    "attributes": {
+      "refresh_token": "your-refresh-token"
+    }
+  }
+}
+```
+
+## Example Request
+
+```bash
+curl -X POST "https://api.prowler.com/api/v1/tokens/refresh" \
+  -H "Content-Type: application/vnd.api+json" \
+  -d '{
+    "data": {
+      "type": "tokens",
+      "attributes": {
+        "refresh_token": "your-refresh-token"
+      }
+    }
+  }'
+```
+
+## Response
+
+Returns a new JWT access token.
+
+<Note>
+Refresh tokens have a longer lifespan than access tokens and should be used to maintain sessions.
+</Note>

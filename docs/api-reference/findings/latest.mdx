@@ -1,0 +1,109 @@
+---
+title: "List Latest Findings"
+api: "GET /api/v1/findings/latest"
+description: "Retrieve the latest findings from the most recent scans for each provider."
+---
+
+Retrieve the most recent findings from the latest scan for each provider in your account. This endpoint automatically filters to show only the latest scan results, making it ideal for dashboards and monitoring.
+
+## Query Parameters
+
+The endpoint supports the same filtering options as the regular findings list, except for the `inserted_at` filter (which is not required for this endpoint).
+
+### Common Filters
+
+**By Status:**
+- `filter[status]`, `filter[status__in]` - Filter by status
+- `filter[severity]`, `filter[severity__in]` - Filter by severity
+- `filter[delta]`, `filter[delta__in]` - Filter by change status
+- `filter[muted]` - Filter by mute status
+
+**By Provider:**
+- `filter[provider]`, `filter[provider__in]` - Filter by provider
+- `filter[provider_type]`, `filter[provider_type__in]` - Filter by provider type
+- `filter[provider_alias]`, `filter[provider_alias__icontains]` - Filter by provider alias
+
+**By Resource:**
+- `filter[resource_name]`, `filter[resource_name__icontains]` - Filter by resource name
+- `filter[resource_type]`, `filter[resource_type__icontains]` - Filter by resource type
+- `filter[region]`, `filter[region__in]` - Filter by region
+- `filter[service]`, `filter[service__icontains]` - Filter by service
+
+**By Check:**
+- `filter[check_id]`, `filter[check_id__icontains]` - Filter by check ID
+
+### Pagination & Sorting
+
+- `page[number]`, `page[size]` - Pagination options
+- `sort` - Sort by field
+- `fields[findings]` - Select specific fields
+- `include` - Include related resources
+
+## Example Request
+
+```bash
+curl -X GET "https://api.prowler.com/api/v1/findings/latest?filter[severity]=critical&filter[status]=FAIL&filter[provider_type]=aws" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json"
+```
+
+## Response
+
+### Success Response (200 OK)
+
+Returns findings from the most recent scan for each provider:
+
+```json
+{
+  "data": [
+    {
+      "type": "findings",
+      "id": "finding-uuid",
+      "attributes": {
+        "uid": "prowler-aws-iam-password-policy-weak",
+        "check_id": "iam_password_policy_uppercase",
+        "status": "FAIL",
+        "status_extended": "IAM password policy does not require uppercase letters",
+        "severity": "medium",
+        "muted": false,
+        "muted_reason": null,
+        "delta": "new",
+        "inserted_at": "2024-01-20T10:30:00Z",
+        "updated_at": "2024-01-20T10:30:00Z",
+        "first_seen_at": "2024-01-20T10:30:00Z",
+        "check_metadata": {},
+        "raw_result": {}
+      },
+      "relationships": {
+        "scan": {
+          "data": {
+            "type": "scans",
+            "id": "scan-uuid"
+          }
+        },
+        "resources": {
+          "data": []
+        }
+      }
+    }
+  ],
+  "meta": {
+    "page": {
+      "number": 1,
+      "size": 20,
+      "total": 45,
+      "total_pages": 3
+    }
+  },
+  "links": {
+    "self": "https://api.prowler.com/api/v1/findings/latest?page[number]=1",
+    "first": "https://api.prowler.com/api/v1/findings/latest?page[number]=1",
+    "next": "https://api.prowler.com/api/v1/findings/latest?page[number]=2",
+    "last": "https://api.prowler.com/api/v1/findings/latest?page[number]=3"
+  }
+}
+```
+
+<Tip>
+Use this endpoint for real-time monitoring and dashboards, as it automatically focuses on the latest scan results without requiring date filters.
+</Tip>

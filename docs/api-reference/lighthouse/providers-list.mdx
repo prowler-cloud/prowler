@@ -1,0 +1,25 @@
+---
+title: "List LLM Provider Configs"
+api: "GET /api/v1/lighthouse/providers"
+description: "Retrieve all LLM provider configurations for Lighthouse AI."
+---
+
+Retrieve all configured LLM provider configurations (OpenAI, etc.) for Lighthouse AI.
+
+## Query Parameters
+
+- `filter[provider_type]` - Filter by provider type: `openai`
+- `filter[is_active]` - Filter by active status (boolean)
+- `page[number]`, `page[size]` - Pagination
+
+## Example Request
+
+```bash
+curl -X GET "https://api.prowler.com/api/v1/lighthouse/providers" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json"
+```
+
+## Response
+
+Returns list of LLM provider configurations.

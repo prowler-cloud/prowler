@@ -1,0 +1,40 @@
+---
+title: "Create LLM Provider Config"
+api: "POST /api/v1/lighthouse/providers"
+description: "Create configuration for an LLM provider."
+---
+
+Configure an LLM provider for use with Lighthouse AI.
+
+## Request Body
+
+```json
+{
+  "data": {
+    "type": "lighthouse-providers",
+    "attributes": {
+      "provider_type": "openai",
+      "base_url": "https://api.openai.com/v1",
+      "credentials": {
+        "api_key": "sk-..."
+      }
+    }
+  }
+}
+```
+
+## Example Request
+
+```bash
+curl -X POST "https://api.prowler.com/api/v1/lighthouse/providers" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json"
+```
+
+## Response
+
+Returns the created provider configuration.
+
+<Note>
+Only one configuration per provider type is allowed per tenant.
+</Note>

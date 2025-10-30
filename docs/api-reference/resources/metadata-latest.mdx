@@ -1,0 +1,29 @@
+---
+title: "Retrieve Latest Resources Metadata"
+api: "GET /api/v1/resources/metadata/latest"
+description: "Fetch unique metadata values from latest scan resources."
+---
+
+Retrieve metadata values from resources in the most recent scans for each provider.
+
+## Query Parameters
+
+### Filtering Options
+
+Filter by provider, resource type, region, service, etc.
+
+### Field Selection
+
+- `fields[resources-metadata]` - Specify which fields to return
+
+## Example Request
+
+```bash
+curl -X GET "https://api.prowler.com/api/v1/resources/metadata/latest?filter[provider_type]=azure" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json"
+```
+
+## Response
+
+Returns unique metadata values from latest scan resources.

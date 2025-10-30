@@ -1,0 +1,23 @@
+---
+title: "Retrieve Resource"
+api: "GET /api/v1/resources/{id}"
+description: "Fetch detailed information about a specific cloud resource."
+---
+
+Retrieve detailed information about a specific cloud resource including its configuration and associated findings.
+
+## Path Parameters
+
+- `id` (required) - UUID of the resource
+
+## Example Request
+
+```bash
+curl -X GET "https://api.prowler.com/api/v1/resources/{id}" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json"
+```
+
+## Response
+
+Returns detailed resource information including metadata and configuration.

@@ -1,0 +1,133 @@
+---
+title: "Retrieve Finding"
+api: "GET /api/v1/findings/{id}"
+description: "Fetch detailed information about a specific finding by its ID."
+---
+
+Retrieve complete details about a specific security finding, including check metadata, raw results, and affected resources.
+
+## Path Parameters
+
+- `id` (required) - The UUID of the finding to retrieve
+
+## Query Parameters
+
+### Field Selection
+
+- `fields[findings]` - Specify which fields to return: `uid`, `delta`, `status`, `status_extended`, `severity`, `check_id`, `check_metadata`, `raw_result`, `inserted_at`, `updated_at`, `first_seen_at`, `muted`, `muted_reason`, `url`, `scan`, `resources`
+
+### Include Related Resources
+
+- `include` - Include related resources: `scan`, `resources`
+
+## Example Request
+
+```bash
+curl -X GET "https://api.prowler.com/api/v1/findings/{id}?include=scan,resources" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json"
+```
+
+## Response
+
+### Success Response (200 OK)
+
+Returns detailed information about the finding:
+
+```json
+{
+  "data": {
+    "type": "findings",
+    "id": "finding-uuid",
+    "attributes": {
+      "uid": "prowler-aws-s3-bucket-unencrypted-123456",
+      "check_id": "s3_bucket_default_encryption",
+      "status": "FAIL",
+      "status_extended": "S3 Bucket 'my-bucket' does not have default encryption enabled",
+      "severity": "high",
+      "muted": false,
+      "muted_reason": null,
+      "delta": "new",
+      "inserted_at": "2024-01-15T10:30:00Z",
+      "updated_at": "2024-01-15T10:30:00Z",
+      "first_seen_at": "2024-01-15T10:30:00Z",
+      "check_metadata": {
+        "Provider": "aws",
+        "CheckID": "s3_bucket_default_encryption",
+        "CheckTitle": "Check if S3 buckets have default encryption enabled",
+        "CheckType": "Software and Configuration Checks",
+        "ServiceName": "s3",
+        "Severity": "high",
+        "ResourceType": "AwsS3Bucket",
+        "Description": "S3 buckets should have encryption at rest enabled...",
+        "Risk": "Unencrypted S3 buckets can expose sensitive data...",
+        "RelatedUrl": "https://docs.aws.amazon.com/...",
+        "Remediation": {
+          "Code": {
+            "CLI": "aws s3api put-bucket-encryption...",
+            "Terraform": "..."
+          },
+          "Recommendation": {
+            "Text": "Enable default encryption on S3 bucket",
+            "Url": "https://docs.aws.amazon.com/..."
+          }
+        },
+        "Categories": ["encryption"]
+      },
+      "raw_result": {
+        "finding_unique_id": "...",
+        "status": "FAIL",
+        "status_extended": "...",
+        "raw": {}
+      }
+    },
+    "relationships": {
+      "scan": {
+        "data": {
+          "type": "scans",
+          "id": "scan-uuid"
+        }
+      },
+      "resources": {
+        "data": [
+          {
+            "type": "resources",
+            "id": "resource-uuid"
+          }
+        ]
+      }
+    }
+  }
+}
+```
+
+### Response Fields
+
+- `uid` (string, required) - Unique identifier for the finding (max 300 characters)
+- `check_id` (string, required) - ID of the security check (max 100 characters)
+- `status` (enum, required) - Finding status: `FAIL`, `PASS`, or `MANUAL`
+- `status_extended` (string, nullable) - Detailed status message
+- `severity` (enum, required) - Severity: `critical`, `high`, `medium`, `low`, `informational`
+- `delta` (enum, nullable) - Change status: `new`, `changed`, or `null`
+- `muted` (boolean) - Whether finding is muted
+- `muted_reason` (string, nullable) - Reason for muting (3-500 characters)
+- `inserted_at` (datetime, read-only) - Creation timestamp
+- `updated_at` (datetime, read-only) - Last modification timestamp
+- `first_seen_at` (datetime, nullable, read-only) - First detection timestamp
+- `check_metadata` (object) - Complete check metadata
+- `raw_result` (object) - Raw scan output
+
+### Error Responses
+
+**404 Not Found** - Finding does not exist
+```json
+{
+  "errors": [
+    {
+      "status": "404",
+      "title": "Not Found",
+      "detail": "Finding not found"
+    }
+  ]
+}
+```

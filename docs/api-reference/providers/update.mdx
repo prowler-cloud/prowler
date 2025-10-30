@@ -1,0 +1,123 @@
+---
+title: "Update Provider"
+api: "PATCH /api/v1/providers/{id}"
+description: "Modify certain fields of an existing provider."
+---
+
+Update an existing cloud provider's configuration or settings.
+
+## Path Parameters
+
+- `id` (required) - UUID of the provider to update
+
+## Request Body
+
+The request follows the JSON:API specification:
+
+```json
+{
+  "data": {
+    "type": "providers",
+    "id": "provider-uuid",
+    "attributes": {
+      "alias": "Updated Provider Name"
+    }
+  }
+}
+```
+
+### Attributes
+
+- `alias` (optional, string, nullable) - Human-readable name to identify the provider (3-100 characters)
+
+<Note>
+Only the `alias` field can be updated. Other fields like `provider`, `uid`, and `connection` are read-only. Provider credentials and configuration are managed separately via the Provider Secrets endpoints.
+</Note>
+
+## Example Request
+
+```bash
+curl -X PATCH "https://api.prowler.com/api/v1/providers/{id}" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json" \
+  -d '{
+    "data": {
+      "type": "providers",
+      "id": "provider-uuid",
+      "attributes": {
+        "alias": "Production AWS - Updated"
+      }
+    }
+  }'
+```
+
+## Response
+
+### Success Response (200 OK)
+
+Returns the updated provider with modified alias:
+
+```json
+{
+  "data": {
+    "type": "providers",
+    "id": "provider-uuid",
+    "attributes": {
+      "provider": "aws",
+      "uid": "123456789012",
+      "alias": "Production AWS - Updated",
+      "connection": {
+        "connected": true,
+        "last_checked_at": "2024-01-20T10:30:00Z"
+      },
+      "inserted_at": "2024-01-15T10:00:00Z",
+      "updated_at": "2024-01-20T14:45:00Z"
+    },
+    "relationships": {
+      "secret": {
+        "data": {
+          "type": "provider-secrets",
+          "id": "secret-uuid"
+        }
+      },
+      "provider_groups": {
+        "data": []
+      },
+      "scans": {
+        "data": []
+      }
+    }
+  }
+}
+```
+
+### Error Responses
+
+**404 Not Found** - Provider does not exist
+```json
+{
+  "errors": [
+    {
+      "status": "404",
+      "title": "Not Found",
+      "detail": "Provider not found"
+    }
+  ]
+}
+```
+
+**422 Unprocessable Entity** - Invalid alias
+```json
+{
+  "errors": [
+    {
+      "status": "422",
+      "title": "Validation Error",
+      "detail": "Alias must be between 3 and 100 characters",
+      "source": {
+        "pointer": "/data/attributes/alias"
+      }
+    }
+  ]
+}
+```

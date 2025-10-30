@@ -1,0 +1,17 @@
+---
+title: "List Provider Groups"
+api: "GET /api/v1/provider-groups"
+description: "Retrieve provider groups for organizing providers."
+---
+
+Get all provider groups used to organize and manage multiple providers.
+
+## Query Parameters
+- `filter[name]` - Filter by group name
+- `page[number]`, `page[size]` - Pagination
+
+## Example
+\`\`\`bash
+curl "https://api.prowler.com/api/v1/provider-groups" \\
+  -H "Authorization: Bearer YOUR_API_KEY"
+\`\`\`

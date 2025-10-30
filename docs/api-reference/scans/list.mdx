@@ -1,0 +1,207 @@
+---
+title: "List Scans"
+api: "GET /api/v1/scans"
+description: "Retrieve a list of all security scans with filtering options."
+---
+
+Retrieve all security scans performed across your cloud providers. Scans contain the results of security checks run against your cloud infrastructure.
+
+## Use Cases
+
+- **Scan History**: View all scans performed on your infrastructure
+- **Compliance Tracking**: Monitor scan completion for compliance requirements
+- **Performance Monitoring**: Track scan duration and success rates
+- **Audit Trail**: Maintain records of security assessments
+- **Troubleshooting**: Investigate failed or stuck scans
+
+## Query Parameters
+
+### Filtering Options
+
+**By Provider:**
+- `filter[provider_id]`, `filter[provider_id__in]` - Filter by provider UUID(s)
+
+**By Status:**
+- `filter[state]`, `filter[state__in]` - Filter by scan state:
+  - `available` - Available
+  - `scheduled` - Scheduled but not started
+  - `executing` - Scan currently in progress
+  - `completed` - Scan finished successfully
+  - `failed` - Scan encountered errors
+  - `cancelled` - Scan was cancelled
+
+**By Date:**
+- `filter[inserted_at]`, `filter[inserted_at__date]` - Filter by scan date
+- `filter[inserted_at__gte]`, `filter[inserted_at__lte]` - Filter by date range
+
+### Pagination
+
+- `page[number]` - Page number to retrieve (default: 1)
+- `page[size]` - Number of results per page (default: 20, max: 100)
+
+### Sorting
+
+- `sort` - Field to sort by:
+  - `inserted_at` - Oldest first
+  - `-inserted_at` - Newest first (default)
+  - `completed_at` - By completion time
+  - `-completed_at` - By completion time (descending)
+
+### Field Selection
+
+- `fields[scans]` - Specify which fields to return
+
+## Example Requests
+
+**Get recent completed scans:**
+```bash
+curl -X GET "https://api.prowler.com/api/v1/scans?filter[state]=completed&sort=-completed_at&page[size]=10" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json"
+```
+
+**Get scans for specific provider:**
+```bash
+curl -X GET "https://api.prowler.com/api/v1/scans?filter[provider_id]=provider-uuid&page[size]=20" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json"
+```
+
+**Get failed scans from last week:**
+```bash
+curl -X GET "https://api.prowler.com/api/v1/scans?filter[state]=failed&filter[inserted_at__gte]=2024-01-08" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json"
+```
+
+## Response
+
+### Success Response (200 OK)
+
+Returns a paginated list of scans:
+
+```json
+{
+  "data": [
+    {
+      "type": "scans",
+      "id": "scan-uuid",
+      "attributes": {
+        "status": "completed",
+        "unique_resource_count": 1247,
+        "duration": 342.5,
+        "started_at": "2024-01-15T10:00:00Z",
+        "completed_at": "2024-01-15T10:05:42Z",
+        "inserted_at": "2024-01-15T10:00:00Z",
+        "updated_at": "2024-01-15T10:05:42Z",
+        "trigger": "manual",
+        "prowler_version": "4.0.0",
+        "summary": {
+          "total_checks": 350,
+          "passed_checks": 245,
+          "failed_checks": 85,
+          "manual_checks": 20,
+          "total_findings": 1152,
+          "failed_findings": 342,
+          "passed_findings": 810,
+          "severities": {
+            "critical": 12,
+            "high": 48,
+            "medium": 132,
+            "low": 98,
+            "informational": 52
+          }
+        },
+        "metadata": {
+          "regions_scanned": ["us-east-1", "us-west-2", "eu-west-1"],
+          "services_scanned": 45,
+          "checks_skipped": 0,
+          "error_count": 0
+        }
+      },
+      "relationships": {
+        "provider": {
+          "data": {
+            "type": "providers",
+            "id": "provider-uuid"
+          }
+        }
+      }
+    }
+  ],
+  "meta": {
+    "page": {
+      "number": 1,
+      "size": 20,
+      "total": 156,
+      "total_pages": 8
+    }
+  },
+  "links": {
+    "self": "https://api.prowler.com/api/v1/scans?page[number]=1",
+    "first": "https://api.prowler.com/api/v1/scans?page[number]=1",
+    "next": "https://api.prowler.com/api/v1/scans?page[number]=2",
+    "last": "https://api.prowler.com/api/v1/scans?page[number]=8"
+  },
+  "included": [
+    {
+      "type": "providers",
+      "id": "provider-uuid",
+      "attributes": {
+        "alias": "Production AWS - US",
+        "provider_type": "aws",
+        "uid": "123456789012"
+      }
+    }
+  ]
+}
+```
+
+### Response Fields
+
+**Core Scan Information:**
+- `id` (UUID) - Unique identifier for the scan
+- `name` (string, nullable) - Optional scan name (3-100 characters)
+- `state` (enum, read-only) - Current scan state:
+  - `available` - Available
+  - `scheduled` - Scheduled
+  - `executing` - Currently running
+  - `completed` - Finished successfully
+  - `failed` - Failed with errors
+  - `cancelled` - Was cancelled
+- `trigger` (enum, read-only) - How scan was initiated:
+  - `manual` - Started manually
+  - `scheduled` - Started by schedule
+
+**Timing & Progress:**
+- `inserted_at` (datetime, read-only) - When scan was created
+- `started_at` (datetime, nullable) - When scan execution began
+- `completed_at` (datetime, nullable) - When scan finished
+- `scheduled_at` (datetime, nullable) - When scan was scheduled for
+- `next_scan_at` (datetime, nullable) - When next scan is scheduled
+- `duration` (integer, nullable) - Scan duration in seconds
+- `progress` (integer) - Scan progress percentage (0-100)
+
+**Resources:**
+- `unique_resource_count` (integer) - Number of unique cloud resources scanned
+
+### Scan State Lifecycle
+
+1. **available** → Scan ready to be executed
+2. **scheduled** → Scan queued for future execution
+3. **executing** → Scan currently in progress
+4. **completed** → Scan finished successfully
+5. **failed** → Scan encountered fatal errors
+6. **cancelled** → Scan was cancelled by user
+
+<Note>
+Scans typically complete within 3-10 minutes depending on the number of resources and regions. Large accounts with many resources may take up to 30 minutes.
+</Note>
+
+<Warning>
+Only the 100 most recent scans are retained in the API. Export scan data to external storage for long-term retention.
+</Warning>
+
+<Tip>
+Monitor the `progress` field to track scan execution in real-time. Poll the scan endpoint while `state` is `executing` to see completion percentage.
+</Tip>

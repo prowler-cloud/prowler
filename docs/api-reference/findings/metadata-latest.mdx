@@ -1,0 +1,79 @@
+---
+title: "Retrieve Latest Findings Metadata"
+api: "GET /api/v1/findings/metadata/latest"
+description: "Fetch unique metadata values from the latest scans for each provider. This is useful for dynamic filtering."
+---
+
+Retrieve metadata values such as services, regions, and resource types from the latest findings for each provider. This endpoint automatically filters to only include data from the most recent scans.
+
+## Query Parameters
+
+### Filtering Options
+
+**By Check:**
+- `filter[check_id]`, `filter[check_id__icontains]`, `filter[check_id__in]` - Filter by check ID
+
+**By Status:**
+- `filter[status]` - Filter by status: `FAIL`, `PASS`, `MANUAL`
+- `filter[severity]` - Filter by severity: `critical`, `high`, `medium`, `low`, `informational`
+- `filter[delta]` - Filter by change status: `new`, `changed`
+- `filter[muted]` - Filter by mute status (boolean)
+
+**By Provider:**
+- `filter[provider]`, `filter[provider__in]` - Filter by provider UUID
+- `filter[provider_type]`, `filter[provider_type__in]` - Filter by provider type: `aws`, `azure`, `gcp`, `kubernetes`, `m365`, `github`, `oci`
+- `filter[provider_alias]`, `filter[provider_alias__icontains]` - Filter by provider alias
+- `filter[provider_uid]`, `filter[provider_uid__icontains]` - Filter by provider UID
+
+**By Resource:**
+- `filter[resource_name]`, `filter[resource_name__icontains]` - Filter by resource name
+- `filter[resource_type]`, `filter[resource_type__icontains]` - Filter by resource type
+- `filter[resource_uid]`, `filter[resource_uid__icontains]` - Filter by resource UID
+- `filter[region]`, `filter[region__icontains]`, `filter[region__in]` - Filter by region
+- `filter[service]`, `filter[service__icontains]` - Filter by cloud service
+
+### Sorting
+
+- `sort` - Field to sort by: `status`, `-status`, `severity`, `-severity`, `check_id`, `-check_id`, `inserted_at`, `-inserted_at`, `updated_at`, `-updated_at`
+
+### Field Selection
+
+- `fields[findings-metadata]` - Specify which fields to return: `services`, `regions`, `resource_types`
+
+## Example Request
+
+```bash
+curl -X GET "https://api.prowler.com/api/v1/findings/metadata/latest?filter[provider_type]=aws" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json"
+```
+
+## Response
+
+### Success Response (200 OK)
+
+Returns unique metadata values from the latest scan findings:
+
+```json
+{
+  "data": {
+    "type": "findings-metadata",
+    "id": "metadata",
+    "attributes": {
+      "services": ["s3", "ec2", "iam", "vpc", "cloudtrail"],
+      "regions": ["us-east-1", "us-west-2", "eu-west-1"],
+      "resource_types": ["aws_s3_bucket", "aws_ec2_instance", "aws_iam_role"]
+    }
+  }
+}
+```
+
+### Response Fields
+
+- `services` (array of strings) - List of unique cloud services from latest scans
+- `regions` (array of strings) - List of unique regions from latest scans
+- `resource_types` (array of strings) - List of unique resource types from latest scans
+
+<Note>
+This endpoint is optimized for dashboard views where you only want to show data from the most recent scans.
+</Note>

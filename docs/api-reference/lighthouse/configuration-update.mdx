@@ -1,0 +1,37 @@
+---
+title: "Update Lighthouse AI Tenant Config"
+api: "PATCH /api/v1/lighthouse/configuration"
+description: "Update tenant-level Lighthouse AI settings."
+---
+
+Update your tenant's Lighthouse AI configuration including business context and default providers/models.
+
+## Request Body
+
+```json
+{
+  "data": {
+    "type": "lighthouse-config",
+    "attributes": {
+      "business_context": "Financial services company focusing on security and compliance",
+      "default_provider": "openai",
+      "default_models": {
+        "chat": "gpt-4",
+        "analysis": "gpt-4"
+      }
+    }
+  }
+}
+```
+
+## Example Request
+
+```bash
+curl -X PATCH "https://api.prowler.com/api/v1/lighthouse/configuration" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json"
+```
+
+## Response
+
+Returns updated configuration.

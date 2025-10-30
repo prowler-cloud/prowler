@@ -1,0 +1,32 @@
+---
+title: "Retrieve Resources Metadata"
+api: "GET /api/v1/resources/metadata"
+description: "Fetch unique metadata values from resources for dynamic filtering."
+---
+
+Retrieve unique metadata values (services, regions, resource types) from your resources. Useful for building dynamic filters.
+
+## Query Parameters
+
+### Required Filters
+- `filter[inserted_at]` - At least one variation required (maximum 7 days range)
+
+### Filtering Options
+
+Similar to the list resources endpoint - filter by provider, resource type, region, etc.
+
+### Field Selection
+
+- `fields[resources-metadata]` - Specify which fields to return
+
+## Example Request
+
+```bash
+curl -X GET "https://api.prowler.com/api/v1/resources/metadata?filter[inserted_at__gte]=2024-01-01&filter[provider_type]=aws" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json"
+```
+
+## Response
+
+Returns unique metadata values from your resources.

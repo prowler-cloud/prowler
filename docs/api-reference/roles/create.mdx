@@ -1,0 +1,20 @@
+---
+title: "Create Role"
+api: "POST /api/v1/roles"
+description: "Create a new RBAC role."
+---
+
+Create a custom role with specific permissions.
+
+## Request Body
+\`\`\`json
+{
+  "data": {
+    "type": "roles",
+    "attributes": {
+      "name": "Security Auditor",
+      "permissions": ["read:findings", "read:scans"]
+    }
+  }
+}
+\`\`\`

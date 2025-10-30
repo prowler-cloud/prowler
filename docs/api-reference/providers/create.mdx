@@ -1,0 +1,293 @@
+---
+title: "Create Provider"
+api: "POST /api/v1/providers"
+description: "Register a new cloud provider with Prowler."
+---
+
+Add a new cloud provider (AWS, Azure, GCP, etc.) to your Prowler tenant. This allows Prowler to scan the provider for security findings and compliance violations.
+
+## Use Cases
+
+- **Multi-Cloud Management**: Add multiple cloud accounts to centralize security monitoring
+- **Account Onboarding**: Quickly onboard new cloud accounts for security scanning
+- **Organization-Wide Coverage**: Add all accounts from AWS Organizations, Azure subscriptions, or GCP projects
+- **DevOps Integration**: Automatically register new cloud accounts via CI/CD pipelines
+
+## Request Body
+
+The request follows the JSON:API specification:
+
+```json
+{
+  "data": {
+    "type": "providers",
+    "attributes": {
+      "provider": "aws",
+      "alias": "Production AWS Account",
+      "uid": "123456789012"
+    }
+  }
+}
+```
+
+### Attributes
+
+- `provider` (required, string) - Type of cloud provider:
+  - `aws` - Amazon Web Services
+  - `azure` - Microsoft Azure
+  - `gcp` - Google Cloud Platform
+  - `kubernetes` - Kubernetes clusters
+  - `m365` - Microsoft 365
+  - `github` - GitHub organizations
+  - `oci` - Oracle Cloud Infrastructure
+
+- `alias` (optional, string) - Human-readable name to identify the provider (3-100 characters)
+  - Examples: "Production AWS Account", "Dev Environment", "Azure Subscription - US"
+
+- `uid` (required, string) - Unique identifier for the provider (3-250 characters):
+  - AWS: Account ID (12 digits, e.g., "123456789012")
+  - Azure: Subscription ID (UUID format)
+  - GCP: Project ID (string)
+  - Kubernetes: Cluster name
+  - M365: Tenant ID
+  - GitHub: Organization name
+  - OCI: Tenancy OCID
+
+<Note>
+**Important:** Provider-specific configuration (credentials, connection details) is managed separately after provider creation. The initial provider creation only requires the `provider`, `alias`, and `uid` fields. Use the provider update endpoint or UI to configure authentication credentials.
+</Note>
+
+## Example Requests
+
+### AWS Provider
+```bash
+curl -X POST "https://api.prowler.com/api/v1/providers" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json" \
+  -d '{
+    "data": {
+      "type": "providers",
+      "attributes": {
+        "provider": "aws",
+        "alias": "Production AWS - US",
+        "uid": "123456789012"
+      }
+    }
+  }'
+```
+
+### Azure Provider
+```bash
+curl -X POST "https://api.prowler.com/api/v1/providers" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json" \
+  -d '{
+    "data": {
+      "type": "providers",
+      "attributes": {
+        "provider": "azure",
+        "alias": "Production Azure Subscription",
+        "uid": "aaaabbbb-cccc-dddd-eeee-ffff00001111"
+      }
+    }
+  }'
+```
+
+### GCP Provider
+```bash
+curl -X POST "https://api.prowler.com/api/v1/providers" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json" \
+  -d '{
+    "data": {
+      "type": "providers",
+      "attributes": {
+        "provider": "gcp",
+        "alias": "Production GCP Project",
+        "uid": "my-gcp-project-id"
+      }
+    }
+  }'
+```
+
+## Response
+
+### Success Response (201 Created)
+
+Returns the created provider with full configuration:
+
+```json
+{
+  "data": {
+    "type": "providers",
+    "id": "provider-uuid-here",
+    "attributes": {
+      "provider": "aws",
+      "uid": "123456789012",
+      "alias": "Production AWS - US",
+      "connection": {
+        "connected": false,
+        "last_checked_at": null
+      },
+      "inserted_at": "2024-01-15T10:30:00Z",
+      "updated_at": "2024-01-15T10:30:00Z"
+    },
+    "relationships": {
+      "secret": {
+        "data": {
+          "type": "provider-secrets",
+          "id": "secret-uuid"
+        }
+      },
+      "provider_groups": {
+        "data": []
+      },
+      "scans": {
+        "data": []
+      }
+    }
+  }
+}
+```
+
+### Response Fields
+
+- `id` (UUID) - Unique identifier for the provider
+- `provider` (enum) - Type of cloud provider: `aws`, `azure`, `gcp`, `kubernetes`, `m365`, `github`, `oci`
+- `uid` (string) - Cloud provider account/subscription ID (3-250 characters)
+- `alias` (string, nullable) - Human-readable name (3-100 characters)
+- `connection` (object, read-only) - Connection status information:
+  - `connected` (boolean) - Whether provider is connected (initially `false`)
+  - `last_checked_at` (datetime, nullable) - Last connection verification time
+- `inserted_at` (datetime, read-only) - When provider was created
+- `updated_at` (datetime, read-only) - Last modification time
+
+### Error Responses
+
+**400 Bad Request** - Invalid configuration
+```json
+{
+  "errors": [
+    {
+      "status": "400",
+      "title": "Invalid Configuration",
+      "detail": "IAM role ARN format is invalid",
+      "source": {
+        "pointer": "/data/attributes/configuration/role_arn"
+      }
+    }
+  ]
+}
+```
+
+**409 Conflict** - Provider already exists
+```json
+{
+  "errors": [
+    {
+      "status": "409",
+      "title": "Provider Already Exists",
+      "detail": "A provider with UID '123456789012' already exists in this tenant"
+    }
+  ]
+}
+```
+
+**422 Unprocessable Entity** - Validation error
+```json
+{
+  "errors": [
+    {
+      "status": "422",
+      "title": "Validation Error",
+      "detail": "Provider must be one of: aws, azure, gcp, kubernetes, m365, github, oci",
+      "source": {
+        "pointer": "/data/attributes/provider"
+      }
+    }
+  ]
+}
+```
+
+**422 Unprocessable Entity** - Invalid UID format
+```json
+{
+  "errors": [
+    {
+      "status": "422",
+      "title": "Validation Error",
+      "detail": "UID must be between 3 and 250 characters",
+      "source": {
+        "pointer": "/data/attributes/uid"
+      }
+    }
+  ]
+}
+```
+
+## Next Steps
+
+After creating a provider:
+
+1. **Verify Connection**: Test the provider connection
+   ```bash
+   curl -X POST "https://api.prowler.com/api/v1/providers/{provider_id}/connection" \
+     -H "Authorization: Bearer YOUR_API_KEY"
+   ```
+
+2. **Run First Scan**: Initiate a security scan
+   ```bash
+   curl -X POST "https://api.prowler.com/api/v1/scans" \
+     -H "Authorization: Bearer YOUR_API_KEY" \
+     -d '{"data": {"type": "scans", "attributes": {"provider_id": "provider-uuid"}}}'
+   ```
+
+3. **View Findings**: Check security findings from the scan
+   ```bash
+   curl -X GET "https://api.prowler.com/api/v1/findings/latest?filter[provider]=provider-uuid" \
+     -H "Authorization: Bearer YOUR_API_KEY"
+   ```
+
+## Prerequisites by Provider Type
+
+### AWS
+1. Create an IAM role in your AWS account
+2. Attach the `SecurityAudit` managed policy (or custom policy)
+3. Configure trust relationship to allow Prowler to assume the role
+4. Note the Role ARN
+
+[AWS Setup Guide →](/user-guide/providers/aws/getting-started-aws)
+
+### Azure
+1. Create an App Registration in Azure AD
+2. Grant `Reader` and `Security Reader` roles at subscription level
+3. Create a client secret
+4. Note tenant ID, client ID, and subscription ID
+
+[Azure Setup Guide →](/user-guide/providers/azure/getting-started-azure)
+
+### GCP
+1. Create a service account in your GCP project
+2. Grant necessary IAM roles (Viewer, Security Reviewer)
+3. Generate and download a JSON key file
+4. Use the key file contents in the configuration
+
+[GCP Setup Guide →](/user-guide/providers/gcp/getting-started-gcp)
+
+<Warning>
+**Security Considerations:**
+- Use least-privilege IAM policies
+- Rotate credentials regularly
+- Use external IDs for AWS role assumption
+- Store credentials securely (never in code)
+- Enable audit logging for all provider access
+- Use read-only permissions only
+</Warning>
+
+<Note>
+After creating a provider, it will show `connected: false` until you verify the connection using the `/providers/{id}/connection` endpoint.
+</Note>
+
+<Tip>
+**Best Practice:** Use descriptive aliases that include the environment and region (e.g., "Production AWS US-East", "Dev Azure West Europe") to easily identify providers in your dashboard.
+</Tip>

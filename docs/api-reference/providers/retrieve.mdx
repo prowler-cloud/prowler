@@ -1,0 +1,101 @@
+---
+title: "Retrieve Provider"
+api: "GET /api/v1/providers/{id}"
+description: "Fetch detailed information about a specific provider by its ID."
+---
+
+Retrieve detailed information about a specific cloud provider.
+
+## Path Parameters
+
+- `id` (required) - UUID of the provider to retrieve
+
+## Query Parameters
+
+### Field Selection
+
+- `fields[providers]` - Specify which fields to return
+
+## Example Request
+
+```bash
+curl -X GET "https://api.prowler.com/api/v1/providers/{id}" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json"
+```
+
+## Response
+
+### Success Response (200 OK)
+
+Returns detailed provider information:
+
+```json
+{
+  "data": {
+    "type": "providers",
+    "id": "provider-uuid",
+    "attributes": {
+      "provider": "aws",
+      "uid": "123456789012",
+      "alias": "Production AWS - US",
+      "connection": {
+        "connected": true,
+        "last_checked_at": "2024-01-20T10:30:00Z"
+      },
+      "inserted_at": "2024-01-15T10:00:00Z",
+      "updated_at": "2024-01-20T10:30:00Z"
+    },
+    "relationships": {
+      "secret": {
+        "data": {
+          "type": "provider-secrets",
+          "id": "secret-uuid"
+        }
+      },
+      "provider_groups": {
+        "data": []
+      },
+      "scans": {
+        "data": [
+          {
+            "type": "scans",
+            "id": "scan-uuid-1"
+          },
+          {
+            "type": "scans",
+            "id": "scan-uuid-2"
+          }
+        ]
+      }
+    }
+  }
+}
+```
+
+### Response Fields
+
+- `id` (UUID) - Unique identifier for the provider
+- `provider` (enum) - Type of cloud provider: `aws`, `azure`, `gcp`, `kubernetes`, `m365`, `github`, `oci`
+- `uid` (string) - Provider's unique identifier (3-250 characters)
+- `alias` (string, nullable) - Human-readable name (3-100 characters)
+- `connection` (object, read-only) - Connection status information:
+  - `connected` (boolean) - Whether provider is connected
+  - `last_checked_at` (datetime) - Last connection verification time
+- `inserted_at` (datetime, read-only) - When provider was created
+- `updated_at` (datetime, read-only) - Last modification time
+
+### Error Responses
+
+**404 Not Found** - Provider does not exist
+```json
+{
+  "errors": [
+    {
+      "status": "404",
+      "title": "Not Found",
+      "detail": "Provider not found"
+    }
+  ]
+}
+```

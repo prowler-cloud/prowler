@@ -1,0 +1,43 @@
+---
+title: "List Resources"
+api: "GET /api/v1/resources"
+description: "Retrieve a list of all cloud resources discovered during scans."
+---
+
+Retrieve all cloud resources (EC2 instances, S3 buckets, IAM roles, etc.) discovered across your providers.
+
+## Query Parameters
+
+### Required Filters
+- `filter[inserted_at]` - At least one variation of this filter is required
+- `filter[inserted_at__gte]`, `filter[inserted_at__lte]` - Filter by date range (maximum 7 days)
+
+### Filtering Options
+
+**By Provider:**
+- `filter[provider]`, `filter[provider__in]` - Filter by provider UUID(s)
+- `filter[provider_type]`, `filter[provider_type__in]` - Filter by provider type
+
+**By Resource:**
+- `filter[resource_type]`, `filter[resource_type__icontains]` - Filter by resource type
+- `filter[resource_name]`, `filter[resource_name__icontains]` - Filter by resource name
+- `filter[resource_uid]`, `filter[resource_uid__icontains]` - Filter by resource UID
+- `filter[region]`, `filter[region__in]` - Filter by region
+- `filter[service]`, `filter[service__icontains]` - Filter by cloud service
+
+### Pagination & Sorting
+
+- `page[number]`, `page[size]` - Pagination controls
+- `sort` - Field to sort by
+
+## Example Request
+
+```bash
+curl -X GET "https://api.prowler.com/api/v1/resources?filter[inserted_at__gte]=2024-01-01&filter[resource_type]=aws_s3_bucket" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json"
+```
+
+## Response
+
+Returns a paginated list of cloud resources with their metadata.

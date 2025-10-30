@@ -1,0 +1,19 @@
+---
+title: "List Tenants"
+api: "GET /api/v1/tenants"
+description: "Retrieve a list of tenants you belong to."
+---
+
+Retrieve all tenants (organizations) that you are a member of.
+
+## Example Request
+
+```bash
+curl -X GET "https://api.prowler.com/api/v1/tenants" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/vnd.api+json"
+```
+
+## Response
+
+Returns a list of tenants with their details and your role in each.

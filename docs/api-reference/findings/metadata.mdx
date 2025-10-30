@@ -1,0 +1,88 @@
+---
+title: "Retrieve Findings Metadata"
+api: "GET /api/v1/findings/metadata"
+description: "Fetch unique metadata values from a set of findings. This is useful for dynamic filtering."
+---
+
+Retrieve metadata values such as services, regions, and resource types from your findings. This endpoint is useful for building dynamic filters in your application.
+
+## Query Parameters
+
+### Required Filters
+
+- `filter[inserted_at]` - At least one variation of this filter is required
+- `filter[inserted_at__gte]` - Filter by creation date (greater than or equal). Maximum date range is 7 days
+- `filter[inserted_at__lte]` - Filter by creation date (less than or equal). Maximum date range is 7 days
+
+### Filtering Options
+
+**By Check:**
+- `filter[check_id]`, `filter[check_id__icontains]`, `filter[check_id__in]` - Filter by check ID
+
+**By Status:**
+- `filter[status]` - Filter by status: `FAIL`, `PASS`, `MANUAL`
+- `filter[severity]` - Filter by severity: `critical`, `high`, `medium`, `low`, `informational`
+- `filter[delta]` - Filter by change status: `new`, `changed`
+- `filter[muted]` - Filter by mute status (boolean)
+
+**By Provider:**
+- `filter[provider]`, `filter[provider__in]` - Filter by provider UUID
+- `filter[provider_type]`, `filter[provider_type__in]` - Filter by provider type: `aws`, `azure`, `gcp`, `kubernetes`, `m365`, `github`, `oci`
+- `filter[provider_alias]`, `filter[provider_alias__icontains]` - Filter by provider alias
+- `filter[provider_uid]`, `filter[provider_uid__icontains]` - Filter by provider UID
+
+**By Resource:**
+- `filter[resource_name]`, `filter[resource_name__icontains]` - Filter by resource name
+- `filter[resource_type]`, `filter[resource_type__icontains]` - Filter by resource type
+- `filter[resource_uid]`, `filter[resource_uid__icontains]` - Filter by resource UID
+- `filter[region]`, `filter[region__icontains]`, `filter[region__in]` - Filter by region
+- `filter[service]`, `filter[service__icontains]` - Filter by cloud service
+
+**By Scan:**
+- `filter[scan]`, `filter[scan__in]` - Filter by scan UUID
+
+### Sorting
+
+- `sort` - Field to sort by: `status`, `-status`, `severity`, `-severity`, `check_id`, `-check_id`, `inserted_at`, `-inserted_at`, `updated_at`, `-updated_at`
+
+### Field Selection
+
+- `fields[findings-metadata]` - Specify which fields to return: `services`, `regions`, `resource_types`
+
+## Example Request
+
+```bash
+curl -X GET "https://api.prowler.com/api/v1/findings/metadata?filter[inserted_at__gte]=2024-01-01" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json"
+```
+
+## Response
+
+### Success Response (200 OK)
+
+Returns unique metadata values from the filtered findings:
+
+```json
+{
+  "data": {
+    "type": "findings-metadata",
+    "id": "metadata",
+    "attributes": {
+      "services": ["s3", "ec2", "iam", "rds", "lambda", "cloudtrail"],
+      "regions": ["us-east-1", "us-west-2", "eu-west-1", "ap-southeast-1"],
+      "resource_types": ["aws_s3_bucket", "aws_ec2_instance", "aws_iam_user", "aws_rds_db_instance"]
+    }
+  }
+}
+```
+
+### Response Fields
+
+- `services` (array of strings) - List of unique cloud services found in the findings
+- `regions` (array of strings) - List of unique regions found in the findings
+- `resource_types` (array of strings) - List of unique resource types found in the findings
+
+<Note>
+This endpoint is useful for populating dropdowns and filters in your UI with actual values from your findings data. The maximum date range is 7 days.
+</Note>

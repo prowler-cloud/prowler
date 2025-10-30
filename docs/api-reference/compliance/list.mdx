@@ -1,0 +1,17 @@
+---
+title: "List Compliance Overviews"
+api: "GET /api/v1/compliance-overviews"
+description: "Retrieve compliance framework coverage for scans."
+---
+
+Get compliance status across frameworks like CIS, PCI-DSS, HIPAA, etc.
+
+## Query Parameters
+- `filter[scan]` - Filter by scan UUID (required)
+- `filter[framework]` - Filter by framework name
+
+## Example
+\`\`\`bash
+curl "https://api.prowler.com/api/v1/compliance-overviews?filter[scan]=scan-uuid" \\
+  -H "Authorization: Bearer YOUR_API_KEY"
+\`\`\`
