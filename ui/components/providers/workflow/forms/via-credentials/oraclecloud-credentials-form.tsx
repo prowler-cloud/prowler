@@ -1,4 +1,4 @@
-import { Control } from "react-hook-form";
+import { Control, Controller } from "react-hook-form";
 
 import { CustomInput, CustomTextarea } from "@/components/ui/custom";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
@@ -19,6 +19,12 @@ export const OracleCloudCredentialsForm = ({
           Please provide your Oracle Cloud Infrastructure API key credentials.
         </div>
       </div>
+      {/* Hidden input for tenancy - auto-populated from provider UID */}
+      <Controller
+        control={control}
+        name={ProviderCredentialFields.OCI_TENANCY}
+        render={({ field }) => <input type="hidden" {...field} />}
+      />
       <CustomInput
         control={control}
         name={ProviderCredentialFields.OCI_USER}
