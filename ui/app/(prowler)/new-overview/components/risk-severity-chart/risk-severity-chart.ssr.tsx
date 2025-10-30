@@ -6,7 +6,7 @@ import {
 } from "@/components/shadcn";
 import { getFindingsBySeverity } from "@/actions/overview/overview";
 import { SearchParamsProps } from "@/types";
-import { RiskSeverityChart } from "../components/risk-severity-chart";
+import { RiskSeverityChart } from "./risk-severity-chart";
 
 const FILTER_PREFIX = "filter[";
 
@@ -19,7 +19,7 @@ function pickFilterParams(
   );
 }
 
-export const RiskSeverityChartContainer = async ({
+export const RiskSeverityChartSSR = async ({
   searchParams,
 }: {
   searchParams: SearchParamsProps | undefined | null;

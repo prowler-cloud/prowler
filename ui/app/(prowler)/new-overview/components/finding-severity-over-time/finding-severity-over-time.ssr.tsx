@@ -7,7 +7,7 @@ import {
 } from "@/components/shadcn";
 import { SearchParamsProps } from "@/types";
 
-import { FindingSeverityOverTime } from "../components/finding-severity-over-time";
+import { FindingSeverityOverTime } from "./finding-severity-over-time";
 
 const FILTER_PREFIX = "filter[";
 
@@ -20,7 +20,7 @@ function pickFilterParams(
   );
 }
 
-export const FindingSeverityOverTimeContainer = async ({
+export const FindingSeverityOverTimeSSR = async ({
   searchParams,
 }: {
   searchParams: SearchParamsProps | undefined | null;
@@ -55,3 +55,4 @@ export const FindingSeverityOverTimeContainer = async ({
     </BaseCard>
   );
 };
+

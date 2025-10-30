@@ -6,9 +6,9 @@ import { SearchParamsProps } from "@/types";
 
 import { AccountsSelector } from "./components/accounts-selector";
 import { ProviderTypeSelector } from "./components/provider-type-selector";
-import { FindingSeverityOverTimeContainer } from "./containers/finding-severity-over-time-container";
-import { RiskSeverityChartContainer } from "./containers/risk-severity-chart-container";
-import { StatusChartContainer } from "./containers/status-chart-container";
+import { StatusChartSSR } from "./components/status-chart";
+import { RiskSeverityChartSSR } from "./components/risk-severity-chart";
+import { FindingSeverityOverTimeSSR } from "./components/finding-severity-over-time";
 
 export default async function NewOverviewPage({
   searchParams,
@@ -32,7 +32,7 @@ export default async function NewOverviewPage({
             </div>
           }
         >
-          <StatusChartContainer searchParams={resolvedSearchParams} />
+          <StatusChartSSR searchParams={resolvedSearchParams} />
         </Suspense>
 
         <Suspense
@@ -42,7 +42,7 @@ export default async function NewOverviewPage({
             </div>
           }
         >
-          <RiskSeverityChartContainer searchParams={resolvedSearchParams} />
+          <RiskSeverityChartSSR searchParams={resolvedSearchParams} />
         </Suspense>
       </div>
       <div className="mt-6">
@@ -53,7 +53,7 @@ export default async function NewOverviewPage({
             </div>
           }
         >
-          <FindingSeverityOverTimeContainer searchParams={resolvedSearchParams} />
+          <FindingSeverityOverTimeSSR searchParams={resolvedSearchParams} />
         </Suspense>
       </div>
     </ContentLayout>

@@ -1,13 +1,12 @@
-import { getFindingsByStatus } from "@/actions/overview/overview";
 import {
   BaseCard,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/shadcn";
+import { getFindingsByStatus } from "@/actions/overview/overview";
 import { SearchParamsProps } from "@/types";
-
-import { StatusChart } from "../components/status-chart";
+import { StatusChart } from "./status-chart";
 
 const FILTER_PREFIX = "filter[";
 
@@ -20,7 +19,7 @@ function pickFilterParams(
   );
 }
 
-export const StatusChartContainer = async ({
+export const StatusChartSSR = async ({
   searchParams,
 }: {
   searchParams: SearchParamsProps | undefined | null;
