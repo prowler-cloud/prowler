@@ -35,7 +35,7 @@ class sharepoint_modern_authentication_required(Check):
                 self.metadata(),
                 resource=settings if settings else {},
                 resource_name="SharePoint Settings",
-                resource_id=sharepoint_client.tenant_domain,
+                resource_id="sharepointSettings",
             )
             report.status = "PASS"
             report.status_extended = "Microsoft 365 SharePoint does not allow access to apps that don't use modern authentication."

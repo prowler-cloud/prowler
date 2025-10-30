@@ -25,6 +25,9 @@ Prowler configuration is based in `.env` files. Every version of Prowler can hav
     curl -LO https://raw.githubusercontent.com/prowler-cloud/prowler/refs/heads/master/.env
     docker compose up -d
     ```
+
+    > Containers are built for `linux/amd64`. If your workstation's architecture is different, please set `DOCKER_DEFAULT_PLATFORM=linux/amd64` in your environment or use the `--platform linux/amd64` flag in the docker command.
+
   </Tab>
   <Tab title="GitHub">
     _Requirements_:
