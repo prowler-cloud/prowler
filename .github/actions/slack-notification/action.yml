@@ -1,0 +1,65 @@
+name: 'Slack Notification'
+description: 'Generic action to send Slack notifications with optional message updates and automatic status detection'
+inputs:
+  slack-bot-token:
+    description: 'Slack bot token for authentication'
+    required: true
+  payload-file-path:
+    description: 'Path to JSON file with the Slack message payload'
+    required: true
+  update-ts:
+    description: 'Message timestamp to update (only for updates, leave empty for new messages)'
+    required: false
+    default: ''
+  step-outcome:
+    description: 'Outcome of a step to determine status (success/failure) - automatically sets STATUS_EMOJI and STATUS_TEXT env vars'
+    required: false
+    default: ''
+outputs:
+  ts:
+    description: 'Timestamp of the Slack message'
+    value: ${{ steps.slack-notification.outputs.ts }}
+runs:
+  using: 'composite'
+  steps:
+    - name: Determine status
+      if: inputs.step-outcome != ''
+      id: status
+      shell: bash
+      run: |
+        if [[ "${{ inputs.step-outcome }}" == "success" ]]; then
+          echo "STATUS_EMOJI=[✓]" >> $GITHUB_ENV
+          echo "STATUS_TEXT=completed successfully!" >> $GITHUB_ENV
+        else
+          echo "STATUS_EMOJI=[✗]" >> $GITHUB_ENV
+          echo "STATUS_TEXT=failed" >> $GITHUB_ENV
+        fi
+
+    - name: Send Slack notification (new message)
+      if: inputs.update-ts == ''
+      id: slack-notification-post
+      uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
+      with:
+        method: chat.postMessage
+        token: ${{ inputs.slack-bot-token }}
+        payload-file-path: ${{ inputs.payload-file-path }}
+
+    - name: Update Slack notification
+      if: inputs.update-ts != ''
+      id: slack-notification-update
+      uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
+      with:
+        method: chat.update
+        token: ${{ inputs.slack-bot-token }}
+        payload-file-path: ${{ inputs.payload-file-path }}
+
+    - name: Set output
+      id: slack-notification
+      shell: bash
+      run: |
+        if [[ "${{ inputs.update-ts }}" == "" ]]; then
+          echo "ts=${{ steps.slack-notification-post.outputs.ts }}" >> $GITHUB_OUTPUT
+        else
+          echo "ts=${{ inputs.update-ts }}" >> $GITHUB_OUTPUT
+        fi
+

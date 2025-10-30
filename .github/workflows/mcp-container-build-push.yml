@@ -80,8 +80,23 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Notify container push started
+        if: github.event_name == 'release'
+        uses: ./.github/actions/slack-notification
+        env:
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_PLATFORM_DEPLOYMENTS }}
+          COMPONENT: MCP
+          RELEASE_TAG: ${{ env.RELEASE_TAG }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        with:
+          slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload-file-path: "./.github/scripts/slack-messages/container-release-started.json"
+
       - name: Build and push MCP container (release)
         if: github.event_name == 'release'
+        id: container-push
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: ${{ env.WORKING_DIRECTORY }}
@@ -99,6 +114,21 @@ jobs:
             org.opencontainers.image.created=${{ github.event.release.published_at }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Notify container push completed
+        if: github.event_name == 'release' && always()
+        uses: ./.github/actions/slack-notification
+        env:
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_PLATFORM_DEPLOYMENTS }}
+          COMPONENT: MCP
+          RELEASE_TAG: ${{ env.RELEASE_TAG }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        with:
+          slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload-file-path: "./.github/scripts/slack-messages/container-release-completed.json"
+          step-outcome: ${{ steps.container-push.outcome }}
 
   trigger-deployment:
     if: github.event_name == 'push'
