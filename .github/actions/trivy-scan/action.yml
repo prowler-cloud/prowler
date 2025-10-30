@@ -46,7 +46,7 @@ runs:
   using: 'composite'
   steps:
     - name: Cache Trivy vulnerability database
-      uses: actions/cache@f0a67a2ed41fa8c0d21ab1521da3a46b0c9ae5e4 # v4.3.1
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
       with:
         path: ~/.cache/trivy
         key: trivy-db-${{ runner.os }}-${{ github.run_id }}
