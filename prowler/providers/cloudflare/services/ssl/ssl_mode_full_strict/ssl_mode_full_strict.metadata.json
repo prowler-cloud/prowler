@@ -1,0 +1,32 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "ssl_mode_full_strict",
+  "CheckTitle": "Ensure SSL/TLS mode is set to Full (strict) for end-to-end encryption",
+  "CheckType": [],
+  "ServiceName": "ssl",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Zone",
+  "Description": "This check ensures that SSL/TLS mode is set to Full (strict) for Cloudflare zones to ensure end-to-end encryption with certificate validation between Cloudflare and origin servers.",
+  "Risk": "Using flexible or off SSL modes can expose traffic between Cloudflare and origin servers to interception. Full (strict) mode ensures encrypted connections and validates origin server certificates.",
+  "RelatedUrl": "https://developers.cloudflare.com/ssl/origin-configuration/ssl-modes/",
+  "Remediation": {
+    "Code": {
+      "CLI": "cloudflare ssl mode update --zone-id <zone_id> --mode full",
+      "NativeIaC": "",
+      "Other": "https://dash.cloudflare.com/ -> Select Zone -> SSL/TLS -> Overview -> Set to 'Full (strict)'",
+      "Terraform": "resource \"cloudflare_zone_settings_override\" \"example\" {\n  zone_id = var.zone_id\n  settings {\n    ssl = \"full\"\n  }\n}"
+    },
+    "Recommendation": {
+      "Text": "Set SSL/TLS mode to Full (strict) for all Cloudflare zones to ensure end-to-end encryption with proper certificate validation.",
+      "Url": "https://developers.cloudflare.com/ssl/origin-configuration/ssl-modes/"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Full (strict) mode requires a valid SSL certificate on the origin server. Ensure your origin has a trusted certificate before enabling."
+}

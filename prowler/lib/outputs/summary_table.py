@@ -67,6 +67,9 @@ def display_summary_table(
         elif provider.type == "llm":
             entity_type = "LLM"
             audited_entities = provider.model
+        elif provider.type == "cloudflare":
+            entity_type = "Account"
+            audited_entities = provider.identity.account_name
         elif provider.type == "oci":
             entity_type = "Tenancy"
             audited_entities = (

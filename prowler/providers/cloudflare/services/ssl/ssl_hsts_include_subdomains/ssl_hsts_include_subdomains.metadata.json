@@ -1,0 +1,32 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "ssl_hsts_include_subdomains",
+  "CheckTitle": "Ensure HSTS includes subdomains for comprehensive protection",
+  "CheckType": [],
+  "ServiceName": "ssl",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Zone",
+  "Description": "This check ensures that HSTS (HTTP Strict Transport Security) is configured with the includeSubDomains directive to apply HSTS policy uniformly across the entire domain including all subdomains.",
+  "Risk": "Without includeSubDomains directive, subdomains may be vulnerable to SSL stripping attacks even if the main domain has HSTS enabled.",
+  "RelatedUrl": "https://developers.cloudflare.com/ssl/edge-certificates/additional-options/http-strict-transport-security/",
+  "Remediation": {
+    "Code": {
+      "CLI": "cloudflare ssl hsts enable --zone-id <zone_id> --include-subdomains",
+      "NativeIaC": "",
+      "Other": "https://dash.cloudflare.com/ -> Select Zone -> SSL/TLS -> Edge Certificates -> HSTS -> Enable 'Include subdomains'",
+      "Terraform": "resource \"cloudflare_zone_settings_override\" \"example\" {\n  zone_id = var.zone_id\n  settings {\n    security_header {\n      enabled = true\n      include_subdomains = true\n      max_age = 31536000\n    }\n  }\n}"
+    },
+    "Recommendation": {
+      "Text": "Enable HSTS with includeSubDomains directive for all Cloudflare zones to ensure all subdomains are protected.",
+      "Url": "https://developers.cloudflare.com/ssl/edge-certificates/additional-options/http-strict-transport-security/"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Ensure all subdomains are accessible via HTTPS before enabling includeSubDomains to avoid accessibility issues."
+}

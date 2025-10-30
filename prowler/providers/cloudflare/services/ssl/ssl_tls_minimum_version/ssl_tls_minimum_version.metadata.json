@@ -1,0 +1,32 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "ssl_tls_minimum_version",
+  "CheckTitle": "Ensure minimum TLS version is set to 1.2 or higher",
+  "CheckType": [],
+  "ServiceName": "ssl",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "zone_id",
+  "Severity": "high",
+  "ResourceType": "Zone",
+  "Description": "This check ensures that Cloudflare zones enforce a minimum TLS version of 1.2 or higher. TLS 1.0 and 1.1 are deprecated and have known security vulnerabilities.",
+  "Risk": "Using outdated TLS versions (1.0 and 1.1) exposes connections to known security vulnerabilities and does not meet modern security standards. This can lead to man-in-the-middle attacks and data interception.",
+  "RelatedUrl": "https://developers.cloudflare.com/ssl/edge-certificates/additional-options/minimum-tls/",
+  "Remediation": {
+    "Code": {
+      "CLI": "curl -X PATCH \"https://api.cloudflare.com/v4/zones/<zone_id>/settings/min_tls_version\" -H \"Authorization: Bearer <api_token>\" -H \"Content-Type: application/json\" -d '{\"value\":\"1.2\"}'",
+      "NativeIaC": "",
+      "Other": "https://dash.cloudflare.com/ -> Select Zone -> SSL/TLS -> Edge Certificates -> Minimum TLS Version -> Set to 1.2 or higher",
+      "Terraform": "resource \"cloudflare_zone_settings_override\" \"example\" {\n  zone_id = var.zone_id\n  settings {\n    min_tls_version = \"1.2\"\n  }\n}"
+    },
+    "Recommendation": {
+      "Text": "Set the minimum TLS version to 1.2 or 1.3 for all Cloudflare zones to ensure secure encrypted connections.",
+      "Url": "https://developers.cloudflare.com/ssl/edge-certificates/additional-options/minimum-tls/"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "TLS 1.0 and 1.1 were deprecated by major browsers in 2020. TLS 1.2 is the current recommended minimum version."
+}
