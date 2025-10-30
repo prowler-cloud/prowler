@@ -1,0 +1,74 @@
+name: 'API: Code Quality'
+
+on:
+  push:
+    branches:
+      - 'master'
+      - 'v5.*'
+    paths:
+      - 'api/**'
+      - '.github/workflows/api-code-quality.yml'
+  pull_request:
+    branches:
+      - 'master'
+      - 'v5.*'
+    paths:
+      - 'api/**'
+      - '.github/workflows/api-code-quality.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  API_WORKING_DIR: ./api
+
+jobs:
+  api-code-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        python-version:
+          - '3.12'
+    defaults:
+      run:
+        working-directory: ./api
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Check for API changes
+        id: check-changes
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        with:
+          files_ignore: |
+            api/docs/**
+            api/README.md
+            api/CHANGELOG.md
+
+      - name: Setup Python with Poetry
+        if: steps.check-changes.outputs.any_changed == 'true'
+        uses: ./.github/actions/setup-python-poetry
+        with:
+          python-version: ${{ matrix.python-version }}
+          working-directory: ./api
+
+      - name: Poetry check
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: poetry check --lock
+
+      - name: Ruff lint
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: poetry run ruff check . --exclude contrib
+
+      - name: Ruff format
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: poetry run ruff format --check . --exclude contrib
+
+      - name: Pylint
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: poetry run pylint --disable=W,C,R,E -j 0 -rn -sn src/

@@ -3284,7 +3284,7 @@ class LighthouseTenantConfigSerializer(RLSSerializer):
 
     def get_url(self, obj):
         request = self.context.get("request")
-        return reverse("lighthouse-config", request=request)
+        return reverse("lighthouse-configurations", request=request)
 
     class Meta:
         model = LighthouseTenantConfiguration
