@@ -179,7 +179,7 @@ def get_security_hub_client_from_integration(
         if the connection was successful and the SecurityHub client or connection object.
     """
     # Get the provider associated with this integration
-    with rls_transaction(tenant_id):
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
         provider_relationship = integration.integrationproviderrelationship_set.first()
         if not provider_relationship:
             return Connection(
