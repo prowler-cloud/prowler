@@ -16,6 +16,7 @@ from tasks.jobs.cartography.aws import start_aws_ingestion
 # logger = get_task_logger(__name__)
 import logging
 from config.custom_logging import BackendLogger
+
 logger = logging.getLogger(BackendLogger.API)
 
 
@@ -45,9 +46,13 @@ def run(provider_id: str) -> None:
         update_tag=int(time.time()),
     )
 
-    logger.info(f"Starting Cartography scan for provider {provider.provider.upper()} {provider.id}")
+    logger.info(
+        f"Starting Cartography scan for provider {provider.provider.upper()} {provider.id}"
+    )
 
-    with neo4j.GraphDatabase.driver(neo4j_uri, auth=(neo4j_user, neo4j_password)) as driver:
+    with neo4j.GraphDatabase.driver(
+        neo4j_uri, auth=(neo4j_user, neo4j_password)
+    ) as driver:
         with driver.session() as neo4j_session:
             cartography_indexes.run(neo4j_session, config)
             _call_within_event_loop(

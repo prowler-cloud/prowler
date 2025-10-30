@@ -16,6 +16,7 @@ from prowler.providers.common.provider import Provider as ProwlerProvider
 # logger = get_task_logger(__name__)
 import logging
 from config.custom_logging import BackendLogger
+
 logger = logging.getLogger(BackendLogger.API)
 
 
@@ -35,16 +36,21 @@ def start_aws_ingestion(
         "aws_cloudtrail_management_events_lookback_hours": config.aws_cloudtrail_management_events_lookback_hours,
     }
 
+    # TODO: Check if there is a way to renew the session token if expired
     boto3_session = prowler_provider.session.current_session
     # Original: boto3_session = boto3.Session()
 
     if config.aws_sync_all_profiles:
-        aws_accounts = cartography_aws.organizations.get_aws_accounts_from_botocore_config(
-            boto3_session,
+        aws_accounts = (
+            cartography_aws.organizations.get_aws_accounts_from_botocore_config(
+                boto3_session,
+            )
         )
 
     else:
-        aws_accounts = cartography_aws.organizations.get_aws_account_default(boto3_session)
+        aws_accounts = cartography_aws.organizations.get_aws_account_default(
+            boto3_session
+        )
 
     if not aws_accounts:
         logger.warning(
@@ -89,7 +95,9 @@ def start_aws_ingestion(
     )
 
     if sync_successful:
-        cartography_aws._perform_aws_analysis(requested_syncs, neo4j_session, common_job_parameters)
+        cartography_aws._perform_aws_analysis(
+            requested_syncs, neo4j_session, common_job_parameters
+        )
 
 
 def _sync_multiple_accounts(
@@ -107,7 +115,9 @@ def _sync_multiple_accounts(
     """
 
     logger.info("Syncing AWS accounts: %s", ", ".join(accounts.values()))
-    cartography_aws.organizations.sync(neo4j_session, accounts, sync_tag, common_job_parameters)
+    cartography_aws.organizations.sync(
+        neo4j_session, accounts, sync_tag, common_job_parameters
+    )
 
     failed_account_ids = []
     exception_tracebacks = []
