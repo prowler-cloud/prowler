@@ -34,7 +34,7 @@ class sharepoint_onedrive_sync_restricted_unmanaged_devices(Check):
                 self.metadata(),
                 resource=settings if settings else {},
                 resource_name="SharePoint Settings",
-                resource_id=sharepoint_client.tenant_domain,
+                resource_id="sharepointSettings",
             )
             report.status = "PASS"
             report.status_extended = "Microsoft 365 SharePoint does not allow OneDrive sync to unmanaged devices."
