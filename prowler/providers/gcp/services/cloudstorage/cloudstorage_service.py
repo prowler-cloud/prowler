@@ -52,6 +52,10 @@ class CloudStorage(GCPService):
                             if retention and int(retention) > 0:
                                 soft_delete_enabled = True
 
+                        logging_info = bucket.get("logging", {})
+                        logging_bucket = logging_info.get("logBucket")
+                        logging_prefix = logging_info.get("logObjectPrefix")
+
                         self.buckets.append(
                             Bucket(
                                 name=bucket["name"],
@@ -66,6 +70,8 @@ class CloudStorage(GCPService):
                                 lifecycle_rules=lifecycle_rules,
                                 versioning_enabled=versioning_enabled,
                                 soft_delete_enabled=soft_delete_enabled,
+                                logging_bucket=logging_bucket,
+                                logging_prefix=logging_prefix,
                             )
                         )
 
@@ -89,3 +95,5 @@ class Bucket(BaseModel):
     lifecycle_rules: Optional[list[dict]] = None
     versioning_enabled: Optional[bool] = False
     soft_delete_enabled: Optional[bool] = False
+    logging_bucket: Optional[str] = None
+    logging_prefix: Optional[str] = None
