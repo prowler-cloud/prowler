@@ -8923,7 +8923,7 @@ class TestLighthouseTenantConfigViewSet:
         """Test creating a tenant config successfully via PATCH (upsert)"""
         payload = {
             "data": {
-                "type": "lighthouse-config",
+                "type": "lighthouse-configuration",
                 "attributes": {
                     "business_context": "Test business context for security analysis",
                     "default_provider": "",
@@ -8932,7 +8932,7 @@ class TestLighthouseTenantConfigViewSet:
             }
         }
         response = authenticated_client.patch(
-            reverse("lighthouse-config"),
+            reverse("lighthouse-configuration"),
             data=payload,
             content_type=API_JSON_CONTENT_TYPE,
         )
@@ -8949,7 +8949,7 @@ class TestLighthouseTenantConfigViewSet:
         """Test that PATCH creates config if not exists and updates if exists (upsert)"""
         payload = {
             "data": {
-                "type": "lighthouse-config",
+                "type": "lighthouse-configuration",
                 "attributes": {
                     "business_context": "First config",
                 },
@@ -8958,7 +8958,7 @@ class TestLighthouseTenantConfigViewSet:
 
         # First PATCH creates the config
         response = authenticated_client.patch(
-            reverse("lighthouse-config"),
+            reverse("lighthouse-configuration"),
             data=payload,
             content_type=API_JSON_CONTENT_TYPE,
         )
@@ -8969,7 +8969,7 @@ class TestLighthouseTenantConfigViewSet:
         # Second PATCH updates the same config (not creating a duplicate)
         payload["data"]["attributes"]["business_context"] = "Updated config"
         response = authenticated_client.patch(
-            reverse("lighthouse-config"),
+            reverse("lighthouse-configuration"),
             data=payload,
             content_type=API_JSON_CONTENT_TYPE,
         )
@@ -9025,7 +9025,7 @@ class TestLighthouseTenantConfigViewSet:
         )
 
         # Retrieve and verify the configuration
-        response = authenticated_client.get(reverse("lighthouse-config"))
+        response = authenticated_client.get(reverse("lighthouse-configuration"))
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
         assert data["id"] == str(config.id)
@@ -9035,7 +9035,7 @@ class TestLighthouseTenantConfigViewSet:
 
     def test_lighthouse_tenant_config_retrieve_not_found(self, authenticated_client):
         """Test GET when config doesn't exist returns 404"""
-        response = authenticated_client.get(reverse("lighthouse-config"))
+        response = authenticated_client.get(reverse("lighthouse-configuration"))
         assert response.status_code == status.HTTP_404_NOT_FOUND
         assert "not found" in response.json()["errors"][0]["detail"].lower()
 
@@ -9056,14 +9056,14 @@ class TestLighthouseTenantConfigViewSet:
         # Update it
         payload = {
             "data": {
-                "type": "lighthouse-config",
+                "type": "lighthouse-configuration",
                 "attributes": {
                     "business_context": "Updated context for cloud security",
                 },
             }
         }
         response = authenticated_client.patch(
-            reverse("lighthouse-config"),
+            reverse("lighthouse-configuration"),
             data=payload,
             content_type=API_JSON_CONTENT_TYPE,
         )
@@ -9088,14 +9088,14 @@ class TestLighthouseTenantConfigViewSet:
         # Try to set invalid provider
         payload = {
             "data": {
-                "type": "lighthouse-config",
+                "type": "lighthouse-configuration",
                 "attributes": {
                     "default_provider": "nonexistent-provider",
                 },
             }
         }
         response = authenticated_client.patch(
-            reverse("lighthouse-config"),
+            reverse("lighthouse-configuration"),
             data=payload,
             content_type=API_JSON_CONTENT_TYPE,
         )
@@ -9116,7 +9116,7 @@ class TestLighthouseTenantConfigViewSet:
 
         # Send invalid JSON
         response = authenticated_client.patch(
-            reverse("lighthouse-config"),
+            reverse("lighthouse-configuration"),
             data="invalid json",
             content_type=API_JSON_CONTENT_TYPE,
         )
