@@ -3,9 +3,9 @@
 import { BellRing } from "lucide-react";
 import { ReactNode } from "react";
 
+import { Button } from "@/components/shadcn";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { BreadcrumbNavigation } from "@/components/ui";
-import { Button } from "@/components/ui/button/button";
 
 import { SheetMenu } from "../sidebar/sheet-menu";
 import { UserNav } from "../user-nav/user-nav";

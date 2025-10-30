@@ -6,17 +6,16 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import type { FeedItem, ParsedFeed } from "@/actions/feeds";
-import { Badge } from "@/components/shadcn";
-import { Separator } from "@/components/shadcn";
 import {
+  Badge,
+  Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu/dropdown-menu";
+  Separator,
+} from "@/components/shadcn";
 import { hasNewFeeds, markFeedsAsSeen } from "@/lib/feeds-storage";
 import { cn } from "@/lib/utils";
-
-import { Button } from "../ui/button/button";
 
 interface FeedsClientProps {
   feedData: ParsedFeed;
@@ -77,10 +76,13 @@ export function FeedsClient({ feedData, error }: FeedsClientProps) {
 
       <DropdownMenuContent
         align="end"
-        className="w-96 overflow-x-hidden"
-        forceMount
+        className={cn(
+          "w-96 overflow-x-hidden",
+          "border-slate-200 bg-white dark:border-zinc-900 dark:bg-stone-950",
+          "gap-2 px-[18px] pt-3 pb-4",
+        )}
       >
-        <div className="px-3 py-2">
+        <div className="pb-2">
           <h3 className="text-base font-semibold text-slate-900 dark:text-white">
             Latest Updates
           </h3>
@@ -157,7 +159,13 @@ function FeedTimelineItem({ item, isLast }: FeedTimelineItemProps) {
           href={item.link}
           target="_blank"
           rel="noopener noreferrer"
-          className="block space-y-1 rounded-lg p-2 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
+          className={cn(
+            "block space-y-1 rounded-[12px] border p-2 transition-all",
+            "backdrop-blur-0 border-transparent",
+            "hover:backdrop-blur-[46px]",
+            "hover:border-slate-300 hover:bg-[#F8FAFC80]",
+            "dark:hover:border-[rgba(38,38,38,0.70)] dark:hover:bg-[rgba(23,23,23,0.50)]",
+          )}
         >
           <div className="flex items-start justify-between gap-2">
             <h4
