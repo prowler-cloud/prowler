@@ -56,7 +56,7 @@ dependencies = [
   "msgraph-sdk==1.23.0",
   "numpy==2.0.2",
   "pandas==2.2.3",
-  "py-ocsf-models==0.5.0",
+  "py-ocsf-models (>=0.7.1,<0.8.0)",
   "pydantic (>=2.0,<3.0)",
   "pygithub==2.5.0",
   "python-dateutil (>=2.9.0.post0,<3.0.0)",
@@ -66,6 +66,7 @@ dependencies = [
   "slack-sdk==3.34.0",
   "tabulate==0.9.0",
   "tzlocal==5.3.1",
+  "ionoscloud==6.1.9",
   "py-iam-expand==0.1.0",
   "h2 (==4.3.0)",
   "oci==2.160.3"
@@ -101,6 +102,7 @@ coverage = "7.6.12"
 docker = "7.1.0"
 flake8 = "7.1.2"
 freezegun = "1.5.1"
+ipdb = "^0.13.13"
 marshmallow = ">=3.15.0,<4.0.0"
 mock = "5.2.0"
 moto = {extras = ["all"], version = "5.1.11"}

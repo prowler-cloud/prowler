@@ -244,15 +244,6 @@ class Provider(ABC):
                         init_modules=arguments.init_modules,
                         fixer_config=fixer_config,
                     )
-                elif "nhn" in provider_class_name.lower():
-                    provider_class(
-                        username=arguments.nhn_username,
-                        password=arguments.nhn_password,
-                        tenant_id=arguments.nhn_tenant_id,
-                        config_path=arguments.config_file,
-                        mutelist_path=arguments.mutelist_file,
-                        fixer_config=fixer_config,
-                    )
                 elif "github" in provider_class_name.lower():
                     provider_class(
                         personal_access_token=arguments.personal_access_token,
@@ -301,6 +292,26 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                         use_instance_principal=arguments.use_instance_principal,
+                    )
+                elif "nhn" in provider_class_name.lower():
+                    provider_class(
+                        username=arguments.nhn_username,
+                        password=arguments.nhn_password,
+                        tenant_id=arguments.nhn_tenant_id,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
+                elif "ionos" in provider_class_name.lower():
+                    provider_class(
+                        ionos_username=arguments.ionos_username,
+                        ionos_password=arguments.ionos_password,
+                        ionos_datacenter_name=arguments.ionos_datacenter_name,
+                        mutelist_path=arguments.mutelist_file,
+                        config_path=arguments.config_file,
+                        use_ionosctl=arguments.ionosctl,
+                        use_env_vars=arguments.ionos_user_env_vars,
+                        fixer_config=fixer_config,
                     )
 
         except TypeError as error:

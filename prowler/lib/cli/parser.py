@@ -26,7 +26,7 @@ class ProwlerArgumentParser:
         self.parser = argparse.ArgumentParser(
             prog="prowler",
             formatter_class=RawTextHelpFormatter,
-            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,nhn,mongodbatlas,oci,dashboard,iac} ...",
+            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,nhn,mongodbatlas,oci,ionos,dashboard,iac} ...",
             epilog="""
 Available Cloud Providers:
   {aws,azure,gcp,kubernetes,m365,github,iac,llm,nhn,mongodbatlas,oci}
@@ -37,10 +37,11 @@ Available Cloud Providers:
     m365                Microsoft 365 Provider
     github              GitHub Provider
     oci                 Oracle Cloud Infrastructure Provider
-    iac                 IaC Provider (Beta)
-    llm                 LLM Provider (Beta)
+    mongodbatlas        MongoDB Atlas Provider
+    iac                 IaC Provider
+    llm                 LLM Provider
     nhn                 NHN Provider (Unofficial)
-    mongodbatlas        MongoDB Atlas Provider (Beta)
+    ionos               IONOS Provider (Unofficial)
 
 Available components:
     dashboard           Local dashboard

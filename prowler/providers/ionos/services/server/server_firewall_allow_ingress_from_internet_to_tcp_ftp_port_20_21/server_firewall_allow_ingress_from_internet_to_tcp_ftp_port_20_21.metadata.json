@@ -1,0 +1,34 @@
+{
+    "Provider": "ionos",
+    "CheckID": "server_firewall_allow_ingress_from_internet_to_tcp_ftp_port_20_21",
+    "CheckTitle": "Check if Servers firewalls allow ingress from internet to TCP ports 20, 21 (FTP)",
+    "CheckType": ["Infrastructure Security"],
+    "ServiceName": "server",
+    "SubServiceName": "firewall",
+    "ResourceIdTemplate": "TBD",
+    "Severity": "high",
+    "ResourceType": "Firewall",
+    "Description": "Check if Firewalls have rules that allow inbound traffic from the internet to FTP ports (20, 21)",
+    "Risk": "Allowing inbound FTP access from the internet poses security risks as FTP protocol transmits data in clear text",
+    "RelatedUrl": "https://docs.ionos.com/cloud/network-services/vdc-networking/how-tos/firewall",
+    "Remediation": {
+        "Code": {
+            "CLI": "",
+            "NativeIaC": "",
+            "Terraform": "",
+            "Console": "",
+            "Other": "1. Navigate to IONOS Cloud Console\n2. Go to Data Center Designer\n3. Select the server\n4. Remove or modify firewall rules allowing inbound TCP ports 20 and 21 from internet (0.0.0.0/0)"
+        },
+        "Recommendation": {
+            "Text": "Modify NSG rules to restrict FTP access to specific IP ranges and consider using SFTP or other secure protocols instead",
+            "Url": "https://docs.ionos.com/cloud/network-services/vdc-networking/how-tos/firewall"
+        }
+    },
+    "Categories": [
+        "internet-exposed",
+        "network-security"
+    ],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": "FTP ports should be restricted to specific IP ranges and secured with additional authentication methods"
+}
