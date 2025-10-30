@@ -11,7 +11,7 @@ permissions: {}
 jobs:
   label-if-community:
     name: Add 'community' label if the PR is from a community contributor
-    if: github.event.pull_request.author_association != 'MEMBER' && github.event.pull_request.author_association != 'OWNER'
+    if: github.repository == 'prowler-cloud/prowler' && github.event.pull_request.author_association != 'MEMBER' && github.event.pull_request.author_association != 'OWNER'
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write # to write the label
