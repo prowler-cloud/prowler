@@ -37,8 +37,7 @@
     }
   },
   "Categories": [
-    "logging",
-    "forensics-ready"
+    "logging"
   ],
   "DependsOn": [],
   "RelatedTo": [],
