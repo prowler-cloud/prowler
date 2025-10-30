@@ -1,7 +1,7 @@
 import datetime
 import traceback
 
-from typing import Any
+from typing import Any, Iterable
 
 import boto3
 import neo4j
@@ -24,9 +24,9 @@ def start_aws_ingestion(
     neo4j_session: neo4j.Session,
     config: CartographyConfig,
     prowler_provider: ProwlerProvider,
-) -> None:
+) -> dict[str, dict[str, str]]:
     """
-    Code based on `cartography.intel.aws.start_aws_ingestion`.
+    Code based on Cartography version 0.117.0, specifically on `cartography.intel.aws.start_aws_ingestion`.
     """
 
     common_job_parameters = {
@@ -83,7 +83,7 @@ def start_aws_ingestion(
     # Original: There is no original for this, in Cartography the `AWS_DEFAULT_REGION`
     #           environment variable must be set or the boto3 client for some services will fail
 
-    sync_successful = _sync_multiple_accounts(
+    failed_account_id_excptions = _sync_multiple_accounts(
         neo4j_session,
         boto3_session,
         aws_accounts,
@@ -93,11 +93,15 @@ def start_aws_ingestion(
         requested_syncs,
         regions=regions,
     )
+    # Original: `_sync_multiple_accounts` returns a boolean indicating if the sync was successful or not
 
-    if sync_successful:
+    if not failed_account_id_excptions:
         cartography_aws._perform_aws_analysis(
             requested_syncs, neo4j_session, common_job_parameters
         )
+
+    return failed_account_id_excptions
+    # Original: There is no return
 
 
 def _sync_multiple_accounts(
@@ -109,9 +113,9 @@ def _sync_multiple_accounts(
     aws_best_effort_mode: bool,
     aws_requested_syncs: list[str] = [],
     regions: list[str] | None = None,
-) -> bool:
+) -> dict[str, dict[str, str]]:
     """
-    Code based on `cartography.intel.aws._sync_multiple_accounts`.
+    Code based on Cartography version 0.117.0, specifically on `cartography.intel.aws._sync_multiple_accounts`.
     """
 
     logger.info("Syncing AWS accounts: %s", ", ".join(accounts.values()))
@@ -119,8 +123,8 @@ def _sync_multiple_accounts(
         neo4j_session, accounts, sync_tag, common_job_parameters
     )
 
-    failed_account_ids = []
-    exception_tracebacks = []
+    failed_account_id_exceptions = {}
+    # Original: This variable is two lists: `failed_account_ids` and `exception_tracebacks`
 
     for profile_name, account_id in accounts.items():
         logger.info(
@@ -133,7 +137,7 @@ def _sync_multiple_accounts(
         # TODO: Check if we can reuse the `boto3_session` from the function parameters or we need to create a new one
         #       per `profile_name`. Probably we don't need to create a new one as the `accounts` dict was created using
         #       `cartography_aws.organizations.get_aws_account_default` as `config.aws_sync_all_profiles` is None.
-        # Original, for more than on account in `accounts`: boto3_session = boto3.Session(profile_name=profile_name)
+        # Original, for more than on account in `accounts`: `boto3_session = boto3.Session(profile_name=profile_name)`
 
         cartography_aws._autodiscover_accounts(
             neo4j_session,
@@ -143,48 +147,137 @@ def _sync_multiple_accounts(
             common_job_parameters,
         )
 
-        try:
-            cartography_aws._sync_one_account(
-                neo4j_session,
-                boto3_session,
-                account_id,
-                sync_tag,
-                common_job_parameters,
-                regions=regions,
-                aws_requested_syncs=aws_requested_syncs,  # Could be replaced later with per-account requested syncs
+        failed_aws_requested_sync_exceptions = _sync_one_account(
+            neo4j_session,
+            boto3_session,
+            account_id,
+            sync_tag,
+            common_job_parameters,
+            regions=regions,
+            aws_requested_syncs=aws_requested_syncs,  # Could be replaced later with per-account requested syncs
+        )
+        if failed_aws_requested_sync_exceptions:
+            failed_account_id_exceptions[account_id] = failed_aws_requested_sync_exceptions
+            failed_aws_requested_syncs = ",".join(failed_aws_requested_sync_exceptions.keys())
+            logger.warning(
+                f"Caught exceptions syncing account {account_id} in the functions {failed_aws_requested_syncs}",
             )
-        except Exception as e:
-            if aws_best_effort_mode:
-                timestamp = datetime.datetime.now()
-                failed_account_ids.append(account_id)
-                exception_traceback = traceback.TracebackException.from_exception(e)
-                traceback_string = "".join(exception_traceback.format())
-                exception_tracebacks.append(
-                    f"{timestamp} - Exception for account ID: {account_id}\n{traceback_string}",
-                )
-                logger.warning(
-                    f"Caught exception syncing account {account_id}. aws-best-effort-mode is on so we are continuing "
-                    f"on to the next AWS account. All exceptions will be aggregated and re-logged at the end of the "
-                    f"sync.",
-                    exc_info=True,
-                )
-                continue
-            else:
-                raise
 
-    if failed_account_ids:
-        logger.error(f"AWS sync failed for accounts {failed_account_ids}")
-        raise Exception("\n".join(exception_tracebacks))
+        # Original: `_sync_one_account` doesn't return anything, also this call is inside a try / except block that
+        #           appends to two lists: `failed_account_ids` and `exception_tracebacks` if the `aws_best_effort_mode`
+        #           config variable is set to `True`
+
+    # Original: Here it logs and raises all the collected exceptions
 
     del common_job_parameters["AWS_ID"]
 
     # There may be orphan Principals which point outside of known AWS accounts. This job cleans
     # up those nodes after all AWS accounts have been synced.
-    if not failed_account_ids:
+    if not failed_account_id_exceptions:
         cartography_aws.run_cleanup_job(
             "aws_post_ingestion_principals_cleanup.json",
             neo4j_session,
             common_job_parameters,
         )
-        return True
-    return False
+
+    return failed_account_id_exceptions
+    # Original: It returns `True` or `False` depending on whether there were exceptions
+
+
+def _sync_one_account(
+    neo4j_session: neo4j.Session,
+    boto3_session: boto3.Session,
+    current_aws_account_id: str,
+    update_tag: int,
+    common_job_parameters: dict[str, Any],
+    regions: list[str] | None = None,
+    aws_requested_syncs: Iterable[str] = cartography_aws.RESOURCE_FUNCTIONS.keys(),
+) -> dict[str, str]:
+    """
+    Code based on Cartography version 0.117.0, specifically on `cartography.intel.aws._sync_one_account`.
+    """
+
+    # Autodiscover the regions supported by the account unless the user has specified the regions to sync.
+    if not regions:
+        regions = cartography_aws._autodiscover_account_regions(boto3_session, current_aws_account_id)
+
+    sync_args = cartography_aws._build_aws_sync_kwargs(
+        neo4j_session,
+        boto3_session,
+        regions,
+        current_aws_account_id,
+        update_tag,
+        common_job_parameters,
+    )
+
+    failed_aws_requested_sync_exceptions = {}
+    # Original: This variable doesn't exist in the original code
+
+    for func_name in aws_requested_syncs:
+        if func_name in cartography_aws.RESOURCE_FUNCTIONS:
+            logger.info(f"Syncing function {func_name} from AWS account {current_aws_account_id}")
+            # Original: There is no log message here
+
+            try:
+                # Skip permission relationships and tags for now because they rely on data already being in the graph
+                if func_name not in [
+                    "permission_relationships",
+                    "resourcegroupstaggingapi",
+                ]:
+                    cartography_aws.RESOURCE_FUNCTIONS[func_name](**sync_args)
+                else:
+                    continue
+
+            except Exception as e:
+                timestamp = datetime.datetime.now()
+                exception_traceback = traceback.TracebackException.from_exception(e)
+                traceback_string = "".join(exception_traceback.format())
+                exception_message = f"{timestamp} - Exception for AWS sync function: {func_name}\n{traceback_string}"
+                failed_aws_requested_sync_exceptions[func_name] = exception_message
+                logger.warning(
+                    f"Caught exception syncing function {func_name} from AWS account {current_aws_account_id}. We are "
+                    f"continuing on to the next AWS sync function. All exceptions will be aggregated and re-logged at "
+                    f"the end of the sync.",
+                    exc_info=True,
+                )
+                continue
+            # Original: The original code doesn't:
+            #     1. Do a try / except block, if a AWS service sync fails the whole AWS account sync fails
+            #     2. Collect exceptions for logging and returning them
+
+        else:
+            raise ValueError(
+                f'AWS sync function "{func_name}" was specified but does not exist. Did you misspell it?',
+            )
+
+    # MAP IAM permissions
+    if "permission_relationships" in aws_requested_syncs:
+        cartography_aws.RESOURCE_FUNCTIONS["permission_relationships"](**sync_args)
+
+    # AWS Tags - Must always be last.
+    if "resourcegroupstaggingapi" in aws_requested_syncs:
+        cartography_aws.RESOURCE_FUNCTIONS["resourcegroupstaggingapi"](**sync_args)
+
+    cartography_aws.run_scoped_analysis_job(
+        "aws_ec2_iaminstanceprofile.json",
+        neo4j_session,
+        common_job_parameters,
+    )
+
+    cartography_aws.run_analysis_job(
+        "aws_lambda_ecr.json",
+        neo4j_session,
+        common_job_parameters,
+    )
+
+    cartography_aws.merge_module_sync_metadata(
+        neo4j_session,
+        group_type="AWSAccount",
+        group_id=current_aws_account_id,
+        synced_type="AWSAccount",
+        update_tag=update_tag,
+        stat_handler=cartography_aws.stat_handler,
+    )
+
+    return failed_aws_requested_sync_exceptions
+    # Original: There is no return

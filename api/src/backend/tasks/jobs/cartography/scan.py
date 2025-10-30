@@ -1,11 +1,11 @@
 import time
 import asyncio
-import threading
 
 import neo4j
 
 from cartography.config import Config as CartographyConfig
-from cartography.intel import create_indexes as cartography_indexes
+from cartography.intel import analysis as cartography_analysis
+from cartography.intel import create_indexes as cartography_create_indexes
 from celery.utils.log import get_task_logger
 
 from api.models import Provider
@@ -27,7 +27,7 @@ CARTOGRAPHY_INGESTION_FUNCTIONS = {
 
 def run(provider_id: str) -> None:
     """
-    Code based on `cartography.cli.main`, `cartography.cli.CLI.main`,
+    Code based on Cartography version 0.117.0, specifically on `cartography.cli.main`, `cartography.cli.CLI.main`,
     `cartography.sync.run_with_config` and `cartography.sync.Sync.run`.
     """
 
@@ -41,8 +41,9 @@ def run(provider_id: str) -> None:
 
     config = CartographyConfig(
         neo4j_uri=neo4j_uri,
-        neo4j_user=neo4j_user,
-        neo4j_password=neo4j_password,
+        neo4j_user=neo4j_user,  # TODO: Don't needed, just for consistency with `neo4j_uri`
+        neo4j_password=neo4j_password,  # TODO: Don't needed, just for consistency with `neo4j_uri`
+        aws_best_effort_mode=True,  # TODO: Don't need if we only run the scan for only one AWS account
         update_tag=int(time.time()),
     )
 
@@ -54,13 +55,21 @@ def run(provider_id: str) -> None:
         neo4j_uri, auth=(neo4j_user, neo4j_password)
     ) as driver:
         with driver.session() as neo4j_session:
-            cartography_indexes.run(neo4j_session, config)
-            _call_within_event_loop(
+            cartography_create_indexes.run(neo4j_session, config)
+
+            failed_ingestoin_function_exceptions = _call_within_event_loop(
                 CARTOGRAPHY_INGESTION_FUNCTIONS[provider.provider],
                 neo4j_session,
                 config,
                 prowler_provider,
             )
+
+            # TODO: Check if it's ok to skip this step because we are not configuring it
+            if not failed_ingestoin_function_exceptions:
+                cartography_analysis.run(neo4j_session, config)
+
+    # TODO: Store something in Postgres and set the right task status
+    return failed_ingestoin_function_exceptions
 
 
 def _call_within_event_loop(fn, *args, **kwargs):
