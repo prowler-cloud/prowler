@@ -12,21 +12,6 @@ on:
       - 'poetry.lock'
       - 'Dockerfile'
       - '.github/workflows/sdk-pull-request.yml'
-      - '!prowler/CHANGELOG.md'
-      - '!docs/**'
-      - '!permissions/**'
-      - '!api/**'
-      - '!ui/**'
-      - '!dashboard/**'
-      - '!mcp_server/**'
-      - '!README.md'
-      - '!mkdocs.yml'
-      - '!.backportrc.json'
-      - '!.env'
-      - '!docker-compose*'
-      - '!examples/**'
-      - '!.gitignore'
-      - '!contrib/**'
   pull_request:
     branches:
       - 'master'
@@ -38,21 +23,6 @@ on:
       - 'poetry.lock'
       - 'Dockerfile'
       - '.github/workflows/sdk-pull-request.yml'
-      - '!prowler/CHANGELOG.md'
-      - '!docs/**'
-      - '!permissions/**'
-      - '!api/**'
-      - '!ui/**'
-      - '!dashboard/**'
-      - '!mcp_server/**'
-      - '!README.md'
-      - '!mkdocs.yml'
-      - '!.backportrc.json'
-      - '!.env'
-      - '!docker-compose*'
-      - '!examples/**'
-      - '!.gitignore'
-      - '!contrib/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -62,8 +32,49 @@ env:
   IMAGE_NAME: prowler
 
 jobs:
-  code-quality:
+  check-changes:
     if: github.repository == 'prowler-cloud/prowler'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      sdk-changed: ${{ steps.filter.outputs.sdk }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Check for SDK changes
+        id: filter
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        with:
+          files_ignore: |
+            prowler/CHANGELOG.md
+            docs/**
+            permissions/**
+            api/**
+            ui/**
+            dashboard/**
+            mcp_server/**
+            README.md
+            mkdocs.yml
+            .backportrc.json
+            .env
+            docker-compose*
+            examples/**
+            .gitignore
+            contrib/**
+
+      - name: Set output
+        id: set-output
+        run: |
+          if [[ "${{ steps.filter.outputs.any_changed }}" == "true" ]]; then
+            echo "sdk=true" >> $GITHUB_OUTPUT
+          else
+            echo "sdk=false" >> $GITHUB_OUTPUT
+          fi
+
+  code-quality:
+    needs: check-changes
+    if: github.repository == 'prowler-cloud/prowler' && needs.check-changes.outputs.sdk-changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -107,7 +118,8 @@ jobs:
         run: poetry run pylint --disable=W,C,R,E -j 0 -rn -sn prowler/
 
   security-scans:
-    if: github.repository == 'prowler-cloud/prowler'
+    needs: check-changes
+    if: github.repository == 'prowler-cloud/prowler' && needs.check-changes.outputs.sdk-changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -139,7 +151,8 @@ jobs:
         run: poetry run vulture --exclude "contrib,api,ui" --min-confidence 100 .
 
   tests:
-    if: github.repository == 'prowler-cloud/prowler'
+    needs: check-changes
+    if: github.repository == 'prowler-cloud/prowler' && needs.check-changes.outputs.sdk-changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
@@ -445,7 +458,8 @@ jobs:
           files: ./config_coverage.xml
 
   dockerfile-lint:
-    if: github.repository == 'prowler-cloud/prowler'
+    needs: check-changes
+    if: github.repository == 'prowler-cloud/prowler' && needs.check-changes.outputs.sdk-changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -469,7 +483,8 @@ jobs:
           ignore: DL3013
 
   container-build-and-scan:
-    if: github.repository == 'prowler-cloud/prowler'
+    needs: check-changes
+    if: github.repository == 'prowler-cloud/prowler' && needs.check-changes.outputs.sdk-changed == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
