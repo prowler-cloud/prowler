@@ -404,8 +404,8 @@ class EventMessageFormatter:
                         isinstance(principal, dict) and principal.get("AWS") == "*"
                     ):
                         return f"⚠️ S3 bucket policy changed to ALLOW PUBLIC ACCESS: {bucket_name}"
-            except (json.JSONDecodeError, AttributeError):
-                pass
+            except Exception as e:
+                logger.error(f"Error parsing S3 bucket policy: {e}")
 
         return f"S3 bucket policy changed: {bucket_name}"
 

@@ -1150,15 +1150,37 @@ class CloudTrailEnricher:
                     resource_type_part = resource_part
 
                 # Map service to AWS resource type
-                if service == "ec2":
+                if service == "ec2" or service == "vpc":
                     if resource_type_part.startswith("instance"):
                         return "AWS::EC2::Instance"
                     elif resource_type_part.startswith("security-group"):
                         return "AWS::EC2::SecurityGroup"
                     elif resource_type_part.startswith("network-interface"):
                         return "AWS::EC2::NetworkInterface"
-                    elif resource_type_part.startswith("snapshot"):
+                    elif "image" in resource_type_part:
+                        return "AWS::EC2::Image"
+                    elif "network-acl" in resource_type_part:
+                        return "AWS::EC2::NetworkACL"
+                    elif "vpc" in resource_type_part:
+                        return "AWS::EC2::VPC"
+                    elif "subnet" in resource_type_part:
+                        return "AWS::EC2::Subnet"
+                    elif "route-table" in resource_type_part:
+                        return "AWS::EC2::RouteTable"
+                    elif "internet-gateway" in resource_type_part:
+                        return "AWS::EC2::InternetGateway"
+                    elif "nat-gateway" in resource_type_part:
+                        return "AWS::EC2::NatGateway"
+                    elif "volume" in resource_type_part:
+                        return "AWS::EC2::Volume"
+                    elif "snapshot" in resource_type_part:
                         return "AWS::EC2::Snapshot"
+                    elif "eip-allocation" in resource_type_part:
+                        return "AWS::EC2::EIPAllocation"
+                    elif "eip-association" in resource_type_part:
+                        return "AWS::EC2::EIPAssociation"
+                    elif "eip" in resource_type_part:
+                        return "AWS::EC2::EIP"
                 elif service == "elasticloadbalancing":
                     return "AWS::ElasticLoadBalancingV2::LoadBalancer"
                 elif service == "rds":
@@ -1231,23 +1253,6 @@ class CloudTrailEnricher:
                         return "AWS::ECS::Service"
                     elif "task-definition" in resource_type_part:
                         return "AWS::ECS::TaskDefinition"
-
-            # VPC and EBS resources are under ec2 service
-            if service == "ec2":
-                if "vpc" in resource_type_part:
-                    return "AWS::EC2::VPC"
-                elif "subnet" in resource_type_part:
-                    return "AWS::EC2::Subnet"
-                elif "route-table" in resource_type_part:
-                    return "AWS::EC2::RouteTable"
-                elif "internet-gateway" in resource_type_part:
-                    return "AWS::EC2::InternetGateway"
-                elif "nat-gateway" in resource_type_part:
-                    return "AWS::EC2::NatGateway"
-                elif "volume" in resource_type_part:
-                    return "AWS::EC2::Volume"
-                elif "snapshot" in resource_type_part:
-                    return "AWS::EC2::Snapshot"
 
         # Fall back to check metadata service name
         check_metadata = getattr(finding, "check_metadata", None)
