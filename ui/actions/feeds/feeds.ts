@@ -55,23 +55,35 @@ async function parseSingleFeed(
     const feed = await parser.parseURL(source.url);
 
     // Map RSS items to our FeedItem type
-    const items: FeedItem[] = (feed.items || []).map((item) => ({
-      id: item.guid || item.link || `${source.id}-${item.title}`,
-      title: item.title || "Untitled",
-      description:
-        item.contentSnippet || item.content || item.description || "",
-      link: item.link || "",
-      pubDate:
-        item.isoDate || new Date(item.pubDate || Date.now()).toISOString(),
-      source: {
-        id: source.id,
-        name: source.name,
-        type: source.type,
-      },
-      author: item.creator || item.author,
-      categories: item.categories || [],
-      contentSnippet: item.contentSnippet || undefined,
-    }));
+    const items: FeedItem[] = (feed.items || []).map((item) => {
+      // Validate and parse date with fallback to current date
+      const parsePubDate = (): string => {
+        const dateString = item.isoDate || item.pubDate;
+        if (!dateString) return new Date().toISOString();
+
+        const parsed = new Date(dateString);
+        return isNaN(parsed.getTime())
+          ? new Date().toISOString()
+          : parsed.toISOString();
+      };
+
+      return {
+        id: item.guid || item.link || `${source.id}-${item.title}`,
+        title: item.title || "Untitled",
+        description:
+          item.contentSnippet || item.content || item.description || "",
+        link: item.link || "",
+        pubDate: parsePubDate(),
+        source: {
+          id: source.id,
+          name: source.name,
+          type: source.type,
+        },
+        author: item.creator || item.author,
+        categories: item.categories || [],
+        contentSnippet: item.contentSnippet || undefined,
+      };
+    });
 
     return { items };
   } catch (error) {

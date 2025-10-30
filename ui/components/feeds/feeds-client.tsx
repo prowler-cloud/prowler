@@ -54,17 +54,22 @@ export function FeedsClient({ feedData, error }: FeedsClientProps) {
         <Button
           variant="outline"
           className="relative h-8 w-8 rounded-full bg-transparent p-2"
+          aria-label={
+            hasUnseenFeeds
+              ? "New updates available - Click to view"
+              : "Check for updates"
+          }
         >
           <BellRing
             size={18}
             className={cn(
-              hasFeeds && hasUnseenFeeds && "animate-pulse text-[#86da26]",
+              hasFeeds && hasUnseenFeeds && "text-prowler-green animate-pulse",
             )}
           />
           {hasFeeds && hasUnseenFeeds && (
             <span className="absolute top-0 right-0 flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#86da26] opacity-75"></span>
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-[#86da26]"></span>
+              <span className="bg-prowler-green absolute inline-flex h-full w-full animate-ping rounded-full opacity-75"></span>
+              <span className="bg-prowler-green relative inline-flex h-2 w-2 rounded-full"></span>
             </span>
           )}
         </Button>
@@ -140,14 +145,7 @@ function FeedTimelineItem({ item, isLast }: FeedTimelineItemProps) {
     <div className="group relative flex gap-3 px-3 py-2">
       {/* Timeline dot */}
       <div className="relative flex flex-col items-center">
-        <div
-          className={cn(
-            "z-10 h-2 w-2 rounded-full border-2",
-            item.source.type === "github_releases"
-              ? "border-[#86da26] bg-[#86da26]"
-              : "border-[#86da26] bg-[#86da26]",
-          )}
-        />
+        <div className="border-prowler-green bg-prowler-green z-10 h-2 w-2 rounded-full border-2" />
         {!isLast && (
           <div className="h-full w-px bg-slate-200 dark:bg-slate-700" />
         )}
@@ -162,13 +160,19 @@ function FeedTimelineItem({ item, isLast }: FeedTimelineItemProps) {
           className="block space-y-1 rounded-lg p-2 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
         >
           <div className="flex items-start justify-between gap-2">
-            <h4 className="min-w-0 flex-1 text-sm leading-tight font-semibold break-words text-slate-900 group-hover:text-[#86da26] dark:text-white dark:group-hover:text-[#86da26]">
+            <h4
+              className={cn(
+                "min-w-0 flex-1 text-sm leading-tight font-semibold break-words",
+                "text-slate-900 dark:text-white",
+                "group-hover:text-prowler-green dark:group-hover:text-prowler-green",
+              )}
+            >
               {item.title}
             </h4>
             {version && (
               <Badge
                 variant="secondary"
-                className="shrink-0 border-[#86da26] bg-[#86da26]/10 text-[10px] font-semibold text-[#86da26] dark:bg-[#86da26]/20"
+                className="border-prowler-green bg-prowler-green/10 text-prowler-green dark:bg-prowler-green/20 shrink-0 text-[10px] font-semibold"
               >
                 v{version}
               </Badge>
@@ -186,7 +190,7 @@ function FeedTimelineItem({ item, isLast }: FeedTimelineItemProps) {
               {relativeTime}
             </time>
 
-            <div className="flex items-center gap-1 text-[#86da26] opacity-0 transition-opacity group-hover:opacity-100">
+            <div className="text-prowler-green flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
               <span className="text-[11px] font-medium">Read more</span>
               <ExternalLink size={10} />
             </div>
