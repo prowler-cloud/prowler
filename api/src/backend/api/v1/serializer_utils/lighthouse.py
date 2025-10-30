@@ -97,6 +97,21 @@ class BedrockCredentialsSerializer(serializers.Serializer):
         return super().to_internal_value(data)
 
 
+class BedrockCredentialsUpdateSerializer(BedrockCredentialsSerializer):
+    """
+    Serializer for AWS Bedrock credentials during UPDATE operations.
+
+    Inherits all validation logic from BedrockCredentialsSerializer but makes
+    all fields optional to support partial updates.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make all fields optional for updates
+        for field in self.fields.values():
+            field.required = False
+
+
 class OpenAICompatibleCredentialsSerializer(serializers.Serializer):
     """
     Minimal serializer for OpenAI-compatible credentials.

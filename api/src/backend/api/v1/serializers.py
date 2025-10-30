@@ -61,6 +61,7 @@ from api.v1.serializer_utils.integrations import (
 )
 from api.v1.serializer_utils.lighthouse import (
     BedrockCredentialsSerializer,
+    BedrockCredentialsUpdateSerializer,
     LighthouseCredentialsField,
     OpenAICompatibleCredentialsSerializer,
     OpenAICredentialsSerializer,
@@ -3203,7 +3204,11 @@ class LighthouseProviderConfigUpdateSerializer(BaseWriteSerializer):
             setattr(instance, attr, value)
 
         if credentials is not None:
-            instance.credentials_decoded = credentials
+            # Merge partial credentials with existing ones
+            # New values overwrite existing ones, but unspecified fields are preserved
+            existing_credentials = instance.credentials_decoded or {}
+            merged_credentials = {**existing_credentials, **credentials}
+            instance.credentials_decoded = merged_credentials
 
         instance.save()
         return instance
@@ -3234,7 +3239,7 @@ class LighthouseProviderConfigUpdateSerializer(BaseWriteSerializer):
             == LighthouseProviderConfiguration.LLMProviderChoices.BEDROCK
         ):
             try:
-                BedrockCredentialsSerializer(data=credentials).is_valid(
+                BedrockCredentialsUpdateSerializer(data=credentials).is_valid(
                     raise_exception=True
                 )
             except ValidationError as e:
