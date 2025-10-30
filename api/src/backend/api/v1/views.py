@@ -3776,10 +3776,7 @@ class OverviewViewSet(BaseRLSViewSet):
 
         findings_aggregated = (
             queryset.filter(scan_id__in=latest_scan_ids)
-            .values(
-                "scan__provider_id",
-                provider=F("scan__provider__provider"),
-            )
+            .values(provider=F("scan__provider__provider"))
             .annotate(
                 findings_passed=Coalesce(Sum("_pass"), 0),
                 findings_failed=Coalesce(Sum("fail"), 0),
@@ -3788,13 +3785,16 @@ class OverviewViewSet(BaseRLSViewSet):
             )
         )
 
-        resources_aggregated = (
-            Resource.all_objects.filter(tenant_id=tenant_id)
-            .values("provider_id")
-            .annotate(total_resources=Count("id"))
-        )
+        resources_queryset = Resource.all_objects.filter(tenant_id=tenant_id)
+        if hasattr(self, "allowed_providers"):
+            resources_queryset = resources_queryset.filter(
+                provider__in=self.allowed_providers
+            )
+        resources_aggregated = resources_queryset.values(
+            provider_type=F("provider__provider")
+        ).annotate(total_resources=Count("id"))
         resource_map = {
-            row["provider_id"]: row["total_resources"] for row in resources_aggregated
+            row["provider_type"]: row["total_resources"] for row in resources_aggregated
         }
 
         overview = []
@@ -3802,7 +3802,7 @@ class OverviewViewSet(BaseRLSViewSet):
             overview.append(
                 {
                     "provider": row["provider"],
-                    "total_resources": resource_map.get(row["scan__provider_id"], 0),
+                    "total_resources": resource_map.get(row["provider"], 0),
                     "total_findings": row["total_findings"],
                     "findings_passed": row["findings_passed"],
                     "findings_failed": row["findings_failed"],
