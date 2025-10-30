@@ -1,0 +1,201 @@
+---
+title: "Create JWT Token"
+api: "POST /api/v1/tokens"
+description: "Authenticate and obtain a JWT access token."
+---
+
+Authenticate with Prowler using email and password credentials to receive JWT tokens for API access. This is the primary authentication method for the Prowler API.
+
+## Use Cases
+
+- **Initial Authentication**: Login to obtain tokens for API access
+- **Application Integration**: Authenticate service accounts or automation tools
+- **Multi-tenant Access**: Obtain tokens with specific tenant context
+- **Session Management**: Create new sessions for web applications
+
+## Request Body
+
+The request follows the JSON:API specification:
+
+```json
+{
+  "data": {
+    "type": "tokens",
+    "attributes": {
+      "email": "user@example.com",
+      "password": "your-password",
+      "tenant_id": "optional-tenant-uuid"
+    }
+  }
+}
+```
+
+<Note>
+The `tenant_id` field is optional. If omitted, you'll be authenticated with your first tenant membership. Use `/api/v1/tokens/switch` to change tenants after authentication.
+</Note>
+
+### Attributes
+
+- `email` (required, string, write-only) - User email address registered in Prowler
+- `password` (required, string, write-only) - User password
+- `tenant_id` (optional, string UUID, write-only) - Specific tenant ID to authenticate with
+  - If not provided, the first tenant membership will be used
+  - Use this to specify which organization/tenant to access
+
+## Example Request
+
+```bash
+curl -X POST "https://api.prowler.com/api/v1/tokens" \
+  -H "Content-Type: application/vnd.api+json" \
+  -d '{
+    "data": {
+      "type": "tokens",
+      "attributes": {
+        "email": "security-team@company.com",
+        "password": "SecurePassword123!"
+      }
+    }
+  }'
+```
+
+## Response
+
+### Success Response (200 OK)
+
+Returns JWT access and refresh tokens:
+
+```json
+{
+  "data": {
+    "type": "tokens",
+    "attributes": {
+      "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLWlkIiwiZXhwIjoxNzA2MTg0MDAwfQ...",
+      "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLWlkIiwiZXhwIjoxNzA4Nzc2MDAwfQ..."
+    }
+  }
+}
+```
+
+### Response Fields
+
+- `access` (string, read-only) - JWT access token for API authentication
+  - Use this token in the `Authorization: Bearer <access>` header for API requests
+  - Typically valid for a limited time (e.g., 1 hour)
+
+- `refresh` (string, read-only) - JWT refresh token to obtain new access tokens
+  - Use this token with the `/api/v1/tokens/refresh` endpoint when access token expires
+  - Typically valid for a longer period (e.g., 30 days)
+  - Only one refresh token is valid at a time; refreshing invalidates the previous one
+
+### Error Responses
+
+**401 Unauthorized** - Invalid credentials
+```json
+{
+  "errors": [
+    {
+      "status": "401",
+      "title": "Authentication Failed",
+      "detail": "Invalid email or password"
+    }
+  ]
+}
+```
+
+**422 Unprocessable Entity** - Missing or invalid fields
+```json
+{
+  "errors": [
+    {
+      "status": "422",
+      "title": "Validation Error",
+      "detail": "Email is required",
+      "source": {
+        "pointer": "/data/attributes/email"
+      }
+    }
+  ]
+}
+```
+
+**429 Too Many Requests** - Rate limit exceeded
+```json
+{
+  "errors": [
+    {
+      "status": "429",
+      "title": "Rate Limit Exceeded",
+      "detail": "Too many authentication attempts. Please try again in 15 minutes."
+    }
+  ]
+}
+```
+
+## Usage Example
+
+After obtaining tokens, use the `access` token in subsequent API requests:
+
+```bash
+# Save the tokens from the response
+ACCESS_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."  # from attributes.access
+REFRESH_TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." # from attributes.refresh
+
+# Use access token in API requests
+curl -X GET "https://api.prowler.com/api/v1/providers" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H "Content-Type: application/vnd.api+json"
+
+# When access token expires, refresh it
+curl -X POST "https://api.prowler.com/api/v1/tokens/refresh" \
+  -H "Content-Type: application/vnd.api+json" \
+  -d "{\"data\":{\"type\":\"tokens-refresh\",\"attributes\":{\"refresh\":\"$REFRESH_TOKEN\"}}}"
+```
+
+## Token Lifecycle
+
+1. **Access Token**: Use for all API requests in the `Authorization` header
+   - Short-lived (typically 1 hour)
+   - Included in every API request
+
+2. **Refresh Token**: Use to obtain new access tokens
+   - Long-lived (typically 30 days)
+   - Only used with `/api/v1/tokens/refresh` endpoint
+   - Previous refresh token is invalidated when a new one is issued
+
+3. **Token Refresh Flow**:
+   ```bash
+   # When access token expires, use refresh token
+   curl -X POST "https://api.prowler.com/api/v1/tokens/refresh" \
+     -H "Content-Type: application/vnd.api+json" \
+     -d '{
+       "data": {
+         "type": "tokens-refresh",
+         "attributes": {
+           "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+         }
+       }
+     }'
+   ```
+
+4. **Revocation**: Tokens are automatically invalidated on:
+   - Password change
+   - Explicit logout
+   - Security events
+
+<Warning>
+**Security Best Practices:**
+- Store tokens securely (encrypted storage, environment variables, secure vaults)
+- Never commit tokens to version control
+- Never log tokens or expose them in error messages
+- Use HTTPS for all API communications
+- Implement token rotation using refresh tokens
+- Revoke tokens when no longer needed
+</Warning>
+
+<Note>
+**Rate Limiting:** This endpoint is rate-limited to 5 requests per minute per IP address to prevent brute-force attacks.
+</Note>
+
+<Tip>
+For automated systems and CI/CD pipelines, consider using API Keys instead of JWT tokens for more stable, long-lived authentication.
+</Tip>

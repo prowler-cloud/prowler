@@ -1,0 +1,120 @@
+---
+title: "List Providers"
+api: "GET /api/v1/providers"
+description: "Retrieve a list of all configured cloud providers with options for filtering."
+---
+
+Retrieve all configured cloud providers in your tenant. Providers represent your cloud accounts (AWS, Azure, GCP, etc.) that Prowler scans for security findings.
+
+## Query Parameters
+
+### Filtering Options
+
+**By Type:**
+- `filter[provider]`, `filter[provider__in]` - Filter by provider type: `aws`, `azure`, `gcp`, `kubernetes`, `m365`, `github`, `oci`
+
+**By Status:**
+- `filter[connected]` - Filter by connection status (boolean)
+
+**By Alias:**
+- `filter[alias]`, `filter[alias__icontains]` - Filter by provider alias
+
+**By UID:**
+- `filter[uid]`, `filter[uid__icontains]` - Filter by provider UID
+
+**By Date:**
+- `filter[inserted_at]`, `filter[inserted_at__date]` - Filter by creation date
+- `filter[inserted_at__gte]`, `filter[inserted_at__lte]` - Filter by date range
+
+### Pagination
+
+- `page[number]` - Page number to retrieve
+- `page[size]` - Number of results per page
+
+### Sorting
+
+- `sort` - Field to sort by: `id`, `-id`, `alias`, `-alias`, `inserted_at`, `-inserted_at`, `updated_at`, `-updated_at`
+
+### Field Selection
+
+- `fields[providers]` - Specify which fields to return
+
+## Example Request
+
+```bash
+curl -X GET "https://api.prowler.com/api/v1/providers?filter[provider]=aws&filter[connected]=true" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json"
+```
+
+## Response
+
+### Success Response (200 OK)
+
+Returns a paginated list of providers with their configuration and connection status:
+
+```json
+{
+  "data": [
+    {
+      "type": "providers",
+      "id": "provider-uuid",
+      "attributes": {
+        "provider": "aws",
+        "uid": "123456789012",
+        "alias": "Production AWS - US",
+        "connection": {
+          "connected": true,
+          "last_checked_at": "2024-01-20T10:30:00Z"
+        },
+        "inserted_at": "2024-01-15T10:00:00Z",
+        "updated_at": "2024-01-20T10:30:00Z"
+      },
+      "relationships": {
+        "secret": {
+          "data": {
+            "type": "provider-secrets",
+            "id": "secret-uuid"
+          }
+        },
+        "provider_groups": {
+          "data": []
+        },
+        "scans": {
+          "data": [
+            {
+              "type": "scans",
+              "id": "scan-uuid"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "meta": {
+    "page": {
+      "number": 1,
+      "size": 20,
+      "total": 1,
+      "total_pages": 1
+    }
+  },
+  "links": {
+    "self": "https://api.prowler.com/api/v1/providers?page[number]=1",
+    "first": "https://api.prowler.com/api/v1/providers?page[number]=1",
+    "last": "https://api.prowler.com/api/v1/providers?page[number]=1"
+  }
+}
+```
+
+### Response Fields
+
+- `id` (UUID) - Unique identifier for the provider
+- `provider` (enum) - Type of cloud provider: `aws`, `azure`, `gcp`, `kubernetes`, `m365`, `github`, `oci`
+- `uid` (string) - Provider's unique identifier (3-250 characters)
+- `alias` (string, nullable) - Human-readable name (3-100 characters)
+- `connection` (object, read-only) - Connection status information:
+  - `connected` (boolean) - Whether provider is connected
+  - `last_checked_at` (datetime) - Last connection verification time
+- `inserted_at` (datetime, read-only) - When provider was created
+- `updated_at` (datetime, read-only) - Last modification time

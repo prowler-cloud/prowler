@@ -1,0 +1,42 @@
+---
+title: "List Latest Resources"
+api: "GET /api/v1/resources/latest"
+description: "Retrieve resources from the latest scans for each provider."
+---
+
+Retrieve cloud resources from the most recent scan for each provider. This endpoint automatically filters to only include data from the latest scans.
+
+## Query Parameters
+
+### Filtering Options
+
+**By Provider:**
+- `filter[provider]`, `filter[provider__in]` - Filter by provider UUID(s)
+- `filter[provider_type]`, `filter[provider_type__in]` - Filter by provider type
+
+**By Resource:**
+- `filter[resource_type]`, `filter[resource_type__icontains]` - Filter by resource type
+- `filter[resource_name]`, `filter[resource_name__icontains]` - Filter by resource name
+- `filter[region]`, `filter[region__in]` - Filter by region
+- `filter[service]` - Filter by cloud service
+
+### Pagination & Sorting
+
+- `page[number]`, `page[size]` - Pagination controls
+- `sort` - Field to sort by
+
+## Example Request
+
+```bash
+curl -X GET "https://api.prowler.com/api/v1/resources/latest?filter[provider_type]=aws&filter[service]=s3" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json"
+```
+
+## Response
+
+Returns resources from the latest scans only.
+
+<Note>
+This endpoint is optimized for dashboard views showing current infrastructure state.
+</Note>

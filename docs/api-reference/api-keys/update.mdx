@@ -1,0 +1,88 @@
+---
+title: "Update API Key"
+api: "PATCH /api/v1/api-keys/{id}"
+description: "Modify certain fields of an existing API key without affecting other settings."
+---
+
+Partially update an API key's properties. This endpoint allows you to modify the name or expiration date without affecting other settings.
+
+## Path Parameters
+
+- `id` (required) - The UUID of the API key to update
+
+## Request Body
+
+The request must follow the JSON:API specification format:
+
+```json
+{
+  "data": {
+    "type": "api-keys",
+    "id": "string",
+    "attributes": {
+      "name": "string",
+      "expires_at": "2024-12-31T23:59:59Z"
+    }
+  }
+}
+```
+
+### Attributes
+
+- `name` (optional, string) - Update the API key name (3-100 characters)
+
+<Note>
+Only the `name` field can be updated. Other fields like `expires_at`, `prefix`, and `revoked` are read-only and cannot be modified after creation.
+</Note>
+
+## Example Request
+
+```bash
+curl -X PATCH "https://api.prowler.com/api/v1/api-keys/{id}" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json" \
+  -d '{
+    "data": {
+      "type": "api-keys",
+      "id": "497f6eca-6276-4993-bfeb-53cbbbba6f08",
+      "attributes": {
+        "name": "Updated API Key Name"
+      }
+    }
+  }'
+```
+
+## Response
+
+### Success Response (200 OK)
+
+Returns the updated API key with modified metadata:
+
+```json
+{
+  "data": {
+    "type": "api-keys",
+    "id": "497f6eca-6276-4993-bfeb-53cbbbba6f08",
+    "attributes": {
+      "name": "Updated API Key Name",
+      "prefix": "pk_live_abc123",
+      "expires_at": "2025-12-31T23:59:59Z",
+      "revoked": false,
+      "inserted_at": "2024-01-15T10:30:00Z",
+      "last_used_at": "2024-01-20T14:22:00Z"
+    },
+    "relationships": {
+      "entity": {
+        "data": {
+          "type": "users",
+          "id": "user-uuid"
+        }
+      }
+    }
+  }
+}
+```
+
+<Warning>
+The full API key value is never returned in responses after creation. Only the prefix is shown for identification.
+</Warning>

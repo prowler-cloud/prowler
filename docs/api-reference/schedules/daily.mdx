@@ -1,0 +1,39 @@
+---
+title: "Configure Daily Scan Schedule"
+api: "POST /api/v1/schedules/daily"
+description: "Configure automated daily scanning for providers."
+---
+
+Set up automated daily scans for your cloud providers.
+
+## Request Body
+
+```json
+{
+  "data": {
+    "type": "schedules",
+    "attributes": {
+      "enabled": true,
+      "time": "02:00",
+      "timezone": "UTC",
+      "providers": ["provider-uuid-1", "provider-uuid-2"]
+    }
+  }
+}
+```
+
+## Example Request
+
+```bash
+curl -X POST "https://api.prowler.com/api/v1/schedules/daily" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json"
+```
+
+## Response
+
+Returns the configured schedule.
+
+<Note>
+Scans will run automatically at the specified time in the configured timezone.
+</Note>

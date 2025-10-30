@@ -1,0 +1,27 @@
+---
+title: "Delete Provider"
+api: "DELETE /api/v1/providers/{id}"
+description: "Remove a provider from the system."
+---
+
+Delete a cloud provider permanently. This will also delete all associated scans and findings.
+
+## Path Parameters
+
+- `id` (required) - UUID of the provider to delete
+
+## Example Request
+
+```bash
+curl -X DELETE "https://api.prowler.com/api/v1/providers/{id}" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json"
+```
+
+## Response
+
+Returns `204 No Content` on successful deletion.
+
+<Warning>
+Deleting a provider will permanently remove all associated scans, findings, and historical data. This action cannot be undone.
+</Warning>

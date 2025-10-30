@@ -1,0 +1,89 @@
+---
+title: "Retrieve API Key"
+api: "GET /api/v1/api-keys/{id}"
+description: "Fetch detailed information about a specific API key by its ID."
+---
+
+Retrieve detailed information about a specific API key. Note that the full API key value is never returned, only metadata about the key.
+
+## Path Parameters
+
+- `id` (required) - The UUID of the API key to retrieve
+
+## Query Parameters
+
+### Field Selection
+
+- `fields[api-keys]` - Specify which fields to return: `name`, `prefix`, `expires_at`, `revoked`, `inserted_at`, `last_used_at`, `entity`
+
+### Include Related Resources
+
+- `include` - Include related resources. Available: `entity`
+
+## Example Request
+
+```bash
+curl -X GET "https://api.prowler.com/api/v1/api-keys/{id}" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json"
+```
+
+## Response
+
+### Success Response (200 OK)
+
+Returns detailed metadata about the API key:
+
+```json
+{
+  "data": {
+    "type": "api-keys",
+    "id": "api-key-uuid",
+    "attributes": {
+      "name": "Production CI/CD Pipeline",
+      "prefix": "pk_live_abc123",
+      "expires_at": "2025-12-31T23:59:59Z",
+      "revoked": false,
+      "inserted_at": "2024-01-15T10:30:00Z",
+      "last_used_at": "2024-01-20T14:22:00Z"
+    },
+    "relationships": {
+      "entity": {
+        "data": {
+          "type": "users",
+          "id": "user-uuid"
+        }
+      }
+    }
+  }
+}
+```
+
+### Response Fields
+
+- `id` (UUID) - Unique identifier for the API key record
+- `name` (string) - Descriptive name (3-100 characters)
+- `prefix` (string, read-only) - First characters of the key for identification
+- `expires_at` (datetime, nullable) - Expiration date in ISO 8601 format
+- `revoked` (boolean, read-only) - Whether key has been revoked
+- `inserted_at` (datetime, read-only) - When key was created
+- `last_used_at` (datetime, nullable, read-only) - Last usage timestamp
+
+### Error Responses
+
+**404 Not Found** - API key does not exist
+```json
+{
+  "errors": [
+    {
+      "status": "404",
+      "title": "Not Found",
+      "detail": "API key not found"
+    }
+  ]
+}
+```
+
+<Note>
+The full API key value is never returned after creation. Only the prefix is shown for identification purposes.
+</Note>

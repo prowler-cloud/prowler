@@ -1,0 +1,19 @@
+---
+title: "Get Lighthouse AI Tenant Config"
+api: "GET /api/v1/lighthouse/configuration"
+description: "Retrieve current tenant-level Lighthouse AI settings."
+---
+
+Get your tenant's Lighthouse AI configuration including business context and default models.
+
+## Example Request
+
+```bash
+curl -X GET "https://api.prowler.com/api/v1/lighthouse/configuration" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json"
+```
+
+## Response
+
+Returns tenant Lighthouse AI configuration.

@@ -1,0 +1,42 @@
+---
+title: "Create Tenant Invitation"
+api: "POST /api/v1/tenants/invitations"
+description: "Invite a user to join your tenant."
+---
+
+Send an invitation to a user to join your tenant.
+
+## Request Body
+
+```json
+{
+  "data": {
+    "type": "invitations",
+    "attributes": {
+      "email": "newuser@example.com",
+      "role": "member"
+    }
+  }
+}
+```
+
+## Example Request
+
+```bash
+curl -X POST "https://api.prowler.com/api/v1/tenants/invitations" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/vnd.api+json" \
+  -d '{
+    "data": {
+      "type": "invitations",
+      "attributes": {
+        "email": "newuser@example.com",
+        "role": "member"
+      }
+    }
+  }'
+```
+
+## Response
+
+Returns the created invitation.

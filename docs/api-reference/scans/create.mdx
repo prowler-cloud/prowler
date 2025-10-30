@@ -1,0 +1,105 @@
+---
+title: "Create Scan"
+api: "POST /api/v1/scans"
+description: "Initiate a new security scan for a cloud provider."
+---
+
+Trigger a security scan to evaluate your cloud infrastructure against security checks. The scan runs asynchronously and results are available via the findings endpoints.
+
+## Request Body
+
+```json
+{
+  "data": {
+    "type": "scans",
+    "attributes": {
+      "name": "Weekly Security Audit"
+    },
+    "relationships": {
+      "provider": {
+        "data": {
+          "type": "providers",
+          "id": "provider-uuid"
+        }
+      }
+    }
+  }
+}
+```
+
+### Attributes
+
+- `name` (optional, string, nullable) - Custom name for the scan (3-100 characters)
+
+### Relationships
+
+- `provider` (required) - The provider to scan
+
+## Example Request
+
+```bash
+curl -X POST "https://api.prowler.com/api/v1/scans" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json" \
+  -d '{
+    "data": {
+      "type": "scans",
+      "relationships": {
+        "provider": {
+          "data": {
+            "type": "providers",
+            "id": "provider-uuid"
+          }
+        }
+      }
+    }
+  }'
+```
+
+## Response
+
+### Success Response (201 Created)
+
+```json
+{
+  "data": {
+    "type": "scans",
+    "id": "scan-uuid",
+    "attributes": {
+      "name": null,
+      "state": "scheduled",
+      "trigger": "manual",
+      "unique_resource_count": 0,
+      "progress": 0,
+      "duration": null,
+      "inserted_at": "2024-01-15T10:00:00Z",
+      "started_at": null,
+      "completed_at": null,
+      "scheduled_at": "2024-01-15T10:00:00Z",
+      "next_scan_at": null
+    },
+    "relationships": {
+      "provider": {
+        "data": {
+          "type": "providers",
+          "id": "provider-uuid"
+        }
+      }
+    }
+  }
+}
+```
+
+### Response Fields
+
+- `state` - Will be `scheduled` initially, then `executing`, then `completed` or `failed`
+- `trigger` - How scan was initiated (`manual` for API-created scans)
+- `progress` - Percentage complete (0-100)
+
+<Note>
+Monitor the scan progress by polling `GET /api/v1/scans/{id}` and checking the `state` and `progress` fields.
+</Note>
+
+<Tip>
+Scans typically complete in 3-10 minutes depending on the number of resources. Poll every 30 seconds to monitor progress.
+</Tip>

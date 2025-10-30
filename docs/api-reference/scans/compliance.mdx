@@ -1,0 +1,28 @@
+---
+title: "Get Scan Compliance Report"
+api: "GET /api/v1/scans/{id}/compliance/{name}"
+description: "Retrieve compliance framework results for a specific scan."
+---
+
+Get detailed compliance framework results for a specific scan. This endpoint returns the compliance status for frameworks like CIS, PCI-DSS, HIPAA, etc.
+
+## Path Parameters
+
+- `id` (required) - UUID of the scan
+- `name` (required) - Name of the compliance framework (e.g., `cis_1.5_aws`, `pci_3.2.1_aws`)
+
+## Example Request
+
+```bash
+curl -X GET "https://api.prowler.com/api/v1/scans/{id}/compliance/cis_1.5_aws" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json"
+```
+
+## Response
+
+Returns detailed compliance results including requirements passed, failed, and overall compliance score.
+
+<Note>
+Use this endpoint to generate compliance reports for auditing and regulatory purposes.
+</Note>
