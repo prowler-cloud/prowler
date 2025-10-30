@@ -43,19 +43,27 @@ runs:
       if: inputs.update-ts == ''
       id: slack-notification-post
       uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
+      env:
+        SLACK_PAYLOAD_FILE_PATH: ${{ inputs.payload-file-path }}
       with:
         method: chat.postMessage
         token: ${{ inputs.slack-bot-token }}
         payload-file-path: ${{ inputs.payload-file-path }}
+        payload-templated: true
+        errors: true
 
     - name: Update Slack notification
       if: inputs.update-ts != ''
       id: slack-notification-update
       uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
+      env:
+        SLACK_PAYLOAD_FILE_PATH: ${{ inputs.payload-file-path }}
       with:
         method: chat.update
         token: ${{ inputs.slack-bot-token }}
         payload-file-path: ${{ inputs.payload-file-path }}
+        payload-templated: true
+        errors: true
 
     - name: Set output
       id: slack-notification
