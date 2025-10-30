@@ -1,4 +1,4 @@
 {
   "channel": "$SLACK_CHANNEL_ID",
-  "text": "[✓] $COMPONENT container release $RELEASE_TAG has been pushed successfully! <$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID|View run>"
+  "text": "$STATUS_EMOJI $COMPONENT container release $RELEASE_TAG push $STATUS_TEXT <$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID|View run>"
 }

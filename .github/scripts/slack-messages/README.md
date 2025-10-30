@@ -42,6 +42,8 @@ Reference: [Sending data using a Slack API method](https://docs.slack.dev/tools/
 - `GITHUB_SERVER_URL`: Provided by GitHub context
 - `GITHUB_REPOSITORY`: Provided by GitHub context
 - `GITHUB_RUN_ID`: Provided by GitHub context
+- `STATUS_EMOJI`: Status symbol (calculated: `[✓]` for success, `[✗]` for failure)
+- `STATUS_TEXT`: Status text (calculated: "completed successfully!" or "failed")
 
 ### Deployment Variables (configured as env)
 - `COMPONENT`: Component name (e.g., "API", "SDK", "UI", "MCP")
@@ -58,7 +60,180 @@ All other variables (MESSAGE_TS, STATUS, STATUS_COLOR, STATUS_EMOJI, etc.) are c
 
 ## Example Workflow Usage
 
-### Container Release Notification (Simple One-Line)
+### Using the Generic Slack Notification Action (Recommended)
+
+**Recommended approach**: Use the generic reusable action `.github/actions/slack-notification` which provides maximum flexibility:
+
+#### Example 1: Container Release (Start + Completion)
+
+```yaml
+# Send start notification
+- name: Notify container push started
+  if: github.event_name == 'release'
+  uses: ./.github/actions/slack-notification
+  with:
+    slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
+    payload: |
+      {
+        "channel": "${{ secrets.SLACK_CHANNEL_ID }}",
+        "text": "API container release ${{ env.RELEASE_TAG }} push started... <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View run>"
+      }
+
+# Build and push container
+- name: Build and push container
+  if: github.event_name == 'release'
+  id: container-push
+  uses: docker/build-push-action@...
+  with:
+    push: true
+    tags: ...
+
+# Calculate status
+- name: Determine push status
+  if: github.event_name == 'release' && always()
+  id: push-status
+  run: |
+    if [[ "${{ steps.container-push.outcome }}" == "success" ]]; then
+      echo "emoji=[✓]" >> $GITHUB_OUTPUT
+      echo "text=completed successfully!" >> $GITHUB_OUTPUT
+    else
+      echo "emoji=[✗]" >> $GITHUB_OUTPUT
+      echo "text=failed" >> $GITHUB_OUTPUT
+    fi
+
+# Send completion notification
+- name: Notify container push completed
+  if: github.event_name == 'release' && always()
+  uses: ./.github/actions/slack-notification
+  with:
+    slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
+    payload: |
+      {
+        "channel": "${{ secrets.SLACK_CHANNEL_ID }}",
+        "text": "${{ steps.push-status.outputs.emoji }} API container release ${{ env.RELEASE_TAG }} push ${{ steps.push-status.outputs.text }} <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View run>"
+      }
+```
+
+#### Example 2: Simple One-Time Message
+
+```yaml
+- name: Send notification
+  uses: ./.github/actions/slack-notification
+  with:
+    slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
+    payload: |
+      {
+        "channel": "${{ secrets.SLACK_CHANNEL_ID }}",
+        "text": "Deployment completed successfully!"
+      }
+```
+
+#### Example 3: Deployment with Message Update Pattern
+
+```yaml
+# Send initial deployment message
+- name: Notify deployment started
+  id: slack-start
+  uses: ./.github/actions/slack-notification
+  with:
+    slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
+    payload: |
+      {
+        "channel": "${{ secrets.SLACK_CHANNEL_ID }}",
+        "text": "API deployment to PRODUCTION started",
+        "attachments": [
+          {
+            "color": "dbab09",
+            "blocks": [
+              {
+                "type": "header",
+                "text": {
+                  "type": "plain_text",
+                  "text": "API | Deployment to PRODUCTION"
+                }
+              },
+              {
+                "type": "section",
+                "fields": [
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Status:*\nIn Progress"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+
+# Run deployment
+- name: Deploy
+  id: deploy
+  run: terraform apply -auto-approve
+
+# Calculate status
+- name: Determine status
+  if: always()
+  id: status
+  run: |
+    if [[ "${{ steps.deploy.outcome }}" == "success" ]]; then
+      echo "color=28a745" >> $GITHUB_OUTPUT
+      echo "emoji=[✓]" >> $GITHUB_OUTPUT
+      echo "status=Completed" >> $GITHUB_OUTPUT
+    else
+      echo "color=fc3434" >> $GITHUB_OUTPUT
+      echo "emoji=[✗]" >> $GITHUB_OUTPUT
+      echo "status=Failed" >> $GITHUB_OUTPUT
+    fi
+
+# Update the same message with final status
+- name: Update deployment notification
+  if: always()
+  uses: ./.github/actions/slack-notification
+  with:
+    slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
+    update-ts: ${{ steps.slack-start.outputs.ts }}
+    payload: |
+      {
+        "channel": "${{ secrets.SLACK_CHANNEL_ID }}",
+        "ts": "${{ steps.slack-start.outputs.ts }}",
+        "text": "${{ steps.status.outputs.emoji }} API deployment to PRODUCTION ${{ steps.status.outputs.status }}",
+        "attachments": [
+          {
+            "color": "${{ steps.status.outputs.color }}",
+            "blocks": [
+              {
+                "type": "header",
+                "text": {
+                  "type": "plain_text",
+                  "text": "API | Deployment to PRODUCTION"
+                }
+              },
+              {
+                "type": "section",
+                "fields": [
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Status:*\n${{ steps.status.outputs.emoji }} ${{ steps.status.outputs.status }}"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+```
+
+**Benefits of using the generic action:**
+- Maximum flexibility: Build any payload you need directly in the workflow
+- No template files needed: Everything inline
+- Supports all scenarios: one-time messages, start/update patterns, rich Block Kit
+- Easy to customize per use case
+- Generic: Works for containers, deployments, or any notification type
+
+For more details, see [Slack Notification Action](../../actions/slack-notification/README.md).
+
+### Using Message Templates (Alternative Approach)
 
 Simple one-line notifications for container releases:
 
@@ -81,14 +256,28 @@ Simple one-line notifications for container releases:
 
 # Step 2: Build and push container
 - name: Build and push container
+  id: container-push
   uses: docker/build-push-action@...
   with:
     push: true
     tags: ...
 
-# Step 3: Notify when push completes
+# Step 3: Determine push status
+- name: Determine push status
+  if: github.event_name == 'release' && always()
+  id: push-status
+  run: |
+    if [[ "${{ steps.container-push.outcome }}" == "success" ]]; then
+      echo "status-emoji=[✓]" >> $GITHUB_OUTPUT
+      echo "status-text=completed successfully!" >> $GITHUB_OUTPUT
+    else
+      echo "status-emoji=[✗]" >> $GITHUB_OUTPUT
+      echo "status-text=failed" >> $GITHUB_OUTPUT
+    fi
+
+# Step 4: Notify when push completes (success or failure)
 - name: Notify container push completed
-  if: github.event_name == 'release'
+  if: github.event_name == 'release' && always()
   uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
   env:
     SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
@@ -97,6 +286,8 @@ Simple one-line notifications for container releases:
     GITHUB_SERVER_URL: ${{ github.server_url }}
     GITHUB_REPOSITORY: ${{ github.repository }}
     GITHUB_RUN_ID: ${{ github.run_id }}
+    STATUS_EMOJI: ${{ steps.push-status.outputs.status-emoji }}
+    STATUS_TEXT: ${{ steps.push-status.outputs.status-text }}
   with:
     method: chat.postMessage
     token: ${{ secrets.SLACK_BOT_TOKEN }}
@@ -229,12 +420,17 @@ For deployments that start with one message and update it with the final status:
 API container release 4.5.0 push started... View run
 ```
 
-**Completion message:**
+**Completion message (success):**
 ```
-[✓] API container release 4.5.0 has been pushed successfully! View run
+[✓] API container release 4.5.0 push completed successfully! View run
 ```
 
-Both messages are simple one-liners with a clickable "View run" link.
+**Completion message (failure):**
+```
+[✗] API container release 4.5.0 push failed View run
+```
+
+All messages are simple one-liners with a clickable "View run" link. The completion message adapts to show success `[✓]` or failure `[✗]` based on the outcome of the container push.
 
 ### Deployment Start
 - Header: Component and environment
