@@ -1166,11 +1166,17 @@ class ResourceSerializer(RLSSerializer):
             "findings",
             "failed_findings_count",
             "url",
+            "metadata",
+            "details",
+            "partition",
         ]
         extra_kwargs = {
             "id": {"read_only": True},
             "inserted_at": {"read_only": True},
             "updated_at": {"read_only": True},
+            "metadata": {"read_only": True},
+            "details": {"read_only": True},
+            "partition": {"read_only": True},
         }
 
     included_serializers = {
