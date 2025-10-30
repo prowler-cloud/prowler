@@ -147,7 +147,7 @@ from api.utils import (
     validate_invitation,
 )
 from api.uuid_utils import datetime_to_uuid7, uuid7_start
-from api.v1.mixins import PaginateByPkMixin, TaskManagementMixin
+from api.v1.mixins import DisablePaginationMixin, PaginateByPkMixin, TaskManagementMixin
 from api.v1.serializers import (
     ComplianceOverviewAttributesSerializer,
     ComplianceOverviewDetailSerializer,
@@ -176,6 +176,7 @@ from api.v1.serializers import (
     LighthouseTenantConfigUpdateSerializer,
     MembershipSerializer,
     OverviewFindingSerializer,
+    OverviewProviderCountSerializer,
     OverviewProviderSerializer,
     OverviewServiceSerializer,
     OverviewSeveritySerializer,
@@ -1431,7 +1432,7 @@ class ProviderGroupProvidersRelationshipView(RelationshipView, BaseRLSViewSet):
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
-class ProviderViewSet(BaseRLSViewSet):
+class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
     queryset = Provider.objects.all()
     serializer_class = ProviderSerializer
     http_method_names = ["get", "post", "patch", "delete"]
@@ -3691,6 +3692,13 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             "each provider are considered in the aggregation to ensure accurate and up-to-date insights."
         ),
     ),
+    providers_count=extend_schema(
+        summary="Get provider counts grouped by type",
+        description=(
+            "Retrieve the number of providers grouped by provider type. "
+            "This endpoint counts every provider in the tenant, including those without completed scans."
+        ),
+    ),
     findings=extend_schema(
         summary="Get aggregated findings data",
         description=(
@@ -3742,6 +3750,8 @@ class OverviewViewSet(BaseRLSViewSet):
     def get_serializer_class(self):
         if self.action == "providers":
             return OverviewProviderSerializer
+        elif self.action == "providers_count":
+            return OverviewProviderCountSerializer
         elif self.action == "findings":
             return OverviewFindingSerializer
         elif self.action == "findings_severity":
@@ -3790,10 +3800,7 @@ class OverviewViewSet(BaseRLSViewSet):
 
         findings_aggregated = (
             queryset.filter(scan_id__in=latest_scan_ids)
-            .values(
-                "scan__provider_id",
-                provider=F("scan__provider__provider"),
-            )
+            .values(provider=F("scan__provider__provider"))
             .annotate(
                 findings_passed=Coalesce(Sum("_pass"), 0),
                 findings_failed=Coalesce(Sum("fail"), 0),
@@ -3802,13 +3809,16 @@ class OverviewViewSet(BaseRLSViewSet):
             )
         )
 
-        resources_aggregated = (
-            Resource.all_objects.filter(tenant_id=tenant_id)
-            .values("provider_id")
-            .annotate(total_resources=Count("id"))
-        )
+        resources_queryset = Resource.all_objects.filter(tenant_id=tenant_id)
+        if hasattr(self, "allowed_providers"):
+            resources_queryset = resources_queryset.filter(
+                provider__in=self.allowed_providers
+            )
+        resources_aggregated = resources_queryset.values(
+            provider_type=F("provider__provider")
+        ).annotate(total_resources=Count("id"))
         resource_map = {
-            row["provider_id"]: row["total_resources"] for row in resources_aggregated
+            row["provider_type"]: row["total_resources"] for row in resources_aggregated
         }
 
         overview = []
@@ -3816,7 +3826,7 @@ class OverviewViewSet(BaseRLSViewSet):
             overview.append(
                 {
                     "provider": row["provider"],
-                    "total_resources": resource_map.get(row["scan__provider_id"], 0),
+                    "total_resources": resource_map.get(row["provider"], 0),
                     "total_findings": row["total_findings"],
                     "findings_passed": row["findings_passed"],
                     "findings_failed": row["findings_failed"],
@@ -3824,6 +3834,36 @@ class OverviewViewSet(BaseRLSViewSet):
                 }
             )
 
+        return Response(
+            self.get_serializer(overview, many=True).data,
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="providers/count",
+        url_name="providers-count",
+    )
+    def providers_count(self, request):
+        tenant_id = self.request.tenant_id
+        providers_qs = Provider.objects.filter(tenant_id=tenant_id)
+
+        if hasattr(self, "allowed_providers"):
+            allowed_ids = list(self.allowed_providers.values_list("id", flat=True))
+            if not allowed_ids:
+                overview = []
+                return Response(
+                    self.get_serializer(overview, many=True).data,
+                    status=status.HTTP_200_OK,
+                )
+            providers_qs = providers_qs.filter(id__in=allowed_ids)
+
+        overview = (
+            providers_qs.values("provider")
+            .annotate(count=Count("id"))
+            .order_by("provider")
+        )
         return Response(
             self.get_serializer(overview, many=True).data,
             status=status.HTTP_200_OK,

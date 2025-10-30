@@ -1,34 +1,26 @@
-name: Label Community Contributors PRs
+name: Community PR labelling
 
 on:
-  pull_request:
-    types: [opened]
+  # We need "write" permissions on the PR to be able to add a label.
+  pull_request_target: # We need this to have labelling permissions. There are no user inputs here, so we should be fine.
+    types:
+      - opened
+
+permissions: {}
 
 jobs:
-  add-community-label:
+  label-if-community:
+    name: Add 'community' label if the PR is from a community contributor
+    if: github.event.pull_request.author_association != 'MEMBER' && github.event.pull_request.author_association != 'OWNER'
     runs-on: ubuntu-latest
     permissions:
-      issues: write
-      pull-requests: write
+      pull-requests: write # to write the label
 
     steps:
-      - name: Label community contributors
+      - name: Add the 'community' label
         env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Fetch fresh PR data to get current author_association
-          ASSOCIATION=$(gh api /repos/${{ github.repository }}/pulls/${{ github.event.number }} --jq '.author_association')
-          AUTHOR=$(gh api /repos/${{ github.repository }}/pulls/${{ github.event.number }} --jq '.user.login')
-
-          echo "Author: $AUTHOR, Association: $ASSOCIATION"
-
-          # Members have associations like: OWNER, MEMBER, COLLABORATOR
-          # Non-members have: CONTRIBUTOR, FIRST_TIME_CONTRIBUTOR, FIRST_TIMER, NONE
-          if [[ "$ASSOCIATION" != "OWNER" && "$ASSOCIATION" != "MEMBER" && "$ASSOCIATION" != "COLLABORATOR" ]]; then
-            gh api /repos/${{ github.repository }}/issues/${{ github.event.number }}/labels \
-              -X POST \
-              -f labels[]='community'
-            echo "Added 'community' label for $ASSOCIATION contributor"
-          else
-            echo "Skipped labeling for $ASSOCIATION"
-          fi
+          echo "Adding 'community' label to the PR"
+          gh pr edit "$PR_NUMBER" --add-label community

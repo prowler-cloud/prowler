@@ -499,8 +499,14 @@ def providers_fixture(tenants_fixture):
         alias="m365_testing",
         tenant_id=tenant.id,
     )
+    provider7 = Provider.objects.create(
+        provider="oci",
+        uid="ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
+        alias="oci_testing",
+        tenant_id=tenant.id,
+    )
 
-    return provider1, provider2, provider3, provider4, provider5, provider6
+    return provider1, provider2, provider3, provider4, provider5, provider6, provider7
 
 
 @pytest.fixture

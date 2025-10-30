@@ -17,6 +17,7 @@ const providerTypeLabels: Record<ProviderType, string> = {
   m365: "Microsoft 365",
   kubernetes: "Kubernetes",
   github: "GitHub",
+  oci: "Oracle Cloud Infrastructure",
 };
 
 interface EnhancedProviderSelectorProps {
