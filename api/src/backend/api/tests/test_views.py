@@ -41,6 +41,7 @@ from api.models import (
     ProviderGroup,
     ProviderGroupMembership,
     ProviderSecret,
+    Resource,
     Role,
     RoleProviderGroupRelationship,
     SAMLConfiguration,
@@ -5781,8 +5782,62 @@ class TestOverviewViewSet:
         assert response.json()["data"][0]["attributes"]["findings"]["pass"] == 2
         assert response.json()["data"][0]["attributes"]["findings"]["fail"] == 1
         assert response.json()["data"][0]["attributes"]["findings"]["muted"] == 1
-        # Since we rely on completed scans, there are only 2 resources now
-        assert response.json()["data"][0]["attributes"]["resources"]["total"] == 2
+        # Aggregated resources include all AWS providers present in the tenant
+        assert response.json()["data"][0]["attributes"]["resources"]["total"] == 3
+
+    def test_overview_providers_aggregates_same_provider_type(
+        self,
+        authenticated_client,
+        scan_summaries_fixture,
+        resources_fixture,
+        providers_fixture,
+        tenants_fixture,
+    ):
+        tenant = tenants_fixture[0]
+        _provider1, provider2, *_ = providers_fixture
+
+        scan = Scan.objects.create(
+            name="overview scan aws account 2",
+            provider=provider2,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan,
+            check_id="check-aws-two",
+            service="service-extra",
+            severity="medium",
+            region="region-extra",
+            _pass=3,
+            fail=2,
+            muted=1,
+            total=6,
+        )
+
+        Resource.objects.create(
+            tenant_id=tenant.id,
+            provider=provider2,
+            uid="arn:aws:ec2:us-west-2:123456789013:instance/i-aggregation",
+            name="Aggregated Instance",
+            region="us-west-2",
+            service="ec2",
+            type="prowler-test",
+        )
+
+        response = authenticated_client.get(reverse("overview-providers"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        attributes = data[0]["attributes"]
+
+        assert attributes["findings"]["total"] == 10
+        assert attributes["findings"]["pass"] == 5
+        assert attributes["findings"]["fail"] == 3
+        assert attributes["findings"]["muted"] == 2
+        assert attributes["resources"]["total"] == 4
 
     def test_overview_services_list_no_required_filters(
         self, authenticated_client, scan_summaries_fixture
