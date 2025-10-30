@@ -15,14 +15,9 @@
   "Risk": "Without **automatic minor upgrades**, Redis nodes may run versions with known CVEs and stability bugs, enabling unauthorized access, replication inconsistencies, or crashes. Delayed patching widens the attack window and lengthens maintenance, degrading confidentiality, integrity, and availability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/config/latest/developerguide/elasticache-auto-minor-version-upgrade-check.html",
     "https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/VersionManagementConsiderations.html",
     "https://support.icompaas.com/support/solutions/articles/62000233595-ensure-elasticache-redis-cache-clusters-have-automatic-minor-upgrades-enabled",
     "https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/engine-versions.html",
-    "https://github.com/hashicorp/terraform-provider-aws/issues/22385",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticache-controls.html#elasticache-2",
-    "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/Clusters.html#Modify",
-    "https://docs.datadoghq.com/security/default_rules/aws-elasticache-elasticache-redis-clusters-should-have-auto-minor-version-upgrades-enabled/",
     "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/VersionManagement.html"
   ],
   "Remediation": {
@@ -37,9 +32,7 @@
       "Url": "https://hub.prowler.com/check/elasticache_redis_cluster_auto_minor_version_upgrades"
     }
   },
-  "Categories": [
-    "vulnerabilities"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

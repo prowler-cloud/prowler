@@ -16,15 +16,9 @@
   "Risk": "Without at-rest encryption, cache files and snapshots can be read if storage or backups are accessed via compromise or misconfiguration. Secrets, tokens, and PII may be exposed, breaking **confidentiality** and aiding **lateral movement** through offline analysis of cached data.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/general-policies/general_9/",
-    "https://cto.ai/blog/caching-with-elasticache-for-redis-and-aws-ubuntu-server/",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ElastiCache/in-transit-and-at-rest-encryption.html",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticache-controls.html#elasticache-4",
-    "https://www.cloudanix.com/docs/aws/audit/esmonitoring/rules/elastic_cache_encrypted_at_rest_and_transit",
     "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/at-rest-encryption.html#at-rest-encryption-enable",
-    "https://bobcares.com/blog/amazon-elasticache-for-redis-encryption/",
-    "https://aws.amazon.com/blogs/security/amazon-elasticache-now-supports-encryption-for-elasticache-for-redis/",
-    "https://docs.prowler.com/checks/aws/general-policies/general_9#terraform"
+    "https://aws.amazon.com/blogs/security/amazon-elasticache-now-supports-encryption-for-elasticache-for-redis/"
   ],
   "Remediation": {
     "Code": {

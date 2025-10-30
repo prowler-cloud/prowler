@@ -15,14 +15,7 @@
   "Risk": "**Missing automatic failover** reduces **availability**: a primary or AZ outage can stop writes and require manual recovery, prolonging downtime.\n\nAs Redis replication is asynchronous, delayed promotion increases chances of **lost or stale writes**, affecting **data integrity** and causing client timeouts.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/cli/latest/reference/elasticache/test-failover.html",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticache-controls.html",
     "https://aws.amazon.com/blogs/database/testing-automatic-failover-to-a-read-replica-on-amazon-elasticache-for-redis/",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticache-controls.html#elasticache-3",
-    "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/AutoFailover.html",
-    "https://docs.prowler.com/checks/aws/general-policies/ensure-aws-elasticache-redis-cluster-with-multi-az-automatic-failover-feature-set-to-enabled/",
-    "https://dev.classmethod.jp/articles/update-aws-security-hub-rolls-out-7-new-controls-for-amazon-elasticache-you-need-to-know/",
-    "https://redis.io/blog/highly-available-in-memory-cloud-datastores/",
     "https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/AutoFailover.html"
   ],
   "Remediation": {

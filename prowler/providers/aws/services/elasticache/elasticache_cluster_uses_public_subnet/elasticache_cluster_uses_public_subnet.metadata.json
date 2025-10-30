@@ -16,11 +16,8 @@
   "Risk": "Hosting caches in **public subnets** can permit direct or misconfigured Internet access, impacting CIA:\n- Confidentiality: unauthorized reads and key dumps\n- Integrity: cache poisoning or key tampering\n- Availability: scanning and DDoS\n\nAttackers may pivot from the cache to **lateral movement** within the VPC.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://medium.com/@programmerohit/accessing-aws-elasticache-redis-from-multiple-aws-accounts-via-aws-privatelink-8938891bec6c",
     "https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/SubnetGroups.html",
-    "https://www.dragonflydb.io/faq/how-can-i-make-my-elasticache-redis-publically-available",
-    "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/VPCs.html",
-    "https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/VPCs.EC.html"
+    "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/VPCs.html"
   ],
   "Remediation": {
     "Code": {
@@ -35,8 +32,7 @@
     }
   },
   "Categories": [
-    "internet-exposed",
-    "trust-boundaries"
+    "internet-exposed"
   ],
   "DependsOn": [],
   "RelatedTo": [],

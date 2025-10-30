@@ -17,19 +17,14 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ElastiCache/enable-automatic-backups.html",
-    "https://docs.aws.amazon.com/AmazonElastiCache/latest/APIReference/API_ReplicationGroup.html",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticache-controls.html#elasticache-1",
-    "https://brightqna.com/blog/fix-elasticache-1-finding-redis",
-    "https://docs.prowler.com/checks/aws/general-policies/ensure-that-amazon-elasticache-redis-clusters-have-automatic-backup-turned-on/",
-    "https://docs.amazonaws.cn/en_us/AWSCloudFormation/latest/TemplateReference/aws-resource-elasticache-replicationgroup.html",
-    "https://www.pulumi.com/registry/packages/aws/api-docs/elasticache/replicationgroup/"
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticache-controls.html#elasticache-1"
   ],
   "Remediation": {
     "Code": {
       "CLI": "aws elasticache modify-replication-group --replication-group-id <REPLICATION_GROUP_ID> --snapshot-retention-limit 7 --apply-immediately",
       "NativeIaC": "```yaml\n# CloudFormation: set automated snapshot retention for a Redis replication group\nResources:\n  <example_resource_name>:\n    Type: AWS::ElastiCache::ReplicationGroup\n    Properties:\n      ReplicationGroupDescription: example\n      SnapshotRetentionLimit: 7  # Critical: enables automatic snapshots and retains them for >=7 days\n```",
       "Other": "1. In the AWS Console, open ElastiCache\n2. Go to Redis > Replication groups\n3. Select <example_resource_id> and click Modify\n4. Set Snapshot retention (days) to 7 or higher\n5. Check Apply immediately\n6. Click Modify to save",
-      "Terraform": "```hcl\nresource \"aws_elasticache_replication_group\" \"<example_resource_name>\" {\n  snapshot_retention_limit = 7  # Critical: enable automated backups and keep them for >=7 days\n}\n```"
+      "Terraform": "```hcl\nresource \"aws_elasticache_replication_group\" \"<example_resource_name>\" {\n  replication_group_id       = \"<example_resource_id>\"\n  replication_group_description = \"<example_description>\"\n  snapshot_retention_limit   = 7  # Critical: enable automated backups and keep them for >=7 days\n}\n```"
     },
     "Recommendation": {
       "Text": "Enable **automated backups** and set **retention** to meet RPO/RTO (typically  `7` days).\n- Define a consistent `snapshot window`\n- Test restores regularly\n- Protect backup storage with **least privilege** and immutability\n- Monitor backup status for failures\n- Apply **defense in depth** with replicas/Multi-AZ",
