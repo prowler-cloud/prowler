@@ -138,6 +138,21 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Notify container push started
+        if: github.event_name == 'release'
+        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
+        env:
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_PLATFORM_DEPLOYMENTS }}
+          COMPONENT: SDK
+          RELEASE_TAG: ${{ env.PROWLER_VERSION }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload-file-path: "./.github/scripts/slack-messages/container-release-started.json"
+
       - name: Build and push SDK container (release)
         if: github.event_name == 'release'
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
@@ -154,6 +169,21 @@ jobs:
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.STABLE_TAG }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Notify container push completed
+        if: github.event_name == 'release'
+        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
+        env:
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_PLATFORM_DEPLOYMENTS }}
+          COMPONENT: SDK
+          RELEASE_TAG: ${{ env.PROWLER_VERSION }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload-file-path: "./.github/scripts/slack-messages/container-release-completed.json"
 
   dispatch-v3-deployment:
     if: needs.container-build-push.outputs.prowler_version_major == '3'
