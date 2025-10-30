@@ -17,12 +17,7 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/eks/latest/userguide/logging-monitoring.html",
     "https://support.icompaas.com/support/solutions/articles/62000233623-ensure-eks-control-plane-logging-is-enabled-for-all-required-log-types",
-    "https://docs.prowler.com/checks/aws/kubernetes-policies-1/bc_aws_kubernetes_4#fix---buildtime",
     "https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html",
-    "https://repost.aws/knowledge-center/eks-get-control-plane-logs",
-    "https://docs.prowler.com/checks/aws/kubernetes-policies-1/bc_aws_kubernetes_4#aws-console",
-    "https://aws.amazon.com/blogs/containers/understanding-and-cost-optimizing-amazon-eks-control-plane-logs/",
-    "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-setup-control-plane-logging.html",
     "https://docs.aws.amazon.com/prescriptive-guidance/latest/implementing-logging-monitoring-cloudwatch/kubernetes-eks-logging.html"
   ],
   "Remediation": {

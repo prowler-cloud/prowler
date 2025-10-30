@@ -33,7 +33,6 @@
     }
   },
   "Categories": [
-    "cluster-security",
     "vulnerabilities"
   ],
   "DependsOn": [],
