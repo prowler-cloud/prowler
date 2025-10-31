@@ -46,6 +46,7 @@ from api.models import (
     ProviderGroup,
     ProviderGroupMembership,
     ProviderSecret,
+    Resource,
     Role,
     RoleProviderGroupRelationship,
     SAMLConfiguration,
@@ -5905,8 +5906,62 @@ class TestOverviewViewSet:
         assert response.json()["data"][0]["attributes"]["findings"]["pass"] == 2
         assert response.json()["data"][0]["attributes"]["findings"]["fail"] == 1
         assert response.json()["data"][0]["attributes"]["findings"]["muted"] == 1
-        # Since we rely on completed scans, there are only 2 resources now
-        assert response.json()["data"][0]["attributes"]["resources"]["total"] == 2
+        # Aggregated resources include all AWS providers present in the tenant
+        assert response.json()["data"][0]["attributes"]["resources"]["total"] == 3
+
+    def test_overview_providers_aggregates_same_provider_type(
+        self,
+        authenticated_client,
+        scan_summaries_fixture,
+        resources_fixture,
+        providers_fixture,
+        tenants_fixture,
+    ):
+        tenant = tenants_fixture[0]
+        _provider1, provider2, *_ = providers_fixture
+
+        scan = Scan.objects.create(
+            name="overview scan aws account 2",
+            provider=provider2,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan,
+            check_id="check-aws-two",
+            service="service-extra",
+            severity="medium",
+            region="region-extra",
+            _pass=3,
+            fail=2,
+            muted=1,
+            total=6,
+        )
+
+        Resource.objects.create(
+            tenant_id=tenant.id,
+            provider=provider2,
+            uid="arn:aws:ec2:us-west-2:123456789013:instance/i-aggregation",
+            name="Aggregated Instance",
+            region="us-west-2",
+            service="ec2",
+            type="prowler-test",
+        )
+
+        response = authenticated_client.get(reverse("overview-providers"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        attributes = data[0]["attributes"]
+
+        assert attributes["findings"]["total"] == 10
+        assert attributes["findings"]["pass"] == 5
+        assert attributes["findings"]["fail"] == 3
+        assert attributes["findings"]["muted"] == 2
+        assert attributes["resources"]["total"] == 4
 
     def test_overview_providers_count(
         self,
@@ -8871,7 +8926,7 @@ class TestLighthouseTenantConfigViewSet:
         """Test creating a tenant config successfully via PATCH (upsert)"""
         payload = {
             "data": {
-                "type": "lighthouse-config",
+                "type": "lighthouse-configurations",
                 "attributes": {
                     "business_context": "Test business context for security analysis",
                     "default_provider": "",
@@ -8880,7 +8935,7 @@ class TestLighthouseTenantConfigViewSet:
             }
         }
         response = authenticated_client.patch(
-            reverse("lighthouse-config"),
+            reverse("lighthouse-configurations"),
             data=payload,
             content_type=API_JSON_CONTENT_TYPE,
         )
@@ -8897,7 +8952,7 @@ class TestLighthouseTenantConfigViewSet:
         """Test that PATCH creates config if not exists and updates if exists (upsert)"""
         payload = {
             "data": {
-                "type": "lighthouse-config",
+                "type": "lighthouse-configurations",
                 "attributes": {
                     "business_context": "First config",
                 },
@@ -8906,7 +8961,7 @@ class TestLighthouseTenantConfigViewSet:
 
         # First PATCH creates the config
         response = authenticated_client.patch(
-            reverse("lighthouse-config"),
+            reverse("lighthouse-configurations"),
             data=payload,
             content_type=API_JSON_CONTENT_TYPE,
         )
@@ -8917,7 +8972,7 @@ class TestLighthouseTenantConfigViewSet:
         # Second PATCH updates the same config (not creating a duplicate)
         payload["data"]["attributes"]["business_context"] = "Updated config"
         response = authenticated_client.patch(
-            reverse("lighthouse-config"),
+            reverse("lighthouse-configurations"),
             data=payload,
             content_type=API_JSON_CONTENT_TYPE,
         )
@@ -8973,7 +9028,7 @@ class TestLighthouseTenantConfigViewSet:
         )
 
         # Retrieve and verify the configuration
-        response = authenticated_client.get(reverse("lighthouse-config"))
+        response = authenticated_client.get(reverse("lighthouse-configurations"))
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
         assert data["id"] == str(config.id)
@@ -8983,7 +9038,7 @@ class TestLighthouseTenantConfigViewSet:
 
     def test_lighthouse_tenant_config_retrieve_not_found(self, authenticated_client):
         """Test GET when config doesn't exist returns 404"""
-        response = authenticated_client.get(reverse("lighthouse-config"))
+        response = authenticated_client.get(reverse("lighthouse-configurations"))
         assert response.status_code == status.HTTP_404_NOT_FOUND
         assert "not found" in response.json()["errors"][0]["detail"].lower()
 
@@ -9004,14 +9059,14 @@ class TestLighthouseTenantConfigViewSet:
         # Update it
         payload = {
             "data": {
-                "type": "lighthouse-config",
+                "type": "lighthouse-configurations",
                 "attributes": {
                     "business_context": "Updated context for cloud security",
                 },
             }
         }
         response = authenticated_client.patch(
-            reverse("lighthouse-config"),
+            reverse("lighthouse-configurations"),
             data=payload,
             content_type=API_JSON_CONTENT_TYPE,
         )
@@ -9036,14 +9091,14 @@ class TestLighthouseTenantConfigViewSet:
         # Try to set invalid provider
         payload = {
             "data": {
-                "type": "lighthouse-config",
+                "type": "lighthouse-configurations",
                 "attributes": {
                     "default_provider": "nonexistent-provider",
                 },
             }
         }
         response = authenticated_client.patch(
-            reverse("lighthouse-config"),
+            reverse("lighthouse-configurations"),
             data=payload,
             content_type=API_JSON_CONTENT_TYPE,
         )
@@ -9064,7 +9119,7 @@ class TestLighthouseTenantConfigViewSet:
 
         # Send invalid JSON
         response = authenticated_client.patch(
-            reverse("lighthouse-config"),
+            reverse("lighthouse-configurations"),
             data="invalid json",
             content_type=API_JSON_CONTENT_TYPE,
         )

@@ -157,7 +157,7 @@ urlpatterns = [
         LighthouseTenantConfigViewSet.as_view(
             {"get": "list", "patch": "partial_update"}
         ),
-        name="lighthouse-config",
+        name="lighthouse-configurations",
     ),
     # API endpoint to start SAML SSO flow
     path(

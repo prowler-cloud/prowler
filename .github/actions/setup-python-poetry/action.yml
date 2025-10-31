@@ -22,8 +22,8 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Replace @master with current branch in pyproject.toml
-      if: github.event_name == 'pull_request' && github.base_ref == 'master'
+    - name: Replace @master with current branch in pyproject.toml (prowler repo only)
+      if: github.event_name == 'pull_request' && github.base_ref == 'master' && github.repository == 'prowler-cloud/prowler'
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
@@ -37,8 +37,8 @@ runs:
         python -m pip install --upgrade pip
         pipx install poetry==${{ inputs.poetry-version }}
 
-    - name: Update SDK resolved_reference to latest commit
-      if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    - name: Update poetry.lock with latest Prowler commit
+      if: github.repository_owner == 'prowler-cloud' && github.repository != 'prowler-cloud/prowler'
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
@@ -50,7 +50,21 @@ runs:
         echo "Updated resolved_reference:"
         grep -A2 -B2 "resolved_reference" poetry.lock
 
-    - name: Update poetry.lock
+    - name: Update SDK resolved_reference to latest commit (prowler repo on push)
+      if: github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository == 'prowler-cloud/prowler'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        LATEST_COMMIT=$(curl -s "https://api.github.com/repos/prowler-cloud/prowler/commits/master" | jq -r '.sha')
+        echo "Latest commit hash: $LATEST_COMMIT"
+        sed -i '/url = "https:\/\/github\.com\/prowler-cloud\/prowler\.git"/,/resolved_reference = / {
+          s/resolved_reference = "[a-f0-9]\{40\}"/resolved_reference = "'"$LATEST_COMMIT"'"/
+        }' poetry.lock
+        echo "Updated resolved_reference:"
+        grep -A2 -B2 "resolved_reference" poetry.lock
+
+    - name: Update poetry.lock (prowler repo only)
+      if: github.repository == 'prowler-cloud/prowler'
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: poetry lock
@@ -69,3 +83,11 @@ runs:
       run: |
         poetry install --no-root
         poetry run pip list
+
+    - name: Update Prowler Cloud API Client
+      if: github.repository_owner == 'prowler-cloud' && github.repository != 'prowler-cloud/prowler'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        poetry remove prowler-cloud-api-client
+        poetry add ./prowler-cloud-api-client
