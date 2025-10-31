@@ -7,7 +7,7 @@ import api.db_utils
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0052_oraclecloud_provider"),
+        ("api", "0053_lighthouse_bedrock_openai_compatible"),
     ]
 
     operations = [
