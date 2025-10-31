@@ -51,8 +51,8 @@ const CustomLineTooltip = ({
     <div
       className="rounded-lg border p-3 shadow-lg"
       style={{
-        backgroundColor: "var(--chart-background)",
-        borderColor: "var(--chart-border-emphasis)",
+        backgroundColor: "var(--bg-neutral-tertiary)",
+        borderColor: "var(--border-neutral-tertiary)",
       }}
     >
       <p
@@ -155,7 +155,11 @@ export function LineChart({
         data={data}
         margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
       >
-        <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.gridLine} />
+        <CartesianGrid
+          strokeDasharray="3 3"
+          stroke={CHART_COLORS.gridLine}
+          vertical={false}
+        />
         <XAxis
           dataKey="date"
           label={

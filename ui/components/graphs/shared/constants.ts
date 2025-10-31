@@ -1,10 +1,10 @@
 export const SEVERITY_COLORS = {
-  Informational: "var(--chart-info)",
-  Info: "var(--chart-info)",
-  Low: "var(--chart-warning)",
-  Medium: "var(--chart-warning-emphasis)",
-  High: "var(--chart-danger)",
-  Critical: "var(--chart-danger-emphasis)",
+  Informational: "var(--bg-data-info)",
+  Info: "var(--bg-data-info)",
+  Low: "var(--bg-data-low)",
+  Medium: "var(--bg-data-medium)",
+  High: "var(--bg-data-high)",
+  Critical: "var(--bg-data-critical)",
 } as const;
 
 export const PROVIDER_COLORS = {
