@@ -26,6 +26,9 @@ class ProviderOutputOptions:
     output_filename: str
     only_logs: bool
     unix_timestamp: bool
+    enrich_findings: bool
+    cloudtrail_lookback_days: int
+    enrich_severities: list[str]
 
     def __init__(self, arguments, bulk_checks_metadata):
         self.status = getattr(arguments, "status", None)
@@ -37,6 +40,13 @@ class ProviderOutputOptions:
         self.unix_timestamp = getattr(arguments, "unix_timestamp", None)
         self.shodan_api_key = getattr(arguments, "shodan", None)
         self.fixer = getattr(arguments, "fixer", None)
+
+        # CloudTrail enrichment options (AWS only)
+        self.enrich_findings = getattr(arguments, "enrich_findings", False)
+        self.cloudtrail_lookback_days = getattr(
+            arguments, "cloudtrail_lookback_days", 90
+        )
+        self.enrich_severities = getattr(arguments, "enrich_severities", None)
 
         # Shodan API Key
         if self.shodan_api_key:

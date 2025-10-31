@@ -192,6 +192,7 @@ class Cloudtrail(AWSService):
             )
 
     def _lookup_events(self, trail, event_name, minutes):
+        """Legacy method for looking up events by name. Used by threat detection checks."""
         logger.info("CloudTrail - Lookup Events...")
         try:
             regional_client = self.regional_clients[trail.region]
@@ -205,6 +206,59 @@ class Cloudtrail(AWSService):
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def lookup_events_for_resource(
+        self,
+        region: str,
+        resource_id: str,
+        start_time: datetime = None,
+        end_time: datetime = None,
+    ):
+        """
+        Lookup all CloudTrail events for a specific resource.
+        Used by CloudTrail enrichment feature.
+
+        Args:
+            region: AWS region to query
+            resource_id: Resource ID to look up (e.g., bucket name, instance ID)
+            start_time: Start time for event lookup
+            end_time: End time for event lookup
+
+        Returns:
+            Generator yielding CloudTrail events
+        """
+        logger.info(
+            f"CloudTrail - Looking up events for resource {resource_id} in {region}..."
+        )
+        try:
+            regional_client = self.regional_clients.get(region)
+            if not regional_client:
+                logger.error(f"No CloudTrail client available for region {region}")
+                return
+
+            # Build lookup parameters
+            params = {
+                "LookupAttributes": [
+                    {"AttributeKey": "ResourceName", "AttributeValue": resource_id}
+                ]
+            }
+            if start_time:
+                params["StartTime"] = start_time
+            if end_time:
+                params["EndTime"] = end_time
+
+            # Use paginator to get ALL events (no limit)
+            paginator = regional_client.get_paginator("lookup_events")
+            page_iterator = paginator.paginate(**params)
+
+            for page in page_iterator:
+                for event in page.get("Events", []):
+                    yield event
+
+        except Exception as error:
+            logger.error(
+                f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def _list_tags_for_resource(self):

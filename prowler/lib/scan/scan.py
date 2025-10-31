@@ -2,6 +2,8 @@ import datetime
 from types import SimpleNamespace
 from typing import Generator
 
+from alive_progress import alive_bar
+
 from prowler.lib.check.check import (
     execute,
     import_check,
@@ -41,6 +43,9 @@ class Scan:
     _status: list[str] = None
     _bulk_checks_metadata: dict[str, CheckMetadata]
     _bulk_compliance_frameworks: dict
+    _enrich_findings: bool = False
+    _enrichment_config: dict = None
+    _enricher = None
 
     def __init__(
         self,
@@ -53,6 +58,8 @@ class Scan:
         excluded_checks: list[str] = None,
         excluded_services: list[str] = None,
         status: list[str] = None,
+        enrich_findings: bool = False,
+        enrichment_config: dict = None,
     ):
         """
         Scan is the class that executes the checks and yields the progress and the findings.
@@ -67,6 +74,8 @@ class Scan:
             excluded_checks: list[str] -> The checks to exclude
             excluded_services: list[str] -> The services to exclude
             status: list[str] -> The status of the checks
+            enrich_findings: bool -> Enable CloudTrail enrichment (AWS only)
+            enrichment_config: dict -> Enrichment configuration (lookback_days, max_events, severities)
 
         Raises:
             ScanInvalidCheckError: If the check does not exist in the provider or is from another provider.
@@ -192,6 +201,10 @@ class Scan:
         self._service_checks_to_execute = service_checks_to_execute
         self._service_checks_completed = service_checks_completed
 
+        # Store enrichment configuration
+        self._enrich_findings = enrich_findings
+        self._enrichment_config = enrichment_config or {}
+
     @property
     def checks_to_execute(self) -> list[str]:
         return self._checks_to_execute
@@ -266,6 +279,9 @@ class Scan:
 
             start_time = datetime.datetime.now()
 
+            # Track all findings for post-scan enrichment
+            all_findings_for_enrichment = []
+
             for check_name in checks_to_execute:
                 try:
                     # Recover service from check name
@@ -303,6 +319,10 @@ class Scan:
                         for finding in check_findings:
                             if finding.status not in self._status:
                                 check_findings.remove(finding)
+
+                    # Store findings for post-scan enrichment
+                    if self._enrich_findings and check_findings:
+                        all_findings_for_enrichment.extend(check_findings)
 
                     # Remove the executed check
                     self._service_checks_to_execute[service].remove(check_name)
@@ -348,10 +368,121 @@ class Scan:
                     )
             # Update the scan duration when all checks are completed
             self._duration = int((datetime.datetime.now() - start_time).total_seconds())
+
+            # Post-scan enrichment (if enabled)
+            if self._enrich_findings and all_findings_for_enrichment:
+                enrichment_stats = self._enrich_findings_post_scan(
+                    all_findings_for_enrichment
+                )
+                # Show enrichment summary
+                if enrichment_stats:
+                    total_enriched = enrichment_stats["total_enriched"]
+                    total_checked = enrichment_stats["total_checked"]
+                    if total_checked > 0:
+                        enrichment_percentage = (total_enriched / total_checked) * 100
+                        logger.info("\nCloudTrail Enrichment Summary:")
+                        logger.info(
+                            f"  ✨ Enriched {total_enriched}/{total_checked} findings ({enrichment_percentage:.1f}%)"
+                        )
+
         except Exception as error:
             logger.error(
                 f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    def _enrich_findings_post_scan(self, findings: list[Finding]) -> dict:
+        """
+        Enriches findings after scan completes using CloudTrail events.
+        Deduplicates resources to avoid redundant API calls.
+
+        Args:
+            findings: List of all findings from the scan
+
+        Returns:
+            dict: Statistics about enrichment (total_enriched, total_checked)
+        """
+        if self._provider.type != "aws":
+            logger.warning(
+                "CloudTrail enrichment is only available for AWS provider. Skipping enrichment."
+            )
+            return {"total_enriched": 0, "total_checked": 0}
+
+        try:
+            from prowler.providers.aws.services.cloudtrail.lib.enrichment.cloudtrail_enricher import (
+                CloudTrailEnricher,
+            )
+
+            logger.info("\nStarting CloudTrail enrichment...")
+
+            lookback_days = self._enrichment_config.get("lookback_days", 90)
+            enrich_severities = self._enrichment_config.get("severities", None)
+
+            # Initialize enricher
+            enricher = CloudTrailEnricher(
+                lookback_days=lookback_days,
+            )
+
+            # Deduplicate resources: group findings by resource_id
+            resource_findings_map = {}  # {resource_id: [(finding, region), ...]}
+
+            for finding in findings:
+                # Apply severity filter
+                if enrich_severities:
+                    severity = finding.check_metadata.get("Severity")
+                    if severity not in enrich_severities:
+                        continue
+
+                resource_id = finding.resource_id
+                region = finding.region
+
+                if resource_id not in resource_findings_map:
+                    resource_findings_map[resource_id] = []
+                resource_findings_map[resource_id].append((finding, region))
+
+            # Enrich each unique resource once using correct regional client
+            enrichment_cache = {}  # {resource_id: enrichment_data}
+            total_checked = len(resource_findings_map)
+            total_enriched = 0
+
+            # Use progress bar for enrichment
+            with alive_bar(
+                total_checked,
+                ctrl_c=False,
+                bar="smooth",
+                spinner="dots_waves",
+                title=f"-> Enriching {total_checked} unique resources",
+            ) as bar:
+                for resource_id, finding_list in resource_findings_map.items():
+                    # Get first finding with this resource
+                    first_finding, _ = finding_list[0]
+
+                    try:
+                        # Enrich the finding
+                        enrichment = enricher.enrich_finding(first_finding)
+
+                        if enrichment:
+                            enrichment_cache[resource_id] = enrichment
+                            total_enriched += 1
+
+                    except Exception as e:
+                        logger.info(f"Could not enrich resource {resource_id}: {e}")
+
+                    bar()
+
+            # Apply enrichment to all findings with the same resource
+            for resource_id, enrichment_data in enrichment_cache.items():
+                if resource_id in resource_findings_map:
+                    for finding, _ in resource_findings_map[resource_id]:
+                        finding.enrichment = enrichment_data
+
+            return {"total_enriched": total_enriched, "total_checked": total_checked}
+
+        except ImportError as e:
+            logger.error(f"Failed to import CloudTrail enricher: {e}")
+            return {"total_enriched": 0, "total_checked": 0}
+        except Exception as e:
+            logger.error(f"Failed to enrich findings: {e}")
+            return {"total_enriched": 0, "total_checked": 0}
 
     def get_completed_services(self) -> set[str]:
         """
