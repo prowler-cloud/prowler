@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0051_oraclecloud_provider"),
+        ("api", "0052_mute_rules"),
     ]
 
     operations = [
