@@ -12,6 +12,7 @@ import { AccountsSelector } from "./components/accounts-selector";
 import { ProviderTypeSelector } from "./components/provider-type-selector";
 import { RiskSeverityChart } from "./components/risk-severity-chart";
 import { StatusChart } from "./components/status-chart";
+import { ThreatScore } from "./components/threat-score";
 
 const FILTER_PREFIX = "filter[";
 
@@ -39,7 +40,17 @@ export default async function NewOverviewPage({
         <ProviderTypeSelector providers={providersData?.data ?? []} />
         <AccountsSelector providers={providersData?.data ?? []} />
       </div>
-      <div className="grid auto-rows-fr gap-6 md:grid-cols-2">
+      <div className="flex flex-col gap-6 md:flex-row md:flex-wrap md:items-stretch">
+        <Suspense
+          fallback={
+            <div className="flex h-[400px] w-full items-center justify-center rounded-xl border border-zinc-900 bg-stone-950">
+              <p className="text-zinc-400">Loading...</p>
+            </div>
+          }
+        >
+          <SSRThreatScore searchParams={resolvedSearchParams} />
+        </Suspense>
+
         <Suspense
           fallback={
             <div className="flex h-[400px] w-full items-center justify-center rounded-xl border border-zinc-900 bg-stone-950">
@@ -140,6 +151,29 @@ const SSRRiskSeverityChart = async ({
       medium={medium}
       low={low}
       informational={informational}
+    />
+  );
+};
+
+const SSRThreatScore = async ({
+  searchParams: _searchParams,
+}: {
+  searchParams: SearchParamsProps | undefined | null;
+}) => {
+  // TODO: Fetch real threat score data from API
+  // const filters = pickFilterParams(_searchParams);
+  // const threatScoreData = await getThreatScore({ filters });
+
+  // For now, using mocked data
+  const mockedScore = 52;
+  const mockedImprovement = 3;
+  const mockedGaps = ["Secret Visibility", "Trust Boundaries"];
+
+  return (
+    <ThreatScore
+      score={mockedScore}
+      improvement={mockedImprovement}
+      gaps={mockedGaps}
     />
   );
 };
