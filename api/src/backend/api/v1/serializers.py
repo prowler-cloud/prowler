@@ -60,7 +60,13 @@ from api.v1.serializer_utils.integrations import (
     S3ConfigSerializer,
     SecurityHubConfigSerializer,
 )
-from api.v1.serializer_utils.lighthouse import OpenAICredentialsSerializer
+from api.v1.serializer_utils.lighthouse import (
+    BedrockCredentialsSerializer,
+    BedrockCredentialsUpdateSerializer,
+    LighthouseCredentialsField,
+    OpenAICompatibleCredentialsSerializer,
+    OpenAICredentialsSerializer,
+)
 from api.v1.serializer_utils.processors import ProcessorConfigField
 from api.v1.serializer_utils.providers import ProviderSecretField
 from prowler.lib.mutelist.mutelist import Mutelist
@@ -3086,7 +3092,12 @@ class LighthouseProviderConfigCreateSerializer(RLSSerializer, BaseWriteSerialize
     Accepts credentials as JSON; stored encrypted via credentials_decoded.
     """
 
-    credentials = serializers.JSONField(write_only=True, required=True)
+    credentials = LighthouseCredentialsField(write_only=True, required=True)
+    base_url = serializers.URLField(
+        required=False,
+        allow_null=True,
+        help_text="Base URL for the LLM provider API. Required for 'openai_compatible' provider type.",
+    )
 
     class Meta:
         model = LighthouseProviderConfiguration
@@ -3098,7 +3109,10 @@ class LighthouseProviderConfigCreateSerializer(RLSSerializer, BaseWriteSerialize
         ]
         extra_kwargs = {
             "is_active": {"required": False},
-            "base_url": {"required": False, "allow_null": True},
+            "provider_type": {
+                "help_text": "LLM provider type. Determines which credential format to use. "
+                "See 'credentials' field documentation for provider-specific requirements."
+            },
         }
 
     def create(self, validated_data):
@@ -3121,10 +3135,40 @@ class LighthouseProviderConfigCreateSerializer(RLSSerializer, BaseWriteSerialize
     def validate(self, attrs):
         provider_type = attrs.get("provider_type")
         credentials = attrs.get("credentials") or {}
+        base_url = attrs.get("base_url")
 
         if provider_type == LighthouseProviderConfiguration.LLMProviderChoices.OPENAI:
             try:
                 OpenAICredentialsSerializer(data=credentials).is_valid(
+                    raise_exception=True
+                )
+            except ValidationError as e:
+                details = e.detail.copy()
+                for key, value in details.items():
+                    e.detail[f"credentials/{key}"] = value
+                    del e.detail[key]
+                raise e
+        elif (
+            provider_type == LighthouseProviderConfiguration.LLMProviderChoices.BEDROCK
+        ):
+            try:
+                BedrockCredentialsSerializer(data=credentials).is_valid(
+                    raise_exception=True
+                )
+            except ValidationError as e:
+                details = e.detail.copy()
+                for key, value in details.items():
+                    e.detail[f"credentials/{key}"] = value
+                    del e.detail[key]
+                raise e
+        elif (
+            provider_type
+            == LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE
+        ):
+            if not base_url:
+                raise ValidationError({"base_url": "Base URL is required."})
+            try:
+                OpenAICompatibleCredentialsSerializer(data=credentials).is_valid(
                     raise_exception=True
                 )
             except ValidationError as e:
@@ -3142,7 +3186,12 @@ class LighthouseProviderConfigUpdateSerializer(BaseWriteSerializer):
     Update serializer for LighthouseProviderConfiguration.
     """
 
-    credentials = serializers.JSONField(write_only=True, required=False)
+    credentials = LighthouseCredentialsField(write_only=True, required=False)
+    base_url = serializers.URLField(
+        required=False,
+        allow_null=True,
+        help_text="Base URL for the LLM provider API. Required for 'openai_compatible' provider type.",
+    )
 
     class Meta:
         model = LighthouseProviderConfiguration
@@ -3156,7 +3205,6 @@ class LighthouseProviderConfigUpdateSerializer(BaseWriteSerializer):
         extra_kwargs = {
             "id": {"read_only": True},
             "provider_type": {"read_only": True},
-            "base_url": {"required": False, "allow_null": True},
             "is_active": {"required": False},
         }
 
@@ -3167,7 +3215,11 @@ class LighthouseProviderConfigUpdateSerializer(BaseWriteSerializer):
             setattr(instance, attr, value)
 
         if credentials is not None:
-            instance.credentials_decoded = credentials
+            # Merge partial credentials with existing ones
+            # New values overwrite existing ones, but unspecified fields are preserved
+            existing_credentials = instance.credentials_decoded or {}
+            merged_credentials = {**existing_credentials, **credentials}
+            instance.credentials_decoded = merged_credentials
 
         instance.save()
         return instance
@@ -3175,6 +3227,7 @@ class LighthouseProviderConfigUpdateSerializer(BaseWriteSerializer):
     def validate(self, attrs):
         provider_type = getattr(self.instance, "provider_type", None)
         credentials = attrs.get("credentials", None)
+        base_url = attrs.get("base_url", None)
 
         if (
             credentials is not None
@@ -3183,6 +3236,40 @@ class LighthouseProviderConfigUpdateSerializer(BaseWriteSerializer):
         ):
             try:
                 OpenAICredentialsSerializer(data=credentials).is_valid(
+                    raise_exception=True
+                )
+            except ValidationError as e:
+                details = e.detail.copy()
+                for key, value in details.items():
+                    e.detail[f"credentials/{key}"] = value
+                    del e.detail[key]
+                raise e
+        elif (
+            credentials is not None
+            and provider_type
+            == LighthouseProviderConfiguration.LLMProviderChoices.BEDROCK
+        ):
+            try:
+                BedrockCredentialsUpdateSerializer(data=credentials).is_valid(
+                    raise_exception=True
+                )
+            except ValidationError as e:
+                details = e.detail.copy()
+                for key, value in details.items():
+                    e.detail[f"credentials/{key}"] = value
+                    del e.detail[key]
+                raise e
+        elif (
+            credentials is not None
+            and provider_type
+            == LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE
+        ):
+            if base_url is None:
+                pass
+            elif not base_url:
+                raise ValidationError({"base_url": "Base URL cannot be empty."})
+            try:
+                OpenAICompatibleCredentialsSerializer(data=credentials).is_valid(
                     raise_exception=True
                 )
             except ValidationError as e:
