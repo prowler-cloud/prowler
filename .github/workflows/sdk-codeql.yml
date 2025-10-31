@@ -36,14 +36,9 @@ on:
     - cron: '00 12 * * *'
 
 jobs:
-<<<<<<< HEAD
-  analyze:
-    name: Analyze
-=======
   sdk-analyze:
     if: github.repository == 'prowler-cloud/prowler'
     name: CodeQL Security Analysis
->>>>>>> 7e7f160b9 (chore(sdk): allow sdk checks only on prowler repository (#9116))
     runs-on: ubuntu-latest
     permissions:
       actions: read
