@@ -52,6 +52,7 @@ jobs:
           ignore: DL3013
 
   sdk-container-build-and-scan:
+    if: github.repository == 'prowler-cloud/prowler'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
