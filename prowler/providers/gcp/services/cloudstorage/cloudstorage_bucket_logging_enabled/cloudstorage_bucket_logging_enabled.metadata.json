@@ -19,7 +19,7 @@
     "Code": {
       "CLI": "gsutil logging set on -b gs://<LOGGING_BUCKET> -o <LOG_OBJECT_PREFIX> gs://<BUCKET_NAME>",
       "NativeIaC": "",
-      "Other": "1) Open Google Cloud Console → Storage → Buckets → <BUCKET_NAME>\n2) Tab 'Configuration'\n3) Under 'Logs', click 'Edit logs' → Enable 'Usage and storage logs'\n4) Choose a destination log bucket and optionally a log object prefix\n5) Save changes",
+      "Other": "",
       "Terraform": "```hcl\n# Example: enable Usage and Storage Logs on a Cloud Storage bucket\nresource \"google_storage_bucket\" \"example\" {\n  name     = var.bucket_name\n  location = var.location\n\n  logging {\n    log_bucket        = var.log_bucket_name\n    log_object_prefix = \"${var.bucket_name}/\"\n  }\n}\n```"
     },
     "Recommendation": {
