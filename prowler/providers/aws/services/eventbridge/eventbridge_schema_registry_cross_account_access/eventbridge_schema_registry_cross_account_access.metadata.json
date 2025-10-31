@@ -1,29 +1,41 @@
 {
   "Provider": "aws",
   "CheckID": "eventbridge_schema_registry_cross_account_access",
-  "CheckTitle": "Ensure that AWS EventBridge schema registries do not allow unknown cross-account access for delivery of events.",
-  "CheckType": [],
+  "CheckTitle": "AWS EventBridge schema registry does not allow cross-account access",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "TTPs/Initial Access/Unauthorized Access",
+    "Effects/Data Exposure"
+  ],
   "ServiceName": "eventbridge",
-  "SubServiceName": "Schemas",
-  "ResourceIdTemplate": "arn:partition:events:region:account-id:event-bus/resource-id",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsEventSchemasRegistry",
-  "Description": "Ensure that AWS EventBridge schema registries do not allow unknown cross-account access for delivery of events.",
-  "Risk": "The schema registry is a central location for storing and managing schemas. If the schema registry is not properly secured, it can lead to unauthorized access to the schema registry and the schemas stored within it.",
-  "RelatedUrl": "https://aws.amazon.com/about-aws/whats-new/2021/09/cross-account-discovery-amazon-eventbridge-schema/",
+  "Description": "**EventBridge schema registry** resource policies are assessed for **cross-account access**. It identifies statements that grant external or public principals (e.g., `Principal: *` or other accounts) permissions to interact with the registry and its schemas.",
+  "Risk": "Unknown cross-account access exposes schema definitions, enabling reconnaissance and leaking data models (**confidentiality**). Excessive permissions may let outsiders alter or delete schemas, corrupt code bindings, and disrupt integrations (**integrity** and **availability**).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://aws.amazon.com/about-aws/whats-new/2021/09/cross-account-discovery-amazon-eventbridge-schema/",
+    "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-schema.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "aws schemas put-resource-policy --registry-name <example_resource_name> --policy '{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::<example_account_id>:root\"},\"Action\":\"schemas:*\",\"Resource\":\"*\"}]}'",
+      "NativeIaC": "```yaml\n# CloudFormation: Restrict EventBridge Schema Registry policy to same account only\nResources:\n  <example_resource_name>RegistryPolicy:\n    Type: AWS::EventSchemas::RegistryPolicy\n    Properties:\n      RegistryName: <example_resource_name>\n      # Critical: Principal limited to this AWS account to prevent cross-account access\n      Policy: !Sub |\n        {\n          \"Version\": \"2012-10-17\",\n          \"Statement\": [\n            {\n              \"Effect\": \"Allow\",\n              \"Principal\": { \"AWS\": \"arn:${AWS::Partition}:iam::${AWS::AccountId}:root\" },\n              \"Action\": \"schemas:*\",\n              \"Resource\": \"*\"\n            }\n          ]\n        }\n```",
+      "Other": "1. Open the Amazon EventBridge console\n2. Go to Schemas > Registries and select <example_resource_name>\n3. Open the Permissions tab and click Edit\n4. Remove any statement with Principal set to \"*\" or an AWS account different from yours\n5. Add a single Allow statement with Principal = arn:aws:iam::<your_account_id>:root\n6. Save changes",
+      "Terraform": "```hcl\n# Restrict EventBridge Schema Registry policy to same account only\nresource \"aws_schemas_registry_policy\" \"<example_resource_name>\" {\n  registry_name = \"<example_resource_name>\"\n\n  # Critical: Principal limited to same account to remove cross-account access\n  policy = jsonencode({\n    Version = \"2012-10-17\"\n    Statement = [{\n      Effect    = \"Allow\"\n      Principal = { AWS = \"arn:aws:iam::<example_account_id>:root\" }\n      Action    = \"schemas:*\"\n      Resource  = \"*\"\n    }]\n  })\n}\n```"
     },
     "Recommendation": {
-      "Text": "To remediate this issue, ensure that the schema registry is not publicly accessible and that only authorized accounts have access to the schema registry.",
-      "Url": "https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-schema.html"
+      "Text": "Apply **least privilege** to registry resource policies:\n- Avoid public principals like `Principal: *`\n- Allow only trusted account ARNs or org IDs\n- Grant minimal actions, prefer read-only\n- Use **separation of duties** and log changes\n\n*If cross-account is needed*, scope tightly and review often.",
+      "Url": "https://hub.prowler.com/check/eventbridge_schema_registry_cross_account_access"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "trust-boundaries",
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

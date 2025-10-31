@@ -823,6 +823,9 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
     muted_reason = models.TextField(
         blank=True, null=True, validators=[MinLengthValidator(3)], max_length=500
     )
+    muted_at = models.DateTimeField(
+        null=True, blank=True, help_text="Timestamp when this finding was muted"
+    )
     compliance = models.JSONField(default=dict, null=True, blank=True)
 
     # Denormalize resource data for performance
@@ -1935,6 +1938,59 @@ class LighthouseConfiguration(RowLevelSecurityProtectedModel):
         resource_name = "lighthouse-configurations"
 
 
+class MuteRule(RowLevelSecurityProtectedModel):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    # Rule metadata
+    name = models.CharField(
+        max_length=100,
+        validators=[MinLengthValidator(3)],
+        help_text="Human-readable name for this rule",
+    )
+    reason = models.TextField(
+        validators=[MinLengthValidator(3)],
+        max_length=500,
+        help_text="Reason for muting",
+    )
+    enabled = models.BooleanField(
+        default=True, help_text="Whether this rule is currently enabled"
+    )
+
+    # Audit fields
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="created_mute_rules",
+        help_text="User who created this rule",
+    )
+
+    # Rule criteria - array of finding UIDs
+    finding_uids = ArrayField(
+        models.CharField(max_length=255), help_text="List of finding UIDs to mute"
+    )
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "mute_rules"
+
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+            models.UniqueConstraint(
+                fields=("tenant_id", "name"),
+                name="unique_mute_rule_name_per_tenant",
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "mute-rules"
+
+
 class Processor(RowLevelSecurityProtectedModel):
     class ProcessorChoices(models.TextChoices):
         MUTELIST = "mutelist", _("Mutelist")
@@ -2104,7 +2160,7 @@ class LighthouseTenantConfiguration(RowLevelSecurityProtectedModel):
         ]
 
     class JSONAPIMeta:
-        resource_name = "lighthouse-config"
+        resource_name = "lighthouse-configurations"
 
 
 class LighthouseProviderModels(RowLevelSecurityProtectedModel):
@@ -2153,3 +2209,6 @@ class LighthouseProviderModels(RowLevelSecurityProtectedModel):
                 name="lh_prov_models_cfg_idx",
             ),
         ]
+
+    class JSONAPIMeta:
+        resource_name = "lighthouse-models"

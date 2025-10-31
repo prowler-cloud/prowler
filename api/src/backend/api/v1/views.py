@@ -68,6 +68,7 @@ from tasks.tasks import (
     delete_provider_task,
     delete_tenant_task,
     jira_integration_task,
+    mute_historical_findings_task,
     perform_scan_task,
     refresh_lighthouse_provider_models_task,
 )
@@ -92,6 +93,7 @@ from api.filters import (
     LighthouseProviderConfigFilter,
     LighthouseProviderModelsFilter,
     MembershipFilter,
+    MuteRuleFilter,
     ProcessorFilter,
     ProviderFilter,
     ProviderGroupFilter,
@@ -117,6 +119,7 @@ from api.models import (
     LighthouseProviderModels,
     LighthouseTenantConfiguration,
     Membership,
+    MuteRule,
     Processor,
     Provider,
     ProviderGroup,
@@ -177,6 +180,9 @@ from api.v1.serializers import (
     LighthouseTenantConfigSerializer,
     LighthouseTenantConfigUpdateSerializer,
     MembershipSerializer,
+    MuteRuleCreateSerializer,
+    MuteRuleSerializer,
+    MuteRuleUpdateSerializer,
     OverviewFindingSerializer,
     OverviewProviderCountSerializer,
     OverviewProviderSerializer,
@@ -416,6 +422,12 @@ class SchemaView(SpectacularAPIView):
                 "name": "API Keys",
                 "description": "Endpoints for API keys management. These can be used as an alternative to JWT "
                 "authorization.",
+            },
+            {
+                "name": "Mute Rules",
+                "description": "Endpoints for simple mute rules management. These can be used as an alternative to the"
+                " Mutelist Processor if you need to mute specific findings across your tenant with a "
+                "specific reason.",
             },
         ]
         return super().get(request, *args, **kwargs)
@@ -3825,10 +3837,7 @@ class OverviewViewSet(BaseRLSViewSet):
 
         findings_aggregated = (
             queryset.filter(scan_id__in=latest_scan_ids)
-            .values(
-                "scan__provider_id",
-                provider=F("scan__provider__provider"),
-            )
+            .values(provider=F("scan__provider__provider"))
             .annotate(
                 findings_passed=Coalesce(Sum("_pass"), 0),
                 findings_failed=Coalesce(Sum("fail"), 0),
@@ -3837,13 +3846,16 @@ class OverviewViewSet(BaseRLSViewSet):
             )
         )
 
-        resources_aggregated = (
-            Resource.all_objects.filter(tenant_id=tenant_id)
-            .values("provider_id")
-            .annotate(total_resources=Count("id"))
-        )
+        resources_queryset = Resource.all_objects.filter(tenant_id=tenant_id)
+        if hasattr(self, "allowed_providers"):
+            resources_queryset = resources_queryset.filter(
+                provider__in=self.allowed_providers
+            )
+        resources_aggregated = resources_queryset.values(
+            provider_type=F("provider__provider")
+        ).annotate(total_resources=Count("id"))
         resource_map = {
-            row["provider_id"]: row["total_resources"] for row in resources_aggregated
+            row["provider_type"]: row["total_resources"] for row in resources_aggregated
         }
 
         overview = []
@@ -3851,7 +3863,7 @@ class OverviewViewSet(BaseRLSViewSet):
             overview.append(
                 {
                     "provider": row["provider"],
-                    "total_resources": resource_map.get(row["scan__provider_id"], 0),
+                    "total_resources": resource_map.get(row["provider"], 0),
                     "total_findings": row["total_findings"],
                     "findings_passed": row["findings_passed"],
                     "findings_failed": row["findings_failed"],
@@ -4730,3 +4742,95 @@ class TenantApiKeyViewSet(BaseRLSViewSet):
 
         serializer = self.get_serializer(instance)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
+
+
+# MuteRules
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Mute Rules"],
+        summary="List all mute rules",
+        description="Retrieve a list of all mute rules with filtering options.",
+    ),
+    retrieve=extend_schema(
+        tags=["Mute Rules"],
+        summary="Retrieve a mute rule",
+        description="Fetch detailed information about a specific mute rule by ID.",
+    ),
+    create=extend_schema(
+        tags=["Mute Rules"],
+        summary="Create a new mute rule",
+        description="Create a new mute rule by providing finding IDs, name, and reason. "
+        "The rule will immediately mute the selected findings and launch a background task "
+        "to mute all historical findings with matching UIDs.",
+        request=MuteRuleCreateSerializer,
+    ),
+    partial_update=extend_schema(
+        tags=["Mute Rules"],
+        summary="Partially update a mute rule",
+        description="Update certain fields of an existing mute rule (e.g., name, reason, enabled).",
+        request=MuteRuleUpdateSerializer,
+        responses={200: MuteRuleSerializer},
+    ),
+    destroy=extend_schema(
+        tags=["Mute Rules"],
+        summary="Delete a mute rule",
+        description="Remove a mute rule from the system. Note: Previously muted findings remain muted.",
+    ),
+)
+class MuteRuleViewSet(BaseRLSViewSet):
+    queryset = MuteRule.objects.all()
+    serializer_class = MuteRuleSerializer
+    filterset_class = MuteRuleFilter
+    http_method_names = ["get", "post", "patch", "delete"]
+    search_fields = ["name", "reason"]
+    ordering = ["-inserted_at"]
+    ordering_fields = [
+        "name",
+        "enabled",
+        "inserted_at",
+        "updated_at",
+    ]
+    required_permissions = [Permissions.MANAGE_SCANS]
+
+    def get_queryset(self):
+        queryset = MuteRule.objects.filter(tenant_id=self.request.tenant_id)
+        return queryset.select_related("created_by")
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return MuteRuleCreateSerializer
+        elif self.action == "partial_update":
+            return MuteRuleUpdateSerializer
+        return super().get_serializer_class()
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # Create the mute rule
+        mute_rule = serializer.save()
+
+        tenant_id = str(request.tenant_id)
+        finding_ids = request.data.get("finding_ids", [])
+
+        # Immediately mute the selected findings
+        Finding.all_objects.filter(
+            id__in=finding_ids, tenant_id=tenant_id, muted=False
+        ).update(
+            muted=True,
+            muted_at=mute_rule.inserted_at,
+            muted_reason=mute_rule.reason,
+        )
+
+        # Launch background task for historical muting
+        with transaction.atomic():
+            mute_historical_findings_task.apply_async(
+                kwargs={"tenant_id": tenant_id, "mute_rule_id": str(mute_rule.id)}
+            )
+
+        # Return the created mute rule
+        serializer = self.get_serializer(mute_rule)
+        return Response(
+            data=serializer.data,
+            status=status.HTTP_201_CREATED,
+        )
