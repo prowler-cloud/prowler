@@ -207,6 +207,9 @@ export const addCredentialsFormSchema = (
                         [ProviderCredentialFields.OCI_KEY_CONTENT]: z
                           .string()
                           .min(1, "Private Key Content is required"),
+                        [ProviderCredentialFields.OCI_TENANCY]: z
+                          .string()
+                          .min(1, "Tenancy OCID is required"),
                         [ProviderCredentialFields.OCI_REGION]: z
                           .string()
                           .min(1, "Region is required"),
