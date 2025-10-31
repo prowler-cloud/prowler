@@ -4335,7 +4335,7 @@ class LighthouseConfigViewSet(BaseRLSViewSet):
         tags=["Lighthouse AI"],
         summary="Create LLM provider configuration",
         description="Create a per-tenant configuration for an LLM provider. Only one configuration per provider type "
-                    "is allowed per tenant.",
+        "is allowed per tenant.",
     ),
     partial_update=extend_schema(
         tags=["Lighthouse AI"],
@@ -4346,7 +4346,7 @@ class LighthouseConfigViewSet(BaseRLSViewSet):
         tags=["Lighthouse AI"],
         summary="Delete LLM provider configuration",
         description="Delete a provider configuration. Any tenant defaults that reference this provider are cleared "
-                    "during deletion.",
+        "during deletion.",
     ),
 )
 class LighthouseProviderConfigViewSet(BaseRLSViewSet):
