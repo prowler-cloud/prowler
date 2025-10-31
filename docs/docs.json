@@ -98,7 +98,7 @@
                 ]
               },
               "user-guide/tutorials/prowler-app-rbac",
-              "user-guide/providers/prowler-app-api-keys",
+              "user-guide/tutorials/prowler-app-api-keys",
               "user-guide/tutorials/prowler-app-mute-findings",
               {
                 "group": "Integrations",

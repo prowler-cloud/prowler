@@ -27,6 +27,11 @@ from tasks.jobs.integrations import (
     upload_s3_integration,
     upload_security_hub_integration,
 )
+from tasks.jobs.lighthouse_providers import (
+    check_lighthouse_provider_connection,
+    refresh_lighthouse_provider_models,
+)
+from tasks.jobs.muting import mute_historical_findings
 from tasks.jobs.report import generate_threatscore_report_job
 from tasks.jobs.scan import (
     aggregate_findings,
@@ -524,6 +529,24 @@ def check_lighthouse_connection_task(lighthouse_config_id: str, tenant_id: str =
     return check_lighthouse_connection(lighthouse_config_id=lighthouse_config_id)
 
 
+@shared_task(base=RLSTask, name="lighthouse-provider-connection-check")
+@set_tenant
+def check_lighthouse_provider_connection_task(
+    provider_config_id: str, tenant_id: str | None = None
+) -> dict:
+    """Task wrapper to validate provider credentials and set is_active."""
+    return check_lighthouse_provider_connection(provider_config_id=provider_config_id)
+
+
+@shared_task(base=RLSTask, name="lighthouse-provider-models-refresh")
+@set_tenant
+def refresh_lighthouse_provider_models_task(
+    provider_config_id: str, tenant_id: str | None = None
+) -> dict:
+    """Task wrapper to refresh provider models catalog for the given configuration."""
+    return refresh_lighthouse_provider_models(provider_config_id=provider_config_id)
+
+
 @shared_task(name="integration-check")
 def check_integrations_task(tenant_id: str, provider_id: str, scan_id: str = None):
     """
@@ -659,3 +682,25 @@ def generate_threatscore_report_task(tenant_id: str, scan_id: str, provider_id: 
     return generate_threatscore_report_job(
         tenant_id=tenant_id, scan_id=scan_id, provider_id=provider_id
     )
+
+
+@shared_task(name="findings-mute-historical")
+def mute_historical_findings_task(tenant_id: str, mute_rule_id: str):
+    """
+    Background task to mute all historical findings matching a mute rule.
+
+    This task processes findings in batches to avoid memory issues with large datasets.
+    It updates the Finding.muted, Finding.muted_at, and Finding.muted_reason fields
+    for all findings whose UID is in the mute rule's finding_uids list.
+
+    Args:
+        tenant_id (str): The tenant ID for RLS context.
+        mute_rule_id (str): The primary key of the MuteRule to apply.
+
+    Returns:
+        dict: A dictionary containing:
+            - 'findings_muted' (int): Total number of findings muted.
+            - 'rule_id' (str): The mute rule ID.
+            - 'status' (str): Final status ('completed').
+    """
+    return mute_historical_findings(tenant_id, mute_rule_id)

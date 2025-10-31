@@ -25,7 +25,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  analyze:
+  api-analyze:
     name: CodeQL Security Analysis
     runs-on: ubuntu-latest
     timeout-minutes: 30

@@ -150,8 +150,8 @@ jobs:
           # Remove --- separators
           sed -i '/^---$/d' "$output_file"
 
-          # Remove trailing empty lines
-          sed -i '/^$/d' "$output_file"
+          # Remove only trailing empty lines (not all empty lines)
+          sed -i -e :a -e '/^\s*$/d;N;ba' "$output_file"
         }
 
         # Calculate expected versions for this release
@@ -247,6 +247,11 @@ jobs:
           echo "" >> combined_changelog.md
         fi
 
+        # Add fallback message if no changelogs were added
+        if [ ! -s combined_changelog.md ]; then
+          echo "No component changes detected for this release." >> combined_changelog.md
+        fi
+
         echo "Combined changelog preview:"
         cat combined_changelog.md
 
@@ -336,13 +341,6 @@ jobs:
         CURRENT_PROWLER_REF=$(grep 'prowler @ git+https://github.com/prowler-cloud/prowler.git@' api/pyproject.toml | sed -E 's/.*@([^"]+)".*/\1/' | tr -d '[:space:]')
         BRANCH_NAME_TRIMMED=$(echo "$BRANCH_NAME" | tr -d '[:space:]')
 
-        # Create a temporary branch for the PR from the minor version branch
-        TEMP_BRANCH="update-api-dependency-$BRANCH_NAME_TRIMMED-$(date +%s)"
-        echo "TEMP_BRANCH=$TEMP_BRANCH" >> $GITHUB_ENV
-
-        # Create temp branch from the current minor version branch
-        git checkout -b "$TEMP_BRANCH"
-
         # Minor release: update the dependency to use the release branch
         echo "Updating prowler dependency from '$CURRENT_PROWLER_REF' to '$BRANCH_NAME_TRIMMED'"
         sed -i "s|prowler @ git+https://github.com/prowler-cloud/prowler.git@[^\"]*\"|prowler @ git+https://github.com/prowler-cloud/prowler.git@$BRANCH_NAME_TRIMMED\"|" api/pyproject.toml
@@ -360,11 +358,6 @@ jobs:
         poetry lock
         cd ..
 
-        # Commit and push the temporary branch
-        git add api/pyproject.toml api/poetry.lock
-        git commit -m "chore(api): update prowler dependency to $BRANCH_NAME_TRIMMED for release $PROWLER_VERSION"
-        git push origin "$TEMP_BRANCH"
-
         echo "✓ Prepared prowler dependency update to: $UPDATED_PROWLER_REF"
 
     - name: Create PR for API dependency update
@@ -372,8 +365,12 @@ jobs:
       uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
       with:
         token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
-        branch: ${{ env.TEMP_BRANCH }}
+        commit-message: 'chore(api): update prowler dependency to ${{ env.BRANCH_NAME }} for release ${{ env.PROWLER_VERSION }}'
+        branch: update-api-dependency-${{ env.BRANCH_NAME }}-${{ github.run_number }}
         base: ${{ env.BRANCH_NAME }}
+        add-paths: |
+          api/pyproject.toml
+          api/poetry.lock
         title: "chore(api): Update prowler dependency to ${{ env.BRANCH_NAME }} for release ${{ env.PROWLER_VERSION }}"
         body: |
           ### Description
@@ -406,5 +403,6 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Clean up temporary files
+      if: always()
       run: |
         rm -f prowler_changelog.md api_changelog.md ui_changelog.md mcp_changelog.md combined_changelog.md
