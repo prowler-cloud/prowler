@@ -3585,7 +3585,7 @@ paths:
       summary: Get Lighthouse AI Tenant config
       parameters:
       - in: query
-        name: fields[lighthouse-config]
+        name: fields[lighthouse-configurations]
         schema:
           type: array
           items:
@@ -3690,7 +3690,7 @@ paths:
       summary: List all LLM models
       parameters:
       - in: query
-        name: fields[LighthouseProviderModels]
+        name: fields[lighthouse-models]
         schema:
           type: array
           items:
@@ -3819,7 +3819,7 @@ paths:
       summary: Retrieve LLM model details
       parameters:
       - in: query
-        name: fields[LighthouseProviderModels]
+        name: fields[lighthouse-models]
         schema:
           type: array
           items:
@@ -3857,7 +3857,7 @@ paths:
     get:
       operationId: lighthouse_providers_list
       description: Retrieve all LLM provider configurations for the current tenant
-      summary: List all LLM provider configs
+      summary: List all LLM provider configurations
       parameters:
       - in: query
         name: fields[lighthouse-providers]
@@ -3973,7 +3973,7 @@ paths:
       operationId: lighthouse_providers_create
       description: Create a per-tenant configuration for an LLM provider. Only one
         configuration per provider type is allowed per tenant.
-      summary: Create LLM provider config
+      summary: Create LLM provider configuration
       tags:
       - Lighthouse AI
       requestBody:
@@ -4002,7 +4002,7 @@ paths:
       operationId: lighthouse_providers_retrieve
       description: Get details for a specific provider configuration in the current
         tenant.
-      summary: Retrieve LLM provider config
+      summary: Retrieve LLM provider configuration
       parameters:
       - in: query
         name: fields[lighthouse-providers]
@@ -4042,7 +4042,7 @@ paths:
     patch:
       operationId: lighthouse_providers_partial_update
       description: Partially update a provider configuration (e.g., base_url, is_active).
-      summary: Update LLM provider config
+      summary: Update LLM provider configuration
       parameters:
       - in: path
         name: id
@@ -4078,7 +4078,7 @@ paths:
       operationId: lighthouse_providers_destroy
       description: Delete a provider configuration. Any tenant defaults that reference
         this provider are cleared during deletion.
-      summary: Delete LLM provider config
+      summary: Delete LLM provider configuration
       parameters:
       - in: path
         name: id
@@ -12016,7 +12016,7 @@ components:
               type: string
               x-spec-enum-id: 30bc523cb9ec0e8b
               description: |-
-                LLM provider name
+                LLM provider type. Determines which credential format to use. See 'credentials' field documentation for provider-specific requirements.
 
                 * `openai` - OpenAI
                 * `bedrock` - AWS Bedrock
@@ -12025,8 +12025,50 @@ components:
               type: string
               format: uri
               nullable: true
-              maxLength: 200
+              description: Base URL for the LLM provider API. Required for 'openai_compatible'
+                provider type.
             credentials:
+              oneOf:
+              - type: object
+                title: OpenAI Credentials
+                properties:
+                  api_key:
+                    type: string
+                    description: OpenAI API key. Must start with 'sk-' followed by
+                      alphanumeric characters, hyphens, or underscores.
+                    pattern: ^sk-[\w-]+$
+                required:
+                - api_key
+              - type: object
+                title: AWS Bedrock Credentials
+                properties:
+                  access_key_id:
+                    type: string
+                    description: AWS access key ID.
+                    pattern: ^AKIA[0-9A-Z]{16}$
+                  secret_access_key:
+                    type: string
+                    description: AWS secret access key.
+                    pattern: ^[A-Za-z0-9/+=]{40}$
+                  region:
+                    type: string
+                    description: 'AWS region identifier where Bedrock is available.
+                      Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                    pattern: ^[a-z]{2}-[a-z]+-\d+$
+                required:
+                - access_key_id
+                - secret_access_key
+                - region
+              - type: object
+                title: OpenAI Compatible Credentials
+                properties:
+                  api_key:
+                    type: string
+                    description: 'API key for OpenAI-compatible provider. The format
+                      varies by provider. Note: The ''base_url'' field (separate from
+                      credentials) is required when using this provider type.'
+                required:
+                - api_key
               writeOnly: true
             is_active:
               type: boolean
@@ -12060,7 +12102,7 @@ components:
                   type: string
                   x-spec-enum-id: 30bc523cb9ec0e8b
                   description: |-
-                    LLM provider name
+                    LLM provider type. Determines which credential format to use. See 'credentials' field documentation for provider-specific requirements.
 
                     * `openai` - OpenAI
                     * `bedrock` - AWS Bedrock
@@ -12069,8 +12111,52 @@ components:
                   type: string
                   format: uri
                   nullable: true
-                  maxLength: 200
+                  minLength: 1
+                  description: Base URL for the LLM provider API. Required for 'openai_compatible'
+                    provider type.
                 credentials:
+                  oneOf:
+                  - type: object
+                    title: OpenAI Credentials
+                    properties:
+                      api_key:
+                        type: string
+                        description: OpenAI API key. Must start with 'sk-' followed
+                          by alphanumeric characters, hyphens, or underscores.
+                        pattern: ^sk-[\w-]+$
+                    required:
+                    - api_key
+                  - type: object
+                    title: AWS Bedrock Credentials
+                    properties:
+                      access_key_id:
+                        type: string
+                        description: AWS access key ID.
+                        pattern: ^AKIA[0-9A-Z]{16}$
+                      secret_access_key:
+                        type: string
+                        description: AWS secret access key.
+                        pattern: ^[A-Za-z0-9/+=]{40}$
+                      region:
+                        type: string
+                        description: 'AWS region identifier where Bedrock is available.
+                          Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                        pattern: ^[a-z]{2}-[a-z]+-\d+$
+                    required:
+                    - access_key_id
+                    - secret_access_key
+                    - region
+                  - type: object
+                    title: OpenAI Compatible Credentials
+                    properties:
+                      api_key:
+                        type: string
+                        description: 'API key for OpenAI-compatible provider. The
+                          format varies by provider. Note: The ''base_url'' field
+                          (separate from credentials) is required when using this
+                          provider type.'
+                    required:
+                    - api_key
                   writeOnly: true
                 is_active:
                   type: boolean
@@ -12131,8 +12217,50 @@ components:
               type: string
               format: uri
               nullable: true
-              maxLength: 200
+              description: Base URL for the LLM provider API. Required for 'openai_compatible'
+                provider type.
             credentials:
+              oneOf:
+              - type: object
+                title: OpenAI Credentials
+                properties:
+                  api_key:
+                    type: string
+                    description: OpenAI API key. Must start with 'sk-' followed by
+                      alphanumeric characters, hyphens, or underscores.
+                    pattern: ^sk-[\w-]+$
+                required:
+                - api_key
+              - type: object
+                title: AWS Bedrock Credentials
+                properties:
+                  access_key_id:
+                    type: string
+                    description: AWS access key ID.
+                    pattern: ^AKIA[0-9A-Z]{16}$
+                  secret_access_key:
+                    type: string
+                    description: AWS secret access key.
+                    pattern: ^[A-Za-z0-9/+=]{40}$
+                  region:
+                    type: string
+                    description: 'AWS region identifier where Bedrock is available.
+                      Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                    pattern: ^[a-z]{2}-[a-z]+-\d+$
+                required:
+                - access_key_id
+                - secret_access_key
+                - region
+              - type: object
+                title: OpenAI Compatible Credentials
+                properties:
+                  api_key:
+                    type: string
+                    description: 'API key for OpenAI-compatible provider. The format
+                      varies by provider. Note: The ''base_url'' field (separate from
+                      credentials) is required when using this provider type.'
+                required:
+                - api_key
               writeOnly: true
             is_active:
               type: boolean
@@ -12156,7 +12284,7 @@ components:
             member is used to describe resource objects that share common attributes
             and relationships.
           enum:
-          - LighthouseProviderModels
+          - lighthouse-models
         id:
           type: string
           format: uuid
@@ -12229,7 +12357,7 @@ components:
             member is used to describe resource objects that share common attributes
             and relationships.
           enum:
-          - lighthouse-config
+          - lighthouse-configurations
         id:
           type: string
           format: uuid
@@ -12266,7 +12394,7 @@ components:
             member is used to describe resource objects that share common attributes
             and relationships.
           enum:
-          - lighthouse-config
+          - lighthouse-configurations
         id:
           type: string
           format: uuid
@@ -13483,8 +13611,52 @@ components:
                   type: string
                   format: uri
                   nullable: true
-                  maxLength: 200
+                  minLength: 1
+                  description: Base URL for the LLM provider API. Required for 'openai_compatible'
+                    provider type.
                 credentials:
+                  oneOf:
+                  - type: object
+                    title: OpenAI Credentials
+                    properties:
+                      api_key:
+                        type: string
+                        description: OpenAI API key. Must start with 'sk-' followed
+                          by alphanumeric characters, hyphens, or underscores.
+                        pattern: ^sk-[\w-]+$
+                    required:
+                    - api_key
+                  - type: object
+                    title: AWS Bedrock Credentials
+                    properties:
+                      access_key_id:
+                        type: string
+                        description: AWS access key ID.
+                        pattern: ^AKIA[0-9A-Z]{16}$
+                      secret_access_key:
+                        type: string
+                        description: AWS secret access key.
+                        pattern: ^[A-Za-z0-9/+=]{40}$
+                      region:
+                        type: string
+                        description: 'AWS region identifier where Bedrock is available.
+                          Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                        pattern: ^[a-z]{2}-[a-z]+-\d+$
+                    required:
+                    - access_key_id
+                    - secret_access_key
+                    - region
+                  - type: object
+                    title: OpenAI Compatible Credentials
+                    properties:
+                      api_key:
+                        type: string
+                        description: 'API key for OpenAI-compatible provider. The
+                          format varies by provider. Note: The ''base_url'' field
+                          (separate from credentials) is required when using this
+                          provider type.'
+                    required:
+                    - api_key
                   writeOnly: true
                 is_active:
                   type: boolean
@@ -13506,7 +13678,7 @@ components:
                 member is used to describe resource objects that share common attributes
                 and relationships.
               enum:
-              - lighthouse-config
+              - lighthouse-configurations
             id:
               type: string
               format: uuid
