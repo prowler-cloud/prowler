@@ -66,6 +66,7 @@
   --border-neutral-tertiary: var(--color-slate-300);
   --border-tag-primary: var(--color-gray-400);
   --border-data-emphasis: rgba(0, 0, 0, 0.1);
+  --border-time-range: #262626B2;
 
   /* Text Colors */
   --text-neutral-primary: var(--color-slate-950);
@@ -222,6 +223,7 @@
   --border-neutral-tertiary: var(--color-zinc-900);
   --border-tag-primary: var(--color-slate-700);
   --border-data-emphasis: rgba(255, 255, 255, 0.1);
+  --border-time-range: #262626B2;
 
   /* Text Colors */
   --text-neutral-primary: var(--color-zinc-100);

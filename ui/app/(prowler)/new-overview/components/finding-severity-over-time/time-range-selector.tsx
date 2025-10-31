@@ -20,13 +20,13 @@ interface TimeRangeSelectorProps {
 
 const BUTTON_STYLES = {
   base: "relative inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50",
-  border: "border-r border-border-neutral-quaternary last:border-r-0",
+  border: "border-r border-zinc-800 last:border-r-0",
   text: "text-text-neutral-quaternary hover:text-text-neutral-quaternary",
   active: "data-[state=active]:text-text-neutral-quaternary",
   underline:
-    "after:absolute after:bottom-0 after:left-1/2 after:h-[1.5px] after:w-0 after:-translate-x-1/2 after:bg-button-primary after:transition-all data-[state=active]:after:w-[calc(100%-theme(spacing.4))]",
+    "after:absolute after:bottom-0 after:left-1/2 after:h-[2px] after:w-0 after:-translate-x-1/2 after:bg-emerald-300 after:transition-all after:duration-200 data-[state=active]:after:w-[calc(100%-2rem)]",
   focus:
-    "focus-visible:ring-2 focus-visible:ring-button-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg-neutral-secondary focus-visible:outline-none",
+    "focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-neutral-secondary focus-visible:outline-none",
 } as const;
 
 export const TimeRangeSelector = ({
@@ -35,7 +35,10 @@ export const TimeRangeSelector = ({
   isLoading = false,
 }: TimeRangeSelectorProps) => {
   return (
-    <div className="border-border-neutral-quaternary bg-bg-neutral-quaternary/50 inline-flex items-center gap-2 rounded-full border p-1">
+    <div
+      className="inline-flex items-center gap-2 rounded-full border p-1 bg-neutral-900"
+      style={{ borderColor: "var(--border-time-range)" }}
+    >
       {Object.entries(TIME_RANGE_OPTIONS).map(([key, range]) => (
         <button
           key={key}
