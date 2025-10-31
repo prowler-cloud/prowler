@@ -50,6 +50,8 @@ from prowler.lib.outputs.compliance.aws_well_architected.aws_well_architected im
     AWSWellArchitected,
 )
 from prowler.lib.outputs.compliance.c5.c5_aws import AWSC5
+from prowler.lib.outputs.compliance.c5.c5_azure import AzureC5
+from prowler.lib.outputs.compliance.c5.c5_gcp import GCPC5
 from prowler.lib.outputs.compliance.ccc.ccc_aws import CCC_AWS
 from prowler.lib.outputs.compliance.ccc.ccc_azure import CCC_Azure
 from prowler.lib.outputs.compliance.ccc.ccc_gcp import CCC_GCP
@@ -688,6 +690,18 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(ccc_azure)
                 ccc_azure.batch_write_data_to_file()
+            elif compliance_name == "c5_azure":
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                c5_azure = AzureC5(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(c5_azure)
+                c5_azure.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -779,6 +793,18 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(ccc_gcp)
                 ccc_gcp.batch_write_data_to_file()
+            elif compliance_name == "c5_gcp":
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                c5_gcp = GCPC5(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(c5_gcp)
+                c5_gcp.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"

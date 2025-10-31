@@ -68,6 +68,7 @@ export const BaseCredentialsForm = ({
   } = useCredentialsForm({
     providerType,
     providerId,
+    providerUid,
     onSubmit,
     successNavigationUrl,
   });
