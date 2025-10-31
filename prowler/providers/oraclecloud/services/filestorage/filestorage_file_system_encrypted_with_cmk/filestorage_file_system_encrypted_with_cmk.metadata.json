@@ -1,5 +1,5 @@
 {
-  "Provider": "oci",
+  "Provider": "oraclecloud",
   "CheckID": "filestorage_file_system_encrypted_with_cmk",
   "CheckTitle": "Ensure File Storage Systems are encrypted with Customer Managed Keys",
   "CheckType": [

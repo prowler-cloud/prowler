@@ -1,5 +1,5 @@
 {
-  "Provider": "oci",
+  "Provider": "oraclecloud",
   "CheckID": "events_rule_security_list_changes",
   "CheckTitle": "Ensure a notification is configured for security list changes",
   "CheckType": [

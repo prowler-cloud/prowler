@@ -1,5 +1,5 @@
 {
-  "Provider": "oci",
+  "Provider": "oraclecloud",
   "CheckID": "identity_user_mfa_enabled_console_access",
   "CheckTitle": "Ensure MFA is enabled for all users with a console password",
   "CheckType": [
