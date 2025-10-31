@@ -24,7 +24,7 @@ def set_mocked_oraclecloud_provider(
 ) -> MagicMock:
     """Create a mocked OCI provider for testing"""
     provider = MagicMock()
-    provider.type = "oci"
+    provider.type = "oraclecloud"
 
     # Mock session
     provider.session = OCISession(

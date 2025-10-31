@@ -136,7 +136,7 @@ class Test_network_security_list_ingress_from_internet_to_ssh_port:
                     assert pass_results[0].compartment_id is not None
 
                     # Verify metadata
-                    assert pass_results[0].check_metadata.Provider == "oci"
+                    assert pass_results[0].check_metadata.Provider == "oraclecloud"
                     assert (
                         pass_results[0].check_metadata.CheckID
                         == "network_security_list_ingress_from_internet_to_ssh_port"
@@ -221,7 +221,7 @@ class Test_network_security_list_ingress_from_internet_to_ssh_port:
                     assert fail_results[0].compartment_id is not None
 
                     # Verify metadata
-                    assert fail_results[0].check_metadata.Provider == "oci"
+                    assert fail_results[0].check_metadata.Provider == "oraclecloud"
                     assert (
                         fail_results[0].check_metadata.CheckID
                         == "network_security_list_ingress_from_internet_to_ssh_port"

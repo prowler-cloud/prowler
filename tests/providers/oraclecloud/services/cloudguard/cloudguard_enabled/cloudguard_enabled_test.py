@@ -136,7 +136,7 @@ class Test_cloudguard_enabled:
                     assert pass_results[0].compartment_id is not None
 
                     # Verify metadata
-                    assert pass_results[0].check_metadata.Provider == "oci"
+                    assert pass_results[0].check_metadata.Provider == "oraclecloud"
                     assert (
                         pass_results[0].check_metadata.CheckID == "cloudguard_enabled"
                     )
@@ -220,7 +220,7 @@ class Test_cloudguard_enabled:
                     assert fail_results[0].compartment_id is not None
 
                     # Verify metadata
-                    assert fail_results[0].check_metadata.Provider == "oci"
+                    assert fail_results[0].check_metadata.Provider == "oraclecloud"
                     assert (
                         fail_results[0].check_metadata.CheckID == "cloudguard_enabled"
                     )

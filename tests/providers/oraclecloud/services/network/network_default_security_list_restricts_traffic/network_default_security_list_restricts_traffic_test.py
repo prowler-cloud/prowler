@@ -136,7 +136,7 @@ class Test_network_default_security_list_restricts_traffic:
                     assert pass_results[0].compartment_id is not None
 
                     # Verify metadata
-                    assert pass_results[0].check_metadata.Provider == "oci"
+                    assert pass_results[0].check_metadata.Provider == "oraclecloud"
                     assert (
                         pass_results[0].check_metadata.CheckID
                         == "network_default_security_list_restricts_traffic"
@@ -221,7 +221,7 @@ class Test_network_default_security_list_restricts_traffic:
                     assert fail_results[0].compartment_id is not None
 
                     # Verify metadata
-                    assert fail_results[0].check_metadata.Provider == "oci"
+                    assert fail_results[0].check_metadata.Provider == "oraclecloud"
                     assert (
                         fail_results[0].check_metadata.CheckID
                         == "network_default_security_list_restricts_traffic"

@@ -136,7 +136,7 @@ class Test_compute_instance_secure_boot_enabled:
                     assert pass_results[0].compartment_id is not None
 
                     # Verify metadata
-                    assert pass_results[0].check_metadata.Provider == "oci"
+                    assert pass_results[0].check_metadata.Provider == "oraclecloud"
                     assert (
                         pass_results[0].check_metadata.CheckID
                         == "compute_instance_secure_boot_enabled"
@@ -221,7 +221,7 @@ class Test_compute_instance_secure_boot_enabled:
                     assert fail_results[0].compartment_id is not None
 
                     # Verify metadata
-                    assert fail_results[0].check_metadata.Provider == "oci"
+                    assert fail_results[0].check_metadata.Provider == "oraclecloud"
                     assert (
                         fail_results[0].check_metadata.CheckID
                         == "compute_instance_secure_boot_enabled"

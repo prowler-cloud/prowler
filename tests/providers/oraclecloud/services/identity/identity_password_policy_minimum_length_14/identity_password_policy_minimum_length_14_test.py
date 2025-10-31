@@ -136,7 +136,7 @@ class Test_identity_password_policy_minimum_length_14:
                     assert pass_results[0].compartment_id is not None
 
                     # Verify metadata
-                    assert pass_results[0].check_metadata.Provider == "oci"
+                    assert pass_results[0].check_metadata.Provider == "oraclecloud"
                     assert (
                         pass_results[0].check_metadata.CheckID
                         == "identity_password_policy_minimum_length_14"
@@ -221,7 +221,7 @@ class Test_identity_password_policy_minimum_length_14:
                     assert fail_results[0].compartment_id is not None
 
                     # Verify metadata
-                    assert fail_results[0].check_metadata.Provider == "oci"
+                    assert fail_results[0].check_metadata.Provider == "oraclecloud"
                     assert (
                         fail_results[0].check_metadata.CheckID
                         == "identity_password_policy_minimum_length_14"
