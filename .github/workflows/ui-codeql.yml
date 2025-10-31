@@ -28,14 +28,9 @@ on:
     - cron: "00 12 * * *"
 
 jobs:
-<<<<<<< HEAD
-  analyze:
-    name: Analyze
-=======
   ui-analyze:
     if: github.repository == 'prowler-cloud/prowler'
     name: CodeQL Security Analysis
->>>>>>> aaae73cd1 (chore(github): rename jobs to know which component they belong (#9117))
     runs-on: ubuntu-latest
     permissions:
       actions: read
