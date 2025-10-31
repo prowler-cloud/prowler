@@ -8,6 +8,7 @@ import {
   AzureProviderBadge,
   GCPProviderBadge,
   GitHubProviderBadge,
+  IacProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
   OracleCloudProviderBadge,
@@ -28,6 +29,7 @@ const PROVIDER_ICON: Record<ProviderType, ReactNode> = {
   kubernetes: <KS8ProviderBadge width={18} height={18} />,
   m365: <M365ProviderBadge width={18} height={18} />,
   github: <GitHubProviderBadge width={18} height={18} />,
+  iac: <IacProviderBadge width={18} height={18} />,
   oci: <OracleCloudProviderBadge width={18} height={18} />,
 };
 

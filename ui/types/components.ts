@@ -248,6 +248,12 @@ export type KubernetesCredentials = {
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
+export type IacCredentials = {
+  [ProviderCredentialFields.REPOSITORY_URL]: string;
+  [ProviderCredentialFields.ACCESS_TOKEN]?: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
 export type OCICredentials = {
   [ProviderCredentialFields.OCI_USER]: string;
   [ProviderCredentialFields.OCI_FINGERPRINT]: string;
@@ -264,6 +270,7 @@ export type CredentialsFormSchema =
   | GCPDefaultCredentials
   | GCPServiceAccountKey
   | KubernetesCredentials
+  | IacCredentials
   | M365Credentials
   | OCICredentials;
 

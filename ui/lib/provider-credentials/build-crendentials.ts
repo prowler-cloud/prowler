@@ -197,6 +197,20 @@ export const buildGitHubSecret = (formData: FormData) => {
   return {};
 };
 
+export const buildIacSecret = (formData: FormData) => {
+  const secret = {
+    [ProviderCredentialFields.REPOSITORY_URL]: getFormValue(
+      formData,
+      ProviderCredentialFields.REPOSITORY_URL,
+    ),
+    [ProviderCredentialFields.ACCESS_TOKEN]: getFormValue(
+      formData,
+      ProviderCredentialFields.ACCESS_TOKEN,
+    ),
+  };
+  return filterEmptyValues(secret);
+};
+
 /**
  * Utility function to safely encode a string to base64
  * Handles UTF-8 characters properly without using deprecated APIs
@@ -285,6 +299,10 @@ export const buildSecretConfig = (
     github: () => ({
       secretType: "static",
       secret: buildGitHubSecret(formData),
+    }),
+    iac: () => ({
+      secretType: "static",
+      secret: buildIacSecret(formData),
     }),
     oci: () => ({
       secretType: "static",

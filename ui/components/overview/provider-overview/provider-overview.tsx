@@ -8,6 +8,7 @@ import {
   AzureProviderBadge,
   GCPProviderBadge,
   GitHubProviderBadge,
+  IacProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
   OracleCloudProviderBadge,
@@ -38,6 +39,8 @@ export const ProvidersOverview = ({
         return <KS8ProviderBadge width={30} height={30} />;
       case "github":
         return <GitHubProviderBadge width={30} height={30} />;
+      case "iac":
+        return <IacProviderBadge width={30} height={30} />;
       case "oci":
         return <OracleCloudProviderBadge width={30} height={30} />;
       default:
@@ -52,6 +55,7 @@ export const ProvidersOverview = ({
     gcp: "GCP",
     kubernetes: "Kubernetes",
     github: "GitHub",
+    iac: "IaC",
     oci: "OCI",
   };
 
