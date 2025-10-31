@@ -36,8 +36,9 @@ on:
     - cron: '00 12 * * *'
 
 jobs:
-  analyze:
-    name: Analyze
+  sdk-analyze:
+    if: github.repository == 'prowler-cloud/prowler'
+    name: CodeQL Security Analysis
     runs-on: ubuntu-latest
     permissions:
       actions: read

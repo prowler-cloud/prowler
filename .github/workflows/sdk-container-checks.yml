@@ -29,6 +29,7 @@ env:
 
 jobs:
   sdk-dockerfile-lint:
+    if: github.repository == 'prowler-cloud/prowler'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -100,7 +101,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Scan SDK container with Trivy
-        if: github.repository == 'prowler-cloud/prowler' && steps.check-changes.outputs.any_changed == 'true'
+        if: steps.check-changes.outputs.any_changed == 'true'
         uses: ./.github/actions/trivy-scan
         with:
           image-name: ${{ env.IMAGE_NAME }}

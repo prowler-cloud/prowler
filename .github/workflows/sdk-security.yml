@@ -28,6 +28,7 @@ concurrency:
 
 jobs:
   sdk-security-scans:
+    if: github.repository == 'prowler-cloud/prowler'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
