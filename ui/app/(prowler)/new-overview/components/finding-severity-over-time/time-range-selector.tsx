@@ -20,14 +20,13 @@ interface TimeRangeSelectorProps {
 
 const BUTTON_STYLES = {
   base: "relative inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50",
-  border: "border-r border-[#E9E9F0] last:border-r-0 dark:border-[#171D30]",
-  text: "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white",
-  active:
-    "data-[state=active]:text-slate-900 dark:data-[state=active]:text-white",
+  border: "border-r border-border-neutral-quaternary last:border-r-0",
+  text: "text-text-neutral-quaternary hover:text-text-neutral-quaternary",
+  active: "data-[state=active]:text-text-neutral-quaternary",
   underline:
-    "after:absolute after:bottom-0 after:left-1/2 after:h-[1.5px] after:w-0 after:-translate-x-1/2 after:bg-[#20B853] after:transition-all data-[state=active]:after:w-[calc(100%-theme(spacing.4))]",
+    "after:absolute after:bottom-0 after:left-1/2 after:h-[1.5px] after:w-0 after:-translate-x-1/2 after:bg-button-primary after:transition-all data-[state=active]:after:w-[calc(100%-theme(spacing.4))]",
   focus:
-    "focus-visible:ring-2 focus-visible:ring-[#20B853] focus-visible:ring-offset-2 focus-visible:ring-offset-white focus-visible:outline-none dark:focus-visible:ring-offset-slate-950",
+    "focus-visible:ring-2 focus-visible:ring-button-primary focus-visible:ring-offset-2 focus-visible:ring-offset-bg-neutral-secondary focus-visible:outline-none",
 } as const;
 
 export const TimeRangeSelector = ({
@@ -36,7 +35,7 @@ export const TimeRangeSelector = ({
   isLoading = false,
 }: TimeRangeSelectorProps) => {
   return (
-    <div className="inline-flex items-center gap-2 rounded-full border border-[#E9E9F0] bg-white/50 p-1 dark:border-[#171D30] dark:bg-slate-950/50">
+    <div className="border-border-neutral-quaternary bg-bg-neutral-quaternary/50 inline-flex items-center gap-2 rounded-full border p-1">
       {Object.entries(TIME_RANGE_OPTIONS).map(([key, range]) => (
         <button
           key={key}

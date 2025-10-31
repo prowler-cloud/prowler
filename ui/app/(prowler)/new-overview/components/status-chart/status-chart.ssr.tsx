@@ -1,11 +1,12 @@
+import { getFindingsByStatus } from "@/actions/overview/overview";
 import {
   BaseCard,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/shadcn";
-import { getFindingsByStatus } from "@/actions/overview/overview";
 import { SearchParamsProps } from "@/types";
+
 import { StatusChart } from "./status-chart";
 
 const FILTER_PREFIX = "filter[";

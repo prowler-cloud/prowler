@@ -55,4 +55,3 @@ export const FindingSeverityOverTimeSSR = async ({
     </BaseCard>
   );
 };
-

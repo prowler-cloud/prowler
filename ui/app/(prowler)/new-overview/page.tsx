@@ -5,10 +5,10 @@ import { ContentLayout } from "@/components/ui";
 import { SearchParamsProps } from "@/types";
 
 import { AccountsSelector } from "./components/accounts-selector";
-import { ProviderTypeSelector } from "./components/provider-type-selector";
-import { StatusChartSSR } from "./components/status-chart";
-import { RiskSeverityChartSSR } from "./components/risk-severity-chart";
 import { FindingSeverityOverTimeSSR } from "./components/finding-severity-over-time";
+import { ProviderTypeSelector } from "./components/provider-type-selector";
+import { RiskSeverityChartSSR } from "./components/risk-severity-chart";
+import { StatusChartSSR } from "./components/status-chart";
 
 export default async function NewOverviewPage({
   searchParams,

@@ -1,11 +1,12 @@
+import { getFindingsBySeverity } from "@/actions/overview/overview";
 import {
   BaseCard,
   CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/shadcn";
-import { getFindingsBySeverity } from "@/actions/overview/overview";
 import { SearchParamsProps } from "@/types";
+
 import { RiskSeverityChart } from "./risk-severity-chart";
 
 const FILTER_PREFIX = "filter[";

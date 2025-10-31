@@ -25,7 +25,7 @@
   /* Chart HSL values */
   --chart-success: 146 80% 35%;
   --chart-fail: 339 90% 51%;
-  --chart-muted: 45 93% 47%;
+  --chart-muted: 0 0% 38%;
   --chart-critical: 336 75% 39%;
   --chart-high: 339 90% 51%;
   --chart-medium: 26 100% 55%;
@@ -71,17 +71,22 @@
   --text-neutral-primary: var(--color-slate-950);
   --text-neutral-secondary: var(--color-zinc-700);
   --text-neutral-tertiary: var(--color-zinc-500);
+  --text-neutral-quaternary: #1E293B;
   --text-error-primary: var(--color-red-600);
 
   /* Background Colors */
   --bg-neutral-primary: #FDFDFD;
   --bg-neutral-secondary: var(--color-white);
   --bg-neutral-tertiary: #FBFDFD;
+  --bg-neutral-quaternary: #F7F7F7;
   --bg-tag-primary: var(--color-slate-50);
   --bg-pass-primary: var(--color-emerald-400);
   --bg-pass-secondary: var(--color-emerald-50);
   --bg-fail-primary: var(--color-rose-500);
   --bg-fail-secondary: var(--color-rose-50);
+
+  /* Border Colors (Additional) */
+  --border-neutral-quaternary: #E9E9F0;
 
   /* Severity Colors */
   --bg-data-critical: #FF006A;
@@ -89,6 +94,69 @@
   --bg-data-medium: #FDD34F;
   --bg-data-low: #F5F3CE;
   --bg-data-info: #3C8DFF;
+
+  /* Chart tooltip colors */
+  --bg-tooltip-primary: var(--color-white);
+  --border-tooltip-primary: var(--color-slate-200);
+  --text-tooltip-primary: var(--color-slate-900);
+  --text-tooltip-secondary: var(--color-slate-600);
+
+  /* Chart specific backgrounds */
+  --bg-chart-track: #FAFAFA;
+
+  /* Selected/Highlight Colors */
+  --bg-highlight-success: #86DA26;
+  --bg-highlight-danger: #DB2B49;
+
+  /* Compliance/Status Colors */
+  --bg-status-pass: #3CEC6D;
+  --bg-status-fail: #FB718F;
+  --bg-status-manual: #868994;
+  --bg-status-empty: var(--color-slate-500);
+
+  /* Heatmap Colors */
+  --bg-heatmap-success: #3CEC6D;
+  --bg-heatmap-low: #fcd34d;
+  --bg-heatmap-medium: #FA7315;
+  --bg-heatmap-high: #F31260;
+
+  /* Compliance requirement types */
+  --bg-requirement-requisito: #FB718F;
+  --bg-requirement-recomendacion: #FDC53A;
+  --bg-requirement-refuerzo: #7FB5FF;
+
+  /* Chart border colors */
+  --border-chart-primary: var(--color-gray-300);
+  --border-chart-secondary: rgba(0, 0, 0, 0.1);
+
+  /* Text colors for heatmap cells */
+  --text-heatmap-cell: #000000;
+
+  /* Resource card variant colors */
+  --bg-card-fail-light: rgba(67, 34, 50, 0.2);
+  --bg-card-fail-border: rgba(67, 34, 50, 0.5);
+  --bg-card-pass-light: rgba(32, 66, 55, 0.2);
+  --bg-card-pass-border: rgba(32, 66, 55, 0.5);
+  --bg-card-warning-light: rgba(61, 53, 32, 0.2);
+  --bg-card-warning-border: rgba(61, 53, 32, 0.5);
+  --bg-card-info-light: rgba(30, 58, 95, 0.2);
+  --bg-card-info-border: rgba(30, 58, 95, 0.5);
+  --bg-card-default-light: rgba(248, 250, 252, 0.5);
+  --bg-card-default-border: var(--color-slate-300);
+
+  /* Resource card badge background colors */
+  --bg-card-badge-fail: var(--color-red-100);
+  --bg-card-badge-pass: var(--color-green-100);
+  --bg-card-badge-warning: var(--color-amber-100);
+  --bg-card-badge-info: var(--color-blue-100);
+  --bg-card-badge-default: var(--color-slate-100);
+
+  /* Resource card variant accent colors */
+  --accent-card-fail: #f54280;
+  --accent-card-pass: #4ade80;
+  --accent-card-warning: #fbbf24;
+  --accent-card-info: #60a5fa;
+  --accent-card-default: #868994;
 }
 
 /* ===== DARK THEME ===== */
@@ -113,7 +181,7 @@
   /* Chart HSL values */
   --chart-success: 146 80% 35%;
   --chart-fail: 339 90% 51%;
-  --chart-muted: 45 93% 47%;
+  --chart-muted: 0 0% 38%;
   --chart-critical: 336 75% 39%;
   --chart-high: 339 90% 51%;
   --chart-medium: 26 100% 55%;
@@ -165,11 +233,18 @@
   --bg-neutral-primary: var(--color-zinc-950);
   --bg-neutral-secondary: var(--color-slate-950);
   --bg-neutral-tertiary: #121110;
+  --bg-neutral-quaternary: #171D30;
   --bg-tag-primary: var(--color-slate-950);
   --bg-pass-primary: var(--color-green-400);
   --bg-pass-secondary: var(--color-emerald-900);
   --bg-fail-primary: var(--color-rose-500);
   --bg-fail-secondary: #432232;
+
+  /* Text Colors (Additional) */
+  --text-neutral-quaternary: #DBDEE4;
+
+  /* Border Colors (Additional) */
+  --border-neutral-quaternary: #171D30;
 
   /* Severity Colors */
   --bg-data-critical: #FF006A;
@@ -177,6 +252,69 @@
   --bg-data-medium: #FEC94D;
   --bg-data-low: #FDFBD4;
   --bg-data-info: #3C8DFF;
+
+  /* Chart tooltip colors */
+  --bg-tooltip-primary: #121110;
+  --border-tooltip-primary: #202020;
+  --text-tooltip-primary: #f4f4f5;
+  --text-tooltip-secondary: #d4d4d8;
+
+  /* Chart specific backgrounds */
+  --bg-chart-track: var(--color-black);
+
+  /* Selected/Highlight Colors */
+  --bg-highlight-success: #86DA26;
+  --bg-highlight-danger: #DB2B49;
+
+  /* Compliance/Status Colors */
+  --bg-status-pass: #3CEC6D;
+  --bg-status-fail: #FB718F;
+  --bg-status-manual: #868994;
+  --bg-status-empty: var(--color-slate-500);
+
+  /* Heatmap Colors */
+  --bg-heatmap-success: #3CEC6D;
+  --bg-heatmap-low: #fcd34d;
+  --bg-heatmap-medium: #FA7315;
+  --bg-heatmap-high: #F31260;
+
+  /* Compliance requirement types */
+  --bg-requirement-requisito: #FB718F;
+  --bg-requirement-recomendacion: #FDC53A;
+  --bg-requirement-refuerzo: #7FB5FF;
+
+  /* Chart border colors */
+  --border-chart-primary: var(--color-gray-700);
+  --border-chart-secondary: rgba(255, 255, 255, 0.1);
+
+  /* Text colors for heatmap cells */
+  --text-heatmap-cell: #ffffff;
+
+  /* Resource card variant colors */
+  --bg-card-fail-light: rgba(67, 34, 50, 0.3);
+  --bg-card-fail-border: rgba(67, 34, 50, 0.7);
+  --bg-card-pass-light: rgba(32, 66, 55, 0.3);
+  --bg-card-pass-border: rgba(32, 66, 55, 0.7);
+  --bg-card-warning-light: rgba(61, 53, 32, 0.3);
+  --bg-card-warning-border: rgba(61, 53, 32, 0.7);
+  --bg-card-info-light: rgba(30, 58, 95, 0.3);
+  --bg-card-info-border: rgba(30, 58, 95, 0.7);
+  --bg-card-default-light: rgba(38, 38, 38, 0.5);
+  --bg-card-default-border: rgba(38, 38, 38, 0.7);
+
+  /* Resource card badge background colors */
+  --bg-card-badge-fail: #432232;
+  --bg-card-badge-pass: #204237;
+  --bg-card-badge-warning: #3d3520;
+  --bg-card-badge-info: #1e3a5f;
+  --bg-card-badge-default: #535359;
+
+  /* Resource card variant accent colors */
+  --accent-card-fail: #f54280;
+  --accent-card-pass: #4ade80;
+  --accent-card-warning: #fbbf24;
+  --accent-card-info: #60a5fa;
+  --accent-card-default: #868994;
 }
 
 /* ===== TAILWIND THEME MAPPINGS ===== */
@@ -213,43 +351,68 @@
   --color-bg-data-low: var(--bg-data-low);
   --color-bg-data-info: var(--bg-data-info);
 
-  /* Button Colors */
-  --color-button-primary: var(--bg-button-primary);
-  --color-button-primary-hover: var(--bg-button-primary-hover);
-  --color-button-secondary: var(--bg-button-secondary);
-  --color-button-secondary-press: var(--bg-button-secondary-press);
-  --color-button-tertiary: var(--bg-button-tertiary);
-  --color-button-tertiary-hover: var(--bg-button-tertiary-hover);
-  --color-button-tertiary-active: var(--bg-button-tertiary-active);
-  --color-button-disabled: var(--bg-button-disabled);
+  /* Tooltip Colors */
+  --color-bg-tooltip: var(--bg-tooltip-primary);
+  --color-border-tooltip: var(--border-tooltip-primary);
+  --color-text-tooltip-primary: var(--text-tooltip-primary);
+  --color-text-tooltip-secondary: var(--text-tooltip-secondary);
 
-  /* Input Colors */
-  --color-input-primary: var(--bg-input-primary);
-  --color-input-border: var(--border-input-primary);
+  /* Chart Backgrounds */
+  --color-bg-chart-track: var(--bg-chart-track);
 
-  /* Border Colors */
-  --color-border-error: var(--border-error-primary);
-  --color-border-neutral-primary: var(--border-neutral-primary);
-  --color-border-neutral-secondary: var(--border-neutral-secondary);
-  --color-border-neutral-tertiary: var(--border-neutral-tertiary);
-  --color-border-tag: var(--border-tag-primary);
-  --color-border-data-emphasis: var(--border-data-emphasis);
+  /* Highlight Colors */
+  --color-bg-highlight-success: var(--bg-highlight-success);
+  --color-bg-highlight-danger: var(--bg-highlight-danger);
 
-  /* Text Colors */
-  --color-text-neutral-primary: var(--text-neutral-primary);
-  --color-text-neutral-secondary: var(--text-neutral-secondary);
-  --color-text-neutral-tertiary: var(--text-neutral-tertiary);
-  --color-text-error: var(--text-error-primary);
+  /* Status Colors */
+  --color-bg-status-pass: var(--bg-status-pass);
+  --color-bg-status-fail: var(--bg-status-fail);
+  --color-bg-status-manual: var(--bg-status-manual);
+  --color-bg-status-empty: var(--bg-status-empty);
 
-  /* Background Colors */
-  --color-bg-neutral-primary: var(--bg-neutral-primary);
-  --color-bg-neutral-secondary: var(--bg-neutral-secondary);
-  --color-bg-neutral-tertiary: var(--bg-neutral-tertiary);
-  --color-bg-tag: var(--bg-tag-primary);
-  --color-bg-pass: var(--bg-pass-primary);
-  --color-bg-pass-secondary: var(--bg-pass-secondary);
-  --color-bg-fail: var(--bg-fail-primary);
-  --color-bg-fail-secondary: var(--bg-fail-secondary);
+  /* Heatmap Colors */
+  --color-bg-heatmap-success: var(--bg-heatmap-success);
+  --color-bg-heatmap-low: var(--bg-heatmap-low);
+  --color-bg-heatmap-medium: var(--bg-heatmap-medium);
+  --color-bg-heatmap-high: var(--bg-heatmap-high);
+
+  /* Requirement Type Colors */
+  --color-bg-requirement-requisito: var(--bg-requirement-requisito);
+  --color-bg-requirement-recomendacion: var(--bg-requirement-recomendacion);
+  --color-bg-requirement-refuerzo: var(--bg-requirement-refuerzo);
+
+  /* Chart Border Colors */
+  --color-border-chart-primary: var(--border-chart-primary);
+  --color-border-chart-secondary: var(--border-chart-secondary);
+
+  /* Heatmap Text Colors */
+  --color-text-heatmap-cell: var(--text-heatmap-cell);
+
+  /* Resource Card Variant Colors */
+  --color-bg-card-fail-light: var(--bg-card-fail-light);
+  --color-bg-card-fail-border: var(--bg-card-fail-border);
+  --color-bg-card-pass-light: var(--bg-card-pass-light);
+  --color-bg-card-pass-border: var(--bg-card-pass-border);
+  --color-bg-card-warning-light: var(--bg-card-warning-light);
+  --color-bg-card-warning-border: var(--bg-card-warning-border);
+  --color-bg-card-info-light: var(--bg-card-info-light);
+  --color-bg-card-info-border: var(--bg-card-info-border);
+  --color-bg-card-default-light: var(--bg-card-default-light);
+  --color-bg-card-default-border: var(--bg-card-default-border);
+
+  /* Resource Card Badge Colors */
+  --color-bg-card-badge-fail: var(--bg-card-badge-fail);
+  --color-bg-card-badge-pass: var(--bg-card-badge-pass);
+  --color-bg-card-badge-warning: var(--bg-card-badge-warning);
+  --color-bg-card-badge-info: var(--bg-card-badge-info);
+  --color-bg-card-badge-default: var(--bg-card-badge-default);
+
+  /* Resource Card Accent Colors */
+  --color-accent-card-fail: var(--accent-card-fail);
+  --color-accent-card-pass: var(--accent-card-pass);
+  --color-accent-card-warning: var(--accent-card-warning);
+  --color-accent-card-info: var(--accent-card-info);
+  --color-accent-card-default: var(--accent-card-default);
 }
 
 /* ===== CONTAINER UTILITY ===== */
