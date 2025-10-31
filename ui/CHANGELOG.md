@@ -2,11 +2,15 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.13.1] (Unreleased)
+## [1.14.0] (Unreleased)
 
 ### 🚀 Added
 
 - RSS feeds support [(#9109)](https://github.com/prowler-cloud/prowler/pull/9109)
+
+---
+
+## [1.13.1]
 
 ### 🔄 Changed
 
