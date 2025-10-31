@@ -72,11 +72,9 @@ async function parseSingleFeed(
           item.contentSnippet || item.content || item.description || "",
         link: item.link || "",
         pubDate: parsePubDate(),
-        source: {
-          id: source.id,
-          name: source.name,
-          type: source.type,
-        },
+        sourceId: source.id,
+        sourceName: source.name,
+        sourceType: source.type,
         author: item.creator || item.author,
         categories: item.categories || [],
         contentSnippet: item.contentSnippet || undefined,
@@ -101,8 +99,6 @@ async function fetchAllFeeds(): Promise<ParsedFeed> {
   const sources = getFeedSources();
 
   if (sources.length === 0) {
-    // eslint-disable-next-line no-console
-    console.warn("No RSS feed sources configured");
     return {
       items: [],
       totalCount: 0,
@@ -115,16 +111,8 @@ async function fetchAllFeeds(): Promise<ParsedFeed> {
     sources.map((source) => parseSingleFeed(source)),
   );
 
-  // Combine all items from all sources
-  const allItems: FeedItem[] = [];
-  const errors: FeedError[] = [];
-
-  results.forEach((result) => {
-    allItems.push(...result.items);
-    if (result.error) {
-      errors.push(result.error);
-    }
-  });
+  // Combine all items from all sources (errors are handled gracefully by returning empty items)
+  const allItems: FeedItem[] = results.flatMap((result) => result.items);
 
   // Sort by publication date (newest first)
   allItems.sort(

@@ -76,11 +76,7 @@ export function FeedsClient({ feedData, error }: FeedsClientProps) {
 
       <DropdownMenuContent
         align="end"
-        className={cn(
-          "w-96 overflow-x-hidden",
-          "border-slate-200 bg-white dark:border-zinc-900 dark:bg-stone-950",
-          "gap-2 px-[18px] pt-3 pb-4",
-        )}
+        className="w-96 gap-2 overflow-x-hidden border-slate-200 bg-white px-[18px] pt-3 pb-4 dark:border-zinc-900 dark:bg-stone-950"
       >
         <div className="pb-2">
           <h3 className="text-base font-semibold text-slate-900 dark:text-white">
@@ -159,22 +155,10 @@ function FeedTimelineItem({ item, isLast }: FeedTimelineItemProps) {
           href={item.link}
           target="_blank"
           rel="noopener noreferrer"
-          className={cn(
-            "block space-y-1 rounded-[12px] border p-2 transition-all",
-            "backdrop-blur-0 border-transparent",
-            "hover:backdrop-blur-[46px]",
-            "hover:border-slate-300 hover:bg-[#F8FAFC80]",
-            "dark:hover:border-[rgba(38,38,38,0.70)] dark:hover:bg-[rgba(23,23,23,0.50)]",
-          )}
+          className="backdrop-blur-0 block space-y-1 rounded-[12px] border border-transparent p-2 transition-all hover:border-slate-300 hover:bg-[#F8FAFC80] hover:backdrop-blur-[46px] dark:hover:border-[rgba(38,38,38,0.70)] dark:hover:bg-[rgba(23,23,23,0.50)]"
         >
           <div className="flex items-start justify-between gap-2">
-            <h4
-              className={cn(
-                "min-w-0 flex-1 text-sm leading-tight font-semibold break-words",
-                "text-slate-900 dark:text-white",
-                "group-hover:text-prowler-green dark:group-hover:text-prowler-green",
-              )}
-            >
+            <h4 className="group-hover:text-prowler-green dark:group-hover:text-prowler-green min-w-0 flex-1 text-sm leading-tight font-semibold break-words text-slate-900 dark:text-white">
               {item.title}
             </h4>
             {version && (

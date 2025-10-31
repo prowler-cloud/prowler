@@ -23,11 +23,9 @@ export interface FeedItem {
   description: string;
   link: string;
   pubDate: string; // ISO 8601 format
-  source: {
-    id: string;
-    name: string;
-    type: FeedSourceType;
-  };
+  sourceId: string;
+  sourceName: string;
+  sourceType: FeedSourceType;
   author?: string;
   categories?: string[];
   contentSnippet?: string;
