@@ -16,7 +16,7 @@ OCI_USER_ID = "ocid1.user.oc1..aaaaaaaexample"
 OCI_REGION = "us-ashburn-1"
 
 
-def set_mocked_oci_provider(
+def set_mocked_oraclecloud_provider(
     tenancy_id: str = OCI_TENANCY_ID,
     tenancy_name: str = OCI_TENANCY_NAME,
     user_id: str = OCI_USER_ID,

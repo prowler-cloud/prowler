@@ -1985,7 +1985,7 @@ class TestProviderSecretViewSet:
             ),
             # OCI with API key credentials (with key_content)
             (
-                Provider.ProviderChoices.OCI.value,
+                Provider.ProviderChoices.ORACLECLOUD.value,
                 ProviderSecret.TypeChoices.STATIC,
                 {
                     "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
@@ -1997,7 +1997,7 @@ class TestProviderSecretViewSet:
             ),
             # OCI with API key credentials (with key_file)
             (
-                Provider.ProviderChoices.OCI.value,
+                Provider.ProviderChoices.ORACLECLOUD.value,
                 ProviderSecret.TypeChoices.STATIC,
                 {
                     "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
@@ -2009,7 +2009,7 @@ class TestProviderSecretViewSet:
             ),
             # OCI with API key credentials (with passphrase)
             (
-                Provider.ProviderChoices.OCI.value,
+                Provider.ProviderChoices.ORACLECLOUD.value,
                 ProviderSecret.TypeChoices.STATIC,
                 {
                     "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",

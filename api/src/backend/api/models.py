@@ -284,7 +284,7 @@ class Provider(RowLevelSecurityProtectedModel):
         KUBERNETES = "kubernetes", _("Kubernetes")
         M365 = "m365", _("M365")
         GITHUB = "github", _("GitHub")
-        OCI = "oci", _("Oracle Cloud Infrastructure")
+        ORACLECLOUD = "oraclecloud", _("Oracle Cloud Infrastructure")
 
     @staticmethod
     def validate_aws_uid(value):

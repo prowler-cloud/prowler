@@ -4,7 +4,7 @@ from tests.providers.oraclecloud.oci_fixtures import (
     OCI_COMPARTMENT_ID,
     OCI_REGION,
     OCI_TENANCY_ID,
-    set_mocked_oci_provider,
+    set_mocked_oraclecloud_provider,
 )
 
 
@@ -41,7 +41,7 @@ class Test_cloudguard_enabled:
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_oci_provider(),
+                return_value=set_mocked_oraclecloud_provider(),
             ),
             mock.patch(
                 "prowler.providers.oraclecloud.services.cloudguard.cloudguard_enabled.cloudguard_enabled.cloudguard_client",
@@ -102,7 +102,7 @@ class Test_cloudguard_enabled:
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_oci_provider(),
+                return_value=set_mocked_oraclecloud_provider(),
             ),
             mock.patch(
                 "prowler.providers.oraclecloud.services.cloudguard.cloudguard_enabled.cloudguard_enabled.cloudguard_client",
@@ -186,7 +186,7 @@ class Test_cloudguard_enabled:
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_oci_provider(),
+                return_value=set_mocked_oraclecloud_provider(),
             ),
             mock.patch(
                 "prowler.providers.oraclecloud.services.cloudguard.cloudguard_enabled.cloudguard_enabled.cloudguard_client",
