@@ -28,6 +28,7 @@ concurrency:
 
 jobs:
   sdk-code-quality:
+    if: github.repository == 'prowler-cloud/prowler'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
