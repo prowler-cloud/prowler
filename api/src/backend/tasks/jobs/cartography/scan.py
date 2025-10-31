@@ -11,6 +11,7 @@ from celery.utils.log import get_task_logger
 from api.models import Provider
 from api.utils import initialize_prowler_provider
 from tasks.jobs.cartography.aws import start_aws_ingestion
+from tasks.jobs.cartography import prowler
 
 # TODO: Use the right logger
 # logger = get_task_logger(__name__)
@@ -43,7 +44,6 @@ def run(provider_id: str) -> None:
         neo4j_uri=neo4j_uri,
         neo4j_user=neo4j_user,  # TODO: Don't needed, just for consistency with `neo4j_uri`
         neo4j_password=neo4j_password,  # TODO: Don't needed, just for consistency with `neo4j_uri`
-        aws_best_effort_mode=True,  # TODO: Don't need if we only run the scan for only one AWS account
         update_tag=int(time.time()),
     )
 
@@ -51,11 +51,14 @@ def run(provider_id: str) -> None:
         f"Starting Cartography scan for provider {provider.provider.upper()} {provider.id}"
     )
 
+    # TODO: Manage Neo4j database as we need to check if the database exist and create it if not
+
     with neo4j.GraphDatabase.driver(
         neo4j_uri, auth=(neo4j_user, neo4j_password)
     ) as driver:
         with driver.session() as neo4j_session:
             cartography_create_indexes.run(neo4j_session, config)
+            prowler.create_indexes(neo4j_session)
 
             failed_ingestoin_function_exceptions = _call_within_event_loop(
                 CARTOGRAPHY_INGESTION_FUNCTIONS[provider.provider],
@@ -67,6 +70,8 @@ def run(provider_id: str) -> None:
             # TODO: Check if it's ok to skip this step because we are not configuring it
             if not failed_ingestoin_function_exceptions:
                 cartography_analysis.run(neo4j_session, config)
+
+            prowler.analysis(neo4j_session, provider_id)
 
     # TODO: Store something in Postgres and set the right task status
     return failed_ingestoin_function_exceptions
