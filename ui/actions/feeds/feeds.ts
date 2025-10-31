@@ -7,7 +7,6 @@ import { z } from "zod";
 import type { FeedError, FeedItem, FeedSource, ParsedFeed } from "./types";
 import { FEED_SOURCE_TYPES } from "./types";
 
-// Zod schema for feed source configuration
 const feedSourceSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
@@ -34,8 +33,7 @@ function getFeedSources(): FeedSource[] {
     const parsed = JSON.parse(feedSourcesEnv);
     const validated = feedSourcesSchema.parse(parsed);
     return validated.filter((source) => source.enabled);
-  } catch (error) {
-    console.error("Error parsing RSS_FEED_SOURCES:", error);
+  } catch {
     return [];
   }
 }
@@ -45,7 +43,7 @@ async function parseSingleFeed(
   source: FeedSource,
 ): Promise<{ items: FeedItem[]; error?: FeedError }> {
   const parser = new Parser({
-    timeout: 10000, // 10 second timeout
+    timeout: 10000,
     headers: {
       "User-Agent": "Prowler-UI/1.0",
     },
@@ -87,15 +85,10 @@ async function parseSingleFeed(
 
     return { items };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error occurred";
-
-    console.error(`Error fetching feed from ${source.name}:`, error);
-
     return {
       items: [],
       error: {
-        message: errorMessage,
+        message: error instanceof Error ? error.message : "Unknown error",
         sourceId: source.id,
         sourceName: source.name,
       },
@@ -137,11 +130,6 @@ async function fetchAllFeeds(): Promise<ParsedFeed> {
   allItems.sort(
     (a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime(),
   );
-
-  // Log errors for monitoring
-  if (errors.length > 0) {
-    console.error("Feed fetch errors:", errors);
-  }
 
   return {
     items: allItems,

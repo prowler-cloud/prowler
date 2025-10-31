@@ -19,8 +19,7 @@ export function getLastSeenFeedIds(): string[] {
 
     const data: FeedStorage = JSON.parse(stored);
     return data.lastSeenIds || [];
-  } catch (error) {
-    console.error("Error reading feed storage:", error);
+  } catch {
     return [];
   }
 }
@@ -37,8 +36,8 @@ export function markFeedsAsSeen(feedIds: string[]): void {
       lastCheckTimestamp: Date.now(),
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  } catch (error) {
-    console.error("Error saving feed storage:", error);
+  } catch {
+    // Silently fail if localStorage is unavailable
   }
 }
 
