@@ -34,6 +34,7 @@ from rest_framework.response import Response
 from api.compliance import get_compliance_frameworks
 from api.db_router import MainRouter
 from api.models import (
+    Finding,
     Integration,
     Invitation,
     LighthouseProviderConfiguration,
@@ -61,6 +62,8 @@ from api.models import (
 from api.rls import Tenant
 from api.v1.serializers import TokenSerializer
 from api.v1.views import ComplianceOverviewViewSet, TenantFinishACSView
+from prowler.lib.check.models import Severity
+from prowler.lib.outputs.finding import Status
 
 
 class TestViewSet:
@@ -9393,6 +9396,560 @@ class TestLighthouseProviderConfigViewSet:
 
         # Unrelated entries should remain untouched
         assert cfg.default_models.get("other") == "model-x"
+
+
+@pytest.mark.django_db
+class TestMuteRuleViewSet:
+    """Tests for MuteRule endpoints."""
+
+    def test_mute_rules_list(self, authenticated_client, mute_rules_fixture):
+        """Test listing all mute rules for the tenant."""
+        response = authenticated_client.get(reverse("mute-rule-list"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == len(mute_rules_fixture)
+
+    def test_mute_rules_list_empty(self, authenticated_client, tenants_fixture):
+        """Test listing mute rules when none exist returns empty list."""
+        response = authenticated_client.get(reverse("mute-rule-list"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 0
+        assert isinstance(data, list)
+
+    def test_mute_rules_list_default_ordering(
+        self, authenticated_client, mute_rules_fixture
+    ):
+        """Test that mute rules are ordered by -inserted_at by default."""
+        response = authenticated_client.get(reverse("mute-rule-list"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+
+        if len(data) >= 2:
+            first_date = data[0]["attributes"]["inserted_at"]
+            second_date = data[1]["attributes"]["inserted_at"]
+            assert first_date >= second_date
+
+    def test_mute_rules_retrieve(self, authenticated_client, mute_rules_fixture):
+        """Test retrieving a single mute rule by ID."""
+        mute_rule = mute_rules_fixture[0]
+        response = authenticated_client.get(
+            reverse("mute-rule-detail", kwargs={"pk": mute_rule.id})
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data["id"] == str(mute_rule.id)
+        assert data["attributes"]["name"] == mute_rule.name
+        assert data["attributes"]["reason"] == mute_rule.reason
+        assert data["attributes"]["enabled"] == mute_rule.enabled
+        assert "finding_uids" in data["attributes"]
+        assert "inserted_at" in data["attributes"]
+        assert "updated_at" in data["attributes"]
+
+    def test_mute_rules_retrieve_invalid(self, authenticated_client):
+        """Test retrieving non-existent mute rule returns 404."""
+        response = authenticated_client.get(
+            reverse(
+                "mute-rule-detail",
+                kwargs={"pk": "f498b103-c760-4785-9a3e-e23fafbb7b02"},
+            )
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @pytest.mark.parametrize(
+        "filter_name, filter_value, expected_count",
+        (
+            [
+                ("name", "Test Rule 1", 1),
+                ("name.icontains", "rule", 2),
+                ("reason.icontains", "security", 1),
+                ("enabled", True, 1),
+                ("enabled", False, 1),
+            ]
+        ),
+    )
+    def test_mute_rule_filters(
+        self,
+        authenticated_client,
+        mute_rules_fixture,
+        filter_name,
+        filter_value,
+        expected_count,
+    ):
+        """Test filtering mute rules by various fields."""
+        filters = {f"filter[{filter_name}]": filter_value}
+        response = authenticated_client.get(reverse("mute-rule-list"), filters)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == expected_count
+
+    def test_mute_rule_filter_by_created_by(
+        self, authenticated_client, mute_rules_fixture, create_test_user
+    ):
+        """Test filtering mute rules by creator."""
+        response = authenticated_client.get(
+            reverse("mute-rule-list"),
+            {"filter[created_by]": create_test_user.id},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 2
+
+    def test_mute_rule_search(self, authenticated_client, mute_rules_fixture):
+        """Test searching mute rules by name and reason."""
+        response = authenticated_client.get(
+            reverse("mute-rule-list"), {"filter[search]": "Rule 1"}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+
+    @pytest.mark.parametrize(
+        "sort_field, first_index",
+        (
+            [
+                ("name", 0),
+                ("-name", 1),
+                ("inserted_at", 0),
+                ("-inserted_at", 1),
+            ]
+        ),
+    )
+    def test_mute_rule_ordering(
+        self, authenticated_client, mute_rules_fixture, sort_field, first_index
+    ):
+        """Test ordering mute rules by various fields."""
+        response = authenticated_client.get(
+            reverse("mute-rule-list"), {"sort": sort_field}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 2
+        assert data[0]["id"] == str(mute_rules_fixture[first_index].id)
+
+    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    def test_mute_rules_create_valid(
+        self,
+        mock_task,
+        authenticated_client,
+        findings_fixture,
+        create_test_user,
+    ):
+        """Test creating a valid mute rule."""
+        finding_ids = [str(findings_fixture[0].id)]
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": "New Mute Rule",
+                    "reason": "Security exception approved",
+                    "finding_ids": finding_ids,
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+
+        # Verify response contains the created mute rule
+        response_data = response.json()["data"]
+        assert response_data["type"] == "mute-rules"
+        assert response_data["attributes"]["name"] == "New Mute Rule"
+        assert response_data["attributes"]["reason"] == "Security exception approved"
+
+        # Verify the finding was immediately muted
+        from api.models import Finding
+
+        finding = Finding.objects.get(id=findings_fixture[0].id)
+        assert finding.muted is True
+        assert finding.muted_at is not None
+        assert finding.muted_reason == "Security exception approved"
+
+        # Verify background task was called
+        mock_task.assert_called_once()
+
+    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    def test_mute_rules_create_converts_finding_ids_to_uids(
+        self,
+        mock_task,
+        authenticated_client,
+        findings_fixture,
+    ):
+        """Test that finding_ids are converted to finding UIDs."""
+        finding_ids = [str(findings_fixture[0].id), str(findings_fixture[1].id)]
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": "UID Conversion Test",
+                    "reason": "Testing UID conversion",
+                    "finding_ids": finding_ids,
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+
+        # Verify finding_uids contains the UIDs, not IDs
+        from api.models import MuteRule
+
+        mute_rule = MuteRule.objects.get(name="UID Conversion Test")
+        expected_uids = [
+            findings_fixture[0].uid,
+            findings_fixture[1].uid,
+        ]
+        assert set(mute_rule.finding_uids) == set(expected_uids)
+
+    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    def test_mute_rules_deduplicates_uids(
+        self,
+        mock_task,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        scans_fixture,
+    ):
+        """Test that multiple findings with same UID result in only one UID in the rule."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+
+        shared_uid = "prowler-aws-dedupe-test-001"
+
+        finding1 = Finding.objects.create(
+            tenant=tenant,
+            uid=shared_uid,
+            scan=scan,
+            status=Status.FAIL,
+            status_extended="test",
+            severity=Severity.high,
+            impact=Severity.high,
+            check_id="test_check",
+            check_metadata={"CheckId": "test_check"},
+            raw_result={},
+        )
+
+        finding2 = Finding.objects.create(
+            tenant=tenant,
+            uid=shared_uid,
+            scan=scan,
+            status=Status.FAIL,
+            status_extended="test",
+            severity=Severity.high,
+            impact=Severity.high,
+            check_id="test_check",
+            check_metadata={"CheckId": "test_check"},
+            raw_result={},
+        )
+
+        finding_ids = [str(finding1.id), str(finding2.id)]
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": "Dedupe Test Rule",
+                    "reason": "Testing UID deduplication",
+                    "finding_ids": finding_ids,
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+
+        from api.models import MuteRule
+
+        mute_rule = MuteRule.objects.get(name="Dedupe Test Rule")
+        assert len(mute_rule.finding_uids) == 1
+        assert mute_rule.finding_uids[0] == shared_uid
+
+        finding1.refresh_from_db()
+        finding2.refresh_from_db()
+        assert finding1.muted is True
+        assert finding2.muted is True
+
+    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    def test_mute_rules_create_overlap_detection_active(
+        self,
+        mock_task,
+        authenticated_client,
+        mute_rules_fixture,
+        findings_fixture,
+    ):
+        """Test that creating a rule with overlapping UIDs in active rule fails."""
+        # mute_rules_fixture[0] is active and has findings_fixture[0] UID
+        finding_ids = [str(findings_fixture[0].id)]
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": "Overlapping Rule",
+                    "reason": "This should fail",
+                    "finding_ids": finding_ids,
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert "errors" in response.json()
+        error_detail = response.json()["errors"][0]["detail"]
+        assert (
+            "already muted" in error_detail.lower() or "overlap" in error_detail.lower()
+        )
+
+    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    def test_mute_rules_create_no_overlap_with_inactive(
+        self,
+        mock_task,
+        authenticated_client,
+        mute_rules_fixture,
+        findings_fixture,
+    ):
+        """Test that disabled rules don't prevent new rules with same UIDs."""
+        # mute_rules_fixture[1] is disabled
+        # Disable the enabled rule first
+        mute_rules_fixture[0].enabled = False
+        mute_rules_fixture[0].save()
+
+        finding_ids = [str(findings_fixture[0].id)]
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": "Non-overlapping Rule",
+                    "reason": "Inactive rules don't block",
+                    "finding_ids": finding_ids,
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+
+    def test_mute_rules_create_invalid_empty_finding_ids(self, authenticated_client):
+        """Test creating mute rule with empty finding_ids fails."""
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": "Valid",
+                    "reason": "Valid",
+                    "finding_ids": [],
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "errors" in response.json()
+        assert (
+            response.json()["errors"][0]["source"]["pointer"]
+            == "/data/attributes/finding_ids"
+        )
+
+    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    def test_mute_rules_create_invalid_finding_ids(
+        self, mock_task, authenticated_client
+    ):
+        """Test creating mute rule with non-existent finding IDs fails."""
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": "Invalid Findings",
+                    "reason": "This should fail",
+                    "finding_ids": ["f498b103-c760-4785-9a3e-e23fafbb7b02"],
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "errors" in response.json()
+
+    def test_mute_rules_create_duplicate_name(
+        self, authenticated_client, mute_rules_fixture
+    ):
+        """Test creating a mute rule with duplicate name fails."""
+        existing_name = mute_rules_fixture[0].name
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": existing_name,
+                    "reason": "Duplicate name test",
+                    "finding_ids": ["f498b103-c760-4785-9a3e-e23fafbb7b02"],
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "errors" in response.json()
+
+    def test_mute_rules_update_name(self, authenticated_client, mute_rules_fixture):
+        """Test updating mute rule name."""
+        mute_rule = mute_rules_fixture[0]
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "id": str(mute_rule.id),
+                "attributes": {
+                    "name": "Updated Name",
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("mute-rule-detail", kwargs={"pk": mute_rule.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()["data"]
+        assert response_data["attributes"]["name"] == "Updated Name"
+
+        # Verify database was updated
+        mute_rule.refresh_from_db()
+        assert mute_rule.name == "Updated Name"
+
+    def test_mute_rules_update_reason(self, authenticated_client, mute_rules_fixture):
+        """Test updating mute rule reason."""
+        mute_rule = mute_rules_fixture[0]
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "id": str(mute_rule.id),
+                "attributes": {
+                    "reason": "Updated reason for muting",
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("mute-rule-detail", kwargs={"pk": mute_rule.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()["data"]
+        assert response_data["attributes"]["reason"] == "Updated reason for muting"
+
+        mute_rule.refresh_from_db()
+        assert mute_rule.reason == "Updated reason for muting"
+
+    def test_mute_rules_update_enabled(self, authenticated_client, mute_rules_fixture):
+        """Test disabling a mute rule."""
+        mute_rule = mute_rules_fixture[0]
+        assert mute_rule.enabled is True
+
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "id": str(mute_rule.id),
+                "attributes": {
+                    "enabled": False,
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("mute-rule-detail", kwargs={"pk": mute_rule.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()["data"]
+        assert response_data["attributes"]["enabled"] is False
+
+        mute_rule.refresh_from_db()
+        assert mute_rule.enabled is False
+
+    def test_mute_rules_update_duplicate_name(
+        self, authenticated_client, mute_rules_fixture
+    ):
+        """Test updating mute rule with duplicate name fails."""
+        first_rule = mute_rules_fixture[0]
+        second_rule = mute_rules_fixture[1]
+
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "id": str(second_rule.id),
+                "attributes": {
+                    "name": first_rule.name,
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("mute-rule-detail", kwargs={"pk": second_rule.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "errors" in response.json()
+
+    def test_mute_rules_delete(self, authenticated_client, mute_rules_fixture):
+        """Test deleting a mute rule."""
+        mute_rule = mute_rules_fixture[0]
+        response = authenticated_client.delete(
+            reverse("mute-rule-detail", kwargs={"pk": mute_rule.id})
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+        # Verify rule was deleted
+        from api.models import MuteRule
+
+        assert not MuteRule.objects.filter(id=mute_rule.id).exists()
+
+    def test_mute_rules_tenant_isolation(
+        self, authenticated_client, mute_rules_fixture, tenants_fixture
+    ):
+        """Test that users can only access mute rules from their tenant."""
+        # Create a second tenant with a mute rule
+        from api.models import MuteRule, Tenant
+
+        other_tenant = Tenant.objects.create(name="Other Tenant")
+        other_rule = MuteRule.objects.create(
+            tenant=other_tenant,
+            name="Other Tenant Rule",
+            reason="Should not be visible",
+            finding_uids=["test-uid"],
+        )
+
+        # Try to access other tenant's rule
+        response = authenticated_client.get(
+            reverse("mute-rule-detail", kwargs={"pk": other_rule.id})
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+        # List should only show current tenant's rules
+        response = authenticated_client.get(reverse("mute-rule-list"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == len(mute_rules_fixture)
+        for rule_data in data:
+            assert rule_data["id"] != str(other_rule.id)
 
     @pytest.mark.parametrize(
         "credentials",

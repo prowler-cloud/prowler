@@ -4173,6 +4173,290 @@ paths:
                         task_args: null
                         metadata: null
           description: ''
+  /api/v1/mute-rules:
+    get:
+      operationId: mute_rules_list
+      description: Retrieve a list of all mute rules with filtering options.
+      summary: List all mute rules
+      parameters:
+      - in: query
+        name: fields[mute-rules]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - name
+            - reason
+            - enabled
+            - created_by
+            - finding_uids
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[created_by]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[enabled]
+        schema:
+          type: boolean
+      - in: query
+        name: filter[id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[name]
+        schema:
+          type: string
+      - in: query
+        name: filter[name__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[reason__icontains]
+        schema:
+          type: string
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[updated_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[updated_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[updated_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - created_by
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - -name
+            - enabled
+            - -enabled
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+        explode: false
+      tags:
+      - Mute Rules
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMuteRuleList'
+          description: ''
+    post:
+      operationId: mute_rules_create
+      description: Create a new mute rule by providing finding IDs, name, and reason.
+        The rule will immediately mute the selected findings and launch a background
+        task to mute all historical findings with matching UIDs.
+      summary: Create a new mute rule
+      tags:
+      - Mute Rules
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/MuteRuleCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MuteRuleCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MuteRuleCreateRequest'
+        required: true
+      security:
+      - JWT or API Key: []
+      responses:
+        '201':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/MuteRuleCreateResponse'
+          description: ''
+  /api/v1/mute-rules/{id}:
+    get:
+      operationId: mute_rules_retrieve
+      description: Fetch detailed information about a specific mute rule by ID.
+      summary: Retrieve a mute rule
+      parameters:
+      - in: query
+        name: fields[mute-rules]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - name
+            - reason
+            - enabled
+            - created_by
+            - finding_uids
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this mute rule.
+        required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - created_by
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      tags:
+      - Mute Rules
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/MuteRuleResponse'
+          description: ''
+    patch:
+      operationId: mute_rules_partial_update
+      description: Update certain fields of an existing mute rule (e.g., name, reason,
+        enabled).
+      summary: Partially update a mute rule
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this mute rule.
+        required: true
+      tags:
+      - Mute Rules
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/PatchedMuteRuleUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedMuteRuleUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedMuteRuleUpdateRequest'
+        required: true
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/SerializerMetaclassResponse'
+          description: ''
+    delete:
+      operationId: mute_rules_destroy
+      description: 'Remove a mute rule from the system. Note: Previously muted findings
+        remain muted.'
+      summary: Delete a mute rule
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this mute rule.
+        required: true
+      tags:
+      - Mute Rules
+      security:
+      - JWT or API Key: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/overviews/findings:
     get:
       operationId: overviews_findings_retrieve
@@ -12093,6 +12377,272 @@ components:
           $ref: '#/components/schemas/Membership'
       required:
       - data
+    MuteRule:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - mute-rules
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+            name:
+              type: string
+              description: Human-readable name for this rule
+              maxLength: 100
+              minLength: 3
+            reason:
+              type: string
+              description: Reason for muting
+              minLength: 3
+              maxLength: 500
+            enabled:
+              type: boolean
+              description: Whether this rule is currently enabled
+            finding_uids:
+              type: array
+              items:
+                type: string
+              readOnly: true
+              description: List of finding UIDs that are muted by this rule
+          required:
+          - name
+          - reason
+        relationships:
+          type: object
+          properties:
+            created_by:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - users
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              nullable: true
+    MuteRuleCreate:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - mute-rules
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+            name:
+              type: string
+              description: Human-readable name for this rule
+              maxLength: 100
+              minLength: 3
+            reason:
+              type: string
+              description: Reason for muting
+              minLength: 3
+              maxLength: 500
+            enabled:
+              type: boolean
+              readOnly: true
+              description: Whether this rule is currently enabled
+            finding_ids:
+              type: array
+              items:
+                type: string
+                format: uuid
+              writeOnly: true
+              description: List of Finding IDs to mute (will be converted to UIDs)
+            finding_uids:
+              type: array
+              items:
+                type: string
+              readOnly: true
+              description: List of finding UIDs that are muted by this rule
+          required:
+          - name
+          - reason
+          - finding_ids
+        relationships:
+          type: object
+          properties:
+            created_by:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - users
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              readOnly: true
+              nullable: true
+    MuteRuleCreateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - mute-rules
+            attributes:
+              type: object
+              properties:
+                inserted_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                updated_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                name:
+                  type: string
+                  minLength: 3
+                  description: Human-readable name for this rule
+                  maxLength: 100
+                reason:
+                  type: string
+                  minLength: 3
+                  description: Reason for muting
+                  maxLength: 500
+                enabled:
+                  type: boolean
+                  readOnly: true
+                  description: Whether this rule is currently enabled
+                finding_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  writeOnly: true
+                  description: List of Finding IDs to mute (will be converted to UIDs)
+                finding_uids:
+                  type: array
+                  items:
+                    type: string
+                    minLength: 1
+                  readOnly: true
+                  description: List of finding UIDs that are muted by this rule
+              required:
+              - name
+              - reason
+              - finding_ids
+            relationships:
+              type: object
+              properties:
+                created_by:
+                  type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        type:
+                          type: string
+                          enum:
+                          - users
+                          title: Resource Type Name
+                          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                            member is used to describe resource objects that share
+                            common attributes and relationships.
+                      required:
+                      - id
+                      - type
+                  required:
+                  - data
+                  description: The identifier of the related object.
+                  title: Resource Identifier
+                  readOnly: true
+                  nullable: true
+      required:
+      - data
+    MuteRuleCreateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/MuteRuleCreate'
+      required:
+      - data
+    MuteRuleResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/MuteRule'
+      required:
+      - data
     OpenApiResponseResponse:
       type: object
       properties:
@@ -12429,6 +12979,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Membership'
+      required:
+      - data
+    PaginatedMuteRuleList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/MuteRule'
       required:
       - data
     PaginatedProcessorList:
@@ -12960,6 +13519,44 @@ components:
                   type: string
                   maxLength: 50
                 default_models: {}
+      required:
+      - data
+    PatchedMuteRuleUpdateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - id
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - mute-rules
+            id:
+              type: string
+              format: uuid
+            attributes:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 3
+                  description: Human-readable name for this rule
+                  maxLength: 100
+                reason:
+                  type: string
+                  minLength: 3
+                  description: Reason for muting
+                  maxLength: 500
+                enabled:
+                  type: boolean
+                  description: Whether this rule is currently enabled
       required:
       - data
     PatchedProcessorUpdateRequest:
@@ -17060,7 +17657,7 @@ components:
       type: object
       properties:
         data:
-          $ref: '#/components/schemas/ProviderGroup'
+          $ref: '#/components/schemas/MuteRule'
       required:
       - data
     Task:
@@ -18104,3 +18701,7 @@ tags:
 - name: API Keys
   description: Endpoints for API keys management. These can be used as an alternative
     to JWT authorization.
+- name: Mute Rules
+  description: Endpoints for simple mute rules management. These can be used as an
+    alternative to the Mutelist Processor if you need to mute specific findings across
+    your tenant with a specific reason.

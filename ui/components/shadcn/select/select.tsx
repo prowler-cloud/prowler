@@ -2,7 +2,14 @@
 
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon, X } from "lucide-react";
-import { createContext, useContext, useId } from "react";
+import {
+  ComponentProps,
+  createContext,
+  KeyboardEvent,
+  MouseEvent,
+  useContext,
+  useId,
+} from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -26,7 +33,7 @@ function Select({
   onMultiValueChange,
   ariaLabel,
   ...props
-}: Omit<React.ComponentProps<typeof SelectPrimitive.Root>, "onValueChange"> & {
+}: Omit<ComponentProps<typeof SelectPrimitive.Root>, "onValueChange"> & {
   allowDeselect?: boolean;
   multiple?: boolean;
   selectedValues?: string[];
@@ -92,7 +99,7 @@ function Select({
 
 function SelectGroup({
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Group>) {
+}: ComponentProps<typeof SelectPrimitive.Group>) {
   return <SelectPrimitive.Group data-slot="select-group" {...props} />;
 }
 
@@ -100,7 +107,7 @@ function SelectValue({
   placeholder,
   children,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Value>) {
+}: ComponentProps<typeof SelectPrimitive.Value>) {
   const { multiple, selectedValues } = useContext(SelectContext);
 
   // For multi-select, render custom children or placeholder
@@ -129,14 +136,16 @@ function SelectTrigger({
   size = "default",
   children,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
+}: ComponentProps<typeof SelectPrimitive.Trigger> & {
   size?: "sm" | "default";
 }) {
   const { multiple, selectedValues, onMultiValueChange, ariaLabel } =
     useContext(SelectContext);
   const hasSelection = multiple && selectedValues && selectedValues.length > 0;
 
-  const handleClear = (e: React.MouseEvent) => {
+  const handleClear = (
+    e: MouseEvent<HTMLSpanElement> | KeyboardEvent<HTMLSpanElement>,
+  ) => {
     e.stopPropagation();
     if (onMultiValueChange) {
       onMultiValueChange([]);
@@ -168,7 +177,7 @@ function SelectTrigger({
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
                 e.stopPropagation();
-                handleClear(e as unknown as React.MouseEvent);
+                handleClear(e);
               }
             }}
             className="pointer-events-auto cursor-pointer rounded-sm p-0.5 opacity-70 transition-opacity hover:opacity-100 focus:opacity-100 focus:ring-2 focus:ring-slate-600 focus:ring-offset-2 focus:outline-none dark:focus:ring-slate-400"
@@ -197,7 +206,7 @@ function SelectContent({
   position = "popper",
   align = "center",
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Content>) {
+}: ComponentProps<typeof SelectPrimitive.Content>) {
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
@@ -231,7 +240,7 @@ function SelectContent({
 function SelectLabel({
   className,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Label>) {
+}: ComponentProps<typeof SelectPrimitive.Label>) {
   return (
     <SelectPrimitive.Label
       data-slot="select-label"
@@ -246,7 +255,7 @@ function SelectItem({
   children,
   value,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Item>) {
+}: ComponentProps<typeof SelectPrimitive.Item>) {
   const { multiple, selectedValues } = useContext(SelectContext);
   const isSelected = multiple && selectedValues?.includes(value);
 
@@ -290,7 +299,7 @@ function SelectItem({
 function SelectSeparator({
   className,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Separator>) {
+}: ComponentProps<typeof SelectPrimitive.Separator>) {
   return (
     <SelectPrimitive.Separator
       data-slot="select-separator"
@@ -303,7 +312,7 @@ function SelectSeparator({
 function SelectScrollUpButton({
   className,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.ScrollUpButton>) {
+}: ComponentProps<typeof SelectPrimitive.ScrollUpButton>) {
   return (
     <SelectPrimitive.ScrollUpButton
       data-slot="select-scroll-up-button"
@@ -321,7 +330,7 @@ function SelectScrollUpButton({
 function SelectScrollDownButton({
   className,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.ScrollDownButton>) {
+}: ComponentProps<typeof SelectPrimitive.ScrollDownButton>) {
   return (
     <SelectPrimitive.ScrollDownButton
       data-slot="select-scroll-down-button"
