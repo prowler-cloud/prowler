@@ -1,0 +1,102 @@
+---
+title: 'Dashboard Category Filter'
+---
+
+## Overview
+
+The Prowler Dashboard includes a **Category** filter that allows you to filter findings by their assigned categories. This is particularly useful when you want to focus on specific security concerns like internet-exposed resources, encryption issues, or logging configurations.
+
+## Using the Category Filter
+
+### Step 1: Run Prowler with Categories
+
+First, run Prowler with the `--categories` flag to generate findings for specific categories:
+
+```sh
+prowler aws --categories internet-exposed
+```
+
+This will scan your AWS environment and identify all resources that are exposed to the internet.
+
+### Step 2: Launch the Dashboard
+
+Start the Prowler dashboard:
+
+```sh
+prowler dashboard
+```
+
+### Step 3: Apply Category Filter
+
+In the dashboard's Overview page, you'll find a **Category** dropdown filter alongside other filters like Severity, Service, Provider, and Status.
+
+<img src="/images/cli/dashboard/dashboard-overview.png" />
+
+The Category filter allows you to:
+
+- Select **All** to view findings from all categories
+- Select one or more specific categories to filter results
+- Combine category filtering with other filters for precise analysis
+
+## Available Categories
+
+Common categories include:
+
+- `internet-exposed` - Resources accessible from the internet
+- `encryption` - Encryption-related findings
+- `logging` - Logging and monitoring configurations
+- `secrets` - Secrets management issues
+- `forensics-ready` - Forensic readiness checks
+- `trustboundaries` - Trust boundary violations
+- And more...
+
+To see all available categories for a provider:
+
+```sh
+prowler <provider> --list-categories
+```
+
+## Example Use Cases
+
+### Filter Internet-Exposed Resources
+
+```sh
+# Run scan for internet-exposed resources
+prowler aws --categories internet-exposed
+
+# Launch dashboard
+prowler dashboard
+
+# In the dashboard, select "internet-exposed" from the Category dropdown
+```
+
+### Multiple Categories
+
+You can scan and filter by multiple categories:
+
+```sh
+prowler aws --categories internet-exposed,encryption
+```
+
+Then use the Category filter in the dashboard to view findings from either or both categories.
+
+## Category Filter Behavior
+
+- **Default**: Set to "All" (shows all findings regardless of category)
+- **Multi-select**: You can select multiple categories simultaneously
+- **Dynamic**: The available categories update based on your current data and other active filters
+- **Comma-separated**: Findings can belong to multiple categories, and the filter handles this automatically
+
+## Integration with Other Filters
+
+The Category filter works seamlessly with other dashboard filters:
+
+```sh
+# Example: View only FAIL status findings in the internet-exposed category
+# 1. Run: prowler aws --categories internet-exposed
+# 2. Launch dashboard
+# 3. Set Status filter to "FAIL"
+# 4. Set Category filter to "internet-exposed"
+```
+
+This allows for powerful, multi-dimensional analysis of your security posture.
