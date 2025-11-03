@@ -8,7 +8,6 @@ export interface LLMProviderField {
   label: string;
   placeholder: string;
   required: boolean;
-  collapsible?: boolean;
   requiresConnectionTest?: boolean;
 }
 
@@ -33,15 +32,6 @@ export const LLM_PROVIDER_REGISTRY: Record<string, LLMProviderConfig> = {
         placeholder: "Enter your API key",
         required: true,
         requiresConnectionTest: true,
-      },
-      {
-        name: "base_url",
-        type: "text",
-        label: "Base URL",
-        placeholder: "https://api.openai.com/v1",
-        required: false,
-        collapsible: true,
-        requiresConnectionTest: false,
       },
     ],
   },
@@ -115,16 +105,5 @@ export const getAllProviders = (): LLMProviderConfig[] => {
 
 export const getMainFields = (providerId: string): LLMProviderField[] => {
   const config = getProviderConfig(providerId);
-  return config?.fields.filter((field) => !field.collapsible) ?? [];
-};
-
-export const getCollapsibleFields = (
-  providerId: string,
-): LLMProviderField[] => {
-  const config = getProviderConfig(providerId);
-  return config?.fields.filter((field) => field.collapsible) ?? [];
-};
-
-export const hasCollapsibleFields = (providerId: string): boolean => {
-  return getCollapsibleFields(providerId).length > 0;
+  return config?.fields ?? [];
 };

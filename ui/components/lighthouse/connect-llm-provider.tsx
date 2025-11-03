@@ -1,6 +1,5 @@
 "use client";
 
-import { ChevronDown, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -9,19 +8,9 @@ import {
   getLighthouseProviderByType,
   updateLighthouseProviderByType,
 } from "@/actions/lighthouse/lighthouse";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
 
-import {
-  getCollapsibleFields,
-  getMainFields,
-  getProviderConfig,
-  hasCollapsibleFields,
-} from "./llm-provider-registry";
+import { getMainFields, getProviderConfig } from "./llm-provider-registry";
 import {
   isProviderFormValid,
   shouldTestConnection,
@@ -50,7 +39,6 @@ export const ConnectLLMProvider = ({
 
   // State
   const [formData, setFormData] = useState<FormData>({});
-  const [isAdditionalOpen, setIsAdditionalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -74,18 +62,6 @@ export const ConnectLLMProvider = ({
           throw new Error(
             result.errors[0]?.detail || "Failed to fetch provider",
           );
-        }
-
-        const providerData = result.data.attributes;
-
-        // Pre-populate non-credential fields (like base_url)
-        const collapsibleFields = getCollapsibleFields(provider);
-        if (collapsibleFields.length > 0 && providerData.base_url) {
-          setFormData((prev) => ({
-            ...prev,
-            base_url: providerData.base_url,
-          }));
-          setIsAdditionalOpen(true);
         }
 
         setExistingProviderId(result.data.id);
@@ -229,8 +205,6 @@ export const ConnectLLMProvider = ({
 
   // Computed values
   const mainFields = getMainFields(provider);
-  const collapsibleFields = getCollapsibleFields(provider);
-  const hasCollapsible = hasCollapsibleFields(provider);
   const isFormValid = isProviderFormValid(provider, formData, isEditMode);
 
   // Button text configuration
@@ -324,45 +298,6 @@ export const ConnectLLMProvider = ({
             />
           </div>
         ))}
-
-        {/* Collapsible fields */}
-        {hasCollapsible && (
-          <Collapsible
-            open={isAdditionalOpen}
-            onOpenChange={setIsAdditionalOpen}
-          >
-            <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100">
-              {isAdditionalOpen ? (
-                <ChevronDown className="h-4 w-4" />
-              ) : (
-                <ChevronRight className="h-4 w-4" />
-              )}
-              Additional Settings
-            </CollapsibleTrigger>
-            <CollapsibleContent className="mt-4">
-              {collapsibleFields.map((field) => (
-                <div key={field.name}>
-                  <label
-                    htmlFor={field.name}
-                    className="mb-2 block text-sm font-medium"
-                  >
-                    {field.label}
-                  </label>
-                  <input
-                    id={field.name}
-                    type={field.type}
-                    value={formData[field.name] || ""}
-                    onChange={(e) =>
-                      handleFieldChange(field.name, e.target.value)
-                    }
-                    placeholder={field.placeholder}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-800"
-                  />
-                </div>
-              ))}
-            </CollapsibleContent>
-          </Collapsible>
-        )}
 
         {/* Actions */}
         <div className="mt-4 flex justify-end gap-4">
