@@ -10,6 +10,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `codepipeline_project_repo_private` check for AWS provider [(#5915)](https://github.com/prowler-cloud/prowler/pull/5915)
 - `cloudstorage_bucket_versioning_enabled` check for GCP provider [(#9014)](https://github.com/prowler-cloud/prowler/pull/9014)
 - `cloudstorage_bucket_soft_delete_enabled` check for GCP provider [(#9028)](https://github.com/prowler-cloud/prowler/pull/9028)
+- CloudTrail enrichment for AWS provider [(#9101)](https://github.com/prowler-cloud/prowler/pull/9101)
 
 ### Changed
 - Update AWS Direct Connect service metadata to new format [(#8855)](https://github.com/prowler-cloud/prowler/pull/8855)
