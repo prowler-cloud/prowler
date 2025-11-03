@@ -1,5 +1,6 @@
 import { Page, Locator, expect } from "@playwright/test";
 import { BasePage } from "../base-page";
+import { ScansPage } from "../scans/scans-page";
 
 // AWS provider data
 export interface AWSProviderData {
@@ -953,5 +954,61 @@ export class ProvidersPage extends BasePage {
     // Navigate back to providers page to ensure clean state
     await this.goto();
     await expect(this.providersTable).toBeVisible({ timeout: 10000 });
+  }
+
+  async AddAWSProvider(
+    accountId: string,
+    accessKey: string,
+    secretKey: string,
+  ): Promise<void> {
+    
+    // Prepare test data for AWS provider
+    const awsProviderData: AWSProviderData = {
+      accountId: accountId,
+      alias: "Test E2E AWS Account - Credentials",
+    };
+
+    // Prepare static credentials
+    const staticCredentials: AWSProviderCredential = {
+      type: AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS,
+      accessKeyId: accessKey,
+      secretAccessKey: secretKey,
+    };
+
+    // Create providers page object
+    const providersPage = new ProvidersPage(this.page);
+
+    // Navigate to providers page
+    await providersPage.goto();
+    await providersPage.verifyPageLoaded();
+
+    // Start adding new provider
+    await providersPage.clickAddProvider();
+    await providersPage.verifyConnectAccountPageLoaded();
+
+    // Select AWS provider
+    await providersPage.selectAWSProvider();
+
+    // Fill provider details
+    await providersPage.fillAWSProviderDetails(awsProviderData);
+    await providersPage.clickNext();
+
+    // Select static credentials type
+    await providersPage.selectCredentialsType(
+      AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS,
+    );
+    await providersPage.verifyCredentialsPageLoaded();
+
+    // Fill static credentials
+    await providersPage.fillStaticCredentials(staticCredentials);
+    await providersPage.clickNext();
+
+    // Launch scan
+    await providersPage.verifyLaunchScanPageLoaded();
+    await providersPage.clickNext();
+
+    // Wait for redirect to provider page
+    const scansPage = new ScansPage(this.page);
+    await scansPage.verifyPageLoaded();
   }
 }
