@@ -42,18 +42,26 @@
             ]
           },
           {
-            "group": "Prowler Lighthouse AI",
-            "pages": [
-              "user-guide/tutorials/prowler-app-lighthouse",
-              "getting-started/goto/prowler-mcp"
-            ]
-          },
-          {
             "group": "Prowler App",
             "pages": [
               "getting-started/products/prowler-app",
               "getting-started/installation/prowler-app",
               "getting-started/basic-usage/prowler-app"
+            ]
+          },
+          {
+            "group": "Prowler Lighthouse AI",
+            "pages": [
+              "user-guide/tutorials/prowler-app-lighthouse"
+            ]
+          },
+          {
+            "group": "Prowler MCP Server",
+            "pages": [
+              "getting-started/products/prowler-mcp",
+              "getting-started/installation/prowler-mcp",
+              "getting-started/basic-usage/prowler-mcp",
+              "getting-started/basic-usage/prowler-mcp-tools"
             ]
           },
           {
@@ -90,7 +98,7 @@
                 ]
               },
               "user-guide/tutorials/prowler-app-rbac",
-              "user-guide/providers/prowler-app-api-keys",
+              "user-guide/tutorials/prowler-app-api-keys",
               "user-guide/tutorials/prowler-app-mute-findings",
               {
                 "group": "Integrations",
@@ -106,7 +114,8 @@
                 "group": "Tutorials",
                 "pages": [
                   "user-guide/tutorials/prowler-app-sso-entra",
-                  "user-guide/tutorials/bulk-provider-provisioning"
+                  "user-guide/tutorials/bulk-provider-provisioning",
+                  "user-guide/tutorials/aws-organizations-bulk-provisioning"
                 ]
               }
             ]
@@ -223,6 +232,13 @@
                 "group": "LLM",
                 "pages": [
                   "user-guide/providers/llm/getting-started-llm"
+                ]
+              },
+              {
+                "group": "Oracle Cloud Infrastructure",
+                "pages": [
+                  "user-guide/providers/oci/getting-started-oci",
+                  "user-guide/providers/oci/authentication"
                 ]
               }
             ]
@@ -390,14 +406,6 @@
       "destination": "/user-guide/providers/gcp/getting-started-gcp"
     },
     {
-      "source": "/projects/prowler-open-source/en/latest/tutorials/prowler-app",
-      "destination": "/user-guide/tutorials/prowler-app#step-4-4%3A-kubernetes-credentials%3A"
-    },
-    {
-      "source": "/projects/prowler-open-source/en/latest/tutorials/prowler-app/#step-3-add-a-provider",
-      "destination": "/user-guide/tutorials/prowler-app#step-3-add-a-provider"
-    },
-    {
       "source": "/projects/prowler-open-source/en/latest/tutorials/microsoft365/getting-started-m365",
       "destination": "/user-guide/providers/microsoft365/getting-started-m365"
     },
@@ -416,6 +424,10 @@
     {
       "source": "/projects/prowler-saas/en/latest/:slug*",
       "destination": "https://docs.prowler.pro/en/latest/:slug*"
+    },
+    {
+      "source": "/projects/prowler-open-source/en/latest/tutorials/:slug*",
+      "destination": "/user-guide/tutorials/:slug*"
     }
   ]
 }

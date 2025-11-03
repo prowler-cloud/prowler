@@ -1,31 +1,38 @@
 {
   "Provider": "aws",
   "CheckID": "cloudtrail_multi_region_enabled_logging_management_events",
-  "CheckTitle": "Ensure CloudTrail logging management events in All Regions",
+  "CheckTitle": "CloudTrail trail logs management events for read and write operations",
   "CheckType": [
-    "CIS AWS Foundations Benchmark"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
   ],
   "ServiceName": "cloudtrail",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsCloudTrailTrail",
-  "Description": "Ensure CloudTrail logging management events in All Regions",
-  "Risk": "AWS CloudTrail enables governance, compliance, operational auditing, and risk auditing of your AWS account. To meet FTR requirements, you must have management events enabled for all AWS accounts and in all regions and aggregate these logs into an Amazon Simple Storage Service (Amazon S3) bucket owned by a separate AWS account.",
-  "RelatedUrl": "https://docs.prowler.com/checks/aws/logging-policies/logging_14",
+  "Description": "**CloudTrail trails** record **management events** (`read` and `write`) in every AWS region and are actively logging, using a multi-region trail or per-region coverage.",
+  "Risk": "Without region-wide management event logging, changes to identities, networking, and audit settings can go untracked.\n\nAdversaries can operate in overlooked regions to create resources, modify permissions, or disable logging, undermining **integrity**, **confidentiality**, and incident response.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/checks/aws/logging-policies/logging_14#terraform",
+    "https://docs.prowler.com/checks/aws/logging-policies/logging_14"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws cloudtrail update-trail --name <trail_name> --is-multi-region-trail",
-      "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/aws/logging-policies/logging_14",
-      "Terraform": "https://docs.prowler.com/checks/aws/logging-policies/logging_14#terraform"
+      "CLI": "",
+      "NativeIaC": "```yaml\n# CloudFormation: enable multi-region and log management events (read & write)\nResources:\n  <example_resource_name>:\n    Type: AWS::CloudTrail::Trail\n    Properties:\n      S3BucketName: <example_resource_name>\n      IsMultiRegionTrail: true  # CRITICAL: apply the trail to all regions\n      EventSelectors:\n        - IncludeManagementEvents: true  # CRITICAL: log management events\n          ReadWriteType: All             # CRITICAL: log both read and write\n```",
+      "Other": "1. In the AWS Console, go to CloudTrail > Trails and select your trail\n2. Click Edit\n3. Set Apply trail to all regions to Yes\n4. Under Management events, set Read/write events to All\n5. Click Save changes\n6. If Logging is Off, click Start logging",
+      "Terraform": "```hcl\n# Terraform: enable multi-region and log management events (read & write)\nresource \"aws_cloudtrail\" \"<example_resource_name>\" {\n  name           = \"<example_resource_name>\"\n  s3_bucket_name = \"<example_resource_name>\"\n\n  is_multi_region_trail = true  # CRITICAL: apply the trail to all regions\n\n  event_selector {\n    include_management_events = true  # CRITICAL: log management events\n    read_write_type           = \"All\" # CRITICAL: log both read & write\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable CloudTrail logging management events in All Regions",
-      "Url": "https://docs.prowler.com/checks/aws/logging-policies/logging_14"
+      "Text": "Enable a **multi-region CloudTrail** that logs **management events** for `read` and `write` in all regions.\n\nCentralize logs in a separate, locked-down account; apply **least privilege**, encryption, retention, and integrity validation; and protect trails and storage with tamper-evident, deny-delete controls for **defense-in-depth**.",
+      "Url": "https://hub.prowler.com/check/cloudtrail_multi_region_enabled_logging_management_events"
     }
   },
   "Categories": [
+    "logging",
     "forensics-ready"
   ],
   "DependsOn": [],

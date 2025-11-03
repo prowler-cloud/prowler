@@ -13,6 +13,6 @@ export * from "./feedback-banner/feedback-banner";
 export * from "./headers/navigation-header";
 export * from "./label/Label";
 export * from "./main-layout/main-layout";
-export * from "./select/Select";
+export * from "./select";
 export * from "./sidebar";
 export * from "./toast";

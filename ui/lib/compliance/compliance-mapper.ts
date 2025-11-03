@@ -2,6 +2,7 @@ import React from "react";
 
 import { AWSWellArchitectedCustomDetails } from "@/components/compliance/compliance-custom-details/aws-well-architected-details";
 import { C5CustomDetails } from "@/components/compliance/compliance-custom-details/c5-details";
+import { CCCCustomDetails } from "@/components/compliance/compliance-custom-details/ccc-details";
 import { CISCustomDetails } from "@/components/compliance/compliance-custom-details/cis-details";
 import { ENSCustomDetails } from "@/components/compliance/compliance-custom-details/ens-details";
 import { GenericCustomDetails } from "@/components/compliance/compliance-custom-details/generic-details";
@@ -27,6 +28,10 @@ import {
   mapComplianceData as mapC5ComplianceData,
   toAccordionItems as toC5AccordionItems,
 } from "./c5";
+import {
+  mapComplianceData as mapCCCComplianceData,
+  toAccordionItems as toCCCAccordionItems,
+} from "./ccc";
 import {
   mapComplianceData as mapCISComplianceData,
   toAccordionItems as toCISAccordionItems,
@@ -164,6 +169,15 @@ const getComplianceMappers = (): Record<string, ComplianceMapper> => ({
       calculateCategoryHeatmapData(complianceData),
     getDetailsComponent: (requirement: Requirement) =>
       React.createElement(ThreatCustomDetails, { requirement }),
+  },
+  CCC: {
+    mapComplianceData: mapCCCComplianceData,
+    toAccordionItems: toCCCAccordionItems,
+    getTopFailedSections,
+    calculateCategoryHeatmapData: (data: Framework[]) =>
+      calculateCategoryHeatmapData(data),
+    getDetailsComponent: (requirement: Requirement) =>
+      React.createElement(CCCCustomDetails, { requirement }),
   },
 });
 

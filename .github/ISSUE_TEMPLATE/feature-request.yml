@@ -3,6 +3,42 @@ description: Suggest an idea for this project
 labels: ["feature-request", "status/needs-triage"]
 
 body:
+  - type: checkboxes
+    id: search
+    attributes:
+      label: Feature search
+      options:
+        - label: I have searched the existing issues and this feature has not been requested yet or is already in our [Public Roadmap](https://roadmap.prowler.com/roadmap)
+          required: true
+  - type: dropdown
+    id: component
+    attributes:
+      label: Which component would this feature affect?
+      multiple: true
+      options:
+        - Prowler CLI/SDK
+        - Prowler API
+        - Prowler UI
+        - Prowler Dashboard
+        - Prowler MCP Server
+        - Documentation
+        - New component/Integration
+    validations:
+      required: true
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Related to specific cloud provider?
+      multiple: true
+      options:
+        - AWS
+        - Azure
+        - GCP
+        - Kubernetes
+        - GitHub
+        - Microsoft 365
+        - All providers
+        - Not provider-specific
   - type: textarea
     id: Problem
     attributes:
@@ -17,6 +53,14 @@ body:
     attributes:
       label: Solution Proposed
       description: A clear and concise description of what you want to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use case and benefits
+      description: Who would benefit from this feature and how?
+      placeholder: This would help security teams by...
     validations:
       required: true
   - type: textarea
