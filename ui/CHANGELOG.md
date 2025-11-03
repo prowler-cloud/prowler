@@ -2,7 +2,20 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.13.1] (Unreleased)
+## [1.14.0] (Unreleased)
+
+### 🚀 Added
+
+- RSS feeds support [(#9109)](https://github.com/prowler-cloud/prowler/pull/9109)
+- Customer Support menu item [(#9143)](https://github.com/prowler-cloud/prowler/pull/9143)
+
+### 🔄 Changed
+
+- Resource ID moved up in the findings detail page [(#9141)](https://github.com/prowler-cloud/prowler/pull/9141)
+
+---
+
+## [1.13.1]
 
 ### 🔄 Changed
 

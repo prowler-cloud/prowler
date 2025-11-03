@@ -70,7 +70,6 @@ htmlcov/
 ui/.env*
 api/.env*
 mcp_server/.env*
-.env.local
 
 # Coverage
 .coverage*
