@@ -32,7 +32,7 @@ from tasks.jobs.lighthouse_providers import (
     refresh_lighthouse_provider_models,
 )
 from tasks.jobs.muting import mute_historical_findings
-from tasks.jobs.report import generate_threatscore_report_job
+from tasks.jobs.report import generate_ens_report_job, generate_threatscore_report_job
 from tasks.jobs.scan import (
     aggregate_findings,
     create_compliance_requirements,
@@ -73,6 +73,9 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
         ),
         group(
             generate_threatscore_report_task.si(
+                tenant_id=tenant_id, scan_id=scan_id, provider_id=provider_id
+            ),
+            generate_ens_report_task.si(
                 tenant_id=tenant_id, scan_id=scan_id, provider_id=provider_id
             ),
             check_integrations_task.si(
@@ -680,6 +683,25 @@ def generate_threatscore_report_task(tenant_id: str, scan_id: str, provider_id: 
         provider_id (str): The provider identifier.
     """
     return generate_threatscore_report_job(
+        tenant_id=tenant_id, scan_id=scan_id, provider_id=provider_id
+    )
+
+
+@shared_task(
+    base=RLSTask,
+    name="scan-ens-report",
+    queue="scan-reports",
+)
+def generate_ens_report_task(tenant_id: str, scan_id: str, provider_id: str):
+    """
+    Task to generate an ENS RD2022 compliance report for a given scan.
+
+    Args:
+        tenant_id (str): The tenant identifier.
+        scan_id (str): The scan identifier.
+        provider_id (str): The provider identifier.
+    """
+    return generate_ens_report_job(
         tenant_id=tenant_id, scan_id=scan_id, provider_id=provider_id
     )
 

@@ -1,5 +1,6 @@
 import {
   getComplianceCsv,
+  getEnsPdf,
   getExportsZip,
   getThreatScorePdf,
 } from "@/actions/scans";
@@ -230,6 +231,19 @@ export const downloadThreatScorePdf = async (
     result,
     "application/pdf",
     "The ThreatScore PDF report has been downloaded successfully.",
+    toast,
+  );
+};
+
+export const downloadEnsPdf = async (
+  scanId: string,
+  toast: ReturnType<typeof useToast>["toast"],
+): Promise<void> => {
+  const result = await getEnsPdf(scanId);
+  await downloadFile(
+    result,
+    "application/pdf",
+    "The ENS PDF report has been downloaded successfully.",
     toast,
   );
 };

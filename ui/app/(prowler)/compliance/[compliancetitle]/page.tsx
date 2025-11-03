@@ -29,6 +29,7 @@ import {
 } from "@/types/compliance";
 import { ScanEntity } from "@/types/scans";
 
+import { EnsDownloadButton } from "./ens-download-button";
 import { ThreatScoreDownloadButton } from "./threatscore-download-button";
 
 interface ComplianceDetailSearchParams {
@@ -160,6 +161,12 @@ export default async function ComplianceDetail({
           selectedScanId && (
             <div className="flex-shrink-0 pt-1">
               <ThreatScoreDownloadButton scanId={selectedScanId} />
+            </div>
+          )}
+        {attributesData?.data?.[0]?.attributes?.framework === "ENS" &&
+          selectedScanId && (
+            <div className="flex-shrink-0 pt-1">
+              <EnsDownloadButton scanId={selectedScanId} />
             </div>
           )}
       </div>

@@ -277,6 +277,210 @@ def _create_status_component(status: str) -> Table:
     return table
 
 
+def _create_ens_nivel_badge(nivel: str) -> Table:
+    """
+    Create a visual badge for ENS requirement level (Nivel).
+
+    Args:
+        nivel (str): The level value (e.g., "alto", "medio", "bajo", "opcional").
+
+    Returns:
+        Table: A ReportLab Table object displaying the level with appropriate color coding.
+    """
+    nivel_lower = nivel.lower()
+
+    if nivel_lower == "alto":
+        nivel_color = colors.Color(0.8, 0.2, 0.2)
+    elif nivel_lower == "medio":
+        nivel_color = colors.Color(0.98, 0.75, 0.13)
+    elif nivel_lower == "bajo":
+        nivel_color = colors.Color(0.06, 0.72, 0.51)
+    else:
+        nivel_color = colors.Color(0.42, 0.45, 0.50)
+
+    data = [[f"Nivel: {nivel.upper()}"]]
+
+    table = Table(data, colWidths=[1.4 * inch])
+
+    table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (0, 0), nivel_color),
+                ("TEXTCOLOR", (0, 0), (0, 0), colors.white),
+                ("FONTNAME", (0, 0), (0, 0), "FiraCode"),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("FONTSIZE", (0, 0), (-1, -1), 11),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
+                ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+                ("TOPPADDING", (0, 0), (-1, -1), 8),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+            ]
+        )
+    )
+
+    return table
+
+
+def _create_ens_tipo_badge(tipo: str) -> Table:
+    """
+    Create a visual badge for ENS requirement type (Tipo).
+
+    Args:
+        tipo (str): The type value (e.g., "requisito", "refuerzo", "recomendacion", "medida").
+
+    Returns:
+        Table: A ReportLab Table object displaying the type with appropriate styling.
+    """
+    tipo_lower = tipo.lower()
+
+    tipo_icons = {
+        "requisito": "⚠️",
+        "refuerzo": "🛡️",
+        "recomendacion": "💡",
+        "medida": "📋",
+    }
+
+    icon = tipo_icons.get(tipo_lower, "")
+    tipo_color = colors.Color(0.2, 0.4, 0.6)
+
+    data = [[f"{icon} {tipo.capitalize()}"]]
+
+    table = Table(data, colWidths=[1.8 * inch])
+
+    table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (0, 0), tipo_color),
+                ("TEXTCOLOR", (0, 0), (0, 0), colors.white),
+                ("FONTNAME", (0, 0), (0, 0), "PlusJakartaSans"),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("FONTSIZE", (0, 0), (-1, -1), 11),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
+                ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+                ("TOPPADDING", (0, 0), (-1, -1), 8),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+            ]
+        )
+    )
+
+    return table
+
+
+def _create_ens_dimension_badges(dimensiones: list[str]) -> Table:
+    """
+    Create visual badges for ENS security dimensions.
+
+    Args:
+        dimensiones (list[str]): List of dimension names (e.g., ["trazabilidad", "autenticidad"]).
+
+    Returns:
+        Table: A ReportLab Table object with color-coded badges for each dimension.
+    """
+    dimension_mapping = {
+        "trazabilidad": ("T", colors.Color(0.26, 0.52, 0.96)),
+        "autenticidad": ("A", colors.Color(0.30, 0.69, 0.31)),
+        "integridad": ("I", colors.Color(0.61, 0.15, 0.69)),
+        "confidencialidad": ("C", colors.Color(0.96, 0.26, 0.21)),
+        "disponibilidad": ("D", colors.Color(1.0, 0.60, 0.0)),
+    }
+
+    badges = []
+    for dimension in dimensiones:
+        dimension_lower = dimension.lower()
+        if dimension_lower in dimension_mapping:
+            badge_text, badge_color = dimension_mapping[dimension_lower]
+            badges.append((badge_text, badge_color))
+
+    if not badges:
+        data = [["N/A"]]
+        table = Table(data, colWidths=[1 * inch])
+        table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (0, 0), colors.Color(0.9, 0.9, 0.9)),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 10),
+                ]
+            )
+        )
+        return table
+
+    data = [[badge[0] for badge in badges]]
+    col_widths = [0.4 * inch] * len(badges)
+
+    table = Table(data, colWidths=col_widths)
+
+    styles = [
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("FONTNAME", (0, 0), (-1, -1), "FiraCode"),
+        ("FONTSIZE", (0, 0), (-1, -1), 10),
+        ("TEXTCOLOR", (0, 0), (-1, -1), colors.white),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
+        ("LEFTPADDING", (0, 0), (-1, -1), 4),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+    ]
+
+    for idx, (_, badge_color) in enumerate(badges):
+        styles.append(("BACKGROUND", (idx, 0), (idx, 0), badge_color))
+
+    table.setStyle(TableStyle(styles))
+
+    return table
+
+
+def _create_ens_mode_badge(modo: str) -> Table:
+    """
+    Create a visual badge for ENS execution mode (ModoEjecucion).
+
+    Args:
+        modo (str): The execution mode (e.g., "automático", "manual").
+
+    Returns:
+        Table: A ReportLab Table object displaying the execution mode.
+    """
+    modo_lower = modo.lower()
+
+    if "auto" in modo_lower:
+        icon = "🤖"
+        modo_text = "Automático"
+        modo_color = colors.Color(0.30, 0.69, 0.31)
+    else:
+        icon = "👤"
+        modo_text = "Manual"
+        modo_color = colors.Color(0.96, 0.60, 0.0)
+
+    data = [[f"{icon} {modo_text}"]]
+
+    table = Table(data, colWidths=[1.6 * inch])
+
+    table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (0, 0), modo_color),
+                ("TEXTCOLOR", (0, 0), (0, 0), colors.white),
+                ("FONTNAME", (0, 0), (0, 0), "PlusJakartaSans"),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("FONTSIZE", (0, 0), (-1, -1), 10),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
+                ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+                ("TOPPADDING", (0, 0), (-1, -1), 8),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+            ]
+        )
+    )
+
+    return table
+
+
 def _create_section_score_chart(
     requirements_list: list[dict], attributes_by_requirement_id: dict
 ) -> io.BytesIO:
@@ -432,6 +636,211 @@ def _add_pdf_footer(canvas_obj: canvas.Canvas, doc: SimpleDocTemplate) -> None:
     powered_text = "Powered by Prowler"
     text_width = canvas_obj.stringWidth(powered_text, "PlusJakartaSans", 9)
     canvas_obj.drawString(width - text_width - 30, 20, powered_text)
+
+
+def _create_marco_category_chart(
+    requirements_list: list[dict], attributes_by_requirement_id: dict
+) -> io.BytesIO:
+    """
+    Create a bar chart showing compliance percentage by Marco (Section) and Categoría.
+
+    Args:
+        requirements_list (list[dict]): List of requirement dictionaries with status and findings data.
+        attributes_by_requirement_id (dict): Mapping of requirement IDs to their attributes.
+
+    Returns:
+        io.BytesIO: A BytesIO buffer containing the chart image in PNG format.
+    """
+    # Collect data by Marco and Categoría
+    marco_categoria_data = defaultdict(lambda: {"passed": 0, "total": 0})
+
+    for requirement in requirements_list:
+        requirement_id = requirement["id"]
+        requirement_attributes = attributes_by_requirement_id.get(requirement_id, {})
+        requirement_status = requirement["attributes"].get(
+            "status", StatusChoices.MANUAL
+        )
+
+        metadata = requirement_attributes.get("attributes", {}).get(
+            "req_attributes", []
+        )
+        if metadata:
+            m = metadata[0]
+            marco = getattr(m, "Marco", "N/A")
+            categoria = getattr(m, "Categoria", "N/A")
+
+            key = f"{marco} - {categoria}"
+            marco_categoria_data[key]["total"] += 1
+            if requirement_status == StatusChoices.PASS:
+                marco_categoria_data[key]["passed"] += 1
+
+    # Calculate percentages
+    categories = []
+    percentages = []
+
+    for category, data in sorted(marco_categoria_data.items()):
+        if data["total"] > 0:
+            percentage = (data["passed"] / data["total"]) * 100
+        else:
+            percentage = 0
+
+        categories.append(category)
+        percentages.append(percentage)
+
+    if not categories:
+        # Return empty chart if no data
+        fig, ax = plt.subplots(figsize=(12, 6))
+        ax.text(0.5, 0.5, "No data available", ha="center", va="center", fontsize=14)
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1)
+        ax.axis("off")
+        buffer = io.BytesIO()
+        plt.savefig(buffer, format="png", dpi=300, bbox_inches="tight")
+        buffer.seek(0)
+        plt.close()
+        return buffer
+
+    # Create horizontal bar chart
+    fig, ax = plt.subplots(figsize=(12, max(8, len(categories) * 0.4)))
+
+    colors_list = []
+    for percentage in percentages:
+        if percentage >= 80:
+            color = "#4CAF50"
+        elif percentage >= 60:
+            color = "#8BC34A"
+        elif percentage >= 40:
+            color = "#FFEB3B"
+        elif percentage >= 20:
+            color = "#FF9800"
+        else:
+            color = "#F44336"
+        colors_list.append(color)
+
+    y_pos = range(len(categories))
+    bars = ax.barh(y_pos, percentages, color=colors_list)
+
+    ax.set_yticks(y_pos)
+    ax.set_yticklabels(categories, fontsize=9)
+    ax.set_xlabel("Porcentaje de Cumplimiento (%)", fontsize=12)
+    ax.set_xlim(0, 100)
+
+    # Add percentage labels
+    for bar, percentage in zip(bars, percentages):
+        width = bar.get_width()
+        ax.text(
+            width + 1,
+            bar.get_y() + bar.get_height() / 2.0,
+            f"{percentage:.1f}%",
+            ha="left",
+            va="center",
+            fontweight="bold",
+            fontsize=8,
+        )
+
+    ax.grid(True, alpha=0.3, axis="x")
+    plt.tight_layout()
+
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format="png", dpi=300, bbox_inches="tight")
+    buffer.seek(0)
+    plt.close()
+
+    return buffer
+
+
+def _create_dimensions_radar_chart(
+    requirements_list: list[dict], attributes_by_requirement_id: dict
+) -> io.BytesIO:
+    """
+    Create a radar/spider chart showing compliance percentage by security dimension.
+
+    Args:
+        requirements_list (list[dict]): List of requirement dictionaries with status and findings data.
+        attributes_by_requirement_id (dict): Mapping of requirement IDs to their attributes.
+
+    Returns:
+        io.BytesIO: A BytesIO buffer containing the chart image in PNG format.
+    """
+    # Define the 5 dimensions
+    dimension_names = [
+        "Trazabilidad",
+        "Autenticidad",
+        "Integridad",
+        "Confidencialidad",
+        "Disponibilidad",
+    ]
+
+    dimension_keys = [
+        "trazabilidad",
+        "autenticidad",
+        "integridad",
+        "confidencialidad",
+        "disponibilidad",
+    ]
+
+    dimension_data = {key: {"passed": 0, "total": 0} for key in dimension_keys}
+
+    # Collect data for each dimension
+    for requirement in requirements_list:
+        requirement_id = requirement["id"]
+        requirement_attributes = attributes_by_requirement_id.get(requirement_id, {})
+        requirement_status = requirement["attributes"].get(
+            "status", StatusChoices.MANUAL
+        )
+
+        metadata = requirement_attributes.get("attributes", {}).get(
+            "req_attributes", []
+        )
+        if metadata:
+            m = metadata[0]
+            dimensiones = getattr(m, "Dimensiones", [])
+
+            for dimension in dimensiones:
+                dimension_lower = dimension.lower()
+                if dimension_lower in dimension_data:
+                    dimension_data[dimension_lower]["total"] += 1
+                    if requirement_status == StatusChoices.PASS:
+                        dimension_data[dimension_lower]["passed"] += 1
+
+    # Calculate percentages
+    percentages = []
+    for key in dimension_keys:
+        if dimension_data[key]["total"] > 0:
+            percentage = (
+                dimension_data[key]["passed"] / dimension_data[key]["total"]
+            ) * 100
+        else:
+            percentage = 100  # No requirements = 100% (no failures)
+        percentages.append(percentage)
+
+    # Create radar chart
+    angles = [
+        n / float(len(dimension_names)) * 2 * 3.14159
+        for n in range(len(dimension_names))
+    ]
+    percentages += percentages[:1]
+    angles += angles[:1]
+
+    fig, ax = plt.subplots(figsize=(10, 10), subplot_kw=dict(projection="polar"))
+
+    ax.plot(angles, percentages, "o-", linewidth=2, color="#2196F3")
+    ax.fill(angles, percentages, alpha=0.25, color="#2196F3")
+    ax.set_xticks(angles[:-1])
+    ax.set_xticklabels(dimension_names, fontsize=11)
+    ax.set_ylim(0, 100)
+    ax.set_yticks([20, 40, 60, 80, 100])
+    ax.set_yticklabels(["20%", "40%", "60%", "80%", "100%"], fontsize=9)
+    ax.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format="png", dpi=300, bbox_inches="tight")
+    buffer.seek(0)
+    plt.close()
+
+    return buffer
 
 
 def _aggregate_requirement_statistics_from_database(
@@ -1251,6 +1660,792 @@ def generate_threatscore_report(
         raise e
 
 
+def generate_ens_report(
+    tenant_id: str,
+    scan_id: str,
+    compliance_id: str,
+    output_path: str,
+    provider_id: str,
+    include_manual: bool = True,
+) -> None:
+    """
+    Generate a PDF compliance report for ENS RD2022 framework.
+
+    This function creates a comprehensive PDF report containing:
+    - Compliance overview and metadata
+    - Executive summary with overall compliance score
+    - Marco/Categoría analysis with charts
+    - Security dimensions radar chart
+    - Requirement type distribution
+    - Execution mode distribution
+    - Critical failed requirements (nivel alto)
+    - Requirements index
+    - Detailed findings for failed and manual requirements
+
+    Args:
+        tenant_id (str): The tenant ID for Row-Level Security context.
+        scan_id (str): ID of the scan executed by Prowler.
+        compliance_id (str): ID of the compliance framework (e.g., "ens_rd2022_aws").
+        output_path (str): Output PDF file path (e.g., "/tmp/ens_report.pdf").
+        provider_id (str): Provider ID for the scan.
+        include_manual (bool): If True, include requirements with manual execution mode
+            in the detailed requirements section. Defaults to True.
+
+    Raises:
+        Exception: If any error occurs during PDF generation, it will be logged and re-raised.
+    """
+    logger.info(f"Generating ENS report for scan {scan_id} with provider {provider_id}")
+    try:
+        # Get PDF styles
+        pdf_styles = _create_pdf_styles()
+        title_style = pdf_styles["title"]
+        h1 = pdf_styles["h1"]
+        h2 = pdf_styles["h2"]
+        h3 = pdf_styles["h3"]
+        normal = pdf_styles["normal"]
+        normal_center = pdf_styles["normal_center"]
+
+        # Get compliance and provider information
+        with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+            provider_obj = Provider.objects.get(id=provider_id)
+            prowler_provider = initialize_prowler_provider(provider_obj)
+            provider_type = provider_obj.provider
+
+            frameworks_bulk = Compliance.get_bulk(provider_type)
+            compliance_obj = frameworks_bulk[compliance_id]
+            compliance_framework = getattr(compliance_obj, "Framework", "N/A")
+            compliance_version = getattr(compliance_obj, "Version", "N/A")
+            compliance_name = getattr(compliance_obj, "Name", "N/A")
+            compliance_description = getattr(compliance_obj, "Description", "")
+
+        # Aggregate requirement statistics from database (memory-efficient)
+        logger.info(f"Aggregating requirement statistics for scan {scan_id}")
+        requirement_statistics_by_check_id = (
+            _aggregate_requirement_statistics_from_database(tenant_id, scan_id)
+        )
+
+        # Calculate requirements data using aggregated statistics
+        attributes_by_requirement_id, requirements_list = (
+            _calculate_requirements_data_from_statistics(
+                compliance_obj, requirement_statistics_by_check_id
+            )
+        )
+
+        # Initialize PDF document
+        doc = SimpleDocTemplate(
+            output_path,
+            pagesize=letter,
+            title=f"Informe de Cumplimiento ENS - {compliance_framework}",
+            author="Prowler",
+            subject=f"Informe de Cumplimiento para {compliance_framework}",
+            creator="Prowler Engineering Team",
+            keywords=f"compliance,{compliance_framework},security,ens,prowler",
+        )
+
+        elements = []
+
+        # SECTION 1: PORTADA (Cover Page)
+        img_path = os.path.join(
+            os.path.dirname(__file__), "../assets/img/prowler_logo.png"
+        )
+        logo = Image(
+            img_path,
+            width=5 * inch,
+            height=1 * inch,
+        )
+        elements.append(logo)
+        elements.append(Spacer(1, 0.5 * inch))
+        elements.append(
+            Paragraph("Informe de Cumplimiento ENS RD 311/2022", title_style)
+        )
+        elements.append(Spacer(1, 0.5 * inch))
+
+        # Add compliance information table
+        info_data = [
+            ["Framework:", compliance_framework],
+            ["ID:", compliance_id],
+            ["Nombre:", Paragraph(compliance_name, normal_center)],
+            ["Versión:", compliance_version],
+            ["Proveedor:", provider_type.upper()],
+            ["Scan ID:", scan_id],
+            ["Descripción:", Paragraph(compliance_description, normal_center)],
+        ]
+        info_table = Table(info_data, colWidths=[2 * inch, 4 * inch])
+        info_table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (0, 6), colors.Color(0.2, 0.4, 0.6)),
+                    ("TEXTCOLOR", (0, 0), (0, 6), colors.white),
+                    ("FONTNAME", (0, 0), (0, 6), "FiraCode"),
+                    ("BACKGROUND", (1, 0), (1, 6), colors.Color(0.95, 0.97, 1.0)),
+                    ("TEXTCOLOR", (1, 0), (1, 6), colors.Color(0.2, 0.2, 0.2)),
+                    ("FONTNAME", (1, 0), (1, 6), "PlusJakartaSans"),
+                    ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 11),
+                    ("GRID", (0, 0), (-1, -1), 1, colors.Color(0.7, 0.8, 0.9)),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 10),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+                    ("TOPPADDING", (0, 0), (-1, -1), 8),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                ]
+            )
+        )
+        elements.append(info_table)
+        elements.append(PageBreak())
+
+        # SECTION 2: RESUMEN EJECUTIVO (Executive Summary)
+        elements.append(Paragraph("Resumen Ejecutivo", h1))
+        elements.append(Spacer(1, 0.2 * inch))
+
+        # Calculate overall compliance (simple PASS/TOTAL)
+        total_requirements = len(requirements_list)
+        passed_requirements = sum(
+            1
+            for req in requirements_list
+            if req["attributes"]["status"] == StatusChoices.PASS
+        )
+        failed_requirements = sum(
+            1
+            for req in requirements_list
+            if req["attributes"]["status"] == StatusChoices.FAIL
+        )
+        manual_requirements = sum(
+            1
+            for req in requirements_list
+            if req["attributes"]["status"] == StatusChoices.MANUAL
+        )
+
+        overall_compliance = (
+            (passed_requirements / total_requirements * 100)
+            if total_requirements > 0
+            else 0
+        )
+
+        if overall_compliance >= 80:
+            compliance_color = colors.Color(0.2, 0.8, 0.2)
+        elif overall_compliance >= 60:
+            compliance_color = colors.Color(0.8, 0.8, 0.2)
+        else:
+            compliance_color = colors.Color(0.8, 0.2, 0.2)
+
+        summary_data = [
+            ["Nivel de Cumplimiento Global:", f"{overall_compliance:.2f}%"],
+        ]
+
+        summary_table = Table(summary_data, colWidths=[3 * inch, 2 * inch])
+        summary_table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (0, 0), colors.Color(0.1, 0.3, 0.5)),
+                    ("TEXTCOLOR", (0, 0), (0, 0), colors.white),
+                    ("FONTNAME", (0, 0), (0, 0), "FiraCode"),
+                    ("FONTSIZE", (0, 0), (0, 0), 12),
+                    ("BACKGROUND", (1, 0), (1, 0), compliance_color),
+                    ("TEXTCOLOR", (1, 0), (1, 0), colors.white),
+                    ("FONTNAME", (1, 0), (1, 0), "FiraCode"),
+                    ("FONTSIZE", (1, 0), (1, 0), 16),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                    ("GRID", (0, 0), (-1, -1), 1.5, colors.Color(0.5, 0.6, 0.7)),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 12),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 12),
+                    ("TOPPADDING", (0, 0), (-1, -1), 10),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+                ]
+            )
+        )
+        elements.append(summary_table)
+        elements.append(Spacer(1, 0.3 * inch))
+
+        # Summary counts table
+        counts_data = [
+            ["Estado", "Cantidad", "Porcentaje"],
+            [
+                "CUMPLE",
+                str(passed_requirements),
+                f"{(passed_requirements / total_requirements * 100):.1f}%",
+            ],
+            [
+                "NO CUMPLE",
+                str(failed_requirements),
+                f"{(failed_requirements / total_requirements * 100):.1f}%",
+            ],
+            [
+                "MANUAL",
+                str(manual_requirements),
+                f"{(manual_requirements / total_requirements * 100):.1f}%",
+            ],
+            ["TOTAL", str(total_requirements), "100%"],
+        ]
+
+        counts_table = Table(counts_data, colWidths=[2 * inch, 1.5 * inch, 1.5 * inch])
+        counts_table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.Color(0.2, 0.4, 0.6)),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                    ("FONTNAME", (0, 0), (-1, 0), "FiraCode"),
+                    ("BACKGROUND", (0, 1), (0, 1), colors.Color(0.2, 0.8, 0.2)),
+                    ("TEXTCOLOR", (0, 1), (0, 1), colors.white),
+                    ("BACKGROUND", (0, 2), (0, 2), colors.Color(0.8, 0.2, 0.2)),
+                    ("TEXTCOLOR", (0, 2), (0, 2), colors.white),
+                    ("BACKGROUND", (0, 3), (0, 3), colors.Color(0.96, 0.60, 0.0)),
+                    ("TEXTCOLOR", (0, 3), (0, 3), colors.white),
+                    ("BACKGROUND", (0, 4), (0, 4), colors.Color(0.4, 0.4, 0.4)),
+                    ("TEXTCOLOR", (0, 4), (0, 4), colors.white),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 10),
+                    ("GRID", (0, 0), (-1, -1), 1, colors.Color(0.7, 0.7, 0.7)),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+                    ("TOPPADDING", (0, 0), (-1, -1), 6),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                ]
+            )
+        )
+        elements.append(counts_table)
+        elements.append(Spacer(1, 0.3 * inch))
+
+        # Summary by Nivel
+        nivel_data = defaultdict(lambda: {"passed": 0, "total": 0})
+        for requirement in requirements_list:
+            requirement_id = requirement["id"]
+            requirement_attributes = attributes_by_requirement_id.get(
+                requirement_id, {}
+            )
+            requirement_status = requirement["attributes"]["status"]
+
+            metadata = requirement_attributes.get("attributes", {}).get(
+                "req_attributes", []
+            )
+            if metadata:
+                m = metadata[0]
+                nivel = getattr(m, "Nivel", "N/A")
+                nivel_data[nivel]["total"] += 1
+                if requirement_status == StatusChoices.PASS:
+                    nivel_data[nivel]["passed"] += 1
+
+        elements.append(Paragraph("Cumplimiento por Nivel", h2))
+        nivel_table_data = [["Nivel", "Cumplidos", "Total", "Porcentaje"]]
+        for nivel in ["alto", "medio", "bajo", "opcional"]:
+            if nivel in nivel_data:
+                data = nivel_data[nivel]
+                percentage = (
+                    (data["passed"] / data["total"] * 100) if data["total"] > 0 else 0
+                )
+                nivel_table_data.append(
+                    [
+                        nivel.capitalize(),
+                        str(data["passed"]),
+                        str(data["total"]),
+                        f"{percentage:.1f}%",
+                    ]
+                )
+
+        nivel_table = Table(
+            nivel_table_data, colWidths=[1.5 * inch, 1.5 * inch, 1.5 * inch, 1.5 * inch]
+        )
+        nivel_table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.Color(0.2, 0.4, 0.6)),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                    ("FONTNAME", (0, 0), (-1, 0), "FiraCode"),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 10),
+                    ("GRID", (0, 0), (-1, -1), 1, colors.Color(0.7, 0.7, 0.7)),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+                    ("TOPPADDING", (0, 0), (-1, -1), 6),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                ]
+            )
+        )
+        elements.append(nivel_table)
+        elements.append(PageBreak())
+
+        # SECTION 3: ANÁLISIS POR MARCOS (Marco Analysis)
+        elements.append(Paragraph("Análisis por Marcos y Categorías", h1))
+        elements.append(Spacer(1, 0.2 * inch))
+
+        chart_buffer = _create_marco_category_chart(
+            requirements_list, attributes_by_requirement_id
+        )
+        chart_image = Image(chart_buffer, width=7 * inch, height=5 * inch)
+        elements.append(chart_image)
+        elements.append(PageBreak())
+
+        # SECTION 4: DIMENSIONES DE SEGURIDAD (Security Dimensions)
+        elements.append(Paragraph("Análisis por Dimensiones de Seguridad", h1))
+        elements.append(Spacer(1, 0.2 * inch))
+
+        radar_buffer = _create_dimensions_radar_chart(
+            requirements_list, attributes_by_requirement_id
+        )
+        radar_image = Image(radar_buffer, width=6 * inch, height=6 * inch)
+        elements.append(radar_image)
+        elements.append(PageBreak())
+
+        # SECTION 5: DISTRIBUCIÓN POR TIPO (Type Distribution)
+        elements.append(Paragraph("Distribución por Tipo de Requisito", h1))
+        elements.append(Spacer(1, 0.2 * inch))
+
+        tipo_data = defaultdict(lambda: {"passed": 0, "total": 0})
+        for requirement in requirements_list:
+            requirement_id = requirement["id"]
+            requirement_attributes = attributes_by_requirement_id.get(
+                requirement_id, {}
+            )
+            requirement_status = requirement["attributes"]["status"]
+
+            metadata = requirement_attributes.get("attributes", {}).get(
+                "req_attributes", []
+            )
+            if metadata:
+                m = metadata[0]
+                tipo = getattr(m, "Tipo", "N/A")
+                tipo_data[tipo]["total"] += 1
+                if requirement_status == StatusChoices.PASS:
+                    tipo_data[tipo]["passed"] += 1
+
+        tipo_table_data = [["Tipo", "Cumplidos", "Total", "Porcentaje"]]
+        for tipo in ["requisito", "refuerzo", "recomendacion", "medida"]:
+            if tipo in tipo_data:
+                data = tipo_data[tipo]
+                percentage = (
+                    (data["passed"] / data["total"] * 100) if data["total"] > 0 else 0
+                )
+                tipo_table_data.append(
+                    [
+                        tipo.capitalize(),
+                        str(data["passed"]),
+                        str(data["total"]),
+                        f"{percentage:.1f}%",
+                    ]
+                )
+
+        tipo_table = Table(
+            tipo_table_data, colWidths=[2 * inch, 1.5 * inch, 1.5 * inch, 1.5 * inch]
+        )
+        tipo_table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.Color(0.2, 0.4, 0.6)),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                    ("FONTNAME", (0, 0), (-1, 0), "FiraCode"),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 10),
+                    ("GRID", (0, 0), (-1, -1), 1, colors.Color(0.7, 0.7, 0.7)),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+                    ("TOPPADDING", (0, 0), (-1, -1), 6),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                ]
+            )
+        )
+        elements.append(tipo_table)
+        elements.append(PageBreak())
+
+        # SECTION 6: MODO DE EJECUCIÓN (Execution Mode)
+        elements.append(Paragraph("Distribución por Modo de Ejecución", h1))
+        elements.append(Spacer(1, 0.2 * inch))
+
+        modo_data = defaultdict(lambda: {"passed": 0, "total": 0})
+        for requirement in requirements_list:
+            requirement_id = requirement["id"]
+            requirement_attributes = attributes_by_requirement_id.get(
+                requirement_id, {}
+            )
+            requirement_status = requirement["attributes"]["status"]
+
+            metadata = requirement_attributes.get("attributes", {}).get(
+                "req_attributes", []
+            )
+            if metadata:
+                m = metadata[0]
+                modo = getattr(m, "ModoEjecucion", "N/A")
+                modo_key = "automático" if "auto" in modo.lower() else "manual"
+                modo_data[modo_key]["total"] += 1
+                if requirement_status == StatusChoices.PASS:
+                    modo_data[modo_key]["passed"] += 1
+
+        modo_table_data = [["Modo", "Cumplidos", "Total", "Porcentaje"]]
+        for modo in ["automático", "manual"]:
+            if modo in modo_data:
+                data = modo_data[modo]
+                percentage = (
+                    (data["passed"] / data["total"] * 100) if data["total"] > 0 else 0
+                )
+                modo_table_data.append(
+                    [
+                        modo.capitalize(),
+                        str(data["passed"]),
+                        str(data["total"]),
+                        f"{percentage:.1f}%",
+                    ]
+                )
+
+        modo_table = Table(
+            modo_table_data, colWidths=[2 * inch, 1.5 * inch, 1.5 * inch, 1.5 * inch]
+        )
+        modo_table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.Color(0.2, 0.4, 0.6)),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                    ("FONTNAME", (0, 0), (-1, 0), "FiraCode"),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 10),
+                    ("GRID", (0, 0), (-1, -1), 1, colors.Color(0.7, 0.7, 0.7)),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+                    ("TOPPADDING", (0, 0), (-1, -1), 6),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                ]
+            )
+        )
+        elements.append(modo_table)
+        elements.append(PageBreak())
+
+        # SECTION 7: REQUISITOS CRÍTICOS NO CUMPLIDOS (Critical Failed Requirements)
+        elements.append(Paragraph("Requisitos Críticos No Cumplidos", h1))
+        elements.append(Spacer(1, 0.2 * inch))
+
+        critical_failed = []
+        for requirement in requirements_list:
+            requirement_status = requirement["attributes"]["status"]
+            if requirement_status == StatusChoices.FAIL:
+                requirement_id = requirement["id"]
+                metadata = (
+                    attributes_by_requirement_id.get(requirement_id, {})
+                    .get("attributes", {})
+                    .get("req_attributes", [{}])[0]
+                )
+                if metadata:
+                    nivel = getattr(metadata, "Nivel", "")
+                    if nivel.lower() == "alto":
+                        critical_failed.append(
+                            {
+                                "requirement": requirement,
+                                "metadata": metadata,
+                            }
+                        )
+
+        if not critical_failed:
+            elements.append(
+                Paragraph(
+                    "✅ No se encontraron requisitos críticos no cumplidos.", normal
+                )
+            )
+        else:
+            elements.append(
+                Paragraph(
+                    f"Se encontraron {len(critical_failed)} requisitos de nivel Alto que no cumplen:",
+                    normal,
+                )
+            )
+            elements.append(Spacer(1, 0.3 * inch))
+
+            critical_table_data = [["ID", "Descripción", "Marco", "Categoría", "Tipo"]]
+            for item in critical_failed:
+                requirement_id = item["requirement"]["id"]
+                description = item["requirement"]["attributes"]["description"]
+                marco = getattr(item["metadata"], "Marco", "N/A")
+                categoria = getattr(item["metadata"], "Categoria", "N/A")
+                tipo = getattr(item["metadata"], "Tipo", "N/A")
+
+                if len(description) > 50:
+                    description = description[:47] + "..."
+
+                critical_table_data.append(
+                    [requirement_id, description, marco, categoria, tipo.capitalize()]
+                )
+
+            critical_table = Table(
+                critical_table_data,
+                colWidths=[1.3 * inch, 2.5 * inch, 1.5 * inch, 1.5 * inch, 1 * inch],
+            )
+            critical_table.setStyle(
+                TableStyle(
+                    [
+                        ("BACKGROUND", (0, 0), (-1, 0), colors.Color(0.8, 0.2, 0.2)),
+                        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                        ("FONTNAME", (0, 0), (-1, 0), "FiraCode"),
+                        ("FONTSIZE", (0, 0), (-1, 0), 9),
+                        ("FONTNAME", (0, 1), (0, -1), "FiraCode"),
+                        ("FONTSIZE", (0, 1), (-1, -1), 8),
+                        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                        ("GRID", (0, 0), (-1, -1), 1, colors.Color(0.7, 0.7, 0.7)),
+                        ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                        ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+                        ("TOPPADDING", (0, 0), (-1, -1), 6),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                        (
+                            "BACKGROUND",
+                            (1, 1),
+                            (-1, -1),
+                            colors.Color(0.98, 0.98, 0.98),
+                        ),
+                    ]
+                )
+            )
+            elements.append(critical_table)
+
+        elements.append(PageBreak())
+
+        # SECTION 8: ÍNDICE DE REQUISITOS (Requirements Index)
+        elements.append(Paragraph("Índice de Requisitos", h1))
+        elements.append(Spacer(1, 0.2 * inch))
+
+        # Group by Marco → Categoría
+        marco_categoria_index = defaultdict(lambda: defaultdict(list))
+        for (
+            requirement_id,
+            requirement_attributes,
+        ) in attributes_by_requirement_id.items():
+            metadata = requirement_attributes["attributes"]["req_attributes"][0]
+            marco = getattr(metadata, "Marco", "N/A")
+            categoria = getattr(metadata, "Categoria", "N/A")
+            id_grupo = getattr(metadata, "IdGrupoControl", "N/A")
+
+            marco_categoria_index[marco][categoria].append(
+                {
+                    "id": requirement_id,
+                    "id_grupo": id_grupo,
+                    "description": requirement_attributes["description"],
+                }
+            )
+
+        for marco, categorias in sorted(marco_categoria_index.items()):
+            elements.append(Paragraph(f"Marco: {marco.capitalize()}", h2))
+            for categoria, requirements in sorted(categorias.items()):
+                elements.append(Paragraph(f"Categoría: {categoria.capitalize()}", h3))
+                for req in requirements:
+                    desc = req["description"]
+                    if len(desc) > 80:
+                        desc = desc[:77] + "..."
+                    elements.append(Paragraph(f"{req['id']} - {desc}", normal))
+                elements.append(Spacer(1, 0.05 * inch))
+
+        elements.append(PageBreak())
+
+        # SECTION 9: DETALLE DE REQUISITOS (Detailed Requirements)
+        elements.append(Paragraph("Detalle de Requisitos", h1))
+        elements.append(Spacer(1, 0.2 * inch))
+
+        # Filter: NO CUMPLE + MANUAL (if include_manual)
+        filtered_requirements = [
+            req
+            for req in requirements_list
+            if req["attributes"]["status"] == StatusChoices.FAIL
+            or (include_manual and req["attributes"]["status"] == StatusChoices.MANUAL)
+        ]
+
+        if not filtered_requirements:
+            elements.append(
+                Paragraph("✅ Todos los requisitos automáticos cumplen.", normal)
+            )
+        else:
+            elements.append(
+                Paragraph(
+                    f"Se muestran {len(filtered_requirements)} requisitos que requieren atención:",
+                    normal,
+                )
+            )
+            elements.append(Spacer(1, 0.2 * inch))
+
+            # Collect check IDs to load
+            check_ids_to_load = []
+            for requirement in filtered_requirements:
+                requirement_id = requirement["id"]
+                requirement_attributes = attributes_by_requirement_id.get(
+                    requirement_id, {}
+                )
+                check_ids = requirement_attributes.get("attributes", {}).get(
+                    "checks", []
+                )
+                check_ids_to_load.extend(check_ids)
+
+            # Load findings on-demand
+            logger.info(
+                f"Loading findings on-demand for {len(filtered_requirements)} requirements"
+            )
+            findings_by_check_id = _load_findings_for_requirement_checks(
+                tenant_id, scan_id, check_ids_to_load, prowler_provider
+            )
+
+            for requirement in filtered_requirements:
+                requirement_id = requirement["id"]
+                requirement_attributes = attributes_by_requirement_id.get(
+                    requirement_id, {}
+                )
+                requirement_status = requirement["attributes"]["status"]
+
+                elements.append(Paragraph(f"{requirement_id}", h1))
+
+                # Status badge
+                status_component = _create_status_component(requirement_status)
+                elements.append(status_component)
+                elements.append(Spacer(1, 0.1 * inch))
+
+                metadata = requirement_attributes.get("attributes", {}).get(
+                    "req_attributes", []
+                )
+                if metadata and len(metadata) > 0:
+                    m = metadata[0]
+
+                    # Nivel badge
+                    nivel = getattr(m, "Nivel", "N/A")
+                    nivel_badge = _create_ens_nivel_badge(nivel)
+                    elements.append(nivel_badge)
+                    elements.append(Spacer(1, 0.1 * inch))
+
+                    # Tipo badge
+                    tipo = getattr(m, "Tipo", "N/A")
+                    tipo_badge = _create_ens_tipo_badge(tipo)
+                    elements.append(tipo_badge)
+                    elements.append(Spacer(1, 0.1 * inch))
+
+                    # Modo badge
+                    modo = getattr(m, "ModoEjecucion", "N/A")
+                    modo_badge = _create_ens_mode_badge(modo)
+                    elements.append(modo_badge)
+                    elements.append(Spacer(1, 0.1 * inch))
+
+                    # Dimensiones badges
+                    dimensiones = getattr(m, "Dimensiones", [])
+                    if dimensiones:
+                        elements.append(Paragraph("Dimensiones:", h3))
+                        dim_badges = _create_ens_dimension_badges(dimensiones)
+                        elements.append(dim_badges)
+                        elements.append(Spacer(1, 0.1 * inch))
+
+                    # Details
+                    elements.append(Paragraph("Marco:", h3))
+                    elements.append(Paragraph(f"{getattr(m, 'Marco', 'N/A')}", normal))
+                    elements.append(Paragraph("Categoría:", h3))
+                    elements.append(
+                        Paragraph(f"{getattr(m, 'Categoria', 'N/A')}", normal)
+                    )
+                    elements.append(Paragraph("ID Grupo Control:", h3))
+                    elements.append(
+                        Paragraph(f"{getattr(m, 'IdGrupoControl', 'N/A')}", normal)
+                    )
+                    elements.append(Paragraph("Descripción del Control:", h3))
+                    elements.append(
+                        Paragraph(f"{getattr(m, 'DescripcionControl', 'N/A')}", normal)
+                    )
+                    elements.append(Spacer(1, 0.1 * inch))
+
+                # Findings for checks
+                requirement_check_ids = requirement_attributes.get(
+                    "attributes", {}
+                ).get("checks", [])
+                for check_id in requirement_check_ids:
+                    elements.append(Paragraph(f"Check: {check_id}", h2))
+                    elements.append(Spacer(1, 0.1 * inch))
+
+                    check_findings = findings_by_check_id.get(check_id, [])
+
+                    if not check_findings:
+                        elements.append(
+                            Paragraph(
+                                "- No hay información disponible para este check",
+                                normal,
+                            )
+                        )
+                    else:
+                        findings_table_data = [
+                            ["Finding", "Resource name", "Severity", "Status", "Region"]
+                        ]
+                        for finding_output in check_findings:
+                            check_metadata = getattr(finding_output, "metadata", {})
+                            finding_title = getattr(
+                                check_metadata,
+                                "CheckTitle",
+                                getattr(finding_output, "check_id", ""),
+                            )
+                            resource_name = getattr(finding_output, "resource_name", "")
+                            if not resource_name:
+                                resource_name = getattr(
+                                    finding_output, "resource_uid", ""
+                                )
+                            severity = getattr(
+                                check_metadata, "Severity", ""
+                            ).capitalize()
+                            finding_status = getattr(
+                                finding_output, "status", ""
+                            ).upper()
+                            region = getattr(finding_output, "region", "global")
+
+                            findings_table_data.append(
+                                [
+                                    Paragraph(finding_title, normal_center),
+                                    Paragraph(resource_name, normal_center),
+                                    Paragraph(severity, normal_center),
+                                    Paragraph(finding_status, normal_center),
+                                    Paragraph(region, normal_center),
+                                ]
+                            )
+
+                        findings_table = Table(
+                            findings_table_data,
+                            colWidths=[
+                                2.5 * inch,
+                                3 * inch,
+                                0.9 * inch,
+                                0.9 * inch,
+                                0.9 * inch,
+                            ],
+                        )
+                        findings_table.setStyle(
+                            TableStyle(
+                                [
+                                    (
+                                        "BACKGROUND",
+                                        (0, 0),
+                                        (-1, 0),
+                                        colors.Color(0.2, 0.4, 0.6),
+                                    ),
+                                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                                    ("FONTNAME", (0, 0), (-1, 0), "FiraCode"),
+                                    ("ALIGN", (0, 0), (0, 0), "CENTER"),
+                                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                                    ("FONTSIZE", (0, 0), (-1, -1), 9),
+                                    (
+                                        "GRID",
+                                        (0, 0),
+                                        (-1, -1),
+                                        0.1,
+                                        colors.Color(0.7, 0.8, 0.9),
+                                    ),
+                                    ("LEFTPADDING", (0, 0), (0, 0), 0),
+                                    ("RIGHTPADDING", (0, 0), (0, 0), 0),
+                                    ("TOPPADDING", (0, 0), (-1, -1), 4),
+                                    ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                                ]
+                            )
+                        )
+                        elements.append(findings_table)
+
+                    elements.append(Spacer(1, 0.1 * inch))
+
+                elements.append(PageBreak())
+
+        # Build the PDF
+        doc.build(elements, onFirstPage=_add_pdf_footer, onLaterPages=_add_pdf_footer)
+    except Exception as e:
+        logger.error(
+            f"Error building ENS report, line {e.__traceback__.tb_lineno} -- {e}"
+        )
+        raise e
+
+
 def generate_threatscore_report_job(
     tenant_id: str, scan_id: str, provider_id: str
 ) -> dict[str, bool | str]:
@@ -1333,5 +2528,88 @@ def generate_threatscore_report_job(
         final_location, did_upload = out_dir, False
 
     logger.info(f"Threatscore report outputs at {final_location}")
+
+    return {"upload": did_upload}
+
+
+def generate_ens_report_job(
+    tenant_id: str, scan_id: str, provider_id: str
+) -> dict[str, bool | str]:
+    """
+    Job function to generate an ENS RD2022 compliance report and upload it to S3.
+
+    This function orchestrates the complete ENS report generation workflow:
+    1. Validates that the scan has findings
+    2. Checks provider type compatibility
+    3. Generates the output directory
+    4. Calls generate_ens_report to create the PDF
+    5. Uploads the PDF to S3
+    6. Cleans up temporary files
+
+    Args:
+        tenant_id (str): The tenant ID for Row-Level Security context.
+        scan_id (str): The ID of the scan to generate a report for.
+        provider_id (str): The ID of the provider used in the scan.
+
+    Returns:
+        dict[str, bool | str]: A dictionary containing:
+            - 'upload' (bool): True if the report was successfully uploaded to S3, False otherwise.
+            - 'error' (str): Error message if an exception occurred (only present on error).
+    """
+    # Check if the scan has findings and get provider info
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        if not ScanSummary.objects.filter(scan_id=scan_id).exists():
+            logger.info(f"No findings found for scan {scan_id}")
+            return {"upload": False}
+
+        provider_obj = Provider.objects.get(id=provider_id)
+        provider_uid = provider_obj.uid
+        provider_type = provider_obj.provider
+
+        if provider_type not in ["aws", "azure", "gcp"]:
+            logger.info(f"Provider {provider_id} is not supported for ENS report")
+            return {"upload": False}
+
+    # Determine compliance_id based on provider
+    compliance_id = f"ens_rd2022_{provider_type}"
+    logger.info(
+        f"Generating ENS report for scan {scan_id} with compliance {compliance_id} inside the job"
+    )
+    try:
+        logger.info("Generating the output directory")
+        out_dir, _, ens_path = _generate_output_directory(
+            DJANGO_TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id
+        )
+    except Exception as e:
+        logger.error(f"Error generating output directory: {e}")
+        return {"error": str(e)}
+
+    pdf_path = f"{ens_path}_ens_report.pdf"
+    logger.info(f"The path for the ENS report is {pdf_path}")
+    generate_ens_report(
+        tenant_id=tenant_id,
+        scan_id=scan_id,
+        compliance_id=compliance_id,
+        output_path=pdf_path,
+        provider_id=provider_id,
+        include_manual=True,
+    )
+
+    upload_uri = _upload_to_s3(
+        tenant_id,
+        scan_id,
+        pdf_path,
+        f"ens/{Path(pdf_path).name}",
+    )
+    if upload_uri:
+        try:
+            rmtree(Path(pdf_path).parent, ignore_errors=True)
+        except Exception as e:
+            logger.error(f"Error deleting output files: {e}")
+        final_location, did_upload = upload_uri, True
+    else:
+        final_location, did_upload = out_dir, False
+
+    logger.info(f"ENS report outputs at {final_location}")
 
     return {"upload": did_upload}
