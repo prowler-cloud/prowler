@@ -6,23 +6,6 @@
   "Description": "FedRAMP 20x Key Security Indicators (KSIs) Low Impact Level represent core security indicators for cloud service providers, focusing on automation, continuous monitoring, and cloud-native security principles per FedRAMP 20x Phase One pilot requirements for Low impact systems.",
   "Requirements": [
     {
-      "Id": "ksi-ced",
-      "Name": "KSI-CED: Cybersecurity Education",
-      "Description": "A secure cloud service provider will continuously educate their employees on cybersecurity measures, testing them regularly",
-      "Attributes": [
-        {
-          "ItemId": "ksi-ced",
-          "Section": "Cybersecurity Education",
-          "Service": "aws"
-        }
-      ],
-      "Checks": [
-        "iam_securityaudit_role_created",
-        "iam_support_role_created",
-        "securityhub_enabled"
-      ]
-    },
-    {
       "Id": "ksi-cmt",
       "Name": "KSI-CMT: Change Management",
       "Description": "A secure cloud service provider will ensure that all system changes are properly documented and configuration baselines are updated accordingly",
@@ -317,24 +300,8 @@
         "inspector2_is_enabled",
         "awslambda_function_using_supported_runtimes",
         "ssm_managed_compliant_patching",
-        "trustedadvisor_premium_support_plan_subscribed"
-      ]
-    },
-    {
-      "Id": "ksi-ced-03",
-      "Name": "KSI-CED-03: Role-Specific Training",
-      "Description": "Require role-specific training for development and engineering staff covering best practices for delivering secure software",
-      "Attributes": [
-        {
-          "ItemId": "ksi-ced-03",
-          "Section": "Cybersecurity Education",
-          "Service": "aws"
-        }
-      ],
-      "Checks": [
-        "config_recorder_all_regions_enabled",
-        "organizations_account_part_of_organizations",
-        "securityhub_enabled"
+        "trustedadvisor_premium_support_plan_subscribed",
+        "guardduty_no_high_severity_findings"
       ]
     },
     {
