@@ -1,7 +1,7 @@
-import urllib.parse
 from typing import List, Optional
 
-import requests
+import httpx
+from prowler_mcp_server import __version__
 from pydantic import BaseModel, Field
 
 
@@ -12,25 +12,51 @@ class SearchResult(BaseModel):
     title: str = Field(description="Document title")
     url: str = Field(description="Documentation URL")
     highlights: List[str] = Field(
-        description="Highlighted content snippets showing query matches with <span> tags",
+        description="Highlighted content snippets showing query matches with <mark><b> tags",
         default_factory=list,
+    )
+    score: float = Field(
+        description="Relevance score for the search result", default=0.0
     )
 
 
 class ProwlerDocsSearchEngine:
-    """Prowler documentation search using ReadTheDocs API."""
+    """Prowler documentation search using Mintlify API."""
 
     def __init__(self):
         """Initialize the search engine."""
-        self.api_base_url = "https://docs.prowler.com/_/api/v3/search/"
-        self.project_name = "prowler-prowler"
-        self.github_raw_base = (
-            "https://raw.githubusercontent.com/prowler-cloud/prowler/master/docs"
+        self.api_base_url = (
+            "https://api.mintlifytrieve.com/api/chunk_group/group_oriented_autocomplete"
+        )
+        self.dataset_id = "0096ba11-3f72-463b-9d95-b788495ac392"
+        self.api_key = "tr-T6JLeTkFXeNbNPyhijtI9XhIncydQQ3O"
+        self.docs_base_url = "https://prowler.mintlify.app"
+
+        # HTTP client for Mintlify API
+        self.mintlify_client = httpx.Client(
+            timeout=30.0,
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "User-Agent": f"prowler-mcp-server/{__version__}",
+                "TR-Dataset": self.dataset_id,
+                "Authorization": self.api_key,
+                "X-API-Version": "V2",
+            },
+        )
+
+        # HTTP client for Mintlify documentation
+        self.docs_client = httpx.Client(
+            timeout=30.0,
+            headers={
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "User-Agent": f"prowler-mcp-server/{__version__}",
+            },
         )
 
     def search(self, query: str, page_size: int = 5) -> List[SearchResult]:
         """
-        Search documentation using ReadTheDocs API.
+        Search documentation using Mintlify API.
 
         Args:
             query: Search query string
@@ -40,53 +66,69 @@ class ProwlerDocsSearchEngine:
             List of search results
         """
         try:
-            # Construct the search query with project filter
-            search_query = f"project:{self.project_name} {query}"
+            # Construct request body
+            payload = {
+                "query": query,
+                "search_type": "fulltext",
+                "extend_results": True,
+                "highlight_options": {
+                    "highlight_window": 10,
+                    "highlight_max_num": 1,
+                    "highlight_max_length": 2,
+                    "highlight_strategy": "exactmatch",
+                    "highlight_delimiters": ["?", ",", ".", "!", "\n"],
+                },
+                "score_threshold": 0.2,
+                "filters": {"must_not": [{"field": "tag_set", "match": ["code"]}]},
+                "page_size": page_size,
+                "group_size": 3,
+            }
 
-            # Make request to ReadTheDocs API with page_size to limit results
-            params = {"q": search_query, "page_size": page_size}
-            response = requests.get(
+            # Make request to Mintlify API
+            response = self.mintlify_client.post(
                 self.api_base_url,
-                params=params,
-                timeout=10,
+                json=payload,
             )
             response.raise_for_status()
-
             data = response.json()
 
             # Parse results
             results = []
-            for hit in data.get("results", []):
-                # Extract relevant fields from API response
-                blocks = hit.get("blocks", [])
-                # Get the document path from the hit's path field
-                hit_path = hit.get("path", "")
-                doc_path = self._extract_doc_path(hit_path)
+            for result in data.get("results", []):
+                group = result.get("group", {})
+                chunks = result.get("chunks", [])
+
+                # Get document path and title from group
+                doc_path = group.get("name", "")
+                group_title = group.get("name", "").replace("/", " / ").title()
+
+                # If chunks exist, use the first chunk's title from metadata
+                title = group_title
+                if chunks:
+                    first_chunk = chunks[0].get("chunk", {})
+                    metadata = first_chunk.get("metadata", {})
+                    title = metadata.get("title", group_title)
 
                 # Construct full URL to docs
-                domain = hit.get("domain", "https://docs.prowler.com")
-                full_url = f"{domain}{hit_path}" if hit_path else ""
+                full_url = f"{self.docs_base_url}/{doc_path}"
 
-                # Extract highlights from API response
+                # Extract highlights and scores from chunks
                 highlights = []
-
-                # Add title highlights
-                page_highlights = hit.get("highlights", {})
-                if page_highlights.get("title"):
-                    highlights.extend(page_highlights["title"])
-
-                # Add block content highlights (up to 3 snippets)
-                for block in blocks[:3]:
-                    block_highlights = block.get("highlights", {})
-                    if block_highlights.get("content"):
-                        highlights.extend(block_highlights["content"])
+                max_score = 0.0
+                for chunk_data in chunks:
+                    chunk_highlights = chunk_data.get("highlights", [])
+                    highlights.extend(chunk_highlights)
+                    # Track the highest score among all chunks in this group
+                    chunk_score = chunk_data.get("score", 0.0)
+                    max_score = max(max_score, chunk_score)
 
                 results.append(
                     SearchResult(
                         path=doc_path,
-                        title=hit.get("title", ""),
+                        title=title,
                         url=full_url,
                         highlights=highlights,
+                        score=max_score,
                     )
                 )
 
@@ -99,7 +141,7 @@ class ProwlerDocsSearchEngine:
 
     def get_document(self, doc_path: str) -> Optional[str]:
         """
-        Get full document content from GitHub raw API.
+        Get full document content from Mintlify documentation.
 
         Args:
             doc_path: Path to the documentation file (e.g., "getting-started/installation")
@@ -111,15 +153,15 @@ class ProwlerDocsSearchEngine:
             # Clean up the path
             doc_path = doc_path.rstrip("/")
 
-            # Add .md extension if not present
+            # Add .md extension if not present (Mintlify serves both .md and .mdx)
             if not doc_path.endswith(".md"):
                 doc_path = f"{doc_path}.md"
 
-            # Construct GitHub raw URL
-            url = f"{self.github_raw_base}/{doc_path}"
+            # Construct Mintlify URL
+            url = f"{self.docs_base_url}/{doc_path}"
 
-            # Fetch the raw markdown
-            response = requests.get(url, timeout=10)
+            # Fetch the documentation page
+            response = self.docs_client.get(url)
             response.raise_for_status()
 
             return response.text
@@ -127,34 +169,3 @@ class ProwlerDocsSearchEngine:
         except Exception as e:
             print(f"Error fetching document: {e}")
             return None
-
-    def _extract_doc_path(self, url: str) -> str:
-        """
-        Extract the document path from a full URL.
-
-        Args:
-            url: Full documentation URL
-
-        Returns:
-            Document path relative to docs base
-        """
-        if not url:
-            return ""
-
-        # Parse URL and extract path
-        try:
-            parsed = urllib.parse.urlparse(url)
-            path = parsed.path
-
-            # Remove the base path prefix if present
-            base_path = "/projects/prowler-open-source/en/latest/"
-            if path.startswith(base_path):
-                path = path[len(base_path) :]
-
-            # Remove .html extension
-            if path.endswith(".html"):
-                path = path[:-5]
-
-            return path.lstrip("/")
-        except Exception:
-            return url

@@ -1,26 +1,35 @@
 {
   "Provider": "aws",
   "CheckID": "elasticache_redis_cluster_rest_encryption_enabled",
-  "CheckTitle": "Ensure Elasticache Redis cache clusters have at rest encryption enabled.",
-  "CheckType": [],
+  "CheckTitle": "ElastiCache Redis cache cluster has at rest encryption enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Data Exposure"
+  ],
   "ServiceName": "elasticache",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
-  "Description": "Ensure Elasticache Redis cache clusters have at rest encryption enabled.",
-  "Risk": "There is a risk of exposing sensitive data if Elasticache Redis cache clusters does not have at rest encryption enabled.",
-  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticache-controls.html#elasticache-4",
+  "Description": "**ElastiCache for Redis replication groups** are evaluated for **encryption at rest** of on-disk cache data and backups. The finding pinpoints groups where this protection is not enabled.",
+  "Risk": "Without at-rest encryption, cache files and snapshots can be read if storage or backups are accessed via compromise or misconfiguration. Secrets, tokens, and PII may be exposed, breaking **confidentiality** and aiding **lateral movement** through offline analysis of cached data.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ElastiCache/in-transit-and-at-rest-encryption.html",
+    "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/at-rest-encryption.html#at-rest-encryption-enable",
+    "https://aws.amazon.com/blogs/security/amazon-elasticache-now-supports-encryption-for-elasticache-for-redis/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/general_9#cloudformation",
-      "Other": "https://docs.prowler.com/checks/aws/general-policies/general_9/",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/general_9#terraform"
+      "NativeIaC": "```yaml\n# CloudFormation: enable at-rest encryption for an ElastiCache Redis replication group\nResources:\n  <example_resource_name>:\n    Type: AWS::ElastiCache::ReplicationGroup\n    Properties:\n      ReplicationGroupId: <example_resource_id>\n      ReplicationGroupDescription: Enable at-rest encryption\n      Engine: redis\n      CacheNodeType: cache.t3.micro\n      NumCacheClusters: 1\n      AtRestEncryptionEnabled: true  # CRITICAL: turns on encryption at rest for the replication group\n```",
+      "Other": "1. In the AWS Console, go to ElastiCache > Redis\n2. Select the non-encrypted replication group, click Actions > Backup and create a manual backup\n3. After the backup completes, click Backups, select it, then Restore\n4. In restore settings, check/enable Encryption at rest (use default KMS key) and create the new replication group\n5. Update your application to use the new replication group endpoint\n6. Verify connectivity and data, then delete the old (non-encrypted) replication group",
+      "Terraform": "```hcl\n# Terraform: enable at-rest encryption for an ElastiCache Redis replication group\nresource \"aws_elasticache_replication_group\" \"<example_resource_name>\" {\n  replication_group_id  = \"<example_resource_id>\"\n  description           = \"Enable at-rest encryption\"\n  node_type             = \"cache.t3.micro\"\n  number_cache_clusters = 1\n  at_rest_encryption_enabled = true  # CRITICAL: turns on encryption at rest for the replication group\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure your Elasticache Redis cache clusters have at rest encryption enabled.",
-      "Url": "https://docs.aws.amazon.com/AmazonElastiCache/latest/red-ug/at-rest-encryption.html#at-rest-encryption-enable"
+      "Text": "Enable **encryption at rest** on all Redis replication groups. Use **customer-managed KMS keys**, apply least-privilege access to keys, and audit key usage. Plan a controlled migration since at-rest encryption is enabled at creation (backup, restore, replace). Pair with **in-transit encryption** and authentication for defense in depth.",
+      "Url": "https://hub.prowler.com/check/elasticache_redis_cluster_rest_encryption_enabled"
     }
   },
   "Categories": [

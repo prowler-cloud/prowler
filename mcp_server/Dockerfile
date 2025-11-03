@@ -47,13 +47,12 @@ COPY --from=builder --chown=prowler /app/prowler_mcp_server /app/prowler_mcp_ser
 # 3. Project metadata file (may be needed by some packages at runtime)
 COPY --from=builder --chown=prowler /app/pyproject.toml /app/pyproject.toml
 
+# 4. Entrypoint helper script for selecting runtime mode
+COPY --from=builder --chown=prowler /app/entrypoint.sh /app/entrypoint.sh
+
 # Add virtual environment to PATH so prowler-mcp command is available
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Entry point for the MCP server
-# Default to stdio mode, but allow overriding via command arguments
-# Examples:
-#   docker run -p 8000:8000 prowler-mcp --transport http --host 0.0.0.0 --port 8000
-#   docker run prowler-mcp --transport stdio
-ENTRYPOINT ["prowler-mcp"]
-CMD ["--transport", "stdio"]
+# Entrypoint wrapper defaults to CLI mode; override with `uvicorn` to run ASGI app
+ENTRYPOINT ["/app/entrypoint.sh"]
+CMD ["main"]

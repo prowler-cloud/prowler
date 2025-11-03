@@ -53,7 +53,7 @@ export const getProviderFormType = (
   via?: string,
 ): ProviderFormType => {
   // Providers that need credential type selection
-  const needsSelector = ["aws", "gcp", "github"].includes(providerType);
+  const needsSelector = ["aws", "gcp", "github", "m365"].includes(providerType);
 
   // Show selector if no via parameter and provider needs it
   if (needsSelector && !via) {
@@ -80,6 +80,14 @@ export const getProviderFormType = (
     return "credentials";
   }
 
+  // M365 credential types
+  if (
+    providerType === "m365" &&
+    ["app_client_secret", "app_certificate"].includes(via || "")
+  ) {
+    return "credentials";
+  }
+
   // Other providers go directly to credentials form
   if (!needsSelector) {
     return "credentials";
@@ -99,6 +107,8 @@ export const requiresBackButton = (via?: string | null): boolean => {
     "personal_access_token",
     "oauth_app",
     "github_app",
+    "app_client_secret",
+    "app_certificate",
   ];
 
   return validViaTypes.includes(via);

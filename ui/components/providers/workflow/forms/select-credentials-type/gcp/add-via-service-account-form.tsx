@@ -7,8 +7,10 @@ import { BaseCredentialsForm } from "../../base-credentials-form";
 
 export const AddViaServiceAccountForm = ({
   searchParams,
+  providerUid,
 }: {
   searchParams: { type: ProviderType; id: string };
+  providerUid?: string;
 }) => {
   const providerType = searchParams.type;
   const providerId = searchParams.id;
@@ -23,6 +25,7 @@ export const AddViaServiceAccountForm = ({
     <BaseCredentialsForm
       providerType={providerType}
       providerId={providerId}
+      providerUid={providerUid}
       onSubmit={handleAddCredentials}
       successNavigationUrl={successNavigationUrl}
       submitButtonText="Next"

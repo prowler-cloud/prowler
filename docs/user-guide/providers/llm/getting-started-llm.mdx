@@ -1,0 +1,143 @@
+---
+title: "Getting Started With LLM on Prowler"
+---
+
+## Overview
+
+Prowler's LLM provider enables comprehensive security testing of large language models using red team techniques. It integrates with [promptfoo](https://promptfoo.dev/) to provide extensive security evaluation capabilities.
+
+## Prerequisites
+
+Before using the LLM provider, ensure the following requirements are met:
+
+- **promptfoo installed**: The LLM provider requires promptfoo to be installed on the system
+- **LLM API access**: Valid API keys for the target LLM models to test
+- **Email verification**: promptfoo requires email verification for red team evaluations
+
+## Installation
+
+### Install promptfoo
+
+Install promptfoo using one of the following methods:
+
+**Using npm:**
+```bash
+npm install -g promptfoo
+```
+
+**Using Homebrew (macOS):**
+```bash
+brew install promptfoo
+```
+
+**Using other package managers:**
+See the [promptfoo installation guide](https://promptfoo.dev/docs/installation/) for additional installation methods.
+
+### Verify Installation
+
+```bash
+promptfoo --version
+```
+
+## Configuration
+
+### Step 1: Email Verification
+
+promptfoo requires email verification for red team evaluations. Set the email address:
+
+```bash
+promptfoo config set email your-email@company.com
+```
+
+### Step 2: Configure LLM API Keys
+
+Set up API keys for the target LLM models. For OpenAI (default configuration):
+
+```bash
+export OPENAI_API_KEY="your-openai-api-key"
+```
+
+For other providers, see the [promptfoo documentation](https://promptfoo.dev/docs/providers/) for specific configuration requirements.
+
+### Step 3: Generate Test Cases (Optional)
+
+Prowler provides a default suite of red team tests but to customize the test cases, generate them first:
+
+```bash
+promptfoo redteam generate
+```
+
+This creates test cases based on your configuration.
+
+## Usage
+
+### Basic Usage
+
+Run LLM security testing with the default configuration:
+
+```bash
+prowler llm
+```
+
+### Custom Configuration
+
+Use a custom promptfoo configuration file:
+
+```bash
+prowler llm --config-path /path/to/your/config.yaml
+```
+
+### Output Options
+
+Generate reports in various formats:
+
+```bash
+# JSON output
+prowler llm --output-format json
+
+# CSV output
+prowler llm --output-format csv
+
+# HTML report
+prowler llm --output-format html
+```
+
+### Concurrency Control
+
+Adjust the number of concurrent tests:
+
+```bash
+prowler llm --max-concurrency 5
+```
+
+## Default Configuration
+
+Prowler includes a comprehensive default LLM configuration that provides:
+
+- **Target Models**: OpenAI GPT models by default
+- **Security Frameworks**:
+  - OWASP LLM Top 10
+  - OWASP API Top 10
+  - MITRE ATLAS
+  - NIST AI Risk Management Framework
+  - EU AI Act compliance
+- **Test Coverage**: Over 5,000 security test cases
+- **Plugin Support**: Multiple security testing plugins
+
+## Advanced Configuration
+
+### Custom Test Suites
+
+Create custom test configurations by modifying the promptfoo config file in `prowler/config/llm_config.yaml` or pass a custom configuration with `--config-file` flag:
+
+```yaml
+description: Custom LLM Security Tests
+targets:
+  - id: openai:gpt-4
+redteam:
+  plugins:
+    - id: owasp:llm
+      numTests: 10
+    - id: mitre:atlas
+      numTests: 5
+```

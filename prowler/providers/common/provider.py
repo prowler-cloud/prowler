@@ -146,8 +146,24 @@ class Provider(ABC):
     @staticmethod
     def init_global_provider(arguments: Namespace) -> None:
         try:
+            # Map CLI provider names to directory names (for cases where they differ)
+            provider_directory_map = {
+                "oci": "oraclecloud",  # oci SDK conflict avoidance
+            }
+            # Map CLI provider names to provider file names (for cases where they differ)
+            provider_file_map = {
+                "oci": "oci",  # oraclecloud directory but oci_provider.py file
+            }
+
+            provider_directory = provider_directory_map.get(
+                arguments.provider, arguments.provider
+            )
+            provider_file = provider_file_map.get(
+                arguments.provider, arguments.provider
+            )
+
             provider_class_path = (
-                f"{providers_path}.{arguments.provider}.{arguments.provider}_provider"
+                f"{providers_path}.{provider_directory}.{provider_file}_provider"
             )
             provider_class_name = f"{arguments.provider.capitalize()}Provider"
             provider_class = getattr(
@@ -220,7 +236,6 @@ class Provider(ABC):
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         sp_env_auth=arguments.sp_env_auth,
-                        env_auth=arguments.env_auth,
                         az_cli_auth=arguments.az_cli_auth,
                         browser_auth=arguments.browser_auth,
                         certificate_auth=arguments.certificate_auth,
@@ -275,6 +290,17 @@ class Provider(ABC):
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
+                    )
+                elif "oci" in provider_class_name.lower():
+                    provider_class(
+                        oci_config_file=arguments.oci_config_file,
+                        profile=arguments.profile,
+                        region=arguments.region,
+                        compartment_ids=arguments.compartment_id,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                        use_instance_principal=arguments.use_instance_principal,
                     )
 
         except TypeError as error:

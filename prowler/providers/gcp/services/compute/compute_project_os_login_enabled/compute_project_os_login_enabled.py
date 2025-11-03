@@ -11,6 +11,11 @@ class compute_project_os_login_enabled(Check):
                 resource=compute_client.projects[project.id],
                 project_id=project.id,
                 location=compute_client.region,
+                resource_name=(
+                    compute_client.projects[project.id].name
+                    if compute_client.projects[project.id].name
+                    else "GCP Project"
+                ),
             )
             report.status = "PASS"
             report.status_extended = f"Project {project.id} has OS Login enabled."

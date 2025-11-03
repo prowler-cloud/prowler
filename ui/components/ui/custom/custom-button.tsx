@@ -86,7 +86,7 @@ export const CustomButton = React.forwardRef<
   ) => (
     <Button
       as={asLink ? Link : undefined}
-      href={asLink}
+      {...(asLink && { href: asLink })}
       target={target}
       type={type}
       aria-label={ariaLabel}

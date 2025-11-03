@@ -27,7 +27,10 @@ from api.models import (
     Finding,
     Integration,
     Invitation,
+    LighthouseProviderConfiguration,
+    LighthouseProviderModels,
     Membership,
+    MuteRule,
     OverviewStatusChoices,
     PermissionChoices,
     Processor,
@@ -241,6 +244,14 @@ class ProviderFilter(FilterSet):
     )
     provider = ChoiceFilter(choices=Provider.ProviderChoices.choices)
     provider__in = ChoiceInFilter(
+        field_name="provider",
+        choices=Provider.ProviderChoices.choices,
+        lookup_expr="in",
+    )
+    provider_type = ChoiceFilter(
+        choices=Provider.ProviderChoices.choices, field_name="provider"
+    )
+    provider_type__in = ChoiceInFilter(
         field_name="provider",
         choices=Provider.ProviderChoices.choices,
         lookup_expr="in",
@@ -765,6 +776,7 @@ class ComplianceOverviewFilter(FilterSet):
 class ScanSummaryFilter(FilterSet):
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
     provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
+    provider_id__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
     provider_type = ChoiceFilter(
         field_name="scan__provider__provider", choices=Provider.ProviderChoices.choices
     )
@@ -926,4 +938,63 @@ class TenantApiKeyFilter(FilterSet):
             "prefix": ["exact", "icontains"],
             "revoked": ["exact"],
             "name": ["exact", "icontains"],
+        }
+
+
+class LighthouseProviderConfigFilter(FilterSet):
+    provider_type = ChoiceFilter(
+        choices=LighthouseProviderConfiguration.LLMProviderChoices.choices
+    )
+    provider_type__in = ChoiceInFilter(
+        choices=LighthouseProviderConfiguration.LLMProviderChoices.choices,
+        field_name="provider_type",
+        lookup_expr="in",
+    )
+    is_active = BooleanFilter()
+
+    class Meta:
+        model = LighthouseProviderConfiguration
+        fields = {
+            "provider_type": ["exact", "in"],
+            "is_active": ["exact"],
+        }
+
+
+class LighthouseProviderModelsFilter(FilterSet):
+    provider_type = ChoiceFilter(
+        choices=LighthouseProviderConfiguration.LLMProviderChoices.choices,
+        field_name="provider_configuration__provider_type",
+    )
+    provider_type__in = ChoiceInFilter(
+        choices=LighthouseProviderConfiguration.LLMProviderChoices.choices,
+        field_name="provider_configuration__provider_type",
+        lookup_expr="in",
+    )
+
+    # Allow filtering by model id
+    model_id = CharFilter(field_name="model_id", lookup_expr="exact")
+    model_id__icontains = CharFilter(field_name="model_id", lookup_expr="icontains")
+    model_id__in = CharInFilter(field_name="model_id", lookup_expr="in")
+
+    class Meta:
+        model = LighthouseProviderModels
+        fields = {
+            "model_id": ["exact", "icontains", "in"],
+        }
+
+
+class MuteRuleFilter(FilterSet):
+    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
+    updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
+    created_by = UUIDFilter(field_name="created_by__id", lookup_expr="exact")
+
+    class Meta:
+        model = MuteRule
+        fields = {
+            "id": ["exact", "in"],
+            "name": ["exact", "icontains"],
+            "reason": ["icontains"],
+            "enabled": ["exact"],
+            "inserted_at": ["gte", "lte"],
+            "updated_at": ["gte", "lte"],
         }

@@ -1,0 +1,49 @@
+# Example AWS Organizations Output
+#
+# This is an example of what aws_org_generator.py produces when run against
+# an AWS Organization. This file can be directly used with prowler_bulk_provisioning.py
+#
+# Generated with:
+#   python aws_org_generator.py -o aws-org-accounts.yaml \
+#     --role-name ProwlerRole \
+#     --external-id prowler-ext-id-12345
+
+- provider: aws
+  uid: '111111111111'
+  alias: Production-Account
+  auth_method: role
+  credentials:
+    role_arn: arn:aws:iam::111111111111:role/ProwlerRole
+    external_id: prowler-ext-id-12345
+
+- provider: aws
+  uid: '222222222222'
+  alias: Development-Account
+  auth_method: role
+  credentials:
+    role_arn: arn:aws:iam::222222222222:role/ProwlerRole
+    external_id: prowler-ext-id-12345
+
+- provider: aws
+  uid: '333333333333'
+  alias: Staging-Account
+  auth_method: role
+  credentials:
+    role_arn: arn:aws:iam::333333333333:role/ProwlerRole
+    external_id: prowler-ext-id-12345
+
+- provider: aws
+  uid: '444444444444'
+  alias: Security-Account
+  auth_method: role
+  credentials:
+    role_arn: arn:aws:iam::444444444444:role/ProwlerRole
+    external_id: prowler-ext-id-12345
+
+- provider: aws
+  uid: '555555555555'
+  alias: Logging-Account
+  auth_method: role
+  credentials:
+    role_arn: arn:aws:iam::555555555555:role/ProwlerRole
+    external_id: prowler-ext-id-12345

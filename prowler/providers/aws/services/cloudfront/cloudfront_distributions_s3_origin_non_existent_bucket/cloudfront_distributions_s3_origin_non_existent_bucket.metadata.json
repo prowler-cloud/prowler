@@ -1,32 +1,39 @@
 {
   "Provider": "aws",
   "CheckID": "cloudfront_distributions_s3_origin_non_existent_bucket",
-  "CheckTitle": "CloudFront distributions should not point to non-existent S3 origins without static website hosting.",
+  "CheckTitle": "CloudFront distribution S3 origins reference existing buckets",
   "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
     "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls"
   ],
   "ServiceName": "cloudfront",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:cloudfront:region:account-id:distribution/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsCloudFrontDistribution",
-  "Description": "This control checks whether Amazon CloudFront distributions are pointing to non-existent Amazon S3 origins without static website hosting. The control fails if the origin is configured to point to a non-existent bucket.",
-  "Risk": "Pointing a CloudFront distribution to a non-existent S3 bucket can allow malicious actors to create the bucket and potentially serve unauthorized content through your distribution, leading to security and integrity issues.",
-  "RelatedUrl": "https://docs.aws.amazon.com/whitepapers/latest/secure-content-delivery-amazon-cloudfront/s3-origin-with-cloudfront.html",
+  "Description": "**CloudFront distributions** with `S3OriginConfig` should reference existing **S3 bucket origins** (excluding static website hosting).\n\nIdentifies origins where the configured bucket name does not exist.",
+  "Risk": "**Dangling S3 origins** allow potential **bucket takeover**: an attacker could create the missing bucket and have CloudFront retrieve attacker-controlled objects *if access isn't restricted*.\n\nThis threatens **integrity** (content spoofing, cache poisoning) and **availability** (errors/timeouts), undermining user trust.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/whitepapers/latest/secure-content-delivery-amazon-cloudfront/s3-origin-with-cloudfront.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudfront-controls.html#cloudfront-12",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/cloudfront-existing-s3-bucket.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudfront-controls.html#cloudfront-12",
-      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/cloudfront-existing-s3-bucket.html"
+      "NativeIaC": "```yaml\n# CloudFormation: ensure the S3 bucket referenced by the CloudFront S3 origin exists\nResources:\n  <example_resource_name>:\n    Type: AWS::S3::Bucket\n    Properties:\n      BucketName: <example_resource_name>  # Critical: must exactly match the bucket name used in the CloudFront origin's domain (before \".s3\") to make it exist\n```",
+      "Other": "1. In the AWS console, open CloudFront and select the distribution\n2. Go to Origins, select the S3 origin, and note the Domain Name (the bucket name is the text before \".s3\")\n3. Open the S3 console, click Create bucket, enter the exact bucket name from step 2, and create the bucket\n4. Re-run the check",
+      "Terraform": "```hcl\n# Ensure the S3 bucket referenced by the CloudFront S3 origin exists\nresource \"aws_s3_bucket\" \"<example_resource_name>\" {\n  bucket = \"<example_resource_name>\"  # Critical: must exactly match the bucket name used in the CloudFront origin's domain (before \".s3\")\n}\n```"
     },
     "Recommendation": {
-      "Text": "Verify that all CloudFront distributions are configured to point to valid, existing S3 buckets. Update the origin settings as needed to ensure that your distributions are linked to appropriate and secure origins.",
-      "Url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/HowToUpdateDistribution.html"
+      "Text": "Ensure origins reference valid, owned buckets; delete or update stale references. Enforce **origin access control** (or OAI) and tight bucket policies so only the distribution can access objects. Apply **least privilege**, manage bucket names, and monitor origin health to prevent misrouting.",
+      "Url": "https://hub.prowler.com/check/cloudfront_distributions_s3_origin_non_existent_bucket"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "resilience"
   ],
   "DependsOn": [],
   "RelatedTo": [],

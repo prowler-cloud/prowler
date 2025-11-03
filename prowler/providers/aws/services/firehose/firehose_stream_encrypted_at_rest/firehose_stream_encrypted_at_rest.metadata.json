@@ -1,31 +1,42 @@
 {
   "Provider": "aws",
   "CheckID": "firehose_stream_encrypted_at_rest",
-  "CheckTitle": "DataFirehose delivery streams should be encrypted at rest.",
+  "CheckTitle": "Kinesis Data Firehose delivery stream is encrypted at rest",
   "CheckType": [
-    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls",
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST CSF Controls (USA)"
   ],
   "ServiceName": "firehose",
-  "SubServiceName": "Ensure DataFirehose delivery streams are encrypted at rest.",
-  "ResourceIdTemplate": "arn:partition:firehose:region:account-id:deliverystream/delivery-stream-id",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AwsKinesisFirehoseDeliveryStream",
-  "Description": "",
-  "Risk": "Without encryption at rest, data in Amazon Kinesis Data Firehose delivery streams is vulnerable to unauthorized access if the storage layer is compromised. This increases the risk of sensitive information exposure, potentially leading to data breaches or non-compliance with security regulations.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingKMSEncryption.html",
+  "ResourceType": "AwsKinesisStream",
+  "Description": "**Amazon Data Firehose** delivery streams use **server-side encryption at rest** with AWS KMS. For `DirectPut` or database sources, the stream must have KMS encryption enabled. When the source is **Kinesis Data Streams**, the source's encryption is considered. For **MSK** sources, encryption at rest is always applied by AWS.",
+  "Risk": "Unencrypted Firehose data at rest can be read if storage or backups are accessed, harming **confidentiality** and **integrity**. Disk-level access, snapshots, or misconfigured destinations enable data exfiltration or tampering. Lacking KMS-backed controls also reduces key rotation, segregation of duties, and auditability.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Firehose/delivery-stream-encrypted-with-kms-customer-master-keys.html",
+    "https://docs.aws.amazon.com/firehose/latest/dev/encryption.html",
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingKMSEncryption.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/datafirehose-controls.html#datafirehose-1"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws firehose update-delivery-stream --delivery-stream-name <delivery-stream-name> --delivery-stream-encryption-configuration-input '{ \"KeyType\": \"CUSTOMER_MANAGED_CMK\", \"KeyARN\": \"<kms-key-arn>\" }'",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/ensure-aws-kinesis-firehoses-delivery-stream-is-encrypted/",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/datafirehose-controls.html#datafirehose-1",
-      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Firehose/delivery-stream-encrypted-with-kms-customer-master-keys.html"
+      "CLI": "aws firehose start-delivery-stream-encryption --delivery-stream-name <delivery-stream-name> --delivery-stream-encryption-configuration-input KeyType=AWS_OWNED_CMK",
+      "NativeIaC": "```yaml\n# CloudFormation: Enable at-rest encryption for a Firehose delivery stream\nResources:\n  <example_resource_name>:\n    Type: AWS::KinesisFirehose::DeliveryStream\n    Properties:\n      DeliveryStreamEncryptionConfigurationInput:\n        KeyType: AWS_OWNED_CMK  # critical: enables SSE at rest using AWS owned KMS key\n      ExtendedS3DestinationConfiguration:\n        BucketARN: arn:aws:s3:::<example_resource_name>\n        RoleARN: arn:aws:iam::<example_account_id>:role/<example_resource_name>\n```",
+      "Other": "1. In the AWS Console, go to Amazon Data Firehose\n2. Select the affected delivery stream and click Edit\n3. Under Server-side encryption, set to Enabled (choose AWS owned key)\n4. Click Save changes",
+      "Terraform": "```hcl\n# Terraform: Enable at-rest encryption for a Firehose delivery stream\nresource \"aws_kinesis_firehose_delivery_stream\" \"<example_resource_name>\" {\n  name        = \"<example_resource_name>\"\n  destination = \"extended_s3\"\n\n  server_side_encryption {\n    enabled = true  # critical: turns on SSE at rest (uses AWS owned KMS key by default)\n  }\n\n  extended_s3_configuration {\n    role_arn   = \"arn:aws:iam::<example_account_id>:role/<example_resource_name>\"\n    bucket_arn = \"arn:aws:s3:::<example_resource_name>\"\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable server-side encryption for Kinesis Firehose delivery streams using AWS Key Management Service (KMS). This encrypts data at rest, ensuring that sensitive information remains secure and compliant with regulatory standards.",
-      "Url": "https://docs.aws.amazon.com/firehose/latest/dev/encryption.html"
+      "Text": "Enable **server-side encryption** for Firehose with AWS KMS. Prefer **customer managed keys** (`CMEK`) to enforce **least privilege**, rotation, and auditing. Ensure upstream **Kinesis** sources are encrypted and confirm MSK defaults meet policy. Monitor KMS health signals and deny writes without encryption. Apply **defense in depth** at destinations.",
+      "Url": "https://hub.prowler.com/check/firehose_stream_encrypted_at_rest"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

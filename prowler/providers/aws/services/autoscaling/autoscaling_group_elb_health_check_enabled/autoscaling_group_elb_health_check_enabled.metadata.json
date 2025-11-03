@@ -1,31 +1,39 @@
 {
   "Provider": "aws",
   "CheckID": "autoscaling_group_elb_health_check_enabled",
-  "CheckTitle": "Check if Auto Scaling groups associated with a load balancer use ELB health checks.",
+  "CheckTitle": "Auto Scaling group associated with a load balancer has ELB health checks enabled",
   "CheckType": [
-    "Software and Configuration Checks/AWS Security Best Practices"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
   ],
   "ServiceName": "autoscaling",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:autoscaling:region:account-id:autoScalingGroup/autoScalingGroupName",
+  "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsAutoScalingAutoScalingGroup",
-  "Description": "This control checks whether an Amazon EC2 Auto Scaling group that is associated with a load balancer uses Elastic Load Balancing (ELB) health checks. The control fails if the Auto Scaling group doesn't use ELB health checks.",
-  "Risk": "If ELB health checks are not enabled, the Auto Scaling group might not be able to accurately determine the health of instances, which could impact the availability and reliability of the applications running on these instances.",
-  "RelatedUrl": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-add-elb-healthcheck.html#as-add-elb-healthcheck-console",
+  "Description": "EC2 Auto Scaling groups attached to a load balancer are evaluated for **ELB-based health checks** that use the load balancer's target health instead of instance-only checks.",
+  "Risk": "Without **ELB health checks**, the group may keep instances that fail load balancer probes, causing:\n- Reduced **availability** from routing to bad targets\n- Higher error rates impacting transaction **integrity**\n- Inefficient scaling and increased **costs**",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/autoscaling-controls.html#autoscaling-1",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/AutoScaling/auto-scaling-group-health-check.html",
+    "https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-add-elb-healthcheck.html#as-add-elb-healthcheck-console"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aws autoscaling update-auto-scaling-group --auto-scaling-group-name <auto-scaling-group-name> --health-check-type ELB",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/autoscaling-controls.html#autoscaling-1",
-      "Terraform": ""
+      "NativeIaC": "```yaml\n# CloudFormation: Enable ELB health checks for the Auto Scaling group\nResources:\n  <example_resource_name>:\n    Type: AWS::AutoScaling::AutoScalingGroup\n    Properties:\n      HealthCheckType: ELB  # Remediation: use ELB health checks so the ASG evaluates instance health via the load balancer\n```",
+      "Other": "1. In AWS Console, go to EC2 > Auto Scaling Groups\n2. Select the Auto Scaling group\n3. On the Details tab, click Edit under Health checks\n4. Under Additional health check types, select Elastic Load Balancing (ELB)\n5. Click Update/Save",
+      "Terraform": "```hcl\n# Enable ELB health checks on the Auto Scaling group\nresource \"aws_autoscaling_group\" \"<example_resource_name>\" {\n  health_check_type = \"ELB\"  # Remediation: ensures ASG uses load balancer health status\n}\n```"
     },
     "Recommendation": {
-      "Text": "Configure your Auto Scaling groups to use ELB health checks to improve the monitoring and availability of your applications.",
-      "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/AutoScaling/auto-scaling-group-health-check.html"
+      "Text": "Enable **ELB health checks** for Auto Scaling groups behind load balancers to reflect real client reachability. Apply **high availability** and **defense in depth** by:\n- Using application-appropriate LB probes\n- Tuning grace and threshold settings to avoid flapping\n- Monitoring health metrics and alerts",
+      "Url": "https://hub.prowler.com/check/autoscaling_group_elb_health_check_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

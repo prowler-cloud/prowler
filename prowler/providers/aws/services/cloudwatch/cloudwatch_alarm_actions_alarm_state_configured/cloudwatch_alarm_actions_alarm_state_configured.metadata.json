@@ -1,31 +1,42 @@
 {
   "Provider": "aws",
   "CheckID": "cloudwatch_alarm_actions_alarm_state_configured",
-  "CheckTitle": "Check if CloudWatch alarms have specified actions configured for the ALARM state.",
+  "CheckTitle": "CloudWatch metric alarm has actions configured for the ALARM state",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"
   ],
   "ServiceName": "cloudwatch",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:cloudwatch:region:account-id:alarm/alarm-name",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsCloudWatchAlarm",
-  "Description": "This control checks whether an Amazon CloudWatch alarm has at least one action configured for the ALARM state. The control fails if the alarm doesn't have an action configured for the ALARM state.",
-  "Risk": "Without an action configured for the ALARM state, the CloudWatch alarm will not notify you or take any predefined action when a monitored metric goes beyond the defined threshold, potentially delaying responses to critical events.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html#alarms-and-actions",
+  "Description": "Amazon CloudWatch metric alarms are evaluated for **actions** configured for the `ALARM` state. The finding flags alarms that have no action to execute when their monitored metric crosses its threshold.",
+  "Risk": "Without an **ALARM action**, threshold breaches trigger no **notification** or **automated response**. This delays detection and containment, risking:\n- Availability: prolonged outages or missed scale-out\n- Integrity/confidentiality: unchecked anomalies enabling tampering or data loss",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html#alarms-and-actions",
+    "https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cloudwatch/client/put_metric_alarm.html",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_metric_alarm",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-15",
+    "https://support.icompaas.com/support/solutions/articles/62000233431-ensure-cloudwatch-alarms-have-specified-actions-configured-for-the-alarm-state",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatch/cloudwatch-alarm-action.html",
+    "https://awscli.amazonaws.com/v2/documentation/api/2.0.34/reference/cloudwatch/put-metric-alarm.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws cloudwatch put-metric-alarm --alarm-name <alarm-name> --alarm-actions <action-arn>",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-15",
-      "Terraform": ""
+      "CLI": "aws cloudwatch put-metric-alarm --alarm-name <alarm-name> --metric-name <metric-name> --namespace <namespace> --statistic <statistic> --period <period-seconds> --evaluation-periods <evaluation-periods> --threshold <threshold> --comparison-operator <comparison-operator> --alarm-actions <action-arn>",
+      "NativeIaC": "```yaml\n# CloudFormation: add an ALARM action to a metric alarm\nResources:\n  <example_resource_name>:\n    Type: AWS::CloudWatch::Alarm\n    Properties:\n      AlarmName: <example_resource_name>\n      MetricName: <metric-name>\n      Namespace: <namespace>\n      Statistic: Average\n      Period: 60\n      EvaluationPeriods: 1\n      Threshold: 1\n      ComparisonOperator: GreaterThanThreshold\n      AlarmActions:\n        - <action-arn>  # CRITICAL: adds an action for ALARM state so the check passes\n```",
+      "Other": "1. Open the AWS Console and go to CloudWatch > Alarms\n2. Select the target alarm and choose Edit (or Modify alarm)\n3. In Actions, under When alarm state is ALARM, add an action (e.g., select an SNS topic or other supported action)\n4. Click Save changes",
+      "Terraform": "```hcl\n# Terraform: add an ALARM action to a metric alarm\nresource \"aws_cloudwatch_metric_alarm\" \"<example_resource_name>\" {\n  alarm_name          = \"<example_resource_name>\"\n  metric_name         = \"<metric-name>\"\n  namespace           = \"<namespace>\"\n  statistic           = \"Average\"\n  period              = 60\n  evaluation_periods  = 1\n  threshold           = 1\n  comparison_operator = \"GreaterThanThreshold\"\n  alarm_actions       = [\"<action-arn>\"] # CRITICAL: ensures an action is configured for ALARM state\n}\n```"
     },
     "Recommendation": {
-      "Text": "Configure your CloudWatch alarms to trigger actions, such as sending notifications via Amazon SNS, when the alarm state changes to ALARM.",
-      "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatch/cloudwatch-alarm-action.html"
+      "Text": "Assign at least one **ALARM-state action** per alarm (e.g., notify via SNS or run automated remediation with Lambda/SSM). Keep actions enabled, apply **least privilege** to targets, and regularly test. *For critical metrics*, add redundant paths (EventBridge) for **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/cloudwatch_alarm_actions_alarm_state_configured"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

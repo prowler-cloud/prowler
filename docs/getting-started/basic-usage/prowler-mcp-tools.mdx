@@ -1,0 +1,122 @@
+---
+title: "Tools Reference"
+---
+
+Complete reference guide for all tools available in the Prowler MCP Server. Tools are organized by namespace.
+
+## Tool Categories Summary
+
+| Category | Tool Count | Authentication Required |
+|----------|------------|------------------------|
+| Prowler Hub | 10 tools | No |
+| Prowler Documentation | 2 tools | No |
+| Prowler Cloud/App | 28 tools | Yes |
+
+## Tool Naming Convention
+
+All tools follow a consistent naming pattern with prefixes:
+
+- `prowler_hub_*` - Prowler Hub catalog and compliance tools
+- `prowler_docs_*` - Prowler documentation search and retrieval
+- `prowler_app_*` - Prowler Cloud and App (Self-Managed) management tools
+
+## Prowler Hub Tools
+
+Access Prowler's security check catalog and compliance frameworks. **No authentication required.**
+
+### Check Discovery
+
+- **`prowler_hub_get_checks`** - List security checks with advanced filtering options
+- **`prowler_hub_get_check_filters`** - Return available filter values for checks (providers, services, severities, categories, compliances)
+- **`prowler_hub_search_checks`** - Full-text search across check metadata
+- **`prowler_hub_get_check_raw_metadata`** - Fetch raw check metadata in JSON format
+
+### Check Code
+
+- **`prowler_hub_get_check_code`** - Fetch the Python implementation code for a security check
+- **`prowler_hub_get_check_fixer`** - Fetch the automated fixer code for a check (if available)
+
+### Compliance Frameworks
+
+- **`prowler_hub_get_compliance_frameworks`** - List and filter compliance frameworks
+- **`prowler_hub_search_compliance_frameworks`** - Full-text search across compliance frameworks
+
+### Provider Information
+
+- **`prowler_hub_list_providers`** - List Prowler official providers and their services
+- **`prowler_hub_get_artifacts_count`** - Get total count of checks and frameworks in Prowler Hub
+
+## Prowler Documentation Tools
+
+Search and access official Prowler documentation. **No authentication required.**
+
+- **`prowler_docs_search`** - Search the official Prowler documentation using full-text search
+- **`prowler_docs_get_document`** - Retrieve the full markdown content of a specific documentation file
+
+## Prowler Cloud/App Tools
+
+Manage Prowler Cloud or Prowler App (Self-Managed) features. **Requires authentication.**
+
+<Note>
+These tools require a valid API key. See the [Configuration Guide](/getting-started/basic-usage/prowler-mcp) for authentication setup.
+</Note>
+
+### Findings Management
+
+- **`prowler_app_list_findings`** - List security findings with advanced filtering
+- **`prowler_app_get_finding`** - Get detailed information about a specific finding
+- **`prowler_app_get_latest_findings`** - Retrieve latest findings from the most recent scans
+- **`prowler_app_get_findings_metadata`** - Get unique metadata values from filtered findings
+- **`prowler_app_get_latest_findings_metadata`** - Get metadata from latest findings across all providers
+
+### Provider Management
+
+- **`prowler_app_list_providers`** - List all providers with filtering options
+- **`prowler_app_create_provider`** - Create a new provider in the current tenant
+- **`prowler_app_get_provider`** - Get detailed information about a specific provider
+- **`prowler_app_update_provider`** - Update provider details (alias, etc.)
+- **`prowler_app_delete_provider`** - Delete a specific provider
+- **`prowler_app_test_provider_connection`** - Test provider connection status
+
+### Provider Secrets Management
+
+- **`prowler_app_list_provider_secrets`** - List all provider secrets with filtering
+- **`prowler_app_add_provider_secret`** - Add or update credentials for a provider
+- **`prowler_app_get_provider_secret`** - Get detailed information about a provider secret
+- **`prowler_app_update_provider_secret`** - Update provider secret details
+- **`prowler_app_delete_provider_secret`** - Delete a provider secret
+
+### Scan Management
+
+- **`prowler_app_list_scans`** - List all scans with filtering options
+- **`prowler_app_create_scan`** - Trigger a manual scan for a specific provider
+- **`prowler_app_get_scan`** - Get detailed information about a specific scan
+- **`prowler_app_update_scan`** - Update scan details
+- **`prowler_app_get_scan_compliance_report`** - Download compliance report as CSV
+- **`prowler_app_get_scan_report`** - Download ZIP file containing complete scan report
+
+### Schedule Management
+
+- **`prowler_app_schedules_daily_scan`** - Create a daily scheduled scan for a provider
+
+### Processor Management
+
+- **`prowler_app_processors_list`** - List all processors with filtering
+- **`prowler_app_processors_create`** - Create a new processor (currently only mute lists supported)
+- **`prowler_app_processors_retrieve`** - Get processor details by ID
+- **`prowler_app_processors_partial_update`** - Update processor configuration
+- **`prowler_app_processors_destroy`** - Delete a processor
+
+## Usage Tips
+
+- Use natural language to interact with the tools through your AI assistant
+- Tools can be combined for complex workflows
+- Filter options are available on most list tools
+- Authentication is only required for Prowler Cloud/App tools
+
+## Additional Resources
+
+- [MCP Protocol Specification](https://modelcontextprotocol.io)
+- [Prowler API Documentation](https://api.prowler.com/api/v1/docs)
+- [Prowler Hub API](https://hub.prowler.com/api/docs)
+- [GitHub Repository](https://github.com/prowler-cloud/prowler)

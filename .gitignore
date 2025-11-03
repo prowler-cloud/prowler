@@ -39,6 +39,12 @@ secrets-*/
 # JUnit Reports
 junit-reports/
 
+# Test and coverage artifacts
+*_coverage.xml
+pytest_*.xml
+.coverage
+htmlcov/
+
 # VSCode files
 .vscode/
 
@@ -64,7 +70,6 @@ junit-reports/
 ui/.env*
 api/.env*
 mcp_server/.env*
-.env.local
 
 # Coverage
 .coverage*
@@ -83,3 +88,6 @@ CLAUDE.md
 # MCP Server
 mcp_server/prowler_mcp_server/prowler_app/server.py
 mcp_server/prowler_mcp_server/prowler_app/utils/schema.yaml
+
+# Compliance report
+*.pdf

@@ -1,30 +1,39 @@
 {
   "Provider": "aws",
   "CheckID": "autoscaling_group_multiple_az",
-  "CheckTitle": "EC2 Auto Scaling Group should use multiple Availability Zones",
-  "CheckType": [],
+  "CheckTitle": "Auto Scaling group uses multiple Availability Zones",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Effects/Denial of Service"
+  ],
   "ServiceName": "autoscaling",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:autoscaling:region:account-id:autoScalingGroupName/resource-name",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsAutoScalingAutoScalingGroup",
-  "Description": "EC2 Auto Scaling Group should use multiple Availability Zones",
-  "Risk": "In case of a failure in a single Availability Zone, the Auto Scaling Group will not be able to launch new instances to replace the failed ones.",
-  "RelatedUrl": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-add-availability-zone.html",
+  "Description": "**EC2 Auto Scaling groups** use **multiple Availability Zones** within a Region, with instances distributed across more than one zone rather than confined to a single zone.",
+  "Risk": "Relying on a single zone concentrates failure risk and harms **availability**. An AZ outage or capacity shortfall can block replacements and scaling, causing downtime, dropped traffic, and a wider blast radius. Recovery can lag because workloads can't shift to healthy zones.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-add-az-console.html",
+    "https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-availability-zone-balanced.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/AutoScaling/multiple-availability-zones.html",
+    "https://docs.aws.amazon.com/autoscaling/ec2/userguide/disaster-recovery-resiliency.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws autoscaling update-auto-scaling-group",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/AutoScaling/multiple-availability-zones.html",
-      "Terraform": ""
+      "CLI": "aws autoscaling update-auto-scaling-group --auto-scaling-group-name <example_resource_name> --vpc-zone-identifier \"<subnet_id_az1>,<subnet_id_az2>\"",
+      "NativeIaC": "```yaml\n# CloudFormation: ensure ASG spans multiple AZs\nResources:\n  <example_resource_name>:\n    Type: AWS::AutoScaling::AutoScalingGroup\n    Properties:\n      MinSize: '1'\n      MaxSize: '1'\n      LaunchTemplate:\n        LaunchTemplateId: <example_resource_id>\n        Version: '$Latest'\n      VPCZoneIdentifier:\n        - <subnet_id_az1>\n        - <subnet_id_az2>  # CRITICAL: Add a second subnet in a different AZ to ensure multiple AZs\n```",
+      "Other": "1. In the AWS Console, go to EC2 > Auto Scaling Groups\n2. Select the group and open the Details tab\n3. Click Network > Edit\n4. In Subnets, add one more subnet from a different Availability Zone\n5. Click Update to save",
+      "Terraform": "```hcl\n# Terraform: ensure ASG spans multiple AZs\nresource \"aws_autoscaling_group\" \"<example_resource_name>\" {\n  min_size = 1\n  max_size = 1\n\n  launch_template {\n    id      = \"<example_resource_id>\"\n    version = \"$Latest\"\n  }\n\n  vpc_zone_identifier = [\n    \"<subnet_id_az1>\",\n    \"<subnet_id_az2>\" # CRITICAL: two subnets in different AZs to pass the check\n  ]\n}\n```"
     },
     "Recommendation": {
-      "Text": "Configure multiple Availability Zones for EC2 Auto Scaling Group",
-      "Url": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/as-add-availability-zone.html"
+      "Text": "Distribute each group across at least two **Availability Zones** to design for failure. Use a load balancer to spread traffic and health-based replacement to sustain capacity. Apply **resilience** and **fault isolation** principles so service continues during zonal degradation.",
+      "Url": "https://hub.prowler.com/check/autoscaling_group_multiple_az"
     }
   },
   "Categories": [
-    "redundancy"
+    "resilience"
   ],
   "DependsOn": [],
   "RelatedTo": [],

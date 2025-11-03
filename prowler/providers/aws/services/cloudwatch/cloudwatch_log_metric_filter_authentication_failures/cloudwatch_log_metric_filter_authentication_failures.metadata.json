@@ -1,31 +1,44 @@
 {
   "Provider": "aws",
   "CheckID": "cloudwatch_log_metric_filter_authentication_failures",
-  "CheckTitle": "Ensure a log metric filter and alarm exist for AWS Management Console authentication failures.",
+  "CheckTitle": "Account has a CloudWatch Logs metric filter and alarm for AWS Management Console authentication failures",
   "CheckType": [
-    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis",
+    "TTPs/Initial Access",
+    "TTPs/Credential Access"
   ],
   "ServiceName": "cloudwatch",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:cloudwatch:region:account-id:certificate/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCloudWatchAlarm",
-  "Description": "Ensure a log metric filter and alarm exist for AWS Management Console authentication failures.",
-  "Risk": "Monitoring unauthorized API calls will help reveal application errors and may reduce time to detect malicious activity.",
-  "RelatedUrl": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
+  "Description": "CloudWatch Logs metric filter and alarm for **AWS Management Console authentication failures**, sourced from CloudTrail (`eventName=ConsoleLogin`, `errorMessage=\"Failed authentication\"`).\n\nIdentifies whether these failures are converted into a metric and actively monitored by an alarm.",
+  "Risk": "Absent visibility into failed console logins enables undetected **brute-force** and **credential-stuffing** attempts, extending attacker dwell time.\n\nSuccessful guesses can grant console access, risking data confidentiality, configuration integrity, and availability through destructive changes.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
+    "https://www.intelligentdiscovery.io/controls/cloudwatch/cloudwatch-alarm-signin-failures",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatchLogs/console-sign-in-failures-alarm.html",
+    "https://newsletter.simpleaws.dev/p/cloudtrail-cloudwatch-logs-login-detection-alert"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_6",
-      "Terraform": "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_6#fix---buildtime"
+      "NativeIaC": "```yaml\n# CloudFormation: Metric filter and alarm for console authentication failures\nResources:\n  MetricFilter:\n    Type: AWS::Logs::MetricFilter\n    Properties:\n      LogGroupName: \"<example_resource_name>\"\n      FilterPattern: '{ ($.eventName = ConsoleLogin) && ($.errorMessage = \"Failed authentication\") }'  # Critical: matches failed console login events\n      MetricTransformations:\n        - MetricValue: \"1\"\n          MetricNamespace: \"<example_resource_name>\"  # Critical: creates metric namespace\n          MetricName: \"<example_resource_name>\"       # Critical: creates metric name\n\n  Alarm:\n    Type: AWS::CloudWatch::Alarm\n    Properties:\n      MetricName: \"<example_resource_name>\"   # Critical: alarm targets metric from filter\n      Namespace: \"<example_resource_name>\"    # Critical: must match metric's namespace\n      ComparisonOperator: GreaterThanOrEqualToThreshold\n      EvaluationPeriods: 1\n      Period: 300\n      Statistic: Sum\n      Threshold: 1\n```",
+      "Other": "1. In the AWS Console, open CloudWatch\n2. Go to Logs > Log groups and select the CloudTrail log group receiving events\n3. Open the Metric filters tab > Create metric filter\n   - Filter pattern: { ($.eventName = ConsoleLogin) && ($.errorMessage = \"Failed authentication\") }\n   - Assign any metric name and namespace, value 1, then create\n4. On the created metric filter, select it and choose Create alarm\n   - Statistic: Sum, Period: 5 minutes, Threshold type: Static, Threshold: >= 1\n   - Create the alarm",
+      "Terraform": "```hcl\n# Metric filter and alarm for console authentication failures\nresource \"aws_cloudwatch_log_metric_filter\" \"metric\" {\n  name           = \"<example_resource_name>\"\n  log_group_name = \"<example_resource_name>\"\n  pattern        = \"{($.eventName = ConsoleLogin) && ($.errorMessage = \\\"Failed authentication\\\") }\" # Critical: detects failed console logins\n\n  metric_transformation {\n    name      = \"<example_resource_name>\"   # Critical: metric created by filter\n    namespace = \"<example_resource_name>\"   # Critical: metric namespace\n    value     = \"1\"\n  }\n}\n\nresource \"aws_cloudwatch_metric_alarm\" \"alarm\" {\n  metric_name          = aws_cloudwatch_log_metric_filter.metric.metric_transformation[0].name   # Critical: alarm references the filter's metric\n  namespace            = aws_cloudwatch_log_metric_filter.metric.metric_transformation[0].namespace # Critical: must match\n  comparison_operator  = \"GreaterThanOrEqualToThreshold\"\n  evaluation_periods   = 1\n  period               = 300\n  statistic            = \"Sum\"\n  threshold            = 1\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended that a metric filter and alarm be established for unauthorized requests.",
-      "Url": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html"
+      "Text": "Implement a log metric filter for `ConsoleLogin` failures and attach a **CloudWatch alarm** with actionable notifications. Tune thresholds to reduce noise and route alerts to incident response.\n\nApply **least privilege** and enforce **MFA** to limit impact, and correlate alerts with source IP and user context.",
+      "Url": "https://hub.prowler.com/check/cloudwatch_log_metric_filter_authentication_failures"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging",
+    "threat-detection"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Logging and Monitoring"

@@ -2,10 +2,12 @@ import base64
 import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Dict
+from typing import Dict, List, Optional
 
 import requests
 import requests.compat
+from markdown_it import MarkdownIt
+from markdown_it.token import Token
 
 from prowler.lib.logger import logger
 from prowler.lib.outputs.finding import Finding
@@ -45,6 +47,204 @@ class JiraConnection(Connection):
     """
 
     projects: dict = None
+
+
+class MarkdownToADFConverter:
+    """Helper to convert Markdown strings into Atlassian Document Format blocks."""
+
+    def __init__(self) -> None:
+        self._parser = MarkdownIt("commonmark", {"html": False})
+
+    def convert(self, text: Optional[str]) -> List[Dict]:
+        if text is None:
+            text = ""
+
+        tokens = self._parser.parse(text)
+        if not tokens:
+            return [self._paragraph_with_text(text)]
+
+        content_stack: List[List[Dict]] = [[]]
+        node_stack: List[Dict] = []
+
+        for token in tokens:
+            token_type = token.type
+
+            if token_type == "paragraph_open":
+                node = {"type": "paragraph", "content": []}
+                node_stack.append(node)
+                content_stack.append(node["content"])
+            elif token_type == "inline":
+                inline_nodes = self._convert_inline(token.children or [])
+                content_stack[-1].extend(inline_nodes)
+            elif token_type == "paragraph_close":
+                node = node_stack.pop()
+                content_stack.pop()
+                content_stack[-1].append(node)
+            elif token_type == "bullet_list_open":
+                node = {"type": "bulletList", "content": []}
+                node_stack.append(node)
+                content_stack.append(node["content"])
+            elif token_type == "bullet_list_close":
+                node = node_stack.pop()
+                content_stack.pop()
+                content_stack[-1].append(node)
+            elif token_type == "ordered_list_open":
+                node: Dict = {"type": "orderedList", "content": []}
+                start_attr = token.attrGet("start")
+                if start_attr and start_attr.isdigit():
+                    start = int(start_attr)
+                    if start != 1:
+                        node["attrs"] = {"order": start}
+                node_stack.append(node)
+                content_stack.append(node["content"])
+            elif token_type == "ordered_list_close":
+                node = node_stack.pop()
+                content_stack.pop()
+                content_stack[-1].append(node)
+            elif token_type == "list_item_open":
+                node = {"type": "listItem", "content": []}
+                node_stack.append(node)
+                content_stack.append(node["content"])
+            elif token_type == "list_item_close":
+                node = node_stack.pop()
+                content_stack.pop()
+                content_stack[-1].append(node)
+            elif token_type == "heading_open":
+                level = self._safe_heading_level(token.tag)
+                node = {"type": "heading", "attrs": {"level": level}, "content": []}
+                node_stack.append(node)
+                content_stack.append(node["content"])
+            elif token_type == "heading_close":
+                node = node_stack.pop()
+                content_stack.pop()
+                content_stack[-1].append(node)
+            elif token_type == "blockquote_open":
+                node = {"type": "blockquote", "content": []}
+                node_stack.append(node)
+                content_stack.append(node["content"])
+            elif token_type == "blockquote_close":
+                node = node_stack.pop()
+                content_stack.pop()
+                content_stack[-1].append(node)
+            elif token_type in {"fence", "code_block"}:
+                language = None
+                if token_type == "fence":
+                    info = (token.info or "").strip()
+                    if info:
+                        language = info.split()[0]
+                code_text = token.content.rstrip("\n")
+                code_node: Dict = {
+                    "type": "codeBlock",
+                    "content": [self._create_text_node(code_text, None)],
+                }
+                if language:
+                    code_node["attrs"] = {"language": language}
+                content_stack[-1].append(code_node)
+            elif token_type in {"hr", "thematic_break"}:
+                content_stack[-1].append({"type": "rule"})
+            elif token_type == "html_block":
+                html_text = token.content.strip()
+                if html_text:
+                    content_stack[-1].append(self._paragraph_with_text(html_text))
+
+        result = content_stack[0]
+        if not result:
+            return [self._paragraph_with_text(text)]
+
+        return result
+
+    def _convert_inline(self, tokens: List[Token]) -> List[Dict]:
+        result: List[Dict] = []
+        marks_stack: List[Dict] = []
+
+        for token in tokens:
+            token_type = token.type
+
+            if token_type == "text":
+                result.extend(self._text_to_nodes(token.content, marks_stack))
+            elif token_type == "code_inline":
+                marks = self._clone_marks(marks_stack)
+                marks.append({"type": "code"})
+                result.append(self._create_text_node(token.content, marks))
+            elif token_type in {"softbreak", "hardbreak"}:
+                result.append({"type": "hardBreak"})
+            elif token_type == "strong_open":
+                marks_stack.append({"type": "strong"})
+            elif token_type == "strong_close":
+                self._pop_mark(marks_stack, "strong")
+            elif token_type == "em_open":
+                marks_stack.append({"type": "em"})
+            elif token_type == "em_close":
+                self._pop_mark(marks_stack, "em")
+            elif token_type == "link_open":
+                href = token.attrGet("href") or ""
+                mark: Dict = {"type": "link", "attrs": {"href": href}}
+                title = token.attrGet("title")
+                if title:
+                    mark["attrs"]["title"] = title
+                marks_stack.append(mark)
+            elif token_type == "link_close":
+                self._pop_mark(marks_stack, "link")
+            elif token_type == "html_inline":
+                result.extend(self._text_to_nodes(token.content, marks_stack))
+            elif token_type == "image":
+                alt_text = token.attrGet("alt") or token.content or ""
+                result.extend(self._text_to_nodes(alt_text, marks_stack))
+
+        return result
+
+    @staticmethod
+    def _clone_marks(marks_stack: List[Dict]) -> List[Dict]:
+        cloned: List[Dict] = []
+        for mark in marks_stack:
+            mark_copy = {"type": mark["type"]}
+            if "attrs" in mark:
+                mark_copy["attrs"] = dict(mark["attrs"])
+            cloned.append(mark_copy)
+        return cloned
+
+    def _text_to_nodes(self, text: str, marks_stack: List[Dict]) -> List[Dict]:
+        if not text:
+            return []
+
+        nodes: List[Dict] = []
+        marks = self._clone_marks(marks_stack)
+        parts = text.split("\n")
+
+        for index, part in enumerate(parts):
+            if part:
+                nodes.append(self._create_text_node(part, marks))
+            if index < len(parts) - 1:
+                nodes.append({"type": "hardBreak"})
+
+        return nodes
+
+    @staticmethod
+    def _create_text_node(text: str, marks: Optional[List[Dict]]) -> Dict:
+        node: Dict = {"type": "text", "text": text}
+        if marks:
+            node["marks"] = marks
+        return node
+
+    def _paragraph_with_text(self, text: str) -> Dict:
+        return {"type": "paragraph", "content": [self._create_text_node(text, None)]}
+
+    @staticmethod
+    def _pop_mark(marks_stack: List[Dict], mark_type: str) -> None:
+        for index in range(len(marks_stack) - 1, -1, -1):
+            if marks_stack[index]["type"] == mark_type:
+                marks_stack.pop(index)
+                break
+
+    @staticmethod
+    def _safe_heading_level(tag: Optional[str]) -> int:
+        if tag and tag.startswith("h"):
+            try:
+                level = int(tag[1])
+                return max(1, min(level, 6))
+            except (ValueError, IndexError):
+                return 1
+        return 1
 
 
 class Jira:
@@ -112,6 +312,7 @@ class Jira:
         jira.send_findings(findings=findings, project_key="KEY")
     """
 
+    _markdown_converter = MarkdownToADFConverter()
     _redirect_uri: str = None
     _client_id: str = None
     _client_secret: str = None
@@ -172,6 +373,45 @@ class Jira:
             raise JiraInvalidParameterError(
                 message=init_error, file=os.path.basename(__file__)
             )
+
+    @staticmethod
+    def _build_code_block_content(code_value: str) -> Optional[Dict]:
+        if not code_value:
+            return None
+
+        lines = code_value.splitlines()
+        if not lines:
+            return None
+
+        language = None
+        first_line = lines[0].strip()
+        if first_line.startswith("```"):
+            language = first_line[3:].strip() or None
+            lines = lines[1:]
+
+        while lines and not lines[0].strip():
+            lines = lines[1:]
+
+        if lines and lines[-1].strip().startswith("```"):
+            lines = lines[:-1]
+
+        while lines and not lines[-1].strip():
+            lines = lines[:-1]
+
+        if not lines:
+            return None
+
+        sanitized_text = "\n".join(lines)
+
+        code_block: Dict = {
+            "type": "codeBlock",
+            "content": [{"type": "text", "text": sanitized_text}],
+        }
+
+        if language:
+            code_block["attrs"] = {"language": language}
+
+        return code_block
 
     @property
     def redirect_uri(self):
@@ -837,8 +1077,8 @@ class Jira:
             return "#0000FF"
         return "#000000"  # Default black color for unknown severities
 
-    @staticmethod
     def get_adf_description(
+        self,
         check_id: str = "",
         check_title: str = "",
         severity: str = "",
@@ -1231,17 +1471,7 @@ class Jira:
                     {
                         "type": "tableCell",
                         "attrs": {"colwidth": [3]},
-                        "content": [
-                            {
-                                "type": "paragraph",
-                                "content": [
-                                    {
-                                        "type": "text",
-                                        "text": risk,
-                                    }
-                                ],
-                            }
-                        ],
+                        "content": self._markdown_converter.convert(risk),
                     },
                 ],
             },
@@ -1340,6 +1570,34 @@ class Jira:
                 )
 
         # Add recommendation row
+        recommendation_content = self._markdown_converter.convert(recommendation_text)
+        if recommendation_url:
+            link_node = {
+                "type": "text",
+                "text": recommendation_url,
+                "marks": [{"type": "link", "attrs": {"href": recommendation_url}}],
+            }
+
+            if (
+                recommendation_content
+                and recommendation_content[-1].get("type") == "paragraph"
+            ):
+                paragraph = recommendation_content[-1]
+                paragraph_content = paragraph.setdefault("content", [])
+                if paragraph_content:
+                    last_inline = paragraph_content[-1]
+                    if last_inline.get("type") == "text" and not last_inline.get(
+                        "text", ""
+                    ).endswith(" "):
+                        paragraph_content.append({"type": "text", "text": " "})
+                    elif last_inline.get("type") != "text":
+                        paragraph_content.append({"type": "text", "text": " "})
+                paragraph_content.append(link_node)
+            else:
+                recommendation_content.append(
+                    {"type": "paragraph", "content": [link_node]}
+                )
+
         table_rows.append(
             {
                 "type": "tableRow",
@@ -1363,27 +1621,7 @@ class Jira:
                     {
                         "type": "tableCell",
                         "attrs": {"colwidth": [3]},
-                        "content": [
-                            {
-                                "type": "paragraph",
-                                "content": [
-                                    {
-                                        "type": "text",
-                                        "text": recommendation_text + " ",
-                                    },
-                                    {
-                                        "type": "text",
-                                        "text": recommendation_url,
-                                        "marks": [
-                                            {
-                                                "type": "link",
-                                                "attrs": {"href": recommendation_url},
-                                            }
-                                        ],
-                                    },
-                                ],
-                            }
-                        ],
+                        "content": recommendation_content,
                     },
                 ],
             }
@@ -1399,6 +1637,14 @@ class Jira:
 
         for code_type, code_value in remediation_codes:
             if code_value and code_value.strip():
+                if code_type == "Other":
+                    formatted_content = self._markdown_converter.convert(code_value)
+                else:
+                    code_block = self._build_code_block_content(code_value)
+                    if not code_block:
+                        continue
+                    formatted_content = [code_block]
+
                 table_rows.append(
                     {
                         "type": "tableRow",
@@ -1422,18 +1668,7 @@ class Jira:
                             {
                                 "type": "tableCell",
                                 "attrs": {"colwidth": [3]},
-                                "content": [
-                                    {
-                                        "type": "paragraph",
-                                        "content": [
-                                            {
-                                                "type": "text",
-                                                "text": code_value,
-                                                "marks": [{"type": "code"}],
-                                            }
-                                        ],
-                                    }
-                                ],
+                                "content": formatted_content,
                             },
                         ],
                     }
@@ -1645,9 +1880,11 @@ class Jira:
                 payload = {
                     "fields": {
                         "project": {"key": project_key},
-                        "summary": summary,
+                        "summary": f"[Prowler] {finding.metadata.Severity.value.upper()} - {finding.metadata.CheckID} - {finding.resource_uid}",
                         "description": adf_description,
                         "issuetype": {"name": issue_type},
+                        "customfield_10148": {"value": "SDK"},
+                        "customfield_10088": {"value": "Core"},
                     }
                 }
                 if issue_labels:

@@ -36,7 +36,7 @@ class sharepoint_external_sharing_managed(Check):
                 self.metadata(),
                 resource=settings if settings else {},
                 resource_name="SharePoint Settings",
-                resource_id=sharepoint_client.tenant_domain,
+                resource_id="sharepointSettings",
             )
             report.status = "FAIL"
             report.status_extended = "SharePoint external sharing is not managed through domain restrictions."

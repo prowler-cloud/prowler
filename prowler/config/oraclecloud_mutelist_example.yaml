@@ -1,0 +1,61 @@
+### Tenancy, Check and/or Region can be * to apply for all the cases.
+### Tenancy == OCI Tenancy OCID and Region == OCI Region
+### Resources and tags are lists that can have either Regex or Keywords.
+### Tags is an optional list that matches on tuples of 'key=value' and are "ANDed" together.
+### Use an alternation Regex to match one of multiple tags with "ORed" logic.
+### For each check you can except Tenancies, Regions, Resources and/or Tags.
+###########################  MUTELIST EXAMPLE  ###########################
+Mutelist:
+  Tenancies:
+    "ocid1.tenancy.oc1..aaaaaaaexample":
+      Checks:
+        "iam_user_mfa_enabled":
+          Regions:
+            - "us-phoenix-1"
+          Resources:
+            - "ocid1.user.oc1..aaaaaaaexample1"           # Will ignore user1 in check iam_user_mfa_enabled
+            - "ocid1.user.oc1..aaaaaaaexample2"           # Will ignore user2 in check iam_user_mfa_enabled
+          Description: "Check iam_user_mfa_enabled muted for region us-phoenix-1 and specific user resources"
+        "objectstorage_*":
+          Regions:
+            - "*"
+          Resources:
+            - "*"                 # Will ignore every Object Storage check in every region
+        "*":
+          Regions:
+            - "*"
+          Resources:
+            - "test"
+          Tags:
+            - "test=test"         # Will ignore every resource containing the string "test" and the tags 'test=test' and
+            - "project=test|project=stage" # either of ('project=test' OR project=stage) in tenancy ocid1.tenancy.oc1..aaaaaaaexample and every region
+            - "environment=prod"   # Will ignore every resource containing the string "test" and tag environment=prod
+
+    "*":
+      Checks:
+        "objectstorage_bucket_public_access":
+          Regions:
+            - "us-ashburn-1"
+            - "us-phoenix-1"
+          Resources:
+            - "ci-logs"           # Will ignore bucket "ci-logs" AND ALSO bucket "ci-logs-replica" in specified check and regions
+            - "logs"              # Will ignore EVERY BUCKET containing the string "logs" in specified check and regions
+            - ".+-logs"           # Will ignore all buckets containing the terms ci-logs, qa-logs, etc. in specified check and regions
+        "*":
+          Regions:
+            - "*"
+          Resources:
+            - "*"
+          Tags:
+            - "environment=dev"    # Will ignore every resource containing the tag 'environment=dev' in every tenancy and region
+        "compute_instance_monitoring_enabled":
+          Regions:
+            - "*"
+          Resources:
+            - "*"
+          Exceptions:
+            Tenancies:
+              - "ocid1.tenancy.oc1..aaaaaaaexample2"
+            Regions:
+              - "eu-frankfurt-1"
+              - "eu-amsterdam-1"        # Will ignore every resource in check compute_instance_monitoring_enabled except the ones in tenancy ocid1.tenancy.oc1..aaaaaaaexample2 located in eu-frankfurt-1 or eu-amsterdam-1

@@ -14,6 +14,7 @@ import {
   GitHubProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
+  OracleCloudProviderBadge,
 } from "../icons/providers-badge";
 import { CustomRadio } from "../ui/custom";
 import { FormMessage } from "../ui/form";
@@ -76,6 +77,15 @@ export const RadioGroupProvider: React.FC<RadioGroupProviderProps> = ({
                 <div className="flex items-center">
                   <GitHubProviderBadge size={26} />
                   <span className="ml-2">GitHub</span>
+                </div>
+              </CustomRadio>
+              <CustomRadio
+                description="Oracle Cloud Infrastructure"
+                value="oci"
+              >
+                <div className="flex items-center">
+                  <OracleCloudProviderBadge size={26} />
+                  <span className="ml-2">Oracle Cloud Infrastructure</span>
                 </div>
               </CustomRadio>
             </div>

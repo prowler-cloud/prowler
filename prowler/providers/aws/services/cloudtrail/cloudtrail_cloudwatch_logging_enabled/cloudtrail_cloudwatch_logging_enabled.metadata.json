@@ -1,35 +1,39 @@
 {
   "Provider": "aws",
   "CheckID": "cloudtrail_cloudwatch_logging_enabled",
-  "CheckTitle": "Ensure CloudTrail trails are integrated with CloudWatch Logs",
+  "CheckTitle": "CloudTrail trail has delivered logs to CloudWatch Logs in the last 24 hours",
   "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS AWS Foundations Benchmark"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
   ],
   "ServiceName": "cloudtrail",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsCloudTrailTrail",
-  "Description": "Ensure CloudTrail trails are integrated with CloudWatch Logs",
-  "Risk": "Sending CloudTrail logs to CloudWatch Logs will facilitate real-time and historic activity logging based on user, API, resource, and IP address, and provides opportunity to establish alarms and notifications for anomalous or sensitivity account activity.",
+  "Description": "**CloudTrail trails** are configured to send events to **CloudWatch Logs**, and show recent delivery within the last `24h`. Trails without integration or without recent CloudWatch delivery are identified, across single-Region and multi-Region trails.",
+  "Risk": "Missing or stale CloudWatch delivery weakens visibility and delays detection, impacting confidentiality and integrity. Adversaries can:\n- Hide **privilege escalation**\n- Perform unauthorized **resource changes**\n- Exfiltrate data via API misuse",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/checks/aws/logging-policies/logging_4#aws-console",
+    "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/send-cloudtrail-events-to-cloudwatch-logs.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws cloudtrail update-trail --name <trail_name> --cloudwatch-logs-log-group- arn <cloudtrail_log_group_arn> --cloudwatch-logs-role-arn <cloudtrail_cloudwatchLogs_role_arn>",
-      "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/aws/logging-policies/logging_4#aws-console",
-      "Terraform": ""
+      "CLI": "aws cloudtrail update-trail --name <trail_name> --cloud-watch-logs-log-group-arn <cloudwatch_log_group_arn> --cloud-watch-logs-role-arn <cloudwatch_logs_role_arn>",
+      "NativeIaC": "```yaml\n# CloudFormation: enable CloudTrail delivery to CloudWatch Logs\nResources:\n  <example_resource_name>:\n    Type: AWS::CloudTrail::Trail\n    Properties:\n      S3BucketName: \"<example_resource_name>\"\n      CloudWatchLogsLogGroupArn: \"<cloudwatch_log_group_arn>\"  # CRITICAL: sends CloudTrail events to CloudWatch Logs\n      CloudWatchLogsRoleArn: \"<cloudwatch_logs_role_arn>\"      # CRITICAL: role CloudTrail assumes to deliver events\n```",
+      "Other": "1. In AWS Console, go to CloudTrail > Trails and select the trail\n2. In the CloudWatch Logs section, click Edit\n3. Set CloudWatch Logs to Enabled\n4. Choose an existing Log group (or create new) and select an IAM role with permissions for CreateLogStream/PutLogEvents\n5. Click Save changes\n6. After a few minutes, verify events appear in the chosen CloudWatch Logs log group",
+      "Terraform": "```hcl\n# Terraform: enable CloudTrail delivery to CloudWatch Logs\nresource \"aws_cloudtrail\" \"<example_resource_name>\" {\n  name                       = \"<example_resource_name>\"\n  s3_bucket_name             = \"<example_resource_name>\"\n  cloud_watch_logs_group_arn = \"<cloudwatch_log_group_arn>\"  # CRITICAL: sends CloudTrail events to CloudWatch Logs\n  cloud_watch_logs_role_arn  = \"<cloudwatch_logs_role_arn>\"   # CRITICAL: role CloudTrail assumes to deliver events\n}\n```"
     },
     "Recommendation": {
-      "Text": "Validate that the trails in CloudTrail have an arn set in the CloudWatchLogsLogGroupArn property.",
-      "Url": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/send-cloudtrail-events-to-cloudwatch-logs.html"
+      "Text": "Integrate every trail with **CloudWatch Logs** and maintain continuous, near-real-time delivery. Enforce **least privilege** on the delivery role, prefer **multi-Region** coverage, and implement **metric filters and alerts** for sensitive actions. Centralize retention to support **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/cloudtrail_cloudwatch_logging_enabled"
     }
   },
   "Categories": [
-    "forensics-ready",
-    "logging"
+    "logging",
+    "forensics-ready"
   ],
   "DependsOn": [],
   "RelatedTo": [],

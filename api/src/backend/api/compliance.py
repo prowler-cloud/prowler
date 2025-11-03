@@ -150,12 +150,16 @@ def generate_scan_compliance(
                 requirement["checks"][check_id] = status
                 requirement["checks_status"][status.lower()] += 1
 
-            if requirement["status"] != "FAIL" and any(
-                value == "FAIL" for value in requirement["checks"].values()
-            ):
-                requirement["status"] = "FAIL"
-                compliance_overview[compliance_id]["requirements_status"]["passed"] -= 1
-                compliance_overview[compliance_id]["requirements_status"]["failed"] += 1
+                if requirement["status"] != "FAIL" and any(
+                    value == "FAIL" for value in requirement["checks"].values()
+                ):
+                    requirement["status"] = "FAIL"
+                    compliance_overview[compliance_id]["requirements_status"][
+                        "passed"
+                    ] -= 1
+                    compliance_overview[compliance_id]["requirements_status"][
+                        "failed"
+                    ] += 1
 
 
 def generate_compliance_overview_template(prowler_compliance: dict):

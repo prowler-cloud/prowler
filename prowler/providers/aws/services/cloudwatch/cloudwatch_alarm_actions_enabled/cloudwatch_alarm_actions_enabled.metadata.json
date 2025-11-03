@@ -1,31 +1,40 @@
 {
   "Provider": "aws",
   "CheckID": "cloudwatch_alarm_actions_enabled",
-  "CheckTitle": "Check if CloudWatch alarms have actions enabled",
+  "CheckTitle": "CloudWatch metric alarm has actions enabled",
   "CheckType": [
-    "Software and Configuration Checks/AWS Security Best Practices"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "TTPs/Defense Evasion"
   ],
   "ServiceName": "cloudwatch",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:cloudwatch:region:account-id:alarm/alarm-name",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsCloudWatchAlarm",
-  "Description": "Alarm actions automatically alert you when a monitored metric is outside the defined threshold. If the alarm action is deactivated, no actions are run when the alarm changes state, and you won't be alerted to changes in monitored metrics. We recommend activating CloudWatch alarm actions to help you quickly respond to security and operational issues.",
-  "Risk": "Without active alarm actions, you may not be alerted to security or operational issues, potentially leading to delayed responses and increased risk.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html#alarms-and-actions",
+  "Description": "**CloudWatch metric alarms** are evaluated for **alarm actions** activation (`actions_enabled: true`), enabling state changes to invoke configured notifications or automated responses.",
+  "Risk": "With alarm actions disabled, state changes neither notify nor remediate. Incidents can persist unnoticed, enabling unauthorized activity, configuration drift, or capacity exhaustion. Visibility drops, MTTR rises, and confidentiality, integrity, and availability are all at greater risk.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatch/cloudwatch-alarm-action-activated.html",
+    "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html#alarms-and-actions",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-17"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aws cloudwatch enable-alarm-actions --alarm-names <alarm-name>",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudwatch-controls.html#cloudwatch-17",
-      "Terraform": ""
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::CloudWatch::Alarm\n    Properties:\n      ActionsEnabled: true  # FIX: activates alarm actions so the check passes\n      ComparisonOperator: GreaterThanThreshold\n      EvaluationPeriods: 1\n      MetricName: <example_metric_name>\n      Namespace: <example_metric_namespace>\n      Period: 60\n      Statistic: Average\n      Threshold: 1\n```",
+      "Other": "1. Open the CloudWatch console\n2. Go to Alarms > All alarms and select the alarm\n3. Choose Actions > Alarm actions - new > Enable\n4. Confirm to activate actions",
+      "Terraform": "```hcl\nresource \"aws_cloudwatch_metric_alarm\" \"<example_resource_name>\" {\n  alarm_name          = \"<example_resource_name>\"\n  comparison_operator = \"GreaterThanThreshold\"\n  evaluation_periods  = 1\n  metric_name         = \"<example_metric_name>\"\n  namespace           = \"<example_metric_namespace>\"\n  period              = 60\n  statistic           = \"Average\"\n  threshold           = 1\n\n  actions_enabled = true  # FIX: activates alarm actions so the check passes\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure that all CloudWatch alarms have at least one action configured. This can include sending notifications to SNS topics, invoking Lambda functions, or triggering other AWS services.",
-      "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatch/cloudwatch-alarm-action-activated.html"
+      "Text": "Enable `actions_enabled` on critical alarms and attach least-privilege actions (SNS, automation) for ALARM and recovery states. Use redundant targets, regularly test notifications, and integrate with incident response. Apply **defense in depth** with complementary detections to ensure timely, reliable alerting.",
+      "Url": "https://hub.prowler.com/check/cloudwatch_alarm_actions_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

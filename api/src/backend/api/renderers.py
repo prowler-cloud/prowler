@@ -11,11 +11,12 @@ class APIJSONRenderer(JSONRenderer):
     def render(self, data, accepted_media_type=None, renderer_context=None):
         request = renderer_context.get("request")
         tenant_id = getattr(request, "tenant_id", None) if request else None
+        db_alias = getattr(request, "db_alias", None) if request else None
         include_param_present = "include" in request.query_params if request else False
 
         # Use rls_transaction if needed for included resources, otherwise do nothing
         context_manager = (
-            rls_transaction(tenant_id)
+            rls_transaction(tenant_id, using=db_alias)
             if tenant_id and include_param_present
             else nullcontext()
         )

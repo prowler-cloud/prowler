@@ -69,11 +69,13 @@ const hideMenuItems = (menuGroups: GroupProps[], labelsToHide: string[]) => {
 export const Menu = ({ isOpen }: { isOpen: boolean }) => {
   const pathname = usePathname();
   const { permissions } = useAuth();
-  const { hasProviders, openMutelistModal } = useUIStore();
+  const { hasProviders, openMutelistModal, requestMutelistModalOpen } =
+    useUIStore();
   const menuList = getMenuList({
     pathname,
     hasProviders,
     openMutelistModal,
+    requestMutelistModalOpen,
   });
 
   const labelsToHide = MENU_HIDE_RULES.filter((rule) =>

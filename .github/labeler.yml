@@ -42,6 +42,11 @@ provider/mongodbatlas:
       - any-glob-to-any-file: "prowler/providers/mongodbatlas/**"
       - any-glob-to-any-file: "tests/providers/mongodbatlas/**"
 
+provider/oci:
+  - changed-files:
+      - any-glob-to-any-file: "prowler/providers/oraclecloud/**"
+      - any-glob-to-any-file: "tests/providers/oraclecloud/**"
+
 github_actions:
   - changed-files:
       - any-glob-to-any-file: ".github/workflows/*"

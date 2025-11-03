@@ -10,92 +10,8 @@ from packaging import version
 
 from prowler.lib.logger import logger
 
-
-class _TimestampManager:
-    def __init__(self):
-        self._timestamp: datetime | None = None
-        self._timestamp_utc: datetime | None = None
-        self._timestamp_iso: str | None = None
-        self._output_file_timestamp: str | None = None
-        self.refresh()
-
-    def refresh(
-        self,
-        current_timestamp: datetime | None = None,
-        current_timestamp_utc: datetime | None = None,
-    ) -> None:
-        """Refreshes cached timestamp values for a new scan run."""
-        local_now = current_timestamp or datetime.today()
-        self._timestamp = local_now
-        self._timestamp_iso = local_now.isoformat(sep=" ", timespec="seconds")
-        self._output_file_timestamp = local_now.strftime("%Y%m%d%H%M%S")
-
-        if current_timestamp_utc:
-            utc_now = current_timestamp_utc
-        elif current_timestamp and current_timestamp.tzinfo:
-            utc_now = current_timestamp.astimezone(timezone.utc)
-        else:
-            utc_now = datetime.now(timezone.utc)
-
-        self._timestamp_utc = utc_now.replace(tzinfo=timezone.utc)
-
-    @property
-    def timestamp(self) -> datetime:
-        return self._timestamp
-
-    @property
-    def timestamp_utc(self) -> datetime:
-        return self._timestamp_utc
-
-    @property
-    def timestamp_iso(self) -> str:
-        return self._timestamp_iso
-
-    @property
-    def output_file_timestamp(self) -> str:
-        return self._output_file_timestamp
-
-
-_timestamp_manager = _TimestampManager()
-
-
-def refresh_timestamps(
-    current_timestamp: datetime | None = None,
-    current_timestamp_utc: datetime | None = None,
-) -> None:
-    """
-    refresh_timestamps updates the cached timestamp values used across the scan outputs.
-
-    Args:
-        current_timestamp (datetime | None): Optional local timestamp to seed the cache.
-        current_timestamp_utc (datetime | None): Optional UTC timestamp to seed the cache.
-    """
-    _timestamp_manager.refresh(
-        current_timestamp=current_timestamp,
-        current_timestamp_utc=current_timestamp_utc,
-    )
-
-
-def get_timestamp() -> datetime:
-    """Returns the cached local timestamp for the current scan run."""
-    return _timestamp_manager.timestamp
-
-
-def get_timestamp_utc() -> datetime:
-    """Returns the cached UTC timestamp for the current scan run."""
-    return _timestamp_manager.timestamp_utc
-
-
-def get_timestamp_iso() -> str:
-    """Returns the cached ISO formatted timestamp for the current scan run."""
-    return _timestamp_manager.timestamp_iso
-
-
-def get_output_file_timestamp() -> str:
-    """Returns the cached output file timestamp suffix for the current scan run."""
-    return _timestamp_manager.output_file_timestamp
-
-
+timestamp = datetime.today()
+timestamp_utc = datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
 prowler_version = "5.13.0"
 html_logo_url = "https://github.com/prowler-cloud/prowler/"
 square_logo_img = "https://prowler.com/wp-content/uploads/logo-html.png"
@@ -117,6 +33,7 @@ class Provider(str, Enum):
     IAC = "iac"
     NHN = "nhn"
     MONGODBATLAS = "mongodbatlas"
+    OCI = "oci"
 
 
 # Compliance

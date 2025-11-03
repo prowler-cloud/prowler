@@ -119,7 +119,12 @@ export const EditForm = ({
           </div>
           <div className="text-small flex items-center text-gray-600">
             <ShieldIcon className="mr-2 h-4 w-4" />
-            <span className="text-gray-500">Role:</span>
+            <span className="text-gray-500">
+              Role:
+              <span className="ml-2 font-semibold text-gray-900">
+                {currentRole ? currentRole : "No role"}
+              </span>
+            </span>
             <span className="ml-2 font-semibold text-gray-900">
               {currentRole}
             </span>

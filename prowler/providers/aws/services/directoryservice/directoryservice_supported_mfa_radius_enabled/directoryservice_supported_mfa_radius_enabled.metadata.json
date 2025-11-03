@@ -1,29 +1,40 @@
 {
   "Provider": "aws",
   "CheckID": "directoryservice_supported_mfa_radius_enabled",
-  "CheckTitle": "Ensure Multi-Factor Authentication (MFA) using Radius Server is enabled in DS.",
-  "CheckType": [],
+  "CheckTitle": "AWS Directory Service directory has RADIUS-based MFA enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "TTPs/Initial Access",
+    "TTPs/Credential Access"
+  ],
   "ServiceName": "directoryservice",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:codeartifact:region:account-id:directory/directory-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
-  "Description": "Ensure Multi-Factor Authentication (MFA) using Radius Server is enabled in DS.",
-  "Risk": "Multi-Factor Authentication (MFA) adds an extra layer of authentication assurance beyond traditional username and password.",
-  "RelatedUrl": "https://docs.aws.amazon.com/directoryservice/latest/admin-guide/ms_ad_mfa.html",
+  "Description": "**AWS Directory Service directories** are evaluated for **RADIUS-backed multi-factor authentication**, confirming that MFA is configured and the RADIUS integration is active.",
+  "Risk": "Without **RADIUS MFA**, directory-based sign-ins to AWS-integrated services rely on a single factor, enabling credential stuffing and phishing to succeed. Compromised passwords can grant unauthorized access, drive data exfiltration, and enable privilege escalation, undermining confidentiality and integrity.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/directoryservice/latest/admin-guide/ms_ad_mfa.html",
+    "https://support.icompaas.com/support/solutions/articles/62000233537-ensure-multi-factor-authentication-mfa-using-a-radius-server-is-enabled-in-directory-service"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aws ds enable-radius --directory-id <example_resource_id> --radius-settings '{\"RadiusServers\":[\"<RADIUS_IP_OR_DNS>\"],\"SharedSecret\":\"<SHARED_SECRET>\"}'",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. Sign in to the AWS Console and open Directory Service\n2. Select your directory and open it\n3. Go to the Networking & security tab\n4. In Multi-factor authentication, click Actions > Enable\n5. Enter RADIUS server IP(s) and the Shared secret, then click Enable\n6. Wait until the RADIUS status shows Completed",
+      "Terraform": "```hcl\nresource \"aws_directory_service_radius_settings\" \"<example_resource_name>\" {\n  directory_id  = \"<example_resource_id>\"            # Directory to enable RADIUS MFA on\n  radius_servers = [\"<RADIUS_IP_OR_DNS>\"]             # Critical: RADIUS server endpoint(s)\n  shared_secret  = \"<SHARED_SECRET>\"                   # Critical: Shared secret for RADIUS\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enabling MFA provides increased security to a user name and password as it requires the user to possess a solution that displays a time-sensitive authentication code.",
-      "Url": "https://docs.aws.amazon.com/directoryservice/latest/admin-guide/ms_ad_mfa.html"
+      "Text": "Enable and enforce **RADIUS-based MFA** for all Directory Service authentications. Apply **least privilege**, harden and monitor the RADIUS infrastructure, rotate shared secrets, and restrict network access (e.g., `UDP/1812`). Use **defense in depth** with segmentation and session controls to limit lateral movement and reduce blast radius.",
+      "Url": "https://hub.prowler.com/check/directoryservice_supported_mfa_radius_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

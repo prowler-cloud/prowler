@@ -1,10 +1,8 @@
 import argparse
-import asyncio
 import os
 import sys
 
 from prowler_mcp_server.lib.logger import logger
-from prowler_mcp_server.server import setup_main_server
 
 
 def parse_arguments():
@@ -13,7 +11,7 @@ def parse_arguments():
     parser.add_argument(
         "--transport",
         choices=["stdio", "http"],
-        default=os.getenv("PROWLER_MCP_MODE", "stdio"),
+        default=None,
         help="Transport method (default: stdio)",
     )
     parser.add_argument(
@@ -35,13 +33,26 @@ def main():
     try:
         args = parse_arguments()
 
-        # Set up server with configuration
-        prowler_mcp_server = asyncio.run(setup_main_server(transport=args.transport))
+        print(f"args.transport: {args.transport}")
+
+        if args.transport is None:
+            args.transport = os.getenv("PROWLER_MCP_TRANSPORT_MODE", "stdio")
+        else:
+            os.environ["PROWLER_MCP_TRANSPORT_MODE"] = args.transport
+
+        from prowler_mcp_server.server import prowler_mcp_server
 
         if args.transport == "stdio":
-            prowler_mcp_server.run(transport="stdio")
+            prowler_mcp_server.run(transport=args.transport, show_banner=False)
         elif args.transport == "http":
-            prowler_mcp_server.run(transport="http", host=args.host, port=args.port)
+            prowler_mcp_server.run(
+                transport=args.transport,
+                host=args.host,
+                port=args.port,
+                show_banner=False,
+            )
+        else:
+            logger.error(f"Invalid transport: {args.transport}")
 
     except KeyboardInterrupt:
         logger.info("Shutting down Prowler MCP server...")

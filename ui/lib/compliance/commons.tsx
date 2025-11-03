@@ -3,6 +3,7 @@ import {
   FailedSection,
   Framework,
   Requirement,
+  REQUIREMENT_STATUS,
   RequirementItemData,
   RequirementsData,
   RequirementStatus,
@@ -12,11 +13,11 @@ export const updateCounters = (
   target: { pass: number; fail: number; manual: number },
   status: RequirementStatus,
 ) => {
-  if (status === "MANUAL") {
+  if (status === REQUIREMENT_STATUS.MANUAL) {
     target.manual++;
-  } else if (status === "PASS") {
+  } else if (status === REQUIREMENT_STATUS.PASS) {
     target.pass++;
-  } else if (status === "FAIL") {
+  } else if (status === REQUIREMENT_STATUS.FAIL) {
     target.fail++;
   }
 };
@@ -30,7 +31,7 @@ export const getTopFailedSections = (
     framework.categories.forEach((category) => {
       category.controls.forEach((control) => {
         control.requirements.forEach((requirement) => {
-          if (requirement.status === "FAIL") {
+          if (requirement.status === REQUIREMENT_STATUS.FAIL) {
             const sectionName = category.name;
 
             if (!failedSectionMap.has(sectionName)) {

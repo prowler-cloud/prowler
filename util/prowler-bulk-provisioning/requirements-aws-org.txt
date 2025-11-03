@@ -1,0 +1,11 @@
+# AWS Organizations Generator Dependencies
+#
+# This extends the base requirements.txt for the AWS Organizations generator
+
+# Include base dependencies
+-r requirements.txt
+
+# AWS SDK for Python
+boto3>=1.26.0
+
+# Note: PyYAML is already included in requirements.txt

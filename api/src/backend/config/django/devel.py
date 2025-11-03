@@ -5,24 +5,39 @@ DEBUG = env.bool("DJANGO_DEBUG", default=True)
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["*"])
 
 # Database
+default_db_name = env("POSTGRES_DB", default="prowler_db")
+default_db_user = env("POSTGRES_USER", default="prowler_user")
+default_db_password = env("POSTGRES_PASSWORD", default="prowler")
+default_db_host = env("POSTGRES_HOST", default="postgres-db")
+default_db_port = env("POSTGRES_PORT", default="5432")
+
 DATABASES = {
     "prowler_user": {
         "ENGINE": "psqlextra.backend",
-        "NAME": env("POSTGRES_DB", default="prowler_db"),
-        "USER": env("POSTGRES_USER", default="prowler_user"),
-        "PASSWORD": env("POSTGRES_PASSWORD", default="prowler"),
-        "HOST": env("POSTGRES_HOST", default="postgres-db"),
-        "PORT": env("POSTGRES_PORT", default="5432"),
+        "NAME": default_db_name,
+        "USER": default_db_user,
+        "PASSWORD": default_db_password,
+        "HOST": default_db_host,
+        "PORT": default_db_port,
     },
     "admin": {
         "ENGINE": "psqlextra.backend",
-        "NAME": env("POSTGRES_DB", default="prowler_db"),
+        "NAME": default_db_name,
         "USER": env("POSTGRES_ADMIN_USER", default="prowler"),
         "PASSWORD": env("POSTGRES_ADMIN_PASSWORD", default="S3cret"),
-        "HOST": env("POSTGRES_HOST", default="postgres-db"),
-        "PORT": env("POSTGRES_PORT", default="5432"),
+        "HOST": default_db_host,
+        "PORT": default_db_port,
+    },
+    "replica": {
+        "ENGINE": "psqlextra.backend",
+        "NAME": env("POSTGRES_REPLICA_DB", default=default_db_name),
+        "USER": env("POSTGRES_REPLICA_USER", default=default_db_user),
+        "PASSWORD": env("POSTGRES_REPLICA_PASSWORD", default=default_db_password),
+        "HOST": env("POSTGRES_REPLICA_HOST", default=default_db_host),
+        "PORT": env("POSTGRES_REPLICA_PORT", default=default_db_port),
     },
 }
+
 DATABASES["default"] = DATABASES["prowler_user"]
 
 REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = tuple(  # noqa: F405

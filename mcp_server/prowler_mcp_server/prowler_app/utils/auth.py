@@ -14,7 +14,7 @@ class ProwlerAppAuth:
 
     def __init__(
         self,
-        mode: str = os.getenv("PROWLER_MCP_MODE", "stdio"),
+        mode: str = os.getenv("PROWLER_MCP_TRANSPORT_MODE", "stdio"),
         base_url: str = os.getenv("PROWLER_API_BASE_URL", "https://api.prowler.com"),
     ):
         self.base_url = base_url.rstrip("/")
@@ -33,7 +33,14 @@ class ProwlerAppAuth:
                 raise ValueError("Prowler App API key format is incorrect")
 
     def _parse_jwt(self, token: str) -> Optional[Dict]:
-        """Parse JWT token and return payload, similar to JS parseJwt function."""
+        """Parse JWT token and return payload
+
+        Args:
+            token: JWT token to parse
+
+        Returns:
+            Parsed JWT payload, or None if parsing fails
+        """
         if not token:
             return None
 

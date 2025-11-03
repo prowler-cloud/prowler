@@ -323,6 +323,20 @@ class Finding(BaseModel):
                 output_data["resource_uid"] = check_output.model
                 output_data["region"] = check_output.model
 
+            elif provider.type == "oci":
+                output_data["auth_method"] = (
+                    f"Profile: {get_nested_attribute(provider, 'session.profile')}"
+                )
+                output_data["account_uid"] = get_nested_attribute(
+                    provider, "identity.tenancy_id"
+                )
+                output_data["account_name"] = get_nested_attribute(
+                    provider, "identity.tenancy_name"
+                )
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = check_output.region
+
             # check_output Unique ID
             # TODO: move this to a function
             # TODO: in Azure, GCP and K8s there are findings without resource_name
@@ -393,6 +407,8 @@ class Finding(BaseModel):
             finding.subscription = list(provider.identity.subscriptions.keys())[0]
         elif provider.type == "gcp":
             finding.project_id = list(provider.projects.keys())[0]
+        elif provider.type == "oci":
+            finding.compartment_id = getattr(finding, "compartment_id", "")
 
         finding.check_metadata = CheckMetadata(
             Provider=finding.check_metadata["provider"],

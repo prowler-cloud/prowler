@@ -1,0 +1,43 @@
+name: Community PR labelling
+
+on:
+  # We need "write" permissions on the PR to be able to add a label.
+  pull_request_target: # We need this to have labelling permissions. There are no user inputs here, so we should be fine.
+    types:
+      - opened
+
+permissions: {}
+
+jobs:
+  label-if-community:
+    name: Add 'community' label if the PR is from a community contributor
+    if: github.repository == 'prowler-cloud/prowler'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: Check if author is org member
+        id: check_membership
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          ORG: ${{ github.repository_owner }}
+        run: |
+          echo "Checking if $AUTHOR is a member of $ORG"
+          if gh api --method GET "orgs/$ORG/members/$AUTHOR" >/dev/null 2>&1; then
+            echo "is_member=true" >> $GITHUB_OUTPUT
+            echo "$AUTHOR is an organization member"
+          else
+            echo "is_member=false" >> $GITHUB_OUTPUT
+            echo "$AUTHOR is not an organization member"
+          fi
+
+      - name: Add community label
+        if: steps.check_membership.outputs.is_member == 'false'
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Adding 'community' label to PR #$PR_NUMBER"
+          gh pr edit "$PR_NUMBER" --add-label community

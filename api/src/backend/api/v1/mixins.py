@@ -12,6 +12,24 @@ from api.models import StateChoices, Task
 from api.v1.serializers import TaskSerializer
 
 
+class DisablePaginationMixin:
+    disable_pagination_query_param = "page[disable]"
+    disable_pagination_truthy_values = {"true"}
+
+    def should_disable_pagination(self) -> bool:
+        if not hasattr(self, "request"):
+            return False
+        value = self.request.query_params.get(self.disable_pagination_query_param)
+        if value is None:
+            return False
+        return str(value).lower() in self.disable_pagination_truthy_values
+
+    def paginate_queryset(self, queryset):
+        if self.should_disable_pagination():
+            return None
+        return super().paginate_queryset(queryset)
+
+
 class PaginateByPkMixin:
     """
     Mixin to paginate on a list of PKs (cheaper than heavy JOINs),

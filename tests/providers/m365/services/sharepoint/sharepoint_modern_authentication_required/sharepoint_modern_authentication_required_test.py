@@ -17,6 +17,7 @@ class Test_sharepoint_modern_authentication_required:
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_m365_provider(),
             ),
+            mock.patch("prowler.providers.m365.lib.service.service.M365PowerShell"),
             mock.patch(
                 "prowler.providers.m365.services.sharepoint.sharepoint_modern_authentication_required.sharepoint_modern_authentication_required.sharepoint_client",
                 new=sharepoint_client,
@@ -47,7 +48,7 @@ class Test_sharepoint_modern_authentication_required:
             assert result[0].status_extended == (
                 "Microsoft 365 SharePoint does not allow access to apps that don't use modern authentication."
             )
-            assert result[0].resource_id == DOMAIN
+            assert result[0].resource_id == "sharepointSettings"
             assert result[0].location == "global"
             assert result[0].resource_name == "SharePoint Settings"
             assert result[0].resource == sharepoint_client.settings.dict()
@@ -64,6 +65,7 @@ class Test_sharepoint_modern_authentication_required:
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_m365_provider(),
             ),
+            mock.patch("prowler.providers.m365.lib.service.service.M365PowerShell"),
             mock.patch(
                 "prowler.providers.m365.services.sharepoint.sharepoint_modern_authentication_required.sharepoint_modern_authentication_required.sharepoint_client",
                 new=sharepoint_client,
@@ -94,7 +96,7 @@ class Test_sharepoint_modern_authentication_required:
             assert result[0].status_extended == (
                 "Microsoft 365 SharePoint allows access to apps that don't use modern authentication."
             )
-            assert result[0].resource_id == DOMAIN
+            assert result[0].resource_id == "sharepointSettings"
             assert result[0].location == "global"
             assert result[0].resource_name == "SharePoint Settings"
             assert result[0].resource == sharepoint_client.settings.dict()
@@ -113,6 +115,7 @@ class Test_sharepoint_modern_authentication_required:
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_m365_provider(),
             ),
+            mock.patch("prowler.providers.m365.lib.service.service.M365PowerShell"),
             mock.patch(
                 "prowler.providers.m365.services.sharepoint.sharepoint_modern_authentication_required.sharepoint_modern_authentication_required.sharepoint_client",
                 new=sharepoint_client,

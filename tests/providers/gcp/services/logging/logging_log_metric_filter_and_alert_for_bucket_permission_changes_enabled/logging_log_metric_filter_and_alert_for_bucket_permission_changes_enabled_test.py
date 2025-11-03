@@ -259,3 +259,141 @@ class Test_logging_log_metric_filter_and_alert_for_bucket_permission_changes_ena
             assert result[0].resource_name == "metric_name"
             assert result[0].project_id == GCP_PROJECT_ID
             assert result[0].location == GCP_EU1_LOCATION
+
+    def test_log_metric_filters_with_none_name(self):
+        """Test that metric with None name uses fallback 'Log Metric Filter'"""
+        logging_client = MagicMock()
+        monitoring_client = MagicMock()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            patch(
+                "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_client",
+                new=logging_client,
+            ),
+            patch(
+                "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.monitoring_client",
+                new=monitoring_client,
+            ),
+        ):
+            from prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled import (
+                logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled,
+            )
+
+            # Create a MagicMock metric object with name=None
+            metric = MagicMock()
+            metric.name = None
+            metric.filter = 'resource.type="gcs_bucket" AND protoPayload.methodName="storage.setIamPermissions"'
+            metric.project_id = GCP_PROJECT_ID
+
+            logging_client.metrics = [metric]
+            logging_client.project_ids = [GCP_PROJECT_ID]
+            logging_client.region = GCP_EU1_LOCATION
+
+            monitoring_client.alert_policies = []
+
+            check = (
+                logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled()
+            )
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].resource_name == "Log Metric Filter"
+            assert (
+                result[0].resource_id == "unknown"
+            )  # resource_id should never be None
+            assert result[0].project_id == GCP_PROJECT_ID
+            assert result[0].location == GCP_EU1_LOCATION
+            # When name is None, the 'or' pattern makes it use "unknown"
+            assert "unknown" in result[0].status_extended
+
+    def test_log_metric_filters_with_missing_name_attribute(self):
+        """Test that metric without name attribute uses fallback 'Log Metric Filter'"""
+        logging_client = MagicMock()
+        monitoring_client = MagicMock()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            patch(
+                "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_client",
+                new=logging_client,
+            ),
+            patch(
+                "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.monitoring_client",
+                new=monitoring_client,
+            ),
+        ):
+            from prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled import (
+                logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled,
+            )
+
+            # Create a MagicMock metric object without name attribute
+            metric = MagicMock(spec=["filter", "project_id"])
+            metric.filter = 'resource.type="gcs_bucket" AND protoPayload.methodName="storage.setIamPermissions"'
+            metric.project_id = GCP_PROJECT_ID
+
+            logging_client.metrics = [metric]
+            logging_client.project_ids = [GCP_PROJECT_ID]
+            logging_client.region = GCP_EU1_LOCATION
+
+            monitoring_client.alert_policies = []
+
+            check = (
+                logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled()
+            )
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].resource_name == "Log Metric Filter"
+            assert (
+                result[0].resource_id == "unknown"
+            )  # resource_id should never be None
+            assert result[0].project_id == GCP_PROJECT_ID
+            assert result[0].location == GCP_EU1_LOCATION
+
+    def test_project_not_in_projects_dict(self):
+        """Test that project not in projects dict uses None and fallback name"""
+        logging_client = MagicMock()
+        monitoring_client = MagicMock()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            patch(
+                "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_client",
+                new=logging_client,
+            ),
+            patch(
+                "prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.monitoring_client",
+                new=monitoring_client,
+            ),
+        ):
+            from prowler.providers.gcp.services.logging.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled.logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled import (
+                logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled,
+            )
+
+            logging_client.metrics = []
+            logging_client.project_ids = [GCP_PROJECT_ID]
+            logging_client.region = GCP_EU1_LOCATION
+            # Project is in project_ids but NOT in projects dict
+            logging_client.projects = {}
+
+            monitoring_client.alert_policies = []
+
+            check = (
+                logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled()
+            )
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].resource_name == "GCP Project"
+            assert result[0].project_id == GCP_PROJECT_ID
+            assert result[0].location == GCP_EU1_LOCATION

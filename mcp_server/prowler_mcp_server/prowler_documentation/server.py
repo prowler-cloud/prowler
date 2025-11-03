@@ -23,18 +23,15 @@ def search(
     to find relevant information about security checks, cloud providers,
     compliance frameworks, and usage instructions.
 
-    Supports advanced search syntax:
-    - Exact phrases: "custom css"
-    - Prefix search: test*
-    - Fuzzy search: doks~1
-    - Proximity search: "dashboard admin"~2
+    Uses fulltext search to find the most relevant documentation pages
+    based on your query.
 
     Args:
         query: The search query
         page_size: Number of top results to return (default: 5)
 
     Returns:
-        List of search results with highlights showing matched terms (in <span> tags)
+        List of search results with highlights showing matched terms (in <mark><b> tags)
     """
     return prowler_docs_search_engine.search(query, page_size)
 

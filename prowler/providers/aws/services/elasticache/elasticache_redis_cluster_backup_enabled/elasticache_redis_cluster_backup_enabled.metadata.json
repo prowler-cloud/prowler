@@ -1,29 +1,39 @@
 {
   "Provider": "aws",
   "CheckID": "elasticache_redis_cluster_backup_enabled",
-  "CheckTitle": "Ensure Elasticache Redis cache cluster has automatic backups enabled.",
-  "CheckType": [],
+  "CheckTitle": "ElastiCache Redis cache cluster has automated snapshot backups enabled with retention of at least 7 days",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Data Destruction"
+  ],
   "ServiceName": "elasticache",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Other",
-  "Description": "Ensure Elasticache Redis cache cluster has automatic backups enabled.",
-  "Risk": "Ensure that your Amazon ElastiCache Redis cache clusters have a sufficient backup retention period set in order to fulfill your organization's compliance requirements. The retention period represents the number of days for which Amazon ElastiCache service retains automatic Redis cluster backups before deleting them.",
-  "RelatedUrl": "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticache-controls.html#elasticache-1",
+  "Description": "Amazon ElastiCache Redis replication groups have **automated snapshot backups** enabled with a **retention period** of at least `7` days.\n\nThe evaluation focuses on whether backups are enabled and the configured retention meets the minimum threshold.",
+  "Risk": "Absent or short-retained backups degrade **availability** and heighten **data loss** risk. Hardware failures, corruption, or accidental deletes may not be recoverable to needed points, undermining **RPO/RTO**, prolonging outages, and limiting **forensics** on cache data.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ElastiCache/enable-automatic-backups.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticache-controls.html#elasticache-1"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws elasticache modify-replication-group --region <value> --replication-group-id <value> --snapshot-retention-limit <value> --apply-immediately",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-that-amazon-elasticache-redis-clusters-have-automatic-backup-turned-on/"
+      "CLI": "aws elasticache modify-replication-group --replication-group-id <REPLICATION_GROUP_ID> --snapshot-retention-limit 7 --apply-immediately",
+      "NativeIaC": "```yaml\n# CloudFormation: set automated snapshot retention for a Redis replication group\nResources:\n  <example_resource_name>:\n    Type: AWS::ElastiCache::ReplicationGroup\n    Properties:\n      ReplicationGroupDescription: example\n      SnapshotRetentionLimit: 7  # Critical: enables automatic snapshots and retains them for >=7 days\n```",
+      "Other": "1. In the AWS Console, open ElastiCache\n2. Go to Redis > Replication groups\n3. Select <example_resource_id> and click Modify\n4. Set Snapshot retention (days) to 7 or higher\n5. Check Apply immediately\n6. Click Modify to save",
+      "Terraform": "```hcl\nresource \"aws_elasticache_replication_group\" \"<example_resource_name>\" {\n  replication_group_id       = \"<example_resource_id>\"\n  replication_group_description = \"<example_description>\"\n  snapshot_retention_limit   = 7  # Critical: enable automated backups and keep them for >=7 days\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure Elasticache Cluster has automatic backups enabled.",
-      "Url": "https://docs.aws.amazon.com/securityhub/latest/userguide/elasticache-controls.html#elasticache-1"
+      "Text": "Enable **automated backups** and set **retention** to meet RPO/RTO (typically  `7` days).\n- Define a consistent `snapshot window`\n- Test restores regularly\n- Protect backup storage with **least privilege** and immutability\n- Monitor backup status for failures\n- Apply **defense in depth** with replicas/Multi-AZ",
+      "Url": "https://hub.prowler.com/check/elasticache_redis_cluster_backup_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

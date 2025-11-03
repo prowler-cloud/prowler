@@ -75,7 +75,7 @@ const baseAuthSchema = z.object({
 
 export const signInSchema = baseAuthSchema
   .extend({
-    password: z.string().min(1, { message: "Password is required." }),
+    password: z.string(),
   })
   .refine(
     (data) => {

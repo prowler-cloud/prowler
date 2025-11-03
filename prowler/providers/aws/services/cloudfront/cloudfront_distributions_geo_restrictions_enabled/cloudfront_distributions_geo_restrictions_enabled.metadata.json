@@ -1,29 +1,38 @@
 {
   "Provider": "aws",
   "CheckID": "cloudfront_distributions_geo_restrictions_enabled",
-  "CheckTitle": "Check if Geo restrictions are enabled in CloudFront distributions.",
-  "CheckType": [],
+  "CheckTitle": "CloudFront distribution has Geo restrictions enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
+  ],
   "ServiceName": "cloudfront",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:cloudfront:region:account-id:distribution/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsCloudFrontDistribution",
-  "Description": "Check if Geo restrictions are enabled in CloudFront distributions.",
-  "Risk": "Consider countries where service should not be accessed, by legal or compliance requirements. Additionally if not restricted the attack vector is increased.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/georestrictions.html",
+  "Description": "**CloudFront distributions** have **geographic restrictions** configured to limit access by country using an allowlist or blocklist (`RestrictionType` not `none`).",
+  "Risk": "Absent geo restrictions, content is globally reachable, enabling:\n- Access from sanctioned or unlicensed regions (confidentiality/compliance)\n- Broader bot abuse, scraping, and DDoS staging (availability)\n- More credential-stuffing and fraud attempts against apps",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://repost.aws/knowledge-center/cloudfront-geo-restriction",
+    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/georestrictions.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/geo-restriction.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/geo-restriction.html",
-      "Terraform": ""
+      "CLI": "aws cloudfront get-distribution-config --id <DISTRIBUTION_ID> --output json > current-config.json && echo 'Manually edit current-config.json to add Restrictions.GeoRestriction with RestrictionType: \"whitelist\" and Locations: [\"US\"], then run:' && echo 'aws cloudfront update-distribution --id <DISTRIBUTION_ID> --distribution-config file://current-config.json --if-match $(aws cloudfront get-distribution-config --id <DISTRIBUTION_ID> --query \"ETag\" --output text)'",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::CloudFront::Distribution\n    Properties:\n      DistributionConfig:\n        Enabled: true\n        Origins:\n          - DomainName: \"<example_origin_domain>\"\n            Id: \"<example_origin_id>\"\n        DefaultCacheBehavior:\n          TargetOriginId: \"<example_origin_id>\"\n          ViewerProtocolPolicy: allow-all\n          CachePolicyId: \"<example_cache_policy_id>\"\n        Restrictions:\n          GeoRestriction:\n            RestrictionType: whitelist  # CRITICAL: enables geo restrictions\n            Locations:                  # CRITICAL: at least one allowed country\n              - US\n```",
+      "Other": "1. In the AWS Console, go to CloudFront > Distributions\n2. Select the target distribution\n3. Open the Security tab > Geographic restrictions > Edit\n4. Choose Allow list (or Block list)\n5. Add at least one country to the list\n6. Save changes",
+      "Terraform": "```hcl\nresource \"aws_cloudfront_distribution\" \"<example_resource_name>\" {\n  enabled = true\n\n  origins {\n    domain_name = \"<example_origin_domain>\"\n    origin_id   = \"<example_origin_id>\"\n  }\n\n  default_cache_behavior {\n    target_origin_id       = \"<example_origin_id>\"\n    viewer_protocol_policy = \"allow-all\"\n    cache_policy_id        = \"<example_cache_policy_id>\"\n  }\n\n  restrictions {\n    geo_restriction {\n      restriction_type = \"whitelist\" # CRITICAL: enables geo restrictions\n      locations        = [\"US\"]      # CRITICAL: at least one allowed country\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "If possible, define and enable Geo restrictions for this service.",
-      "Url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/georestrictions.html"
+      "Text": "Apply **least privilege** to distribution scope: enable geo restrictions with a country **allowlist** where feasible, or maintain a precise blocklist aligned to legal, licensing, and threat models.\n\nLayer **defense in depth**: use WAF/bot controls, signed URLs or cookies, and monitoring to detect abuse and configuration drift.",
+      "Url": "https://hub.prowler.com/check/cloudfront_distributions_geo_restrictions_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Infrastructure Security"

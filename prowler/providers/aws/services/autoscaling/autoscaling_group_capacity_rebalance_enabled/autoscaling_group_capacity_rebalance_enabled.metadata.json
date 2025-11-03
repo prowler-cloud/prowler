@@ -1,32 +1,39 @@
 {
   "Provider": "aws",
   "CheckID": "autoscaling_group_capacity_rebalance_enabled",
-  "CheckTitle": "Check if Amazon EC2 Auto Scaling groups have capacity rebalance enabled.",
+  "CheckTitle": "Amazon EC2 Auto Scaling group has Capacity Rebalancing enabled",
   "CheckType": [
-    "Resilience"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Effects/Denial of Service"
   ],
   "ServiceName": "autoscaling",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:autoscaling:region:account-id:autoScalingGroup/autoScalingGroupName",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsAutoScalingAutoScalingGroup",
-  "Description": "This control checks whether an Amazon EC2 Auto Scaling group has capacity rebalance enabled.",
-  "Risk": "When you don't use Capacity Rebalancing, Amazon EC2 Auto Scaling doesn't replace Spot Instances until after the Amazon EC2 Spot service interrupts the instances and their health check fails. Before interrupting an instance, Amazon EC2 always gives both an EC2 instance rebalance recommendation and a Spot two-minute instance interruption notice.",
-  "RelatedUrl": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-capacity-rebalancing.html",
+  "Description": "**EC2 Auto Scaling groups** use **Capacity Rebalancing** to act on EC2 `rebalance` recommendations by launching replacement Spot instances and terminating at-risk ones after they are healthy.\n\n*Assesses whether this proactive replacement behavior is enabled.*",
+  "Risk": "Without **Capacity Rebalancing**, Spot interruptions can drop targets and reduce capacity, causing timeouts, 5xx spikes, and backlog growth. The two-minute notice is often insufficient, reducing service **availability** and increasing the chance of cascading failures and slow recovery.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/awssupport/latest/user/fault-tolerance-checks.html#amazon-ec2-auto-scaling-group-capacity-rebalance-enabled",
+    "https://docs.aws.amazon.com/autoscaling/ec2/userguide/ec2-auto-scaling-capacity-rebalancing.html",
+    "https://trendmicro.com/cloudoneconformity/knowledge-base/aws/EC2/enable-capacity-rebalancing.html",
+    "https://docs.aws.amazon.com/autoscaling/ec2/userguide/enable-capacity-rebalancing-console-cli.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws autoscaling create-auto-scaling-group --capacity-rebalance",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/autoscaling/ec2/userguide/enable-capacity-rebalancing-console-cli.html",
-      "Terraform": ""
+      "CLI": "aws autoscaling update-auto-scaling-group --auto-scaling-group-name <example_resource_name> --capacity-rebalance",
+      "NativeIaC": "```yaml\n# CloudFormation: Enable Capacity Rebalancing on an Auto Scaling group\nResources:\n  <example_resource_name>:\n    Type: AWS::AutoScaling::AutoScalingGroup\n    Properties:\n      MinSize: \"1\"\n      MaxSize: \"1\"\n      AvailabilityZones: [\"<example_az>\"]\n      LaunchTemplate:\n        LaunchTemplateName: <example_resource_name>\n        Version: \"$Default\"\n      CapacityRebalance: true  # CRITICAL: Enables proactive replacement of at-risk Spot instances\n```",
+      "Other": "1. In the AWS Console, go to EC2 > Auto Scaling Groups\n2. Select <example_resource_name> and open the Details tab\n3. Click Allocation strategies > Edit, check Capacity rebalancing\n4. Click Update/Save",
+      "Terraform": "```hcl\n# Terraform: Enable Capacity Rebalancing on an Auto Scaling group\nresource \"aws_autoscaling_group\" \"<example_resource_name>\" {\n  name               = \"<example_resource_name>\"\n  min_size           = 1\n  max_size           = 1\n  desired_capacity   = 1\n  availability_zones = [\"<example_az>\"]\n\n  launch_template {\n    id    = \"<example_resource_id>\"\n    version = \"$Latest\"\n  }\n\n  capacity_rebalance = true  # CRITICAL: Turns on Capacity Rebalancing\n}\n```"
     },
     "Recommendation": {
-      "Text": "When you enable Capacity Rebalancing for your Auto Scaling group, Amazon EC2 Auto Scaling attempts to proactively replace the Spot Instances in your group that have received a rebalance recommendation. This provides an opportunity to rebalance your workload to new Spot Instances that aren't at an elevated risk of interruption.",
-      "Url": "https://docs.aws.amazon.com/awssupport/latest/user/fault-tolerance-checks.html#amazon-ec2-auto-scaling-group-capacity-rebalance-enabled"
+      "Text": "Enable **Capacity Rebalancing** for ASGs that use Spot.\n\nApply resilience practices:\n- Prefer `price-capacity-optimized` allocation\n- Keep headroom below `MaxSize`\n- Use lifecycle hooks to drain/deregister\n- Design stateless, interruption-tolerant workloads (least privilege and defense-in-depth for dependencies)",
+      "Url": "https://hub.prowler.com/check/autoscaling_group_capacity_rebalance_enabled"
     }
   },
   "Categories": [
-    "redundancy"
+    "resilience"
   ],
   "DependsOn": [],
   "RelatedTo": [],

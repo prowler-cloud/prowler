@@ -1,31 +1,40 @@
 {
   "Provider": "aws",
   "CheckID": "cloudwatch_changes_to_network_route_tables_alarm_configured",
-  "CheckTitle": "Ensure route table changes are monitored",
+  "CheckTitle": "Account monitors VPC route table changes with a CloudWatch Logs metric filter and alarm",
   "CheckType": [
-    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "TTPs/Defense Evasion",
+    "Effects/Data Exfiltration"
   ],
   "ServiceName": "cloudwatch",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:cloudwatch:region:account-id:certificate/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCloudWatchAlarm",
-  "Description": "Real-time monitoring of API calls can be achieved by directing Cloud Trail Logs to CloudWatch Logs, or an external Security information and event management (SIEM)environment, and establishing corresponding metric filters and alarms. Routing tablesare used to route network traffic between subnets and to network gateways. It isrecommended that a metric filter and alarm be established for changes to route tables.",
-  "Risk": "CloudWatch is an AWS native service that allows you to ob serve and monitor resources and applications. CloudTrail Logs can also be sent to an external Security informationand event management (SIEM) environment for monitoring and alerting.Monitoring changes to route tables will help ensure that all VPC traffic flows through anexpected path and prevent any accidental or intentional modifications that may lead touncontrolled network traffic. An alarm should be triggered every time an AWS API call isperformed to create, replace, delete, or disassociate a Route Table.",
-  "RelatedUrl": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
+  "Description": "**VPC route table changes** are captured from **CloudTrail logs** by a **CloudWatch Logs metric filter** with an associated **alarm** for events like `CreateRoute`, `CreateRouteTable`, `ReplaceRoute`, `ReplaceRouteTableAssociation`, `DeleteRoute`, `DeleteRouteTable`, and `DisassociateRouteTable`.",
+  "Risk": "Without monitoring of **route table changes**, unauthorized or accidental edits can redirect traffic, bypass inspection, or blackhole routes, impacting **confidentiality** (exfiltration), **integrity** (tampered paths), and **availability** (outages from misrouted traffic).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_13",
-      "Terraform": "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_13#fix---buildtime"
+      "NativeIaC": "```yaml\n# CloudFormation: Metric filter + alarm for VPC route table changes\nResources:\n  RouteTableChangeMetricFilter:\n    Type: AWS::Logs::MetricFilter\n    Properties:\n      LogGroupName: \"<example_resource_name>\"\n      # CRITICAL: Detect EC2 route table change events in CloudTrail logs\n      # Includes eventSource and the required eventNames\n      FilterPattern: '{($.eventSource = ec2.amazonaws.com) && (($.eventName = CreateRoute) || ($.eventName = CreateRouteTable) || ($.eventName = ReplaceRoute) || ($.eventName = ReplaceRouteTableAssociation) || ($.eventName = DeleteRouteTable) || ($.eventName = DeleteRoute) || ($.eventName = DisassociateRouteTable))}'\n      MetricTransformations:\n        - MetricValue: \"1\"\n          MetricNamespace: \"<example_resource_name>\"\n          MetricName: \"<example_resource_name>\"\n\n  RouteTableChangeAlarm:\n    Type: AWS::CloudWatch::Alarm\n    Properties:\n      # CRITICAL: Alarm on the metric from the filter above\n      Namespace: \"<example_resource_name>\"\n      MetricName: \"<example_resource_name>\"\n      ComparisonOperator: GreaterThanOrEqualToThreshold\n      EvaluationPeriods: 1\n      Period: 300\n      Statistic: Sum\n      Threshold: 1\n```",
+      "Other": "1. In the AWS console, open CloudWatch > Log groups and select your CloudTrail log group\n2. Go to Metric filters > Create metric filter\n3. Set Filter pattern to:\n   {($.eventSource = ec2.amazonaws.com) && (($.eventName = CreateRoute) || ($.eventName = CreateRouteTable) || ($.eventName = ReplaceRoute) || ($.eventName = ReplaceRouteTableAssociation) || ($.eventName = DeleteRouteTable) || ($.eventName = DeleteRoute) || ($.eventName = DisassociateRouteTable))}\n4. Name the metric and set Metric value to 1; choose any namespace/name\n5. Create the filter\n6. From the filter, click Create alarm\n7. Set Statistic: Sum, Period: 5 minutes, Threshold type: Static, Threshold: 1, Whenever: Greater/Equal\n8. Create the alarm (notifications optional)",
+      "Terraform": "```hcl\n# Metric filter + alarm for VPC route table changes\nresource \"aws_cloudwatch_log_metric_filter\" \"routes\" {\n  name           = \"<example_resource_name>\"\n  log_group_name = \"<example_resource_name>\"\n  # CRITICAL: Detect EC2 route table change events in CloudTrail logs\n  pattern = \"{($.eventSource = ec2.amazonaws.com) && (($.eventName = CreateRoute) || ($.eventName = CreateRouteTable) || ($.eventName = ReplaceRoute) || ($.eventName = ReplaceRouteTableAssociation) || ($.eventName = DeleteRouteTable) || ($.eventName = DeleteRoute) || ($.eventName = DisassociateRouteTable))}\"\n\n  metric_transformation {\n    name      = \"<example_resource_name>\"\n    namespace = \"<example_resource_name>\"\n    value     = \"1\"\n  }\n}\n\nresource \"aws_cloudwatch_metric_alarm\" \"routes\" {\n  alarm_name          = \"<example_resource_name>\"\n  # CRITICAL: Alarm targets the metric from the filter above\n  metric_name         = \"<example_resource_name>\"\n  namespace           = \"<example_resource_name>\"\n  comparison_operator = \"GreaterThanOrEqualToThreshold\"\n  evaluation_periods  = 1\n  period              = 300\n  statistic           = \"Sum\"\n  threshold           = 1\n}\n```"
     },
     "Recommendation": {
-      "Text": "If you are using CloudTrails and CloudWatch, perform the following to setup the metric filter, alarm, SNS topic, and subscription: 1. Create a metric filter based on filter pattern provided which checks for route table changes and the <cloudtrail_log_group_name> taken from audit step 1. aws logs put-metric-filter --log-group-name <cloudtrail_log_group_name> -- filter-name `<route_table_changes_metric>` --metric-transformations metricName= `<route_table_changes_metric>` ,metricNamespace='CISBenchmark',metricValue=1 --filter-pattern '{($.eventSource = ec2.amazonaws.com) && (($.eventName = CreateRoute) || ($.eventName = CreateRouteTable) || ($.eventName = ReplaceRoute) || ($.eventName = ReplaceRouteTableAssociation) || ($.eventName = DeleteRouteTable) || ($.eventName = DeleteRoute) || ($.eventName = DisassociateRouteTable)) }' Note: You can choose your own metricName and metricNamespace strings. Using the same metricNamespace for all Foundations Benchmark metrics will group them together. 2. Create an SNS topic that the alarm will notify aws sns create-topic --name <sns_topic_name> Note: you can execute this command once and then re-use the same topic for all monitoring alarms. 3. Create an SNS subscription to the topic created in step 2 aws sns subscribe --topic-arn <sns_topic_arn> --protocol <protocol_for_sns> - -notification-endpoint <sns_subscription_endpoints> Note: you can execute this command once and then re-use the SNS subscription for all monitoring alarms. 4. Create an alarm that is associated with the CloudWatch Logs Metric Filter created in step 1 and an SNS topic created in step 2 aws cloudwatch put-metric-alarm --alarm-name `<route_table_changes_alarm>` --metric-name `<route_table_changes_metric>` --statistic Sum --period 300 - -threshold 1 --comparison-operator GreaterThanOrEqualToThreshold -- evaluation-periods 1 --namespace 'CISBenchmark' --alarm-actions <sns_topic_arn>",
-      "Url": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html"
+      "Text": "Implement a **CloudWatch Logs metric filter and alarm** on CloudTrail for these route table events and notify responders. Enforce **least privilege** for route modifications, require **change control**, and apply **defense in depth** with VPC Flow Logs and guardrails to prevent and quickly contain unsafe routing changes.",
+      "Url": "https://hub.prowler.com/check/cloudwatch_changes_to_network_route_tables_alarm_configured"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging",
+    "threat-detection"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
