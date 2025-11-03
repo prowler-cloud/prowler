@@ -36,6 +36,14 @@ export interface RadarDataPoint {
   change?: number;
 }
 
+export interface ScatterDataPoint {
+  x: number;
+  y: number;
+  provider: string;
+  name: string;
+  size?: number;
+}
+
 export interface LineConfig {
   dataKey: string;
   color: string;

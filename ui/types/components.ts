@@ -213,14 +213,23 @@ export type AzureCredentials = {
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
-export type M365Credentials = {
+export type M365ClientSecretCredentials = {
   [ProviderCredentialFields.CLIENT_ID]: string;
   [ProviderCredentialFields.CLIENT_SECRET]: string;
   [ProviderCredentialFields.TENANT_ID]: string;
-  [ProviderCredentialFields.USER]?: string;
-  [ProviderCredentialFields.PASSWORD]?: string;
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
+
+export type M365CertificateCredentials = {
+  [ProviderCredentialFields.CLIENT_ID]: string;
+  [ProviderCredentialFields.CERTIFICATE_CONTENT]: string;
+  [ProviderCredentialFields.TENANT_ID]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
+export type M365Credentials =
+  | M365ClientSecretCredentials
+  | M365CertificateCredentials;
 
 export type GCPDefaultCredentials = {
   client_id: string;
@@ -239,13 +248,24 @@ export type KubernetesCredentials = {
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
+export type OCICredentials = {
+  [ProviderCredentialFields.OCI_USER]: string;
+  [ProviderCredentialFields.OCI_FINGERPRINT]: string;
+  [ProviderCredentialFields.OCI_KEY_CONTENT]: string;
+  [ProviderCredentialFields.OCI_TENANCY]: string;
+  [ProviderCredentialFields.OCI_REGION]: string;
+  [ProviderCredentialFields.OCI_PASS_PHRASE]?: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
 export type CredentialsFormSchema =
   | AWSCredentials
   | AzureCredentials
   | GCPDefaultCredentials
   | GCPServiceAccountKey
   | KubernetesCredentials
-  | M365Credentials;
+  | M365Credentials
+  | OCICredentials;
 
 export interface SearchParamsProps {
   [key: string]: string | string[] | undefined;
