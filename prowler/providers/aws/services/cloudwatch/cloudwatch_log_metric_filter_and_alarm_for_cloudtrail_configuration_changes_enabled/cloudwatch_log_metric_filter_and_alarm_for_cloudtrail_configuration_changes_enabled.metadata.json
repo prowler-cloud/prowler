@@ -1,31 +1,41 @@
 {
   "Provider": "aws",
   "CheckID": "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
-  "CheckTitle": "Ensure a log metric filter and alarm exist for CloudTrail configuration changes.",
+  "CheckTitle": "CloudWatch Logs metric filter and alarm exist for CloudTrail configuration changes",
   "CheckType": [
-    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "TTPs/Defense Evasion"
   ],
   "ServiceName": "cloudwatch",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:cloudwatch:region:account-id:certificate/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCloudWatchAlarm",
-  "Description": "Ensure a log metric filter and alarm exist for CloudTrail configuration changes.",
-  "Risk": "Monitoring unauthorized API calls will help reveal application errors and may reduce time to detect malicious activity.",
-  "RelatedUrl": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
+  "Description": "**CloudTrail logs** include a **metric filter** for trail configuration events (`CreateTrail`, `UpdateTrail`, `DeleteTrail`, `StartLogging`, `StopLogging`) with an associated **CloudWatch alarm** to alert on matches.\n\nEvaluates the presence of this filter-and-alarm monitoring.",
+  "Risk": "Absent this monitoring, logging can be stopped or altered without notice, eroding visibility.\n\nThat enables covert activity and data exfiltration without audit evidence, harming confidentiality, the integrity of records, and the availability of reliable logs for detection and forensics.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
+    "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_5",
+    "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_5#fix---buildtime"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_5",
-      "Terraform": "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_5#fix---buildtime"
+      "NativeIaC": "```yaml\nResources:\n  CloudTrailCfgMetricFilter:\n    Type: AWS::Logs::MetricFilter\n    Properties:\n      LogGroupName: <example_resource_name> # CRITICAL: CloudTrail log group to monitor\n      FilterPattern: \"{($.eventName = CreateTrail) || ($.eventName = UpdateTrail) || ($.eventName = DeleteTrail) || ($.eventName = StartLogging) || ($.eventName = StopLogging)}\" # CRITICAL: Detects CloudTrail config changes\n      MetricTransformations:\n        - MetricName: <example_resource_name>  # CRITICAL: Metric created by the filter\n          MetricNamespace: <example_resource_name>\n          MetricValue: \"1\"\n\n  CloudTrailCfgAlarm:\n    Type: AWS::CloudWatch::Alarm\n    Properties:\n      MetricName: <example_resource_name>      # CRITICAL: Alarm uses metric from filter\n      Namespace: <example_resource_name>\n      ComparisonOperator: GreaterThanOrEqualToThreshold\n      EvaluationPeriods: 1\n      Period: 300\n      Statistic: Sum\n      Threshold: 1\n```",
+      "Other": "1. In the AWS Console, go to CloudWatch > Log groups and open the log group used by CloudTrail\n2. Create metric filter: Actions > Create metric filter\n   - Filter pattern: {($.eventName = CreateTrail) || ($.eventName = UpdateTrail) || ($.eventName = DeleteTrail) || ($.eventName = StartLogging) || ($.eventName = StopLogging)}\n   - Metric name: <example_resource_name>, Namespace: <example_resource_name>, Value: 1\n   - Create metric filter\n3. From the Metric filters tab, select the new filter and choose Create alarm\n   - Threshold: Greater/Equal 1, Period: 5 minutes, Evaluation periods: 1\n   - Create alarm",
+      "Terraform": "```hcl\nresource \"aws_cloudwatch_log_metric_filter\" \"cfg\" {\n  name           = \"<example_resource_name>\"\n  log_group_name = \"<example_resource_name>\" # CRITICAL: CloudTrail log group\n  pattern        = \"{($.eventName = CreateTrail) || ($.eventName = UpdateTrail) || ($.eventName = DeleteTrail) || ($.eventName = StartLogging) || ($.eventName = StopLogging)}\" # CRITICAL: Detects CloudTrail config changes\n\n  metric_transformation {\n    name      = \"<example_resource_name>\"   # CRITICAL: Metric created by filter\n    namespace = \"<example_resource_name>\"\n    value     = \"1\"\n  }\n}\n\nresource \"aws_cloudwatch_metric_alarm\" \"cfg\" {\n  metric_name         = \"<example_resource_name>\" # CRITICAL: Uses metric from filter\n  namespace           = \"<example_resource_name>\"\n  comparison_operator = \"GreaterThanOrEqualToThreshold\"\n  evaluation_periods  = 1\n  period              = 300\n  statistic           = \"Sum\"\n  threshold           = 1\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended that a metric filter and alarm be established for unauthorized requests.",
-      "Url": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html"
+      "Text": "Implement a **metric filter** for trail configuration events and a linked **alarm** that notifies response channels.\n\nApply **least privilege** and **separation of duties** for trail changes, add **defense in depth** with centralized logging and validation, and regularly test that alerts fire.",
+      "Url": "https://hub.prowler.com/check/cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging",
+    "threat-detection"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Logging and Monitoring"

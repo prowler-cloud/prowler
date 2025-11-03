@@ -9,25 +9,6 @@ PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE = {}
 PROWLER_CHECKS = {}
 AVAILABLE_COMPLIANCE_FRAMEWORKS = {}
 
-# Map API provider names to Prowler directory names
-# This is needed because the OCI provider directory is 'oraclecloud' but the provider type is 'oci'
-PROVIDER_NAME_MAPPING = {
-    "oci": "oraclecloud",
-}
-
-
-def get_prowler_provider_name(provider_type: str) -> str:
-    """
-    Map API provider type to Prowler provider directory name.
-
-    Args:
-        provider_type: The provider type from the API (e.g., 'oci', 'aws', 'azure')
-
-    Returns:
-        The provider name used in Prowler's directory structure (e.g., 'oraclecloud', 'aws', 'azure')
-    """
-    return PROVIDER_NAME_MAPPING.get(provider_type, provider_type)
-
 
 def get_compliance_frameworks(provider_type: Provider.ProviderChoices) -> list[str]:
     """
@@ -47,9 +28,8 @@ def get_compliance_frameworks(provider_type: Provider.ProviderChoices) -> list[s
     """
     global AVAILABLE_COMPLIANCE_FRAMEWORKS
     if provider_type not in AVAILABLE_COMPLIANCE_FRAMEWORKS:
-        prowler_provider_name = get_prowler_provider_name(provider_type)
         AVAILABLE_COMPLIANCE_FRAMEWORKS[provider_type] = (
-            get_available_compliance_frameworks(prowler_provider_name)
+            get_available_compliance_frameworks(provider_type)
         )
 
     return AVAILABLE_COMPLIANCE_FRAMEWORKS[provider_type]
@@ -69,8 +49,7 @@ def get_prowler_provider_checks(provider_type: Provider.ProviderChoices):
     Returns:
         Iterable[str]: An iterable of check IDs associated with the specified provider type.
     """
-    prowler_provider_name = get_prowler_provider_name(provider_type)
-    return CheckMetadata.get_bulk(prowler_provider_name).keys()
+    return CheckMetadata.get_bulk(provider_type).keys()
 
 
 def get_prowler_provider_compliance(provider_type: Provider.ProviderChoices) -> dict:
@@ -88,8 +67,7 @@ def get_prowler_provider_compliance(provider_type: Provider.ProviderChoices) -> 
         dict: A dictionary mapping compliance framework names to their respective
             Compliance objects for the specified provider.
     """
-    prowler_provider_name = get_prowler_provider_name(provider_type)
-    return Compliance.get_bulk(prowler_provider_name)
+    return Compliance.get_bulk(provider_type)
 
 
 def load_prowler_compliance():

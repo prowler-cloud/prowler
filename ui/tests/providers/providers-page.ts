@@ -10,6 +10,12 @@ export interface AWSProviderData {
   accessKeyId?: string;
   secretAccessKey?: string;
 }
+  
+// AZURE provider data
+export interface AZUREProviderData {
+  subscriptionId: string;
+  alias?: string;
+}
 
 // AWS credential options
 export const AWS_CREDENTIAL_OPTIONS = {
@@ -28,6 +34,23 @@ export interface AWSProviderCredential {
   accessKeyId?: string;
   secretAccessKey?: string;
 }
+
+// AZURE credential options
+export const AZURE_CREDENTIAL_OPTIONS = {
+  AZURE_CREDENTIALS: "credentials"
+} as const;
+
+// AZURE credential type
+type AZURECredentialType = (typeof AZURE_CREDENTIAL_OPTIONS)[keyof typeof AZURE_CREDENTIAL_OPTIONS];
+
+// AZURE provider credential
+export interface AZUREProviderCredential {
+  type: AZURECredentialType;
+  clientId:string;
+  clientSecret:string;
+  tenantId:string;
+}
+
 
 // Providers page
 export class ProvidersPage extends BasePage {
@@ -64,6 +87,12 @@ export class ProvidersPage extends BasePage {
   readonly accessKeyIdInput: Locator;
   readonly secretAccessKeyInput: Locator;
 
+  // AZURE provider form elements
+  readonly azureSubscriptionIdInput: Locator;
+  readonly azureClientIdInput: Locator;
+  readonly azureClientSecretInput: Locator;
+  readonly azureTenantIdInput: Locator;
+
   // Delete button
   readonly deleteProviderConfirmationButton: Locator;
 
@@ -96,6 +125,14 @@ export class ProvidersPage extends BasePage {
 
     // AWS provider form inputs
     this.accountIdInput = page.getByRole("textbox", { name: "Account ID" });
+    
+    // AZURE provider form inputs
+    this.azureSubscriptionIdInput = page.getByRole("textbox", { name: "Subscription ID" });
+    this.azureClientIdInput = page.getByRole("textbox", { name: "Client ID" });
+    this.azureClientSecretInput = page.getByRole("textbox", { name: "Client Secret" });
+    this.azureTenantIdInput = page.getByRole("textbox", { name: "Tenant ID" });
+
+    // Alias input
     this.aliasInput = page.getByRole("textbox", { name: "Provider alias (optional)" });
 
     // Navigation buttons in the form (next and back)
@@ -150,15 +187,33 @@ export class ProvidersPage extends BasePage {
   }
 
   async selectAWSProvider(): Promise<void> {
+
     // Prefer label-based click for radios, force if overlay intercepts
     await this.awsProviderRadio.click({ force: true });
     await this.waitForPageLoad();
   }
 
+  async selectAZUREProvider(): Promise<void> {
+    
+    // Prefer label-based click for radios, force if overlay intercepts
+    await this.azureProviderRadio.click({ force: true });
+    await this.waitForPageLoad();
+  }
+  
   async fillAWSProviderDetails(data: AWSProviderData): Promise<void> {
     // Fill the AWS provider details
 
     await this.accountIdInput.fill(data.accountId);
+
+    if (data.alias) {
+      await this.aliasInput.fill(data.alias);
+    }
+  }
+
+  async fillAZUREProviderDetails(data: AZUREProviderData): Promise<void> {
+    // Fill the AWS provider details
+
+    await this.azureSubscriptionIdInput.fill(data.subscriptionId);
 
     if (data.alias) {
       await this.aliasInput.fill(data.alias);
@@ -315,6 +370,20 @@ export class ProvidersPage extends BasePage {
     }
     if (credentials.secretAccessKey) {
       await this.secretAccessKeyInput.fill(credentials.secretAccessKey);
+    }
+  }
+
+  async fillAZURECredentials(credentials: AZUREProviderCredential): Promise<void> {
+    // Fill the azure credentials form
+
+    if (credentials.clientId) {
+      await this.azureClientIdInput.fill(credentials.clientId);
+    }
+    if (credentials.clientSecret) {
+      await this.azureClientSecretInput.fill(credentials.clientSecret);
+    }
+    if (credentials.tenantId) {
+      await this.azureTenantIdInput.fill(credentials.tenantId);
     }
   }
 

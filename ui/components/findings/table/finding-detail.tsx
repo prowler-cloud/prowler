@@ -131,6 +131,9 @@ export const FindingDetail = ({
         <InfoField label="Finding UID" variant="simple">
           <CodeSnippet value={attributes.uid} />
         </InfoField>
+        <InfoField label="Resource ID" variant="simple">
+          <CodeSnippet value={resource.uid} />
+        </InfoField>
 
         {attributes.status === "FAIL" && (
           <InfoField label="Risk" variant="simple">
@@ -236,14 +239,6 @@ export const FindingDetail = ({
 
       {/* Resource Details */}
       <CustomSection title="Resource Details">
-        <InfoField label="Resource ID" variant="simple">
-          <Snippet className="bg-gray-50 py-1 dark:bg-slate-800" hideSymbol>
-            <span className="text-xs whitespace-pre-line">
-              {renderValue(resource.uid)}
-            </span>
-          </Snippet>
-        </InfoField>
-
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <InfoField label="Resource Name">
             {renderValue(resource.name)}

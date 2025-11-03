@@ -30,6 +30,7 @@ from api.exceptions import ProviderConnectionError
 from api.models import (
     ComplianceRequirementOverview,
     Finding,
+    MuteRule,
     Processor,
     Provider,
     Resource,
@@ -301,6 +302,20 @@ def perform_prowler_scan(
             logger.error(f"Error processing mutelist rules: {e}")
             mutelist_processor = None
 
+    # Load enabled mute rules for this tenant
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        try:
+            active_mute_rules = MuteRule.objects.filter(
+                tenant_id=tenant_id, enabled=True
+            ).values_list("finding_uids", "reason")
+
+            mute_rules_cache = {}
+            for finding_uids, reason in active_mute_rules:
+                for uid in finding_uids:
+                    mute_rules_cache[uid] = reason
+        except Exception as e:
+            logger.error(f"Error loading mute rules: {e}")
+            mute_rules_cache = {}
     try:
         with rls_transaction(tenant_id):
             try:
@@ -449,11 +464,22 @@ def perform_prowler_scan(
                     if not last_first_seen_at:
                         last_first_seen_at = datetime.now(tz=timezone.utc)
 
-                    # If the finding is muted at this time the reason must be the configured Mutelist
-                    muted_reason = "Muted by mutelist" if finding.muted else None
+                    # Determine if finding should be muted and why
+                    # Priority: mutelist processor (highest) > manual mute rules
+                    is_muted = False
+                    muted_reason = None
+
+                    # Check mutelist processor first (highest priority)
+                    if finding.muted:
+                        is_muted = True
+                        muted_reason = "Muted by mutelist"
+                    # If not muted by mutelist, check manual mute rules
+                    elif finding_uid in mute_rules_cache:
+                        is_muted = True
+                        muted_reason = mute_rules_cache[finding_uid]
 
                     # Increment failed_findings_count cache if the finding status is FAIL and not muted
-                    if status == FindingStatus.FAIL and not finding.muted:
+                    if status == FindingStatus.FAIL and not is_muted:
                         resource_uid = finding.resource_uid
                         resource_failed_findings_cache[resource_uid] += 1
 
@@ -472,7 +498,8 @@ def perform_prowler_scan(
                         check_id=finding.check_id,
                         scan=scan_instance,
                         first_seen_at=last_first_seen_at,
-                        muted=finding.muted,
+                        muted=is_muted,
+                        muted_at=datetime.now(tz=timezone.utc) if is_muted else None,
                         muted_reason=muted_reason,
                         compliance=finding.compliance,
                     )

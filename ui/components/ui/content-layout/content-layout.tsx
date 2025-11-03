@@ -1,5 +1,3 @@
-"use client";
-
 import { ReactNode } from "react";
 
 import { Navbar } from "../nav-bar/navbar";

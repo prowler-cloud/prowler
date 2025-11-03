@@ -31,7 +31,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  analyze:
+  sdk-analyze:
+    if: github.repository == 'prowler-cloud/prowler'
     name: CodeQL Security Analysis
     runs-on: ubuntu-latest
     timeout-minutes: 30

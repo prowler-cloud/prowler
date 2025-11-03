@@ -48,8 +48,9 @@ class MainRouter:
         return db == self.admin_db
 
     def allow_relation(self, obj1, obj2, **hints):  # noqa: F841
-        # Allow relations if both objects are in either "default" or "admin" db connectors
-        if {obj1._state.db, obj2._state.db} <= {self.default_db, self.admin_db}:
+        # Allow relations when both objects originate from allowed connectors
+        allowed_dbs = {self.default_db, self.admin_db, self.replica_db}
+        if {obj1._state.db, obj2._state.db} <= allowed_dbs:
             return True
         return None
 
