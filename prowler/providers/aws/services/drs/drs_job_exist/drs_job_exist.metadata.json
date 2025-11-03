@@ -1,29 +1,39 @@
 {
   "Provider": "aws",
   "CheckID": "drs_job_exist",
-  "CheckTitle": "Ensure DRS is enabled with jobs.",
-  "CheckType": [],
+  "CheckTitle": "Region has AWS Elastic Disaster Recovery (DRS) enabled with at least one recovery job",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
   "ServiceName": "drs",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:drs:region:account-id:job/job-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
-  "Description": "Ensure DRS is enabled with jobs.",
-  "Risk": "If DRS is not enabled with jobs, then it may not be able to recover from a disaster.",
-  "RelatedUrl": "https://docs.aws.amazon.com/drs/latest/userguide/what-is-drs.html",
+  "Description": "**AWS Elastic Disaster Recovery** is assessed per Region to verify the service is **initialized** and that at least one **recovery or drill job** exists, demonstrating that failover has been exercised.",
+  "Risk": "Without DRS enabled or any prior jobs, workloads are **unprotected and untested**, undermining **availability**.\nDuring outages or ransomware, recovery may be delayed or fail, increasing RTO/RPO, causing **data loss** and prolonged downtime.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://aws.amazon.com/blogs/storage/cross-region-disaster-recovery-using-aws-elastic-disaster-recovery/",
+    "https://docs.aws.amazon.com/drs/latest/userguide/quick-start-guide-gs.html",
+    "https://aws.amazon.com/disaster-recovery/",
+    "https://docs.aws.amazon.com/drs/latest/userguide/recovery-job.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. In the AWS Console, switch to the target Region\n2. Open Elastic Disaster Recovery (DRS)\n3. Click \"Set default replication settings\" (or Settings > Initialize) and choose \"Configure and initialize\" to enable DRS in this Region\n4. Go to \"Source servers\" > \"Add server\", copy the install command, run it on one server, and wait until it shows Data replication status = Healthy and Ready for recovery\n5. Select that server, choose \"Initiate recovery drill\" (or \"Initiate recovery\") and confirm to create a job\n6. Verify under \"Recovery job history\" that the job completes",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure DRS is enabled with jobs.",
-      "Url": "https://docs.aws.amazon.com/drs/latest/userguide/what-is-drs.html"
+      "Text": "Enable DRS in required Regions and protect critical workloads. Define RTO/RPO and run **regular recovery drills** to validate launch settings and dependencies. Apply **least privilege**, monitor replication health, and document failover procedures to ensure consistent, repeatable recovery.",
+      "Url": "https://hub.prowler.com/check/drs_job_exist"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

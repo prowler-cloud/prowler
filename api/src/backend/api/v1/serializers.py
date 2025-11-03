@@ -6,8 +6,10 @@ from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
 from django.contrib.auth.password_validation import validate_password
+from django.db import IntegrityError
 from drf_spectacular.utils import extend_schema_field
 from jwt.exceptions import InvalidKeyError
+from rest_framework.reverse import reverse
 from rest_framework.validators import UniqueTogetherValidator
 from rest_framework_json_api import serializers
 from rest_framework_json_api.relations import SerializerMethodResourceRelatedField
@@ -25,7 +27,11 @@ from api.models import (
     Invitation,
     InvitationRoleRelationship,
     LighthouseConfiguration,
+    LighthouseProviderConfiguration,
+    LighthouseProviderModels,
+    LighthouseTenantConfiguration,
     Membership,
+    MuteRule,
     Processor,
     Provider,
     ProviderGroup,
@@ -53,6 +59,13 @@ from api.v1.serializer_utils.integrations import (
     JiraCredentialSerializer,
     S3ConfigSerializer,
     SecurityHubConfigSerializer,
+)
+from api.v1.serializer_utils.lighthouse import (
+    BedrockCredentialsSerializer,
+    BedrockCredentialsUpdateSerializer,
+    LighthouseCredentialsField,
+    OpenAICompatibleCredentialsSerializer,
+    OpenAICredentialsSerializer,
 )
 from api.v1.serializer_utils.processors import ProcessorConfigField
 from api.v1.serializer_utils.providers import ProviderSecretField
@@ -1353,6 +1366,8 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 serializer = KubernetesProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.M365.value:
                 serializer = M365ProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.OCI.value:
+                serializer = OracleCloudProviderSecret(data=secret)
             else:
                 raise serializers.ValidationError(
                     {"provider": f"Provider type not supported {provider_type}"}
@@ -1461,6 +1476,19 @@ class GithubProviderSecret(serializers.Serializer):
     oauth_app_token = serializers.CharField(required=False)
     github_app_id = serializers.IntegerField(required=False)
     github_app_key_content = serializers.CharField(required=False)
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
+class OracleCloudProviderSecret(serializers.Serializer):
+    user = serializers.CharField()
+    fingerprint = serializers.CharField()
+    key_file = serializers.CharField(required=False)
+    key_content = serializers.CharField(required=False)
+    tenancy = serializers.CharField()
+    region = serializers.CharField()
+    pass_phrase = serializers.CharField(required=False)
 
     class Meta:
         resource_name = "provider-secrets"
@@ -2097,6 +2125,17 @@ class OverviewProviderSerializer(serializers.Serializer):
         return {
             "total": obj["total_resources"],
         }
+
+
+class OverviewProviderCountSerializer(serializers.Serializer):
+    id = serializers.CharField(source="provider")
+    count = serializers.IntegerField()
+
+    class JSONAPIMeta:
+        resource_name = "providers-count-overview"
+
+    def get_root_meta(self, _resource, _many):
+        return {"version": "v1"}
 
 
 class OverviewFindingSerializer(serializers.Serializer):
@@ -2750,6 +2789,16 @@ class LighthouseConfigCreateSerializer(RLSSerializer, BaseWriteSerializer):
             "updated_at": {"read_only": True},
         }
 
+    def validate_temperature(self, value):
+        if not 0 <= value <= 1:
+            raise ValidationError("Temperature must be between 0 and 1.")
+        return value
+
+    def validate_max_tokens(self, value):
+        if not 500 <= value <= 5000:
+            raise ValidationError("Max tokens must be between 500 and 5000.")
+        return value
+
     def validate(self, attrs):
         tenant_id = self.context.get("request").tenant_id
         if LighthouseConfiguration.objects.filter(tenant_id=tenant_id).exists():
@@ -2757,6 +2806,11 @@ class LighthouseConfigCreateSerializer(RLSSerializer, BaseWriteSerializer):
                 {
                     "tenant_id": "Lighthouse configuration already exists for this tenant."
                 }
+            )
+        api_key = attrs.get("api_key")
+        if api_key is not None:
+            OpenAICredentialsSerializer(data={"api_key": api_key}).is_valid(
+                raise_exception=True
             )
         return super().validate(attrs)
 
@@ -2801,6 +2855,24 @@ class LighthouseConfigUpdateSerializer(BaseWriteSerializer):
             "temperature": {"required": False},
             "max_tokens": {"required": False},
         }
+
+    def validate_temperature(self, value):
+        if not 0 <= value <= 1:
+            raise ValidationError("Temperature must be between 0 and 1.")
+        return value
+
+    def validate_max_tokens(self, value):
+        if not 500 <= value <= 5000:
+            raise ValidationError("Max tokens must be between 500 and 5000.")
+        return value
+
+    def validate(self, attrs):
+        api_key = attrs.get("api_key", None)
+        if api_key is not None:
+            OpenAICredentialsSerializer(data={"api_key": api_key}).is_valid(
+                raise_exception=True
+            )
+        return super().validate(attrs)
 
     def update(self, instance, validated_data):
         api_key = validated_data.pop("api_key", None)
@@ -2930,4 +3002,607 @@ class TenantApiKeyUpdateSerializer(RLSSerializer, BaseWriteSerializer):
             .exists()
         ):
             raise ValidationError("An API key with this name already exists.")
+        return value
+
+
+# Lighthouse: Provider configurations
+
+
+class LighthouseProviderConfigSerializer(RLSSerializer):
+    """
+    Read serializer for LighthouseProviderConfiguration.
+    """
+
+    # Decrypted credentials are only returned in to_representation when requested
+    credentials = serializers.JSONField(required=False, read_only=True)
+
+    class Meta:
+        model = LighthouseProviderConfiguration
+        fields = [
+            "id",
+            "inserted_at",
+            "updated_at",
+            "provider_type",
+            "base_url",
+            "is_active",
+            "credentials",
+            "url",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+            "is_active": {"read_only": True},
+            "url": {"read_only": True, "view_name": "lighthouse-providers-detail"},
+        }
+
+    class JSONAPIMeta:
+        resource_name = "lighthouse-providers"
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Support JSON:API fields filter: fields[lighthouse-providers]=credentials,base_url
+        fields_param = self.context.get("request", None) and self.context[
+            "request"
+        ].query_params.get("fields[lighthouse-providers]", "")
+
+        creds = instance.credentials_decoded
+
+        requested_fields = (
+            [f.strip() for f in fields_param.split(",")] if fields_param else []
+        )
+
+        if "credentials" in requested_fields:
+            # Return full decrypted credentials JSON
+            data["credentials"] = creds
+        else:
+            # Return masked credentials by default
+            def mask_value(value):
+                if isinstance(value, str):
+                    return "*" * len(value)
+                if isinstance(value, dict):
+                    return {k: mask_value(v) for k, v in value.items()}
+                if isinstance(value, list):
+                    return [mask_value(v) for v in value]
+                return value
+
+            # Always return masked credentials, even if creds is None
+            if creds is not None:
+                data["credentials"] = mask_value(creds)
+            else:
+                # If credentials_decoded returns None, return None for credentials field
+                data["credentials"] = None
+
+        return data
+
+
+class LighthouseProviderConfigCreateSerializer(RLSSerializer, BaseWriteSerializer):
+    """
+    Create serializer for LighthouseProviderConfiguration.
+    Accepts credentials as JSON; stored encrypted via credentials_decoded.
+    """
+
+    credentials = LighthouseCredentialsField(write_only=True, required=True)
+    base_url = serializers.URLField(
+        required=False,
+        allow_null=True,
+        help_text="Base URL for the LLM provider API. Required for 'openai_compatible' provider type.",
+    )
+
+    class Meta:
+        model = LighthouseProviderConfiguration
+        fields = [
+            "provider_type",
+            "base_url",
+            "credentials",
+            "is_active",
+        ]
+        extra_kwargs = {
+            "is_active": {"required": False},
+            "provider_type": {
+                "help_text": "LLM provider type. Determines which credential format to use. "
+                "See 'credentials' field documentation for provider-specific requirements."
+            },
+        }
+
+    def create(self, validated_data):
+        credentials = validated_data.pop("credentials")
+
+        instance = LighthouseProviderConfiguration(**validated_data)
+        instance.tenant_id = self.context.get("tenant_id")
+        instance.credentials_decoded = credentials
+
+        try:
+            instance.save()
+            return instance
+        except IntegrityError:
+            raise ValidationError(
+                {
+                    "provider_type": "Configuration for this provider already exists for the tenant."
+                }
+            )
+
+    def validate(self, attrs):
+        provider_type = attrs.get("provider_type")
+        credentials = attrs.get("credentials") or {}
+        base_url = attrs.get("base_url")
+
+        if provider_type == LighthouseProviderConfiguration.LLMProviderChoices.OPENAI:
+            try:
+                OpenAICredentialsSerializer(data=credentials).is_valid(
+                    raise_exception=True
+                )
+            except ValidationError as e:
+                details = e.detail.copy()
+                for key, value in details.items():
+                    e.detail[f"credentials/{key}"] = value
+                    del e.detail[key]
+                raise e
+        elif (
+            provider_type == LighthouseProviderConfiguration.LLMProviderChoices.BEDROCK
+        ):
+            try:
+                BedrockCredentialsSerializer(data=credentials).is_valid(
+                    raise_exception=True
+                )
+            except ValidationError as e:
+                details = e.detail.copy()
+                for key, value in details.items():
+                    e.detail[f"credentials/{key}"] = value
+                    del e.detail[key]
+                raise e
+        elif (
+            provider_type
+            == LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE
+        ):
+            if not base_url:
+                raise ValidationError({"base_url": "Base URL is required."})
+            try:
+                OpenAICompatibleCredentialsSerializer(data=credentials).is_valid(
+                    raise_exception=True
+                )
+            except ValidationError as e:
+                details = e.detail.copy()
+                for key, value in details.items():
+                    e.detail[f"credentials/{key}"] = value
+                    del e.detail[key]
+                raise e
+
+        return super().validate(attrs)
+
+
+class LighthouseProviderConfigUpdateSerializer(BaseWriteSerializer):
+    """
+    Update serializer for LighthouseProviderConfiguration.
+    """
+
+    credentials = LighthouseCredentialsField(write_only=True, required=False)
+    base_url = serializers.URLField(
+        required=False,
+        allow_null=True,
+        help_text="Base URL for the LLM provider API. Required for 'openai_compatible' provider type.",
+    )
+
+    class Meta:
+        model = LighthouseProviderConfiguration
+        fields = [
+            "id",
+            "provider_type",
+            "base_url",
+            "credentials",
+            "is_active",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "provider_type": {"read_only": True},
+            "is_active": {"required": False},
+        }
+
+    def update(self, instance, validated_data):
+        credentials = validated_data.pop("credentials", None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        if credentials is not None:
+            # Merge partial credentials with existing ones
+            # New values overwrite existing ones, but unspecified fields are preserved
+            existing_credentials = instance.credentials_decoded or {}
+            merged_credentials = {**existing_credentials, **credentials}
+            instance.credentials_decoded = merged_credentials
+
+        instance.save()
+        return instance
+
+    def validate(self, attrs):
+        provider_type = getattr(self.instance, "provider_type", None)
+        credentials = attrs.get("credentials", None)
+        base_url = attrs.get("base_url", None)
+
+        if (
+            credentials is not None
+            and provider_type
+            == LighthouseProviderConfiguration.LLMProviderChoices.OPENAI
+        ):
+            try:
+                OpenAICredentialsSerializer(data=credentials).is_valid(
+                    raise_exception=True
+                )
+            except ValidationError as e:
+                details = e.detail.copy()
+                for key, value in details.items():
+                    e.detail[f"credentials/{key}"] = value
+                    del e.detail[key]
+                raise e
+        elif (
+            credentials is not None
+            and provider_type
+            == LighthouseProviderConfiguration.LLMProviderChoices.BEDROCK
+        ):
+            try:
+                BedrockCredentialsUpdateSerializer(data=credentials).is_valid(
+                    raise_exception=True
+                )
+            except ValidationError as e:
+                details = e.detail.copy()
+                for key, value in details.items():
+                    e.detail[f"credentials/{key}"] = value
+                    del e.detail[key]
+                raise e
+        elif (
+            credentials is not None
+            and provider_type
+            == LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE
+        ):
+            if base_url is None:
+                pass
+            elif not base_url:
+                raise ValidationError({"base_url": "Base URL cannot be empty."})
+            try:
+                OpenAICompatibleCredentialsSerializer(data=credentials).is_valid(
+                    raise_exception=True
+                )
+            except ValidationError as e:
+                details = e.detail.copy()
+                for key, value in details.items():
+                    e.detail[f"credentials/{key}"] = value
+                    del e.detail[key]
+                raise e
+
+        return super().validate(attrs)
+
+
+# Lighthouse: Tenant configuration
+
+
+class LighthouseTenantConfigSerializer(RLSSerializer):
+    """
+    Read serializer for LighthouseTenantConfiguration.
+    """
+
+    # Build singleton URL without pk
+    url = serializers.SerializerMethodField()
+
+    def get_url(self, obj):
+        request = self.context.get("request")
+        return reverse("lighthouse-configurations", request=request)
+
+    class Meta:
+        model = LighthouseTenantConfiguration
+        fields = [
+            "id",
+            "inserted_at",
+            "updated_at",
+            "business_context",
+            "default_provider",
+            "default_models",
+            "url",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+            "url": {"read_only": True},
+        }
+
+
+class LighthouseTenantConfigUpdateSerializer(BaseWriteSerializer):
+    class Meta:
+        model = LighthouseTenantConfiguration
+        fields = [
+            "id",
+            "business_context",
+            "default_provider",
+            "default_models",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+        }
+
+    def validate(self, attrs):
+        request = self.context.get("request")
+        tenant_id = self.context.get("tenant_id") or (
+            getattr(request, "tenant_id", None) if request else None
+        )
+
+        default_provider = attrs.get(
+            "default_provider", getattr(self.instance, "default_provider", "")
+        )
+        default_models = attrs.get(
+            "default_models", getattr(self.instance, "default_models", {})
+        )
+
+        if default_provider:
+            supported = set(LighthouseProviderConfiguration.LLMProviderChoices.values)
+            if default_provider not in supported:
+                raise ValidationError(
+                    {"default_provider": f"Unsupported provider '{default_provider}'."}
+                )
+            if not LighthouseProviderConfiguration.objects.filter(
+                tenant_id=tenant_id, provider_type=default_provider, is_active=True
+            ).exists():
+                raise ValidationError(
+                    {
+                        "default_provider": f"No active configuration found for '{default_provider}'."
+                    }
+                )
+
+        if default_models is not None and not isinstance(default_models, dict):
+            raise ValidationError(
+                {"default_models": "Must be an object mapping provider -> model_id."}
+            )
+
+        for provider_type, model_id in (default_models or {}).items():
+            provider_cfg = LighthouseProviderConfiguration.objects.filter(
+                tenant_id=tenant_id, provider_type=provider_type, is_active=True
+            ).first()
+            if not provider_cfg:
+                raise ValidationError(
+                    {
+                        "default_models": f"No active configuration for provider '{provider_type}'."
+                    }
+                )
+            if not LighthouseProviderModels.objects.filter(
+                tenant_id=tenant_id,
+                provider_configuration=provider_cfg,
+                model_id=model_id,
+            ).exists():
+                raise ValidationError(
+                    {
+                        "default_models": f"Invalid model '{model_id}' for provider '{provider_type}'."
+                    }
+                )
+
+        return super().validate(attrs)
+
+
+# Lighthouse: Provider models
+
+
+class LighthouseProviderModelsSerializer(RLSSerializer):
+    """
+    Read serializer for LighthouseProviderModels.
+    """
+
+    provider_configuration = serializers.ResourceRelatedField(read_only=True)
+
+    class Meta:
+        model = LighthouseProviderModels
+        fields = [
+            "id",
+            "inserted_at",
+            "updated_at",
+            "provider_configuration",
+            "model_id",
+            "model_name",
+            "default_parameters",
+            "url",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+            "url": {"read_only": True, "view_name": "lighthouse-models-detail"},
+        }
+
+
+class LighthouseProviderModelsCreateSerializer(RLSSerializer, BaseWriteSerializer):
+    provider_configuration = serializers.ResourceRelatedField(
+        queryset=LighthouseProviderConfiguration.objects.all()
+    )
+
+    class Meta:
+        model = LighthouseProviderModels
+        fields = [
+            "provider_configuration",
+            "model_id",
+            "default_parameters",
+        ]
+        extra_kwargs = {
+            "default_parameters": {"required": False},
+        }
+
+
+class LighthouseProviderModelsUpdateSerializer(BaseWriteSerializer):
+    class Meta:
+        model = LighthouseProviderModels
+        fields = [
+            "id",
+            "default_parameters",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+        }
+
+
+# Mute Rules
+
+
+class MuteRuleSerializer(RLSSerializer):
+    """
+    Serializer for reading MuteRule instances.
+    """
+
+    finding_uids = serializers.ListField(
+        child=serializers.CharField(),
+        read_only=True,
+        help_text="List of finding UIDs that are muted by this rule",
+    )
+
+    class Meta:
+        model = MuteRule
+        fields = [
+            "id",
+            "inserted_at",
+            "updated_at",
+            "name",
+            "reason",
+            "enabled",
+            "created_by",
+            "finding_uids",
+        ]
+
+    included_serializers = {
+        "created_by": "api.v1.serializers.UserIncludeSerializer",
+    }
+
+
+class MuteRuleCreateSerializer(RLSSerializer, BaseWriteSerializer):
+    """
+    Serializer for creating new MuteRule instances.
+
+    Accepts finding_ids in the request, converts them to UIDs, and stores in finding_uids.
+    """
+
+    finding_ids = serializers.ListField(
+        child=serializers.UUIDField(),
+        write_only=True,
+        required=True,
+        help_text="List of Finding IDs to mute (will be converted to UIDs)",
+    )
+    finding_uids = serializers.ListField(
+        child=serializers.CharField(),
+        read_only=True,
+        help_text="List of finding UIDs that are muted by this rule",
+    )
+
+    class Meta:
+        model = MuteRule
+        fields = [
+            "id",
+            "inserted_at",
+            "updated_at",
+            "name",
+            "reason",
+            "enabled",
+            "created_by",
+            "finding_ids",
+            "finding_uids",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "inserted_at": {"read_only": True},
+            "updated_at": {"read_only": True},
+            "enabled": {"read_only": True},
+            "created_by": {"read_only": True},
+        }
+
+    def validate_name(self, value):
+        """Validate that the name is unique within the tenant."""
+        tenant_id = self.context.get("tenant_id")
+        if MuteRule.objects.filter(tenant_id=tenant_id, name=value).exists():
+            raise ValidationError("A mute rule with this name already exists.")
+        return value
+
+    def validate_finding_ids(self, value):
+        """Validate that all finding IDs exist and belong to the tenant."""
+        if not value:
+            raise ValidationError("At least one finding_id must be provided.")
+
+        tenant_id = self.context.get("tenant_id")
+
+        # Check that all findings exist and belong to this tenant
+        findings = Finding.all_objects.filter(tenant_id=tenant_id, id__in=value)
+        found_ids = set(findings.values_list("id", flat=True))
+        provided_ids = set(value)
+
+        missing_ids = provided_ids - found_ids
+        if missing_ids:
+            raise ValidationError(
+                f"The following finding IDs do not exist or do not belong to your tenant: {missing_ids}"
+            )
+
+        return value
+
+    def validate(self, data):
+        """Validate the entire mute rule, including overlap detection."""
+        data = super().validate(data)
+
+        tenant_id = self.context.get("tenant_id")
+        finding_ids = data.get("finding_ids", [])
+
+        if not finding_ids:
+            return data
+
+        # Convert finding IDs to UIDs (deduplicate in case multiple findings have same UID)
+        findings = Finding.all_objects.filter(id__in=finding_ids, tenant_id=tenant_id)
+        finding_uids = list(set(findings.values_list("uid", flat=True)))
+
+        # Check for overlaps with existing enabled rules
+        existing_rules = MuteRule.objects.filter(tenant_id=tenant_id, enabled=True)
+
+        for rule in existing_rules:
+            overlap = set(finding_uids) & set(rule.finding_uids)
+            if overlap:
+                raise ConflictException(
+                    detail=f"The following finding UIDs are already muted by rule '{rule.name}': {overlap}"
+                )
+
+        # Store finding_uids in validated_data for create
+        data["finding_uids"] = finding_uids
+
+        return data
+
+    def create(self, validated_data):
+        """Create a new mute rule and set created_by."""
+        # Remove finding_ids from validated_data (we've already converted to finding_uids)
+        validated_data.pop("finding_ids", None)
+
+        # Set created_by to the current user
+        request = self.context.get("request")
+        if request and hasattr(request, "user"):
+            validated_data["created_by"] = request.user
+
+        return super().create(validated_data)
+
+
+class MuteRuleUpdateSerializer(BaseWriteSerializer):
+    """
+    Serializer for updating MuteRule instances.
+    """
+
+    class Meta:
+        model = MuteRule
+        fields = [
+            "id",
+            "name",
+            "reason",
+            "enabled",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "name": {"required": False},
+            "reason": {"required": False},
+            "enabled": {"required": False},
+        }
+
+    def validate_name(self, value):
+        """Validate that the name is unique within the tenant, excluding current instance."""
+        tenant_id = self.context.get("tenant_id")
+        if (
+            MuteRule.objects.filter(tenant_id=tenant_id, name=value)
+            .exclude(id=self.instance.id)
+            .exists()
+        ):
+            raise ValidationError("A mute rule with this name already exists.")
         return value
