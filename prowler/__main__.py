@@ -61,7 +61,7 @@ from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
 from prowler.lib.outputs.compliance.cis.cis_github import GithubCIS
 from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
 from prowler.lib.outputs.compliance.cis.cis_m365 import M365CIS
-from prowler.lib.outputs.compliance.cis.cis_oci import OCICIS
+from prowler.lib.outputs.compliance.cis.cis_oraclecloud import OracleCloudCIS
 from prowler.lib.outputs.compliance.compliance import display_compliance_table
 from prowler.lib.outputs.compliance.ens.ens_aws import AWSENS
 from prowler.lib.outputs.compliance.ens.ens_azure import AzureENS
@@ -971,7 +971,7 @@ def prowler():
                     f"{output_options.output_directory}/compliance/"
                     f"{output_options.output_filename}_{compliance_name}.csv"
                 )
-                cis = OCICIS(
+                cis = OracleCloudCIS(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     file_path=filename,
