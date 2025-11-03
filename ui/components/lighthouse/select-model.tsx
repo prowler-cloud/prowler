@@ -15,6 +15,13 @@ import {
   refreshModelsInBackground,
 } from "./llm-provider-utils";
 
+// Recommended models per provider
+const RECOMMENDED_MODELS: Record<string, Set<string>> = {
+  openai: new Set(["gpt-5"]),
+  bedrock: new Set([]),
+  openai_compatible: new Set([]),
+};
+
 interface SelectModelProps {
   provider: string;
   mode?: string;
@@ -38,6 +45,10 @@ export const SelectModel = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
   const isEditMode = mode === "edit";
+
+  const isRecommended = (modelId: string) => {
+    return RECOMMENDED_MODELS[provider]?.has(modelId) || false;
+  };
 
   const fetchModels = async (triggerRefresh: boolean = false) => {
     setIsLoading(true);
@@ -119,12 +130,22 @@ export const SelectModel = ({
     }
   };
 
-  // Filter models based on search query
-  const filteredModels = models.filter(
-    (model) =>
-      model.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      model.id.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  // Filter models based on search query and sort with recommended models first
+  const filteredModels = models
+    .filter(
+      (model) =>
+        model.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        model.id.toLowerCase().includes(searchQuery.toLowerCase()),
+    )
+    .sort((a, b) => {
+      const aRecommended = isRecommended(a.id);
+      const bRecommended = isRecommended(b.id);
+      // Recommended models first
+      if (aRecommended && !bRecommended) return -1;
+      if (!aRecommended && bRecommended) return 1;
+      // Then alphabetically by name
+      return a.name.localeCompare(b.name);
+    });
 
   return (
     <div className="flex w-full flex-col gap-6">
@@ -216,7 +237,15 @@ export const SelectModel = ({
                   onChange={() => setSelectedModel(model.id)}
                   className="h-4 w-4 cursor-pointer"
                 />
-                <span className="text-sm font-medium">{model.name}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">{model.name}</span>
+                  {isRecommended(model.id) && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                      <Icon icon="heroicons:star-solid" className="h-3 w-3" />
+                      Recommended
+                    </span>
+                  )}
+                </div>
               </div>
             </label>
           ))}
