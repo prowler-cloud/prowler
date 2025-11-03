@@ -317,6 +317,271 @@
         ]
       },
       {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "api-reference/introduction"
+            ]
+          },
+          {
+            "group": "API Endpoints",
+            "pages": [
+              {
+                "group": "Authentication",
+                "pages": [
+                  "api-reference/tokens/create",
+                  "api-reference/tokens/refresh",
+                  "api-reference/tokens/switch"
+                ]
+              },
+              {
+                "group": "API Keys",
+                "pages": [
+                  "api-reference/api-keys/list",
+                  "api-reference/api-keys/create",
+                  "api-reference/api-keys/retrieve",
+                  "api-reference/api-keys/update",
+                  "api-reference/api-keys/revoke"
+                ]
+              },
+              {
+                "group": "Users",
+                "pages": [
+                  "api-reference/users/me",
+                  "api-reference/users/list",
+                  "api-reference/users/create",
+                  "api-reference/users/retrieve",
+                  "api-reference/users/update",
+                  "api-reference/users/delete",
+                  "api-reference/users/memberships-list",
+                  "api-reference/users/memberships-retrieve",
+                  "api-reference/users/add-roles",
+                  "api-reference/users/update-roles",
+                  "api-reference/users/remove-roles"
+                ]
+              },
+              {
+                "group": "Tenants",
+                "pages": [
+                  "api-reference/tenants/list",
+                  "api-reference/tenants/create",
+                  "api-reference/tenants/retrieve",
+                  "api-reference/tenants/update",
+                  "api-reference/tenants/delete",
+                  {
+                    "group": "Memberships",
+                    "pages": [
+                      "api-reference/tenants/memberships/list",
+                      "api-reference/tenants/memberships/delete"
+                    ]
+                  },
+                  {
+                    "group": "Invitations",
+                    "pages": [
+                      "api-reference/tenants/invitations-list",
+                      "api-reference/tenants/invitations-create",
+                      "api-reference/tenants/invitations/retrieve",
+                      "api-reference/tenants/invitations/update",
+                      "api-reference/tenants/invitations/delete"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Invitations",
+                "pages": [
+                  "api-reference/invitations/accept"
+                ]
+              },
+              {
+                "group": "Provider Groups",
+                "pages": [
+                  "api-reference/provider-groups/list",
+                  "api-reference/provider-groups/create",
+                  "api-reference/provider-groups/retrieve",
+                  "api-reference/provider-groups/update",
+                  "api-reference/provider-groups/delete",
+                  "api-reference/provider-groups/add-providers",
+                  "api-reference/provider-groups/update-providers",
+                  "api-reference/provider-groups/remove-providers"
+                ]
+              },
+              {
+                "group": "Roles",
+                "pages": [
+                  "api-reference/roles/list",
+                  "api-reference/roles/create",
+                  "api-reference/roles/retrieve",
+                  "api-reference/roles/update",
+                  "api-reference/roles/delete",
+                  "api-reference/roles/add-provider-groups",
+                  "api-reference/roles/update-provider-groups",
+                  "api-reference/roles/remove-provider-groups"
+                ]
+              },
+              {
+                "group": "SAML Configuration",
+                "pages": [
+                  "api-reference/saml/list",
+                  "api-reference/saml/create",
+                  "api-reference/saml/retrieve",
+                  "api-reference/saml/update",
+                  "api-reference/saml/delete"
+                ]
+              },
+              {
+                "group": "Providers",
+                "pages": [
+                  "api-reference/providers/list",
+                  "api-reference/providers/create",
+                  "api-reference/providers/retrieve",
+                  "api-reference/providers/update",
+                  "api-reference/providers/delete",
+                  "api-reference/providers/check-connection",
+                  {
+                    "group": "Provider Secrets",
+                    "pages": [
+                      "api-reference/providers/secrets/list",
+                      "api-reference/providers/secrets/create",
+                      "api-reference/providers/secrets/retrieve",
+                      "api-reference/providers/secrets/update",
+                      "api-reference/providers/secrets/delete"
+                    ]
+                  }
+                ]
+              },
+              {
+                "group": "Scans",
+                "pages": [
+                  "api-reference/scans/list",
+                  "api-reference/scans/create",
+                  "api-reference/scans/retrieve",
+                  "api-reference/scans/update",
+                  "api-reference/scans/compliance",
+                  "api-reference/scans/report",
+                  "api-reference/scans/threatscore"
+                ]
+              },
+              {
+                "group": "Findings",
+                "pages": [
+                  "api-reference/findings/list",
+                  "api-reference/findings/retrieve",
+                  "api-reference/findings/latest",
+                  "api-reference/findings/services-regions",
+                  "api-reference/findings/metadata",
+                  "api-reference/findings/metadata-latest"
+                ]
+              },
+              {
+                "group": "Resources",
+                "pages": [
+                  "api-reference/resources/list",
+                  "api-reference/resources/retrieve",
+                  "api-reference/resources/latest",
+                  "api-reference/resources/metadata",
+                  "api-reference/resources/metadata-latest"
+                ]
+              },
+              {
+                "group": "Compliance Overview",
+                "pages": [
+                  "api-reference/compliance/list",
+                  "api-reference/compliance/requirements",
+                  "api-reference/compliance/attributes",
+                  "api-reference/compliance/metadata"
+                ]
+              },
+              {
+                "group": "Overviews",
+                "pages": [
+                  "api-reference/overviews/findings",
+                  "api-reference/overviews/findings-severity",
+                  "api-reference/overviews/providers",
+                  "api-reference/overviews/providers-count",
+                  "api-reference/overviews/services"
+                ]
+              },
+              {
+                "group": "Integrations",
+                "pages": [
+                  "api-reference/integrations/list",
+                  "api-reference/integrations/create",
+                  "api-reference/integrations/retrieve",
+                  "api-reference/integrations/update",
+                  "api-reference/integrations/delete",
+                  "api-reference/integrations/check-connection",
+                  "api-reference/integrations/jira-dispatch"
+                ]
+              },
+              {
+                "group": "Lighthouse AI",
+                "pages": [
+                  {
+                    "group": "Providers",
+                    "pages": [
+                      "api-reference/lighthouse/providers/list",
+                      "api-reference/lighthouse/providers/create",
+                      "api-reference/lighthouse/providers/retrieve",
+                      "api-reference/lighthouse/providers/update",
+                      "api-reference/lighthouse/providers/delete",
+                      "api-reference/lighthouse/providers/test-connection",
+                      "api-reference/lighthouse/providers/refresh-models"
+                    ]
+                  },
+                  {
+                    "group": "Configurations",
+                    "pages": [
+                      "api-reference/lighthouse/configurations/list",
+                      "api-reference/lighthouse/configurations/create",
+                      "api-reference/lighthouse/configurations/retrieve",
+                      "api-reference/lighthouse/configurations/update",
+                      "api-reference/lighthouse/configurations/delete",
+                      "api-reference/lighthouse/configurations/test-connection"
+                    ]
+                  },
+                  {
+                    "group": "Models",
+                    "pages": [
+                      "api-reference/lighthouse/models/list",
+                      "api-reference/lighthouse/models/retrieve"
+                    ]
+                  },
+                  "api-reference/lighthouse/config-list",
+                  "api-reference/lighthouse/config-update"
+                ]
+              },
+              {
+                "group": "Processors",
+                "pages": [
+                  "api-reference/processors/list",
+                  "api-reference/processors/create",
+                  "api-reference/processors/retrieve",
+                  "api-reference/processors/update",
+                  "api-reference/processors/delete"
+                ]
+              },
+              {
+                "group": "Schedules",
+                "pages": [
+                  "api-reference/schedules/create-daily"
+                ]
+              },
+              {
+                "group": "Tasks",
+                "pages": [
+                  "api-reference/tasks/list",
+                  "api-reference/tasks/retrieve",
+                  "api-reference/tasks/delete"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
         "tab": "About Us",
         "icon": "/favicon.ico",
         "href": "https://prowler.com/about#team"
@@ -382,6 +647,16 @@
       "youtube": "https://www.youtube.com/@prowlercloud",
       "slack": "https://goto.prowler.com/slack",
       "website": "https://prowler.com"
+    }
+  },
+  "openapi": "/api-reference/openapi.yaml",
+  "api": {
+    "baseUrl": "https://api.prowler.com",
+    "auth": {
+      "method": "bearer"
+    },
+    "playground": {
+      "mode": "simple"
     }
   },
   "redirects": [

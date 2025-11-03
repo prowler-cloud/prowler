@@ -1,0 +1,35 @@
+---
+title: "Update Scan"
+api: "PATCH /api/v1/scans/{id}"
+description: "Update scan metadata."
+---
+
+Update a scan's name or other mutable fields.
+
+## Path Parameters
+
+- `id` (required) - UUID of the scan to update
+
+## Request Body
+
+```json
+{
+  "data": {
+    "type": "scans",
+    "id": "scan-uuid",
+    "attributes": {
+      "name": "Updated Scan Name"
+    }
+  }
+}
+```
+
+## Response
+
+### Success Response (200 OK)
+
+Returns the updated scan.
+
+<Note>
+Only the `name` field can be updated. State and execution details are read-only.
+</Note>

@@ -1,0 +1,25 @@
+---
+title: "List LLM Models"
+api: "GET /api/v1/lighthouse/models"
+description: "List available LLM models per configured provider."
+---
+
+Retrieve all available LLM models from your configured providers.
+
+## Query Parameters
+
+- `filter[provider_type]` - Filter by provider type
+- `filter[model_id]`, `filter[model_id__icontains]` - Filter by model ID
+- `page[number]`, `page[size]` - Pagination
+
+## Example Request
+
+```bash
+curl -X GET "https://api.prowler.com/api/v1/lighthouse/models?filter[provider_type]=openai" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json"
+```
+
+## Response
+
+Returns list of available LLM models with their parameters.

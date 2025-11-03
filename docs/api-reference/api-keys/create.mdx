@@ -1,0 +1,182 @@
+---
+title: "Create API Key"
+api: "POST /api/v1/api-keys"
+description: "Create a new API key for the tenant."
+---
+
+Create a new API key for programmatic access to the Prowler API. The API key will be returned in the response and should be stored securely as it cannot be retrieved later.
+
+## Request Body
+
+The request must follow the JSON:API specification format:
+
+```json
+{
+  "data": {
+    "type": "api-keys",
+    "attributes": {
+      "name": "string",
+      "expires_at": "2024-12-31T23:59:59Z"
+    }
+  }
+}
+```
+
+### Attributes
+
+- `name` (required) - A descriptive name for the API key
+- `expires_at` (optional) - Expiration date for the API key in ISO 8601 format
+
+## Example Request
+
+```bash
+curl -X POST "https://api.prowler.com/api/v1/api-keys" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/vnd.api+json" \
+  -d '{
+    "data": {
+      "type": "api-keys",
+      "attributes": {
+        "name": "Production API Key",
+        "expires_at": "2025-12-31T23:59:59Z"
+      }
+    }
+  }'
+```
+
+## Response
+
+### Success Response (201 Created)
+
+Returns the created API key **including the full key value** (only shown once):
+
+```json
+{
+  "data": {
+    "type": "api-keys",
+    "id": "api-key-uuid",
+    "attributes": {
+      "name": "Production API Key",
+      "prefix": "pk_live_abc123",
+      "api_key": "pk_live_abc123def456ghi789jkl012mno345pqr678stu901vwx234yz",
+      "expires_at": "2025-12-31T23:59:59Z",
+      "revoked": false,
+      "inserted_at": "2024-01-15T10:30:00Z",
+      "last_used_at": null
+    },
+    "relationships": {
+      "entity": {
+        "data": {
+          "type": "users",
+          "id": "user-uuid"
+        }
+      }
+    }
+  }
+}
+```
+
+### Response Fields
+
+- `id` - Unique UUID for the API key record
+- `name` - Descriptive name you provided (3-100 characters)
+- `prefix` - First characters of the key (for identification, read-only)
+- `api_key` - **Full API key value** (only returned on creation, read-only)
+- `expires_at` - Expiration date in ISO 8601 format (optional)
+- `revoked` - Whether key has been revoked (always false on creation, read-only)
+- `inserted_at` - When key was created (read-only)
+- `last_used_at` - Last usage timestamp (null initially, read-only)
+
+### Error Responses
+
+**400 Bad Request** - Invalid expiration date
+```json
+{
+  "errors": [
+    {
+      "status": "400",
+      "title": "Invalid Expiration Date",
+      "detail": "Expiration date must be in the future"
+    }
+  ]
+}
+```
+
+**422 Unprocessable Entity** - Missing required fields
+```json
+{
+  "errors": [
+    {
+      "status": "422",
+      "title": "Validation Error",
+      "detail": "Name is required",
+      "source": {
+        "pointer": "/data/attributes/name"
+      }
+    }
+  ]
+}
+```
+
+**429 Too Many Requests** - API key limit reached
+```json
+{
+  "errors": [
+    {
+      "status": "429",
+      "title": "API Key Limit Exceeded",
+      "detail": "Maximum of 10 active API keys per tenant. Revoke unused keys to create new ones."
+    }
+  ]
+}
+```
+
+## Usage Example
+
+After creating the API key, use it to authenticate API requests:
+
+```bash
+# Save the API key
+API_KEY="pk_live_abc123def456ghi789jkl012mno345pqr678stu901vwx234yz"
+
+# Use it in requests
+curl -X GET "https://api.prowler.com/api/v1/providers" \
+  -H "Authorization: Bearer $API_KEY" \
+  -H "Content-Type: application/vnd.api+json"
+```
+
+## Security Best Practices
+
+1. **Store Securely**: Save the API key in a secure location immediately (password manager, secrets vault, environment variables)
+2. **Never Commit**: Do not commit API keys to version control systems
+3. **Use Environment Variables**: Store keys in environment variables, not in code
+4. **Set Expiration**: Always set an expiration date for API keys (recommended: 90 days)
+5. **Rotate Regularly**: Rotate API keys every 90 days
+6. **Limit Scope**: Use separate API keys for different environments (dev, staging, production)
+7. **Monitor Usage**: Regularly check `last_used_at` to identify unused keys
+8. **Revoke Unused**: Revoke API keys that are no longer needed
+
+## Naming Conventions
+
+Use descriptive names that include:
+- **Environment**: Production, Staging, Development
+- **Purpose**: CI/CD, Dashboard, Integration
+- **Owner/Team**: Security Team, DevOps, Monitoring
+
+Examples:
+- "Production CI/CD Pipeline"
+- "Staging Dashboard API Access"
+- "Security Team Automation"
+- "JIRA Integration - Production"
+
+<Warning>
+**CRITICAL:** The API key is only shown once in the creation response. It cannot be retrieved later. If you lose the key, you must revoke it and create a new one. Store it securely immediately after creation.
+</Warning>
+
+<Note>
+API keys have the same permissions as the user who created them. For automated systems, consider creating a dedicated service account with limited permissions.
+</Note>
+
+<Tip>
+**Automation Tip:** API keys are ideal for CI/CD pipelines, scheduled scans, and integrations. Unlike JWT tokens, they don't expire hourly and don't require refresh logic.
+</Tip>

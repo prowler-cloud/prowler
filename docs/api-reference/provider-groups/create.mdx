@@ -1,0 +1,20 @@
+---
+title: "Create Provider Group"
+api: "POST /api/v1/provider-groups"
+description: "Create a new provider group."
+---
+
+Create a group to organize multiple providers together.
+
+## Request Body
+\`\`\`json
+{
+  "data": {
+    "type": "provider-groups",
+    "attributes": {
+      "name": "Production Providers",
+      "description": "All production cloud accounts"
+    }
+  }
+}
+\`\`\`

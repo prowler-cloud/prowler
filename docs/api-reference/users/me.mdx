@@ -1,0 +1,23 @@
+---
+title: "Get Current User"
+api: "GET /api/v1/users/me"
+description: "Retrieve information about the currently authenticated user."
+---
+
+Get profile information for the currently authenticated user including roles and permissions.
+
+## Example Request
+
+```bash
+curl -X GET "https://api.prowler.com/api/v1/users/me" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/vnd.api+json"
+```
+
+## Response
+
+Returns the current user's profile including email, roles, tenants, and permissions.
+
+<Note>
+Use this endpoint to verify authentication and retrieve user context for your application.
+</Note>

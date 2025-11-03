@@ -1,0 +1,21 @@
+---
+title: "Create SAML Configuration"
+api: "POST /api/v1/saml-config"
+description: "Configure SAML SSO."
+---
+
+Add SAML identity provider for SSO authentication.
+
+## Request Body
+\`\`\`json
+{
+  "data": {
+    "type": "saml-config",
+    "attributes": {
+      "entity_id": "https://idp.example.com",
+      "sso_url": "https://idp.example.com/sso",
+      "x509_cert": "-----BEGIN CERTIFICATE-----\\n...\\n-----END CERTIFICATE-----"
+    }
+  }
+}
+\`\`\`

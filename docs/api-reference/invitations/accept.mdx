@@ -1,0 +1,50 @@
+---
+title: "Accept Invitation"
+api: "POST /api/v1/invitations/accept"
+description: "Accept an invitation to an existing tenant."
+---
+
+Accept an invitation to join a tenant. This invitation cannot be expired and the emails must match.
+
+## Request Body
+
+The request must follow the JSON:API specification format:
+
+```json
+{
+  "data": {
+    "type": "invitations",
+    "attributes": {
+      "token": "invitation-token"
+    }
+  }
+}
+```
+
+### Attributes
+
+- `token` (required) - The invitation token received via email
+
+## Example Request
+
+```bash
+curl -X POST "https://api.prowler.com/api/v1/invitations/accept" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/vnd.api+json" \
+  -d '{
+    "data": {
+      "type": "invitations",
+      "attributes": {
+        "token": "your-invitation-token"
+      }
+    }
+  }'
+```
+
+## Response
+
+Returns a success response indicating you have been added to the tenant.
+
+<Note>
+The email address associated with your account must match the email address to which the invitation was sent.
+</Note>

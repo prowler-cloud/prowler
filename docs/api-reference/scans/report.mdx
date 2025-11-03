@@ -1,0 +1,32 @@
+---
+title: "Generate Scan Report"
+api: "GET /api/v1/scans/{id}/report"
+description: "Generate a downloadable report for a specific scan."
+---
+
+Generate and download a comprehensive security report for a specific scan in various formats (PDF, CSV, JSON, HTML).
+
+## Path Parameters
+
+- `id` (required) - UUID of the scan
+
+## Query Parameters
+
+- `format` - Report format: `pdf`, `csv`, `json`, `html` (default: `json`)
+
+## Example Request
+
+```bash
+curl -X GET "https://api.prowler.com/api/v1/scans/{id}/report?format=pdf" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json" \
+  --output scan-report.pdf
+```
+
+## Response
+
+Returns the report file in the requested format.
+
+<Note>
+PDF and HTML reports include visualizations and executive summaries, while CSV and JSON provide raw data for analysis.
+</Note>

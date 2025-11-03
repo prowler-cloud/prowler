@@ -1,0 +1,40 @@
+---
+title: "Switch Tenant Context"
+api: "POST /api/v1/tokens/switch"
+description: "Switch to a different tenant context."
+---
+
+Switch your authentication context to a different tenant if you belong to multiple tenants.
+
+## Request Body
+
+```json
+{
+  "data": {
+    "type": "tokens",
+    "attributes": {
+      "tenant_id": "tenant-uuid"
+    }
+  }
+}
+```
+
+## Example Request
+
+```bash
+curl -X POST "https://api.prowler.com/api/v1/tokens/switch" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/vnd.api+json" \
+  -d '{
+    "data": {
+      "type": "tokens",
+      "attributes": {
+        "tenant_id": "tenant-uuid"
+      }
+    }
+  }'
+```
+
+## Response
+
+Returns a new JWT token with the selected tenant context.

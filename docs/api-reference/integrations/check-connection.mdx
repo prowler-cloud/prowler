@@ -1,0 +1,45 @@
+---
+title: "Check Integration Connection"
+api: "POST /api/v1/integrations/{id}/connection"
+description: "Try to verify integration connection."
+---
+
+Test the connection to an integration to ensure it is configured correctly and can communicate with the external service.
+
+## Path Parameters
+
+- `id` (required) - UUID of the integration to test
+
+## Example Request
+
+```bash
+curl -X POST "https://api.prowler.com/api/v1/integrations/{id}/connection" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json"
+```
+
+## Response
+
+Returns a task object. The connection test is performed asynchronously.
+
+```json
+{
+  "data": {
+    "type": "tasks",
+    "id": "497f6eca-6276-4993-bfeb-53cbbbba6f08",
+    "attributes": {
+      "inserted_at": "2019-08-24T14:15:22Z",
+      "completed_at": "2019-08-24T14:15:22Z",
+      "name": "string",
+      "state": "available",
+      "result": null,
+      "task_args": null,
+      "metadata": null
+    }
+  }
+}
+```
+
+<Note>
+Use the returned task ID to check the connection test status via the Tasks API.
+</Note>

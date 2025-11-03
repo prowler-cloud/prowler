@@ -1,0 +1,86 @@
+---
+title: "Revoke API Key"
+api: "DELETE /api/v1/api-keys/{id}/revoke"
+description: "Revoke an API key by its ID. This action is irreversible."
+---
+
+Revoke an API key, preventing it from being used for further API requests. This action cannot be undone.
+
+## Path Parameters
+
+- `id` (required) - The UUID of the API key to revoke
+
+## Example Request
+
+```bash
+curl -X DELETE "https://api.prowler.com/api/v1/api-keys/{id}/revoke" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json"
+```
+
+## Response
+
+### Success Response (200 OK)
+
+Returns the API key with `revoked` status set to `true`:
+
+```json
+{
+  "data": {
+    "type": "api-keys",
+    "id": "api-key-uuid",
+    "attributes": {
+      "name": "Production CI/CD Pipeline",
+      "prefix": "pk_live_abc123",
+      "expires_at": "2025-12-31T23:59:59Z",
+      "revoked": true,
+      "inserted_at": "2024-01-15T10:30:00Z",
+      "last_used_at": "2024-01-20T14:22:00Z"
+    },
+    "relationships": {
+      "entity": {
+        "data": {
+          "type": "users",
+          "id": "user-uuid"
+        }
+      }
+    }
+  }
+}
+```
+
+### Error Responses
+
+**404 Not Found** - API key does not exist
+```json
+{
+  "errors": [
+    {
+      "status": "404",
+      "title": "Not Found",
+      "detail": "API key not found"
+    }
+  ]
+}
+```
+
+**409 Conflict** - API key already revoked
+```json
+{
+  "errors": [
+    {
+      "status": "409",
+      "title": "Already Revoked",
+      "detail": "This API key has already been revoked"
+    }
+  ]
+}
+```
+
+<Warning>
+Revoking an API key is permanent and cannot be undone. Any applications using this key will immediately lose access. The `revoked` field will be set to `true` and the key will no longer authenticate API requests.
+</Warning>
+
+<Tip>
+Monitor the `last_used_at` field before revoking to ensure the key is no longer in active use.
+</Tip>

@@ -1,0 +1,27 @@
+---
+title: "Get Scan Threat Score"
+api: "GET /api/v1/scans/{id}/threatscore"
+description: "Retrieve the threat score and risk assessment for a specific scan."
+---
+
+Get the calculated threat score and risk assessment for a specific scan. The threat score is a weighted metric that considers severity, quantity, and criticality of findings.
+
+## Path Parameters
+
+- `id` (required) - UUID of the scan
+
+## Example Request
+
+```bash
+curl -X GET "https://api.prowler.com/api/v1/scans/{id}/threatscore" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json"
+```
+
+## Response
+
+Returns the threat score along with contributing factors and risk breakdown.
+
+<Note>
+The threat score ranges from 0-100, where higher scores indicate greater security risk.
+</Note>

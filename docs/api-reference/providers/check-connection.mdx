@@ -1,0 +1,27 @@
+---
+title: "Check Provider Connection"
+api: "POST /api/v1/providers/{id}/connection"
+description: "Test the connection to a cloud provider."
+---
+
+Verify that Prowler can successfully connect to the cloud provider using the configured credentials.
+
+## Path Parameters
+
+- `id` (required) - UUID of the provider to test
+
+## Example Request
+
+```bash
+curl -X POST "https://api.prowler.com/api/v1/providers/{id}/connection" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/vnd.api+json"
+```
+
+## Response
+
+Returns a task object. The connection test is performed asynchronously.
+
+<Note>
+Use this endpoint after creating or updating a provider to verify the credentials are correct.
+</Note>

@@ -1,0 +1,121 @@
+---
+title: "API Reference"
+description: "Comprehensive API documentation for Prowler Cloud"
+---
+
+## Welcome to the Prowler API
+
+The Prowler API provides programmatic access to Prowler Cloud's security compliance scanning and reporting capabilities. This API follows RESTful principles and uses JSON:API specification for request and response formatting.
+
+### Base URL
+
+```
+https://api.prowler.com/api/v1
+```
+
+### Authentication
+
+All API requests require authentication using either:
+
+- **JWT Token**: Obtained through user authentication
+- **API Key**: Generated from your Prowler Cloud account
+
+Include your authentication credentials in the `Authorization` header:
+
+```bash
+Authorization: Bearer YOUR_API_KEY_OR_JWT_TOKEN
+```
+
+### API Keys Management
+
+You can manage your API keys through the [API Keys endpoints](/api-reference/api-keys/list). API keys provide:
+
+- Programmatic access to your Prowler Cloud resources
+- Fine-grained access control
+- Expiration and revocation capabilities
+- Usage tracking
+
+### Request Format
+
+All requests should include the following headers:
+
+```
+Content-Type: application/vnd.api+json
+Accept: application/vnd.api+json
+Authorization: Bearer YOUR_API_KEY_OR_JWT_TOKEN
+```
+
+### Response Format
+
+The API follows the [JSON:API specification](https://jsonapi.org/). Responses include:
+
+- **data**: The primary data for the response
+- **included**: Related resources (when using `include` parameter)
+- **meta**: Metadata about the response
+- **links**: Pagination links
+
+### Pagination
+
+List endpoints support pagination using the following query parameters:
+
+- `page[number]`: The page number to retrieve
+- `page[size]`: Number of results per page
+
+### Filtering
+
+Most list endpoints support filtering using query parameters in the format:
+
+```
+filter[field_name]=value
+filter[field_name__operator]=value
+```
+
+Common operators:
+- `__gte`: Greater than or equal
+- `__lte`: Less than or equal
+- `__icontains`: Case-insensitive contains
+- `__in`: In a list of values
+
+### Sorting
+
+Use the `sort` parameter to order results:
+
+```
+sort=field_name          # Ascending order
+sort=-field_name         # Descending order
+```
+
+### Field Selection
+
+Optimize responses by requesting only specific fields:
+
+```
+fields[resource-type]=field1,field2,field3
+```
+
+### Rate Limits
+
+API requests are subject to rate limiting to ensure service stability. Rate limit information is included in response headers.
+
+### Support
+
+For questions or issues with the API:
+
+- Join our [Slack community](https://goto.prowler.com/slack)
+- Visit [Prowler Cloud](https://cloud.prowler.com)
+- Check our [GitHub repository](https://github.com/prowler-cloud/prowler)
+
+## API Endpoints
+
+Explore the complete API reference using the navigation menu. Main endpoint categories include:
+
+- **API Keys**: Manage programmatic access credentials
+- **Findings**: Security findings and vulnerabilities
+- **Compliance**: Compliance frameworks and requirements
+- **Scans**: Security scan operations and results
+- **Providers**: Cloud provider configurations
+- **Resources**: Cloud resources inventory
+
+<Note>
+The Prowler API is currently at version 1.15.0. We maintain backward compatibility and announce breaking changes in advance.
+</Note>
