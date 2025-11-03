@@ -10,6 +10,7 @@ from cartography.config import Config as CartographyConfig
 from cartography.intel import aws as cartography_aws
 from celery.utils.log import get_task_logger
 
+from api.models import Provider as ProwlerAPIProvider
 from prowler.providers.common.provider import Provider as ProwlerProvider
 
 # TODO: Use the right logger
@@ -23,6 +24,7 @@ logger = logging.getLogger(BackendLogger.API)
 def start_aws_ingestion(
     neo4j_session: neo4j.Session,
     config: CartographyConfig,
+    provider_api_provider: ProwlerAPIProvider,
     prowler_provider: ProwlerProvider,
 ) -> dict[str, dict[str, str]]:
     """
@@ -40,38 +42,26 @@ def start_aws_ingestion(
     boto3_session = prowler_provider.session.current_session
     # Original: boto3_session = boto3.Session()
 
-    if config.aws_sync_all_profiles:
-        aws_accounts = (
-            cartography_aws.organizations.get_aws_accounts_from_botocore_config(
-                boto3_session,
-            )
-        )
-
-    else:
-        aws_accounts = cartography_aws.organizations.get_aws_account_default(
-            boto3_session
-        )
-
-    if not aws_accounts:
+    aws_accounts_from_session = cartography_aws.organizations.get_aws_account_default(
+        boto3_session
+    )
+    if not aws_accounts_from_session:
         logger.warning(
             "No valid AWS credentials could be found. No AWS accounts can be synced. Exiting AWS sync stage.",
         )
         return
 
-    if len(list(aws_accounts.values())) != len(set(aws_accounts.values())):
+    aws_account_id_from_session = list(aws_accounts_from_session.values())[0]
+    if provider_api_provider.uid != aws_account_id_from_session:
         logger.warning(
-            (
-                "There are duplicate AWS accounts in your AWS configuration. It is strongly recommended that you run "
-                "cartography with an AWS configuration which has exactly one profile for each AWS account you want to "
-                f"sync. Doing otherwise will result in undefined and untested behavior. Account list: {aws_accounts}"
-            ),
+            f"Provider {provider_api_provider.uid} does not match AWS account {aws_account_id_from_session}. "
+            "Exiting AWS sync stage.",
         )
+        return
+    # Original: The account information was got from the session object, and multiple checks are done
 
     requested_syncs: list[str] = list(cartography_aws.RESOURCE_FUNCTIONS.keys())
-    if config.aws_requested_syncs:
-        requested_syncs = cartography_aws.parse_and_validate_aws_requested_syncs(
-            config.aws_requested_syncs,
-        )
+    # Original: If `config.aws_requested_syncs` is set, they are parsed and validated
 
     regions = prowler_provider._enabled_regions
     # Original: regions = parse_and_validate_aws_regions(config.aws_regions)
@@ -83,10 +73,10 @@ def start_aws_ingestion(
     # Original: There is no original for this, in Cartography the `AWS_DEFAULT_REGION`
     #           environment variable must be set or the boto3 client for some services will fail
 
-    failed_account_id_excptions = _sync_multiple_accounts(
+    failed_account_id_exceptions = _sync_multiple_accounts(
         neo4j_session,
         boto3_session,
-        aws_accounts,
+        provider_api_provider.uid,
         config.update_tag,
         common_job_parameters,
         config.aws_best_effort_mode,
@@ -95,19 +85,19 @@ def start_aws_ingestion(
     )
     # Original: `_sync_multiple_accounts` returns a boolean indicating if the sync was successful or not
 
-    if not failed_account_id_excptions:
+    if not failed_account_id_exceptions:
         cartography_aws._perform_aws_analysis(
             requested_syncs, neo4j_session, common_job_parameters
         )
 
-    return failed_account_id_excptions
+    return failed_account_id_exceptions
     # Original: There is no return
 
 
 def _sync_multiple_accounts(
     neo4j_session: neo4j.Session,
     boto3_session: boto3.Session,
-    accounts: dict[str, str],
+    provider_api_provider: ProwlerAPIProvider,
     sync_tag: int,
     common_job_parameters: dict[str, Any],
     aws_best_effort_mode: bool,
@@ -118,6 +108,13 @@ def _sync_multiple_accounts(
     Code based on Cartography version 0.117.0, specifically on `cartography.intel.aws._sync_multiple_accounts`.
     """
 
+    profile_name = provider_api_provider.alias
+    account_id = provider_api_provider.uid
+    accounts = {
+        profile_name: account_id,
+    }
+    # Origional: `accounts` was a function parameter
+
     logger.info("Syncing AWS accounts: %s", ", ".join(accounts.values()))
     cartography_aws.organizations.sync(
         neo4j_session, accounts, sync_tag, common_job_parameters
@@ -126,46 +123,47 @@ def _sync_multiple_accounts(
     failed_account_id_exceptions = {}
     # Original: This variable is two lists: `failed_account_ids` and `exception_tracebacks`
 
-    for profile_name, account_id in accounts.items():
-        logger.info(
-            "Syncing AWS account with ID '%s' using configured profile '%s'.",
-            account_id,
-            profile_name,
+    logger.info(
+        "Syncing AWS account with ID '%s' using configured profile '%s'.",
+        account_id,
+        profile_name,
+    )
+    common_job_parameters["AWS_ID"] = account_id
+
+    # TODO: Check if we can reuse the `boto3_session` from the function parameters or we need to create a new one
+    #       per `profile_name`. Probably we don't need to create a new one as the `accounts` dict was created using
+    #       `cartography_aws.organizations.get_aws_account_default` as `config.aws_sync_all_profiles` is None.
+    # Original, for more than on account in `accounts`: `boto3_session = boto3.Session(profile_name=profile_name)`
+
+    cartography_aws._autodiscover_accounts(
+        neo4j_session,
+        boto3_session,
+        account_id,
+        sync_tag,
+        common_job_parameters,
+    )
+
+    failed_aws_requested_sync_exceptions = _sync_one_account(
+        neo4j_session,
+        boto3_session,
+        account_id,
+        sync_tag,
+        common_job_parameters,
+        regions=regions,
+        aws_requested_syncs=aws_requested_syncs,  # Could be replaced later with per-account requested syncs
+    )
+    if failed_aws_requested_sync_exceptions:
+        failed_account_id_exceptions[account_id] = failed_aws_requested_sync_exceptions
+        failed_aws_requested_syncs = ",".join(failed_aws_requested_sync_exceptions.keys())
+        logger.warning(
+            f"Caught exceptions syncing account {account_id} in the functions {failed_aws_requested_syncs}",
         )
-        common_job_parameters["AWS_ID"] = account_id
 
-        # TODO: Check if we can reuse the `boto3_session` from the function parameters or we need to create a new one
-        #       per `profile_name`. Probably we don't need to create a new one as the `accounts` dict was created using
-        #       `cartography_aws.organizations.get_aws_account_default` as `config.aws_sync_all_profiles` is None.
-        # Original, for more than on account in `accounts`: `boto3_session = boto3.Session(profile_name=profile_name)`
+    # Original: As multiple AWS account could be hold in `boto3_session` there is a loop here to iterate over them
 
-        cartography_aws._autodiscover_accounts(
-            neo4j_session,
-            boto3_session,
-            account_id,
-            sync_tag,
-            common_job_parameters,
-        )
-
-        failed_aws_requested_sync_exceptions = _sync_one_account(
-            neo4j_session,
-            boto3_session,
-            account_id,
-            sync_tag,
-            common_job_parameters,
-            regions=regions,
-            aws_requested_syncs=aws_requested_syncs,  # Could be replaced later with per-account requested syncs
-        )
-        if failed_aws_requested_sync_exceptions:
-            failed_account_id_exceptions[account_id] = failed_aws_requested_sync_exceptions
-            failed_aws_requested_syncs = ",".join(failed_aws_requested_sync_exceptions.keys())
-            logger.warning(
-                f"Caught exceptions syncing account {account_id} in the functions {failed_aws_requested_syncs}",
-            )
-
-        # Original: `_sync_one_account` doesn't return anything, also this call is inside a try / except block that
-        #           appends to two lists: `failed_account_ids` and `exception_tracebacks` if the `aws_best_effort_mode`
-        #           config variable is set to `True`
+    # Original: `_sync_one_account` doesn't return anything, also this call is inside a try / except block that
+    #           appends to two lists: `failed_account_ids` and `exception_tracebacks` if the `aws_best_effort_mode`
+    #           config variable is set to `True`
 
     # Original: Here it logs and raises all the collected exceptions
 

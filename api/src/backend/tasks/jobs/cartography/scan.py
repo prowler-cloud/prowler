@@ -8,7 +8,7 @@ from cartography.intel import analysis as cartography_analysis
 from cartography.intel import create_indexes as cartography_create_indexes
 from celery.utils.log import get_task_logger
 
-from api.models import Provider
+from api.models import Provider as PrwolerAPIProvider
 from api.utils import initialize_prowler_provider
 from tasks.jobs.cartography.aws import start_aws_ingestion
 from tasks.jobs.cartography import prowler
@@ -32,8 +32,8 @@ def run(provider_id: str) -> None:
     `cartography.sync.run_with_config` and `cartography.sync.Sync.run`.
     """
 
-    provider = Provider.objects.get(id=provider_id)
-    prowler_provider = initialize_prowler_provider(provider)
+    provider_api_provider = PrwolerAPIProvider.objects.get(id=provider_id)
+    prowler_provider = initialize_prowler_provider(provider_api_provider)
 
     # TODO: Proper Neo4j configuration
     neo4j_uri = "bolt://neo4j:7687"
@@ -48,7 +48,7 @@ def run(provider_id: str) -> None:
     )
 
     logger.info(
-        f"Starting Cartography scan for provider {provider.provider.upper()} {provider.id}"
+        f"Starting Cartography scan for provider {provider_api_provider.provider.upper()} {provider_api_provider.id}"
     )
 
     # TODO: Manage Neo4j database as we need to check if the database exist and create it if not
@@ -60,21 +60,22 @@ def run(provider_id: str) -> None:
             cartography_create_indexes.run(neo4j_session, config)
             prowler.create_indexes(neo4j_session)
 
-            failed_ingestoin_function_exceptions = _call_within_event_loop(
-                CARTOGRAPHY_INGESTION_FUNCTIONS[provider.provider],
+            failed_ingestion_function_exceptions = _call_within_event_loop(
+                CARTOGRAPHY_INGESTION_FUNCTIONS[provider_api_provider.provider],
                 neo4j_session,
                 config,
+                provider_api_provider,
                 prowler_provider,
             )
 
             # TODO: Check if it's ok to skip this step because we are not configuring it
-            if not failed_ingestoin_function_exceptions:
+            if not failed_ingestion_function_exceptions:
                 cartography_analysis.run(neo4j_session, config)
 
-            prowler.analysis(neo4j_session, provider_id)
+            prowler.analysis(neo4j_session, provider_api_provider, config)
 
     # TODO: Store something in Postgres and set the right task status
-    return failed_ingestoin_function_exceptions
+    return failed_ingestion_function_exceptions
 
 
 def _call_within_event_loop(fn, *args, **kwargs):
