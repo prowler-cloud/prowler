@@ -107,6 +107,7 @@ class TestOCSF:
             "additional_urls": findings[0].metadata.AdditionalURLs,
             "notes": findings[0].metadata.Notes,
             "compliance": findings[0].compliance,
+            "enrichment": None,
         }
 
         # Test with int timestamp (UNIX timestamp)
@@ -196,6 +197,7 @@ class TestOCSF:
                     ],
                     "notes": "test-notes",
                     "compliance": {"test-compliance": "test-compliance"},
+                    "enrichment": None,
                 },
                 "activity_name": "Create",
                 "activity_id": 1,
@@ -324,6 +326,7 @@ class TestOCSF:
             "additional_urls": finding_output.metadata.AdditionalURLs,
             "notes": finding_output.metadata.Notes,
             "compliance": finding_output.compliance,
+            "enrichment": None,
         }
 
         # ResourceDetails
