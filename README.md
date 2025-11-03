@@ -88,7 +88,7 @@ prowler dashboard
 | Kubernetes | 83 | 7 | 5 | 7 | Official | Stable | UI, API, CLI |
 | GitHub | 17 | 2 | 1 | 0 | Official | Stable | UI, API, CLI |
 | M365 | 70 | 7 | 3 | 2 | Official | Stable | UI, API, CLI |
-| OCI | 51 | 13 | 1 | 10 | Official | Stable | CLI |
+| OCI | 51 | 13 | 1 | 10 | Official | Stable | UI, API, CLI |
 | IaC | [See `trivy` docs.](https://trivy.dev/latest/docs/coverage/iac/) | N/A | N/A | N/A | Official | Beta | CLI |
 | MongoDB Atlas | 10 | 3 | 0 | 0 | Official | Beta | CLI |
 | LLM | [See `promptfoo` docs.](https://www.promptfoo.dev/docs/red-team/plugins/) | N/A | N/A | N/A | Official | Beta | CLI |

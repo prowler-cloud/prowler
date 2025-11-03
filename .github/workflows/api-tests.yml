@@ -1,0 +1,110 @@
+name: 'API: Tests'
+
+on:
+  push:
+    branches:
+      - 'master'
+      - 'v5.*'
+    paths:
+      - 'api/**'
+      - '.github/workflows/api-tests.yml'
+  pull_request:
+    branches:
+      - 'master'
+      - 'v5.*'
+    paths:
+      - 'api/**'
+      - '.github/workflows/api-tests.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  POSTGRES_HOST: localhost
+  POSTGRES_PORT: 5432
+  POSTGRES_ADMIN_USER: prowler
+  POSTGRES_ADMIN_PASSWORD: S3cret
+  POSTGRES_USER: prowler_user
+  POSTGRES_PASSWORD: prowler
+  POSTGRES_DB: postgres-db
+  VALKEY_HOST: localhost
+  VALKEY_PORT: 6379
+  VALKEY_DB: 0
+  API_WORKING_DIR: ./api
+
+jobs:
+  api-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        python-version:
+          - '3.12'
+    defaults:
+      run:
+        working-directory: ./api
+
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_HOST: ${{ env.POSTGRES_HOST }}
+          POSTGRES_PORT: ${{ env.POSTGRES_PORT }}
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      valkey:
+        image: valkey/valkey:7-alpine3.19
+        env:
+          VALKEY_HOST: ${{ env.VALKEY_HOST }}
+          VALKEY_PORT: ${{ env.VALKEY_PORT }}
+          VALKEY_DB: ${{ env.VALKEY_DB }}
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "valkey-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Check for API changes
+        id: check-changes
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        with:
+          files_ignore: |
+            api/docs/**
+            api/README.md
+            api/CHANGELOG.md
+
+      - name: Setup Python with Poetry
+        if: steps.check-changes.outputs.any_changed == 'true'
+        uses: ./.github/actions/setup-python-poetry
+        with:
+          python-version: ${{ matrix.python-version }}
+          working-directory: ./api
+
+      - name: Run tests with pytest
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: poetry run pytest --cov=./src/backend --cov-report=xml src/backend
+
+      - name: Upload coverage reports to Codecov
+        if: steps.check-changes.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: api
