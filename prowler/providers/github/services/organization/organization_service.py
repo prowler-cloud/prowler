@@ -189,6 +189,13 @@ class Organization(GithubService):
             _extract_flag("members_allowed_repository_creation_type", str)
         )
 
+        base_permission_raw = _extract_flag("default_repository_permission", str)
+        base_permission = (
+            base_permission_raw.lower()
+            if isinstance(base_permission_raw, str)
+            else None
+        )
+
         organizations[org.id] = Org(
             id=org.id,
             name=org.login,
@@ -208,6 +215,7 @@ class Organization(GithubService):
             members_allowed_repository_creation_type=repo_creation_settings[
                 "members_allowed_repository_creation_type"
             ],
+            base_permission=base_permission,
         )
 
 
@@ -222,3 +230,4 @@ class Org(BaseModel):
     members_can_create_private_repositories: Optional[bool] = None
     members_can_create_internal_repositories: Optional[bool] = None
     members_allowed_repository_creation_type: Optional[str] = None
+    base_permission: Optional[str] = None
