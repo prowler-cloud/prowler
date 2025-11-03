@@ -1,6 +1,6 @@
 """Unit tests for enrichment data models."""
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from prowler.providers.aws.services.cloudtrail.lib.enrichment.models import (
     FindingEnrichment,
@@ -114,8 +114,7 @@ class TestFindingEnrichment:
         # Create enrichment with created_at 10 days ago
         ten_days_ago = datetime.now(timezone.utc).replace(
             hour=0, minute=0, second=0, microsecond=0
-        )
-        ten_days_ago = ten_days_ago.replace(day=ten_days_ago.day - 10)
+        ) - timedelta(days=10)
 
         enrichment = FindingEnrichment(created_at=ten_days_ago)
 
@@ -132,8 +131,7 @@ class TestFindingEnrichment:
         # Create enrichment modified 5 days ago
         five_days_ago = datetime.now(timezone.utc).replace(
             hour=0, minute=0, second=0, microsecond=0
-        )
-        five_days_ago = five_days_ago.replace(day=five_days_ago.day - 5)
+        ) - timedelta(days=5)
 
         enrichment = FindingEnrichment(last_modified_at=five_days_ago)
 
