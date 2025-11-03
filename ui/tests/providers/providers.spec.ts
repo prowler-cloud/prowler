@@ -1,5 +1,4 @@
 import { test } from "@playwright/test";
-import { ScansPage } from "../scans/scans-page";
 import {
   ProvidersPage,
   AWSProviderData,
@@ -16,6 +15,7 @@ import {
   KUBERNETES_CREDENTIAL_OPTIONS,
 } from "./providers-page";
 import fs from "fs";
+import { ScansPage } from "../scans/scans-page";
 
 test.describe("Add Provider", () => {
   test.describe.serial("Add AWS Provider", () => {

@@ -30,6 +30,7 @@ from api.models import (
     LighthouseProviderConfiguration,
     LighthouseProviderModels,
     Membership,
+    MuteRule,
     OverviewStatusChoices,
     PermissionChoices,
     Processor,
@@ -243,6 +244,14 @@ class ProviderFilter(FilterSet):
     )
     provider = ChoiceFilter(choices=Provider.ProviderChoices.choices)
     provider__in = ChoiceInFilter(
+        field_name="provider",
+        choices=Provider.ProviderChoices.choices,
+        lookup_expr="in",
+    )
+    provider_type = ChoiceFilter(
+        choices=Provider.ProviderChoices.choices, field_name="provider"
+    )
+    provider_type__in = ChoiceInFilter(
         field_name="provider",
         choices=Provider.ProviderChoices.choices,
         lookup_expr="in",
@@ -971,4 +980,21 @@ class LighthouseProviderModelsFilter(FilterSet):
         model = LighthouseProviderModels
         fields = {
             "model_id": ["exact", "icontains", "in"],
+        }
+
+
+class MuteRuleFilter(FilterSet):
+    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
+    updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
+    created_by = UUIDFilter(field_name="created_by__id", lookup_expr="exact")
+
+    class Meta:
+        model = MuteRule
+        fields = {
+            "id": ["exact", "in"],
+            "name": ["exact", "icontains"],
+            "reason": ["icontains"],
+            "enabled": ["exact"],
+            "inserted_at": ["gte", "lte"],
+            "updated_at": ["gte", "lte"],
         }
