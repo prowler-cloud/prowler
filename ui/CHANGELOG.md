@@ -8,6 +8,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - RSS feeds support [(#9109)](https://github.com/prowler-cloud/prowler/pull/9109)
 - Customer Support menu item [(#9143)](https://github.com/prowler-cloud/prowler/pull/9143)
+- Add compliance logo for each compliance specfic view [(#9145)](https://github.com/prowler-cloud/prowler/pull/9145)
 
 ### 🔄 Changed
 
