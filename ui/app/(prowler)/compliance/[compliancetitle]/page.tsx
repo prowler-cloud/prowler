@@ -61,6 +61,25 @@ const ComplianceIconSmall = ({
   );
 };
 
+const ComplianceLogo = ({ logoPath }: { logoPath?: string }) => {
+  if (!logoPath) {
+    return null;
+  }
+
+  return (
+    <div className="flex h-[320px] w-[200px] flex-col items-center justify-center lg:w-[200px]">
+      <div className="relative h-[180px] w-full rounded-lg border border-gray-300 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
+        <Image
+          src={logoPath}
+          alt="Compliance logo"
+          fill
+          className="object-contain p-3"
+        />
+      </div>
+    </div>
+  );
+};
+
 const ChartsWrapper = ({
   children,
 }: {
@@ -172,6 +191,7 @@ export default async function ComplianceDetail({
               <PieChartSkeleton />
               <BarChartSkeleton />
               <HeatmapChartSkeleton />
+              <ComplianceLogo logoPath={logoPath} />
             </ChartsWrapper>
             <SkeletonAccordion />
           </div>
@@ -219,6 +239,7 @@ const SSRComplianceContent = async ({
           <PieChart pass={0} fail={0} manual={0} />
           <BarChart sections={[]} />
           <HeatmapChart categories={[]} />
+          <ComplianceLogo logoPath={logoPath} />
         </ChartsWrapper>
         <ClientAccordionWrapper items={[]} defaultExpandedKeys={[]} />
       </div>
@@ -254,6 +275,7 @@ const SSRComplianceContent = async ({
         />
         <BarChart sections={topFailedSections} />
         <HeatmapChart categories={categoryHeatmapData} />
+        <ComplianceLogo logoPath={logoPath} />
       </ChartsWrapper>
 
       <Spacer className="h-1 w-full rounded-full bg-gray-200 dark:bg-gray-800" />
