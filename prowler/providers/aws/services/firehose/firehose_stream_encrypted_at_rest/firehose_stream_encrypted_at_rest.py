@@ -28,7 +28,11 @@ class firehose_stream_encrypted_at_rest(Check):
             report.status = "FAIL"
             report.status_extended = f"Firehose Stream {stream.name} does not have at rest encryption enabled."
 
-            if stream.delivery_stream_type == "KinesisStreamAsSource":
+            if stream.kms_encryption == EncryptionStatus.ENABLED:
+                report.status = "PASS"
+                report.status_extended = f"Firehose Stream {stream.name} does have at rest encryption enabled."
+
+            elif stream.delivery_stream_type == "KinesisStreamAsSource":
                 source_stream_arn = stream.source.kinesis_stream.kinesis_stream_arn
                 source_stream = kinesis_client.streams.get(source_stream_arn, None)
                 if source_stream:
@@ -58,10 +62,6 @@ class firehose_stream_encrypted_at_rest(Check):
                             report.status_extended = f"Firehose Stream {stream.name} uses MSK provisioned source which always has encryption at rest enabled by AWS (either with AWS managed keys or CMK)."
                     else:
                         report.status_extended = f"Firehose Stream {stream.name} uses MSK source which always has encryption at rest enabled by AWS."
-
-            elif stream.kms_encryption == EncryptionStatus.ENABLED:
-                report.status = "PASS"
-                report.status_extended = f"Firehose Stream {stream.name} does have at rest encryption enabled."
 
             findings.append(report)
 
