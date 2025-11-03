@@ -12,6 +12,10 @@ export class ScansPage extends BasePage {
     readonly scanAliasInput: Locator;
     readonly startNowButton: Locator;
 
+    // Scan state elements
+    readonly successToast: Locator;
+
+
   constructor(page: Page) {
     super(page);
 
@@ -19,6 +23,9 @@ export class ScansPage extends BasePage {
     this.scanProviderSelect = page.getByRole("button", { name: "Select a cloud provider to launch a scan" });
     this.scanAliasInput = page.getByRole("textbox", { name: "Scan label (optional)" });
     this.startNowButton = page.getByRole("button", { name: /Start now|Start scan now/i });
+
+    // Scan state elements
+    this.successToast = page.getByRole("alert", { name: /The scan was launched successfully\.?/i });
 
     // Main content elements
     this.scanTable = page.locator("table");
@@ -60,13 +67,8 @@ export class ScansPage extends BasePage {
   async verifyScanLaunched(alias: string): Promise<void> {
     // Verify the scan was launched
 
-    // Optional success toast (best-effort)
-    const successToast = this.page.getByRole("alert", { name: "The scan was launched successfully." }).getByText(
-      "The scan was launched successfully.",
-    );
-
     // Verify the success toast is visible
-    await successToast.isVisible().catch(() => {});
+    await this.successToast.waitFor({ state: "visible", timeout: 5000 }).catch(() => {});
 
     // Wait for the scans table to be visible
     await expect(this.scanTable).toBeVisible();
