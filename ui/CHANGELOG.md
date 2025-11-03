@@ -7,6 +7,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🚀 Added
 
 - RSS feeds support [(#9109)](https://github.com/prowler-cloud/prowler/pull/9109)
+- Multi LLM support to Lighthouse AI [(#8925)](https://github.com/prowler-cloud/prowler/pull/8925)
 
 ### 🔄 Changed
 
