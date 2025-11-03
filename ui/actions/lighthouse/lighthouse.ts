@@ -205,7 +205,7 @@ export const updateTenantConfig = async (config: {
   try {
     const payload = {
       data: {
-        type: "lighthouse-config",
+        type: "lighthouse-configurations",
         attributes: config,
       },
     };
