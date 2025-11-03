@@ -216,11 +216,13 @@ export const SignInForm = ({
         </Button>
       </div>
 
-      <AuthFooterLink
-        text="Need to create an account?"
-        linkText="Sign up"
-        href="/sign-up"
-      />
+      {process.env.NEXT_PUBLIC_ALLOW_TENANT_CREATION !== "false" && (
+        <AuthFooterLink
+          text="Need to create an account?"
+          linkText="Sign up"
+          href="/sign-up"
+        />
+      )}
     </AuthLayout>
   );
 };

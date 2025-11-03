@@ -45,6 +45,21 @@ export async function authenticate(
 }
 
 export const createNewUser = async (formData: SignUpFormData) => {
+  // Prevent tenant creation if disabled, unless user has an invitation token
+  const allowTenantCreation =
+    process.env.NEXT_PUBLIC_ALLOW_TENANT_CREATION !== "false";
+  if (!allowTenantCreation && !formData.invitationToken) {
+    return {
+      errors: [
+        {
+          source: { pointer: "/data" },
+          detail:
+            "Tenant creation is disabled. Please contact an administrator to create an account.",
+        },
+      ],
+    };
+  }
+
   const url = new URL(`${apiBaseUrl}/users`);
 
   if (formData.invitationToken) {
