@@ -323,7 +323,7 @@ class Finding(BaseModel):
                 output_data["resource_uid"] = check_output.model
                 output_data["region"] = check_output.model
 
-            elif provider.type == "oci":
+            elif provider.type == "oraclecloud":
                 output_data["auth_method"] = (
                     f"Profile: {get_nested_attribute(provider, 'session.profile')}"
                 )
@@ -407,7 +407,7 @@ class Finding(BaseModel):
             finding.subscription = list(provider.identity.subscriptions.keys())[0]
         elif provider.type == "gcp":
             finding.project_id = list(provider.projects.keys())[0]
-        elif provider.type == "oci":
+        elif provider.type == "oraclecloud":
             finding.compartment_id = getattr(finding, "compartment_id", "")
 
         finding.check_metadata = CheckMetadata(

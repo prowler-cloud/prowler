@@ -275,7 +275,7 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
-                elif "oci" in provider_class_name.lower():
+                elif "oraclecloud" in provider_class_name.lower():
                     provider_class(
                         oci_config_file=arguments.oci_config_file,
                         profile=arguments.profile,

@@ -271,16 +271,8 @@ class Scan:
                     # Recover service from check name
                     service = get_service_name_from_check_name(check_name)
                     try:
-                        # Map CLI provider names to directory names (for cases where they differ)
-                        provider_directory_map = {
-                            "oci": "oraclecloud",  # OCI SDK conflict avoidance
-                        }
-                        provider_directory = provider_directory_map.get(
-                            self._provider.type, self._provider.type
-                        )
-
                         # Import check module
-                        check_module_path = f"prowler.providers.{provider_directory}.services.{service}.{check_name}.{check_name}"
+                        check_module_path = f"prowler.providers.{self._provider.type}.services.{service}.{check_name}.{check_name}"
                         lib = import_check(check_module_path)
                         # Recover functions from check
                         check_to_execute = getattr(lib, check_name)

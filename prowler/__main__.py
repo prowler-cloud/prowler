@@ -334,7 +334,7 @@ def prowler():
         output_options = IACOutputOptions(args, bulk_checks_metadata)
     elif provider == "llm":
         output_options = LLMOutputOptions(args, bulk_checks_metadata)
-    elif provider == "oci":
+    elif provider == "oraclecloud":
         output_options = OCIOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
@@ -963,7 +963,7 @@ def prowler():
                 generated_outputs["compliance"].append(generic_compliance)
                 generic_compliance.batch_write_data_to_file()
 
-    elif provider == "oci":
+    elif provider == "oraclecloud":
         for compliance_name in input_compliance_frameworks:
             if compliance_name.startswith("cis_"):
                 # Generate CIS Finding Object
