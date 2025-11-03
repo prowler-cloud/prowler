@@ -11,7 +11,35 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # First, update the field definition with the new choices
+        # Add the new enum value
+        migrations.RunSQL(
+            "ALTER TYPE provider ADD VALUE IF NOT EXISTS 'oraclecloud';",
+            reverse_sql=migrations.RunSQL.noop,
+        ),
+        # Update existing records from 'oci' to 'oraclecloud' (if table exists)
+        migrations.RunSQL(
+            """
+            DO $$
+            BEGIN
+                IF EXISTS (SELECT FROM information_schema.tables
+                          WHERE table_schema = 'public'
+                          AND table_name = 'api_provider') THEN
+                    UPDATE api_provider SET provider = 'oraclecloud' WHERE provider = 'oci';
+                END IF;
+            END $$;
+            """,
+            reverse_sql="""
+            DO $$
+            BEGIN
+                IF EXISTS (SELECT FROM information_schema.tables
+                          WHERE table_schema = 'public'
+                          AND table_name = 'api_provider') THEN
+                    UPDATE api_provider SET provider = 'oci' WHERE provider = 'oraclecloud';
+                END IF;
+            END $$;
+            """,
+        ),
+        # Update the field definition with the new choices
         migrations.AlterField(
             model_name="provider",
             name="provider",
@@ -27,16 +55,6 @@ class Migration(migrations.Migration):
                 ],
                 default="aws",
             ),
-        ),
-        # Add the new enum value
-        migrations.RunSQL(
-            "ALTER TYPE provider ADD VALUE IF NOT EXISTS 'oraclecloud';",
-            reverse_sql=migrations.RunSQL.noop,
-        ),
-        # Update existing records from 'oci' to 'oraclecloud'
-        migrations.RunSQL(
-            "UPDATE api_provider SET provider = 'oraclecloud' WHERE provider = 'oci';",
-            reverse_sql="UPDATE api_provider SET provider = 'oci' WHERE provider = 'oraclecloud';",
         ),
         # Note: We cannot remove the old 'oci' value from the enum as PostgreSQL
         # does not support removing enum values. The old value will remain in the
