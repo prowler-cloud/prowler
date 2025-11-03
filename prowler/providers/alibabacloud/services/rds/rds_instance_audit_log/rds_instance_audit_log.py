@@ -1,0 +1,18 @@
+from prowler.lib.check.models import Check, Check_Report_AlibabaCloud
+from prowler.providers.alibabacloud.services.rds.rds_client import rds_client
+
+
+class rds_instance_audit_log(Check):
+    def execute(self):
+        findings = []
+        for db_instance in rds_client.db_instances.values():
+            report = Check_Report_AlibabaCloud(
+                metadata=self.metadata(), resource=db_instance
+            )
+            report.status = "FAIL"
+            report.status_extended = f"RDS instance {db_instance.db_instance_name} does not have audit logging enabled."
+            if db_instance.audit_log_enabled:
+                report.status = "PASS"
+                report.status_extended = f"RDS instance {db_instance.db_instance_name} has audit logging enabled."
+            findings.append(report)
+        return findings

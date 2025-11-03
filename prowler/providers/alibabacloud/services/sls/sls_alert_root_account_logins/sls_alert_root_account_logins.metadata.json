@@ -1,0 +1,22 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "sls_alert_root_account_logins",
+  "CheckTitle": "Ensure alert is configured for root account logins",
+  "CheckType": [],
+  "ServiceName": "sls",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "high",
+  "ResourceType": "Alert",
+  "Description": "Ensures that an alert is configured in SLS to monitor and notify on root account login activities.",
+  "Risk": "Root account has unrestricted access to all resources. Without monitoring, unauthorized root access may go undetected.",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/root-account-logins-alert.html",
+  "Remediation": {
+    "Code": {"CLI": "", "NativeIaC": "", "Other": "", "Terraform": ""},
+    "Recommendation": {"Text": "Create and enable an alert in SLS to monitor root account login activities from ActionTrail logs.", "Url": "https://www.alibabacloud.com/help/en/sls/user-guide/create-an-alert-rule"}
+  },
+  "Categories": ["logging"],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check looks for enabled alerts that monitor root account console or API logins."
+}

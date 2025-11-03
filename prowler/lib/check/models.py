@@ -660,6 +660,33 @@ class Check_Report_Kubernetes(Check_Report):
 
 
 @dataclass
+class Check_Report_AlibabaCloud(Check_Report):
+    """Contains the Alibaba Cloud Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    resource_arn: str
+    region: str
+    account_uid: str
+
+    def __init__(self, metadata: Dict, resource: Any) -> None:
+        """Initialize the Alibaba Cloud Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource.
+        """
+        super().__init__(metadata, resource)
+        self.resource_id = (
+            getattr(resource, "id", None) or getattr(resource, "name", None) or ""
+        )
+        self.resource_name = getattr(resource, "name", "")
+        self.resource_arn = getattr(resource, "arn", "")
+        self.region = getattr(resource, "region", "")
+        self.account_uid = ""
+
+
+@dataclass
 class CheckReportGithub(Check_Report):
     """Contains the GitHub Check's finding information."""
 

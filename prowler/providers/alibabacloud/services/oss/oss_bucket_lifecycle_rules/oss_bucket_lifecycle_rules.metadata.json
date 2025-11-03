@@ -1,0 +1,32 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "oss_bucket_lifecycle_rules",
+  "CheckTitle": "Ensure OSS buckets have lifecycle rules configured",
+  "CheckType": [],
+  "ServiceName": "oss",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "low",
+  "ResourceType": "Bucket",
+  "Description": "Ensures that OSS buckets have lifecycle rules configured to manage object lifecycle and optimize costs. Lifecycle rules automatically transition or delete objects based on age.",
+  "Risk": "Without lifecycle rules, old or unused objects remain in the bucket indefinitely, leading to unnecessary storage costs and difficulty managing data retention policies.",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/OSS/bucket-lifecycle.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure lifecycle rules for OSS buckets. Go to OSS Console > Buckets, select the bucket, and create lifecycle rules to automatically transition or delete objects.",
+      "Url": "https://www.alibabacloud.com/help/en/oss/user-guide/lifecycle-rules"
+    }
+  },
+  "Categories": [
+    "trustworthy-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

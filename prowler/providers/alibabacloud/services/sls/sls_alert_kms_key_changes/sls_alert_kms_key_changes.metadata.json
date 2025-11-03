@@ -1,0 +1,32 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "sls_alert_kms_key_changes",
+  "CheckTitle": "Ensure alert is configured for kms key changes",
+  "CheckType": [],
+  "ServiceName": "sls",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "high",
+  "ResourceType": "Alert",
+  "Description": "Ensures that an alert is configured in SLS to monitor and notify on KMS key configuration changes.",
+  "Risk": "Unauthorized KMS key changes can compromise data encryption or lead to data loss.",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/kms-key-changes-alert.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create and enable an alert in SLS to monitor kms key changes from ActionTrail logs.",
+      "Url": "https://www.alibabacloud.com/help/en/sls/user-guide/create-an-alert-rule"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check looks for enabled alerts that monitor kms key changes."
+}

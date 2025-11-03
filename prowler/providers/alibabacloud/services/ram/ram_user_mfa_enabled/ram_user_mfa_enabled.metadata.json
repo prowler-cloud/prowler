@@ -1,0 +1,32 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "ram_user_mfa_enabled",
+  "CheckTitle": "Ensure MFA is enabled for all RAM users with console access",
+  "CheckType": [],
+  "ServiceName": "ram",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "medium",
+  "ResourceType": "User",
+  "Description": "Ensures that multi-factor authentication (MFA) is enabled for all RAM users with console access. MFA adds an extra layer of security by requiring users to provide a unique authentication code from an approved authentication device in addition to their username and password.",
+  "Risk": "Without MFA enabled, user accounts are vulnerable to unauthorized access if credentials are compromised. This could lead to data breaches, unauthorized resource access, or malicious activities.",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/RAM/user-mfa.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable MFA for all RAM users with console access. Go to RAM Console > Users, select each user, and enable MFA device binding.",
+      "Url": "https://www.alibabacloud.com/help/en/ram/user-guide/enable-an-mfa-device-for-a-ram-user"
+    }
+  },
+  "Categories": [
+    "identity-and-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

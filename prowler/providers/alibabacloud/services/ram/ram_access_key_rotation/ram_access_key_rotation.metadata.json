@@ -1,0 +1,32 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "ram_access_key_rotation",
+  "CheckTitle": "Ensure RAM user access keys are rotated every 90 days or less",
+  "CheckType": [],
+  "ServiceName": "ram",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "medium",
+  "ResourceType": "AccessKey",
+  "Description": "Ensures that RAM user access keys are rotated regularly (within 90 days). Regular access key rotation reduces the risk of unauthorized access from compromised keys.",
+  "Risk": "Access keys that are not rotated regularly increase the risk of unauthorized access if they are compromised. Older keys have had more time to potentially be exposed through logs, code repositories, or other means.",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/RAM/access-key-rotation.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Rotate RAM user access keys that are older than 90 days. Create new access keys, update applications to use the new keys, and delete the old keys.",
+      "Url": "https://www.alibabacloud.com/help/en/ram/user-guide/create-an-accesskey-pair"
+    }
+  },
+  "Categories": [
+    "identity-and-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,0 +1,22 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "vpc_default_vpc_in_use",
+  "CheckTitle": "Ensure default VPCs are not in use",
+  "CheckType": [],
+  "ServiceName": "vpc",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "low",
+  "ResourceType": "VPC",
+  "Description": "Ensures that default VPCs are not in use for production workloads.",
+  "Risk": "Default VPCs may have less secure default configurations.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {"CLI": "", "NativeIaC": "", "Other": "", "Terraform": ""},
+    "Recommendation": {"Text": "Use custom VPCs instead of default VPCs.", "Url": ""}
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
