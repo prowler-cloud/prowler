@@ -1718,6 +1718,9 @@ class ScanViewSet(BaseRLSViewSet):
         elif self.action == "threatscore":
             if hasattr(self, "response_serializer_class"):
                 return self.response_serializer_class
+        elif self.action == "ens":
+            if hasattr(self, "response_serializer_class"):
+                return self.response_serializer_class
         return super().get_serializer_class()
 
     def partial_update(self, request, *args, **kwargs):

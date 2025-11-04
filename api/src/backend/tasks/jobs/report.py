@@ -2493,7 +2493,7 @@ def generate_threatscore_report_job(
     )
     try:
         logger.info("Generating the output directory")
-        out_dir, _, threatscore_path = _generate_output_directory(
+        out_dir, _, threatscore_path, _ = _generate_output_directory(
             DJANGO_TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id
         )
     except Exception as e:
@@ -2577,7 +2577,7 @@ def generate_ens_report_job(
     )
     try:
         logger.info("Generating the output directory")
-        out_dir, _, ens_path = _generate_output_directory(
+        out_dir, _, _, ens_path = _generate_output_directory(
             DJANGO_TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id
         )
     except Exception as e:
