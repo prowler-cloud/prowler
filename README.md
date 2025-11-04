@@ -83,10 +83,10 @@ prowler dashboard
 | Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) | Support | Interface |
 |---|---|---|---|---|---|---|
 | AWS | 576 | 82 | 38 | 10 | Official | UI, API, CLI |
-| GCP | 79 | 13 | 11 | 3 | Official | UI, API, CLI |
+| GCP | 79 | 13 | 12 | 3 | Official | UI, API, CLI |
 | Azure | 162 | 19 | 12 | 4 | Official | UI, API, CLI |
 | Kubernetes | 83 | 7 | 5 | 7 | Official | UI, API, CLI |
-| GitHub | 17 | 2 | 1 | 0 | Official | UI, API, CLI |
+| GitHub | 17 | 2 | 1 | 0 | Official | Stable | UI, API, CLI |
 | M365 | 70 | 7 | 3 | 2 | Official | UI, API, CLI |
 | OCI | 51 | 13 | 1 | 10 | Official | UI, API, CLI |
 | IaC | [See `trivy` docs.](https://trivy.dev/latest/docs/coverage/iac/) | N/A | N/A | N/A | Official | UI, API, CLI |

@@ -16,7 +16,7 @@
   "Risk": "**Open Internet ingress** to EMR nodes enables direct access to services and UIs, facilitating brute force, RCE, and data theft. Adversaries can pivot inside the VPC, alter jobs and outputs (**integrity**), exfiltrate datasets (**confidentiality**), or abuse compute for mining, degrading **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-block-public-access.html",
+    "https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-block-public-access.html"
   ],
   "Remediation": {
     "Code": {

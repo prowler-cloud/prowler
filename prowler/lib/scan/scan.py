@@ -1,4 +1,5 @@
 import datetime
+from datetime import timezone
 from types import SimpleNamespace
 from typing import Generator
 
@@ -25,6 +26,7 @@ from prowler.lib.scan.exceptions.exceptions import (
 )
 from prowler.providers.common.models import Audit_Metadata, ProviderOutputOptions
 from prowler.providers.common.provider import Provider
+from prowler.providers.iac.iac_provider import IacProvider
 
 
 class Scan:
@@ -90,15 +92,25 @@ class Scan:
             except ValueError:
                 raise ScanInvalidStatusError(f"Invalid status provided: {s}.")
 
-        # Load bulk compliance frameworks
-        self._bulk_compliance_frameworks = Compliance.get_bulk(provider.type)
-
-        # Get bulk checks metadata for the provider
-        self._bulk_checks_metadata = CheckMetadata.get_bulk(provider.type)
-        # Complete checks metadata with the compliance framework specification
-        self._bulk_checks_metadata = update_checks_metadata_with_compliance(
-            self._bulk_compliance_frameworks, self._bulk_checks_metadata
-        )
+        # Special setup for IaC provider - override inputs to work with traditional flow
+        if provider.type == "iac":
+            # IaC doesn't use traditional Prowler checks, so clear all input parameters
+            # to avoid validation errors and let it flow through the normal logic
+            checks = None
+            services = None
+            excluded_checks = None
+            excluded_services = None
+            self._bulk_checks_metadata = {}
+            self._bulk_compliance_frameworks = {}
+        else:
+            # Load bulk compliance frameworks
+            self._bulk_compliance_frameworks = Compliance.get_bulk(provider.type)
+            # Get bulk checks metadata for the provider
+            self._bulk_checks_metadata = CheckMetadata.get_bulk(provider.type)
+            # Complete checks metadata with the compliance framework specification
+            self._bulk_checks_metadata = update_checks_metadata_with_compliance(
+                self._bulk_compliance_frameworks, self._bulk_checks_metadata
+            )
 
         # Create a list of valid categories
         valid_categories = set()
@@ -148,19 +160,22 @@ class Scan:
                     )
 
         # Load checks to execute
-        self._checks_to_execute = sorted(
-            load_checks_to_execute(
-                bulk_checks_metadata=self._bulk_checks_metadata,
-                bulk_compliance_frameworks=self._bulk_compliance_frameworks,
-                check_list=checks,
-                service_list=services,
-                compliance_frameworks=compliances,
-                categories=categories,
-                severities=severities,
-                provider=provider.type,
-                checks_file=None,
+        if provider.type == "iac":
+            self._checks_to_execute = ["iac_scan"]  # Dummy check name for IaC
+        else:
+            self._checks_to_execute = sorted(
+                load_checks_to_execute(
+                    bulk_checks_metadata=self._bulk_checks_metadata,
+                    bulk_compliance_frameworks=self._bulk_compliance_frameworks,
+                    check_list=checks,
+                    service_list=services,
+                    compliance_frameworks=compliances,
+                    categories=categories,
+                    severities=severities,
+                    provider=provider.type,
+                    checks_file=None,
+                )
             )
-        )
 
         # Exclude checks
         if excluded_checks:
@@ -184,9 +199,13 @@ class Scan:
 
         self._number_of_checks_to_execute = len(self._checks_to_execute)
 
-        service_checks_to_execute = get_service_checks_to_execute(
-            self._checks_to_execute
-        )
+        # Set up service-based checks tracking
+        if provider.type == "iac":
+            service_checks_to_execute = {"iac": set(["iac_scan"])}
+        else:
+            service_checks_to_execute = get_service_checks_to_execute(
+                self._checks_to_execute
+            )
         service_checks_completed = dict()
 
         self._service_checks_to_execute = service_checks_to_execute
@@ -245,6 +264,9 @@ class Scan:
             Exception: If any other error occurs during the execution of a check.
         """
         try:
+            # Initialize check_name for error handling
+            check_name = None
+
             # Using SimpleNamespace to create a mocked object
             arguments = SimpleNamespace()
 
@@ -265,6 +287,64 @@ class Scan:
             )
 
             start_time = datetime.datetime.now()
+
+            # Special handling for IaC provider
+            if self._provider.type == "iac":
+                # IaC provider doesn't use regular checks, it runs Trivy directly
+                if isinstance(self._provider, IacProvider):
+                    logger.info("Running IaC scan with Trivy...")
+                    # Run the IaC scan
+                    iac_reports = self._provider.run()
+
+                    # Convert IaC reports to Finding objects
+                    findings = []
+
+                    for report in iac_reports:
+                        # Generate unique UID for the finding
+                        finding_uid = f"{report.check_metadata.CheckID}-{report.resource_name}-{report.resource_line_range}"
+
+                        # Convert status string to Status enum
+                        status_enum = (
+                            Status.FAIL if report.status == "FAIL" else Status.PASS
+                        )
+                        if report.muted:
+                            status_enum = Status.MUTED
+
+                        finding = Finding(
+                            auth_method="Repository",  # IaC uses repository as auth method
+                            timestamp=datetime.datetime.now(timezone.utc),
+                            account_uid=self._provider.scan_repository_url or "local",
+                            account_name="IaC Repository",
+                            metadata=report.check_metadata,  # Pass the CheckMetadata object directly
+                            uid=finding_uid,
+                            status=status_enum,
+                            status_extended=report.status_extended,
+                            muted=report.muted,
+                            resource_uid=report.resource_name,  # For IaC, the file path is the UID
+                            resource_metadata=report.resource,  # The raw finding dict
+                            resource_name=report.resource_name,
+                            resource_details=report.resource_details,
+                            resource_tags={},  # IaC doesn't have resource tags
+                            region="global",  # IaC doesn't have regions
+                            compliance={},  # IaC doesn't have compliance mappings yet
+                            raw=report.resource,  # The raw finding dict
+                        )
+                        findings.append(finding)
+
+                    # Filter the findings by the status
+                    if self._status:
+                        findings = [f for f in findings if f.status in self._status]
+
+                    # Update progress and yield findings
+                    self._number_of_checks_completed = 1
+                    self._number_of_checks_to_execute = 1
+
+                    yield (100.0, findings)
+
+                    # Calculate duration
+                    end_time = datetime.datetime.now()
+                    self._duration = int((end_time - start_time).total_seconds())
+                    return
 
             for check_name in checks_to_execute:
                 try:
@@ -349,6 +429,7 @@ class Scan:
             # Update the scan duration when all checks are completed
             self._duration = int((datetime.datetime.now() - start_time).total_seconds())
         except Exception as error:
+            check_name = check_name or "Scan error"
             logger.error(
                 f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
