@@ -1,10 +1,3 @@
-"""
-ThreatScore metrics computation helpers.
-
-This module provides utilities for computing ThreatScore metrics from scan data,
-including overall scores, section breakdowns, and critical requirements identification.
-"""
-
 from celery.utils.log import get_task_logger
 from tasks.jobs.threatscore_utils import (
     _aggregate_requirement_statistics_from_database,

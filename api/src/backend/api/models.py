@@ -2220,7 +2220,6 @@ class ThreatScoreSnapshot(RowLevelSecurityProtectedModel):
     """
     Stores historical ThreatScore metrics for a given scan.
     Snapshots are created automatically after each ThreatScore report generation.
-    RLS-protected to ensure tenant isolation.
     """
 
     objects = models.Manager()
