@@ -887,7 +887,7 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `iac` - IaC
-          * `oci` - Oracle Cloud Infrastructure
+          * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -913,7 +913,7 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `iac` - IaC
-          * `oci` - Oracle Cloud Infrastructure
+          * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -1421,7 +1421,7 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `iac` - IaC
-          * `oci` - Oracle Cloud Infrastructure
+          * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -1447,7 +1447,7 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `iac` - IaC
-          * `oci` - Oracle Cloud Infrastructure
+          * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -1863,7 +1863,7 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `iac` - IaC
-          * `oci` - Oracle Cloud Infrastructure
+          * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -1889,7 +1889,7 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `iac` - IaC
-          * `oci` - Oracle Cloud Infrastructure
+          * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -2303,7 +2303,7 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `iac` - IaC
-          * `oci` - Oracle Cloud Infrastructure
+          * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -2329,7 +2329,7 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `iac` - IaC
-          * `oci` - Oracle Cloud Infrastructure
+          * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -2731,7 +2731,7 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `iac` - IaC
-          * `oci` - Oracle Cloud Infrastructure
+          * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -2757,7 +2757,7 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `iac` - IaC
-          * `oci` - Oracle Cloud Infrastructure
+          * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -4563,7 +4563,7 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `iac` - IaC
-          * `oci` - Oracle Cloud Infrastructure
+          * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -4589,7 +4589,7 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `iac` - IaC
-          * `oci` - Oracle Cloud Infrastructure
+          * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -4747,7 +4747,7 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `iac` - IaC
-          * `oci` - Oracle Cloud Infrastructure
+          * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -4773,7 +4773,7 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `iac` - IaC
-          * `oci` - Oracle Cloud Infrastructure
+          * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -4997,7 +4997,7 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `iac` - IaC
-          * `oci` - Oracle Cloud Infrastructure
+          * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -5023,7 +5023,7 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `iac` - IaC
-          * `oci` - Oracle Cloud Infrastructure
+          * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -5727,7 +5727,7 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `iac` - IaC
-          * `oci` - Oracle Cloud Infrastructure
+          * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider__in]
         schema:
@@ -6416,7 +6416,7 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `iac` - IaC
-          * `oci` - Oracle Cloud Infrastructure
+          * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -6442,7 +6442,7 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `iac` - IaC
-          * `oci` - Oracle Cloud Infrastructure
+          * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -6788,7 +6788,7 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `iac` - IaC
-          * `oci` - Oracle Cloud Infrastructure
+          * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -6814,7 +6814,7 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `iac` - IaC
-          * `oci` - Oracle Cloud Infrastructure
+          * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -7061,7 +7061,7 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `iac` - IaC
-          * `oci` - Oracle Cloud Infrastructure
+          * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -7087,7 +7087,7 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `iac` - IaC
-          * `oci` - Oracle Cloud Infrastructure
+          * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -7340,7 +7340,7 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `iac` - IaC
-          * `oci` - Oracle Cloud Infrastructure
+          * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -7366,7 +7366,7 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `iac` - IaC
-          * `oci` - Oracle Cloud Infrastructure
+          * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -8182,7 +8182,7 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `iac` - IaC
-          * `oci` - Oracle Cloud Infrastructure
+          * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -8208,7 +8208,7 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `iac` - IaC
-          * `oci` - Oracle Cloud Infrastructure
+          * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
