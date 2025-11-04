@@ -7,6 +7,8 @@ from celery.utils.log import get_task_logger
 from api.models import Provider, ResourceFindingMapping, Scan
 from django.db.models import Subquery
 
+from prowler.config import config as ProwlerConfig
+
 # TODO: Use the right logger
 # logger = get_task_logger(__name__)
 import logging
@@ -14,9 +16,10 @@ from config.custom_logging import BackendLogger
 
 logger = logging.getLogger(BackendLogger.API)
 
+# TODO: To environment variable and/or settings
 BATCH_SIZE = 1000
 
-ROOT_NODE_TYPES = {
+ROOT_NODE_LABELS = {
     "aws": "AWSAccount",
 }
 
@@ -24,13 +27,10 @@ NODE_UID_FIELDS = {
     "aws": "arn",
 }
 
-ACCOUNT_NODE_TYPES = {
-    "aws": "AWSAccount",
-}
-
 INDEX_STATEMENTS = [
     "CREATE INDEX prowler_finding_id IF NOT EXISTS FOR (n:ProwlerFinding) ON (n.id);",
     "CREATE INDEX prowler_finding_account_id IF NOT EXISTS FOR (n:ProwlerFinding) ON (n.account_id);",
+    "CREATE INDEX prowler_finding_lastupdated IF NOT EXISTS FOR (n:ProwlerFinding) ON (n.lastupdated);",
     "CREATE INDEX prowler_finding_check_id IF NOT EXISTS FOR (n:ProwlerFinding) ON (n.check_id);",
     "CREATE INDEX prowler_finding_severity IF NOT EXISTS FOR (n:ProwlerFinding) ON (n.severity);",
 ]
@@ -38,7 +38,7 @@ INDEX_STATEMENTS = [
 INSERT_STATEMENT_TEMPLATE = """
     UNWIND $findings_data AS finding_data
 
-    MATCH (account:__ROOT_NODE_TYPE__ {id: $account_id})
+    MATCH (account:__ROOT_NODE_LABEL__ {id: $account_id})
     MATCH (account)-->(resource)
         WHERE resource.__NODE_UID_FIELD__ = finding_data.resource_uid
             OR resource.id = finding_data.resource_uid
@@ -60,7 +60,9 @@ INSERT_STATEMENT_TEMPLATE = """
             finding.muted_reason = finding_data.muted_reason,
             finding.account_id = $account_id,
             finding.firstseen = timestamp(),
-            finding.lastupdated = $last_updated
+            finding.lastupdated = $last_updated,
+            finding._module_name = 'cartography:prowler',
+            finding._module_version = $prowler_version
         ON MATCH SET
             finding.status = finding_data.status,
             finding.status_extended = finding_data.status_extended,
@@ -70,7 +72,9 @@ INSERT_STATEMENT_TEMPLATE = """
         ON CREATE SET
             rel.account_id = $account_id,
             rel.firstseen = timestamp(),
-            rel.lastupdated = $last_updated
+            rel.lastupdated = $last_updated,
+            rel._module_name = 'cartography:prowler',
+            rel._module_version = $prowler_version
         ON MATCH SET
             rel.lastupdated = $last_updated
 """
@@ -100,17 +104,17 @@ def create_indexes(neo4j_session: neo4j.Session) -> None:
 
 def analysis(
     neo4j_session: neo4j.Session,
-    provider_api_provider: Provider,
+    prowler_api_provider: Provider,
     config: CartographyConfig,
 ) -> None:
-    findings_data = get_provider_last_scan_findings(provider_api_provider)
-    load_findings(neo4j_session, findings_data, provider_api_provider, config)
-    cleanup_findings(neo4j_session, provider_api_provider, config)
+    findings_data = get_provider_last_scan_findings(prowler_api_provider)
+    load_findings(neo4j_session, findings_data, prowler_api_provider, config)
+    cleanup_findings(neo4j_session, prowler_api_provider, config)
 
 
-def get_provider_last_scan_findings(provider_api_provider: Provider) -> list[dict[str, str]]:
+def get_provider_last_scan_findings(prowler_api_provider: Provider) -> list[dict[str, str]]:
     latest_scan_id_subquery = (
-        Scan.objects.filter(provider_id=provider_api_provider.id, completed_at__isnull=False)
+        Scan.objects.filter(provider_id=prowler_api_provider.id, completed_at__isnull=False)
         .order_by("-completed_at")
         .values("id")[:1]
     )
@@ -159,20 +163,21 @@ def get_provider_last_scan_findings(provider_api_provider: Provider) -> list[dic
 def load_findings(
     neo4j_session: neo4j.Session,
     findings_data: list[dict[str, str]],
-    provider_api_provider: Provider,
+    prowler_api_provider: Provider,
     config: CartographyConfig
 ) -> None:
     replacements = {
-        "__ROOT_NODE_TYPE__": ROOT_NODE_TYPES[provider_api_provider.provider],
-        "__NODE_UID_FIELD__": NODE_UID_FIELDS[provider_api_provider.provider],
+        "__ROOT_NODE_LABEL__": ROOT_NODE_LABELS[prowler_api_provider.provider],
+        "__NODE_UID_FIELD__": NODE_UID_FIELDS[prowler_api_provider.provider],
     }
     query = INSERT_STATEMENT_TEMPLATE
     for replace_key, replace_value in replacements.items():
             query = query.replace(replace_key, replace_value)
 
     parameters = {
-        "account_id": str(provider_api_provider.uid),
+        "account_id": str(prowler_api_provider.uid),
         "last_updated": config.update_tag,
+        "prowler_version": ProwlerConfig.prowler_version,
     }
 
     total_length = len(findings_data)
@@ -187,9 +192,9 @@ def load_findings(
         )
 
 
-def cleanup_findings(neo4j_session: neo4j.Session, provider_api_provider: Provider, config: CartographyConfig) -> None:
+def cleanup_findings(neo4j_session: neo4j.Session, prowler_api_provider: Provider, config: CartographyConfig) -> None:
     parameters = {
-        "account_id": str(provider_api_provider.uid),
+        "account_id": str(prowler_api_provider.uid),
         "last_updated": config.update_tag,
         "batch_size": BATCH_SIZE,
     }
