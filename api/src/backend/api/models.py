@@ -284,6 +284,7 @@ class Provider(RowLevelSecurityProtectedModel):
         KUBERNETES = "kubernetes", _("Kubernetes")
         M365 = "m365", _("M365")
         GITHUB = "github", _("GitHub")
+        IAC = "iac", _("IaC")
         OCI = "oci", _("Oracle Cloud Infrastructure")
 
     @staticmethod
@@ -352,6 +353,19 @@ class Provider(RowLevelSecurityProtectedModel):
                 detail="GitHub provider ID must be a valid GitHub username or organization name (1-39 characters, "
                 "starting with alphanumeric, containing only alphanumeric characters and hyphens).",
                 code="github-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_iac_uid(value):
+        # Validate that it's a valid repository URL (git URL format)
+        if not re.match(
+            r"^(https?://|git@|ssh://)[^\s/]+[^\s]*\.git$|^(https?://)[^\s/]+[^\s]*$",
+            value,
+        ):
+            raise ModelValidationError(
+                detail="IaC provider ID must be a valid repository URL (e.g., https://github.com/user/repo or https://github.com/user/repo.git).",
+                code="iac-uid",
                 pointer="/data/attributes/uid",
             )
 
