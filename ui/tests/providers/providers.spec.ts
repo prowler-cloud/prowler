@@ -1,5 +1,4 @@
 import { test } from "@playwright/test";
-import { ScansPage } from "../scans/scans-page";
 import {
   ProvidersPage,
   AWSProviderData,
@@ -8,7 +7,11 @@ import {
   AZUREProviderData,
   AZUREProviderCredential,
   AZURE_CREDENTIAL_OPTIONS,
+  M365ProviderData,
+  M365ProviderCredential,
+  M365_CREDENTIAL_OPTIONS,
 } from "./providers-page";
+import { ScansPage } from "../scans/scans-page";
 
 test.describe("Add Provider", () => {
   test.describe.serial("Add AWS Provider", () => {
@@ -260,4 +263,176 @@ test.describe("Add Provider", () => {
       },
     );
   });
+
+  test.describe.serial("Add M365 Provider", () => {
+    // Providers page object
+    let providersPage: ProvidersPage;
+    let scansPage: ScansPage;
+
+    // Test data from environment variables
+    const domainId = process.env.E2E_M365_DOMAIN_ID;
+    const clientId = process.env.E2E_M365_CLIENT_ID;
+    const tenantId = process.env.E2E_M365_TENANT_ID;
+
+    // Validate required environment variables
+    if (!domainId || !clientId || !tenantId) {
+      throw new Error(
+        "E2E_M365_DOMAIN_ID, E2E_M365_CLIENT_ID, and E2E_M365_TENANT_ID environment variables are not set",
+      );
+    }
+
+    // Setup before each test
+    test.beforeEach(async ({ page }) => {
+      providersPage = new ProvidersPage(page);
+      // Clean up existing provider to ensure clean test state
+      await providersPage.deleteProviderIfExists(domainId);
+    });
+
+    // Use admin authentication for provider management
+    test.use({ storageState: "playwright/.auth/admin_user.json" });
+
+    test(
+      "should add a new M365 provider with static credentials",
+      {
+        tag: [
+          "@critical",
+          "@e2e",
+          "@providers",
+          "@m365",
+          "@serial",
+          "@PROVIDER-E2E-004",
+        ],
+      },
+      async ({ page }) => {
+        // Validate required environment variables
+        const clientSecret = process.env.E2E_M365_SECRET_ID;
+
+        if (!clientSecret) {
+          throw new Error("E2E_M365_SECRET_ID environment variable is not set");
+        }
+        // Prepare test data for M365 provider
+        const m365ProviderData: M365ProviderData = {
+          domainId: domainId,
+          alias: "Test E2E M365 Account - Credentials",
+        };
+
+        // Prepare static credentials
+        const m365Credentials: M365ProviderCredential = {
+          type: M365_CREDENTIAL_OPTIONS.M365_CREDENTIALS,
+          clientId: clientId,
+          clientSecret: clientSecret,
+          tenantId: tenantId,
+        };
+
+        // Navigate to providers page
+        await providersPage.goto();
+        await providersPage.verifyPageLoaded();
+
+        // Start adding new provider
+        await providersPage.clickAddProvider();
+        await providersPage.verifyConnectAccountPageLoaded();
+
+        // Select M365 provider
+        await providersPage.selectM365Provider();
+
+        // Fill provider details
+        await providersPage.fillM365ProviderDetails(m365ProviderData);
+        await providersPage.clickNext();
+
+        // Select static credentials type
+        await providersPage.selectM365CredentialsType(
+          M365_CREDENTIAL_OPTIONS.M365_CREDENTIALS,
+        );
+
+        // Verify M365 credentials page is loaded
+        await providersPage.verifyM365CredentialsPageLoaded();
+
+        // Fill static credentials details
+        await providersPage.fillM365Credentials(m365Credentials);
+        await providersPage.clickNext();
+
+        // Launch scan
+        await providersPage.verifyLaunchScanPageLoaded();
+        await providersPage.clickNext();
+
+        // Wait for redirect to scan page
+        scansPage = new ScansPage(page);
+        await scansPage.verifyPageLoaded();
+      },
+    );
+
+    test(
+      "should add a new M365 provider with certificate",
+      {
+        tag: [
+          "@critical",
+          "@e2e",
+          "@providers",
+          "@m365",
+          "@serial",
+          "@PROVIDER-E2E-005",
+        ],
+      },
+      async ({ page }) => {
+        // Validate required environment variables
+        const certificateContent = process.env.E2E_M365_CERTIFICATE_CONTENT;
+
+        if (!certificateContent) {
+          throw new Error(
+            "E2E_M365_CERTIFICATE_CONTENT environment variable is not set",
+          );
+        }
+
+        // Prepare test data for M365 provider
+        const m365ProviderData: M365ProviderData = {
+          domainId: domainId,
+          alias: "Test E2E M365 Account - Certificate",
+        };
+
+        // Prepare static credentials
+        const m365Credentials: M365ProviderCredential = {
+          type: M365_CREDENTIAL_OPTIONS.M365_CERTIFICATE_CREDENTIALS,
+          clientId: clientId,
+          tenantId: tenantId,
+          certificateContent: certificateContent,
+        };
+
+        // Navigate to providers page
+        await providersPage.goto();
+        await providersPage.verifyPageLoaded();
+
+        // Start adding new provider
+        await providersPage.clickAddProvider();
+        await providersPage.verifyConnectAccountPageLoaded();
+
+        // Select M365 provider
+        await providersPage.selectM365Provider();
+
+        // Fill provider details
+        await providersPage.fillM365ProviderDetails(m365ProviderData);
+        await providersPage.clickNext();
+
+        // Select static credentials type
+        await providersPage.selectM365CredentialsType(
+          M365_CREDENTIAL_OPTIONS.M365_CERTIFICATE_CREDENTIALS,
+        );
+
+        // Verify M365 certificate credentials page is loaded
+        await providersPage.verifyM365CertificateCredentialsPageLoaded();
+
+        // Fill static credentials details
+        await providersPage.fillM365CertificateCredentials(m365Credentials);
+        await providersPage.clickNext();
+
+        // Launch scan
+        await providersPage.verifyLaunchScanPageLoaded();
+        await providersPage.clickNext();
+
+        // Wait for redirect to scan page
+        scansPage = new ScansPage(page);
+        await scansPage.verifyPageLoaded();
+      },
+    );
+  });
+
 });

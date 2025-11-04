@@ -42,6 +42,11 @@ const GitHubProviderBadge = lazy(() =>
     default: m.GitHubProviderBadge,
   })),
 );
+const IacProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.IacProviderBadge,
+  })),
+);
 const OracleCloudProviderBadge = lazy(() =>
   import("@/components/icons/providers-badge").then((m) => ({
     default: m.OracleCloudProviderBadge,
@@ -81,6 +86,10 @@ const PROVIDER_DATA: Record<
   github: {
     label: "GitHub",
     icon: GitHubProviderBadge,
+  },
+  iac: {
+    label: "Infrastructure as Code",
+    icon: IacProviderBadge,
   },
   oci: {
     label: "Oracle Cloud Infrastructure",

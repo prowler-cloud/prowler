@@ -16,6 +16,7 @@ import {
   AzureCredentials,
   GCPDefaultCredentials,
   GCPServiceAccountKey,
+  IacCredentials,
   KubernetesCredentials,
   M365CertificateCredentials,
   M365ClientSecretCredentials,
@@ -34,6 +35,7 @@ import {
 } from "./select-credentials-type/m365";
 import { AzureCredentialsForm } from "./via-credentials/azure-credentials-form";
 import { GitHubCredentialsForm } from "./via-credentials/github-credentials-form";
+import { IacCredentialsForm } from "./via-credentials/iac-credentials-form";
 import { KubernetesCredentialsForm } from "./via-credentials/k8s-credentials-form";
 import { OracleCloudCredentialsForm } from "./via-credentials/oraclecloud-credentials-form";
 
@@ -158,6 +160,11 @@ export const BaseCredentialsForm = ({
           <GitHubCredentialsForm
             control={form.control}
             credentialsType={searchParamsObj.get("via") || undefined}
+          />
+        )}
+        {providerType === "iac" && (
+          <IacCredentialsForm
+            control={form.control as unknown as Control<IacCredentials>}
           />
         )}
         {providerType === "oci" && (
