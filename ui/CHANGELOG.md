@@ -2,12 +2,21 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.14.0] (Prowler UNRELEASED)
+## [1.14.0] (Unreleased)
 
 ### 🚀 Added
 
+- RSS feeds support [(#9109)](https://github.com/prowler-cloud/prowler/pull/9109)
+- Customer Support menu item [(#9143)](https://github.com/prowler-cloud/prowler/pull/9143)
 - IaC (Infrastructure as Code) provider support for scanning remote repositories [(#8751)](https://github.com/prowler-cloud/prowler/pull/8751)
-- Support for Oracle Cloud Infrastructure (OCI) provider [(#8984)](https://github.com/prowler-cloud/prowler/pull/8984)
+
+### 🔄 Changed
+
+- Resource ID moved up in the findings detail page [(#9141)](https://github.com/prowler-cloud/prowler/pull/9141)
+
+---
+
+## [1.13.1]
 
 ### 🔄 Changed
 

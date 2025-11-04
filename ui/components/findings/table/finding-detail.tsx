@@ -133,6 +133,9 @@ export const FindingDetail = ({
         <InfoField label="Finding UID" variant="simple">
           <CodeSnippet value={attributes.uid} />
         </InfoField>
+        <InfoField label="Resource ID" variant="simple">
+          <CodeSnippet value={resource.uid} />
+        </InfoField>
 
         {attributes.status === "FAIL" && (
           <InfoField label="Risk" variant="simple">
