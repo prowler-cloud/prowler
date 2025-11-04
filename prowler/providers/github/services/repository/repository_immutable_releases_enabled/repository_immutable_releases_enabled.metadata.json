@@ -1,0 +1,31 @@
+{
+  "Provider": "github",
+  "CheckID": "repository_immutable_releases_enabled",
+  "CheckTitle": "Ensure repository immutable releases are enabled",
+  "CheckType": [],
+  "ServiceName": "repository",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "github:user-id:repository/repository-name",
+  "Severity": "high",
+  "ResourceType": "GitHubRepository",
+  "Description": "Immutable releases protect published artifacts from being modified or replaced. This check verifies that immutable releases are enabled for each repository.",
+  "Risk": "If immutable releases are disabled, release assets can be tampered with after publication, allowing attackers to substitute malicious binaries and undermining supply chain integrity.",
+  "RelatedUrl": "https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository#preventing-changes-to-releases",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable immutable releases in the repository settings so release artifacts cannot be altered once published.",
+      "Url": "https://github.blog/changelog/2025-10-28-immutable-releases-are-now-generally-available/#release-attestations-and-verification"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
+

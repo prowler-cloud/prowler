@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
 import github
 import requests
@@ -341,6 +341,9 @@ class Repository(GithubService):
                 name=repo.name,
                 owner=repo.owner.login,
                 full_name=repo.full_name,
+                immutable_releases_enabled=self._get_repository_immutable_releases_status(
+                    repo
+                ),
                 default_branch=Branch(
                     name=default_branch,
                     protected=branch_protection,
@@ -370,6 +373,114 @@ class Repository(GithubService):
                 f"{repo.full_name}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _get_repository_immutable_releases_status(self, repo) -> Optional[bool]:
+        """Retrieve the immutable releases status for the provided repository.
+
+        Args:
+            repo: The PyGithub repository instance to query.
+
+        Returns:
+            Optional[bool]: True when immutable releases are enabled, False when they are disabled, and None when the status cannot be determined.
+        """
+        try:
+            response, _ = repo._requester.requestJsonAndCheck(  # type: ignore[attr-defined]
+                "GET",
+                f"/repos/{repo.full_name}/immutability",
+                headers={
+                    "Accept": "application/vnd.github+json",
+                    "X-GitHub-Api-Version": "2022-11-28",
+                },
+            )
+            return self._parse_immutability_response(repo.full_name, response)
+        except github.GithubException as error:
+            status_code = getattr(error, "status", None)
+            if status_code == 404:
+                logger.info(
+                    f"{repo.full_name}: immutable releases endpoint not available for this repository."
+                )
+                return None
+            if status_code == 403:
+                logger.warning(
+                    f"{repo.full_name}: insufficient permissions to query immutable releases endpoint."
+                )
+                return None
+            self._handle_github_api_error(
+                error, "fetching immutable releases status", repo.full_name
+            )
+        except Exception as error:
+            logger.error(
+                f"{repo.full_name}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return None
+
+    @staticmethod
+    def _normalize_immutability_value(value: Any) -> Optional[bool]:
+        """Normalize various response representations into a boolean value."""
+        if isinstance(value, bool):
+            return value
+
+        if isinstance(value, str):
+            normalized_value = value.strip().lower()
+            if normalized_value in {"enabled", "enable", "true", "on"}:
+                return True
+            if normalized_value in {"disabled", "disable", "false", "off"}:
+                return False
+
+        return None
+
+    def _parse_immutability_response(
+        self, repo_full_name: str, data: Any
+    ) -> Optional[bool]:
+        """Parse the GitHub API response for repository immutability.
+
+        Args:
+            repo_full_name: Repository full name, used for logging context.
+            data: Raw response payload returned by the GitHub API.
+
+        Returns:
+            Optional[bool]: True when immutable releases are enabled, False when disabled, or None when the payload cannot be interpreted.
+        """
+        if not isinstance(data, dict):
+            logger.error(
+                f"{repo_full_name}: Unexpected immutability payload type {type(data)}"
+            )
+            return None
+
+        for key in (
+            "enabled",
+            "immutable_releases",
+            "immutable_release_assets",
+            "immutable",
+        ):
+            if key in data:
+                normalized_value = self._normalize_immutability_value(data[key])
+                if normalized_value is not None:
+                    return normalized_value
+
+        if "state" in data:
+            normalized_state = self._normalize_immutability_value(data["state"])
+            if normalized_state is not None:
+                return normalized_state
+
+        immutability_section = data.get("immutability")
+        if isinstance(immutability_section, dict):
+            for key in ("enabled", "state"):
+                if key in immutability_section:
+                    normalized_value = self._normalize_immutability_value(
+                        immutability_section[key]
+                    )
+                    if normalized_value is not None:
+                        return normalized_value
+        elif immutability_section is not None:
+            normalized_value = self._normalize_immutability_value(immutability_section)
+            if normalized_value is not None:
+                return normalized_value
+
+        logger.warning(
+            f"{repo_full_name}: Unable to determine immutable releases state from payload."
+        )
+        return None
+
 
 class Branch(BaseModel):
     """Model for Github Branch"""
@@ -396,6 +507,7 @@ class Repo(BaseModel):
     name: str
     owner: str
     full_name: str
+    immutable_releases_enabled: Optional[bool] = None
     default_branch: Branch
     private: bool
     archived: bool
