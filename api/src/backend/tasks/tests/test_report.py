@@ -5,11 +5,13 @@ from unittest.mock import MagicMock, patch
 import matplotlib
 import pytest
 from tasks.jobs.report import (
-    _aggregate_requirement_statistics_from_database,
-    _calculate_requirements_data_from_statistics,
     _load_findings_for_requirement_checks,
     generate_threatscore_report,
     generate_threatscore_report_job,
+)
+from tasks.jobs.threatscore_utils import (
+    _aggregate_requirement_statistics_from_database,
+    _calculate_requirements_data_from_statistics,
 )
 from tasks.tasks import generate_threatscore_report_task
 
@@ -743,8 +745,10 @@ class TestGenerateThreatscoreReportFunction:
     @patch("tasks.jobs.report.initialize_prowler_provider")
     @patch("tasks.jobs.report.Provider.objects.get")
     @patch("tasks.jobs.report.Compliance.get_bulk")
-    @patch("tasks.jobs.report._aggregate_requirement_statistics_from_database")
-    @patch("tasks.jobs.report._calculate_requirements_data_from_statistics")
+    @patch(
+        "tasks.jobs.threatscore_utils._aggregate_requirement_statistics_from_database"
+    )
+    @patch("tasks.jobs.threatscore_utils._calculate_requirements_data_from_statistics")
     @patch("tasks.jobs.report._load_findings_for_requirement_checks")
     @patch("tasks.jobs.report.SimpleDocTemplate")
     @patch("tasks.jobs.report.Image")
