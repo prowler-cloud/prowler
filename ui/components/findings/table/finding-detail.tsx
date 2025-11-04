@@ -62,6 +62,16 @@ export const FindingDetail = ({
   params.set("id", findingDetails.id);
   const url = `${window.location.origin}${currentUrl.pathname}?${params.toString()}`;
 
+  // Build Git URL for IaC findings
+  const gitUrl =
+    providerDetails.provider === "iac"
+      ? buildGitFileUrl(
+          providerDetails.uid,
+          resource.name,
+          extractLineRangeFromUid(attributes.uid) || "",
+        )
+      : null;
+
   return (
     <div className="flex flex-col gap-6 rounded-lg">
       {/* Header */}
@@ -242,36 +252,21 @@ export const FindingDetail = ({
       {/* Resource Details */}
       <CustomSection
         title={
-          providerDetails.provider === "iac"
-            ? (() => {
-                // Extract line range from the Finding UID (may be null)
-                const lineRange = extractLineRangeFromUid(attributes.uid);
-                // Build URL with or without line range
-                const gitUrl = buildGitFileUrl(
-                  providerDetails.uid, // Repository URL
-                  resource.name, // File path
-                  lineRange || "", // Empty string if no line range
-                );
-
-                return (
-                  <span className="flex items-center gap-2">
-                    Resource Details
-                    {gitUrl && (
-                      <a
-                        href={gitUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title="Go to Resource in the Repository"
-                        className="text-blue-600 transition-colors hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                        aria-label="Open resource in repository"
-                      >
-                        <ExternalLink size={16} />
-                      </a>
-                    )}
-                  </span>
-                );
-              })()
-            : "Resource Details"
+          <span className="flex items-center gap-2">
+            Resource Details
+            {gitUrl && (
+              <a
+                href={gitUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Go to Resource in the Repository"
+                className="text-blue-600 transition-colors hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                aria-label="Open resource in repository"
+              >
+                <ExternalLink size={16} />
+              </a>
+            )}
+          </span>
         }
       >
         <InfoField label="Resource ID" variant="simple">
