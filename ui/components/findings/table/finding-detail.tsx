@@ -1,6 +1,7 @@
 "use client";
 
 import { Snippet } from "@heroui/snippet";
+import { ExternalLink } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
@@ -13,6 +14,7 @@ import {
 } from "@/components/ui/entities";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import { SeverityBadge } from "@/components/ui/table/severity-badge";
+import { buildGitFileUrl, extractLineRangeFromUid } from "@/lib/git-utils";
 import { FindingProps, ProviderType } from "@/types";
 
 import { Muted } from "../muted";
@@ -235,7 +237,40 @@ export const FindingDetail = ({
       </CustomSection>
 
       {/* Resource Details */}
-      <CustomSection title="Resource Details">
+      <CustomSection
+        title={
+          providerDetails.provider === "iac"
+            ? (() => {
+                // Extract line range from the Finding UID (may be null)
+                const lineRange = extractLineRangeFromUid(attributes.uid);
+                // Build URL with or without line range
+                const gitUrl = buildGitFileUrl(
+                  providerDetails.uid, // Repository URL
+                  resource.name, // File path
+                  lineRange || "", // Empty string if no line range
+                );
+
+                return (
+                  <span className="flex items-center gap-2">
+                    Resource Details
+                    {gitUrl && (
+                      <a
+                        href={gitUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Go to Resource in the Repository"
+                        className="text-blue-600 transition-colors hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                        aria-label="Open resource in repository"
+                      >
+                        <ExternalLink size={16} />
+                      </a>
+                    )}
+                  </span>
+                );
+              })()
+            : "Resource Details"
+        }
+      >
         <InfoField label="Resource ID" variant="simple">
           <Snippet className="bg-gray-50 py-1 dark:bg-slate-800" hideSymbol>
             <span className="text-xs whitespace-pre-line">
