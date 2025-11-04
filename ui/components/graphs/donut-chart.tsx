@@ -181,7 +181,7 @@ export function DonutChart({
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) + 24}
-                          className="text-xs text-zinc-800 dark:text-zinc-400"
+                          className="text-sm text-nowrap text-zinc-800 dark:text-zinc-300"
                           style={{
                             fill: "currentColor",
                           }}
