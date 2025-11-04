@@ -15,7 +15,7 @@ class cloudstorage_bucket_sufficient_retention_period(Check):
         findings = []
 
         min_retention_days = getattr(cloudstorage_client, "audit_config", {}).get(
-            "gcp_storage_min_retention_days", 90
+            "storage_min_retention_days", 90
         )
 
         for bucket in cloudstorage_client.buckets:

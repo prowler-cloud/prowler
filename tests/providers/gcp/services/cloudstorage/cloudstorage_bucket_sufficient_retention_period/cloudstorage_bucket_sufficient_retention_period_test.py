@@ -28,7 +28,7 @@ class TestCloudStorageBucketSufficientRetentionPeriod:
             cloudstorage_client.project_ids = [GCP_PROJECT_ID]
             cloudstorage_client.region = GCP_US_CENTER1_LOCATION
             cloudstorage_client.buckets = []
-            cloudstorage_client.audit_config = {}
+            cloudstorage_client.audit_config = {"storage_min_retention_days": 90}
 
             check = cloudstorage_bucket_sufficient_retention_period()
             result = check.execute()
@@ -57,7 +57,7 @@ class TestCloudStorageBucketSufficientRetentionPeriod:
 
             cloudstorage_client.project_ids = [GCP_PROJECT_ID]
             cloudstorage_client.region = GCP_US_CENTER1_LOCATION
-            cloudstorage_client.audit_config = {}
+            cloudstorage_client.audit_config = {"storage_min_retention_days": 90}
 
             cloudstorage_client.buckets = [
                 Bucket(
@@ -109,7 +109,7 @@ class TestCloudStorageBucketSufficientRetentionPeriod:
 
             cloudstorage_client.project_ids = [GCP_PROJECT_ID]
             cloudstorage_client.region = GCP_US_CENTER1_LOCATION
-            cloudstorage_client.audit_config = {}
+            cloudstorage_client.audit_config = {"storage_min_retention_days": 90}
 
             cloudstorage_client.buckets = [
                 Bucket(
@@ -161,7 +161,7 @@ class TestCloudStorageBucketSufficientRetentionPeriod:
 
             cloudstorage_client.project_ids = [GCP_PROJECT_ID]
             cloudstorage_client.region = GCP_US_CENTER1_LOCATION
-            cloudstorage_client.audit_config = {}
+            cloudstorage_client.audit_config = {"storage_min_retention_days": 90}
 
             cloudstorage_client.buckets = [
                 Bucket(
@@ -213,7 +213,7 @@ class TestCloudStorageBucketSufficientRetentionPeriod:
 
             cloudstorage_client.project_ids = [GCP_PROJECT_ID]
             cloudstorage_client.region = GCP_US_CENTER1_LOCATION
-            cloudstorage_client.audit_config = {}
+            cloudstorage_client.audit_config = {"storage_min_retention_days": 90}
 
             cloudstorage_client.buckets = [
                 Bucket(

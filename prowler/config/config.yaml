@@ -513,7 +513,7 @@ gcp:
   max_unused_account_days: 180
   # GCP Storage Sufficient Retention Period
   # gcp.cloudstorage_bucket_sufficient_retention_period
-  gcp_storage_min_retention_days: 90
+  storage_min_retention_days: 90
 
 # Kubernetes Configuration
 kubernetes:
