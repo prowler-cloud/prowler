@@ -736,9 +736,7 @@ def _create_section_score_chart(
             sections_data[section]["numerator"] += (
                 rate_i * total_findings * weight * rfac_i
             )
-            sections_data[section]["denominator"] += (
-                total_findings * weight * rfac_i
-            )
+            sections_data[section]["denominator"] += total_findings * weight * rfac_i
 
     # Calculate percentages
     section_names = []
@@ -960,9 +958,11 @@ def _create_dimensions_radar_chart(
 
     # Calculate percentages
     percentages = [
-        (dimension_data[key]["passed"] / dimension_data[key]["total"] * 100)
-        if dimension_data[key]["total"] > 0
-        else 100  # No requirements = 100% (no failures)
+        (
+            (dimension_data[key]["passed"] / dimension_data[key]["total"] * 100)
+            if dimension_data[key]["total"] > 0
+            else 100
+        )  # No requirements = 100% (no failures)
         for key in DIMENSION_KEYS
     ]
 
@@ -2304,7 +2304,9 @@ def generate_ens_report(
             requirement_status = requirement["attributes"]["status"]
             if requirement_status == StatusChoices.FAIL:
                 requirement_id = requirement["id"]
-                req_attributes = attributes_by_requirement_id.get(requirement_id, {}).get("attributes", {})
+                req_attributes = attributes_by_requirement_id.get(
+                    requirement_id, {}
+                ).get("attributes", {})
                 metadata_list = req_attributes.get("req_attributes", [])
                 if metadata_list:
                     metadata = metadata_list[0]
