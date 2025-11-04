@@ -85,12 +85,12 @@ export default function ConnectLLMLayout({ children }: ConnectLLMLayoutProps) {
                   <CustomButton
                     ariaLabel="Set as Default Provider"
                     variant="bordered"
-                    color="success"
                     size="sm"
                     startContent={
                       <Icon icon="heroicons:star" className="h-4 w-4" />
                     }
                     onPress={handleSetDefault}
+                    className="w-full sm:w-auto"
                   >
                     Set as Default
                   </CustomButton>
@@ -105,6 +105,7 @@ export default function ConnectLLMLayout({ children }: ConnectLLMLayoutProps) {
                     <Icon icon="heroicons:trash" className="h-4 w-4" />
                   }
                   onPress={() => setIsDeleteOpen(true)}
+                  className="w-full sm:w-auto"
                 >
                   Delete Provider
                 </CustomButton>
