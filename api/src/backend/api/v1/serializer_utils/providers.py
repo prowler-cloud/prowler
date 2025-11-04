@@ -241,6 +241,21 @@ from rest_framework_json_api import serializers
             },
             {
                 "type": "object",
+                "title": "IaC Repository Credentials",
+                "properties": {
+                    "repository_url": {
+                        "type": "string",
+                        "description": "Repository URL to scan for IaC files.",
+                    },
+                    "access_token": {
+                        "type": "string",
+                        "description": "Optional access token for private repositories.",
+                    },
+                },
+                "required": ["repository_url"],
+            },
+            {
+                "type": "object",
                 "title": "Oracle Cloud Infrastructure (OCI) API Key Credentials",
                 "properties": {
                     "user": {

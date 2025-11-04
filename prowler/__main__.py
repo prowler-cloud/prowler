@@ -359,6 +359,12 @@ def prowler():
         else:
             # Original behavior for IAC or non-verbose LLM
             findings = global_provider.run()
+            # Note: IaC doesn't support granular progress tracking since Trivy runs as a black box
+            # and returns all findings at once. Progress tracking would just be 0% → 100%.
+
+            # Filter findings by status if specified
+            if hasattr(args, "status") and args.status:
+                findings = [f for f in findings if f.status in args.status]
             # Report findings for verbose output
             report(findings, global_provider, output_options)
     elif len(checks_to_execute):
