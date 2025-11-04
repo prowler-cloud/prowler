@@ -1368,10 +1368,10 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 serializer = KubernetesProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.M365.value:
                 serializer = M365ProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.ORACLECLOUD.value:
+                serializer = OracleCloudProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.MONGODBATLAS.value:
                 serializer = MongoDBAtlasProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.OCI.value:
-                serializer = OracleCloudProviderSecret(data=secret)
             else:
                 raise serializers.ValidationError(
                     {"provider": f"Provider type not supported {provider_type}"}

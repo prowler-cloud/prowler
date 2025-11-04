@@ -1,12 +1,12 @@
 from unittest.mock import patch
 
-from tests.providers.oraclecloud.oci_fixtures import set_mocked_oci_provider
+from tests.providers.oraclecloud.oci_fixtures import set_mocked_oraclecloud_provider
 
 
 class TestAuditService:
     def test_service(self):
         """Test that audit service can be instantiated and mocked"""
-        oci_provider = set_mocked_oci_provider()
+        oraclecloud_provider = set_mocked_oraclecloud_provider()
 
         # Mock the entire service initialization
         with patch(
@@ -15,14 +15,14 @@ class TestAuditService:
         ):
             from prowler.providers.oraclecloud.services.audit.audit_service import Audit
 
-            audit_client = Audit(oci_provider)
+            audit_client = Audit(oraclecloud_provider)
 
             # Manually set required attributes since __init__ was mocked
             audit_client.service = "audit"
-            audit_client.provider = oci_provider
+            audit_client.provider = oraclecloud_provider
             audit_client.audited_compartments = {}
             audit_client.regional_clients = {}
 
             # Verify service name
             assert audit_client.service == "audit"
-            assert audit_client.provider == oci_provider
+            assert audit_client.provider == oraclecloud_provider

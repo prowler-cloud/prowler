@@ -501,7 +501,7 @@ def providers_fixture(tenants_fixture):
         tenant_id=tenant.id,
     )
     provider7 = Provider.objects.create(
-        provider="oci",
+        provider="oraclecloud",
         uid="ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
         alias="oci_testing",
         tenant_id=tenant.id,

@@ -1,5 +1,5 @@
 {
-  "Provider": "oci",
+  "Provider": "oraclecloud",
   "CheckID": "identity_no_resources_in_root_compartment",
   "CheckTitle": "Ensure no resources are created in the root compartment",
   "CheckType": [],
