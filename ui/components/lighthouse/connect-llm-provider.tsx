@@ -22,12 +22,8 @@ interface ConnectLLMProviderProps {
   mode?: string;
 }
 
-type AsyncResult<T = any> = {
-  data?: T;
-  errors?: Array<{ detail: string }>;
-};
-
 type FormData = Record<string, string>;
+type Status = "idle" | "connecting" | "verifying" | "loading-models";
 
 export const ConnectLLMProvider = ({
   provider,
@@ -37,33 +33,27 @@ export const ConnectLLMProvider = ({
   const providerConfig = getProviderConfig(provider);
   const isEditMode = mode === "edit";
 
-  // State
   const [formData, setFormData] = useState<FormData>({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [isFetching, setIsFetching] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [existingProviderId, setExistingProviderId] = useState<string | null>(
     null,
   );
-  const [connectionPhase, setConnectionPhase] = useState<string>("");
+  const [status, setStatus] = useState<Status>("idle");
+  const [isFetching, setIsFetching] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Fetch existing provider data in edit mode
+  // Fetch existing provider ID in edit mode
   useEffect(() => {
     if (!isEditMode || !providerConfig) return;
 
-    const fetchProviderData = async () => {
+    const fetchProvider = async () => {
       setIsFetching(true);
-      setError(null);
-
       try {
         const result = await getLighthouseProviderByType(provider);
-
         if (result.errors) {
           throw new Error(
             result.errors[0]?.detail || "Failed to fetch provider",
           );
         }
-
         setExistingProviderId(result.data.id);
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err));
@@ -72,117 +62,104 @@ export const ConnectLLMProvider = ({
       }
     };
 
-    fetchProviderData();
+    fetchProvider();
   }, [isEditMode, provider, providerConfig]);
 
-  // Helper: Extract data from API result or throw error
-  const unwrapResult = <T,>(result: AsyncResult<T>, fallbackMsg: string): T => {
-    if (result.errors) {
-      throw new Error(result.errors[0]?.detail || fallbackMsg);
-    }
-    if (!result.data) {
-      throw new Error(fallbackMsg);
-    }
-    return result.data;
-  };
-
-  // Build API payload from form data
   const buildPayload = (): Record<string, any> => {
     if (!providerConfig) return {};
 
-    const payload: Record<string, any> = {};
-
-    // Separate credential and non-credential fields
-    const credentialFields = providerConfig.fields.filter(
-      (f) => f.requiresConnectionTest,
-    );
-    const nonCredentialFields = providerConfig.fields.filter(
-      (f) => !f.requiresConnectionTest,
-    );
-
-    // Build credentials object if any credential field has a value
     const credentials: Record<string, string> = {};
-    credentialFields.forEach((field) => {
+    const otherFields: Record<string, string> = {};
+
+    providerConfig.fields.forEach((field) => {
       if (formData[field.name]) {
-        credentials[field.name] = formData[field.name];
+        if (field.requiresConnectionTest) {
+          credentials[field.name] = formData[field.name];
+        } else {
+          otherFields[field.name] = formData[field.name];
+        }
       }
     });
 
-    if (Object.keys(credentials).length > 0) {
-      payload.credentials = credentials;
-    }
-
-    // Add non-credential fields to root level
-    nonCredentialFields.forEach((field) => {
-      if (formData[field.name]) {
-        payload[field.name] = formData[field.name];
-      }
-    });
-
-    return payload;
+    return {
+      ...(Object.keys(credentials).length > 0 && { credentials }),
+      ...otherFields,
+    };
   };
 
-  // Create or update provider
-  const saveProvider = async (): Promise<string> => {
-    const payload = buildPayload();
-
-    if (isEditMode) {
-      // Update existing provider
-      if (Object.keys(payload).length > 0) {
-        await updateLighthouseProviderByType(provider, payload);
-      }
-      return existingProviderId!;
-    } else {
-      // Create new provider
-      const createResult = await createLighthouseProvider({
-        provider_type: provider,
-        credentials: payload.credentials || {},
-        ...(payload.base_url && { base_url: payload.base_url }),
-      });
-      const providerData = unwrapResult<{ id: string }>(
-        createResult,
-        "Failed to create provider",
-      );
-      return providerData.id;
-    }
-  };
-
-  // Main handler for connect/update
   const handleConnect = async () => {
     if (!providerConfig) return;
 
-    setIsLoading(true);
+    setStatus("connecting");
     setError(null);
-    setConnectionPhase("Connecting");
 
     try {
-      // Step 1: Create or update provider
-      const providerId = await saveProvider();
+      let providerId: string;
+      const payload = buildPayload();
 
-      // Step 2: Test connection only if credentials were provided
-      if (shouldTestConnection(provider, formData)) {
-        setConnectionPhase("Verifying");
-        await testAndRefreshModels(providerId);
-        setConnectionPhase("Loading models");
+      // Update if we have an existing provider, otherwise create
+      if (existingProviderId) {
+        if (Object.keys(payload).length > 0) {
+          await updateLighthouseProviderByType(provider, payload);
+        }
+        providerId = existingProviderId;
+      } else {
+        const result = await createLighthouseProvider({
+          provider_type: provider,
+          credentials: payload.credentials || {},
+          ...(payload.base_url && { base_url: payload.base_url }),
+        });
+
+        if (result.errors) {
+          throw new Error(
+            result.errors[0]?.detail || "Failed to create provider",
+          );
+        }
+        if (!result.data?.id) {
+          throw new Error("Failed to create provider");
+        }
+
+        providerId = result.data.id;
+        setExistingProviderId(providerId);
       }
 
-      // Step 3: Navigate to model selection
+      // Test connection if credentials provided
+      if (shouldTestConnection(provider, formData)) {
+        setStatus("verifying");
+        await testAndRefreshModels(providerId);
+        setStatus("loading-models");
+      }
+
+      // Navigate to model selection on success
       router.push(
         `/lighthouse/config/select-model?provider=${provider}${isEditMode ? "&mode=edit" : ""}`,
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setIsLoading(false);
-      setConnectionPhase("");
+      setStatus("idle");
     }
   };
 
   const handleFieldChange = (fieldName: string, value: string) => {
     setFormData((prev) => ({ ...prev, [fieldName]: value }));
+    if (error) setError(null);
   };
 
-  // Early returns for error/loading states
+  const getButtonText = () => {
+    if (status === "idle") {
+      if (error && existingProviderId) return "Retry Connection";
+      return isEditMode ? "Continue" : "Connect";
+    }
+
+    const statusText = {
+      connecting: "Connecting...",
+      verifying: "Verifying...",
+      "loading-models": "Loading models...",
+    };
+
+    return statusText[status] || "Connecting...";
+  };
+
   if (!providerConfig) {
     return (
       <div className="flex h-64 items-center justify-center">
@@ -203,48 +180,12 @@ export const ConnectLLMProvider = ({
     );
   }
 
-  // Computed values
   const mainFields = getMainFields(provider);
   const isFormValid = isProviderFormValid(provider, formData, isEditMode);
-
-  // Button text configuration
-  const buttonText = {
-    connect: {
-      idle: "Connect",
-      connecting: "Connecting...",
-      verifying: "Verifying...",
-      loadingModels: "Loading models...",
-    },
-    edit: {
-      idle: "Continue",
-      updating: "Updating...",
-    },
-  };
-
-  // Determine current button text
-  const getButtonText = () => {
-    if (!isLoading) {
-      return isEditMode ? buttonText.edit.idle : buttonText.connect.idle;
-    }
-
-    if (isEditMode) {
-      return buttonText.edit.updating;
-    }
-
-    // Connect mode - use connectionPhase if available
-    switch (connectionPhase) {
-      case "Verifying":
-        return buttonText.connect.verifying;
-      case "Loading models":
-        return buttonText.connect.loadingModels;
-      default:
-        return buttonText.connect.connecting;
-    }
-  };
+  const isLoading = status !== "idle";
 
   return (
     <div className="flex w-full flex-col gap-6">
-      {/* Header */}
       <div>
         <h2 className="mb-2 text-xl font-semibold">
           {isEditMode
@@ -258,16 +199,13 @@ export const ConnectLLMProvider = ({
         </p>
       </div>
 
-      {/* Error message */}
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         </div>
       )}
 
-      {/* Form */}
       <div className="flex flex-col gap-4">
-        {/* Main fields */}
         {mainFields.map((field) => (
           <div key={field.name}>
             <label
@@ -299,7 +237,6 @@ export const ConnectLLMProvider = ({
           </div>
         ))}
 
-        {/* Actions */}
         <div className="mt-4 flex justify-end gap-4">
           <CustomButton
             type="button"
