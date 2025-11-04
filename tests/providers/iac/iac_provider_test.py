@@ -86,9 +86,12 @@ class TestIacProvider:
             stdout=get_sample_trivy_json_output(), stderr=""
         )
 
-        reports = provider.run_scan(
+        # Collect all batches from the generator
+        reports = []
+        for batch in provider.run_scan(
             "/test/directory", ["vuln", "misconfig", "secret"], []
-        )
+        ):
+            reports.extend(batch)
 
         # Should have 3 misconfigurations from the sample output
         assert len(reports) == 3
@@ -124,9 +127,11 @@ class TestIacProvider:
             stdout=get_empty_trivy_output(), stderr=""
         )
 
-        reports = provider.run_scan(
+        reports = []
+        for batch in provider.run_scan(
             "/test/directory", ["vuln", "misconfig", "secret"], []
-        )
+        ):
+            reports.extend(batch)
         assert len(reports) == 0
 
     def test_provider_run_local_scan(self):
@@ -200,7 +205,9 @@ class TestIacProvider:
         )
 
         with pytest.raises(SystemExit) as excinfo:
-            provider.run_scan("/test/directory", ["all"], [])
+            # Consume the generator
+            for _ in provider.run_scan("/test/directory", ["all"], []):
+                pass
 
         assert excinfo.value.code == 1
 
@@ -212,7 +219,11 @@ class TestIacProvider:
         mock_subprocess.return_value = MagicMock(stdout="null", stderr="")
 
         with pytest.raises(SystemExit) as exc_info:
-            provider.run_scan("/test/directory", ["vuln", "misconfig", "secret"], [])
+            # Consume the generator
+            for _ in provider.run_scan(
+                "/test/directory", ["vuln", "misconfig", "secret"], []
+            ):
+                pass
         assert exc_info.value.code == 1
 
     def test_iac_provider_process_finding_dockerfile(self):
@@ -264,9 +275,11 @@ class TestIacProvider:
             stdout=json.dumps(sample_output), stderr=""
         )
 
-        result = provider.run_scan(
+        result = []
+        for batch in provider.run_scan(
             "/test/directory", ["vuln", "misconfig", "secret"], []
-        )
+        ):
+            result.extend(batch)
 
         # Verify results
         assert len(result) == 2
@@ -299,9 +312,11 @@ class TestIacProvider:
             stdout=json.dumps(sample_output), stderr=""
         )
 
-        result = provider.run_scan(
+        result = []
+        for batch in provider.run_scan(
             "/test/directory", ["vuln", "misconfig", "secret"], ["exclude/path"]
-        )
+        ):
+            result.extend(batch)
 
         # Verify results
         assert len(result) == 1
@@ -318,9 +333,11 @@ class TestIacProvider:
             stdout=json.dumps({"Results": []}), stderr=""
         )
 
-        result = provider.run_scan(
+        result = []
+        for batch in provider.run_scan(
             "/test/directory", ["vuln", "misconfig", "secret"], []
-        )
+        ):
+            result.extend(batch)
 
         # Verify results
         assert len(result) == 0
@@ -356,9 +373,11 @@ class TestIacProvider:
             stdout=json.dumps(sample_output), stderr=""
         )
 
-        result = provider.run_scan(
+        result = []
+        for batch in provider.run_scan(
             "/test/directory", ["vuln", "misconfig", "secret"], []
-        )
+        ):
+            result.extend(batch)
 
         # Verify results
         assert len(result) == 2
@@ -377,7 +396,11 @@ class TestIacProvider:
         mock_subprocess.side_effect = Exception("Test exception")
 
         with pytest.raises(SystemExit) as exc_info:
-            provider.run_scan("/test/directory", ["vuln", "misconfig", "secret"], [])
+            # Consume the generator
+            for _ in provider.run_scan(
+                "/test/directory", ["vuln", "misconfig", "secret"], []
+            ):
+                pass
 
         assert exc_info.value.code == 1
 
@@ -405,7 +428,9 @@ class TestIacProvider:
 
         # Test with specific scanners
         scanners = ["vuln", "misconfig", "secret"]
-        result = provider.run_scan("/test/directory", scanners, [])
+        result = []
+        for batch in provider.run_scan("/test/directory", scanners, []):
+            result.extend(batch)
 
         # Verify subprocess was called with correct scanners
         mock_subprocess.assert_called_once_with(
@@ -453,9 +478,11 @@ class TestIacProvider:
 
         # Test with exclude paths
         exclude_paths = ["node_modules", ".git", "vendor"]
-        result = provider.run_scan(
+        result = []
+        for batch in provider.run_scan(
             "/test/directory", ["vuln", "misconfig", "secret"], exclude_paths
-        )
+        ):
+            result.extend(batch)
 
         # Verify subprocess was called with correct exclude paths
         expected_command = [
@@ -510,9 +537,12 @@ class TestIacProvider:
             stdout=json.dumps(sample_output), stderr=""
         )
 
-        result = provider.run_scan(
+        # Consume the generator to get all batches
+        result = []
+        for batch in provider.run_scan(
             "/test/directory", ["vuln", "misconfig", "secret"], []
-        )
+        ):
+            result.extend(batch)
 
         # Verify results
         assert len(result) == 5  # 5 misconfigurations
@@ -536,9 +566,12 @@ class TestIacProvider:
             stdout=json.dumps({"Results": []}), stderr=""
         )
 
-        result = provider.run_scan(
+        # Consume the generator to get all batches
+        result = []
+        for batch in provider.run_scan(
             "/test/directory", ["vuln", "misconfig", "secret"], []
-        )
+        ):
+            result.extend(batch)
 
         # Verify results
         assert len(result) == 0
@@ -592,9 +625,12 @@ class TestIacProvider:
             stdout=json.dumps(sample_output), stderr=""
         )
 
-        result = provider.run_scan(
+        # Consume the generator to get all batches
+        result = []
+        for batch in provider.run_scan(
             "/test/directory", ["vuln", "misconfig", "secret"], []
-        )
+        ):
+            result.extend(batch)
 
         # Verify results
         assert (
@@ -615,7 +651,8 @@ class TestIacProvider:
         )
 
         with patch.object(provider, "run_scan") as mock_run_scan:
-            mock_run_scan.return_value = []
+            # Mock should return a generator (empty in this case)
+            mock_run_scan.return_value = iter([])
             provider.run()
 
             mock_run_scan.assert_called_once_with(

@@ -47,6 +47,11 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
+### Changed
+- Adapt IaC provider to be used in the Prowler App [(#8751)](https://github.com/prowler-cloud/prowler/pull/8751)
+
+---
+
 ## [v5.13.0] (Prowler v5.13.0)
 
 ### Added

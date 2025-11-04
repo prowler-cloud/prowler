@@ -1143,6 +1143,16 @@ class TestProviderViewSet:
                     "uid": "a12345678901234567890123456789012345678",
                     "alias": "Long Username",
                 },
+                {
+                    "provider": "iac",
+                    "uid": "https://github.com/user/repo.git",
+                    "alias": "Git Repo",
+                },
+                {
+                    "provider": "iac",
+                    "uid": "https://gitlab.com/user/project",
+                    "alias": "GitLab Repo",
+                },
             ]
         ),
     )
@@ -1290,6 +1300,33 @@ class TestProviderViewSet:
                         "alias": "test",
                     },
                     "github-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "iac",
+                        "uid": "not-a-url",
+                        "alias": "test",
+                    },
+                    "iac-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "iac",
+                        "uid": "ftp://invalid-protocol.com/repo",
+                        "alias": "test",
+                    },
+                    "iac-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "iac",
+                        "uid": "http://",
+                        "alias": "test",
+                    },
+                    "iac-uid",
                     "uid",
                 ),
             ]
