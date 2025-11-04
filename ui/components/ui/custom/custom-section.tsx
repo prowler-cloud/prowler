@@ -1,7 +1,9 @@
+import { type ReactNode } from "react";
+
 interface CustomSectionProps {
-  title: string | React.ReactNode;
-  children: React.ReactNode;
-  action?: React.ReactNode;
+  title: string | ReactNode;
+  children: ReactNode;
+  action?: ReactNode;
 }
 
 export const CustomSection = ({
