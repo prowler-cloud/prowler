@@ -1,5 +1,4 @@
 import { test } from "@playwright/test";
-import * as helpers from "../helpers";
 import {
   ProvidersPage,
   AWSProviderData,
@@ -117,6 +116,9 @@ test.describe("Add Provider", () => {
         // Wait for redirect to provider page
         scansPage = new ScansPage(page);
         await scansPage.verifyPageLoaded();
+
+        // Verify scan status is "Scheduled scan"
+        await scansPage.verifyScheduledScanStatus(accountId);
       },
     );
 
@@ -186,6 +188,9 @@ test.describe("Add Provider", () => {
         // Wait for redirect to provider page
         scansPage = new ScansPage(page);
         await scansPage.verifyPageLoaded();
+
+        // Verify scan status is "Scheduled scan"
+        await scansPage.verifyScheduledScanStatus(accountId);
       },
     );
   });
@@ -271,6 +276,9 @@ test.describe("Add Provider", () => {
         // Wait for redirect to scan page
         scansPage = new ScansPage(page);
         await scansPage.verifyPageLoaded();
+
+        // Verify scan status is "Scheduled scan"
+        await scansPage.verifyScheduledScanStatus(subscriptionId);
       },
     );
   });
@@ -369,6 +377,9 @@ test.describe("Add Provider", () => {
         // Wait for redirect to scan page
         scansPage = new ScansPage(page);
         await scansPage.verifyPageLoaded();
+
+        // Verify scan status is "Scheduled scan"
+        await scansPage.verifyScheduledScanStatus(domainId);
       },
     );
 
@@ -442,6 +453,9 @@ test.describe("Add Provider", () => {
         // Wait for redirect to scan page
         scansPage = new ScansPage(page);
         await scansPage.verifyPageLoaded();
+
+        // Verify scan status is "Scheduled scan"
+        await scansPage.verifyScheduledScanStatus(domainId);
       },
     );
   });
@@ -544,6 +558,9 @@ test.describe("Add Provider", () => {
         // Wait for redirect to provider page
         scansPage = new ScansPage(page);
         await scansPage.verifyPageLoaded();
+
+        // Verify scan status is "Scheduled scan"
+        await scansPage.verifyScheduledScanStatus(context);
       },
     );
   });
@@ -652,6 +669,9 @@ test.describe("Add Provider", () => {
         // Wait for redirect to scan page
         scansPage = new ScansPage(page);
         await scansPage.verifyPageLoaded();
+
+        // Verify scan status is "Scheduled scan"
+        await scansPage.verifyScheduledScanStatus(projectId);
       },
     );
   });
@@ -752,6 +772,9 @@ test.describe("Add Provider", () => {
           // Wait for redirect to scan page
           scansPage = new ScansPage(page);
           await scansPage.verifyPageLoaded();
+
+          // Verify scan status is "Scheduled scan"
+          await scansPage.verifyScheduledScanStatus(username);
         },
       );
       test(
@@ -834,6 +857,9 @@ test.describe("Add Provider", () => {
           // Wait for redirect to scan page
           scansPage = new ScansPage(page);
           await scansPage.verifyPageLoaded();
+
+          // Verify scan status is "Scheduled scan"
+          await scansPage.verifyScheduledScanStatus(username);
         },
       );
     });
@@ -929,6 +955,9 @@ test.describe("Add Provider", () => {
           // Wait for redirect to scan page
           scansPage = new ScansPage(page);
           await scansPage.verifyPageLoaded();
+
+          // Verify scan status is "Scheduled scan"
+          await scansPage.verifyScheduledScanStatus(organization);
         },
       );
     });

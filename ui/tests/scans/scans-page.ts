@@ -95,5 +95,30 @@ export class ScansPage extends BasePage {
       }
     });
   }
+
+
+  async verifyScheduledScanStatus(accountId: string): Promise<void> {
+    // Verifies that:
+    // 1. The provider exists in the table (by account ID/UID)
+    // 2. The scan name field contains "scheduled scan"
+
+    // Scan Table exists
+    await expect(this.scanTable).toBeVisible();
+
+    // Find a row that contains the account ID (provider UID in Cloud Provider column)
+    const rowWithAccountId = this.scanTable
+      .locator("tbody tr")
+      .filter({ hasText: accountId })
+      .first();
+
+    // Verify the row with the account ID is visible (provider exists)
+    await expect(rowWithAccountId).toBeVisible();
+
+    // Verify the row contains "scheduled scan" in the Scan name column
+    // The scan name "Daily scheduled scan" is displayed as "scheduled scan" in the table
+    await expect(rowWithAccountId).toContainText("scheduled scan", {
+      ignoreCase: true,
+    });
+  }
   
 }
