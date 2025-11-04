@@ -2211,8 +2211,8 @@ def generate_ens_report(
                 marco = getattr(item["metadata"], "Marco", "N/A")
                 categoria = getattr(item["metadata"], "Categoria", "N/A")
 
-                if len(description) > 80:
-                    description = description[:77] + "..."
+                if len(description) > 60:
+                    description = description[:57] + "..."
 
                 critical_table_data.append(
                     [requirement_id, description, marco, categoria]
