@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import {
   getFindingsBySeverity,
   getFindingsByStatus,
+  getThreatScore,
 } from "@/actions/overview/overview";
 import { getProviders } from "@/actions/providers";
 import { ContentLayout } from "@/components/ui";
@@ -156,24 +157,34 @@ const SSRRiskSeverityChart = async ({
 };
 
 const SSRThreatScore = async ({
-  searchParams: _searchParams,
+  searchParams,
 }: {
   searchParams: SearchParamsProps | undefined | null;
 }) => {
-  // TODO: Fetch real threat score data from API
-  // const filters = pickFilterParams(_searchParams);
-  // const threatScoreData = await getThreatScore({ filters });
+  const filters = pickFilterParams(searchParams);
+  const threatScoreData = await getThreatScore({ filters });
 
-  // For now, using mocked data
-  const mockedScore = 52;
-  const mockedImprovement = 3;
-  const mockedGaps = ["Secret Visibility", "Trust Boundaries"];
+  // If no data, pass undefined score and let component handle empty state
+  if (!threatScoreData?.data || threatScoreData.data.length === 0) {
+    return <ThreatScore />;
+  }
+
+  // Get the first snapshot (aggregated or single provider)
+  const snapshot = threatScoreData.data[0];
+  const attributes = snapshot.attributes;
+
+  // Parse score from decimal string to number and round to integer
+  const score = Math.round(parseFloat(attributes.overall_score));
+  const scoreDelta = attributes.score_delta
+    ? Math.round(parseFloat(attributes.score_delta))
+    : null;
 
   return (
     <ThreatScore
-      score={mockedScore}
-      improvement={mockedImprovement}
-      gaps={mockedGaps}
+      score={score}
+      scoreDelta={scoreDelta}
+      sectionScores={attributes.section_scores}
+      criticalRequirements={attributes.critical_requirements}
     />
   );
 };

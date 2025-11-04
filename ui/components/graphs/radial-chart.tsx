@@ -46,12 +46,12 @@ const CustomTooltip = ({ active, payload }: any) => {
       <div className="flex flex-col gap-0.5">
         {tooltipItems.map((item: TooltipItem, index: number) => (
           <div key={index} className="flex items-end gap-1">
-            <p className="text-sm leading-5 font-medium text-slate-900 dark:text-[#f4f4f5]">
+            <p className="text-xs leading-5 font-medium text-slate-900 dark:text-[#f4f4f5]">
               {item.name}
             </p>
             <div className="mb-[4px] flex-1 border-b border-dotted border-slate-400 dark:border-slate-600" />
             <p
-              className="text-sm leading-5 font-medium"
+              className="text-xs leading-5 font-medium"
               style={{
                 color: item.color || "var(--chart-text-primary)",
               }}

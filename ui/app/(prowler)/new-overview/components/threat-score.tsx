@@ -1,7 +1,12 @@
 "use client";
 
 import { MessageCircleWarning, ThumbsUp } from "lucide-react";
+import Link from "next/link";
 
+import type {
+  CriticalRequirement,
+  SectionScores,
+} from "@/actions/overview/types";
 import { RadialChart } from "@/components/graphs/radial-chart";
 import {
   SEVERITY_COLORS,
@@ -55,9 +60,10 @@ const THREAT_LEVEL_CONFIG = {
 type ThreatLevelKey = keyof typeof THREAT_LEVEL_CONFIG;
 
 interface ThreatScoreProps {
-  score: number;
-  improvement?: number;
-  gaps?: string[];
+  score?: number | null;
+  scoreDelta?: number | null;
+  sectionScores?: SectionScores;
+  criticalRequirements?: CriticalRequirement[];
   onViewRemediationPlan?: () => void;
   className?: string;
 }
@@ -71,13 +77,74 @@ function getThreatLevel(score: number): ThreatLevelKey {
   return "MODERATE";
 }
 
+// Convert section scores to tooltip data for the radial chart
+function convertSectionScoresToTooltipData(
+  sectionScores?: SectionScores,
+): Array<{ name: string; value: number; color: string }> {
+  if (!sectionScores) return [];
+
+  return Object.entries(sectionScores).map(([name, value]) => {
+    // Determine color based on score value
+    let color: string = SEVERITY_COLORS.Critical;
+    if (value >= 80) color = STATUS_COLORS.Success;
+    else if (value >= 60) color = SEVERITY_COLORS.Low;
+    else if (value >= 40) color = SEVERITY_COLORS.Medium;
+    else if (value >= 20) color = SEVERITY_COLORS.High;
+
+    // Round to nearest integer
+    const roundedValue = Math.round(value);
+
+    return { name, value: roundedValue, color };
+  });
+}
+
+// Extract top gap names from critical requirements
+function extractTopGaps(
+  criticalRequirements?: CriticalRequirement[],
+  limit = 2,
+): string[] {
+  if (!criticalRequirements || criticalRequirements.length === 0) return [];
+
+  // Sort by risk_level descending, then by weight descending
+  const sorted = [...criticalRequirements].sort((a, b) => {
+    if (b.risk_level !== a.risk_level) {
+      return b.risk_level - a.risk_level;
+    }
+    return b.weight - a.weight;
+  });
+
+  return sorted.slice(0, limit).map((req) => req.title);
+}
+
 export function ThreatScore({
   score,
-  improvement,
-  gaps = [],
+  scoreDelta,
+  sectionScores,
+  criticalRequirements,
 }: ThreatScoreProps) {
+  if (score === null || score === undefined) {
+    return (
+      <BaseCard className="flex min-h-[372px] min-w-[312px] flex-col justify-between md:max-w-[312px]">
+        <CardHeader>
+          <CardTitle>Prowler Threat Score</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-1 items-center justify-center">
+          <p className="text-chart-text-primary">
+            No ThreatScore data available
+          </p>
+        </CardContent>
+      </BaseCard>
+    );
+  }
+
   const threatLevel = getThreatLevel(score);
   const config = THREAT_LEVEL_CONFIG[threatLevel];
+
+  // Convert section scores to tooltip data
+  const tooltipData = convertSectionScoresToTooltipData(sectionScores);
+
+  // Extract top gaps from critical requirements
+  const gaps = extractTopGaps(criticalRequirements, 2);
 
   return (
     <BaseCard className="flex min-h-[372px] min-w-[312px] flex-col justify-between md:max-w-[312px]">
@@ -100,12 +167,7 @@ export function ThreatScore({
               startAngle={200}
               endAngle={-20}
               hasDots
-              tooltipData={[
-                { name: "IAM", value: 10, color: "#ef4444" },
-                { name: "Encryption", value: 92, color: "#22c55e" },
-                { name: "Attack Surface", value: 82, color: "#22c55e" },
-                { name: "Logging & Monitoring", value: 10, color: "#ef4444" },
-              ]}
+              tooltipData={tooltipData}
             />
           </div>
           {/* Overlaid Text (centered) */}
@@ -120,15 +182,17 @@ export function ThreatScore({
         <div className="flex-1 rounded-xl border border-slate-300 bg-[#F8FAFC80] px-3 py-[9px] backdrop-blur-[46px] dark:border-[rgba(38,38,38,0.70)] dark:bg-[rgba(23,23,23,0.50)]">
           <div className="flex flex-col gap-1.5 text-sm leading-6 text-zinc-800 dark:text-zinc-300">
             {/* Improvement Message */}
-            {improvement !== undefined && improvement !== 0 && (
-              <div className="flex items-center gap-1">
-                <ThumbsUp size={14} className="flex-shrink-0" />
-                <p>
-                  Threat score has {improvement > 0 ? "improved" : "decreased"}{" "}
-                  by {Math.abs(improvement)}%.
-                </p>
-              </div>
-            )}
+            {scoreDelta !== undefined &&
+              scoreDelta !== null &&
+              scoreDelta !== 0 && (
+                <div className="flex items-center gap-1">
+                  <ThumbsUp size={14} className="flex-shrink-0" />
+                  <p>
+                    Threat score has {scoreDelta > 0 ? "improved" : "decreased"}{" "}
+                    by {Math.abs(scoreDelta)}%.
+                  </p>
+                </div>
+              )}
 
             {/* Gaps Message */}
             {gaps.length > 0 && (
@@ -145,11 +209,13 @@ export function ThreatScore({
             )}
 
             {/* View Remediation Plan Button */}
-            <button onClick={() => {}}>
-              <span className="text-sm font-medium text-blue-600 dark:text-blue-300">
-                View Remediation Plan
-              </span>
-            </button>
+            <div className="flex justify-center">
+              <Link href="/compliance">
+                <span className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-300">
+                  View Remediation Plan
+                </span>
+              </Link>
+            </div>
           </div>
         </div>
       </CardContent>
