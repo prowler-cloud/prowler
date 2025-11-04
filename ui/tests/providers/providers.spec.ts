@@ -168,6 +168,11 @@ test.describe("Add Provider", () => {
         await providersPage.fillRoleCredentials(roleCredentials);
         await providersPage.clickNext();
 
+        // Select Authentication Method
+        await providersPage.selectAuthenticationMethod(
+          AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN,
+        );
+
         // Launch scan
         await providersPage.verifyLaunchScanPageLoaded();
         await providersPage.clickNext();
