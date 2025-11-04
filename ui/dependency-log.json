@@ -121,6 +121,14 @@
   },
   {
     "section": "dependencies",
+    "name": "@radix-ui/react-separator",
+    "from": "1.1.7",
+    "to": "1.1.7",
+    "strategy": "installed",
+    "generatedAt": "2025-10-30T10:22:21.335Z"
+  },
+  {
+    "section": "dependencies",
     "name": "@radix-ui/react-slot",
     "from": "1.2.3",
     "to": "1.2.3",
@@ -323,17 +331,17 @@
     "section": "dependencies",
     "name": "react",
     "from": "19.1.1",
-    "to": "19.1.1",
+    "to": "19.2.0",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2025-10-28T08:31:51.187Z"
   },
   {
     "section": "dependencies",
     "name": "react-dom",
     "from": "19.1.1",
-    "to": "19.1.1",
+    "to": "19.2.0",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2025-10-28T08:31:51.187Z"
   },
   {
     "section": "dependencies",
@@ -473,6 +481,14 @@
   },
   {
     "section": "devDependencies",
+    "name": "@types/geojson",
+    "from": "7946.0.16",
+    "to": "7946.0.16",
+    "strategy": "installed",
+    "generatedAt": "2025-10-30T10:22:21.335Z"
+  },
+  {
+    "section": "devDependencies",
     "name": "@types/node",
     "from": "20.5.7",
     "to": "20.5.7",
@@ -502,6 +518,14 @@
     "to": "3.1.5",
     "strategy": "installed",
     "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "@types/topojson-specification",
+    "from": "1.0.5",
+    "to": "1.0.5",
+    "strategy": "installed",
+    "generatedAt": "2025-10-30T10:22:21.335Z"
   },
   {
     "section": "devDependencies",
@@ -611,9 +635,9 @@
     "section": "devDependencies",
     "name": "eslint-plugin-react-hooks",
     "from": "4.6.2",
-    "to": "4.6.2",
+    "to": "7.0.1",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2025-10-28T08:32:52.037Z"
   },
   {
     "section": "devDependencies",

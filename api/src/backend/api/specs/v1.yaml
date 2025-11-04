@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.14.0
+  version: 1.15.0
   description: |-
     Prowler API specification.
 
@@ -869,15 +869,17 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4c1e219dad1cc0e7
+          x-spec-enum-id: 6f034074d7104650
           enum:
           - aws
           - azure
           - gcp
           - github
           - mongodbatlas
+          - iac
           - kubernetes
           - m365
+          - oci
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -886,13 +888,15 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oci` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4c1e219dad1cc0e7
+            x-spec-enum-id: 6f034074d7104650
             enum:
             - aws
             - azure
@@ -901,6 +905,7 @@ paths:
             - mongodbatlas
             - kubernetes
             - m365
+            - oci
         description: |-
           Multiple values may be separated by commas.
 
@@ -911,6 +916,8 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oci` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -1400,15 +1407,17 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4c1e219dad1cc0e7
+          x-spec-enum-id: 6f034074d7104650
           enum:
           - aws
           - azure
           - gcp
           - github
           - mongodbatlas
+          - iac
           - kubernetes
           - m365
+          - oci
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -1417,13 +1426,15 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oci` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4c1e219dad1cc0e7
+            x-spec-enum-id: 6f034074d7104650
             enum:
             - aws
             - azure
@@ -1432,6 +1443,7 @@ paths:
             - mongodbatlas
             - kubernetes
             - m365
+            - oci
         description: |-
           Multiple values may be separated by commas.
 
@@ -1442,6 +1454,8 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oci` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -1839,15 +1853,17 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4c1e219dad1cc0e7
+          x-spec-enum-id: 6f034074d7104650
           enum:
           - aws
           - azure
           - gcp
           - github
           - mongodbatlas
+          - iac
           - kubernetes
           - m365
+          - oci
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -1856,13 +1872,15 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oci` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4c1e219dad1cc0e7
+            x-spec-enum-id: 6f034074d7104650
             enum:
             - aws
             - azure
@@ -1871,6 +1889,7 @@ paths:
             - mongodbatlas
             - kubernetes
             - m365
+            - oci
         description: |-
           Multiple values may be separated by commas.
 
@@ -1881,6 +1900,8 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oci` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -2276,15 +2297,17 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4c1e219dad1cc0e7
+          x-spec-enum-id: 6f034074d7104650
           enum:
           - aws
           - azure
           - gcp
           - github
           - mongodbatlas
+          - iac
           - kubernetes
           - m365
+          - oci
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -2293,13 +2316,15 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oci` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4c1e219dad1cc0e7
+            x-spec-enum-id: 6f034074d7104650
             enum:
             - aws
             - azure
@@ -2308,6 +2333,7 @@ paths:
             - mongodbatlas
             - kubernetes
             - m365
+            - oci
         description: |-
           Multiple values may be separated by commas.
 
@@ -2318,6 +2344,8 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oci` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -2701,15 +2729,17 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4c1e219dad1cc0e7
+          x-spec-enum-id: 6f034074d7104650
           enum:
           - aws
           - azure
           - gcp
           - github
           - mongodbatlas
+          - iac
           - kubernetes
           - m365
+          - oci
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -2718,13 +2748,15 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oci` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4c1e219dad1cc0e7
+            x-spec-enum-id: 6f034074d7104650
             enum:
             - aws
             - azure
@@ -2733,6 +2765,7 @@ paths:
             - mongodbatlas
             - kubernetes
             - m365
+            - oci
         description: |-
           Multiple values may be separated by commas.
 
@@ -2743,6 +2776,8 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oci` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -3449,6 +3484,7 @@ paths:
       - Lighthouse AI
       security:
       - JWT or API Key: []
+      deprecated: true
       responses:
         '200':
           content:
@@ -3476,6 +3512,7 @@ paths:
         required: true
       security:
       - JWT or API Key: []
+      deprecated: true
       responses:
         '201':
           content:
@@ -3510,6 +3547,7 @@ paths:
         required: true
       security:
       - JWT or API Key: []
+      deprecated: true
       responses:
         '200':
           content:
@@ -3531,6 +3569,7 @@ paths:
       - Lighthouse AI
       security:
       - JWT or API Key: []
+      deprecated: true
       responses:
         '204':
           description: No response body
@@ -3545,6 +3584,563 @@ paths:
         name: id
         schema:
           type: string
+        required: true
+      tags:
+      - Lighthouse AI
+      security:
+      - JWT or API Key: []
+      deprecated: true
+      responses:
+        '202':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+              examples:
+                Task queued:
+                  summary: Task queued
+                  value:
+                    data:
+                      type: tasks
+                      id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                      attributes:
+                        inserted_at: '2019-08-24T14:15:22Z'
+                        completed_at: '2019-08-24T14:15:22Z'
+                        name: string
+                        state: available
+                        result: null
+                        task_args: null
+                        metadata: null
+          description: ''
+  /api/v1/lighthouse/configuration:
+    get:
+      operationId: lighthouse_configuration_list
+      description: Retrieve current tenant-level Lighthouse AI settings. Returns a
+        single configuration object.
+      summary: Get Lighthouse AI Tenant config
+      parameters:
+      - in: query
+        name: fields[lighthouse-configurations]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - business_context
+            - default_provider
+            - default_models
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+            - business_context
+            - -business_context
+            - default_provider
+            - -default_provider
+            - default_models
+            - -default_models
+            - url
+            - -url
+        explode: false
+      tags:
+      - Lighthouse AI
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLighthouseTenantConfigList'
+          description: ''
+    patch:
+      operationId: lighthouse_configuration_partial_update
+      description: Update tenant-level settings. Validates that the default provider
+        is configured and active and that default model IDs exist for the chosen providers.
+        Auto-creates configuration if it doesn't exist.
+      summary: Update Lighthouse AI Tenant config
+      tags:
+      - Lighthouse AI
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/PatchedLighthouseTenantConfigUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLighthouseTenantConfigUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLighthouseTenantConfigUpdateRequest'
+        required: true
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/LighthouseTenantConfigUpdateResponse'
+          description: ''
+  /api/v1/lighthouse/models:
+    get:
+      operationId: lighthouse_models_list
+      description: List available LLM models per configured provider for the current
+        tenant.
+      summary: List all LLM models
+      parameters:
+      - in: query
+        name: fields[lighthouse-models]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - provider_configuration
+            - model_id
+            - model_name
+            - default_parameters
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[model_id]
+        schema:
+          type: string
+      - in: query
+        name: filter[model_id__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[model_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          x-spec-enum-id: 30bc523cb9ec0e8b
+          enum:
+          - bedrock
+          - openai
+          - openai_compatible
+        description: |-
+          LLM provider name
+
+          * `openai` - OpenAI
+          * `bedrock` - AWS Bedrock
+          * `openai_compatible` - OpenAI Compatible
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            x-spec-enum-id: 30bc523cb9ec0e8b
+            enum:
+            - bedrock
+            - openai
+            - openai_compatible
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `openai` - OpenAI
+          * `bedrock` - AWS Bedrock
+          * `openai_compatible` - OpenAI Compatible
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+            - provider_configuration
+            - -provider_configuration
+            - model_id
+            - -model_id
+            - model_name
+            - -model_name
+            - default_parameters
+            - -default_parameters
+            - url
+            - -url
+        explode: false
+      tags:
+      - Lighthouse AI
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLighthouseProviderModelsList'
+          description: ''
+  /api/v1/lighthouse/models/{id}:
+    get:
+      operationId: lighthouse_models_retrieve
+      description: Get details for a specific LLM model.
+      summary: Retrieve LLM model details
+      parameters:
+      - in: query
+        name: fields[lighthouse-models]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - provider_configuration
+            - model_id
+            - model_name
+            - default_parameters
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this lighthouse provider models.
+        required: true
+      tags:
+      - Lighthouse AI
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/LighthouseProviderModelsResponse'
+          description: ''
+  /api/v1/lighthouse/providers:
+    get:
+      operationId: lighthouse_providers_list
+      description: Retrieve all LLM provider configurations for the current tenant
+      summary: List all LLM provider configurations
+      parameters:
+      - in: query
+        name: fields[lighthouse-providers]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - provider_type
+            - base_url
+            - is_active
+            - credentials
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[is_active]
+        schema:
+          type: boolean
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          x-spec-enum-id: 30bc523cb9ec0e8b
+          enum:
+          - bedrock
+          - openai
+          - openai_compatible
+        description: |-
+          LLM provider name
+
+          * `openai` - OpenAI
+          * `bedrock` - AWS Bedrock
+          * `openai_compatible` - OpenAI Compatible
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            x-spec-enum-id: 30bc523cb9ec0e8b
+            enum:
+            - bedrock
+            - openai
+            - openai_compatible
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `openai` - OpenAI
+          * `bedrock` - AWS Bedrock
+          * `openai_compatible` - OpenAI Compatible
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+            - provider_type
+            - -provider_type
+            - base_url
+            - -base_url
+            - is_active
+            - -is_active
+            - credentials
+            - -credentials
+            - url
+            - -url
+        explode: false
+      tags:
+      - Lighthouse AI
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLighthouseProviderConfigList'
+          description: ''
+    post:
+      operationId: lighthouse_providers_create
+      description: Create a per-tenant configuration for an LLM provider. Only one
+        configuration per provider type is allowed per tenant.
+      summary: Create LLM provider configuration
+      tags:
+      - Lighthouse AI
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/LighthouseProviderConfigCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/LighthouseProviderConfigCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/LighthouseProviderConfigCreateRequest'
+        required: true
+      security:
+      - JWT or API Key: []
+      responses:
+        '201':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/LighthouseProviderConfigCreateResponse'
+          description: ''
+  /api/v1/lighthouse/providers/{id}:
+    get:
+      operationId: lighthouse_providers_retrieve
+      description: Get details for a specific provider configuration in the current
+        tenant.
+      summary: Retrieve LLM provider configuration
+      parameters:
+      - in: query
+        name: fields[lighthouse-providers]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - provider_type
+            - base_url
+            - is_active
+            - credentials
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this lighthouse provider configuration.
+        required: true
+      tags:
+      - Lighthouse AI
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/LighthouseProviderConfigResponse'
+          description: ''
+    patch:
+      operationId: lighthouse_providers_partial_update
+      description: Partially update a provider configuration (e.g., base_url, is_active).
+      summary: Update LLM provider configuration
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this lighthouse provider configuration.
+        required: true
+      tags:
+      - Lighthouse AI
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/PatchedLighthouseProviderConfigUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedLighthouseProviderConfigUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedLighthouseProviderConfigUpdateRequest'
+        required: true
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/LighthouseProviderConfigUpdateResponse'
+          description: ''
+    delete:
+      operationId: lighthouse_providers_destroy
+      description: Delete a provider configuration. Any tenant defaults that reference
+        this provider are cleared during deletion.
+      summary: Delete LLM provider configuration
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this lighthouse provider configuration.
+        required: true
+      tags:
+      - Lighthouse AI
+      security:
+      - JWT or API Key: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/lighthouse/providers/{id}/connection:
+    post:
+      operationId: lighthouse_providers_connection_create
+      description: Validate provider credentials asynchronously and toggle is_active.
+      summary: Check LLM provider connection
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this lighthouse provider configuration.
         required: true
       tags:
       - Lighthouse AI
@@ -3572,6 +4168,330 @@ paths:
                         task_args: null
                         metadata: null
           description: ''
+  /api/v1/lighthouse/providers/{id}/refresh-models:
+    post:
+      operationId: lighthouse_providers_refresh_models_create
+      description: Fetch available models for this provider configuration and upsert
+        into catalog. Supports OpenAI, OpenAI-compatible, and AWS Bedrock providers.
+      summary: Refresh LLM models catalog
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this lighthouse provider configuration.
+        required: true
+      tags:
+      - Lighthouse AI
+      security:
+      - JWT or API Key: []
+      responses:
+        '202':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+              examples:
+                Task queued:
+                  summary: Task queued
+                  value:
+                    data:
+                      type: tasks
+                      id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+                      attributes:
+                        inserted_at: '2019-08-24T14:15:22Z'
+                        completed_at: '2019-08-24T14:15:22Z'
+                        name: string
+                        state: available
+                        result: null
+                        task_args: null
+                        metadata: null
+          description: ''
+  /api/v1/mute-rules:
+    get:
+      operationId: mute_rules_list
+      description: Retrieve a list of all mute rules with filtering options.
+      summary: List all mute rules
+      parameters:
+      - in: query
+        name: fields[mute-rules]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - name
+            - reason
+            - enabled
+            - created_by
+            - finding_uids
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[created_by]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[enabled]
+        schema:
+          type: boolean
+      - in: query
+        name: filter[id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[name]
+        schema:
+          type: string
+      - in: query
+        name: filter[name__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[reason__icontains]
+        schema:
+          type: string
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[updated_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[updated_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[updated_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - created_by
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - -name
+            - enabled
+            - -enabled
+            - inserted_at
+            - -inserted_at
+            - updated_at
+            - -updated_at
+        explode: false
+      tags:
+      - Mute Rules
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMuteRuleList'
+          description: ''
+    post:
+      operationId: mute_rules_create
+      description: Create a new mute rule by providing finding IDs, name, and reason.
+        The rule will immediately mute the selected findings and launch a background
+        task to mute all historical findings with matching UIDs.
+      summary: Create a new mute rule
+      tags:
+      - Mute Rules
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/MuteRuleCreateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MuteRuleCreateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MuteRuleCreateRequest'
+        required: true
+      security:
+      - JWT or API Key: []
+      responses:
+        '201':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/MuteRuleCreateResponse'
+          description: ''
+  /api/v1/mute-rules/{id}:
+    get:
+      operationId: mute_rules_retrieve
+      description: Fetch detailed information about a specific mute rule by ID.
+      summary: Retrieve a mute rule
+      parameters:
+      - in: query
+        name: fields[mute-rules]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - updated_at
+            - name
+            - reason
+            - enabled
+            - created_by
+            - finding_uids
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this mute rule.
+        required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - created_by
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      tags:
+      - Mute Rules
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/MuteRuleResponse'
+          description: ''
+    patch:
+      operationId: mute_rules_partial_update
+      description: Update certain fields of an existing mute rule (e.g., name, reason,
+        enabled).
+      summary: Partially update a mute rule
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this mute rule.
+        required: true
+      tags:
+      - Mute Rules
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/PatchedMuteRuleUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedMuteRuleUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedMuteRuleUpdateRequest'
+        required: true
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/SerializerMetaclassResponse'
+          description: ''
+    delete:
+      operationId: mute_rules_destroy
+      description: 'Remove a mute rule from the system. Note: Previously muted findings
+        remain muted.'
+      summary: Delete a mute rule
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this mute rule.
+        required: true
+      tags:
+      - Mute Rules
+      security:
+      - JWT or API Key: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/overviews/findings:
     get:
       operationId: overviews_findings_retrieve
@@ -3645,15 +4565,17 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4c1e219dad1cc0e7
+          x-spec-enum-id: 6f034074d7104650
           enum:
           - aws
           - azure
           - gcp
           - github
           - mongodbatlas
+          - iac
           - kubernetes
           - m365
+          - oci
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -3662,13 +4584,15 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oci` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4c1e219dad1cc0e7
+            x-spec-enum-id: 6f034074d7104650
             enum:
             - aws
             - azure
@@ -3677,6 +4601,7 @@ paths:
             - mongodbatlas
             - kubernetes
             - m365
+            - oci
         description: |-
           Multiple values may be separated by commas.
 
@@ -3687,6 +4612,8 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oci` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -3826,15 +4753,17 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4c1e219dad1cc0e7
+          x-spec-enum-id: 6f034074d7104650
           enum:
           - aws
           - azure
           - gcp
           - github
           - mongodbatlas
+          - iac
           - kubernetes
           - m365
+          - oci
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -3843,13 +4772,15 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oci` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4c1e219dad1cc0e7
+            x-spec-enum-id: 6f034074d7104650
             enum:
             - aws
             - azure
@@ -3858,6 +4789,7 @@ paths:
             - mongodbatlas
             - kubernetes
             - m365
+            - oci
         description: |-
           Multiple values may be separated by commas.
 
@@ -3868,6 +4800,8 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oci` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -3979,6 +4913,37 @@ paths:
               schema:
                 $ref: '#/components/schemas/OverviewProviderResponse'
           description: ''
+  /api/v1/overviews/providers/count:
+    get:
+      operationId: overviews_providers_count_retrieve
+      description: Retrieve the number of providers grouped by provider type. This
+        endpoint counts every provider in the tenant, including those without completed
+        scans.
+      summary: Get provider counts grouped by type
+      parameters:
+      - in: query
+        name: fields[providers-count-overview]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - count
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      tags:
+      - Overview
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OverviewProviderCountResponse'
+          description: ''
   /api/v1/overviews/services:
     get:
       operationId: overviews_services_retrieve
@@ -4042,15 +5007,17 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4c1e219dad1cc0e7
+          x-spec-enum-id: 6f034074d7104650
           enum:
           - aws
           - azure
           - gcp
           - github
           - mongodbatlas
+          - iac
           - kubernetes
           - m365
+          - oci
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -4059,13 +5026,15 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oci` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4c1e219dad1cc0e7
+            x-spec-enum-id: 6f034074d7104650
             enum:
             - aws
             - azure
@@ -4074,6 +5043,7 @@ paths:
             - mongodbatlas
             - kubernetes
             - m365
+            - oci
         description: |-
           Multiple values may be separated by commas.
 
@@ -4084,6 +5054,8 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oci` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -4769,15 +5741,17 @@ paths:
         name: filter[provider]
         schema:
           type: string
-          x-spec-enum-id: 4c1e219dad1cc0e7
+          x-spec-enum-id: 6f034074d7104650
           enum:
           - aws
           - azure
           - gcp
           - github
           - mongodbatlas
+          - iac
           - kubernetes
           - m365
+          - oci
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -4786,13 +5760,15 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oci` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4c1e219dad1cc0e7
+            x-spec-enum-id: 6f034074d7104650
             enum:
             - aws
             - azure
@@ -4801,6 +5777,7 @@ paths:
             - mongodbatlas
             - kubernetes
             - m365
+            - oci
         description: |-
           Multiple values may be separated by commas.
 
@@ -4811,6 +5788,55 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `mongodbatlas` - MongoDB Atlas
+          * `oci` - Oracle Cloud Infrastructure
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          x-spec-enum-id: 6f034074d7104650
+          enum:
+          - aws
+          - azure
+          - gcp
+          - github
+          - kubernetes
+          - m365
+          - oci
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            x-spec-enum-id: 6f034074d7104650
+            enum:
+            - aws
+            - azure
+            - gcp
+            - github
+            - kubernetes
+            - m365
+            - oci
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `oci` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - name: filter[search]
@@ -5408,15 +6434,17 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4c1e219dad1cc0e7
+          x-spec-enum-id: 6f034074d7104650
           enum:
           - aws
           - azure
           - gcp
           - github
           - mongodbatlas
+          - iac
           - kubernetes
           - m365
+          - oci
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -5425,13 +6453,15 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oci` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4c1e219dad1cc0e7
+            x-spec-enum-id: 6f034074d7104650
             enum:
             - aws
             - azure
@@ -5440,6 +6470,7 @@ paths:
             - mongodbatlas
             - kubernetes
             - m365
+            - oci
         description: |-
           Multiple values may be separated by commas.
 
@@ -5450,6 +6481,8 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oci` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -5777,15 +6810,17 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4c1e219dad1cc0e7
+          x-spec-enum-id: 6f034074d7104650
           enum:
           - aws
           - azure
           - gcp
           - github
           - mongodbatlas
+          - iac
           - kubernetes
           - m365
+          - oci
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -5794,13 +6829,15 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oci` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4c1e219dad1cc0e7
+            x-spec-enum-id: 6f034074d7104650
             enum:
             - aws
             - azure
@@ -5809,6 +6846,7 @@ paths:
             - mongodbatlas
             - kubernetes
             - m365
+            - oci
         description: |-
           Multiple values may be separated by commas.
 
@@ -5819,6 +6857,8 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oci` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -6047,15 +7087,17 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4c1e219dad1cc0e7
+          x-spec-enum-id: 6f034074d7104650
           enum:
           - aws
           - azure
           - gcp
           - github
           - mongodbatlas
+          - iac
           - kubernetes
           - m365
+          - oci
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -6064,13 +7106,15 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oci` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4c1e219dad1cc0e7
+            x-spec-enum-id: 6f034074d7104650
             enum:
             - aws
             - azure
@@ -6079,6 +7123,7 @@ paths:
             - mongodbatlas
             - kubernetes
             - m365
+            - oci
         description: |-
           Multiple values may be separated by commas.
 
@@ -6089,6 +7134,8 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oci` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -6323,15 +7370,17 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4c1e219dad1cc0e7
+          x-spec-enum-id: 6f034074d7104650
           enum:
           - aws
           - azure
           - gcp
           - github
           - mongodbatlas
+          - iac
           - kubernetes
           - m365
+          - oci
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -6340,13 +7389,15 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oci` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4c1e219dad1cc0e7
+            x-spec-enum-id: 6f034074d7104650
             enum:
             - aws
             - azure
@@ -6355,6 +7406,7 @@ paths:
             - mongodbatlas
             - kubernetes
             - m365
+            - oci
         description: |-
           Multiple values may be separated by commas.
 
@@ -6365,6 +7417,8 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oci` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -7162,15 +8216,17 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 4c1e219dad1cc0e7
+          x-spec-enum-id: 6f034074d7104650
           enum:
           - aws
           - azure
           - gcp
           - github
           - mongodbatlas
+          - iac
           - kubernetes
           - m365
+          - oci
         description: |-
           * `aws` - AWS
           * `azure` - Azure
@@ -7179,13 +8235,15 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oci` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: 4c1e219dad1cc0e7
+            x-spec-enum-id: 6f034074d7104650
             enum:
             - aws
             - azure
@@ -7194,6 +8252,7 @@ paths:
             - mongodbatlas
             - kubernetes
             - m365
+            - oci
         description: |-
           Multiple values may be separated by commas.
 
@@ -7204,6 +8263,8 @@ paths:
           * `m365` - M365
           * `github` - GitHub
           * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oci` - Oracle Cloud Infrastructure
         explode: false
         style: form
       - in: query
@@ -7577,6 +8638,72 @@ paths:
         '404':
           description: The scan has no reports, or the report generation task has
             not started yet
+  /api/v1/scans/{id}/threatscore:
+    get:
+      operationId: scans_threatscore_retrieve
+      description: Download a specific threatscore report (e.g., 'prowler_threatscore_aws')
+        as a PDF file.
+      summary: Retrieve threatscore report
+      parameters:
+      - in: query
+        name: fields[scans]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - trigger
+            - state
+            - unique_resource_count
+            - progress
+            - duration
+            - provider
+            - task
+            - inserted_at
+            - started_at
+            - completed_at
+            - scheduled_at
+            - next_scan_at
+            - processor
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scan.
+        required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      tags:
+      - Scan
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          description: PDF file containing the threatscore report
+        '202':
+          description: The task is in progress
+        '401':
+          description: API key missing or user not Authenticated
+        '403':
+          description: There is a problem with credentials
+        '404':
+          description: The scan has no threatscore reports, or the threatscore report
+            generation task has not started yet
   /api/v1/schedules/daily:
     post:
       operationId: schedules_daily_create
@@ -10909,6 +12036,481 @@ components:
           $ref: '#/components/schemas/LighthouseConfigUpdate'
       required:
       - data
+    LighthouseProviderConfig:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - lighthouse-providers
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+            provider_type:
+              enum:
+              - openai
+              - bedrock
+              - openai_compatible
+              type: string
+              x-spec-enum-id: 30bc523cb9ec0e8b
+              description: |-
+                LLM provider name
+
+                * `openai` - OpenAI
+                * `bedrock` - AWS Bedrock
+                * `openai_compatible` - OpenAI Compatible
+            base_url:
+              type: string
+              format: uri
+              nullable: true
+              maxLength: 200
+            is_active:
+              type: boolean
+              readOnly: true
+            credentials:
+              readOnly: true
+          required:
+          - provider_type
+    LighthouseProviderConfigCreate:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - lighthouse-providers
+        attributes:
+          type: object
+          properties:
+            provider_type:
+              enum:
+              - openai
+              - bedrock
+              - openai_compatible
+              type: string
+              x-spec-enum-id: 30bc523cb9ec0e8b
+              description: |-
+                LLM provider type. Determines which credential format to use. See 'credentials' field documentation for provider-specific requirements.
+
+                * `openai` - OpenAI
+                * `bedrock` - AWS Bedrock
+                * `openai_compatible` - OpenAI Compatible
+            base_url:
+              type: string
+              format: uri
+              nullable: true
+              description: Base URL for the LLM provider API. Required for 'openai_compatible'
+                provider type.
+            credentials:
+              oneOf:
+              - type: object
+                title: OpenAI Credentials
+                properties:
+                  api_key:
+                    type: string
+                    description: OpenAI API key. Must start with 'sk-' followed by
+                      alphanumeric characters, hyphens, or underscores.
+                    pattern: ^sk-[\w-]+$
+                required:
+                - api_key
+              - type: object
+                title: AWS Bedrock Credentials
+                properties:
+                  access_key_id:
+                    type: string
+                    description: AWS access key ID.
+                    pattern: ^AKIA[0-9A-Z]{16}$
+                  secret_access_key:
+                    type: string
+                    description: AWS secret access key.
+                    pattern: ^[A-Za-z0-9/+=]{40}$
+                  region:
+                    type: string
+                    description: 'AWS region identifier where Bedrock is available.
+                      Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                    pattern: ^[a-z]{2}-[a-z]+-\d+$
+                required:
+                - access_key_id
+                - secret_access_key
+                - region
+              - type: object
+                title: OpenAI Compatible Credentials
+                properties:
+                  api_key:
+                    type: string
+                    description: 'API key for OpenAI-compatible provider. The format
+                      varies by provider. Note: The ''base_url'' field (separate from
+                      credentials) is required when using this provider type.'
+                required:
+                - api_key
+              writeOnly: true
+            is_active:
+              type: boolean
+          required:
+          - provider_type
+          - credentials
+    LighthouseProviderConfigCreateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - lighthouse-providers
+            attributes:
+              type: object
+              properties:
+                provider_type:
+                  enum:
+                  - openai
+                  - bedrock
+                  - openai_compatible
+                  type: string
+                  x-spec-enum-id: 30bc523cb9ec0e8b
+                  description: |-
+                    LLM provider type. Determines which credential format to use. See 'credentials' field documentation for provider-specific requirements.
+
+                    * `openai` - OpenAI
+                    * `bedrock` - AWS Bedrock
+                    * `openai_compatible` - OpenAI Compatible
+                base_url:
+                  type: string
+                  format: uri
+                  nullable: true
+                  minLength: 1
+                  description: Base URL for the LLM provider API. Required for 'openai_compatible'
+                    provider type.
+                credentials:
+                  oneOf:
+                  - type: object
+                    title: OpenAI Credentials
+                    properties:
+                      api_key:
+                        type: string
+                        description: OpenAI API key. Must start with 'sk-' followed
+                          by alphanumeric characters, hyphens, or underscores.
+                        pattern: ^sk-[\w-]+$
+                    required:
+                    - api_key
+                  - type: object
+                    title: AWS Bedrock Credentials
+                    properties:
+                      access_key_id:
+                        type: string
+                        description: AWS access key ID.
+                        pattern: ^AKIA[0-9A-Z]{16}$
+                      secret_access_key:
+                        type: string
+                        description: AWS secret access key.
+                        pattern: ^[A-Za-z0-9/+=]{40}$
+                      region:
+                        type: string
+                        description: 'AWS region identifier where Bedrock is available.
+                          Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                        pattern: ^[a-z]{2}-[a-z]+-\d+$
+                    required:
+                    - access_key_id
+                    - secret_access_key
+                    - region
+                  - type: object
+                    title: OpenAI Compatible Credentials
+                    properties:
+                      api_key:
+                        type: string
+                        description: 'API key for OpenAI-compatible provider. The
+                          format varies by provider. Note: The ''base_url'' field
+                          (separate from credentials) is required when using this
+                          provider type.'
+                    required:
+                    - api_key
+                  writeOnly: true
+                is_active:
+                  type: boolean
+              required:
+              - provider_type
+              - credentials
+      required:
+      - data
+    LighthouseProviderConfigCreateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/LighthouseProviderConfigCreate'
+      required:
+      - data
+    LighthouseProviderConfigResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/LighthouseProviderConfig'
+      required:
+      - data
+    LighthouseProviderConfigUpdate:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - lighthouse-providers
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            provider_type:
+              enum:
+              - openai
+              - bedrock
+              - openai_compatible
+              type: string
+              x-spec-enum-id: 30bc523cb9ec0e8b
+              readOnly: true
+              description: |-
+                LLM provider name
+
+                * `openai` - OpenAI
+                * `bedrock` - AWS Bedrock
+                * `openai_compatible` - OpenAI Compatible
+            base_url:
+              type: string
+              format: uri
+              nullable: true
+              description: Base URL for the LLM provider API. Required for 'openai_compatible'
+                provider type.
+            credentials:
+              oneOf:
+              - type: object
+                title: OpenAI Credentials
+                properties:
+                  api_key:
+                    type: string
+                    description: OpenAI API key. Must start with 'sk-' followed by
+                      alphanumeric characters, hyphens, or underscores.
+                    pattern: ^sk-[\w-]+$
+                required:
+                - api_key
+              - type: object
+                title: AWS Bedrock Credentials
+                properties:
+                  access_key_id:
+                    type: string
+                    description: AWS access key ID.
+                    pattern: ^AKIA[0-9A-Z]{16}$
+                  secret_access_key:
+                    type: string
+                    description: AWS secret access key.
+                    pattern: ^[A-Za-z0-9/+=]{40}$
+                  region:
+                    type: string
+                    description: 'AWS region identifier where Bedrock is available.
+                      Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                    pattern: ^[a-z]{2}-[a-z]+-\d+$
+                required:
+                - access_key_id
+                - secret_access_key
+                - region
+              - type: object
+                title: OpenAI Compatible Credentials
+                properties:
+                  api_key:
+                    type: string
+                    description: 'API key for OpenAI-compatible provider. The format
+                      varies by provider. Note: The ''base_url'' field (separate from
+                      credentials) is required when using this provider type.'
+                required:
+                - api_key
+              writeOnly: true
+            is_active:
+              type: boolean
+    LighthouseProviderConfigUpdateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/LighthouseProviderConfigUpdate'
+      required:
+      - data
+    LighthouseProviderModels:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - lighthouse-models
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+            model_id:
+              type: string
+              maxLength: 100
+            model_name:
+              type: string
+              maxLength: 100
+            default_parameters: {}
+          required:
+          - model_id
+          - model_name
+        relationships:
+          type: object
+          properties:
+            provider_configuration:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - lighthouse-providers
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              readOnly: true
+    LighthouseProviderModelsResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/LighthouseProviderModels'
+      required:
+      - data
+    LighthouseTenantConfig:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - lighthouse-configurations
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+            business_context:
+              type: string
+            default_provider:
+              type: string
+              maxLength: 50
+            default_models: {}
+            url:
+              type: string
+              readOnly: true
+    LighthouseTenantConfigUpdate:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - lighthouse-configurations
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            business_context:
+              type: string
+            default_provider:
+              type: string
+              maxLength: 50
+            default_models: {}
+    LighthouseTenantConfigUpdateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/LighthouseTenantConfigUpdate'
+      required:
+      - data
     Membership:
       type: object
       required:
@@ -10998,6 +12600,272 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/Membership'
+      required:
+      - data
+    MuteRule:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - mute-rules
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+            name:
+              type: string
+              description: Human-readable name for this rule
+              maxLength: 100
+              minLength: 3
+            reason:
+              type: string
+              description: Reason for muting
+              minLength: 3
+              maxLength: 500
+            enabled:
+              type: boolean
+              description: Whether this rule is currently enabled
+            finding_uids:
+              type: array
+              items:
+                type: string
+              readOnly: true
+              description: List of finding UIDs that are muted by this rule
+          required:
+          - name
+          - reason
+        relationships:
+          type: object
+          properties:
+            created_by:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - users
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              nullable: true
+    MuteRuleCreate:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - mute-rules
+        attributes:
+          type: object
+          properties:
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            updated_at:
+              type: string
+              format: date-time
+              readOnly: true
+            name:
+              type: string
+              description: Human-readable name for this rule
+              maxLength: 100
+              minLength: 3
+            reason:
+              type: string
+              description: Reason for muting
+              minLength: 3
+              maxLength: 500
+            enabled:
+              type: boolean
+              readOnly: true
+              description: Whether this rule is currently enabled
+            finding_ids:
+              type: array
+              items:
+                type: string
+                format: uuid
+              writeOnly: true
+              description: List of Finding IDs to mute (will be converted to UIDs)
+            finding_uids:
+              type: array
+              items:
+                type: string
+              readOnly: true
+              description: List of finding UIDs that are muted by this rule
+          required:
+          - name
+          - reason
+          - finding_ids
+        relationships:
+          type: object
+          properties:
+            created_by:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - users
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              readOnly: true
+              nullable: true
+    MuteRuleCreateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - mute-rules
+            attributes:
+              type: object
+              properties:
+                inserted_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                updated_at:
+                  type: string
+                  format: date-time
+                  readOnly: true
+                name:
+                  type: string
+                  minLength: 3
+                  description: Human-readable name for this rule
+                  maxLength: 100
+                reason:
+                  type: string
+                  minLength: 3
+                  description: Reason for muting
+                  maxLength: 500
+                enabled:
+                  type: boolean
+                  readOnly: true
+                  description: Whether this rule is currently enabled
+                finding_ids:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  writeOnly: true
+                  description: List of Finding IDs to mute (will be converted to UIDs)
+                finding_uids:
+                  type: array
+                  items:
+                    type: string
+                    minLength: 1
+                  readOnly: true
+                  description: List of finding UIDs that are muted by this rule
+              required:
+              - name
+              - reason
+              - finding_ids
+            relationships:
+              type: object
+              properties:
+                created_by:
+                  type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        type:
+                          type: string
+                          enum:
+                          - users
+                          title: Resource Type Name
+                          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                            member is used to describe resource objects that share
+                            common attributes and relationships.
+                      required:
+                      - id
+                      - type
+                  required:
+                  - data
+                  description: The identifier of the related object.
+                  title: Resource Identifier
+                  readOnly: true
+                  nullable: true
+      required:
+      - data
+    MuteRuleCreateResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/MuteRuleCreate'
+      required:
+      - data
+    MuteRuleResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/MuteRule'
       required:
       - data
     OpenApiResponseResponse:
@@ -11115,6 +12983,38 @@ components:
               readOnly: true
           required:
           - id
+    OverviewProviderCount:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - providers-count-overview
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            count:
+              type: integer
+          required:
+          - id
+          - count
+    OverviewProviderCountResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/OverviewProviderCount'
+      required:
+      - data
     OverviewProviderResponse:
       type: object
       properties:
@@ -11270,6 +13170,33 @@ components:
             $ref: '#/components/schemas/LighthouseConfig'
       required:
       - data
+    PaginatedLighthouseProviderConfigList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LighthouseProviderConfig'
+      required:
+      - data
+    PaginatedLighthouseProviderModelsList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LighthouseProviderModels'
+      required:
+      - data
+    PaginatedLighthouseTenantConfigList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LighthouseTenantConfig'
+      required:
+      - data
     PaginatedMembershipList:
       type: object
       properties:
@@ -11277,6 +13204,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Membership'
+      required:
+      - data
+    PaginatedMuteRuleList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/MuteRule'
       required:
       - data
     PaginatedProcessorList:
@@ -11729,6 +13665,167 @@ components:
                 is_active:
                   type: boolean
                   readOnly: true
+      required:
+      - data
+    PatchedLighthouseProviderConfigUpdateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - id
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - lighthouse-providers
+            id:
+              type: string
+              format: uuid
+            attributes:
+              type: object
+              properties:
+                provider_type:
+                  enum:
+                  - openai
+                  - bedrock
+                  - openai_compatible
+                  type: string
+                  x-spec-enum-id: 30bc523cb9ec0e8b
+                  readOnly: true
+                  description: |-
+                    LLM provider name
+
+                    * `openai` - OpenAI
+                    * `bedrock` - AWS Bedrock
+                    * `openai_compatible` - OpenAI Compatible
+                base_url:
+                  type: string
+                  format: uri
+                  nullable: true
+                  minLength: 1
+                  description: Base URL for the LLM provider API. Required for 'openai_compatible'
+                    provider type.
+                credentials:
+                  oneOf:
+                  - type: object
+                    title: OpenAI Credentials
+                    properties:
+                      api_key:
+                        type: string
+                        description: OpenAI API key. Must start with 'sk-' followed
+                          by alphanumeric characters, hyphens, or underscores.
+                        pattern: ^sk-[\w-]+$
+                    required:
+                    - api_key
+                  - type: object
+                    title: AWS Bedrock Credentials
+                    properties:
+                      access_key_id:
+                        type: string
+                        description: AWS access key ID.
+                        pattern: ^AKIA[0-9A-Z]{16}$
+                      secret_access_key:
+                        type: string
+                        description: AWS secret access key.
+                        pattern: ^[A-Za-z0-9/+=]{40}$
+                      region:
+                        type: string
+                        description: 'AWS region identifier where Bedrock is available.
+                          Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                        pattern: ^[a-z]{2}-[a-z]+-\d+$
+                    required:
+                    - access_key_id
+                    - secret_access_key
+                    - region
+                  - type: object
+                    title: OpenAI Compatible Credentials
+                    properties:
+                      api_key:
+                        type: string
+                        description: 'API key for OpenAI-compatible provider. The
+                          format varies by provider. Note: The ''base_url'' field
+                          (separate from credentials) is required when using this
+                          provider type.'
+                    required:
+                    - api_key
+                  writeOnly: true
+                is_active:
+                  type: boolean
+      required:
+      - data
+    PatchedLighthouseTenantConfigUpdateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - id
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - lighthouse-configurations
+            id:
+              type: string
+              format: uuid
+            attributes:
+              type: object
+              properties:
+                business_context:
+                  type: string
+                default_provider:
+                  type: string
+                  maxLength: 50
+                default_models: {}
+      required:
+      - data
+    PatchedMuteRuleUpdateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          - id
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - mute-rules
+            id:
+              type: string
+              format: uuid
+            attributes:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 3
+                  description: Human-readable name for this rule
+                  maxLength: 100
+                reason:
+                  type: string
+                  minLength: 3
+                  description: Reason for muting
+                  maxLength: 500
+                enabled:
+                  type: boolean
+                  description: Whether this rule is currently enabled
       required:
       - data
     PatchedProcessorUpdateRequest:
@@ -12213,6 +14310,50 @@ components:
                     required:
                     - atlas_public_key
                     - atlas_private_key
+                  - type: object
+                    title: IaC Repository Credentials
+                    properties:
+                      repository_url:
+                        type: string
+                        description: Repository URL to scan for IaC files.
+                      access_token:
+                        type: string
+                        description: Optional access token for private repositories.
+                    required:
+                    - repository_url
+                  - type: object
+                    title: Oracle Cloud Infrastructure (OCI) API Key Credentials
+                    properties:
+                      user:
+                        type: string
+                        description: The OCID of the user to authenticate with.
+                      fingerprint:
+                        type: string
+                        description: The fingerprint of the API signing key.
+                      key_file:
+                        type: string
+                        description: The path to the private key file for API signing.
+                          Either key_file or key_content must be provided.
+                      key_content:
+                        type: string
+                        description: The content of the private key for API signing
+                          (base64 encoded). Either key_file or key_content must be
+                          provided.
+                      tenancy:
+                        type: string
+                        description: The OCID of the tenancy.
+                      region:
+                        type: string
+                        description: The OCI region identifier (e.g., us-ashburn-1,
+                          us-phoenix-1).
+                      pass_phrase:
+                        type: string
+                        description: The passphrase for the private key, if encrypted.
+                    required:
+                    - user
+                    - fingerprint
+                    - tenancy
+                    - region
                   writeOnly: true
               required:
               - secret
@@ -13208,6 +15349,7 @@ components:
               - m365
               - github
               - mongodbatlas
+              - oci
               type: string
               description: |-
                 * `aws` - AWS
@@ -13217,7 +15359,8 @@ components:
                 * `m365` - M365
                 * `github` - GitHub
                 * `mongodbatlas` - MongoDB Atlas
-              x-spec-enum-id: 4c1e219dad1cc0e7
+                * `oci` - Oracle Cloud Infrastructure
+              x-spec-enum-id: 6f034074d7104650
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -13330,8 +15473,9 @@ components:
               - m365
               - github
               - mongodbatlas
+              - oci
               type: string
-              x-spec-enum-id: 4c1e219dad1cc0e7
+              x-spec-enum-id: 6f034074d7104650
               description: |-
                 Type of provider to create.
 
@@ -13342,6 +15486,7 @@ components:
                 * `m365` - M365
                 * `github` - GitHub
                 * `mongodbatlas` - MongoDB Atlas
+                * `oci` - Oracle Cloud Infrastructure
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -13386,8 +15531,9 @@ components:
                   - m365
                   - github
                   - mongodbatlas
+                  - oci
                   type: string
-                  x-spec-enum-id: 4c1e219dad1cc0e7
+                  x-spec-enum-id: 6f034074d7104650
                   description: |-
                     Type of provider to create.
 
@@ -13398,6 +15544,7 @@ components:
                     * `m365` - M365
                     * `github` - GitHub
                     * `mongodbatlas` - MongoDB Atlas
+                    * `oci` - Oracle Cloud Infrastructure
                 uid:
                   type: string
                   minLength: 3
@@ -14106,6 +16253,48 @@ components:
                 required:
                 - github_app_id
                 - github_app_key
+              - type: object
+                title: IaC Repository Credentials
+                properties:
+                  repository_url:
+                    type: string
+                    description: Repository URL to scan for IaC files.
+                  access_token:
+                    type: string
+                    description: Optional access token for private repositories.
+                required:
+                - repository_url
+              - type: object
+                title: Oracle Cloud Infrastructure (OCI) API Key Credentials
+                properties:
+                  user:
+                    type: string
+                    description: The OCID of the user to authenticate with.
+                  fingerprint:
+                    type: string
+                    description: The fingerprint of the API signing key.
+                  key_file:
+                    type: string
+                    description: The path to the private key file for API signing.
+                      Either key_file or key_content must be provided.
+                  key_content:
+                    type: string
+                    description: The content of the private key for API signing (base64
+                      encoded). Either key_file or key_content must be provided.
+                  tenancy:
+                    type: string
+                    description: The OCID of the tenancy.
+                  region:
+                    type: string
+                    description: The OCI region identifier (e.g., us-ashburn-1, us-phoenix-1).
+                  pass_phrase:
+                    type: string
+                    description: The passphrase for the private key, if encrypted.
+                required:
+                - user
+                - fingerprint
+                - tenancy
+                - region
               writeOnly: true
           required:
           - secret_type
@@ -14375,6 +16564,50 @@ components:
                     required:
                     - github_app_id
                     - github_app_key
+                  - type: object
+                    title: IaC Repository Credentials
+                    properties:
+                      repository_url:
+                        type: string
+                        description: Repository URL to scan for IaC files.
+                      access_token:
+                        type: string
+                        description: Optional access token for private repositories.
+                    required:
+                    - repository_url
+                  - type: object
+                    title: Oracle Cloud Infrastructure (OCI) API Key Credentials
+                    properties:
+                      user:
+                        type: string
+                        description: The OCID of the user to authenticate with.
+                      fingerprint:
+                        type: string
+                        description: The fingerprint of the API signing key.
+                      key_file:
+                        type: string
+                        description: The path to the private key file for API signing.
+                          Either key_file or key_content must be provided.
+                      key_content:
+                        type: string
+                        description: The content of the private key for API signing
+                          (base64 encoded). Either key_file or key_content must be
+                          provided.
+                      tenancy:
+                        type: string
+                        description: The OCID of the tenancy.
+                      region:
+                        type: string
+                        description: The OCI region identifier (e.g., us-ashburn-1,
+                          us-phoenix-1).
+                      pass_phrase:
+                        type: string
+                        description: The passphrase for the private key, if encrypted.
+                    required:
+                    - user
+                    - fingerprint
+                    - tenancy
+                    - region
                   writeOnly: true
               required:
               - secret_type
@@ -14660,6 +16893,48 @@ components:
                 required:
                 - github_app_id
                 - github_app_key
+              - type: object
+                title: IaC Repository Credentials
+                properties:
+                  repository_url:
+                    type: string
+                    description: Repository URL to scan for IaC files.
+                  access_token:
+                    type: string
+                    description: Optional access token for private repositories.
+                required:
+                - repository_url
+              - type: object
+                title: Oracle Cloud Infrastructure (OCI) API Key Credentials
+                properties:
+                  user:
+                    type: string
+                    description: The OCID of the user to authenticate with.
+                  fingerprint:
+                    type: string
+                    description: The fingerprint of the API signing key.
+                  key_file:
+                    type: string
+                    description: The path to the private key file for API signing.
+                      Either key_file or key_content must be provided.
+                  key_content:
+                    type: string
+                    description: The content of the private key for API signing (base64
+                      encoded). Either key_file or key_content must be provided.
+                  tenancy:
+                    type: string
+                    description: The OCID of the tenancy.
+                  region:
+                    type: string
+                    description: The OCI region identifier (e.g., us-ashburn-1, us-phoenix-1).
+                  pass_phrase:
+                    type: string
+                    description: The passphrase for the private key, if encrypted.
+                required:
+                - user
+                - fingerprint
+                - tenancy
+                - region
               writeOnly: true
           required:
           - secret
@@ -15713,7 +17988,7 @@ components:
       type: object
       properties:
         data:
-          $ref: '#/components/schemas/ProviderGroup'
+          $ref: '#/components/schemas/MuteRule'
       required:
       - data
     Task:
@@ -16757,3 +19032,7 @@ tags:
 - name: API Keys
   description: Endpoints for API keys management. These can be used as an alternative
     to JWT authorization.
+- name: Mute Rules
+  description: Endpoints for simple mute rules management. These can be used as an
+    alternative to the Mutelist Processor if you need to mute specific findings across
+    your tenant with a specific reason.

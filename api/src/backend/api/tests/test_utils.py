@@ -24,6 +24,7 @@ from prowler.providers.github.github_provider import GithubProvider
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
 from prowler.providers.m365.m365_provider import M365Provider
 from prowler.providers.mongodbatlas.mongodbatlas_provider import MongodbatlasProvider
+from prowler.providers.oraclecloud.oci_provider import OciProvider
 
 
 class TestMergeDicts:
@@ -111,10 +112,8 @@ class TestReturnProwlerProvider:
             (Provider.ProviderChoices.KUBERNETES.value, KubernetesProvider),
             (Provider.ProviderChoices.M365.value, M365Provider),
             (Provider.ProviderChoices.GITHUB.value, GithubProvider),
-            (
-                Provider.ProviderChoices.MONGODBATLAS.value,
-                MongodbatlasProvider,
-            ),
+            (Provider.ProviderChoices.MONGODBATLAS.value, MongodbatlasProvider),
+            (Provider.ProviderChoices.OCI.value, OciProvider),
         ],
     )
     def test_return_prowler_provider(self, provider_type, expected_provider):
@@ -209,6 +208,10 @@ class TestGetProwlerProviderKwargs:
             (
                 Provider.ProviderChoices.GITHUB.value,
                 {"organizations": ["provider_uid"]},
+            ),
+            (
+                Provider.ProviderChoices.OCI.value,
+                {},
             ),
             (
                 Provider.ProviderChoices.MONGODBATLAS.value,
