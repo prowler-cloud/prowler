@@ -167,7 +167,7 @@ export const BaseCredentialsForm = ({
             control={form.control as unknown as Control<IacCredentials>}
           />
         )}
-        {providerType === "oci" && (
+        {providerType === "oraclecloud" && (
           <OracleCloudCredentialsForm
             control={form.control as unknown as Control<OCICredentials>}
           />
