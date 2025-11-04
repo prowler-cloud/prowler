@@ -1,5 +1,5 @@
 {
-  "Provider": "oci",
+  "Provider": "oraclecloud",
   "CheckID": "events_rule_network_gateway_changes",
   "CheckTitle": "Ensure a notification is configured for changes to network gateways",
   "CheckType": [

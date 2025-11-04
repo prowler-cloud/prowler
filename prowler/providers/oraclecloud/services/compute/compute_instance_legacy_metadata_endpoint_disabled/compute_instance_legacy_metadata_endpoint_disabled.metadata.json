@@ -1,5 +1,5 @@
 {
-  "Provider": "oci",
+  "Provider": "oraclecloud",
   "CheckID": "compute_instance_legacy_metadata_endpoint_disabled",
   "CheckTitle": "Ensure Compute Instance Legacy Metadata service endpoint is disabled",
   "CheckType": [

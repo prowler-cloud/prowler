@@ -285,7 +285,7 @@ class Provider(RowLevelSecurityProtectedModel):
         M365 = "m365", _("M365")
         GITHUB = "github", _("GitHub")
         IAC = "iac", _("IaC")
-        OCI = "oci", _("Oracle Cloud Infrastructure")
+        ORACLECLOUD = "oraclecloud", _("Oracle Cloud Infrastructure")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -370,14 +370,14 @@ class Provider(RowLevelSecurityProtectedModel):
             )
 
     @staticmethod
-    def validate_oci_uid(value):
+    def validate_oraclecloud_uid(value):
         if not re.match(
             r"^ocid1\.([a-z0-9_-]+)\.([a-z0-9_-]+)\.([a-z0-9_-]*)\.([a-z0-9]+)$", value
         ):
             raise ModelValidationError(
                 detail="Oracle Cloud Infrastructure provider ID must be a valid tenancy OCID in the format: "
                 "ocid1.<resource_type>.<realm>.<region>.<unique_id>",
-                code="oci-uid",
+                code="oraclecloud-uid",
                 pointer="/data/attributes/uid",
             )
 
