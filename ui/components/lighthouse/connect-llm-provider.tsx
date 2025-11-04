@@ -302,19 +302,24 @@ export const ConnectLLMProvider = ({
         {/* Actions */}
         <div className="mt-4 flex justify-end gap-4">
           <CustomButton
+            type="button"
             ariaLabel="Cancel"
-            variant="bordered"
-            color="secondary"
-            size="md"
+            className="w-full bg-transparent"
+            variant="faded"
+            size="lg"
+            radius="lg"
             onPress={() => router.push("/lighthouse/config")}
+            isDisabled={isLoading}
           >
-            Cancel
+            <span>Cancel</span>
           </CustomButton>
           <CustomButton
             ariaLabel={isEditMode ? "Update" : "Connect"}
+            className="w-full"
             variant="solid"
             color="action"
-            size="md"
+            size="lg"
+            radius="lg"
             isLoading={isLoading}
             isDisabled={!isFormValid}
             onPress={handleConnect}
