@@ -22,8 +22,8 @@ Refer to the [Prowler App Tutorial](/user-guide/tutorials/prowler-app) for detai
 
     ```bash
     VERSION=$(curl -s https://api.github.com/repos/prowler-cloud/prowler/releases/latest | jq -r .tag_name)
-    curl -LO https://raw.githubusercontent.com/prowler-cloud/prowler/refs/heads/${VERSION}/docker-compose.yml
-    curl -LO https://raw.githubusercontent.com/prowler-cloud/prowler/refs/heads/${VERSION}/.env
+    curl -sLO "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/${VERSION}/docker-compose.yml"
+    curl -sLO "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/${VERSION}/.env"
     docker compose up -d
     ```
 
