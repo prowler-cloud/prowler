@@ -132,10 +132,11 @@ export function RadialChart({
 
         {hasDots &&
           Array.from({ length: numberOfDots })
-            .slice(0, -1)
+            .slice(1, -1)
             .map((_, i) => {
               // Calculate the angle for this point
-              const angleProgress = i / (numberOfDots - 1 || 1);
+              // Ajustar el índice ya que ahora empezamos desde 1
+              const angleProgress = (i + 1) / (numberOfDots - 1 || 1);
               const currentAngle =
                 startAngle - angleProgress * (startAngle - endAngle);
 

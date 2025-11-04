@@ -147,7 +147,7 @@ export function ThreatScore({
   const gaps = extractTopGaps(criticalRequirements, 2);
 
   return (
-    <BaseCard className="flex min-h-[372px] min-w-[312px] flex-col justify-between md:max-w-[312px]">
+    <BaseCard className="flex min-h-[372px] min-w-[328px] flex-col justify-between md:max-w-[312px]">
       <CardHeader>
         <CardTitle>Prowler Threat Score</CardTitle>
       </CardHeader>
@@ -189,7 +189,7 @@ export function ThreatScore({
                   <ThumbsUp size={14} className="flex-shrink-0" />
                   <p>
                     Threat score has {scoreDelta > 0 ? "improved" : "decreased"}{" "}
-                    by {Math.abs(scoreDelta)}%.
+                    by {Math.abs(scoreDelta)}%
                   </p>
                 </div>
               )}
@@ -203,7 +203,7 @@ export function ThreatScore({
                 />
                 <p>
                   Major gaps include {gaps.slice(0, 2).join(", ")}
-                  {gaps.length > 2 && ` & ${gaps.length - 2} more...`}.
+                  {gaps.length > 2 && ` & ${gaps.length - 2} more...`}
                 </p>
               </div>
             )}
