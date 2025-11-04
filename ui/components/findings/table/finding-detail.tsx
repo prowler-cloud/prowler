@@ -14,11 +14,11 @@ import {
 } from "@/components/ui/entities";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import { SeverityBadge } from "@/components/ui/table/severity-badge";
-import { buildGitFileUrl, extractLineRangeFromUid } from "@/lib/git-utils";
 import { FindingProps, ProviderType } from "@/types";
 
 import { Muted } from "../muted";
 import { DeltaIndicator } from "./delta-indicator";
+import { buildGitFileUrl, extractLineRangeFromUid } from "./git-utils";
 
 const MarkdownContainer = ({ children }: { children: string }) => {
   return (

@@ -102,6 +102,7 @@ function parseLineRange(lineRange: string): {
   }
 
   // Handle formats: "10-15", "10:15", "10"
+  // Safe regex: anchored pattern for line numbers only (no ReDoS risk)
   // eslint-disable-next-line security/detect-unsafe-regex
   const match = lineRange.match(/^(\d+)[-:]?(\d+)?$/);
   if (match) {
