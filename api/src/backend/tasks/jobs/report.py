@@ -628,14 +628,16 @@ def _add_pdf_footer(canvas_obj: canvas.Canvas, doc: SimpleDocTemplate) -> None:
         canvas_obj (canvas.Canvas): The ReportLab canvas object for drawing.
         doc (SimpleDocTemplate): The document template containing page information.
     """
+    canvas_obj.saveState()
     width, height = doc.pagesize
-    page_num_text = f"Page {doc.page}"
+    page_num_text = f"Página {doc.page}"
     canvas_obj.setFont("PlusJakartaSans", 9)
     canvas_obj.setFillColorRGB(0.4, 0.4, 0.4)
     canvas_obj.drawString(30, 20, page_num_text)
     powered_text = "Powered by Prowler"
     text_width = canvas_obj.stringWidth(powered_text, "PlusJakartaSans", 9)
     canvas_obj.drawString(width - text_width - 30, 20, powered_text)
+    canvas_obj.restoreState()
 
 
 def _create_marco_category_chart(
@@ -721,8 +723,8 @@ def _create_marco_category_chart(
     bars = ax.barh(y_pos, percentages, color=colors_list)
 
     ax.set_yticks(y_pos)
-    ax.set_yticklabels(categories, fontsize=9)
-    ax.set_xlabel("Porcentaje de Cumplimiento (%)", fontsize=12)
+    ax.set_yticklabels(categories, fontsize=12)
+    ax.set_xlabel("Porcentaje de Cumplimiento (%)", fontsize=14)
     ax.set_xlim(0, 100)
 
     # Add percentage labels
@@ -735,7 +737,7 @@ def _create_marco_category_chart(
             ha="left",
             va="center",
             fontweight="bold",
-            fontsize=8,
+            fontsize=10,
         )
 
     ax.grid(True, alpha=0.3, axis="x")
@@ -827,10 +829,10 @@ def _create_dimensions_radar_chart(
     ax.plot(angles, percentages, "o-", linewidth=2, color="#2196F3")
     ax.fill(angles, percentages, alpha=0.25, color="#2196F3")
     ax.set_xticks(angles[:-1])
-    ax.set_xticklabels(dimension_names, fontsize=11)
+    ax.set_xticklabels(dimension_names, fontsize=14)
     ax.set_ylim(0, 100)
     ax.set_yticks([20, 40, 60, 80, 100])
-    ax.set_yticklabels(["20%", "40%", "60%", "80%", "100%"], fontsize=9)
+    ax.set_yticklabels(["20%", "40%", "60%", "80%", "100%"], fontsize=12)
     ax.grid(True, alpha=0.3)
 
     plt.tight_layout()
@@ -1731,6 +1733,25 @@ def generate_ens_report(
             )
         )
 
+        # Count manual requirements before filtering
+        manual_requirements_count = sum(
+            1
+            for req in requirements_list
+            if req["attributes"]["status"] == StatusChoices.MANUAL
+        )
+        total_requirements_count = len(requirements_list)
+
+        # Filter out manual requirements for the report
+        requirements_list = [
+            req
+            for req in requirements_list
+            if req["attributes"]["status"] != StatusChoices.MANUAL
+        ]
+
+        logger.info(
+            f"Filtered {manual_requirements_count} manual requirements out of {total_requirements_count} total requirements"
+        )
+
         # Initialize PDF document
         doc = SimpleDocTemplate(
             output_path,
@@ -1745,16 +1766,41 @@ def generate_ens_report(
         elements = []
 
         # SECTION 1: PORTADA (Cover Page)
-        img_path = os.path.join(
+        # Create logos side by side
+        prowler_logo_path = os.path.join(
             os.path.dirname(__file__), "../assets/img/prowler_logo.png"
         )
-        logo = Image(
-            img_path,
-            width=5 * inch,
-            height=1 * inch,
+        ens_logo_path = os.path.join(
+            os.path.dirname(__file__), "../assets/img/ens_logo.png"
         )
-        elements.append(logo)
-        elements.append(Spacer(1, 0.5 * inch))
+
+        prowler_logo = Image(
+            prowler_logo_path,
+            width=3.5 * inch,
+            height=0.7 * inch,
+        )
+        ens_logo = Image(
+            ens_logo_path,
+            width=1.5 * inch,
+            height=2 * inch,
+        )
+
+        # Create table with both logos
+        logos_table = Table(
+            [[prowler_logo, ens_logo]], colWidths=[4 * inch, 2.5 * inch]
+        )
+        logos_table.setStyle(
+            TableStyle(
+                [
+                    ("ALIGN", (0, 0), (0, 0), "LEFT"),
+                    ("ALIGN", (1, 0), (1, 0), "RIGHT"),
+                    ("VALIGN", (0, 0), (0, 0), "MIDDLE"),  # Prowler logo middle
+                    ("VALIGN", (1, 0), (1, 0), "TOP"),  # ENS logo top
+                ]
+            )
+        )
+        elements.append(logos_table)
+        elements.append(Spacer(1, 0.3 * inch))
         elements.append(
             Paragraph("Informe de Cumplimiento ENS RD 311/2022", title_style)
         )
@@ -1792,6 +1838,87 @@ def generate_ens_report(
             )
         )
         elements.append(info_table)
+        elements.append(Spacer(1, 0.5 * inch))
+
+        # Add warning about excluded manual requirements
+        warning_text = (
+            f"<b>AVISO:</b> Este informe no incluye los requisitos de ejecución manual. "
+            f"El compliance <b>{compliance_id}</b> contiene un total de "
+            f"<b>{manual_requirements_count} requisitos manuales</b> que no han sido evaluados "
+            f"automáticamente y por tanto no están reflejados en las estadísticas de este reporte. "
+            f"El análisis se basa únicamente en los <b>{len(requirements_list)} requisitos automatizados</b>."
+        )
+        warning_paragraph = Paragraph(warning_text, normal)
+        warning_table = Table([[warning_paragraph]], colWidths=[6 * inch])
+        warning_table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (0, 0), colors.Color(1.0, 0.95, 0.7)),
+                    ("TEXTCOLOR", (0, 0), (0, 0), colors.Color(0.4, 0.3, 0.0)),
+                    ("ALIGN", (0, 0), (0, 0), "LEFT"),
+                    ("VALIGN", (0, 0), (0, 0), "MIDDLE"),
+                    ("BOX", (0, 0), (-1, -1), 2, colors.Color(0.9, 0.7, 0.0)),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 15),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 15),
+                    ("TOPPADDING", (0, 0), (-1, -1), 12),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
+                ]
+            )
+        )
+        elements.append(warning_table)
+        elements.append(Spacer(1, 0.5 * inch))
+
+        # Add legend explaining ENS values
+        elements.append(Paragraph("Leyenda de Valores ENS", h2))
+        elements.append(Spacer(1, 0.2 * inch))
+
+        legend_text = """
+        <b>Nivel (Criticidad del requisito):</b><br/>
+        • <b>Alto:</b> Requisitos críticos que deben cumplirse prioritariamente<br/>
+        • <b>Medio:</b> Requisitos importantes con impacto moderado<br/>
+        • <b>Bajo:</b> Requisitos complementarios de menor criticidad<br/>
+        • <b>Opcional:</b> Recomendaciones adicionales no obligatorias<br/>
+        <br/>
+        <b>Tipo (Clasificación del requisito):</b><br/>
+        • <b>Requisito:</b> Obligación establecida por el ENS<br/>
+        • <b>Refuerzo:</b> Medida adicional que refuerza un requisito<br/>
+        • <b>Recomendación:</b> Buena práctica sugerida<br/>
+        • <b>Medida:</b> Acción concreta de implementación<br/>
+        <br/>
+        <b>Modo de Ejecución:</b><br/>
+        • <b>Automático:</b> El requisito puede verificarse automáticamente mediante escaneo<br/>
+        • <b>Manual:</b> Requiere verificación manual por parte de un auditor<br/>
+        <br/>
+        <b>Dimensiones de Seguridad:</b><br/>
+        • <b>C (Confidencialidad):</b> Protección contra accesos no autorizados a la información<br/>
+        • <b>I (Integridad):</b> Garantía de exactitud y completitud de la información<br/>
+        • <b>T (Trazabilidad):</b> Capacidad de rastrear acciones y eventos<br/>
+        • <b>A (Autenticidad):</b> Verificación de identidad de usuarios y sistemas<br/>
+        • <b>D (Disponibilidad):</b> Acceso a la información cuando se necesita<br/>
+        <br/>
+        <b>Estados de Cumplimiento:</b><br/>
+        • <b>CUMPLE (PASS):</b> El requisito se cumple satisfactoriamente<br/>
+        • <b>NO CUMPLE (FAIL):</b> El requisito no se cumple y requiere corrección<br/>
+        • <b>MANUAL:</b> Requiere revisión manual para determinar cumplimiento
+        """
+        legend_paragraph = Paragraph(legend_text, normal)
+        legend_table = Table([[legend_paragraph]], colWidths=[6.5 * inch])
+        legend_table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (0, 0), colors.Color(0.95, 0.97, 1.0)),
+                    ("TEXTCOLOR", (0, 0), (0, 0), colors.Color(0.2, 0.2, 0.2)),
+                    ("ALIGN", (0, 0), (0, 0), "LEFT"),
+                    ("VALIGN", (0, 0), (0, 0), "TOP"),
+                    ("BOX", (0, 0), (-1, -1), 1.5, colors.Color(0.5, 0.6, 0.8)),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 15),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 15),
+                    ("TOPPADDING", (0, 0), (-1, -1), 12),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
+                ]
+            )
+        )
+        elements.append(legend_table)
         elements.append(PageBreak())
 
         # SECTION 2: RESUMEN EJECUTIVO (Executive Summary)
@@ -1809,11 +1936,6 @@ def generate_ens_report(
             1
             for req in requirements_list
             if req["attributes"]["status"] == StatusChoices.FAIL
-        )
-        manual_requirements = sum(
-            1
-            for req in requirements_list
-            if req["attributes"]["status"] == StatusChoices.MANUAL
         )
 
         overall_compliance = (
@@ -1871,11 +1993,6 @@ def generate_ens_report(
                 str(failed_requirements),
                 f"{(failed_requirements / total_requirements * 100):.1f}%",
             ],
-            [
-                "MANUAL",
-                str(manual_requirements),
-                f"{(manual_requirements / total_requirements * 100):.1f}%",
-            ],
             ["TOTAL", str(total_requirements), "100%"],
         ]
 
@@ -1890,10 +2007,8 @@ def generate_ens_report(
                     ("TEXTCOLOR", (0, 1), (0, 1), colors.white),
                     ("BACKGROUND", (0, 2), (0, 2), colors.Color(0.8, 0.2, 0.2)),
                     ("TEXTCOLOR", (0, 2), (0, 2), colors.white),
-                    ("BACKGROUND", (0, 3), (0, 3), colors.Color(0.96, 0.60, 0.0)),
+                    ("BACKGROUND", (0, 3), (0, 3), colors.Color(0.4, 0.4, 0.4)),
                     ("TEXTCOLOR", (0, 3), (0, 3), colors.white),
-                    ("BACKGROUND", (0, 4), (0, 4), colors.Color(0.4, 0.4, 0.4)),
-                    ("TEXTCOLOR", (0, 4), (0, 4), colors.white),
                     ("ALIGN", (0, 0), (-1, -1), "CENTER"),
                     ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
                     ("FONTSIZE", (0, 0), (-1, -1), 10),
@@ -2050,69 +2165,7 @@ def generate_ens_report(
         elements.append(tipo_table)
         elements.append(PageBreak())
 
-        # SECTION 6: MODO DE EJECUCIÓN (Execution Mode)
-        elements.append(Paragraph("Distribución por Modo de Ejecución", h1))
-        elements.append(Spacer(1, 0.2 * inch))
-
-        modo_data = defaultdict(lambda: {"passed": 0, "total": 0})
-        for requirement in requirements_list:
-            requirement_id = requirement["id"]
-            requirement_attributes = attributes_by_requirement_id.get(
-                requirement_id, {}
-            )
-            requirement_status = requirement["attributes"]["status"]
-
-            metadata = requirement_attributes.get("attributes", {}).get(
-                "req_attributes", []
-            )
-            if metadata:
-                m = metadata[0]
-                modo = getattr(m, "ModoEjecucion", "N/A")
-                modo_key = "automático" if "auto" in modo.lower() else "manual"
-                modo_data[modo_key]["total"] += 1
-                if requirement_status == StatusChoices.PASS:
-                    modo_data[modo_key]["passed"] += 1
-
-        modo_table_data = [["Modo", "Cumplidos", "Total", "Porcentaje"]]
-        for modo in ["automático", "manual"]:
-            if modo in modo_data:
-                data = modo_data[modo]
-                percentage = (
-                    (data["passed"] / data["total"] * 100) if data["total"] > 0 else 0
-                )
-                modo_table_data.append(
-                    [
-                        modo.capitalize(),
-                        str(data["passed"]),
-                        str(data["total"]),
-                        f"{percentage:.1f}%",
-                    ]
-                )
-
-        modo_table = Table(
-            modo_table_data, colWidths=[2 * inch, 1.5 * inch, 1.5 * inch, 1.5 * inch]
-        )
-        modo_table.setStyle(
-            TableStyle(
-                [
-                    ("BACKGROUND", (0, 0), (-1, 0), colors.Color(0.2, 0.4, 0.6)),
-                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                    ("FONTNAME", (0, 0), (-1, 0), "FiraCode"),
-                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                    ("FONTSIZE", (0, 0), (-1, -1), 10),
-                    ("GRID", (0, 0), (-1, -1), 1, colors.Color(0.7, 0.7, 0.7)),
-                    ("LEFTPADDING", (0, 0), (-1, -1), 8),
-                    ("RIGHTPADDING", (0, 0), (-1, -1), 8),
-                    ("TOPPADDING", (0, 0), (-1, -1), 6),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-                ]
-            )
-        )
-        elements.append(modo_table)
-        elements.append(PageBreak())
-
-        # SECTION 7: REQUISITOS CRÍTICOS NO CUMPLIDOS (Critical Failed Requirements)
+        # SECTION 6: REQUISITOS CRÍTICOS NO CUMPLIDOS (Critical Failed Requirements)
         elements.append(Paragraph("Requisitos Críticos No Cumplidos", h1))
         elements.append(Spacer(1, 0.2 * inch))
 
@@ -2151,24 +2204,23 @@ def generate_ens_report(
             )
             elements.append(Spacer(1, 0.3 * inch))
 
-            critical_table_data = [["ID", "Descripción", "Marco", "Categoría", "Tipo"]]
+            critical_table_data = [["ID", "Descripción", "Marco", "Categoría"]]
             for item in critical_failed:
                 requirement_id = item["requirement"]["id"]
                 description = item["requirement"]["attributes"]["description"]
                 marco = getattr(item["metadata"], "Marco", "N/A")
                 categoria = getattr(item["metadata"], "Categoria", "N/A")
-                tipo = getattr(item["metadata"], "Tipo", "N/A")
 
-                if len(description) > 50:
-                    description = description[:47] + "..."
+                if len(description) > 80:
+                    description = description[:77] + "..."
 
                 critical_table_data.append(
-                    [requirement_id, description, marco, categoria, tipo.capitalize()]
+                    [requirement_id, description, marco, categoria]
                 )
 
             critical_table = Table(
                 critical_table_data,
-                colWidths=[1.3 * inch, 2.5 * inch, 1.5 * inch, 1.5 * inch, 1 * inch],
+                colWidths=[1.5 * inch, 3.3 * inch, 1.5 * inch, 2 * inch],
             )
             critical_table.setStyle(
                 TableStyle(
@@ -2198,7 +2250,7 @@ def generate_ens_report(
 
         elements.append(PageBreak())
 
-        # SECTION 8: ÍNDICE DE REQUISITOS (Requirements Index)
+        # SECTION 7: ÍNDICE DE REQUISITOS (Requirements Index)
         elements.append(Paragraph("Índice de Requisitos", h1))
         elements.append(Spacer(1, 0.2 * inch))
 
@@ -2234,7 +2286,7 @@ def generate_ens_report(
 
         elements.append(PageBreak())
 
-        # SECTION 9: DETALLE DE REQUISITOS (Detailed Requirements)
+        # SECTION 8: DETALLE DE REQUISITOS (Detailed Requirements)
         elements.append(Paragraph("Detalle de Requisitos", h1))
         elements.append(Spacer(1, 0.2 * inch))
 
@@ -2285,13 +2337,33 @@ def generate_ens_report(
                     requirement_id, {}
                 )
                 requirement_status = requirement["attributes"]["status"]
+                requirement_description = requirement_attributes.get("description", "")
 
-                elements.append(Paragraph(f"{requirement_id}", h1))
-
-                # Status badge
-                status_component = _create_status_component(requirement_status)
-                elements.append(status_component)
-                elements.append(Spacer(1, 0.1 * inch))
+                # Requirement ID header in a box
+                req_id_paragraph = Paragraph(requirement_id, h2)
+                req_id_table = Table([[req_id_paragraph]], colWidths=[6.5 * inch])
+                req_id_table.setStyle(
+                    TableStyle(
+                        [
+                            (
+                                "BACKGROUND",
+                                (0, 0),
+                                (0, 0),
+                                colors.Color(0.15, 0.35, 0.55),
+                            ),
+                            ("TEXTCOLOR", (0, 0), (0, 0), colors.white),
+                            ("ALIGN", (0, 0), (0, 0), "CENTER"),
+                            ("VALIGN", (0, 0), (0, 0), "MIDDLE"),
+                            ("LEFTPADDING", (0, 0), (-1, -1), 15),
+                            ("RIGHTPADDING", (0, 0), (-1, -1), 15),
+                            ("TOPPADDING", (0, 0), (-1, -1), 10),
+                            ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+                            ("BOX", (0, 0), (-1, -1), 2, colors.Color(0.2, 0.4, 0.6)),
+                        ]
+                    )
+                )
+                elements.append(req_id_table)
+                elements.append(Spacer(1, 0.15 * inch))
 
                 metadata = requirement_attributes.get("attributes", {}).get(
                     "req_attributes", []
@@ -2299,48 +2371,110 @@ def generate_ens_report(
                 if metadata and len(metadata) > 0:
                     m = metadata[0]
 
-                    # Nivel badge
+                    # Create all badges
+                    status_component = _create_status_component(requirement_status)
                     nivel = getattr(m, "Nivel", "N/A")
                     nivel_badge = _create_ens_nivel_badge(nivel)
-                    elements.append(nivel_badge)
-                    elements.append(Spacer(1, 0.1 * inch))
-
-                    # Tipo badge
                     tipo = getattr(m, "Tipo", "N/A")
                     tipo_badge = _create_ens_tipo_badge(tipo)
-                    elements.append(tipo_badge)
-                    elements.append(Spacer(1, 0.1 * inch))
-
-                    # Modo badge
                     modo = getattr(m, "ModoEjecucion", "N/A")
                     modo_badge = _create_ens_mode_badge(modo)
-                    elements.append(modo_badge)
-                    elements.append(Spacer(1, 0.1 * inch))
 
-                    # Dimensiones badges
+                    # Organize badges in a horizontal table (2 rows x 2 cols)
+                    badges_table = Table(
+                        [[status_component, nivel_badge], [tipo_badge, modo_badge]],
+                        colWidths=[3.25 * inch, 3.25 * inch],
+                    )
+                    badges_table.setStyle(
+                        TableStyle(
+                            [
+                                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                                ("LEFTPADDING", (0, 0), (-1, -1), 5),
+                                ("RIGHTPADDING", (0, 0), (-1, -1), 5),
+                                ("TOPPADDING", (0, 0), (-1, -1), 5),
+                                ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+                            ]
+                        )
+                    )
+                    elements.append(badges_table)
+                    elements.append(Spacer(1, 0.15 * inch))
+
+                    # Dimensiones badges (if present)
                     dimensiones = getattr(m, "Dimensiones", [])
                     if dimensiones:
-                        elements.append(Paragraph("Dimensiones:", h3))
+                        dim_label = Paragraph("<b>Dimensiones:</b>", normal)
                         dim_badges = _create_ens_dimension_badges(dimensiones)
-                        elements.append(dim_badges)
-                        elements.append(Spacer(1, 0.1 * inch))
+                        dim_table = Table(
+                            [[dim_label, dim_badges]], colWidths=[1.5 * inch, 5 * inch]
+                        )
+                        dim_table.setStyle(
+                            TableStyle(
+                                [
+                                    ("ALIGN", (0, 0), (0, 0), "LEFT"),
+                                    ("ALIGN", (1, 0), (1, 0), "LEFT"),
+                                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                                ]
+                            )
+                        )
+                        elements.append(dim_table)
+                        elements.append(Spacer(1, 0.15 * inch))
 
-                    # Details
-                    elements.append(Paragraph("Marco:", h3))
-                    elements.append(Paragraph(f"{getattr(m, 'Marco', 'N/A')}", normal))
-                    elements.append(Paragraph("Categoría:", h3))
-                    elements.append(
-                        Paragraph(f"{getattr(m, 'Categoria', 'N/A')}", normal)
+                    # Requirement details in a clean table
+                    details_data = [
+                        ["Descripción:", Paragraph(requirement_description, normal)],
+                        ["Marco:", Paragraph(getattr(m, "Marco", "N/A"), normal)],
+                        [
+                            "Categoría:",
+                            Paragraph(getattr(m, "Categoria", "N/A"), normal),
+                        ],
+                        [
+                            "ID Grupo Control:",
+                            Paragraph(getattr(m, "IdGrupoControl", "N/A"), normal),
+                        ],
+                        [
+                            "Descripción del Control:",
+                            Paragraph(getattr(m, "DescripcionControl", "N/A"), normal),
+                        ],
+                    ]
+                    details_table = Table(
+                        details_data, colWidths=[2.2 * inch, 4.5 * inch]
                     )
-                    elements.append(Paragraph("ID Grupo Control:", h3))
-                    elements.append(
-                        Paragraph(f"{getattr(m, 'IdGrupoControl', 'N/A')}", normal)
+                    details_table.setStyle(
+                        TableStyle(
+                            [
+                                (
+                                    "BACKGROUND",
+                                    (0, 0),
+                                    (0, -1),
+                                    colors.Color(0.9, 0.93, 0.96),
+                                ),
+                                (
+                                    "TEXTCOLOR",
+                                    (0, 0),
+                                    (0, -1),
+                                    colors.Color(0.2, 0.2, 0.2),
+                                ),
+                                ("FONTNAME", (0, 0), (0, -1), "FiraCode"),
+                                ("FONTSIZE", (0, 0), (-1, -1), 10),
+                                ("ALIGN", (0, 0), (0, -1), "LEFT"),
+                                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                                (
+                                    "GRID",
+                                    (0, 0),
+                                    (-1, -1),
+                                    0.5,
+                                    colors.Color(0.7, 0.8, 0.9),
+                                ),
+                                ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                                ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+                                ("TOPPADDING", (0, 0), (-1, -1), 6),
+                                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                            ]
+                        )
                     )
-                    elements.append(Paragraph("Descripción del Control:", h3))
-                    elements.append(
-                        Paragraph(f"{getattr(m, 'DescripcionControl', 'N/A')}", normal)
-                    )
-                    elements.append(Spacer(1, 0.1 * inch))
+                    elements.append(details_table)
+                    elements.append(Spacer(1, 0.2 * inch))
 
                 # Findings for checks
                 requirement_check_ids = requirement_attributes.get(
@@ -2438,6 +2572,7 @@ def generate_ens_report(
                 elements.append(PageBreak())
 
         # Build the PDF
+        logger.info("Building PDF...")
         doc.build(elements, onFirstPage=_add_pdf_footer, onLaterPages=_add_pdf_footer)
     except Exception as e:
         logger.error(
