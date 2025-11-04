@@ -22,6 +22,39 @@ The IaC provider leverages [Trivy](https://trivy.dev/latest/docs/scanner/vulnera
 - Mutelist logic ([filtering](https://trivy.dev/latest/docs/configuration/filtering/)) is handled by Trivy, not Prowler.
 - Results are output in the same formats as other Prowler providers (CSV, JSON, HTML, etc.).
 
+## Prowler App
+### Step 1: Access Prowler Cloud/App
+
+1. Navigate to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](/user-guide/tutorials/prowler-app)
+2. Go to "Configuration" > "Cloud Providers"
+
+    ![Cloud Providers Page](/images/prowler-app/cloud-providers-page.png)
+
+3. Click "Add Cloud Provider"
+
+    ![Add a Cloud Provider](/images/prowler-app/add-cloud-provider.png)
+
+4. Select "Infrastructure as Code"
+
+    ![Select Infrastructure as Code](/images/providers/select-iac.png)
+
+5. Add the Repository URL and an optional alias, then click "Next"
+
+    ![Add IaC Repository URL](/images/providers/add-iac-repo.png)
+
+### Step 2: Enter Authentication Details
+
+6. Optionally provide an [authentication](/user-guide/providers/iac/authentication) for private repositories, then click "Next"
+
+    ![IaC Authentication](/images/providers/iac-authentication.png)
+
+### Step 3: Verify Connection & Start Scan
+
+7. Review the provider configuration and click "Launch scan" to initiate the scan
+
+    ![Verify Connection & Start Scan](/images/providers/iac-verify-connection.png)
+
+
 ## Prowler CLI
 
 ### Usage
