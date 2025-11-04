@@ -53,10 +53,240 @@ pdfmetrics.registerFont(
 
 logger = get_task_logger(__name__)
 
+# Color constants
+COLOR_PROWLER_DARK_GREEN = colors.Color(0.1, 0.5, 0.2)
+COLOR_BLUE = colors.Color(0.2, 0.4, 0.6)
+COLOR_LIGHT_BLUE = colors.Color(0.3, 0.5, 0.7)
+COLOR_LIGHTER_BLUE = colors.Color(0.4, 0.6, 0.8)
+COLOR_BG_BLUE = colors.Color(0.95, 0.97, 1.0)
+COLOR_BG_LIGHT_BLUE = colors.Color(0.98, 0.99, 1.0)
+COLOR_GRAY = colors.Color(0.2, 0.2, 0.2)
+COLOR_LIGHT_GRAY = colors.Color(0.9, 0.9, 0.9)
+COLOR_BORDER_GRAY = colors.Color(0.7, 0.8, 0.9)
+COLOR_GRID_GRAY = colors.Color(0.7, 0.7, 0.7)
+COLOR_DARK_GRAY = colors.Color(0.4, 0.4, 0.4)
+COLOR_HEADER_DARK = colors.Color(0.1, 0.3, 0.5)
+COLOR_HEADER_MEDIUM = colors.Color(0.15, 0.35, 0.55)
+COLOR_WHITE = colors.white
+
+# Risk and status colors
+COLOR_HIGH_RISK = colors.Color(0.8, 0.2, 0.2)
+COLOR_MEDIUM_RISK = colors.Color(0.9, 0.6, 0.2)
+COLOR_LOW_RISK = colors.Color(0.9, 0.9, 0.2)
+COLOR_SAFE = colors.Color(0.2, 0.8, 0.2)
+
+# ENS specific colors
+COLOR_ENS_ALTO = colors.Color(0.8, 0.2, 0.2)
+COLOR_ENS_MEDIO = colors.Color(0.98, 0.75, 0.13)
+COLOR_ENS_BAJO = colors.Color(0.06, 0.72, 0.51)
+COLOR_ENS_OPCIONAL = colors.Color(0.42, 0.45, 0.50)
+COLOR_ENS_TIPO = colors.Color(0.2, 0.4, 0.6)
+COLOR_ENS_AUTO = colors.Color(0.30, 0.69, 0.31)
+COLOR_ENS_MANUAL = colors.Color(0.96, 0.60, 0.0)
+
+# Chart colors
+CHART_COLOR_GREEN_1 = "#4CAF50"
+CHART_COLOR_GREEN_2 = "#8BC34A"
+CHART_COLOR_YELLOW = "#FFEB3B"
+CHART_COLOR_ORANGE = "#FF9800"
+CHART_COLOR_RED = "#F44336"
+CHART_COLOR_BLUE = "#2196F3"
+
+# ENS dimension mappings
+DIMENSION_MAPPING = {
+    "trazabilidad": ("T", colors.Color(0.26, 0.52, 0.96)),
+    "autenticidad": ("A", colors.Color(0.30, 0.69, 0.31)),
+    "integridad": ("I", colors.Color(0.61, 0.15, 0.69)),
+    "confidencialidad": ("C", colors.Color(0.96, 0.26, 0.21)),
+    "disponibilidad": ("D", colors.Color(1.0, 0.60, 0.0)),
+}
+
+# ENS tipo icons
+TIPO_ICONS = {
+    "requisito": "⚠️",
+    "refuerzo": "🛡️",
+    "recomendacion": "💡",
+    "medida": "📋",
+}
+
+# Dimension names for charts
+DIMENSION_NAMES = [
+    "Trazabilidad",
+    "Autenticidad",
+    "Integridad",
+    "Confidencialidad",
+    "Disponibilidad",
+]
+
+DIMENSION_KEYS = [
+    "trazabilidad",
+    "autenticidad",
+    "integridad",
+    "confidencialidad",
+    "disponibilidad",
+]
+
+# ENS nivel order
+ENS_NIVEL_ORDER = ["alto", "medio", "bajo", "opcional"]
+
+# ENS tipo order
+ENS_TIPO_ORDER = ["requisito", "refuerzo", "recomendacion", "medida"]
+
+# ThreatScore expected sections
+THREATSCORE_SECTIONS = [
+    "1. IAM",
+    "2. Attack Surface",
+    "3. Logging and Monitoring",
+    "4. Encryption",
+]
+
+# Table column widths (in inches)
+COL_WIDTH_SMALL = 0.4 * inch
+COL_WIDTH_MEDIUM = 0.9 * inch
+COL_WIDTH_LARGE = 1.5 * inch
+COL_WIDTH_XLARGE = 2 * inch
+COL_WIDTH_XXLARGE = 3 * inch
+
+# Common padding values
+PADDING_SMALL = 4
+PADDING_MEDIUM = 6
+PADDING_LARGE = 8
+PADDING_XLARGE = 10
+
+
+# Cache for PDF styles to avoid recreating them on every call
+_PDF_STYLES_CACHE: dict[str, ParagraphStyle] | None = None
+
+
+# Helper functions for performance optimization
+def _get_color_for_risk_level(risk_level: int) -> colors.Color:
+    """Get color based on risk level using optimized lookup."""
+    if risk_level >= 4:
+        return COLOR_HIGH_RISK
+    elif risk_level >= 3:
+        return COLOR_MEDIUM_RISK
+    elif risk_level >= 2:
+        return COLOR_LOW_RISK
+    return COLOR_SAFE
+
+
+def _get_color_for_weight(weight: int) -> colors.Color:
+    """Get color based on weight using optimized lookup."""
+    if weight > 100:
+        return COLOR_HIGH_RISK
+    elif weight > 50:
+        return COLOR_LOW_RISK
+    return COLOR_SAFE
+
+
+def _get_color_for_compliance(percentage: float) -> colors.Color:
+    """Get color based on compliance percentage."""
+    if percentage >= 80:
+        return COLOR_SAFE
+    elif percentage >= 60:
+        return COLOR_LOW_RISK
+    return COLOR_HIGH_RISK
+
+
+def _get_chart_color_for_percentage(percentage: float) -> str:
+    """Get chart color string based on percentage."""
+    if percentage >= 80:
+        return CHART_COLOR_GREEN_1
+    elif percentage >= 60:
+        return CHART_COLOR_GREEN_2
+    elif percentage >= 40:
+        return CHART_COLOR_YELLOW
+    elif percentage >= 20:
+        return CHART_COLOR_ORANGE
+    return CHART_COLOR_RED
+
+
+def _get_ens_nivel_color(nivel: str) -> colors.Color:
+    """Get ENS nivel color using optimized lookup."""
+    nivel_lower = nivel.lower()
+    if nivel_lower == "alto":
+        return COLOR_ENS_ALTO
+    elif nivel_lower == "medio":
+        return COLOR_ENS_MEDIO
+    elif nivel_lower == "bajo":
+        return COLOR_ENS_BAJO
+    return COLOR_ENS_OPCIONAL
+
+
+def _safe_getattr(obj, attr: str, default: str = "N/A") -> str:
+    """Optimized getattr with default value."""
+    return getattr(obj, attr, default)
+
+
+def _create_info_table_style() -> TableStyle:
+    """Create a reusable table style for information/metadata tables."""
+    return TableStyle(
+        [
+            ("BACKGROUND", (0, 0), (0, -1), COLOR_BLUE),
+            ("TEXTCOLOR", (0, 0), (0, -1), COLOR_WHITE),
+            ("FONTNAME", (0, 0), (0, -1), "FiraCode"),
+            ("BACKGROUND", (1, 0), (1, -1), COLOR_BG_BLUE),
+            ("TEXTCOLOR", (1, 0), (1, -1), COLOR_GRAY),
+            ("FONTNAME", (1, 0), (1, -1), "PlusJakartaSans"),
+            ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("FONTSIZE", (0, 0), (-1, -1), 11),
+            ("GRID", (0, 0), (-1, -1), 1, COLOR_BORDER_GRAY),
+            ("LEFTPADDING", (0, 0), (-1, -1), PADDING_XLARGE),
+            ("RIGHTPADDING", (0, 0), (-1, -1), PADDING_XLARGE),
+            ("TOPPADDING", (0, 0), (-1, -1), PADDING_LARGE),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), PADDING_LARGE),
+        ]
+    )
+
+
+def _create_header_table_style(header_color: colors.Color = None) -> TableStyle:
+    """Create a reusable table style for tables with headers."""
+    if header_color is None:
+        header_color = COLOR_BLUE
+
+    return TableStyle(
+        [
+            ("BACKGROUND", (0, 0), (-1, 0), header_color),
+            ("TEXTCOLOR", (0, 0), (-1, 0), COLOR_WHITE),
+            ("FONTNAME", (0, 0), (-1, 0), "FiraCode"),
+            ("FONTSIZE", (0, 0), (-1, 0), 10),
+            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("FONTSIZE", (1, 1), (-1, -1), 9),
+            ("GRID", (0, 0), (-1, -1), 1, COLOR_GRID_GRAY),
+            ("LEFTPADDING", (0, 0), (-1, -1), PADDING_MEDIUM),
+            ("RIGHTPADDING", (0, 0), (-1, -1), PADDING_MEDIUM),
+            ("TOPPADDING", (0, 0), (-1, -1), PADDING_MEDIUM),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), PADDING_MEDIUM),
+        ]
+    )
+
+
+def _create_findings_table_style() -> TableStyle:
+    """Create a reusable table style for findings tables."""
+    return TableStyle(
+        [
+            ("BACKGROUND", (0, 0), (-1, 0), COLOR_BLUE),
+            ("TEXTCOLOR", (0, 0), (-1, 0), COLOR_WHITE),
+            ("FONTNAME", (0, 0), (-1, 0), "FiraCode"),
+            ("ALIGN", (0, 0), (0, 0), "CENTER"),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("FONTSIZE", (0, 0), (-1, -1), 9),
+            ("GRID", (0, 0), (-1, -1), 0.1, COLOR_BORDER_GRAY),
+            ("LEFTPADDING", (0, 0), (0, 0), 0),
+            ("RIGHTPADDING", (0, 0), (0, 0), 0),
+            ("TOPPADDING", (0, 0), (-1, -1), PADDING_SMALL),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), PADDING_SMALL),
+        ]
+    )
+
 
 def _create_pdf_styles() -> dict[str, ParagraphStyle]:
     """
     Create and return PDF paragraph styles used throughout the report.
+
+    Styles are cached on first call to improve performance.
 
     Returns:
         dict[str, ParagraphStyle]: A dictionary containing the following styles:
@@ -67,14 +297,18 @@ def _create_pdf_styles() -> dict[str, ParagraphStyle]:
             - 'normal': Normal text style with left indent
             - 'normal_center': Normal text style without indent
     """
+    global _PDF_STYLES_CACHE
+
+    if _PDF_STYLES_CACHE is not None:
+        return _PDF_STYLES_CACHE
+
     styles = getSampleStyleSheet()
-    prowler_dark_green = colors.Color(0.1, 0.5, 0.2)
 
     title_style = ParagraphStyle(
         "CustomTitle",
         parent=styles["Title"],
         fontSize=24,
-        textColor=prowler_dark_green,
+        textColor=COLOR_PROWLER_DARK_GREEN,
         spaceAfter=20,
         fontName="PlusJakartaSans",
         alignment=TA_CENTER,
@@ -84,37 +318,37 @@ def _create_pdf_styles() -> dict[str, ParagraphStyle]:
         "CustomH1",
         parent=styles["Heading1"],
         fontSize=18,
-        textColor=colors.Color(0.2, 0.4, 0.6),
+        textColor=COLOR_BLUE,
         spaceBefore=20,
         spaceAfter=12,
         fontName="PlusJakartaSans",
         leftIndent=0,
         borderWidth=2,
-        borderColor=colors.Color(0.2, 0.4, 0.6),
-        borderPadding=8,
-        backColor=colors.Color(0.95, 0.97, 1.0),
+        borderColor=COLOR_BLUE,
+        borderPadding=PADDING_LARGE,
+        backColor=COLOR_BG_BLUE,
     )
 
     h2 = ParagraphStyle(
         "CustomH2",
         parent=styles["Heading2"],
         fontSize=14,
-        textColor=colors.Color(0.3, 0.5, 0.7),
+        textColor=COLOR_LIGHT_BLUE,
         spaceBefore=15,
         spaceAfter=8,
         fontName="PlusJakartaSans",
         leftIndent=10,
         borderWidth=1,
-        borderColor=colors.Color(0.7, 0.8, 0.9),
+        borderColor=COLOR_BORDER_GRAY,
         borderPadding=5,
-        backColor=colors.Color(0.98, 0.99, 1.0),
+        backColor=COLOR_BG_LIGHT_BLUE,
     )
 
     h3 = ParagraphStyle(
         "CustomH3",
         parent=styles["Heading3"],
         fontSize=12,
-        textColor=colors.Color(0.4, 0.6, 0.8),
+        textColor=COLOR_LIGHTER_BLUE,
         spaceBefore=10,
         spaceAfter=6,
         fontName="PlusJakartaSans",
@@ -125,9 +359,9 @@ def _create_pdf_styles() -> dict[str, ParagraphStyle]:
         "CustomNormal",
         parent=styles["Normal"],
         fontSize=10,
-        textColor=colors.Color(0.2, 0.2, 0.2),
-        spaceBefore=4,
-        spaceAfter=4,
+        textColor=COLOR_GRAY,
+        spaceBefore=PADDING_SMALL,
+        spaceAfter=PADDING_SMALL,
         leftIndent=30,
         fontName="PlusJakartaSans",
     )
@@ -136,11 +370,11 @@ def _create_pdf_styles() -> dict[str, ParagraphStyle]:
         "CustomNormalCenter",
         parent=styles["Normal"],
         fontSize=10,
-        textColor=colors.Color(0.2, 0.2, 0.2),
+        textColor=COLOR_GRAY,
         fontName="PlusJakartaSans",
     )
 
-    return {
+    _PDF_STYLES_CACHE = {
         "title": title_style,
         "h1": h1,
         "h2": h2,
@@ -148,6 +382,8 @@ def _create_pdf_styles() -> dict[str, ParagraphStyle]:
         "normal": normal,
         "normal_center": normal_center,
     }
+
+    return _PDF_STYLES_CACHE
 
 
 def _create_risk_component(risk_level: int, weight: int, score: int = 0) -> Table:
@@ -162,23 +398,8 @@ def _create_risk_component(risk_level: int, weight: int, score: int = 0) -> Tabl
     Returns:
         Table: A ReportLab Table object with colored cells representing risk, weight, and score.
     """
-    if risk_level >= 4:
-        risk_color = colors.Color(0.8, 0.2, 0.2)
-    elif risk_level >= 3:
-        risk_color = colors.Color(0.9, 0.6, 0.2)
-    elif risk_level >= 2:
-        risk_color = colors.Color(0.9, 0.9, 0.2)
-    else:
-        risk_color = colors.Color(0.2, 0.8, 0.2)
-
-    if weight <= 50:
-        weight_color = colors.Color(0.2, 0.8, 0.2)
-    elif weight <= 100:
-        weight_color = colors.Color(0.9, 0.9, 0.2)
-    else:
-        weight_color = colors.Color(0.8, 0.2, 0.2)
-
-    score_color = colors.Color(0.4, 0.4, 0.4)
+    risk_color = _get_color_for_risk_level(risk_level)
+    weight_color = _get_color_for_weight(weight)
 
     data = [
         [
@@ -195,37 +416,37 @@ def _create_risk_component(risk_level: int, weight: int, score: int = 0) -> Tabl
         data,
         colWidths=[
             0.8 * inch,
-            0.4 * inch,
+            COL_WIDTH_SMALL,
             0.6 * inch,
-            0.4 * inch,
+            COL_WIDTH_SMALL,
             0.5 * inch,
-            0.4 * inch,
+            COL_WIDTH_SMALL,
         ],
     )
 
     table.setStyle(
         TableStyle(
             [
-                ("BACKGROUND", (0, 0), (0, 0), colors.Color(0.9, 0.9, 0.9)),
+                ("BACKGROUND", (0, 0), (0, 0), COLOR_LIGHT_GRAY),
                 ("BACKGROUND", (1, 0), (1, 0), risk_color),
-                ("TEXTCOLOR", (1, 0), (1, 0), colors.white),
+                ("TEXTCOLOR", (1, 0), (1, 0), COLOR_WHITE),
                 ("FONTNAME", (1, 0), (1, 0), "FiraCode"),
-                ("BACKGROUND", (2, 0), (2, 0), colors.Color(0.9, 0.9, 0.9)),
+                ("BACKGROUND", (2, 0), (2, 0), COLOR_LIGHT_GRAY),
                 ("BACKGROUND", (3, 0), (3, 0), weight_color),
-                ("TEXTCOLOR", (3, 0), (3, 0), colors.white),
+                ("TEXTCOLOR", (3, 0), (3, 0), COLOR_WHITE),
                 ("FONTNAME", (3, 0), (3, 0), "FiraCode"),
-                ("BACKGROUND", (4, 0), (4, 0), colors.Color(0.9, 0.9, 0.9)),
-                ("BACKGROUND", (5, 0), (5, 0), score_color),
-                ("TEXTCOLOR", (5, 0), (5, 0), colors.white),
+                ("BACKGROUND", (4, 0), (4, 0), COLOR_LIGHT_GRAY),
+                ("BACKGROUND", (5, 0), (5, 0), COLOR_DARK_GRAY),
+                ("TEXTCOLOR", (5, 0), (5, 0), COLOR_WHITE),
                 ("FONTNAME", (5, 0), (5, 0), "FiraCode"),
                 ("ALIGN", (0, 0), (-1, -1), "CENTER"),
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
                 ("FONTSIZE", (0, 0), (-1, -1), 10),
                 ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
-                ("LEFTPADDING", (0, 0), (-1, -1), 6),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 6),
-                ("TOPPADDING", (0, 0), (-1, -1), 8),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                ("LEFTPADDING", (0, 0), (-1, -1), PADDING_MEDIUM),
+                ("RIGHTPADDING", (0, 0), (-1, -1), PADDING_MEDIUM),
+                ("TOPPADDING", (0, 0), (-1, -1), PADDING_LARGE),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), PADDING_LARGE),
             ]
         )
     )
@@ -243,33 +464,34 @@ def _create_status_component(status: str) -> Table:
     Returns:
         Table: A ReportLab Table object displaying the status with appropriate color coding.
     """
-    if status.upper() == "PASS":
-        status_color = colors.Color(0.2, 0.8, 0.2)
-    elif status.upper() == "FAIL":
-        status_color = colors.Color(0.8, 0.2, 0.2)
+    status_upper = status.upper()
+    if status_upper == "PASS":
+        status_color = COLOR_SAFE
+    elif status_upper == "FAIL":
+        status_color = COLOR_HIGH_RISK
     else:
-        status_color = colors.Color(0.4, 0.4, 0.4)
+        status_color = COLOR_DARK_GRAY
 
-    data = [["State:", status.upper()]]
+    data = [["State:", status_upper]]
 
     table = Table(data, colWidths=[0.6 * inch, 0.8 * inch])
 
     table.setStyle(
         TableStyle(
             [
-                ("BACKGROUND", (0, 0), (0, 0), colors.Color(0.9, 0.9, 0.9)),
+                ("BACKGROUND", (0, 0), (0, 0), COLOR_LIGHT_GRAY),
                 ("FONTNAME", (0, 0), (0, 0), "PlusJakartaSans"),
                 ("BACKGROUND", (1, 0), (1, 0), status_color),
-                ("TEXTCOLOR", (1, 0), (1, 0), colors.white),
+                ("TEXTCOLOR", (1, 0), (1, 0), COLOR_WHITE),
                 ("FONTNAME", (1, 0), (1, 0), "FiraCode"),
                 ("ALIGN", (0, 0), (-1, -1), "CENTER"),
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
                 ("FONTSIZE", (0, 0), (-1, -1), 12),
                 ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
-                ("LEFTPADDING", (0, 0), (-1, -1), 8),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 8),
-                ("TOPPADDING", (0, 0), (-1, -1), 10),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+                ("LEFTPADDING", (0, 0), (-1, -1), PADDING_LARGE),
+                ("RIGHTPADDING", (0, 0), (-1, -1), PADDING_LARGE),
+                ("TOPPADDING", (0, 0), (-1, -1), PADDING_XLARGE),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), PADDING_XLARGE),
             ]
         )
     )
@@ -287,17 +509,7 @@ def _create_ens_nivel_badge(nivel: str) -> Table:
     Returns:
         Table: A ReportLab Table object displaying the level with appropriate color coding.
     """
-    nivel_lower = nivel.lower()
-
-    if nivel_lower == "alto":
-        nivel_color = colors.Color(0.8, 0.2, 0.2)
-    elif nivel_lower == "medio":
-        nivel_color = colors.Color(0.98, 0.75, 0.13)
-    elif nivel_lower == "bajo":
-        nivel_color = colors.Color(0.06, 0.72, 0.51)
-    else:
-        nivel_color = colors.Color(0.42, 0.45, 0.50)
-
+    nivel_color = _get_ens_nivel_color(nivel)
     data = [[f"Nivel: {nivel.upper()}"]]
 
     table = Table(data, colWidths=[1.4 * inch])
@@ -306,16 +518,16 @@ def _create_ens_nivel_badge(nivel: str) -> Table:
         TableStyle(
             [
                 ("BACKGROUND", (0, 0), (0, 0), nivel_color),
-                ("TEXTCOLOR", (0, 0), (0, 0), colors.white),
+                ("TEXTCOLOR", (0, 0), (0, 0), COLOR_WHITE),
                 ("FONTNAME", (0, 0), (0, 0), "FiraCode"),
                 ("ALIGN", (0, 0), (-1, -1), "CENTER"),
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
                 ("FONTSIZE", (0, 0), (-1, -1), 11),
                 ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
-                ("LEFTPADDING", (0, 0), (-1, -1), 8),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 8),
-                ("TOPPADDING", (0, 0), (-1, -1), 8),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                ("LEFTPADDING", (0, 0), (-1, -1), PADDING_LARGE),
+                ("RIGHTPADDING", (0, 0), (-1, -1), PADDING_LARGE),
+                ("TOPPADDING", (0, 0), (-1, -1), PADDING_LARGE),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), PADDING_LARGE),
             ]
         )
     )
@@ -334,16 +546,7 @@ def _create_ens_tipo_badge(tipo: str) -> Table:
         Table: A ReportLab Table object displaying the type with appropriate styling.
     """
     tipo_lower = tipo.lower()
-
-    tipo_icons = {
-        "requisito": "⚠️",
-        "refuerzo": "🛡️",
-        "recomendacion": "💡",
-        "medida": "📋",
-    }
-
-    icon = tipo_icons.get(tipo_lower, "")
-    tipo_color = colors.Color(0.2, 0.4, 0.6)
+    icon = TIPO_ICONS.get(tipo_lower, "")
 
     data = [[f"{icon} {tipo.capitalize()}"]]
 
@@ -352,17 +555,17 @@ def _create_ens_tipo_badge(tipo: str) -> Table:
     table.setStyle(
         TableStyle(
             [
-                ("BACKGROUND", (0, 0), (0, 0), tipo_color),
-                ("TEXTCOLOR", (0, 0), (0, 0), colors.white),
+                ("BACKGROUND", (0, 0), (0, 0), COLOR_ENS_TIPO),
+                ("TEXTCOLOR", (0, 0), (0, 0), COLOR_WHITE),
                 ("FONTNAME", (0, 0), (0, 0), "PlusJakartaSans"),
                 ("ALIGN", (0, 0), (-1, -1), "CENTER"),
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
                 ("FONTSIZE", (0, 0), (-1, -1), 11),
                 ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
-                ("LEFTPADDING", (0, 0), (-1, -1), 8),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 8),
-                ("TOPPADDING", (0, 0), (-1, -1), 8),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                ("LEFTPADDING", (0, 0), (-1, -1), PADDING_LARGE),
+                ("RIGHTPADDING", (0, 0), (-1, -1), PADDING_LARGE),
+                ("TOPPADDING", (0, 0), (-1, -1), PADDING_LARGE),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), PADDING_LARGE),
             ]
         )
     )
@@ -380,20 +583,11 @@ def _create_ens_dimension_badges(dimensiones: list[str]) -> Table:
     Returns:
         Table: A ReportLab Table object with color-coded badges for each dimension.
     """
-    dimension_mapping = {
-        "trazabilidad": ("T", colors.Color(0.26, 0.52, 0.96)),
-        "autenticidad": ("A", colors.Color(0.30, 0.69, 0.31)),
-        "integridad": ("I", colors.Color(0.61, 0.15, 0.69)),
-        "confidencialidad": ("C", colors.Color(0.96, 0.26, 0.21)),
-        "disponibilidad": ("D", colors.Color(1.0, 0.60, 0.0)),
-    }
-
-    badges = []
-    for dimension in dimensiones:
-        dimension_lower = dimension.lower()
-        if dimension_lower in dimension_mapping:
-            badge_text, badge_color = dimension_mapping[dimension_lower]
-            badges.append((badge_text, badge_color))
+    badges = [
+        DIMENSION_MAPPING[dimension.lower()]
+        for dimension in dimensiones
+        if dimension.lower() in DIMENSION_MAPPING
+    ]
 
     if not badges:
         data = [["N/A"]]
@@ -401,7 +595,7 @@ def _create_ens_dimension_badges(dimensiones: list[str]) -> Table:
         table.setStyle(
             TableStyle(
                 [
-                    ("BACKGROUND", (0, 0), (0, 0), colors.Color(0.9, 0.9, 0.9)),
+                    ("BACKGROUND", (0, 0), (0, 0), COLOR_LIGHT_GRAY),
                     ("ALIGN", (0, 0), (-1, -1), "CENTER"),
                     ("FONTSIZE", (0, 0), (-1, -1), 10),
                 ]
@@ -410,7 +604,7 @@ def _create_ens_dimension_badges(dimensiones: list[str]) -> Table:
         return table
 
     data = [[badge[0] for badge in badges]]
-    col_widths = [0.4 * inch] * len(badges)
+    col_widths = [COL_WIDTH_SMALL] * len(badges)
 
     table = Table(data, colWidths=col_widths)
 
@@ -419,12 +613,12 @@ def _create_ens_dimension_badges(dimensiones: list[str]) -> Table:
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
         ("FONTNAME", (0, 0), (-1, -1), "FiraCode"),
         ("FONTSIZE", (0, 0), (-1, -1), 10),
-        ("TEXTCOLOR", (0, 0), (-1, -1), colors.white),
+        ("TEXTCOLOR", (0, 0), (-1, -1), COLOR_WHITE),
         ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
-        ("LEFTPADDING", (0, 0), (-1, -1), 4),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 4),
-        ("TOPPADDING", (0, 0), (-1, -1), 6),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ("LEFTPADDING", (0, 0), (-1, -1), PADDING_SMALL),
+        ("RIGHTPADDING", (0, 0), (-1, -1), PADDING_SMALL),
+        ("TOPPADDING", (0, 0), (-1, -1), PADDING_MEDIUM),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), PADDING_MEDIUM),
     ]
 
     for idx, (_, badge_color) in enumerate(badges):
@@ -450,11 +644,11 @@ def _create_ens_mode_badge(modo: str) -> Table:
     if "auto" in modo_lower:
         icon = "🤖"
         modo_text = "Automático"
-        modo_color = colors.Color(0.30, 0.69, 0.31)
+        modo_color = COLOR_ENS_AUTO
     else:
         icon = "👤"
         modo_text = "Manual"
-        modo_color = colors.Color(0.96, 0.60, 0.0)
+        modo_color = COLOR_ENS_MANUAL
 
     data = [[f"{icon} {modo_text}"]]
 
@@ -464,16 +658,16 @@ def _create_ens_mode_badge(modo: str) -> Table:
         TableStyle(
             [
                 ("BACKGROUND", (0, 0), (0, 0), modo_color),
-                ("TEXTCOLOR", (0, 0), (0, 0), colors.white),
+                ("TEXTCOLOR", (0, 0), (0, 0), COLOR_WHITE),
                 ("FONTNAME", (0, 0), (0, 0), "PlusJakartaSans"),
                 ("ALIGN", (0, 0), (-1, -1), "CENTER"),
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
                 ("FONTSIZE", (0, 0), (-1, -1), 10),
                 ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
-                ("LEFTPADDING", (0, 0), (-1, -1), 8),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 8),
-                ("TOPPADDING", (0, 0), (-1, -1), 8),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                ("LEFTPADDING", (0, 0), (-1, -1), PADDING_LARGE),
+                ("RIGHTPADDING", (0, 0), (-1, -1), PADDING_LARGE),
+                ("TOPPADDING", (0, 0), (-1, -1), PADDING_LARGE),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), PADDING_LARGE),
             ]
         )
     )
@@ -494,14 +688,6 @@ def _create_section_score_chart(
     Returns:
         io.BytesIO: A BytesIO buffer containing the chart image in PNG format.
     """
-    # Define expected sections
-    expected_sections = [
-        "1. IAM",
-        "2. Attack Surface",
-        "3. Logging and Monitoring",
-        "4. Encryption",
-    ]
-
     # Initialize all expected sections with default values
     sections_data = {
         section: {
@@ -509,7 +695,7 @@ def _create_section_score_chart(
             "denominator": 0,
             "has_findings": False,
         }
-        for section in expected_sections
+        for section in THREATSCORE_SECTIONS
     }
 
     # Collect data from requirements
@@ -520,38 +706,41 @@ def _create_section_score_chart(
         metadata = requirement_attributes.get("attributes", {}).get(
             "req_attributes", []
         )
-        if metadata:
-            m = metadata[0]
-            section = getattr(m, "Section", "Unknown")
+        if not metadata:
+            continue
 
-            # Add section if not in expected list (for flexibility)
-            if section not in sections_data:
-                sections_data[section] = {
-                    "numerator": 0,
-                    "denominator": 0,
-                    "has_findings": False,
-                }
+        m = metadata[0]
+        section = _safe_getattr(m, "Section", "Unknown")
 
-            # Get findings data
-            passed_findings = requirement["attributes"].get("passed_findings", 0)
-            total_findings = requirement["attributes"].get("total_findings", 0)
+        # Add section if not in expected list (for flexibility)
+        if section not in sections_data:
+            sections_data[section] = {
+                "numerator": 0,
+                "denominator": 0,
+                "has_findings": False,
+            }
 
-            if total_findings > 0:
-                sections_data[section]["has_findings"] = True
-                risk_level = getattr(m, "LevelOfRisk", 0)
-                weight = getattr(m, "Weight", 0)
+        # Get findings data
+        passed_findings = requirement["attributes"].get("passed_findings", 0)
+        total_findings = requirement["attributes"].get("total_findings", 0)
 
-                # Calculate using ThreatScore formula from UI
-                rate_i = passed_findings / total_findings
-                rfac_i = 1 + 0.25 * risk_level
+        if total_findings > 0:
+            sections_data[section]["has_findings"] = True
+            risk_level = _safe_getattr(m, "LevelOfRisk", 0)
+            weight = _safe_getattr(m, "Weight", 0)
 
-                sections_data[section]["numerator"] += (
-                    rate_i * total_findings * weight * rfac_i
-                )
-                sections_data[section]["denominator"] += (
-                    total_findings * weight * rfac_i
-                )
+            # Calculate using ThreatScore formula from UI
+            rate_i = passed_findings / total_findings
+            rfac_i = 1 + 0.25 * risk_level
 
+            sections_data[section]["numerator"] += (
+                rate_i * total_findings * weight * rfac_i
+            )
+            sections_data[section]["denominator"] += (
+                total_findings * weight * rfac_i
+            )
+
+    # Calculate percentages
     section_names = []
     compliance_percentages = []
 
@@ -565,29 +754,17 @@ def _create_section_score_chart(
         compliance_percentages.append(compliance_percentage)
 
     # Sort alphabetically by section name
-    sorted_data = sorted(
-        zip(section_names, compliance_percentages),
-        key=lambda x: x[0],
-    )
-    section_names, compliance_percentages = (
-        zip(*sorted_data) if sorted_data else ([], [])
-    )
+    sorted_data = sorted(zip(section_names, compliance_percentages), key=lambda x: x[0])
+    if not sorted_data:
+        section_names, compliance_percentages = [], []
+    else:
+        section_names, compliance_percentages = zip(*sorted_data)
 
+    # Generate chart
     fig, ax = plt.subplots(figsize=(12, 8))
 
-    colors_list = []
-    for percentage in compliance_percentages:
-        if percentage >= 80:
-            color = "#4CAF50"
-        elif percentage >= 60:
-            color = "#8BC34A"
-        elif percentage >= 40:
-            color = "#FFEB3B"
-        elif percentage >= 20:
-            color = "#FF9800"
-        else:
-            color = "#F44336"
-        colors_list.append(color)
+    # Use helper function for color selection
+    colors_list = [_get_chart_color_for_percentage(p) for p in compliance_percentages]
 
     bars = ax.bar(section_names, compliance_percentages, color=colors_list)
 
@@ -607,15 +784,15 @@ def _create_section_score_chart(
         )
 
     plt.xticks(rotation=45, ha="right")
-
     ax.grid(True, alpha=0.3, axis="y")
-
     plt.tight_layout()
 
     buffer = io.BytesIO()
-    plt.savefig(buffer, format="png", dpi=300, bbox_inches="tight")
-    buffer.seek(0)
-    plt.close()
+    try:
+        plt.savefig(buffer, format="png", dpi=300, bbox_inches="tight")
+        buffer.seek(0)
+    finally:
+        plt.close(fig)
 
     return buffer
 
@@ -666,26 +843,24 @@ def _create_marco_category_chart(
         metadata = requirement_attributes.get("attributes", {}).get(
             "req_attributes", []
         )
-        if metadata:
-            m = metadata[0]
-            marco = getattr(m, "Marco", "N/A")
-            categoria = getattr(m, "Categoria", "N/A")
+        if not metadata:
+            continue
 
-            key = f"{marco} - {categoria}"
-            marco_categoria_data[key]["total"] += 1
-            if requirement_status == StatusChoices.PASS:
-                marco_categoria_data[key]["passed"] += 1
+        m = metadata[0]
+        marco = _safe_getattr(m, "Marco")
+        categoria = _safe_getattr(m, "Categoria")
+
+        key = f"{marco} - {categoria}"
+        marco_categoria_data[key]["total"] += 1
+        if requirement_status == StatusChoices.PASS:
+            marco_categoria_data[key]["passed"] += 1
 
     # Calculate percentages
     categories = []
     percentages = []
 
     for category, data in sorted(marco_categoria_data.items()):
-        if data["total"] > 0:
-            percentage = (data["passed"] / data["total"]) * 100
-        else:
-            percentage = 0
-
+        percentage = (data["passed"] / data["total"] * 100) if data["total"] > 0 else 0
         categories.append(category)
         percentages.append(percentage)
 
@@ -697,27 +872,18 @@ def _create_marco_category_chart(
         ax.set_ylim(0, 1)
         ax.axis("off")
         buffer = io.BytesIO()
-        plt.savefig(buffer, format="png", dpi=300, bbox_inches="tight")
-        buffer.seek(0)
-        plt.close()
+        try:
+            plt.savefig(buffer, format="png", dpi=300, bbox_inches="tight")
+            buffer.seek(0)
+        finally:
+            plt.close(fig)
         return buffer
 
     # Create horizontal bar chart
     fig, ax = plt.subplots(figsize=(12, max(8, len(categories) * 0.4)))
 
-    colors_list = []
-    for percentage in percentages:
-        if percentage >= 80:
-            color = "#4CAF50"
-        elif percentage >= 60:
-            color = "#8BC34A"
-        elif percentage >= 40:
-            color = "#FFEB3B"
-        elif percentage >= 20:
-            color = "#FF9800"
-        else:
-            color = "#F44336"
-        colors_list.append(color)
+    # Use helper function for color selection
+    colors_list = [_get_chart_color_for_percentage(p) for p in percentages]
 
     y_pos = range(len(categories))
     bars = ax.barh(y_pos, percentages, color=colors_list)
@@ -744,9 +910,11 @@ def _create_marco_category_chart(
     plt.tight_layout()
 
     buffer = io.BytesIO()
-    plt.savefig(buffer, format="png", dpi=300, bbox_inches="tight")
-    buffer.seek(0)
-    plt.close()
+    try:
+        plt.savefig(buffer, format="png", dpi=300, bbox_inches="tight")
+        buffer.seek(0)
+    finally:
+        plt.close(fig)
 
     return buffer
 
@@ -764,24 +932,7 @@ def _create_dimensions_radar_chart(
     Returns:
         io.BytesIO: A BytesIO buffer containing the chart image in PNG format.
     """
-    # Define the 5 dimensions
-    dimension_names = [
-        "Trazabilidad",
-        "Autenticidad",
-        "Integridad",
-        "Confidencialidad",
-        "Disponibilidad",
-    ]
-
-    dimension_keys = [
-        "trazabilidad",
-        "autenticidad",
-        "integridad",
-        "confidencialidad",
-        "disponibilidad",
-    ]
-
-    dimension_data = {key: {"passed": 0, "total": 0} for key in dimension_keys}
+    dimension_data = {key: {"passed": 0, "total": 0} for key in DIMENSION_KEYS}
 
     # Collect data for each dimension
     for requirement in requirements_list:
@@ -794,42 +945,39 @@ def _create_dimensions_radar_chart(
         metadata = requirement_attributes.get("attributes", {}).get(
             "req_attributes", []
         )
-        if metadata:
-            m = metadata[0]
-            dimensiones = getattr(m, "Dimensiones", [])
+        if not metadata:
+            continue
 
-            for dimension in dimensiones:
-                dimension_lower = dimension.lower()
-                if dimension_lower in dimension_data:
-                    dimension_data[dimension_lower]["total"] += 1
-                    if requirement_status == StatusChoices.PASS:
-                        dimension_data[dimension_lower]["passed"] += 1
+        m = metadata[0]
+        dimensiones = _safe_getattr(m, "Dimensiones", [])
+
+        for dimension in dimensiones:
+            dimension_lower = dimension.lower()
+            if dimension_lower in dimension_data:
+                dimension_data[dimension_lower]["total"] += 1
+                if requirement_status == StatusChoices.PASS:
+                    dimension_data[dimension_lower]["passed"] += 1
 
     # Calculate percentages
-    percentages = []
-    for key in dimension_keys:
-        if dimension_data[key]["total"] > 0:
-            percentage = (
-                dimension_data[key]["passed"] / dimension_data[key]["total"]
-            ) * 100
-        else:
-            percentage = 100  # No requirements = 100% (no failures)
-        percentages.append(percentage)
+    percentages = [
+        (dimension_data[key]["passed"] / dimension_data[key]["total"] * 100)
+        if dimension_data[key]["total"] > 0
+        else 100  # No requirements = 100% (no failures)
+        for key in DIMENSION_KEYS
+    ]
 
     # Create radar chart
-    angles = [
-        n / float(len(dimension_names)) * 2 * 3.14159
-        for n in range(len(dimension_names))
-    ]
+    num_dims = len(DIMENSION_NAMES)
+    angles = [n / float(num_dims) * 2 * 3.14159 for n in range(num_dims)]
     percentages += percentages[:1]
     angles += angles[:1]
 
     fig, ax = plt.subplots(figsize=(10, 10), subplot_kw=dict(projection="polar"))
 
-    ax.plot(angles, percentages, "o-", linewidth=2, color="#2196F3")
-    ax.fill(angles, percentages, alpha=0.25, color="#2196F3")
+    ax.plot(angles, percentages, "o-", linewidth=2, color=CHART_COLOR_BLUE)
+    ax.fill(angles, percentages, alpha=0.25, color=CHART_COLOR_BLUE)
     ax.set_xticks(angles[:-1])
-    ax.set_xticklabels(dimension_names, fontsize=14)
+    ax.set_xticklabels(DIMENSION_NAMES, fontsize=14)
     ax.set_ylim(0, 100)
     ax.set_yticks([20, 40, 60, 80, 100])
     ax.set_yticklabels(["20%", "40%", "60%", "80%", "100%"], fontsize=12)
@@ -838,9 +986,11 @@ def _create_dimensions_radar_chart(
     plt.tight_layout()
 
     buffer = io.BytesIO()
-    plt.savefig(buffer, format="png", dpi=300, bbox_inches="tight")
-    buffer.seek(0)
-    plt.close()
+    try:
+        plt.savefig(buffer, format="png", dpi=300, bbox_inches="tight")
+        buffer.seek(0)
+    finally:
+        plt.close(fig)
 
     return buffer
 
@@ -1086,10 +1236,10 @@ def generate_threatscore_report(
 
             frameworks_bulk = Compliance.get_bulk(provider_type)
             compliance_obj = frameworks_bulk[compliance_id]
-            compliance_framework = getattr(compliance_obj, "Framework", "N/A")
-            compliance_version = getattr(compliance_obj, "Version", "N/A")
-            compliance_name = getattr(compliance_obj, "Name", "N/A")
-            compliance_description = getattr(compliance_obj, "Description", "")
+            compliance_framework = _safe_getattr(compliance_obj, "Framework")
+            compliance_version = _safe_getattr(compliance_obj, "Version")
+            compliance_name = _safe_getattr(compliance_obj, "Name")
+            compliance_description = _safe_getattr(compliance_obj, "Description", "")
 
         # Aggregate requirement statistics from database (memory-efficient)
         logger.info(f"Aggregating requirement statistics for scan {scan_id}")
@@ -1141,27 +1291,8 @@ def generate_threatscore_report(
             ["Scan ID:", scan_id],
             ["Description:", Paragraph(compliance_description, normal_center)],
         ]
-        info_table = Table(info_data, colWidths=[2 * inch, 4 * inch])
-        info_table.setStyle(
-            TableStyle(
-                [
-                    ("BACKGROUND", (0, 0), (0, 5), colors.Color(0.2, 0.4, 0.6)),
-                    ("TEXTCOLOR", (0, 0), (0, 5), colors.white),
-                    ("FONTNAME", (0, 0), (0, 5), "FiraCode"),
-                    ("BACKGROUND", (1, 0), (1, 5), colors.Color(0.95, 0.97, 1.0)),
-                    ("TEXTCOLOR", (1, 0), (1, 5), colors.Color(0.2, 0.2, 0.2)),
-                    ("FONTNAME", (1, 0), (1, 5), "PlusJakartaSans"),
-                    ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                    ("FONTSIZE", (0, 0), (-1, -1), 11),
-                    ("GRID", (0, 0), (-1, -1), 1, colors.Color(0.7, 0.8, 0.9)),
-                    ("LEFTPADDING", (0, 0), (-1, -1), 10),
-                    ("RIGHTPADDING", (0, 0), (-1, -1), 10),
-                    ("TOPPADDING", (0, 0), (-1, -1), 8),
-                    ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-                ]
-            )
-        )
+        info_table = Table(info_data, colWidths=[COL_WIDTH_XLARGE, 4 * inch])
+        info_table.setStyle(_create_info_table_style())
 
         elements.append(info_table)
         elements.append(PageBreak())
@@ -1226,12 +1357,7 @@ def generate_threatscore_report(
             ["ThreatScore:", f"{overall_compliance:.2f}%"],
         ]
 
-        if overall_compliance >= 80:
-            compliance_color = colors.Color(0.2, 0.8, 0.2)
-        elif overall_compliance >= 60:
-            compliance_color = colors.Color(0.8, 0.8, 0.2)
-        else:
-            compliance_color = colors.Color(0.8, 0.2, 0.2)
+        compliance_color = _get_color_for_compliance(overall_compliance)
 
         summary_table = Table(summary_data, colWidths=[2.5 * inch, 2 * inch])
         summary_table.setStyle(
@@ -1715,10 +1841,10 @@ def generate_ens_report(
 
             frameworks_bulk = Compliance.get_bulk(provider_type)
             compliance_obj = frameworks_bulk[compliance_id]
-            compliance_framework = getattr(compliance_obj, "Framework", "N/A")
-            compliance_version = getattr(compliance_obj, "Version", "N/A")
-            compliance_name = getattr(compliance_obj, "Name", "N/A")
-            compliance_description = getattr(compliance_obj, "Description", "")
+            compliance_framework = _safe_getattr(compliance_obj, "Framework")
+            compliance_version = _safe_getattr(compliance_obj, "Version")
+            compliance_name = _safe_getattr(compliance_obj, "Name")
+            compliance_description = _safe_getattr(compliance_obj, "Description", "")
 
         # Aggregate requirement statistics from database (memory-efficient)
         logger.info(f"Aggregating requirement statistics for scan {scan_id}")
@@ -2035,16 +2161,18 @@ def generate_ens_report(
             metadata = requirement_attributes.get("attributes", {}).get(
                 "req_attributes", []
             )
-            if metadata:
-                m = metadata[0]
-                nivel = getattr(m, "Nivel", "N/A")
-                nivel_data[nivel]["total"] += 1
-                if requirement_status == StatusChoices.PASS:
-                    nivel_data[nivel]["passed"] += 1
+            if not metadata:
+                continue
+
+            m = metadata[0]
+            nivel = _safe_getattr(m, "Nivel")
+            nivel_data[nivel]["total"] += 1
+            if requirement_status == StatusChoices.PASS:
+                nivel_data[nivel]["passed"] += 1
 
         elements.append(Paragraph("Cumplimiento por Nivel", h2))
         nivel_table_data = [["Nivel", "Cumplidos", "Total", "Porcentaje"]]
-        for nivel in ["alto", "medio", "bajo", "opcional"]:
+        for nivel in ENS_NIVEL_ORDER:
             if nivel in nivel_data:
                 data = nivel_data[nivel]
                 percentage = (
@@ -2119,15 +2247,17 @@ def generate_ens_report(
             metadata = requirement_attributes.get("attributes", {}).get(
                 "req_attributes", []
             )
-            if metadata:
-                m = metadata[0]
-                tipo = getattr(m, "Tipo", "N/A")
-                tipo_data[tipo]["total"] += 1
-                if requirement_status == StatusChoices.PASS:
-                    tipo_data[tipo]["passed"] += 1
+            if not metadata:
+                continue
+
+            m = metadata[0]
+            tipo = _safe_getattr(m, "Tipo")
+            tipo_data[tipo]["total"] += 1
+            if requirement_status == StatusChoices.PASS:
+                tipo_data[tipo]["passed"] += 1
 
         tipo_table_data = [["Tipo", "Cumplidos", "Total", "Porcentaje"]]
-        for tipo in ["requisito", "refuerzo", "recomendacion", "medida"]:
+        for tipo in ENS_TIPO_ORDER:
             if tipo in tipo_data:
                 data = tipo_data[tipo]
                 percentage = (
@@ -2174,13 +2304,11 @@ def generate_ens_report(
             requirement_status = requirement["attributes"]["status"]
             if requirement_status == StatusChoices.FAIL:
                 requirement_id = requirement["id"]
-                metadata = (
-                    attributes_by_requirement_id.get(requirement_id, {})
-                    .get("attributes", {})
-                    .get("req_attributes", [{}])[0]
-                )
-                if metadata:
-                    nivel = getattr(metadata, "Nivel", "")
+                req_attributes = attributes_by_requirement_id.get(requirement_id, {}).get("attributes", {})
+                metadata_list = req_attributes.get("req_attributes", [])
+                if metadata_list:
+                    metadata = metadata_list[0]
+                    nivel = _safe_getattr(metadata, "Nivel", "")
                     if nivel.lower() == "alto":
                         critical_failed.append(
                             {
@@ -2208,8 +2336,8 @@ def generate_ens_report(
             for item in critical_failed:
                 requirement_id = item["requirement"]["id"]
                 description = item["requirement"]["attributes"]["description"]
-                marco = getattr(item["metadata"], "Marco", "N/A")
-                categoria = getattr(item["metadata"], "Categoria", "N/A")
+                marco = _safe_getattr(item["metadata"], "Marco")
+                categoria = _safe_getattr(item["metadata"], "Categoria")
 
                 if len(description) > 60:
                     description = description[:57] + "..."
