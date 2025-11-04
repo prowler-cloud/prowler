@@ -29,11 +29,12 @@ def refresh_timestamps() -> datetime:
     """
     Refresh cached timestamps so every scan run gets its own suffixes.
     """
-    global timestamp, timestamp_utc, output_file_timestamp
+    global timestamp, timestamp_utc, output_file_timestamp, timestamp_iso
 
     timestamp = datetime.today()
     timestamp_utc = datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
     output_file_timestamp = timestamp.strftime("%Y%m%d%H%M%S")
+    timestamp_iso = timestamp.isoformat(sep=" ", timespec="seconds")
 
     return timestamp
 
@@ -57,6 +58,13 @@ def get_output_file_timestamp() -> str:
     Return the formatted suffix used for naming output artifacts.
     """
     return output_file_timestamp
+
+
+def get_timestamp_iso() -> str:
+    """
+    Return the current timestamp formatted for human readable outputs.
+    """
+    return timestamp_iso
 
 
 class Provider(str, Enum):
