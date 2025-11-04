@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
 import sys
 from os import environ
 
@@ -109,6 +108,7 @@ from prowler.providers.common.quick_inventory import run_provider_quick_inventor
 from prowler.providers.gcp.models import GCPOutputOptions
 from prowler.providers.github.models import GithubOutputOptions
 from prowler.providers.iac.models import IACOutputOptions
+from prowler.providers.ionos.models import IonosOutputOptions
 from prowler.providers.kubernetes.models import KubernetesOutputOptions
 from prowler.providers.llm.models import LLMOutputOptions
 from prowler.providers.m365.models import M365OutputOptions
@@ -322,20 +322,24 @@ def prowler():
         output_options = M365OutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
+    elif provider == "iac":
+        output_options = IACOutputOptions(args, bulk_checks_metadata)
     elif provider == "mongodbatlas":
         output_options = MongoDBAtlasOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "llm":
+        output_options = LLMOutputOptions(args, bulk_checks_metadata)
+    elif provider == "oci":
+        output_options = OCIOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
     elif provider == "nhn":
         output_options = NHNOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
-    elif provider == "iac":
-        output_options = IACOutputOptions(args, bulk_checks_metadata)
-    elif provider == "llm":
-        output_options = LLMOutputOptions(args, bulk_checks_metadata)
-    elif provider == "oci":
-        output_options = OCIOutputOptions(
+    elif provider == "ionos":
+        output_options = IonosOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
 
@@ -573,7 +577,6 @@ def prowler():
                 generated_outputs["compliance"].append(prowler_threatscore)
                 prowler_threatscore.batch_write_data_to_file()
             elif compliance_name.startswith("ccc_"):
-
                 filename = (
                     f"{output_options.output_directory}/compliance/"
                     f"{output_options.output_filename}_{compliance_name}.csv"

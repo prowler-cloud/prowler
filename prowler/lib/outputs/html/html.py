@@ -903,8 +903,7 @@ class HTML(Output):
                         <div class="card-header">
                             IAC Assessment Summary
                         </div>
-                        <ul class="list-group
-                        list-group-flush">
+                        <ul class="list-group list-group-flush">
                             <li class="list-group-item">
                                 {"<b>IAC repository URL:</b> " + provider.scan_repository_url if provider.scan_repository_url else "<b>IAC path:</b> " + provider.scan_path}
                             </li>
@@ -916,10 +915,55 @@ class HTML(Output):
                         <div class="card-header">
                             IAC Credentials
                         </div>
-                        <ul class="list-group
-                        list-group-flush">
+                        <ul class="list-group list-group-flush">
                             <li class="list-group-item">
                                 <b>IAC authentication method:</b> {provider.auth_method}
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
+    def get_ionos_assessment_summary(provider: Provider) -> str:
+        """
+        get_ionos_assessment_summary gets the HTML assessment summary for the provider
+
+        Args:
+            provider (Provider): the provider object
+
+        Returns:
+            str: the HTML assessment summary
+        """
+        try:
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Ionos Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Ionos Datacenter ID:</b> {provider.identity.datacenter_id}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Ionos Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Ionos Token:</b> {provider.identity.token[:8]}...{provider.identity.token[-8:]}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Ionos User:</b> {provider.identity.username}
                             </li>
                         </ul>
                     </div>
@@ -950,8 +994,7 @@ class HTML(Output):
                         </h5>
                     </div>
                     <div class="card-body">
-                        <ul class="list-group
-                        list-group-flush">
+                        <ul class="list-group list-group-flush">
                             <li class="list-group-item">
                                 <b>Target LLM:</b> {provider.model}
                             </li>

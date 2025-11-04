@@ -57,6 +57,9 @@ def display_summary_table(
         elif provider.type == "nhn":
             entity_type = "Tenant Domain"
             audited_entities = provider.identity.tenant_domain
+        elif provider.type == "ionos":
+            entity_type = "Datacenter ID"
+            audited_entities = provider.identity.datacenter_id
         elif provider.type == "iac":
             if provider.scan_repository_url:
                 entity_type = "Repository"

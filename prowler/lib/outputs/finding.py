@@ -278,6 +278,16 @@ class Finding(BaseModel):
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["region"] = check_output.location
 
+            elif provider.type == "iac":
+                output_data["auth_method"] = provider.auth_method
+                output_data["account_uid"] = "iac"
+                output_data["account_name"] = "iac"
+                output_data["resource_name"] = check_output.resource["resource"]
+                output_data["resource_uid"] = check_output.resource["resource"]
+                output_data["region"] = check_output.resource_path
+                output_data["resource_line_range"] = check_output.resource_line_range
+                output_data["framework"] = check_output.check_metadata.ServiceName
+
             elif provider.type == "mongodbatlas":
                 output_data["auth_method"] = "api_key"
                 output_data["account_uid"] = get_nested_attribute(
@@ -285,21 +295,6 @@ class Finding(BaseModel):
                 )
                 output_data["account_name"] = get_nested_attribute(
                     provider, "identity.organization_name"
-                )
-                output_data["resource_name"] = check_output.resource_name
-                output_data["resource_uid"] = check_output.resource_id
-                output_data["region"] = check_output.location
-
-            elif provider.type == "nhn":
-                output_data["auth_method"] = (
-                    f"passwordCredentials: username={get_nested_attribute(provider, '_identity.username')}, "
-                    f"tenantId={get_nested_attribute(provider, '_identity.tenant_id')}"
-                )
-                output_data["account_uid"] = get_nested_attribute(
-                    provider, "identity.tenant_id"
-                )
-                output_data["account_name"] = get_nested_attribute(
-                    provider, "identity.tenant_domain"
                 )
                 output_data["resource_name"] = check_output.resource_name
                 output_data["resource_uid"] = check_output.resource_id
@@ -343,6 +338,41 @@ class Finding(BaseModel):
                 output_data["resource_name"] = check_output.resource_name
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["region"] = check_output.region
+
+            elif provider.type == "nhn":
+                output_data["auth_method"] = (
+                    f"passwordCredentials: username={get_nested_attribute(provider, '_identity.username')}, "
+                    f"tenantId={get_nested_attribute(provider, '_identity.tenant_id')}"
+                )
+                output_data["account_uid"] = get_nested_attribute(
+                    provider, "identity.tenant_id"
+                )
+                output_data["account_name"] = get_nested_attribute(
+                    provider, "identity.tenant_domain"
+                )
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = check_output.location
+
+            elif provider.type == "ionos":
+                output_data["auth_method"] = (
+                    f"Token: {get_nested_attribute(provider, 'identity.token')}"
+                )
+                output_data["account_uid"] = get_nested_attribute(
+                    provider, "identity.email"
+                )
+                output_data["account_name"] = get_nested_attribute(
+                    provider, "identity.username"
+                )
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = check_output.location
+                # Extract any available tags from the resource
+                if (
+                    hasattr(check_output, "resource_tags")
+                    and check_output.resource_tags
+                ):
+                    output_data["resource_tags"] = check_output.resource_tags
 
             # check_output Unique ID
             # TODO: move this to a function
