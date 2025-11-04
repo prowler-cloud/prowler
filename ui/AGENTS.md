@@ -13,7 +13,33 @@
 
 ## Critical Architecture Rules (Non-Negotiable)
 
-### 1. TypeScript Type Patterns (Required)
+### 1. React Imports (Required)
+
+**NEVER** import React with `import * as React`. Instead, import only what you need:
+
+**❌ DON'T:**
+
+```typescript
+import * as React from "react";
+import React, { useState } from "react";
+```
+
+**✅ DO:**
+
+```typescript
+import { useState, useEffect } from "react";
+```
+
+**When you need nothing from React (e.g., only using JSX):**
+
+```typescript
+// No React import needed - JSX works without it in modern Next.js
+export function MyComponent() {
+  return <div>Hello</div>;
+}
+```
+
+### 2. TypeScript Type Patterns (Required)
 
 When defining union types for options, ALWAYS create a const object first, then extract the type:
 
@@ -390,6 +416,7 @@ ui/
 ├── types/ # TypeScript type definitions
 ├── hooks/ # Custom React hooks
 ├── store/ # Zustand state management
+├── tests/ # Playwright E2E tests
 └── styles/ # Global CSS & Tailwind config
 ```
 
@@ -683,13 +710,423 @@ const text = message.parts
 
 ### Playwright E2E Tests
 
+**⚠️ MANDATORY: If you have access to Playwright MCP tools, ALWAYS use them to understand the actual application flow before creating any E2E test.**
+
+- **IF Playwright MCP is available**: Use browser tools to navigate, interact, and understand the real UI behavior FIRST, then create tests
+- **IF Playwright MCP is NOT available**: Proceed with test creation based on available documentation and code analysis
 - Add/update E2E tests for critical flows you modify
 - Scope: run only affected specs when iterating
 - Commit snapshot updates only with real UI changes
 - Determinism: avoid relying on real external services; mock or stub where possible
+- **Organization**: Create a folder under `tests/` for each page (e.g., `tests/sign-in/`, `tests/sign-up/`, etc.)
+- **File Structure**: Each page folder should contain 3 files:
+  - `{page-name}-page.ts` - Page Object Model
+  - `{page-name}.spec.ts` - Test specifications
+  - `{page-name}.md` - Test documentation
+- **Base Class**: `tests/base-page.ts` - Parent class that all `{page-name}-page.ts` files should extend
+- **Helpers**: `tests/helpers.ts` - Utility functions and helper methods for tests
+
+#### Playwright MCP Integration
+
+**⚠️ CRITICAL WORKFLOW (When Available): If you have access to Playwright MCP browser tools, use them to explore the application BEFORE writing any test code.**
+
+**Recommended Steps Before Creating Tests (Only if MCP Tools are Available):**
+
+1. **Navigate to the application** to reach the target page
+2. **Take a snapshot** to see the page structure and available elements
+3. **Interact with forms and elements** to verify the exact user flow
+4. **Take screenshots** to document expected states at each step
+5. **Verify page transitions** by navigating through the complete flow to understand all states (loading, success, error)
+6. **Document actual selectors** from the snapshots - use the real element references (ref) and labels you observe
+7. **Only after exploring** the complete flow manually, create the test code with the exact selectors and steps you verified
+
+**Why This Matters (When MCP Tools are Available):**
+
+- ✅ **Precise test creation** - Only include the exact steps needed, no assumptions or guessing
+- ✅ **Accurate selectors** - Use the actual DOM structure from real snapshots, not imagined selectors
+- ✅ **Real flow validation** - Verify the complete user journey actually works as expected
+- ✅ **Avoid over-engineering** - Create minimal tests that focus on what actually exists
+- ✅ **Prevent flaky tests** - Tests based on real exploration are more stable and reliable
+- ❌ **Never assume** - Don't create tests based on assumptions about how the UI "should" work
+
+**Benefits:**
+- **Precise test creation** - Only include the exact steps needed for the test requirement
+- **Accurate selectors** - Use the actual DOM structure to create reliable locators
+- **Real flow validation** - Verify the complete user journey works as expected
+- **Avoid over-engineering** - Create minimal tests that focus on the specific requirement
+
+#### Test Creation Guidelines
+
+**IMPORTANT: Always ask for clarification if the request is ambiguous about scope.**
+
+**When creating a specific test:**
+
+- Create only a single `test()` entry implementing the specific functionality described
+- Do NOT create the full test suite for this page
+- **ALWAYS add the test to the page's main spec file** (e.g., `sign-up.spec.ts`), NOT in a separate file
+- **REUSE existing page objects** from other pages when possible (e.g., use existing SignInPage, HomePage, etc.)
+- If the page's spec file doesn't exist, create minimal structure:
+  - `{page-name}-page.ts` - Page Object Model
+  - `{page-name}.spec.ts` - Test specifications (add your specific test here)
+- Focus on the exact requirement without additional test cases
+- Do NOT create separate files like `{page-name}-critical-path.spec.ts` or `{page-name}-specific-test.spec.ts`
+
+**When creating comprehensive page tests:**
+
+- Create the full test suite with all files (page object, spec, documentation)
+- Include multiple test cases covering various scenarios in `{page-name}.spec.ts`
+- Follow the complete structure with validation, error handling, accessibility tests
+- Create comprehensive documentation for all test cases in `{page-name}.md`
+
+**File Naming Convention:**
+
+- ✅ **CORRECT**: `sign-up.spec.ts` (contains all sign-up tests)
+- ✅ **CORRECT**: `sign-up-page.ts` (page object)
+- ✅ **CORRECT**: `sign-up.md` (documentation for all tests)
+- ❌ **WRONG**: `sign-up-critical-path.spec.ts` (separate file for specific test)
+- ❌ **WRONG**: `sign-up-validation.spec.ts` (separate file for specific test)
+
+**Examples:**
+
+```typescript
+// ✅ Specific test request - create only this test
+test("User can create account and login successfully",{
+    tag: ['@critical', '@e2e', '@signup', '@SIGNUP-E2E-001']
+  } async ({ page }) => {
+  // Implementation for this specific test only
+});
+
+// ❌ Don't create full suite when only one test is requested
+```
+
+**Request Examples:**
+
+- **"Create a test for user sign-up"** → Create only the sign-up test, not the full suite
+- **"Generate E2E tests for the login page"** → Create comprehensive test suite with all scenarios
+- **"Add a test to verify form validation"** → Add only the validation test to existing spec
+- **"Create tests for the home page"** → Create full test suite for home functionality
+- **"Create a new test e2e for sign-up"** → Create only the specific test mentioned
+- **"Generate comprehensive E2E tests for sign-up"** → Create full test suite
+
+**Key Phrases to Identify Scope:**
+
+- **Single Test**: "a test", "one test", "new test", "add test"
+- **Full Suite**: "comprehensive tests", "all tests", "test suite", "complete tests", "generate tests"
+
+#### Page Object Model Pattern
+
+- **Extend BasePage**: All page objects should extend `BasePage` for common functionality
+- **REUSE Existing Page Objects**: Always check for existing page objects before creating new ones
+- **Interface Definitions**: Define clear interfaces for form data and credentials
+- **Method Organization**: Group methods by functionality (navigation, form interaction, validation, etc.)
+- **Locator Strategy**: Use stable selectors (name attributes, labels) over fragile CSS selectors
+- **Avoid Code Duplication**: When creating a new page object, verify if there are repeated methods across page objects that should be moved to `BasePage`
+- **Shared Utilities**: If utility functions are repeated across tests, create or update `tests/helpers.ts` to centralize them
+- **Refactor to BasePage**: Common patterns like form validation, notification checks, or navigation should be extracted to `BasePage`
+- **Refactor to Helpers**: Data generation, test setup utilities, or common assertions should be extracted to `tests/helpers.ts`
+
+#### Page Object Reuse Guidelines
+
+- **Check existing page objects first**: Look in `tests/` directory for existing page objects
+- **Import and reuse**: Use existing page objects like `SignInPage`, `HomePage`, etc.
+- **Create page objects when needed**: If a test requires interaction with a page that doesn't have a page object yet, create it following the Page Object Model pattern
+- **Only create new page objects** when the page doesn't exist or has unique functionality
+- **Example**: For a sign-up test that needs to verify login after signup, reuse `SignInPage` and `HomePage` if they exist, or create them if needed
+- **Avoid duplication**: Don't recreate functionality that already exists in other page objects
+- **Complete dependencies**: When creating a test that requires multiple page interactions, ensure all necessary page objects exist (create them if they don't)
+
+#### Code Refactoring Guidelines
+
+**When to move code to `BasePage`:**
+
+- ✅ **Navigation helpers** used by multiple pages (e.g., `waitForPageLoad()`, `getCurrentUrl()`)
+- ✅ **Common UI interactions** (e.g., clicking notifications, handling modals, theme toggles)
+- ✅ **Verification patterns** repeated across pages (e.g., `isVisible()`, `waitForVisible()`)
+- ✅ **Error handling** that applies to all pages
+- ✅ **Screenshot utilities** for debugging
+
+**When to move code to `tests/helpers.ts`:**
+
+- ✅ **Test data generation** (e.g., `generateUniqueEmail()`, `generateTestUser()`)
+- ✅ **Setup/teardown utilities** (e.g., `createTestUser()`, `cleanupTestData()`)
+- ✅ **Custom assertions** used across tests (e.g., `expectNotificationToContain()`)
+- ✅ **API helpers** for test setup (e.g., `seedDatabase()`, `resetState()`)
+- ✅ **Time utilities** (e.g., `waitForCondition()`, `retryAction()`)
+
+**Example - Before Refactoring:**
+
+```typescript
+// ❌ BAD: Repeated code in multiple page objects
+export class SignUpPage extends BasePage {
+  async waitForNotification(): Promise<void> {
+    await this.page.waitForSelector('[role="status"]');
+  }
+}
+
+export class SignInPage extends BasePage {
+  async waitForNotification(): Promise<void> {
+    await this.page.waitForSelector('[role="status"]');
+  }
+}
+```
+
+**Example - After Refactoring:**
+
+```typescript
+// ✅ GOOD: Move to BasePage
+export class BasePage {
+  async waitForNotification(): Promise<void> {
+    await this.page.waitForSelector('[role="status"]');
+  }
+
+  async verifyNotificationMessage(message: string): Promise<void> {
+    const notification = this.page.locator('[role="status"]');
+    await expect(notification).toContainText(message);
+  }
+}
+
+// ✅ GOOD: Move to helpers.ts for data generation
+export function generateUniqueEmail(): string {
+  const timestamp = Date.now();
+  return `test.user.${timestamp}@example.com`;
+}
+
+export function generateTestUser() {
+  return {
+    name: "Test User",
+    email: generateUniqueEmail(),
+    password: "TestPassword123!",
+  };
+}
+```
+
+**Page Object Reuse Example:**
+
+```typescript
+// ✅ GOOD: Check for existing page objects, create if needed
+// 1. Check if SignInPage exists - if not, create it
+// 2. Check if HomePage exists - if not, create it
+import { SignInPage } from "../sign-in/sign-in-page";
+import { HomePage } from "../home/home-page";
+
+test("User can sign up and login", async ({ page }) => {
+  const signUpPage = new SignUpPage(page);
+  const signInPage = new SignInPage(page); // REUSE existing (or create if missing)
+  const homePage = new HomePage(page); // REUSE existing (or create if missing)
+
+  // Use existing functionality
+  await signUpPage.signUp(userData);
+  await homePage.verifyPageLoaded(); // REUSE existing method
+  await homePage.signOut(); // REUSE existing method
+  await signInPage.login(credentials); // REUSE existing method
+});
+
+// ❌ BAD: Don't recreate existing functionality in SignUpPage
+export class SignUpPage extends BasePage {
+  // Don't recreate logout functionality
+  async logout() {
+    /* ... */
+  } // ❌ HomePage already has this
+
+  // Don't recreate login functionality
+  async login() {
+    /* ... */
+  } // ❌ SignInPage already has this
+
+  // ✅ GOOD: Instead, use composition or delegation
+  async loginAfterSignUp(credentials: LoginCredentials): Promise<void> {
+    // Reuse SignInPage methods or delegate to it
+    const emailField = this.page.getByRole("textbox", { name: "Email*" });
+    const passwordField = this.page.getByRole("textbox", { name: "Password*" });
+    const loginButton = this.page.getByRole("button", { name: "Log in" });
+
+    await emailField.fill(credentials.email);
+    await passwordField.fill(credentials.password);
+    await loginButton.click();
+  }
+}
+```
+
+**Page Object Structure:**
+
+```typescript
+export interface FeatureData {
+  email: string;
+  password: string;
+  // ... other fields
+}
+
+export class FeaturePage extends BasePage {
+  // Form elements
+  readonly emailInput: Locator;
+  readonly passwordInput: Locator;
+  readonly submitButton: Locator;
+
+  constructor(page: Page) {
+    super(page);
+    // Use stable selectors
+    this.emailInput = page.getByLabel("Email");
+    this.passwordInput = page.locator('input[name="password"]');
+    this.submitButton = page.getByRole("button", { name: "Submit" });
+  }
+
+  async goto(): Promise<void> {
+    await super.goto("/feature-path");
+  }
+
+  async performAction(data: FeatureData): Promise<void> {
+    await this.emailInput.fill(data.email);
+    await this.passwordInput.fill(data.password);
+    await this.submitButton.click();
+  }
+
+  async verifyCriticalOutcome(): Promise<void> {
+    await expect(this.page).toHaveURL("/expected-path");
+    // ... verification logic
+  }
+}
+```
+
+#### Test Structure Best Practices
+
+- **Page Object Usage**: Use Page Object Models for all page interactions
+- **Tag Organization**: Use Playwright tag syntax for test categorization
+- **Test IDs**: Include test case IDs in tags for traceability
+- **Verification Steps**: Include clear verification steps for each major action
+
+**Key Elements:**
+
+- **Page Objects**: All interactions through Page Object Models
+- **Clear Tags**: Use `{ tag: ['@priority', '@type', '@feature', '@test-id'] }` syntax
+- **Verification**: Explicit verification of critical outcomes
+
+#### Playwright Selector Best Practices
+
+When creating locators in Page Objects, follow this priority order for maximum reliability:
+
+**✅ Primary Selectors (Recommended):**
+
+- **`getByRole()`**: The best and most robust for all interactive elements (buttons, links, main sections)
+- **`getByLabel()`**: The best for form controls that have an associated label
+
+**⚠️ Secondary Selectors (Use Sparingly):**
+
+- **`getByText()`**: Use only when the above fail or for static text verification (headings, paragraphs, messages)
+- **Others (e.g. `getByTestId()`)**: Use only as a last resort when the above fail or are not applicable
+
+**Examples:**
+
+```typescript
+// ✅ GOOD - Using getByRole for interactive elements
+this.submitButton = page.getByRole("button", { name: "Submit" });
+this.navigationLink = page.getByRole("link", { name: "Dashboard" });
+
+// ✅ GOOD - Using getByLabel for form controls
+this.emailInput = page.getByLabel("Email");
+this.passwordInput = page.getByLabel("Password");
+
+// ⚠️ SPARINGLY - Using getByText only when necessary
+this.errorMessage = page.getByText("Invalid credentials"); // Only if no better selector exists
+this.pageTitle = page.getByText("Welcome to Prowler"); // Only for static content verification
+
+// ❌ AVOID - Using fragile selectors when better options exist
+this.submitButton = page.locator(".btn-primary"); // Use getByRole instead
+this.emailInput = page.locator("#email"); // Use getByLabel instead
+```
+
+**Tag Syntax Example:**
+
+```typescript
+test(
+  "Test description",
+  { tag: ["@critical", "@e2e", "@signup", "@SIGNUP-E2E-001"] },
+  async ({ page }) => {
+    // Test implementation
+  },
+);
+```
+
+#### E2E Test Documentation Format
+
+Each test documentation file (`{page-name}.md`) should follow this structured format:
+
+```markdown
+### E2E Tests: {Feature Name}
+
+**Suite ID:** `{SUITE-ID}`
+**Feature:** {Feature description}
+
+---
+
+## Test Case: `{TEST-ID}` - {Test case title}
+
+**Priority:** `{critical|high|medium|low}`
+
+**Tags:**
+
+- type → @e2e
+- feature → @{feature-name}
+
+**Description/Objective:** {Brief description of what the test validates}
+
+**Preconditions:**
+
+- {List of prerequisites for the test to run}
+- {Any required data or state}
+
+### Flow Steps:
+
+1. {Step 1 description}
+2. {Step 2 description}
+3. {Step 3 description}
+   ...
+
+### Expected Result:
+
+- {Expected outcome 1}
+- {Expected outcome 2}
+  ...
+
+### Key verification points:
+
+- {Key assertion 1}
+- {Key assertion 2}
+- {Key assertion 3}
+
+### Notes:
+
+- {Any additional notes or considerations}
+- {Test data requirements or constraints}
+```
+
+#### Test Documentation Best Practices
+- **Suite ID Format**: Use descriptive suite IDs (e.g., `SIGNUP-E2E`)
+- **Test ID Format**: Include feature and sequence (e.g., `SIGNUP-E2E-001`)
+- **Priority Levels**: Use `critical`, `high`, `medium`, `low` for test prioritization
+- **Tag Organization**: Use Playwright tag syntax: `{ tag: ['@priority', '@type', '@feature', '@test-id'] }`
+- **Flow Steps**: Number steps clearly and describe user actions
+- **Verification Points**: List specific assertions and expected outcomes
+- **Preconditions**: Document any required setup or data dependencies
+- **Test Data Notes**: Include information about data generation and uniqueness strategies
+
+**Tag Categories:**
+- **Priority**: `@critical`, `@high`, `@medium`, `@low`
+- **Type**: `@e2e`
+- **Feature**: `@signup`, `@signin`, `@dashboard`
+- **Test ID**: `@SIGNUP-E2E-001`, `@LOGIN-E2E-002`
+
+**IMPORTANT - Keep Documentation Concise:**
+- ❌ **DO NOT** include general test running instructions
+- ❌ **DO NOT** include file structure explanations
+- ❌ **DO NOT** include code examples or tutorials
+- ❌ **DO NOT** include extensive troubleshooting sections
+- ❌ **DO NOT** include command references or configuration details
+- ✅ **DO** focus only on the specific test case: flow, preconditions, expected results, and verification points
+- ✅ **DO** keep the documentation under 60 lines when possible
+- ✅ **DO** follow the exact format template provided above
+
 
 ### Component Testing (Future)
-
 - Jest + React Testing Library
 - Component unit tests
 - Integration tests for complex flows
@@ -769,6 +1206,38 @@ const text = message.parts
 - Add types to `types/` if they're shared (2+ features); otherwise colocate types near usage (1 feature)
 - Follow The Scope Rule strictly - used by 2+ features = shared, 1 feature = local
 - Update feature docs and `ui/CHANGELOG.md` when behavior changes
+
+### Documentation Links Pattern (Integrations Only)
+
+For integration features (e.g., API Keys, SAML, S3) that have dedicated documentation, include "Read the docs" links in both the main card/component and related modals:
+
+**Main Card Header** (e.g., API Keys card):
+```tsx
+<p className="text-xs text-gray-500">
+  Manage API keys for programmatic access.{" "}
+  <CustomLink href="https://docs.prowler.com/user-guide/providers/prowler-app-api-keys">
+    Read the docs
+  </CustomLink>
+</p>
+```
+
+**Modal/Form** (e.g., Create API Key modal):
+```tsx
+<p className="text-xs text-gray-500">
+  Need help configuring API Keys?{" "}
+  <CustomLink href="https://docs.prowler.com/user-guide/providers/prowler-app-api-keys">
+    Read the docs
+  </CustomLink>
+</p>
+```
+
+**Rules:**
+- **Only apply to integration components** (API Keys, SAML, S3, Security Hub, etc.)
+- Use the same documentation URL across related components
+- Tailor the helper text to the component context (card = general, modal = action-specific)
+- Apply `text-xs text-gray-500` styling for consistency
+- Place the link in a `<p>` tag or description area within the component
+- Always use `CustomLink` component for documentation links
 
 ## Environment Configuration
 

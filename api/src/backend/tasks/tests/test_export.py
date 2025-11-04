@@ -72,17 +72,26 @@ class TestOutputs:
         client_mock = MagicMock()
         mock_get_client.return_value = client_mock
 
-        result = _upload_to_s3("tenant-id", str(zip_path), "scan-id")
+        result = _upload_to_s3(
+            "tenant-id",
+            "scan-id",
+            str(zip_path),
+            "outputs.zip",
+        )
 
         expected_uri = "s3://test-bucket/tenant-id/scan-id/outputs.zip"
         assert result == expected_uri
-        assert client_mock.upload_file.call_count == 2
+        client_mock.upload_file.assert_called_once_with(
+            Filename=str(zip_path),
+            Bucket="test-bucket",
+            Key="tenant-id/scan-id/outputs.zip",
+        )
 
     @patch("tasks.jobs.export.get_s3_client")
     @patch("tasks.jobs.export.base")
     def test_upload_to_s3_missing_bucket(self, mock_base, mock_get_client):
         mock_base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET = ""
-        result = _upload_to_s3("tenant", "/tmp/fake.zip", "scan")
+        result = _upload_to_s3("tenant", "scan", "/tmp/fake.zip", "fake.zip")
         assert result is None
 
     @patch("tasks.jobs.export.get_s3_client")
@@ -101,11 +110,15 @@ class TestOutputs:
         client_mock = MagicMock()
         mock_get_client.return_value = client_mock
 
-        result = _upload_to_s3("tenant", str(zip_path), "scan")
+        result = _upload_to_s3(
+            "tenant",
+            "scan",
+            str(compliance_dir / "subdir"),
+            "compliance/subdir",
+        )
 
-        expected_uri = "s3://test-bucket/tenant/scan/results.zip"
-        assert result == expected_uri
-        client_mock.upload_file.assert_called_once()
+        assert result is None
+        client_mock.upload_file.assert_not_called()
 
     @patch(
         "tasks.jobs.export.get_s3_client",
@@ -126,7 +139,12 @@ class TestOutputs:
         compliance_dir.mkdir()
         (compliance_dir / "report.csv").write_text("csv")
 
-        _upload_to_s3("tenant", str(zip_path), "scan")
+        _upload_to_s3(
+            "tenant",
+            "scan",
+            str(zip_path),
+            "zipfile.zip",
+        )
         mock_logger.assert_called()
 
     @patch("tasks.jobs.export.rls_transaction")

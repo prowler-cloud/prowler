@@ -15,10 +15,10 @@
     "format:check": "./node_modules/.bin/prettier --check ./app",
     "format:write": "./node_modules/.bin/prettier --config .prettierrc.json --write ./app",
     "prepare": "husky",
-    "test:e2e": "playwright test --project=chromium",
-    "test:e2e:ui": "playwright test --project=chromium --ui",
-    "test:e2e:debug": "playwright test --project=chromium --debug",
-    "test:e2e:headed": "playwright test --project=chromium --headed",
+    "test:e2e": "playwright test --project=chromium --project=sign-up --project=providers",
+    "test:e2e:ui": "playwright test --project=chromium --project=sign-up --project=providers --ui",
+    "test:e2e:debug": "playwright test --project=chromium --project=sign-up --project=providers --debug",
+    "test:e2e:headed": "playwright test --project=chromium --project=sign-up --project=providers --headed",
     "test:e2e:report": "playwright show-report",
     "test:e2e:install": "playwright install"
   },
@@ -38,6 +38,7 @@
     "@radix-ui/react-icons": "1.3.2",
     "@radix-ui/react-label": "2.1.7",
     "@radix-ui/react-select": "2.2.5",
+    "@radix-ui/react-separator": "1.1.7",
     "@radix-ui/react-slot": "1.2.3",
     "@radix-ui/react-toast": "1.2.14",
     "@react-aria/ssr": "3.9.4",
@@ -64,8 +65,8 @@
     "next-auth": "5.0.0-beta.29",
     "next-themes": "0.2.1",
     "radix-ui": "1.4.2",
-    "react": "19.1.1",
-    "react-dom": "19.1.1",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
     "react-hook-form": "7.62.0",
     "react-markdown": "10.1.0",
     "recharts": "2.15.4",
@@ -83,12 +84,14 @@
   },
   "devDependencies": {
     "@iconify/react": "5.2.1",
-    "@types/d3": "7.4.3",
     "@playwright/test": "1.56.1",
+    "@types/d3": "7.4.3",
+    "@types/geojson": "7946.0.16",
     "@types/node": "20.5.7",
     "@types/react": "19.1.13",
     "@types/react-dom": "19.1.9",
     "@types/topojson-client": "3.1.5",
+    "@types/topojson-specification": "1.0.5",
     "@types/uuid": "10.0.0",
     "@typescript-eslint/eslint-plugin": "7.18.0",
     "@typescript-eslint/parser": "7.18.0",
@@ -102,7 +105,7 @@
     "eslint-plugin-node": "11.1.0",
     "eslint-plugin-prettier": "5.5.1",
     "eslint-plugin-react": "7.37.5",
-    "eslint-plugin-react-hooks": "4.6.2",
+    "eslint-plugin-react-hooks": "7.0.1",
     "eslint-plugin-security": "3.0.1",
     "eslint-plugin-simple-import-sort": "12.1.1",
     "eslint-plugin-unused-imports": "3.2.0",
@@ -119,18 +122,18 @@
   "overrides": {
     "@react-types/shared": "3.26.0",
     "alert": {
-      "react": "19.1.1",
-      "react-dom": "19.1.1"
+      "react": "19.2.0",
+      "react-dom": "19.2.0"
     },
     "@react-aria/ssr": {
-      "react": "19.1.1",
-      "react-dom": "19.1.1"
+      "react": "19.2.0",
+      "react-dom": "19.2.0"
     },
     "@react-aria/visually-hidden": {
-      "react": "19.1.1"
+      "react": "19.2.0"
     },
     "@react-aria/interactions": {
-      "react": "19.1.1"
+      "react": "19.2.0"
     }
   },
   "resolutions": {

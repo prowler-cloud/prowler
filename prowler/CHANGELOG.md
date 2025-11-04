@@ -2,7 +2,52 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [v5.13.0] (Prowler UNRELEASED)
+## [v5.14.0] (Prowler UNRELEASED)
+
+### Added
+- GitHub provider check `organization_default_repository_permission_strict` [(#8785)](https://github.com/prowler-cloud/prowler/pull/8785)
+- Add OCI mapping to scan and check classes [(#8927)](https://github.com/prowler-cloud/prowler/pull/8927)
+- `codepipeline_project_repo_private` check for AWS provider [(#5915)](https://github.com/prowler-cloud/prowler/pull/5915)
+- `cloudstorage_bucket_versioning_enabled` check for GCP provider [(#9014)](https://github.com/prowler-cloud/prowler/pull/9014)
+- `cloudstorage_bucket_soft_delete_enabled` check for GCP provider [(#9028)](https://github.com/prowler-cloud/prowler/pull/9028)
+- `cloudstorage_bucket_logging_enabled` check for GCP provider [(#9091)](https://github.com/prowler-cloud/prowler/pull/9091)
+- C5 compliance framework for Azure provider [(#9081)](https://github.com/prowler-cloud/prowler/pull/9081)
+- C5 compliance framework for the GCP provider [(#9097)](https://github.com/prowler-cloud/prowler/pull/9097)
+- HIPAA compliance framework for the GCP provider [(#8955)](https://github.com/prowler-cloud/prowler/pull/8955)
+
+### Changed
+- Update AWS Direct Connect service metadata to new format [(#8855)](https://github.com/prowler-cloud/prowler/pull/8855)
+- Update AWS DRS service metadata to new format [(#8870)](https://github.com/prowler-cloud/prowler/pull/8870)
+- Update AWS DynamoDB service metadata to new format [(#8871)](https://github.com/prowler-cloud/prowler/pull/8871)
+- Update AWS CloudWatch service metadata to new format [(#8848)](https://github.com/prowler-cloud/prowler/pull/8848)
+- Update AWS EMR service metadata to new format [(#9002)](https://github.com/prowler-cloud/prowler/pull/9002)
+- Update AWS EKS service metadata to new format [(#8890)](https://github.com/prowler-cloud/prowler/pull/8890)
+- Update AWS Elastic Beanstalk service metadata to new format [(#8934)](https://github.com/prowler-cloud/prowler/pull/8934)
+- Update AWS ElastiCache service metadata to new format [(#8933)](https://github.com/prowler-cloud/prowler/pull/8933)
+- Update AWS CodeBuild service metadata to new format [(#8851)](https://github.com/prowler-cloud/prowler/pull/8851)
+- Update GCP Artifact Registry service metadata to new format [(#9088)](https://github.com/prowler-cloud/prowler/pull/9088)
+- Update AWS EFS service metadata to new format [(#8889)](https://github.com/prowler-cloud/prowler/pull/8889)
+- Update AWS EventBridge service metadata to new format [(#9003)](https://github.com/prowler-cloud/prowler/pull/9003)
+- Update AWS Firehose service metadata to new format [(#9004)](https://github.com/prowler-cloud/prowler/pull/9004)
+- Update AWS FMS service metadata to new format [(#9005)](https://github.com/prowler-cloud/prowler/pull/9005)
+- Update AWS FSx service metadata to new format [(#9006)](https://github.com/prowler-cloud/prowler/pull/9006)
+- Update AWS Glacier service metadata to new format [(#9007)](https://github.com/prowler-cloud/prowler/pull/9007)
+- Update AWS CodeArtifact service metadata to new format [(#8850)](https://github.com/prowler-cloud/prowler/pull/8850)
+
+---
+
+## [v5.13.1] (Prowler UNRELEASED)
+
+### Fixed
+- Add `resource_name` for checks under `logging` for the GCP provider [(#9023)](https://github.com/prowler-cloud/prowler/pull/9023)
+- Fix `ec2_instance_with_outdated_ami` check to handle None AMIs [(#9046)](https://github.com/prowler-cloud/prowler/pull/9046)
+- Handle timestamp when transforming compliance findings in CCC [(#9042)](https://github.com/prowler-cloud/prowler/pull/9042)
+- Update `resource_id` for admincenter service and avoid unnecessary msgraph requests [(#9019)](https://github.com/prowler-cloud/prowler/pull/9019)
+- Fix `firehose_stream_encrypted_at_rest` description and findings clarity [(#9142)](https://github.com/prowler-cloud/prowler/pull/9142)
+
+---
+
+## [v5.13.0] (Prowler v5.13.0)
 
 ### Added
 - Support for AdditionalURLs in outputs [(#8651)](https://github.com/prowler-cloud/prowler/pull/8651)
@@ -17,6 +62,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Oracle Cloud provider with CIS 3.0 benchmark [(#8893)](https://github.com/prowler-cloud/prowler/pull/8893)
 - Support for Atlassian Document Format (ADF) in Jira integration [(#8878)](https://github.com/prowler-cloud/prowler/pull/8878)
 - Add Common Cloud Controls for AWS, Azure and GCP [(#8000)](https://github.com/prowler-cloud/prowler/pull/8000)
+- Improve Provider documentation guide [(#8430)](https://github.com/prowler-cloud/prowler/pull/8430)
 - `cloudstorage_bucket_lifecycle_management_enabled` check for GCP provider [(#8936)](https://github.com/prowler-cloud/prowler/pull/8936)
 
 ### Changed
@@ -43,7 +89,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS Directory Service service metadata to new format [(#8859)](https://github.com/prowler-cloud/prowler/pull/8859)
 - Update AWS CloudFront service metadata to new format [(#8829)](https://github.com/prowler-cloud/prowler/pull/8829)
 - Deprecate user authentication for M365 provider [(#8865)](https://github.com/prowler-cloud/prowler/pull/8865)
-- Update AWS EFS service metadata to new format [(#8889)](https://github.com/prowler-cloud/prowler/pull/8889)
 
 ### Fixed
 - Fix SNS topics showing empty AWS_ResourceID in Quick Inventory output [(#8762)](https://github.com/prowler-cloud/prowler/issues/8762)
@@ -51,13 +96,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Prowler ThreatScore scoring calculation CLI [(#8582)](https://github.com/prowler-cloud/prowler/pull/8582)
 - Add missing attributes for Mitre Attack AWS, Azure and GCP [(#8907)](https://github.com/prowler-cloud/prowler/pull/8907)
 - Fix KeyError in CloudSQL and Monitoring services in GCP provider [(#8909)](https://github.com/prowler-cloud/prowler/pull/8909)
+- Fix Value Errors in Entra service for M365 provider [(#8919)](https://github.com/prowler-cloud/prowler/pull/8919)
 - Fix ResourceName in GCP provider [(#8928)](https://github.com/prowler-cloud/prowler/pull/8928)
-
----
-
-## [v5.12.4] (Prowler UNRELEASED)
-
-### Fixed
 - Fix KeyError in `elb_ssl_listeners_use_acm_certificate` check and handle None cluster version in `eks_cluster_uses_a_supported_version` check [(#8791)](https://github.com/prowler-cloud/prowler/pull/8791)
 - Fix file extension parsing for compliance reports [(#8791)](https://github.com/prowler-cloud/prowler/pull/8791)
 - Added user pagination to Entra and Admincenter services [(#8858)](https://github.com/prowler-cloud/prowler/pull/8858)

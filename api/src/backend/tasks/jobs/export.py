@@ -20,16 +20,19 @@ from prowler.lib.outputs.asff.asff import ASFF
 from prowler.lib.outputs.compliance.aws_well_architected.aws_well_architected import (
     AWSWellArchitected,
 )
+from prowler.lib.outputs.compliance.c5.c5_aws import AWSC5
+from prowler.lib.outputs.compliance.c5.c5_azure import AzureC5
+from prowler.lib.outputs.compliance.c5.c5_gcp import GCPC5
 from prowler.lib.outputs.compliance.ccc.ccc_aws import CCC_AWS
 from prowler.lib.outputs.compliance.ccc.ccc_azure import CCC_Azure
 from prowler.lib.outputs.compliance.ccc.ccc_gcp import CCC_GCP
-from prowler.lib.outputs.compliance.c5.c5_aws import AWSC5
 from prowler.lib.outputs.compliance.cis.cis_aws import AWSCIS
 from prowler.lib.outputs.compliance.cis.cis_azure import AzureCIS
 from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
 from prowler.lib.outputs.compliance.cis.cis_github import GithubCIS
 from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
 from prowler.lib.outputs.compliance.cis.cis_m365 import M365CIS
+from prowler.lib.outputs.compliance.cis.cis_oci import OCICIS
 from prowler.lib.outputs.compliance.ens.ens_aws import AWSENS
 from prowler.lib.outputs.compliance.ens.ens_azure import AzureENS
 from prowler.lib.outputs.compliance.ens.ens_gcp import GCPENS
@@ -87,6 +90,7 @@ COMPLIANCE_CLASS_MAP = {
         (lambda name: name.startswith("iso27001_"), AzureISO27001),
         (lambda name: name == "ccc_azure", CCC_Azure),
         (lambda name: name == "prowler_threatscore_azure", ProwlerThreatScoreAzure),
+        (lambda name: name == "c5_azure", AzureC5),
     ],
     "gcp": [
         (lambda name: name.startswith("cis_"), GCPCIS),
@@ -95,6 +99,7 @@ COMPLIANCE_CLASS_MAP = {
         (lambda name: name.startswith("iso27001_"), GCPISO27001),
         (lambda name: name == "prowler_threatscore_gcp", ProwlerThreatScoreGCP),
         (lambda name: name == "ccc_gcp", CCC_GCP),
+        (lambda name: name == "c5_gcp", GCPC5),
     ],
     "kubernetes": [
         (lambda name: name.startswith("cis_"), KubernetesCIS),
@@ -107,6 +112,9 @@ COMPLIANCE_CLASS_MAP = {
     ],
     "github": [
         (lambda name: name.startswith("cis_"), GithubCIS),
+    ],
+    "oci": [
+        (lambda name: name.startswith("cis_"), OCICIS),
     ],
 }
 
@@ -183,18 +191,21 @@ def get_s3_client():
     return s3_client
 
 
-def _upload_to_s3(tenant_id: str, zip_path: str, scan_id: str) -> str | None:
+def _upload_to_s3(
+    tenant_id: str, scan_id: str, local_path: str, relative_key: str
+) -> str | None:
     """
-    Upload the specified ZIP file to an S3 bucket.
-    If the S3 bucket environment variables are not configured,
-    the function returns None without performing an upload.
+    Upload a local artifact to an S3 bucket under the tenant/scan prefix.
+
     Args:
-        tenant_id (str): The tenant identifier, used as part of the S3 key prefix.
-        zip_path (str): The local file system path to the ZIP file to be uploaded.
-        scan_id (str): The scan identifier, used as part of the S3 key prefix.
+        tenant_id (str): The tenant identifier used as the first segment of the S3 key.
+        scan_id (str): The scan identifier used as the second segment of the S3 key.
+        local_path (str): Filesystem path to the artifact to upload.
+        relative_key (str): Object key relative to `<tenant_id>/<scan_id>/`.
+
     Returns:
-        str: The S3 URI of the uploaded file (e.g., "s3://<bucket>/<key>") if successful.
-        None: If the required environment variables for the S3 bucket are not set.
+        str | None: S3 URI of the uploaded artifact, or None if the upload is skipped.
+
     Raises:
         botocore.exceptions.ClientError: If the upload attempt to S3 fails for any reason.
     """
@@ -202,27 +213,19 @@ def _upload_to_s3(tenant_id: str, zip_path: str, scan_id: str) -> str | None:
     if not bucket:
         return
 
+    if not relative_key:
+        return
+
+    if not os.path.isfile(local_path):
+        return
+
     try:
         s3 = get_s3_client()
 
-        # Upload the ZIP file (outputs) to the S3 bucket
-        zip_key = f"{tenant_id}/{scan_id}/{os.path.basename(zip_path)}"
-        s3.upload_file(
-            Filename=zip_path,
-            Bucket=bucket,
-            Key=zip_key,
-        )
+        s3_key = f"{tenant_id}/{scan_id}/{relative_key}"
+        s3.upload_file(Filename=local_path, Bucket=bucket, Key=s3_key)
 
-        # Upload the compliance directory to the S3 bucket
-        compliance_dir = os.path.join(os.path.dirname(zip_path), "compliance")
-        for filename in os.listdir(compliance_dir):
-            local_path = os.path.join(compliance_dir, filename)
-            if not os.path.isfile(local_path):
-                continue
-            file_key = f"{tenant_id}/{scan_id}/compliance/{filename}"
-            s3.upload_file(Filename=local_path, Bucket=bucket, Key=file_key)
-
-        return f"s3://{base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET}/{zip_key}"
+        return f"s3://{base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET}/{s3_key}"
     except (ClientError, NoCredentialsError, ParamValidationError, ValueError) as e:
         logger.error(f"S3 upload failed: {str(e)}")
 

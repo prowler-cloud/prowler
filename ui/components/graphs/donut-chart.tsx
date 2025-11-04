@@ -21,44 +21,40 @@ interface DonutChartProps {
 }
 
 const CustomTooltip = ({ active, payload }: any) => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload;
-    return (
-      <div
-        className="rounded-lg border p-3 shadow-lg"
-        style={{
-          backgroundColor: "var(--chart-background)",
-          borderColor: "var(--chart-border-emphasis)",
-        }}
-      >
-        <div className="flex items-center gap-2">
+  if (!active || !payload || !payload.length) return null;
+
+  const entry = payload[0];
+  const name = entry.name;
+  const percentage = entry.payload?.percentage;
+  const color = entry.color || entry.payload?.color;
+  const change = entry.payload?.change;
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 shadow-lg dark:border-[#202020] dark:bg-[#121110]">
+      <div className="flex flex-col gap-0.5">
+        {/* Title with color chip */}
+        <div className="flex items-center gap-1">
           <div
-            className="h-3 w-3 rounded-sm"
-            style={{ backgroundColor: data.color }}
+            className="size-3 shrink-0 rounded"
+            style={{ backgroundColor: color }}
           />
-          <span
-            className="text-sm font-semibold"
-            style={{ color: "var(--chart-text-primary)" }}
-          >
-            {data.percentage}% {data.name}
-          </span>
-        </div>
-        {data.change !== undefined && (
-          <p
-            className="mt-2 text-xs"
-            style={{ color: "var(--chart-text-secondary)" }}
-          >
-            <span className="font-bold">
-              {data.change > 0 ? "+" : ""}
-              {data.change}%
-            </span>{" "}
-            Since last scan
+          <p className="text-sm leading-5 font-medium text-slate-900 dark:text-[#f4f4f5]">
+            {percentage}% {name}
           </p>
+        </div>
+
+        {/* Change percentage row */}
+        {change !== undefined && (
+          <div className="flex items-start">
+            <p className="text-sm leading-5 font-medium text-slate-600 dark:text-[#d4d4d8]">
+              {change > 0 ? "+" : ""}
+              {change}% Since last scan
+            </p>
+          </div>
         )}
       </div>
-    );
-  }
-  return null;
+    </div>
+  );
 };
 
 const CustomLegend = ({ payload }: any) => {
@@ -72,8 +68,8 @@ const CustomLegend = ({ payload }: any) => {
 
 export function DonutChart({
   data,
-  innerRadius = 80,
-  outerRadius = 120,
+  innerRadius = 68,
+  outerRadius = 86,
   showLegend = true,
   centerLabel,
 }: DonutChartProps) {
@@ -99,32 +95,46 @@ export function DonutChart({
     change: item.change,
   }));
 
-  const legendPayload = chartData.map((entry) => ({
-    value: entry.name,
+  const total = chartData.reduce((sum, d) => sum + (Number(d.value) || 0), 0);
+  const isEmpty = total <= 0;
+
+  const emptyData = [
+    {
+      name: "No data",
+      value: 1,
+      fill: "var(--chart-border-emphasis)",
+      color: "var(--chart-border-emphasis)",
+      percentage: 0,
+      change: undefined,
+    },
+  ];
+
+  const legendPayload = (isEmpty ? emptyData : chartData).map((entry) => ({
+    value: isEmpty ? "No data" : entry.name,
     color: entry.color,
     payload: {
-      percentage: entry.percentage,
+      percentage: isEmpty ? 0 : entry.percentage,
     },
   }));
 
   return (
-    <div>
+    <>
       <ChartContainer
         config={chartConfig}
         className="mx-auto aspect-square max-h-[350px]"
       >
         <PieChart>
-          <Tooltip content={<CustomTooltip />} />
+          {!isEmpty && <Tooltip content={<CustomTooltip />} />}
           <Pie
-            data={chartData}
+            data={isEmpty ? emptyData : chartData}
             dataKey="value"
             nameKey="name"
             innerRadius={innerRadius}
             outerRadius={outerRadius}
             strokeWidth={0}
-            paddingAngle={2}
+            paddingAngle={0}
           >
-            {chartData.map((entry, index) => {
+            {(isEmpty ? emptyData : chartData).map((entry, index) => {
               const opacity =
                 hoveredIndex === null ? 1 : hoveredIndex === index ? 1 : 0.5;
               return (
@@ -138,14 +148,18 @@ export function DonutChart({
                 />
               );
             })}
-            {centerLabel && (
+            {(centerLabel || isEmpty) && (
               <Label
                 content={({ viewBox }) => {
                   if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                    const centerValue = centerLabel ? centerLabel.value : 0;
+                    const centerText = centerLabel
+                      ? centerLabel.label
+                      : "No data";
                     const formattedValue =
-                      typeof centerLabel.value === "number"
-                        ? centerLabel.value.toLocaleString()
-                        : centerLabel.value;
+                      typeof centerValue === "number"
+                        ? centerValue.toLocaleString()
+                        : centerValue;
 
                     return (
                       <text
@@ -156,10 +170,10 @@ export function DonutChart({
                       >
                         <tspan
                           x={viewBox.cx}
-                          y={viewBox.cy}
-                          className="text-3xl font-bold"
+                          y={(viewBox.cy || 0) - 6}
+                          className="text-2xl font-bold text-zinc-800 dark:text-zinc-300"
                           style={{
-                            fill: "var(--chart-text-primary)",
+                            fill: "currentColor",
                           }}
                         >
                           {formattedValue}
@@ -167,11 +181,12 @@ export function DonutChart({
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) + 24}
+                          className="text-xs text-zinc-800 dark:text-zinc-400"
                           style={{
-                            fill: "var(--chart-text-secondary)",
+                            fill: "currentColor",
                           }}
                         >
-                          {centerLabel.label}
+                          {centerText}
                         </tspan>
                       </text>
                     );
@@ -183,6 +198,6 @@ export function DonutChart({
         </PieChart>
       </ChartContainer>
       {showLegend && <CustomLegend payload={legendPayload} />}
-    </div>
+    </>
   );
 }
