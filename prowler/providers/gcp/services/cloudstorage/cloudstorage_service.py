@@ -63,7 +63,7 @@ class CloudStorage(GCPService):
                             if rp_seconds:
                                 retention_policy = RetentionPolicy(
                                     retention_period=int(rp_seconds),
-                                    is_looked=bool(
+                                    is_locked=bool(
                                         retention_policy_raw.get("isLocked", False)
                                     ),
                                     effective_time=retention_policy_raw.get(
