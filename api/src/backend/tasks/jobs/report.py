@@ -1981,14 +1981,12 @@ def _create_nis2_subsection_table(
             else 100
         )
 
-        # Truncate long subsection names
-        subsection_display = (
-            subsection[:60] + "..." if len(subsection) > 60 else subsection
-        )
+        if len(subsection) > 100:
+            subsection = subsection[:80] + "..."
 
         table_data.append(
             [
-                subsection_display,
+                subsection,  # No truncate - let it wrap naturally
                 str(total),
                 str(data["passed"]),
                 str(data["failed"]),
@@ -1997,10 +1995,17 @@ def _create_nis2_subsection_table(
             ]
         )
 
-    # Create table
+    # Create table with wider SubSection column
     table = Table(
         table_data,
-        colWidths=[3 * inch, 0.6 * inch, 0.6 * inch, 0.6 * inch, 0.7 * inch, 1 * inch],
+        colWidths=[
+            4.5 * inch,
+            0.6 * inch,
+            0.6 * inch,
+            0.6 * inch,
+            0.7 * inch,
+            1 * inch,
+        ],
     )
     table.setStyle(
         TableStyle(
@@ -2065,13 +2070,14 @@ def _create_nis2_requirements_index(
         else:
             status_indicator = "⊙"
 
+        description = requirement["attributes"].get(
+            "description", "No description available"
+        )
         sections_hierarchy[section][subsection].append(
             {
                 "id": requirement_id,
                 "description": (
-                    requirement["description"][:100] + "..."
-                    if len(requirement["description"]) > 100
-                    else requirement["description"]
+                    description[:100] + "..." if len(description) > 100 else description
                 ),
                 "status_indicator": status_indicator,
             }
@@ -3142,16 +3148,40 @@ def generate_nis2_report(
         elements = []
 
         # SECTION 1: Cover Page
+        # Create logos side by side
         prowler_logo_path = os.path.join(
             os.path.dirname(__file__), "../assets/img/prowler_logo.png"
         )
+        nis2_logo_path = os.path.join(
+            os.path.dirname(__file__), "../assets/img/nis2_logo.png"
+        )
+
         prowler_logo = Image(
             prowler_logo_path,
             width=3.5 * inch,
             height=0.7 * inch,
         )
+        nis2_logo = Image(
+            nis2_logo_path,
+            width=2.3 * inch,
+            height=1.5 * inch,
+        )
 
-        elements.append(prowler_logo)
+        # Create table with both logos
+        logos_table = Table(
+            [[prowler_logo, nis2_logo]], colWidths=[4 * inch, 2.5 * inch]
+        )
+        logos_table.setStyle(
+            TableStyle(
+                [
+                    ("ALIGN", (0, 0), (0, 0), "LEFT"),
+                    ("ALIGN", (1, 0), (1, 0), "RIGHT"),
+                    ("VALIGN", (0, 0), (0, 0), "MIDDLE"),  # Prowler logo middle
+                    ("VALIGN", (1, 0), (1, 0), "MIDDLE"),  # NIS2 logo middle
+                ]
+            )
+        )
+        elements.append(logos_table)
         elements.append(Spacer(1, 0.3 * inch))
 
         # Title
@@ -3164,29 +3194,15 @@ def generate_nis2_report(
 
         # Compliance metadata table
         metadata_data = [
-            ["Framework", compliance_framework],
-            [
-                "Name",
-                (
-                    compliance_name[:80] + "..."
-                    if len(compliance_name) > 80
-                    else compliance_name
-                ),
-            ],
-            ["Version", compliance_version or "N/A"],
-            ["Provider", provider_type.upper()],
-            ["Scan ID", scan_id],
-            [
-                "Description",
-                (
-                    compliance_description[:150] + "..."
-                    if len(compliance_description) > 150
-                    else compliance_description
-                ),
-            ],
+            ["Framework:", compliance_framework],
+            ["Name:", Paragraph(compliance_name, normal_center)],
+            ["Version:", compliance_version or "N/A"],
+            ["Provider:", provider_type.upper()],
+            ["Scan ID:", scan_id],
+            ["Description:", Paragraph(compliance_description, normal_center)],
         ]
 
-        metadata_table = Table(metadata_data, colWidths=[1.5 * inch, 5 * inch])
+        metadata_table = Table(metadata_data, colWidths=[COL_WIDTH_XLARGE, 4 * inch])
         metadata_table.setStyle(_create_info_table_style())
         elements.append(metadata_table)
         elements.append(PageBreak())
@@ -3233,18 +3249,28 @@ def generate_nis2_report(
         summary_table.setStyle(
             TableStyle(
                 [
+                    # Header row
                     ("BACKGROUND", (0, 0), (-1, 0), COLOR_NIS2_PRIMARY),
                     ("TEXTCOLOR", (0, 0), (-1, 0), COLOR_WHITE),
+                    # Status-specific colors for left column
+                    ("BACKGROUND", (0, 2), (0, 2), COLOR_SAFE),  # Passed row
+                    ("TEXTCOLOR", (0, 2), (0, 2), COLOR_WHITE),
+                    ("BACKGROUND", (0, 3), (0, 3), COLOR_HIGH_RISK),  # Failed row
+                    ("TEXTCOLOR", (0, 3), (0, 3), COLOR_WHITE),
+                    ("BACKGROUND", (0, 4), (0, 4), COLOR_DARK_GRAY),  # Manual row
+                    ("TEXTCOLOR", (0, 4), (0, 4), COLOR_WHITE),
+                    # General styling
                     ("ALIGN", (0, 0), (-1, -1), "CENTER"),
                     ("FONTNAME", (0, 0), (-1, 0), "PlusJakartaSans"),
                     ("FONTSIZE", (0, 0), (-1, 0), 12),
                     ("FONTSIZE", (0, 1), (-1, -1), 10),
                     ("BOTTOMPADDING", (0, 0), (-1, 0), 10),
                     ("GRID", (0, 0), (-1, -1), 0.5, COLOR_BORDER_GRAY),
+                    # Alternating backgrounds for right column
                     (
                         "ROWBACKGROUNDS",
-                        (0, 1),
-                        (-1, -1),
+                        (1, 1),
+                        (1, -1),
                         [COLOR_WHITE, COLOR_NIS2_BG_BLUE],
                     ),
                 ]
@@ -3283,42 +3309,7 @@ def generate_nis2_report(
         elements.append(subsection_table)
         elements.append(PageBreak())
 
-        # SECTION 5: Critical Failed Requirements
-        elements.append(Paragraph("Critical Failed Requirements", h1))
-        elements.append(Spacer(1, 0.1 * inch))
-
-        # Group failed requirements by section
-        failed_by_section = defaultdict(list)
-        for requirement in requirements_list:
-            if requirement["attributes"].get("status") == StatusChoices.FAIL:
-                requirement_id = requirement["id"]
-                requirement_attributes = attributes_by_requirement_id.get(
-                    requirement_id, {}
-                )
-                metadata = requirement_attributes.get("attributes", {}).get(
-                    "req_attributes", []
-                )
-
-                if metadata:
-                    m = metadata[0]
-                    section = _safe_getattr(m, "Section", "Unknown")
-                    failed_by_section[section].append(requirement)
-
-        if failed_by_section:
-            for section in sorted(failed_by_section.keys()):
-                elements.append(Paragraph(f"Section: {section[:100]}", h2))
-
-                for req in failed_by_section[section][:5]:  # Limit to top 5 per section
-                    req_text = f"• {req['id']}: {req['description'][:150]}..."
-                    elements.append(Paragraph(req_text, normal))
-
-                elements.append(Spacer(1, 0.1 * inch))
-        else:
-            elements.append(Paragraph("No failed requirements found.", normal_center))
-
-        elements.append(PageBreak())
-
-        # SECTION 6: Requirements Index
+        # SECTION 5: Requirements Index
         elements.append(Paragraph("Requirements Index", h1))
         elements.append(Spacer(1, 0.1 * inch))
 
@@ -3328,7 +3319,7 @@ def generate_nis2_report(
         elements.extend(index_elements)
         elements.append(PageBreak())
 
-        # SECTION 7: Detailed Findings
+        # SECTION 6: Detailed Findings
         elements.append(Paragraph("Detailed Findings", h1))
         elements.append(Spacer(1, 0.1 * inch))
 
@@ -3372,39 +3363,44 @@ def generate_nis2_report(
                     elements.append(Paragraph(f"Requirement: {requirement_id}", h2))
 
                     # Info table
+                    description = requirement["attributes"].get(
+                        "description", "No description available"
+                    )
                     info_data = [
-                        [
-                            "Section",
-                            section[:80] + "..." if len(section) > 80 else section,
-                        ],
-                        [
-                            "SubSection",
-                            (
-                                subsection[:80] + "..."
-                                if len(subsection) > 80
-                                else subsection
-                            ),
-                        ],
-                        ["Service", service],
-                        ["Status", status],
-                        ["Description", requirement["description"]],
+                        ["Section:", Paragraph(section, normal_center)],
+                        ["SubSection:", Paragraph(subsection, normal_center)],
+                        ["Service:", service],
+                        ["Status:", status],
+                        ["Description:", Paragraph(description, normal_center)],
                     ]
 
-                    info_table = Table(info_data, colWidths=[1.5 * inch, 5 * inch])
-                    info_table.setStyle(
-                        TableStyle(
-                            [
-                                ("BACKGROUND", (0, 0), (0, -1), COLOR_NIS2_BG_BLUE),
-                                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                                ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                                ("FONTNAME", (0, 0), (0, -1), "PlusJakartaSans"),
-                                ("FONTSIZE", (0, 0), (-1, -1), 9),
-                                ("GRID", (0, 0), (-1, -1), 0.5, COLOR_BORDER_GRAY),
-                                ("BACKGROUND", (1, 3), (1, 3), status_color),
-                                ("TEXTCOLOR", (1, 3), (1, 3), COLOR_WHITE),
-                            ]
-                        )
+                    info_table = Table(
+                        info_data, colWidths=[COL_WIDTH_XLARGE, 4 * inch]
                     )
+
+                    # Create custom style based on _create_info_table_style
+                    info_style = TableStyle(
+                        [
+                            ("BACKGROUND", (0, 0), (0, -1), COLOR_BLUE),
+                            ("TEXTCOLOR", (0, 0), (0, -1), COLOR_WHITE),
+                            ("FONTNAME", (0, 0), (0, -1), "FiraCode"),
+                            ("BACKGROUND", (1, 0), (1, -1), COLOR_BG_BLUE),
+                            ("TEXTCOLOR", (1, 0), (1, -1), COLOR_GRAY),
+                            ("FONTNAME", (1, 0), (1, -1), "PlusJakartaSans"),
+                            ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                            ("FONTSIZE", (0, 0), (-1, -1), 11),
+                            ("GRID", (0, 0), (-1, -1), 1, COLOR_BORDER_GRAY),
+                            ("LEFTPADDING", (0, 0), (-1, -1), PADDING_XLARGE),
+                            ("RIGHTPADDING", (0, 0), (-1, -1), PADDING_XLARGE),
+                            ("TOPPADDING", (0, 0), (-1, -1), PADDING_LARGE),
+                            ("BOTTOMPADDING", (0, 0), (-1, -1), PADDING_LARGE),
+                            # Status color override
+                            ("BACKGROUND", (1, 3), (1, 3), status_color),
+                            ("TEXTCOLOR", (1, 3), (1, 3), COLOR_WHITE),
+                        ]
+                    )
+                    info_table.setStyle(info_style)
                     elements.append(info_table)
                     elements.append(Spacer(1, 0.1 * inch))
 
