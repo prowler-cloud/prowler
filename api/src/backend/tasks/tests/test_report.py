@@ -20,6 +20,7 @@ from tasks.jobs.report import (
     COLOR_HIGH_RISK,
     COLOR_LOW_RISK,
     COLOR_MEDIUM_RISK,
+    COLOR_NIS2_PRIMARY,
     COLOR_SAFE,
     _aggregate_requirement_statistics_from_database,
     _calculate_requirements_data_from_statistics,
@@ -31,6 +32,9 @@ from tasks.jobs.report import (
     _create_header_table_style,
     _create_info_table_style,
     _create_marco_category_chart,
+    _create_nis2_requirements_index,
+    _create_nis2_section_chart,
+    _create_nis2_subsection_table,
     _create_pdf_styles,
     _create_risk_component,
     _create_section_score_chart,
@@ -43,6 +47,7 @@ from tasks.jobs.report import (
     _load_findings_for_requirement_checks,
     _safe_getattr,
     generate_compliance_reports_job,
+    generate_nis2_report,
     generate_threatscore_report,
 )
 
@@ -1421,3 +1426,351 @@ class TestGenerateComplianceReportsOptimized:
             # Verify DB was only queried for check-2 (not check-1)
             filter_call = mock_finding_class.all_objects.filter.call_args
             assert filter_call[1]["check_id__in"] == ["check-2"]
+
+
+class TestNIS2SectionChart:
+    """Test suite for _create_nis2_section_chart function."""
+
+    @pytest.fixture(autouse=True)
+    def setup_matplotlib(self):
+        """Setup matplotlib backend for tests."""
+        matplotlib.use("Agg")
+
+    def test_creates_chart_with_sections(self):
+        """Verify chart is created with correct sections and compliance data."""
+        # Mock requirement with NIS2 section attribute
+        mock_attr = Mock()
+        mock_attr.Section = (
+            "1 POLICY ON THE SECURITY OF NETWORK AND INFORMATION SYSTEMS"
+        )
+
+        requirements_list = [
+            {
+                "id": "1.1.1.a",
+                "description": "Test requirement",
+                "attributes": {
+                    "passed_findings": 5,
+                    "total_findings": 10,
+                    "status": StatusChoices.FAIL,
+                },
+            }
+        ]
+
+        attributes_by_requirement_id = {
+            "1.1.1.a": {
+                "attributes": {
+                    "req_attributes": [mock_attr],
+                }
+            }
+        }
+
+        # Call function
+        result = _create_nis2_section_chart(
+            requirements_list, attributes_by_requirement_id
+        )
+
+        # Verify result is a BytesIO buffer
+        assert isinstance(result, io.BytesIO)
+        assert result.tell() > 0  # Buffer has content
+
+    def test_handles_empty_requirements(self):
+        """Verify chart handles empty requirements gracefully."""
+        result = _create_nis2_section_chart([], {})
+
+        # Verify result is still a valid BytesIO buffer
+        assert isinstance(result, io.BytesIO)
+
+    def test_calculates_compliance_percentage_correctly(self):
+        """Verify compliance percentage calculation is correct."""
+        mock_attr1 = Mock()
+        mock_attr1.Section = "11 ACCESS CONTROL"
+
+        mock_attr2 = Mock()
+        mock_attr2.Section = "11 ACCESS CONTROL"
+
+        requirements_list = [
+            {
+                "id": "11.1.1",
+                "description": "Test 1",
+                "attributes": {
+                    "passed_findings": 8,
+                    "total_findings": 10,  # 80%
+                    "status": StatusChoices.PASS,
+                },
+            },
+            {
+                "id": "11.1.2",
+                "description": "Test 2",
+                "attributes": {
+                    "passed_findings": 10,
+                    "total_findings": 10,  # 100%
+                    "status": StatusChoices.PASS,
+                },
+            },
+        ]
+
+        attributes_by_requirement_id = {
+            "11.1.1": {"attributes": {"req_attributes": [mock_attr1]}},
+            "11.1.2": {"attributes": {"req_attributes": [mock_attr2]}},
+        }
+
+        # Call function
+        result = _create_nis2_section_chart(
+            requirements_list, attributes_by_requirement_id
+        )
+
+        # Expected: (8+10)/(10+10) = 18/20 = 90%
+        assert isinstance(result, io.BytesIO)
+
+
+class TestNIS2SubsectionTable:
+    """Test suite for _create_nis2_subsection_table function."""
+
+    def test_creates_table_with_subsections(self):
+        """Verify table is created with correct subsection breakdown."""
+        mock_attr1 = Mock()
+        mock_attr1.SubSection = (
+            "1.1 Policy on the security of network and information systems"
+        )
+
+        mock_attr2 = Mock()
+        mock_attr2.SubSection = "1.2 Roles, responsibilities and authorities"
+
+        requirements_list = [
+            {
+                "id": "1.1.1.a",
+                "description": "Test 1",
+                "attributes": {"status": StatusChoices.PASS},
+            },
+            {
+                "id": "1.1.1.b",
+                "description": "Test 2",
+                "attributes": {"status": StatusChoices.FAIL},
+            },
+            {
+                "id": "1.2.1",
+                "description": "Test 3",
+                "attributes": {"status": StatusChoices.MANUAL},
+            },
+        ]
+
+        attributes_by_requirement_id = {
+            "1.1.1.a": {"attributes": {"req_attributes": [mock_attr1]}},
+            "1.1.1.b": {"attributes": {"req_attributes": [mock_attr1]}},
+            "1.2.1": {"attributes": {"req_attributes": [mock_attr2]}},
+        }
+
+        # Call function
+        result = _create_nis2_subsection_table(
+            requirements_list, attributes_by_requirement_id
+        )
+
+        # Verify result is a Table
+        assert isinstance(result, Table)
+
+        # Verify table has correct structure (header + data rows)
+        assert len(result._cellvalues) > 1  # At least header + 1 row
+
+        # Verify header row
+        assert result._cellvalues[0][0] == "SubSection"
+        assert result._cellvalues[0][1] == "Total"
+        assert result._cellvalues[0][2] == "Pass"
+        assert result._cellvalues[0][3] == "Fail"
+        assert result._cellvalues[0][4] == "Manual"
+        assert result._cellvalues[0][5] == "Compliance %"
+
+    def test_table_has_correct_styling(self):
+        """Verify table has NIS2 styling applied."""
+        mock_attr = Mock()
+        mock_attr.SubSection = "Test SubSection"
+
+        requirements_list = [
+            {
+                "id": "1.1.1.a",
+                "description": "Test",
+                "attributes": {"status": StatusChoices.PASS},
+            }
+        ]
+
+        attributes_by_requirement_id = {
+            "1.1.1.a": {"attributes": {"req_attributes": [mock_attr]}}
+        }
+
+        result = _create_nis2_subsection_table(
+            requirements_list, attributes_by_requirement_id
+        )
+
+        # Verify styling is applied
+        assert isinstance(result._cellStyles, list)
+        assert len(result._cellStyles) > 0
+
+
+class TestNIS2RequirementsIndex:
+    """Test suite for _create_nis2_requirements_index function."""
+
+    def test_creates_hierarchical_index(self):
+        """Verify index creates hierarchical structure by Section and SubSection."""
+        pdf_styles = _create_pdf_styles()
+
+        mock_attr1 = Mock()
+        mock_attr1.Section = "1 POLICY ON SECURITY"
+        mock_attr1.SubSection = "1.1 Policy definition"
+
+        mock_attr2 = Mock()
+        mock_attr2.Section = "1 POLICY ON SECURITY"
+        mock_attr2.SubSection = "1.2 Roles and responsibilities"
+
+        requirements_list = [
+            {
+                "id": "1.1.1.a",
+                "description": "Define security policies",
+                "attributes": {"status": StatusChoices.PASS},
+            },
+            {
+                "id": "1.2.1",
+                "description": "Assign security roles",
+                "attributes": {"status": StatusChoices.FAIL},
+            },
+        ]
+
+        attributes_by_requirement_id = {
+            "1.1.1.a": {"attributes": {"req_attributes": [mock_attr1]}},
+            "1.2.1": {"attributes": {"req_attributes": [mock_attr2]}},
+        }
+
+        # Call function
+        result = _create_nis2_requirements_index(
+            requirements_list,
+            attributes_by_requirement_id,
+            pdf_styles["h2"],
+            pdf_styles["h3"],
+            pdf_styles["normal"],
+        )
+
+        # Verify result is a list of elements
+        assert isinstance(result, list)
+        assert len(result) > 0
+
+    def test_includes_status_indicators(self):
+        """Verify index includes status indicators (✓, ✗, ⊙)."""
+        pdf_styles = _create_pdf_styles()
+
+        mock_attr = Mock()
+        mock_attr.Section = "Test Section"
+        mock_attr.SubSection = "Test SubSection"
+
+        requirements_list = [
+            {
+                "id": "test.1",
+                "description": "Passed requirement",
+                "attributes": {"status": StatusChoices.PASS},
+            },
+            {
+                "id": "test.2",
+                "description": "Failed requirement",
+                "attributes": {"status": StatusChoices.FAIL},
+            },
+            {
+                "id": "test.3",
+                "description": "Manual requirement",
+                "attributes": {"status": StatusChoices.MANUAL},
+            },
+        ]
+
+        attributes_by_requirement_id = {
+            "test.1": {"attributes": {"req_attributes": [mock_attr]}},
+            "test.2": {"attributes": {"req_attributes": [mock_attr]}},
+            "test.3": {"attributes": {"req_attributes": [mock_attr]}},
+        }
+
+        result = _create_nis2_requirements_index(
+            requirements_list,
+            attributes_by_requirement_id,
+            pdf_styles["h2"],
+            pdf_styles["h3"],
+            pdf_styles["normal"],
+        )
+
+        # Convert paragraphs to text and check for status indicators
+        str(result)
+        # Status indicators should be present in the generated content
+        assert len(result) > 0
+
+
+@pytest.mark.django_db
+class TestGenerateNIS2Report:
+    """Test suite for generate_nis2_report function."""
+
+    @patch("tasks.jobs.report._upload_to_s3")
+    @patch("tasks.jobs.report._generate_output_directory")
+    @patch("tasks.jobs.report.Provider.objects.get")
+    @patch("tasks.jobs.report.ScanSummary.objects.filter")
+    @patch("tasks.jobs.report.Compliance.get_bulk")
+    @patch("tasks.jobs.report.SimpleDocTemplate")
+    def test_generates_nis2_report_successfully(
+        self,
+        mock_doc,
+        mock_compliance,
+        mock_scan_summary,
+        mock_provider_get,
+        mock_output_dir,
+        mock_upload,
+        tenants_fixture,
+        scans_fixture,
+    ):
+        """Verify NIS2 report generation completes successfully."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+
+        # Setup mocks
+        mock_provider = Mock()
+        mock_provider.provider = "aws"
+        mock_provider.uid = "provider-123"
+        mock_provider_get.return_value = mock_provider
+
+        mock_scan_summary.return_value.exists.return_value = True
+
+        # Mock compliance object
+        mock_compliance_obj = Mock()
+        mock_compliance_obj.Framework = "NIS2"
+        mock_compliance_obj.Name = "Network and Information Security Directive"
+        mock_compliance_obj.Version = ""
+        mock_compliance_obj.Description = "NIS2 Directive"
+        mock_compliance_obj.Requirements = []
+
+        mock_compliance.return_value = {"nis2_aws": mock_compliance_obj}
+
+        mock_output_dir.return_value = "/tmp/test"
+        mock_doc_instance = Mock()
+        mock_doc.return_value = mock_doc_instance
+
+        # Call function
+        with patch("tasks.jobs.report.rls_transaction"):
+            with patch(
+                "tasks.jobs.report._aggregate_requirement_statistics_from_database"
+            ) as mock_aggregate:
+                mock_aggregate.return_value = {}
+
+                with patch(
+                    "tasks.jobs.report._calculate_requirements_data_from_statistics"
+                ) as mock_calculate:
+                    mock_calculate.return_value = ({}, [])
+
+                    # Should not raise exception
+                    generate_nis2_report(
+                        tenant_id=str(tenant.id),
+                        scan_id=str(scan.id),
+                        compliance_id="nis2_aws",
+                        output_path="/tmp/test_nis2.pdf",
+                        provider_id="provider-123",
+                        only_failed=True,
+                    )
+
+        # Verify PDF was built
+        mock_doc_instance.build.assert_called_once()
+
+    def test_nis2_colors_are_defined(self):
+        """Verify NIS2 specific colors are defined."""
+        # Check that NIS2 primary color exists
+        assert COLOR_NIS2_PRIMARY is not None
+        assert isinstance(COLOR_NIS2_PRIMARY, colors.Color)

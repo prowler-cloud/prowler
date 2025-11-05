@@ -8714,6 +8714,72 @@ paths:
         '404':
           description: The scan has no ENS reports, or the ENS report generation task
             has not started yet
+  /api/v1/scans/{id}/nis2:
+    get:
+      operationId: scans_nis2_retrieve
+      description: Download NIS2 compliance report (Directive (EU) 2022/2555) as a
+        PDF file.
+      summary: Retrieve NIS2 compliance report
+      parameters:
+      - in: query
+        name: fields[scans]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - trigger
+            - state
+            - unique_resource_count
+            - progress
+            - duration
+            - provider
+            - task
+            - inserted_at
+            - started_at
+            - completed_at
+            - scheduled_at
+            - next_scan_at
+            - processor
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scan.
+        required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      tags:
+      - Scan
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          description: PDF file containing the NIS2 compliance report
+        '202':
+          description: The task is in progress
+        '401':
+          description: API key missing or user not Authenticated
+        '403':
+          description: There is a problem with credentials
+        '404':
+          description: The scan has no NIS2 reports, or the NIS2 report generation
+            task has not started yet
   /api/v1/schedules/daily:
     post:
       operationId: schedules_daily_create

@@ -84,6 +84,11 @@ COLOR_ENS_TIPO = colors.Color(0.2, 0.4, 0.6)
 COLOR_ENS_AUTO = colors.Color(0.30, 0.69, 0.31)
 COLOR_ENS_MANUAL = colors.Color(0.96, 0.60, 0.0)
 
+# NIS2 specific colors
+COLOR_NIS2_PRIMARY = colors.Color(0.12, 0.23, 0.54)  # EU Blue #1E3A8A
+COLOR_NIS2_SECONDARY = colors.Color(0.23, 0.51, 0.96)  # Light Blue #3B82F6
+COLOR_NIS2_BG_BLUE = colors.Color(0.96, 0.97, 0.99)  # Very light blue background
+
 # Chart colors
 CHART_COLOR_GREEN_1 = "#4CAF50"
 CHART_COLOR_GREEN_2 = "#8BC34A"
@@ -138,6 +143,20 @@ THREATSCORE_SECTIONS = [
     "2. Attack Surface",
     "3. Logging and Monitoring",
     "4. Encryption",
+]
+
+# NIS2 main sections (simplified for chart display)
+NIS2_SECTIONS = [
+    "1",  # Policy on Security
+    "2",  # Risk Management
+    "3",  # Incident Handling
+    "4",  # Business Continuity
+    "5",  # Supply Chain Security
+    "6",  # Acquisition & Development
+    "7",  # Effectiveness Assessment
+    "9",  # Cryptography
+    "11",  # Access Control
+    "12",  # Asset Management
 ]
 
 # Table column widths (in inches)
@@ -1804,6 +1823,282 @@ def generate_threatscore_report(
         raise e
 
 
+def _create_nis2_section_chart(
+    requirements_list: list[dict], attributes_by_requirement_id: dict
+) -> io.BytesIO:
+    """
+    Create a horizontal bar chart showing compliance percentage by NIS2 section.
+
+    Args:
+        requirements_list (list[dict]): List of requirement dictionaries with status and findings data.
+        attributes_by_requirement_id (dict): Mapping of requirement IDs to their attributes.
+
+    Returns:
+        io.BytesIO: A BytesIO buffer containing the chart image in PNG format.
+    """
+    # Initialize sections data
+    sections_data = defaultdict(lambda: {"passed": 0, "total": 0})
+
+    # Collect data from requirements
+    for requirement in requirements_list:
+        requirement_id = requirement["id"]
+        requirement_attributes = attributes_by_requirement_id.get(requirement_id, {})
+
+        metadata = requirement_attributes.get("attributes", {}).get(
+            "req_attributes", []
+        )
+        if not metadata:
+            continue
+
+        m = metadata[0]
+        section_full = _safe_getattr(m, "Section", "")
+
+        # Extract section number (e.g., "1" from "1 POLICY ON...")
+        section_number = section_full.split()[0] if section_full else "Unknown"
+
+        # Get findings data
+        passed_findings = requirement["attributes"].get("passed_findings", 0)
+        total_findings = requirement["attributes"].get("total_findings", 0)
+
+        if total_findings > 0:
+            sections_data[section_number]["passed"] += passed_findings
+            sections_data[section_number]["total"] += total_findings
+
+    # Calculate percentages and prepare data for chart
+    section_names = []
+    compliance_percentages = []
+
+    # Get section titles for display
+    section_titles = {
+        "1": "1. Policy on Security",
+        "2": "2. Risk Management",
+        "3": "3. Incident Handling",
+        "4": "4. Business Continuity",
+        "5": "5. Supply Chain",
+        "6": "6. Acquisition & Dev",
+        "7": "7. Effectiveness",
+        "9": "9. Cryptography",
+        "11": "11. Access Control",
+        "12": "12. Asset Management",
+    }
+
+    # Sort by section number
+    for section_num in sorted(
+        sections_data.keys(), key=lambda x: int(x) if x.isdigit() else 999
+    ):
+        data = sections_data[section_num]
+        if data["total"] > 0:
+            compliance_percentage = (data["passed"] / data["total"]) * 100
+        else:
+            compliance_percentage = 100  # No findings = 100% (PASS)
+
+        section_title = section_titles.get(section_num, f"{section_num}. Unknown")
+        section_names.append(section_title)
+        compliance_percentages.append(compliance_percentage)
+
+    # Generate horizontal bar chart
+    fig, ax = plt.subplots(figsize=(10, 8))
+
+    # Use color helper for compliance percentage
+    colors_list = [_get_chart_color_for_percentage(p) for p in compliance_percentages]
+
+    bars = ax.barh(section_names, compliance_percentages, color=colors_list)
+
+    ax.set_xlabel("Compliance (%)", fontsize=12)
+    ax.set_xlim(0, 100)
+
+    # Add percentage labels
+    for bar, percentage in zip(bars, compliance_percentages):
+        width = bar.get_width()
+        ax.text(
+            width + 1,
+            bar.get_y() + bar.get_height() / 2.0,
+            f"{percentage:.1f}%",
+            ha="left",
+            va="center",
+            fontweight="bold",
+        )
+
+    ax.grid(True, alpha=0.3, axis="x")
+    plt.tight_layout()
+
+    buffer = io.BytesIO()
+    try:
+        plt.savefig(buffer, format="png", dpi=300, bbox_inches="tight")
+        buffer.seek(0)
+    finally:
+        plt.close(fig)
+
+    return buffer
+
+
+def _create_nis2_subsection_table(
+    requirements_list: list[dict], attributes_by_requirement_id: dict
+) -> Table:
+    """
+    Create a table showing compliance by subsection.
+
+    Args:
+        requirements_list (list[dict]): List of requirement dictionaries.
+        attributes_by_requirement_id (dict): Mapping of requirement IDs to their attributes.
+
+    Returns:
+        Table: A ReportLab table showing subsection breakdown.
+    """
+    # Collect data by subsection
+    subsections_data = defaultdict(lambda: {"passed": 0, "failed": 0, "manual": 0})
+
+    for requirement in requirements_list:
+        requirement_id = requirement["id"]
+        requirement_attributes = attributes_by_requirement_id.get(requirement_id, {})
+
+        metadata = requirement_attributes.get("attributes", {}).get(
+            "req_attributes", []
+        )
+        if not metadata:
+            continue
+
+        m = metadata[0]
+        subsection = _safe_getattr(m, "SubSection", "Unknown")
+        status = requirement["attributes"].get("status", StatusChoices.MANUAL)
+
+        if status == StatusChoices.PASS:
+            subsections_data[subsection]["passed"] += 1
+        elif status == StatusChoices.FAIL:
+            subsections_data[subsection]["failed"] += 1
+        else:
+            subsections_data[subsection]["manual"] += 1
+
+    # Create table data
+    table_data = [["SubSection", "Total", "Pass", "Fail", "Manual", "Compliance %"]]
+
+    for subsection in sorted(subsections_data.keys()):
+        data = subsections_data[subsection]
+        total = data["passed"] + data["failed"] + data["manual"]
+        compliance = (
+            (data["passed"] / (data["passed"] + data["failed"]) * 100)
+            if (data["passed"] + data["failed"]) > 0
+            else 100
+        )
+
+        # Truncate long subsection names
+        subsection_display = (
+            subsection[:60] + "..." if len(subsection) > 60 else subsection
+        )
+
+        table_data.append(
+            [
+                subsection_display,
+                str(total),
+                str(data["passed"]),
+                str(data["failed"]),
+                str(data["manual"]),
+                f"{compliance:.1f}%",
+            ]
+        )
+
+    # Create table
+    table = Table(
+        table_data,
+        colWidths=[3 * inch, 0.6 * inch, 0.6 * inch, 0.6 * inch, 0.7 * inch, 1 * inch],
+    )
+    table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), COLOR_NIS2_PRIMARY),
+                ("TEXTCOLOR", (0, 0), (-1, 0), COLOR_WHITE),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ("ALIGN", (0, 1), (0, -1), "LEFT"),
+                ("FONTNAME", (0, 0), (-1, 0), "PlusJakartaSans"),
+                ("FONTSIZE", (0, 0), (-1, 0), 10),
+                ("FONTSIZE", (0, 1), (-1, -1), 9),
+                ("BOTTOMPADDING", (0, 0), (-1, 0), 8),
+                ("TOPPADDING", (0, 0), (-1, 0), 8),
+                ("GRID", (0, 0), (-1, -1), 0.5, COLOR_BORDER_GRAY),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [COLOR_WHITE, COLOR_NIS2_BG_BLUE]),
+            ]
+        )
+    )
+
+    return table
+
+
+def _create_nis2_requirements_index(
+    requirements_list: list[dict], attributes_by_requirement_id: dict, h2, h3, normal
+) -> list:
+    """
+    Create a hierarchical requirements index organized by Section and SubSection.
+
+    Args:
+        requirements_list (list[dict]): List of requirement dictionaries.
+        attributes_by_requirement_id (dict): Mapping of requirement IDs to their attributes.
+        h2, h3, normal: Paragraph styles.
+
+    Returns:
+        list: List of ReportLab elements for the index.
+    """
+    elements = []
+
+    # Organize requirements by section and subsection
+    sections_hierarchy = defaultdict(lambda: defaultdict(list))
+
+    for requirement in requirements_list:
+        requirement_id = requirement["id"]
+        requirement_attributes = attributes_by_requirement_id.get(requirement_id, {})
+
+        metadata = requirement_attributes.get("attributes", {}).get(
+            "req_attributes", []
+        )
+        if not metadata:
+            continue
+
+        m = metadata[0]
+        section = _safe_getattr(m, "Section", "Unknown")
+        subsection = _safe_getattr(m, "SubSection", "Unknown")
+        status = requirement["attributes"].get("status", StatusChoices.MANUAL)
+
+        # Status indicator
+        if status == StatusChoices.PASS:
+            status_indicator = "✓"
+        elif status == StatusChoices.FAIL:
+            status_indicator = "✗"
+        else:
+            status_indicator = "⊙"
+
+        sections_hierarchy[section][subsection].append(
+            {
+                "id": requirement_id,
+                "description": (
+                    requirement["description"][:100] + "..."
+                    if len(requirement["description"]) > 100
+                    else requirement["description"]
+                ),
+                "status_indicator": status_indicator,
+            }
+        )
+
+    # Build the index
+    for section in sorted(sections_hierarchy.keys()):
+        # Section header
+        elements.append(Paragraph(section, h2))
+
+        subsections = sections_hierarchy[section]
+        for subsection in sorted(subsections.keys()):
+            # Subsection header
+            elements.append(Paragraph(f"  {subsection}", h3))
+
+            # Requirements
+            for req in subsections[subsection]:
+                req_text = (
+                    f"    {req['status_indicator']} {req['id']} - {req['description']}"
+                )
+                elements.append(Paragraph(req_text, normal))
+
+        elements.append(Spacer(1, 0.1 * inch))
+
+    return elements
+
+
 def generate_ens_report(
     tenant_id: str,
     scan_id: str,
@@ -2745,25 +3040,458 @@ def generate_ens_report(
         raise e
 
 
+def generate_nis2_report(
+    tenant_id: str,
+    scan_id: str,
+    compliance_id: str,
+    output_path: str,
+    provider_id: str,
+    only_failed: bool = True,
+    provider_obj=None,
+    requirement_statistics: dict[str, dict[str, int]] = None,
+    findings_cache: dict[str, list[FindingOutput]] = None,
+) -> None:
+    """
+    Generate a PDF compliance report for NIS2 Directive (EU) 2022/2555.
+
+    This function creates a comprehensive PDF report containing:
+    - Compliance overview and metadata
+    - Executive summary with overall compliance score
+    - Section analysis with horizontal bar chart
+    - SubSection breakdown table
+    - Critical failed requirements
+    - Requirements index organized by section and subsection
+    - Detailed findings for failed requirements
+
+    Args:
+        tenant_id (str): The tenant ID for Row-Level Security context.
+        scan_id (str): ID of the scan executed by Prowler.
+        compliance_id (str): ID of the compliance framework (e.g., "nis2_aws").
+        output_path (str): Output PDF file path (e.g., "/tmp/nis2_report.pdf").
+        provider_id (str): Provider ID for the scan.
+        only_failed (bool): If True, only requirements with status "FAIL" will be included
+            in the detailed requirements section. Defaults to True.
+        provider_obj (Provider, optional): Pre-fetched Provider object to avoid duplicate queries.
+            If None, the provider will be fetched from the database.
+        requirement_statistics (dict, optional): Pre-aggregated requirement statistics to avoid
+            duplicate database aggregations. If None, statistics will be aggregated from the database.
+        findings_cache (dict, optional): Cache of already loaded findings to avoid duplicate queries.
+            If None, findings will be loaded from the database.
+
+    Raises:
+        Exception: If any error occurs during PDF generation, it will be logged and re-raised.
+    """
+    logger.info(
+        f"Generating NIS2 report for scan {scan_id} with provider {provider_id}"
+    )
+    try:
+        # Get PDF styles
+        pdf_styles = _create_pdf_styles()
+        title_style = pdf_styles["title"]
+        h1 = pdf_styles["h1"]
+        h2 = pdf_styles["h2"]
+        h3 = pdf_styles["h3"]
+        normal = pdf_styles["normal"]
+        normal_center = pdf_styles["normal_center"]
+
+        # Get compliance and provider information
+        with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+            # Use provided provider_obj or fetch from database
+            if provider_obj is None:
+                provider_obj = Provider.objects.get(id=provider_id)
+
+            provider_type = provider_obj.provider
+
+            frameworks_bulk = Compliance.get_bulk(provider_type)
+            compliance_obj = frameworks_bulk[compliance_id]
+            compliance_framework = _safe_getattr(compliance_obj, "Framework")
+            compliance_version = _safe_getattr(compliance_obj, "Version")
+            compliance_name = _safe_getattr(compliance_obj, "Name")
+            compliance_description = _safe_getattr(compliance_obj, "Description", "")
+
+        # Aggregate requirement statistics from database
+        if requirement_statistics is None:
+            logger.info(f"Aggregating requirement statistics for scan {scan_id}")
+            requirement_statistics_by_check_id = (
+                _aggregate_requirement_statistics_from_database(tenant_id, scan_id)
+            )
+        else:
+            logger.info(
+                f"Reusing pre-aggregated requirement statistics for scan {scan_id}"
+            )
+            requirement_statistics_by_check_id = requirement_statistics
+
+        # Calculate requirements data using aggregated statistics
+        attributes_by_requirement_id, requirements_list = (
+            _calculate_requirements_data_from_statistics(
+                compliance_obj, requirement_statistics_by_check_id
+            )
+        )
+
+        # Initialize PDF document
+        doc = SimpleDocTemplate(
+            output_path,
+            pagesize=letter,
+            title="NIS2 Compliance Report - Prowler",
+            author="Prowler",
+            subject=f"Compliance Report for {compliance_framework}",
+            creator="Prowler Engineering Team",
+            keywords=f"compliance,{compliance_framework},security,nis2,prowler,eu",
+        )
+
+        elements = []
+
+        # SECTION 1: Cover Page
+        prowler_logo_path = os.path.join(
+            os.path.dirname(__file__), "../assets/img/prowler_logo.png"
+        )
+        prowler_logo = Image(
+            prowler_logo_path,
+            width=3.5 * inch,
+            height=0.7 * inch,
+        )
+
+        elements.append(prowler_logo)
+        elements.append(Spacer(1, 0.3 * inch))
+
+        # Title
+        title = Paragraph(
+            "NIS2 Compliance Report<br/>Directive (EU) 2022/2555",
+            title_style,
+        )
+        elements.append(title)
+        elements.append(Spacer(1, 0.3 * inch))
+
+        # Compliance metadata table
+        metadata_data = [
+            ["Framework", compliance_framework],
+            [
+                "Name",
+                (
+                    compliance_name[:80] + "..."
+                    if len(compliance_name) > 80
+                    else compliance_name
+                ),
+            ],
+            ["Version", compliance_version or "N/A"],
+            ["Provider", provider_type.upper()],
+            ["Scan ID", scan_id],
+            [
+                "Description",
+                (
+                    compliance_description[:150] + "..."
+                    if len(compliance_description) > 150
+                    else compliance_description
+                ),
+            ],
+        ]
+
+        metadata_table = Table(metadata_data, colWidths=[1.5 * inch, 5 * inch])
+        metadata_table.setStyle(_create_info_table_style())
+        elements.append(metadata_table)
+        elements.append(PageBreak())
+
+        # SECTION 2: Executive Summary
+        elements.append(Paragraph("Executive Summary", h1))
+        elements.append(Spacer(1, 0.1 * inch))
+
+        # Calculate overall statistics
+        total_requirements = len(requirements_list)
+        passed_requirements = sum(
+            1
+            for req in requirements_list
+            if req["attributes"].get("status") == StatusChoices.PASS
+        )
+        failed_requirements = sum(
+            1
+            for req in requirements_list
+            if req["attributes"].get("status") == StatusChoices.FAIL
+        )
+        manual_requirements = sum(
+            1
+            for req in requirements_list
+            if req["attributes"].get("status") == StatusChoices.MANUAL
+        )
+
+        overall_compliance = (
+            (passed_requirements / (passed_requirements + failed_requirements) * 100)
+            if (passed_requirements + failed_requirements) > 0
+            else 100
+        )
+
+        # Summary statistics table
+        summary_data = [
+            ["Metric", "Value"],
+            ["Total Requirements", str(total_requirements)],
+            ["Passed ✓", str(passed_requirements)],
+            ["Failed ✗", str(failed_requirements)],
+            ["Manual ⊙", str(manual_requirements)],
+            ["Overall Compliance", f"{overall_compliance:.1f}%"],
+        ]
+
+        summary_table = Table(summary_data, colWidths=[3 * inch, 2 * inch])
+        summary_table.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), COLOR_NIS2_PRIMARY),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), COLOR_WHITE),
+                    ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                    ("FONTNAME", (0, 0), (-1, 0), "PlusJakartaSans"),
+                    ("FONTSIZE", (0, 0), (-1, 0), 12),
+                    ("FONTSIZE", (0, 1), (-1, -1), 10),
+                    ("BOTTOMPADDING", (0, 0), (-1, 0), 10),
+                    ("GRID", (0, 0), (-1, -1), 0.5, COLOR_BORDER_GRAY),
+                    (
+                        "ROWBACKGROUNDS",
+                        (0, 1),
+                        (-1, -1),
+                        [COLOR_WHITE, COLOR_NIS2_BG_BLUE],
+                    ),
+                ]
+            )
+        )
+        elements.append(summary_table)
+        elements.append(PageBreak())
+
+        # SECTION 3: Compliance by Section Analysis
+        elements.append(Paragraph("Compliance by Section", h1))
+        elements.append(Spacer(1, 0.1 * inch))
+
+        elements.append(
+            Paragraph(
+                "The following chart shows compliance percentage for each main section of the NIS2 directive:",
+                normal_center,
+            )
+        )
+        elements.append(Spacer(1, 0.1 * inch))
+
+        # Create section chart
+        section_chart_buffer = _create_nis2_section_chart(
+            requirements_list, attributes_by_requirement_id
+        )
+        section_chart = Image(section_chart_buffer, width=6.5 * inch, height=5 * inch)
+        elements.append(section_chart)
+        elements.append(PageBreak())
+
+        # SECTION 4: SubSection Breakdown
+        elements.append(Paragraph("SubSection Breakdown", h1))
+        elements.append(Spacer(1, 0.1 * inch))
+
+        subsection_table = _create_nis2_subsection_table(
+            requirements_list, attributes_by_requirement_id
+        )
+        elements.append(subsection_table)
+        elements.append(PageBreak())
+
+        # SECTION 5: Critical Failed Requirements
+        elements.append(Paragraph("Critical Failed Requirements", h1))
+        elements.append(Spacer(1, 0.1 * inch))
+
+        # Group failed requirements by section
+        failed_by_section = defaultdict(list)
+        for requirement in requirements_list:
+            if requirement["attributes"].get("status") == StatusChoices.FAIL:
+                requirement_id = requirement["id"]
+                requirement_attributes = attributes_by_requirement_id.get(
+                    requirement_id, {}
+                )
+                metadata = requirement_attributes.get("attributes", {}).get(
+                    "req_attributes", []
+                )
+
+                if metadata:
+                    m = metadata[0]
+                    section = _safe_getattr(m, "Section", "Unknown")
+                    failed_by_section[section].append(requirement)
+
+        if failed_by_section:
+            for section in sorted(failed_by_section.keys()):
+                elements.append(Paragraph(f"Section: {section[:100]}", h2))
+
+                for req in failed_by_section[section][:5]:  # Limit to top 5 per section
+                    req_text = f"• {req['id']}: {req['description'][:150]}..."
+                    elements.append(Paragraph(req_text, normal))
+
+                elements.append(Spacer(1, 0.1 * inch))
+        else:
+            elements.append(Paragraph("No failed requirements found.", normal_center))
+
+        elements.append(PageBreak())
+
+        # SECTION 6: Requirements Index
+        elements.append(Paragraph("Requirements Index", h1))
+        elements.append(Spacer(1, 0.1 * inch))
+
+        index_elements = _create_nis2_requirements_index(
+            requirements_list, attributes_by_requirement_id, h2, h3, normal
+        )
+        elements.extend(index_elements)
+        elements.append(PageBreak())
+
+        # SECTION 7: Detailed Findings
+        elements.append(Paragraph("Detailed Findings", h1))
+        elements.append(Spacer(1, 0.1 * inch))
+
+        # Filter requirements for detailed findings
+        requirements_to_show = [
+            req
+            for req in requirements_list
+            if not only_failed or req["attributes"].get("status") == StatusChoices.FAIL
+        ]
+
+        if requirements_to_show:
+            for requirement in requirements_to_show:
+                requirement_id = requirement["id"]
+                requirement_attributes = attributes_by_requirement_id.get(
+                    requirement_id, {}
+                )
+
+                metadata = requirement_attributes.get("attributes", {}).get(
+                    "req_attributes", []
+                )
+                if metadata:
+                    m = metadata[0]
+                    section = _safe_getattr(m, "Section", "Unknown")
+                    subsection = _safe_getattr(m, "SubSection", "Unknown")
+                    service = _safe_getattr(m, "Service", "generic")
+
+                    status = requirement["attributes"].get(
+                        "status", StatusChoices.MANUAL
+                    )
+                    status_color = (
+                        COLOR_SAFE
+                        if status == StatusChoices.PASS
+                        else (
+                            COLOR_HIGH_RISK
+                            if status == StatusChoices.FAIL
+                            else COLOR_DARK_GRAY
+                        )
+                    )
+
+                    # Requirement header
+                    elements.append(Paragraph(f"Requirement: {requirement_id}", h2))
+
+                    # Info table
+                    info_data = [
+                        [
+                            "Section",
+                            section[:80] + "..." if len(section) > 80 else section,
+                        ],
+                        [
+                            "SubSection",
+                            (
+                                subsection[:80] + "..."
+                                if len(subsection) > 80
+                                else subsection
+                            ),
+                        ],
+                        ["Service", service],
+                        ["Status", status],
+                        ["Description", requirement["description"]],
+                    ]
+
+                    info_table = Table(info_data, colWidths=[1.5 * inch, 5 * inch])
+                    info_table.setStyle(
+                        TableStyle(
+                            [
+                                ("BACKGROUND", (0, 0), (0, -1), COLOR_NIS2_BG_BLUE),
+                                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                                ("FONTNAME", (0, 0), (0, -1), "PlusJakartaSans"),
+                                ("FONTSIZE", (0, 0), (-1, -1), 9),
+                                ("GRID", (0, 0), (-1, -1), 0.5, COLOR_BORDER_GRAY),
+                                ("BACKGROUND", (1, 3), (1, 3), status_color),
+                                ("TEXTCOLOR", (1, 3), (1, 3), COLOR_WHITE),
+                            ]
+                        )
+                    )
+                    elements.append(info_table)
+                    elements.append(Spacer(1, 0.1 * inch))
+
+                    # Findings table (if applicable)
+                    checks = requirement_attributes.get("attributes", {}).get(
+                        "Checks", []
+                    )
+                    if checks and findings_cache:
+                        findings_data = [["Check ID", "Status", "Resource", "Region"]]
+
+                        for check_id in checks[:10]:  # Limit to 10 checks
+                            check_findings = findings_cache.get(check_id, [])
+                            for finding in check_findings[
+                                :5
+                            ]:  # Limit to 5 findings per check
+                                findings_data.append(
+                                    [
+                                        check_id[:30],
+                                        finding.status,
+                                        (
+                                            finding.resource_uid[:40]
+                                            if finding.resource_uid
+                                            else "N/A"
+                                        ),
+                                        (
+                                            finding.region[:20]
+                                            if finding.region
+                                            else "N/A"
+                                        ),
+                                    ]
+                                )
+
+                        if len(findings_data) > 1:
+                            findings_table = Table(
+                                findings_data,
+                                colWidths=[
+                                    1.8 * inch,
+                                    0.8 * inch,
+                                    2.5 * inch,
+                                    1.4 * inch,
+                                ],
+                            )
+                            findings_table.setStyle(_create_findings_table_style())
+                            elements.append(findings_table)
+
+                    elements.append(Spacer(1, 0.2 * inch))
+        else:
+            elements.append(
+                Paragraph(
+                    "No requirements to display based on the current filter.",
+                    normal_center,
+                )
+            )
+
+        # Build the PDF
+        logger.info("Building NIS2 PDF...")
+        doc.build(elements, onFirstPage=_add_pdf_footer, onLaterPages=_add_pdf_footer)
+        logger.info(f"NIS2 report successfully generated at {output_path}")
+
+    except Exception as e:
+        logger.error(
+            f"Error building NIS2 report, line {e.__traceback__.tb_lineno} -- {e}"
+        )
+        raise e
+
+
 def generate_compliance_reports(
     tenant_id: str,
     scan_id: str,
     provider_id: str,
     generate_threatscore: bool = True,
     generate_ens: bool = True,
+    generate_nis2: bool = True,
     only_failed_threatscore: bool = True,
     min_risk_level_threatscore: int = 4,
     include_manual_ens: bool = True,
+    only_failed_nis2: bool = True,
 ) -> dict[str, dict[str, bool | str]]:
     """
-    Generate multiple compliance reports (ThreatScore and/or ENS) with shared database queries.
+    Generate multiple compliance reports (ThreatScore, ENS, and/or NIS2) with shared database queries.
 
     This function optimizes the generation of multiple reports by:
     - Fetching the provider object once
-    - Aggregating requirement statistics once (shared across both reports)
+    - Aggregating requirement statistics once (shared across all reports)
     - Reusing compliance framework data when possible
 
-    This can reduce database queries by up to 50% when generating both reports.
+    This can reduce database queries by up to 50-70% when generating multiple reports.
 
     Args:
         tenant_id (str): The tenant ID for Row-Level Security context.
@@ -2771,15 +3499,18 @@ def generate_compliance_reports(
         provider_id (str): The ID of the provider used in the scan.
         generate_threatscore (bool): Whether to generate ThreatScore report. Defaults to True.
         generate_ens (bool): Whether to generate ENS report. Defaults to True.
+        generate_nis2 (bool): Whether to generate NIS2 report. Defaults to True.
         only_failed_threatscore (bool): For ThreatScore, only include failed requirements. Defaults to True.
         min_risk_level_threatscore (int): Minimum risk level for ThreatScore critical requirements. Defaults to 4.
         include_manual_ens (bool): For ENS, include manual requirements. Defaults to True.
+        only_failed_nis2 (bool): For NIS2, only include failed requirements. Defaults to True.
 
     Returns:
         dict[str, dict[str, bool | str]]: Dictionary with results for each report:
             {
                 'threatscore': {'upload': bool, 'path': str, 'error': str (optional)},
-                'ens': {'upload': bool, 'path': str, 'error': str (optional)}
+                'ens': {'upload': bool, 'path': str, 'error': str (optional)},
+                'nis2': {'upload': bool, 'path': str, 'error': str (optional)}
             }
 
     Example:
@@ -2788,14 +3519,15 @@ def generate_compliance_reports(
         ...     scan_id="scan-456",
         ...     provider_id="provider-789",
         ...     generate_threatscore=True,
-        ...     generate_ens=True
+        ...     generate_ens=True,
+        ...     generate_nis2=True
         ... )
         >>> print(results['threatscore']['upload'])
         True
     """
     logger.info(
         f"Generating compliance reports for scan {scan_id} with provider {provider_id}"
-        f" (ThreatScore: {generate_threatscore}, ENS: {generate_ens})"
+        f" (ThreatScore: {generate_threatscore}, ENS: {generate_ens}, NIS2: {generate_nis2})"
     )
 
     results = {}
@@ -2808,6 +3540,8 @@ def generate_compliance_reports(
                 results["threatscore"] = {"upload": False, "path": ""}
             if generate_ens:
                 results["ens"] = {"upload": False, "path": ""}
+            if generate_nis2:
+                results["nis2"] = {"upload": False, "path": ""}
             return results
 
         # Fetch provider once (optimization)
@@ -2830,8 +3564,15 @@ def generate_compliance_reports(
         results["ens"] = {"upload": False, "path": ""}
         generate_ens = False
 
+    if generate_nis2 and provider_type not in ["aws", "azure", "gcp"]:
+        logger.info(
+            f"Provider {provider_id} ({provider_type}) is not supported for NIS2 report"
+        )
+        results["nis2"] = {"upload": False, "path": ""}
+        generate_nis2 = False
+
     # If no reports to generate, return early
-    if not generate_threatscore and not generate_ens:
+    if not generate_threatscore and not generate_ens and not generate_nis2:
         return results
 
     # Aggregate requirement statistics once (major optimization)
@@ -2863,6 +3604,13 @@ def generate_compliance_reports(
             scan_id,
             compliance_framework="ens",
         )
+        nis2_path = _generate_output_directory(
+            DJANGO_TMP_OUTPUT_DIRECTORY,
+            provider_uid,
+            tenant_id,
+            scan_id,
+            compliance_framework="nis2",
+        )
         # Extract base scan directory for cleanup (parent of threatscore directory)
         out_dir = str(Path(threatscore_path).parent.parent)
     except Exception as e:
@@ -2872,6 +3620,8 @@ def generate_compliance_reports(
             results["threatscore"] = error_dict.copy()
         if generate_ens:
             results["ens"] = error_dict.copy()
+        if generate_nis2:
+            results["nis2"] = error_dict.copy()
         return results
 
     # Generate ThreatScore report
@@ -2954,6 +3704,43 @@ def generate_compliance_reports(
             logger.error(f"Error generating ENS report: {e}")
             results["ens"] = {"upload": False, "path": "", "error": str(e)}
 
+    # Generate NIS2 report
+    if generate_nis2:
+        compliance_id_nis2 = f"nis2_{provider_type}"
+        pdf_path_nis2 = f"{nis2_path}_nis2_report.pdf"
+        logger.info(f"Generating NIS2 report with compliance {compliance_id_nis2}")
+
+        try:
+            generate_nis2_report(
+                tenant_id=tenant_id,
+                scan_id=scan_id,
+                compliance_id=compliance_id_nis2,
+                output_path=pdf_path_nis2,
+                provider_id=provider_id,
+                only_failed=only_failed_nis2,
+                provider_obj=provider_obj,  # Reuse provider object
+                requirement_statistics=requirement_statistics,  # Reuse statistics
+                findings_cache=findings_cache,  # Share findings cache
+            )
+
+            upload_uri_nis2 = _upload_to_s3(
+                tenant_id,
+                scan_id,
+                pdf_path_nis2,
+                f"nis2/{Path(pdf_path_nis2).name}",
+            )
+
+            if upload_uri_nis2:
+                results["nis2"] = {"upload": True, "path": upload_uri_nis2}
+                logger.info(f"NIS2 report uploaded to {upload_uri_nis2}")
+            else:
+                results["nis2"] = {"upload": False, "path": out_dir}
+                logger.warning(f"NIS2 report saved locally at {out_dir}")
+
+        except Exception as e:
+            logger.error(f"Error generating NIS2 report: {e}")
+            results["nis2"] = {"upload": False, "path": "", "error": str(e)}
+
     # Clean up temporary files if all reports were uploaded successfully
     all_uploaded = all(
         result.get("upload", False)
@@ -2978,13 +3765,14 @@ def generate_compliance_reports_job(
     provider_id: str,
     generate_threatscore: bool = True,
     generate_ens: bool = True,
+    generate_nis2: bool = True,
 ) -> dict[str, dict[str, bool | str]]:
     """
-    Job function to generate ThreatScore and/or ENS compliance reports with optimized database queries.
+    Job function to generate ThreatScore, ENS, and/or NIS2 compliance reports with optimized database queries.
 
     This function efficiently generates compliance reports by:
-    - Fetching the provider object once (shared between both reports)
-    - Aggregating requirement statistics once (shared between both reports)
+    - Fetching the provider object once (shared across all reports)
+    - Aggregating requirement statistics once (shared across all reports)
     - Sharing findings cache between reports to avoid duplicate queries
     - Reducing total database queries by 50-70% compared to generating reports separately
 
@@ -2996,12 +3784,14 @@ def generate_compliance_reports_job(
         provider_id (str): The ID of the provider used in the scan.
         generate_threatscore (bool): Whether to generate ThreatScore report. Defaults to True.
         generate_ens (bool): Whether to generate ENS report. Defaults to True.
+        generate_nis2 (bool): Whether to generate NIS2 report. Defaults to True.
 
     Returns:
         dict[str, dict[str, bool | str]]: Dictionary with results for each report:
             {
                 'threatscore': {'upload': bool, 'path': str, 'error': str (optional)},
-                'ens': {'upload': bool, 'path': str, 'error': str (optional)}
+                'ens': {'upload': bool, 'path': str, 'error': str (optional)},
+                'nis2': {'upload': bool, 'path': str, 'error': str (optional)}
             }
 
     Example:
@@ -3014,10 +3804,12 @@ def generate_compliance_reports_job(
         ...     print(f"ThreatScore uploaded to {results['threatscore']['path']}")
         >>> if results['ens']['upload']:
         ...     print(f"ENS uploaded to {results['ens']['path']}")
+        >>> if results['nis2']['upload']:
+        ...     print(f"NIS2 uploaded to {results['nis2']['path']}")
     """
     logger.info(
         f"Starting optimized compliance reports job for scan {scan_id} "
-        f"(ThreatScore: {generate_threatscore}, ENS: {generate_ens})"
+        f"(ThreatScore: {generate_threatscore}, ENS: {generate_ens}, NIS2: {generate_nis2})"
     )
 
     try:
@@ -3027,9 +3819,11 @@ def generate_compliance_reports_job(
             provider_id=provider_id,
             generate_threatscore=generate_threatscore,
             generate_ens=generate_ens,
+            generate_nis2=generate_nis2,
             only_failed_threatscore=True,
             min_risk_level_threatscore=4,
             include_manual_ens=True,
+            only_failed_nis2=True,
         )
         logger.info("Optimized compliance reports job completed successfully")
         return results
@@ -3042,4 +3836,6 @@ def generate_compliance_reports_job(
             results["threatscore"] = error_result.copy()
         if generate_ens:
             results["ens"] = error_result.copy()
+        if generate_nis2:
+            results["nis2"] = error_result.copy()
         return results

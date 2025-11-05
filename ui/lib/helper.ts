@@ -229,12 +229,16 @@ export const downloadComplianceCsv = async (
  */
 export const downloadComplianceReportPdf = async (
   scanId: string,
-  reportType: "threatscore" | "ens",
+  reportType: "threatscore" | "ens" | "nis2",
   toast: ReturnType<typeof useToast>["toast"],
 ): Promise<void> => {
   const result = await getCompliancePdfReport(scanId, reportType);
   const reportName =
-    reportType === "threatscore" ? "ThreatScore" : "ENS RD2022";
+    reportType === "threatscore"
+      ? "ThreatScore"
+      : reportType === "ens"
+        ? "ENS RD2022"
+        : "NIS2";
   await downloadFile(
     result,
     "application/pdf",
