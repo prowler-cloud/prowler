@@ -154,27 +154,29 @@ export default async function ComplianceDetail({
         )
       }
     >
-      {selectedScanId && selectedScan && (
-        <div className="flex max-w-[328px] flex-col items-start">
-          <div className="rounded-lg bg-gray-50 p-2 dark:bg-gray-800">
-            <ComplianceScanInfo scan={selectedScan} />
-          </div>
-          <Spacer y={8} />
-        </div>
-      )}
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex-1">
-          <ComplianceHeader
-            scans={[]}
-            uniqueRegions={uniqueRegions}
-            showSearch={false}
-            framework={compliancetitle}
-            showProviders={false}
-          />
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="hidden sm:block">
+      <div className="relative">
+        {logoPath && (
+          <div className="absolute right-0 top-0 z-10 hidden sm:block">
             <ComplianceLogo logoPath={logoPath} />
+          </div>
+        )}
+        {selectedScanId && selectedScan && (
+          <div className="flex max-w-[328px] flex-col items-start">
+            <div className="rounded-lg bg-gray-50 p-2 dark:bg-gray-800">
+              <ComplianceScanInfo scan={selectedScan} />
+            </div>
+            <Spacer y={8} />
+          </div>
+        )}
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex-1">
+            <ComplianceHeader
+              scans={[]}
+              uniqueRegions={uniqueRegions}
+              showSearch={false}
+              framework={compliancetitle}
+              showProviders={false}
+            />
           </div>
           {attributesData?.data?.[0]?.attributes?.framework ===
             "ProwlerThreatScore" &&
