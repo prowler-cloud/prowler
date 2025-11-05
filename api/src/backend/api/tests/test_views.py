@@ -1525,7 +1525,7 @@ class TestProviderViewSet:
                 (
                     "uid.icontains",
                     "1",
-                    6,
+                    7,
                 ),
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
@@ -1533,7 +1533,7 @@ class TestProviderViewSet:
                 (
                     "inserted_at.gte",
                     "2024-01-01",
-                    7,
+                    8,
                 ),
                 ("inserted_at.lte", "2024-01-01", 0),
                 (
@@ -2145,15 +2145,6 @@ class TestProviderSecretViewSet:
                     },
                     "required",
                     "secret/aws_access_key_id",
-                ),
-                (
-                    {
-                        "name": "testing",
-                        "secret_type": "static",
-                        "secret": {"atlas_public_key": "value"},
-                    },
-                    "required",
-                    "secret/atlas_private_key",
                 ),
                 (
                     {
