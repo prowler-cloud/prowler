@@ -156,7 +156,7 @@ export default async function ComplianceDetail({
     >
       <div className="relative">
         {logoPath && (
-          <div className="absolute right-0 top-0 z-10 hidden sm:block">
+          <div className="absolute top-0 right-0 z-10 hidden sm:block">
             <ComplianceLogo logoPath={logoPath} />
           </div>
         )}
