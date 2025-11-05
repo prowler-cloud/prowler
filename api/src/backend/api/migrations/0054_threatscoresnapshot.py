@@ -9,7 +9,6 @@ import api.rls
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("api", "0053_lighthouse_bedrock_openai_compatible"),
     ]
