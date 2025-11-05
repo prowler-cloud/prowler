@@ -743,7 +743,7 @@ class TestGenerateThreatscoreReportFunction:
             mock_compliance_obj, {"check_1": {"passed": 5, "total": 10}}
         )
         mock_load_findings.assert_called_once_with(
-            self.tenant_id, self.scan_id, ["check_1"], prowler_provider
+            self.tenant_id, self.scan_id, ["check_1"], prowler_provider, None
         )
 
         # Verify PDF was built

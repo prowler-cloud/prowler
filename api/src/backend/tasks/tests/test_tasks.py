@@ -288,7 +288,6 @@ class TestGenerateOutputs:
                 return_value=(
                     "/tmp/test/outdir",
                     "/tmp/test/compdir",
-                    "/tmp/test/threatdir",
                 ),
             ),
             patch("tasks.tasks._compress_output_files", return_value="outdir.zip"),
@@ -367,7 +366,6 @@ class TestGenerateOutputs:
                 return_value=(
                     "/tmp/test/outdir",
                     "/tmp/test/compdir",
-                    "/tmp/test/threatdir",
                 ),
             ),
             patch("tasks.tasks.FindingOutput._transform_findings_stats"),
