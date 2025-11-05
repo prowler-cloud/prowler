@@ -15,6 +15,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - C5 compliance framework for the GCP provider [(#9097)](https://github.com/prowler-cloud/prowler/pull/9097)
 - HIPAA compliance framework for the GCP provider [(#8955)](https://github.com/prowler-cloud/prowler/pull/8955)
 - Support PDF reporting for ENS compliance framework [(#9158)](https://github.com/prowler-cloud/prowler/pull/9158)
+- PDF reporting for NIS2 compliance framework [(#9170)](https://github.com/prowler-cloud/prowler/pull/9170)
 
 ### Changed
 - Update AWS Direct Connect service metadata to new format [(#8855)](https://github.com/prowler-cloud/prowler/pull/8855)
