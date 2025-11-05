@@ -40,9 +40,9 @@ from prowler.providers.oraclecloud.models import (
 )
 
 
-class OciProvider(Provider):
+class OraclecloudProvider(Provider):
     """
-    OciProvider class is the main class for the OCI provider.
+    OraclecloudProvider class is the main class for the Oracle Cloud Infrastructure provider.
 
     This class is responsible for initializing the OCI provider, setting up the OCI session,
     validating the OCI credentials, getting the OCI identity, and managing compartments and regions.
@@ -58,7 +58,7 @@ class OciProvider(Provider):
         audit_metadata (Audit_Metadata): The audit metadata.
     """
 
-    _type: str = "oci"
+    _type: str = "oraclecloud"
     _identity: OCIIdentityInfo
     _session: OCISession
     _audit_config: dict
@@ -118,11 +118,11 @@ class OciProvider(Provider):
                     or
                     - export OCI_CLI_AUTH=instance_principal (for instance principal)
                 - To create a new OCI provider object:
-                    - oci = OciProvider()
-                    - oci = OciProvider(profile="profile_name")
-                    - oci = OciProvider(oci_config_file="/path/to/config")
-                    - oci = OciProvider(use_instance_principal=True)
-                    - oci = OciProvider(user="ocid1...", fingerprint="...", key_content="...", tenancy="ocid1...", region="us-ashburn-1")
+                    - oci = OraclecloudProvider()
+                    - oci = OraclecloudProvider(profile="profile_name")
+                    - oci = OraclecloudProvider(oci_config_file="/path/to/config")
+                    - oci = OraclecloudProvider(use_instance_principal=True)
+                    - oci = OraclecloudProvider(user="ocid1...", fingerprint="...", key_content="...", tenancy="ocid1...", region="us-ashburn-1")
         """
 
         logger.info("Initializing OCI provider ...")
@@ -439,7 +439,7 @@ class OciProvider(Provider):
                 )
 
             # Validate tenancy OCID format
-            if not OciProvider.validate_ocid(tenancy_id, "tenancy"):
+            if not OraclecloudProvider.validate_ocid(tenancy_id, "tenancy"):
                 raise OCIInvalidTenancyError(
                     file=pathlib.Path(__file__).name,
                     message=f"Invalid tenancy OCID format: {tenancy_id}",
@@ -817,11 +817,11 @@ class OciProvider(Provider):
             Exception: If there is an unexpected error.
 
         Examples:
-            >>> OciProvider.test_connection(profile="DEFAULT", raise_on_exception=False)
+            >>> OraclecloudProvider.test_connection(profile="DEFAULT", raise_on_exception=False)
             Connection(is_connected=True, Error=None)
-            >>> OciProvider.test_connection(use_instance_principal=True, raise_on_exception=False)
+            >>> OraclecloudProvider.test_connection(use_instance_principal=True, raise_on_exception=False)
             Connection(is_connected=True, Error=None)
-            >>> OciProvider.test_connection(
+            >>> OraclecloudProvider.test_connection(
                     user="ocid1.user.oc1..aaaaaa...",
                     fingerprint="12:34:56:78:...",
                     key_content="base64_encoded_key",
@@ -890,13 +890,13 @@ class OciProvider(Provider):
                 session = OCISession(config=config, signer=None, profile=None)
             else:
                 # Use traditional config file or instance principal authentication
-                session = OciProvider.setup_session(
+                session = OraclecloudProvider.setup_session(
                     oci_config_file=oci_config_file,
                     profile=profile,
                     use_instance_principal=use_instance_principal,
                 )
 
-            identity = OciProvider.set_identity(
+            identity = OraclecloudProvider.set_identity(
                 session=session,
                 region=region,
             )
@@ -1032,7 +1032,7 @@ class OciProvider(Provider):
             set: A set of region names.
 
         Example:
-            >>> OciProvider.get_regions()
+            >>> OraclecloudProvider.get_regions()
             {"us-ashburn-1", "us-phoenix-1", ...}
         """
         return set(OCI_REGIONS.keys())

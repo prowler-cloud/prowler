@@ -67,7 +67,7 @@ def display_summary_table(
         elif provider.type == "llm":
             entity_type = "LLM"
             audited_entities = provider.model
-        elif provider.type == "oci":
+        elif provider.type == "oraclecloud":
             entity_type = "Tenancy"
             audited_entities = (
                 provider.identity.tenancy_name

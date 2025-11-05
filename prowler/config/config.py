@@ -77,7 +77,7 @@ class Provider(str, Enum):
     IAC = "iac"
     NHN = "nhn"
     MONGODBATLAS = "mongodbatlas"
-    OCI = "oci"
+    ORACLECLOUD = "oraclecloud"
 
 
 # Compliance

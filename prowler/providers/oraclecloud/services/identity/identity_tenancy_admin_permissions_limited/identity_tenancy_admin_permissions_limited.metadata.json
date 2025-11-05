@@ -1,5 +1,5 @@
 {
-  "Provider": "oci",
+  "Provider": "oraclecloud",
   "CheckID": "identity_tenancy_admin_permissions_limited",
   "CheckTitle": "Ensure permissions on all resources are given only to the tenancy administrator group",
   "CheckType": [

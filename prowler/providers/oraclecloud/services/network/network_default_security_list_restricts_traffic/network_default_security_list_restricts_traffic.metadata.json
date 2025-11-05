@@ -1,5 +1,5 @@
 {
-  "Provider": "oci",
+  "Provider": "oraclecloud",
   "CheckID": "network_default_security_list_restricts_traffic",
   "CheckTitle": "Ensure the default security list of every VCN restricts all traffic except ICMP",
   "CheckType": [

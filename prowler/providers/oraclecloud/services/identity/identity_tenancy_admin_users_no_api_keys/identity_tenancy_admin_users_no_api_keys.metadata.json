@@ -1,5 +1,5 @@
 {
-  "Provider": "oci",
+  "Provider": "oraclecloud",
   "CheckID": "identity_tenancy_admin_users_no_api_keys",
   "CheckTitle": "Ensure API keys are not created for tenancy administrator users",
   "CheckType": [

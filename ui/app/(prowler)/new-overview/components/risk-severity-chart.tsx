@@ -58,7 +58,7 @@ export const RiskSeverityChart = ({
   ];
 
   return (
-    <BaseCard className="flex h-full flex-col">
+    <BaseCard className="flex min-h-[372px] min-w-[312px] flex-1 flex-col md:min-w-[380px]">
       <CardHeader>
         <CardTitle>Risk Severity</CardTitle>
       </CardHeader>

@@ -74,7 +74,7 @@ export const StatusChart = ({
   ];
 
   return (
-    <BaseCard>
+    <BaseCard className="flex min-h-[372px] min-w-[312px] flex-1 flex-col justify-between md:min-w-[380px]">
       <CardHeader>
         <CardTitle>Check Findings</CardTitle>
       </CardHeader>

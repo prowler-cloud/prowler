@@ -1,5 +1,5 @@
 {
-  "Provider": "oci",
+  "Provider": "oraclecloud",
   "CheckID": "network_vcn_subnet_flow_logs_enabled",
   "CheckTitle": "Ensure VCN flow logging is enabled for all subnets",
   "CheckType": [
