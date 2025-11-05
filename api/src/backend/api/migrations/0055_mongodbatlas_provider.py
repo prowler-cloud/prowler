@@ -6,7 +6,6 @@ import api.db_utils
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("api", "0054_iac_provider"),
     ]
