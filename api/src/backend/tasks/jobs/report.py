@@ -3053,6 +3053,7 @@ def generate_nis2_report(
     output_path: str,
     provider_id: str,
     only_failed: bool = True,
+    include_manual: bool = True,
     provider_obj=None,
     requirement_statistics: dict[str, dict[str, int]] = None,
     findings_cache: dict[str, list[FindingOutput]] = None,
@@ -3077,6 +3078,8 @@ def generate_nis2_report(
         provider_id (str): Provider ID for the scan.
         only_failed (bool): If True, only requirements with status "FAIL" will be included
             in the detailed requirements section. Defaults to True.
+        include_manual (bool): If True, includes MANUAL requirements in the detailed findings
+            section along with FAIL requirements. Defaults to True.
         provider_obj (Provider, optional): Pre-fetched Provider object to avoid duplicate queries.
             If None, the provider will be fetched from the database.
         requirement_statistics (dict, optional): Pre-aggregated requirement statistics to avoid
@@ -3106,6 +3109,7 @@ def generate_nis2_report(
             if provider_obj is None:
                 provider_obj = Provider.objects.get(id=provider_id)
 
+            prowler_provider = initialize_prowler_provider(provider_obj)
             provider_type = provider_obj.provider
 
             frameworks_bulk = Compliance.get_bulk(provider_type)
@@ -3321,21 +3325,77 @@ def generate_nis2_report(
 
         # SECTION 6: Detailed Findings
         elements.append(Paragraph("Detailed Findings", h1))
-        elements.append(Spacer(1, 0.1 * inch))
+        elements.append(Spacer(1, 0.2 * inch))
 
-        # Filter requirements for detailed findings
-        requirements_to_show = [
+        # Filter requirements for detailed findings (FAIL + MANUAL if include_manual)
+        filtered_requirements = [
             req
             for req in requirements_list
-            if not only_failed or req["attributes"].get("status") == StatusChoices.FAIL
+            if req["attributes"]["status"] == StatusChoices.FAIL
+            or (include_manual and req["attributes"]["status"] == StatusChoices.MANUAL)
         ]
 
-        if requirements_to_show:
-            for requirement in requirements_to_show:
+        if not filtered_requirements:
+            elements.append(
+                Paragraph("✅ All automatic requirements are compliant.", normal)
+            )
+        else:
+            elements.append(
+                Paragraph(
+                    f"Showing {len(filtered_requirements)} requirements that need attention:",
+                    normal,
+                )
+            )
+            elements.append(Spacer(1, 0.2 * inch))
+
+            # Collect check IDs to load
+            check_ids_to_load = []
+            for requirement in filtered_requirements:
                 requirement_id = requirement["id"]
                 requirement_attributes = attributes_by_requirement_id.get(
                     requirement_id, {}
                 )
+                check_ids = requirement_attributes.get("attributes", {}).get(
+                    "checks", []
+                )
+                check_ids_to_load.extend(check_ids)
+
+            # Load findings on-demand
+            logger.info(
+                f"Loading findings on-demand for {len(filtered_requirements)} NIS2 requirements"
+            )
+            findings_by_check_id = _load_findings_for_requirement_checks(
+                tenant_id, scan_id, check_ids_to_load, prowler_provider, findings_cache
+            )
+
+            for requirement in filtered_requirements:
+                requirement_id = requirement["id"]
+                requirement_attributes = attributes_by_requirement_id.get(
+                    requirement_id, {}
+                )
+                requirement_status = requirement["attributes"]["status"]
+                requirement_description = requirement_attributes.get("description", "")
+
+                # Requirement ID header in a box
+                req_id_paragraph = Paragraph(f"Requirement: {requirement_id}", h2)
+                req_id_table = Table([[req_id_paragraph]], colWidths=[6.5 * inch])
+                req_id_table.setStyle(
+                    TableStyle(
+                        [
+                            ("BACKGROUND", (0, 0), (0, 0), COLOR_NIS2_PRIMARY),
+                            ("TEXTCOLOR", (0, 0), (0, 0), colors.white),
+                            ("ALIGN", (0, 0), (0, 0), "CENTER"),
+                            ("VALIGN", (0, 0), (0, 0), "MIDDLE"),
+                            ("LEFTPADDING", (0, 0), (-1, -1), 15),
+                            ("RIGHTPADDING", (0, 0), (-1, -1), 15),
+                            ("TOPPADDING", (0, 0), (-1, -1), 10),
+                            ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+                            ("BOX", (0, 0), (-1, -1), 2, COLOR_NIS2_SECONDARY),
+                        ]
+                    )
+                )
+                elements.append(req_id_table)
+                elements.append(Spacer(1, 0.15 * inch))
 
                 metadata = requirement_attributes.get("attributes", {}).get(
                     "req_attributes", []
@@ -3346,114 +3406,179 @@ def generate_nis2_report(
                     subsection = _safe_getattr(m, "SubSection", "Unknown")
                     service = _safe_getattr(m, "Service", "generic")
 
-                    status = requirement["attributes"].get(
-                        "status", StatusChoices.MANUAL
+                    # Status badge
+                    status_text = (
+                        "✓ PASS"
+                        if requirement_status == StatusChoices.PASS
+                        else (
+                            "✗ FAIL"
+                            if requirement_status == StatusChoices.FAIL
+                            else "⊙ MANUAL"
+                        )
                     )
                     status_color = (
                         COLOR_SAFE
-                        if status == StatusChoices.PASS
+                        if requirement_status == StatusChoices.PASS
                         else (
                             COLOR_HIGH_RISK
-                            if status == StatusChoices.FAIL
+                            if requirement_status == StatusChoices.FAIL
                             else COLOR_DARK_GRAY
                         )
                     )
 
-                    # Requirement header
-                    elements.append(Paragraph(f"Requirement: {requirement_id}", h2))
-
-                    # Info table
-                    description = requirement["attributes"].get(
-                        "description", "No description available"
+                    status_badge = Paragraph(
+                        f"<b>{status_text}</b>",
+                        ParagraphStyle(
+                            "status_badge",
+                            parent=normal,
+                            alignment=1,
+                            textColor=colors.white,
+                            fontSize=14,
+                        ),
                     )
-                    info_data = [
-                        ["Section:", Paragraph(section, normal_center)],
-                        ["SubSection:", Paragraph(subsection, normal_center)],
+                    status_table = Table([[status_badge]], colWidths=[6.5 * inch])
+                    status_table.setStyle(
+                        TableStyle(
+                            [
+                                ("BACKGROUND", (0, 0), (0, 0), status_color),
+                                ("ALIGN", (0, 0), (0, 0), "CENTER"),
+                                ("VALIGN", (0, 0), (0, 0), "MIDDLE"),
+                                ("TOPPADDING", (0, 0), (-1, -1), 8),
+                                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                            ]
+                        )
+                    )
+                    elements.append(status_table)
+                    elements.append(Spacer(1, 0.15 * inch))
+
+                    # Requirement details table
+                    details_data = [
+                        ["Description:", Paragraph(requirement_description, normal)],
+                        ["Section:", Paragraph(section, normal)],
+                        ["SubSection:", Paragraph(subsection, normal)],
                         ["Service:", service],
-                        ["Status:", status],
-                        ["Description:", Paragraph(description, normal_center)],
                     ]
-
-                    info_table = Table(
-                        info_data, colWidths=[COL_WIDTH_XLARGE, 4 * inch]
+                    details_table = Table(
+                        details_data, colWidths=[2.2 * inch, 4.5 * inch]
                     )
-
-                    # Create custom style based on _create_info_table_style
-                    info_style = TableStyle(
-                        [
-                            ("BACKGROUND", (0, 0), (0, -1), COLOR_BLUE),
-                            ("TEXTCOLOR", (0, 0), (0, -1), COLOR_WHITE),
-                            ("FONTNAME", (0, 0), (0, -1), "FiraCode"),
-                            ("BACKGROUND", (1, 0), (1, -1), COLOR_BG_BLUE),
-                            ("TEXTCOLOR", (1, 0), (1, -1), COLOR_GRAY),
-                            ("FONTNAME", (1, 0), (1, -1), "PlusJakartaSans"),
-                            ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                            ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                            ("FONTSIZE", (0, 0), (-1, -1), 11),
-                            ("GRID", (0, 0), (-1, -1), 1, COLOR_BORDER_GRAY),
-                            ("LEFTPADDING", (0, 0), (-1, -1), PADDING_XLARGE),
-                            ("RIGHTPADDING", (0, 0), (-1, -1), PADDING_XLARGE),
-                            ("TOPPADDING", (0, 0), (-1, -1), PADDING_LARGE),
-                            ("BOTTOMPADDING", (0, 0), (-1, -1), PADDING_LARGE),
-                            # Status color override
-                            ("BACKGROUND", (1, 3), (1, 3), status_color),
-                            ("TEXTCOLOR", (1, 3), (1, 3), COLOR_WHITE),
-                        ]
+                    details_table.setStyle(
+                        TableStyle(
+                            [
+                                (
+                                    "BACKGROUND",
+                                    (0, 0),
+                                    (0, -1),
+                                    COLOR_NIS2_BG_BLUE,
+                                ),
+                                ("TEXTCOLOR", (0, 0), (0, -1), COLOR_GRAY),
+                                ("FONTNAME", (0, 0), (0, -1), "FiraCode"),
+                                ("FONTSIZE", (0, 0), (-1, -1), 10),
+                                ("ALIGN", (0, 0), (0, -1), "LEFT"),
+                                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                                ("GRID", (0, 0), (-1, -1), 0.5, COLOR_BORDER_GRAY),
+                                ("LEFTPADDING", (0, 0), (-1, -1), 8),
+                                ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+                                ("TOPPADDING", (0, 0), (-1, -1), 6),
+                                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                            ]
+                        )
                     )
-                    info_table.setStyle(info_style)
-                    elements.append(info_table)
+                    elements.append(details_table)
+                    elements.append(Spacer(1, 0.2 * inch))
+
+                # Findings for checks
+                requirement_check_ids = requirement_attributes.get(
+                    "attributes", {}
+                ).get("checks", [])
+                for check_id in requirement_check_ids:
+                    elements.append(Paragraph(f"Check: {check_id}", h3))
                     elements.append(Spacer(1, 0.1 * inch))
 
-                    # Findings table (if applicable)
-                    checks = requirement_attributes.get("attributes", {}).get(
-                        "Checks", []
-                    )
-                    if checks and findings_cache:
-                        findings_data = [["Check ID", "Status", "Resource", "Region"]]
+                    check_findings = findings_by_check_id.get(check_id, [])
 
-                        for check_id in checks[:10]:  # Limit to 10 checks
-                            check_findings = findings_cache.get(check_id, [])
-                            for finding in check_findings[
-                                :5
-                            ]:  # Limit to 5 findings per check
-                                findings_data.append(
-                                    [
-                                        check_id[:30],
-                                        finding.status,
-                                        (
-                                            finding.resource_uid[:40]
-                                            if finding.resource_uid
-                                            else "N/A"
-                                        ),
-                                        (
-                                            finding.region[:20]
-                                            if finding.region
-                                            else "N/A"
-                                        ),
-                                    ]
-                                )
-
-                        if len(findings_data) > 1:
-                            findings_table = Table(
-                                findings_data,
-                                colWidths=[
-                                    1.8 * inch,
-                                    0.8 * inch,
-                                    2.5 * inch,
-                                    1.4 * inch,
-                                ],
+                    if not check_findings:
+                        elements.append(
+                            Paragraph(
+                                "- No information available for this check", normal
                             )
-                            findings_table.setStyle(_create_findings_table_style())
-                            elements.append(findings_table)
+                        )
+                    else:
+                        findings_table_data = [
+                            ["Finding", "Resource name", "Severity", "Status", "Region"]
+                        ]
+                        for finding_output in check_findings:
+                            check_metadata = getattr(finding_output, "metadata", {})
+                            finding_title = getattr(
+                                check_metadata,
+                                "CheckTitle",
+                                getattr(finding_output, "check_id", ""),
+                            )
+                            resource_name = getattr(finding_output, "resource_name", "")
+                            if not resource_name:
+                                resource_name = getattr(
+                                    finding_output, "resource_uid", ""
+                                )
+                            severity = getattr(
+                                check_metadata, "Severity", ""
+                            ).capitalize()
+                            finding_status = getattr(
+                                finding_output, "status", ""
+                            ).upper()
+                            region = getattr(finding_output, "region", "global")
 
-                    elements.append(Spacer(1, 0.2 * inch))
-        else:
-            elements.append(
-                Paragraph(
-                    "No requirements to display based on the current filter.",
-                    normal_center,
-                )
-            )
+                            findings_table_data.append(
+                                [
+                                    Paragraph(finding_title, normal_center),
+                                    Paragraph(resource_name, normal_center),
+                                    Paragraph(severity, normal_center),
+                                    Paragraph(finding_status, normal_center),
+                                    Paragraph(region, normal_center),
+                                ]
+                            )
+
+                        findings_table = Table(
+                            findings_table_data,
+                            colWidths=[
+                                2.5 * inch,
+                                3 * inch,
+                                0.9 * inch,
+                                0.9 * inch,
+                                0.9 * inch,
+                            ],
+                        )
+                        findings_table.setStyle(
+                            TableStyle(
+                                [
+                                    (
+                                        "BACKGROUND",
+                                        (0, 0),
+                                        (-1, 0),
+                                        COLOR_NIS2_PRIMARY,
+                                    ),
+                                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                                    ("FONTNAME", (0, 0), (-1, 0), "FiraCode"),
+                                    ("ALIGN", (0, 0), (0, 0), "CENTER"),
+                                    ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                                    ("FONTSIZE", (0, 0), (-1, -1), 9),
+                                    ("GRID", (0, 0), (-1, -1), 0.5, COLOR_BORDER_GRAY),
+                                    (
+                                        "ROWBACKGROUNDS",
+                                        (0, 1),
+                                        (-1, -1),
+                                        [colors.white, COLOR_NIS2_BG_BLUE],
+                                    ),
+                                    ("LEFTPADDING", (0, 0), (-1, -1), 5),
+                                    ("RIGHTPADDING", (0, 0), (-1, -1), 5),
+                                    ("TOPPADDING", (0, 0), (-1, -1), 5),
+                                    ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+                                ]
+                            )
+                        )
+                        elements.append(findings_table)
+
+                    elements.append(Spacer(1, 0.15 * inch))
+
+                elements.append(Spacer(1, 0.2 * inch))
 
         # Build the PDF
         logger.info("Building NIS2 PDF...")
