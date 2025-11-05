@@ -284,7 +284,8 @@ class Provider(RowLevelSecurityProtectedModel):
         KUBERNETES = "kubernetes", _("Kubernetes")
         M365 = "m365", _("M365")
         GITHUB = "github", _("GitHub")
-        OCI = "oci", _("Oracle Cloud Infrastructure")
+        IAC = "iac", _("IaC")
+        ORACLECLOUD = "oraclecloud", _("Oracle Cloud Infrastructure")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -356,14 +357,27 @@ class Provider(RowLevelSecurityProtectedModel):
             )
 
     @staticmethod
-    def validate_oci_uid(value):
+    def validate_iac_uid(value):
+        # Validate that it's a valid repository URL (git URL format)
+        if not re.match(
+            r"^(https?://|git@|ssh://)[^\s/]+[^\s]*\.git$|^(https?://)[^\s/]+[^\s]*$",
+            value,
+        ):
+            raise ModelValidationError(
+                detail="IaC provider ID must be a valid repository URL (e.g., https://github.com/user/repo or https://github.com/user/repo.git).",
+                code="iac-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_oraclecloud_uid(value):
         if not re.match(
             r"^ocid1\.([a-z0-9_-]+)\.([a-z0-9_-]+)\.([a-z0-9_-]*)\.([a-z0-9]+)$", value
         ):
             raise ModelValidationError(
                 detail="Oracle Cloud Infrastructure provider ID must be a valid tenancy OCID in the format: "
                 "ocid1.<resource_type>.<realm>.<region>.<unique_id>",
-                code="oci-uid",
+                code="oraclecloud-uid",
                 pointer="/data/attributes/uid",
             )
 

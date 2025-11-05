@@ -309,10 +309,17 @@ class Finding(BaseModel):
                 output_data["auth_method"] = provider.auth_method
                 output_data["account_uid"] = "iac"
                 output_data["account_name"] = "iac"
-                output_data["resource_name"] = check_output.resource_name
-                output_data["resource_uid"] = check_output.resource_name
-                output_data["region"] = check_output.resource_line_range
-                output_data["resource_line_range"] = check_output.resource_line_range
+                output_data["resource_name"] = getattr(
+                    check_output, "resource_name", ""
+                )
+                output_data["resource_uid"] = getattr(check_output, "resource_name", "")
+                # For IaC, resource_line_range only exists on CheckReportIAC, not on Finding objects
+                output_data["region"] = getattr(
+                    check_output, "resource_line_range", "file"
+                )
+                output_data["resource_line_range"] = getattr(
+                    check_output, "resource_line_range", ""
+                )
                 output_data["framework"] = check_output.check_metadata.ServiceName
 
             elif provider.type == "llm":
@@ -323,7 +330,7 @@ class Finding(BaseModel):
                 output_data["resource_uid"] = check_output.model
                 output_data["region"] = check_output.model
 
-            elif provider.type == "oci":
+            elif provider.type == "oraclecloud":
                 output_data["auth_method"] = (
                     f"Profile: {get_nested_attribute(provider, 'session.profile')}"
                 )
@@ -407,7 +414,11 @@ class Finding(BaseModel):
             finding.subscription = list(provider.identity.subscriptions.keys())[0]
         elif provider.type == "gcp":
             finding.project_id = list(provider.projects.keys())[0]
-        elif provider.type == "oci":
+        elif provider.type == "iac":
+            # For IaC, we don't have resource_line_range in the Finding model
+            # It would need to be extracted from the resource metadata if needed
+            finding.resource_line_range = ""  # Set empty for compatibility
+        elif provider.type == "oraclecloud":
             finding.compartment_id = getattr(finding, "compartment_id", "")
 
         finding.check_metadata = CheckMetadata(
