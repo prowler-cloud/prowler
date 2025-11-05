@@ -5,6 +5,7 @@ export const PROVIDER_TYPES = [
   "kubernetes",
   "m365",
   "github",
+  "iac",
   "oci",
 ] as const;
 

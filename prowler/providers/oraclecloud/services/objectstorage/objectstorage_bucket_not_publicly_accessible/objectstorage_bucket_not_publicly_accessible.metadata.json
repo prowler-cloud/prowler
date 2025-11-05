@@ -1,5 +1,5 @@
 {
-  "Provider": "oci",
+  "Provider": "oraclecloud",
   "CheckID": "objectstorage_bucket_not_publicly_accessible",
   "CheckTitle": "Ensure no Object Storage buckets are publicly visible",
   "CheckType": [

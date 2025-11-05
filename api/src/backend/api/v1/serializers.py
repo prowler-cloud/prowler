@@ -1362,11 +1362,13 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 serializer = GCPProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.GITHUB.value:
                 serializer = GithubProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.IAC.value:
+                serializer = IacProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.KUBERNETES.value:
                 serializer = KubernetesProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.M365.value:
                 serializer = M365ProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.OCI.value:
+            elif provider_type == Provider.ProviderChoices.ORACLECLOUD.value:
                 serializer = OracleCloudProviderSecret(data=secret)
             else:
                 raise serializers.ValidationError(
@@ -1476,6 +1478,14 @@ class GithubProviderSecret(serializers.Serializer):
     oauth_app_token = serializers.CharField(required=False)
     github_app_id = serializers.IntegerField(required=False)
     github_app_key_content = serializers.CharField(required=False)
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
+class IacProviderSecret(serializers.Serializer):
+    repository_url = serializers.CharField()
+    access_token = serializers.CharField(required=False)
 
     class Meta:
         resource_name = "provider-secrets"
