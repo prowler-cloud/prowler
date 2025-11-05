@@ -329,6 +329,10 @@
       {
         "tab": "Public Roadmap",
         "href": "https://roadmap.prowler.com/"
+      },
+      {
+        "tab": "API Reference",
+        "openapi": "api-reference/openapi.json"
       }
     ],
     "global": {
