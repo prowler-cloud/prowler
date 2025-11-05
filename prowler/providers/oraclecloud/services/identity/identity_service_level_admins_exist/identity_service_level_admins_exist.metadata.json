@@ -1,5 +1,5 @@
 {
-  "Provider": "oci",
+  "Provider": "oraclecloud",
   "CheckID": "identity_service_level_admins_exist",
   "CheckTitle": "Ensure service level admins are created to manage resources of particular service",
   "CheckType": [],
