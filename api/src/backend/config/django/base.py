@@ -128,6 +128,7 @@ SPECTACULAR_SETTINGS = {
         "api.schema_hooks.fix_empty_id_fields",
         "api.schema_hooks.fix_pattern_properties",
         "api.schema_hooks.fix_type_formats",
+        "api.schema_hooks.add_api_servers",
         "api.schema_hooks.attach_task_202_examples",
     ],
     "TITLE": "API Reference - Prowler",

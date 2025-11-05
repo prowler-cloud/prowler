@@ -25722,5 +25722,15 @@
       "name": "Mute Rules",
       "description": "Endpoints for simple mute rules management. These can be used as an alternative to the Mutelist Processor if you need to mute specific findings across your tenant with a specific reason."
     }
+  ],
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Local Development Server"
+    },
+    {
+      "url": "https://api.prowler.com",
+      "description": "Prowler Cloud API (Production)"
+    }
   ]
 }

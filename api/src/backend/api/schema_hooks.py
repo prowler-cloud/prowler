@@ -152,6 +152,53 @@ def fix_type_formats(result, generator, request, public):  # noqa: F841
     return fix_invalid_types(result)
 
 
+def add_api_servers(result, generator, request, public):  # noqa: F841
+    """
+    Add servers configuration to OpenAPI spec for Mintlify API playground.
+    This enables the "Try it out" feature in the documentation.
+    Dynamically determines the server URL based on the request.
+    """
+    if not isinstance(result, dict):
+        return result
+
+    # Add servers array if not already present
+    if "servers" not in result:
+        servers = []
+
+        # Try to get the current server URL from the request
+        if request:
+            scheme = request.scheme  # http or https
+            host = request.get_host()  # e.g., localhost:8080 or api.prowler.com
+
+            # Determine description based on host
+            if "localhost" in host or "127.0.0.1" in host:
+                description = "Local Development Server"
+            elif "dev" in host or "staging" in host:
+                description = "Development/Staging API"
+            else:
+                description = "Prowler Cloud API"
+
+            servers.append(
+                {
+                    "url": f"{scheme}://{host}",
+                    "description": description,
+                }
+            )
+
+        # Always add production as fallback/alternative
+        if not servers or (request and "prowler.com" not in request.get_host()):
+            servers.append(
+                {
+                    "url": "https://api.prowler.com",
+                    "description": "Prowler Cloud API (Production)",
+                }
+            )
+
+        result["servers"] = servers
+
+    return result
+
+
 def attach_task_202_examples(result, generator, request, public):  # noqa: F841
     if not isinstance(result, dict):
         return result
