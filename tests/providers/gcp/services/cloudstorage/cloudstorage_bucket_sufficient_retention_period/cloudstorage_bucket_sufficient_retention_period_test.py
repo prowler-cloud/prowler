@@ -105,6 +105,7 @@ class TestCloudStorageBucketSufficientRetentionPeriod:
             )
             from prowler.providers.gcp.services.cloudstorage.cloudstorage_service import (
                 Bucket,
+                RetentionPolicy,
             )
 
             cloudstorage_client.project_ids = [GCP_PROJECT_ID]
@@ -118,7 +119,11 @@ class TestCloudStorageBucketSufficientRetentionPeriod:
                     region=GCP_US_CENTER1_LOCATION,
                     uniform_bucket_level_access=True,
                     public=False,
-                    retention_policy={"retentionPeriod": "12096000"},  # 140 days
+                    retention_policy=RetentionPolicy(
+                        retention_period=12096000,  # 140 days
+                        is_locked=False,
+                        effective_time=None,
+                    ),
                     project_id=GCP_PROJECT_ID,
                     lifecycle_rules=[],
                     versioning_enabled=True,
@@ -132,7 +137,7 @@ class TestCloudStorageBucketSufficientRetentionPeriod:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Bucket sufficient-retention-policy has a retention policy of 140 days (minimum required: 90)."
+                == "Bucket sufficient-retention-policy has a sufficient retention policy of 140 days (minimum required: 90)."
             )
             assert result[0].resource_id == "sufficient-retention-policy"
             assert result[0].resource_name == "sufficient-retention-policy"
@@ -157,6 +162,7 @@ class TestCloudStorageBucketSufficientRetentionPeriod:
             )
             from prowler.providers.gcp.services.cloudstorage.cloudstorage_service import (
                 Bucket,
+                RetentionPolicy,
             )
 
             cloudstorage_client.project_ids = [GCP_PROJECT_ID]
@@ -170,7 +176,11 @@ class TestCloudStorageBucketSufficientRetentionPeriod:
                     region=GCP_US_CENTER1_LOCATION,
                     uniform_bucket_level_access=True,
                     public=False,
-                    retention_policy={"retentionPeriod": "604800"},  # 7 days
+                    retention_policy=RetentionPolicy(
+                        retention_period=604800,  # 7 days
+                        is_locked=False,
+                        effective_time=None,
+                    ),
                     project_id=GCP_PROJECT_ID,
                     lifecycle_rules=[],
                     versioning_enabled=True,
@@ -188,57 +198,5 @@ class TestCloudStorageBucketSufficientRetentionPeriod:
             )
             assert result[0].resource_id == "insufficient-retention-policy"
             assert result[0].resource_name == "insufficient-retention-policy"
-            assert result[0].location == GCP_US_CENTER1_LOCATION
-            assert result[0].project_id == GCP_PROJECT_ID
-
-    def test_bucket_with_invalid_retention_policy(self):
-        cloudstorage_client = mock.MagicMock()
-
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_gcp_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_sufficient_retention_period.cloudstorage_bucket_sufficient_retention_period.cloudstorage_client",
-                new=cloudstorage_client,
-            ),
-        ):
-            from prowler.providers.gcp.services.cloudstorage.cloudstorage_bucket_sufficient_retention_period.cloudstorage_bucket_sufficient_retention_period import (
-                cloudstorage_bucket_sufficient_retention_period,
-            )
-            from prowler.providers.gcp.services.cloudstorage.cloudstorage_service import (
-                Bucket,
-            )
-
-            cloudstorage_client.project_ids = [GCP_PROJECT_ID]
-            cloudstorage_client.region = GCP_US_CENTER1_LOCATION
-            cloudstorage_client.audit_config = {"storage_min_retention_days": 90}
-
-            cloudstorage_client.buckets = [
-                Bucket(
-                    name="invalid-retention-policy",
-                    id="invalid-retention-policy",
-                    region=GCP_US_CENTER1_LOCATION,
-                    uniform_bucket_level_access=True,
-                    public=False,
-                    retention_policy={"retentionPeriod": "invalid_value"},
-                    project_id=GCP_PROJECT_ID,
-                    lifecycle_rules=[],
-                    versioning_enabled=True,
-                )
-            ]
-
-            check = cloudstorage_bucket_sufficient_retention_period()
-            result = check.execute()
-
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert (
-                result[0].status_extended
-                == "Bucket invalid-retention-policy has a retention policy but retentionPeriod is invalid (minimum required: 90 days)."
-            )
-            assert result[0].resource_id == "invalid-retention-policy"
-            assert result[0].resource_name == "invalid-retention-policy"
             assert result[0].location == GCP_US_CENTER1_LOCATION
             assert result[0].project_id == GCP_PROJECT_ID

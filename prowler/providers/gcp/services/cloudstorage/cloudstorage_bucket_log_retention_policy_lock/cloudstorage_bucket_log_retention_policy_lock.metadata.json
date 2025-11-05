@@ -1,26 +1,29 @@
 {
   "Provider": "gcp",
   "CheckID": "cloudstorage_bucket_log_retention_policy_lock",
-  "CheckTitle": "Ensure That Retention Policies on Cloud Storage Buckets Used for Exporting Logs Are Configured Using Bucket Lock",
+  "CheckTitle": "Cloud Storage log buckets have a Retention Policy with Bucket Lock enabled",
   "CheckType": [],
   "ServiceName": "cloudstorage",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Bucket",
-  "Description": "Enabling retention policies on log buckets will protect logs stored in cloud storage buckets from being overwritten or accidentally deleted.",
-  "Risk": "Sinks can be configured to export logs in storage buckets. It is recommended to configure a data retention policy for these cloud storage buckets and to lock the data retention policy, thus permanently preventing the policy from being reduced or removed. This way, if the system is ever compromised by an attacker or a malicious insider who wants to cover their tracks, the activity logs are definitely preserved for forensics and security investigations.",
+  "ResourceType": "storage.googleapis.com/Bucket",
+  "Description": "**Google Cloud Storage buckets** used as **log sinks** are evaluated to ensure that a **Retention Policy** is configured and **Bucket Lock** is enabled. Enabling Bucket Lock permanently prevents the retention policy from being reduced or removed, protecting logs from modification or deletion.",
+  "Risk": "Log sink buckets without a locked retention policy are at risk of log tampering or accidental deletion. Without Bucket Lock, an attacker or user could remove or shorten the retention policy, compromising the integrity of audit logs required for forensics and compliance investigations.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudStorage/retention-policies-with-bucket-lock.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "gcloud storage buckets lock-retention-policy gs://<LOG_BUCKET_NAME>",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudStorage/retention-policies-with-bucket-lock.html",
-      "Terraform": "https://docs.prowler.com/checks/gcp/logging-policies-1/ensure-that-retention-policies-on-log-buckets-are-configured-using-bucket-lock#terraform"
+      "Other": "1) Open Google Cloud Console → Storage → Buckets → <LOG_BUCKET_NAME>\n2) Go to the **Configuration** tab\n3) Under **Retention policy**, ensure a retention duration is set\n4) Click **Lock** to enable Bucket Lock and confirm the operation",
+      "Terraform": "```hcl\nresource \"google_storage_bucket\" \"log_bucket\" {\n  name     = var.log_bucket_name\n  location = var.location\n\n  retention_policy {\n    retention_period = 31536000 # 365 days in seconds\n    is_locked        = true\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended to set up retention policies and configure Bucket Lock on all storage buckets that are used as log sinks.",
-      "Url": "https://cloud.google.com/storage/docs/using-uniform-bucket-level-access"
+      "Text": "Configure a retention policy and enable Bucket Lock on all Cloud Storage buckets used as log sinks to ensure log integrity and immutability.",
+      "Url": "https://hub.prowler.com/check/cloudstorage_bucket_log_retention_policy_lock"
     }
   },
   "Categories": [],
