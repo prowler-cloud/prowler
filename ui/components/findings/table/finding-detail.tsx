@@ -14,11 +14,11 @@ import {
 } from "@/components/ui/entities";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import { SeverityBadge } from "@/components/ui/table/severity-badge";
+import { buildGitFileUrl, extractLineRangeFromUid } from "@/lib/iac-utils";
 import { FindingProps, ProviderType } from "@/types";
 
 import { Muted } from "../muted";
 import { DeltaIndicator } from "./delta-indicator";
-import { buildGitFileUrl, extractLineRangeFromUid } from "./git-utils";
 
 const MarkdownContainer = ({ children }: { children: string }) => {
   return (
@@ -143,6 +143,9 @@ export const FindingDetail = ({
         <InfoField label="Finding UID" variant="simple">
           <CodeSnippet value={attributes.uid} />
         </InfoField>
+        <InfoField label="Resource ID" variant="simple">
+          <CodeSnippet value={resource.uid} />
+        </InfoField>
 
         {attributes.status === "FAIL" && (
           <InfoField label="Risk" variant="simple">
@@ -249,31 +252,27 @@ export const FindingDetail = ({
       {/* Resource Details */}
       <CustomSection
         title={
-          <span className="flex items-center gap-2">
-            Resource Details
-            {gitUrl && (
-              <a
-                href={gitUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                title="Go to Resource in the Repository"
-                className="text-blue-600 transition-colors hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                aria-label="Open resource in repository"
-              >
-                <ExternalLink size={16} />
-              </a>
-            )}
-          </span>
+          providerDetails.provider === "iac" ? (
+            <span className="flex items-center gap-2">
+              Resource Details
+              {gitUrl && (
+                <a
+                  href={gitUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Go to Resource in the Repository"
+                  className="text-blue-600 transition-colors hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                  aria-label="Open resource in repository"
+                >
+                  <ExternalLink size={16} />
+                </a>
+              )}
+            </span>
+          ) : (
+            "Resource Details"
+          )
         }
       >
-        <InfoField label="Resource ID" variant="simple">
-          <Snippet className="bg-gray-50 py-1 dark:bg-slate-800" hideSymbol>
-            <span className="text-xs whitespace-pre-line">
-              {renderValue(resource.uid)}
-            </span>
-          </Snippet>
-        </InfoField>
-
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <InfoField label="Resource Name">
             {renderValue(resource.name)}
