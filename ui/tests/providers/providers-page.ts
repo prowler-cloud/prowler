@@ -17,6 +17,12 @@ export interface AZUREProviderData {
   alias?: string;
 }
 
+// M365 provider data
+export interface M365ProviderData {
+  domainId: string;
+  alias?: string;
+}
+
 // AWS credential options
 export const AWS_CREDENTIAL_OPTIONS = {
   AWS_ROLE_ARN: "role",
@@ -51,6 +57,23 @@ export interface AZUREProviderCredential {
   tenantId:string;
 }
 
+// M365 credential options
+export const M365_CREDENTIAL_OPTIONS = {
+  M365_CREDENTIALS: "credentials",
+  M365_CERTIFICATE_CREDENTIALS: "certificate"
+} as const;
+
+// M365 credential type
+type M365CredentialType = (typeof M365_CREDENTIAL_OPTIONS)[keyof typeof M365_CREDENTIAL_OPTIONS]; 
+
+// M365 provider credential
+export interface M365ProviderCredential {
+  type: M365CredentialType;
+  clientId:string;
+  clientSecret?:string;
+  tenantId:string;
+  certificateContent?:string;
+}
 
 // Providers page
 export class ProvidersPage extends BasePage {
@@ -79,6 +102,10 @@ export class ProvidersPage extends BasePage {
   readonly roleCredentialsRadio: Locator;
   readonly staticCredentialsRadio: Locator;
 
+  // M365 credentials type selection
+  readonly m365StaticCredentialsRadio: Locator;
+  readonly m365CertificateCredentialsRadio: Locator;
+
   // AWS role credentials form
   readonly roleArnInput: Locator;
   readonly externalIdInput: Locator;
@@ -92,6 +119,13 @@ export class ProvidersPage extends BasePage {
   readonly azureClientIdInput: Locator;
   readonly azureClientSecretInput: Locator;
   readonly azureTenantIdInput: Locator;
+
+  // M365 provider form elements
+  readonly m365domainIdInput: Locator;
+  readonly m365ClientIdInput: Locator;
+  readonly m365ClientSecretInput: Locator;
+  readonly m365TenantIdInput: Locator;
+  readonly m365CertificateContentInput: Locator;
 
   // Delete button
   readonly deleteProviderConfirmationButton: Locator;
@@ -131,7 +165,14 @@ export class ProvidersPage extends BasePage {
     this.azureClientIdInput = page.getByRole("textbox", { name: "Client ID" });
     this.azureClientSecretInput = page.getByRole("textbox", { name: "Client Secret" });
     this.azureTenantIdInput = page.getByRole("textbox", { name: "Tenant ID" });
-
+    
+    // M365 provider form inputs
+    this.m365domainIdInput = page.getByRole("textbox", { name: "Domain ID" });
+    this.m365ClientIdInput = page.getByRole("textbox", { name: "Client ID" });
+    this.m365ClientSecretInput = page.getByRole("textbox", { name: "Client Secret" });
+    this.m365TenantIdInput = page.getByRole("textbox", { name: "Tenant ID" });
+    this.m365CertificateContentInput = page.getByRole("textbox", { name: "Certificate Content" });
+    
     // Alias input
     this.aliasInput = page.getByRole("textbox", { name: "Provider alias (optional)" });
 
@@ -156,6 +197,14 @@ export class ProvidersPage extends BasePage {
     });
     this.staticCredentialsRadio = page.getByRole("radio", {
       name: /Connect via Credentials/i,
+    });
+
+    // Radios for selecting M365 credentials method
+    this.m365StaticCredentialsRadio = page.getByRole("radio", {
+      name: /App Client Secret Credentials/i,
+    });
+    this.m365CertificateCredentialsRadio = page.getByRole("radio", {
+      name: /App Certificate Credentials/i,
     });
 
     // Inputs for IAM Role credentials
@@ -200,6 +249,14 @@ export class ProvidersPage extends BasePage {
     await this.waitForPageLoad();
   }
   
+  async selectM365Provider(): Promise<void> {
+    // Select the M365 provider
+
+    await this.m365ProviderRadio.click({ force: true });
+    await this.waitForPageLoad();
+  }
+
+
   async fillAWSProviderDetails(data: AWSProviderData): Promise<void> {
     // Fill the AWS provider details
 
@@ -214,6 +271,16 @@ export class ProvidersPage extends BasePage {
     // Fill the AWS provider details
 
     await this.azureSubscriptionIdInput.fill(data.subscriptionId);
+
+    if (data.alias) {
+      await this.aliasInput.fill(data.alias);
+    }
+  }
+
+  async fillM365ProviderDetails(data: M365ProviderData): Promise<void> {
+    // Fill the M365 provider details
+
+    await this.m365domainIdInput.fill(data.domainId);
 
     if (data.alias) {
       await this.aliasInput.fill(data.alias);
@@ -342,6 +409,21 @@ export class ProvidersPage extends BasePage {
     await this.waitForPageLoad();
   }
 
+  async selectM365CredentialsType(type: M365CredentialType): Promise<void> {
+    // Ensure we are on the add-credentials page where the selector exists
+
+    await expect(this.page).toHaveURL(/\/providers\/add-credentials/);
+    if (type === M365_CREDENTIAL_OPTIONS.M365_CREDENTIALS) {
+      await this.m365StaticCredentialsRadio.click({ force: true });
+    } else if (type === M365_CREDENTIAL_OPTIONS.M365_CERTIFICATE_CREDENTIALS) {
+      await this.m365CertificateCredentialsRadio.click({ force: true }); 
+    } else {
+      throw new Error(`Invalid M365 credential type: ${type}`);
+    }
+    // Wait for the page to load
+    await this.waitForPageLoad();
+  }
+
   async fillRoleCredentials(credentials: AWSProviderCredential): Promise<void> {
     // Fill the role credentials form
     
@@ -387,6 +469,34 @@ export class ProvidersPage extends BasePage {
     }
   }
 
+  async fillM365Credentials(credentials: M365ProviderCredential): Promise<void> {
+    // Fill the m365 credentials form
+
+    if (credentials.clientId) {
+      await this.m365ClientIdInput.fill(credentials.clientId);
+    }
+    if (credentials.clientSecret) {
+      await this.m365ClientSecretInput.fill(credentials.clientSecret);
+    }
+    if (credentials.tenantId) {
+      await this.m365TenantIdInput.fill(credentials.tenantId);
+    }
+  }
+
+  async fillM365CertificateCredentials(credentials: M365ProviderCredential): Promise<void> {
+    // Fill the m365 certificate credentials form
+
+    if (credentials.clientId) {
+      await this.m365ClientIdInput.fill(credentials.clientId);
+    }
+    if (credentials.certificateContent) {
+      await this.m365CertificateContentInput.fill(credentials.certificateContent);
+    }
+    if (credentials.tenantId) {
+      await this.m365TenantIdInput.fill(credentials.tenantId);
+    }
+  }
+
   async verifyPageLoaded(): Promise<void> {
     // Verify the providers page is loaded
 
@@ -407,6 +517,24 @@ export class ProvidersPage extends BasePage {
 
     await expect(this.page).toHaveTitle(/Prowler/);
     await expect(this.roleCredentialsRadio).toBeVisible();
+  }
+
+  async verifyM365CredentialsPageLoaded(): Promise<void> {
+    // Verify the M365 credentials page is loaded
+
+    await expect(this.page).toHaveTitle(/Prowler/);
+    await expect(this.m365ClientIdInput).toBeVisible();
+    await expect(this.m365ClientSecretInput).toBeVisible();
+    await expect(this.m365TenantIdInput).toBeVisible();
+  }
+
+  async verifyM365CertificateCredentialsPageLoaded(): Promise<void> {
+    // Verify the M365 certificate credentials page is loaded
+
+    await expect(this.page).toHaveTitle(/Prowler/);
+    await expect(this.m365ClientIdInput).toBeVisible();
+    await expect(this.m365TenantIdInput).toBeVisible();
+    await expect(this.m365CertificateContentInput).toBeVisible();
   }
 
   async verifyLaunchScanPageLoaded(): Promise<void> {

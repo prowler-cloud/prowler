@@ -1,5 +1,5 @@
 {
-  "Provider": "oci",
+  "Provider": "oraclecloud",
   "CheckID": "identity_iam_admins_cannot_update_tenancy_admins",
   "CheckTitle": "Ensure IAM administrators cannot update tenancy Administrators group",
   "CheckType": [

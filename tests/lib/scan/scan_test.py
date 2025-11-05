@@ -260,16 +260,24 @@ class TestScan:
             assert scan.get_completed_services() == set()
             assert scan.get_completed_checks() == set()
 
-    @patch("importlib.import_module")
+    @patch("prowler.lib.scan.scan.load_checks_to_execute")
+    @patch("prowler.lib.scan.scan.update_checks_metadata_with_compliance")
+    @patch("prowler.lib.scan.scan.Compliance.get_bulk")
+    @patch("prowler.lib.scan.scan.CheckMetadata.get_bulk")
+    @patch("prowler.lib.scan.scan.import_check")
     def test_scan(
-        mock_import_module,
+        self,
+        mock_import_check,
+        mock_get_bulk,
+        mock_compliance_get_bulk,
+        mock_update_checks_metadata,
+        mock_load_checks,
         mock_global_provider,
         mock_execute,
         mock_logger,
-        mock_generate_output,
-        mock_recover_checks_from_provider,
-        mock_load_check_metadata,
     ):
+        from prowler.lib.check.models import Severity
+
         mock_check_class = MagicMock()
         mock_check_instance = mock_check_class.return_value
         mock_check_instance.Provider = "aws"
@@ -277,23 +285,39 @@ class TestScan:
         mock_check_instance.CheckTitle = "Check if IAM Access Analyzer is enabled"
         mock_check_instance.Categories = []
 
-        mock_import_module.return_value = MagicMock(
+        mock_import_check.return_value = MagicMock(
             accessanalyzer_enabled=mock_check_class
         )
 
         checks_to_execute = {"accessanalyzer_enabled"}
         custom_checks_metadata = {}
-        mock_global_provider.type = "aws"
+
+        # Mock CheckMetadata
+        mock_metadata = MagicMock()
+        mock_metadata.CheckID = "accessanalyzer_enabled"
+        mock_metadata.ResourceType = "AWS::IAM::AccessAnalyzer"
+        mock_metadata.Categories = []
+        mock_metadata.CheckAliases = []
+        mock_metadata.Severity = Severity.medium
+        mock_metadata.Compliance = []
+
+        bulk_checks_metadata = {"accessanalyzer_enabled": mock_metadata}
+        mock_get_bulk.return_value = bulk_checks_metadata
+
+        # Mock update_checks_metadata_with_compliance to return the same metadata
+        mock_update_checks_metadata.return_value = bulk_checks_metadata
+
+        # Mock Compliance frameworks
+        mock_compliance_get_bulk.return_value = {}
+
+        # Mock load_checks_to_execute to return the checks
+        mock_load_checks.return_value = ["accessanalyzer_enabled"]
 
         scan = Scan(mock_global_provider, checks=checks_to_execute)
-        mock_load_check_metadata.assert_called_once()
-        mock_recover_checks_from_provider.assert_called_once_with("aws")
         results = list(scan.scan(custom_checks_metadata))
 
-        assert mock_generate_output.call_count == 1 * len(mock_execute.side_effect())
         assert mock_execute.call_count == 1
         assert len(results) == 1
-        assert results[0][1] == mock_execute.side_effect()
         assert results[0][0] == 100.0
         assert scan.progress == 100.0
         # Since the scan is mocked, the duration will always be 0 for now

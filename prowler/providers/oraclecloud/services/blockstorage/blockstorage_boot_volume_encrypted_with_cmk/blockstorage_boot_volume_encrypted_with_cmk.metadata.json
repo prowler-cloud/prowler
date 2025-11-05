@@ -1,5 +1,5 @@
 {
-  "Provider": "oci",
+  "Provider": "oraclecloud",
   "CheckID": "blockstorage_boot_volume_encrypted_with_cmk",
   "CheckTitle": "Ensure Boot Volumes are encrypted with Customer Managed Key",
   "CheckType": [
