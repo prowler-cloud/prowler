@@ -67,7 +67,7 @@ const ComplianceLogo = ({ logoPath }: { logoPath?: string }) => {
   }
 
   return (
-    <div className="relative h-[120px] w-[120px] rounded-lg border border-gray-300 bg-white p-2 dark:border-gray-700 dark:bg-gray-900">
+    <div className="relative h-[200px] w-[200px] rounded-lg border border-gray-300 bg-white p-2 dark:border-gray-700 dark:bg-gray-900">
       <Image
         src={logoPath}
         alt="Compliance logo"
