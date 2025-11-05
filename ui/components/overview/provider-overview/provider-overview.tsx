@@ -41,7 +41,7 @@ export const ProvidersOverview = ({
         return <GitHubProviderBadge width={30} height={30} />;
       case "iac":
         return <IacProviderBadge width={30} height={30} />;
-      case "oci":
+      case "oraclecloud":
         return <OracleCloudProviderBadge width={30} height={30} />;
       default:
         return null;
@@ -56,7 +56,7 @@ export const ProvidersOverview = ({
     kubernetes: "Kubernetes",
     github: "GitHub",
     iac: "IaC",
-    oci: "OCI",
+    oraclecloud: "OCI",
   };
 
   const providers = PROVIDER_TYPES.map((providerType) => ({

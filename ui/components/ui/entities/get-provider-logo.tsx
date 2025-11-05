@@ -28,7 +28,7 @@ export const getProviderLogo = (provider: ProviderType) => {
       return <GitHubProviderBadge width={35} height={35} />;
     case "iac":
       return <IacProviderBadge width={35} height={35} />;
-    case "oci":
+    case "oraclecloud":
       return <OracleCloudProviderBadge width={35} height={35} />;
     default:
       return null;
@@ -51,7 +51,7 @@ export const getProviderName = (provider: ProviderType): string => {
       return "GitHub";
     case "iac":
       return "Infrastructure as Code";
-    case "oci":
+    case "oraclecloud":
       return "Oracle Cloud Infrastructure";
     default:
       return "Unknown Provider";
