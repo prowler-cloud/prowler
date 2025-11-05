@@ -29,7 +29,8 @@ export const ComplianceDownloadButton = ({
     }
   };
 
-  const defaultLabel = reportType === "threatscore" ? "PDF ThreatScore Report" : "PDF ENS Report";
+  const defaultLabel =
+    reportType === "threatscore" ? "PDF ThreatScore Report" : "PDF ENS Report";
 
   return (
     <Button

@@ -159,13 +159,19 @@ export default async function ComplianceDetail({
           "ProwlerThreatScore" &&
           selectedScanId && (
             <div className="flex-shrink-0 pt-1">
-              <ComplianceDownloadButton scanId={selectedScanId} reportType="threatscore" />
+              <ComplianceDownloadButton
+                scanId={selectedScanId}
+                reportType="threatscore"
+              />
             </div>
           )}
         {attributesData?.data?.[0]?.attributes?.framework === "ENS" &&
           selectedScanId && (
             <div className="flex-shrink-0 pt-1">
-              <ComplianceDownloadButton scanId={selectedScanId} reportType="ens" />
+              <ComplianceDownloadButton
+                scanId={selectedScanId}
+                reportType="ens"
+              />
             </div>
           )}
       </div>

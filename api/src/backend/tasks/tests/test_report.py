@@ -1388,7 +1388,6 @@ class TestGenerateComplianceReportsOptimized:
             patch("tasks.jobs.report.rls_transaction"),
             patch("tasks.jobs.report.batched") as mock_batched,
         ):
-
             # Setup mocks
             mock_finding_class.all_objects.filter.return_value.order_by.return_value.iterator.return_value = [
                 mock_finding2

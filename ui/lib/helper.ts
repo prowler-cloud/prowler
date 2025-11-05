@@ -233,7 +233,8 @@ export const downloadComplianceReportPdf = async (
   toast: ReturnType<typeof useToast>["toast"],
 ): Promise<void> => {
   const result = await getCompliancePdfReport(scanId, reportType);
-  const reportName = reportType === "threatscore" ? "ThreatScore" : "ENS RD2022";
+  const reportName =
+    reportType === "threatscore" ? "ThreatScore" : "ENS RD2022";
   await downloadFile(
     result,
     "application/pdf",
