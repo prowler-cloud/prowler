@@ -869,7 +869,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7087703783970b51
+          x-spec-enum-id: cfe6f885ff538a1a
           enum:
           - aws
           - azure
@@ -894,12 +894,13 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7087703783970b51
+            x-spec-enum-id: cfe6f885ff538a1a
             enum:
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
             - oraclecloud
@@ -1403,7 +1404,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7087703783970b51
+          x-spec-enum-id: cfe6f885ff538a1a
           enum:
           - aws
           - azure
@@ -1428,12 +1429,13 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7087703783970b51
+            x-spec-enum-id: cfe6f885ff538a1a
             enum:
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
             - oraclecloud
@@ -1845,7 +1847,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7087703783970b51
+          x-spec-enum-id: cfe6f885ff538a1a
           enum:
           - aws
           - azure
@@ -1870,12 +1872,13 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7087703783970b51
+            x-spec-enum-id: cfe6f885ff538a1a
             enum:
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
             - oraclecloud
@@ -2285,7 +2288,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7087703783970b51
+          x-spec-enum-id: cfe6f885ff538a1a
           enum:
           - aws
           - azure
@@ -2310,12 +2313,13 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7087703783970b51
+            x-spec-enum-id: cfe6f885ff538a1a
             enum:
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
             - oraclecloud
@@ -2713,7 +2717,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7087703783970b51
+          x-spec-enum-id: cfe6f885ff538a1a
           enum:
           - aws
           - azure
@@ -2738,12 +2742,13 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7087703783970b51
+            x-spec-enum-id: cfe6f885ff538a1a
             enum:
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
             - oraclecloud
@@ -4545,7 +4550,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7087703783970b51
+          x-spec-enum-id: cfe6f885ff538a1a
           enum:
           - aws
           - azure
@@ -4570,12 +4575,13 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7087703783970b51
+            x-spec-enum-id: cfe6f885ff538a1a
             enum:
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
             - oraclecloud
@@ -4729,7 +4735,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7087703783970b51
+          x-spec-enum-id: cfe6f885ff538a1a
           enum:
           - aws
           - azure
@@ -4754,12 +4760,13 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7087703783970b51
+            x-spec-enum-id: cfe6f885ff538a1a
             enum:
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
             - oraclecloud
@@ -4979,7 +4986,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7087703783970b51
+          x-spec-enum-id: cfe6f885ff538a1a
           enum:
           - aws
           - azure
@@ -5004,12 +5011,13 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7087703783970b51
+            x-spec-enum-id: cfe6f885ff538a1a
             enum:
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
             - oraclecloud
@@ -5709,7 +5717,7 @@ paths:
         name: filter[provider]
         schema:
           type: string
-          x-spec-enum-id: 7087703783970b51
+          x-spec-enum-id: cfe6f885ff538a1a
           enum:
           - aws
           - azure
@@ -5734,12 +5742,13 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7087703783970b51
+            x-spec-enum-id: cfe6f885ff538a1a
             enum:
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
             - oraclecloud
@@ -5752,6 +5761,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
         style: form
@@ -5759,12 +5769,13 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7087703783970b51
+          x-spec-enum-id: cfe6f885ff538a1a
           enum:
           - aws
           - azure
           - gcp
           - github
+          - iac
           - kubernetes
           - m365
           - oraclecloud
@@ -5775,6 +5786,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
@@ -5782,12 +5794,13 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7087703783970b51
+            x-spec-enum-id: cfe6f885ff538a1a
             enum:
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
             - oraclecloud
@@ -5800,6 +5813,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
         style: form
@@ -6398,7 +6412,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7087703783970b51
+          x-spec-enum-id: cfe6f885ff538a1a
           enum:
           - aws
           - azure
@@ -6423,12 +6437,13 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7087703783970b51
+            x-spec-enum-id: cfe6f885ff538a1a
             enum:
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
             - oraclecloud
@@ -6770,7 +6785,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7087703783970b51
+          x-spec-enum-id: cfe6f885ff538a1a
           enum:
           - aws
           - azure
@@ -6795,12 +6810,13 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7087703783970b51
+            x-spec-enum-id: cfe6f885ff538a1a
             enum:
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
             - oraclecloud
@@ -7043,7 +7059,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7087703783970b51
+          x-spec-enum-id: cfe6f885ff538a1a
           enum:
           - aws
           - azure
@@ -7068,12 +7084,13 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7087703783970b51
+            x-spec-enum-id: cfe6f885ff538a1a
             enum:
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
             - oraclecloud
@@ -7322,7 +7339,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7087703783970b51
+          x-spec-enum-id: cfe6f885ff538a1a
           enum:
           - aws
           - azure
@@ -7347,12 +7364,13 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7087703783970b51
+            x-spec-enum-id: cfe6f885ff538a1a
             enum:
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
             - oraclecloud
@@ -8164,7 +8182,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7087703783970b51
+          x-spec-enum-id: cfe6f885ff538a1a
           enum:
           - aws
           - azure
@@ -8189,12 +8207,13 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7087703783970b51
+            x-spec-enum-id: cfe6f885ff538a1a
             enum:
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
             - oraclecloud
@@ -13284,7 +13303,10 @@ components:
                 and relationships.
               enum:
               - integrations
-            id: {}
+            id:
+              type: string
+              format: uuid
+              description: Unique identifier for this resource object.
             attributes:
               type: object
               properties:
@@ -13789,7 +13811,10 @@ components:
                 and relationships.
               enum:
               - processors
-            id: {}
+            id:
+              type: string
+              format: uuid
+              description: Unique identifier for this resource object.
             attributes:
               type: object
               properties:
@@ -13811,16 +13836,33 @@ components:
                         properties:
                           Accounts:
                             type: object
-                            patternProperties:
-                              .*:
-                                type: object
-                                properties:
-                                  Checks:
+                            additionalProperties:
+                              type: object
+                              properties:
+                                Checks:
+                                  type: object
+                                  additionalProperties:
                                     type: object
-                                    patternProperties:
-                                      .*:
+                                    properties:
+                                      Regions:
+                                        type: array
+                                        items:
+                                          type: string
+                                      Resources:
+                                        type: array
+                                        items:
+                                          type: string
+                                      Tags:
+                                        type: array
+                                        items:
+                                          type: string
+                                      Exceptions:
                                         type: object
                                         properties:
+                                          Accounts:
+                                            type: array
+                                            items:
+                                              type: string
                                           Regions:
                                             type: array
                                             items:
@@ -13833,37 +13875,16 @@ components:
                                             type: array
                                             items:
                                               type: string
-                                          Exceptions:
-                                            type: object
-                                            properties:
-                                              Accounts:
-                                                type: array
-                                                items:
-                                                  type: string
-                                              Regions:
-                                                type: array
-                                                items:
-                                                  type: string
-                                              Resources:
-                                                type: array
-                                                items:
-                                                  type: string
-                                              Tags:
-                                                type: array
-                                                items:
-                                                  type: string
-                                            additionalProperties: false
-                                          Description:
-                                            type: string
-                                        required:
-                                        - Regions
-                                        - Resources
                                         additionalProperties: false
+                                      Description:
+                                        type: string
+                                    required:
+                                    - Regions
+                                    - Resources
                                     additionalProperties: false
-                                required:
-                                - Checks
-                                additionalProperties: false
-                            additionalProperties: false
+                              required:
+                              - Checks
+                              additionalProperties: false
                         required:
                         - Accounts
                         additionalProperties: false
@@ -14146,9 +14167,10 @@ components:
                         description: The client secret associated with the application
                           (client) ID, providing secure access.
                       user:
-                        type: email
+                        type: string
                         description: User microsoft email address.
                         deprecated: true
+                        format: email
                       password:
                         type: string
                         description: User password.
@@ -14336,7 +14358,10 @@ components:
                 and relationships.
               enum:
               - providers
-            id: {}
+            id:
+              type: string
+              format: uuid
+              description: Unique identifier for this resource object.
             attributes:
               type: object
               properties:
@@ -14863,16 +14888,33 @@ components:
                     properties:
                       Accounts:
                         type: object
-                        patternProperties:
-                          .*:
-                            type: object
-                            properties:
-                              Checks:
+                        additionalProperties:
+                          type: object
+                          properties:
+                            Checks:
+                              type: object
+                              additionalProperties:
                                 type: object
-                                patternProperties:
-                                  .*:
+                                properties:
+                                  Regions:
+                                    type: array
+                                    items:
+                                      type: string
+                                  Resources:
+                                    type: array
+                                    items:
+                                      type: string
+                                  Tags:
+                                    type: array
+                                    items:
+                                      type: string
+                                  Exceptions:
                                     type: object
                                     properties:
+                                      Accounts:
+                                        type: array
+                                        items:
+                                          type: string
                                       Regions:
                                         type: array
                                         items:
@@ -14885,37 +14927,16 @@ components:
                                         type: array
                                         items:
                                           type: string
-                                      Exceptions:
-                                        type: object
-                                        properties:
-                                          Accounts:
-                                            type: array
-                                            items:
-                                              type: string
-                                          Regions:
-                                            type: array
-                                            items:
-                                              type: string
-                                          Resources:
-                                            type: array
-                                            items:
-                                              type: string
-                                          Tags:
-                                            type: array
-                                            items:
-                                              type: string
-                                        additionalProperties: false
-                                      Description:
-                                        type: string
-                                    required:
-                                    - Regions
-                                    - Resources
                                     additionalProperties: false
+                                  Description:
+                                    type: string
+                                required:
+                                - Regions
+                                - Resources
                                 additionalProperties: false
-                            required:
-                            - Checks
-                            additionalProperties: false
-                        additionalProperties: false
+                          required:
+                          - Checks
+                          additionalProperties: false
                     required:
                     - Accounts
                     additionalProperties: false
@@ -14963,16 +14984,33 @@ components:
                     properties:
                       Accounts:
                         type: object
-                        patternProperties:
-                          .*:
-                            type: object
-                            properties:
-                              Checks:
+                        additionalProperties:
+                          type: object
+                          properties:
+                            Checks:
+                              type: object
+                              additionalProperties:
                                 type: object
-                                patternProperties:
-                                  .*:
+                                properties:
+                                  Regions:
+                                    type: array
+                                    items:
+                                      type: string
+                                  Resources:
+                                    type: array
+                                    items:
+                                      type: string
+                                  Tags:
+                                    type: array
+                                    items:
+                                      type: string
+                                  Exceptions:
                                     type: object
                                     properties:
+                                      Accounts:
+                                        type: array
+                                        items:
+                                          type: string
                                       Regions:
                                         type: array
                                         items:
@@ -14985,37 +15023,16 @@ components:
                                         type: array
                                         items:
                                           type: string
-                                      Exceptions:
-                                        type: object
-                                        properties:
-                                          Accounts:
-                                            type: array
-                                            items:
-                                              type: string
-                                          Regions:
-                                            type: array
-                                            items:
-                                              type: string
-                                          Resources:
-                                            type: array
-                                            items:
-                                              type: string
-                                          Tags:
-                                            type: array
-                                            items:
-                                              type: string
-                                        additionalProperties: false
-                                      Description:
-                                        type: string
-                                    required:
-                                    - Regions
-                                    - Resources
                                     additionalProperties: false
+                                  Description:
+                                    type: string
+                                required:
+                                - Regions
+                                - Resources
                                 additionalProperties: false
-                            required:
-                            - Checks
-                            additionalProperties: false
-                        additionalProperties: false
+                          required:
+                          - Checks
+                          additionalProperties: false
                     required:
                     - Accounts
                     additionalProperties: false
@@ -15066,16 +15083,33 @@ components:
                         properties:
                           Accounts:
                             type: object
-                            patternProperties:
-                              .*:
-                                type: object
-                                properties:
-                                  Checks:
+                            additionalProperties:
+                              type: object
+                              properties:
+                                Checks:
+                                  type: object
+                                  additionalProperties:
                                     type: object
-                                    patternProperties:
-                                      .*:
+                                    properties:
+                                      Regions:
+                                        type: array
+                                        items:
+                                          type: string
+                                      Resources:
+                                        type: array
+                                        items:
+                                          type: string
+                                      Tags:
+                                        type: array
+                                        items:
+                                          type: string
+                                      Exceptions:
                                         type: object
                                         properties:
+                                          Accounts:
+                                            type: array
+                                            items:
+                                              type: string
                                           Regions:
                                             type: array
                                             items:
@@ -15088,37 +15122,16 @@ components:
                                             type: array
                                             items:
                                               type: string
-                                          Exceptions:
-                                            type: object
-                                            properties:
-                                              Accounts:
-                                                type: array
-                                                items:
-                                                  type: string
-                                              Regions:
-                                                type: array
-                                                items:
-                                                  type: string
-                                              Resources:
-                                                type: array
-                                                items:
-                                                  type: string
-                                              Tags:
-                                                type: array
-                                                items:
-                                                  type: string
-                                            additionalProperties: false
-                                          Description:
-                                            type: string
-                                        required:
-                                        - Regions
-                                        - Resources
                                         additionalProperties: false
+                                      Description:
+                                        type: string
+                                    required:
+                                    - Regions
+                                    - Resources
                                     additionalProperties: false
-                                required:
-                                - Checks
-                                additionalProperties: false
-                            additionalProperties: false
+                              required:
+                              - Checks
+                              additionalProperties: false
                         required:
                         - Accounts
                         additionalProperties: false
@@ -15178,16 +15191,33 @@ components:
                     properties:
                       Accounts:
                         type: object
-                        patternProperties:
-                          .*:
-                            type: object
-                            properties:
-                              Checks:
+                        additionalProperties:
+                          type: object
+                          properties:
+                            Checks:
+                              type: object
+                              additionalProperties:
                                 type: object
-                                patternProperties:
-                                  .*:
+                                properties:
+                                  Regions:
+                                    type: array
+                                    items:
+                                      type: string
+                                  Resources:
+                                    type: array
+                                    items:
+                                      type: string
+                                  Tags:
+                                    type: array
+                                    items:
+                                      type: string
+                                  Exceptions:
                                     type: object
                                     properties:
+                                      Accounts:
+                                        type: array
+                                        items:
+                                          type: string
                                       Regions:
                                         type: array
                                         items:
@@ -15200,37 +15230,16 @@ components:
                                         type: array
                                         items:
                                           type: string
-                                      Exceptions:
-                                        type: object
-                                        properties:
-                                          Accounts:
-                                            type: array
-                                            items:
-                                              type: string
-                                          Regions:
-                                            type: array
-                                            items:
-                                              type: string
-                                          Resources:
-                                            type: array
-                                            items:
-                                              type: string
-                                          Tags:
-                                            type: array
-                                            items:
-                                              type: string
-                                        additionalProperties: false
-                                      Description:
-                                        type: string
-                                    required:
-                                    - Regions
-                                    - Resources
                                     additionalProperties: false
+                                  Description:
+                                    type: string
+                                required:
+                                - Regions
+                                - Resources
                                 additionalProperties: false
-                            required:
-                            - Checks
-                            additionalProperties: false
-                        additionalProperties: false
+                          required:
+                          - Checks
+                          additionalProperties: false
                     required:
                     - Accounts
                     additionalProperties: false
@@ -15280,6 +15289,7 @@ components:
               - kubernetes
               - m365
               - github
+              - iac
               - oraclecloud
               type: string
               description: |-
@@ -15289,8 +15299,9 @@ components:
                 * `kubernetes` - Kubernetes
                 * `m365` - M365
                 * `github` - GitHub
+                * `iac` - IaC
                 * `oraclecloud` - Oracle Cloud Infrastructure
-              x-spec-enum-id: 7087703783970b51
+              x-spec-enum-id: cfe6f885ff538a1a
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -15402,9 +15413,10 @@ components:
               - kubernetes
               - m365
               - github
+              - iac
               - oraclecloud
               type: string
-              x-spec-enum-id: 7087703783970b51
+              x-spec-enum-id: cfe6f885ff538a1a
               description: |-
                 Type of provider to create.
 
@@ -15414,6 +15426,7 @@ components:
                 * `kubernetes` - Kubernetes
                 * `m365` - M365
                 * `github` - GitHub
+                * `iac` - IaC
                 * `oraclecloud` - Oracle Cloud Infrastructure
             uid:
               type: string
@@ -15458,9 +15471,10 @@ components:
                   - kubernetes
                   - m365
                   - github
+                  - iac
                   - oraclecloud
                   type: string
-                  x-spec-enum-id: 7087703783970b51
+                  x-spec-enum-id: cfe6f885ff538a1a
                   description: |-
                     Type of provider to create.
 
@@ -15470,6 +15484,7 @@ components:
                     * `kubernetes` - Kubernetes
                     * `m365` - M365
                     * `github` - GitHub
+                    * `iac` - IaC
                     * `oraclecloud` - Oracle Cloud Infrastructure
                 uid:
                   type: string
@@ -16083,9 +16098,10 @@ components:
                     description: The client secret associated with the application
                       (client) ID, providing secure access.
                   user:
-                    type: email
+                    type: string
                     description: User microsoft email address.
                     deprecated: true
+                    format: email
                   password:
                     type: string
                     description: User password.
@@ -16394,9 +16410,10 @@ components:
                         description: The client secret associated with the application
                           (client) ID, providing secure access.
                       user:
-                        type: email
+                        type: string
                         description: User microsoft email address.
                         deprecated: true
+                        format: email
                       password:
                         type: string
                         description: User password.
@@ -16723,9 +16740,10 @@ components:
                     description: The client secret associated with the application
                       (client) ID, providing secure access.
                   user:
-                    type: email
+                    type: string
                     description: User microsoft email address.
                     deprecated: true
+                    format: email
                   password:
                     type: string
                     description: User password.
@@ -18962,3 +18980,8 @@ tags:
   description: Endpoints for simple mute rules management. These can be used as an
     alternative to the Mutelist Processor if you need to mute specific findings across
     your tenant with a specific reason.
+servers:
+- url: http://localhost:8080
+  description: Local Development Server
+- url: https://api.prowler.com
+  description: Prowler Cloud API (Production)

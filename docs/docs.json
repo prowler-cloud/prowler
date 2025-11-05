@@ -332,7 +332,7 @@
       },
       {
         "tab": "API Reference",
-        "openapi": "api-reference/openapi.json"
+        "openapi": "api-reference/openapi.yml"
       }
     ],
     "global": {
