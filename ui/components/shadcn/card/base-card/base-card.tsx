@@ -25,7 +25,7 @@ const BaseCard = ({ className, variant, ...props }: BaseCardProps) => {
     <Card
       className={cn(
         baseCardVariants({ variant }),
-        "gap-2 px-[18px] pt-3 pb-4",
+        "px-[18px] pt-3 pb-4",
         className,
       )}
       {...props}

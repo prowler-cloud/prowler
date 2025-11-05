@@ -17,8 +17,8 @@ const containerVariants = cva(
     variants: {
       padding: {
         sm: "px-3 py-2",
-        md: "px-[19px] py-[9px]",
-        lg: "px-6 py-3",
+        md: "px-4 py-3",
+        lg: "px-5 py-4",
         none: "p-0",
       },
     },
@@ -28,19 +28,19 @@ const containerVariants = cva(
   },
 );
 
-export interface ResourceStatsCardContainerProps
+export interface InnerBaseCardProps
   extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof containerVariants> {
   ref?: React.Ref<HTMLDivElement>;
 }
 
-export const ResourceStatsCardContainer = ({
+export const InnerBaseCard = ({
   className,
   children,
   padding,
   ref,
   ...props
-}: ResourceStatsCardContainerProps) => {
+}: InnerBaseCardProps) => {
   return (
     <div
       ref={ref}
@@ -52,4 +52,4 @@ export const ResourceStatsCardContainer = ({
   );
 };
 
-ResourceStatsCardContainer.displayName = "ResourceStatsCardContainer";
+InnerBaseCard.displayName = "InnerBaseCard";

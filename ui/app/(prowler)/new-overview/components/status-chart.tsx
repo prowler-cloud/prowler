@@ -10,8 +10,8 @@ import {
   CardHeader,
   CardTitle,
   CardVariant,
+  InnerBaseCard,
   ResourceStatsCard,
-  ResourceStatsCardContainer,
 } from "@/components/shadcn";
 import { calculatePercentage } from "@/lib/utils";
 
@@ -79,8 +79,8 @@ export const StatusChart = ({
         <CardTitle>Check Findings</CardTitle>
       </CardHeader>
 
-      <CardContent className="space-y-2">
-        <div className="mx-auto max-h-[200px] max-w-[200px]">
+      <CardContent className="flex flex-1 flex-col justify-between space-y-4">
+        <div className="mx-auto h-[172px] w-[172px]">
           <DonutChart
             data={donutData}
             showLegend={false}
@@ -93,7 +93,7 @@ export const StatusChart = ({
           />
         </div>
 
-        <ResourceStatsCardContainer className="flex w-full flex-col items-start justify-center gap-4 lg:flex-row lg:justify-between">
+        <InnerBaseCard className="flex w-full flex-col items-start justify-center gap-4 lg:flex-row lg:justify-between">
           <ResourceStatsCard
             containerless
             badge={{
@@ -137,7 +137,7 @@ export const StatusChart = ({
             }
             className="w-full lg:min-w-0 lg:flex-1"
           />
-        </ResourceStatsCardContainer>
+        </InnerBaseCard>
       </CardContent>
     </BaseCard>
   );
