@@ -269,10 +269,19 @@ export const getComplianceCsv = async (
   }
 };
 
-export const getThreatScorePdf = async (scanId: string) => {
+/**
+ * Generic function to get a compliance PDF report (ThreatScore or ENS)
+ * @param scanId - The scan ID
+ * @param reportType - Type of report: 'threatscore' or 'ens'
+ * @returns Promise with the PDF data or error
+ */
+export const getCompliancePdfReport = async (
+  scanId: string,
+  reportType: "threatscore" | "ens",
+) => {
   const headers = await getAuthHeaders({ contentType: false });
 
-  const url = new URL(`${apiBaseUrl}/scans/${scanId}/threatscore`);
+  const url = new URL(`${apiBaseUrl}/scans/${scanId}/${reportType}`);
 
   try {
     const response = await fetch(url.toString(), { headers });
@@ -290,9 +299,11 @@ export const getThreatScorePdf = async (scanId: string) => {
 
     if (!response.ok) {
       const errorData = await response.json();
+      const reportName =
+        reportType === "threatscore" ? "ThreatScore" : "ENS RD2022";
       throw new Error(
         errorData?.errors?.detail ||
-          "Unable to retrieve ThreatScore PDF report. Contact support if the issue continues.",
+          `Unable to retrieve ${reportName} PDF report. Contact support if the issue continues.`,
       );
     }
 
@@ -302,49 +313,7 @@ export const getThreatScorePdf = async (scanId: string) => {
     return {
       success: true,
       data: base64,
-      filename: `scan-${scanId}-threatscore.pdf`,
-    };
-  } catch (error) {
-    return {
-      error: getErrorMessage(error),
-    };
-  }
-};
-
-export const getEnsPdf = async (scanId: string) => {
-  const headers = await getAuthHeaders({ contentType: false });
-
-  const url = new URL(`${apiBaseUrl}/scans/${scanId}/ens`);
-
-  try {
-    const response = await fetch(url.toString(), { headers });
-
-    if (response.status === 202) {
-      const json = await response.json();
-      const taskId = json?.data?.id;
-      const state = json?.data?.attributes?.state;
-      return {
-        pending: true,
-        state,
-        taskId,
-      };
-    }
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(
-        errorData?.errors?.detail ||
-          "Unable to retrieve ENS PDF report. Contact support if the issue continues.",
-      );
-    }
-
-    const arrayBuffer = await response.arrayBuffer();
-    const base64 = Buffer.from(arrayBuffer).toString("base64");
-
-    return {
-      success: true,
-      data: base64,
-      filename: `scan-${scanId}-ens.pdf`,
+      filename: `scan-${scanId}-${reportType}.pdf`,
     };
   } catch (error) {
     return {

@@ -5,25 +5,31 @@ import { DownloadIcon } from "lucide-react";
 import { useState } from "react";
 
 import { toast } from "@/components/ui";
-import { downloadThreatScorePdf } from "@/lib/helper";
+import { downloadComplianceReportPdf } from "@/lib/helper";
 
-interface ThreatScoreDownloadButtonProps {
+interface ComplianceDownloadButtonProps {
   scanId: string;
+  reportType: "threatscore" | "ens";
+  label?: string;
 }
 
-export const ThreatScoreDownloadButton = ({
+export const ComplianceDownloadButton = ({
   scanId,
-}: ThreatScoreDownloadButtonProps) => {
+  reportType,
+  label,
+}: ComplianceDownloadButtonProps) => {
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
 
   const handleDownload = async () => {
     setIsDownloading(true);
     try {
-      await downloadThreatScorePdf(scanId, toast);
+      await downloadComplianceReportPdf(scanId, reportType, toast);
     } finally {
       setIsDownloading(false);
     }
   };
+
+  const defaultLabel = reportType === "threatscore" ? "PDF ThreatScore Report" : "PDF ENS Report";
 
   return (
     <Button
@@ -39,7 +45,7 @@ export const ThreatScoreDownloadButton = ({
       isLoading={isDownloading}
       size="sm"
     >
-      PDF ThreatScore Report
+      {label || defaultLabel}
     </Button>
   );
 };

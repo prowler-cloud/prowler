@@ -1,6 +1,5 @@
 import io
 import uuid
-from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
 
 import matplotlib
@@ -43,199 +42,14 @@ from tasks.jobs.report import (
     _get_ens_nivel_color,
     _load_findings_for_requirement_checks,
     _safe_getattr,
-    generate_ens_report_job,
+    generate_compliance_reports_job,
     generate_threatscore_report,
-    generate_threatscore_report_job,
 )
-from tasks.tasks import generate_threatscore_report_task
 
 from api.models import Finding, StatusChoices
 from prowler.lib.check.models import Severity
 
 matplotlib.use("Agg")  # Use non-interactive backend for tests
-
-
-@pytest.mark.django_db
-class TestGenerateThreatscoreReport:
-    def setup_method(self):
-        self.scan_id = str(uuid.uuid4())
-        self.provider_id = str(uuid.uuid4())
-        self.tenant_id = str(uuid.uuid4())
-
-    def test_no_findings_returns_early(self):
-        with patch("tasks.jobs.report.ScanSummary.objects.filter") as mock_filter:
-            mock_filter.return_value.exists.return_value = False
-
-            result = generate_threatscore_report_job(
-                tenant_id=self.tenant_id,
-                scan_id=self.scan_id,
-                provider_id=self.provider_id,
-            )
-
-            assert result == {"upload": False}
-            mock_filter.assert_called_once_with(scan_id=self.scan_id)
-
-    @patch("tasks.jobs.report.rmtree")
-    @patch("tasks.jobs.report._upload_to_s3")
-    @patch("tasks.jobs.report.generate_threatscore_report")
-    @patch("tasks.jobs.report._generate_output_directory")
-    @patch("tasks.jobs.report.Provider.objects.get")
-    @patch("tasks.jobs.report.ScanSummary.objects.filter")
-    def test_generate_threatscore_report_happy_path(
-        self,
-        mock_scan_summary_filter,
-        mock_provider_get,
-        mock_generate_output_directory,
-        mock_generate_report,
-        mock_upload,
-        mock_rmtree,
-    ):
-        mock_scan_summary_filter.return_value.exists.return_value = True
-
-        mock_provider = MagicMock()
-        mock_provider.uid = "provider-uid"
-        mock_provider.provider = "aws"
-        mock_provider_get.return_value = mock_provider
-
-        mock_generate_output_directory.return_value = (
-            "/tmp/output",
-            "/tmp/compressed",
-            "/tmp/threatscore_path",
-        )
-
-        mock_upload.return_value = "s3://bucket/threatscore_report.pdf"
-
-        result = generate_threatscore_report_job(
-            tenant_id=self.tenant_id,
-            scan_id=self.scan_id,
-            provider_id=self.provider_id,
-        )
-
-        assert result == {"upload": True}
-        mock_generate_report.assert_called_once_with(
-            tenant_id=self.tenant_id,
-            scan_id=self.scan_id,
-            compliance_id="prowler_threatscore_aws",
-            output_path="/tmp/threatscore_path_threatscore_report.pdf",
-            provider_id=self.provider_id,
-            only_failed=True,
-            min_risk_level=4,
-        )
-        mock_upload.assert_called_once_with(
-            self.tenant_id,
-            self.scan_id,
-            "/tmp/threatscore_path_threatscore_report.pdf",
-            "threatscore/threatscore_path_threatscore_report.pdf",
-        )
-        mock_rmtree.assert_called_once_with(
-            Path("/tmp/threatscore_path_threatscore_report.pdf").parent,
-            ignore_errors=True,
-        )
-
-    def test_generate_threatscore_report_fails_upload(self):
-        with (
-            patch("tasks.jobs.report.ScanSummary.objects.filter") as mock_filter,
-            patch("tasks.jobs.report.Provider.objects.get") as mock_provider_get,
-            patch("tasks.jobs.report._generate_output_directory") as mock_gen_dir,
-            patch("tasks.jobs.report.generate_threatscore_report"),
-            patch("tasks.jobs.report._upload_to_s3", return_value=None),
-        ):
-            mock_filter.return_value.exists.return_value = True
-
-            # Mock provider
-            mock_provider = MagicMock()
-            mock_provider.uid = "aws-provider-uid"
-            mock_provider.provider = "aws"
-            mock_provider_get.return_value = mock_provider
-
-            mock_gen_dir.return_value = (
-                "/tmp/output",
-                "/tmp/compressed",
-                "/tmp/threatscore_path",
-            )
-
-            result = generate_threatscore_report_job(
-                tenant_id=self.tenant_id,
-                scan_id=self.scan_id,
-                provider_id=self.provider_id,
-            )
-
-            assert result == {"upload": False}
-
-    def test_generate_threatscore_report_logs_rmtree_exception(self, caplog):
-        with (
-            patch("tasks.jobs.report.ScanSummary.objects.filter") as mock_filter,
-            patch("tasks.jobs.report.Provider.objects.get") as mock_provider_get,
-            patch("tasks.jobs.report._generate_output_directory") as mock_gen_dir,
-            patch("tasks.jobs.report.generate_threatscore_report"),
-            patch(
-                "tasks.jobs.report._upload_to_s3", return_value="s3://bucket/report.pdf"
-            ),
-            patch(
-                "tasks.jobs.report.rmtree", side_effect=Exception("Test deletion error")
-            ),
-        ):
-            mock_filter.return_value.exists.return_value = True
-
-            # Mock provider
-            mock_provider = MagicMock()
-            mock_provider.uid = "aws-provider-uid"
-            mock_provider.provider = "aws"
-            mock_provider_get.return_value = mock_provider
-
-            mock_gen_dir.return_value = (
-                "/tmp/output",
-                "/tmp/compressed",
-                "/tmp/threatscore_path",
-            )
-
-            with caplog.at_level("ERROR"):
-                generate_threatscore_report_job(
-                    tenant_id=self.tenant_id,
-                    scan_id=self.scan_id,
-                    provider_id=self.provider_id,
-                )
-                assert "Error deleting output files" in caplog.text
-
-    def test_generate_threatscore_report_azure_provider(self):
-        with (
-            patch("tasks.jobs.report.ScanSummary.objects.filter") as mock_filter,
-            patch("tasks.jobs.report.Provider.objects.get") as mock_provider_get,
-            patch("tasks.jobs.report._generate_output_directory") as mock_gen_dir,
-            patch("tasks.jobs.report.generate_threatscore_report") as mock_generate,
-            patch(
-                "tasks.jobs.report._upload_to_s3", return_value="s3://bucket/report.pdf"
-            ),
-            patch("tasks.jobs.report.rmtree"),
-        ):
-            mock_filter.return_value.exists.return_value = True
-
-            mock_provider = MagicMock()
-            mock_provider.uid = "azure-provider-uid"
-            mock_provider.provider = "azure"
-            mock_provider_get.return_value = mock_provider
-
-            mock_gen_dir.return_value = (
-                "/tmp/output",
-                "/tmp/compressed",
-                "/tmp/threatscore_path",
-            )
-
-            generate_threatscore_report_job(
-                tenant_id=self.tenant_id,
-                scan_id=self.scan_id,
-                provider_id=self.provider_id,
-            )
-
-            mock_generate.assert_called_once_with(
-                tenant_id=self.tenant_id,
-                scan_id=self.scan_id,
-                compliance_id="prowler_threatscore_azure",
-                output_path="/tmp/threatscore_path_threatscore_report.pdf",
-                provider_id=self.provider_id,
-                only_failed=True,
-                min_risk_level=4,
-            )
 
 
 @pytest.mark.django_db
@@ -962,43 +776,6 @@ class TestGenerateThreatscoreReportFunction:
 
 
 @pytest.mark.django_db
-class TestGenerateThreatscoreReportTask:
-    def setup_method(self):
-        self.scan_id = str(uuid.uuid4())
-        self.provider_id = str(uuid.uuid4())
-        self.tenant_id = str(uuid.uuid4())
-
-    @patch("tasks.tasks.generate_threatscore_report_job")
-    def test_generate_threatscore_report_task_calls_job(self, mock_generate_job):
-        mock_generate_job.return_value = {"upload": True}
-
-        result = generate_threatscore_report_task(
-            tenant_id=self.tenant_id,
-            scan_id=self.scan_id,
-            provider_id=self.provider_id,
-        )
-
-        assert result == {"upload": True}
-        mock_generate_job.assert_called_once_with(
-            tenant_id=self.tenant_id,
-            scan_id=self.scan_id,
-            provider_id=self.provider_id,
-        )
-
-    @patch("tasks.tasks.generate_threatscore_report_job")
-    def test_generate_threatscore_report_task_handles_job_exception(
-        self, mock_generate_job
-    ):
-        mock_generate_job.side_effect = Exception("Job failed")
-
-        with pytest.raises(Exception, match="Job failed"):
-            generate_threatscore_report_task(
-                tenant_id=self.tenant_id,
-                scan_id=self.scan_id,
-                provider_id=self.provider_id,
-            )
-
-
 class TestColorHelperFunctions:
     """Test suite for color selection helper functions."""
 
@@ -1427,96 +1204,6 @@ class TestChartCreation:
 
 
 @pytest.mark.django_db
-class TestGenerateENSReport:
-    """Test suite for ENS report generation functions."""
-
-    def setup_method(self):
-        self.scan_id = str(uuid.uuid4())
-        self.provider_id = str(uuid.uuid4())
-        self.tenant_id = str(uuid.uuid4())
-
-    def test_ens_report_job_no_findings(self):
-        """ENS report job returns early when no findings exist."""
-        with patch("tasks.jobs.report.ScanSummary.objects.filter") as mock_filter:
-            mock_filter.return_value.exists.return_value = False
-
-            result = generate_ens_report_job(
-                tenant_id=self.tenant_id,
-                scan_id=self.scan_id,
-                provider_id=self.provider_id,
-            )
-
-            assert result == {"upload": False}
-
-    def test_ens_report_job_unsupported_provider(self):
-        """ENS report job returns False for unsupported provider types."""
-        with (
-            patch("tasks.jobs.report.ScanSummary.objects.filter") as mock_filter,
-            patch("tasks.jobs.report.Provider.objects.get") as mock_provider_get,
-        ):
-            mock_filter.return_value.exists.return_value = True
-
-            mock_provider = MagicMock()
-            mock_provider.provider = "kubernetes"  # Not supported for ENS
-            mock_provider_get.return_value = mock_provider
-
-            result = generate_ens_report_job(
-                tenant_id=self.tenant_id,
-                scan_id=self.scan_id,
-                provider_id=self.provider_id,
-            )
-
-            assert result == {"upload": False}
-
-    @patch("tasks.jobs.report.rmtree")
-    @patch("tasks.jobs.report._upload_to_s3")
-    @patch("tasks.jobs.report.generate_ens_report")
-    @patch("tasks.jobs.report._generate_output_directory")
-    @patch("tasks.jobs.report.Provider.objects.get")
-    @patch("tasks.jobs.report.ScanSummary.objects.filter")
-    def test_ens_report_job_success(
-        self,
-        mock_scan_filter,
-        mock_provider_get,
-        mock_gen_dir,
-        mock_generate_report,
-        mock_upload,
-        mock_rmtree,
-    ):
-        """ENS report job completes successfully."""
-        mock_scan_filter.return_value.exists.return_value = True
-
-        mock_provider = MagicMock()
-        mock_provider.uid = "azure-provider"
-        mock_provider.provider = "azure"
-        mock_provider_get.return_value = mock_provider
-
-        mock_gen_dir.return_value = (
-            "/tmp/output",
-            "/tmp/compressed",
-            "/tmp/threatscore",
-            "/tmp/ens_path",
-        )
-
-        mock_upload.return_value = "s3://bucket/ens_report.pdf"
-
-        result = generate_ens_report_job(
-            tenant_id=self.tenant_id,
-            scan_id=self.scan_id,
-            provider_id=self.provider_id,
-        )
-
-        assert result == {"upload": True}
-        mock_generate_report.assert_called_once_with(
-            tenant_id=self.tenant_id,
-            scan_id=self.scan_id,
-            compliance_id="ens_rd2022_azure",
-            output_path="/tmp/ens_path_ens_report.pdf",
-            provider_id=self.provider_id,
-            include_manual=True,
-        )
-
-
 class TestOptimizationImprovements:
     """Test suite to verify optimization improvements work correctly."""
 
@@ -1549,3 +1236,189 @@ class TestOptimizationImprovements:
         assert _get_chart_color_for_percentage(75.0) == _get_chart_color_for_percentage(
             75.0
         )
+
+
+@pytest.mark.django_db
+class TestGenerateComplianceReportsOptimized:
+    """Test suite for the optimized generate_compliance_reports_job function."""
+
+    def setup_method(self):
+        self.scan_id = str(uuid.uuid4())
+        self.provider_id = str(uuid.uuid4())
+        self.tenant_id = str(uuid.uuid4())
+
+    def test_no_findings_returns_early_for_both_reports(self):
+        """Test that function returns early when no findings exist."""
+        with patch("tasks.jobs.report.ScanSummary.objects.filter") as mock_filter:
+            mock_filter.return_value.exists.return_value = False
+
+            result = generate_compliance_reports_job(
+                tenant_id=self.tenant_id,
+                scan_id=self.scan_id,
+                provider_id=self.provider_id,
+            )
+
+            assert result["threatscore"] == {"upload": False, "path": ""}
+            assert result["ens"] == {"upload": False, "path": ""}
+            mock_filter.assert_called_once_with(scan_id=self.scan_id)
+
+    @patch("tasks.jobs.report.rmtree")
+    @patch("tasks.jobs.report._upload_to_s3")
+    @patch("tasks.jobs.report.generate_ens_report")
+    @patch("tasks.jobs.report.generate_threatscore_report")
+    @patch("tasks.jobs.report._generate_output_directory")
+    @patch("tasks.jobs.report._aggregate_requirement_statistics_from_database")
+    @patch("tasks.jobs.report.Provider")
+    @patch("tasks.jobs.report.ScanSummary")
+    def test_generates_both_reports_with_shared_queries(
+        self,
+        mock_scan_summary,
+        mock_provider,
+        mock_aggregate_stats,
+        mock_gen_dir,
+        mock_gen_threatscore,
+        mock_gen_ens,
+        mock_upload,
+        mock_rmtree,
+    ):
+        """Test that both reports are generated with shared database queries."""
+        # Setup mocks
+        mock_scan_summary.objects.filter.return_value.exists.return_value = True
+        mock_provider_obj = Mock()
+        mock_provider_obj.uid = "test-uid"
+        mock_provider_obj.provider = "aws"
+        mock_provider.objects.get.return_value = mock_provider_obj
+
+        mock_aggregate_stats.return_value = {"check-1": {"passed": 10, "total": 15}}
+        # Mock returns different paths for different compliance_framework calls
+        mock_gen_dir.side_effect = [
+            "/tmp/threatscore_path",  # First call with compliance_framework="threatscore"
+            "/tmp/ens_path",  # Second call with compliance_framework="ens"
+        ]
+        mock_upload.side_effect = [
+            "s3://bucket/threatscore.pdf",
+            "s3://bucket/ens.pdf",
+        ]
+
+        result = generate_compliance_reports_job(
+            tenant_id=self.tenant_id,
+            scan_id=self.scan_id,
+            provider_id=self.provider_id,
+            generate_threatscore=True,
+            generate_ens=True,
+        )
+
+        # Verify Provider fetched only ONCE (optimization)
+        mock_provider.objects.get.assert_called_once_with(id=self.provider_id)
+
+        # Verify aggregation called only ONCE (optimization)
+        mock_aggregate_stats.assert_called_once_with(self.tenant_id, self.scan_id)
+
+        # Verify both report generation functions were called with shared data
+        assert mock_gen_threatscore.call_count == 1
+        assert mock_gen_ens.call_count == 1
+
+        # Verify provider_obj and requirement_statistics were passed to both
+        threatscore_call_kwargs = mock_gen_threatscore.call_args[1]
+        assert threatscore_call_kwargs["provider_obj"] == mock_provider_obj
+        assert threatscore_call_kwargs["requirement_statistics"] == {
+            "check-1": {"passed": 10, "total": 15}
+        }
+
+        ens_call_kwargs = mock_gen_ens.call_args[1]
+        assert ens_call_kwargs["provider_obj"] == mock_provider_obj
+        assert ens_call_kwargs["requirement_statistics"] == {
+            "check-1": {"passed": 10, "total": 15}
+        }
+
+        # Verify both reports were uploaded successfully
+        assert result["threatscore"]["upload"] is True
+        assert result["threatscore"]["path"] == "s3://bucket/threatscore.pdf"
+        assert result["ens"]["upload"] is True
+        assert result["ens"]["path"] == "s3://bucket/ens.pdf"
+
+    @patch("tasks.jobs.report._aggregate_requirement_statistics_from_database")
+    @patch("tasks.jobs.report.Provider")
+    @patch("tasks.jobs.report.ScanSummary")
+    def test_skips_ens_for_unsupported_provider(
+        self, mock_scan_summary, mock_provider, mock_aggregate_stats
+    ):
+        """Test that ENS report is skipped for M365 provider."""
+        mock_scan_summary.objects.filter.return_value.exists.return_value = True
+        mock_provider_obj = Mock()
+        mock_provider_obj.uid = "test-uid"
+        mock_provider_obj.provider = "m365"  # Not supported for ENS
+        mock_provider.objects.get.return_value = mock_provider_obj
+
+        result = generate_compliance_reports_job(
+            tenant_id=self.tenant_id,
+            scan_id=self.scan_id,
+            provider_id=self.provider_id,
+        )
+
+        # ENS should be skipped, only ThreatScore key should have error/status
+        assert "ens" in result
+        assert result["ens"]["upload"] is False
+
+    def test_findings_cache_reuses_loaded_findings(self):
+        """Test that findings cache properly reuses findings across calls."""
+        # Create mock findings
+        mock_finding1 = Mock()
+        mock_finding1.check_id = "check-1"
+        mock_finding2 = Mock()
+        mock_finding2.check_id = "check-2"
+        mock_finding3 = Mock()
+        mock_finding3.check_id = "check-1"
+
+        mock_output1 = Mock()
+        mock_output1.check_id = "check-1"
+        mock_output2 = Mock()
+        mock_output2.check_id = "check-2"
+        mock_output3 = Mock()
+        mock_output3.check_id = "check-1"
+
+        # Pre-populate cache
+        findings_cache = {
+            "check-1": [mock_output1, mock_output3],
+        }
+
+        with (
+            patch("tasks.jobs.report.Finding") as mock_finding_class,
+            patch("tasks.jobs.report.FindingOutput") as mock_finding_output,
+            patch("tasks.jobs.report.rls_transaction"),
+            patch("tasks.jobs.report.batched") as mock_batched,
+        ):
+
+            # Setup mocks
+            mock_finding_class.all_objects.filter.return_value.order_by.return_value.iterator.return_value = [
+                mock_finding2
+            ]
+            mock_batched.return_value = [([mock_finding2], True)]
+            mock_finding_output.transform_api_finding.return_value = mock_output2
+
+            mock_provider = Mock()
+
+            # Call with cache containing check-1, requesting check-1 and check-2
+            result = _load_findings_for_requirement_checks(
+                tenant_id=self.tenant_id,
+                scan_id=self.scan_id,
+                check_ids=["check-1", "check-2"],
+                prowler_provider=mock_provider,
+                findings_cache=findings_cache,
+            )
+
+            # Verify check-1 was reused from cache (no DB query)
+            assert len(result["check-1"]) == 2
+            assert result["check-1"] == [mock_output1, mock_output3]
+
+            # Verify check-2 was loaded from DB
+            assert len(result["check-2"]) == 1
+            assert result["check-2"][0] == mock_output2
+
+            # Verify cache was updated with check-2
+            assert "check-2" in findings_cache
+            assert findings_cache["check-2"] == [mock_output2]
+
+            # Verify DB was only queried for check-2 (not check-1)
+            filter_call = mock_finding_class.all_objects.filter.call_args
+            assert filter_call[1]["check_id__in"] == ["check-2"]

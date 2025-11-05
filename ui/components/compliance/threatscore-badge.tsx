@@ -9,7 +9,7 @@ import { useState } from "react";
 
 import { ThreatScoreLogo } from "@/components/compliance/threatscore-logo";
 import { toast } from "@/components/ui";
-import { downloadComplianceCsv, downloadThreatScorePdf } from "@/lib/helper";
+import { downloadComplianceCsv, downloadComplianceReportPdf } from "@/lib/helper";
 import type { ScanEntity } from "@/types/scans";
 
 interface ThreatScoreBadgeProps {
@@ -77,7 +77,7 @@ export const ThreatScoreBadge = ({
   const handleDownloadPdf = async () => {
     setIsDownloadingPdf(true);
     try {
-      await downloadThreatScorePdf(scanId, toast);
+      await downloadComplianceReportPdf(scanId, "threatscore", toast);
     } finally {
       setIsDownloadingPdf(false);
     }

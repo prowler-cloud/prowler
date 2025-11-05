@@ -235,8 +235,12 @@ def _upload_to_s3(
 
 
 def _generate_output_directory(
-    output_directory, prowler_provider: object, tenant_id: str, scan_id: str
-) -> tuple[str, str, str, str]:
+    output_directory,
+    prowler_provider: object,
+    tenant_id: str,
+    scan_id: str,
+    compliance_framework: str = None,
+):
     """
     Generate a file system path for the output directory of a prowler scan.
 
@@ -245,25 +249,28 @@ def _generate_output_directory(
     the prowler provider along with a timestamp. The resulting path is used to
     store the output files of a prowler scan.
 
-    Note:
-        This function depends on one external variable:
-          - `output_file_timestamp`: A timestamp (as a string) used to uniquely identify the output.
-
     Args:
         output_directory (str): The base output directory.
         prowler_provider (object): An identifier or descriptor for the prowler provider.
                                    Typically, this is a string indicating the provider (e.g., "aws").
         tenant_id (str): The unique identifier for the tenant.
         scan_id (str): The unique identifier for the scan.
+        compliance_framework (str, optional): The compliance framework name (e.g., "threatscore", "ens").
+                                              If provided, returns only the path for that framework.
+                                              If None, returns both standard and compliance paths.
 
     Returns:
-        str: The constructed file system path for the prowler scan output directory.
+        str | tuple[str, str]: If compliance_framework is provided, returns a single path string.
+                               If compliance_framework is None, returns tuple (standard_path, compliance_path).
 
     Example:
         >>> _generate_output_directory("/tmp", "aws", "tenant-1234", "scan-5678")
-        '/tmp/tenant-1234/aws/scan-5678/prowler-output-2023-02-15T12:34:56',
-        '/tmp/tenant-1234/aws/scan-5678/compliance/prowler-output-2023-02-15T12:34:56'
-        '/tmp/tenant-1234/aws/scan-5678/threatscore/prowler-output-2023-02-15T12:34:56'
+        ('/tmp/tenant-1234/scan-5678/prowler-output-aws-20230215123456',
+         '/tmp/tenant-1234/scan-5678/compliance/prowler-output-aws-20230215123456')
+        >>> _generate_output_directory("/tmp", "aws", "tenant-1234", "scan-5678", "threatscore")
+        '/tmp/tenant-1234/scan-5678/threatscore/prowler-output-aws-20230215123456'
+        >>> _generate_output_directory("/tmp", "aws", "tenant-1234", "scan-5678", "ens")
+        '/tmp/tenant-1234/scan-5678/ens/prowler-output-aws-20230215123456'
     """
     # Sanitize the prowler provider name to ensure it is a valid directory name
     prowler_provider_sanitized = re.sub(r"[^\w\-]", "-", prowler_provider)
@@ -272,28 +279,34 @@ def _generate_output_directory(
         started_at = Scan.objects.get(id=scan_id).started_at
 
     timestamp = started_at.strftime("%Y%m%d%H%M%S")
-    path = (
-        f"{output_directory}/{tenant_id}/{scan_id}/prowler-output-"
-        f"{prowler_provider_sanitized}-{timestamp}"
-    )
-    os.makedirs("/".join(path.split("/")[:-1]), exist_ok=True)
 
-    compliance_path = (
-        f"{output_directory}/{tenant_id}/{scan_id}/compliance/prowler-output-"
-        f"{prowler_provider_sanitized}-{timestamp}"
-    )
-    os.makedirs("/".join(compliance_path.split("/")[:-1]), exist_ok=True)
+    def _build_path(subdirectory: str = None) -> str:
+        """Helper to build a path with optional subdirectory."""
+        if subdirectory:
+            return (
+                f"{output_directory}/{tenant_id}/{scan_id}/{subdirectory}/prowler-output-"
+                f"{prowler_provider_sanitized}-{timestamp}"
+            )
+        return (
+            f"{output_directory}/{tenant_id}/{scan_id}/prowler-output-"
+            f"{prowler_provider_sanitized}-{timestamp}"
+        )
 
-    threatscore_path = (
-        f"{output_directory}/{tenant_id}/{scan_id}/threatscore/prowler-output-"
-        f"{prowler_provider_sanitized}-{timestamp}"
-    )
-    os.makedirs("/".join(threatscore_path.split("/")[:-1]), exist_ok=True)
+    def _ensure_directory(path: str) -> None:
+        """Create directory for the given path if it doesn't exist."""
+        os.makedirs("/".join(path.split("/")[:-1]), exist_ok=True)
 
-    ens_path = (
-        f"{output_directory}/{tenant_id}/{scan_id}/ens/prowler-output-"
-        f"{prowler_provider_sanitized}-{timestamp}"
-    )
-    os.makedirs("/".join(ens_path.split("/")[:-1]), exist_ok=True)
+    # If a specific compliance framework is requested, return only that path
+    if compliance_framework:
+        framework_path = _build_path(subdirectory=compliance_framework)
+        _ensure_directory(framework_path)
+        return framework_path
 
-    return path, compliance_path, threatscore_path, ens_path
+    # Otherwise, return both standard and compliance paths
+    standard_path = _build_path()
+    compliance_path = _build_path(subdirectory="compliance")
+
+    _ensure_directory(standard_path)
+    _ensure_directory(compliance_path)
+
+    return standard_path, compliance_path
