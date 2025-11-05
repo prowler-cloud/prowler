@@ -1,7 +1,7 @@
 {
   "Provider": "gcp",
   "CheckID": "cloudstorage_bucket_log_retention_policy_lock",
-  "CheckTitle": "Cloud Storage log buckets have a Retention Policy with Bucket Lock enabled",
+  "CheckTitle": "Cloud Storage log bucket has a Retention Policy with Bucket Lock enabled",
   "CheckType": [],
   "ServiceName": "cloudstorage",
   "SubServiceName": "",
