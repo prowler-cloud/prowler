@@ -1,3 +1,6 @@
+# Portions of this file are based on code from the Cartography project
+# (https://github.com/cartography-cncf/cartography), which is licensed under the Apache 2.0 License.
+
 import datetime
 import traceback
 
@@ -72,7 +75,7 @@ def start_aws_ingestion(
         common_job_parameters,
     )
 
-    failed_syncs = sync_aws_account_syncs(prowler_api_provider, requested_syncs, sync_args)
+    failed_syncs = sync_aws_account(prowler_api_provider, requested_syncs, sync_args)
 
     if "permission_relationships" in requested_syncs:
         cartography_aws.RESOURCE_FUNCTIONS["permission_relationships"](**sync_args)
@@ -137,7 +140,7 @@ def get_boto3_session(prowler_api_provider: ProwlerAPIProvider, prowler_provider
     return boto3_session
 
 
-def sync_aws_account_syncs(
+def sync_aws_account(
     prowler_api_provider: ProwlerAPIProvider,
     requested_syncs: list[str],
     sync_args: dict[str, Any],

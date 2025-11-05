@@ -28,6 +28,7 @@ def create_neo4j_database(
         )
 
 
+# TODO: Remember to use this function when a tenant is deleted
 def drop_neo4j_database(
     config: CartographyConfig,
     database: str,
@@ -39,6 +40,7 @@ def drop_neo4j_database(
         )
 
 
+# TODO: Remember to use this function when a tenant delete a cloud provider
 def drop_neo4j_account_subgraph(
     config: CartographyConfig,
     database: str,
