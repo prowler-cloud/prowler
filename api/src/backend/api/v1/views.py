@@ -2702,10 +2702,19 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
             .order_by("resource_type")
         )
 
+        # Extract unique categories from check_metadata
+        categories = set()
+        for finding in filtered_queryset.only("check_metadata"):
+            check_categories = finding.check_metadata.get("Categories", [])
+            if check_categories:
+                categories.update(check_categories)
+        categories = sorted(list(categories))
+
         result = {
             "services": services,
             "regions": regions,
             "resource_types": resource_types,
+            "categories": categories,
         }
 
         serializer = self.get_serializer(data=result)
@@ -2810,10 +2819,21 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
             .order_by("resource_type")
         )
 
+        # Extract unique categories from check_metadata
+        categories = set()
+        for finding in self.filter_queryset(self.get_queryset()).filter(
+            tenant_id=tenant_id, scan_id__in=latest_scans_ids
+        ).only("check_metadata"):
+            check_categories = finding.check_metadata.get("Categories", [])
+            if check_categories:
+                categories.update(check_categories)
+        categories = sorted(list(categories))
+
         result = {
             "services": services,
             "regions": regions,
             "resource_types": resource_types,
+            "categories": categories,
         }
 
         serializer = self.get_serializer(data=result)
