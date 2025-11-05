@@ -629,52 +629,6 @@ def _create_ens_dimension_badges(dimensiones: list[str]) -> Table:
     return table
 
 
-def _create_ens_mode_badge(modo: str) -> Table:
-    """
-    Create a visual badge for ENS execution mode (ModoEjecucion).
-
-    Args:
-        modo (str): The execution mode (e.g., "automático", "manual").
-
-    Returns:
-        Table: A ReportLab Table object displaying the execution mode.
-    """
-    modo_lower = modo.lower()
-
-    if "auto" in modo_lower:
-        icon = "🤖"
-        modo_text = "Automático"
-        modo_color = COLOR_ENS_AUTO
-    else:
-        icon = "👤"
-        modo_text = "Manual"
-        modo_color = COLOR_ENS_MANUAL
-
-    data = [[f"{icon} {modo_text}"]]
-
-    table = Table(data, colWidths=[1.6 * inch])
-
-    table.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (0, 0), modo_color),
-                ("TEXTCOLOR", (0, 0), (0, 0), COLOR_WHITE),
-                ("FONTNAME", (0, 0), (0, 0), "PlusJakartaSans"),
-                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                ("FONTSIZE", (0, 0), (-1, -1), 10),
-                ("GRID", (0, 0), (-1, -1), 0.5, colors.black),
-                ("LEFTPADDING", (0, 0), (-1, -1), PADDING_LARGE),
-                ("RIGHTPADDING", (0, 0), (-1, -1), PADDING_LARGE),
-                ("TOPPADDING", (0, 0), (-1, -1), PADDING_LARGE),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), PADDING_LARGE),
-            ]
-        )
-    )
-
-    return table
-
-
 def _create_section_score_chart(
     requirements_list: list[dict], attributes_by_requirement_id: dict
 ) -> io.BytesIO:
@@ -887,7 +841,7 @@ def _create_marco_category_chart(
     bars = ax.barh(y_pos, percentages, color=colors_list)
 
     ax.set_yticks(y_pos)
-    ax.set_yticklabels(categories, fontsize=12)
+    ax.set_yticklabels(categories, fontsize=16)
     ax.set_xlabel("Porcentaje de Cumplimiento (%)", fontsize=14)
     ax.set_xlim(0, 100)
 
@@ -2507,12 +2461,10 @@ def generate_ens_report(
                     nivel_badge = _create_ens_nivel_badge(nivel)
                     tipo = getattr(m, "Tipo", "N/A")
                     tipo_badge = _create_ens_tipo_badge(tipo)
-                    modo = getattr(m, "ModoEjecucion", "N/A")
-                    modo_badge = _create_ens_mode_badge(modo)
 
                     # Organize badges in a horizontal table (2 rows x 2 cols)
                     badges_table = Table(
-                        [[status_component, nivel_badge], [tipo_badge, modo_badge]],
+                        [[status_component, nivel_badge], [tipo_badge]],
                         colWidths=[3.25 * inch, 3.25 * inch],
                     )
                     badges_table.setStyle(
