@@ -23,6 +23,7 @@ from api.models import (
     Invitation,
     LighthouseConfiguration,
     Membership,
+    MuteRule,
     Processor,
     Provider,
     ProviderGroup,
@@ -500,7 +501,7 @@ def providers_fixture(tenants_fixture):
         tenant_id=tenant.id,
     )
     provider7 = Provider.objects.create(
-        provider="oci",
+        provider="oraclecloud",
         uid="ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
         alias="oci_testing",
         tenant_id=tenant.id,
@@ -1423,6 +1424,34 @@ def api_keys_fixture(tenants_fixture, create_test_user):
     api_key3._raw_key = raw_key3
 
     return [api_key1, api_key2, api_key3]
+
+
+@pytest.fixture
+def mute_rules_fixture(tenants_fixture, create_test_user, findings_fixture):
+    """Create test mute rules for testing."""
+    tenant = tenants_fixture[0]
+    user = create_test_user
+
+    # Create two mute rules: one enabled, one disabled
+    mute_rule1 = MuteRule.objects.create(
+        tenant_id=tenant.id,
+        name="Test Rule 1",
+        reason="Security exception for testing",
+        enabled=True,
+        created_by=user,
+        finding_uids=[findings_fixture[0].uid],
+    )
+
+    mute_rule2 = MuteRule.objects.create(
+        tenant_id=tenant.id,
+        name="Test Rule 2",
+        reason="Compliance exception approved",
+        enabled=False,
+        created_by=user,
+        finding_uids=[findings_fixture[1].uid],
+    )
+
+    return mute_rule1, mute_rule2
 
 
 def get_authorization_header(access_token: str) -> dict:

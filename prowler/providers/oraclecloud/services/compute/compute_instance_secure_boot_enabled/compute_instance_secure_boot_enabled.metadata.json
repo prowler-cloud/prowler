@@ -1,5 +1,5 @@
 {
-  "Provider": "oci",
+  "Provider": "oraclecloud",
   "CheckID": "compute_instance_secure_boot_enabled",
   "CheckTitle": "Ensure Secure Boot is enabled on Compute Instance",
   "CheckType": [

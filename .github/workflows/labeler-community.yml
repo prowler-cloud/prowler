@@ -40,4 +40,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           echo "Adding 'community' label to PR #$PR_NUMBER"
-          gh pr edit "$PR_NUMBER" --add-label community
+          gh api /repos/${{ github.repository }}/issues/${{ github.event.number }}/labels \
+            -X POST \
+            -f labels[]='community'

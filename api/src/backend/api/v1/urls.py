@@ -21,6 +21,7 @@ from api.v1.views import (
     LighthouseProviderModelsViewSet,
     LighthouseTenantConfigViewSet,
     MembershipViewSet,
+    MuteRuleViewSet,
     OverviewViewSet,
     ProcessorViewSet,
     ProviderGroupProvidersRelationshipView,
@@ -80,6 +81,7 @@ router.register(
     LighthouseProviderModelsViewSet,
     basename="lighthouse-models",
 )
+router.register(r"mute-rules", MuteRuleViewSet, basename="mute-rule")
 
 tenants_router = routers.NestedSimpleRouter(router, r"tenants", lookup="tenant")
 tenants_router.register(
@@ -150,7 +152,6 @@ urlpatterns = [
         ),
         name="provider_group-providers-relationship",
     ),
-    # Lighthouse tenant config as singleton endpoint
     path(
         "lighthouse/configuration",
         LighthouseTenantConfigViewSet.as_view(
