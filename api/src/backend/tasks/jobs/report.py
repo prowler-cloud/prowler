@@ -1918,7 +1918,7 @@ def generate_ens_report(
         doc = SimpleDocTemplate(
             output_path,
             pagesize=letter,
-            title=f"Informe de Cumplimiento ENS - {compliance_framework}",
+            title="Informe de Cumplimiento ENS - Prowler",
             author="Prowler",
             subject=f"Informe de Cumplimiento para {compliance_framework}",
             creator="Prowler Engineering Team",
