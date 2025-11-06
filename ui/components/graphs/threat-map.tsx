@@ -351,10 +351,10 @@ export function ThreatMap({
   ]);
 
   return (
-    <div className="flex w-full flex-col gap-6 lg:flex-row lg:items-start">
+    <div className="flex h-full w-full flex-col gap-4 lg:flex-row">
       {/* Map Section */}
-      <div className="flex-1">
-        <div className="mb-4 flex items-center justify-between">
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <div className="mb-3 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-white">Threat Map</h3>
           <div className="relative">
             <select
@@ -378,19 +378,20 @@ export function ThreatMap({
 
         <div
           ref={containerRef}
-          className="rounded-lg border border-slate-700 bg-slate-800/50 p-4"
+          className="flex-1 overflow-hidden rounded-lg border border-slate-700 bg-slate-800/50 p-4"
         >
           {isLoadingMap ? (
             <LoadingState height={dimensions.height} />
           ) : (
             <>
-              <div className="relative">
+              <div className="relative h-full w-full">
                 <svg
                   ref={svgRef}
                   width={dimensions.width}
                   height={dimensions.height}
-                  className="w-full"
-                  style={{ maxWidth: "100%" }}
+                  className="h-full w-full"
+                  style={{ maxWidth: "100%", maxHeight: "100%" }}
+                  preserveAspectRatio="xMidYMid meet"
                 />
                 {hoveredLocation && tooltipPosition && (
                   <MapTooltip
@@ -399,7 +400,7 @@ export function ThreatMap({
                   />
                 )}
               </div>
-              <div className="mt-4 flex items-center gap-2">
+              <div className="mt-3 flex items-center gap-2">
                 <div className="h-3 w-3 rounded-full bg-[#DB2B49]" />
                 <span className="text-sm text-slate-400">
                   {filteredLocations.length} Locations
@@ -411,18 +412,17 @@ export function ThreatMap({
       </div>
 
       {/* Details Section */}
-      <div className="w-full lg:w-[400px]">
-        <div className="mb-4 h-10" />
+      <div className="w-full overflow-hidden lg:w-[380px] lg:flex-shrink-0">
         {selectedLocation ? (
-          <div className="rounded-lg border border-slate-700 bg-slate-800 p-6">
-            <div className="mb-6">
+          <div className="h-full overflow-y-auto rounded-lg border border-slate-700 bg-slate-800 p-4">
+            <div className="mb-4">
               <div className="mb-1 flex items-center gap-2">
                 <div className="h-2 w-2 rounded-full bg-[#86DA26]" />
                 <h4 className="text-base font-semibold text-white">
                   {selectedLocation.name}
                 </h4>
               </div>
-              <p className="text-sm text-slate-400">
+              <p className="text-xs text-slate-400">
                 {selectedLocation.totalFindings.toLocaleString()} Total Findings
               </p>
             </div>
@@ -435,4 +435,3 @@ export function ThreatMap({
     </div>
   );
 }
-

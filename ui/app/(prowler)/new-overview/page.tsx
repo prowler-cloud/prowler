@@ -6,6 +6,7 @@ import { SearchParamsProps } from "@/types";
 
 import { AccountsSelector } from "./components/accounts-selector";
 import { FindingSeverityOverTimeSSR } from "./components/finding-severity-over-time";
+import { GraphsTabsWrapper } from "./components/graphs-tabs/graphs-tabs-wrapper";
 import { ProviderTypeSelector } from "./components/provider-type-selector";
 import { RiskSeverityChartSSR } from "./components/risk-severity-chart";
 import { StatusChartSSR } from "./components/status-chart";
@@ -54,6 +55,17 @@ export default async function NewOverviewPage({
           }
         >
           <FindingSeverityOverTimeSSR searchParams={resolvedSearchParams} />
+        </Suspense>
+      </div>
+      <div className="mt-6">
+        <Suspense
+          fallback={
+            <div className="flex h-[500px] w-full items-center justify-center rounded-xl border border-zinc-900 bg-stone-950">
+              <p className="text-zinc-400">Loading...</p>
+            </div>
+          }
+        >
+          <GraphsTabsWrapper searchParams={resolvedSearchParams} />
         </Suspense>
       </div>
     </ContentLayout>

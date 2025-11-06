@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   CartesianGrid,
   Legend,
@@ -11,25 +12,33 @@ import {
   YAxis,
 } from "recharts";
 
-import { AlertPill } from "./shared/alert-pill";
-import { ChartLegend } from "./shared/chart-legend";
-import { CHART_COLORS } from "./shared/constants";
-import { getSeverityColorByRiskScore } from "./shared/utils";
-import type { ScatterDataPoint } from "./types";
+import { AlertPill } from "@/components/graphs/shared/alert-pill";
+import { ChartLegend } from "@/components/graphs/shared/chart-legend";
+import { CHART_COLORS } from "@/components/graphs/shared/constants";
+import { getSeverityColorByRiskScore } from "@/components/graphs/shared/utils";
 
-interface ScatterPlotProps {
-  data: ScatterDataPoint[];
-  xLabel?: string;
-  yLabel?: string;
-  height?: number;
-  onSelectPoint?: (point: ScatterDataPoint | null) => void;
-  selectedPoint?: ScatterDataPoint | null;
-}
+// Mock data - Risk Score (0-10) vs Failed Findings count
+const mockScatterData = [
+  { x: 9.2, y: 1456, provider: "AWS", name: "Amazon RDS" },
+  { x: 8.5, y: 892, provider: "AWS", name: "Amazon EC2" },
+  { x: 7.1, y: 445, provider: "AWS", name: "Amazon S3" },
+  { x: 6.3, y: 678, provider: "AWS", name: "AWS Lambda" },
+  { x: 4.2, y: 156, provider: "AWS", name: "AWS Backup" },
+  { x: 8.8, y: 1023, provider: "Azure", name: "Azure SQL Database" },
+  { x: 7.9, y: 834, provider: "Azure", name: "Azure Virtual Machines" },
+  { x: 6.4, y: 567, provider: "Azure", name: "Azure Storage" },
+  { x: 5.1, y: 289, provider: "Azure", name: "Azure Key Vault" },
+  { x: 7.6, y: 712, provider: "Google", name: "Cloud SQL" },
+  { x: 6.9, y: 623, provider: "Google", name: "Compute Engine" },
+  { x: 5.8, y: 412, provider: "Google", name: "Cloud Storage" },
+  { x: 4.5, y: 198, provider: "Google", name: "Cloud Run" },
+  { x: 8.9, y: 945, provider: "AWS", name: "Amazon RDS Aurora" },
+];
 
 const PROVIDER_COLORS = {
-  AWS: "var(--chart-provider-aws)",
-  Azure: "var(--chart-provider-azure)",
-  Google: "var(--chart-provider-google)",
+  AWS: "#ff9900",
+  Azure: "#00bcd4",
+  Google: "#EA4335",
 };
 
 const CustomTooltip = ({ active, payload }: any) => {
@@ -104,25 +113,10 @@ const CustomLegend = ({ payload }: any) => {
   return <ChartLegend items={items} />;
 };
 
-export function ScatterPlot({
-  data,
-  xLabel = "Risk Score",
-  yLabel = "Failed Findings",
-  height = 400,
-  onSelectPoint,
-  selectedPoint,
-}: ScatterPlotProps) {
-  const handlePointClick = (point: ScatterDataPoint) => {
-    if (onSelectPoint) {
-      if (selectedPoint?.name === point.name) {
-        onSelectPoint(null);
-      } else {
-        onSelectPoint(point);
-      }
-    }
-  };
+export function RiskPlotView() {
+  const [selectedPoint, setSelectedPoint] = useState<any>(null);
 
-  const dataByProvider = data.reduce(
+  const dataByProvider = mockScatterData.reduce(
     (acc, point) => {
       const provider = point.provider;
       if (!acc[provider]) {
@@ -131,19 +125,28 @@ export function ScatterPlot({
       acc[provider].push(point);
       return acc;
     },
-    {} as Record<string, ScatterDataPoint[]>,
+    {} as Record<string, typeof mockScatterData>,
   );
 
+  const handleSelectPoint = (point: any) => {
+    if (selectedPoint?.name === point.name) {
+      setSelectedPoint(null);
+    } else {
+      setSelectedPoint(point);
+    }
+  };
+
   return (
-    <ResponsiveContainer width="100%" height={height}>
+    <div className="w-full flex-1 overflow-hidden">
+      <ResponsiveContainer width="100%" height={460}>
       <ScatterChart margin={{ top: 20, right: 30, bottom: 60, left: 60 }}>
         <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.gridLine} />
         <XAxis
           type="number"
           dataKey="x"
-          name={xLabel}
+          name="Risk Score"
           label={{
-            value: xLabel,
+            value: "Risk Score",
             position: "bottom",
             offset: 10,
             fill: CHART_COLORS.textSecondary,
@@ -154,9 +157,9 @@ export function ScatterPlot({
         <YAxis
           type="number"
           dataKey="y"
-          name={yLabel}
+          name="Failed Findings"
           label={{
-            value: yLabel,
+            value: "Failed Findings",
             angle: -90,
             position: "left",
             offset: 10,
@@ -179,12 +182,13 @@ export function ScatterPlot({
               <CustomScatterDot
                 {...props}
                 selectedPoint={selectedPoint}
-                onSelectPoint={handlePointClick}
+                onSelectPoint={handleSelectPoint}
               />
             )}
           />
         ))}
       </ScatterChart>
     </ResponsiveContainer>
+    </div>
   );
 }

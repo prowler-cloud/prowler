@@ -36,7 +36,7 @@ export const TimeRangeSelector = ({
 }: TimeRangeSelectorProps) => {
   return (
     <div
-      className="inline-flex items-center gap-2 rounded-full border p-1 bg-neutral-900"
+      className="inline-flex items-center gap-2 rounded-full border bg-neutral-900 p-1"
       style={{ borderColor: "var(--border-time-range)" }}
     >
       {Object.entries(TIME_RANGE_OPTIONS).map(([key, range]) => (
