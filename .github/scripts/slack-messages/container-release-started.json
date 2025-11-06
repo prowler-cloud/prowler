@@ -1,0 +1,17 @@
+{
+  "channel": "${{ env.SLACK_CHANNEL_ID }}",
+  "attachments": [
+    {
+      "color": "${{ env.STATUS_COLOR }}",
+      "blocks": [
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "*Status:*\nStarted\n\n${{ env.COMPONENT }} container release ${{ env.RELEASE_TAG }} push started...\n\n<${{ env.GITHUB_SERVER_URL }}/${{ env.GITHUB_REPOSITORY }}/actions/runs/${{ env.GITHUB_RUN_ID }}|View run>"
+          }
+        }
+      ]
+    }
+  ]
+}
