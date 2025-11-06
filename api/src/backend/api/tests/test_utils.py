@@ -215,7 +215,7 @@ class TestGetProwlerProviderKwargs:
             ),
             (
                 Provider.ProviderChoices.MONGODBATLAS.value,
-                {"atlas_project_id": "provider_uid"},
+                {"atlas_organization_id": "provider_uid"},
             ),
         ],
     )

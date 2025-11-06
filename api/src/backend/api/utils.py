@@ -153,7 +153,7 @@ def get_prowler_provider_kwargs(
     elif provider.provider == Provider.ProviderChoices.MONGODBATLAS.value:
         prowler_provider_kwargs = {
             **prowler_provider_kwargs,
-            "atlas_project_id": provider.uid,
+            "atlas_organization_id": provider.uid,
         }
 
     if mutelist_processor:
