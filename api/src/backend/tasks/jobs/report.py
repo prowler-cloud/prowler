@@ -3053,7 +3053,7 @@ def generate_nis2_report(
     output_path: str,
     provider_id: str,
     only_failed: bool = True,
-    include_manual: bool = True,
+    include_manual: bool = False,
     provider_obj=None,
     requirement_statistics: dict[str, dict[str, int]] = None,
     findings_cache: dict[str, list[FindingOutput]] = None,
@@ -3453,9 +3453,12 @@ def generate_nis2_report(
 
                     # Requirement details table
                     details_data = [
-                        ["Description:", Paragraph(requirement_description, normal)],
-                        ["Section:", Paragraph(section, normal)],
-                        ["SubSection:", Paragraph(subsection, normal)],
+                        [
+                            "Description:",
+                            Paragraph(requirement_description, normal_center),
+                        ],
+                        ["Section:", Paragraph(section, normal_center)],
+                        ["SubSection:", Paragraph(subsection, normal_center)],
                         ["Service:", service],
                     ]
                     details_table = Table(
@@ -3602,6 +3605,7 @@ def generate_compliance_reports(
     only_failed_threatscore: bool = True,
     min_risk_level_threatscore: int = 4,
     include_manual_ens: bool = True,
+    include_manual_nis2: bool = False,
     only_failed_nis2: bool = True,
 ) -> dict[str, dict[str, bool | str]]:
     """
@@ -3839,6 +3843,7 @@ def generate_compliance_reports(
                 output_path=pdf_path_nis2,
                 provider_id=provider_id,
                 only_failed=only_failed_nis2,
+                include_manual=include_manual_nis2,
                 provider_obj=provider_obj,  # Reuse provider object
                 requirement_statistics=requirement_statistics,  # Reuse statistics
                 findings_cache=findings_cache,  # Share findings cache
@@ -3944,6 +3949,7 @@ def generate_compliance_reports_job(
             only_failed_threatscore=True,
             min_risk_level_threatscore=4,
             include_manual_ens=True,
+            include_manual_nis2=False,
             only_failed_nis2=True,
         )
         logger.info("Optimized compliance reports job completed successfully")
