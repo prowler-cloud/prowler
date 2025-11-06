@@ -11,14 +11,10 @@ All notable changes to the **Prowler API** are documented in this file.
 - Support for configuring multiple LLM providers [(#8772)](https://github.com/prowler-cloud/prowler/pull/8772)
 - Support C5 compliance framework for Azure provider [(#9081)](https://github.com/prowler-cloud/prowler/pull/9081)
 - Support for Oracle Cloud Infrastructure (OCI) provider [(#8927)](https://github.com/prowler-cloud/prowler/pull/8927)
-<<<<<<< HEAD
 - Support muting findings based on simple rules with custom reason [(#9051)](https://github.com/prowler-cloud/prowler/pull/9051)
 - Support C5 compliance framework for the GCP provider [(#9097)](https://github.com/prowler-cloud/prowler/pull/9097)
 - Support for Amazon Bedrock and OpenAI compatible providers in Lighthouse AI [(#8957)](https://github.com/prowler-cloud/prowler/pull/8957)
-- Added `metadata`, `details`, and `partition` attributes to the `ResourceSerializer`. [(#9098)](https://github.com/prowler-cloud/prowler/pull/9098)
-=======
-- Added `metadata`, `details`, and `partition` attributes to `/resources` endpoint [(#9098)](https://github.com/prowler-cloud/prowler/pull/9098)
->>>>>>> 0ab85fffa (chore(api): update CHANGELOG for resources endpoint changes)
+- Added `metadata`, `details`, and `partition` attributes to `/resources` endpoint & `details`, and `partition` to `/findings` endpoint [(#9098)](https://github.com/prowler-cloud/prowler/pull/9098)
 
 ---
 
