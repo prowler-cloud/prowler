@@ -1,5 +1,5 @@
 {
-  "Provider": "oci",
+  "Provider": "oraclecloud",
   "CheckID": "events_rule_route_table_changes",
   "CheckTitle": "Ensure a notification is configured for changes to route tables",
   "CheckType": [

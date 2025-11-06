@@ -291,6 +291,52 @@
     display: none; /* Chrome, Safari, Opera */
   }
 
+  /* Minimal scrollbar styles */
+  .minimal-scrollbar {
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: rgb(203 213 225 / 0.5) transparent; /* thumb and track for Firefox */
+  }
+
+  .minimal-scrollbar:hover {
+    scrollbar-color: rgb(148 163 184 / 0.7) transparent; /* darker thumb on hover */
+  }
+
+  /* Webkit browsers (Chrome, Safari, Edge) */
+  .minimal-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .minimal-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .minimal-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgb(203 213 225 / 0.5);
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
+  }
+
+  .minimal-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(148 163 184 / 0.7);
+  }
+
+  /* Dark mode */
+  .dark .minimal-scrollbar {
+    scrollbar-color: rgb(71 85 105 / 0.5) transparent;
+  }
+
+  .dark .minimal-scrollbar:hover {
+    scrollbar-color: rgb(100 116 139 / 0.7) transparent;
+  }
+
+  .dark .minimal-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgb(71 85 105 / 0.5);
+  }
+
+  .dark .minimal-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(100 116 139 / 0.7);
+  }
+
   .checkbox-update {
     margin-right: 0.5rem;
     background-color: var(--background);

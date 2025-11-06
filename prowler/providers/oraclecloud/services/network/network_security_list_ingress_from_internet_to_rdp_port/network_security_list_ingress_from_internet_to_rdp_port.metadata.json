@@ -1,5 +1,5 @@
 {
-  "Provider": "oci",
+  "Provider": "oraclecloud",
   "CheckID": "network_security_list_ingress_from_internet_to_rdp_port",
   "CheckTitle": "Ensure no security lists allow ingress from 0.0.0.0/0 to port 3389",
   "CheckType": [

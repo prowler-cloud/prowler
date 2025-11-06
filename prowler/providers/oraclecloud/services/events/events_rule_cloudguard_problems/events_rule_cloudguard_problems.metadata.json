@@ -1,5 +1,5 @@
 {
-  "Provider": "oci",
+  "Provider": "oraclecloud",
   "CheckID": "events_rule_cloudguard_problems",
   "CheckTitle": "Ensure a notification is configured for Oracle Cloud Guard problems detected",
   "CheckType": [

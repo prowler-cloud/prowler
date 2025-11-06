@@ -111,7 +111,12 @@ export const addProviderFormSchema = z
         providerUid: z.string(),
       }),
       z.object({
-        providerType: z.literal("oci"),
+        providerType: z.literal("iac"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z.string(),
+      }),
+      z.object({
+        providerType: z.literal("oraclecloud"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
         providerUid: z.string(),
       }),
@@ -196,28 +201,37 @@ export const addCredentialsFormSchema = (
                         .string()
                         .optional(),
                     }
-                  : providerType === "oci"
+                  : providerType === "iac"
                     ? {
-                        [ProviderCredentialFields.OCI_USER]: z
+                        [ProviderCredentialFields.REPOSITORY_URL]: z
                           .string()
-                          .min(1, "User OCID is required"),
-                        [ProviderCredentialFields.OCI_FINGERPRINT]: z
+                          .optional(),
+                        [ProviderCredentialFields.ACCESS_TOKEN]: z
                           .string()
-                          .min(1, "Fingerprint is required"),
-                        [ProviderCredentialFields.OCI_KEY_CONTENT]: z
-                          .string()
-                          .min(1, "Private Key Content is required"),
-                        [ProviderCredentialFields.OCI_TENANCY]: z
-                          .string()
-                          .min(1, "Tenancy OCID is required"),
-                        [ProviderCredentialFields.OCI_REGION]: z
-                          .string()
-                          .min(1, "Region is required"),
-                        [ProviderCredentialFields.OCI_PASS_PHRASE]: z
-                          .union([z.string(), z.literal("")])
                           .optional(),
                       }
-                    : {}),
+                    : providerType === "oraclecloud"
+                      ? {
+                          [ProviderCredentialFields.OCI_USER]: z
+                            .string()
+                            .min(1, "User OCID is required"),
+                          [ProviderCredentialFields.OCI_FINGERPRINT]: z
+                            .string()
+                            .min(1, "Fingerprint is required"),
+                          [ProviderCredentialFields.OCI_KEY_CONTENT]: z
+                            .string()
+                            .min(1, "Private Key Content is required"),
+                          [ProviderCredentialFields.OCI_TENANCY]: z
+                            .string()
+                            .min(1, "Tenancy OCID is required"),
+                          [ProviderCredentialFields.OCI_REGION]: z
+                            .string()
+                            .min(1, "Region is required"),
+                          [ProviderCredentialFields.OCI_PASS_PHRASE]: z
+                            .union([z.string(), z.literal("")])
+                            .optional(),
+                        }
+                      : {}),
     })
     .superRefine((data: Record<string, any>, ctx) => {
       if (providerType === "m365") {

@@ -34,6 +34,7 @@ from rest_framework.response import Response
 from api.compliance import get_compliance_frameworks
 from api.db_router import MainRouter
 from api.models import (
+    Finding,
     Integration,
     Invitation,
     LighthouseProviderConfiguration,
@@ -61,6 +62,8 @@ from api.models import (
 from api.rls import Tenant
 from api.v1.serializers import TokenSerializer
 from api.v1.views import ComplianceOverviewViewSet, TenantFinishACSView
+from prowler.lib.check.models import Severity
+from prowler.lib.outputs.finding import Status
 
 
 class TestViewSet:
@@ -1140,6 +1143,16 @@ class TestProviderViewSet:
                     "uid": "a12345678901234567890123456789012345678",
                     "alias": "Long Username",
                 },
+                {
+                    "provider": "iac",
+                    "uid": "https://github.com/user/repo.git",
+                    "alias": "Git Repo",
+                },
+                {
+                    "provider": "iac",
+                    "uid": "https://gitlab.com/user/project",
+                    "alias": "GitLab Repo",
+                },
             ]
         ),
     )
@@ -1287,6 +1300,33 @@ class TestProviderViewSet:
                         "alias": "test",
                     },
                     "github-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "iac",
+                        "uid": "not-a-url",
+                        "alias": "test",
+                    },
+                    "iac-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "iac",
+                        "uid": "ftp://invalid-protocol.com/repo",
+                        "alias": "test",
+                    },
+                    "iac-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "iac",
+                        "uid": "http://",
+                        "alias": "test",
+                    },
+                    "iac-uid",
                     "uid",
                 ),
             ]
@@ -1982,7 +2022,7 @@ class TestProviderSecretViewSet:
             ),
             # OCI with API key credentials (with key_content)
             (
-                Provider.ProviderChoices.OCI.value,
+                Provider.ProviderChoices.ORACLECLOUD.value,
                 ProviderSecret.TypeChoices.STATIC,
                 {
                     "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
@@ -1994,7 +2034,7 @@ class TestProviderSecretViewSet:
             ),
             # OCI with API key credentials (with key_file)
             (
-                Provider.ProviderChoices.OCI.value,
+                Provider.ProviderChoices.ORACLECLOUD.value,
                 ProviderSecret.TypeChoices.STATIC,
                 {
                     "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
@@ -2006,7 +2046,7 @@ class TestProviderSecretViewSet:
             ),
             # OCI with API key credentials (with passphrase)
             (
-                Provider.ProviderChoices.OCI.value,
+                Provider.ProviderChoices.ORACLECLOUD.value,
                 ProviderSecret.TypeChoices.STATIC,
                 {
                     "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
@@ -9393,3 +9433,934 @@ class TestLighthouseProviderConfigViewSet:
 
         # Unrelated entries should remain untouched
         assert cfg.default_models.get("other") == "model-x"
+
+
+@pytest.mark.django_db
+class TestMuteRuleViewSet:
+    """Tests for MuteRule endpoints."""
+
+    def test_mute_rules_list(self, authenticated_client, mute_rules_fixture):
+        """Test listing all mute rules for the tenant."""
+        response = authenticated_client.get(reverse("mute-rule-list"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == len(mute_rules_fixture)
+
+    def test_mute_rules_list_empty(self, authenticated_client, tenants_fixture):
+        """Test listing mute rules when none exist returns empty list."""
+        response = authenticated_client.get(reverse("mute-rule-list"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 0
+        assert isinstance(data, list)
+
+    def test_mute_rules_list_default_ordering(
+        self, authenticated_client, mute_rules_fixture
+    ):
+        """Test that mute rules are ordered by -inserted_at by default."""
+        response = authenticated_client.get(reverse("mute-rule-list"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+
+        if len(data) >= 2:
+            first_date = data[0]["attributes"]["inserted_at"]
+            second_date = data[1]["attributes"]["inserted_at"]
+            assert first_date >= second_date
+
+    def test_mute_rules_retrieve(self, authenticated_client, mute_rules_fixture):
+        """Test retrieving a single mute rule by ID."""
+        mute_rule = mute_rules_fixture[0]
+        response = authenticated_client.get(
+            reverse("mute-rule-detail", kwargs={"pk": mute_rule.id})
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data["id"] == str(mute_rule.id)
+        assert data["attributes"]["name"] == mute_rule.name
+        assert data["attributes"]["reason"] == mute_rule.reason
+        assert data["attributes"]["enabled"] == mute_rule.enabled
+        assert "finding_uids" in data["attributes"]
+        assert "inserted_at" in data["attributes"]
+        assert "updated_at" in data["attributes"]
+
+    def test_mute_rules_retrieve_invalid(self, authenticated_client):
+        """Test retrieving non-existent mute rule returns 404."""
+        response = authenticated_client.get(
+            reverse(
+                "mute-rule-detail",
+                kwargs={"pk": "f498b103-c760-4785-9a3e-e23fafbb7b02"},
+            )
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @pytest.mark.parametrize(
+        "filter_name, filter_value, expected_count",
+        (
+            [
+                ("name", "Test Rule 1", 1),
+                ("name.icontains", "rule", 2),
+                ("reason.icontains", "security", 1),
+                ("enabled", True, 1),
+                ("enabled", False, 1),
+            ]
+        ),
+    )
+    def test_mute_rule_filters(
+        self,
+        authenticated_client,
+        mute_rules_fixture,
+        filter_name,
+        filter_value,
+        expected_count,
+    ):
+        """Test filtering mute rules by various fields."""
+        filters = {f"filter[{filter_name}]": filter_value}
+        response = authenticated_client.get(reverse("mute-rule-list"), filters)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == expected_count
+
+    def test_mute_rule_filter_by_created_by(
+        self, authenticated_client, mute_rules_fixture, create_test_user
+    ):
+        """Test filtering mute rules by creator."""
+        response = authenticated_client.get(
+            reverse("mute-rule-list"),
+            {"filter[created_by]": create_test_user.id},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 2
+
+    def test_mute_rule_search(self, authenticated_client, mute_rules_fixture):
+        """Test searching mute rules by name and reason."""
+        response = authenticated_client.get(
+            reverse("mute-rule-list"), {"filter[search]": "Rule 1"}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+
+    @pytest.mark.parametrize(
+        "sort_field, first_index",
+        (
+            [
+                ("name", 0),
+                ("-name", 1),
+                ("inserted_at", 0),
+                ("-inserted_at", 1),
+            ]
+        ),
+    )
+    def test_mute_rule_ordering(
+        self, authenticated_client, mute_rules_fixture, sort_field, first_index
+    ):
+        """Test ordering mute rules by various fields."""
+        response = authenticated_client.get(
+            reverse("mute-rule-list"), {"sort": sort_field}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 2
+        assert data[0]["id"] == str(mute_rules_fixture[first_index].id)
+
+    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    def test_mute_rules_create_valid(
+        self,
+        mock_task,
+        authenticated_client,
+        findings_fixture,
+        create_test_user,
+    ):
+        """Test creating a valid mute rule."""
+        finding_ids = [str(findings_fixture[0].id)]
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": "New Mute Rule",
+                    "reason": "Security exception approved",
+                    "finding_ids": finding_ids,
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+
+        # Verify response contains the created mute rule
+        response_data = response.json()["data"]
+        assert response_data["type"] == "mute-rules"
+        assert response_data["attributes"]["name"] == "New Mute Rule"
+        assert response_data["attributes"]["reason"] == "Security exception approved"
+
+        # Verify the finding was immediately muted
+        from api.models import Finding
+
+        finding = Finding.objects.get(id=findings_fixture[0].id)
+        assert finding.muted is True
+        assert finding.muted_at is not None
+        assert finding.muted_reason == "Security exception approved"
+
+        # Verify background task was called
+        mock_task.assert_called_once()
+
+    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    def test_mute_rules_create_converts_finding_ids_to_uids(
+        self,
+        mock_task,
+        authenticated_client,
+        findings_fixture,
+    ):
+        """Test that finding_ids are converted to finding UIDs."""
+        finding_ids = [str(findings_fixture[0].id), str(findings_fixture[1].id)]
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": "UID Conversion Test",
+                    "reason": "Testing UID conversion",
+                    "finding_ids": finding_ids,
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+
+        # Verify finding_uids contains the UIDs, not IDs
+        from api.models import MuteRule
+
+        mute_rule = MuteRule.objects.get(name="UID Conversion Test")
+        expected_uids = [
+            findings_fixture[0].uid,
+            findings_fixture[1].uid,
+        ]
+        assert set(mute_rule.finding_uids) == set(expected_uids)
+
+    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    def test_mute_rules_deduplicates_uids(
+        self,
+        mock_task,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        scans_fixture,
+    ):
+        """Test that multiple findings with same UID result in only one UID in the rule."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+
+        shared_uid = "prowler-aws-dedupe-test-001"
+
+        finding1 = Finding.objects.create(
+            tenant=tenant,
+            uid=shared_uid,
+            scan=scan,
+            status=Status.FAIL,
+            status_extended="test",
+            severity=Severity.high,
+            impact=Severity.high,
+            check_id="test_check",
+            check_metadata={"CheckId": "test_check"},
+            raw_result={},
+        )
+
+        finding2 = Finding.objects.create(
+            tenant=tenant,
+            uid=shared_uid,
+            scan=scan,
+            status=Status.FAIL,
+            status_extended="test",
+            severity=Severity.high,
+            impact=Severity.high,
+            check_id="test_check",
+            check_metadata={"CheckId": "test_check"},
+            raw_result={},
+        )
+
+        finding_ids = [str(finding1.id), str(finding2.id)]
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": "Dedupe Test Rule",
+                    "reason": "Testing UID deduplication",
+                    "finding_ids": finding_ids,
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+
+        from api.models import MuteRule
+
+        mute_rule = MuteRule.objects.get(name="Dedupe Test Rule")
+        assert len(mute_rule.finding_uids) == 1
+        assert mute_rule.finding_uids[0] == shared_uid
+
+        finding1.refresh_from_db()
+        finding2.refresh_from_db()
+        assert finding1.muted is True
+        assert finding2.muted is True
+
+    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    def test_mute_rules_create_overlap_detection_active(
+        self,
+        mock_task,
+        authenticated_client,
+        mute_rules_fixture,
+        findings_fixture,
+    ):
+        """Test that creating a rule with overlapping UIDs in active rule fails."""
+        # mute_rules_fixture[0] is active and has findings_fixture[0] UID
+        finding_ids = [str(findings_fixture[0].id)]
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": "Overlapping Rule",
+                    "reason": "This should fail",
+                    "finding_ids": finding_ids,
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert "errors" in response.json()
+        error_detail = response.json()["errors"][0]["detail"]
+        assert (
+            "already muted" in error_detail.lower() or "overlap" in error_detail.lower()
+        )
+
+    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    def test_mute_rules_create_no_overlap_with_inactive(
+        self,
+        mock_task,
+        authenticated_client,
+        mute_rules_fixture,
+        findings_fixture,
+    ):
+        """Test that disabled rules don't prevent new rules with same UIDs."""
+        # mute_rules_fixture[1] is disabled
+        # Disable the enabled rule first
+        mute_rules_fixture[0].enabled = False
+        mute_rules_fixture[0].save()
+
+        finding_ids = [str(findings_fixture[0].id)]
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": "Non-overlapping Rule",
+                    "reason": "Inactive rules don't block",
+                    "finding_ids": finding_ids,
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+
+    def test_mute_rules_create_invalid_empty_finding_ids(self, authenticated_client):
+        """Test creating mute rule with empty finding_ids fails."""
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": "Valid",
+                    "reason": "Valid",
+                    "finding_ids": [],
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "errors" in response.json()
+        assert (
+            response.json()["errors"][0]["source"]["pointer"]
+            == "/data/attributes/finding_ids"
+        )
+
+    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    def test_mute_rules_create_invalid_finding_ids(
+        self, mock_task, authenticated_client
+    ):
+        """Test creating mute rule with non-existent finding IDs fails."""
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": "Invalid Findings",
+                    "reason": "This should fail",
+                    "finding_ids": ["f498b103-c760-4785-9a3e-e23fafbb7b02"],
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "errors" in response.json()
+
+    def test_mute_rules_create_duplicate_name(
+        self, authenticated_client, mute_rules_fixture
+    ):
+        """Test creating a mute rule with duplicate name fails."""
+        existing_name = mute_rules_fixture[0].name
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": existing_name,
+                    "reason": "Duplicate name test",
+                    "finding_ids": ["f498b103-c760-4785-9a3e-e23fafbb7b02"],
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "errors" in response.json()
+
+    def test_mute_rules_update_name(self, authenticated_client, mute_rules_fixture):
+        """Test updating mute rule name."""
+        mute_rule = mute_rules_fixture[0]
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "id": str(mute_rule.id),
+                "attributes": {
+                    "name": "Updated Name",
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("mute-rule-detail", kwargs={"pk": mute_rule.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()["data"]
+        assert response_data["attributes"]["name"] == "Updated Name"
+
+        # Verify database was updated
+        mute_rule.refresh_from_db()
+        assert mute_rule.name == "Updated Name"
+
+    def test_mute_rules_update_reason(self, authenticated_client, mute_rules_fixture):
+        """Test updating mute rule reason."""
+        mute_rule = mute_rules_fixture[0]
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "id": str(mute_rule.id),
+                "attributes": {
+                    "reason": "Updated reason for muting",
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("mute-rule-detail", kwargs={"pk": mute_rule.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()["data"]
+        assert response_data["attributes"]["reason"] == "Updated reason for muting"
+
+        mute_rule.refresh_from_db()
+        assert mute_rule.reason == "Updated reason for muting"
+
+    def test_mute_rules_update_enabled(self, authenticated_client, mute_rules_fixture):
+        """Test disabling a mute rule."""
+        mute_rule = mute_rules_fixture[0]
+        assert mute_rule.enabled is True
+
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "id": str(mute_rule.id),
+                "attributes": {
+                    "enabled": False,
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("mute-rule-detail", kwargs={"pk": mute_rule.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()["data"]
+        assert response_data["attributes"]["enabled"] is False
+
+        mute_rule.refresh_from_db()
+        assert mute_rule.enabled is False
+
+    def test_mute_rules_update_duplicate_name(
+        self, authenticated_client, mute_rules_fixture
+    ):
+        """Test updating mute rule with duplicate name fails."""
+        first_rule = mute_rules_fixture[0]
+        second_rule = mute_rules_fixture[1]
+
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "id": str(second_rule.id),
+                "attributes": {
+                    "name": first_rule.name,
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("mute-rule-detail", kwargs={"pk": second_rule.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "errors" in response.json()
+
+    def test_mute_rules_delete(self, authenticated_client, mute_rules_fixture):
+        """Test deleting a mute rule."""
+        mute_rule = mute_rules_fixture[0]
+        response = authenticated_client.delete(
+            reverse("mute-rule-detail", kwargs={"pk": mute_rule.id})
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+        # Verify rule was deleted
+        from api.models import MuteRule
+
+        assert not MuteRule.objects.filter(id=mute_rule.id).exists()
+
+    def test_mute_rules_tenant_isolation(
+        self, authenticated_client, mute_rules_fixture, tenants_fixture
+    ):
+        """Test that users can only access mute rules from their tenant."""
+        # Create a second tenant with a mute rule
+        from api.models import MuteRule, Tenant
+
+        other_tenant = Tenant.objects.create(name="Other Tenant")
+        other_rule = MuteRule.objects.create(
+            tenant=other_tenant,
+            name="Other Tenant Rule",
+            reason="Should not be visible",
+            finding_uids=["test-uid"],
+        )
+
+        # Try to access other tenant's rule
+        response = authenticated_client.get(
+            reverse("mute-rule-detail", kwargs={"pk": other_rule.id})
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+        # List should only show current tenant's rules
+        response = authenticated_client.get(reverse("mute-rule-list"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == len(mute_rules_fixture)
+        for rule_data in data:
+            assert rule_data["id"] != str(other_rule.id)
+
+    @pytest.mark.parametrize(
+        "credentials",
+        [
+            {},  # empty credentials
+            {
+                "access_key_id": "AKIAIOSFODNN7EXAMPLE"
+            },  # missing secret_access_key and region
+            {
+                "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+            },  # missing access_key_id and region
+            {
+                "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+                "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+            },  # missing region
+            {  # invalid access_key_id format (not starting with AKIA)
+                "access_key_id": "ABCD0123456789ABCDEF",
+                "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+                "region": "us-east-1",
+            },
+            {  # invalid access_key_id format (wrong length)
+                "access_key_id": "AKIAIOSFODNN7EXAMPL",
+                "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+                "region": "us-east-1",
+            },
+            {  # invalid secret_access_key format (wrong length)
+                "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+                "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEK",
+                "region": "us-east-1",
+            },
+            {  # invalid region format
+                "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+                "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+                "region": "invalid-region",
+            },
+            {  # invalid region format (uppercase)
+                "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+                "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+                "region": "US-EAST-1",
+            },
+        ],
+    )
+    def test_bedrock_invalid_credentials(self, authenticated_client, credentials):
+        """Bedrock provider with invalid credentials should error"""
+        payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "bedrock",
+                    "credentials": credentials,
+                },
+            }
+        }
+        resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_bedrock_valid_credentials_success(self, authenticated_client):
+        """Bedrock provider with valid AWS credentials should succeed and mask credentials"""
+        valid_credentials = {
+            "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+            "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+            "region": "us-east-1",
+        }
+        payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "bedrock",
+                    "credentials": valid_credentials,
+                },
+            }
+        }
+        resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp.status_code == status.HTTP_201_CREATED
+        data = resp.json()["data"]
+
+        # Verify credentials are returned masked
+        masked_creds = data["attributes"].get("credentials")
+        assert masked_creds is not None
+        assert "access_key_id" in masked_creds
+        assert "secret_access_key" in masked_creds
+        assert "region" in masked_creds
+        # Verify all characters are masked with asterisks
+        assert all(c == "*" for c in masked_creds["access_key_id"])
+        assert all(c == "*" for c in masked_creds["secret_access_key"])
+
+    def test_bedrock_provider_duplicate_per_tenant(self, authenticated_client):
+        """Creating a second Bedrock provider for same tenant should fail"""
+        valid_credentials = {
+            "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+            "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+            "region": "us-west-2",
+        }
+        payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "bedrock",
+                    "credentials": valid_credentials,
+                },
+            }
+        }
+        # First creation succeeds
+        resp1 = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp1.status_code == status.HTTP_201_CREATED
+
+        # Second creation should fail with validation error
+        resp2 = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp2.status_code == status.HTTP_400_BAD_REQUEST
+        assert "already exists" in str(resp2.json()).lower()
+
+    def test_bedrock_patch_credentials_and_fields_filter(self, authenticated_client):
+        """PATCH credentials and verify fields filter returns decrypted values"""
+        valid_credentials = {
+            "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+            "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+            "region": "eu-west-1",
+        }
+        create_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "bedrock",
+                    "credentials": valid_credentials,
+                },
+            }
+        }
+        create_resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=create_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert create_resp.status_code == status.HTTP_201_CREATED
+        provider_id = create_resp.json()["data"]["id"]
+
+        # Update credentials with new valid ones
+        new_credentials = {
+            "access_key_id": "AKIAZZZZZZZZZZZZZZZZ",
+            "secret_access_key": "aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789+/==",
+            "region": "ap-south-1",
+        }
+        patch_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "id": provider_id,
+                "attributes": {
+                    "credentials": new_credentials,
+                    "is_active": False,
+                },
+            }
+        }
+        patch_resp = authenticated_client.patch(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id}),
+            data=patch_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert patch_resp.status_code == status.HTTP_200_OK
+        updated = patch_resp.json()["data"]["attributes"]
+        assert updated["is_active"] is False
+
+        # Default GET should return masked credentials
+        get_resp = authenticated_client.get(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id})
+        )
+        assert get_resp.status_code == status.HTTP_200_OK
+        masked = get_resp.json()["data"]["attributes"]["credentials"]
+        assert all(c == "*" for c in masked["access_key_id"])
+        assert all(c == "*" for c in masked["secret_access_key"])
+
+        # Fields filter should return decrypted credentials
+        get_full = authenticated_client.get(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id})
+            + "?fields[lighthouse-providers]=credentials"
+        )
+        assert get_full.status_code == status.HTTP_200_OK
+        creds = get_full.json()["data"]["attributes"]["credentials"]
+        assert creds["access_key_id"] == new_credentials["access_key_id"]
+        assert creds["secret_access_key"] == new_credentials["secret_access_key"]
+        assert creds["region"] == new_credentials["region"]
+
+    def test_bedrock_partial_credential_update(self, authenticated_client):
+        """Test partial update of Bedrock credentials (e.g., only region)"""
+        # Create provider with full credentials
+        initial_credentials = {
+            "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+            "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+            "region": "us-east-1",
+        }
+        create_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "bedrock",
+                    "credentials": initial_credentials,
+                },
+            }
+        }
+        create_resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=create_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert create_resp.status_code == status.HTTP_201_CREATED
+        provider_id = create_resp.json()["data"]["id"]
+
+        # Update only the region field
+        partial_update = {
+            "region": "eu-west-1",
+        }
+        patch_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "id": provider_id,
+                "attributes": {
+                    "credentials": partial_update,
+                },
+            }
+        }
+        patch_resp = authenticated_client.patch(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id}),
+            data=patch_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert patch_resp.status_code == status.HTTP_200_OK
+
+        # Verify credentials with fields filter - region should be updated, keys preserved
+        get_full = authenticated_client.get(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id})
+            + "?fields[lighthouse-providers]=credentials"
+        )
+        assert get_full.status_code == status.HTTP_200_OK
+        creds = get_full.json()["data"]["attributes"]["credentials"]
+
+        # Original keys should be preserved
+        assert creds["access_key_id"] == initial_credentials["access_key_id"]
+        assert creds["secret_access_key"] == initial_credentials["secret_access_key"]
+        # Region should be updated
+        assert creds["region"] == "eu-west-1"
+
+    @pytest.mark.parametrize(
+        "attributes",
+        [
+            pytest.param(
+                {
+                    "provider_type": "openai_compatible",
+                    "credentials": {"api_key": "compat-key"},
+                },
+                id="missing",
+            ),
+            pytest.param(
+                {
+                    "provider_type": "openai_compatible",
+                    "credentials": {"api_key": "compat-key"},
+                    "base_url": "",
+                },
+                id="empty",
+            ),
+        ],
+    )
+    def test_openai_compatible_missing_base_url(self, authenticated_client, attributes):
+        payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": attributes,
+            }
+        }
+
+        resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        error_detail = str(resp.json()).lower()
+        assert "base_url" in error_detail
+
+    def test_openai_compatible_invalid_credentials(self, authenticated_client):
+        payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "openai_compatible",
+                    "base_url": "https://compat.example/v1",
+                    "credentials": {"api_key": ""},
+                },
+            }
+        }
+
+        resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        errors = resp.json().get("errors", [])
+        assert any(
+            error.get("source", {}).get("pointer")
+            == "/data/attributes/credentials/api_key"
+            for error in errors
+        )
+        assert any(
+            "may not be blank" in error.get("detail", "").lower() for error in errors
+        )
+
+    def test_openai_compatible_patch_credentials_and_fields(self, authenticated_client):
+        create_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "openai_compatible",
+                    "base_url": "https://compat.example/v1",
+                    "credentials": {"api_key": "compat-key-123"},
+                },
+            }
+        }
+
+        create_resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=create_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert create_resp.status_code == status.HTTP_201_CREATED
+        provider_id = create_resp.json()["data"]["id"]
+
+        updated_base_url = "https://compat.example/v2"
+        updated_api_key = "compat-key-456"
+        patch_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "id": provider_id,
+                "attributes": {
+                    "base_url": updated_base_url,
+                    "credentials": {"api_key": updated_api_key},
+                },
+            }
+        }
+
+        patch_resp = authenticated_client.patch(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id}),
+            data=patch_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert patch_resp.status_code == status.HTTP_200_OK
+        updated_attrs = patch_resp.json()["data"]["attributes"]
+        assert updated_attrs["base_url"] == updated_base_url
+        assert updated_attrs["credentials"]["api_key"] == "*" * len(updated_api_key)
+
+        get_resp = authenticated_client.get(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id})
+        )
+        assert get_resp.status_code == status.HTTP_200_OK
+        masked = get_resp.json()["data"]["attributes"]["credentials"]["api_key"]
+        assert masked == "*" * len(updated_api_key)
+
+        get_full = authenticated_client.get(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id})
+            + "?fields[lighthouse-providers]=credentials"
+        )
+        assert get_full.status_code == status.HTTP_200_OK
+        creds = get_full.json()["data"]["attributes"]["credentials"]
+        assert creds["api_key"] == updated_api_key
