@@ -54,10 +54,12 @@ if [ "$CODE_REVIEW_ENABLED" = "true" ]; then
     echo -e "${BLUE}📤 Sending to Claude Code for validation...${NC}"
     echo ""
 
-    # Build prompt with git diff of changes
+    # Build prompt with git diff of changes AND full context
     VALIDATION_PROMPT=$(
       cat <<'PROMPT_EOF'
-You are a code reviewer for the Prowler UI project. Analyze the code changes (git diff) below and validate they comply with AGENTS.md standards.
+You are a code reviewer for the Prowler UI project. Analyze the code changes (git diff with full context) below and validate they comply with AGENTS.md standards.
+
+**CRITICAL: You MUST check BOTH the changed lines AND the surrounding context for violations.**
 
 **RULES TO CHECK:**
 1. React Imports: NO `import * as React` or `import React, {` → Use `import { useState }`
@@ -70,35 +72,41 @@ You are a code reviewer for the Prowler UI project. Analyze the code changes (gi
 8. Directives: Server Actions need "use server", clients need "use client"
 9. Implement DRY, KISS principles. (example: reusable components, avoid repetition)
 10. Layout must work for all the responsive breakpoints (mobile, tablet, desktop)
-11. ANY types cannot be used
+11. ANY types cannot be used - CRITICAL: Check for `: any` in all visible lines
 12. Use the components inside components/shadcn if possible
 13. Check Accessibility best practices (like alt tags in images, semantic HTML, Aria labels, etc.)
 
-=== GIT DIFF OF CHANGES ===
+=== GIT DIFF WITH CONTEXT ===
 PROMPT_EOF
     )
 
-    # Add git diff to prompt (shows only actual changes)
+    # Add git diff to prompt with more context (U5 = 5 lines before/after)
     VALIDATION_PROMPT="$VALIDATION_PROMPT
-$(git diff --cached -U0)"
+$(git diff --cached -U5)"
 
     VALIDATION_PROMPT="$VALIDATION_PROMPT
 
 === END DIFF ===
 
-**RESPOND WITH:**
-STATUS: [PASSED | FAILED]
-[If FAILED: list violations with File, Rule, Issue, and line reference]
-[If PASSED: confirm all changes comply with AGENTS.md standards]"
+**IMPORTANT: Your response MUST start with exactly one of these lines:**
+STATUS: PASSED
+STATUS: FAILED
+
+**If FAILED:** List each violation with File, Line Number, Rule Number, and Issue.
+**If PASSED:** Confirm all visible code (including context) complies with AGENTS.md standards.
+
+**Start your response now with STATUS:**"
 
     # Send to Claude Code
     if VALIDATION_OUTPUT=$(echo "$VALIDATION_PROMPT" | claude 2>&1); then
       echo "$VALIDATION_OUTPUT"
       echo ""
 
-      # Check result
+      # Check result - STRICT MODE: fail if status unclear
       if echo "$VALIDATION_OUTPUT" | grep -q "^STATUS: PASSED"; then
+        echo ""
         echo -e "${GREEN}✅ VALIDATION PASSED${NC}"
+        echo ""
       elif echo "$VALIDATION_OUTPUT" | grep -q "^STATUS: FAILED"; then
         echo ""
         echo -e "${RED}❌ VALIDATION FAILED${NC}"
@@ -106,8 +114,14 @@ STATUS: [PASSED | FAILED]
         echo ""
         exit 1
       else
-        echo -e "${YELLOW}⚠️  Could not determine validation status${NC}"
-        echo "Continuing (validation inconclusive)"
+        echo ""
+        echo -e "${RED}❌ VALIDATION ERROR${NC}"
+        echo -e "${RED}Could not determine validation status from Claude Code response${NC}"
+        echo -e "${YELLOW}Response must start with 'STATUS: PASSED' or 'STATUS: FAILED'${NC}"
+        echo ""
+        echo -e "${YELLOW}To bypass validation temporarily, set CODE_REVIEW_ENABLED=false in .env${NC}"
+        echo ""
+        exit 1
       fi
     else
       echo -e "${YELLOW}⚠️  Claude Code not available${NC}"
