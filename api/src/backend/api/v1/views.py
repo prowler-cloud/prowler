@@ -4118,20 +4118,22 @@ class OverviewViewSet(BaseRLSViewSet):
         filtered_queryset = filterset.qs
 
         # Get distinct provider IDs from filtered queryset
-        provider_ids = filtered_queryset.values_list(
-            "provider_id", flat=True
-        ).distinct()
-
-        # For each provider, get the latest snapshot
-        latest_snapshots = []
-        for provider_id in provider_ids:
-            latest_snapshot = (
-                filtered_queryset.filter(provider_id=provider_id)
-                .order_by("-inserted_at")
-                .first()
-            )
-            if latest_snapshot:
-                latest_snapshots.append(latest_snapshot)
+        # Pick the latest snapshot per provider using Postgres DISTINCT ON pattern.
+        # This avoids issuing one query per provider (N+1) when the filtered dataset is large.
+        latest_snapshot_ids = list(
+            filtered_queryset.order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values_list("id", flat=True)
+        )
+        latest_snapshot_map = {
+            snapshot.id: snapshot
+            for snapshot in filtered_queryset.filter(id__in=latest_snapshot_ids)
+        }
+        latest_snapshots = [
+            latest_snapshot_map[snapshot_id]
+            for snapshot_id in latest_snapshot_ids
+            if snapshot_id in latest_snapshot_map
+        ]
 
         if len(latest_snapshots) <= 1:
             serializer = ThreatScoreSnapshotSerializer(
