@@ -11,13 +11,7 @@ import {
   SEVERITY_COLORS,
   STATUS_COLORS,
 } from "@/components/graphs/shared/constants";
-import {
-  BaseCard,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  InnerBaseCard,
-} from "@/components/shadcn";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
 
 const THREAT_LEVEL_CONFIG = {
   DANGER: {
@@ -121,7 +115,10 @@ export function ThreatScore({
   const gaps = extractTopGaps(criticalRequirements, 2);
 
   return (
-    <BaseCard className="flex min-h-[372px] min-w-[328px] flex-col justify-between md:max-w-[312px]">
+    <Card
+      variant="base"
+      className="flex min-h-[372px] min-w-[328px] flex-col justify-between md:max-w-[312px]"
+    >
       <CardHeader>
         <CardTitle>Prowler Threat Score</CardTitle>
       </CardHeader>
@@ -156,7 +153,11 @@ export function ThreatScore({
 
         {/* Info Box or Empty State */}
         {hasData ? (
-          <InnerBaseCard className="items-center justify-center">
+          <Card
+            variant="innerBase"
+            padding="md"
+            className="items-center justify-center"
+          >
             <div className="flex flex-col gap-1.5 text-sm leading-6 text-zinc-800 dark:text-zinc-300">
               {/* Improvement Message */}
               {scoreDelta !== undefined &&
@@ -186,15 +187,19 @@ export function ThreatScore({
                 </div>
               )}
             </div>
-          </InnerBaseCard>
+          </Card>
         ) : (
-          <InnerBaseCard className="items-center justify-center">
+          <Card
+            variant="innerBase"
+            padding="md"
+            className="items-center justify-center"
+          >
             <p className="text-sm text-zinc-300">
               Threat Score Data Unavailable
             </p>
-          </InnerBaseCard>
+          </Card>
         )}
       </CardContent>
-    </BaseCard>
+    </Card>
   );
 }

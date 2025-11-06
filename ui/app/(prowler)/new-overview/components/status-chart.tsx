@@ -5,12 +5,11 @@ import { Bell, BellOff, ShieldCheck, TriangleAlert } from "lucide-react";
 import { DonutChart } from "@/components/graphs/donut-chart";
 import { DonutDataPoint } from "@/components/graphs/types";
 import {
-  BaseCard,
+  Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardVariant,
-  InnerBaseCard,
   ResourceStatsCard,
 } from "@/components/shadcn";
 import { calculatePercentage } from "@/lib/utils";
@@ -74,7 +73,10 @@ export const StatusChart = ({
   ];
 
   return (
-    <BaseCard className="flex min-h-[372px] min-w-[312px] flex-1 flex-col justify-between md:min-w-[380px]">
+    <Card
+      variant="base"
+      className="flex min-h-[372px] min-w-[312px] flex-1 flex-col justify-between md:min-w-[380px]"
+    >
       <CardHeader>
         <CardTitle>Check Findings</CardTitle>
       </CardHeader>
@@ -93,7 +95,11 @@ export const StatusChart = ({
           />
         </div>
 
-        <InnerBaseCard className="flex w-full flex-col items-start justify-center gap-4 lg:flex-row lg:justify-between">
+        <Card
+          variant="innerBase"
+          padding="md"
+          className="flex w-full flex-col items-start justify-center gap-4 lg:flex-row lg:justify-between"
+        >
           <ResourceStatsCard
             containerless
             badge={{
@@ -137,8 +143,8 @@ export const StatusChart = ({
             }
             className="w-full lg:min-w-0 lg:flex-1"
           />
-        </InnerBaseCard>
+        </Card>
       </CardContent>
-    </BaseCard>
+    </Card>
   );
 };

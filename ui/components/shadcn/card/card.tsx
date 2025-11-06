@@ -1,3 +1,5 @@
+import { cva, type VariantProps } from "class-variance-authority";
+
 import { cn } from "@/lib/utils";
 
 export const CardVariant = {
@@ -10,14 +12,44 @@ export const CardVariant = {
 
 export type CardVariant = (typeof CardVariant)[keyof typeof CardVariant];
 
-function Card({ className, ...props }: React.ComponentProps<"div">) {
+const cardVariants = cva("flex flex-col gap-6 rounded-xl border", {
+  variants: {
+    variant: {
+      default: "py-6",
+      base: "border-slate-200 bg-white bg-neutral-secondary px-[18px] pt-3 pb-4 dark:border-zinc-900 dark:bg-stone-950",
+      innerBase:
+        "rounded-[12px] backdrop-blur-[46px] border-slate-300 bg-[#F8FAFC80] dark:border-[rgba(38,38,38,0.70)] dark:bg-[rgba(23,23,23,0.50)]",
+    },
+    padding: {
+      default: "",
+      sm: "px-3 py-2",
+      md: "px-4 py-3",
+      lg: "px-5 py-4",
+      none: "p-0",
+    },
+  },
+  compoundVariants: [
+    {
+      variant: "innerBase",
+      padding: "default",
+      className: "px-4 py-3", // md padding by default for innerBase
+    },
+  ],
+  defaultVariants: {
+    variant: "default",
+    padding: "default",
+  },
+});
+
+interface CardProps
+  extends React.ComponentProps<"div">,
+    VariantProps<typeof cardVariants> {}
+
+function Card({ className, variant, padding, ...props }: CardProps) {
   return (
     <div
       data-slot="card"
-      className={cn(
-        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6",
-        className,
-      )}
+      className={cn(cardVariants({ variant, padding }), className)}
       {...props}
     />
   );
@@ -40,10 +72,7 @@ function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-title"
-      className={cn(
-        "mt-2 text-[18px] leading-none text-slate-900 dark:text-white",
-        className,
-      )}
+      className={cn("mt-2 text-[18px] leading-none", className)}
       {...props}
     />
   );
@@ -96,4 +125,6 @@ export {
   CardFooter,
   CardHeader,
   CardTitle,
+  cardVariants,
 };
+export type { CardProps };

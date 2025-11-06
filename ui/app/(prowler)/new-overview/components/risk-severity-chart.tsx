@@ -2,12 +2,7 @@
 
 import { HorizontalBarChart } from "@/components/graphs/horizontal-bar-chart";
 import { BarDataPoint } from "@/components/graphs/types";
-import {
-  BaseCard,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/shadcn";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
 import { calculatePercentage } from "@/lib/utils";
 
 interface RiskSeverityChartProps {
@@ -58,7 +53,10 @@ export const RiskSeverityChart = ({
   ];
 
   return (
-    <BaseCard className="flex min-h-[372px] min-w-[312px] flex-1 flex-col md:min-w-[380px]">
+    <Card
+      variant="base"
+      className="flex min-h-[372px] min-w-[312px] flex-1 flex-col md:min-w-[380px]"
+    >
       <CardHeader>
         <CardTitle>Risk Severity</CardTitle>
       </CardHeader>
@@ -66,6 +64,6 @@ export const RiskSeverityChart = ({
       <CardContent className="flex flex-1 items-center justify-start px-6">
         <HorizontalBarChart data={chartData} />
       </CardContent>
-    </BaseCard>
+    </Card>
   );
 };

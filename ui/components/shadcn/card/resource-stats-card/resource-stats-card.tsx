@@ -3,8 +3,7 @@ import { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-import { CardVariant } from "../card";
-import { InnerBaseCard } from "../inner-base-card";
+import { Card, CardVariant } from "../card";
 import type { StatItem } from "./resource-stats-card-content";
 import { ResourceStatsCardContent } from "./resource-stats-card-content";
 import { ResourceStatsCardHeader } from "./resource-stats-card-header";
@@ -131,8 +130,9 @@ export const ResourceStatsCard = ({
 
   // Otherwise, render with container
   return (
-    <InnerBaseCard
+    <Card
       ref={ref}
+      variant="innerBase"
       className={cn(cardVariants({ variant, size }), "flex-col", className)}
       {...props}
     >
@@ -155,7 +155,7 @@ export const ResourceStatsCard = ({
           />
         )
       )}
-    </InnerBaseCard>
+    </Card>
   );
 };
 
