@@ -17,48 +17,6 @@ from prowler.providers.common.provider import Provider
 
 class HTML(Output):
     @staticmethod
-    def _format_enrichment_html(enrichment: dict) -> str:
-        """Format enrichment data as HTML summary.
-
-        Args:
-            enrichment (dict): The enrichment data dictionary
-
-        Returns:
-            str: HTML formatted enrichment summary
-        """
-        if not enrichment:
-            return ""
-
-        parts = []
-
-        # Add creation info
-        if enrichment.get("created_by"):
-            parts.append(f"<strong>Created by:</strong> {enrichment['created_by']}")
-        if enrichment.get("created_at"):
-            parts.append(f"<strong>Created:</strong> {enrichment['created_at']}")
-
-        # Add last modified info
-        if enrichment.get("last_modified_by"):
-            parts.append(
-                f"<strong>Modified by:</strong> {enrichment['last_modified_by']}"
-            )
-        if enrichment.get("last_modified_at"):
-            parts.append(f"<strong>Modified:</strong> {enrichment['last_modified_at']}")
-
-        # Add resource age
-        if enrichment.get("resource_age_days") is not None:
-            parts.append(
-                f"<strong>Age:</strong> {enrichment['resource_age_days']} days"
-            )
-
-        # Add timeline event count
-        timeline = enrichment.get("timeline", [])
-        if timeline:
-            parts.append(f"<strong>Events:</strong> {len(timeline)}")
-
-        return "<br />".join(parts) if parts else "No data"
-
-    @staticmethod
     def process_markdown(text: str) -> str:
         """
         Process markdown syntax in text and convert to HTML using the markdown library.
@@ -129,7 +87,6 @@ class HTML(Output):
                             <td><p class="show-read-more">{HTML.process_markdown(finding.metadata.Risk)}</p></td>
                             <td><p class="show-read-more">{HTML.process_markdown(finding.metadata.Remediation.Recommendation.Text)}</p> <a class="read-more" href="{finding.metadata.Remediation.Recommendation.Url}"><i class="fas fa-external-link-alt"></i></a></td>
                             <td><p class="show-read-more">{parse_html_string(unroll_dict(finding.compliance, separator=": "))}</p></td>
-                            <td>{self._format_enrichment_html(finding.enrichment) if finding.enrichment else ""}</td>
                         </tr>
                         """
                 )
@@ -293,7 +250,6 @@ class HTML(Output):
                     <th scope="col">Risk</th>
                     <th scope="col">Recommendation</th>
                     <th scope="col">Compliance</th>
-                    <th scope="col">CloudTrail Timeline</th>
                 </tr>
             </thead>
             <tbody>"""

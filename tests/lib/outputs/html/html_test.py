@@ -44,7 +44,6 @@ pass_html_finding = """
                             <td><p class="show-read-more">
 &#x2022;test-compliance: test-compliance
 </p></td>
-                            <td></td>
                         </tr>
                         """
 fail_html_finding = """
@@ -67,7 +66,6 @@ fail_html_finding = """
                             <td><p class="show-read-more">
 &#x2022;test-compliance: test-compliance
 </p></td>
-                            <td></td>
                         </tr>
                         """
 muted_html_finding = """
@@ -86,7 +84,6 @@ muted_html_finding = """
                             <td><p class="show-read-more">
 &#x2022;test-compliance: test-compliance
 </p></td>
-                            <td></td>
                         </tr>
                         """
 manual_html_finding = """
@@ -105,7 +102,6 @@ manual_html_finding = """
                             <td><p class="show-read-more">
 &#x2022;test-compliance: test-compliance
 </p></td>
-                            <td></td>
                         </tr>
                         """
 aws_html_assessment_summary = """
@@ -472,7 +468,6 @@ def get_aws_html_header(args: list) -> str:
                     <th scope="col">Risk</th>
                     <th scope="col">Recommendation</th>
                     <th scope="col">Compliance</th>
-                    <th scope="col">CloudTrail Timeline</th>
                 </tr>
             </thead>
             <tbody>"""

@@ -162,9 +162,6 @@ class OCSF(Output):
                         "additional_urls": finding.metadata.AdditionalURLs,
                         "notes": finding.metadata.Notes,
                         "compliance": finding.compliance,
-                        "enrichment": (
-                            finding.enrichment if finding.enrichment else None
-                        ),
                     },
                 )
                 if finding.provider != "kubernetes":

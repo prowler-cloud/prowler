@@ -3,8 +3,6 @@ from datetime import timezone
 from types import SimpleNamespace
 from typing import Generator
 
-from alive_progress import alive_bar
-
 from prowler.lib.check.check import (
     execute,
     import_check,
@@ -464,100 +462,6 @@ class Scan:
             logger.error(
                 f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-
-    def _enrich_findings_post_scan(self, findings: list[Finding]) -> dict:
-        """
-        Enriches findings after scan completes using CloudTrail events.
-        Deduplicates resources to avoid redundant API calls.
-
-        Args:
-            findings: List of all findings from the scan
-
-        Returns:
-            dict: Statistics about enrichment (total_enriched, total_checked)
-        """
-        if self._provider.type != "aws":
-            logger.warning(
-                "CloudTrail enrichment is only available for AWS provider. Skipping enrichment."
-            )
-            return {"total_enriched": 0, "total_checked": 0}
-
-        try:
-            from prowler.providers.aws.services.cloudtrail.lib.enrichment.cloudtrail_enricher import (
-                CloudTrailEnricher,
-            )
-
-            logger.info("\nStarting CloudTrail enrichment...")
-
-            lookback_days = self._enrichment_config.get("lookback_days", 90)
-            enrich_severities = self._enrichment_config.get("severities", None)
-
-            # Initialize enricher
-            enricher = CloudTrailEnricher(
-                lookback_days=lookback_days,
-            )
-
-            # Deduplicate resources: group findings by resource_id
-            resource_findings_map = {}  # {resource_id: [(finding, region), ...]}
-
-            for finding in findings:
-                # Apply severity filter
-                if enrich_severities:
-                    severity = finding.check_metadata.get("Severity")
-                    if severity not in enrich_severities:
-                        continue
-
-                resource_id = finding.resource_id
-                region = finding.region
-
-                if resource_id not in resource_findings_map:
-                    resource_findings_map[resource_id] = []
-                resource_findings_map[resource_id].append((finding, region))
-
-            # Enrich each unique resource once using correct regional client
-            enrichment_cache = {}  # {resource_id: enrichment_data}
-            total_checked = len(resource_findings_map)
-            total_enriched = 0
-
-            # Use progress bar for enrichment
-            with alive_bar(
-                total_checked,
-                ctrl_c=False,
-                bar="smooth",
-                spinner="dots_waves",
-                title=f"-> Enriching {total_checked} unique resources",
-            ) as bar:
-                for resource_id, finding_list in resource_findings_map.items():
-                    # Get first finding with this resource
-                    first_finding, _ = finding_list[0]
-
-                    try:
-                        # Enrich the finding
-                        enrichment = enricher.enrich_finding(first_finding)
-
-                        if enrichment:
-                            enrichment_cache[resource_id] = enrichment
-                            total_enriched += 1
-
-                    except Exception as e:
-                        logger.info(f"Could not enrich resource {resource_id}: {e}")
-
-                    bar()
-
-            # Apply enrichment to all findings with the same resource
-            for resource_id, enrichment_data in enrichment_cache.items():
-                if resource_id in resource_findings_map:
-                    for finding, _ in resource_findings_map[resource_id]:
-                        finding.enrichment = enrichment_data
-
-            return {"total_enriched": total_enriched, "total_checked": total_checked}
-
-        except ImportError as e:
-            logger.error(f"Failed to import CloudTrail enricher: {e}")
-            return {"total_enriched": 0, "total_checked": 0}
-        except Exception as e:
-            logger.error(f"Failed to enrich findings: {e}")
-            return {"total_enriched": 0, "total_checked": 0}
 
     def get_completed_services(self) -> set[str]:
         """
