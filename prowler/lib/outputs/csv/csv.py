@@ -82,7 +82,6 @@ class CSV(Output):
                 finding_dict["ADDITIONAL_URLS"] = unroll_list(
                     finding.metadata.AdditionalURLs
                 )
-
                 self._data.append(finding_dict)
         except Exception as error:
             logger.error(
