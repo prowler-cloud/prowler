@@ -167,30 +167,6 @@ def init_parser(self):
         help="Fix the failed findings that can be fixed by Prowler",
     )
 
-    # CloudTrail Finding Enrichment
-    enrichment_subparser = aws_parser.add_argument_group(
-        "CloudTrail Finding Enrichment"
-    )
-    enrichment_subparser.add_argument(
-        "--enrich-findings",
-        action="store_true",
-        help="Enrich findings with CloudTrail event history showing who created/modified resources and when. Adds timeline context for faster incident investigation and compliance audit trails.",
-    )
-    enrichment_subparser.add_argument(
-        "--cloudtrail-lookback-days",
-        type=int,
-        default=90,
-        metavar="DAYS",
-        help="Number of days to look back in CloudTrail for event history (default: 90, maximum: 90 for free tier)",
-    )
-    enrichment_subparser.add_argument(
-        "--enrich-severities",
-        nargs="+",
-        default=None,
-        metavar="SEVERITY",
-        help="Only enrich findings with these severities (critical, high, medium, low, informational). Default: enrich all findings",
-    )
-
 
 def validate_session_duration(session_duration: int) -> int:
     """validate_session_duration validates that the input session_duration is valid"""

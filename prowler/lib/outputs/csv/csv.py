@@ -83,43 +83,6 @@ class CSV(Output):
                     finding.metadata.AdditionalURLs
                 )
 
-                # Add enrichment summary (same format as HTML)
-                if finding.enrichment:
-                    parts = []
-
-                    # Add creation info
-                    if finding.enrichment.get("created_by"):
-                        parts.append(f"Created by: {finding.enrichment['created_by']}")
-                    if finding.enrichment.get("created_at"):
-                        parts.append(f"Created: {finding.enrichment['created_at']}")
-
-                    # Add last modified info
-                    if finding.enrichment.get("last_modified_by"):
-                        parts.append(
-                            f"Modified by: {finding.enrichment['last_modified_by']}"
-                        )
-                    if finding.enrichment.get("last_modified_at"):
-                        parts.append(
-                            f"Modified: {finding.enrichment['last_modified_at']}"
-                        )
-
-                    # Add resource age
-                    if finding.enrichment.get("resource_age_days") is not None:
-                        parts.append(
-                            f"Age: {finding.enrichment['resource_age_days']} days"
-                        )
-
-                    # Add timeline event count
-                    timeline = finding.enrichment.get("timeline", [])
-                    if timeline:
-                        parts.append(f"Events: {len(timeline)}")
-
-                    finding_dict["CLOUDTRAIL_TIMELINE"] = (
-                        " | ".join(parts) if parts else ""
-                    )
-                else:
-                    finding_dict["CLOUDTRAIL_TIMELINE"] = ""
-
                 self._data.append(finding_dict)
         except Exception as error:
             logger.error(
