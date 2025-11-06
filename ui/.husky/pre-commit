@@ -1,1 +1,120 @@
-npm run healthcheck
+#!/bin/bash
+
+# Prowler UI - Pre-Commit Hook
+# Optionally validates ONLY staged files against AGENTS.md standards using Claude Code
+# Controlled by CODE_REVIEW_ENABLED in .env
+
+set -e
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "🚀 Prowler UI - Pre-Commit Hook"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+# Load .env file (look in git root directory)
+GIT_ROOT=$(git rev-parse --show-toplevel)
+if [ -f "$GIT_ROOT/ui/.env" ]; then
+  CODE_REVIEW_ENABLED=$(grep "^CODE_REVIEW_ENABLED" "$GIT_ROOT/ui/.env" | cut -d'=' -f2 | tr -d ' ')
+elif [ -f "$GIT_ROOT/.env" ]; then
+  CODE_REVIEW_ENABLED=$(grep "^CODE_REVIEW_ENABLED" "$GIT_ROOT/.env" | cut -d'=' -f2 | tr -d ' ')
+elif [ -f ".env" ]; then
+  CODE_REVIEW_ENABLED=$(grep "^CODE_REVIEW_ENABLED" .env | cut -d'=' -f2 | tr -d ' ')
+else
+  CODE_REVIEW_ENABLED="false"
+fi
+
+# Normalize the value to lowercase
+CODE_REVIEW_ENABLED=$(echo "$CODE_REVIEW_ENABLED" | tr '[:upper:]' '[:lower:]')
+
+echo -e "${BLUE}ℹ️  Code Review Status: ${CODE_REVIEW_ENABLED}${NC}"
+echo ""
+
+# Get staged files (what will be committed)
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(tsx?|jsx?)$' || true)
+
+if [ "$CODE_REVIEW_ENABLED" = "true" ]; then
+  if [ -z "$STAGED_FILES" ]; then
+    echo -e "${YELLOW}⚠️  No TypeScript/JavaScript files staged to validate${NC}"
+    echo ""
+  else
+    echo -e "${YELLOW}🔍 Running Claude Code standards validation...${NC}"
+    echo ""
+    echo -e "${BLUE}📋 Files to validate:${NC}"
+    echo "$STAGED_FILES" | sed 's/^/  - /'
+    echo ""
+
+    echo -e "${BLUE}📤 Sending to Claude Code for validation...${NC}"
+    echo ""
+
+    # Build prompt with git diff of changes
+    VALIDATION_PROMPT=$(
+      cat <<'PROMPT_EOF'
+You are a code reviewer for the Prowler UI project. Analyze the code changes (git diff) below and validate they comply with AGENTS.md standards.
+
+**RULES TO CHECK:**
+1. React Imports: NO `import * as React` or `import React, {` → Use `import { useState }`
+2. TypeScript: NO union types like `type X = "a" | "b"` → Use const-based: `const X = {...} as const`
+3. Tailwind: NO `var()` or hex colors in className → Use `className="bg-card-bg"`
+4. cn(): ONLY for conditionals → NOT for static classes
+5. React 19: NO `useMemo`/`useCallback` without reason
+6. Zod v4: Use `.min(1)` not `.nonempty()`, `z.email()` not `z.string().email()`. All inputs must be validated with Zod.
+7. File Org: 1 feature = local, 2+ features = shared
+8. Directives: Server Actions need "use server", clients need "use client"
+9. Implement DRY, KISS principles. (example: reusable components, avoid repetition)
+10. Layout must work for all the responsive breakpoints (mobile, tablet, desktop)
+11. ANY types cannot be used
+12. Use the components inside components/shadcn if possible
+13. Check Accessibility best practices (like alt tags in images, semantic HTML, Aria labels, etc.)
+
+=== GIT DIFF OF CHANGES ===
+PROMPT_EOF
+    )
+
+    # Add git diff to prompt (shows only actual changes)
+    VALIDATION_PROMPT="$VALIDATION_PROMPT
+$(git diff --cached -U0)"
+
+    VALIDATION_PROMPT="$VALIDATION_PROMPT
+
+=== END DIFF ===
+
+**RESPOND WITH:**
+STATUS: [PASSED | FAILED]
+[If FAILED: list violations with File, Rule, Issue, and line reference]
+[If PASSED: confirm all changes comply with AGENTS.md standards]"
+
+    # Send to Claude Code
+    if VALIDATION_OUTPUT=$(echo "$VALIDATION_PROMPT" | claude 2>&1); then
+      echo "$VALIDATION_OUTPUT"
+      echo ""
+
+      # Check result
+      if echo "$VALIDATION_OUTPUT" | grep -q "^STATUS: PASSED"; then
+        echo -e "${GREEN}✅ VALIDATION PASSED${NC}"
+      elif echo "$VALIDATION_OUTPUT" | grep -q "^STATUS: FAILED"; then
+        echo ""
+        echo -e "${RED}❌ VALIDATION FAILED${NC}"
+        echo -e "${RED}Fix violations before committing${NC}"
+        echo ""
+        exit 1
+      else
+        echo -e "${YELLOW}⚠️  Could not determine validation status${NC}"
+        echo "Continuing (validation inconclusive)"
+      fi
+    else
+      echo -e "${YELLOW}⚠️  Claude Code not available${NC}"
+    fi
+    echo ""
+  fi
+else
+  echo -e "${YELLOW}⏭️  Code review disabled (CODE_REVIEW_ENABLED=false)${NC}"
+  echo ""
+fi
