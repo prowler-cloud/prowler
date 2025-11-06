@@ -754,13 +754,16 @@ class CloudTrailEnricher:
 
     def __init__(
         self,
+        session,
         lookback_days: int = 90,
     ):
         """Initialize CloudTrail enricher.
 
         Args:
+            session: AWS session object to create CloudTrail clients
             lookback_days: Days to look back for events (default: 90, max: 90)
         """
+        self.session = session
         self.lookback_days = lookback_days
 
         # Calculate time range based on lookback days
@@ -867,34 +870,46 @@ class CloudTrailEnricher:
         timeline_events = []
 
         try:
-            # Import CloudTrail client
-            from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
-                cloudtrail_client,
-            )
+            # Create CloudTrail client for the specific region using the session
+            regional_client = self.session.client("cloudtrail", region_name=region)
 
-            # Query CloudTrail using the client method (gets ALL events, no limit)
-            events = cloudtrail_client.lookup_events_for_resource(
-                region=region,
-                resource_id=resource_id,
-                start_time=self.start_time,
-                end_time=self.end_time,
-            )
+            # Build lookup parameters
+            params = {
+                "LookupAttributes": [
+                    {"AttributeKey": "ResourceName", "AttributeValue": resource_id}
+                ]
+            }
+            if self.start_time:
+                params["StartTime"] = self.start_time
+            if self.end_time:
+                params["EndTime"] = self.end_time
 
-            for event in events:
-                event_name = event.get("EventName")
+            # Use paginator to get ALL events (no limit)
+            paginator = regional_client.get_paginator("lookup_events")
+            page_iterator = paginator.paginate(**params)
 
-                if event_name in supported_events:
-                    timeline_event = self._parse_cloudtrail_event(
-                        event, resource_id, resource_type, supported_events
-                    )
-                    if timeline_event:
-                        timeline_events.append(timeline_event)
+            for page in page_iterator:
+                for event in page.get("Events", []):
+                    event_name = event.get("EventName")
+
+                    if event_name in supported_events:
+                        timeline_event = self._parse_cloudtrail_event(
+                            event, resource_id, resource_type, supported_events
+                        )
+                        if timeline_event:
+                            timeline_events.append(timeline_event)
 
         except ClientError as e:
             logger.error(
                 "CloudTrail lookup failed for %s: %s",
                 resource_id,
                 e.response.get("Error", {}).get("Message", ""),
+            )
+        except Exception as e:
+            logger.error(
+                "Failed to query CloudTrail for %s: %s",
+                resource_id,
+                str(e),
             )
 
         return timeline_events

@@ -348,7 +348,6 @@ class Scan:
                     )
             # Update the scan duration when all checks are completed
             self._duration = int((datetime.datetime.now() - start_time).total_seconds())
-
         except Exception as error:
             logger.error(
                 f"{check_name} - {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
