@@ -1,0 +1,165 @@
+#!/bin/bash
+
+# Prowler UI - Pre-Push Hook
+# Optionally validates ONLY changed files against AGENTS.md standards using Claude Code
+# Controlled by CODE_REVIEW_ENABLED in .env
+
+set -e
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "🚀 Prowler UI - Pre-Push Hook"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+# Load .env file
+if [ -f ".env" ]; then
+  # Use grep to extract CODE_REVIEW_ENABLED, handling comments and whitespace
+  CODE_REVIEW_ENABLED=$(grep "^CODE_REVIEW_ENABLED" .env | cut -d'=' -f2 | tr -d ' ')
+else
+  CODE_REVIEW_ENABLED="false"
+fi
+
+# Normalize the value to lowercase
+CODE_REVIEW_ENABLED=$(echo "$CODE_REVIEW_ENABLED" | tr '[:upper:]' '[:lower:]')
+
+echo -e "${BLUE}ℹ️  Code Review Status: ${CODE_REVIEW_ENABLED}${NC}"
+echo ""
+
+# Get the commits that will be pushed (compare with remote)
+COMMITS_TO_PUSH=$(git rev-list origin/$(git rev-parse --abbrev-ref HEAD)..HEAD 2>/dev/null || echo "")
+
+if [ -z "$COMMITS_TO_PUSH" ]; then
+  echo -e "${YELLOW}⚠️  No new commits to push${NC}"
+  echo ""
+else
+  # Get only the files changed in commits that will be pushed
+  CHANGED_FILES=$(git diff origin/$(git rev-parse --abbrev-ref HEAD)...HEAD --name-only --diff-filter=ACM 2>/dev/null | grep -E '\.(tsx?|jsx?)$' || true)
+
+  if [ "$CODE_REVIEW_ENABLED" = "true" ]; then
+    if [ -z "$CHANGED_FILES" ]; then
+      echo -e "${YELLOW}⚠️  No TypeScript/JavaScript files changed in commits to push${NC}"
+      echo ""
+    else
+      echo -e "${YELLOW}🔍 Running Claude Code standards validation...${NC}"
+      echo ""
+      echo -e "${BLUE}📋 Files being pushed (to validate):${NC}"
+      echo "$CHANGED_FILES" | sed 's/^/  - /'
+      echo ""
+
+      # Create temp files for validation
+      VALIDATION_PROMPT="/tmp/prowler-validation-prompt-$$.txt"
+      VALIDATION_REPORT="/tmp/prowler-validation-report-$$.txt"
+      > "$VALIDATION_REPORT"
+
+      # Build the prompt with changed files content
+      {
+        cat << 'PROMPT_EOF'
+You are a code reviewer for the Prowler UI project. Analyze ONLY the code changes shown below and validate they comply with AGENTS.md standards.
+
+**CRITICAL RULES TO CHECK:**
+
+1. **React Imports** - MUST use `import { useState }` NOT `import * as React` or `import React, {`
+2. **TypeScript Types** - MUST use const-based pattern: `const SORT_OPTIONS = {...} as const; type SortOption = typeof SORT_OPTIONS[keyof typeof SORT_OPTIONS]`
+3. **Tailwind** - MUST use Tailwind classes, NEVER use `var()` in className or hex colors
+4. **cn() utility** - ONLY for conditionals/merging, NEVER for static classes
+5. **React 19** - NO `useMemo` or `useCallback` without documented reason
+6. **Zod v4** - MUST use v4 syntax (`.min(1)` not `.nonempty()`, `z.email()` not `z.string().email()`)
+7. **File Organization** - Code used by 1 feature stays local, 2+ features goes to shared
+8. **"use client"/"use server"** - Client components and Server Actions must have proper directives
+
+=== FILES BEING PUSHED ===
+PROMPT_EOF
+
+        # Add each changed file content
+        echo "$CHANGED_FILES" | while read -r file; do
+          if [ -f "$file" ]; then
+            echo ""
+            echo "--- FILE: $file ---"
+            cat "$file"
+          fi
+        done
+
+        cat << 'PROMPT_EOF'
+
+=== END FILES ===
+
+**YOUR RESPONSE FORMAT:**
+
+STATUS: [PASSED | FAILED]
+
+[If FAILED, list violations with]:
+- File: path:line
+- Rule: [Rule name]
+- Issue: [Description]
+
+[If PASSED]:
+All files comply with AGENTS.md standards.
+
+**CRITICAL:** Response MUST start with "STATUS: PASSED" or "STATUS: FAILED"
+PROMPT_EOF
+      } > "$VALIDATION_PROMPT"
+
+      echo -e "${BLUE}📤 Sending to Claude Code for validation...${NC}"
+      echo ""
+
+      # Run claude-code with the validation
+      if VALIDATION_OUTPUT=$(cat "$VALIDATION_PROMPT" | claude-code 2>&1); then
+        echo "$VALIDATION_OUTPUT" | tee "$VALIDATION_REPORT"
+        echo ""
+
+        # Check validation result using grep
+        if echo "$VALIDATION_OUTPUT" | grep -q "^STATUS: PASSED"; then
+          echo ""
+          echo -e "${GREEN}✅ VALIDATION PASSED${NC}"
+          rm -f "$VALIDATION_PROMPT" "$VALIDATION_REPORT"
+        elif echo "$VALIDATION_OUTPUT" | grep -q "^STATUS: FAILED"; then
+          echo ""
+          echo -e "${RED}❌ VALIDATION FAILED${NC}"
+          echo ""
+          echo -e "${RED}Please fix the violations before pushing:${NC}"
+          echo "  1. Review the violations listed above"
+          echo "  2. Fix the code according to AGENTS.md standards"
+          echo "  3. Commit your changes"
+          echo "  4. Try pushing again"
+          echo ""
+          rm -f "$VALIDATION_PROMPT" "$VALIDATION_REPORT"
+          exit 1
+        else
+          echo -e "${YELLOW}⚠️  Could not determine validation status${NC}"
+          echo "Allowing push (validation inconclusive)"
+          rm -f "$VALIDATION_PROMPT" "$VALIDATION_REPORT"
+        fi
+      else
+        echo -e "${YELLOW}⚠️  Claude Code validation unavailable${NC}"
+        echo "To enable: ensure Claude Code is in PATH and CODE_REVIEW_ENABLED=true"
+        rm -f "$VALIDATION_PROMPT" "$VALIDATION_REPORT"
+      fi
+      echo ""
+    fi
+  else
+    echo -e "${YELLOW}⏭️  Code review disabled (CODE_REVIEW_ENABLED=false)${NC}"
+    echo "To enable: set CODE_REVIEW_ENABLED=true in .env"
+    echo ""
+    echo -e "${BLUE}📋 Files being pushed (not validated):${NC}"
+    echo "$CHANGED_FILES" | sed 's/^/  - /'
+    echo ""
+  fi
+fi
+
+# Run build check (always runs)
+echo -e "${BLUE}🔨 Building project...${NC}"
+cd ui && npm run build
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo -e "${GREEN}✅ Pre-push checks completed successfully!${NC}"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
