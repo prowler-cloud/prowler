@@ -24,17 +24,17 @@ CODE_REVIEW_ENABLED=true
 
 ## Qué Ocurre Ahora
 
-Cada vez que hagas `git push`:
+Cada vez que hagas `git commit`:
 
 ```
 ✅ Si tu código cumple con AGENTS.md standards:
-   → Push se ejecuta normalmente
+   → Commit se ejecuta normalmente
 
 ❌ Si hay violaciones de estándares:
-   → Push es BLOQUEADO
+   → Commit es BLOQUEADO
    → Ves los errores en la terminal
    → Arreglas el código
-   → Haces push de nuevo
+   → Haces commit de nuevo
 ```
 
 ---
@@ -42,14 +42,18 @@ Cada vez que hagas `git push`:
 ## Ejemplo
 
 ```bash
-$ git push
+$ git commit -m "feat: add new component"
+
+🏁 Prowler UI - Pre-Commit Hook
+
+ℹ️  Code Review Status: true
 
 🔍 Running Claude Code standards validation...
 
-📋 Files being pushed:
+📋 Files to validate:
   - components/my-feature.tsx
 
-📤 Sending to Claude Code...
+📤 Sending to Claude Code for validation...
 
 STATUS: FAILED
 - File: components/my-feature.tsx:45
@@ -58,28 +62,34 @@ STATUS: FAILED
   Expected: import { useState } from "react"
 
 ❌ VALIDATION FAILED
-Please fix the violations...
+Fix violations before committing
 
-# Arreglas el archivo y haces push de nuevo
-$ git push
+# Arreglas el archivo y haces commit de nuevo
+$ git commit -m "feat: add new component"
+
+🏁 Prowler UI - Pre-Commit Hook
+
+ℹ️  Code Review Status: true
+
+🔍 Running Claude Code standards validation...
+
 ✅ VALIDATION PASSED
-✅ Build completed
-✅ Pre-push checks completed!
-# Push exitoso ✅
+
+# Commit exitoso ✅
 ```
 
 ---
 
 ## Desactivar Temporalmente
 
-Si necesitas pushear sin validación:
+Si necesitas hacer commit sin validación:
 
 ```bash
 # Opción 1: Cambiar en .env
 CODE_REVIEW_ENABLED=false
 
 # Opción 2: Bypass (con cuidado!)
-git push --no-verify
+git commit --no-verify
 ```
 
 ---

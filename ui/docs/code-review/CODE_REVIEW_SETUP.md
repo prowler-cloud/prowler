@@ -1,34 +1,32 @@
 # Code Review Setup - Prowler UI
 
-Guía para configurar la validación automática de código con Claude Code en el pre-push hook.
+Guía para configurar la validación automática de código con Claude Code en el pre-commit hook.
 
 ## Descripción General
 
 El sistema de code review funciona así:
 
 1. **Cuando activas `CODE_REVIEW_ENABLED=true` en `.env`**
-   - Al hacer `git push`, el hook pre-push se ejecuta
-   - Solo valida los archivos TypeScript/JavaScript que vas a pushear
+   - Al hacer `git commit`, el hook pre-commit se ejecuta
+   - Solo valida los archivos TypeScript/JavaScript que vas a commitear
    - Usa Claude Code para analizar si cumplen con AGENTS.md
-   - Si hay violaciones → **BLOQUEA el push**
+   - Si hay violaciones → **BLOQUEA el commit**
    - Si todo está bien → Continúa normalmente
 
 2. **Cuando `CODE_REVIEW_ENABLED=false` (default)**
-   - El hook pre-push solo ejecuta `npm run build`
+   - El hook pre-commit no ejecuta validación
    - No hay validación de estándares
-   - Los developers pueden pushear sin restricciones
+   - Los developers pueden commitear sin restricciones
 
 ## Instalación
 
 ### 1. Asegúrate que Claude Code esté en tu PATH
 
 ```bash
-# Verifica que claude-code esté disponible en terminal
-which claude-code
+# Verifica que claude esté disponible en terminal
+which claude
 
-# Si no aparece, agrega a tu ~/.zshrc o ~/.bashrc:
-# export PATH="$HOME/.claude/bin:$PATH"
-# (o donde tengas instalado claude-code)
+# Si no aparece, verifica tu instalación de Claude Code CLI
 ```
 
 ### 2. Activa la validación en `.env`
@@ -37,7 +35,7 @@ En `/ui/.env`, busca la sección "Code Review Configuration":
 
 ```bash
 #### Code Review Configuration ####
-# Enable Claude Code standards validation on pre-push hook
+# Enable Claude Code standards validation on pre-commit hook
 # Set to 'true' to validate changes against AGENTS.md standards via Claude Code
 # Set to 'false' to skip validation
 CODE_REVIEW_ENABLED=false  # ← Cambia esto a 'true'

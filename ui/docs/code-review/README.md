@@ -23,15 +23,15 @@ Complete documentation for the Claude Code-powered pre-push validation system.
 
 ## What This System Does
 
-Automatically validates code against AGENTS.md standards when you push to GitHub using Claude Code.
+Automatically validates code against AGENTS.md standards when you commit using Claude Code.
 
 ```
-git push
+git commit
   ↓
 (Optional) Claude Code validation
   ↓
-If violations found → Push is BLOCKED ❌
-If code complies → Push continues ✅
+If violations found → Commit is BLOCKED ❌
+If code complies → Commit continues ✅
 ```
 
 **Key Feature:** Configurable with a single variable in `.env`
@@ -103,7 +103,7 @@ CODE_REVIEW_ENABLED=true
 ```
 
 ### Step 3: Done!
-Your next `git push` will validate automatically.
+Your next `git commit` will validate automatically.
 
 ---
 
@@ -113,9 +113,9 @@ Your next `git push` will validate automatically.
 |----------|--------|
 | How do I enable it? | Change `CODE_REVIEW_ENABLED=true` in `.env` |
 | How do I disable it? | Change `CODE_REVIEW_ENABLED=false` in `.env` |
-| How do I bypass? | Use `git push --no-verify` (emergency only) |
-| What if Claude Code isn't found? | Check PATH: `which claude-code` |
-| What if hook doesn't run? | Check executable: `chmod +x .husky/pre-push` |
+| How do I bypass? | Use `git commit --no-verify` (emergency only) |
+| What if Claude Code isn't found? | Check PATH: `which claude` |
+| What if hook doesn't run? | Check executable: `chmod +x .husky/pre-commit` |
 | How do I test it? | Read `CODE_REVIEW_TESTING.md` |
 | What if I don't have Claude Code? | Validation is skipped gracefully |
 
@@ -129,13 +129,13 @@ Your next `git push` will validate automatically.
 - Works offline (if Claude Code supports it)
 
 ✅ **Smart Validation**
-- Only checks files being pushed
+- Only checks files being committed
 - Not the entire codebase
 - Fast: ~10-30 seconds with validation enabled
 
 ✅ **Flexible**
 - Can be enabled/disabled per developer
-- Can be disabled temporarily with `git push --no-verify`
+- Can be disabled temporarily with `git commit --no-verify`
 - Default is disabled (doesn't interrupt workflow)
 
 ✅ **Clear Feedback**
@@ -154,12 +154,12 @@ Your next `git push` will validate automatically.
 
 ```
 ┌─────────────────────────────────────────┐
-│  Developer pushes code                  │
+│  Developer commits code                 │
 └────────────────┬────────────────────────┘
                  ↓
         ┌─────────────────┐
-        │ Pre-Push Hook   │
-        │ (.husky/pre-push)
+        │ Pre-Commit Hook │
+        │ (.husky/pre-commit)
         └────────┬────────┘
                  ↓
         Read CODE_REVIEW_ENABLED from .env
@@ -168,22 +168,20 @@ Your next `git push` will validate automatically.
         │ If false (disabled)      │
         └────────┬─────────────────┘
                  ↓
-        npm run build (always)
-                 ↓
             exit 0 (OK)
                  ↓
-            Push continues ✅
+            Commit continues ✅
 
         ┌──────────────────────────┐
         │ If true (enabled)        │
         └────────┬─────────────────┘
                  ↓
-        Extract files to push
-        (git diff origin...HEAD)
+        Extract staged files
+        (git diff --cached)
                  ↓
-        Build prompt with code
+        Build prompt with git diff
                  ↓
-        Send to: claude-code < prompt
+        Send to: claude < prompt
                  ↓
         Analyze against AGENTS.md
                  ↓
@@ -195,11 +193,9 @@ Your next `git push` will validate automatically.
         │ PASSED detected  │
         └────────┬─────────┘
                  ↓
-        npm run build
-                 ↓
             exit 0 (OK)
                  ↓
-            Push continues ✅
+            Commit continues ✅
 
         ┌──────────────────┐
         │ FAILED detected  │
@@ -209,10 +205,10 @@ Your next `git push` will validate automatically.
                  ↓
             exit 1 (FAIL)
                  ↓
-        Push is BLOCKED ❌
+        Commit is BLOCKED ❌
                  ↓
         Developer fixes code
-        Developer pushes again
+        Developer commits again
 ```
 
 ---
@@ -221,17 +217,17 @@ Your next `git push` will validate automatically.
 
 1. **Read:** [`CODE_REVIEW_QUICK_START.md`](./CODE_REVIEW_QUICK_START.md) (5 minutes)
 2. **Enable:** Set `CODE_REVIEW_ENABLED=true` in your `.env`
-3. **Test:** Push some code and see validation in action
+3. **Test:** Commit some code and see validation in action
 4. **For help:** See the troubleshooting section in [`CODE_REVIEW_SETUP.md`](./CODE_REVIEW_SETUP.md)
 
 ---
 
 ## Implementation Details
 
-- **Files Modified:** 2 (`.env`, `.husky/pre-push`)
-- **Files Created:** 5 (documentation)
-- **Hook Size:** 165 lines of bash
-- **Dependencies:** Claude Code (already available)
+- **Files Modified:** 1 (`.husky/pre-commit`)
+- **Files Created:** 6 (documentation)
+- **Hook Size:** ~120 lines of bash
+- **Dependencies:** Claude Code CLI (already available)
 - **Setup Time:** 1 minute
 - **Default:** Disabled (no workflow interruption)
 
