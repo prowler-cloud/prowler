@@ -69,7 +69,10 @@ def validate_arguments(arguments):
     if hasattr(arguments, "repository_url") and arguments.repository_url:
         has_github_auth = False
 
-        if hasattr(arguments, "personal_access_token") and arguments.personal_access_token:
+        if (
+            hasattr(arguments, "personal_access_token")
+            and arguments.personal_access_token
+        ):
             has_github_auth = True
 
         if hasattr(arguments, "oauth_app_token") and arguments.oauth_app_token:
