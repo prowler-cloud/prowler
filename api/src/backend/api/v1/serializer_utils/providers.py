@@ -239,6 +239,56 @@ from rest_framework_json_api import serializers
                 },
                 "required": ["github_app_id", "github_app_key"],
             },
+            {
+                "type": "object",
+                "title": "IaC Repository Credentials",
+                "properties": {
+                    "repository_url": {
+                        "type": "string",
+                        "description": "Repository URL to scan for IaC files.",
+                    },
+                    "access_token": {
+                        "type": "string",
+                        "description": "Optional access token for private repositories.",
+                    },
+                },
+                "required": ["repository_url"],
+            },
+            {
+                "type": "object",
+                "title": "Oracle Cloud Infrastructure (OCI) API Key Credentials",
+                "properties": {
+                    "user": {
+                        "type": "string",
+                        "description": "The OCID of the user to authenticate with.",
+                    },
+                    "fingerprint": {
+                        "type": "string",
+                        "description": "The fingerprint of the API signing key.",
+                    },
+                    "key_file": {
+                        "type": "string",
+                        "description": "The path to the private key file for API signing. Either key_file or key_content must be provided.",
+                    },
+                    "key_content": {
+                        "type": "string",
+                        "description": "The content of the private key for API signing (base64 encoded). Either key_file or key_content must be provided.",
+                    },
+                    "tenancy": {
+                        "type": "string",
+                        "description": "The OCID of the tenancy.",
+                    },
+                    "region": {
+                        "type": "string",
+                        "description": "The OCI region identifier (e.g., us-ashburn-1, us-phoenix-1).",
+                    },
+                    "pass_phrase": {
+                        "type": "string",
+                        "description": "The passphrase for the private key, if encrypted.",
+                    },
+                },
+                "required": ["user", "fingerprint", "tenancy", "region"],
+            },
         ]
     }
 )

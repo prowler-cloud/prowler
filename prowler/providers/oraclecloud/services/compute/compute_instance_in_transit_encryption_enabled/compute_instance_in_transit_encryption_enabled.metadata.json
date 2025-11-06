@@ -1,5 +1,5 @@
 {
-  "Provider": "oci",
+  "Provider": "oraclecloud",
   "CheckID": "compute_instance_in_transit_encryption_enabled",
   "CheckTitle": "Ensure In-transit Encryption is enabled on Compute Instance",
   "CheckType": [

@@ -1,0 +1,64 @@
+name: 'UI: Tests'
+
+on:
+  push:
+    branches:
+      - 'master'
+      - 'v5.*'
+  pull_request:
+    branches:
+      - 'master'
+      - 'v5.*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UI_WORKING_DIR: ./ui
+  NODE_VERSION: '20.x'
+
+jobs:
+  ui-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: ./ui
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Check for UI changes
+        id: check-changes
+        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+        with:
+          files: |
+            ui/**
+            .github/workflows/ui-tests.yml
+          files_ignore: |
+            ui/CHANGELOG.md
+            ui/README.md
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        if: steps.check-changes.outputs.any_changed == 'true'
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: './ui/package-lock.json'
+
+      - name: Install dependencies
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: npm ci
+
+      - name: Run healthcheck
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: npm run healthcheck
+
+      - name: Build application
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: npm run build

@@ -17,6 +17,7 @@ import {
 type UseCredentialsFormProps = {
   providerType: ProviderType;
   providerId: string;
+  providerUid?: string;
   onSubmit: (formData: FormData) => Promise<any>;
   successNavigationUrl: string;
 };
@@ -24,6 +25,7 @@ type UseCredentialsFormProps = {
 export const useCredentialsForm = ({
   providerType,
   providerId,
+  providerUid,
   onSubmit,
   successNavigationUrl,
 }: UseCredentialsFormProps) => {
@@ -155,6 +157,16 @@ export const useCredentialsForm = ({
           };
         }
         return baseDefaults;
+      case "oraclecloud":
+        return {
+          ...baseDefaults,
+          [ProviderCredentialFields.OCI_USER]: "",
+          [ProviderCredentialFields.OCI_FINGERPRINT]: "",
+          [ProviderCredentialFields.OCI_KEY_CONTENT]: "",
+          [ProviderCredentialFields.OCI_TENANCY]: providerUid || "",
+          [ProviderCredentialFields.OCI_REGION]: "",
+          [ProviderCredentialFields.OCI_PASS_PHRASE]: "",
+        };
       default:
         return baseDefaults;
     }

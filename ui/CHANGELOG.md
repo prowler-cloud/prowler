@@ -2,7 +2,30 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.13.0] (Prowler UNRELEASED)
+## [1.14.0] (Unreleased)
+
+### 🚀 Added
+
+- RSS feeds support [(#9109)](https://github.com/prowler-cloud/prowler/pull/9109)
+- Customer Support menu item [(#9143)](https://github.com/prowler-cloud/prowler/pull/9143)
+- IaC (Infrastructure as Code) provider support for scanning remote repositories [(#8751)](https://github.com/prowler-cloud/prowler/pull/8751)
+- External resource link to IaC findings for direct navigation to source code in Git repositories [(#9151)](https://github.com/prowler-cloud/prowler/pull/9151)
+
+### 🔄 Changed
+
+- Resource ID moved up in the findings detail page [(#9141)](https://github.com/prowler-cloud/prowler/pull/9141)
+
+---
+
+## [1.13.1]
+
+### 🔄 Changed
+
+- Upgrade React to version 19.2.0 [(#9039)](https://github.com/prowler-cloud/prowler/pull/9039)
+
+---
+
+## [1.13.0] (Prowler v5.13.0)
 
 ### 🚀 Added
 
@@ -12,6 +35,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - React Compiler support for automatic optimization [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
 - Turbopack support for faster development builds [(#8748)](https://github.com/prowler-cloud/prowler/pull/8748)
 - Add compliance name in compliance detail view [(#8775)](https://github.com/prowler-cloud/prowler/pull/8775)
+- PDF reporting for Prowler ThreatScore [(#8867)](https://github.com/prowler-cloud/prowler/pull/8867)
 - Support C5 compliance framework for the AWS provider [(#8830)](https://github.com/prowler-cloud/prowler/pull/8830)
 - API key management in user profile [(#8308)](https://github.com/prowler-cloud/prowler/pull/8308)
 - Refresh access token error handling [(#8864)](https://github.com/prowler-cloud/prowler/pull/8864)
@@ -63,6 +87,8 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Field-level email validation message [(#8698)](https://github.com/prowler-cloud/prowler/pull/8698)
 - POST method on auth form [(#8699)](https://github.com/prowler-cloud/prowler/pull/8699)
+
+---
 
 ## [1.12.0] (Prowler v5.12.0)
 

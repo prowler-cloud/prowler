@@ -11,8 +11,6 @@ on:
       - 'opened'
       - 'edited'
       - 'synchronize'
-    paths:
-      - '.github/workflows/conventional-commit.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
@@ -28,6 +26,6 @@ jobs:
 
     steps:
       - name: Check PR title format
-        uses: agenthunt/conventional-commit-checker-action@9e552d650d0e205553ec7792d447929fc78e012b # v2.0.0
+        uses: agenthunt/conventional-commit-checker-action@f1823f632e95a64547566dcd2c7da920e67117ad # v2.0.1
         with:
           pr-title-regex: '^(feat|fix|docs|style|refactor|perf|test|chore|build|ci|revert)(\([^)]+\))?!?: .+'

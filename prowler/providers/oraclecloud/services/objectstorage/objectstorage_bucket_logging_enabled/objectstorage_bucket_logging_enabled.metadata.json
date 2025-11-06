@@ -1,5 +1,5 @@
 {
-  "Provider": "oci",
+  "Provider": "oraclecloud",
   "CheckID": "objectstorage_bucket_logging_enabled",
   "CheckTitle": "Ensure write level Object Storage logging is enabled for all buckets",
   "CheckType": [],
