@@ -16,6 +16,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - HIPAA compliance framework for the GCP provider [(#8955)](https://github.com/prowler-cloud/prowler/pull/8955)
 - Add multiple compliance improvements [(#9145)](https://github.com/prowler-cloud/prowler/pull/9145)
 - Added validation for invalid checks, services, and categories in `load_checks_to_execute` function [(#8971)](https://github.com/prowler-cloud/prowler/pull/8971)
+- GitHub Actions provider for scanning workflow security issues using zizmor [(#9182)](https://github.com/prowler-cloud/prowler/pull/9182)
 
 ### Changed
 - Update AWS Direct Connect service metadata to new format [(#8855)](https://github.com/prowler-cloud/prowler/pull/8855)
