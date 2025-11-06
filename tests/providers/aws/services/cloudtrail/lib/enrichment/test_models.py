@@ -3,9 +3,10 @@
 from datetime import datetime, timedelta, timezone
 
 from prowler.providers.aws.services.cloudtrail.lib.enrichment.models import (
+    EC2EventType,
     FindingEnrichment,
+    GeneralEventType,
     TimelineEvent,
-    TimelineEventType,
 )
 
 
@@ -17,7 +18,7 @@ class TestTimelineEvent:
         event = TimelineEvent(
             timestamp=datetime(2025, 10, 15, 14, 23, 45, tzinfo=timezone.utc),
             event_source="AWS CloudTrail",
-            event_type=TimelineEventType.SECURITY_GROUP_CREATED,
+            event_type=EC2EventType.SECURITY_GROUP_CREATED,
             resource_type="AWS::EC2::SecurityGroup",
             resource_id="sg-0abc123",
             principal="admin@company.com",
@@ -27,7 +28,7 @@ class TestTimelineEvent:
 
         assert event.timestamp.year == 2025
         assert event.event_source == "AWS CloudTrail"
-        assert event.event_type == TimelineEventType.SECURITY_GROUP_CREATED
+        assert event.event_type == EC2EventType.SECURITY_GROUP_CREATED
         assert event.resource_id == "sg-0abc123"
         assert event.principal == "admin@company.com"
 
@@ -36,7 +37,7 @@ class TestTimelineEvent:
         event = TimelineEvent(
             timestamp=datetime(2025, 10, 15, 14, 23, 45, tzinfo=timezone.utc),
             event_source="AWS CloudTrail",
-            event_type=TimelineEventType.INSTANCE_CREATED,
+            event_type=EC2EventType.INSTANCE_CREATED,
             resource_type="AWS::EC2::Instance",
             resource_id="i-0abc123",
             principal="deploy-role",
@@ -56,7 +57,7 @@ class TestTimelineEvent:
         event = TimelineEvent(
             timestamp=datetime(2025, 10, 15, 14, 23, 45),
             event_source="AWS CloudTrail",
-            event_type=TimelineEventType.RESOURCE_CREATED,
+            event_type=GeneralEventType.RESOURCE_CREATED,
             resource_type="AWS::EC2::Instance",
             resource_id="i-test",
             principal="test-user",
@@ -76,7 +77,7 @@ class TestFindingEnrichment:
             TimelineEvent(
                 timestamp=datetime(2025, 10, 15, 14, 23, 45, tzinfo=timezone.utc),
                 event_source="AWS CloudTrail",
-                event_type=TimelineEventType.SECURITY_GROUP_CREATED,
+                event_type=EC2EventType.SECURITY_GROUP_CREATED,
                 resource_type="AWS::EC2::SecurityGroup",
                 resource_id="sg-0abc123",
                 principal="admin@company.com",

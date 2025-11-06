@@ -15,9 +15,27 @@ from prowler.providers.aws.services.cloudtrail.lib.enrichment.formatters import 
     EventMessageFormatter,
 )
 from prowler.providers.aws.services.cloudtrail.lib.enrichment.models import (
+    CloudTrailEventType,
+    CloudWatchEventType,
+    DynamoDBEventType,
+    EBSEventType,
+    EC2EventType,
+    ECREventType,
+    ECSEventType,
+    ELBEventType,
+    ELBv2EventType,
     FindingEnrichment,
+    GeneralEventType,
+    IAMEventType,
+    KMSEventType,
+    LambdaEventType,
+    RDSEventType,
+    S3EventType,
+    SecretsManagerEventType,
+    SNSEventType,
+    SQSEventType,
     TimelineEvent,
-    TimelineEventType,
+    VPCEventType,
 )
 
 
@@ -31,24 +49,24 @@ class CloudTrailEnricher:
     # Event mappings for EC2 Instances
     EC2_INSTANCE_EVENTS = {
         "RunInstances": {
-            "event_type": TimelineEventType.INSTANCE_CREATED,
+            "event_type": EC2EventType.INSTANCE_CREATED,
             "message": "Instance created",
             "formatter": EventMessageFormatter.format_instance_created,
         },
         "TerminateInstances": {
-            "event_type": TimelineEventType.INSTANCE_TERMINATED,
+            "event_type": EC2EventType.INSTANCE_TERMINATED,
             "message": "Instance terminated",
         },
         "StartInstances": {
-            "event_type": TimelineEventType.INSTANCE_STARTED,
+            "event_type": EC2EventType.INSTANCE_STARTED,
             "message": "Instance started",
         },
         "StopInstances": {
-            "event_type": TimelineEventType.INSTANCE_STOPPED,
+            "event_type": EC2EventType.INSTANCE_STOPPED,
             "message": "Instance stopped",
         },
         "RebootInstances": {
-            "event_type": TimelineEventType.INSTANCE_REBOOTED,
+            "event_type": EC2EventType.INSTANCE_REBOOTED,
             "message": "Instance rebooted",
         },
     }
@@ -56,21 +74,21 @@ class CloudTrailEnricher:
     # Event mappings for Security Groups
     SECURITY_GROUP_EVENTS = {
         "CreateSecurityGroup": {
-            "event_type": TimelineEventType.SECURITY_GROUP_CREATED,
+            "event_type": EC2EventType.SECURITY_GROUP_CREATED,
             "message": "Security group created",
         },
         "AuthorizeSecurityGroupIngress": {
-            "event_type": TimelineEventType.SECURITY_GROUP_RULE_ADDED,
+            "event_type": EC2EventType.SECURITY_GROUP_RULE_ADDED,
             "message": "Ingress rule added",
             "formatter": EventMessageFormatter.format_security_group_rule_added,
         },
         "ModifySecurityGroupRules": {
-            "event_type": TimelineEventType.SECURITY_GROUP_RULE_MODIFIED,
+            "event_type": EC2EventType.SECURITY_GROUP_RULE_MODIFIED,
             "message": "Security group rules modified",
             "formatter": EventMessageFormatter.format_security_group_rule_modified,
         },
         "RevokeSecurityGroupIngress": {
-            "event_type": TimelineEventType.SECURITY_GROUP_RULE_REMOVED,
+            "event_type": EC2EventType.SECURITY_GROUP_RULE_REMOVED,
             "message": "Ingress rule removed",
             "formatter": EventMessageFormatter.format_security_group_rule_removed,
         },
@@ -79,20 +97,20 @@ class CloudTrailEnricher:
     # Event mappings for Network Interfaces
     NETWORK_INTERFACE_EVENTS = {
         "CreateNetworkInterface": {
-            "event_type": TimelineEventType.NETWORK_INTERFACE_CREATED,
+            "event_type": EC2EventType.NETWORK_INTERFACE_CREATED,
             "message": "Network interface created",
         },
         "ModifyNetworkInterfaceAttribute": {
-            "event_type": TimelineEventType.NETWORK_INTERFACE_MODIFIED,
+            "event_type": EC2EventType.NETWORK_INTERFACE_MODIFIED,
             "message": "Network interface modified",
             "formatter": EventMessageFormatter.format_eni_attribute_modification,
         },
         "AttachNetworkInterface": {
-            "event_type": TimelineEventType.NETWORK_INTERFACE_ATTACHED,
+            "event_type": EC2EventType.NETWORK_INTERFACE_ATTACHED,
             "message": "Network interface attached",
         },
         "DetachNetworkInterface": {
-            "event_type": TimelineEventType.NETWORK_INTERFACE_DETACHED,
+            "event_type": EC2EventType.NETWORK_INTERFACE_DETACHED,
             "message": "Network interface detached",
         },
     }
@@ -100,16 +118,16 @@ class CloudTrailEnricher:
     # Event mappings for Load Balancers
     LOAD_BALANCER_EVENTS = {
         "CreateLoadBalancer": {
-            "event_type": TimelineEventType.LOAD_BALANCER_CREATED,
+            "event_type": ELBEventType.LOAD_BALANCER_CREATED,
             "message": "Load balancer created",
             "formatter": EventMessageFormatter.format_load_balancer_created,
         },
         "ModifyLoadBalancerAttributes": {
-            "event_type": TimelineEventType.LOAD_BALANCER_MODIFIED,
+            "event_type": ELBEventType.LOAD_BALANCER_MODIFIED,
             "message": "Load balancer attributes modified",
         },
         "DeleteLoadBalancer": {
-            "event_type": TimelineEventType.LOAD_BALANCER_DELETED,
+            "event_type": ELBEventType.LOAD_BALANCER_DELETED,
             "message": "Load balancer deleted",
         },
     }
@@ -117,34 +135,34 @@ class CloudTrailEnricher:
     # Event mappings for RDS Instances
     RDS_INSTANCE_EVENTS = {
         "CreateDBInstance": {
-            "event_type": TimelineEventType.RDS_INSTANCE_CREATED,
+            "event_type": RDSEventType.INSTANCE_CREATED,
             "message": "RDS instance created",
             "formatter": EventMessageFormatter.format_rds_instance_created,
         },
         "ModifyDBInstance": {
-            "event_type": TimelineEventType.RDS_INSTANCE_MODIFIED,
+            "event_type": RDSEventType.INSTANCE_MODIFIED,
             "message": "RDS instance modified",
             "formatter": EventMessageFormatter.format_rds_instance_modified,
         },
         "DeleteDBInstance": {
-            "event_type": TimelineEventType.RDS_INSTANCE_DELETED,
+            "event_type": RDSEventType.INSTANCE_DELETED,
             "message": "RDS instance deleted",
         },
         "CreateDBSnapshot": {
-            "event_type": TimelineEventType.RDS_SNAPSHOT_CREATED,
+            "event_type": RDSEventType.SNAPSHOT_CREATED,
             "message": "RDS snapshot created",
         },
         "ModifyDBSnapshotAttribute": {
-            "event_type": TimelineEventType.RDS_SNAPSHOT_SHARED,
+            "event_type": RDSEventType.SNAPSHOT_SHARED,
             "message": "RDS snapshot sharing modified",
             "formatter": EventMessageFormatter.format_rds_snapshot_shared,
         },
         "CreateDBCluster": {
-            "event_type": TimelineEventType.RDS_CLUSTER_CREATED,
+            "event_type": RDSEventType.CLUSTER_CREATED,
             "message": "RDS cluster created",
         },
         "ModifyDBCluster": {
-            "event_type": TimelineEventType.RDS_CLUSTER_MODIFIED,
+            "event_type": RDSEventType.CLUSTER_MODIFIED,
             "message": "RDS cluster modified",
         },
     }
@@ -152,47 +170,47 @@ class CloudTrailEnricher:
     # Event mappings for S3 Buckets
     S3_BUCKET_EVENTS = {
         "CreateBucket": {
-            "event_type": TimelineEventType.S3_BUCKET_CREATED,
+            "event_type": S3EventType.BUCKET_CREATED,
             "message": "S3 bucket created",
             "formatter": EventMessageFormatter.format_s3_bucket_created,
         },
         "DeleteBucket": {
-            "event_type": TimelineEventType.S3_BUCKET_DELETED,
+            "event_type": S3EventType.BUCKET_DELETED,
             "message": "S3 bucket deleted",
         },
         "PutBucketPolicy": {
-            "event_type": TimelineEventType.S3_BUCKET_POLICY_CHANGED,
+            "event_type": S3EventType.BUCKET_POLICY_CHANGED,
             "message": "S3 bucket policy changed",
             "formatter": EventMessageFormatter.format_s3_bucket_policy_changed,
         },
         "DeleteBucketPolicy": {
-            "event_type": TimelineEventType.S3_BUCKET_POLICY_CHANGED,
+            "event_type": S3EventType.BUCKET_POLICY_CHANGED,
             "message": "S3 bucket policy deleted",
         },
         "PutPublicAccessBlock": {
-            "event_type": TimelineEventType.S3_PUBLIC_ACCESS_BLOCK_CHANGED,
+            "event_type": S3EventType.PUBLIC_ACCESS_BLOCK_CHANGED,
             "message": "S3 public access block configuration changed",
             "formatter": EventMessageFormatter.format_s3_public_access_block_changed,
         },
         "DeletePublicAccessBlock": {
-            "event_type": TimelineEventType.S3_PUBLIC_ACCESS_BLOCK_CHANGED,
+            "event_type": S3EventType.PUBLIC_ACCESS_BLOCK_CHANGED,
             "message": "S3 public access block removed",
         },
         "PutBucketEncryption": {
-            "event_type": TimelineEventType.S3_ENCRYPTION_CHANGED,
+            "event_type": S3EventType.ENCRYPTION_CHANGED,
             "message": "S3 bucket encryption configured",
             "formatter": EventMessageFormatter.format_s3_encryption_changed,
         },
         "DeleteBucketEncryption": {
-            "event_type": TimelineEventType.S3_ENCRYPTION_CHANGED,
+            "event_type": S3EventType.ENCRYPTION_CHANGED,
             "message": "S3 bucket encryption removed",
         },
         "PutBucketVersioning": {
-            "event_type": TimelineEventType.S3_VERSIONING_CHANGED,
+            "event_type": S3EventType.VERSIONING_CHANGED,
             "message": "S3 bucket versioning changed",
         },
         "PutBucketLogging": {
-            "event_type": TimelineEventType.S3_LOGGING_CHANGED,
+            "event_type": S3EventType.LOGGING_CHANGED,
             "message": "S3 bucket logging configured",
         },
     }
@@ -200,35 +218,35 @@ class CloudTrailEnricher:
     # Event mappings for Lambda Functions
     LAMBDA_FUNCTION_EVENTS = {
         "CreateFunction": {
-            "event_type": TimelineEventType.LAMBDA_FUNCTION_CREATED,
+            "event_type": LambdaEventType.FUNCTION_CREATED,
             "message": "Lambda function created",
             "formatter": EventMessageFormatter.format_lambda_function_created,
         },
         "DeleteFunction": {
-            "event_type": TimelineEventType.LAMBDA_FUNCTION_DELETED,
+            "event_type": LambdaEventType.FUNCTION_DELETED,
             "message": "Lambda function deleted",
         },
         "UpdateFunctionConfiguration": {
-            "event_type": TimelineEventType.LAMBDA_FUNCTION_UPDATED,
+            "event_type": LambdaEventType.FUNCTION_UPDATED,
             "message": "Lambda function configuration updated",
         },
         "UpdateFunctionCode": {
-            "event_type": TimelineEventType.LAMBDA_CODE_UPDATED,
+            "event_type": LambdaEventType.CODE_UPDATED,
             "message": "Lambda function code updated",
             "formatter": EventMessageFormatter.format_lambda_code_updated,
         },
         "AddPermission": {
-            "event_type": TimelineEventType.LAMBDA_PERMISSION_ADDED,
+            "event_type": LambdaEventType.PERMISSION_ADDED,
             "message": "Lambda permission added",
             "formatter": EventMessageFormatter.format_lambda_permission_added,
         },
         "CreateFunctionUrlConfig": {
-            "event_type": TimelineEventType.LAMBDA_FUNCTION_URL_CREATED,
+            "event_type": LambdaEventType.FUNCTION_URL_CREATED,
             "message": "Lambda function URL created",
             "formatter": EventMessageFormatter.format_lambda_function_url_created,
         },
         "UpdateFunctionUrlConfig": {
-            "event_type": TimelineEventType.LAMBDA_FUNCTION_URL_CREATED,
+            "event_type": LambdaEventType.FUNCTION_URL_CREATED,
             "message": "Lambda function URL updated",
         },
     }
@@ -236,52 +254,52 @@ class CloudTrailEnricher:
     # Event mappings for VPC Resources
     VPC_EVENTS = {
         "CreateVpc": {
-            "event_type": TimelineEventType.VPC_CREATED,
+            "event_type": VPCEventType.VPC_CREATED,
             "message": "VPC created",
         },
         "CreateSubnet": {
-            "event_type": TimelineEventType.SUBNET_CREATED,
+            "event_type": VPCEventType.SUBNET_CREATED,
             "message": "Subnet created",
             "formatter": EventMessageFormatter.format_subnet_created,
         },
         "ModifySubnetAttribute": {
-            "event_type": TimelineEventType.SUBNET_MODIFIED,
+            "event_type": VPCEventType.SUBNET_MODIFIED,
             "message": "Subnet modified",
             "formatter": EventMessageFormatter.format_subnet_modified,
         },
         "CreateRouteTable": {
-            "event_type": TimelineEventType.ROUTE_TABLE_CREATED,
+            "event_type": VPCEventType.ROUTE_TABLE_CREATED,
             "message": "Route table created",
         },
         "CreateRoute": {
-            "event_type": TimelineEventType.ROUTE_CREATED,
+            "event_type": VPCEventType.ROUTE_CREATED,
             "message": "Route created",
             "formatter": EventMessageFormatter.format_route_created,
         },
         "CreateInternetGateway": {
-            "event_type": TimelineEventType.INTERNET_GATEWAY_CREATED,
+            "event_type": VPCEventType.INTERNET_GATEWAY_CREATED,
             "message": "Internet gateway created",
         },
         "AttachInternetGateway": {
-            "event_type": TimelineEventType.INTERNET_GATEWAY_ATTACHED,
+            "event_type": VPCEventType.INTERNET_GATEWAY_ATTACHED,
             "message": "Internet gateway attached",
             "formatter": EventMessageFormatter.format_internet_gateway_attached,
         },
         "CreateNatGateway": {
-            "event_type": TimelineEventType.NAT_GATEWAY_CREATED,
+            "event_type": VPCEventType.NAT_GATEWAY_CREATED,
             "message": "NAT gateway created",
         },
         "CreateVpcEndpoint": {
-            "event_type": TimelineEventType.VPC_ENDPOINT_CREATED,
+            "event_type": VPCEventType.VPC_ENDPOINT_CREATED,
             "message": "VPC endpoint created",
             "formatter": EventMessageFormatter.format_vpc_endpoint_created,
         },
         "CreateNetworkAcl": {
-            "event_type": TimelineEventType.NETWORK_ACL_CREATED,
+            "event_type": VPCEventType.NETWORK_ACL_CREATED,
             "message": "Network ACL created",
         },
         "CreateNetworkAclEntry": {
-            "event_type": TimelineEventType.NETWORK_ACL_ENTRY_CREATED,
+            "event_type": VPCEventType.NETWORK_ACL_ENTRY_CREATED,
             "message": "Network ACL entry created",
         },
     }
@@ -289,29 +307,29 @@ class CloudTrailEnricher:
     # Event mappings for ELBv2 (ALB/NLB)
     ELBV2_EVENTS = {
         "CreateLoadBalancer": {
-            "event_type": TimelineEventType.ELBV2_LOAD_BALANCER_CREATED,
+            "event_type": ELBv2EventType.LOAD_BALANCER_CREATED,
             "message": "Load balancer created",
             "formatter": EventMessageFormatter.format_elbv2_load_balancer_created,
         },
         "ModifyLoadBalancerAttributes": {
-            "event_type": TimelineEventType.ELBV2_LOAD_BALANCER_MODIFIED,
+            "event_type": ELBv2EventType.LOAD_BALANCER_MODIFIED,
             "message": "Load balancer attributes modified",
         },
         "DeleteLoadBalancer": {
-            "event_type": TimelineEventType.ELBV2_LOAD_BALANCER_DELETED,
+            "event_type": ELBv2EventType.LOAD_BALANCER_DELETED,
             "message": "Load balancer deleted",
         },
         "CreateListener": {
-            "event_type": TimelineEventType.ELBV2_LISTENER_CREATED,
+            "event_type": ELBv2EventType.LISTENER_CREATED,
             "message": "Listener created",
             "formatter": EventMessageFormatter.format_elbv2_listener_created,
         },
         "ModifyListener": {
-            "event_type": TimelineEventType.ELBV2_LISTENER_MODIFIED,
+            "event_type": ELBv2EventType.LISTENER_MODIFIED,
             "message": "Listener modified",
         },
         "CreateTargetGroup": {
-            "event_type": TimelineEventType.ELBV2_TARGET_GROUP_CREATED,
+            "event_type": ELBv2EventType.TARGET_GROUP_CREATED,
             "message": "Target group created",
         },
     }
@@ -319,53 +337,53 @@ class CloudTrailEnricher:
     # Event mappings for IAM
     IAM_EVENTS = {
         "CreateUser": {
-            "event_type": TimelineEventType.IAM_USER_CREATED,
+            "event_type": IAMEventType.USER_CREATED,
             "message": "IAM user created",
             "formatter": EventMessageFormatter.format_iam_user_created,
         },
         "DeleteUser": {
-            "event_type": TimelineEventType.IAM_USER_DELETED,
+            "event_type": IAMEventType.USER_DELETED,
             "message": "IAM user deleted",
         },
         "CreateRole": {
-            "event_type": TimelineEventType.IAM_ROLE_CREATED,
+            "event_type": IAMEventType.ROLE_CREATED,
             "message": "IAM role created",
             "formatter": EventMessageFormatter.format_iam_role_created,
         },
         "DeleteRole": {
-            "event_type": TimelineEventType.IAM_ROLE_DELETED,
+            "event_type": IAMEventType.ROLE_DELETED,
             "message": "IAM role deleted",
         },
         "AttachUserPolicy": {
-            "event_type": TimelineEventType.IAM_POLICY_ATTACHED,
+            "event_type": IAMEventType.POLICY_ATTACHED,
             "message": "Policy attached to user",
             "formatter": EventMessageFormatter.format_iam_policy_attached,
         },
         "AttachRolePolicy": {
-            "event_type": TimelineEventType.IAM_POLICY_ATTACHED,
+            "event_type": IAMEventType.POLICY_ATTACHED,
             "message": "Policy attached to role",
             "formatter": EventMessageFormatter.format_iam_policy_attached,
         },
         "AttachGroupPolicy": {
-            "event_type": TimelineEventType.IAM_POLICY_ATTACHED,
+            "event_type": IAMEventType.POLICY_ATTACHED,
             "message": "Policy attached to group",
             "formatter": EventMessageFormatter.format_iam_policy_attached,
         },
         "CreatePolicy": {
-            "event_type": TimelineEventType.IAM_POLICY_CREATED,
+            "event_type": IAMEventType.POLICY_CREATED,
             "message": "IAM policy created",
         },
         "CreateAccessKey": {
-            "event_type": TimelineEventType.IAM_ACCESS_KEY_CREATED,
+            "event_type": IAMEventType.ACCESS_KEY_CREATED,
             "message": "Access key created",
             "formatter": EventMessageFormatter.format_iam_access_key_created,
         },
         "AddUserToGroup": {
-            "event_type": TimelineEventType.IAM_USER_ADDED_TO_GROUP,
+            "event_type": IAMEventType.USER_ADDED_TO_GROUP,
             "message": "User added to group",
         },
         "UpdateAssumeRolePolicy": {
-            "event_type": TimelineEventType.IAM_ASSUME_ROLE_POLICY_UPDATED,
+            "event_type": IAMEventType.ASSUME_ROLE_POLICY_UPDATED,
             "message": "Assume role policy updated",
         },
     }
@@ -373,24 +391,24 @@ class CloudTrailEnricher:
     # Event mappings for DynamoDB
     DYNAMODB_EVENTS = {
         "CreateTable": {
-            "event_type": TimelineEventType.DYNAMODB_TABLE_CREATED,
+            "event_type": DynamoDBEventType.TABLE_CREATED,
             "message": "DynamoDB table created",
             "formatter": EventMessageFormatter.format_dynamodb_table_created,
         },
         "UpdateTable": {
-            "event_type": TimelineEventType.DYNAMODB_TABLE_UPDATED,
+            "event_type": DynamoDBEventType.TABLE_UPDATED,
             "message": "DynamoDB table updated",
         },
         "DeleteTable": {
-            "event_type": TimelineEventType.DYNAMODB_TABLE_DELETED,
+            "event_type": DynamoDBEventType.TABLE_DELETED,
             "message": "DynamoDB table deleted",
         },
         "CreateBackup": {
-            "event_type": TimelineEventType.DYNAMODB_BACKUP_CREATED,
+            "event_type": DynamoDBEventType.BACKUP_CREATED,
             "message": "DynamoDB backup created",
         },
         "UpdateContinuousBackups": {
-            "event_type": TimelineEventType.DYNAMODB_PITR_UPDATED,
+            "event_type": DynamoDBEventType.PITR_UPDATED,
             "message": "DynamoDB PITR configuration updated",
             "formatter": EventMessageFormatter.format_dynamodb_pitr_updated,
         },
@@ -399,57 +417,57 @@ class CloudTrailEnricher:
     # Event mappings for KMS
     KMS_EVENTS = {
         "CreateKey": {
-            "event_type": TimelineEventType.KMS_KEY_CREATED,
+            "event_type": KMSEventType.KEY_CREATED,
             "message": "KMS key created",
             "formatter": EventMessageFormatter.format_kms_key_created,
         },
         "ScheduleKeyDeletion": {
-            "event_type": TimelineEventType.KMS_KEY_DELETION_SCHEDULED,
+            "event_type": KMSEventType.KEY_DELETION_SCHEDULED,
             "message": "KMS key deletion scheduled",
             "formatter": EventMessageFormatter.format_kms_key_deletion_scheduled,
         },
         "CancelKeyDeletion": {
-            "event_type": TimelineEventType.KMS_KEY_DELETION_CANCELLED,
+            "event_type": KMSEventType.KEY_DELETION_CANCELLED,
             "message": "KMS key deletion cancelled",
             "formatter": EventMessageFormatter.format_kms_key_deletion_cancelled,
         },
         "DisableKey": {
-            "event_type": TimelineEventType.KMS_KEY_DISABLED,
+            "event_type": KMSEventType.KEY_DISABLED,
             "message": "KMS key disabled",
             "formatter": EventMessageFormatter.format_kms_key_disabled,
         },
         "EnableKey": {
-            "event_type": TimelineEventType.KMS_KEY_ENABLED,
+            "event_type": KMSEventType.KEY_ENABLED,
             "message": "KMS key enabled",
             "formatter": EventMessageFormatter.format_kms_key_enabled,
         },
         "EnableKeyRotation": {
-            "event_type": TimelineEventType.KMS_KEY_ROTATION_ENABLED,
+            "event_type": KMSEventType.KEY_ROTATION_ENABLED,
             "message": "KMS key rotation enabled",
             "formatter": EventMessageFormatter.format_kms_key_rotation_enabled,
         },
         "DisableKeyRotation": {
-            "event_type": TimelineEventType.KMS_KEY_ROTATION_DISABLED,
+            "event_type": KMSEventType.KEY_ROTATION_DISABLED,
             "message": "KMS key rotation disabled",
             "formatter": EventMessageFormatter.format_kms_key_rotation_disabled,
         },
         "PutKeyPolicy": {
-            "event_type": TimelineEventType.KMS_KEY_POLICY_CHANGED,
+            "event_type": KMSEventType.KEY_POLICY_CHANGED,
             "message": "KMS key policy changed",
             "formatter": EventMessageFormatter.format_kms_key_policy_changed,
         },
         "ImportKeyMaterial": {
-            "event_type": TimelineEventType.KMS_KEY_IMPORTED,
+            "event_type": KMSEventType.KEY_IMPORTED,
             "message": "KMS key material imported",
             "formatter": EventMessageFormatter.format_kms_key_imported,
         },
         "CreateGrant": {
-            "event_type": TimelineEventType.KMS_GRANT_CREATED,
+            "event_type": KMSEventType.GRANT_CREATED,
             "message": "KMS grant created",
             "formatter": EventMessageFormatter.format_kms_grant_created,
         },
         "RevokeGrant": {
-            "event_type": TimelineEventType.KMS_GRANT_REVOKED,
+            "event_type": KMSEventType.GRANT_REVOKED,
             "message": "KMS grant revoked",
             "formatter": EventMessageFormatter.format_kms_grant_revoked,
         },
@@ -458,32 +476,32 @@ class CloudTrailEnricher:
     # Event mappings for CloudTrail
     CLOUDTRAIL_EVENTS = {
         "CreateTrail": {
-            "event_type": TimelineEventType.CLOUDTRAIL_TRAIL_CREATED,
+            "event_type": CloudTrailEventType.TRAIL_CREATED,
             "message": "CloudTrail trail created",
             "formatter": EventMessageFormatter.format_cloudtrail_trail_created,
         },
         "DeleteTrail": {
-            "event_type": TimelineEventType.CLOUDTRAIL_TRAIL_DELETED,
+            "event_type": CloudTrailEventType.TRAIL_DELETED,
             "message": "CloudTrail trail deleted",
             "formatter": EventMessageFormatter.format_cloudtrail_trail_deleted,
         },
         "UpdateTrail": {
-            "event_type": TimelineEventType.CLOUDTRAIL_TRAIL_UPDATED,
+            "event_type": CloudTrailEventType.TRAIL_UPDATED,
             "message": "CloudTrail trail updated",
             "formatter": EventMessageFormatter.format_cloudtrail_trail_updated,
         },
         "StopLogging": {
-            "event_type": TimelineEventType.CLOUDTRAIL_LOGGING_STOPPED,
+            "event_type": CloudTrailEventType.LOGGING_STOPPED,
             "message": "CloudTrail logging stopped",
             "formatter": EventMessageFormatter.format_cloudtrail_logging_stopped,
         },
         "StartLogging": {
-            "event_type": TimelineEventType.CLOUDTRAIL_LOGGING_STARTED,
+            "event_type": CloudTrailEventType.LOGGING_STARTED,
             "message": "CloudTrail logging started",
             "formatter": EventMessageFormatter.format_cloudtrail_logging_started,
         },
         "PutEventSelectors": {
-            "event_type": TimelineEventType.CLOUDTRAIL_EVENT_SELECTORS_UPDATED,
+            "event_type": CloudTrailEventType.EVENT_SELECTORS_UPDATED,
             "message": "CloudTrail event selectors updated",
             "formatter": EventMessageFormatter.format_cloudtrail_event_selectors_updated,
         },
@@ -492,42 +510,42 @@ class CloudTrailEnricher:
     # Event mappings for EBS
     EBS_EVENTS = {
         "CreateVolume": {
-            "event_type": TimelineEventType.EBS_VOLUME_CREATED,
+            "event_type": EBSEventType.VOLUME_CREATED,
             "message": "EBS volume created",
             "formatter": EventMessageFormatter.format_ebs_volume_created,
         },
         "DeleteVolume": {
-            "event_type": TimelineEventType.EBS_VOLUME_DELETED,
+            "event_type": EBSEventType.VOLUME_DELETED,
             "message": "EBS volume deleted",
             "formatter": EventMessageFormatter.format_ebs_volume_deleted,
         },
         "ModifyVolume": {
-            "event_type": TimelineEventType.EBS_VOLUME_MODIFIED,
+            "event_type": EBSEventType.VOLUME_MODIFIED,
             "message": "EBS volume modified",
             "formatter": EventMessageFormatter.format_ebs_volume_modified,
         },
         "CreateSnapshot": {
-            "event_type": TimelineEventType.EBS_SNAPSHOT_CREATED,
+            "event_type": EBSEventType.SNAPSHOT_CREATED,
             "message": "EBS snapshot created",
             "formatter": EventMessageFormatter.format_ebs_snapshot_created,
         },
         "DeleteSnapshot": {
-            "event_type": TimelineEventType.EBS_SNAPSHOT_DELETED,
+            "event_type": EBSEventType.SNAPSHOT_DELETED,
             "message": "EBS snapshot deleted",
             "formatter": EventMessageFormatter.format_ebs_snapshot_deleted,
         },
         "ModifySnapshotAttribute": {
-            "event_type": TimelineEventType.EBS_SNAPSHOT_SHARED,
+            "event_type": EBSEventType.SNAPSHOT_SHARED,
             "message": "EBS snapshot permissions modified",
             "formatter": EventMessageFormatter.format_ebs_snapshot_shared,
         },
         "EnableEbsEncryptionByDefault": {
-            "event_type": TimelineEventType.EBS_ENCRYPTION_ENABLED,
+            "event_type": EBSEventType.ENCRYPTION_ENABLED,
             "message": "EBS encryption by default enabled",
             "formatter": EventMessageFormatter.format_ebs_encryption_enabled,
         },
         "DisableEbsEncryptionByDefault": {
-            "event_type": TimelineEventType.EBS_ENCRYPTION_DISABLED,
+            "event_type": EBSEventType.ENCRYPTION_DISABLED,
             "message": "EBS encryption by default disabled",
             "formatter": EventMessageFormatter.format_ebs_encryption_disabled,
         },
@@ -536,37 +554,37 @@ class CloudTrailEnricher:
     # Event mappings for Secrets Manager
     SECRETS_MANAGER_EVENTS = {
         "CreateSecret": {
-            "event_type": TimelineEventType.SECRETS_MANAGER_SECRET_CREATED,
+            "event_type": SecretsManagerEventType.SECRET_CREATED,
             "message": "Secret created",
             "formatter": EventMessageFormatter.format_secrets_manager_secret_created,
         },
         "DeleteSecret": {
-            "event_type": TimelineEventType.SECRETS_MANAGER_SECRET_DELETED,
+            "event_type": SecretsManagerEventType.SECRET_DELETED,
             "message": "Secret deleted",
             "formatter": EventMessageFormatter.format_secrets_manager_secret_deleted,
         },
         "UpdateSecret": {
-            "event_type": TimelineEventType.SECRETS_MANAGER_SECRET_UPDATED,
+            "event_type": SecretsManagerEventType.SECRET_UPDATED,
             "message": "Secret updated",
             "formatter": EventMessageFormatter.format_secrets_manager_secret_updated,
         },
         "PutSecretValue": {
-            "event_type": TimelineEventType.SECRETS_MANAGER_SECRET_UPDATED,
+            "event_type": SecretsManagerEventType.SECRET_UPDATED,
             "message": "Secret value updated",
             "formatter": EventMessageFormatter.format_secrets_manager_secret_updated,
         },
         "RotateSecret": {
-            "event_type": TimelineEventType.SECRETS_MANAGER_SECRET_ROTATED,
+            "event_type": SecretsManagerEventType.SECRET_ROTATED,
             "message": "Secret rotated",
             "formatter": EventMessageFormatter.format_secrets_manager_secret_rotated,
         },
         "CancelRotateSecret": {
-            "event_type": TimelineEventType.SECRETS_MANAGER_ROTATION_DISABLED,
+            "event_type": SecretsManagerEventType.ROTATION_DISABLED,
             "message": "Secret rotation disabled",
             "formatter": EventMessageFormatter.format_secrets_manager_rotation_disabled,
         },
         "PutResourcePolicy": {
-            "event_type": TimelineEventType.SECRETS_MANAGER_POLICY_CHANGED,
+            "event_type": SecretsManagerEventType.POLICY_CHANGED,
             "message": "Secret resource policy changed",
             "formatter": EventMessageFormatter.format_secrets_manager_policy_changed,
         },
@@ -575,42 +593,42 @@ class CloudTrailEnricher:
     # Event mappings for CloudWatch
     CLOUDWATCH_EVENTS = {
         "PutMetricAlarm": {
-            "event_type": TimelineEventType.CLOUDWATCH_ALARM_CREATED,
+            "event_type": CloudWatchEventType.ALARM_CREATED,
             "message": "CloudWatch alarm created/updated",
             "formatter": EventMessageFormatter.format_cloudwatch_alarm_created,
         },
         "DeleteAlarms": {
-            "event_type": TimelineEventType.CLOUDWATCH_ALARM_DELETED,
+            "event_type": CloudWatchEventType.ALARM_DELETED,
             "message": "CloudWatch alarm(s) deleted",
             "formatter": EventMessageFormatter.format_cloudwatch_alarm_deleted,
         },
         "SetAlarmState": {
-            "event_type": TimelineEventType.CLOUDWATCH_ALARM_STATE_CHANGED,
+            "event_type": CloudWatchEventType.ALARM_STATE_CHANGED,
             "message": "CloudWatch alarm state changed",
             "formatter": EventMessageFormatter.format_cloudwatch_alarm_state_changed,
         },
         "DisableAlarmActions": {
-            "event_type": TimelineEventType.CLOUDWATCH_ALARM_ACTIONS_DISABLED,
+            "event_type": CloudWatchEventType.ALARM_ACTIONS_DISABLED,
             "message": "CloudWatch alarm actions disabled",
             "formatter": EventMessageFormatter.format_cloudwatch_alarm_actions_disabled,
         },
         "EnableAlarmActions": {
-            "event_type": TimelineEventType.CLOUDWATCH_ALARM_ACTIONS_ENABLED,
+            "event_type": CloudWatchEventType.ALARM_ACTIONS_ENABLED,
             "message": "CloudWatch alarm actions enabled",
             "formatter": EventMessageFormatter.format_cloudwatch_alarm_actions_enabled,
         },
         "CreateLogGroup": {
-            "event_type": TimelineEventType.CLOUDWATCH_LOG_GROUP_CREATED,
+            "event_type": CloudWatchEventType.LOG_GROUP_CREATED,
             "message": "CloudWatch log group created",
             "formatter": EventMessageFormatter.format_cloudwatch_log_group_created,
         },
         "DeleteLogGroup": {
-            "event_type": TimelineEventType.CLOUDWATCH_LOG_GROUP_DELETED,
+            "event_type": CloudWatchEventType.LOG_GROUP_DELETED,
             "message": "CloudWatch log group deleted",
             "formatter": EventMessageFormatter.format_cloudwatch_log_group_deleted,
         },
         "PutRetentionPolicy": {
-            "event_type": TimelineEventType.CLOUDWATCH_LOG_RETENTION_CHANGED,
+            "event_type": CloudWatchEventType.LOG_RETENTION_CHANGED,
             "message": "CloudWatch log retention changed",
             "formatter": EventMessageFormatter.format_cloudwatch_log_retention_changed,
         },
@@ -619,27 +637,27 @@ class CloudTrailEnricher:
     # Event mappings for SNS
     SNS_EVENTS = {
         "CreateTopic": {
-            "event_type": TimelineEventType.SNS_TOPIC_CREATED,
+            "event_type": SNSEventType.TOPIC_CREATED,
             "message": "SNS topic created",
             "formatter": EventMessageFormatter.format_sns_topic_created,
         },
         "DeleteTopic": {
-            "event_type": TimelineEventType.SNS_TOPIC_DELETED,
+            "event_type": SNSEventType.TOPIC_DELETED,
             "message": "SNS topic deleted",
             "formatter": EventMessageFormatter.format_sns_topic_deleted,
         },
         "SetTopicAttributes": {
-            "event_type": TimelineEventType.SNS_TOPIC_ATTRIBUTE_CHANGED,
+            "event_type": SNSEventType.TOPIC_ATTRIBUTE_CHANGED,
             "message": "SNS topic attributes changed",
             "formatter": EventMessageFormatter.format_sns_topic_attribute_changed,
         },
         "Subscribe": {
-            "event_type": TimelineEventType.SNS_SUBSCRIPTION_CREATED,
+            "event_type": SNSEventType.SUBSCRIPTION_CREATED,
             "message": "SNS subscription created",
             "formatter": EventMessageFormatter.format_sns_subscription_created,
         },
         "Unsubscribe": {
-            "event_type": TimelineEventType.SNS_SUBSCRIPTION_DELETED,
+            "event_type": SNSEventType.SUBSCRIPTION_DELETED,
             "message": "SNS subscription deleted",
             "formatter": EventMessageFormatter.format_sns_subscription_deleted,
         },
@@ -648,27 +666,27 @@ class CloudTrailEnricher:
     # Event mappings for SQS
     SQS_EVENTS = {
         "CreateQueue": {
-            "event_type": TimelineEventType.SQS_QUEUE_CREATED,
+            "event_type": SQSEventType.QUEUE_CREATED,
             "message": "SQS queue created",
             "formatter": EventMessageFormatter.format_sqs_queue_created,
         },
         "DeleteQueue": {
-            "event_type": TimelineEventType.SQS_QUEUE_DELETED,
+            "event_type": SQSEventType.QUEUE_DELETED,
             "message": "SQS queue deleted",
             "formatter": EventMessageFormatter.format_sqs_queue_deleted,
         },
         "SetQueueAttributes": {
-            "event_type": TimelineEventType.SQS_QUEUE_ATTRIBUTE_CHANGED,
+            "event_type": SQSEventType.QUEUE_ATTRIBUTE_CHANGED,
             "message": "SQS queue attributes changed",
             "formatter": EventMessageFormatter.format_sqs_queue_attribute_changed,
         },
         "AddPermission": {
-            "event_type": TimelineEventType.SQS_QUEUE_POLICY_CHANGED,
+            "event_type": SQSEventType.QUEUE_POLICY_CHANGED,
             "message": "SQS queue policy changed",
             "formatter": EventMessageFormatter.format_sqs_queue_policy_changed,
         },
         "RemovePermission": {
-            "event_type": TimelineEventType.SQS_QUEUE_POLICY_CHANGED,
+            "event_type": SQSEventType.QUEUE_POLICY_CHANGED,
             "message": "SQS queue policy changed",
             "formatter": EventMessageFormatter.format_sqs_queue_policy_changed,
         },
@@ -677,37 +695,37 @@ class CloudTrailEnricher:
     # Event mappings for ECR
     ECR_EVENTS = {
         "CreateRepository": {
-            "event_type": TimelineEventType.ECR_REPOSITORY_CREATED,
+            "event_type": ECREventType.REPOSITORY_CREATED,
             "message": "ECR repository created",
             "formatter": EventMessageFormatter.format_ecr_repository_created,
         },
         "DeleteRepository": {
-            "event_type": TimelineEventType.ECR_REPOSITORY_DELETED,
+            "event_type": ECREventType.REPOSITORY_DELETED,
             "message": "ECR repository deleted",
             "formatter": EventMessageFormatter.format_ecr_repository_deleted,
         },
         "PutImage": {
-            "event_type": TimelineEventType.ECR_IMAGE_PUSHED,
+            "event_type": ECREventType.IMAGE_PUSHED,
             "message": "ECR image pushed",
             "formatter": EventMessageFormatter.format_ecr_image_pushed,
         },
         "BatchDeleteImage": {
-            "event_type": TimelineEventType.ECR_IMAGE_DELETED,
+            "event_type": ECREventType.IMAGE_DELETED,
             "message": "ECR image(s) deleted",
             "formatter": EventMessageFormatter.format_ecr_image_deleted,
         },
         "PutLifecyclePolicy": {
-            "event_type": TimelineEventType.ECR_LIFECYCLE_POLICY_SET,
+            "event_type": ECREventType.LIFECYCLE_POLICY_SET,
             "message": "ECR lifecycle policy set",
             "formatter": EventMessageFormatter.format_ecr_lifecycle_policy_set,
         },
         "SetRepositoryPolicy": {
-            "event_type": TimelineEventType.ECR_REPOSITORY_POLICY_SET,
+            "event_type": ECREventType.REPOSITORY_POLICY_SET,
             "message": "ECR repository policy set",
             "formatter": EventMessageFormatter.format_ecr_repository_policy_set,
         },
         "PutImageScanningConfiguration": {
-            "event_type": TimelineEventType.ECR_IMAGE_SCAN_CONFIGURED,
+            "event_type": ECREventType.IMAGE_SCAN_CONFIGURED,
             "message": "ECR image scanning configured",
             "formatter": EventMessageFormatter.format_ecr_image_scan_configured,
         },
@@ -716,37 +734,37 @@ class CloudTrailEnricher:
     # Event mappings for ECS
     ECS_EVENTS = {
         "CreateCluster": {
-            "event_type": TimelineEventType.ECS_CLUSTER_CREATED,
+            "event_type": ECSEventType.CLUSTER_CREATED,
             "message": "ECS cluster created",
             "formatter": EventMessageFormatter.format_ecs_cluster_created,
         },
         "DeleteCluster": {
-            "event_type": TimelineEventType.ECS_CLUSTER_DELETED,
+            "event_type": ECSEventType.CLUSTER_DELETED,
             "message": "ECS cluster deleted",
             "formatter": EventMessageFormatter.format_ecs_cluster_deleted,
         },
         "CreateService": {
-            "event_type": TimelineEventType.ECS_SERVICE_CREATED,
+            "event_type": ECSEventType.SERVICE_CREATED,
             "message": "ECS service created",
             "formatter": EventMessageFormatter.format_ecs_service_created,
         },
         "DeleteService": {
-            "event_type": TimelineEventType.ECS_SERVICE_DELETED,
+            "event_type": ECSEventType.SERVICE_DELETED,
             "message": "ECS service deleted",
             "formatter": EventMessageFormatter.format_ecs_service_deleted,
         },
         "UpdateService": {
-            "event_type": TimelineEventType.ECS_SERVICE_UPDATED,
+            "event_type": ECSEventType.SERVICE_UPDATED,
             "message": "ECS service updated",
             "formatter": EventMessageFormatter.format_ecs_service_updated,
         },
         "RegisterTaskDefinition": {
-            "event_type": TimelineEventType.ECS_TASK_DEFINITION_REGISTERED,
+            "event_type": ECSEventType.TASK_DEFINITION_REGISTERED,
             "message": "ECS task definition registered",
             "formatter": EventMessageFormatter.format_ecs_task_definition_registered,
         },
         "DeregisterTaskDefinition": {
-            "event_type": TimelineEventType.ECS_TASK_DEFINITION_DEREGISTERED,
+            "event_type": ECSEventType.TASK_DEFINITION_DEREGISTERED,
             "message": "ECS task definition deregistered",
             "formatter": EventMessageFormatter.format_ecs_task_definition_deregistered,
         },
@@ -787,13 +805,13 @@ class CloudTrailEnricher:
 
             if not resource_id:
                 logger.info(
-                    "Skipping enrichment for finding without resource_id: %s",
+                    "CloudTrail - Skipping enrichment for finding without resource_id: %s",
                     getattr(finding, "check_metadata", {}).CheckID or "unknown",
                 )
                 return finding
 
             if not region:
-                logger.info("Skipping enrichment - missing region")
+                logger.info("CloudTrail - Skipping enrichment - missing region")
                 return finding
 
             # Determine resource type from ARN or finding metadata
@@ -805,7 +823,7 @@ class CloudTrailEnricher:
             )
             if not timeline_events:
                 logger.info(
-                    "No CloudTrail events found for resource %s with type %s",
+                    "CloudTrail - No events found for resource %s with type %s",
                     resource_arn,
                     resource_type,
                 )
@@ -818,7 +836,7 @@ class CloudTrailEnricher:
             finding.enrichment = enrichment
 
             logger.info(
-                "Enriched finding for %s with %d timeline events",
+                "CloudTrail - Enriched finding for %s with %d timeline events",
                 resource_arn,
                 len(timeline_events),
             )
@@ -827,21 +845,16 @@ class CloudTrailEnricher:
             error_code = e.response.get("Error", {}).get("Code", "Unknown")
             if error_code == "AccessDeniedException":
                 logger.warning(
-                    "Missing CloudTrail permissions to enrich findings. "
+                    "CloudTrail - Missing permissions to enrich findings. "
                     "Add 'cloudtrail:LookupEvents' permission to continue."
                 )
             else:
                 logger.error(
-                    "CloudTrail API error during enrichment: %s - %s",
-                    error_code,
-                    e.response.get("Error", {}).get("Message", ""),
+                    f"{region} -- {e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}"
                 )
-        except Exception as e:
+        except Exception as error:
             logger.error(
-                "Failed to enrich finding for %s: %s",
-                resource_id,
-                str(e),
-                exc_info=True,
+                f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
         return finding
@@ -863,7 +876,7 @@ class CloudTrailEnricher:
         supported_events = self._get_supported_events(resource_type)
         if not supported_events:
             logger.info(
-                "No supported CloudTrail events for resource type: %s", resource_type
+                "CloudTrail - No supported events for resource type: %s", resource_type
             )
             return []
 
@@ -899,17 +912,9 @@ class CloudTrailEnricher:
                         if timeline_event:
                             timeline_events.append(timeline_event)
 
-        except ClientError as e:
+        except Exception as error:
             logger.error(
-                "CloudTrail lookup failed for %s: %s",
-                resource_id,
-                e.response.get("Error", {}).get("Message", ""),
-            )
-        except Exception as e:
-            logger.error(
-                "Failed to query CloudTrail for %s: %s",
-                resource_id,
-                str(e),
+                f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
         return timeline_events
@@ -956,7 +961,7 @@ class CloudTrailEnricher:
                 timestamp=event["EventTime"],
                 event_source="AWS CloudTrail",
                 event_type=event_metadata.get(
-                    "event_type", TimelineEventType.RESOURCE_MODIFIED
+                    "event_type", GeneralEventType.RESOURCE_MODIFIED
                 ),
                 resource_type=resource_type,
                 resource_id=resource_id,
@@ -965,11 +970,9 @@ class CloudTrailEnricher:
                 event_details=event_details,
             )
 
-        except Exception as e:
-            logger.warning(
-                "Failed to parse CloudTrail event %s: %s",
-                event.get("EventId", "unknown"),
-                str(e),
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return None
 
@@ -997,33 +1000,33 @@ class CloudTrailEnricher:
         created_at = None
         for event in sorted_events:
             if event.event_type in [
-                TimelineEventType.RESOURCE_CREATED,
-                TimelineEventType.INSTANCE_CREATED,
-                TimelineEventType.SECURITY_GROUP_CREATED,
-                TimelineEventType.NETWORK_INTERFACE_CREATED,
-                TimelineEventType.LOAD_BALANCER_CREATED,
-                TimelineEventType.RDS_INSTANCE_CREATED,
-                TimelineEventType.RDS_CLUSTER_CREATED,
-                TimelineEventType.S3_BUCKET_CREATED,
-                TimelineEventType.LAMBDA_FUNCTION_CREATED,
-                TimelineEventType.VPC_CREATED,
-                TimelineEventType.SUBNET_CREATED,
-                TimelineEventType.ELBV2_LOAD_BALANCER_CREATED,
-                TimelineEventType.IAM_USER_CREATED,
-                TimelineEventType.IAM_ROLE_CREATED,
-                TimelineEventType.DYNAMODB_TABLE_CREATED,
-                TimelineEventType.KMS_KEY_CREATED,
-                TimelineEventType.CLOUDTRAIL_TRAIL_CREATED,
-                TimelineEventType.EBS_VOLUME_CREATED,
-                TimelineEventType.EBS_SNAPSHOT_CREATED,
-                TimelineEventType.SECRETS_MANAGER_SECRET_CREATED,
-                TimelineEventType.CLOUDWATCH_ALARM_CREATED,
-                TimelineEventType.CLOUDWATCH_LOG_GROUP_CREATED,
-                TimelineEventType.SNS_TOPIC_CREATED,
-                TimelineEventType.SQS_QUEUE_CREATED,
-                TimelineEventType.ECR_REPOSITORY_CREATED,
-                TimelineEventType.ECS_CLUSTER_CREATED,
-                TimelineEventType.ECS_SERVICE_CREATED,
+                GeneralEventType.RESOURCE_CREATED,
+                EC2EventType.INSTANCE_CREATED,
+                EC2EventType.SECURITY_GROUP_CREATED,
+                EC2EventType.NETWORK_INTERFACE_CREATED,
+                ELBEventType.LOAD_BALANCER_CREATED,
+                RDSEventType.INSTANCE_CREATED,
+                RDSEventType.CLUSTER_CREATED,
+                S3EventType.BUCKET_CREATED,
+                LambdaEventType.FUNCTION_CREATED,
+                VPCEventType.VPC_CREATED,
+                VPCEventType.SUBNET_CREATED,
+                ELBv2EventType.LOAD_BALANCER_CREATED,
+                IAMEventType.USER_CREATED,
+                IAMEventType.ROLE_CREATED,
+                DynamoDBEventType.TABLE_CREATED,
+                KMSEventType.KEY_CREATED,
+                CloudTrailEventType.TRAIL_CREATED,
+                EBSEventType.VOLUME_CREATED,
+                EBSEventType.SNAPSHOT_CREATED,
+                SecretsManagerEventType.SECRET_CREATED,
+                CloudWatchEventType.ALARM_CREATED,
+                CloudWatchEventType.LOG_GROUP_CREATED,
+                SNSEventType.TOPIC_CREATED,
+                SQSEventType.QUEUE_CREATED,
+                ECREventType.REPOSITORY_CREATED,
+                ECSEventType.CLUSTER_CREATED,
+                ECSEventType.SERVICE_CREATED,
             ]:
                 created_by = event.principal
                 created_at = event.timestamp
@@ -1138,7 +1141,10 @@ class CloudTrailEnricher:
         ):
             return self.ECS_EVENTS
         else:
-            logger.info("Unsupported resource type for enrichment: %s", resource_type)
+            logger.info(
+                "CloudTrail - Unsupported resource type for enrichment: %s",
+                resource_type,
+            )
             return {}
 
     def _determine_resource_type(self, resource_arn: str | None, finding: Any) -> str:
