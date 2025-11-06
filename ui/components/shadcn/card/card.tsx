@@ -15,10 +15,10 @@ export type CardVariant = (typeof CardVariant)[keyof typeof CardVariant];
 const cardVariants = cva("flex flex-col gap-6 rounded-xl border", {
   variants: {
     variant: {
-      default: "py-6",
-      base: "border-slate-200 bg-white bg-neutral-secondary px-[18px] pt-3 pb-4 dark:border-zinc-900 dark:bg-stone-950",
+      default: "",
+      base: "border-border-neutral-secondary bg-bg-neutral-secondary px-[18px] pt-3 pb-4",
       innerBase:
-        "rounded-[12px] backdrop-blur-[46px] border-slate-300 bg-[#F8FAFC80] dark:border-[rgba(38,38,38,0.70)] dark:bg-[rgba(23,23,23,0.50)]",
+        "rounded-[12px] backdrop-blur-[46px] border-border-neutral-tertiary bg-bg-neutral-tertiary",
     },
     padding: {
       default: "",
