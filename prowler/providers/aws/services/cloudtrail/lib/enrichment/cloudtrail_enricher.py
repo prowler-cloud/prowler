@@ -788,34 +788,32 @@ class CloudTrailEnricher:
         self.end_time = datetime.now(timezone.utc)
         self.start_time = self.end_time - timedelta(days=self.lookback_days)
 
-    def enrich_finding(self, finding: Any) -> Any:
-        """Enrich a single finding with CloudTrail timeline.
+    def enrich_finding(
+        self, resource_id: str, resource_arn: str, region: str
+    ) -> list[dict]:
+        """Get CloudTrail timeline events for a resource.
 
         Args:
-            finding: Prowler finding object
+            resource_id: AWS resource ID (e.g., sg-1234567890abcdef0)
+            resource_arn: AWS resource ARN
+            region: AWS region
 
         Returns:
-            Finding with enrichment data added
+            List of timeline event dictionaries, empty list if no events found
         """
         try:
-            # Extract resource info from finding
-            resource_id = getattr(finding, "resource_id", None)
-            resource_arn = getattr(finding, "resource_arn", None)
-            region = getattr(finding, "region", None)
-
             if not resource_id:
                 logger.info(
-                    "CloudTrail - Skipping enrichment for finding without resource_id: %s",
-                    getattr(finding, "check_metadata", {}).CheckID or "unknown",
+                    "CloudTrail - Skipping enrichment for resource without resource_id"
                 )
-                return finding
+                return []
 
             if not region:
                 logger.info("CloudTrail - Skipping enrichment - missing region")
-                return finding
+                return []
 
-            # Determine resource type from ARN or finding metadata
-            resource_type = self._determine_resource_type(resource_arn, finding)
+            # Determine resource type from ARN
+            resource_type = self._determine_resource_type_from_arn(resource_arn)
 
             # Query CloudTrail
             timeline_events = self._lookup_resource_events(
@@ -827,19 +825,16 @@ class CloudTrailEnricher:
                     resource_arn,
                     resource_type,
                 )
-                return finding
-
-            # Create enrichment object
-            enrichment = self._create_enrichment(timeline_events)
-
-            # Add enrichment to finding
-            finding.enrichment = enrichment
+                return []
 
             logger.info(
-                "CloudTrail - Enriched finding for %s with %d timeline events",
-                resource_arn,
+                "CloudTrail - Found %d timeline events for resource %s",
                 len(timeline_events),
+                resource_arn,
             )
+
+            # Convert timeline events to dictionaries
+            return [event.to_dict() for event in timeline_events]
 
         except ClientError as e:
             error_code = e.response.get("Error", {}).get("Code", "Unknown")
@@ -857,7 +852,7 @@ class CloudTrailEnricher:
                 f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-        return finding
+        return []
 
     def _lookup_resource_events(
         self, resource_id: str, resource_type: str, region: str
@@ -1147,154 +1142,128 @@ class CloudTrailEnricher:
             )
             return {}
 
-    def _determine_resource_type(self, resource_arn: str | None, finding: Any) -> str:
-        """Determine AWS resource type from ARN or finding metadata.
+    def _determine_resource_type_from_arn(self, resource_arn: str) -> str:
+        """Determine AWS resource type from ARN.
 
         Args:
-            resource_arn: Resource ARN if available
-            finding: Prowler finding object
+            resource_arn: Resource ARN
 
         Returns:
             AWS resource type string (e.g., "AWS::EC2::Instance")
         """
-        if resource_arn:
-            # Parse resource type from ARN
-            # Format: arn:aws:service:region:account:resource-type/resource-id
-            parts = resource_arn.split(":")
-            if len(parts) >= 6:
-                service = parts[2]
-                resource_part = parts[5]
+        if not resource_arn:
+            return "AWS::Unknown"
 
-                if "/" in resource_part:
-                    resource_type_part = resource_part.split("/")[0]
-                else:
-                    resource_type_part = resource_part
+        # Parse resource type from ARN
+        # Format: arn:aws:service:region:account:resource-type/resource-id
+        parts = resource_arn.split(":")
+        if len(parts) >= 6:
+            service = parts[2]
+            resource_part = parts[5]
 
-                # Map service to AWS resource type
-                if service == "ec2" or service == "vpc":
-                    if resource_type_part.startswith("instance"):
-                        return "AWS::EC2::Instance"
-                    elif resource_type_part.startswith("security-group"):
-                        return "AWS::EC2::SecurityGroup"
-                    elif resource_type_part.startswith("network-interface"):
-                        return "AWS::EC2::NetworkInterface"
-                    elif "image" in resource_type_part:
-                        return "AWS::EC2::Image"
-                    elif "network-acl" in resource_type_part:
-                        return "AWS::EC2::NetworkACL"
-                    elif "vpc" in resource_type_part:
-                        return "AWS::EC2::VPC"
-                    elif "subnet" in resource_type_part:
-                        return "AWS::EC2::Subnet"
-                    elif "route-table" in resource_type_part:
-                        return "AWS::EC2::RouteTable"
-                    elif "internet-gateway" in resource_type_part:
-                        return "AWS::EC2::InternetGateway"
-                    elif "nat-gateway" in resource_type_part:
-                        return "AWS::EC2::NatGateway"
-                    elif "volume" in resource_type_part:
-                        return "AWS::EC2::Volume"
-                    elif "snapshot" in resource_type_part:
-                        return "AWS::EC2::Snapshot"
-                    elif "eip-allocation" in resource_type_part:
-                        return "AWS::EC2::EIPAllocation"
-                    elif "eip-association" in resource_type_part:
-                        return "AWS::EC2::EIPAssociation"
-                    elif "eip" in resource_type_part:
-                        return "AWS::EC2::EIP"
-                elif service == "elasticloadbalancing":
+            if "/" in resource_part:
+                resource_type_part = resource_part.split("/")[0]
+            else:
+                resource_type_part = resource_part
+
+            # Map service to AWS resource type
+            if service == "ec2" or service == "vpc":
+                if resource_type_part.startswith("instance"):
+                    return "AWS::EC2::Instance"
+                elif resource_type_part.startswith("security-group"):
+                    return "AWS::EC2::SecurityGroup"
+                elif resource_type_part.startswith("network-interface"):
+                    return "AWS::EC2::NetworkInterface"
+                elif "image" in resource_type_part:
+                    return "AWS::EC2::Image"
+                elif "network-acl" in resource_type_part:
+                    return "AWS::EC2::NetworkACL"
+                elif "vpc" in resource_type_part:
+                    return "AWS::EC2::VPC"
+                elif "subnet" in resource_type_part:
+                    return "AWS::EC2::Subnet"
+                elif "route-table" in resource_type_part:
+                    return "AWS::EC2::RouteTable"
+                elif "internet-gateway" in resource_type_part:
+                    return "AWS::EC2::InternetGateway"
+                elif "nat-gateway" in resource_type_part:
+                    return "AWS::EC2::NatGateway"
+                elif "volume" in resource_type_part:
+                    return "AWS::EC2::Volume"
+                elif "snapshot" in resource_type_part:
+                    return "AWS::EC2::Snapshot"
+                elif "eip-allocation" in resource_type_part:
+                    return "AWS::EC2::EIPAllocation"
+                elif "eip-association" in resource_type_part:
+                    return "AWS::EC2::EIPAssociation"
+                elif "eip" in resource_type_part:
+                    return "AWS::EC2::EIP"
+            elif service == "elasticloadbalancing":
+                if (
+                    "loadbalancer/app" in resource_part
+                    or "loadbalancer/net" in resource_part
+                ):
                     return "AWS::ElasticLoadBalancingV2::LoadBalancer"
-                elif service == "rds":
-                    if resource_type_part.startswith("db"):
-                        if "cluster" in resource_type_part:
-                            return "AWS::RDS::DBCluster"
-                        elif "snapshot" in resource_type_part:
-                            return "AWS::RDS::DBSnapshot"
-                        else:
-                            return "AWS::RDS::DBInstance"
-                elif service == "s3":
-                    return "AWS::S3::Bucket"
-                elif service == "lambda":
-                    if resource_type_part.startswith("function"):
-                        return "AWS::Lambda::Function"
-                elif service == "elasticloadbalancing":
-                    if (
-                        "loadbalancer/app" in resource_part
-                        or "loadbalancer/net" in resource_part
-                    ):
-                        return "AWS::ElasticLoadBalancingV2::LoadBalancer"
-                    elif "targetgroup" in resource_part:
-                        return "AWS::ElasticLoadBalancingV2::TargetGroup"
-                    else:
-                        return "AWS::ElasticLoadBalancing::LoadBalancer"
-                elif service == "iam":
-                    if "user/" in resource_part:
-                        return "AWS::IAM::User"
-                    elif "role/" in resource_part:
-                        return "AWS::IAM::Role"
-                    elif "policy/" in resource_part:
-                        return "AWS::IAM::Policy"
-                    else:
-                        return "AWS::IAM::Resource"
-                elif service == "dynamodb":
-                    if resource_type_part.startswith("table"):
-                        return "AWS::DynamoDB::Table"
-                elif service == "kms":
-                    if resource_type_part.startswith("key"):
-                        return "AWS::KMS::Key"
-                elif service == "cloudtrail":
-                    if resource_type_part.startswith("trail"):
-                        return "AWS::CloudTrail::Trail"
-                elif service == "secretsmanager":
-                    if resource_type_part.startswith("secret"):
-                        return "AWS::SecretsManager::Secret"
-                elif service == "cloudwatch":
-                    if "alarm" in resource_type_part:
-                        return "AWS::CloudWatch::Alarm"
-                elif service == "logs":
-                    if "log-group" in resource_type_part:
-                        return "AWS::Logs::LogGroup"
-                elif service == "sns":
-                    if (
-                        resource_type_part.startswith("topic")
-                        or "/" not in resource_part
-                    ):
-                        return "AWS::SNS::Topic"
-                    elif "subscription" in resource_type_part:
-                        return "AWS::SNS::Subscription"
-                elif service == "sqs":
-                    return "AWS::SQS::Queue"
-                elif service == "ecr":
-                    if resource_type_part.startswith("repository"):
-                        return "AWS::ECR::Repository"
-                elif service == "ecs":
+                elif "targetgroup" in resource_part:
+                    return "AWS::ElasticLoadBalancingV2::TargetGroup"
+                else:
+                    return "AWS::ElasticLoadBalancing::LoadBalancer"
+            elif service == "rds":
+                if resource_type_part.startswith("db"):
                     if "cluster" in resource_type_part:
-                        return "AWS::ECS::Cluster"
-                    elif "service" in resource_type_part:
-                        return "AWS::ECS::Service"
-                    elif "task-definition" in resource_type_part:
-                        return "AWS::ECS::TaskDefinition"
-
-        # Fall back to check metadata service name
-        check_metadata = getattr(finding, "check_metadata", None)
-        service_name = (
-            getattr(check_metadata, "ServiceName", "") if check_metadata else ""
-        )
-
-        if service_name:
-            # Map Prowler service names to resource types
-            service_map = {
-                "ec2": "AWS::EC2::Instance",
-                "vpc": "AWS::EC2::VPC",
-                "elb": "AWS::ElasticLoadBalancing::LoadBalancer",
-                "elbv2": "AWS::ElasticLoadBalancingV2::LoadBalancer",
-                "rds": "AWS::RDS::DBInstance",
-                "s3": "AWS::S3::Bucket",
-                "awslambda": "AWS::Lambda::Function",
-                "lambda": "AWS::Lambda::Function",
-                "iam": "AWS::IAM::Resource",
-                "dynamodb": "AWS::DynamoDB::Table",
-            }
-            return service_map.get(service_name, f"AWS::{service_name}")
+                        return "AWS::RDS::DBCluster"
+                    elif "snapshot" in resource_type_part:
+                        return "AWS::RDS::DBSnapshot"
+                    else:
+                        return "AWS::RDS::DBInstance"
+            elif service == "s3":
+                return "AWS::S3::Bucket"
+            elif service == "lambda":
+                if resource_type_part.startswith("function"):
+                    return "AWS::Lambda::Function"
+            elif service == "iam":
+                if "user/" in resource_part:
+                    return "AWS::IAM::User"
+                elif "role/" in resource_part:
+                    return "AWS::IAM::Role"
+                elif "policy/" in resource_part:
+                    return "AWS::IAM::Policy"
+                else:
+                    return "AWS::IAM::Resource"
+            elif service == "dynamodb":
+                if resource_type_part.startswith("table"):
+                    return "AWS::DynamoDB::Table"
+            elif service == "kms":
+                if resource_type_part.startswith("key"):
+                    return "AWS::KMS::Key"
+            elif service == "cloudtrail":
+                if resource_type_part.startswith("trail"):
+                    return "AWS::CloudTrail::Trail"
+            elif service == "secretsmanager":
+                if resource_type_part.startswith("secret"):
+                    return "AWS::SecretsManager::Secret"
+            elif service == "cloudwatch":
+                if "alarm" in resource_type_part:
+                    return "AWS::CloudWatch::Alarm"
+            elif service == "logs":
+                if "log-group" in resource_type_part:
+                    return "AWS::Logs::LogGroup"
+            elif service == "sns":
+                if resource_type_part.startswith("topic") or "/" not in resource_part:
+                    return "AWS::SNS::Topic"
+                elif "subscription" in resource_type_part:
+                    return "AWS::SNS::Subscription"
+            elif service == "sqs":
+                return "AWS::SQS::Queue"
+            elif service == "ecr":
+                if resource_type_part.startswith("repository"):
+                    return "AWS::ECR::Repository"
+            elif service == "ecs":
+                if "cluster" in resource_type_part:
+                    return "AWS::ECS::Cluster"
+                elif "service" in resource_type_part:
+                    return "AWS::ECS::Service"
+                elif "task-definition" in resource_type_part:
+                    return "AWS::ECS::TaskDefinition"
 
         return "AWS::Unknown"
