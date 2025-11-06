@@ -248,7 +248,6 @@ class Provider(ABC):
                         exclude_workflows=getattr(arguments, "exclude_workflows", []),
                         config_path=getattr(arguments, "config_file", None),
                         fixer_config=fixer_config,
-                        github_username=getattr(arguments, "github_username", None),
                         personal_access_token=getattr(
                             arguments, "personal_access_token", None
                         ),
