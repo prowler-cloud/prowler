@@ -126,7 +126,9 @@ class GithubActionsProvider(Provider):
         """GitHub Actions provider doesn't need a session since it uses zizmor directly"""
         return None
 
-    def _should_exclude_workflow(self, workflow_file: str, exclude_patterns: list[str]) -> bool:
+    def _should_exclude_workflow(
+        self, workflow_file: str, exclude_patterns: list[str]
+    ) -> bool:
         """
         Check if a workflow file should be excluded based on exclude patterns.
 
@@ -146,23 +148,28 @@ class GithubActionsProvider(Provider):
 
         # Get just the filename from the path
         from os.path import basename
+
         filename = basename(workflow_file)
 
         # Check if the pattern matches either the full path or just the filename
         for pattern in exclude_patterns:
             # Try matching against full path first
             if fnmatch(workflow_file, pattern):
-                logger.debug(f"Excluding workflow {workflow_file} (matches full path pattern: {pattern})")
+                logger.debug(
+                    f"Excluding workflow {workflow_file} (matches full path pattern: {pattern})"
+                )
                 return True
 
             # Also try matching against just the filename for convenience
             if fnmatch(filename, pattern):
-                logger.debug(f"Excluding workflow {workflow_file} (matches filename pattern: {pattern})")
+                logger.debug(
+                    f"Excluding workflow {workflow_file} (matches filename pattern: {pattern})"
+                )
                 return True
 
         return False
 
-    def _extract_workflow_file_from_location(self, location: dict) -> str:
+    def _extract_workflow_file_from_location(self, location: dict) -> str | None:
         """
         Extract the workflow file path from a location object.
         Supports zizmor v1.x+ JSON format.
@@ -355,6 +362,7 @@ class GithubActionsProvider(Provider):
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
             sys.exit(1)
+            return ""  # Unreachable, but satisfies static analysis
 
     def run(self) -> List[CheckReportGithubAction]:
         temp_dir = None
@@ -470,7 +478,9 @@ class GithubActionsProvider(Provider):
                         )
                         if workflow_file:
                             # Check if this workflow should be excluded
-                            if self._should_exclude_workflow(workflow_file, exclude_workflows):
+                            if self._should_exclude_workflow(
+                                workflow_file, exclude_workflows
+                            ):
                                 continue
 
                             report = self._process_zizmor_finding(
