@@ -67,18 +67,14 @@ class TestGithubActionsProvider:
             location = {
                 "symbolic": {
                     "annotation": "High risk of code execution",
-                    "key": {
-                        "Local": {
-                            "given_path": ".github/workflows/test.yml"
-                        }
-                    }
+                    "key": {"Local": {"given_path": ".github/workflows/test.yml"}},
                 },
                 "concrete": {
                     "location": {
                         "start_point": {"row": 10, "column": 5},
-                        "end_point": {"row": 10, "column": 15}
+                        "end_point": {"row": 10, "column": 15},
                     }
-                }
+                },
             }
 
             report = provider._process_zizmor_finding(
@@ -132,19 +128,17 @@ class TestGithubActionsProvider:
                             "symbolic": {
                                 "annotation": "Excessive permissions detected",
                                 "key": {
-                                    "Local": {
-                                        "given_path": ".github/workflows/ci.yml"
-                                    }
-                                }
+                                    "Local": {"given_path": ".github/workflows/ci.yml"}
+                                },
                             },
                             "concrete": {
                                 "location": {
                                     "start_point": {"row": 5, "column": 1},
-                                    "end_point": {"row": 5, "column": 20}
+                                    "end_point": {"row": 5, "column": 20},
                                 }
-                            }
+                            },
                         }
-                    ]
+                    ],
                 }
             ]
 
