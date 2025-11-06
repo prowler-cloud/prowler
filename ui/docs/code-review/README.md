@@ -10,15 +10,6 @@ Complete documentation for the Claude Code-powered pre-commit validation system.
 **Want complete technical details?**
 → Read: [`CODE_REVIEW_SETUP.md`](./CODE_REVIEW_SETUP.md)
 
-**Want to test the system?**
-→ Read: [`CODE_REVIEW_TESTING.md`](./CODE_REVIEW_TESTING.md)
-
-**Want to deploy to your team?**
-→ Read: [`DEPLOY_CODE_REVIEW.md`](./DEPLOY_CODE_REVIEW.md)
-
-**Want a quick summary?**
-→ Read: [`IMPLEMENTATION_SUMMARY.md`](./IMPLEMENTATION_SUMMARY.md)
-
 ---
 
 ## What This System Does
@@ -46,9 +37,6 @@ If code complies → Commit continues ✅
 |------|---------|-----------|
 | [`CODE_REVIEW_QUICK_START.md`](./CODE_REVIEW_QUICK_START.md) | 3-step setup & examples | 5 min |
 | [`CODE_REVIEW_SETUP.md`](./CODE_REVIEW_SETUP.md) | Complete technical guide | 15 min |
-| [`CODE_REVIEW_TESTING.md`](./CODE_REVIEW_TESTING.md) | How to test the system | 10 min |
-| [`DEPLOY_CODE_REVIEW.md`](./DEPLOY_CODE_REVIEW.md) | Team deployment guide | 10 min |
-| [`IMPLEMENTATION_SUMMARY.md`](./IMPLEMENTATION_SUMMARY.md) | What was implemented | 10 min |
 
 ---
 
@@ -116,7 +104,7 @@ Your next `git commit` will validate automatically.
 | How do I bypass? | Use `git commit --no-verify` (emergency only) |
 | What if Claude Code isn't found? | Check PATH: `which claude` |
 | What if hook doesn't run? | Check executable: `chmod +x .husky/pre-commit` |
-| How do I test it? | Read `CODE_REVIEW_TESTING.md` |
+| How do I test it? | Enable validation and commit code with violations to test |
 | What if I don't have Claude Code? | Validation is skipped gracefully |
 
 ---
@@ -216,7 +204,7 @@ Your next `git commit` will validate automatically.
 ## Getting Started
 
 1. **Read:** [`CODE_REVIEW_QUICK_START.md`](./CODE_REVIEW_QUICK_START.md) (5 minutes)
-2. **Enable:** Set `CODE_REVIEW_ENABLED=true` in your `.env`
+2. **Enable:** Set `CODE_REVIEW_ENABLED=true` in your `ui/.env`
 3. **Test:** Commit some code and see validation in action
 4. **For help:** See the troubleshooting section in [`CODE_REVIEW_SETUP.md`](./CODE_REVIEW_SETUP.md)
 
@@ -225,8 +213,8 @@ Your next `git commit` will validate automatically.
 ## Implementation Details
 
 - **Files Modified:** 1 (`.husky/pre-commit`)
-- **Files Created:** 6 (documentation)
-- **Hook Size:** ~114 lines of bash
+- **Files Created:** 3 (documentation)
+- **Hook Size:** ~120 lines of bash
 - **Dependencies:** Claude Code CLI (already available)
 - **Setup Time:** 1 minute
 - **Default:** Disabled (no workflow interruption)
@@ -237,9 +225,7 @@ Your next `git commit` will validate automatically.
 
 - **How to enable?** → `CODE_REVIEW_QUICK_START.md`
 - **How does it work?** → `CODE_REVIEW_SETUP.md`
-- **How to test?** → `CODE_REVIEW_TESTING.md`
-- **How to deploy?** → `DEPLOY_CODE_REVIEW.md`
-- **Summary?** → `IMPLEMENTATION_SUMMARY.md`
+- **Troubleshooting?** → See troubleshooting section in `CODE_REVIEW_SETUP.md`
 
 ---
 
