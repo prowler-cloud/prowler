@@ -3694,6 +3694,8 @@ class TestFindingViewSet:
             response.json()["data"][0]["attributes"]["status"]
             == findings_fixture[0].status
         )
+        assert "details" in response.json()["data"][0]["attributes"]
+        assert "partition" in response.json()["data"][0]["attributes"]
 
     @pytest.mark.parametrize(
         "include_values, expected_resources",
