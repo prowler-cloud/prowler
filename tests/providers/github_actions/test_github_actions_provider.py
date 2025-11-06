@@ -3,29 +3,31 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from prowler.providers.github_action.github_action_provider import GithubActionProvider
+from prowler.providers.github_actions.github_actions_provider import (
+    GithubActionsProvider,
+)
 
 
-class TestGithubActionProvider:
-    """Test cases for the GitHub Action Provider"""
+class TestGithubActionsProvider:
+    """Test cases for the GitHub Actions Provider"""
 
-    def test_github_action_provider_init_default(self):
+    def test_github_actions_provider_init_default(self):
         """Test provider initialization with default values"""
-        with patch.object(GithubActionProvider, "setup_session", return_value=None):
-            provider = GithubActionProvider()
+        with patch.object(GithubActionsProvider, "setup_session", return_value=None):
+            provider = GithubActionsProvider()
 
-            assert provider.type == "github_action"
+            assert provider.type == "github_actions"
             assert provider.workflow_path == "."
             assert provider.repository_url is None
             assert provider.exclude_workflows == []
             assert provider.auth_method == "No auth"
             assert provider.region == "global"
-            assert provider.audited_account == "github-actions"
+            assert provider.audited_account == "github_actions"
 
-    def test_github_action_provider_init_with_repository_url(self):
+    def test_github_actions_provider_init_with_repository_url(self):
         """Test provider initialization with repository URL"""
-        with patch.object(GithubActionProvider, "setup_session", return_value=None):
-            provider = GithubActionProvider(
+        with patch.object(GithubActionsProvider, "setup_session", return_value=None):
+            provider = GithubActionsProvider(
                 repository_url="https://github.com/test/repo",
                 github_username="testuser",
                 personal_access_token="token123",
@@ -36,10 +38,10 @@ class TestGithubActionProvider:
             assert provider.personal_access_token == "token123"
             assert provider.auth_method == "Personal Access Token"
 
-    def test_github_action_provider_init_with_oauth_token(self):
+    def test_github_actions_provider_init_with_oauth_token(self):
         """Test provider initialization with OAuth token"""
-        with patch.object(GithubActionProvider, "setup_session", return_value=None):
-            provider = GithubActionProvider(
+        with patch.object(GithubActionsProvider, "setup_session", return_value=None):
+            provider = GithubActionsProvider(
                 repository_url="https://github.com/test/repo",
                 oauth_app_token="oauth_token123",
             )
@@ -49,50 +51,65 @@ class TestGithubActionProvider:
             assert provider.github_username is None
             assert provider.personal_access_token is None
 
-    def test_process_finding(self):
+    def test_process_zizmor_finding(self):
         """Test processing a zizmor finding"""
-        with patch.object(GithubActionProvider, "setup_session", return_value=None):
-            provider = GithubActionProvider()
+        with patch.object(GithubActionsProvider, "setup_session", return_value=None):
+            provider = GithubActionsProvider()
 
-            # Sample zizmor finding
+            # Sample zizmor v1.x+ finding
             finding = {
-                "id": "template-injection",
-                "title": "Template Injection Vulnerability",
-                "level": "HIGH",
-                "description": "Potential code injection in workflow",
-                "documentation_url": "https://example.com/docs",
-                "location": {"line": 10, "column": 5},
-                "risk": "High risk of code execution",
-                "remediation": "Use environment variables instead",
+                "ident": "template-injection",
+                "desc": "Template Injection Vulnerability",
+                "determinations": {"severity": "high", "confidence": "High"},
+                "url": "https://example.com/docs",
             }
 
-            report = provider._process_finding(finding, ".github/workflows/test.yml")
+            location = {
+                "symbolic": {
+                    "annotation": "High risk of code execution",
+                    "key": {
+                        "Local": {
+                            "given_path": ".github/workflows/test.yml"
+                        }
+                    }
+                },
+                "concrete": {
+                    "location": {
+                        "start_point": {"row": 10, "column": 5},
+                        "end_point": {"row": 10, "column": 15}
+                    }
+                }
+            }
+
+            report = provider._process_zizmor_finding(
+                finding, ".github/workflows/test.yml", location
+            )
 
             assert report.resource_name == ".github/workflows/test.yml"
             assert report.status == "FAIL"
-            assert "line 10, column 5" in report.status_extended
+            assert "line 10" in report.resource_line_range
 
             # Check metadata
             assert (
-                report.check_metadata.CheckID == "githubaction_template_injection"
-            )  # Prefixed with githubaction_
+                report.check_metadata.CheckID == "githubactions_template_injection"
+            )  # Prefixed with githubactions_
             assert report.check_metadata.Severity == "high"
-            assert report.check_metadata.Provider == "github_action"
+            assert report.check_metadata.Provider == "github_actions"
 
     def test_run_scan_no_issues(self):
         """Test scanning when no issues are found"""
-        with patch.object(GithubActionProvider, "setup_session", return_value=None):
-            provider = GithubActionProvider()
+        with patch.object(GithubActionsProvider, "setup_session", return_value=None):
+            provider = GithubActionsProvider()
 
-            # Mock subprocess to return empty findings
+            # Mock subprocess to return empty findings (zizmor v1.x+ format)
             mock_process = MagicMock()
-            mock_process.stdout = '{"findings": {}}'
+            mock_process.stdout = "[]"
             mock_process.stderr = ""
             mock_process.returncode = 0
 
             with patch("subprocess.run", return_value=mock_process):
                 with patch(
-                    "prowler.providers.github_action.github_action_provider.alive_bar"
+                    "prowler.providers.github_actions.github_actions_provider.alive_bar"
                 ):
                     reports = provider.run_scan(".", [])
 
@@ -100,24 +117,36 @@ class TestGithubActionProvider:
 
     def test_run_scan_with_findings(self):
         """Test scanning with security findings"""
-        with patch.object(GithubActionProvider, "setup_session", return_value=None):
-            provider = GithubActionProvider()
+        with patch.object(GithubActionsProvider, "setup_session", return_value=None):
+            provider = GithubActionsProvider()
 
-            # Mock subprocess to return findings
-            mock_output = {
-                "findings": {
-                    ".github/workflows/ci.yml": [
+            # Mock subprocess to return findings (zizmor v1.x+ format)
+            mock_output = [
+                {
+                    "ident": "excessive-permissions",
+                    "desc": "Workflow has write-all permissions",
+                    "determinations": {"severity": "medium", "confidence": "High"},
+                    "url": "https://docs.example.com",
+                    "locations": [
                         {
-                            "id": "excessive-permissions",
-                            "title": "Excessive Permissions",
-                            "level": "MEDIUM",
-                            "description": "Workflow has write-all permissions",
-                            "documentation_url": "https://docs.example.com",
-                            "location": {"line": 5},
+                            "symbolic": {
+                                "annotation": "Excessive permissions detected",
+                                "key": {
+                                    "Local": {
+                                        "given_path": ".github/workflows/ci.yml"
+                                    }
+                                }
+                            },
+                            "concrete": {
+                                "location": {
+                                    "start_point": {"row": 5, "column": 1},
+                                    "end_point": {"row": 5, "column": 20}
+                                }
+                            }
                         }
                     ]
                 }
-            }
+            ]
 
             mock_process = MagicMock()
             mock_process.stdout = json.dumps(mock_output)
@@ -126,7 +155,7 @@ class TestGithubActionProvider:
 
             with patch("subprocess.run", return_value=mock_process):
                 with patch(
-                    "prowler.providers.github_action.github_action_provider.alive_bar"
+                    "prowler.providers.github_actions.github_actions_provider.alive_bar"
                 ):
                     reports = provider.run_scan(".", [])
 
@@ -135,28 +164,28 @@ class TestGithubActionProvider:
 
     def test_run_scan_zizmor_not_found(self):
         """Test error handling when zizmor is not installed"""
-        with patch.object(GithubActionProvider, "setup_session", return_value=None):
-            provider = GithubActionProvider()
+        with patch.object(GithubActionsProvider, "setup_session", return_value=None):
+            provider = GithubActionsProvider()
 
             with patch(
                 "subprocess.run",
                 side_effect=FileNotFoundError("No such file or directory: 'zizmor'"),
             ):
                 with patch(
-                    "prowler.providers.github_action.github_action_provider.alive_bar"
+                    "prowler.providers.github_actions.github_actions_provider.alive_bar"
                 ):
                     with pytest.raises(SystemExit):
                         provider.run_scan(".", [])
 
     def test_clone_repository_with_pat(self):
         """Test cloning repository with personal access token"""
-        with patch.object(GithubActionProvider, "setup_session", return_value=None):
-            provider = GithubActionProvider()
+        with patch.object(GithubActionsProvider, "setup_session", return_value=None):
+            provider = GithubActionsProvider()
 
             with patch("tempfile.mkdtemp", return_value="/tmp/test"):
                 with patch("dulwich.porcelain.clone"):
                     with patch(
-                        "prowler.providers.github_action.github_action_provider.alive_bar"
+                        "prowler.providers.github_actions.github_actions_provider.alive_bar"
                     ):
                         temp_dir = provider._clone_repository(
                             "https://github.com/test/repo",
@@ -168,10 +197,12 @@ class TestGithubActionProvider:
 
     def test_print_credentials_local_scan(self):
         """Test printing credentials for local scan"""
-        with patch.object(GithubActionProvider, "setup_session", return_value=None):
-            provider = GithubActionProvider(workflow_path="/path/to/workflows")
+        with patch.object(GithubActionsProvider, "setup_session", return_value=None):
+            provider = GithubActionsProvider(workflow_path="/path/to/workflows")
 
-            with patch("prowler.lib.utils.utils.print_boxes") as mock_print:
+            with patch(
+                "prowler.providers.github_actions.github_actions_provider.print_boxes"
+            ) as mock_print:
                 provider.print_credentials()
 
                 # Verify print_boxes was called with expected content
@@ -181,13 +212,15 @@ class TestGithubActionProvider:
 
     def test_print_credentials_remote_scan(self):
         """Test printing credentials for remote repository scan"""
-        with patch.object(GithubActionProvider, "setup_session", return_value=None):
-            provider = GithubActionProvider(
+        with patch.object(GithubActionsProvider, "setup_session", return_value=None):
+            provider = GithubActionsProvider(
                 repository_url="https://github.com/test/repo",
                 exclude_workflows=["test*.yml"],
             )
 
-            with patch("prowler.lib.utils.utils.print_boxes") as mock_print:
+            with patch(
+                "prowler.providers.github_actions.github_actions_provider.print_boxes"
+            ) as mock_print:
                 provider.print_credentials()
 
                 # Verify print_boxes was called with expected content

@@ -1,12 +1,13 @@
-# GitHub Actions Security Scanning with Prowler
+---
+title: "Getting Started with the GitHub Actions Provider"
+---
+import { VersionBadge } from "/snippets/version-badge.mdx"
 
-Prowler integrates with [zizmor](https://github.com/woodruffw/zizmor) to provide comprehensive security scanning for GitHub Actions workflows. This feature helps identify security vulnerabilities and misconfigurations in your CI/CD pipelines.
+Prowler's GitHub Actions provider enables comprehensive security scanning for GitHub Actions workflows using [zizmor](https://github.com/woodruffw/zizmor). This provider helps identify security vulnerabilities and misconfigurations in CI/CD pipelines.
 
 ## Prerequisites
 
-Before using the GitHub Actions provider, you need to install zizmor:
-
-### Install Zizmor
+Before using the GitHub Actions provider, zizmor must be installed:
 
 ```bash
 # Using Cargo (Rust package manager)
@@ -26,77 +27,84 @@ The GitHub Actions provider scans for:
 - **Impostor commits and confusable git references** - Spots suspicious references
 - **Other GitHub Actions security best practices**
 
-## Basic Usage
+## How It Works
 
-### Scan Local Workflows
+- The GitHub Actions provider scans `.github/workflows/` directories for workflow files.
+- Local scans require no authentication.
+- Remote repository scans support authentication via GitHub credentials.
+  - Check the [GitHub Actions Authentication](/user-guide/providers/github-actions/authentication) page for more details.
+- Results are output in the same formats as other Prowler providers (CSV, JSON, HTML, etc.).
 
-To scan GitHub Actions workflows in your current directory:
+## Prowler CLI
+
+<VersionBadge version="5.14.0" />
+
+### Basic Usage
+
+#### Scan Local Workflows
+
+Scan GitHub Actions workflows in the current directory:
 
 ```bash
 prowler github_actions
 ```
 
-To scan workflows in a specific directory:
+Scan workflows in a specific directory:
 
 ```bash
 prowler github_actions --workflow-path /path/to/repository
 ```
 
-### Scan Remote Repository
+#### Scan Remote Repository
 
-To scan a GitHub repository directly:
+Scan a public GitHub repository:
 
 ```bash
-# Public repository
 prowler github_actions --repository-url https://github.com/user/repo
+```
 
-# Private repository with authentication
+Scan a private repository with authentication:
+
+```bash
 prowler github_actions --repository-url https://github.com/user/private-repo \
   --github-username YOUR_USERNAME \
   --personal-access-token YOUR_TOKEN
 ```
 
-## Authentication Options
+### Authentication for Private Repositories
 
-For scanning private repositories, Prowler supports multiple authentication methods:
+Authentication for private repositories can be provided using one of the following methods:
 
-### Personal Access Token
+- **Personal Access Token:**
+  ```bash
+  prowler github_actions --repository-url https://github.com/org/private-repo \
+    --github-username YOUR_USERNAME \
+    --personal-access-token YOUR_PAT
+  ```
+- **OAuth App Token:**
+  ```bash
+  prowler github_actions --repository-url https://github.com/org/private-repo \
+    --oauth-app-token YOUR_OAUTH_TOKEN
+  ```
+- If not provided via CLI, the following environment variables will be used:
+  ```bash
+  export GITHUB_USERNAME=your-username
+  export GITHUB_PERSONAL_ACCESS_TOKEN=your-token
+  # or
+  export GITHUB_OAUTH_APP_TOKEN=your-oauth-token
 
-```bash
-prowler github_actions --repository-url https://github.com/org/private-repo \
-  --github-username YOUR_USERNAME \
-  --personal-access-token YOUR_PAT
-```
+  prowler github_actions --repository-url https://github.com/org/private-repo
+  ```
 
-### OAuth App Token
+### Excluding Workflows
 
-```bash
-prowler github_actions --repository-url https://github.com/org/private-repo \
-  --oauth-app-token YOUR_OAUTH_TOKEN
-```
-
-### Environment Variables
-
-You can also set authentication via environment variables:
-
-```bash
-export GITHUB_USERNAME=your-username
-export GITHUB_PERSONAL_ACCESS_TOKEN=your-token
-# or
-export GITHUB_OAUTH_APP_TOKEN=your-oauth-token
-
-prowler github_actions --repository-url https://github.com/org/private-repo
-```
-
-## Excluding Workflows
-
-To exclude specific workflows or patterns from scanning:
+Exclude specific workflows or patterns from scanning:
 
 ```bash
 prowler github_actions --exclude-workflows "test-*.yml" "experimental/*"
 ```
 
-## Output Formats
+### Output Formats
 
 The GitHub Actions provider supports all standard Prowler output formats:
 
@@ -110,8 +118,6 @@ prowler github_actions --output-directory ./security-reports
 # Custom output filename
 prowler github_actions --output-filename github-actions-security-scan
 ```
-
-## Examples
 
 ### Complete Security Scan with Full Reporting
 
@@ -138,7 +144,7 @@ done
 
 ## Understanding Results
 
-The scanner will identify issues with different severity levels:
+The scanner identifies issues with different severity levels:
 
 - **CRITICAL/HIGH**: Immediate security risks that should be addressed urgently
 - **MEDIUM**: Potential security issues that should be reviewed
@@ -152,7 +158,7 @@ Each finding includes:
 
 ## Integration with CI/CD
 
-You can integrate Prowler's GitHub Actions scanning into your CI/CD pipeline:
+Integrate Prowler's GitHub Actions scanning into CI/CD pipelines:
 
 ```yaml
 name: Security Scan
@@ -196,11 +202,11 @@ jobs:
 
 ### Zizmor Not Found
 
-If you get an error about zizmor not being found:
+If an error about zizmor not being found occurs:
 
 1. Ensure zizmor is installed: `which zizmor`
 2. Install it using: `cargo install zizmor`
-3. Make sure it's in your PATH
+3. Verify it is in your PATH
 
 ### Authentication Issues
 
