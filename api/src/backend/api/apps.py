@@ -41,7 +41,9 @@ class ApiConfig(AppConfig):
         if "manage.py" not in sys.argv or os.environ.get("RUN_MAIN"):
             self._ensure_crypto_keys()
 
-        if not getattr(settings, "TESTING", False):  # TODO: Remove this when we have attack paths tests
+        if not getattr(
+            settings, "TESTING", False
+        ):  # TODO: Remove this when we have attack paths tests
             neo4j.init_neo4j_driver()
             atexit.register(neo4j.close_neo4j_driver)
 

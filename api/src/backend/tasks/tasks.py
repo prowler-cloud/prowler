@@ -84,6 +84,7 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
             ),
         ),
     ).apply_async()
+    perform_cartography_scan_task(scan_id=scan_id)
 
 
 @shared_task(base=RLSTask, name="provider-connection-check")
@@ -101,7 +102,6 @@ def check_provider_connection_task(provider_id: str):
             - 'error' (str or None): The error message if the connection failed, otherwise `None`.
     """
     return check_provider_connection(provider_id=provider_id)
-
 
 
 @shared_task(base=RLSTask, name="integration-connection-check")
@@ -711,7 +711,7 @@ def mute_historical_findings_task(tenant_id: str, mute_rule_id: str):
 
 @shared_task(base=RLSTask, name="cartography-scan-perform", queue="cartography")
 @set_tenant
-def perform_cartography_scan_task(provider_id: str):
+def perform_cartography_scan_task(scan_id: str):
     """
     Execute a Cartography ingestion for the given provider within the current tenant RLS context.
 
@@ -721,4 +721,4 @@ def perform_cartography_scan_task(provider_id: str):
     Returns:
         Any: The result from cartography_scan.run, including any per-ingestion failure details.
     """
-    return cartography_scan(provider_id=provider_id)
+    return cartography_scan(scan_id=scan_id)

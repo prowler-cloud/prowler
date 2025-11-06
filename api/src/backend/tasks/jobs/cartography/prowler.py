@@ -3,10 +3,9 @@ import neo4j
 from cartography.client.core.tx import run_write_query
 from cartography.config import Config as CartographyConfig
 from celery.utils.log import get_task_logger
-
-from api.models import Provider, ResourceFindingMapping, Scan
 from django.db.models import Subquery
 
+from api.models import Provider, ResourceFindingMapping, Scan
 from prowler.config import config as ProwlerConfig
 
 # TODO: Use the right logger
@@ -112,9 +111,13 @@ def analysis(
     cleanup_findings(neo4j_session, prowler_api_provider, config)
 
 
-def get_provider_last_scan_findings(prowler_api_provider: Provider) -> list[dict[str, str]]:
+def get_provider_last_scan_findings(
+    prowler_api_provider: Provider,
+) -> list[dict[str, str]]:
     latest_scan_id_subquery = (
-        Scan.objects.filter(provider_id=prowler_api_provider.id, completed_at__isnull=False)
+        Scan.objects.filter(
+            provider_id=prowler_api_provider.id, completed_at__isnull=False
+        )
         .order_by("-completed_at")
         .values("id")[:1]
     )
@@ -140,22 +143,24 @@ def get_provider_last_scan_findings(prowler_api_provider: Provider) -> list[dict
 
     findings = []
     for resource_finding in resource_finding_qs:
-        findings.append({
-            "resource_uid": str(resource_finding["resource__uid"]),
-            "id": str(resource_finding["finding__id"]),
-            "uid": resource_finding["finding__uid"],
-            "inserted_at": resource_finding["finding__inserted_at"],
-            "updated_at": resource_finding["finding__updated_at"],
-            "first_seen_at": resource_finding["finding__first_seen_at"],
-            "scan_id": str(resource_finding["finding__scan_id"]),
-            "delta": resource_finding["finding__delta"],
-            "status": resource_finding["finding__status"],
-            "status_extended": resource_finding["finding__status_extended"],
-            "severity": resource_finding["finding__severity"],
-            "check_id": str(resource_finding["finding__check_id"]),
-            "muted": resource_finding["finding__muted"],
-            "muted_reason": resource_finding["finding__muted_reason"],
-        })
+        findings.append(
+            {
+                "resource_uid": str(resource_finding["resource__uid"]),
+                "id": str(resource_finding["finding__id"]),
+                "uid": resource_finding["finding__uid"],
+                "inserted_at": resource_finding["finding__inserted_at"],
+                "updated_at": resource_finding["finding__updated_at"],
+                "first_seen_at": resource_finding["finding__first_seen_at"],
+                "scan_id": str(resource_finding["finding__scan_id"]),
+                "delta": resource_finding["finding__delta"],
+                "status": resource_finding["finding__status"],
+                "status_extended": resource_finding["finding__status_extended"],
+                "severity": resource_finding["finding__severity"],
+                "check_id": str(resource_finding["finding__check_id"]),
+                "muted": resource_finding["finding__muted"],
+                "muted_reason": resource_finding["finding__muted_reason"],
+            }
+        )
 
     return findings
 
@@ -164,7 +169,7 @@ def load_findings(
     neo4j_session: neo4j.Session,
     findings_data: list[dict[str, str]],
     prowler_api_provider: Provider,
-    config: CartographyConfig
+    config: CartographyConfig,
 ) -> None:
     replacements = {
         "__ROOT_NODE_LABEL__": ROOT_NODE_LABELS[prowler_api_provider.provider],
@@ -172,7 +177,7 @@ def load_findings(
     }
     query = INSERT_STATEMENT_TEMPLATE
     for replace_key, replace_value in replacements.items():
-            query = query.replace(replace_key, replace_value)
+        query = query.replace(replace_key, replace_value)
 
     parameters = {
         "account_id": str(prowler_api_provider.uid),
@@ -182,9 +187,11 @@ def load_findings(
 
     total_length = len(findings_data)
     for i in range(0, total_length, BATCH_SIZE):
-        parameters["findings_data"] = findings_data[i:i + BATCH_SIZE]
+        parameters["findings_data"] = findings_data[i : i + BATCH_SIZE]
 
-        logger.info(f"Loading findings batch {i // BATCH_SIZE + 1} / {(total_length + BATCH_SIZE - 1) // BATCH_SIZE}")
+        logger.info(
+            f"Loading findings batch {i // BATCH_SIZE + 1} / {(total_length + BATCH_SIZE - 1) // BATCH_SIZE}"
+        )
 
         neo4j_session.run(
             query=query,
@@ -192,7 +199,11 @@ def load_findings(
         )
 
 
-def cleanup_findings(neo4j_session: neo4j.Session, prowler_api_provider: Provider, config: CartographyConfig) -> None:
+def cleanup_findings(
+    neo4j_session: neo4j.Session,
+    prowler_api_provider: Provider,
+    config: CartographyConfig,
+) -> None:
     parameters = {
         "account_id": str(prowler_api_provider.uid),
         "last_updated": config.update_tag,

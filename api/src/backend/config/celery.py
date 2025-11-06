@@ -4,7 +4,6 @@ from celery import Celery, Task
 from celery.signals import worker_process_init, worker_process_shutdown
 
 from config.env import env
-from config import neo4j
 
 # Suppress specific warnings from django-rest-auth: https://github.com/iMerica/dj-rest-auth/issues/684
 warnings.filterwarnings(
@@ -31,11 +30,17 @@ celery_app.autodiscover_tasks(["api"])
 
 @worker_process_init.connect
 def _init_neo4j_driver(**kwargs):
+    from config import (
+        neo4j,
+    )  # The import must be inside the function to avoid circular imports
+
     neo4j.init_neo4j_driver()  # TODO: Check if there is some case, like TESTING, where we should skip this
 
 
 @worker_process_shutdown.connect
 def _close_neo4j_driver(**kwargs):
+    from config import neo4j  # Same here
+
     neo4j.close_neo4j_driver()
 
 

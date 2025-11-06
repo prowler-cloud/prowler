@@ -7,12 +7,15 @@ import neo4j
 
 from django.conf import settings
 
+from tasks.jobs.cartography import ROOT_NODE_LABELS
+
 # Module-level process-wide driver singleton
 _driver: neo4j.Driver | None = None
 _lock = threading.Lock()
 
 
 # Base Neo4j functions
+
 
 def get_neo4j_uri() -> str:
     host = settings.DATABASES["neo4j"]["HOST"]
@@ -30,7 +33,9 @@ def init_neo4j_driver() -> neo4j.Driver:
             neo4j_uri = get_neo4j_uri()
             neo4j_config = settings.DATABASES["neo4j"]
 
-            _driver = neo4j.GraphDatabase.driver(neo4j_uri, auth=(neo4j_config["USER"], neo4j_config["PASSWORD"]))
+            _driver = neo4j.GraphDatabase.driver(
+                neo4j_uri, auth=(neo4j_config["USER"], neo4j_config["PASSWORD"])
+            )
             _driver.verify_connectivity()
 
     return _driver
@@ -73,7 +78,26 @@ def drop_neo4j_database(database: str) -> None:
         )
 
 
+def drop_neo4j_subgraph(database: str, root_node_label: str, root_node_id: str) -> None:
+    query = """
+        MATCH (a:__ROOT_NODE_LABEL__ {id: $root_node_id}})
+        CALL apoc.path.subgraphNodes(a, {})
+        YIELD node
+        DETACH DELETE node
+        RETURN COUNT(node) AS deleted_nodes_count
+    """.replace("__ROOT_NODE_LABEL__", root_node_label)
+
+    with get_neo4j_session(database) as neo4j_session:
+        result = neo4j_session.run(
+            query=query,
+            parameters={"root_node_id": root_node_id},
+        )
+
+    return result.single()["deleted_nodes_count"]
+
+
 # Neo4j functions related to Prowler + Cartography
+
 
 def get_neo4j_tenant_database_name(tenant_id: str) -> str:
     prefix = settings.DATABASES["neo4j"]["DATABASE_PREFIX"]
@@ -85,20 +109,11 @@ def drop_neo4j_tenant_database(tenant_id: str) -> None:
     drop_neo4j_database(database)
 
 
-# TODO: Remember to use this function when a tenant delete a cloud provider
-def drop_neo4j_account_subgraph(database: str, root_node_label: str, account_id: str) -> None:
-    query = """
-        MATCH (a:__ROOT_NODE_LABEL__ {id: $account_id}})
-        CALL apoc.path.subgraphNodes(a, {})
-        YIELD node
-        DETACH DELETE node
-        RETURN COUNT(node) AS deleted_nodes_count
-    """.replace("__ROOT_NODE_LABEL__", root_node_label)
+def drop_neo4j_account_subgraph(
+    tenant_id: str, provider_type: str, provider_uid: str
+) -> None:
+    database = get_neo4j_tenant_database_name(tenant_id)
+    root_node_label = ROOT_NODE_LABELS[provider_type]
+    root_node_id = provider_uid
 
-    with get_neo4j_session(database) as neo4j_session:
-        result = neo4j_session.run(
-            query=query,
-            parameters={"account_id": account_id},
-        )
-
-        return result.single()["deleted_nodes_count"]
+    drop_neo4j_subgraph(database, root_node_label, root_node_id)

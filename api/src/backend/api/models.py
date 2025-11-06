@@ -591,6 +591,81 @@ class Scan(RowLevelSecurityProtectedModel):
         resource_name = "scans"
 
 
+class CartographyScan(RowLevelSecurityProtectedModel):
+    objects = ActiveProviderManager()
+    all_objects = models.Manager()
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    state = StateEnumField(choices=StateChoices.choices, default=StateChoices.AVAILABLE)
+    progress = models.IntegerField(default=0)
+
+    # Timing
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    duration = models.IntegerField(
+        null=True, blank=True, help_text="Duration in seconds"
+    )
+
+    # Relationship to the provider and optional prowler Scan and celery Task
+    provider = models.ForeignKey(
+        "Provider",
+        on_delete=models.CASCADE,
+        related_name="cartography_scans",
+        related_query_name="cartography_scan",
+    )
+    scan = models.ForeignKey(
+        "Scan",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="cartography_scans",
+        related_query_name="cartography_scan",
+    )
+    task = models.ForeignKey(
+        "Task",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="cartography_scans",
+        related_query_name="cartography_scan",
+    )
+
+    # Cartography specific metadata
+    update_tag = models.BigIntegerField(
+        null=True, blank=True, help_text="Cartography update tag (epoch)"
+    )
+    neo4j_database = models.CharField(max_length=128, null=True, blank=True)
+    ingestion_exceptions = models.JSONField(default=dict, null=True, blank=True)
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "cartography_scans"
+
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "provider_id", "state", "inserted_at"],
+                name="c_scans_prov_state_ins_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "scan_id", "inserted_at"],
+                name="c_scans_scan_ins_idx",
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "cartography-scans"
+
+
 class ResourceTag(RowLevelSecurityProtectedModel):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
