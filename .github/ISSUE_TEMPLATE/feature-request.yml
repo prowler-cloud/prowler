@@ -8,7 +8,7 @@ body:
     attributes:
       label: Feature search
       options:
-        - label: I have searched the existing issues and this feature has not been requested yet
+        - label: I have searched the existing issues and this feature has not been requested yet or is already in our [Public Roadmap](https://roadmap.prowler.com/roadmap)
           required: true
   - type: dropdown
     id: component
