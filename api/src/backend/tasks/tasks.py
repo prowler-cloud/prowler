@@ -1,14 +1,27 @@
 import os
+
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from shutil import rmtree
 
 from celery import chain, group, shared_task
 from celery.utils.log import get_task_logger
+from django_celery_beat.models import PeriodicTask
+
+from api.compliance import get_compliance_frameworks
+from api.db_router import READ_REPLICA_ALIAS
+from api.db_utils import rls_transaction
+from api.decorators import set_tenant
+from api.models import Finding, Integration, Provider, Scan, ScanSummary, StateChoices
+from api.utils import initialize_prowler_provider
+from api.v1.serializers import ScanTaskSerializer
 from config.celery import RLSTask
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE, DJANGO_TMP_OUTPUT_DIRECTORY
-from django_celery_beat.models import PeriodicTask
+from prowler.lib.check.compliance_models import Compliance
+from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
+from prowler.lib.outputs.finding import Finding as FindingOutput
 from tasks.jobs.backfill import backfill_resource_scan_summaries
+from tasks.jobs.cartography import cartography_scan
 from tasks.jobs.connection import (
     check_integration_connection,
     check_lighthouse_connection,
@@ -39,17 +52,6 @@ from tasks.jobs.scan import (
     perform_prowler_scan,
 )
 from tasks.utils import batched, get_next_execution_datetime
-
-from api.compliance import get_compliance_frameworks
-from api.db_router import READ_REPLICA_ALIAS
-from api.db_utils import rls_transaction
-from api.decorators import set_tenant
-from api.models import Finding, Integration, Provider, Scan, ScanSummary, StateChoices
-from api.utils import initialize_prowler_provider
-from api.v1.serializers import ScanTaskSerializer
-from prowler.lib.check.compliance_models import Compliance
-from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
-from prowler.lib.outputs.finding import Finding as FindingOutput
 
 logger = get_task_logger(__name__)
 
@@ -99,6 +101,7 @@ def check_provider_connection_task(provider_id: str):
             - 'error' (str or None): The error message if the connection failed, otherwise `None`.
     """
     return check_provider_connection(provider_id=provider_id)
+
 
 
 @shared_task(base=RLSTask, name="integration-connection-check")
@@ -704,3 +707,18 @@ def mute_historical_findings_task(tenant_id: str, mute_rule_id: str):
             - 'status' (str): Final status ('completed').
     """
     return mute_historical_findings(tenant_id, mute_rule_id)
+
+
+@shared_task(base=RLSTask, name="cartography-scan-perform", queue="cartography")
+@set_tenant
+def perform_cartography_scan_task(provider_id: str):
+    """
+    Execute a Cartography ingestion for the given provider within the current tenant RLS context.
+
+    Args:
+        provider_id (str): The primary key of the Provider instance to ingest into Neo4j.
+
+    Returns:
+        Any: The result from cartography_scan.run, including any per-ingestion failure details.
+    """
+    return cartography_scan(provider_id=provider_id)

@@ -1,4 +1,5 @@
 import logging
+import atexit
 import os
 import sys
 from pathlib import Path
@@ -31,6 +32,7 @@ class ApiConfig(AppConfig):
         from api import schema_extensions  # noqa: F401
         from api import signals  # noqa: F401
         from api.compliance import load_prowler_compliance
+        from config import neo4j
 
         # Generate required cryptographic keys if not present, but only if:
         #   `"manage.py" not in sys.argv`: If an external server (e.g., Gunicorn) is running the app
@@ -38,6 +40,10 @@ class ApiConfig(AppConfig):
         #                                 only the main process will do it
         if "manage.py" not in sys.argv or os.environ.get("RUN_MAIN"):
             self._ensure_crypto_keys()
+
+        if not getattr(settings, "TESTING", False):  # TODO: Remove this when we have attack paths tests
+            neo4j.init_neo4j_driver()
+            atexit.register(neo4j.close_neo4j_driver)
 
         load_prowler_compliance()
 
@@ -54,7 +60,7 @@ class ApiConfig(AppConfig):
         global _keys_initialized
 
         # Skip key generation if running tests
-        if hasattr(settings, "TESTING") and settings.TESTING:
+        if getattr(settings, "TESTING", False):
             return
 
         # Skip if already initialized in this process

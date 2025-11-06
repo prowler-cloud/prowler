@@ -1,9 +1,11 @@
 from celery.utils.log import get_task_logger
 from django.db import DatabaseError
+import tenacity
 
 from api.db_router import MainRouter
 from api.db_utils import batch_delete, rls_transaction
 from api.models import Finding, Provider, Resource, Scan, ScanSummary, Tenant
+from config import neo4j
 
 logger = get_task_logger(__name__)
 
@@ -31,6 +33,7 @@ def delete_provider(tenant_id: str, pk: str):
             ("Findings", Finding.all_objects.filter(scan__provider=instance)),
             ("Resources", Resource.all_objects.filter(provider=instance)),
             ("Scans", Scan.all_objects.filter(provider=instance)),
+            # TODO: Cartography Model: ("CartographyScans", CartographyScans.all_objects.filter(provider=instance)),
         ]
 
     for step_name, queryset in deletion_steps:
@@ -48,6 +51,9 @@ def delete_provider(tenant_id: str, pk: str):
     except DatabaseError as db_error:
         logger.error(f"Error deleting Provider: {db_error}")
         raise
+
+    # TODO: Drop Cartography data from Neo4j related to this provider and update `deletion_summary`
+
     return deletion_summary
 
 
@@ -67,6 +73,8 @@ def delete_tenant(pk: str):
     for provider in Provider.objects.using(MainRouter.admin_db).filter(tenant_id=pk):
         summary = delete_provider(pk, provider.id)
         deletion_summary.update(summary)
+
+    neo4j.drop_neo4j_tenant_database(tenant_id=pk)
 
     Tenant.objects.using(MainRouter.admin_db).filter(id=pk).delete()
 
