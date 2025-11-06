@@ -21,8 +21,8 @@ from prowler.providers.common.models import Audit_Metadata
 from prowler.providers.common.provider import Provider
 
 
-class GithubActionProvider(Provider):
-    _type: str = "github_action"
+class GithubActionsProvider(Provider):
+    _type: str = "github_actions"
     audit_metadata: Audit_Metadata
 
     def __init__(
@@ -37,13 +37,13 @@ class GithubActionProvider(Provider):
         personal_access_token: str = None,
         oauth_app_token: str = None,
     ):
-        logger.info("Instantiating GitHub Action Provider...")
+        logger.info("Instantiating GitHub Actions Provider...")
 
         self.workflow_path = workflow_path
         self.repository_url = repository_url
         self.exclude_workflows = exclude_workflows
         self.region = "global"
-        self.audited_account = "github-actions"
+        self.audited_account = "github_actions"
         self._session = None
         self._identity = "prowler"
         self._auth_method = "No auth"
@@ -94,7 +94,7 @@ class GithubActionProvider(Provider):
         self.audit_metadata = Audit_Metadata(
             provider=self._type,
             account_id=self.audited_account,
-            account_name="github_action",
+            account_name="github_actions",
             region=self.region,
             services_scanned=0,  # GitHub Actions doesn't use services
             expected_checks=[],  # GitHub Actions doesn't use checks
@@ -129,7 +129,7 @@ class GithubActionProvider(Provider):
         return self._fixer_config
 
     def setup_session(self):
-        """GitHub Action provider doesn't need a session since it uses zizmor directly"""
+        """GitHub Actions provider doesn't need a session since it uses zizmor directly"""
         return None
 
     def _extract_workflow_file_from_location(self, location: dict) -> str:
@@ -210,18 +210,18 @@ class GithubActionProvider(Provider):
 
             # Create CheckReport
             finding_id = (
-                f"githubaction_{finding.get('ident', 'unknown').replace('-', '_')}"
+                f"githubactions_{finding.get('ident', 'unknown').replace('-', '_')}"
             )
 
             # Prepare metadata dict
             metadata = {
-                "Provider": "github_action",
+                "Provider": "github_actions",
                 "CheckID": finding_id,
                 "CheckTitle": finding.get(
                     "desc", "Unknown GitHub Actions Security Issue"
                 ),
                 "CheckType": ["Security"],
-                "ServiceName": "githubaction",
+                "ServiceName": "githubactions",
                 "SubServiceName": "",
                 "ResourceIdTemplate": "",
                 "Severity": prowler_severity,

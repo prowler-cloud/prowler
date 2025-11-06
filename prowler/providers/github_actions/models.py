@@ -2,10 +2,10 @@ from prowler.config.config import output_file_timestamp
 from prowler.providers.common.models import ProviderOutputOptions
 
 
-class GithubActionOutputOptions(ProviderOutputOptions):
+class GithubActionsOutputOptions(ProviderOutputOptions):
     """
-    GithubActionOutputOptions overrides ProviderOutputOptions for GitHub Action-specific output logic.
-    For example, generating a filename that includes github-action identifier.
+    GithubActionsOutputOptions overrides ProviderOutputOptions for GitHub Actions-specific output logic.
+    For example, generating a filename that includes github_actions identifier.
 
     Attributes inherited from ProviderOutputOptions:
         - output_filename (str): The base filename used for generated reports.
@@ -13,7 +13,7 @@ class GithubActionOutputOptions(ProviderOutputOptions):
         - ... see ProviderOutputOptions for more details.
 
     Methods:
-        - __init__: Customizes the output filename logic for GitHub Action.
+        - __init__: Customizes the output filename logic for GitHub Actions.
     """
 
     def __init__(self, arguments, bulk_checks_metadata):
@@ -21,7 +21,9 @@ class GithubActionOutputOptions(ProviderOutputOptions):
 
         # If --output-filename is not specified, build a default name.
         if not getattr(arguments, "output_filename", None):
-            self.output_filename = f"prowler-output-github-action-{output_file_timestamp}"
+            self.output_filename = (
+                f"prowler-output-github_actions-{output_file_timestamp}"
+            )
         # If --output-filename was explicitly given, respect that
         else:
             self.output_filename = arguments.output_filename

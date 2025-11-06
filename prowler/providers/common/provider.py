@@ -150,8 +150,8 @@ class Provider(ABC):
                 f"{providers_path}.{arguments.provider}.{arguments.provider}_provider"
             )
             # Special handling for certain providers
-            if arguments.provider == "github_action":
-                provider_class_name = "GithubActionProvider"
+            if arguments.provider == "github_actions":
+                provider_class_name = "GithubActionsProvider"
             elif arguments.provider == "pipeline":
                 provider_class_name = "PipelineProvider"
             else:
@@ -254,7 +254,7 @@ class Provider(ABC):
                         config_path=getattr(arguments, "config_file", None),
                         fixer_config=fixer_config,
                     )
-                elif "githubaction" in provider_class_name.lower():
+                elif "githubactions" in provider_class_name.lower():
                     provider_class(
                         workflow_path=getattr(arguments, "workflow_path", "."),
                         repository_url=getattr(arguments, "repository_url", None),

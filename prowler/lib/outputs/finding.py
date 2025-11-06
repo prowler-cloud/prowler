@@ -302,10 +302,10 @@ class Finding(BaseModel):
                 output_data["region"] = check_output.resource_line_range
                 output_data["resource_line_range"] = check_output.resource_line_range
                 output_data["framework"] = check_output.check_metadata.ServiceName
-            elif provider.type == "github_action":
+            elif provider.type == "github_actions":
                 output_data["auth_method"] = provider.auth_method
-                output_data["account_uid"] = "github-actions"
-                output_data["account_name"] = "github-actions"
+                output_data["account_uid"] = "github_actions"
+                output_data["account_name"] = "github_actions"
                 output_data["resource_name"] = check_output.resource_name
                 output_data["resource_uid"] = check_output.resource_name
                 output_data["region"] = check_output.resource_line_range

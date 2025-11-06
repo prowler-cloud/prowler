@@ -99,7 +99,7 @@ from prowler.providers.common.provider import Provider
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
 from prowler.providers.gcp.models import GCPOutputOptions
 from prowler.providers.github.models import GithubOutputOptions
-from prowler.providers.github_action.models import GithubActionOutputOptions
+from prowler.providers.github_actions.models import GithubActionsOutputOptions
 from prowler.providers.iac.models import IACOutputOptions
 from prowler.providers.kubernetes.models import KubernetesOutputOptions
 from prowler.providers.m365.models import M365OutputOptions
@@ -153,7 +153,8 @@ def prowler():
     if compliance_framework:
         args.output_formats.extend(compliance_framework)
     # If no input compliance framework, set all, unless a specific service or check is input
-    elif default_execution:
+    # Skip for IAC, GitHub Actions, and Pipeline providers that don't use compliance frameworks
+    elif default_execution and provider not in ["iac", "github_actions", "pipeline"]:
         args.output_formats.extend(get_available_compliance_frameworks(provider))
 
     # Set Logger configuration
@@ -180,7 +181,7 @@ def prowler():
     logger.debug("Loading compliance frameworks from .json files")
 
     # Skip compliance frameworks for IAC, GitHub Action, and Pipeline providers
-    if provider not in ["iac", "github_action", "pipeline"]:
+    if provider not in ["iac", "github_actions", "pipeline"]:
         bulk_compliance_frameworks = Compliance.get_bulk(provider)
         # Complete checks metadata with the compliance framework specification
         bulk_checks_metadata = update_checks_metadata_with_compliance(
@@ -308,8 +309,8 @@ def prowler():
         )
     elif provider == "iac":
         output_options = IACOutputOptions(args, bulk_checks_metadata)
-    elif provider == "github_action":
-        output_options = GithubActionOutputOptions(args, bulk_checks_metadata)
+    elif provider == "github_actions":
+        output_options = GithubActionsOutputOptions(args, bulk_checks_metadata)
     elif provider == "pipeline":
         output_options = PipelineOutputOptions(args, bulk_checks_metadata)
 
@@ -321,7 +322,7 @@ def prowler():
     # Execute checks
     findings = []
 
-    if provider in ["iac", "github_action", "pipeline"]:
+    if provider in ["iac", "github_actions", "pipeline"]:
         # For IAC, GitHub Action, and Pipeline providers, run the scan directly
         findings = global_provider.run()
     elif len(checks_to_execute):
