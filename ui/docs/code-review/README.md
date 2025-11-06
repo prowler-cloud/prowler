@@ -1,6 +1,6 @@
 # Code Review System Documentation
 
-Complete documentation for the Claude Code-powered pre-push validation system.
+Complete documentation for the Claude Code-powered pre-commit validation system.
 
 ## Quick Navigation
 
@@ -35,7 +35,7 @@ If code complies → Commit continues ✅
 ```
 
 **Key Feature:** Configurable with a single variable in `.env`
-- `CODE_REVIEW_ENABLED=true` → Validates (recommended before PRs)
+- `CODE_REVIEW_ENABLED=true` → Validates (recommended before commits)
 - `CODE_REVIEW_ENABLED=false` → Skip validation (default, for iteration)
 
 ---
@@ -94,7 +94,7 @@ When validation is enabled, the system checks:
 
 ### Step 1: Decide if you want validation
 - **Optional:** Each developer decides
-- **Team policy:** Consider making it standard before PRs
+- **Team policy:** Consider making it standard before commits
 
 ### Step 2: Enable in your environment
 ```bash
@@ -226,7 +226,7 @@ Your next `git commit` will validate automatically.
 
 - **Files Modified:** 1 (`.husky/pre-commit`)
 - **Files Created:** 6 (documentation)
-- **Hook Size:** ~120 lines of bash
+- **Hook Size:** ~114 lines of bash
 - **Dependencies:** Claude Code CLI (already available)
 - **Setup Time:** 1 minute
 - **Default:** Disabled (no workflow interruption)
