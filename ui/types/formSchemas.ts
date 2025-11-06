@@ -116,7 +116,7 @@ export const addProviderFormSchema = z
         providerUid: z.string(),
       }),
       z.object({
-        providerType: z.literal("oci"),
+        providerType: z.literal("oraclecloud"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
         providerUid: z.string(),
       }),
@@ -210,7 +210,7 @@ export const addCredentialsFormSchema = (
                           .string()
                           .optional(),
                       }
-                    : providerType === "oci"
+                    : providerType === "oraclecloud"
                       ? {
                           [ProviderCredentialFields.OCI_USER]: z
                             .string()
