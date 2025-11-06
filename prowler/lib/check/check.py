@@ -405,13 +405,6 @@ def execute_checks(
         audit_progress=0,
     )
 
-    # Check if enrichment is enabled (will be done post-scan)
-    enrich_findings = (
-        hasattr(output_options, "enrich_findings")
-        and output_options.enrich_findings
-        and global_provider.type == "aws"
-    )
-
     # Refactor(CLI): This needs to be moved somewhere in the CLI
     if os.name != "nt":
         try:
@@ -466,7 +459,6 @@ def execute_checks(
                     custom_checks_metadata,
                     output_options,
                 )
-
                 report(check_findings, global_provider, output_options)
                 all_findings.extend(check_findings)
 
@@ -497,14 +489,6 @@ def execute_checks(
             messages.append(
                 f"Scanning unused services and resources: {Fore.YELLOW}{global_provider.scan_unused_services}{Style.RESET_ALL}"
             )
-            if enrich_findings:
-                messages.append(
-                    f"CloudTrail enrichment: {Fore.YELLOW}Enabled (lookback: {output_options.cloudtrail_lookback_days} days){Style.RESET_ALL}"
-                )
-            else:
-                messages.append(
-                    f"CloudTrail enrichment: {Fore.YELLOW}Disabled{Style.RESET_ALL}"
-                )
         report_title = (
             f"{Style.BRIGHT}Using the following configuration:{Style.RESET_ALL}"
         )
@@ -618,7 +602,7 @@ def execute(
 
         # Execute the check
         check_findings = []
-        logger.info(f"Executing check: {check.CheckID}")
+        logger.debug(f"Executing check: {check.CheckID}")
         try:
             check_findings = check.execute()
         except Exception as error:
