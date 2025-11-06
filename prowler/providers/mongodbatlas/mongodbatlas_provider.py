@@ -292,6 +292,7 @@ class MongodbatlasProvider(Provider):
         atlas_public_key: str = "",
         atlas_private_key: str = "",
         raise_on_exception: bool = True,
+        provider_id: str = None,
     ) -> Connection:
         """
         Test connection to MongoDB Atlas
@@ -300,7 +301,7 @@ class MongodbatlasProvider(Provider):
             atlas_public_key: MongoDB Atlas API public key
             atlas_private_key: MongoDB Atlas API private key
             raise_on_exception: Whether to raise exceptions
-
+            provider_id: MongoDB Atlas project ID to validate access (added for API compatibility)
         Returns:
             Connection: Connection status
         """
