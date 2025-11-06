@@ -8,13 +8,13 @@ from cartography.intel import analysis as cartography_analysis
 from cartography.intel import create_indexes as cartography_create_indexes
 from celery.utils.log import get_task_logger
 
+from api import neo4j
 from api.models import (
     Provider as ProwlerAPIProvider,
     Scan as ProwlerAPIScan,
     StateChoices,
 )
 from api.utils import initialize_prowler_provider
-from config import neo4j
 from tasks.jobs.cartography import aws, db_utils, prowler
 
 # TODO: Use the right logger
@@ -35,6 +35,13 @@ def run(scan_id: str) -> dict[str, Any]:
     `cartography.sync.run_with_config` and `cartography.sync.Sync.run`.
     """
 
+    # Prowler necessary objects
+    prowler_api_scan = ProwlerAPIScan.objects.get(id=scan_id)
+    prowler_api_provider = ProwlerAPIProvider.objects.get(
+        id=prowler_api_scan.provider_id
+    )
+    prowler_provider = initialize_prowler_provider(prowler_api_provider)
+
     # Attributes `neo4j_user` and `neo4j_password` are not really needed in this config object
     config = CartographyConfig(
         neo4j_uri=neo4j.get_neo4j_uri(),
@@ -44,12 +51,6 @@ def run(scan_id: str) -> dict[str, Any]:
         update_tag=int(time.time()),
     )
 
-    # Prowler necessary objects
-    prowler_api_scan = ProwlerAPIScan.objects.get(id=scan_id)
-    prowler_api_provider = ProwlerAPIProvider.objects.get(
-        id=prowler_api_scan.provider_id
-    )
-    prowler_provider = initialize_prowler_provider(prowler_api_provider)
     cartography_scan = db_utils.create_cartography_scan(
         prowler_api_scan, prowler_api_provider, config
     )
@@ -119,7 +120,8 @@ def _call_within_event_loop(fn, *args, **kwargs):
 
     finally:
         try:
-            loop.run_until_complete(loop.shutdown_asyncgens())
+            # loop.run_until_complete(loop.shutdown_asyncgens())
+            pass
 
         except Exception:
             pass

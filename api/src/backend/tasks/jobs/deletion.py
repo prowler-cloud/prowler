@@ -1,6 +1,7 @@
 from celery.utils.log import get_task_logger
 from django.db import DatabaseError
 
+from api import neo4j
 from api.db_router import MainRouter
 from api.db_utils import batch_delete, rls_transaction
 from api.models import (
@@ -12,7 +13,6 @@ from api.models import (
     ScanSummary,
     Tenant,
 )
-from config import neo4j
 
 logger = get_task_logger(__name__)
 

@@ -30,17 +30,13 @@ celery_app.autodiscover_tasks(["api"])
 
 @worker_process_init.connect
 def _init_neo4j_driver(**kwargs):
-    from config import (
-        neo4j,
-    )  # The import must be inside the function to avoid circular imports
-
+    from api import neo4j  # The import must be inside the function to avoid circular imports
     neo4j.init_neo4j_driver()  # TODO: Check if there is some case, like TESTING, where we should skip this
 
 
 @worker_process_shutdown.connect
 def _close_neo4j_driver(**kwargs):
-    from config import neo4j  # Same here
-
+    from api import neo4j  # Same as `_init_neo4j_driver`
     neo4j.close_neo4j_driver()
 
 

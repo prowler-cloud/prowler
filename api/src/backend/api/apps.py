@@ -29,10 +29,10 @@ class ApiConfig(AppConfig):
     name = "api"
 
     def ready(self):
+        from api import neo4j
         from api import schema_extensions  # noqa: F401
         from api import signals  # noqa: F401
         from api.compliance import load_prowler_compliance
-        from config import neo4j
 
         # Generate required cryptographic keys if not present, but only if:
         #   `"manage.py" not in sys.argv`: If an external server (e.g., Gunicorn) is running the app

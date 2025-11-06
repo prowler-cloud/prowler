@@ -1573,12 +1573,13 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
     def cartography_launch_scan(self, request, pk=None):
         get_object_or_404(Provider, pk=pk)
 
-        # Cleaning input
-        provider_id = pk
+        last_scan = Scan.objects.filter(
+            tenant_id=self.request.tenant_id,
+            provider_id=pk,
+            state=StateChoices.COMPLETED,
+        ).order_by("-completed_at").first()
 
-        result = cartography_scan.run(
-            provider_id=provider_id,
-        )
+        result = cartography_scan.run(scan_id=str(last_scan.id))
         return Response(data={"result": result}, status=status.HTTP_201_CREATED)
 
 
