@@ -109,7 +109,6 @@ class TestGenerateOutputs:
                 return_value=(
                     "/tmp/test/out-dir",
                     "/tmp/test/comp-dir",
-                    "/tmp/test/threat-dir",
                 ),
             ),
             patch("tasks.tasks.Scan.all_objects.filter") as mock_scan_update,
@@ -139,7 +138,7 @@ class TestGenerateOutputs:
             patch("tasks.tasks.Finding.all_objects.filter") as mock_findings,
             patch(
                 "tasks.tasks._generate_output_directory",
-                return_value=("/tmp/test/out", "/tmp/test/comp", "/tmp/test/threat"),
+                return_value=("/tmp/test/out", "/tmp/test/comp"),
             ),
             patch("tasks.tasks.FindingOutput._transform_findings_stats"),
             patch("tasks.tasks.FindingOutput.transform_api_finding"),
@@ -209,7 +208,7 @@ class TestGenerateOutputs:
             patch("tasks.tasks.Finding.all_objects.filter") as mock_findings,
             patch(
                 "tasks.tasks._generate_output_directory",
-                return_value=("/tmp/test/out", "/tmp/test/comp", "/tmp/test/threat"),
+                return_value=("/tmp/test/out", "/tmp/test/comp"),
             ),
             patch(
                 "tasks.tasks.FindingOutput._transform_findings_stats",
@@ -289,7 +288,6 @@ class TestGenerateOutputs:
                 return_value=(
                     "/tmp/test/outdir",
                     "/tmp/test/compdir",
-                    "/tmp/test/threatdir",
                 ),
             ),
             patch("tasks.tasks._compress_output_files", return_value="outdir.zip"),
@@ -368,7 +366,6 @@ class TestGenerateOutputs:
                 return_value=(
                     "/tmp/test/outdir",
                     "/tmp/test/compdir",
-                    "/tmp/test/threatdir",
                 ),
             ),
             patch("tasks.tasks.FindingOutput._transform_findings_stats"),
@@ -436,7 +433,7 @@ class TestGenerateOutputs:
             patch("tasks.tasks.Finding.all_objects.filter") as mock_findings,
             patch(
                 "tasks.tasks._generate_output_directory",
-                return_value=("/tmp/test/out", "/tmp/test/comp", "/tmp/test/threat"),
+                return_value=("/tmp/test/out", "/tmp/test/comp"),
             ),
             patch(
                 "tasks.tasks.FindingOutput._transform_findings_stats",
@@ -494,7 +491,7 @@ class TestGenerateOutputs:
             patch("tasks.tasks.Finding.all_objects.filter") as mock_findings,
             patch(
                 "tasks.tasks._generate_output_directory",
-                return_value=("/tmp/test/out", "/tmp/test/comp", "/tmp/test/threat"),
+                return_value=("/tmp/test/out", "/tmp/test/comp"),
             ),
             patch("tasks.tasks.FindingOutput._transform_findings_stats"),
             patch("tasks.tasks.FindingOutput.transform_api_finding"),
@@ -535,34 +532,45 @@ class TestScanCompleteTasks:
     @patch("tasks.tasks.create_compliance_requirements_task.apply_async")
     @patch("tasks.tasks.perform_scan_summary_task.si")
     @patch("tasks.tasks.generate_outputs_task.si")
-    @patch("tasks.tasks.generate_threatscore_report_task.si")
+    @patch("tasks.tasks.generate_compliance_reports_task.si")
     @patch("tasks.tasks.check_integrations_task.si")
     def test_scan_complete_tasks(
         self,
         mock_check_integrations_task,
-        mock_threatscore_task,
+        mock_compliance_reports_task,
         mock_outputs_task,
         mock_scan_summary_task,
-        mock_compliance_tasks,
+        mock_compliance_requirements_task,
     ):
+        """Test that scan complete tasks are properly orchestrated with optimized reports."""
         _perform_scan_complete_tasks("tenant-id", "scan-id", "provider-id")
-        mock_compliance_tasks.assert_called_once_with(
+
+        # Verify compliance requirements task is called
+        mock_compliance_requirements_task.assert_called_once_with(
             kwargs={"tenant_id": "tenant-id", "scan_id": "scan-id"},
         )
+
+        # Verify scan summary task is called
         mock_scan_summary_task.assert_called_once_with(
             scan_id="scan-id",
             tenant_id="tenant-id",
         )
+
+        # Verify outputs task is called
         mock_outputs_task.assert_called_once_with(
             scan_id="scan-id",
             provider_id="provider-id",
             tenant_id="tenant-id",
         )
-        mock_threatscore_task.assert_called_once_with(
+
+        # Verify optimized compliance reports task is called (replaces individual tasks)
+        mock_compliance_reports_task.assert_called_once_with(
             tenant_id="tenant-id",
             scan_id="scan-id",
             provider_id="provider-id",
         )
+
+        # Verify integrations task is called
         mock_check_integrations_task.assert_called_once_with(
             tenant_id="tenant-id",
             provider_id="provider-id",
@@ -738,7 +746,7 @@ class TestCheckIntegrationsTask:
         mock_initialize_provider.return_value = MagicMock()
         mock_compliance_bulk.return_value = {}
         mock_get_frameworks.return_value = []
-        mock_generate_dir.return_value = ("out-dir", "comp-dir", "threat-dir")
+        mock_generate_dir.return_value = ("out-dir", "comp-dir")
         mock_transform_stats.return_value = {"stats": "data"}
 
         # Mock findings
@@ -863,7 +871,7 @@ class TestCheckIntegrationsTask:
         mock_initialize_provider.return_value = MagicMock()
         mock_compliance_bulk.return_value = {}
         mock_get_frameworks.return_value = []
-        mock_generate_dir.return_value = ("out-dir", "comp-dir", "threat-dir")
+        mock_generate_dir.return_value = ("out-dir", "comp-dir")
         mock_transform_stats.return_value = {"stats": "data"}
 
         # Mock findings
@@ -979,7 +987,7 @@ class TestCheckIntegrationsTask:
         mock_initialize_provider.return_value = MagicMock()
         mock_compliance_bulk.return_value = {}
         mock_get_frameworks.return_value = []
-        mock_generate_dir.return_value = ("out-dir", "comp-dir", "threat-dir")
+        mock_generate_dir.return_value = ("out-dir", "comp-dir")
         mock_transform_stats.return_value = {"stats": "data"}
 
         # Mock findings

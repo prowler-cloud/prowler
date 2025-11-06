@@ -29,7 +29,7 @@ import {
 } from "@/types/compliance";
 import { ScanEntity } from "@/types/scans";
 
-import { ThreatScoreDownloadButton } from "./threatscore-download-button";
+import { ComplianceDownloadButton } from "./compliance-download-button";
 
 interface ComplianceDetailSearchParams {
   complianceId: string;
@@ -159,7 +159,19 @@ export default async function ComplianceDetail({
           "ProwlerThreatScore" &&
           selectedScanId && (
             <div className="flex-shrink-0 pt-1">
-              <ThreatScoreDownloadButton scanId={selectedScanId} />
+              <ComplianceDownloadButton
+                scanId={selectedScanId}
+                reportType="threatscore"
+              />
+            </div>
+          )}
+        {attributesData?.data?.[0]?.attributes?.framework === "ENS" &&
+          selectedScanId && (
+            <div className="flex-shrink-0 pt-1">
+              <ComplianceDownloadButton
+                scanId={selectedScanId}
+                reportType="ens"
+              />
             </div>
           )}
       </div>
