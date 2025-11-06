@@ -9,7 +9,7 @@ import { downloadComplianceReportPdf } from "@/lib/helper";
 
 interface ComplianceDownloadButtonProps {
   scanId: string;
-  reportType: "threatscore" | "ens";
+  reportType: "threatscore" | "ens" | "nis2";
   label?: string;
 }
 
@@ -30,7 +30,11 @@ export const ComplianceDownloadButton = ({
   };
 
   const defaultLabel =
-    reportType === "threatscore" ? "PDF ThreatScore Report" : "PDF ENS Report";
+    reportType === "threatscore"
+      ? "PDF ThreatScore Report"
+      : reportType === "ens"
+        ? "PDF ENS Report"
+        : "PDF NIS2 Report";
 
   return (
     <Button

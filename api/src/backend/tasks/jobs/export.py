@@ -271,6 +271,8 @@ def _generate_output_directory(
         '/tmp/tenant-1234/scan-5678/threatscore/prowler-output-aws-20230215123456'
         >>> _generate_output_directory("/tmp", "aws", "tenant-1234", "scan-5678", "ens")
         '/tmp/tenant-1234/scan-5678/ens/prowler-output-aws-20230215123456'
+        >>> _generate_output_directory("/tmp", "aws", "tenant-1234", "scan-5678", "nis2")
+        '/tmp/tenant-1234/scan-5678/nis2/prowler-output-aws-20230215123456'
     """
     # Sanitize the prowler provider name to ensure it is a valid directory name
     prowler_provider_sanitized = re.sub(r"[^\w\-]", "-", prowler_provider)

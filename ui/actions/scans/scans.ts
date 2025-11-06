@@ -272,12 +272,12 @@ export const getComplianceCsv = async (
 /**
  * Generic function to get a compliance PDF report (ThreatScore or ENS)
  * @param scanId - The scan ID
- * @param reportType - Type of report: 'threatscore' or 'ens'
+ * @param reportType - Type of report: 'threatscore', 'ens', or 'nis2'
  * @returns Promise with the PDF data or error
  */
 export const getCompliancePdfReport = async (
   scanId: string,
-  reportType: "threatscore" | "ens",
+  reportType: "threatscore" | "ens" | "nis2",
 ) => {
   const headers = await getAuthHeaders({ contentType: false });
 
@@ -300,7 +300,11 @@ export const getCompliancePdfReport = async (
     if (!response.ok) {
       const errorData = await response.json();
       const reportName =
-        reportType === "threatscore" ? "ThreatScore" : "ENS RD2022";
+        reportType === "threatscore"
+          ? "ThreatScore"
+          : reportType === "ens"
+            ? "ENS RD2022"
+            : "NIS2";
       throw new Error(
         errorData?.errors?.detail ||
           `Unable to retrieve ${reportName} PDF report. Contact support if the issue continues.`,

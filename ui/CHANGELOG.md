@@ -10,6 +10,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Customer Support menu item [(#9143)](https://github.com/prowler-cloud/prowler/pull/9143)
 - PDF reporting for ENS compliance framework [(#9158)](https://github.com/prowler-cloud/prowler/pull/9158)
 - IaC (Infrastructure as Code) provider support for scanning remote repositories [(#8751)](https://github.com/prowler-cloud/prowler/pull/8751)
+- PDF reporting for NIS2 compliance framework [(#9170)](https://github.com/prowler-cloud/prowler/pull/9170)
 
 ### 🔄 Changed
 

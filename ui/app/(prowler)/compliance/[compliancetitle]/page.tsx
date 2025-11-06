@@ -174,6 +174,15 @@ export default async function ComplianceDetail({
               />
             </div>
           )}
+        {attributesData?.data?.[0]?.attributes?.framework === "NIS2" &&
+          selectedScanId && (
+            <div className="flex-shrink-0 pt-1">
+              <ComplianceDownloadButton
+                scanId={selectedScanId}
+                reportType="nis2"
+              />
+            </div>
+          )}
       </div>
 
       <Suspense
