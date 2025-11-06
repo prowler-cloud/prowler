@@ -36,6 +36,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS CodeArtifact service metadata to new format [(#8850)](https://github.com/prowler-cloud/prowler/pull/8850)
 - Rename OCI provider to oraclecloud with oci alias [(#9126)](https://github.com/prowler-cloud/prowler/pull/9126)
 
+### Fixed
+- Check `check_name` has no `resource_name` error for GCP provider [(#9169)](https://github.com/prowler-cloud/prowler/pull/9169)
+
 ---
 
 ## [v5.13.1] (Prowler UNRELEASED)
