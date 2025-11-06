@@ -4103,7 +4103,8 @@ class OverviewViewSet(BaseRLSViewSet):
                 raise NotFound(detail="ThreatScore snapshot not found")
 
         # Case 2: Latest snapshot per provider (default)
-        # Apply filters using the ThreatScoreSnapshotFilter
+        # Apply filters manually: this @action is outside the standard list endpoint flow,
+        # so DRF's filter backends don't execute and we must flatten JSON:API params ourselves.
         normalized_params = QueryDict(mutable=True)
         for param_key, values in request.query_params.lists():
             normalized_key = param_key
