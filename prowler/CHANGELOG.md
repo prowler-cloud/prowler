@@ -2,50 +2,12 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-<<<<<<< HEAD
-## [v5.13.1] (Prowler v5.13.1)
-=======
-## [v5.14.0] (Prowler UNRELEASED)
-
-### Added
-- GitHub provider check `organization_default_repository_permission_strict` [(#8785)](https://github.com/prowler-cloud/prowler/pull/8785)
-- Add OCI mapping to scan and check classes [(#8927)](https://github.com/prowler-cloud/prowler/pull/8927)
-- `codepipeline_project_repo_private` check for AWS provider [(#5915)](https://github.com/prowler-cloud/prowler/pull/5915)
-- `cloudstorage_bucket_versioning_enabled` check for GCP provider [(#9014)](https://github.com/prowler-cloud/prowler/pull/9014)
-- `cloudstorage_bucket_soft_delete_enabled` check for GCP provider [(#9028)](https://github.com/prowler-cloud/prowler/pull/9028)
-- `cloudstorage_bucket_logging_enabled` check for GCP provider [(#9091)](https://github.com/prowler-cloud/prowler/pull/9091)
-- C5 compliance framework for Azure provider [(#9081)](https://github.com/prowler-cloud/prowler/pull/9081)
-- C5 compliance framework for the GCP provider [(#9097)](https://github.com/prowler-cloud/prowler/pull/9097)
-- HIPAA compliance framework for the GCP provider [(#8955)](https://github.com/prowler-cloud/prowler/pull/8955)
-- Added validation for invalid checks, services, and categories in `load_checks_to_execute` function [(#8971)](https://github.com/prowler-cloud/prowler/pull/8971)
-
-### Changed
-- Update AWS Direct Connect service metadata to new format [(#8855)](https://github.com/prowler-cloud/prowler/pull/8855)
-- Update AWS DRS service metadata to new format [(#8870)](https://github.com/prowler-cloud/prowler/pull/8870)
-- Update AWS DynamoDB service metadata to new format [(#8871)](https://github.com/prowler-cloud/prowler/pull/8871)
-- Update AWS CloudWatch service metadata to new format [(#8848)](https://github.com/prowler-cloud/prowler/pull/8848)
-- Update AWS EMR service metadata to new format [(#9002)](https://github.com/prowler-cloud/prowler/pull/9002)
-- Update AWS EKS service metadata to new format [(#8890)](https://github.com/prowler-cloud/prowler/pull/8890)
-- Update AWS Elastic Beanstalk service metadata to new format [(#8934)](https://github.com/prowler-cloud/prowler/pull/8934)
-- Update AWS ElastiCache service metadata to new format [(#8933)](https://github.com/prowler-cloud/prowler/pull/8933)
-- Update AWS CodeBuild service metadata to new format [(#8851)](https://github.com/prowler-cloud/prowler/pull/8851)
-- Update GCP Artifact Registry service metadata to new format [(#9088)](https://github.com/prowler-cloud/prowler/pull/9088)
-- Update AWS EFS service metadata to new format [(#8889)](https://github.com/prowler-cloud/prowler/pull/8889)
-- Update AWS EventBridge service metadata to new format [(#9003)](https://github.com/prowler-cloud/prowler/pull/9003)
-- Update AWS Firehose service metadata to new format [(#9004)](https://github.com/prowler-cloud/prowler/pull/9004)
-- Update AWS FMS service metadata to new format [(#9005)](https://github.com/prowler-cloud/prowler/pull/9005)
-- Update AWS FSx service metadata to new format [(#9006)](https://github.com/prowler-cloud/prowler/pull/9006)
-- Update AWS Glacier service metadata to new format [(#9007)](https://github.com/prowler-cloud/prowler/pull/9007)
-- Update AWS CodeArtifact service metadata to new format [(#8850)](https://github.com/prowler-cloud/prowler/pull/8850)
-- Rename OCI provider to oraclecloud with oci alias [(#9126)](https://github.com/prowler-cloud/prowler/pull/9126)
+## [v5.13.2] (Prowler UNRELEASED)
 
 ### Fixed
 - Check `check_name` has no `resource_name` error for GCP provider [(#9169)](https://github.com/prowler-cloud/prowler/pull/9169)
 
----
-
-## [v5.13.1] (Prowler UNRELEASED)
->>>>>>> 8ab77b7db (fix(gcp): check `check_name` has no `resource_name` error (#9169))
+## [v5.13.1] (Prowler v5.13.1)
 
 ### Fixed
 - Add `resource_name` for checks under `logging` for the GCP provider [(#9023)](https://github.com/prowler-cloud/prowler/pull/9023)
