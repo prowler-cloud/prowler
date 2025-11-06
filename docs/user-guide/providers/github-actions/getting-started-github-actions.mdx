@@ -98,11 +98,30 @@ Authentication for private repositories can be provided using one of the followi
 
 ### Excluding Workflows
 
-Exclude specific workflows or patterns from scanning:
+Exclude specific workflows from the scan results using glob patterns. Prowler filters findings after zizmor completes the scan, matching patterns against both workflow filenames and full paths:
 
 ```bash
-prowler github_actions --exclude-workflows "test-*.yml" "experimental/*"
+# Exclude by filename pattern (matches any path)
+prowler github_actions --exclude-workflows "test-*.yml" "api-*.yml"
+
+# Exclude by full path pattern
+prowler github_actions --exclude-workflows ".github/workflows/experimental-*.yml"
+
+# Exclude entire subdirectories
+prowler github_actions --exclude-workflows "**/draft/*.yml"
+
+# Combine multiple pattern types
+prowler github_actions \
+  --workflow-path .github/workflows \
+  --exclude-workflows "test-*.yml" ".github/workflows/experimental/*"
 ```
+
+<Note>
+Patterns can match against either the full path or just the filename:
+- `test-*.yml` matches `test-deploy.yml` in any directory
+- `.github/workflows/test-*.yml` matches only workflows in that specific directory
+- `**/experimental/*.yml` matches workflows in any `experimental` subdirectory
+</Note>
 
 ### Output Formats
 

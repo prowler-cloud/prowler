@@ -3,6 +3,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from fnmatch import fnmatch
 from os import environ
 from typing import List
 
@@ -131,6 +132,42 @@ class GithubActionsProvider(Provider):
     def setup_session(self):
         """GitHub Actions provider doesn't need a session since it uses zizmor directly"""
         return None
+
+    def _should_exclude_workflow(self, workflow_file: str, exclude_patterns: list[str]) -> bool:
+        """
+        Check if a workflow file should be excluded based on exclude patterns.
+
+        Patterns can match against either:
+        - The full workflow path (e.g., ".github/workflows/test-*.yml")
+        - Just the filename (e.g., "test-*.yml")
+
+        Args:
+            workflow_file: The workflow file path
+            exclude_patterns: List of glob patterns to exclude
+
+        Returns:
+            True if the workflow should be excluded, False otherwise
+        """
+        if not exclude_patterns:
+            return False
+
+        # Get just the filename from the path
+        from os.path import basename
+        filename = basename(workflow_file)
+
+        # Check if the pattern matches either the full path or just the filename
+        for pattern in exclude_patterns:
+            # Try matching against full path first
+            if fnmatch(workflow_file, pattern):
+                logger.debug(f"Excluding workflow {workflow_file} (matches full path pattern: {pattern})")
+                return True
+
+            # Also try matching against just the filename for convenience
+            if fnmatch(filename, pattern):
+                logger.debug(f"Excluding workflow {workflow_file} (matches filename pattern: {pattern})")
+                return True
+
+        return False
 
     def _extract_workflow_file_from_location(self, location: dict) -> str:
         """
@@ -368,16 +405,13 @@ class GithubActionsProvider(Provider):
             logger.info(f"Running GitHub Actions security scan on {directory} ...")
 
             # Build zizmor command
+            # Note: zizmor doesn't support --exclude, so we filter findings after scanning
             zizmor_command = [
                 "zizmor",
                 directory,
                 "--format",
                 "json",
             ]
-
-            # Add exclude patterns if provided
-            for exclude_pattern in exclude_workflows:
-                zizmor_command.extend(["--exclude", exclude_pattern])
 
             with alive_bar(
                 ctrl_c=False,
@@ -444,6 +478,10 @@ class GithubActionsProvider(Provider):
                             location
                         )
                         if workflow_file:
+                            # Check if this workflow should be excluded
+                            if self._should_exclude_workflow(workflow_file, exclude_workflows):
+                                continue
+
                             report = self._process_zizmor_finding(
                                 finding, workflow_file, location
                             )

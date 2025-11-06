@@ -222,3 +222,53 @@ class TestGithubActionsProvider:
                 args = mock_print.call_args[0]
                 assert "https://github.com/test/repo" in str(args[0])
                 assert "test*.yml" in str(args[0])
+
+    def test_should_exclude_workflow(self):
+        """Test workflow exclusion pattern matching"""
+        with patch.object(GithubActionsProvider, "setup_session", return_value=None):
+            provider = GithubActionsProvider()
+
+            # Test no exclusions
+            assert not provider._should_exclude_workflow(
+                ".github/workflows/test.yml", []
+            )
+
+            # Test exact filename match
+            assert provider._should_exclude_workflow(
+                ".github/workflows/test.yml", ["test.yml"]
+            )
+
+            # Test wildcard pattern on filename
+            assert provider._should_exclude_workflow(
+                ".github/workflows/test-api.yml", ["test-*.yml"]
+            )
+
+            # Test multiple patterns
+            assert provider._should_exclude_workflow(
+                ".github/workflows/api-test.yml", ["test-*.yml", "api-*.yml"]
+            )
+
+            # Test no match
+            assert not provider._should_exclude_workflow(
+                ".github/workflows/deploy.yml", ["test-*.yml", "api-*.yml"]
+            )
+
+            # Test full path matching
+            assert provider._should_exclude_workflow(
+                ".github/workflows/test.yml", [".github/workflows/test.yml"]
+            )
+
+            # Test full path with wildcard
+            assert provider._should_exclude_workflow(
+                ".github/workflows/api-tests.yml", [".github/workflows/api-*.yml"]
+            )
+
+            # Test subdirectory patterns
+            assert provider._should_exclude_workflow(
+                ".github/workflows/experimental/test.yml", ["**/experimental/*.yml"]
+            )
+
+            # Test that filename pattern works regardless of path
+            assert provider._should_exclude_workflow(
+                "workflows/subdir/test-deploy.yml", ["test-*.yml"]
+            )
