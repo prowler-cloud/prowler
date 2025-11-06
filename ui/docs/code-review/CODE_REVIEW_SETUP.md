@@ -1,91 +1,87 @@
 # Code Review Setup - Prowler UI
 
-Guía para configurar la validación automática de código con Claude Code en el pre-commit hook.
+Guide to set up automatic code validation with Claude Code in the pre-commit hook.
 
-## Descripción General
+## Overview
 
-El sistema de code review funciona así:
+The code review system works like this:
 
-1. **Cuando activas `CODE_REVIEW_ENABLED=true` en `.env`**
-   - Al hacer `git commit`, el hook pre-commit se ejecuta
-   - Solo valida los archivos TypeScript/JavaScript que vas a commitear
-   - Usa Claude Code para analizar si cumplen con AGENTS.md
-   - Si hay violaciones → **BLOQUEA el commit**
-   - Si todo está bien → Continúa normalmente
+1. **When you enable `CODE_REVIEW_ENABLED=true` in `.env`**
+   - When you `git commit`, the pre-commit hook runs
+   - Only validates TypeScript/JavaScript files you're committing
+   - Uses Claude Code to check if they comply with AGENTS.md
+   - If there are violations → **BLOCKS the commit**
+   - If everything is fine → Continues normally
 
-2. **Cuando `CODE_REVIEW_ENABLED=false` (default)**
-   - El hook pre-commit no ejecuta validación
-   - No hay validación de estándares
-   - Los developers pueden commitear sin restricciones
+2. **When `CODE_REVIEW_ENABLED=false` (default)**
+   - The pre-commit hook does not run validation
+   - No standards validation
+   - Developers can commit without restrictions
 
-## Instalación
+## Installation
 
-### 1. Asegúrate que Claude Code esté en tu PATH
+### 1. Ensure Claude Code is in your PATH
 
 ```bash
-# Verifica que claude esté disponible en terminal
+# Verify that claude is available in terminal
 which claude
 
-# Si no aparece, verifica tu instalación de Claude Code CLI
+# If it doesn't appear, check your Claude Code CLI installation
 ```
 
-### 2. Activa la validación en `.env`
+### 2. Enable validation in `.env`
 
-En `/ui/.env`, busca la sección "Code Review Configuration":
+In `/ui/.env`, find the "Code Review Configuration" section:
 
 ```bash
 #### Code Review Configuration ####
 # Enable Claude Code standards validation on pre-commit hook
 # Set to 'true' to validate changes against AGENTS.md standards via Claude Code
 # Set to 'false' to skip validation
-CODE_REVIEW_ENABLED=false  # ← Cambia esto a 'true'
+CODE_REVIEW_ENABLED=false  # ← Change this to 'true'
 ```
 
-**Opciones:**
-- `CODE_REVIEW_ENABLED=true` → Activa validación
-- `CODE_REVIEW_ENABLED=false` → Desactiva validación (default)
+**Options:**
+- `CODE_REVIEW_ENABLED=true` → Enables validation
+- `CODE_REVIEW_ENABLED=false` → Disables validation (default)
 
-### 3. El hook está listo
+### 3. The hook is ready
 
-El archivo `.husky/pre-push` ya contiene la lógica. No necesitas instalar nada más.
+The `.husky/pre-commit` file already contains the logic. You don't need to install anything else.
 
-## Cómo Funciona
+## How It Works
 
-### Flujo Normal (con validación activada)
+### Normal Flow (with validation enabled)
 
 ```bash
-$ git push
+$ git commit -m "feat: add new component"
 
-# Hook pre-push se ejecuta automáticamente
-🚀 Prowler UI - Pre-Push Hook
-ℹ️  Code Review Status: true
+# Pre-commit hook executes automatically
+🚀 Prowler UI - Pre-Commit Hook
+ ℹ️  Code Review Status: true
 
-📋 Files being pushed (to validate):
+📋 Files to validate:
   - components/new-feature.tsx
   - types/new-feature.ts
 
 📤 Sending to Claude Code for validation...
 
-# Claude analiza los archivos...
+# Claude analyzes the files...
 
 === VALIDATION REPORT ===
 STATUS: PASSED
 All files comply with AGENTS.md standards.
 
 ✅ VALIDATION PASSED
-🔨 Building project...
-npm run build...
-
-✅ Pre-push checks completed successfully!
-# Push continúa ✅
+# Commit continues ✅
 ```
 
-### Si Hay Violaciones
+### If There Are Violations
 
 ```bash
-$ git push
+$ git commit -m "feat: add new component"
 
-# Claude detecta problemas...
+# Claude detects issues...
 
 === VALIDATION REPORT ===
 STATUS: FAILED
@@ -97,35 +93,35 @@ STATUS: FAILED
 
 ❌ VALIDATION FAILED
 
-Please fix the violations before pushing:
+Please fix the violations before committing:
   1. Review the violations listed above
   2. Fix the code according to AGENTS.md standards
   3. Commit your changes
-  4. Try pushing again
+  4. Try again
 
-# Push es BLOQUEADO ❌
+# Commit is BLOCKED ❌
 ```
 
-## Qué Valida
+## What Gets Validated
 
-El sistema verifica que los archivos cumplan con:
+The system verifies that files comply with:
 
 ### 1. React Imports
 ```typescript
-// ❌ INCORRECTO
+// ❌ WRONG
 import * as React from "react"
 import React, { useState } from "react"
 
-// ✅ CORRECTO
+// ✅ CORRECT
 import { useState } from "react"
 ```
 
 ### 2. TypeScript Type Patterns
 ```typescript
-// ❌ INCORRECTO
+// ❌ WRONG
 type SortOption = "high-low" | "low-high"
 
-// ✅ CORRECTO
+// ✅ CORRECT
 const SORT_OPTIONS = {
   HIGH_LOW: "high-low",
   LOW_HIGH: "low-high",
@@ -135,85 +131,85 @@ type SortOption = typeof SORT_OPTIONS[keyof typeof SORT_OPTIONS]
 
 ### 3. Tailwind CSS
 ```typescript
-// ❌ INCORRECTO
+// ❌ WRONG
 className="bg-[var(--color)]"
 className="text-[#ffffff]"
 
-// ✅ CORRECTO
+// ✅ CORRECT
 className="bg-card-bg text-white"
 ```
 
 ### 4. cn() Utility
 ```typescript
-// ❌ INCORRECTO
+// ❌ WRONG
 className={cn("flex items-center")}
 
-// ✅ CORRECTO
+// ✅ CORRECT
 className={cn("h-3 w-3", isCircle ? "rounded-full" : "rounded-sm")}
 ```
 
 ### 5. React 19 Hooks
 ```typescript
-// ❌ INCORRECTO
+// ❌ WRONG
 const memoized = useMemo(() => value, [])
 
-// ✅ CORRECTO
-// No usar useMemo (React Compiler lo maneja)
+// ✅ CORRECT
+// Don't use useMemo (React Compiler handles it)
 const value = expensiveCalculation()
 ```
 
 ### 6. Zod v4 Syntax
 ```typescript
-// ❌ INCORRECTO
+// ❌ WRONG
 z.string().email()
 z.string().nonempty()
 
-// ✅ CORRECTO
+// ✅ CORRECT
 z.email()
 z.string().min(1)
 ```
 
 ### 7. File Organization
 ```
-// ❌ INCORRECTO
-Código usado por 2+ features en carpeta feature-specific
+// ❌ WRONG
+Code used by 2+ features in feature-specific folder
 
-// ✅ CORRECTO
-Código usado por 1 feature → local en esa feature
-Código usado por 2+ features → en shared/global
+// ✅ CORRECT
+Code used by 1 feature → local in that feature
+Code used by 2+ features → in shared/global
 ```
 
 ### 8. Use Directives
 ```typescript
-// ❌ INCORRECTO
-export async function updateUser() { } // Falta "use server"
+// ❌ WRONG
+export async function updateUser() { } // Missing "use server"
 
-// ✅ CORRECTO
+// ✅ CORRECT
 "use server"
 export async function updateUser() { }
 ```
 
-## Desactivar Temporalmente
+## Disable Temporarily
 
-Si necesitas hacer push sin validación temporalmente:
+If you need to commit without validation temporarily:
 
 ```bash
-# Opción 1: Cambiar en .env
+# Option 1: Change in .env
 CODE_REVIEW_ENABLED=false
-git push
+git commit
 
-# Opción 2: Usar git hook bypass
-git push --no-verify
+# Option 2: Use git hook bypass
+git commit --no-verify
 
-# Opción 3: Desactivar el hook
-chmod -x .husky/pre-push
-git push
-chmod +x .husky/pre-push
+# Option 3: Disable the hook
+chmod -x .husky/pre-commit
+git commit
+chmod +x .husky/pre-commit
 ```
 
-**⚠️ Nota:** `--no-verify` salta TODOS los hooks, incluyendo el build check.
+**⚠️ Note:** `--no-verify` skips ALL hooks.
 
-## Solución de Problemas
+## Troubleshooting
 
 ### "Claude Code CLI not found"
 
@@ -222,79 +218,79 @@ chmod +x .husky/pre-push
 To enable: ensure Claude Code is in PATH and CODE_REVIEW_ENABLED=true
 ```
 
-**Solución:**
+**Solution:**
 ```bash
-# Verifica dónde está instalado claude-code
+# Check where claude-code is installed
 which claude-code
 
-# Si no aparece, agrega a tu ~/.zshrc:
-export PATH="$HOME/.local/bin:$PATH"  # o donde esté instalado
+# If not found, add to your ~/.zshrc:
+export PATH="$HOME/.local/bin:$PATH"  # or where it's installed
 
-# Recarga la terminal
+# Reload the terminal
 source ~/.zshrc
 ```
 
 ### "Validation inconclusive"
 
-Si Claude Code no puede determinar el status:
+If Claude Code cannot determine the status:
 
 ```
 ⚠️ Could not determine validation status
-Allowing push (validation inconclusive)
+Allowing commit (validation inconclusive)
 ```
 
-El push se permite automáticamente. Si quieres ser más estricto, puedes:
+The commit is allowed automatically. If you want to be stricter, you can:
 
-1. Revisar manualmente los archivos contra AGENTS.md
-2. Reportar el problema del análisis a Claude
+1. Manually review files against AGENTS.md
+2. Report the analysis problem to Claude
 
-### Build falla después de validación
+### Build fails after validation
 
 ```
 ❌ Build failed
 ```
 
-Si la validación pasa pero el build falla:
+If validation passes but build fails:
 
-1. Revisa el error del build
-2. Arréglalo localmente
-3. Haz commit y push de nuevo
+1. Check the build error
+2. Fix it locally
+3. Commit and try again
 
-## Ver el Reporte Completo
+## View the Full Report
 
-Los reportes se guardan en archivos temporales que se eliminan después. Para ver el reporte detallado en tiempo real, observa la salida del hook:
+Reports are saved in temporary files that are deleted afterward. To see the detailed report in real-time, watch the hook output:
 
 ```bash
-git push 2>&1 | tee push-report.txt
+git commit 2>&1 | tee commit-report.txt
 ```
 
-Esto guardará todo en `push-report.txt`.
+This will save everything to `commit-report.txt`.
 
-## Para el Equipo
+## For the Team
 
-### Activar en tu máquina
+### Enable on your machine
 
 ```bash
 cd ui
+# Edit .env locally and set:
 CODE_REVIEW_ENABLED=true
-# Edita .env localmente
 ```
 
-### Flujo Recomendado
+### Recommended Flow
 
-1. **Durante desarrollo**: `CODE_REVIEW_ENABLED=false`
-   - Iteras más rápido
-   - El build check aún se ejecuta
+1. **During development**: `CODE_REVIEW_ENABLED=false`
+   - Iterate faster
+   - Build check still runs
 
-2. **Antes de push final**: `CODE_REVIEW_ENABLED=true`
-   - Valida que cumplas con estándares
-   - Previene PRs rechazadas por violaciones
+2. **Before final commit**: `CODE_REVIEW_ENABLED=true`
+   - Verify you meet standards
+   - Prevent PRs rejected for violations
 
-3. **En CI/CD**: Podrías agregar una validación adicional
-   - (futuro) Validación server-side en GitHub Actions
+3. **In CI/CD**: You could add additional validation
+   - (future) Server-side validation in GitHub Actions
 
-## Contacto
+## Questions?
 
-Si tienes preguntas sobre los estándares validados, revisa:
-- `AGENTS.md` - Guía completa de arquitectura
-- `CLAUDE.md` - Instrucciones específicas del proyecto
+If you have questions about the standards being validated, check:
+- `AGENTS.md` - Complete architecture guide
+- `CLAUDE.md` - Project-specific instructions

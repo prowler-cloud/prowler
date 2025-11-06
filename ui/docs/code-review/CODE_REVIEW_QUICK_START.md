@@ -1,45 +1,45 @@
 # Code Review - Quick Start
 
-## 3 Pasos para Activar
+## 3 Steps to Enable
 
-### 1. Abre `.env`
+### 1. Open `.env`
 ```bash
 nano ui/.env
-# o tu editor favorito
+# or your favorite editor
 ```
 
-### 2. Encuentra esta línea
+### 2. Find this line
 ```bash
 CODE_REVIEW_ENABLED=false
 ```
 
-### 3. Cámbialo a
+### 3. Change it to
 ```bash
 CODE_REVIEW_ENABLED=true
 ```
 
-**Listo! ✅**
+**Done! ✅**
 
 ---
 
-## Qué Ocurre Ahora
+## What Happens Now
 
-Cada vez que hagas `git commit`:
+Every time you `git commit`:
 
 ```
-✅ Si tu código cumple con AGENTS.md standards:
-   → Commit se ejecuta normalmente
+✅ If your code complies with AGENTS.md standards:
+   → Commit executes normally
 
-❌ Si hay violaciones de estándares:
-   → Commit es BLOQUEADO
-   → Ves los errores en la terminal
-   → Arreglas el código
-   → Haces commit de nuevo
+❌ If there are standard violations:
+   → Commit is BLOCKED
+   → You see the errors in the terminal
+   → Fix the code
+   → Commit again
 ```
 
 ---
 
-## Ejemplo
+## Example
 
 ```bash
 $ git commit -m "feat: add new component"
@@ -64,7 +64,7 @@ STATUS: FAILED
 ❌ VALIDATION FAILED
 Fix violations before committing
 
-# Arreglas el archivo y haces commit de nuevo
+# Fix the file and commit again
 $ git commit -m "feat: add new component"
 
 🏁 Prowler UI - Pre-Commit Hook
@@ -75,41 +75,41 @@ $ git commit -m "feat: add new component"
 
 ✅ VALIDATION PASSED
 
-# Commit exitoso ✅
+# Commit successful ✅
 ```
 
 ---
 
-## Desactivar Temporalmente
+## Disable Temporarily
 
-Si necesitas hacer commit sin validación:
+If you need to commit without validation:
 
 ```bash
-# Opción 1: Cambiar en .env
+# Option 1: Change in .env
 CODE_REVIEW_ENABLED=false
 
-# Opción 2: Bypass (con cuidado!)
+# Option 2: Bypass (use with caution!)
 git commit --no-verify
 ```
 
 ---
 
-## Qué Valida
+## What Gets Validated
 
-- ✅ React imports correctos
+- ✅ Correct React imports
 - ✅ TypeScript patterns (const-based types)
-- ✅ Tailwind CSS (sin var() ni hex en className)
-- ✅ cn() utility (solo para condicionales)
-- ✅ No useMemo/useCallback sin razón
+- ✅ Tailwind CSS (no var() or hex in className)
+- ✅ cn() utility (only for conditionals)
+- ✅ No useMemo/useCallback without reason
 - ✅ Zod v4 syntax
-- ✅ Organización de archivos
-- ✅ Directivas "use client"/"use server"
+- ✅ File organization
+- ✅ Directives "use client"/"use server"
 
 ---
 
-## Más Info
+## More Info
 
-Lee `CODE_REVIEW_SETUP.md` para:
-- Solución de problemas
-- Detalles completos
-- Configuración avanzada
+Read `CODE_REVIEW_SETUP.md` for:
+- Troubleshooting
+- Complete details
+- Advanced configuration
