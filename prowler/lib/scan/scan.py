@@ -420,7 +420,6 @@ class Scan:
                     )
             # Update the scan duration when all checks are completed
             self._duration = int((datetime.datetime.now() - start_time).total_seconds())
-
         except Exception as error:
             check_name = check_name or "Scan error"
             logger.error(
