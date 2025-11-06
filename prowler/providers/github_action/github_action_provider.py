@@ -14,7 +14,7 @@ from prowler.config.config import (
     default_config_file_path,
     load_and_validate_config_file,
 )
-from prowler.lib.check.models import CheckReportGithubAction, CheckMetadata
+from prowler.lib.check.models import CheckMetadata, CheckReportGithubAction
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata
@@ -132,17 +132,48 @@ class GithubActionProvider(Provider):
         """GitHub Action provider doesn't need a session since it uses zizmor directly"""
         return None
 
+    def _extract_workflow_file_from_location(self, location: dict) -> str:
+        """
+        Extract the workflow file path from a location object.
+        Supports zizmor v1.x+ JSON format.
+
+        Args:
+            location: The location object from zizmor output
+
+        Returns:
+            The workflow file path, or None if not found
+        """
+        try:
+            symbolic = location.get("symbolic", {})
+
+            # v1.x+ format: symbolic.key.Local.given_path
+            if "key" in symbolic:
+                key = symbolic["key"]
+                if isinstance(key, dict) and "Local" in key:
+                    local = key["Local"]
+                    if isinstance(local, dict) and "given_path" in local:
+                        return local["given_path"]
+
+            logger.warning(f"Could not extract workflow file from location: {location}")
+            return None
+
+        except Exception as error:
+            logger.error(
+                f"Error extracting workflow file from location: {error.__class__.__name__} - {error}"
+            )
+            return None
+
     def _process_zizmor_finding(
         self, finding: dict, workflow_file: str, location: dict
     ) -> CheckReportGithubAction:
         """
-        Process a zizmor finding with the new JSON structure.
-        
+        Process a zizmor finding (v1.x+ format).
+
         Args:
             finding: The finding object from zizmor output
             workflow_file: The path to the workflow file
             location: The specific location object for this finding
-            
+
         Returns:
             CheckReportGithubAction: The processed check report
         """
@@ -151,7 +182,7 @@ class GithubActionProvider(Provider):
             concrete_location = location.get("concrete", {}).get("location", {})
             start = concrete_location.get("start_point", {})
             end = concrete_location.get("end_point", {})
-            
+
             # Format line range
             if start and end:
                 if start.get("row") == end.get("row"):
@@ -160,75 +191,86 @@ class GithubActionProvider(Provider):
                     line_range = f"lines {start.get('row', 'unknown')}-{end.get('row', 'unknown')}"
             else:
                 line_range = "location unknown"
-            
+
             # Get determinations (severity/confidence)
             determinations = finding.get("determinations", {})
             severity = determinations.get("severity", "Unknown").lower()
             confidence = determinations.get("confidence", "Unknown")
-            
+
             # Map zizmor severity to Prowler severity
             severity_map = {
                 "critical": "critical",
-                "high": "high", 
+                "high": "high",
                 "medium": "medium",
                 "low": "low",
                 "informational": "informational",
-                "unknown": "medium"
+                "unknown": "medium",
             }
             prowler_severity = severity_map.get(severity, "medium")
-            
+
             # Create CheckReport
-            finding_id = f"githubaction_{finding.get('ident', 'unknown').replace('-', '_')}"
-            
+            finding_id = (
+                f"githubaction_{finding.get('ident', 'unknown').replace('-', '_')}"
+            )
+
             # Prepare metadata dict
             metadata = {
                 "Provider": "github_action",
                 "CheckID": finding_id,
-                "CheckTitle": finding.get("desc", "Unknown GitHub Actions Security Issue"),
+                "CheckTitle": finding.get(
+                    "desc", "Unknown GitHub Actions Security Issue"
+                ),
                 "CheckType": ["Security"],
                 "ServiceName": "githubaction",
                 "SubServiceName": "",
                 "ResourceIdTemplate": "",
                 "Severity": prowler_severity,
                 "ResourceType": "GitHubActionsWorkflow",
-                "Description": finding.get("desc", "Security issue detected in GitHub Actions workflow"),
-                "Risk": location.get("symbolic", {}).get("annotation", "Security risk in workflow"),
+                "Description": finding.get(
+                    "desc", "Security issue detected in GitHub Actions workflow"
+                ),
+                "Risk": location.get("symbolic", {}).get(
+                    "annotation", "Security risk in workflow"
+                ),
                 "RelatedUrl": finding.get("url", "https://docs.zizmor.sh/"),
                 "Remediation": {
                     "Code": {
                         "CLI": "",
                         "NativeIaC": "",
                         "Other": "Review and fix the security issue in your GitHub Actions workflow",
-                        "Terraform": ""
+                        "Terraform": "",
                     },
                     "Recommendation": {
                         "Text": f"Review the security issue at {line_range} in {workflow_file}. {finding.get('desc', '')}",
-                        "Url": finding.get("url", "https://docs.zizmor.sh/")
-                    }
+                        "Url": finding.get("url", "https://docs.zizmor.sh/"),
+                    },
                 },
                 "Categories": ["security"],
                 "DependsOn": [],
                 "RelatedTo": [],
-                "Notes": ""
+                "Notes": "",
             }
-            
-            # Create the report with metadata as JSON string and finding
+
+            # Create the report - need to pass all required fields to the dataclass
+            # Since CheckReportGithubAction is a dataclass without custom __init__,
+            # we need to create it with all required fields from Check_Report
             report = CheckReportGithubAction(
-                metadata=json.dumps(metadata),
-                finding=finding,
-                workflow_path=workflow_file
+                status="FAIL",
+                status_extended=(
+                    f"GitHub Actions security issue found in {workflow_file} at {line_range}: "
+                    f"{finding.get('desc', 'Unknown issue')}. "
+                    f"Confidence: {confidence}. "
+                    f"Details: {location.get('symbolic', {}).get('annotation', 'No details available')}"
+                ),
+                check_metadata=CheckMetadata.parse_raw(json.dumps(metadata)),
+                resource=finding,
+                resource_details="",
+                resource_tags=[],
+                muted=False,
+                resource_name=workflow_file,
+                resource_line_range=line_range,
             )
-            
-            report.resource_name = workflow_file
-            report.resource_line_range = line_range
-            report.status = "FAIL"
-            report.status_extended = (
-                f"GitHub Actions security issue found in {workflow_file} at {line_range}: "
-                f"{finding.get('desc', 'Unknown issue')}. "
-                f"Confidence: {confidence}. "
-                f"Details: {location.get('symbolic', {}).get('annotation', 'No details available')}"
-            )
-            
+
             return report
         except Exception as error:
             logger.critical(
@@ -309,8 +351,21 @@ class GithubActionProvider(Provider):
         self, directory: str, exclude_workflows: list[str]
     ) -> List[CheckReportGithubAction]:
         try:
+            # Check zizmor version
+            try:
+                version_result = subprocess.run(
+                    ["zizmor", "--version"],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                )
+                zizmor_version = version_result.stdout.strip()
+                logger.info(f"Using {zizmor_version}")
+            except Exception as version_error:
+                logger.warning(f"Could not determine zizmor version: {version_error}")
+
             logger.info(f"Running GitHub Actions security scan on {directory} ...")
-            
+
             # Build zizmor command
             zizmor_command = [
                 "zizmor",
@@ -318,11 +373,11 @@ class GithubActionProvider(Provider):
                 "--format",
                 "json",
             ]
-            
+
             # Add exclude patterns if provided
             for exclude_pattern in exclude_workflows:
                 zizmor_command.extend(["--exclude", exclude_pattern])
-                
+
             with alive_bar(
                 ctrl_c=False,
                 bar="blocks",
@@ -331,8 +386,12 @@ class GithubActionProvider(Provider):
                 enrich_print=False,
             ) as bar:
                 try:
-                    bar.title = f"-> Running GitHub Actions security scan on {directory} ..."
+                    bar.title = (
+                        f"-> Running GitHub Actions security scan on {directory} ..."
+                    )
                     # Run zizmor with JSON output
+                    # Note: zizmor exits with non-zero code when findings exist (e.g., 14)
+                    # This is expected behavior, not an error
                     process = subprocess.run(
                         zizmor_command,
                         capture_output=True,
@@ -342,7 +401,7 @@ class GithubActionProvider(Provider):
                 except Exception as error:
                     bar.title = "-> Scan failed!"
                     raise error
-                    
+
             # Log zizmor's stderr output
             if process.stderr:
                 for line in process.stderr.strip().split("\n"):
@@ -356,12 +415,12 @@ class GithubActionProvider(Provider):
                 else:
                     logger.warning("No output returned from zizmor scan")
                     return []
-                    
+
                 # zizmor returns an array of findings directly
                 if not output or (isinstance(output, list) and len(output) == 0):
                     logger.info("No security issues found in GitHub Actions workflows")
                     return []
-                    
+
             except json.JSONDecodeError as error:
                 # zizmor might not output JSON for certain cases
                 logger.warning(f"Failed to parse zizmor output as JSON: {error}")
@@ -380,12 +439,14 @@ class GithubActionProvider(Provider):
                 # Extract workflow file from the finding's location
                 if "locations" in finding and finding["locations"]:
                     for location in finding["locations"]:
-                        if "symbolic" in location and "key" in location["symbolic"]:
-                            key = location["symbolic"]["key"]
-                            if "Local" in key:
-                                workflow_file = key["Local"]["given_path"]
-                                report = self._process_zizmor_finding(finding, workflow_file, location)
-                                reports.append(report)
+                        workflow_file = self._extract_workflow_file_from_location(
+                            location
+                        )
+                        if workflow_file:
+                            report = self._process_zizmor_finding(
+                                finding, workflow_file, location
+                            )
+                            reports.append(report)
 
             return reports
 
@@ -410,9 +471,7 @@ class GithubActionProvider(Provider):
                 f"Repository: {Fore.YELLOW}{self.repository_url}{Style.RESET_ALL}",
             ]
         else:
-            report_title = (
-                f"{Style.BRIGHT}Scanning local GitHub Actions workflows:{Style.RESET_ALL}"
-            )
+            report_title = f"{Style.BRIGHT}Scanning local GitHub Actions workflows:{Style.RESET_ALL}"
             report_lines = [
                 f"Directory: {Fore.YELLOW}{self.workflow_path}{Style.RESET_ALL}",
             ]

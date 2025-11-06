@@ -104,6 +104,7 @@ from prowler.providers.iac.models import IACOutputOptions
 from prowler.providers.kubernetes.models import KubernetesOutputOptions
 from prowler.providers.m365.models import M365OutputOptions
 from prowler.providers.nhn.models import NHNOutputOptions
+from prowler.providers.pipeline.models import PipelineOutputOptions
 
 
 def prowler():
@@ -178,8 +179,8 @@ def prowler():
     # Load compliance frameworks
     logger.debug("Loading compliance frameworks from .json files")
 
-    # Skip compliance frameworks for IAC and GitHub Action providers
-    if provider not in ["iac", "github_action"]:
+    # Skip compliance frameworks for IAC, GitHub Action, and Pipeline providers
+    if provider not in ["iac", "github_action", "pipeline"]:
         bulk_compliance_frameworks = Compliance.get_bulk(provider)
         # Complete checks metadata with the compliance framework specification
         bulk_checks_metadata = update_checks_metadata_with_compliance(
@@ -309,6 +310,8 @@ def prowler():
         output_options = IACOutputOptions(args, bulk_checks_metadata)
     elif provider == "github_action":
         output_options = GithubActionOutputOptions(args, bulk_checks_metadata)
+    elif provider == "pipeline":
+        output_options = PipelineOutputOptions(args, bulk_checks_metadata)
 
     # Run the quick inventory for the provider if available
     if hasattr(args, "quick_inventory") and args.quick_inventory:
@@ -318,8 +321,8 @@ def prowler():
     # Execute checks
     findings = []
 
-    if provider in ["iac", "github_action"]:
-        # For IAC and GitHub Action providers, run the scan directly
+    if provider in ["iac", "github_action", "pipeline"]:
+        # For IAC, GitHub Action, and Pipeline providers, run the scan directly
         findings = global_provider.run()
     elif len(checks_to_execute):
         findings = execute_checks(

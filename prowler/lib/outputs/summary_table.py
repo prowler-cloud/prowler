@@ -68,6 +68,16 @@ def display_summary_table(
             else:
                 entity_type = "Directory"
                 audited_entities = provider.workflow_path
+        elif provider.type == "pipeline":
+            if provider.organization:
+                entity_type = "Organization"
+                audited_entities = provider.organization
+            elif provider.repository_url:
+                entity_type = "Repository"
+                audited_entities = provider.repository_url
+            else:
+                entity_type = "Directory"
+                audited_entities = provider.scan_path
 
         # Check if there are findings and that they are not all MANUAL
         if findings and not all(finding.status == "MANUAL" for finding in findings):

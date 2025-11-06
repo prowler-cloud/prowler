@@ -311,6 +311,15 @@ class Finding(BaseModel):
                 output_data["region"] = check_output.resource_line_range
                 output_data["resource_line_range"] = check_output.resource_line_range
                 output_data["framework"] = "zizmor"
+            elif provider.type == "pipeline":
+                output_data["auth_method"] = provider.auth_method
+                output_data["account_uid"] = provider.identity.scan_type
+                output_data["account_name"] = provider.identity.platform
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_name
+                output_data["region"] = check_output.resource_line_range
+                output_data["resource_line_range"] = check_output.resource_line_range
+                output_data["framework"] = "poutine"
 
             # check_output Unique ID
             # TODO: move this to a function

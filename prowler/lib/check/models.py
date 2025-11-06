@@ -685,25 +685,34 @@ class CheckReportGithubAction(Check_Report):
     resource_name: str
     resource_line_range: str
 
+
+@dataclass
+class CheckReportPipeline(Check_Report):
+    """Contains the Pipeline Check's finding information using poutine."""
+
+    resource_name: str
+    resource_line_range: str
+
     def __init__(
-        self, metadata: dict = {}, finding: dict = {}, workflow_path: str = ""
+        self, metadata: dict = {}, finding: dict = {}, pipeline_path: str = ""
     ) -> None:
         """
-        Initialize the GitHub Action Check's finding information from a zizmor finding dict.
+        Initialize the Pipeline Check's finding information from a poutine finding dict.
 
         Args:
-            metadata (Dict): Optional check metadata (can be None).
-            finding (dict): A single finding result from zizmor's JSON output.
-            workflow_path (str): Path to the workflow file.
+            metadata (Dict): Check metadata as JSON string.
+            finding (dict): A single finding result from poutine's JSON output.
+            pipeline_path (str): Path to the pipeline file.
         """
         super().__init__(metadata, finding)
 
         self.resource = finding
-        self.resource_name = workflow_path
-        # Extract line range from location if available
+        self.resource_name = pipeline_path
+
+        # Extract line range from finding location
         location = finding.get("location", {})
-        if location.get("line"):
-            start_line = location.get("line", "")
+        if location.get("start_line"):
+            start_line = location.get("start_line", "")
             end_line = location.get("end_line", start_line)
             self.resource_line_range = f"{start_line}:{end_line}" if start_line else ""
         else:

@@ -20,8 +20,8 @@ def load_checks_to_execute(
 ) -> set:
     """Generate the list of checks to execute based on the cloud provider and the input arguments given"""
     try:
-        # Bypass check loading for IAC and GitHub Action providers since they use external tools directly
-        if provider in ["iac", "github_action"]:
+        # Bypass check loading for IAC, GitHub Action, and Pipeline providers since they use external tools directly
+        if provider in ["iac", "github_action", "pipeline"]:
             return set()
 
         # Local subsets

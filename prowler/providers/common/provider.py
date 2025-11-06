@@ -149,9 +149,11 @@ class Provider(ABC):
             provider_class_path = (
                 f"{providers_path}.{arguments.provider}.{arguments.provider}_provider"
             )
-            # Special handling for github_action provider
+            # Special handling for certain providers
             if arguments.provider == "github_action":
                 provider_class_name = "GithubActionProvider"
+            elif arguments.provider == "pipeline":
+                provider_class_name = "PipelineProvider"
             else:
                 provider_class_name = f"{arguments.provider.capitalize()}Provider"
             provider_class = getattr(
@@ -241,6 +243,17 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
+                elif "pipeline" in provider_class_name.lower():
+                    provider_class(
+                        scan_path=getattr(arguments, "scan_path", "."),
+                        repository_url=getattr(arguments, "repository_url", None),
+                        organization=getattr(arguments, "organization", None),
+                        platform=getattr(arguments, "platform", "github"),
+                        token=getattr(arguments, "token", None),
+                        exclude_paths=getattr(arguments, "exclude_paths", []),
+                        config_path=getattr(arguments, "config_file", None),
+                        fixer_config=fixer_config,
+                    )
                 elif "githubaction" in provider_class_name.lower():
                     provider_class(
                         workflow_path=getattr(arguments, "workflow_path", "."),
@@ -249,7 +262,9 @@ class Provider(ABC):
                         config_path=getattr(arguments, "config_file", None),
                         fixer_config=fixer_config,
                         github_username=getattr(arguments, "github_username", None),
-                        personal_access_token=getattr(arguments, "personal_access_token", None),
+                        personal_access_token=getattr(
+                            arguments, "personal_access_token", None
+                        ),
                         oauth_app_token=getattr(arguments, "oauth_app_token", None),
                     )
                 elif "github" in provider_class_name.lower():
