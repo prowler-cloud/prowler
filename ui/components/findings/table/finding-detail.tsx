@@ -11,6 +11,7 @@ import { CustomLink } from "@/components/ui/custom/custom-link";
 import { EntityInfoShort, InfoField } from "@/components/ui/entities";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import { SeverityBadge } from "@/components/ui/table/severity-badge";
+import { buildAwsConsoleUrl } from "@/lib/aws-utils";
 import { buildGitFileUrl, extractLineRangeFromUid } from "@/lib/iac-utils";
 import { FindingProps, ProviderType } from "@/types";
 
@@ -59,15 +60,17 @@ export const FindingDetail = ({
   params.set("id", findingDetails.id);
   const url = `${window.location.origin}${currentUrl.pathname}?${params.toString()}`;
 
-  // Build Git URL for IaC findings
-  const gitUrl =
+  // Build external resource URL based on provider
+  const externalUrl =
     providerDetails.provider === "iac"
       ? buildGitFileUrl(
           providerDetails.uid,
           resource.name,
           extractLineRangeFromUid(attributes.uid) || "",
         )
-      : null;
+      : providerDetails.provider === "aws" && resource.uid
+        ? buildAwsConsoleUrl(resource.uid)
+        : null;
 
   return (
     <div className="flex flex-col gap-6 rounded-lg">
@@ -257,22 +260,31 @@ export const FindingDetail = ({
       {/* Resource Details */}
       <CustomSection
         title={
-          providerDetails.provider === "iac" ? (
+          externalUrl ? (
             <span className="flex items-center gap-2">
               Resource Details
-              {gitUrl && (
-                <Tooltip content="Go to Resource in the Repository" size="sm">
-                  <a
-                    href={gitUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-bg-data-info inline-flex cursor-pointer"
-                    aria-label="Open resource in repository"
-                  >
-                    <ExternalLink size={16} className="inline" />
-                  </a>
-                </Tooltip>
-              )}
+              <Tooltip
+                content={
+                  providerDetails.provider === "iac"
+                    ? "Go to Resource in the Repository"
+                    : "Go to Resource in AWS Console"
+                }
+                size="sm"
+              >
+                <a
+                  href={externalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-bg-data-info inline-flex cursor-pointer"
+                  aria-label={
+                    providerDetails.provider === "iac"
+                      ? "Open resource in repository"
+                      : "Open resource in AWS Console"
+                  }
+                >
+                  <ExternalLink size={16} className="inline" />
+                </a>
+              </Tooltip>
             </span>
           ) : (
             "Resource Details"
