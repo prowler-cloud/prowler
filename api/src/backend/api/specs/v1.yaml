@@ -15491,7 +15491,7 @@ components:
               type: string
               title: Unique identifier for the provider, set by the provider
               description: Unique identifier for the provider, set by the provider,
-                e.g. AWS account ID, Azure subscription ID, GCP project ID, etc.
+                e.g. AWS account ID, Azure subscription ID, GCP project ID, MongoDB Atlas organization ID, etc.
               maxLength: 250
               minLength: 3
           required:
@@ -15550,7 +15550,7 @@ components:
                   minLength: 3
                   title: Unique identifier for the provider, set by the provider
                   description: Unique identifier for the provider, set by the provider,
-                    e.g. AWS account ID, Azure subscription ID, GCP project ID, etc.
+                    e.g. AWS account ID, Azure subscription ID, GCP project ID, MongoDB Atlas organization ID, etc.
                   maxLength: 250
               required:
               - uid

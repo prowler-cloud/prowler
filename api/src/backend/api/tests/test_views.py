@@ -1156,7 +1156,7 @@ class TestProviderViewSet:
                 {
                     "provider": "mongodbatlas",
                     "uid": "64b1d3c0e4b03b1234567890",
-                    "alias": "Atlas Project",
+                    "alias": "Atlas Organization",
                 },
             ]
         ),

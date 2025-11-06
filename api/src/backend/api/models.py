@@ -386,7 +386,7 @@ class Provider(RowLevelSecurityProtectedModel):
     def validate_mongodbatlas_uid(value):
         if not re.match(r"^[0-9a-fA-F]{24}$", value):
             raise ModelValidationError(
-                detail="MongoDB Atlas project ID must be a 24-character hexadecimal string.",
+                detail="MongoDB Atlas organization ID must be a 24-character hexadecimal string.",
                 code="mongodbatlas-uid",
                 pointer="/data/attributes/uid",
             )
