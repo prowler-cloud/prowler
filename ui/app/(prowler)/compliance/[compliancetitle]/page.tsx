@@ -61,23 +61,6 @@ const ComplianceIconSmall = ({
   );
 };
 
-const ComplianceLogo = ({ logoPath }: { logoPath?: string }) => {
-  if (!logoPath) {
-    return null;
-  }
-
-  return (
-    <div className="relative h-[200px] w-[200px] rounded-lg border border-gray-300 bg-white p-2 dark:border-gray-700 dark:bg-gray-900">
-      <Image
-        src={logoPath}
-        alt="Compliance logo"
-        fill
-        className="object-contain p-2"
-      />
-    </div>
-  );
-};
-
 const ChartsWrapper = ({
   children,
 }: {
@@ -154,38 +137,31 @@ export default async function ComplianceDetail({
         )
       }
     >
-      <div className="relative">
-        {logoPath && (
-          <div className="absolute top-0 right-0 z-10 hidden sm:block">
-            <ComplianceLogo logoPath={logoPath} />
+      {selectedScanId && selectedScan && (
+        <div className="flex max-w-[328px] flex-col items-start">
+          <div className="rounded-lg bg-gray-50 p-2 dark:bg-gray-800">
+            <ComplianceScanInfo scan={selectedScan} />
           </div>
-        )}
-        {selectedScanId && selectedScan && (
-          <div className="flex max-w-[328px] flex-col items-start">
-            <div className="rounded-lg bg-gray-50 p-2 dark:bg-gray-800">
-              <ComplianceScanInfo scan={selectedScan} />
-            </div>
-            <Spacer y={8} />
-          </div>
-        )}
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex-1">
-            <ComplianceHeader
-              scans={[]}
-              uniqueRegions={uniqueRegions}
-              showSearch={false}
-              framework={compliancetitle}
-              showProviders={false}
-            />
-          </div>
-          {attributesData?.data?.[0]?.attributes?.framework ===
-            "ProwlerThreatScore" &&
-            selectedScanId && (
-              <div className="flex-shrink-0">
-                <ThreatScoreDownloadButton scanId={selectedScanId} />
-              </div>
-            )}
+          <Spacer y={8} />
         </div>
+      )}
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1">
+          <ComplianceHeader
+            scans={[]}
+            uniqueRegions={uniqueRegions}
+            showSearch={false}
+            framework={compliancetitle}
+            showProviders={false}
+          />
+        </div>
+        {attributesData?.data?.[0]?.attributes?.framework ===
+          "ProwlerThreatScore" &&
+          selectedScanId && (
+            <div className="flex-shrink-0 pt-1">
+              <ThreatScoreDownloadButton scanId={selectedScanId} />
+            </div>
+          )}
       </div>
 
       <Suspense
