@@ -16,12 +16,6 @@ def init_parser(self):
         "Authentication"
     )
     github_actions_auth_subparser.add_argument(
-        "--github-username",
-        nargs="?",
-        default=None,
-        help="GitHub username for authentication when cloning private repositories",
-    )
-    github_actions_auth_subparser.add_argument(
         "--personal-access-token",
         nargs="?",
         default=None,
@@ -75,11 +69,8 @@ def validate_arguments(arguments):
     if hasattr(arguments, "repository_url") and arguments.repository_url:
         has_github_auth = False
 
-        if hasattr(arguments, "github_username") and hasattr(
-            arguments, "personal_access_token"
-        ):
-            if arguments.github_username and arguments.personal_access_token:
-                has_github_auth = True
+        if hasattr(arguments, "personal_access_token") and arguments.personal_access_token:
+            has_github_auth = True
 
         if hasattr(arguments, "oauth_app_token") and arguments.oauth_app_token:
             has_github_auth = True

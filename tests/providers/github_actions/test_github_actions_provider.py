@@ -29,12 +29,10 @@ class TestGithubActionsProvider:
         with patch.object(GithubActionsProvider, "setup_session", return_value=None):
             provider = GithubActionsProvider(
                 repository_url="https://github.com/test/repo",
-                github_username="testuser",
                 personal_access_token="token123",
             )
 
             assert provider.repository_url == "https://github.com/test/repo"
-            assert provider.github_username == "testuser"
             assert provider.personal_access_token == "token123"
             assert provider.auth_method == "Personal Access Token"
 
@@ -48,7 +46,6 @@ class TestGithubActionsProvider:
 
             assert provider.oauth_app_token == "oauth_token123"
             assert provider.auth_method == "OAuth App Token"
-            assert provider.github_username is None
             assert provider.personal_access_token is None
 
     def test_process_zizmor_finding(self):
@@ -183,7 +180,6 @@ class TestGithubActionsProvider:
                     ):
                         temp_dir = provider._clone_repository(
                             "https://github.com/test/repo",
-                            github_username="user",
                             personal_access_token="token",
                         )
 

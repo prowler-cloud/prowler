@@ -34,7 +34,6 @@ class GithubActionsProvider(Provider):
         config_path: str = None,
         config_content: dict = None,
         fixer_config: dict = {},
-        github_username: str = None,
         personal_access_token: str = None,
         oauth_app_token: str = None,
     ):
@@ -51,27 +50,21 @@ class GithubActionsProvider(Provider):
 
         if repository_url:
             oauth_app_token = oauth_app_token or environ.get("GITHUB_OAUTH_APP_TOKEN")
-            github_username = github_username or environ.get("GITHUB_USERNAME")
             personal_access_token = personal_access_token or environ.get(
                 "GITHUB_PERSONAL_ACCESS_TOKEN"
             )
 
             if oauth_app_token:
                 self.oauth_app_token = oauth_app_token
-                self.github_username = None
                 self.personal_access_token = None
                 self._auth_method = "OAuth App Token"
                 logger.info("Using OAuth App Token for GitHub authentication")
-            elif github_username and personal_access_token:
-                self.github_username = github_username
+            elif personal_access_token:
                 self.personal_access_token = personal_access_token
                 self.oauth_app_token = None
                 self._auth_method = "Personal Access Token"
-                logger.info(
-                    "Using GitHub username and personal access token for authentication"
-                )
+                logger.info("Using personal access token for authentication")
             else:
-                self.github_username = None
                 self.personal_access_token = None
                 self.oauth_app_token = None
                 logger.debug(
@@ -318,7 +311,6 @@ class GithubActionsProvider(Provider):
     def _clone_repository(
         self,
         repository_url: str,
-        github_username: str = None,
         personal_access_token: str = None,
         oauth_app_token: str = None,
     ) -> str:
@@ -328,10 +320,10 @@ class GithubActionsProvider(Provider):
         try:
             original_url = repository_url
 
-            if github_username and personal_access_token:
+            if personal_access_token:
                 repository_url = repository_url.replace(
                     "https://github.com/",
-                    f"https://{github_username}:{personal_access_token}@github.com/",
+                    f"https://{personal_access_token}@github.com/",
                 )
             elif oauth_app_token:
                 repository_url = repository_url.replace(
@@ -369,7 +361,6 @@ class GithubActionsProvider(Provider):
         if self.repository_url:
             scan_dir = temp_dir = self._clone_repository(
                 self.repository_url,
-                getattr(self, "github_username", None),
                 getattr(self, "personal_access_token", None),
                 getattr(self, "oauth_app_token", None),
             )

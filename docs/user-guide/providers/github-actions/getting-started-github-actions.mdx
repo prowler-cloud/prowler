@@ -67,7 +67,6 @@ Scan a private repository with authentication:
 
 ```bash
 prowler github_actions --repository-url https://github.com/user/private-repo \
-  --github-username YOUR_USERNAME \
   --personal-access-token YOUR_TOKEN
 ```
 
@@ -78,7 +77,6 @@ Authentication for private repositories can be provided using one of the followi
 - **Personal Access Token:**
   ```bash
   prowler github_actions --repository-url https://github.com/org/private-repo \
-    --github-username YOUR_USERNAME \
     --personal-access-token YOUR_PAT
   ```
 - **OAuth App Token:**
@@ -88,7 +86,6 @@ Authentication for private repositories can be provided using one of the followi
   ```
 - If not provided via CLI, the following environment variables will be used:
   ```bash
-  export GITHUB_USERNAME=your-username
   export GITHUB_PERSONAL_ACCESS_TOKEN=your-token
   # or
   export GITHUB_OAUTH_APP_TOKEN=your-oauth-token
