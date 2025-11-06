@@ -1,8 +1,12 @@
+import csv
+import io
 import json
 import time
+import uuid
 from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timezone
+from typing import Any
 
 from celery.utils.log import get_task_logger
 from config.settings.celery import CELERY_DEADLOCK_ATTEMPTS
@@ -14,8 +18,11 @@ from api.compliance import (
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
     generate_scan_compliance,
 )
+from api.db_router import READ_REPLICA_ALIAS, MainRouter
 from api.db_utils import (
-    create_objects_in_batches,
+    POSTGRES_TENANT_VAR,
+    SET_CONFIG_QUERY,
+    psycopg_connection,
     rls_transaction,
     update_objects_in_batches,
 )
@@ -23,6 +30,7 @@ from api.exceptions import ProviderConnectionError
 from api.models import (
     ComplianceRequirementOverview,
     Finding,
+    MuteRule,
     Processor,
     Provider,
     Resource,
@@ -39,6 +47,28 @@ from prowler.lib.outputs.finding import Finding as ProwlerFinding
 from prowler.lib.scan.scan import Scan as ProwlerScan
 
 logger = get_task_logger(__name__)
+
+# Column order must match `ComplianceRequirementOverview` schema in
+# `api/models.py`. Keep this list minimal but sufficient to populate all
+# non-nullable fields plus the counters we care about.
+COMPLIANCE_REQUIREMENT_COPY_COLUMNS = (
+    "id",
+    "tenant_id",
+    "inserted_at",
+    "compliance_id",
+    "framework",
+    "version",
+    "description",
+    "region",
+    "requirement_id",
+    "requirement_status",
+    "passed_checks",
+    "failed_checks",
+    "total_checks",
+    "passed_findings",
+    "total_findings",
+    "scan_id",
+)
 
 
 def _create_finding_delta(
@@ -107,6 +137,124 @@ def _store_resources(
     return resource_instance, (resource_instance.uid, resource_instance.region)
 
 
+def _copy_compliance_requirement_rows(
+    tenant_id: str, rows: list[dict[str, Any]]
+) -> None:
+    """Stream compliance requirement rows into Postgres using COPY.
+
+    We leverage the admin connection (when available) to bypass the COPY + RLS
+    restriction, writing only the fields required by
+    ``ComplianceRequirementOverview``.
+
+    Args:
+        tenant_id: Target tenant UUID.
+        rows: List of row dictionaries prepared by
+            :func:`create_compliance_requirements`.
+    """
+
+    csv_buffer = io.StringIO()
+    writer = csv.writer(csv_buffer)
+
+    datetime_now = datetime.now(tz=timezone.utc)
+    for row in rows:
+        writer.writerow(
+            [
+                str(row.get("id")),
+                str(row.get("tenant_id")),
+                (row.get("inserted_at") or datetime_now).isoformat(),
+                row.get("compliance_id") or "",
+                row.get("framework") or "",
+                row.get("version") or "",
+                row.get("description") or "",
+                row.get("region") or "",
+                row.get("requirement_id") or "",
+                row.get("requirement_status") or "",
+                row.get("passed_checks", 0),
+                row.get("failed_checks", 0),
+                row.get("total_checks", 0),
+                row.get("passed_findings", 0),
+                row.get("total_findings", 0),
+                str(row.get("scan_id")),
+            ]
+        )
+
+    csv_buffer.seek(0)
+    copy_sql = (
+        "COPY compliance_requirements_overviews ("
+        + ", ".join(COMPLIANCE_REQUIREMENT_COPY_COLUMNS)
+        + ") FROM STDIN WITH (FORMAT CSV, DELIMITER ',', QUOTE '\"', ESCAPE '\"', NULL '\\N')"
+    )
+
+    try:
+        with psycopg_connection(MainRouter.admin_db) as connection:
+            connection.autocommit = False
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute(SET_CONFIG_QUERY, [POSTGRES_TENANT_VAR, tenant_id])
+                    cursor.copy_expert(copy_sql, csv_buffer)
+                connection.commit()
+            except Exception:
+                connection.rollback()
+                raise
+    finally:
+        csv_buffer.close()
+
+
+def _persist_compliance_requirement_rows(
+    tenant_id: str, rows: list[dict[str, Any]]
+) -> None:
+    """Persist compliance requirement rows using COPY with ORM fallback.
+
+    Args:
+        tenant_id: Target tenant UUID.
+        rows: Precomputed row dictionaries that reflect the compliance
+            overview state for a scan.
+    """
+    if not rows:
+        return
+
+    try:
+        _copy_compliance_requirement_rows(tenant_id, rows)
+    except Exception as error:
+        logger.exception(
+            "COPY bulk insert for compliance requirements failed; falling back to ORM bulk_create",
+            exc_info=error,
+        )
+        fallback_objects = [
+            ComplianceRequirementOverview(
+                id=row["id"],
+                tenant_id=row["tenant_id"],
+                inserted_at=row["inserted_at"],
+                compliance_id=row["compliance_id"],
+                framework=row["framework"],
+                version=row["version"],
+                description=row["description"],
+                region=row["region"],
+                requirement_id=row["requirement_id"],
+                requirement_status=row["requirement_status"],
+                passed_checks=row["passed_checks"],
+                failed_checks=row["failed_checks"],
+                total_checks=row["total_checks"],
+                passed_findings=row.get("passed_findings", 0),
+                total_findings=row.get("total_findings", 0),
+                scan_id=row["scan_id"],
+            )
+            for row in rows
+        ]
+        with rls_transaction(tenant_id):
+            ComplianceRequirementOverview.objects.bulk_create(
+                fallback_objects, batch_size=500
+            )
+
+
+def _normalized_compliance_key(framework: str | None, version: str | None) -> str:
+    """Return normalized identifier used to group compliance totals."""
+
+    normalized_framework = (framework or "").lower().replace("-", "").replace("_", "")
+    normalized_version = (version or "").lower().replace("-", "").replace("_", "")
+    return f"{normalized_framework}{normalized_version}"
+
+
 def perform_prowler_scan(
     tenant_id: str,
     scan_id: str,
@@ -143,7 +291,7 @@ def perform_prowler_scan(
         scan_instance.save()
 
     # Find the mutelist processor if it exists
-    with rls_transaction(tenant_id):
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
         try:
             mutelist_processor = Processor.objects.get(
                 tenant_id=tenant_id, processor_type=Processor.ProcessorChoices.MUTELIST
@@ -154,6 +302,20 @@ def perform_prowler_scan(
             logger.error(f"Error processing mutelist rules: {e}")
             mutelist_processor = None
 
+    # Load enabled mute rules for this tenant
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        try:
+            active_mute_rules = MuteRule.objects.filter(
+                tenant_id=tenant_id, enabled=True
+            ).values_list("finding_uids", "reason")
+
+            mute_rules_cache = {}
+            for finding_uids, reason in active_mute_rules:
+                for uid in finding_uids:
+                    mute_rules_cache[uid] = reason
+        except Exception as e:
+            logger.error(f"Error loading mute rules: {e}")
+            mute_rules_cache = {}
     try:
         with rls_transaction(tenant_id):
             try:
@@ -272,7 +434,7 @@ def perform_prowler_scan(
                 unique_resources.add((resource_instance.uid, resource_instance.region))
 
                 # Process finding
-                with rls_transaction(tenant_id):
+                with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
                     finding_uid = finding.uid
                     last_first_seen_at = None
                     if finding_uid not in last_status_cache:
@@ -302,9 +464,26 @@ def perform_prowler_scan(
                     if not last_first_seen_at:
                         last_first_seen_at = datetime.now(tz=timezone.utc)
 
-                    # If the finding is muted at this time the reason must be the configured Mutelist
-                    muted_reason = "Muted by mutelist" if finding.muted else None
+                    # Determine if finding should be muted and why
+                    # Priority: mutelist processor (highest) > manual mute rules
+                    is_muted = False
+                    muted_reason = None
 
+                    # Check mutelist processor first (highest priority)
+                    if finding.muted:
+                        is_muted = True
+                        muted_reason = "Muted by mutelist"
+                    # If not muted by mutelist, check manual mute rules
+                    elif finding_uid in mute_rules_cache:
+                        is_muted = True
+                        muted_reason = mute_rules_cache[finding_uid]
+
+                    # Increment failed_findings_count cache if the finding status is FAIL and not muted
+                    if status == FindingStatus.FAIL and not is_muted:
+                        resource_uid = finding.resource_uid
+                        resource_failed_findings_cache[resource_uid] += 1
+
+                with rls_transaction(tenant_id):
                     # Create the finding
                     finding_instance = Finding.objects.create(
                         tenant_id=tenant_id,
@@ -319,16 +498,12 @@ def perform_prowler_scan(
                         check_id=finding.check_id,
                         scan=scan_instance,
                         first_seen_at=last_first_seen_at,
-                        muted=finding.muted,
+                        muted=is_muted,
+                        muted_at=datetime.now(tz=timezone.utc) if is_muted else None,
                         muted_reason=muted_reason,
                         compliance=finding.compliance,
                     )
                     finding_instance.add_resources([resource_instance])
-
-                    # Increment failed_findings_count cache if the finding status is FAIL and not muted
-                    if status == FindingStatus.FAIL and not finding.muted:
-                        resource_uid = finding.resource_uid
-                        resource_failed_findings_cache[resource_uid] += 1
 
                 # Update scan resource summaries
                 scan_resource_cache.add(
@@ -439,7 +614,7 @@ def aggregate_findings(tenant_id: str, scan_id: str):
         - muted_new: Muted findings with a delta of 'new'.
         - muted_changed: Muted findings with a delta of 'changed'.
     """
-    with rls_transaction(tenant_id):
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
         findings = Finding.objects.filter(tenant_id=tenant_id, scan_id=scan_id)
 
         aggregation = findings.values(
@@ -582,15 +757,32 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
         ValidationError: If tenant_id is not a valid UUID.
     """
     try:
-        with rls_transaction(tenant_id):
+        with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
             scan_instance = Scan.objects.get(pk=scan_id)
             provider_instance = scan_instance.provider
             prowler_provider = return_prowler_provider(provider_instance)
 
+        compliance_template = PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE[
+            provider_instance.provider
+        ]
+        modeled_threatscore_compliance_id = "ProwlerThreatScore-1.0"
+        threatscore_requirements_by_check: dict[str, set[str]] = {}
+        threatscore_framework = compliance_template.get(
+            modeled_threatscore_compliance_id
+        )
+        if threatscore_framework:
+            for requirement_id, requirement in threatscore_framework[
+                "requirements"
+            ].items():
+                for check_id in requirement["checks"]:
+                    threatscore_requirements_by_check.setdefault(check_id, set()).add(
+                        requirement_id
+                    )
+
         # Get check status data by region from findings
         findings = (
             Finding.all_objects.filter(scan_id=scan_id, muted=False)
-            .only("id", "check_id", "status")
+            .only("id", "check_id", "status", "compliance")
             .prefetch_related(
                 Prefetch(
                     "resources",
@@ -601,14 +793,36 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
             .iterator(chunk_size=1000)
         )
 
+        findings_count_by_compliance = {}
         check_status_by_region = {}
-        with rls_transaction(tenant_id):
+        with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
             for finding in findings:
                 for resource in finding.small_resources:
                     region = resource.region
                     current_status = check_status_by_region.setdefault(region, {})
                     if current_status.get(finding.check_id) != "FAIL":
                         current_status[finding.check_id] = finding.status
+                    if modeled_threatscore_compliance_id in finding.compliance:
+                        for requirement_id in finding.compliance[
+                            modeled_threatscore_compliance_id
+                        ]:
+                            compliance_key = findings_count_by_compliance.setdefault(
+                                region, {}
+                            ).setdefault(
+                                modeled_threatscore_compliance_id.lower().replace(
+                                    "-", ""
+                                ),
+                                {},
+                            )
+                            if requirement_id not in compliance_key:
+                                compliance_key[requirement_id] = {
+                                    "total": 0,
+                                    "pass": 0,
+                                }
+
+                            compliance_key[requirement_id]["total"] += 1
+                            if finding.status == "PASS":
+                                compliance_key[requirement_id]["pass"] += 1
 
         try:
             # Try to get regions from provider
@@ -616,11 +830,6 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
         except (AttributeError, Exception):
             # If not available, use regions from findings
             regions = set(check_status_by_region.keys())
-
-        # Get compliance template for the provider
-        compliance_template = PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE[
-            provider_instance.provider
-        ]
 
         # Create compliance data by region
         compliance_overview_by_region = {
@@ -640,36 +849,53 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
                     status,
                 )
 
-        # Prepare compliance requirement objects
-        compliance_requirement_objects = []
+        # Prepare compliance requirement rows
+        compliance_requirement_rows: list[dict[str, Any]] = []
+        utc_datetime_now = datetime.now(tz=timezone.utc)
         for region, compliance_data in compliance_overview_by_region.items():
             for compliance_id, compliance in compliance_data.items():
+                modeled_compliance_id = _normalized_compliance_key(
+                    compliance["framework"], compliance["version"]
+                )
                 # Create an overview record for each requirement within each compliance framework
                 for requirement_id, requirement in compliance["requirements"].items():
-                    compliance_requirement_objects.append(
-                        ComplianceRequirementOverview(
-                            tenant_id=tenant_id,
-                            scan=scan_instance,
-                            region=region,
-                            compliance_id=compliance_id,
-                            framework=compliance["framework"],
-                            version=compliance["version"],
-                            requirement_id=requirement_id,
-                            description=requirement["description"],
-                            passed_checks=requirement["checks_status"]["pass"],
-                            failed_checks=requirement["checks_status"]["fail"],
-                            total_checks=requirement["checks_status"]["total"],
-                            requirement_status=requirement["status"],
-                        )
+                    checks_status = requirement["checks_status"]
+                    compliance_requirement_rows.append(
+                        {
+                            "id": uuid.uuid4(),
+                            "tenant_id": tenant_id,
+                            "inserted_at": utc_datetime_now,
+                            "compliance_id": compliance_id,
+                            "framework": compliance["framework"],
+                            "version": compliance["version"] or "",
+                            "description": requirement.get("description") or "",
+                            "region": region,
+                            "requirement_id": requirement_id,
+                            "requirement_status": requirement["status"],
+                            "passed_checks": checks_status["pass"],
+                            "failed_checks": checks_status["fail"],
+                            "total_checks": checks_status["total"],
+                            "scan_id": scan_instance.id,
+                            "passed_findings": findings_count_by_compliance.get(
+                                region, {}
+                            )
+                            .get(modeled_compliance_id, {})
+                            .get(requirement_id, {})
+                            .get("pass", 0),
+                            "total_findings": findings_count_by_compliance.get(
+                                region, {}
+                            )
+                            .get(modeled_compliance_id, {})
+                            .get(requirement_id, {})
+                            .get("total", 0),
+                        }
                     )
 
-        # Bulk create requirement records
-        create_objects_in_batches(
-            tenant_id, ComplianceRequirementOverview, compliance_requirement_objects
-        )
+        # Bulk create requirement records using PostgreSQL COPY
+        _persist_compliance_requirement_rows(tenant_id, compliance_requirement_rows)
 
         return {
-            "requirements_created": len(compliance_requirement_objects),
+            "requirements_created": len(compliance_requirement_rows),
             "regions_processed": list(regions),
             "compliance_frameworks": (
                 list(compliance_overview_by_region.get(list(regions)[0], {}).keys())

@@ -14,8 +14,8 @@ def recover_checks_from_provider(
     Returns a list of tuples with the following format (check_name, check_path)
     """
     try:
-        # Bypass check loading for IAC, GitHub Actions, and Pipeline providers since they use external tools directly
-        if provider in ["iac", "github_actions", "pipeline"]:
+        # Bypass check loading for IAC, GitHub Actions, and LLM providers since they use external tools directly
+        if provider in ["iac", "github_actions", "llm"]:
             return []
 
         checks = []
@@ -63,8 +63,8 @@ def recover_checks_from_service(service_list: list, provider: str) -> set:
     Returns a set of checks from the given services
     """
     try:
-        # Bypass check loading for IAC, GitHub Actions, and Pipeline providers since they use external tools directly
-        if provider in ["iac", "github_actions", "pipeline"]:
+        # Bypass check loading for IAC, GitHub Actions, and LLM providers since they use external tools directly
+        if provider in ["iac", "github_actions", "llm"]:
             return set()
 
         checks = set()

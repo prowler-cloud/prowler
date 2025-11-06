@@ -1,0 +1,37 @@
+{
+  "Provider": "oraclecloud",
+  "CheckID": "blockstorage_block_volume_encrypted_with_cmk",
+  "CheckTitle": "Ensure Block Volumes are encrypted with Customer Managed Keys",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS OCI Foundations Benchmark"
+  ],
+  "ServiceName": "blockstorage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "oci:blockstorage:volume",
+  "Severity": "medium",
+  "ResourceType": "OciBlockVolume",
+  "Description": "Block volumes should be encrypted with Customer Managed Keys (CMK) for enhanced security and control over encryption keys.",
+  "Risk": "Using Oracle-managed encryption keys instead of Customer Managed Keys reduces control over encryption key lifecycle and access policies.",
+  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Block/Concepts/overview.htm",
+  "Remediation": {
+    "Code": {
+      "CLI": "oci bv volume create --compartment-id <compartment-ocid> --availability-domain <ad> --kms-key-id <kms-key-ocid>",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Block Storage > Block Volumes\n2. Create a new volume or update existing\n3. Under 'Encryption', select 'Encrypt using customer-managed keys'\n4. Select the KMS vault and key\n5. Click 'Create' or 'Save Changes'",
+      "Terraform": "resource \"oci_core_volume\" \"example\" {\n  compartment_id = var.compartment_id\n  availability_domain = var.availability_domain\n  kms_key_id = var.kms_key_id\n}"
+    },
+    "Recommendation": {
+      "Text": "Encrypt all block volumes with Customer Managed Keys for better security control.",
+      "Url": "https://hub.prowler.com/check/oci/blockstorage_block_volume_encrypted_with_cmk"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "storage"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

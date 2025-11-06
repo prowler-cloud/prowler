@@ -1,0 +1,37 @@
+{
+  "Provider": "oraclecloud",
+  "CheckID": "audit_log_retention_period_365_days",
+  "CheckTitle": "Ensure audit log retention period is set to 365 days or greater",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS OCI Foundations Benchmark"
+  ],
+  "ServiceName": "audit",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "oci:audit:configuration",
+  "Severity": "medium",
+  "ResourceType": "OciAudit",
+  "Description": "Ensure audit log retention period is set to 365 days or greater",
+  "Risk": "Inadequate audit logging increases risk of undetected security incidents.",
+  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Audit/Tasks/settingretentionperiod.htm",
+  "Remediation": {
+    "Code": {
+      "CLI": "oci audit configuration update --compartment-id <tenancy-ocid> --retention-period-days 365",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Governance > Audit\n2. Click Configuration\n3. Set retention period to 365 days or greater\n4. Save changes",
+      "Terraform": "resource \"oci_audit_configuration\" \"example\" {\n  compartment_id = var.tenancy_ocid\n  retention_period_days = 365\n}"
+    },
+    "Recommendation": {
+      "Text": "Ensure audit log retention period is set to 365 days or greater",
+      "Url": "https://hub.prowler.com/check/oci/audit_log_retention_period_365_days"
+    }
+  },
+  "Categories": [
+    "logging",
+    "security-configuration"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

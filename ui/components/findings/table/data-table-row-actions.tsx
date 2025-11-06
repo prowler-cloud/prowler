@@ -1,62 +1,44 @@
 "use client";
 
+import { Button } from "@heroui/button";
 import {
-  Button,
   Dropdown,
   DropdownItem,
   DropdownMenu,
   DropdownSection,
   DropdownTrigger,
-} from "@nextui-org/react";
-import {
-  // AddNoteBulkIcon,
-  EditDocumentBulkIcon,
-} from "@nextui-org/shared-icons";
+} from "@heroui/dropdown";
 import { Row } from "@tanstack/react-table";
+import { useState } from "react";
 
-// import { useState } from "react";
+import { SendToJiraModal } from "@/components/findings/send-to-jira-modal";
 import { VerticalDotsIcon } from "@/components/icons";
-// import { CustomAlertModal } from "@/components/ui/custom";
+import { JiraIcon } from "@/components/icons/services/IconServices";
+import type { FindingProps } from "@/types/components";
 
-// import { EditForm } from "../forms";
-// import { DeleteForm } from "../forms/delete-form";
-
-interface DataTableRowActionsProps<FindingProps> {
+interface DataTableRowActionsProps {
   row: Row<FindingProps>;
 }
-const iconClasses =
-  "text-2xl text-default-500 pointer-events-none flex-shrink-0";
 
-export function DataTableRowActions<FindingProps>({
-  row,
-}: DataTableRowActionsProps<FindingProps>) {
-  const findingId = (row.original as { id: string }).id;
+export function DataTableRowActions({ row }: DataTableRowActionsProps) {
+  const finding = row.original;
+  const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
+
+  const findingTitle =
+    finding.attributes.check_metadata?.checktitle || "Security Finding";
+
   return (
     <>
-      {/* <CustomAlertModal
-        isOpen={isEditOpen}
-        onOpenChange={setIsEditOpen}
-        title="Edit Provider"
-        description={"Edit the provider details"}
-      >
-        <EditForm
-          providerId={providerId}
-          providerAlias={providerAlias}
-          setIsOpen={setIsEditOpen}
-        />
-      </CustomAlertModal>
-      <CustomAlertModal
-        isOpen={isDeleteOpen}
-        onOpenChange={setIsDeleteOpen}
-        title="Are you absolutely sure?"
-        description="This action cannot be undone. This will permanently delete your provider account and remove your data from the server."
-      >
-        <DeleteForm providerId={providerId} setIsOpen={setIsDeleteOpen} />
-      </CustomAlertModal> */}
+      <SendToJiraModal
+        isOpen={isJiraModalOpen}
+        onOpenChange={setIsJiraModalOpen}
+        findingId={finding.id}
+        findingTitle={findingTitle}
+      />
 
       <div className="relative flex items-center justify-end gap-2">
         <Dropdown
-          className="shadow-xl dark:bg-prowler-blue-800"
+          className="dark:bg-prowler-blue-800 shadow-xl"
           placement="bottom"
         >
           <DropdownTrigger>
@@ -66,29 +48,24 @@ export function DataTableRowActions<FindingProps>({
           </DropdownTrigger>
           <DropdownMenu
             closeOnSelect
-            aria-label="Actions"
+            aria-label="Finding actions"
             color="default"
             variant="flat"
           >
             <DropdownSection title="Actions">
               <DropdownItem
                 key="jira"
-                description="Allows you to send the finding to Jira"
+                description="Create a Jira issue for this finding"
                 textValue="Send to Jira"
-                startContent={<EditDocumentBulkIcon className={iconClasses} />}
-                // onPress={() => setIsEditOpen(true)}
+                startContent={
+                  <JiraIcon
+                    size={20}
+                    className="text-default-500 pointer-events-none shrink-0"
+                  />
+                }
+                onPress={() => setIsJiraModalOpen(true)}
               >
-                <span className="hidden text-sm">{findingId}</span>
                 Send to Jira
-              </DropdownItem>
-              <DropdownItem
-                key="slack"
-                description="Allows you to send the finding to Slack"
-                textValue="Send to Slack"
-                startContent={<EditDocumentBulkIcon className={iconClasses} />}
-                // onPress={() => setIsEditOpen(true)}
-              >
-                Send to Slack
               </DropdownItem>
             </DropdownSection>
           </DropdownMenu>

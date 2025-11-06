@@ -108,3 +108,61 @@ class Test_MemoryDB_Service:
                 snapshot_limit=5,
             )
         }
+
+
+def mock_make_api_call_no_security_groups(self, operation_name, kwargs):
+    """Mock that simulates a cluster response WITHOUT the SecurityGroups field"""
+    if operation_name == "DescribeClusters":
+        return {
+            "Clusters": [
+                {
+                    "Name": MEM_DB_CLUSTER_NAME,
+                    "Description": "Test cluster without SecurityGroups",
+                    "Status": "available",
+                    "NumberOfShards": 1,
+                    "AvailabilityMode": "singleaz",
+                    "Engine": "valkey",
+                    "EngineVersion": MEM_DB_ENGINE_VERSION,
+                    "EnginePatchVersion": "5.0.6",
+                    # SecurityGroups field is MISSING
+                    "TLSEnabled": True,
+                    "ARN": MEM_DB_CLUSTER_ARN,
+                    "SnapshotRetentionLimit": 5,
+                    "AutoMinorVersionUpgrade": True,
+                },
+            ]
+        }
+    return make_api_call(self, operation_name, kwargs)
+
+
+@patch(
+    "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
+    new=mock_generate_regional_clients,
+)
+@patch(
+    "botocore.client.BaseClient._make_api_call",
+    new=mock_make_api_call_no_security_groups,
+)
+class Test_MemoryDB_Service_No_Security_Groups:
+    """Test class for clusters without SecurityGroups field"""
+
+    def test_describe_clusters_no_security_groups(self):
+        """Test that clusters without SecurityGroups field are handled correctly"""
+        aws_provider = set_mocked_aws_provider()
+        memorydb = MemoryDB(aws_provider)
+        assert memorydb.clusters == {
+            MEM_DB_CLUSTER_ARN: Cluster(
+                name=MEM_DB_CLUSTER_NAME,
+                arn=MEM_DB_CLUSTER_ARN,
+                number_of_shards=1,
+                engine="valkey",
+                engine_version=MEM_DB_ENGINE_VERSION,
+                engine_patch_version="5.0.6",
+                multi_az="singleaz",
+                region=AWS_REGION_US_EAST_1,
+                security_groups=[],
+                tls_enabled=True,
+                auto_minor_version_upgrade=True,
+                snapshot_limit=5,
+            )
+        }

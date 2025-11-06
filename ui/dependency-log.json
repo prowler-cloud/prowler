@@ -1,0 +1,738 @@
+[
+  {
+    "section": "dependencies",
+    "name": "@ai-sdk/langchain",
+    "from": "1.0.59",
+    "to": "1.0.59",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@ai-sdk/react",
+    "from": "2.0.59",
+    "to": "2.0.59",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@heroui/react",
+    "from": "2.8.4",
+    "to": "2.8.4",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@hookform/resolvers",
+    "from": "5.2.2",
+    "to": "5.2.2",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@langchain/core",
+    "from": "0.3.77",
+    "to": "0.3.77",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@langchain/langgraph",
+    "from": "0.4.9",
+    "to": "0.4.9",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@langchain/langgraph-supervisor",
+    "from": "0.0.20",
+    "to": "0.0.20",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@langchain/openai",
+    "from": "0.5.18",
+    "to": "0.5.18",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@next/third-parties",
+    "from": "15.3.5",
+    "to": "15.3.5",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@radix-ui/react-alert-dialog",
+    "from": "1.1.14",
+    "to": "1.1.14",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@radix-ui/react-dialog",
+    "from": "1.1.14",
+    "to": "1.1.14",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@radix-ui/react-dropdown-menu",
+    "from": "2.1.15",
+    "to": "2.1.15",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@radix-ui/react-icons",
+    "from": "1.3.2",
+    "to": "1.3.2",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@radix-ui/react-label",
+    "from": "2.1.7",
+    "to": "2.1.7",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@radix-ui/react-select",
+    "from": "2.2.5",
+    "to": "2.2.5",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@radix-ui/react-separator",
+    "from": "1.1.7",
+    "to": "1.1.7",
+    "strategy": "installed",
+    "generatedAt": "2025-10-30T10:22:21.335Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@radix-ui/react-slot",
+    "from": "1.2.3",
+    "to": "1.2.3",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@radix-ui/react-toast",
+    "from": "1.2.14",
+    "to": "1.2.14",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@react-aria/ssr",
+    "from": "3.9.4",
+    "to": "3.9.4",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@react-aria/visually-hidden",
+    "from": "3.8.12",
+    "to": "3.8.12",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@tailwindcss/postcss",
+    "from": "4.1.13",
+    "to": "4.1.13",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@tailwindcss/typography",
+    "from": "0.5.16",
+    "to": "0.5.16",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@tanstack/react-table",
+    "from": "8.21.3",
+    "to": "8.21.3",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@types/js-yaml",
+    "from": "4.0.9",
+    "to": "4.0.9",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "ai",
+    "from": "5.0.59",
+    "to": "5.0.59",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "alert",
+    "from": "6.0.2",
+    "to": "6.0.2",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "class-variance-authority",
+    "from": "0.7.1",
+    "to": "0.7.1",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "clsx",
+    "from": "2.1.1",
+    "to": "2.1.1",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "d3",
+    "from": "7.9.0",
+    "to": "7.9.0",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "date-fns",
+    "from": "4.1.0",
+    "to": "4.1.0",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "framer-motion",
+    "from": "11.18.2",
+    "to": "11.18.2",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "intl-messageformat",
+    "from": "10.7.16",
+    "to": "10.7.16",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "jose",
+    "from": "5.10.0",
+    "to": "5.10.0",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "js-yaml",
+    "from": "4.1.0",
+    "to": "4.1.0",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "jwt-decode",
+    "from": "4.0.0",
+    "to": "4.0.0",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "lucide-react",
+    "from": "0.543.0",
+    "to": "0.543.0",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "marked",
+    "from": "15.0.12",
+    "to": "15.0.12",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "next",
+    "from": "15.5.3",
+    "to": "15.5.3",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "next-auth",
+    "from": "5.0.0-beta.29",
+    "to": "5.0.0-beta.29",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "next-themes",
+    "from": "0.2.1",
+    "to": "0.2.1",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "radix-ui",
+    "from": "1.4.2",
+    "to": "1.4.2",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "react",
+    "from": "19.1.1",
+    "to": "19.2.0",
+    "strategy": "installed",
+    "generatedAt": "2025-10-28T08:31:51.187Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "react-dom",
+    "from": "19.1.1",
+    "to": "19.2.0",
+    "strategy": "installed",
+    "generatedAt": "2025-10-28T08:31:51.187Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "react-hook-form",
+    "from": "7.62.0",
+    "to": "7.62.0",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "react-markdown",
+    "from": "10.1.0",
+    "to": "10.1.0",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "recharts",
+    "from": "2.15.4",
+    "to": "2.15.4",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "rss-parser",
+    "from": "3.13.0",
+    "to": "3.13.0",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "server-only",
+    "from": "0.0.1",
+    "to": "0.0.1",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "sharp",
+    "from": "0.33.5",
+    "to": "0.33.5",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "tailwind-merge",
+    "from": "3.3.1",
+    "to": "3.3.1",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "tailwindcss-animate",
+    "from": "1.0.7",
+    "to": "1.0.7",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "topojson-client",
+    "from": "3.1.0",
+    "to": "3.1.0",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "tw-animate-css",
+    "from": "1.4.0",
+    "to": "1.4.0",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "uuid",
+    "from": "11.1.0",
+    "to": "11.1.0",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "world-atlas",
+    "from": "2.0.2",
+    "to": "2.0.2",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "zod",
+    "from": "4.1.11",
+    "to": "4.1.11",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "zustand",
+    "from": "5.0.8",
+    "to": "5.0.8",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "@iconify/react",
+    "from": "5.2.1",
+    "to": "5.2.1",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "@playwright/test",
+    "from": "1.56.1",
+    "to": "1.56.1",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "@types/d3",
+    "from": "7.4.3",
+    "to": "7.4.3",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "@types/geojson",
+    "from": "7946.0.16",
+    "to": "7946.0.16",
+    "strategy": "installed",
+    "generatedAt": "2025-10-30T10:22:21.335Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "@types/node",
+    "from": "20.5.7",
+    "to": "20.5.7",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "@types/react",
+    "from": "19.1.13",
+    "to": "19.1.13",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "@types/react-dom",
+    "from": "19.1.9",
+    "to": "19.1.9",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "@types/topojson-client",
+    "from": "3.1.5",
+    "to": "3.1.5",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "@types/topojson-specification",
+    "from": "1.0.5",
+    "to": "1.0.5",
+    "strategy": "installed",
+    "generatedAt": "2025-10-30T10:22:21.335Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "@types/uuid",
+    "from": "10.0.0",
+    "to": "10.0.0",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "@typescript-eslint/eslint-plugin",
+    "from": "7.18.0",
+    "to": "7.18.0",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "@typescript-eslint/parser",
+    "from": "7.18.0",
+    "to": "7.18.0",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "autoprefixer",
+    "from": "10.4.19",
+    "to": "10.4.19",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "babel-plugin-react-compiler",
+    "from": "19.1.0-rc.3",
+    "to": "19.1.0-rc.3",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "eslint",
+    "from": "8.57.1",
+    "to": "8.57.1",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "eslint-config-next",
+    "from": "15.5.3",
+    "to": "15.5.3",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "eslint-config-prettier",
+    "from": "10.1.5",
+    "to": "10.1.5",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "eslint-plugin-import",
+    "from": "2.32.0",
+    "to": "2.32.0",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "eslint-plugin-jsx-a11y",
+    "from": "6.10.2",
+    "to": "6.10.2",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "eslint-plugin-node",
+    "from": "11.1.0",
+    "to": "11.1.0",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "eslint-plugin-prettier",
+    "from": "5.5.1",
+    "to": "5.5.1",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "eslint-plugin-react",
+    "from": "7.37.5",
+    "to": "7.37.5",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "eslint-plugin-react-hooks",
+    "from": "4.6.2",
+    "to": "7.0.1",
+    "strategy": "installed",
+    "generatedAt": "2025-10-28T08:32:52.037Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "eslint-plugin-security",
+    "from": "3.0.1",
+    "to": "3.0.1",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "eslint-plugin-simple-import-sort",
+    "from": "12.1.1",
+    "to": "12.1.1",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "eslint-plugin-unused-imports",
+    "from": "3.2.0",
+    "to": "3.2.0",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "husky",
+    "from": "9.1.7",
+    "to": "9.1.7",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "lint-staged",
+    "from": "15.5.2",
+    "to": "15.5.2",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "postcss",
+    "from": "8.4.38",
+    "to": "8.4.38",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "prettier",
+    "from": "3.6.2",
+    "to": "3.6.2",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "prettier-plugin-tailwindcss",
+    "from": "0.6.14",
+    "to": "0.6.14",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "shadcn",
+    "from": "3.4.1",
+    "to": "3.4.1",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "tailwind-variants",
+    "from": "0.1.20",
+    "to": "0.1.20",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "tailwindcss",
+    "from": "4.1.13",
+    "to": "4.1.13",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "typescript",
+    "from": "5.5.4",
+    "to": "5.5.4",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T12:36:37.962Z"
+  }
+]

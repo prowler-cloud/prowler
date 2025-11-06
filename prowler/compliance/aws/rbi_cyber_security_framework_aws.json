@@ -1,5 +1,6 @@
 {
   "Framework": "RBI-Cyber-Security-Framework",
+  "Name": "Reserve Bank of India (RBI) Cyber Security Framework",
   "Version": "",
   "Provider": "AWS",
   "Description": "The Reserve Bank had prescribed a set of baseline cyber security controls for primary (Urban) cooperative banks (UCBs) in October 2018. On further examination, it has been decided to prescribe a comprehensive cyber security framework for the UCBs, as a graded approach, based on their digital depth and interconnectedness with the payment systems landscape, digital products offered by them and assessment of cyber security risk. The framework would mandate implementation of progressively stronger security measures based on the nature, variety and scale of digital product offerings of banks.",
@@ -66,7 +67,7 @@
         "elbv2_ssl_listeners",
         "ssm_documents_set_as_public",
         "vpc_subnet_no_public_ip_by_default",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_ftp_20_21",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mysql_3306",
         "s3_account_level_public_access_blocks"

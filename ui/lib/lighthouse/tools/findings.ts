@@ -1,11 +1,19 @@
 import { tool } from "@langchain/core/tools";
+import { z } from "zod";
 
 import { getFindings, getMetadataInfo } from "@/actions/findings";
 import { getFindingsSchema, getMetadataInfoSchema } from "@/types/lighthouse";
 
 export const getFindingsTool = tool(
-  async ({ page, pageSize, query, sort, filters }) => {
-    return await getFindings({ page, pageSize, query, sort, filters });
+  async (input) => {
+    const typedInput = input as z.infer<typeof getFindingsSchema>;
+    return await getFindings({
+      page: typedInput.page,
+      pageSize: typedInput.pageSize,
+      query: typedInput.query,
+      sort: typedInput.sort,
+      filters: typedInput.filters,
+    });
   },
   {
     name: "getFindings",
@@ -16,8 +24,13 @@ export const getFindingsTool = tool(
 );
 
 export const getMetadataInfoTool = tool(
-  async ({ query, sort, filters }) => {
-    return await getMetadataInfo({ query, sort, filters });
+  async (input) => {
+    const typedInput = input as z.infer<typeof getMetadataInfoSchema>;
+    return await getMetadataInfo({
+      query: typedInput.query,
+      sort: typedInput.sort,
+      filters: typedInput.filters,
+    });
   },
   {
     name: "getMetadataInfo",

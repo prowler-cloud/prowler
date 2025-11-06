@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount.providers.saml",
     "dj_rest_auth.registration",
     "rest_framework.authtoken",
+    "drf_simple_apikey",
 ]
 
 MIDDLEWARE = [
@@ -84,7 +85,7 @@ TEMPLATES = [
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular_jsonapi.schemas.openapi.JsonApiAutoSchema",
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "api.authentication.CombinedJWTOrAPIKeyAuthentication",
     ),
     "PAGE_SIZE": 10,
     "EXCEPTION_HANDLER": "api.exceptions.custom_exception_handler",
@@ -108,6 +109,13 @@ REST_FRAMEWORK = {
     ),
     "TEST_REQUEST_DEFAULT_FORMAT": "vnd.api+json",
     "JSON_API_UNIFORM_EXCEPTIONS": True,
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.ScopedRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "token-obtain": env("DJANGO_THROTTLE_TOKEN_OBTAIN", default=None),
+        "dj_rest_auth": None,
+    },
 }
 
 SPECTACULAR_SETTINGS = {
@@ -115,6 +123,9 @@ SPECTACULAR_SETTINGS = {
     "COMPONENT_SPLIT_REQUEST": True,
     "PREPROCESSING_HOOKS": [
         "drf_spectacular_jsonapi.hooks.fix_nested_path_parameters",
+    ],
+    "POSTPROCESSING_HOOKS": [
+        "api.schema_hooks.attach_task_202_examples",
     ],
     "TITLE": "API Reference - Prowler",
 }
@@ -210,7 +221,8 @@ SIMPLE_JWT = {
     "JTI_CLAIM": "jti",
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "sub",
-    # Issuer and Audience claims, for the moment we will keep these values as default values, they may change in the future.
+    # Issuer and Audience claims, for the moment we will keep these values as default values, they may change in the
+    # future.
     "AUDIENCE": env.str("DJANGO_JWT_AUDIENCE", "https://api.prowler.com"),
     "ISSUER": env.str("DJANGO_JWT_ISSUER", "https://api.prowler.com"),
     # Additional security settings
@@ -218,6 +230,13 @@ SIMPLE_JWT = {
 }
 
 SECRETS_ENCRYPTION_KEY = env.str("DJANGO_SECRETS_ENCRYPTION_KEY", "")
+
+# DRF Simple API Key settings
+DRF_API_KEY = {
+    "FERNET_SECRET": SECRETS_ENCRYPTION_KEY,
+    "API_KEY_LIFETIME": 365,
+    "AUTHENTICATION_KEYWORD_HEADER": "Api-Key",
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/

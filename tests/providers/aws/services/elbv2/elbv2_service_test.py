@@ -283,6 +283,7 @@ class Test_ELBv2_Service:
         listener_arn = conn.create_listener(
             LoadBalancerArn=lb["LoadBalancerArn"],
             Protocol="HTTP",
+            Port=80,
             DefaultActions=actions,
         )["Listeners"][0]["ListenerArn"]
         # ELBv2 client for this test class

@@ -1,5 +1,3 @@
-"use client";
-
 import {
   Bookmark,
   CloudCog,
@@ -7,6 +5,7 @@ import {
   Group,
   LayoutGrid,
   Mail,
+  MessageCircleQuestion,
   Puzzle,
   Settings,
   ShieldCheck,
@@ -20,12 +19,13 @@ import {
   VolumeX,
   Warehouse,
 } from "lucide-react";
+import type { MouseEvent } from "react";
 
+import { ProwlerShort } from "@/components/icons";
 import {
   APIdocIcon,
   AWSIcon,
   AzureIcon,
-  CircleHelpIcon,
   DocIcon,
   GCPIcon,
   GithubIcon,
@@ -40,12 +40,14 @@ interface MenuListOptions {
   pathname: string;
   hasProviders?: boolean;
   openMutelistModal?: () => void;
+  requestMutelistModalOpen?: () => void;
 }
 
 export const getMenuList = ({
   pathname,
   hasProviders,
   openMutelistModal,
+  requestMutelistModalOpen,
 }: MenuListOptions): GroupProps[] => {
   return [
     {
@@ -80,6 +82,7 @@ export const getMenuList = ({
           href: "/lighthouse",
           label: "Lighthouse AI",
           icon: LighthouseIcon,
+          active: pathname === "/lighthouse",
         },
       ],
     },
@@ -164,12 +167,28 @@ export const getMenuList = ({
           submenus: [
             { href: "/providers", label: "Cloud Providers", icon: CloudCog },
             {
-              // Use trailing slash to prevent both menu items from being active at /providers
-              href: "/providers/",
+              href: "/providers",
               label: "Mutelist",
               icon: VolumeX,
               disabled: hasProviders === false,
-              onClick: openMutelistModal,
+              active: false,
+              onClick: (event: MouseEvent<HTMLAnchorElement>) => {
+                if (hasProviders === false) {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  return;
+                }
+
+                requestMutelistModalOpen?.();
+
+                if (pathname !== "/providers") {
+                  return;
+                }
+
+                event.preventDefault();
+                event.stopPropagation();
+                openMutelistModal?.();
+              },
             },
             { href: "/manage-groups", label: "Provider Groups", icon: Group },
             { href: "/scans", label: "Scan Jobs", icon: Timer },
@@ -200,6 +219,18 @@ export const getMenuList = ({
       groupLabel: "",
       menus: [
         {
+          href: "https://hub.prowler.com/",
+          label: "Prowler Hub",
+          icon: ProwlerShort,
+          target: "_blank",
+          tooltip: "Looking for all available checks? learn more.",
+        },
+      ],
+    },
+    {
+      groupLabel: "",
+      menus: [
+        {
           href: "",
           label: "Support & Help",
           icon: SupportIcon,
@@ -220,10 +251,16 @@ export const getMenuList = ({
               icon: APIdocIcon,
             },
             {
+              href: "https://customer.support.prowler.com/servicedesk/customer/portal/9/create/102",
+              target: "_blank",
+              label: "Customer Support",
+              icon: MessageCircleQuestion,
+            },
+            {
               href: "https://github.com/prowler-cloud/prowler/issues",
               target: "_blank",
-              label: "Support",
-              icon: CircleHelpIcon,
+              label: "Community Support",
+              icon: GithubIcon,
             },
           ],
           defaultOpen: false,

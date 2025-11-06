@@ -4,10 +4,12 @@ import pytest
 from tasks.jobs.integrations import (
     get_s3_client_from_integration,
     get_security_hub_client_from_integration,
+    send_findings_to_jira,
     upload_s3_integration,
     upload_security_hub_integration,
 )
 
+from api.db_router import READ_REPLICA_ALIAS, MainRouter
 from api.models import Integration
 from api.utils import prowler_integration_connection_test
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHubConnection
@@ -492,14 +494,17 @@ class TestProwlerIntegrationConnectionTest:
     def test_aws_security_hub_integration_connection_failure(
         self, mock_security_hub_class
     ):
-        """Test AWS Security Hub integration connection failure."""
+        """Test AWS Security Hub integration connection failure resets regions."""
         integration = MagicMock()
         integration.integration_type = Integration.IntegrationChoices.AWS_SECURITY_HUB
         integration.credentials = {
             "aws_access_key_id": "invalid_key",
             "aws_secret_access_key": "invalid_secret",
         }
-        integration.configuration = {"send_only_fails": False}
+        integration.configuration = {
+            "send_only_fails": False,
+            "regions": {"us-east-1": True, "us-west-2": False},  # Existing regions
+        }
 
         # Mock integration provider relationship
         mock_provider = MagicMock()
@@ -524,8 +529,9 @@ class TestProwlerIntegrationConnectionTest:
 
         assert result.is_connected is False
         assert result.error == test_exception
-        # Verify regions were not saved when connection failed
-        integration.save.assert_not_called()
+        # Verify regions were reset to empty dict when connection failed
+        assert integration.configuration["regions"] == {}
+        integration.save.assert_called_once()
 
     @patch("api.utils.SecurityHub")
     def test_aws_security_hub_integration_with_provider_credentials(
@@ -574,6 +580,72 @@ class TestProwlerIntegrationConnectionTest:
         assert integration.configuration["regions"]["eu-central-1"]
         assert not integration.configuration["regions"]["ap-south-1"]
         integration.save.assert_called_once()
+
+    @patch("api.utils.SecurityHub")
+    def test_aws_security_hub_connection_failure_with_multiple_regions_clears_all(
+        self, mock_security_hub_class
+    ):
+        """Test that SecurityHub connection failure clears all existing regions data."""
+        integration = MagicMock()
+        integration.integration_type = Integration.IntegrationChoices.AWS_SECURITY_HUB
+        integration.credentials = {
+            "aws_access_key_id": "test_key",
+            "aws_secret_access_key": "test_secret",
+        }
+        # Start with complex regions configuration
+        integration.configuration = {
+            "send_only_fails": True,
+            "regions": {
+                "us-east-1": True,
+                "us-east-2": False,
+                "us-west-1": True,
+                "us-west-2": True,
+                "eu-west-1": False,
+                "eu-west-2": True,
+                "eu-central-1": True,
+                "ap-northeast-1": False,
+                "ap-southeast-1": True,
+                "ap-southeast-2": False,
+            },
+        }
+
+        # Mock integration provider relationship
+        mock_provider = MagicMock()
+        mock_provider.uid = "987654321098"
+        mock_relationship = MagicMock()
+        mock_relationship.provider = mock_provider
+        integration.integrationproviderrelationship_set.first.return_value = (
+            mock_relationship
+        )
+
+        # Mock failed SecurityHub connection
+        mock_connection = SecurityHubConnection(
+            is_connected=False,
+            error=Exception("Invalid credentials or permissions"),
+            enabled_regions=set(),
+            disabled_regions=set(),
+        )
+        mock_security_hub_class.test_connection.return_value = mock_connection
+
+        result = prowler_integration_connection_test(integration)
+
+        assert result.is_connected is False
+        assert str(result.error) == "Invalid credentials or permissions"
+
+        # Verify all regions were completely cleared
+        assert integration.configuration["regions"] == {}
+        assert len(integration.configuration["regions"]) == 0
+
+        # Verify save was called to persist the cleared regions
+        integration.save.assert_called_once()
+
+        # Verify the test_connection was called with correct parameters
+        mock_security_hub_class.test_connection.assert_called_once_with(
+            aws_account_id="987654321098",
+            raise_on_exception=False,
+            aws_access_key_id="test_key",
+            aws_secret_access_key="test_secret",
+        )
 
     def test_unsupported_integration_type(self):
         """Test unsupported integration type raises ValueError."""
@@ -674,15 +746,19 @@ class TestSecurityHubIntegrationUploads:
             "us-west-2",
         ]
 
+    @patch("tasks.jobs.integrations.rls_transaction")
     @patch("tasks.jobs.integrations.SecurityHub.test_connection")
     @patch("tasks.jobs.integrations.initialize_prowler_provider")
     def test_get_security_hub_client_from_integration_failure(
-        self, mock_initialize_provider, mock_test_connection
+        self, mock_initialize_provider, mock_test_connection, mock_rls
     ):
-        """Test SecurityHub client creation failure."""
+        """Test SecurityHub client creation failure resets regions."""
         # Mock integration
         mock_integration = MagicMock()
-        mock_integration.configuration = {"send_only_fails": False}
+        mock_integration.configuration = {
+            "send_only_fails": False,
+            "regions": {"us-east-1": True, "us-west-2": False},  # Existing regions
+        }
         mock_integration.credentials = {}  # Empty credentials, use provider
 
         # Mock tenant_id
@@ -710,6 +786,9 @@ class TestSecurityHubIntegrationUploads:
         # Mock findings
         mock_findings = [{"finding": "test"}]
 
+        # Mock RLS context manager
+        mock_rls.return_value.__enter__.return_value = None
+
         connected, connection = get_security_hub_client_from_integration(
             mock_integration, tenant_id, mock_findings
         )
@@ -718,6 +797,94 @@ class TestSecurityHubIntegrationUploads:
         assert connection == mock_connection
 
         # Verify test_connection was called with correct parameters
+        mock_test_connection.assert_called_once_with(
+            aws_account_id="123456789012",
+            raise_on_exception=False,
+            aws_access_key_id="test_key_id",
+            aws_secret_access_key="test_secret_key",
+        )
+
+        # Verify regions were reset to empty when connection failed
+        assert mock_integration.configuration["regions"] == {}
+        mock_integration.save.assert_called_once()
+        # Verify RLS transaction was used for the reset
+        assert (
+            mock_rls.call_count == 2
+        )  # Once for getting provider, once for resetting regions
+
+    @patch("tasks.jobs.integrations.rls_transaction")
+    @patch("tasks.jobs.integrations.SecurityHub.test_connection")
+    def test_get_security_hub_client_from_integration_failure_clears_existing_regions(
+        self, mock_test_connection, mock_rls
+    ):
+        """Test that SecurityHub client creation failure clears existing regions configuration."""
+        # Mock integration with pre-existing regions configuration
+        mock_integration = MagicMock()
+        mock_integration.configuration = {
+            "send_only_fails": True,
+            "regions": {
+                "us-east-1": True,
+                "us-west-2": True,
+                "eu-west-1": False,
+                "ap-south-1": False,
+            },  # Pre-existing regions configuration
+        }
+        mock_integration.credentials = {
+            "aws_access_key_id": "test_key_id",
+            "aws_secret_access_key": "test_secret_key",
+        }
+
+        # Mock tenant_id
+        tenant_id = "550e8400-e29b-41d4-a716-446655440000"
+
+        # Mock provider relationship
+        mock_provider = MagicMock()
+        mock_provider.uid = "123456789012"
+        mock_provider.secret.secret = {
+            "aws_access_key_id": "provider_key",
+            "aws_secret_access_key": "provider_secret",
+        }
+        mock_relationship = MagicMock()
+        mock_relationship.provider = mock_provider
+        mock_integration.integrationproviderrelationship_set.first.return_value = (
+            mock_relationship
+        )
+
+        # Mock failed connection with specific error
+        mock_connection = MagicMock()
+        mock_connection.is_connected = False
+        mock_connection.error = "Access denied: SecurityHub not enabled in region"
+        mock_test_connection.return_value = mock_connection
+
+        # Mock findings
+        mock_findings = [{"finding": "test1"}, {"finding": "test2"}]
+
+        # Mock RLS context manager
+        mock_rls.return_value.__enter__.return_value = None
+
+        # Call the function
+        connected, connection = get_security_hub_client_from_integration(
+            mock_integration, tenant_id, mock_findings
+        )
+
+        # Assertions
+        assert connected is False
+        assert connection == mock_connection
+        assert connection.error == "Access denied: SecurityHub not enabled in region"
+
+        # Verify that regions configuration was completely cleared
+        assert mock_integration.configuration["regions"] == {}
+
+        # Verify save was called to persist the change
+        mock_integration.save.assert_called_once()
+
+        # Verify RLS transaction was used correctly
+        # Should be called twice: once for getting provider info, once for resetting regions
+        assert mock_rls.call_count == 2
+        mock_rls.assert_any_call(tenant_id, using=READ_REPLICA_ALIAS)
+        mock_rls.assert_any_call(tenant_id, using=MainRouter.default_db)
+
+        # Verify test_connection was called with integration credentials (not provider's)
         mock_test_connection.assert_called_once_with(
             aws_account_id="123456789012",
             raise_on_exception=False,
@@ -1393,3 +1560,354 @@ class TestSecurityHubIntegrationUploads:
 
         mock_security_hub.batch_send_to_security_hub.assert_called_once()
         mock_security_hub.archive_previous_findings.assert_called_once()
+
+
+@pytest.mark.django_db
+class TestJiraIntegration:
+    @patch("tasks.jobs.integrations.rls_transaction")
+    @patch("tasks.jobs.integrations.Finding")
+    @patch("tasks.jobs.integrations.Integration")
+    @patch("tasks.jobs.integrations.initialize_prowler_integration")
+    def test_send_findings_to_jira_success(
+        self,
+        mock_initialize_integration,
+        mock_integration_model,
+        mock_finding_model,
+        mock_rls_transaction,
+    ):
+        """Test successful sending of findings to Jira using send_finding method"""
+        tenant_id = "tenant-123"
+        integration_id = "integration-456"
+        project_key = "PROJ"
+        issue_type = "Task"
+        finding_ids = ["finding-1", "finding-2"]
+
+        # Mock RLS transaction
+        mock_rls_transaction.return_value.__enter__ = MagicMock()
+        mock_rls_transaction.return_value.__exit__ = MagicMock()
+
+        # Mock integration
+        integration = MagicMock()
+        mock_integration_model.objects.get.return_value = integration
+
+        # Mock Jira integration
+        mock_jira_integration = MagicMock()
+        mock_jira_integration.send_finding.side_effect = [True, True]  # Both succeed
+        mock_initialize_integration.return_value = mock_jira_integration
+
+        # Mock findings with resources
+        resource1 = MagicMock()
+        resource1.uid = "resource-uid-1"
+        resource1.name = "resource-name-1"
+        resource1.region = "us-east-1"
+        resource1.get_tags.return_value = {"env": "prod", "team": "security"}
+
+        resource2 = MagicMock()
+        resource2.uid = "resource-uid-2"
+        resource2.name = "resource-name-2"
+        resource2.region = "eu-west-1"
+        resource2.get_tags.return_value = {"env": "dev"}
+
+        finding1 = MagicMock()
+        finding1.id = "finding-1"
+        finding1.check_id = "check_001"
+        finding1.severity = "high"
+        finding1.status = "FAIL"
+        finding1.status_extended = "Resource is not compliant"
+        finding1.resource_regions = ["us-east-1"]
+        finding1.compliance = {"cis": ["1.1", "1.2"]}
+        finding1.resources.exists.return_value = True
+        finding1.resources.first.return_value = resource1
+        finding1.scan.provider.provider = "aws"
+        finding1.check_metadata = {
+            "checktitle": "Check Title 1",
+            "risk": "High risk finding",
+            "remediation": {
+                "recommendation": {
+                    "text": "Fix this issue",
+                    "url": "https://docs.example.com/fix",
+                },
+                "code": {
+                    "nativeiac": "native code",
+                    "terraform": "terraform code",
+                    "cli": "aws cli command",
+                    "other": "",
+                },
+            },
+        }
+
+        finding2 = MagicMock()
+        finding2.id = "finding-2"
+        finding2.check_id = "check_002"
+        finding2.severity = "medium"
+        finding2.status = "PASS"
+        finding2.status_extended = None
+        finding2.resource_regions = []
+        finding2.compliance = {}
+        finding2.resources.exists.return_value = True
+        finding2.resources.first.return_value = resource2
+        finding2.scan.provider.provider = "azure"
+        finding2.check_metadata = {
+            "checktitle": "Check Title 2",
+            "risk": "Medium risk",
+            "remediation": {
+                "recommendation": {"text": "Consider fixing", "url": ""},
+                "code": {},
+            },
+        }
+
+        mock_finding_model.all_objects.select_related.return_value.prefetch_related.return_value.get.side_effect = [
+            finding1,
+            finding2,
+        ]
+
+        # Call the function
+        result = send_findings_to_jira(
+            tenant_id, integration_id, project_key, issue_type, finding_ids
+        )
+
+        # Assertions
+        assert result == {"created_count": 2, "failed_count": 0}
+
+        # Verify Jira integration was initialized
+        mock_initialize_integration.assert_called_once_with(integration)
+
+        # Verify send_finding was called twice with correct parameters
+        assert mock_jira_integration.send_finding.call_count == 2
+
+        # Verify first call
+        first_call = mock_jira_integration.send_finding.call_args_list[0]
+        assert first_call.kwargs["check_id"] == "check_001"
+        assert first_call.kwargs["check_title"] == "Check Title 1"
+        assert first_call.kwargs["severity"] == "high"
+        assert first_call.kwargs["status"] == "FAIL"
+        assert first_call.kwargs["resource_uid"] == "resource-uid-1"
+        assert first_call.kwargs["resource_name"] == "resource-name-1"
+        assert first_call.kwargs["region"] == "us-east-1"
+        assert first_call.kwargs["provider"] == "aws"
+        assert first_call.kwargs["project_key"] == project_key
+        assert first_call.kwargs["issue_type"] == issue_type
+
+        # Verify second call
+        second_call = mock_jira_integration.send_finding.call_args_list[1]
+        assert second_call.kwargs["check_id"] == "check_002"
+        assert second_call.kwargs["severity"] == "medium"
+        assert second_call.kwargs["status"] == "PASS"
+
+    @patch("tasks.jobs.integrations.rls_transaction")
+    @patch("tasks.jobs.integrations.Finding")
+    @patch("tasks.jobs.integrations.Integration")
+    @patch("tasks.jobs.integrations.initialize_prowler_integration")
+    @patch("tasks.jobs.integrations.logger")
+    def test_send_findings_to_jira_partial_failure(
+        self,
+        mock_logger,
+        mock_initialize_integration,
+        mock_integration_model,
+        mock_finding_model,
+        mock_rls_transaction,
+    ):
+        """Test partial failure when sending findings to Jira"""
+        tenant_id = "tenant-123"
+        integration_id = "integration-456"
+        project_key = "PROJ"
+        issue_type = "Task"
+        finding_ids = ["finding-1", "finding-2", "finding-3"]
+
+        # Mock RLS transaction
+        mock_rls_transaction.return_value.__enter__ = MagicMock()
+        mock_rls_transaction.return_value.__exit__ = MagicMock()
+
+        # Mock integration
+        integration = MagicMock()
+        mock_integration_model.objects.get.return_value = integration
+
+        # Mock Jira integration with mixed results
+        mock_jira_integration = MagicMock()
+        mock_jira_integration.send_finding.side_effect = [
+            True,
+            False,
+            True,
+        ]  # Second fails
+        mock_initialize_integration.return_value = mock_jira_integration
+
+        # Mock findings (simplified for this test)
+        findings = []
+        for i in range(3):
+            finding = MagicMock()
+            finding.id = f"finding-{i + 1}"
+            finding.check_id = f"check_{i + 1:03d}"
+            finding.severity = "low"
+            finding.status = "FAIL"
+            finding.status_extended = ""
+            finding.resource_regions = []
+            finding.compliance = {}
+
+            finding.resources.exists.return_value = False
+            finding.resources.first.return_value = None
+            finding.scan.provider.provider = "aws"
+            finding.check_metadata = {
+                "checktitle": f"Check {i + 1}",
+                "risk": "Low risk",
+                "remediation": {"recommendation": {}, "code": {}},
+            }
+            findings.append(finding)
+
+        mock_finding_model.all_objects.select_related.return_value.prefetch_related.return_value.get.side_effect = findings
+
+        # Call the function
+        result = send_findings_to_jira(
+            tenant_id, integration_id, project_key, issue_type, finding_ids
+        )
+
+        # Assertions
+        assert result == {"created_count": 2, "failed_count": 1}
+
+        # Verify error was logged for the failed finding
+        mock_logger.error.assert_called_with("Failed to send finding finding-2 to Jira")
+
+    @patch("tasks.jobs.integrations.rls_transaction")
+    @patch("tasks.jobs.integrations.Finding")
+    @patch("tasks.jobs.integrations.Integration")
+    @patch("tasks.jobs.integrations.initialize_prowler_integration")
+    def test_send_findings_to_jira_no_resources(
+        self,
+        mock_initialize_integration,
+        mock_integration_model,
+        mock_finding_model,
+        mock_rls_transaction,
+    ):
+        """Test sending findings to Jira when finding has no resources"""
+        tenant_id = "tenant-123"
+        integration_id = "integration-456"
+        project_key = "PROJ"
+        issue_type = "Task"
+        finding_ids = ["finding-1"]
+
+        # Mock RLS transaction
+        mock_rls_transaction.return_value.__enter__ = MagicMock()
+        mock_rls_transaction.return_value.__exit__ = MagicMock()
+
+        # Mock integration
+        integration = MagicMock()
+        mock_integration_model.objects.get.return_value = integration
+
+        # Mock Jira integration
+        mock_jira_integration = MagicMock()
+        mock_jira_integration.send_finding.return_value = True
+        mock_initialize_integration.return_value = mock_jira_integration
+
+        # Mock finding without resources
+        finding = MagicMock()
+        finding.id = "finding-1"
+        finding.check_id = "check_001"
+        finding.severity = "critical"
+        finding.status = "FAIL"
+        finding.status_extended = "Critical issue found"
+        finding.resource_regions = None
+        finding.compliance = {"pci": ["3.1"]}
+
+        finding.resources.exists.return_value = False
+        finding.resources.first.return_value = None
+        finding.scan.provider.provider = "gcp"
+        finding.check_metadata = {
+            "checktitle": "Critical Check",
+            "risk": "Very high risk",
+            "remediation": {
+                "recommendation": {
+                    "text": "Immediate action required",
+                    "url": "https://example.com/critical",
+                },
+                "code": {
+                    "nativeiac": "",
+                    "terraform": "terraform fix",
+                    "cli": "",
+                    "other": "manual fix",
+                },
+            },
+        }
+
+        mock_finding_model.all_objects.select_related.return_value.prefetch_related.return_value.get.return_value = finding
+
+        # Call the function
+        result = send_findings_to_jira(
+            tenant_id, integration_id, project_key, issue_type, finding_ids
+        )
+
+        # Assertions
+        assert result == {"created_count": 1, "failed_count": 0}
+
+        # Verify send_finding was called with empty resource fields
+        call_kwargs = mock_jira_integration.send_finding.call_args.kwargs
+        assert call_kwargs["resource_uid"] == ""
+        assert call_kwargs["resource_name"] == ""
+        assert call_kwargs["resource_tags"] == {}
+        assert call_kwargs["region"] == ""
+
+    @patch("tasks.jobs.integrations.rls_transaction")
+    @patch("tasks.jobs.integrations.Finding")
+    @patch("tasks.jobs.integrations.Integration")
+    @patch("tasks.jobs.integrations.initialize_prowler_integration")
+    def test_send_findings_to_jira_with_empty_check_metadata(
+        self,
+        mock_initialize_integration,
+        mock_integration_model,
+        mock_finding_model,
+        mock_rls_transaction,
+    ):
+        """Test sending findings to Jira when check_metadata is empty or missing fields"""
+        tenant_id = "tenant-123"
+        integration_id = "integration-456"
+        project_key = "PROJ"
+        issue_type = "Task"
+        finding_ids = ["finding-1"]
+
+        # Mock RLS transaction
+        mock_rls_transaction.return_value.__enter__ = MagicMock()
+        mock_rls_transaction.return_value.__exit__ = MagicMock()
+
+        # Mock integration
+        integration = MagicMock()
+        mock_integration_model.objects.get.return_value = integration
+
+        # Mock Jira integration
+        mock_jira_integration = MagicMock()
+        mock_jira_integration.send_finding.return_value = True
+        mock_initialize_integration.return_value = mock_jira_integration
+
+        # Mock finding with minimal/empty check_metadata
+        finding = MagicMock()
+        finding.id = "finding-1"
+        finding.check_id = "check_001"
+        finding.severity = "low"
+        finding.status = "PASS"
+        finding.status_extended = None
+        finding.resource_regions = []
+        finding.compliance = None
+
+        finding.resources.exists.return_value = False
+        finding.resources.first.return_value = None
+        finding.scan.provider.provider = "kubernetes"
+        finding.check_metadata = {}  # Empty metadata
+
+        mock_finding_model.all_objects.select_related.return_value.prefetch_related.return_value.get.return_value = finding
+
+        # Call the function
+        result = send_findings_to_jira(
+            tenant_id, integration_id, project_key, issue_type, finding_ids
+        )
+
+        # Assertions
+        assert result == {"created_count": 1, "failed_count": 0}
+
+        # Verify send_finding was called with default/empty values
+        call_kwargs = mock_jira_integration.send_finding.call_args.kwargs
+        assert call_kwargs["check_title"] == ""
+        assert call_kwargs["risk"] == ""
+        assert call_kwargs["recommendation_text"] == ""
+        assert call_kwargs["recommendation_url"] == ""
+        assert call_kwargs["remediation_code_native_iac"] == ""
+        assert call_kwargs["remediation_code_terraform"] == ""
+        assert call_kwargs["remediation_code_cli"] == ""
+        assert call_kwargs["remediation_code_other"] == ""
+        assert call_kwargs["compliance"] == {}

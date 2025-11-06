@@ -1,6 +1,7 @@
-import html
 import sys
 from io import TextIOWrapper
+
+import markdown
 
 from prowler.config.config import (
     html_logo_url,
@@ -15,6 +16,42 @@ from prowler.providers.common.provider import Provider
 
 
 class HTML(Output):
+    @staticmethod
+    def process_markdown(text: str) -> str:
+        """
+        Process markdown syntax in text and convert to HTML using the markdown library.
+
+        Args:
+            text (str): Text containing markdown syntax
+
+        Returns:
+            str: HTML with markdown syntax converted
+        """
+        if not text:
+            return text
+
+        # Initialize markdown converter with safe mode to prevent XSS
+        md = markdown.Markdown(extensions=["nl2br"])
+
+        # Convert markdown to HTML
+        html_content = md.convert(text)
+
+        # Strip outer <p> tags if present, as we're embedding in existing HTML
+        # Handle single paragraph case
+        if (
+            html_content.startswith("<p>")
+            and html_content.endswith("</p>")
+            and html_content.count("<p>") == 1
+        ):
+            html_content = html_content[3:-4]
+        # Handle multiple paragraphs case - replace <p> and </p> with <br><br>
+        elif "<p>" in html_content and "</p>" in html_content:
+            html_content = html_content.replace("</p>\n<p>", "<br />\n<br />\n")
+            html_content = html_content.replace("<p>", "")
+            html_content = html_content.replace("</p>", "")
+
+        return html_content
+
     def transform(self, findings: list[Finding]) -> None:
         """Transforms the findings into the HTML format.
 
@@ -47,8 +84,8 @@ class HTML(Output):
                             <td>{finding.resource_uid.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr />_")}</td>
                             <td>{parse_html_string(unroll_dict(finding.resource_tags))}</td>
                             <td>{finding.status_extended.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr />_")}</td>
-                            <td><p class="show-read-more">{html.escape(finding.metadata.Risk)}</p></td>
-                            <td><p class="show-read-more">{html.escape(finding.metadata.Remediation.Recommendation.Text)}</p> <a class="read-more" href="{finding.metadata.Remediation.Recommendation.Url}"><i class="fas fa-external-link-alt"></i></a></td>
+                            <td><p class="show-read-more">{HTML.process_markdown(finding.metadata.Risk)}</p></td>
+                            <td><p class="show-read-more">{HTML.process_markdown(finding.metadata.Remediation.Recommendation.Text)}</p> <a class="read-more" href="{finding.metadata.Remediation.Recommendation.Url}"><i class="fas fa-external-link-alt"></i></a></td>
                             <td><p class="show-read-more">{parse_html_string(unroll_dict(finding.compliance, separator=": "))}</p></td>
                         </tr>
                         """
@@ -295,10 +332,68 @@ class HTML(Output):
             var maxLength = 30;
             // ReadMore ReadLess
             $(".show-read-more").each(function () {
-                var myStr = $(this).text();
-                if ($.trim(myStr).length > maxLength) {
-                    var newStr = myStr.substring(0, maxLength);
-                    var removedStr = myStr.substring(maxLength, $.trim(myStr).length);
+                var myStr = $(this).html();
+                var textLength = $(this).text().length;
+                if (textLength > maxLength) {
+                    // Find the position where to cut while preserving HTML tags and breaking at word boundaries
+                    var cutPosition = 0;
+                    var currentLength = 0;
+                    var inTag = false;
+                    var lastWordBoundary = 0;
+                    var tagStack = [];
+
+                    for (var i = 0; i < myStr.length; i++) {
+                        if (myStr[i] === '<') {
+                            inTag = true;
+                            // Track opening tags
+                            if (myStr[i + 1] !== '/') {
+                                var tagEnd = myStr.indexOf('>', i);
+                                if (tagEnd !== -1) {
+                                    var tagName = myStr.substring(i + 1, tagEnd).split(' ')[0];
+                                    tagStack.push(tagName);
+                                }
+                            } else {
+                                // Closing tag
+                                var tagEnd = myStr.indexOf('>', i);
+                                if (tagEnd !== -1) {
+                                    var tagName = myStr.substring(i + 2, tagEnd).split(' ')[0];
+                                    if (tagStack.length > 0) {
+                                        tagStack.pop();
+                                    }
+                                }
+                            }
+                        } else if (myStr[i] === '>') {
+                            inTag = false;
+                        } else if (!inTag) {
+                            currentLength++;
+                            // Only consider word boundaries if we're not inside any HTML tags
+                            if (tagStack.length === 0 && (myStr[i] === ' ' || myStr[i] === '.' || myStr[i] === ',' || myStr[i] === ';' || myStr[i] === ':' || myStr[i] === '!' || myStr[i] === '?')) {
+                                lastWordBoundary = i + 1;
+                            }
+
+                            if (currentLength >= maxLength) {
+                                // If we're inside HTML tags, find the next closing tag
+                                if (tagStack.length > 0) {
+                                    // Find the next closing tag for the current open tag
+                                    var nextClosingTag = '</' + tagStack[tagStack.length - 1] + '>';
+                                    var closingTagPos = myStr.indexOf(nextClosingTag, i);
+                                    if (closingTagPos !== -1) {
+                                        cutPosition = closingTagPos + nextClosingTag.length;
+                                    } else {
+                                        // If no closing tag found, use current position
+                                        cutPosition = i + 1;
+                                    }
+                                } else {
+                                    // Use the last word boundary if available, otherwise use current position
+                                    cutPosition = lastWordBoundary > 0 ? lastWordBoundary : i + 1;
+                                }
+                                break;
+                            }
+                        }
+                    }
+
+                    var newStr = myStr.substring(0, cutPosition);
+                    var removedStr = myStr.substring(cutPosition);
                     $(this).empty().html(newStr);
                     $(this).append(' <a href="javascript:void(0);" class="read-more">read more...</a>');
                     $(this).append('<span class="more-text">' + removedStr + '</span>');
@@ -746,6 +841,51 @@ class HTML(Output):
             return ""
 
     @staticmethod
+    def get_mongodbatlas_assessment_summary(provider: Provider) -> str:
+        """
+        get_mongodbatlas_assessment_summary gets the HTML assessment summary for the provider
+
+        Args:
+            provider (Provider): the provider object
+
+        Returns:
+            str: the HTML assessment summary
+        """
+        try:
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            MongoDB Atlas Assessment Summary
+                        </div>
+                        <ul class="list-group
+                        list-group-flush">
+                            <li class="list-group-item">
+                                <b>MongoDB Atlas organization:</b> {provider.identity.organization_name}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            MongoDB Atlas Credentials
+                        </div>
+                        <ul class="list-group
+                        list-group-flush">
+                            <li class="list-group-item">
+                                <b>MongoDB Atlas authentication method:</b> API Key
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
     def get_iac_assessment_summary(provider: Provider) -> str:
         """
         get_iac_assessment_summary gets the HTML assessment summary for the provider
@@ -780,6 +920,96 @@ class HTML(Output):
                         list-group-flush">
                             <li class="list-group-item">
                                 <b>IAC authentication method:</b> {provider.auth_method}
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
+    def get_llm_assessment_summary(provider: Provider) -> str:
+        """
+        get_llm_assessment_summary gets the HTML assessment summary for the LLM provider
+
+        Args:
+            provider (Provider): the LLM provider object
+
+        Returns:
+            str: HTML assessment summary for the LLM provider
+        """
+        try:
+            return f"""
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-robot"></i> LLM Security Assessment Summary
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group
+                        list-group-flush">
+                            <li class="list-group-item">
+                                <b>Target LLM:</b> {provider.model}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Plugins:</b> {", ".join(provider.plugins)}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Max concurrency:</b> {provider.max_concurrency}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Config file:</b> {provider.config_path if provider.config_path else "Using promptfoo defaults"}
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
+    def get_oci_assessment_summary(provider: Provider) -> str:
+        """
+        get_oci_assessment_summary gets the HTML assessment summary for the OCI provider
+
+        Args:
+            provider (Provider): the OCI provider object
+
+        Returns:
+            str: HTML assessment summary for the OCI provider
+        """
+        try:
+            profile = getattr(provider.session, "profile", "default")
+            tenancy_name = getattr(provider.identity, "tenancy_name", "unknown")
+            tenancy_id = getattr(provider.identity, "tenancy_id", "unknown")
+
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            OCI Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>OCI Tenancy:</b> {tenancy_name if tenancy_name != "unknown" else tenancy_id}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            OCI Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Profile:</b> {profile}
                             </li>
                         </ul>
                     </div>

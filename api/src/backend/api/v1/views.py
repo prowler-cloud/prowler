@@ -1,4 +1,6 @@
+import fnmatch
 import glob
+import json
 import logging
 import os
 from datetime import datetime, timedelta, timezone
@@ -59,10 +61,14 @@ from tasks.tasks import (
     backfill_scan_resource_summaries_task,
     check_integration_connection_task,
     check_lighthouse_connection_task,
+    check_lighthouse_provider_connection_task,
     check_provider_connection_task,
     delete_provider_task,
     delete_tenant_task,
+    jira_integration_task,
+    mute_historical_findings_task,
     perform_scan_task,
+    refresh_lighthouse_provider_models_task,
 )
 
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
@@ -75,12 +81,17 @@ from api.db_utils import rls_transaction
 from api.exceptions import TaskFailedException
 from api.filters import (
     ComplianceOverviewFilter,
+    CustomDjangoFilterBackend,
     FindingFilter,
     IntegrationFilter,
+    IntegrationJiraFindingsFilter,
     InvitationFilter,
     LatestFindingFilter,
     LatestResourceFilter,
+    LighthouseProviderConfigFilter,
+    LighthouseProviderModelsFilter,
     MembershipFilter,
+    MuteRuleFilter,
     ProcessorFilter,
     ProviderFilter,
     ProviderGroupFilter,
@@ -89,8 +100,10 @@ from api.filters import (
     RoleFilter,
     ScanFilter,
     ScanSummaryFilter,
+    ScanSummarySeverityFilter,
     ServiceOverviewFilter,
     TaskFilter,
+    TenantApiKeyFilter,
     TenantFilter,
     UserFilter,
 )
@@ -100,7 +113,11 @@ from api.models import (
     Integration,
     Invitation,
     LighthouseConfiguration,
+    LighthouseProviderConfiguration,
+    LighthouseProviderModels,
+    LighthouseTenantConfiguration,
     Membership,
+    MuteRule,
     Processor,
     Provider,
     ProviderGroup,
@@ -120,6 +137,7 @@ from api.models import (
     SeverityChoices,
     StateChoices,
     Task,
+    TenantAPIKey,
     User,
     UserRoleRelationship,
 )
@@ -132,16 +150,18 @@ from api.utils import (
     validate_invitation,
 )
 from api.uuid_utils import datetime_to_uuid7, uuid7_start
-from api.v1.mixins import PaginateByPkMixin, TaskManagementMixin
+from api.v1.mixins import DisablePaginationMixin, PaginateByPkMixin, TaskManagementMixin
 from api.v1.serializers import (
     ComplianceOverviewAttributesSerializer,
     ComplianceOverviewDetailSerializer,
+    ComplianceOverviewDetailThreatscoreSerializer,
     ComplianceOverviewMetadataSerializer,
     ComplianceOverviewSerializer,
     FindingDynamicFilterSerializer,
     FindingMetadataSerializer,
     FindingSerializer,
     IntegrationCreateSerializer,
+    IntegrationJiraDispatchSerializer,
     IntegrationSerializer,
     IntegrationUpdateSerializer,
     InvitationAcceptSerializer,
@@ -151,8 +171,18 @@ from api.v1.serializers import (
     LighthouseConfigCreateSerializer,
     LighthouseConfigSerializer,
     LighthouseConfigUpdateSerializer,
+    LighthouseProviderConfigCreateSerializer,
+    LighthouseProviderConfigSerializer,
+    LighthouseProviderConfigUpdateSerializer,
+    LighthouseProviderModelsSerializer,
+    LighthouseTenantConfigSerializer,
+    LighthouseTenantConfigUpdateSerializer,
     MembershipSerializer,
+    MuteRuleCreateSerializer,
+    MuteRuleSerializer,
+    MuteRuleUpdateSerializer,
     OverviewFindingSerializer,
+    OverviewProviderCountSerializer,
     OverviewProviderSerializer,
     OverviewServiceSerializer,
     OverviewSeveritySerializer,
@@ -184,6 +214,9 @@ from api.v1.serializers import (
     ScanUpdateSerializer,
     ScheduleDailyCreateSerializer,
     TaskSerializer,
+    TenantApiKeyCreateSerializer,
+    TenantApiKeySerializer,
+    TenantApiKeyUpdateSerializer,
     TenantSerializer,
     TokenRefreshSerializer,
     TokenSerializer,
@@ -214,6 +247,8 @@ class RelationshipViewSchema(JsonApiAutoSchema):
     description="Obtain a token by providing valid credentials and an optional tenant ID.",
 )
 class CustomTokenObtainView(GenericAPIView):
+    throttle_scope = "token-obtain"
+
     resource_name = "tokens"
     serializer_class = TokenSerializer
     http_method_names = ["post"]
@@ -293,7 +328,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.12.0"
+        spectacular_settings.VERSION = "1.15.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -314,6 +349,11 @@ class SchemaView(SpectacularAPIView):
                 "invitations, creating new invitations, accepting and revoking them.",
             },
             {
+                "name": "Role",
+                "description": "Endpoints for managing RBAC roles within tenants, allowing creation, retrieval, "
+                "updating, and deletion of role configurations and permissions.",
+            },
+            {
                 "name": "Provider",
                 "description": "Endpoints for managing providers (AWS, GCP, Azure, etc...).",
             },
@@ -322,8 +362,18 @@ class SchemaView(SpectacularAPIView):
                 "description": "Endpoints for managing provider groups.",
             },
             {
+                "name": "Task",
+                "description": "Endpoints for task management, allowing retrieval of task status and "
+                "revoking tasks that have not started.",
+            },
+            {
                 "name": "Scan",
                 "description": "Endpoints for triggering manual scans and viewing scan results.",
+            },
+            {
+                "name": "Schedule",
+                "description": "Endpoints for managing scan schedules, allowing configuration of automated "
+                "scans with different scheduling options.",
             },
             {
                 "name": "Resource",
@@ -336,8 +386,9 @@ class SchemaView(SpectacularAPIView):
                 "findings that result from scans.",
             },
             {
-                "name": "Overview",
-                "description": "Endpoints for retrieving aggregated summaries of resources from the system.",
+                "name": "Processor",
+                "description": "Endpoints for managing post-processors used to process Prowler findings, including "
+                "registration, configuration, and deletion of post-processing actions.",
             },
             {
                 "name": "Compliance Overview",
@@ -345,9 +396,8 @@ class SchemaView(SpectacularAPIView):
                 " compliance framework ID.",
             },
             {
-                "name": "Task",
-                "description": "Endpoints for task management, allowing retrieval of task status and "
-                "revoking tasks that have not started.",
+                "name": "Overview",
+                "description": "Endpoints for retrieving aggregated summaries of resources from the system.",
             },
             {
                 "name": "Integration",
@@ -355,14 +405,26 @@ class SchemaView(SpectacularAPIView):
                 " retrieval, and deletion of integrations such as S3, JIRA, or other services.",
             },
             {
-                "name": "Lighthouse",
-                "description": "Endpoints for managing Lighthouse configurations, including creation, retrieval, "
-                "updating, and deletion of configurations such as OpenAI keys, models, and business context.",
+                "name": "Lighthouse AI",
+                "description": "Endpoints for managing Lighthouse AI configurations, including creation, retrieval, "
+                "updating, and deletion of configurations such as OpenAI keys, models, and business "
+                "context.",
             },
             {
-                "name": "Processor",
-                "description": "Endpoints for managing post-processors used to process Prowler findings, including "
-                "registration, configuration, and deletion of post-processing actions.",
+                "name": "SAML",
+                "description": "Endpoints for Single Sign-On authentication management via SAML for seamless user "
+                "authentication.",
+            },
+            {
+                "name": "API Keys",
+                "description": "Endpoints for API keys management. These can be used as an alternative to JWT "
+                "authorization.",
+            },
+            {
+                "name": "Mute Rules",
+                "description": "Endpoints for simple mute rules management. These can be used as an alternative to the"
+                " Mutelist Processor if you need to mute specific findings across your tenant with a "
+                "specific reason.",
             },
         ]
         return super().get(request, *args, **kwargs)
@@ -632,36 +694,48 @@ class TenantFinishACSView(FinishACSView):
             .get(email_domain=email_domain)
             .tenant
         )
-        role_name = (
-            extra.get("userType", ["no_permissions"])[0].strip()
-            if extra.get("userType")
-            else "no_permissions"
+
+        # Check if tenant has only one user with MANAGE_ACCOUNT role
+        users_with_manage_account = (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(role__manage_account=True, tenant_id=tenant.id)
+            .values("user")
+            .distinct()
+            .count()
         )
-        try:
-            role = Role.objects.using(MainRouter.admin_db).get(
-                name=role_name, tenant=tenant
+
+        # Only apply role mapping from userType if tenant does NOT have exactly one user with MANAGE_ACCOUNT
+        if users_with_manage_account != 1:
+            role_name = (
+                extra.get("userType", ["no_permissions"])[0].strip()
+                if extra.get("userType")
+                else "no_permissions"
             )
-        except Role.DoesNotExist:
-            role = Role.objects.using(MainRouter.admin_db).create(
-                name=role_name,
-                tenant=tenant,
-                manage_users=False,
-                manage_account=False,
-                manage_billing=False,
-                manage_providers=False,
-                manage_integrations=False,
-                manage_scans=False,
-                unlimited_visibility=False,
+            try:
+                role = Role.objects.using(MainRouter.admin_db).get(
+                    name=role_name, tenant=tenant
+                )
+            except Role.DoesNotExist:
+                role = Role.objects.using(MainRouter.admin_db).create(
+                    name=role_name,
+                    tenant=tenant,
+                    manage_users=False,
+                    manage_account=False,
+                    manage_billing=False,
+                    manage_providers=False,
+                    manage_integrations=False,
+                    manage_scans=False,
+                    unlimited_visibility=False,
+                )
+            UserRoleRelationship.objects.using(MainRouter.admin_db).filter(
+                user=user,
+                tenant_id=tenant.id,
+            ).delete()
+            UserRoleRelationship.objects.using(MainRouter.admin_db).create(
+                user=user,
+                role=role,
+                tenant_id=tenant.id,
             )
-        UserRoleRelationship.objects.using(MainRouter.admin_db).filter(
-            user=user,
-            tenant_id=tenant.id,
-        ).delete()
-        UserRoleRelationship.objects.using(MainRouter.admin_db).create(
-            user=user,
-            role=role,
-            tenant_id=tenant.id,
-        )
         membership, _ = Membership.objects.using(MainRouter.admin_db).get_or_create(
             user=user,
             tenant=tenant,
@@ -745,11 +819,13 @@ class UserViewSet(BaseUserViewset):
         # If called during schema generation, return an empty queryset
         if getattr(self, "swagger_fake_view", False):
             return User.objects.none()
+
         queryset = (
             User.objects.filter(membership__tenant__id=self.request.tenant_id)
             if hasattr(self.request, "tenant_id")
             else User.objects.all()
         )
+
         return queryset.prefetch_related("memberships", "roles")
 
     def get_permissions(self):
@@ -767,6 +843,12 @@ class UserViewSet(BaseUserViewset):
         else:
             return UserSerializer
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        if self.request.user.is_authenticated:
+            context["role"] = get_role(self.request.user)
+        return context
+
     @action(detail=False, methods=["get"], url_name="me")
     def me(self, request):
         user = self.request.user
@@ -780,7 +862,9 @@ class UserViewSet(BaseUserViewset):
         if kwargs["pk"] != str(self.request.user.id):
             raise ValidationError("Only the current user can be deleted.")
 
-        return super().destroy(request, *args, **kwargs)
+        user = self.get_object()
+        user.delete(using=MainRouter.admin_db)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @extend_schema(
         parameters=[
@@ -871,7 +955,11 @@ class UserViewSet(BaseUserViewset):
     partial_update=extend_schema(
         tags=["User"],
         summary="Partially update a user-roles relationship",
-        description="Update the user-roles relationship information without affecting other fields.",
+        description=(
+            "Update the user-roles relationship information without affecting other fields. "
+            "If the update would remove MANAGE_ACCOUNT from the last remaining user in the "
+            "tenant, the API rejects the request with a 400 response."
+        ),
         responses={
             204: OpenApiResponse(
                 response=None, description="Relationship updated successfully"
@@ -881,7 +969,12 @@ class UserViewSet(BaseUserViewset):
     destroy=extend_schema(
         tags=["User"],
         summary="Delete a user-roles relationship",
-        description="Remove the user-roles relationship from the system by their ID.",
+        description=(
+            "Remove the user-roles relationship from the system by their ID. If removing "
+            "MANAGE_ACCOUNT would take it away from the last remaining user in the tenant, "
+            "the API rejects the request with a 400 response. Users also cannot delete their "
+            "own role assignments; attempting to do so returns a 400 response."
+        ),
         responses={
             204: OpenApiResponse(
                 response=None, description="Relationship deleted successfully"
@@ -896,10 +989,47 @@ class UserRoleRelationshipView(RelationshipView, BaseRLSViewSet):
     http_method_names = ["post", "patch", "delete"]
     schema = RelationshipViewSchema()
     # RBAC required permissions
-    required_permissions = [Permissions.MANAGE_USERS]
+    required_permissions = [Permissions.MANAGE_ACCOUNT]
 
     def get_queryset(self):
         return User.objects.filter(membership__tenant__id=self.request.tenant_id)
+
+    def destroy(self, request, *args, **kwargs):
+        """
+        Prevent deleting role relationships if it would leave the tenant with no
+        users having MANAGE_ACCOUNT. Supports deleting specific roles via JSON:API
+        relationship payload or clearing all roles for the user when no payload.
+        """
+        user = self.get_object()
+        # Disallow deleting own roles
+        if str(user.id) == str(request.user.id):
+            return Response(
+                data={
+                    "detail": "Users cannot delete the relationship with their role."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        tenant_id = self.request.tenant_id
+        payload = request.data if isinstance(request.data, dict) else None
+
+        # If a user has more than one role, we will delete the relationship with the roles in the payload
+        data = payload.get("data") if payload else None
+        if data:
+            try:
+                role_ids = [item["id"] for item in data]
+            except KeyError:
+                role_ids = []
+            roles_to_remove = Role.objects.filter(id__in=role_ids, tenant_id=tenant_id)
+        else:
+            roles_to_remove = user.roles.filter(tenant_id=tenant_id)
+
+        UserRoleRelationship.objects.filter(
+            user=user,
+            tenant_id=tenant_id,
+            role_id__in=roles_to_remove.values_list("id", flat=True),
+        ).delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     def create(self, request, *args, **kwargs):
         user = self.get_object()
@@ -937,12 +1067,6 @@ class UserRoleRelationshipView(RelationshipView, BaseRLSViewSet):
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-    def destroy(self, request, *args, **kwargs):
-        user = self.get_object()
-        user.roles.clear()
-
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -1320,7 +1444,7 @@ class ProviderGroupProvidersRelationshipView(RelationshipView, BaseRLSViewSet):
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
-class ProviderViewSet(BaseRLSViewSet):
+class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
     queryset = Provider.objects.all()
     serializer_class = ProviderSerializer
     http_method_names = ["get", "post", "patch", "delete"]
@@ -1497,6 +1621,25 @@ class ProviderViewSet(BaseRLSViewSet):
         },
         request=None,
     ),
+    threatscore=extend_schema(
+        tags=["Scan"],
+        summary="Retrieve threatscore report",
+        description="Download a specific threatscore report (e.g., 'prowler_threatscore_aws') as a PDF file.",
+        request=None,
+        responses={
+            200: OpenApiResponse(
+                description="PDF file containing the threatscore report"
+            ),
+            202: OpenApiResponse(description="The task is in progress"),
+            401: OpenApiResponse(
+                description="API key missing or user not Authenticated"
+            ),
+            403: OpenApiResponse(description="There is a problem with credentials"),
+            404: OpenApiResponse(
+                description="The scan has no threatscore reports, or the threatscore report generation task has not started yet"
+            ),
+        },
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
@@ -1553,6 +1696,9 @@ class ScanViewSet(BaseRLSViewSet):
             if hasattr(self, "response_serializer_class"):
                 return self.response_serializer_class
             return ScanComplianceReportSerializer
+        elif self.action == "threatscore":
+            if hasattr(self, "response_serializer_class"):
+                return self.response_serializer_class
         return super().get_serializer_class()
 
     def partial_update(self, request, *args, **kwargs):
@@ -1657,7 +1803,18 @@ class ScanViewSet(BaseRLSViewSet):
                         status=status.HTTP_502_BAD_GATEWAY,
                     )
                 contents = resp.get("Contents", [])
-                keys = [obj["Key"] for obj in contents if obj["Key"].endswith(suffix)]
+                keys = []
+                for obj in contents:
+                    key = obj["Key"]
+                    key_basename = os.path.basename(key)
+                    if any(ch in suffix for ch in ("*", "?", "[")):
+                        if fnmatch.fnmatch(key_basename, suffix):
+                            keys.append(key)
+                    elif key_basename == suffix:
+                        keys.append(key)
+                    elif key.endswith(suffix):
+                        # Backward compatibility if suffix already includes directories
+                        keys.append(key)
                 if not keys:
                     return Response(
                         {
@@ -1783,6 +1940,45 @@ class ScanViewSet(BaseRLSViewSet):
 
         content, filename = loader
         return self._serve_file(content, filename, "text/csv")
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_name="threatscore",
+    )
+    def threatscore(self, request, pk=None):
+        scan = self.get_object()
+        running_resp = self._get_task_status(scan)
+        if running_resp:
+            return running_resp
+
+        if not scan.output_location:
+            return Response(
+                {
+                    "detail": "The scan has no reports, or the threatscore report generation task has not started yet."
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if scan.output_location.startswith("s3://"):
+            bucket = env.str("DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET", "")
+            key_prefix = scan.output_location.removeprefix(f"s3://{bucket}/")
+            prefix = os.path.join(
+                os.path.dirname(key_prefix),
+                "threatscore",
+                "*_threatscore_report.pdf",
+            )
+            loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
+        else:
+            base = os.path.dirname(scan.output_location)
+            pattern = os.path.join(base, "threatscore", "*_threatscore_report.pdf")
+            loader = self._load_file(pattern, s3=False)
+
+        if isinstance(loader, Response):
+            return loader
+
+        content, filename = loader
+        return self._serve_file(content, filename, "application/pdf")
 
     def create(self, request, *args, **kwargs):
         input_serializer = self.get_serializer(data=request.data)
@@ -2849,13 +3045,11 @@ class InvitationAcceptViewSet(BaseRLSViewSet):
     partial_update=extend_schema(
         tags=["Role"],
         summary="Partially update a role",
-        description="Update certain fields of an existing role's information without affecting other fields.",
         responses={200: RoleSerializer},
     ),
     destroy=extend_schema(
         tags=["Role"],
         summary="Delete a role",
-        description="Remove a role from the system by their ID.",
     ),
 )
 class RoleViewSet(BaseRLSViewSet):
@@ -2877,6 +3071,14 @@ class RoleViewSet(BaseRLSViewSet):
             return RoleUpdateSerializer
         return super().get_serializer_class()
 
+    @extend_schema(
+        description=(
+            "Update selected fields on an existing role. When changing the `users` "
+            "relationship of a role that grants MANAGE_ACCOUNT, the API blocks attempts "
+            "that would leave the tenant without any MANAGE_ACCOUNT assignees and prevents "
+            "callers from removing their own assignment to that role."
+        )
+    )
     def partial_update(self, request, *args, **kwargs):
         user_role = get_role(request.user)
         # If the user is the owner of the role, the manage_account field is not editable
@@ -2884,12 +3086,33 @@ class RoleViewSet(BaseRLSViewSet):
             request.data["manage_account"] = str(user_role.manage_account).lower()
         return super().partial_update(request, *args, **kwargs)
 
+    @extend_schema(
+        description=(
+            "Delete the specified role. The API rejects deletion of the last role "
+            "in the tenant that grants MANAGE_ACCOUNT."
+        )
+    )
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         if (
             instance.name == "admin"
         ):  # TODO: Move to a constant/enum (in case other roles are created by default)
             raise ValidationError(detail="The admin role cannot be deleted.")
+
+        # Prevent deleting the last MANAGE_ACCOUNT role in the tenant
+        if instance.manage_account:
+            has_other_ma = (
+                Role.objects.filter(tenant_id=instance.tenant_id, manage_account=True)
+                .exclude(id=instance.id)
+                .exists()
+            )
+            if not has_other_ma:
+                return Response(
+                    data={
+                        "detail": "Cannot delete the only role with MANAGE_ACCOUNT in the tenant."
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         return super().destroy(request, *args, **kwargs)
 
@@ -3033,7 +3256,9 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
                 description="Compliance overviews metadata obtained successfully",
                 response=ComplianceOverviewMetadataSerializer,
             ),
-            202: OpenApiResponse(description="The task is in progress"),
+            202: OpenApiResponse(
+                description="The task is in progress", response=TaskSerializer
+            ),
             500: OpenApiResponse(
                 description="Compliance overviews generation task failed"
             ),
@@ -3065,7 +3290,9 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
                 description="Compliance requirement details obtained successfully",
                 response=ComplianceOverviewDetailSerializer(many=True),
             ),
-            202: OpenApiResponse(description="The task is in progress"),
+            202: OpenApiResponse(
+                description="The task is in progress", response=TaskSerializer
+            ),
             500: OpenApiResponse(
                 description="Compliance overviews generation task failed"
             ),
@@ -3322,15 +3549,16 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             )
         filtered_queryset = self.filter_queryset(self.get_queryset())
 
-        all_requirements = (
-            filtered_queryset.values(
-                "requirement_id", "framework", "version", "description"
-            )
-            .distinct()
-            .annotate(
-                total_instances=Count("id"),
-                manual_count=Count("id", filter=Q(requirement_status="MANUAL")),
-            )
+        all_requirements = filtered_queryset.values(
+            "requirement_id",
+            "framework",
+            "version",
+            "description",
+        ).annotate(
+            total_instances=Count("id"),
+            manual_count=Count("id", filter=Q(requirement_status="MANUAL")),
+            passed_findings_sum=Sum("passed_findings"),
+            total_findings_sum=Sum("total_findings"),
         )
 
         passed_instances = (
@@ -3349,6 +3577,8 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             total_instances = requirement["total_instances"]
             passed_count = passed_counts.get(requirement_id, 0)
             is_manual = requirement["manual_count"] == total_instances
+            passed_findings = requirement["passed_findings_sum"] or 0
+            total_findings = requirement["total_findings_sum"] or 0
             if is_manual:
                 requirement_status = "MANUAL"
             elif passed_count == total_instances:
@@ -3363,10 +3593,19 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                     "version": requirement["version"],
                     "description": requirement["description"],
                     "status": requirement_status,
+                    "passed_findings": passed_findings,
+                    "total_findings": total_findings,
                 }
             )
 
-        serializer = self.get_serializer(requirements_summary, many=True)
+        # Use different serializer for threatscore framework
+        if "threatscore" not in compliance_id:
+            serializer = self.get_serializer(requirements_summary, many=True)
+        else:
+            serializer = ComplianceOverviewDetailThreatscoreSerializer(
+                requirements_summary, many=True
+            )
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], url_name="attributes")
@@ -3443,6 +3682,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                     ),
                     "name": requirement.get("name", ""),
                     "framework": compliance_framework.get("framework", ""),
+                    "compliance_name": compliance_framework.get("name", ""),
                     "version": compliance_framework.get("version", ""),
                     "description": requirement.get("description", ""),
                     "attributes": base_attributes,
@@ -3462,6 +3702,13 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             "The response includes the count of passed, failed, and manual findings, along with "
             "the total number of resources managed by each provider. Only the latest findings for "
             "each provider are considered in the aggregation to ensure accurate and up-to-date insights."
+        ),
+    ),
+    providers_count=extend_schema(
+        summary="Get provider counts grouped by type",
+        description=(
+            "Retrieve the number of providers grouped by provider type. "
+            "This endpoint counts every provider in the tenant, including those without completed scans."
         ),
     ),
     findings=extend_schema(
@@ -3515,6 +3762,8 @@ class OverviewViewSet(BaseRLSViewSet):
     def get_serializer_class(self):
         if self.action == "providers":
             return OverviewProviderSerializer
+        elif self.action == "providers_count":
+            return OverviewProviderCountSerializer
         elif self.action == "findings":
             return OverviewFindingSerializer
         elif self.action == "findings_severity":
@@ -3526,8 +3775,10 @@ class OverviewViewSet(BaseRLSViewSet):
     def get_filterset_class(self):
         if self.action == "providers":
             return None
-        elif self.action in ["findings", "findings_severity"]:
+        elif self.action == "findings":
             return ScanSummaryFilter
+        elif self.action == "findings_severity":
+            return ScanSummarySeverityFilter
         elif self.action == "services":
             return ServiceOverviewFilter
         return None
@@ -3561,10 +3812,7 @@ class OverviewViewSet(BaseRLSViewSet):
 
         findings_aggregated = (
             queryset.filter(scan_id__in=latest_scan_ids)
-            .values(
-                "scan__provider_id",
-                provider=F("scan__provider__provider"),
-            )
+            .values(provider=F("scan__provider__provider"))
             .annotate(
                 findings_passed=Coalesce(Sum("_pass"), 0),
                 findings_failed=Coalesce(Sum("fail"), 0),
@@ -3573,13 +3821,16 @@ class OverviewViewSet(BaseRLSViewSet):
             )
         )
 
-        resources_aggregated = (
-            Resource.all_objects.filter(tenant_id=tenant_id)
-            .values("provider_id")
-            .annotate(total_resources=Count("id"))
-        )
+        resources_queryset = Resource.all_objects.filter(tenant_id=tenant_id)
+        if hasattr(self, "allowed_providers"):
+            resources_queryset = resources_queryset.filter(
+                provider__in=self.allowed_providers
+            )
+        resources_aggregated = resources_queryset.values(
+            provider_type=F("provider__provider")
+        ).annotate(total_resources=Count("id"))
         resource_map = {
-            row["provider_id"]: row["total_resources"] for row in resources_aggregated
+            row["provider_type"]: row["total_resources"] for row in resources_aggregated
         }
 
         overview = []
@@ -3587,7 +3838,7 @@ class OverviewViewSet(BaseRLSViewSet):
             overview.append(
                 {
                     "provider": row["provider"],
-                    "total_resources": resource_map.get(row["scan__provider_id"], 0),
+                    "total_resources": resource_map.get(row["provider"], 0),
                     "total_findings": row["total_findings"],
                     "findings_passed": row["findings_passed"],
                     "findings_failed": row["findings_failed"],
@@ -3595,6 +3846,36 @@ class OverviewViewSet(BaseRLSViewSet):
                 }
             )
 
+        return Response(
+            self.get_serializer(overview, many=True).data,
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="providers/count",
+        url_name="providers-count",
+    )
+    def providers_count(self, request):
+        tenant_id = self.request.tenant_id
+        providers_qs = Provider.objects.filter(tenant_id=tenant_id)
+
+        if hasattr(self, "allowed_providers"):
+            allowed_ids = list(self.allowed_providers.values_list("id", flat=True))
+            if not allowed_ids:
+                overview = []
+                return Response(
+                    self.get_serializer(overview, many=True).data,
+                    status=status.HTTP_200_OK,
+                )
+            providers_qs = providers_qs.filter(id__in=allowed_ids)
+
+        overview = (
+            providers_qs.values("provider")
+            .annotate(count=Count("id"))
+            .order_by("provider")
+        )
         return Response(
             self.get_serializer(overview, many=True).data,
             status=status.HTTP_200_OK,
@@ -3649,7 +3930,12 @@ class OverviewViewSet(BaseRLSViewSet):
     @action(detail=False, methods=["get"], url_name="findings_severity")
     def findings_severity(self, request):
         tenant_id = self.request.tenant_id
-        queryset = self.get_queryset()
+
+        # Load only required fields
+        queryset = self.get_queryset().only(
+            "tenant_id", "scan_id", "severity", "fail", "_pass", "total"
+        )
+
         filtered_queryset = self.filter_queryset(queryset)
         provider_filter = (
             {"provider__in": self.allowed_providers}
@@ -3669,16 +3955,22 @@ class OverviewViewSet(BaseRLSViewSet):
             tenant_id=tenant_id, scan_id__in=latest_scan_ids
         )
 
+        # The filter will have added a status_count annotation if any status filter was used
+        if "status_count" in filtered_queryset.query.annotations:
+            sum_expression = Sum("status_count")
+        else:
+            sum_expression = Sum("total")
+
         severity_counts = (
             filtered_queryset.values("severity")
-            .annotate(count=Sum("total"))
+            .annotate(count=sum_expression)
             .order_by("severity")
         )
 
         severity_data = {sev[0]: 0 for sev in SeverityChoices}
-
-        for item in severity_counts:
-            severity_data[item["severity"]] = item["count"]
+        severity_data.update(
+            {item["severity"]: item["count"] for item in severity_counts}
+        )
 
         serializer = self.get_serializer(severity_data)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -3867,32 +4159,117 @@ class IntegrationViewSet(BaseRLSViewSet):
 
 
 @extend_schema_view(
+    dispatches=extend_schema(
+        tags=["Integration"],
+        summary="Send findings to a Jira integration",
+        description="Send a set of filtered findings to the given integration. At least one finding filter must be "
+        "provided.",
+        responses={202: OpenApiResponse(response=TaskSerializer)},
+        filters=True,
+    )
+)
+class IntegrationJiraViewSet(BaseRLSViewSet):
+    queryset = Finding.all_objects.all()
+    serializer_class = IntegrationJiraDispatchSerializer
+    http_method_names = ["post"]
+    filter_backends = [CustomDjangoFilterBackend]
+    filterset_class = IntegrationJiraFindingsFilter
+    # RBAC required permissions
+    required_permissions = [Permissions.MANAGE_INTEGRATIONS]
+
+    @extend_schema(exclude=True)
+    def create(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="POST")
+
+    def get_queryset(self):
+        tenant_id = self.request.tenant_id
+        user_roles = get_role(self.request.user)
+        if user_roles.unlimited_visibility:
+            # User has unlimited visibility, return all findings
+            queryset = Finding.all_objects.filter(tenant_id=tenant_id)
+        else:
+            # User lacks permission, filter findings based on provider groups associated with the role
+            queryset = Finding.all_objects.filter(
+                scan__provider__in=get_providers(user_roles)
+            )
+
+        return queryset
+
+    @action(detail=False, methods=["post"], url_name="dispatches")
+    def dispatches(self, request, integration_pk=None):
+        get_object_or_404(Integration, pk=integration_pk)
+        serializer = self.get_serializer(
+            data=request.data, context={"integration_id": integration_pk}
+        )
+        serializer.is_valid(raise_exception=True)
+
+        if self.filter_queryset(self.get_queryset()).count() == 0:
+            raise ValidationError(
+                {"findings": "No findings match the provided filters"}
+            )
+
+        finding_ids = [
+            str(finding_id)
+            for finding_id in self.filter_queryset(self.get_queryset()).values_list(
+                "id", flat=True
+            )
+        ]
+        project_key = serializer.validated_data["project_key"]
+        issue_type = serializer.validated_data["issue_type"]
+
+        with transaction.atomic():
+            task = jira_integration_task.delay(
+                tenant_id=self.request.tenant_id,
+                integration_id=integration_pk,
+                project_key=project_key,
+                issue_type=issue_type,
+                finding_ids=finding_ids,
+            )
+        prowler_task = Task.objects.get(id=task.id)
+        serializer = TaskSerializer(prowler_task)
+        return Response(
+            data=serializer.data,
+            status=status.HTTP_202_ACCEPTED,
+            headers={
+                "Content-Location": reverse(
+                    "task-detail", kwargs={"pk": prowler_task.id}
+                )
+            },
+        )
+
+
+@extend_schema_view(
     list=extend_schema(
-        tags=["Lighthouse"],
-        summary="List all Lighthouse configurations",
-        description="Retrieve a list of all Lighthouse configurations.",
+        tags=["Lighthouse AI"],
+        summary="List all Lighthouse AI configurations",
+        description="Retrieve a list of all Lighthouse AI configurations.",
+        deprecated=True,
     ),
     create=extend_schema(
-        tags=["Lighthouse"],
-        summary="Create a new Lighthouse configuration",
-        description="Create a new Lighthouse configuration with the specified details.",
+        tags=["Lighthouse AI"],
+        summary="Create a new Lighthouse AI configuration",
+        description="Create a new Lighthouse AI configuration with the specified details.",
+        deprecated=True,
     ),
     partial_update=extend_schema(
-        tags=["Lighthouse"],
-        summary="Partially update a Lighthouse configuration",
-        description="Update certain fields of an existing Lighthouse configuration.",
+        tags=["Lighthouse AI"],
+        summary="Partially update a Lighthouse AI configuration",
+        description="Update certain fields of an existing Lighthouse AI configuration.",
+        deprecated=True,
     ),
     destroy=extend_schema(
-        tags=["Lighthouse"],
-        summary="Delete a Lighthouse configuration",
-        description="Remove a Lighthouse configuration by its ID.",
+        tags=["Lighthouse AI"],
+        summary="Delete a Lighthouse AI configuration",
+        description="Remove a Lighthouse AI configuration by its ID.",
+        deprecated=True,
     ),
     connection=extend_schema(
-        tags=["Lighthouse"],
+        tags=["Lighthouse AI"],
         summary="Check the connection to the OpenAI API",
-        description="Verify the connection to the OpenAI API for a specific Lighthouse configuration.",
+        description="Verify the connection to the OpenAI API for a specific Lighthouse AI configuration.",
         request=None,
         responses={202: OpenApiResponse(response=TaskSerializer)},
+        deprecated=True,
     ),
 )
 class LighthouseConfigViewSet(BaseRLSViewSet):
@@ -3945,6 +4322,255 @@ class LighthouseConfigViewSet(BaseRLSViewSet):
 
 @extend_schema_view(
     list=extend_schema(
+        tags=["Lighthouse AI"],
+        summary="List all LLM provider configurations",
+        description="Retrieve all LLM provider configurations for the current tenant",
+    ),
+    retrieve=extend_schema(
+        tags=["Lighthouse AI"],
+        summary="Retrieve LLM provider configuration",
+        description="Get details for a specific provider configuration in the current tenant.",
+    ),
+    create=extend_schema(
+        tags=["Lighthouse AI"],
+        summary="Create LLM provider configuration",
+        description="Create a per-tenant configuration for an LLM provider. Only one configuration per provider type "
+        "is allowed per tenant.",
+    ),
+    partial_update=extend_schema(
+        tags=["Lighthouse AI"],
+        summary="Update LLM provider configuration",
+        description="Partially update a provider configuration (e.g., base_url, is_active).",
+    ),
+    destroy=extend_schema(
+        tags=["Lighthouse AI"],
+        summary="Delete LLM provider configuration",
+        description="Delete a provider configuration. Any tenant defaults that reference this provider are cleared "
+        "during deletion.",
+    ),
+)
+class LighthouseProviderConfigViewSet(BaseRLSViewSet):
+    queryset = LighthouseProviderConfiguration.objects.all()
+    serializer_class = LighthouseProviderConfigSerializer
+    http_method_names = ["get", "post", "patch", "delete"]
+    filterset_class = LighthouseProviderConfigFilter
+
+    def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return LighthouseProviderConfiguration.objects.none()
+        return LighthouseProviderConfiguration.objects.filter(
+            tenant_id=self.request.tenant_id
+        )
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return LighthouseProviderConfigCreateSerializer
+        elif self.action == "partial_update":
+            return LighthouseProviderConfigUpdateSerializer
+        elif self.action in ["connection", "refresh_models"]:
+            return TaskSerializer
+        return super().get_serializer_class()
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        read_serializer = LighthouseProviderConfigSerializer(
+            instance, context=self.get_serializer_context()
+        )
+        headers = self.get_success_headers(read_serializer.data)
+        return Response(
+            data=read_serializer.data,
+            status=status.HTTP_201_CREATED,
+            headers=headers,
+        )
+
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(
+            instance,
+            data=request.data,
+            partial=True,
+            context=self.get_serializer_context(),
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        read_serializer = LighthouseProviderConfigSerializer(
+            instance, context=self.get_serializer_context()
+        )
+        return Response(data=read_serializer.data, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        tags=["Lighthouse AI"],
+        summary="Check LLM provider connection",
+        description="Validate provider credentials asynchronously and toggle is_active.",
+        request=None,
+        responses={202: OpenApiResponse(response=TaskSerializer)},
+    )
+    @action(detail=True, methods=["post"], url_name="connection")
+    def connection(self, request, pk=None):
+        instance = self.get_object()
+
+        with transaction.atomic():
+            task = check_lighthouse_provider_connection_task.delay(
+                provider_config_id=str(instance.id), tenant_id=self.request.tenant_id
+            )
+
+        prowler_task = Task.objects.get(id=task.id)
+        serializer = TaskSerializer(prowler_task)
+        return Response(
+            data=serializer.data,
+            status=status.HTTP_202_ACCEPTED,
+            headers={
+                "Content-Location": reverse(
+                    "task-detail", kwargs={"pk": prowler_task.id}
+                )
+            },
+        )
+
+    @extend_schema(
+        tags=["Lighthouse AI"],
+        summary="Refresh LLM models catalog",
+        description="Fetch available models for this provider configuration and upsert into catalog. Supports OpenAI, OpenAI-compatible, and AWS Bedrock providers.",
+        request=None,
+        responses={202: OpenApiResponse(response=TaskSerializer)},
+    )
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="refresh-models",
+        url_name="refresh-models",
+    )
+    def refresh_models(self, request, pk=None):
+        instance = self.get_object()
+
+        with transaction.atomic():
+            task = refresh_lighthouse_provider_models_task.delay(
+                provider_config_id=str(instance.id), tenant_id=self.request.tenant_id
+            )
+
+        prowler_task = Task.objects.get(id=task.id)
+        serializer = TaskSerializer(prowler_task)
+        return Response(
+            data=serializer.data,
+            status=status.HTTP_202_ACCEPTED,
+            headers={
+                "Content-Location": reverse(
+                    "task-detail", kwargs={"pk": prowler_task.id}
+                )
+            },
+        )
+
+
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Lighthouse AI"],
+        summary="Get Lighthouse AI Tenant config",
+        description="Retrieve current tenant-level Lighthouse AI settings. Returns a single configuration object.",
+    ),
+    partial_update=extend_schema(
+        tags=["Lighthouse AI"],
+        summary="Update Lighthouse AI Tenant config",
+        description="Update tenant-level settings. Validates that the default provider is configured and active and that default model IDs exist for the chosen providers. Auto-creates configuration if it doesn't exist.",
+    ),
+)
+class LighthouseTenantConfigViewSet(BaseRLSViewSet):
+    """
+    Singleton endpoint for tenant-level Lighthouse AI configuration.
+
+    This viewset implements a true singleton pattern:
+    - GET returns the single configuration object (or 404 if not found)
+    - PATCH updates/creates the configuration (upsert semantics)
+    - No ID is required in the URL
+    """
+
+    queryset = LighthouseTenantConfiguration.objects.all()
+    serializer_class = LighthouseTenantConfigSerializer
+    http_method_names = ["get", "patch"]
+
+    def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return LighthouseTenantConfiguration.objects.none()
+        return LighthouseTenantConfiguration.objects.filter(
+            tenant_id=self.request.tenant_id
+        )
+
+    def get_serializer_class(self):
+        if self.action == "partial_update":
+            return LighthouseTenantConfigUpdateSerializer
+        return super().get_serializer_class()
+
+    def get_object(self):
+        """Retrieve the singleton instance for the current tenant."""
+        obj = LighthouseTenantConfiguration.objects.filter(
+            tenant_id=self.request.tenant_id
+        ).first()
+        if obj is None:
+            raise NotFound("Tenant Lighthouse configuration not found")
+        self.check_object_permissions(self.request, obj)
+        return obj
+
+    def list(self, request, *args, **kwargs):
+        """GET endpoint for singleton - returns single object, not an array."""
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+    def partial_update(self, request, *args, **kwargs):
+        """PATCH endpoint for singleton - no pk required. Auto-creates if not exists."""
+        # Auto-create tenant config if it doesn't exist (upsert semantics)
+        instance, created = LighthouseTenantConfiguration.objects.get_or_create(
+            tenant_id=self.request.tenant_id,
+            defaults={},
+        )
+
+        # Extract attributes from JSON:API payload
+        try:
+            payload = json.loads(request.body)
+            attributes = payload.get("data", {}).get("attributes", {})
+        except (json.JSONDecodeError, AttributeError):
+            raise ValidationError("Invalid JSON:API payload")
+
+        serializer = self.get_serializer(instance, data=attributes, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        read_serializer = LighthouseTenantConfigSerializer(
+            instance, context=self.get_serializer_context()
+        )
+        return Response(read_serializer.data, status=status.HTTP_200_OK)
+
+
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Lighthouse AI"],
+        summary="List all LLM models",
+        description="List available LLM models per configured provider for the current tenant.",
+    ),
+    retrieve=extend_schema(
+        tags=["Lighthouse AI"],
+        summary="Retrieve LLM model details",
+        description="Get details for a specific LLM model.",
+    ),
+)
+class LighthouseProviderModelsViewSet(BaseRLSViewSet):
+    queryset = LighthouseProviderModels.objects.all()
+    serializer_class = LighthouseProviderModelsSerializer
+    filterset_class = LighthouseProviderModelsFilter
+    # Expose as read-only catalog collection
+    http_method_names = ["get"]
+
+    def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return LighthouseProviderModels.objects.none()
+        return LighthouseProviderModels.objects.filter(tenant_id=self.request.tenant_id)
+
+    def get_serializer_class(self):
+        return super().get_serializer_class()
+
+
+@extend_schema_view(
+    list=extend_schema(
         tags=["Processor"],
         summary="List all processors",
         description="Retrieve a list of all configured processors with options for filtering by various criteria.",
@@ -3992,3 +4618,176 @@ class ProcessorViewSet(BaseRLSViewSet):
         elif self.action == "partial_update":
             return ProcessorUpdateSerializer
         return super().get_serializer_class()
+
+
+@extend_schema_view(
+    list=extend_schema(
+        tags=["API Keys"],
+        summary="List API keys",
+        description="Retrieve a list of API keys for the tenant, with filtering support.",
+    ),
+    retrieve=extend_schema(
+        tags=["API Keys"],
+        summary="Retrieve API key details",
+        description="Fetch detailed information about a specific API key by its ID.",
+    ),
+    create=extend_schema(
+        tags=["API Keys"],
+        summary="Create a new API key",
+        description="Create a new API key for the tenant.",
+    ),
+    partial_update=extend_schema(
+        tags=["API Keys"],
+        summary="Partially update an API key",
+        description="Modify certain fields of an existing API key without affecting other settings.",
+    ),
+    revoke=extend_schema(
+        tags=["API Keys"],
+        summary="Revoke an API key",
+        description="Revoke an API key by its ID. This action is irreversible and will prevent the key from being "
+        "used.",
+        request=None,
+        responses={
+            200: OpenApiResponse(
+                response=TenantApiKeySerializer,
+                description="API key was successfully revoked",
+            )
+        },
+    ),
+)
+class TenantApiKeyViewSet(BaseRLSViewSet):
+    queryset = TenantAPIKey.objects.all()
+    serializer_class = TenantApiKeySerializer
+    filterset_class = TenantApiKeyFilter
+    http_method_names = ["get", "post", "patch", "delete"]
+    ordering = ["revoked", "-created"]
+    ordering_fields = ["name", "prefix", "revoked", "inserted_at", "expires_at"]
+    # RBAC required permissions
+    required_permissions = [Permissions.MANAGE_ACCOUNT]
+
+    def get_queryset(self):
+        queryset = TenantAPIKey.objects.filter(
+            tenant_id=self.request.tenant_id
+        ).annotate(inserted_at=F("created"), expires_at=F("expiry_date"))
+        return queryset
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return TenantApiKeyCreateSerializer
+        elif self.action == "partial_update":
+            return TenantApiKeyUpdateSerializer
+        return super().get_serializer_class()
+
+    @extend_schema(exclude=True)
+    def destroy(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="DESTROY")
+
+    @action(detail=True, methods=["delete"])
+    def revoke(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        # Check if already revoked
+        if instance.revoked:
+            raise ValidationError(
+                {
+                    "detail": "API key is already revoked",
+                }
+            )
+
+        TenantAPIKey.objects.revoke_api_key(instance.pk)
+        instance.refresh_from_db()
+
+        serializer = self.get_serializer(instance)
+        return Response(data=serializer.data, status=status.HTTP_200_OK)
+
+
+# MuteRules
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Mute Rules"],
+        summary="List all mute rules",
+        description="Retrieve a list of all mute rules with filtering options.",
+    ),
+    retrieve=extend_schema(
+        tags=["Mute Rules"],
+        summary="Retrieve a mute rule",
+        description="Fetch detailed information about a specific mute rule by ID.",
+    ),
+    create=extend_schema(
+        tags=["Mute Rules"],
+        summary="Create a new mute rule",
+        description="Create a new mute rule by providing finding IDs, name, and reason. "
+        "The rule will immediately mute the selected findings and launch a background task "
+        "to mute all historical findings with matching UIDs.",
+        request=MuteRuleCreateSerializer,
+    ),
+    partial_update=extend_schema(
+        tags=["Mute Rules"],
+        summary="Partially update a mute rule",
+        description="Update certain fields of an existing mute rule (e.g., name, reason, enabled).",
+        request=MuteRuleUpdateSerializer,
+        responses={200: MuteRuleSerializer},
+    ),
+    destroy=extend_schema(
+        tags=["Mute Rules"],
+        summary="Delete a mute rule",
+        description="Remove a mute rule from the system. Note: Previously muted findings remain muted.",
+    ),
+)
+class MuteRuleViewSet(BaseRLSViewSet):
+    queryset = MuteRule.objects.all()
+    serializer_class = MuteRuleSerializer
+    filterset_class = MuteRuleFilter
+    http_method_names = ["get", "post", "patch", "delete"]
+    search_fields = ["name", "reason"]
+    ordering = ["-inserted_at"]
+    ordering_fields = [
+        "name",
+        "enabled",
+        "inserted_at",
+        "updated_at",
+    ]
+    required_permissions = [Permissions.MANAGE_SCANS]
+
+    def get_queryset(self):
+        queryset = MuteRule.objects.filter(tenant_id=self.request.tenant_id)
+        return queryset.select_related("created_by")
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return MuteRuleCreateSerializer
+        elif self.action == "partial_update":
+            return MuteRuleUpdateSerializer
+        return super().get_serializer_class()
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # Create the mute rule
+        mute_rule = serializer.save()
+
+        tenant_id = str(request.tenant_id)
+        finding_ids = request.data.get("finding_ids", [])
+
+        # Immediately mute the selected findings
+        Finding.all_objects.filter(
+            id__in=finding_ids, tenant_id=tenant_id, muted=False
+        ).update(
+            muted=True,
+            muted_at=mute_rule.inserted_at,
+            muted_reason=mute_rule.reason,
+        )
+
+        # Launch background task for historical muting
+        with transaction.atomic():
+            mute_historical_findings_task.apply_async(
+                kwargs={"tenant_id": tenant_id, "mute_rule_id": str(mute_rule.id)}
+            )
+
+        # Return the created mute rule
+        serializer = self.get_serializer(mute_rule)
+        return Response(
+            data=serializer.data,
+            status=status.HTTP_201_CREATED,
+        )

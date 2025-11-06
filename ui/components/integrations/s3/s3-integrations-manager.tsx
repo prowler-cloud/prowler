@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardBody, CardHeader } from "@nextui-org/react";
+import { Card, CardBody, CardHeader } from "@heroui/card";
 import { format } from "date-fns";
 import { PlusIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
@@ -214,7 +214,7 @@ export const S3IntegrationsManager = ({
         title="Delete S3 Integration"
         description="This action cannot be undone. This will permanently delete your S3 integration."
       >
-        <div className="flex w-full justify-center space-x-6">
+        <div className="flex w-full justify-center gap-6">
           <CustomButton
             type="button"
             ariaLabel="Cancel"
@@ -271,7 +271,7 @@ export const S3IntegrationsManager = ({
         />
       </CustomAlertModal>
 
-      <div className="space-y-6">
+      <div className="flex flex-col gap-6">
         {/* Header with Add Button */}
         <div className="flex items-center justify-between">
           <div>
@@ -322,8 +322,10 @@ export const S3IntegrationsManager = ({
                     connectionStatus={{
                       connected: integration.attributes.connected,
                     }}
+                    navigationUrl={`https://console.aws.amazon.com/s3/buckets/${integration.attributes.configuration.bucket_name}`}
                   />
                 </CardHeader>
+
                 <CardBody className="pt-0">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="text-xs text-gray-500 dark:text-gray-300">

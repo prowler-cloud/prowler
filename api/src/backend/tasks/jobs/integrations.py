@@ -5,9 +5,10 @@ from celery.utils.log import get_task_logger
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE
 from tasks.utils import batched
 
+from api.db_router import READ_REPLICA_ALIAS, MainRouter
 from api.db_utils import rls_transaction
 from api.models import Finding, Integration, Provider
-from api.utils import initialize_prowler_provider
+from api.utils import initialize_prowler_integration, initialize_prowler_provider
 from prowler.lib.outputs.asff.asff import ASFF
 from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
 from prowler.lib.outputs.csv.csv import CSV
@@ -178,7 +179,7 @@ def get_security_hub_client_from_integration(
         if the connection was successful and the SecurityHub client or connection object.
     """
     # Get the provider associated with this integration
-    with rls_transaction(tenant_id):
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
         provider_relationship = integration.integrationproviderrelationship_set.first()
         if not provider_relationship:
             return Connection(
@@ -207,7 +208,7 @@ def get_security_hub_client_from_integration(
             regions_status[region] = region in connection.enabled_regions
 
         # Save regions information in the integration configuration
-        with rls_transaction(tenant_id):
+        with rls_transaction(tenant_id, using=MainRouter.default_db):
             integration.configuration["regions"] = regions_status
             integration.save()
 
@@ -220,6 +221,11 @@ def get_security_hub_client_from_integration(
             **credentials,
         )
         return True, security_hub
+    else:
+        # Reset regions information if connection fails
+        with rls_transaction(tenant_id, using=MainRouter.default_db):
+            integration.configuration["regions"] = {}
+            integration.save()
 
     return False, connection
 
@@ -284,7 +290,7 @@ def upload_security_hub_integration(
                 has_findings = False
                 batch_number = 0
 
-                with rls_transaction(tenant_id):
+                with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
                     qs = (
                         Finding.all_objects.filter(tenant_id=tenant_id, scan_id=scan_id)
                         .order_by("uid")
@@ -325,15 +331,20 @@ def upload_security_hub_integration(
 
                                 if not connected:
                                     logger.error(
-                                        f"Security Hub connection failed for integration {integration.id}: {security_hub.error}"
+                                        f"Security Hub connection failed for integration {integration.id}: "
+                                        f"{security_hub.error}"
                                     )
-                                    integration.connected = False
-                                    integration.save()
+                                    with rls_transaction(
+                                        tenant_id, using=MainRouter.default_db
+                                    ):
+                                        integration.connected = False
+                                        integration.save()
                                     break  # Skip this integration
 
                                 security_hub_client = security_hub
                                 logger.info(
-                                    f"Sending {'fail' if send_only_fails else 'all'} findings to Security Hub via integration {integration.id}"
+                                    f"Sending {'fail' if send_only_fails else 'all'} findings to Security Hub via "
+                                    f"integration {integration.id}"
                                 )
                             else:
                                 # Update findings in existing client for this batch
@@ -422,3 +433,78 @@ def upload_security_hub_integration(
             f"Security Hub integrations failed for provider {provider_id}: {str(e)}"
         )
         return False
+
+
+def send_findings_to_jira(
+    tenant_id: str,
+    integration_id: str,
+    project_key: str,
+    issue_type: str,
+    finding_ids: list[str],
+):
+    with rls_transaction(tenant_id):
+        integration = Integration.objects.get(id=integration_id)
+        jira_integration = initialize_prowler_integration(integration)
+
+    num_tickets_created = 0
+    for finding_id in finding_ids:
+        with rls_transaction(tenant_id):
+            finding_instance = (
+                Finding.all_objects.select_related("scan__provider")
+                .prefetch_related("resources")
+                .get(id=finding_id)
+            )
+
+            # Extract resource information
+            resource = (
+                finding_instance.resources.first()
+                if finding_instance.resources.exists()
+                else None
+            )
+            resource_uid = resource.uid if resource else ""
+            resource_name = resource.name if resource else ""
+            resource_tags = {}
+            if resource and hasattr(resource, "tags"):
+                resource_tags = resource.get_tags(tenant_id)
+
+            # Get region
+            region = resource.region if resource and resource.region else ""
+
+            # Extract remediation information from check_metadata
+            check_metadata = finding_instance.check_metadata
+            remediation = check_metadata.get("remediation", {})
+            recommendation = remediation.get("recommendation", {})
+            remediation_code = remediation.get("code", {})
+
+            # Send the individual finding to Jira
+            result = jira_integration.send_finding(
+                check_id=finding_instance.check_id,
+                check_title=check_metadata.get("checktitle", ""),
+                severity=finding_instance.severity,
+                status=finding_instance.status,
+                status_extended=finding_instance.status_extended or "",
+                provider=finding_instance.scan.provider.provider,
+                region=region,
+                resource_uid=resource_uid,
+                resource_name=resource_name,
+                risk=check_metadata.get("risk", ""),
+                recommendation_text=recommendation.get("text", ""),
+                recommendation_url=recommendation.get("url", ""),
+                remediation_code_native_iac=remediation_code.get("nativeiac", ""),
+                remediation_code_terraform=remediation_code.get("terraform", ""),
+                remediation_code_cli=remediation_code.get("cli", ""),
+                remediation_code_other=remediation_code.get("other", ""),
+                resource_tags=resource_tags,
+                compliance=finding_instance.compliance or {},
+                project_key=project_key,
+                issue_type=issue_type,
+            )
+            if result:
+                num_tickets_created += 1
+            else:
+                logger.error(f"Failed to send finding {finding_id} to Jira")
+
+    return {
+        "created_count": num_tickets_created,
+        "failed_count": len(finding_ids) - num_tickets_created,
+    }

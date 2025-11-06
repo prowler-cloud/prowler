@@ -1,7 +1,7 @@
 "use server";
-import { revalidatePath } from "next/cache";
 
-import { apiBaseUrl, getAuthHeaders, parseStringify } from "@/lib";
+import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { handleApiResponse } from "@/lib/server-actions-helper";
 
 export const getCompliancesOverview = async ({
   scanId,
@@ -25,15 +25,12 @@ export const getCompliancesOverview = async ({
   }
 
   try {
-    const compliances = await fetch(url.toString(), {
+    const response = await fetch(url.toString(), {
       headers,
     });
-    const data = await compliances.json();
-    const parsedData = parseStringify(data);
-    revalidatePath("/compliance");
-    return parsedData;
+
+    return handleApiResponse(response);
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error fetching providers:", error);
     return undefined;
   }
@@ -52,8 +49,8 @@ export const getComplianceOverviewMetadataInfo = async ({
   if (sort) url.searchParams.append("sort", sort);
 
   Object.entries(filters).forEach(([key, value]) => {
-    // Define filters to exclude
-    if (key !== "filter[search]") {
+    // Define filters to exclude and check for valid values
+    if (key !== "filter[search]" && value && String(value).trim() !== "") {
       url.searchParams.append(key, String(value));
     }
   });
@@ -63,17 +60,8 @@ export const getComplianceOverviewMetadataInfo = async ({
       headers,
     });
 
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch compliance overview metadata info: ${response.statusText}`,
-      );
-    }
-
-    const parsedData = parseStringify(await response.json());
-
-    return parsedData;
+    return handleApiResponse(response);
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error fetching compliance overview metadata info:", error);
     return undefined;
   }
@@ -90,22 +78,11 @@ export const getComplianceAttributes = async (complianceId: string) => {
       headers,
     });
 
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch compliance attributes: ${response.statusText}`,
-      );
-    }
-
-    const data = await response.json();
-
-    const parsedData = parseStringify(data);
-    return parsedData;
+    return handleApiResponse(response);
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error fetching compliance attributes:", error);
     return undefined;
   }
-  // */
 };
 
 export const getComplianceRequirements = async ({
@@ -135,20 +112,9 @@ export const getComplianceRequirements = async ({
       headers,
     });
 
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch compliance requirements: ${response.statusText}`,
-      );
-    }
-
-    const data = await response.json();
-    const parsedData = parseStringify(data);
-
-    return parsedData;
+    return handleApiResponse(response);
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error fetching compliance requirements:", error);
     return undefined;
   }
-  // */
 };

@@ -51,6 +51,9 @@ def display_summary_table(
         elif provider.type == "m365":
             entity_type = "Tenant Domain"
             audited_entities = provider.identity.tenant_domain
+        elif provider.type == "mongodbatlas":
+            entity_type = "Organization"
+            audited_entities = provider.identity.organization_name
         elif provider.type == "nhn":
             entity_type = "Tenant Domain"
             audited_entities = provider.identity.tenant_domain
@@ -68,16 +71,16 @@ def display_summary_table(
             else:
                 entity_type = "Directory"
                 audited_entities = provider.workflow_path
-        elif provider.type == "pipeline":
-            if provider.organization:
-                entity_type = "Organization"
-                audited_entities = provider.organization
-            elif provider.repository_url:
-                entity_type = "Repository"
-                audited_entities = provider.repository_url
-            else:
-                entity_type = "Directory"
-                audited_entities = provider.scan_path
+        elif provider.type == "llm":
+            entity_type = "LLM"
+            audited_entities = provider.model
+        elif provider.type == "oraclecloud":
+            entity_type = "Tenancy"
+            audited_entities = (
+                provider.identity.tenancy_name
+                if provider.identity.tenancy_name != "unknown"
+                else provider.identity.tenancy_id
+            )
 
         # Check if there are findings and that they are not all MANUAL
         if findings and not all(finding.status == "MANUAL" for finding in findings):

@@ -1,29 +1,42 @@
 {
   "Provider": "aws",
   "CheckID": "cloudfront_distributions_origin_traffic_encrypted",
-  "CheckTitle": "Check if CloudFront distributions encrypt traffic to custom origins.",
-  "CheckType": [],
+  "CheckTitle": "CloudFront distribution encrypts traffic to custom origins",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Security",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Data Exposure"
+  ],
   "ServiceName": "cloudfront",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:cloudfront:region:account-id:distribution/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AWSCloudFrontDistribution",
-  "Description": "Check if CloudFront distributions encrypt traffic to custom origins.",
-  "Risk": "Allowing unencrypted HTTP traffic between CloudFront and custom origins can expose data to potential eavesdropping and manipulation, compromising data security and integrity.",
-  "RelatedUrl": "https://docs.aws.amazon.com/whitepapers/latest/secure-content-delivery-amazon-cloudfront/custom-origin-with-cloudfront.html",
+  "ResourceType": "AwsCloudFrontDistribution",
+  "Description": "**CloudFront distributions** are evaluated for **TLS to origins**. The check ensures custom origins use `origin_protocol_policy`=`https-only`, or `match-viewer` only when the viewer protocol policy disallows HTTP. For S3 origins, it inspects the viewer protocol policy and flags `allow-all` as permitting non-encrypted paths.",
+  "Risk": "Unencrypted origin links enable on-path interception and manipulation. Secrets, cookies, and PII can be exposed, and responses altered, undermining **confidentiality** and **integrity**. This increases chances of session hijacking, cache poisoning, and malicious content injection.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-https.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/cloudfront-traffic-to-origin-unencrypted.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudfront-controls.html#cloudfront-9",
+    "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-https-cloudfront-to-custom-origin.html",
+    "https://docs.aws.amazon.com/whitepapers/latest/secure-content-delivery-amazon-cloudfront/custom-origin-with-cloudfront.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/cloudfront-controls.html#cloudfront-9",
-      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudFront/cloudfront-traffic-to-origin-unencrypted.html"
+      "CLI": "aws cloudfront get-distribution-config --id <DISTRIBUTION_ID> --output json > current-config.json && echo 'Manually edit current-config.json to change Origins[].CustomOriginConfig.OriginProtocolPolicy to https-only', then run:' && echo 'aws cloudfront update-distribution --id <DISTRIBUTION_ID> --distribution-config file://current-config.json --if-match $(aws cloudfront get-distribution-config --id <DISTRIBUTION_ID> --query \"ETag\" --output text)'",
+      "NativeIaC": "```yaml\n# CloudFormation: set CloudFront origin to use HTTPS only\nResources:\n  <example_resource_name>:\n    Type: AWS::CloudFront::Distribution\n    Properties:\n      DistributionConfig:\n        Enabled: true\n        Origins:\n          - Id: <example_origin_id>\n            DomainName: <example_origin_domain>\n            CustomOriginConfig:\n              OriginProtocolPolicy: https-only  # FIX: Force CloudFront-to-origin over HTTPS only\n        DefaultCacheBehavior:\n          TargetOriginId: <example_origin_id>\n          ViewerProtocolPolicy: allow-all\n          ForwardedValues:\n            QueryString: false\n```",
+      "Other": "1. In the AWS Console, open CloudFront and select your distribution\n2. Go to the Origins tab, select the custom origin, and click Edit\n3. Set Protocol to HTTPS only (Origin protocol policy = HTTPS Only)\n4. Click Save changes and wait for the distribution to deploy",
+      "Terraform": "```hcl\n# Terraform: set CloudFront origin to use HTTPS only\nresource \"aws_cloudfront_distribution\" \"<example_resource_name>\" {\n  enabled = true\n\n  origin {\n    domain_name = \"<example_origin_domain>\"\n    origin_id   = \"<example_origin_id>\"\n\n    custom_origin_config {\n      http_port              = 80\n      https_port             = 443\n      origin_protocol_policy = \"https-only\"   # FIX: Force CloudFront-to-origin over HTTPS only\n      origin_ssl_protocols   = [\"TLSv1.2\"]\n    }\n  }\n\n  default_cache_behavior {\n    target_origin_id       = \"<example_origin_id>\"\n    viewer_protocol_policy = \"allow-all\"\n    forwarded_values {\n      query_string = false\n      cookies { forward = \"none\" }\n    }\n  }\n\n  restrictions { geo_restriction { restriction_type = \"none\" } }\n  viewer_certificate { cloudfront_default_certificate = true }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Configure your CloudFront distributions to require HTTPS (TLS) for traffic to custom origins, ensuring all data transmitted between CloudFront and the origin is encrypted and protected from unauthorized access.",
-      "Url": "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-https-cloudfront-to-custom-origin.html"
+      "Text": "Enforce end-to-end HTTPS. Set `origin_protocol_policy` to `https-only` and viewer policy to `https-only` or `redirect-to-https`. Use trusted certificates and modern TLS (`TLSv1.2+`), disabling weak protocols. Apply **least privilege** and **defense in depth** by restricting direct origin access and preferring private connectivity.",
+      "Url": "https://hub.prowler.com/check/cloudfront_distributions_origin_traffic_encrypted"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

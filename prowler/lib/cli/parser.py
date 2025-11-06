@@ -26,20 +26,22 @@ class ProwlerArgumentParser:
         self.parser = argparse.ArgumentParser(
             prog="prowler",
             formatter_class=RawTextHelpFormatter,
-            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,nhn,dashboard,iac,github_actions,pipeline} ...",
+            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,nhn,mongodbatlas,oraclecloud,dashboard,iac,github_actions,llm} ...",
             epilog="""
 Available Cloud Providers:
-  {aws,azure,gcp,kubernetes,m365,github,iac,nhn,github_actions,pipeline}
+  {aws,azure,gcp,kubernetes,m365,github,iac,github_actions,llm,nhn,mongodbatlas,oraclecloud}
     aws                 AWS Provider
     azure               Azure Provider
     gcp                 GCP Provider
     kubernetes          Kubernetes Provider
     m365                Microsoft 365 Provider
     github              GitHub Provider
-    iac                 IaC Provider (Preview)
-    nhn                 NHN Provider (Unofficial)
+    oraclecloud         Oracle Cloud Infrastructure Provider
+    iac                 IaC Provider (Beta)
     github_actions      GitHub Actions Security Provider
-    pipeline            CI/CD Pipeline Security Provider
+    llm                 LLM Provider (Beta)
+    nhn                 NHN Provider (Unofficial)
+    mongodbatlas        MongoDB Atlas Provider (Beta)
 
 Available components:
     dashboard           Local dashboard
@@ -112,6 +114,9 @@ Detailed documentation at https://docs.prowler.com
             # Microsoft 365
             elif sys.argv[1] == "microsoft365":
                 sys.argv[1] = "m365"
+            # Oracle Cloud Infrastructure
+            elif sys.argv[1] == "oci":
+                sys.argv[1] = "oraclecloud"
 
         # Parse arguments
         args = self.parser.parse_args()
@@ -235,6 +240,11 @@ Detailed documentation at https://docs.prowler.com
             "-e",
             nargs="+",
             help="Checks to exclude",
+        )
+        exclude_checks_parser.add_argument(
+            "--excluded-checks-file",
+            nargs="?",
+            help="JSON file containing the checks to be excluded. See config/checklist_example.json",
         )
         exclude_checks_parser.add_argument(
             "--excluded-service",

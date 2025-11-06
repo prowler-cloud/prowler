@@ -1,6 +1,6 @@
 "use client";
 
-import { Select, SelectItem } from "@nextui-org/react";
+import { Select, SelectItem } from "@heroui/select";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useCallback, useMemo } from "react";
 
@@ -11,8 +11,10 @@ import {
   CustomProviderInputAzure,
   CustomProviderInputGCP,
   CustomProviderInputGitHub,
+  CustomProviderInputIac,
   CustomProviderInputKubernetes,
   CustomProviderInputM365,
+  CustomProviderInputOracleCloud,
 } from "./custom-provider-inputs";
 
 const providerDisplayData: Record<
@@ -42,6 +44,14 @@ const providerDisplayData: Record<
   github: {
     label: "GitHub",
     component: <CustomProviderInputGitHub />,
+  },
+  iac: {
+    label: "Infrastructure as Code",
+    component: <CustomProviderInputIac />,
+  },
+  oraclecloud: {
+    label: "Oracle Cloud Infrastructure",
+    component: <CustomProviderInputOracleCloud />,
   },
 };
 
@@ -85,7 +95,7 @@ export const CustomSelectProvider: React.FC = () => {
       placeholder="Select a provider"
       classNames={{
         selectorIcon: "right-2",
-        label: "!z-0 mb-2",
+        label: "z-0! mb-2",
       }}
       label="Provider"
       labelPlacement="inside"

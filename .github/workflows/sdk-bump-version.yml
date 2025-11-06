@@ -1,146 +1,218 @@
-name: SDK - Bump Version
+name: 'SDK: Bump Version'
 
 on:
   release:
-    types: [published]
+    types:
+      - 'published'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
 
 env:
   PROWLER_VERSION: ${{ github.event.release.tag_name }}
   BASE_BRANCH: master
 
 jobs:
-  bump-version:
-    name: Bump Version
+  detect-release-type:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      is_minor: ${{ steps.detect.outputs.is_minor }}
+      is_patch: ${{ steps.detect.outputs.is_patch }}
+      major_version: ${{ steps.detect.outputs.major_version }}
+      minor_version: ${{ steps.detect.outputs.minor_version }}
+      patch_version: ${{ steps.detect.outputs.patch_version }}
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-
-      - name: Get Prowler version
-        shell: bash
+      - name: Detect release type and parse version
+        id: detect
         run: |
           if [[ $PROWLER_VERSION =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
             MAJOR_VERSION=${BASH_REMATCH[1]}
             MINOR_VERSION=${BASH_REMATCH[2]}
-            FIX_VERSION=${BASH_REMATCH[3]}
+            PATCH_VERSION=${BASH_REMATCH[3]}
 
-            # Export version components to GitHub environment
-            echo "MAJOR_VERSION=${MAJOR_VERSION}" >> "${GITHUB_ENV}"
-            echo "MINOR_VERSION=${MINOR_VERSION}" >> "${GITHUB_ENV}"
-            echo "FIX_VERSION=${FIX_VERSION}" >> "${GITHUB_ENV}"
+            echo "major_version=${MAJOR_VERSION}" >> "${GITHUB_OUTPUT}"
+            echo "minor_version=${MINOR_VERSION}" >> "${GITHUB_OUTPUT}"
+            echo "patch_version=${PATCH_VERSION}" >> "${GITHUB_OUTPUT}"
 
-            if (( MAJOR_VERSION == 5 )); then
-                if (( FIX_VERSION == 0 )); then
-                  echo "Minor Release: $PROWLER_VERSION"
+            if (( MAJOR_VERSION != 5 )); then
+              echo "::error::Releasing another Prowler major version, aborting..."
+              exit 1
+            fi
 
-                  # Set up next minor version for master
-                  BUMP_VERSION_TO=${MAJOR_VERSION}.$((MINOR_VERSION + 1)).${FIX_VERSION}
-                  echo "BUMP_VERSION_TO=${BUMP_VERSION_TO}" >> "${GITHUB_ENV}"
-
-                  TARGET_BRANCH=${BASE_BRANCH}
-                  echo "TARGET_BRANCH=${TARGET_BRANCH}" >> "${GITHUB_ENV}"
-
-                  # Set up patch version for version branch
-                  PATCH_VERSION_TO=${MAJOR_VERSION}.${MINOR_VERSION}.1
-                  echo "PATCH_VERSION_TO=${PATCH_VERSION_TO}" >> "${GITHUB_ENV}"
-
-                  VERSION_BRANCH=v${MAJOR_VERSION}.${MINOR_VERSION}
-                  echo "VERSION_BRANCH=${VERSION_BRANCH}" >> "${GITHUB_ENV}"
-
-                  echo "Bumping to next minor version: ${BUMP_VERSION_TO} in branch ${TARGET_BRANCH}"
-                  echo "Bumping to next patch version: ${PATCH_VERSION_TO} in branch ${VERSION_BRANCH}"
-                else
-                  echo "Patch Release: $PROWLER_VERSION"
-
-                  BUMP_VERSION_TO=${MAJOR_VERSION}.${MINOR_VERSION}.$((FIX_VERSION + 1))
-                  echo "BUMP_VERSION_TO=${BUMP_VERSION_TO}" >> "${GITHUB_ENV}"
-
-                  TARGET_BRANCH=v${MAJOR_VERSION}.${MINOR_VERSION}
-                  echo "TARGET_BRANCH=${TARGET_BRANCH}" >> "${GITHUB_ENV}"
-
-                  echo "Bumping to next patch version: ${BUMP_VERSION_TO} in branch ${TARGET_BRANCH}"
-                fi
+            if (( PATCH_VERSION == 0 )); then
+              echo "is_minor=true" >> "${GITHUB_OUTPUT}"
+              echo "is_patch=false" >> "${GITHUB_OUTPUT}"
+              echo "✓ Minor release detected: $PROWLER_VERSION"
             else
-                echo "Releasing another Prowler major version, aborting..."
-                exit 1
+              echo "is_minor=false" >> "${GITHUB_OUTPUT}"
+              echo "is_patch=true" >> "${GITHUB_OUTPUT}"
+              echo "✓ Patch release detected: $PROWLER_VERSION"
             fi
           else
-            echo "Invalid version syntax: '$PROWLER_VERSION' (must be N.N.N)" >&2
+            echo "::error::Invalid version syntax: '$PROWLER_VERSION' (must be X.Y.Z)"
             exit 1
           fi
 
-      - name: Bump versions in files
+  bump-minor-version:
+    needs: detect-release-type
+    if: needs.detect-release-type.outputs.is_minor == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Calculate next minor version
         run: |
-            echo "Using PROWLER_VERSION=$PROWLER_VERSION"
-            echo "Using BUMP_VERSION_TO=$BUMP_VERSION_TO"
+          MAJOR_VERSION=${{ needs.detect-release-type.outputs.major_version }}
+          MINOR_VERSION=${{ needs.detect-release-type.outputs.minor_version }}
 
-            set -e
+          NEXT_MINOR_VERSION=${MAJOR_VERSION}.$((MINOR_VERSION + 1)).0
+          echo "NEXT_MINOR_VERSION=${NEXT_MINOR_VERSION}" >> "${GITHUB_ENV}"
 
-            echo "Bumping version in pyproject.toml ..."
-            sed -i "s|version = \"${PROWLER_VERSION}\"|version = \"${BUMP_VERSION_TO}\"|" pyproject.toml
+          echo "Current version: $PROWLER_VERSION"
+          echo "Next minor version: $NEXT_MINOR_VERSION"
 
-            echo "Bumping version in prowler/config/config.py ..."
-            sed -i "s|prowler_version = \"${PROWLER_VERSION}\"|prowler_version = \"${BUMP_VERSION_TO}\"|" prowler/config/config.py
+      - name: Bump versions in files for master
+        run: |
+          set -e
 
-            echo "Bumping version in .env ..."
-            sed -i "s|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${PROWLER_VERSION}|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${BUMP_VERSION_TO}|" .env
+          sed -i "s|version = \"${PROWLER_VERSION}\"|version = \"${NEXT_MINOR_VERSION}\"|" pyproject.toml
+          sed -i "s|prowler_version = \"${PROWLER_VERSION}\"|prowler_version = \"${NEXT_MINOR_VERSION}\"|" prowler/config/config.py
+          sed -i "s|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${PROWLER_VERSION}|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${NEXT_MINOR_VERSION}|" .env
 
-            git --no-pager diff
+          echo "Files modified:"
+          git --no-pager diff
 
-      - name: Create Pull Request
+      - name: Create PR for next minor version to master
         uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
         with:
-            author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
-            token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
-            base: ${{ env.TARGET_BRANCH }}
-            commit-message: "chore(release): Bump version to v${{ env.BUMP_VERSION_TO }}"
-            branch: "version-bump-to-v${{ env.BUMP_VERSION_TO }}"
-            title: "chore(release): Bump version to v${{ env.BUMP_VERSION_TO }}"
-            labels: no-changelog
-            body: |
-              ### Description
+          author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
+          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
+          base: master
+          commit-message: 'chore(release): Bump version to v${{ env.NEXT_MINOR_VERSION }}'
+          branch: version-bump-to-v${{ env.NEXT_MINOR_VERSION }}
+          title: 'chore(release): Bump version to v${{ env.NEXT_MINOR_VERSION }}'
+          labels: no-changelog
+          body: |
+            ### Description
 
-              Bump Prowler version to v${{ env.BUMP_VERSION_TO }}
+            Bump Prowler version to v${{ env.NEXT_MINOR_VERSION }} after releasing v${{ env.PROWLER_VERSION }}.
 
-              ### License
+            ### License
 
-              By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.
+            By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.
 
-      - name: Handle patch version for minor release
-        if: env.FIX_VERSION == '0'
+      - name: Checkout version branch
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: v${{ needs.detect-release-type.outputs.major_version }}.${{ needs.detect-release-type.outputs.minor_version }}
+
+      - name: Calculate first patch version
         run: |
-            echo "Using PROWLER_VERSION=$PROWLER_VERSION"
-            echo "Using PATCH_VERSION_TO=$PATCH_VERSION_TO"
+          MAJOR_VERSION=${{ needs.detect-release-type.outputs.major_version }}
+          MINOR_VERSION=${{ needs.detect-release-type.outputs.minor_version }}
 
-            set -e
+          FIRST_PATCH_VERSION=${MAJOR_VERSION}.${MINOR_VERSION}.1
+          VERSION_BRANCH=v${MAJOR_VERSION}.${MINOR_VERSION}
 
-            echo "Bumping version in pyproject.toml ..."
-            sed -i "s|version = \"${PROWLER_VERSION}\"|version = \"${PATCH_VERSION_TO}\"|" pyproject.toml
+          echo "FIRST_PATCH_VERSION=${FIRST_PATCH_VERSION}" >> "${GITHUB_ENV}"
+          echo "VERSION_BRANCH=${VERSION_BRANCH}" >> "${GITHUB_ENV}"
 
-            echo "Bumping version in prowler/config/config.py ..."
-            sed -i "s|prowler_version = \"${PROWLER_VERSION}\"|prowler_version = \"${PATCH_VERSION_TO}\"|" prowler/config/config.py
+          echo "First patch version: $FIRST_PATCH_VERSION"
+          echo "Version branch: $VERSION_BRANCH"
 
-            echo "Bumping version in .env ..."
-            sed -i "s|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${PROWLER_VERSION}|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${PATCH_VERSION_TO}|" .env
+      - name: Bump versions in files for version branch
+        run: |
+          set -e
 
-            git --no-pager diff
+          sed -i "s|version = \"${PROWLER_VERSION}\"|version = \"${FIRST_PATCH_VERSION}\"|" pyproject.toml
+          sed -i "s|prowler_version = \"${PROWLER_VERSION}\"|prowler_version = \"${FIRST_PATCH_VERSION}\"|" prowler/config/config.py
+          sed -i "s|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${PROWLER_VERSION}|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${FIRST_PATCH_VERSION}|" .env
 
-      - name: Create Pull Request for patch version
-        if: env.FIX_VERSION == '0'
+          echo "Files modified:"
+          git --no-pager diff
+
+      - name: Create PR for first patch version to version branch
         uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
         with:
-            author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
-            token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
-            base: ${{ env.VERSION_BRANCH }}
-            commit-message: "chore(release): Bump version to v${{ env.PATCH_VERSION_TO }}"
-            branch: "version-bump-to-v${{ env.PATCH_VERSION_TO }}"
-            title: "chore(release): Bump version to v${{ env.PATCH_VERSION_TO }}"
-            labels: no-changelog
-            body: |
-              ### Description
+          author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
+          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
+          base: ${{ env.VERSION_BRANCH }}
+          commit-message: 'chore(release): Bump version to v${{ env.FIRST_PATCH_VERSION }}'
+          branch: version-bump-to-v${{ env.FIRST_PATCH_VERSION }}
+          title: 'chore(release): Bump version to v${{ env.FIRST_PATCH_VERSION }}'
+          labels: no-changelog
+          body: |
+            ### Description
 
-              Bump Prowler version to v${{ env.PATCH_VERSION_TO }}
+            Bump Prowler version to v${{ env.FIRST_PATCH_VERSION }} in version branch after releasing v${{ env.PROWLER_VERSION }}.
 
-              ### License
+            ### License
 
-              By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.
+            By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.
+
+  bump-patch-version:
+    needs: detect-release-type
+    if: needs.detect-release-type.outputs.is_patch == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Calculate next patch version
+        run: |
+          MAJOR_VERSION=${{ needs.detect-release-type.outputs.major_version }}
+          MINOR_VERSION=${{ needs.detect-release-type.outputs.minor_version }}
+          PATCH_VERSION=${{ needs.detect-release-type.outputs.patch_version }}
+
+          NEXT_PATCH_VERSION=${MAJOR_VERSION}.${MINOR_VERSION}.$((PATCH_VERSION + 1))
+          VERSION_BRANCH=v${MAJOR_VERSION}.${MINOR_VERSION}
+
+          echo "NEXT_PATCH_VERSION=${NEXT_PATCH_VERSION}" >> "${GITHUB_ENV}"
+          echo "VERSION_BRANCH=${VERSION_BRANCH}" >> "${GITHUB_ENV}"
+
+          echo "Current version: $PROWLER_VERSION"
+          echo "Next patch version: $NEXT_PATCH_VERSION"
+          echo "Target branch: $VERSION_BRANCH"
+
+      - name: Bump versions in files for version branch
+        run: |
+          set -e
+
+          sed -i "s|version = \"${PROWLER_VERSION}\"|version = \"${NEXT_PATCH_VERSION}\"|" pyproject.toml
+          sed -i "s|prowler_version = \"${PROWLER_VERSION}\"|prowler_version = \"${NEXT_PATCH_VERSION}\"|" prowler/config/config.py
+          sed -i "s|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${PROWLER_VERSION}|NEXT_PUBLIC_PROWLER_RELEASE_VERSION=v${NEXT_PATCH_VERSION}|" .env
+
+          echo "Files modified:"
+          git --no-pager diff
+
+      - name: Create PR for next patch version to version branch
+        uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
+        with:
+          author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
+          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
+          base: ${{ env.VERSION_BRANCH }}
+          commit-message: 'chore(release): Bump version to v${{ env.NEXT_PATCH_VERSION }}'
+          branch: version-bump-to-v${{ env.NEXT_PATCH_VERSION }}
+          title: 'chore(release): Bump version to v${{ env.NEXT_PATCH_VERSION }}'
+          labels: no-changelog
+          body: |
+            ### Description
+
+            Bump Prowler version to v${{ env.NEXT_PATCH_VERSION }} after releasing v${{ env.PROWLER_VERSION }}.
+
+            ### License
+
+            By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.

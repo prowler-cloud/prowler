@@ -13,6 +13,7 @@ from prowler.lib.check.models import CheckMetadata
 custom_compliance_metadata = {
     "framework1_aws": Compliance(
         Framework="Framework1",
+        Name="Framework 1",
         Provider="aws",
         Version="1.0",
         Description="Framework 1 Description",
@@ -67,6 +68,7 @@ custom_compliance_metadata = {
     ),
     "framework1_azure": Compliance(
         Framework="Framework1",
+        Name="Framework 1",
         Provider="azure",
         Version="1.0",
         Description="Framework 2 Description",
@@ -96,6 +98,7 @@ custom_compliance_metadata = {
     ),
     "framework1_gcp": Compliance(
         Framework="Framework1",
+        Name="Framework 1",
         Provider="gcp",
         Version="1.0",
         Description="Framework 2 Description",
@@ -125,6 +128,7 @@ custom_compliance_metadata = {
     ),
     "framework1_k8s": Compliance(
         Framework="Framework1",
+        Name="Framework 1",
         Provider="Kubernetes",
         Version="1.0",
         Description="Framework 2 Description",
@@ -154,6 +158,7 @@ custom_compliance_metadata = {
     ),
     "framework1_m365": Compliance(
         Framework="Framework1",
+        Name="Framework 1",
         Provider="m365",
         Version="1.0",
         Description="Framework 2 Description",

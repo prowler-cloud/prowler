@@ -149,3 +149,13 @@ export interface TenantDetailData {
     };
   };
 }
+
+export type IncludedItem = RoleDetail | MembershipDetailData | TenantDetailData;
+
+export interface UserProfileResponse {
+  data: UserDataWithRoles;
+  included?: IncludedItem[];
+  meta?: {
+    version: string;
+  };
+}

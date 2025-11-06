@@ -1,7 +1,7 @@
 "use client";
 
+import { Divider } from "@heroui/divider";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Divider } from "@nextui-org/react";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
@@ -265,6 +265,7 @@ export const S3IntegrationForm = ({
           externalId={externalId}
           templateLinks={templateLinks}
           type="integrations"
+          integrationType="amazon_s3"
         />
       );
     }
@@ -274,7 +275,7 @@ export const S3IntegrationForm = ({
       return (
         <>
           {/* Provider Selection */}
-          <div className="space-y-4">
+          <div className="flex flex-col gap-4">
             <EnhancedProviderSelector
               control={form.control}
               name="providers"
@@ -283,14 +284,14 @@ export const S3IntegrationForm = ({
               placeholder="Select providers to integrate with"
               isInvalid={!!form.formState.errors.providers}
               selectionMode="multiple"
-              enableSearch={providers.length > 10}
+              enableSearch={true}
             />
           </div>
 
           <Divider />
 
           {/* S3 Configuration */}
-          <div className="space-y-4">
+          <div className="flex flex-col gap-4">
             <CustomInput
               control={form.control}
               name="bucket_name"
@@ -385,11 +386,11 @@ export const S3IntegrationForm = ({
               ? handleNext
               : form.handleSubmit(onSubmit)
         }
-        className="flex flex-col space-y-6"
+        className="flex flex-col gap-6"
       >
-        <div className="flex flex-col space-y-4">
+        <div className="flex flex-col gap-4">
           <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
-            <p className="flex items-center gap-2 text-sm text-default-500">
+            <p className="text-default-500 flex items-center gap-2 text-sm">
               Need help configuring your Amazon S3 integration?
             </p>
             <CustomLink

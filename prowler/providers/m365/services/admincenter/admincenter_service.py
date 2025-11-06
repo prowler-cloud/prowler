@@ -1,4 +1,4 @@
-from asyncio import gather, get_event_loop
+import asyncio
 from typing import List, Optional
 
 from pydantic.v1 import BaseModel
@@ -20,22 +20,42 @@ class AdminCenter(M365Service):
                 self.sharing_policy = self._get_sharing_policy()
             self.powershell.close()
 
-        loop = get_event_loop()
+        created_loop = False
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            created_loop = True
+
+        if loop.is_closed():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            created_loop = True
+
+        if loop.is_running():
+            raise RuntimeError(
+                "Cannot initialize AdminCenter service while event loop is running"
+            )
 
         # Get users first alone because it is a dependency for other attributes
         self.users = loop.run_until_complete(self._get_users())
 
         attributes = loop.run_until_complete(
-            gather(
+            asyncio.gather(
                 self._get_directory_roles(),
                 self._get_groups(),
-                self._get_domains(),
+                self._get_password_policy(),
             )
         )
 
         self.directory_roles = attributes[0]
         self.groups = attributes[1]
-        self.domains = attributes[2]
+        self.password_policy = attributes[2]
+
+        if created_loop:
+            asyncio.set_event_loop(None)
+            loop.close()
 
     def _get_organization_config(self):
         logger.info("Microsoft365 - Getting Exchange Organization configuration...")
@@ -77,27 +97,36 @@ class AdminCenter(M365Service):
         logger.info("M365 - Getting users...")
         users = {}
         try:
-            users_list = await self.client.users.get()
             users.update({})
-            for user in users_list.value:
-                license_details = await self.client.users.by_user_id(
-                    user.id
-                ).license_details.get()
-                users.update(
-                    {
-                        user.id: User(
-                            id=user.id,
-                            name=getattr(user, "display_name", ""),
-                            license=(
-                                getattr(
-                                    license_details.value[0], "sku_part_number", None
-                                )
-                                if license_details.value
-                                else None
-                            ),
-                        )
-                    }
-                )
+            users_response = await self.client.users.get()
+
+            while users_response:
+                for user in getattr(users_response, "value", []) or []:
+                    license_details = await self.client.users.by_user_id(
+                        user.id
+                    ).license_details.get()
+                    users.update(
+                        {
+                            user.id: User(
+                                id=user.id,
+                                name=getattr(user, "display_name", ""),
+                                license=(
+                                    getattr(
+                                        license_details.value[0],
+                                        "sku_part_number",
+                                        None,
+                                    )
+                                    if license_details.value
+                                    else None
+                                ),
+                            )
+                        }
+                    )
+
+                next_link = getattr(users_response, "odata_next_link", None)
+                if not next_link:
+                    break
+                users_response = await self.client.users.with_url(next_link).get()
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -163,34 +192,31 @@ class AdminCenter(M365Service):
             )
         return groups
 
-    async def _get_domains(self):
-        logger.info("M365 - Getting domains...")
-        domains = {}
+    async def _get_password_policy(self):
+        logger.info("M365 - Getting password policy...")
+        password_policy = None
         try:
+            logger.info("M365 - Getting domains...")
             domains_list = await self.client.domains.get()
-            domains.update({})
-            for domain in domains_list.value:
-                if domain:
-                    password_validity_period = getattr(
-                        domain, "password_validity_period_in_days", None
-                    )
-                    if password_validity_period is None:
-                        password_validity_period = 0
+            for domain in getattr(domains_list, "value", []) or []:
+                if not domain:
+                    continue
+                password_validity_period = getattr(
+                    domain, "password_validity_period_in_days", None
+                )
+                if password_validity_period is None:
+                    password_validity_period = 0
 
-                    domains.update(
-                        {
-                            domain.id: Domain(
-                                id=domain.id,
-                                password_validity_period=password_validity_period,
-                            )
-                        }
-                    )
+                password_policy = PasswordPolicy(
+                    password_validity_period=password_validity_period,
+                )
+                break
 
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        return domains
+        return password_policy
 
 
 class User(BaseModel):
@@ -213,8 +239,7 @@ class Group(BaseModel):
     visibility: Optional[str]
 
 
-class Domain(BaseModel):
-    id: str
+class PasswordPolicy(BaseModel):
     password_validity_period: int
 
 

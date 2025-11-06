@@ -1,3 +1,5 @@
+import sys
+
 from colorama import Fore, Style
 
 from prowler.lib.check.check import parse_checks_from_file
@@ -20,8 +22,8 @@ def load_checks_to_execute(
 ) -> set:
     """Generate the list of checks to execute based on the cloud provider and the input arguments given"""
     try:
-        # Bypass check loading for IAC, GitHub Actions, and Pipeline providers since they use external tools directly
-        if provider in ["iac", "github_actions", "pipeline"]:
+        # Bypass check loading for IAC, GitHub Actions, and LLM providers since they use external tools directly
+        if provider in ["iac", "github_actions", "llm"]:
             return set()
 
         # Local subsets
@@ -57,8 +59,24 @@ def load_checks_to_execute(
 
         # Handle if there are checks passed using -c/--checks
         if check_list:
+            # Validate that all checks exist
+            available_checks = set(bulk_checks_metadata.keys())
+            available_checks.update(check_aliases.keys())
+            invalid_checks = []
             for check_name in check_list:
-                checks_to_execute.add(check_name)
+                if check_name not in available_checks:
+                    invalid_checks.append(check_name)
+                else:
+                    checks_to_execute.add(check_name)
+
+            if invalid_checks:
+                logger.critical(
+                    f"Invalid check(s) specified: {', '.join(invalid_checks)}"
+                )
+                logger.critical(
+                    f"Please provide valid check names. Use 'prowler {provider} --list-checks' to see available checks."
+                )
+                sys.exit(1)
 
         # Handle if there are some severities passed using --severity
         elif severities:
@@ -66,6 +84,23 @@ def load_checks_to_execute(
                 checks_to_execute.update(check_severities[severity])
 
             if service_list:
+                # Validate that all services exist
+                available_services = set()
+                for metadata in bulk_checks_metadata.values():
+                    available_services.add(metadata.ServiceName)
+
+                invalid_services = [
+                    s for s in service_list if s not in available_services
+                ]
+                if invalid_services:
+                    logger.critical(
+                        f"Invalid service(s) specified: {', '.join(invalid_services)}"
+                    )
+                    logger.critical(
+                        f"Please provide valid service names. Use 'prowler {provider} --list-services' to see available services."
+                    )
+                    sys.exit(1)
+
                 checks_from_services = set()
                 for service in service_list:
                     service_checks = CheckMetadata.list(
@@ -81,6 +116,21 @@ def load_checks_to_execute(
 
         # Handle if there are services passed using -s/--services
         elif service_list:
+            # Validate that all services exist
+            available_services = set()
+            for metadata in bulk_checks_metadata.values():
+                available_services.add(metadata.ServiceName)
+
+            invalid_services = [s for s in service_list if s not in available_services]
+            if invalid_services:
+                logger.critical(
+                    f"Invalid service(s) specified: {', '.join(invalid_services)}"
+                )
+                logger.critical(
+                    f"Please provide valid service names. Use 'prowler {provider} --list-services' to see available services."
+                )
+                sys.exit(1)
+
             for service in service_list:
                 checks_to_execute.update(
                     CheckMetadata.list(
@@ -103,6 +153,20 @@ def load_checks_to_execute(
 
         # Handle if there are categories passed using --categories
         elif categories:
+            # Validate that all categories exist
+            available_categories = set(check_categories.keys())
+            invalid_categories = [
+                c for c in categories if c not in available_categories
+            ]
+            if invalid_categories:
+                logger.critical(
+                    f"Invalid category(ies) specified: {', '.join(invalid_categories)}"
+                )
+                logger.critical(
+                    f"Please provide valid category names. Use 'prowler {provider} --list-categories' to see available categories."
+                )
+                sys.exit(1)
+
             for category in categories:
                 checks_to_execute.update(check_categories[category])
 
