@@ -1,12 +1,13 @@
-name: 'MCP: Container Build and Push'
+name: 'API: Container Build and Push'
 
 on:
   push:
     branches:
       - 'master'
     paths:
-      - 'mcp_server/**'
-      - '.github/workflows/mcp-container-build-push.yml'
+      - 'api/**'
+      - 'prowler/**'
+      - '.github/workflows/api-build-lint-push-containers.yml'
   release:
     types:
       - 'published'
@@ -23,11 +24,11 @@ env:
   LATEST_TAG: latest
   RELEASE_TAG: ${{ github.event.release.tag_name }}
   STABLE_TAG: stable
-  WORKING_DIRECTORY: ./mcp_server
+  WORKING_DIRECTORY: ./api
 
   # Container registries
   PROWLERCLOUD_DOCKERHUB_REPOSITORY: prowlercloud
-  PROWLERCLOUD_DOCKERHUB_IMAGE: prowler-mcp
+  PROWLERCLOUD_DOCKERHUB_IMAGE: prowler-api
 
 jobs:
   setup:
@@ -48,6 +49,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -61,7 +63,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
 
-      - name: Build and push MCP container (latest)
+      - name: Build and push API container (latest)
         if: github.event_name == 'push'
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
@@ -70,13 +72,6 @@ jobs:
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.LATEST_TAG }}
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.short-sha }}
-          labels: |
-            org.opencontainers.image.title=Prowler MCP Server
-            org.opencontainers.image.description=Model Context Protocol server for Prowler
-            org.opencontainers.image.vendor=ProwlerPro, Inc.
-            org.opencontainers.image.source=https://github.com/${{ github.repository }}
-            org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -85,7 +80,7 @@ jobs:
         uses: ./.github/actions/slack-notification
         env:
           SLACK_CHANNEL_ID: ${{ secrets.SLACK_PLATFORM_DEPLOYMENTS }}
-          COMPONENT: MCP
+          COMPONENT: API
           RELEASE_TAG: ${{ env.RELEASE_TAG }}
           GITHUB_SERVER_URL: ${{ github.server_url }}
           GITHUB_REPOSITORY: ${{ github.repository }}
@@ -94,7 +89,7 @@ jobs:
           slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
           payload-file-path: "./.github/scripts/slack-messages/container-release-started.json"
 
-      - name: Build and push MCP container (release)
+      - name: Build and push API container (release)
         if: github.event_name == 'release'
         id: container-push
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
@@ -104,14 +99,6 @@ jobs:
           tags: |
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.RELEASE_TAG }}
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.STABLE_TAG }}
-          labels: |
-            org.opencontainers.image.title=Prowler MCP Server
-            org.opencontainers.image.description=Model Context Protocol server for Prowler
-            org.opencontainers.image.vendor=ProwlerPro, Inc.
-            org.opencontainers.image.version=${{ env.RELEASE_TAG }}
-            org.opencontainers.image.source=https://github.com/${{ github.repository }}
-            org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.created=${{ github.event.release.published_at }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -120,7 +107,7 @@ jobs:
         uses: ./.github/actions/slack-notification
         env:
           SLACK_CHANNEL_ID: ${{ secrets.SLACK_PLATFORM_DEPLOYMENTS }}
-          COMPONENT: MCP
+          COMPONENT: API
           RELEASE_TAG: ${{ env.RELEASE_TAG }}
           GITHUB_SERVER_URL: ${{ github.server_url }}
           GITHUB_REPOSITORY: ${{ github.repository }}
@@ -139,10 +126,10 @@ jobs:
       contents: read
 
     steps:
-      - name: Trigger MCP deployment
+      - name: Trigger API deployment
         uses: peter-evans/repository-dispatch@5fc4efd1a4797ddb68ffd0714a238564e4cc0e6f # v4.0.0
         with:
           token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
           repository: ${{ secrets.CLOUD_DISPATCH }}
-          event-type: mcp-prowler-deployment
+          event-type: api-prowler-deployment
           client-payload: '{"sha": "${{ github.sha }}", "short_sha": "${{ needs.setup.outputs.short-sha }}"}'
