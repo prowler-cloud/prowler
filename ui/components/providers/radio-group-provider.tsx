@@ -88,7 +88,7 @@ export const RadioGroupProvider: React.FC<RadioGroupProviderProps> = ({
               </CustomRadio>
               <CustomRadio
                 description="Oracle Cloud Infrastructure"
-                value="oci"
+                value="oraclecloud"
               >
                 <div className="flex items-center">
                   <OracleCloudProviderBadge size={26} />
