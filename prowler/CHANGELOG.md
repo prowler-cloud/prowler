@@ -43,7 +43,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Fixed
 - Check `check_name` has no `resource_name` error for GCP provider [(#9169)](https://github.com/prowler-cloud/prowler/pull/9169)
-- Depth Truncation error in PowerShell queries [(#9181)](https://github.com/prowler-cloud/prowler/pull/9181)
+- Depth Truncation and parsing error in PowerShell queries [(#9181)](https://github.com/prowler-cloud/prowler/pull/9181)
 
 ---
 
