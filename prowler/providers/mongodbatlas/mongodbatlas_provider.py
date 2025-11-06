@@ -54,6 +54,7 @@ class MongodbatlasProvider(Provider):
         mutelist_content: dict = None,
         # Optional filters
         atlas_project_id: str = None,
+        atlas_organization_id: str = None,
     ):
         """
         MongoDB Atlas Provider constructor
@@ -67,6 +68,7 @@ class MongodbatlasProvider(Provider):
             mutelist_path: Path to the mutelist file
             mutelist_content: Mutelist content
             atlas_project_id: Project ID to filter
+            atlas_organization_id: Organization ID
         """
         logger.info("Instantiating MongoDB Atlas Provider...")
 
@@ -79,6 +81,7 @@ class MongodbatlasProvider(Provider):
 
         # Store filter options
         self._project_id = atlas_project_id
+        self._organization_id = atlas_organization_id
 
         # Audit Config
         if config_content:
