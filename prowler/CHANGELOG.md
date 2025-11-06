@@ -2,6 +2,11 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [v5.13.2] (Prowler UNRELEASED)
+
+### Fixed
+- Check `check_name` has no `resource_name` error for GCP provider [(#9169)](https://github.com/prowler-cloud/prowler/pull/9169)
+
 ## [v5.13.1] (Prowler v5.13.1)
 
 ### Fixed
