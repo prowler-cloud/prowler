@@ -207,7 +207,7 @@ export const LLMProvidersTable = () => {
 
               {showConfigure && (
                 <CustomButton
-                  asLink={`/lighthouse/config/configure?provider=${provider.id}`}
+                  asLink={`/lighthouse/config/connect?provider=${provider.id}&mode=edit`}
                   ariaLabel={`Configure ${provider.provider}`}
                   variant="bordered"
                   color="action"
