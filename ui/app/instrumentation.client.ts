@@ -26,7 +26,7 @@ Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 
   // 🌍 Environment - Separate dev errors from production
-  environment: process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT || "dev",
+  environment: process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT || "local",
 
   // 📦 Release - Track which version has the error
   release: process.env.NEXT_PUBLIC_PROWLER_RELEASE_VERSION,
