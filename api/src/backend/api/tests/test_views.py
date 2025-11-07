@@ -34,6 +34,8 @@ from rest_framework.response import Response
 from api.compliance import get_compliance_frameworks
 from api.db_router import MainRouter
 from api.models import (
+    ComplianceOverviewSummary,
+    ComplianceRequirementOverview,
     Finding,
     Integration,
     Invitation,
@@ -54,6 +56,7 @@ from api.models import (
     Scan,
     ScanSummary,
     StateChoices,
+    StatusChoices,
     Task,
     TenantAPIKey,
     User,
@@ -5657,16 +5660,44 @@ class TestProviderGroupMembershipViewSet:
 
 @pytest.mark.django_db
 class TestComplianceOverviewViewSet:
-    def test_compliance_overview_list_none(self, authenticated_client):
+    @pytest.fixture(autouse=True)
+    def mock_backfill_task(self):
+        with patch("api.v1.views.backfill_compliance_summaries_task.delay") as mock:
+            yield mock
+
+    def test_compliance_overview_list_none(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        mock_backfill_task,
+    ):
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        scan = Scan.objects.create(
+            name="empty-compliance-scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
         response = authenticated_client.get(
             reverse("complianceoverview-list"),
-            {"filter[scan_id]": "8d20ac7d-4cbc-435e-85f4-359be37af821"},
+            {"filter[scan_id]": str(scan.id)},
         )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 0
+        mock_backfill_task.assert_called_once()
+        _, kwargs = mock_backfill_task.call_args
+        assert kwargs["scan_id"] == str(scan.id)
+        assert str(kwargs["tenant_id"]) == str(tenant.id)
 
     def test_compliance_overview_list(
-        self, authenticated_client, compliance_requirements_overviews_fixture
+        self,
+        authenticated_client,
+        compliance_requirements_overviews_fixture,
+        mock_backfill_task,
     ):
         # List compliance overviews with existing data
         requirement_overview1 = compliance_requirements_overviews_fixture[0]
@@ -5696,6 +5727,90 @@ class TestComplianceOverviewViewSet:
             assert "requirements_failed" in attributes
             assert "requirements_manual" in attributes
             assert "total_requirements" in attributes
+        mock_backfill_task.assert_called_once()
+        _, kwargs = mock_backfill_task.call_args
+        assert kwargs["scan_id"] == scan_id
+
+    def test_compliance_overview_list_uses_preaggregated_summaries(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        mock_backfill_task,
+    ):
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        scan = Scan.objects.create(
+            name="preaggregated-scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        ComplianceRequirementOverview.objects.create(
+            tenant=tenant,
+            scan=scan,
+            compliance_id="cis_1.4_aws",
+            framework="CIS-1.4-AWS",
+            version="1.4",
+            description="CIS AWS Foundations Benchmark v1.4.0",
+            region="eu-west-1",
+            requirement_id="framework-metadata",
+            requirement_status=StatusChoices.PASS,
+            passed_checks=1,
+            failed_checks=0,
+            total_checks=1,
+        )
+
+        ComplianceOverviewSummary.objects.create(
+            tenant=tenant,
+            scan=scan,
+            compliance_id="cis_1.4_aws",
+            requirements_passed=5,
+            requirements_failed=1,
+            requirements_manual=2,
+            total_requirements=8,
+        )
+
+        response = authenticated_client.get(
+            reverse("complianceoverview-list"),
+            {"filter[scan_id]": str(scan.id)},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        overview = data[0]
+        assert overview["id"] == "cis_1.4_aws"
+        assert overview["attributes"]["requirements_passed"] == 5
+        assert overview["attributes"]["requirements_failed"] == 1
+        assert overview["attributes"]["requirements_manual"] == 2
+        assert overview["attributes"]["total_requirements"] == 8
+        assert "framework" in overview["attributes"]
+        assert "version" in overview["attributes"]
+        mock_backfill_task.assert_not_called()
+
+    def test_compliance_overview_region_filter_skips_backfill(
+        self,
+        authenticated_client,
+        compliance_requirements_overviews_fixture,
+        mock_backfill_task,
+    ):
+        requirement_overview = compliance_requirements_overviews_fixture[0]
+        scan_id = str(requirement_overview.scan.id)
+
+        response = authenticated_client.get(
+            reverse("complianceoverview-list"),
+            {
+                "filter[scan_id]": scan_id,
+                "filter[region]": requirement_overview.region,
+            },
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) >= 1
+        mock_backfill_task.assert_not_called()
 
     def test_compliance_overview_metadata(
         self, authenticated_client, compliance_requirements_overviews_fixture
@@ -5849,6 +5964,11 @@ class TestComplianceOverviewViewSet:
         requirement_overview1 = compliance_requirements_overviews_fixture[0]
         scan_id = str(requirement_overview1.scan.id)
 
+        # Remove existing compliance data so the view falls back to task checks
+        scan = requirement_overview1.scan
+        ComplianceOverviewSummary.objects.filter(scan=scan).delete()
+        ComplianceRequirementOverview.objects.filter(scan=scan).delete()
+
         # Mock a running task
         with patch.object(
             ComplianceOverviewViewSet, "get_task_response_if_running"
@@ -5875,6 +5995,11 @@ class TestComplianceOverviewViewSet:
 
         requirement_overview1 = compliance_requirements_overviews_fixture[0]
         scan_id = str(requirement_overview1.scan.id)
+
+        # Remove existing compliance data so the view falls back to task checks
+        scan = requirement_overview1.scan
+        ComplianceOverviewSummary.objects.filter(scan=scan).delete()
+        ComplianceRequirementOverview.objects.filter(scan=scan).delete()
 
         # Mock a failed task
         with patch.object(
