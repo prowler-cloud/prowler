@@ -7,6 +7,9 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🚀 Added
 
 - RSS feeds support [(#9109)](https://github.com/prowler-cloud/prowler/pull/9109)
+- Customer Support menu item [(#9143)](https://github.com/prowler-cloud/prowler/pull/9143)
+- IaC (Infrastructure as Code) provider support for scanning remote repositories [(#8751)](https://github.com/prowler-cloud/prowler/pull/8751)
+- External resource link to IaC findings for direct navigation to source code in Git repositories [(#9151)](https://github.com/prowler-cloud/prowler/pull/9151)
 
 ### 🔄 Changed
 
@@ -19,7 +22,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🔄 Changed
 
 - Upgrade React to version 19.2.0 [(#9039)](https://github.com/prowler-cloud/prowler/pull/9039)
-- Add support for Oracle Cloud Infrastructure (OCI) provider [(#8984)](https://github.com/prowler-cloud/prowler/pull/8984)
 
 ---
 
@@ -85,6 +87,8 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Field-level email validation message [(#8698)](https://github.com/prowler-cloud/prowler/pull/8698)
 - POST method on auth form [(#8699)](https://github.com/prowler-cloud/prowler/pull/8699)
+
+---
 
 ## [1.12.0] (Prowler v5.12.0)
 

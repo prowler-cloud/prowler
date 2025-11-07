@@ -1143,6 +1143,21 @@ class TestProviderViewSet:
                     "uid": "a12345678901234567890123456789012345678",
                     "alias": "Long Username",
                 },
+                {
+                    "provider": "iac",
+                    "uid": "https://github.com/user/repo.git",
+                    "alias": "Git Repo",
+                },
+                {
+                    "provider": "iac",
+                    "uid": "https://gitlab.com/user/project",
+                    "alias": "GitLab Repo",
+                },
+                {
+                    "provider": "mongodbatlas",
+                    "uid": "64b1d3c0e4b03b1234567890",
+                    "alias": "Atlas Organization",
+                },
             ]
         ),
     )
@@ -1290,6 +1305,51 @@ class TestProviderViewSet:
                         "alias": "test",
                     },
                     "github-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "iac",
+                        "uid": "not-a-url",
+                        "alias": "test",
+                    },
+                    "iac-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "iac",
+                        "uid": "ftp://invalid-protocol.com/repo",
+                        "alias": "test",
+                    },
+                    "iac-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "iac",
+                        "uid": "http://",
+                        "alias": "test",
+                    },
+                    "iac-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "mongodbatlas",
+                        "uid": "64b1d3c0e4b03b123456789g",
+                        "alias": "test",
+                    },
+                    "mongodbatlas-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "mongodbatlas",
+                        "uid": "1234",
+                        "alias": "test",
+                    },
+                    "mongodbatlas-uid",
                     "uid",
                 ),
             ]
@@ -1465,22 +1525,22 @@ class TestProviderViewSet:
                 (
                     "uid.icontains",
                     "1",
-                    6,
-                ),  # Updated: includes OCI provider with "1" in UID
+                    7,
+                ),
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
-                ("inserted_at", TODAY, 7),  # Updated: 7 providers now (added OCI)
+                ("inserted_at", TODAY, 8),
                 (
                     "inserted_at.gte",
                     "2024-01-01",
-                    7,
-                ),  # Updated: 7 providers now (added OCI)
+                    8,
+                ),
                 ("inserted_at.lte", "2024-01-01", 0),
                 (
                     "updated_at.gte",
                     "2024-01-01",
-                    7,
-                ),  # Updated: 7 providers now (added OCI)
+                    8,
+                ),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
         ),
@@ -1985,7 +2045,7 @@ class TestProviderSecretViewSet:
             ),
             # OCI with API key credentials (with key_content)
             (
-                Provider.ProviderChoices.OCI.value,
+                Provider.ProviderChoices.ORACLECLOUD.value,
                 ProviderSecret.TypeChoices.STATIC,
                 {
                     "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
@@ -1997,7 +2057,7 @@ class TestProviderSecretViewSet:
             ),
             # OCI with API key credentials (with key_file)
             (
-                Provider.ProviderChoices.OCI.value,
+                Provider.ProviderChoices.ORACLECLOUD.value,
                 ProviderSecret.TypeChoices.STATIC,
                 {
                     "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
@@ -2009,7 +2069,7 @@ class TestProviderSecretViewSet:
             ),
             # OCI with API key credentials (with passphrase)
             (
-                Provider.ProviderChoices.OCI.value,
+                Provider.ProviderChoices.ORACLECLOUD.value,
                 ProviderSecret.TypeChoices.STATIC,
                 {
                     "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
@@ -2018,6 +2078,15 @@ class TestProviderSecretViewSet:
                     "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
                     "region": "us-ashburn-1",
                     "pass_phrase": "my-secure-passphrase",
+                },
+            ),
+            # MongoDB Atlas credentials
+            (
+                Provider.ProviderChoices.MONGODBATLAS.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "atlas_public_key": "public-key",
+                    "atlas_private_key": "private-key",
                 },
             ),
         ],

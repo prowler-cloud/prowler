@@ -78,10 +78,10 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
 
               {/* Bar - flexible */}
               <div className="relative flex-1">
-                <div className="absolute inset-0 h-[22px] w-full rounded-xl bg-[#FAFAFA] dark:bg-black" />
+                <div className="absolute inset-0 h-[22px] w-full rounded-sm bg-[#FAFAFA] dark:bg-black" />
                 {(item.value > 0 || isEmpty) && (
                   <div
-                    className="relative h-[22px] rounded-[4px] border border-black/10 transition-all duration-300"
+                    className="relative h-[22px] rounded-sm border border-black/10 transition-all duration-300"
                     style={{
                       width: isEmpty
                         ? `${item.percentage}%`
