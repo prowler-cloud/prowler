@@ -125,7 +125,7 @@ export function ThreatScore({
       <CardContent className="flex flex-1 flex-col justify-between space-y-4">
         {/* Radial Chart */}
         <div className="relative mx-auto h-[172px] w-full max-w-[250px]">
-          <div className="absolute top-0 left-1/2 z-10 w-full -translate-x-1/2">
+          <div className="absolute top-0 left-1/2 z-1 w-full -translate-x-1/2">
             <RadialChart
               percentage={displayScore}
               label="Score"
