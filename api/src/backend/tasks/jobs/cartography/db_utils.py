@@ -4,27 +4,22 @@ from typing import Any
 from cartography.config import Config as CartographyConfig
 
 from api.db_utils import rls_transaction
-from api.models import (
-    CartographyScan as ProwlerAPICartographyScan,
-    Provider as ProwlerAPIProvider,
-    Scan as ProwlerAPIScan,
-    StateChoices,
-    Task as ProwlerAPITask,
-)
+from api.models import CartographyScan as ProwlerAPICartographyScan, StateChoices
 
 
 def create_cartography_scan(
-    prowler_api_task: ProwlerAPITask,
-    prowler_api_scan: ProwlerAPIScan,
-    prowler_api_provider: ProwlerAPIProvider,
+    tenant_id: str,
+    scan_id: str,
+    task_id: str,
+    provider_id: int,
     cartography_config: CartographyConfig,
 ) -> ProwlerAPICartographyScan:
-    with rls_transaction(prowler_api_scan.tenant_id):
+    with rls_transaction(tenant_id):
         cartography_scan = ProwlerAPICartographyScan.objects.create(
-            tenant_id=prowler_api_scan.tenant_id,
-            task=prowler_api_task,
-            provider=prowler_api_provider,
-            scan=prowler_api_scan,
+            tenant_id=tenant_id,
+            task_id=task_id,
+            provider_id=provider_id,
+            scan_id=scan_id,
             state=StateChoices.EXECUTING,
             started_at=datetime.now(tz=timezone.utc),
             update_tag=cartography_config.update_tag,
@@ -32,7 +27,7 @@ def create_cartography_scan(
         )
         cartography_scan.save()
 
-        return cartography_scan
+    return cartography_scan
 
 
 def modify_cartography_scan(
@@ -67,5 +62,4 @@ def update_cartography_scan_progress(
 ) -> None:
     with rls_transaction(cartography_scan.tenant_id):
         cartography_scan.progress = progress
-
         cartography_scan.save(update_fields=["progress"])

@@ -85,9 +85,11 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
             ),
         ),
     ).apply_async()
-    perform_cartography_scan_task.apply_async(kwargs={"scan_id": scan_id})
+    perform_cartography_scan_task.apply_async(kwargs={"tenant_id": tenant_id, "scan_id": scan_id})
     """
-    perform_cartography_scan_task.apply_async(kwargs={"scan_id": scan_id})
+    perform_cartography_scan_task.apply_async(
+        kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
+    )
 
 
 @shared_task(base=RLSTask, name="provider-connection-check")
@@ -288,19 +290,24 @@ def perform_scan_summary_task(tenant_id: str, scan_id: str):
     return aggregate_findings(tenant_id=tenant_id, scan_id=scan_id)
 
 
-@shared_task(base=RLSTask, bind=True, name="cartography-scan-perform", queue="cartography")
-def perform_cartography_scan_task(self, scan_id: str):
+@shared_task(
+    base=RLSTask, bind=True, name="cartography-scan-perform", queue="cartography"
+)
+def perform_cartography_scan_task(self, tenant_id: str, scan_id: str):
     """
     Execute a Cartography ingestion for the given provider within the current tenant RLS context.
 
     Args:
-        task_id (str): The Celery task ID.
+        self: The task instance (automatically passed when bind=True).
+        tenant_id (str): The tenant identifier for RLS context.
         scan_id (str): The Prowler scan identifier for obtaining the tenant and provider context.
 
     Returns:
         Any: The result from cartography_scan.run, including any per-ingestion failure details.
     """
-    return cartography_scan(task_id=self.request.id, scan_id=scan_id)
+    return cartography_scan(
+        tenant_id=tenant_id, scan_id=scan_id, task_id=self.request.id
+    )
 
 
 @shared_task(name="tenant-deletion", queue="deletion", autoretry_for=(Exception,))

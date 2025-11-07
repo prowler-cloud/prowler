@@ -9,11 +9,12 @@ from cartography.intel import create_indexes as cartography_create_indexes
 from celery.utils.log import get_task_logger
 
 from api import neo4j
+from api.db_utils import rls_transaction
+from django.db.models import Subquery
 from api.models import (
     Provider as ProwlerAPIProvider,
     Scan as ProwlerAPIScan,
     StateChoices,
-    Task as ProwlerAPITask,
 )
 from api.utils import initialize_prowler_provider
 from tasks.jobs.cartography import aws, db_utils, prowler
@@ -25,17 +26,21 @@ CARTOGRAPHY_INGESTION_FUNCTIONS = {
 }
 
 
-def run(task_id: str, scan_id: str) -> dict[str, Any]:
+def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
     """
     Code based on Cartography version 0.117.0, specifically on `cartography.cli.main`, `cartography.cli.CLI.main`,
     `cartography.sync.run_with_config` and `cartography.sync.Sync.run`.
     """
 
     # Prowler necessary objects
-    prowler_api_task = ProwlerAPITask.objects.get(id=task_id)
-    prowler_api_scan = ProwlerAPIScan.objects.get(id=scan_id)
-    prowler_api_provider = ProwlerAPIProvider.objects.get(id=prowler_api_scan.provider_id)
-    prowler_provider = initialize_prowler_provider(prowler_api_provider)
+    with rls_transaction(tenant_id):
+        provider_id_subquery = ProwlerAPIScan.objects.filter(pk=scan_id).values(
+            "provider_id"
+        )[:1]
+        prowler_api_provider = ProwlerAPIProvider.objects.get(
+            id=Subquery(provider_id_subquery)
+        )
+        prowler_sdk_provider = initialize_prowler_provider(prowler_api_provider)
 
     # Attributes `neo4j_user` and `neo4j_password` are not really needed in this config object
     cartography_config = CartographyConfig(
@@ -47,7 +52,7 @@ def run(task_id: str, scan_id: str) -> dict[str, Any]:
     )
 
     cartography_scan = db_utils.create_cartography_scan(
-        prowler_api_task, prowler_api_scan, prowler_api_provider, cartography_config
+        tenant_id, scan_id, task_id, prowler_api_provider.id, cartography_config
     )
 
     ingestion_exceptions = {}
@@ -61,7 +66,9 @@ def run(task_id: str, scan_id: str) -> dict[str, Any]:
         logger.info(
             f"Starting Cartography scan ({cartography_scan.id}) for {prowler_api_provider.provider.upper()} provider {prowler_api_provider.id}"
         )
-        with neo4j.get_neo4j_session(cartography_config.neo4j_database) as neo4j_session:
+        with neo4j.get_neo4j_session(
+            cartography_config.neo4j_database
+        ) as neo4j_session:
             # Indexes creation
             cartography_create_indexes.run(neo4j_session, cartography_config)
             prowler.create_indexes(neo4j_session)
@@ -73,7 +80,7 @@ def run(task_id: str, scan_id: str) -> dict[str, Any]:
                 neo4j_session,
                 cartography_config,
                 prowler_api_provider,
-                prowler_provider,
+                prowler_sdk_provider,
                 cartography_scan,
             )
 

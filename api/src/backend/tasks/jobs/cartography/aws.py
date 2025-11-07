@@ -27,7 +27,7 @@ def start_aws_ingestion(
     neo4j_session: neo4j.Session,
     cartography_config: CartographyConfig,
     prowler_api_provider: ProwlerAPIProvider,
-    prowler_provider: ProwlerSDKProvider,
+    prowler_sdk_provider: ProwlerSDKProvider,
     cartography_scan: ProwlerAPICartographyScan,
 ) -> dict[str, dict[str, str]]:
     """
@@ -47,8 +47,8 @@ def start_aws_ingestion(
     }
 
     # TODO: Check if there is a way to renew the session token if expired
-    boto3_session = get_boto3_session(prowler_api_provider, prowler_provider)
-    regions: list[str] = list(prowler_provider._enabled_regions)
+    boto3_session = get_boto3_session(prowler_api_provider, prowler_sdk_provider)
+    regions: list[str] = list(prowler_sdk_provider._enabled_regions)
     requested_syncs = list(cartography_aws.RESOURCE_FUNCTIONS.keys())
 
     sync_args = cartography_aws._build_aws_sync_kwargs(
@@ -136,9 +136,9 @@ def start_aws_ingestion(
 
 
 def get_boto3_session(
-    prowler_api_provider: ProwlerAPIProvider, prowler_provider: ProwlerSDKProvider
+    prowler_api_provider: ProwlerAPIProvider, prowler_sdk_provider: ProwlerSDKProvider
 ) -> boto3.Session:
-    boto3_session = prowler_provider.session.current_session
+    boto3_session = prowler_sdk_provider.session.current_session
 
     aws_accounts_from_session = cartography_aws.organizations.get_aws_account_default(
         boto3_session
@@ -156,7 +156,7 @@ def get_boto3_session(
 
     # TODO: Check if this is the right solution
     if boto3_session.region_name is None:
-        global_region = prowler_provider.get_global_region()
+        global_region = prowler_sdk_provider.get_global_region()
         boto3_session._session.set_config_variable("region", global_region)
 
     return boto3_session
