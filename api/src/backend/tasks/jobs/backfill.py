@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import rls_transaction
 from api.models import (
     ComplianceOverviewSummary,
@@ -13,7 +14,7 @@ from api.models import (
 
 
 def backfill_resource_scan_summaries(tenant_id: str, scan_id: str):
-    with rls_transaction(tenant_id):
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
         if ResourceScanSummary.objects.filter(
             tenant_id=tenant_id, scan_id=scan_id
         ).exists():
