@@ -7,31 +7,27 @@ import type {
   SectionScores,
 } from "@/actions/overview/types";
 import { RadialChart } from "@/components/graphs/radial-chart";
-import {
-  SEVERITY_COLORS,
-  STATUS_COLORS,
-} from "@/components/graphs/shared/constants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
 
 const THREAT_LEVEL_CONFIG = {
   DANGER: {
     label: "Critical Risk",
-    color: "text-chart-danger",
-    chartColor: SEVERITY_COLORS.Critical,
+    color: "var(--bg-fail-primary)",
+    chartColor: "var(--bg-fail-primary)",
     minScore: 0,
     maxScore: 30,
   },
   WARNING: {
     label: "Moderate Risk",
-    color: "text-chart-warning",
-    chartColor: SEVERITY_COLORS.Medium,
+    color: "var(--bg-warning-primary)",
+    chartColor: "var(--bg-warning-primary)",
     minScore: 31,
     maxScore: 60,
   },
   SUCCESS: {
     label: "Secure",
-    color: "text-chart-success",
-    chartColor: STATUS_COLORS.Success,
+    color: "var(--bg-pass-primary)",
+    chartColor: "var(--bg-pass-primary)",
     minScore: 61,
     maxScore: 100,
   },
@@ -64,15 +60,12 @@ function convertSectionScoresToTooltipData(
   if (!sectionScores) return [];
 
   return Object.entries(sectionScores).map(([name, value]) => {
-    // Determine color based on score value
-    let color: string = SEVERITY_COLORS.Critical;
-    if (value >= 80) color = STATUS_COLORS.Success;
-    else if (value >= 60) color = SEVERITY_COLORS.Low;
-    else if (value >= 40) color = SEVERITY_COLORS.Medium;
-    else if (value >= 20) color = SEVERITY_COLORS.High;
-
     // Round to nearest integer
     const roundedValue = Math.round(value);
+
+    // Determine color based on the same ranges as THREAT_LEVEL_CONFIG
+    const threatLevel = getThreatLevel(roundedValue);
+    const color = THREAT_LEVEL_CONFIG[threatLevel].chartColor;
 
     return { name, value: roundedValue, color };
   });
@@ -131,7 +124,7 @@ export function ThreatScore({
               percentage={displayScore}
               label="Score"
               color={config.chartColor}
-              backgroundColor="rgba(100, 100, 100, 0.2)"
+              backgroundColor="var(--bg-neutral-tertiary)"
               height={206}
               innerRadius={90}
               outerRadius={115}
@@ -143,8 +136,8 @@ export function ThreatScore({
           </div>
           {/* Overlaid Text (centered) */}
           {hasData && (
-            <div className="pointer-events-none absolute top-[75%] left-1/2 z-0 -translate-x-1/2 -translate-y-1/2 text-center">
-              <p className="text-sm text-nowrap text-slate-900 dark:text-zinc-300">
+            <div className="pointer-events-none absolute top-[65%] left-1/2 z-0 -translate-x-1/2 -translate-y-1/2 text-center">
+              <p className="text-text-neutral-secondary text-sm text-nowrap">
                 {config.label}
               </p>
             </div>
@@ -158,7 +151,7 @@ export function ThreatScore({
             padding="md"
             className="items-center justify-center"
           >
-            <div className="flex flex-col gap-1.5 text-sm leading-6 text-zinc-800 dark:text-zinc-300">
+            <div className="text-text-neutral-secondary flex flex-col gap-1.5 text-sm leading-6">
               {/* Improvement Message */}
               {scoreDelta !== undefined &&
                 scoreDelta !== null &&
@@ -194,7 +187,7 @@ export function ThreatScore({
             padding="md"
             className="items-center justify-center"
           >
-            <p className="text-sm text-zinc-300">
+            <p className="text-text-neutral-secondary text-sm">
               Threat Score Data Unavailable
             </p>
           </Card>
