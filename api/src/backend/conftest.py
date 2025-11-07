@@ -506,8 +506,23 @@ def providers_fixture(tenants_fixture):
         alias="oci_testing",
         tenant_id=tenant.id,
     )
+    provider8 = Provider.objects.create(
+        provider="mongodbatlas",
+        uid="64b1d3c0e4b03b1234567890",
+        alias="mongodbatlas_testing",
+        tenant_id=tenant.id,
+    )
 
-    return provider1, provider2, provider3, provider4, provider5, provider6, provider7
+    return (
+        provider1,
+        provider2,
+        provider3,
+        provider4,
+        provider5,
+        provider6,
+        provider7,
+        provider8,
+    )
 
 
 @pytest.fixture
