@@ -13,13 +13,13 @@ const isProduction = process.env.SENTRY_ENVIRONMENT === "pro";
  */
 Sentry.init({
   // 📍 DSN - Data Source Name (identifies your Sentry project)
-  dsn: process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN,
+  dsn: process.env.SENTRY_DSN,
 
   // 🌍 Environment configuration
-  environment: process.env.SENTRY_ENVIRONMENT || process.env.NODE_ENV || "local",
+  environment: process.env.SENTRY_ENVIRONMENT || "local",
 
   // 📦 Release tracking
-  release: process.env.SENTRY_RELEASE || process.env.NEXT_PUBLIC_SENTRY_RELEASE,
+  release: process.env.SENTRY_RELEASE,
 
   // 📊 Sample Rates - Reduced for edge runtime constraints
   // 50% in dev, 25% in production (edge has lower overhead limits than server)
