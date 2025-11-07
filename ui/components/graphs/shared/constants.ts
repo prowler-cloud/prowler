@@ -1,5 +1,5 @@
 export const SEVERITY_COLORS = {
-  Info: "var(--bg-data-info)",
+  Informational: "var(--bg-data-info)",
   Low: "var(--bg-data-low)",
   Medium: "var(--bg-data-medium)",
   High: "var(--bg-data-high)",

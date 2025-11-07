@@ -24,6 +24,7 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
     { name: "High", value: 1, percentage: 100 },
     { name: "Medium", value: 1, percentage: 100 },
     { name: "Low", value: 1, percentage: 100 },
+    { name: "Informational", value: 1, percentage: 100 },
   ];
 
   const sortedData = (isEmpty ? emptyData : [...data]).sort((a, b) => {
@@ -57,8 +58,8 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
 
           return (
             <div
-              key={index}
-              className="flex items-center gap-6"
+              key={item.name}
+              className="flex gap-6"
               onMouseEnter={() => !isEmpty && setHoveredIndex(index)}
               onMouseLeave={() => !isEmpty && setHoveredIndex(null)}
             >
@@ -72,7 +73,7 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
                     transition: "opacity 0.2s",
                   }}
                 >
-                  {item.name}
+                  {item.name === "Informational" ? "Info" : item.name}
                 </span>
               </div>
 
@@ -102,7 +103,9 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
                           style={{ backgroundColor: barColor }}
                         />
                         <p className="text-text-neutral-primary text-xs leading-5 font-medium">
-                          {item.value.toLocaleString()} {item.name} Risk
+                          {item.value.toLocaleString()}{" "}
+                          {item.name === "Informational" ? "Info" : item.name}{" "}
+                          Risk
                         </p>
                       </div>
 
