@@ -38,7 +38,7 @@ const CustomTooltip = ({ active, payload }: any) => {
             className="size-3 shrink-0 rounded"
             style={{ backgroundColor: color }}
           />
-          <p className="text-text-neutral-primary text-sm leading-5 font-medium">
+          <p className="text-text-neutral-primary text-xs leading-5 font-medium">
             {percentage}% {name}
           </p>
         </div>
@@ -46,7 +46,7 @@ const CustomTooltip = ({ active, payload }: any) => {
         {/* Change percentage row */}
         {change !== undefined && (
           <div className="flex items-start">
-            <p className="text-text-neutral-primary text-sm leading-5 font-medium">
+            <p className="text-text-neutral-primary text-xs leading-5 font-medium">
               {change > 0 ? "+" : ""}
               {change}% Since last scan
             </p>
