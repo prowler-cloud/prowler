@@ -9,7 +9,6 @@ import api.rls
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("api", "0056_drop_redundant_compliance_requirement_indexes"),
     ]

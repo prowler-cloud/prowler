@@ -48,7 +48,6 @@ def get_not_completed_scans(providers_fixture):
 
 @pytest.mark.django_db
 class TestBackfillResourceScanSummaries:
-
     def test_already_backfilled(self, resource_scan_summary_data):
         tenant_id = resource_scan_summary_data.tenant_id
         scan_id = resource_scan_summary_data.scan_id
