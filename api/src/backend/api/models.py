@@ -425,7 +425,8 @@ class Provider(RowLevelSecurityProtectedModel):
 
         constraints = [
             models.UniqueConstraint(
-                fields=("tenant_id", "provider", "uid", "is_deleted"),
+                fields=("tenant_id", "provider", "uid"),
+                condition=Q(is_deleted=False),
                 name="unique_provider_uids",
             ),
             RowLevelSecurityConstraint(

@@ -19,6 +19,11 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
+## [1.14.2] (Prowler 5.13.2)
+
+### Fixed
+- Update unique constraint for `Provider` model to exclude soft-deleted entries, resolving duplicate errors when re-deleting providers.
+
 ## [1.14.1] (Prowler 5.13.1)
 
 ### Fixed
