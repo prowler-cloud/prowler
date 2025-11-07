@@ -4349,28 +4349,30 @@ class LighthouseConfigViewSet(BaseRLSViewSet):
 @extend_schema_view(
     list=extend_schema(
         tags=["Lighthouse AI"],
-        summary="List all LLM provider configs",
+        summary="List all LLM provider configurations",
         description="Retrieve all LLM provider configurations for the current tenant",
     ),
     retrieve=extend_schema(
         tags=["Lighthouse AI"],
-        summary="Retrieve LLM provider config",
+        summary="Retrieve LLM provider configuration",
         description="Get details for a specific provider configuration in the current tenant.",
     ),
     create=extend_schema(
         tags=["Lighthouse AI"],
-        summary="Create LLM provider config",
-        description="Create a per-tenant configuration for an LLM provider. Only one configuration per provider type is allowed per tenant.",
+        summary="Create LLM provider configuration",
+        description="Create a per-tenant configuration for an LLM provider. Only one configuration per provider type "
+        "is allowed per tenant.",
     ),
     partial_update=extend_schema(
         tags=["Lighthouse AI"],
-        summary="Update LLM provider config",
+        summary="Update LLM provider configuration",
         description="Partially update a provider configuration (e.g., base_url, is_active).",
     ),
     destroy=extend_schema(
         tags=["Lighthouse AI"],
-        summary="Delete LLM provider config",
-        description="Delete a provider configuration. Any tenant defaults that reference this provider are cleared during deletion.",
+        summary="Delete LLM provider configuration",
+        description="Delete a provider configuration. Any tenant defaults that reference this provider are cleared "
+        "during deletion.",
     ),
 )
 class LighthouseProviderConfigViewSet(BaseRLSViewSet):
@@ -4435,16 +4437,6 @@ class LighthouseProviderConfigViewSet(BaseRLSViewSet):
     @action(detail=True, methods=["post"], url_name="connection")
     def connection(self, request, pk=None):
         instance = self.get_object()
-        if (
-            instance.provider_type
-            != LighthouseProviderConfiguration.LLMProviderChoices.OPENAI
-        ):
-            return Response(
-                data={
-                    "errors": [{"detail": "Only 'openai' provider supported in MVP"}]
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
 
         with transaction.atomic():
             task = check_lighthouse_provider_connection_task.delay(
@@ -4466,7 +4458,7 @@ class LighthouseProviderConfigViewSet(BaseRLSViewSet):
     @extend_schema(
         tags=["Lighthouse AI"],
         summary="Refresh LLM models catalog",
-        description="Fetch available models for this provider configuration and upsert into catalog.",
+        description="Fetch available models for this provider configuration and upsert into catalog. Supports OpenAI, OpenAI-compatible, and AWS Bedrock providers.",
         request=None,
         responses={202: OpenApiResponse(response=TaskSerializer)},
     )
@@ -4478,16 +4470,6 @@ class LighthouseProviderConfigViewSet(BaseRLSViewSet):
     )
     def refresh_models(self, request, pk=None):
         instance = self.get_object()
-        if (
-            instance.provider_type
-            != LighthouseProviderConfiguration.LLMProviderChoices.OPENAI
-        ):
-            return Response(
-                data={
-                    "errors": [{"detail": "Only 'openai' provider supported in MVP"}]
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
 
         with transaction.atomic():
             task = refresh_lighthouse_provider_models_task.delay(

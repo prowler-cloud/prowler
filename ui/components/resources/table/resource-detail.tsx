@@ -2,7 +2,8 @@
 
 import { Snippet } from "@heroui/snippet";
 import { Spinner } from "@heroui/spinner";
-import { InfoIcon } from "lucide-react";
+import { Tooltip } from "@heroui/tooltip";
+import { ExternalLink, InfoIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { getFindingById } from "@/actions/findings";
@@ -17,6 +18,7 @@ import {
 } from "@/components/ui/entities";
 import { SeverityBadge, StatusFindingBadge } from "@/components/ui/table";
 import { createDict } from "@/lib";
+import { buildGitFileUrl } from "@/lib/iac-utils";
 import { FindingProps, ProviderType, ResourceProps } from "@/types";
 
 const renderValue = (value: string | null | undefined) => {
@@ -162,6 +164,12 @@ export const ResourceDetail = ({
   const providerData = resource.relationships.provider.data.attributes;
   const allFindings = findingsData;
 
+  // Build Git URL for IaC resources
+  const gitUrl =
+    providerData.provider === "iac"
+      ? buildGitFileUrl(providerData.uid, attributes.name, "")
+      : null;
+
   if (selectedFindingId) {
     const findingTitle =
       findingDetails?.attributes?.check_metadata?.checktitle ||
@@ -186,7 +194,30 @@ export const ResourceDetail = ({
   return (
     <div className="flex flex-col gap-6 rounded-lg">
       {/* Resource Details section */}
-      <CustomSection title="Resource Details">
+      <CustomSection
+        title={
+          providerData.provider === "iac" ? (
+            <span className="flex items-center gap-2">
+              Resource Details
+              {gitUrl && (
+                <Tooltip content="Go to Resource in the Repository" size="sm">
+                  <a
+                    href={gitUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-bg-data-info inline-flex cursor-pointer"
+                    aria-label="Open resource in repository"
+                  >
+                    <ExternalLink size={16} className="inline" />
+                  </a>
+                </Tooltip>
+              )}
+            </span>
+          ) : (
+            "Resource Details"
+          )
+        }
+      >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <InfoField label="Resource UID" variant="simple">
             <Snippet className="bg-gray-50 py-1 dark:bg-slate-800" hideSymbol>

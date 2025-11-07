@@ -139,6 +139,24 @@ export const addCredentialsProvider = async (formData: FormData) => {
   ) as string | undefined;
 
   try {
+    // For IaC provider, fetch the provider data to get the repository URL from uid
+    if (providerType === "iac") {
+      const providerUrl = new URL(`${apiBaseUrl}/providers/${providerId}`);
+      const providerResponse = await fetch(providerUrl.toString(), {
+        headers: await getAuthHeaders({ contentType: false }),
+      });
+
+      if (providerResponse.ok) {
+        const providerData = await providerResponse.json();
+        const providerUid = providerData?.data?.attributes?.uid;
+
+        // Add the repository URL to formData using the provider's uid
+        if (providerUid) {
+          formData.append(ProviderCredentialFields.REPOSITORY_URL, providerUid);
+        }
+      }
+    }
+
     const { secretType, secret } = buildSecretConfig(
       formData,
       providerType,
