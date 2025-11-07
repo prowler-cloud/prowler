@@ -56,7 +56,7 @@ Prowler includes hundreds of built-in controls to ensure compliance with standar
 
 Prowler App is a web-based application that simplifies running Prowler across your cloud provider accounts. It provides a user-friendly interface to visualize the results and streamline your security assessments.
 
-![Prowler App](docs/products/img/overview.png)
+![Prowler App](docs/images/products/overview.png)
 
 >For more details, refer to the [Prowler App Documentation](https://docs.prowler.com/projects/prowler-open-source/en/latest/#prowler-app-installation)
 
@@ -73,7 +73,7 @@ prowler <provider>
 ```console
 prowler dashboard
 ```
-![Prowler Dashboard](docs/products/img/dashboard.png)
+![Prowler Dashboard](docs/images/products/dashboard.png)
 
 # Prowler at a Glance
 > [!Tip]
@@ -90,7 +90,7 @@ prowler dashboard
 | M365 | 70 | 7 | 3 | 2 | Official | UI, API, CLI |
 | OCI | 51 | 13 | 1 | 10 | Official | UI, API, CLI |
 | IaC | [See `trivy` docs.](https://trivy.dev/latest/docs/coverage/iac/) | N/A | N/A | N/A | Official | UI, API, CLI |
-| MongoDB Atlas | 10 | 3 | 0 | 0 | Official | CLI |
+| MongoDB Atlas | 10 | 3 | 0 | 0 | Official | CLI, API |
 | LLM | [See `promptfoo` docs.](https://www.promptfoo.dev/docs/red-team/plugins/) | N/A | N/A | N/A | Official | CLI |
 | NHN | 6 | 2 | 1 | 0 | Unofficial | CLI |
 

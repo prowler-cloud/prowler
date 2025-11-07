@@ -7,7 +7,7 @@
     "start": "next start",
     "start:standalone": "node .next/standalone/server.js",
     "deps:log": "node scripts/update-dependency-log.js",
-    "postinstall": "node -e \"const fs=require('fs'); if(fs.existsSync('scripts/update-dependency-log.js')) require('./scripts/update-dependency-log.js'); else console.log('skip deps:log (script missing)');\"",
+    "postinstall": "node scripts/postinstall.js",
     "typecheck": "tsc",
     "healthcheck": "npm run typecheck && npm run lint:check",
     "lint:check": "eslint . --ext .ts,.tsx -c .eslintrc.cjs",

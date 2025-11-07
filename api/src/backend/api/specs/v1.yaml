@@ -875,6 +875,7 @@ paths:
           - azure
           - gcp
           - github
+          - mongodbatlas
           - iac
           - kubernetes
           - m365
@@ -886,6 +887,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
@@ -900,6 +902,7 @@ paths:
             - azure
             - gcp
             - github
+            - mongodbatlas
             - kubernetes
             - m365
             - oraclecloud
@@ -912,6 +915,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
@@ -1409,6 +1413,7 @@ paths:
           - azure
           - gcp
           - github
+          - mongodbatlas
           - iac
           - kubernetes
           - m365
@@ -1420,6 +1425,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
@@ -1434,6 +1440,7 @@ paths:
             - azure
             - gcp
             - github
+            - mongodbatlas
             - kubernetes
             - m365
             - oraclecloud
@@ -1446,6 +1453,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
@@ -1851,6 +1859,7 @@ paths:
           - azure
           - gcp
           - github
+          - mongodbatlas
           - iac
           - kubernetes
           - m365
@@ -1862,6 +1871,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
@@ -1876,6 +1886,7 @@ paths:
             - azure
             - gcp
             - github
+            - mongodbatlas
             - kubernetes
             - m365
             - oraclecloud
@@ -1888,6 +1899,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
@@ -2291,6 +2303,7 @@ paths:
           - azure
           - gcp
           - github
+          - mongodbatlas
           - iac
           - kubernetes
           - m365
@@ -2302,6 +2315,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
@@ -2316,6 +2330,7 @@ paths:
             - azure
             - gcp
             - github
+            - mongodbatlas
             - kubernetes
             - m365
             - oraclecloud
@@ -2328,6 +2343,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
@@ -2719,6 +2735,7 @@ paths:
           - azure
           - gcp
           - github
+          - mongodbatlas
           - iac
           - kubernetes
           - m365
@@ -2730,6 +2747,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
@@ -2744,6 +2762,7 @@ paths:
             - azure
             - gcp
             - github
+            - mongodbatlas
             - kubernetes
             - m365
             - oraclecloud
@@ -2756,6 +2775,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
@@ -4551,6 +4571,7 @@ paths:
           - azure
           - gcp
           - github
+          - mongodbatlas
           - iac
           - kubernetes
           - m365
@@ -4562,6 +4583,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
@@ -4576,6 +4598,7 @@ paths:
             - azure
             - gcp
             - github
+            - mongodbatlas
             - kubernetes
             - m365
             - oraclecloud
@@ -4588,6 +4611,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
@@ -4735,6 +4759,7 @@ paths:
           - azure
           - gcp
           - github
+          - mongodbatlas
           - iac
           - kubernetes
           - m365
@@ -4746,6 +4771,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
@@ -4760,6 +4786,7 @@ paths:
             - azure
             - gcp
             - github
+            - mongodbatlas
             - kubernetes
             - m365
             - oraclecloud
@@ -4772,6 +4799,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
@@ -4985,6 +5013,7 @@ paths:
           - azure
           - gcp
           - github
+          - mongodbatlas
           - iac
           - kubernetes
           - m365
@@ -4996,6 +5025,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
@@ -5010,6 +5040,7 @@ paths:
             - azure
             - gcp
             - github
+            - mongodbatlas
             - kubernetes
             - m365
             - oraclecloud
@@ -5022,6 +5053,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
@@ -5715,6 +5747,7 @@ paths:
           - azure
           - gcp
           - github
+          - mongodbatlas
           - iac
           - kubernetes
           - m365
@@ -5726,6 +5759,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
@@ -5740,6 +5774,7 @@ paths:
             - azure
             - gcp
             - github
+            - mongodbatlas
             - kubernetes
             - m365
             - oraclecloud
@@ -5752,6 +5787,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
         style: form
@@ -6404,6 +6440,7 @@ paths:
           - azure
           - gcp
           - github
+          - mongodbatlas
           - iac
           - kubernetes
           - m365
@@ -6415,6 +6452,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
@@ -6429,6 +6467,7 @@ paths:
             - azure
             - gcp
             - github
+            - mongodbatlas
             - kubernetes
             - m365
             - oraclecloud
@@ -6441,6 +6480,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
@@ -6776,6 +6816,7 @@ paths:
           - azure
           - gcp
           - github
+          - mongodbatlas
           - iac
           - kubernetes
           - m365
@@ -6787,6 +6828,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
@@ -6801,6 +6843,7 @@ paths:
             - azure
             - gcp
             - github
+            - mongodbatlas
             - kubernetes
             - m365
             - oraclecloud
@@ -6813,6 +6856,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
@@ -7049,6 +7093,7 @@ paths:
           - azure
           - gcp
           - github
+          - mongodbatlas
           - iac
           - kubernetes
           - m365
@@ -7060,6 +7105,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
@@ -7074,6 +7120,7 @@ paths:
             - azure
             - gcp
             - github
+            - mongodbatlas
             - kubernetes
             - m365
             - oraclecloud
@@ -7086,6 +7133,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
@@ -7328,6 +7376,7 @@ paths:
           - azure
           - gcp
           - github
+          - mongodbatlas
           - iac
           - kubernetes
           - m365
@@ -7339,6 +7388,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
@@ -7353,6 +7403,7 @@ paths:
             - azure
             - gcp
             - github
+            - mongodbatlas
             - kubernetes
             - m365
             - oraclecloud
@@ -7365,6 +7416,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
@@ -8170,6 +8222,7 @@ paths:
           - azure
           - gcp
           - github
+          - mongodbatlas
           - iac
           - kubernetes
           - m365
@@ -8181,6 +8234,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
@@ -8195,6 +8249,7 @@ paths:
             - azure
             - gcp
             - github
+            - mongodbatlas
             - kubernetes
             - m365
             - oraclecloud
@@ -8207,6 +8262,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
@@ -14229,7 +14285,7 @@ components:
                         type: string
                         description: GitHub OAuth App token for authentication.
                     required:
-                    - oauth_app_token
+                  - oauth_app_token
                   - type: object
                     title: GitHub App Credentials
                     properties:
@@ -14242,6 +14298,18 @@ components:
                     required:
                     - github_app_id
                     - github_app_key
+                  - type: object
+                    title: MongoDB Atlas API Key
+                    properties:
+                      atlas_public_key:
+                        type: string
+                        description: MongoDB Atlas API public key.
+                      atlas_private_key:
+                        type: string
+                        description: MongoDB Atlas API private key.
+                    required:
+                    - atlas_public_key
+                    - atlas_private_key
                   - type: object
                     title: IaC Repository Credentials
                     properties:
@@ -15280,6 +15348,7 @@ components:
               - kubernetes
               - m365
               - github
+              - mongodbatlas
               - oraclecloud
               type: string
               description: |-
@@ -15289,6 +15358,7 @@ components:
                 * `kubernetes` - Kubernetes
                 * `m365` - M365
                 * `github` - GitHub
+                * `mongodbatlas` - MongoDB Atlas
                 * `oraclecloud` - Oracle Cloud Infrastructure
               x-spec-enum-id: 7087703783970b51
             uid:
@@ -15402,6 +15472,7 @@ components:
               - kubernetes
               - m365
               - github
+              - mongodbatlas
               - oraclecloud
               type: string
               x-spec-enum-id: 7087703783970b51
@@ -15414,12 +15485,13 @@ components:
                 * `kubernetes` - Kubernetes
                 * `m365` - M365
                 * `github` - GitHub
+                * `mongodbatlas` - MongoDB Atlas
                 * `oraclecloud` - Oracle Cloud Infrastructure
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
               description: Unique identifier for the provider, set by the provider,
-                e.g. AWS account ID, Azure subscription ID, GCP project ID, etc.
+                e.g. AWS account ID, Azure subscription ID, GCP project ID, MongoDB Atlas organization ID, etc.
               maxLength: 250
               minLength: 3
           required:
@@ -15458,6 +15530,7 @@ components:
                   - kubernetes
                   - m365
                   - github
+                  - mongodbatlas
                   - oraclecloud
                   type: string
                   x-spec-enum-id: 7087703783970b51
@@ -15470,13 +15543,14 @@ components:
                     * `kubernetes` - Kubernetes
                     * `m365` - M365
                     * `github` - GitHub
+                    * `mongodbatlas` - MongoDB Atlas
                     * `oraclecloud` - Oracle Cloud Infrastructure
                 uid:
                   type: string
                   minLength: 3
                   title: Unique identifier for the provider, set by the provider
                   description: Unique identifier for the provider, set by the provider,
-                    e.g. AWS account ID, Azure subscription ID, GCP project ID, etc.
+                    e.g. AWS account ID, Azure subscription ID, GCP project ID, MongoDB Atlas organization ID, etc.
                   maxLength: 250
               required:
               - uid
