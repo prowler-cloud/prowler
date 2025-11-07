@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta, timezone
 
-from prowler.providers.aws.services.cloudtrail.lib.enrichment.models import (
+from prowler.providers.aws.lib.cloudtrail_enrichment.models import (
     EC2EventType,
     FindingEnrichment,
     GeneralEventType,

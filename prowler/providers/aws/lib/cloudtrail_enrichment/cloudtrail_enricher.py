@@ -11,10 +11,10 @@ from typing import Any
 from botocore.exceptions import ClientError
 
 from prowler.lib.logger import logger
-from prowler.providers.aws.services.cloudtrail.lib.enrichment.formatters import (
+from prowler.providers.aws.lib.cloudtrail_enrichment.formatters import (
     EventMessageFormatter,
 )
-from prowler.providers.aws.services.cloudtrail.lib.enrichment.models import (
+from prowler.providers.aws.lib.cloudtrail_enrichment.models import (
     CloudTrailEventType,
     CloudWatchEventType,
     DynamoDBEventType,

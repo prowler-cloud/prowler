@@ -9,10 +9,10 @@ import pytest
 from botocore.exceptions import ClientError
 from moto import mock_aws
 
-from prowler.providers.aws.services.cloudtrail.lib.enrichment.cloudtrail_enricher import (
+from prowler.providers.aws.lib.cloudtrail_enrichment.cloudtrail_enricher import (
     CloudTrailEnricher,
 )
-from prowler.providers.aws.services.cloudtrail.lib.enrichment.models import EC2EventType
+from prowler.providers.aws.lib.cloudtrail_enrichment.models import EC2EventType
 
 
 class TestCloudTrailEnricher:
@@ -62,7 +62,7 @@ class TestCloudTrailEnricher:
         assert result == []
 
     @patch(
-        "prowler.providers.aws.services.cloudtrail.lib.enrichment.cloudtrail_enricher.CloudTrailEnricher._lookup_resource_events"
+        "prowler.providers.aws.lib.cloudtrail_enrichment.cloudtrail_enricher.CloudTrailEnricher._lookup_resource_events"
     )
     def test_enrich_finding_no_events_found(self, mock_lookup):
         """Test enrichment returns empty list when no events found."""
@@ -81,13 +81,11 @@ class TestCloudTrailEnricher:
         assert result == []
 
     @patch(
-        "prowler.providers.aws.services.cloudtrail.lib.enrichment.cloudtrail_enricher.CloudTrailEnricher._lookup_resource_events"
+        "prowler.providers.aws.lib.cloudtrail_enrichment.cloudtrail_enricher.CloudTrailEnricher._lookup_resource_events"
     )
     def test_enrich_finding_with_events(self, mock_lookup):
         """Test enrichment returns list of event dictionaries."""
-        from prowler.providers.aws.services.cloudtrail.lib.enrichment.models import (
-            TimelineEvent,
-        )
+        from prowler.providers.aws.lib.cloudtrail_enrichment.models import TimelineEvent
 
         mock_events = [
             TimelineEvent(

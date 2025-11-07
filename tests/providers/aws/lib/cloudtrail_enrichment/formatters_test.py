@@ -1,6 +1,6 @@
 """Unit tests for CloudTrail event message formatters."""
 
-from prowler.providers.aws.services.cloudtrail.lib.enrichment.formatters import (
+from prowler.providers.aws.lib.cloudtrail_enrichment.formatters import (
     EventMessageFormatter,
 )
 
