@@ -936,7 +936,8 @@ class Testm365PowerShell:
         assert result is True
 
         session.execute.assert_called_once_with(
-            "Connect-ExchangeOnline -Certificate $certificate -AppId $clientID -Organization $tenantDomain"
+            "Connect-ExchangeOnline -Certificate $certificate -AppId $clientID -Organization $tenantDomain",
+            timeout=M365PowerShell.CONNECT_TIMEOUT,
         )
 
         session.close()
@@ -960,7 +961,8 @@ class Testm365PowerShell:
         assert result is False
 
         session.execute.assert_called_once_with(
-            "Connect-ExchangeOnline -Certificate $certificate -AppId $clientID -Organization $tenantDomain"
+            "Connect-ExchangeOnline -Certificate $certificate -AppId $clientID -Organization $tenantDomain",
+            timeout=M365PowerShell.CONNECT_TIMEOUT,
         )
 
         session.close()
@@ -979,7 +981,7 @@ class Testm365PowerShell:
             session = M365PowerShell(credentials, identity)
 
         # Mock successful Teams connection - the method returns bool
-        def mock_execute_side_effect(command):
+        def mock_execute_side_effect(command, *_, **__):
             if "Connect-MicrosoftTeams" in command:
                 # Return result that contains the identity_id for success
                 return "Connected successfully test_identity_id"
@@ -991,7 +993,8 @@ class Testm365PowerShell:
         assert result is True
 
         session.execute.assert_called_once_with(
-            "Connect-MicrosoftTeams -Certificate $certificate -ApplicationId $clientID -TenantId $tenantID"
+            "Connect-MicrosoftTeams -Certificate $certificate -ApplicationId $clientID -TenantId $tenantID",
+            timeout=M365PowerShell.CONNECT_TIMEOUT,
         )
 
         session.close()
@@ -1007,7 +1010,7 @@ class Testm365PowerShell:
         session = M365PowerShell(credentials, identity)
 
         # Mock failed Teams connection
-        def mock_execute_side_effect(command, json_parse=False):
+        def mock_execute_side_effect(command, **kwargs):
             if "Connect-MicrosoftTeams" in command:
                 raise Exception("Connection failed: Authentication error")
             return ""
@@ -1090,7 +1093,7 @@ class Testm365PowerShell:
         # Mock certificate variable check and teams connection
         execute_calls = []
 
-        def mock_execute_side_effect(command, json_parse=False):
+        def mock_execute_side_effect(command):
             execute_calls.append(command)
             if "Write-Output $certificate" in command:
                 return "certificate_content"  # Non-empty means certificate exists
@@ -1123,7 +1126,7 @@ class Testm365PowerShell:
         # Mock certificate variable check and exchange connection
         execute_calls = []
 
-        def mock_execute_side_effect(command, json_parse=False):
+        def mock_execute_side_effect(command):
             execute_calls.append(command)
             if "Write-Output $certificate" in command:
                 return "certificate_content"  # Non-empty means certificate exists
