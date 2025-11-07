@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0054_iac_provider"),
+        ("api", "0055_mongodbatlas_provider"),
     ]
 
     operations = [
