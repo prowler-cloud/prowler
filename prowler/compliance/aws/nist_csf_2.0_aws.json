@@ -17,16 +17,12 @@
           "Service": "aws"
         }
       ],
-      "Checks": [
-        "cloudtrail_multi_region_enabled",
-        "config_recorder_all_regions_enabled",
-        "securityhub_enabled"
-      ]
+      "Checks": []
     },
     {
       "Id": "oc_2",
       "Name": "GV.OC-2",
-      "Description": "Legal, regulatory, and contractual requirements regarding cybersecurity — including privacy and civil liberties obligations — are understood and managed.",
+      "Description": "Legal, regulatory, and contractual requirements regarding cybersecurity including privacy and civil liberties obligations are understood and managed.",
       "Attributes": [
         {
           "ItemId": "oc_2",
@@ -35,12 +31,7 @@
           "Service": "aws"
         }
       ],
-      "Checks": [
-        "cloudtrail_multi_region_enabled",
-        "cloudtrail_cloudwatch_logging_enabled",
-        "config_recorder_all_regions_enabled",
-        "securityhub_enabled"
-      ]
+      "Checks": []
     },
     {
       "Id": "oc_3",
@@ -54,10 +45,7 @@
           "Service": "aws"
         }
       ],
-      "Checks": [
-        "config_recorder_all_regions_enabled",
-        "securityhub_enabled"
-      ]
+      "Checks": []
     },
     {
       "Id": "rm_1",
@@ -72,10 +60,18 @@
         }
       ],
       "Checks": [
-        "cloudtrail_multi_region_enabled",
         "config_recorder_all_regions_enabled",
-        "guardduty_is_enabled",
-        "securityhub_enabled"
+        "config_recorder_using_aws_service_role",
+        "organizations_account_part_of_organizations",
+        "organizations_scp_check_deny_regions",
+        "organizations_tags_policies_enabled_and_attached",
+        "organizations_delegated_administrators",
+        "organizations_opt_out_ai_services_policy",
+        "trustedadvisor_premium_support_plan_subscribed",
+        "trustedadvisor_errors_and_warnings",
+        "securityhub_enabled",
+        "wellarchitected_workload_no_high_or_medium_risks",
+        "servicecatalog_portfolio_shared_within_organization_only"
       ]
     },
     {
@@ -90,11 +86,7 @@
           "Service": "aws"
         }
       ],
-      "Checks": [
-        "cloudtrail_multi_region_enabled",
-        "config_recorder_all_regions_enabled",
-        "securityhub_enabled"
-      ]
+      "Checks": []
     },
     {
       "Id": "rm_3",
@@ -108,11 +100,7 @@
           "Service": "aws"
         }
       ],
-      "Checks": [
-        "config_recorder_all_regions_enabled",
-        "guardduty_is_enabled",
-        "securityhub_enabled"
-      ]
+      "Checks": []
     },
     {
       "Id": "sc_1",
@@ -127,12 +115,11 @@
         }
       ],
       "Checks": [
-        "cloudtrail_multi_region_enabled",
-        "cloudtrail_s3_dataevents_read_enabled",
-        "cloudtrail_s3_dataevents_write_enabled",
-        "config_recorder_all_regions_enabled",
-        "guardduty_is_enabled",
-        "securityhub_enabled"
+        "codeartifact_packages_external_public_publishing_disabled",
+        "codebuild_project_uses_allowed_github_organizations",
+        "codebuild_project_source_repo_url_no_sensitive_credentials",
+        "codebuild_project_user_controlled_buildspec",
+        "codebuild_project_no_secrets_in_variables"
       ]
     },
     {
@@ -148,9 +135,8 @@
         }
       ],
       "Checks": [
-        "cloudtrail_multi_region_enabled",
-        "config_recorder_all_regions_enabled",
-        "securityhub_enabled"
+        "codeartifact_packages_external_public_publishing_disabled",
+        "codebuild_project_uses_allowed_github_organizations"
       ]
     },
     {
@@ -166,12 +152,10 @@
         }
       ],
       "Checks": [
-        "cloudtrail_multi_region_enabled",
-        "cloudtrail_s3_dataevents_read_enabled",
-        "cloudtrail_s3_dataevents_write_enabled",
-        "config_recorder_all_regions_enabled",
-        "guardduty_is_enabled",
-        "securityhub_enabled"
+        "codeartifact_packages_external_public_publishing_disabled",
+        "codebuild_project_user_controlled_buildspec",
+        "codebuild_project_source_repo_url_no_sensitive_credentials",
+        "codebuild_project_uses_allowed_github_organizations"
       ]
     },
     {
@@ -186,11 +170,7 @@
           "Service": "aws"
         }
       ],
-      "Checks": [
-        "cloudtrail_multi_region_enabled",
-        "config_recorder_all_regions_enabled",
-        "securityhub_enabled"
-      ]
+      "Checks": []
     },
     {
       "Id": "rr_1",
@@ -205,11 +185,27 @@
         }
       ],
       "Checks": [
-        "iam_aws_attached_policy_no_administrative_privileges",
-        "iam_customer_attached_policy_no_administrative_privileges",
+        "organizations_account_part_of_organizations",
+        "organizations_delegated_administrators",
+        "organizations_scp_check_deny_regions",
+        "organizations_opt_out_ai_services_policy",
+        "vpc_endpoint_connections_trust_boundaries",
+        "iam_role_administratoraccess_policy",
+        "iam_group_administrator_access_policy",
+        "iam_user_administrator_access_policy",
+        "iam_policy_attached_only_to_group_or_roles",
+        "iam_policy_allows_privilege_escalation",
+        "iam_inline_policy_allows_privilege_escalation",
+        "iam_inline_policy_no_full_access_to_kms",
         "iam_inline_policy_no_administrative_privileges",
-        "iam_no_root_access_key",
-        "cloudtrail_multi_region_enabled"
+        "iam_policy_no_full_access_to_cloudtrail",
+        "iam_policy_no_full_access_to_kms",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_administrator_access_with_mfa",
+        "iam_root_mfa_enabled",
+        "iam_root_credentials_management_enabled",
+        "iam_no_custom_policy_permissive_role_assumption",
+        "iam_aws_attached_policy_no_administrative_privileges"
       ]
     },
     {
@@ -225,10 +221,21 @@
         }
       ],
       "Checks": [
-        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_group_administrator_access_policy",
+        "iam_role_administratoraccess_policy",
+        "iam_user_administrator_access_policy",
         "iam_customer_attached_policy_no_administrative_privileges",
         "iam_inline_policy_no_administrative_privileges",
-        "cloudtrail_multi_region_enabled"
+        "iam_policy_allows_privilege_escalation",
+        "iam_inline_policy_allows_privilege_escalation",
+        "iam_policy_attached_only_to_group_or_roles",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "organizations_account_part_of_organizations",
+        "organizations_delegated_administrators",
+        "organizations_opt_out_ai_services_policy",
+        "organizations_scp_check_deny_regions",
+        "iam_root_credentials_management_enabled",
+        "iam_role_cross_account_readonlyaccess_policy"
       ]
     },
     {
@@ -243,13 +250,7 @@
           "Service": "aws"
         }
       ],
-      "Checks": [
-        "iam_root_hardware_mfa_enabled",
-        "iam_root_mfa_enabled",
-        "iam_no_root_access_key",
-        "cloudtrail_multi_region_enabled",
-        "securityhub_enabled"
-      ]
+      "Checks": []
     },
     {
       "Id": "po_1",
@@ -264,10 +265,21 @@
         }
       ],
       "Checks": [
-        "cloudtrail_multi_region_enabled",
-        "config_recorder_all_regions_enabled",
-        "iam_password_policy_reuse_24",
-        "securityhub_enabled"
+        "iam_policy_attached_only_to_group_or_roles",
+        "iam_policy_allows_privilege_escalation",
+        "iam_inline_policy_allows_privilege_escalation",
+        "iam_inline_policy_no_full_access_to_cloudtrail",
+        "iam_inline_policy_no_full_access_to_kms",
+        "iam_inline_policy_no_administrative_privileges",
+        "iam_policy_no_full_access_to_cloudtrail",
+        "iam_policy_no_full_access_to_kms",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_customer_unattached_policy_no_administrative_privileges",
+        "iam_group_administrator_access_policy",
+        "iam_user_administrator_access_policy",
+        "iam_role_administratoraccess_policy",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_no_custom_policy_permissive_role_assumption"
       ]
     },
     {
@@ -282,12 +294,7 @@
           "Service": "aws"
         }
       ],
-      "Checks": [
-        "cloudtrail_multi_region_enabled",
-        "cloudtrail_cloudwatch_logging_enabled",
-        "config_recorder_all_regions_enabled",
-        "cloudwatch_log_metric_filter_policy_changes"
-      ]
+      "Checks": []
     },
     {
       "Id": "po_3",
@@ -302,10 +309,19 @@
         }
       ],
       "Checks": [
-        "cloudtrail_multi_region_enabled",
-        "cloudtrail_cloudwatch_logging_enabled",
+        "securityhub_enabled",
         "config_recorder_all_regions_enabled",
-        "securityhub_enabled"
+        "organizations_account_part_of_organizations",
+        "organizations_opt_out_ai_services_policy",
+        "trustedadvisor_premium_support_plan_subscribed",
+        "trustedadvisor_errors_and_warnings",
+        "accessanalyzer_enabled",
+        "vpc_endpoint_connections_trust_boundaries",
+        "organizations_scp_check_deny_regions",
+        "servicecatalog_portfolio_shared_within_organization_only",
+        "wellarchitected_workload_no_high_or_medium_risks",
+        "organizations_delegated_administrators",
+        "organizations_tags_policies_enabled_and_attached"
       ]
     },
     {
@@ -321,10 +337,21 @@
         }
       ],
       "Checks": [
-        "cloudtrail_multi_region_enabled",
         "config_recorder_all_regions_enabled",
-        "guardduty_is_enabled",
-        "securityhub_enabled"
+        "config_recorder_using_aws_service_role",
+        "accessanalyzer_enabled",
+        "cloudtrail_threat_detection_enumeration",
+        "cloudtrail_threat_detection_privilege_escalation",
+        "cloudtrail_threat_detection_llm_jacking",
+        "cloudtrail_multi_region_enabled_logging_management_events",
+        "organizations_scp_check_deny_regions",
+        "organizations_account_part_of_organizations",
+        "trustedadvisor_premium_support_plan_subscribed",
+        "trustedadvisor_errors_and_warnings",
+        "securityhub_enabled",
+        "vpc_flow_logs_enabled",
+        "iam_root_mfa_enabled",
+        "iam_root_credentials_management_enabled"
       ]
     },
     {
@@ -340,11 +367,11 @@
         }
       ],
       "Checks": [
-        "cloudtrail_multi_region_enabled",
-        "cloudtrail_s3_dataevents_read_enabled",
-        "cloudtrail_s3_dataevents_write_enabled",
-        "config_recorder_all_regions_enabled",
-        "securityhub_enabled"
+        "codeartifact_packages_external_public_publishing_disabled",
+        "codebuild_project_uses_allowed_github_organizations",
+        "codebuild_project_source_repo_url_no_sensitive_credentials",
+        "codebuild_project_user_controlled_buildspec",
+        "codebuild_project_no_secrets_in_variables"
       ]
     },
     {
@@ -359,12 +386,7 @@
           "Service": "aws"
         }
       ],
-      "Checks": [
-        "cloudtrail_multi_region_enabled",
-        "config_recorder_all_regions_enabled",
-        "guardduty_is_enabled",
-        "securityhub_enabled"
-      ]
+      "Checks": []
     },
     {
       "Id": "ov_2",
@@ -379,11 +401,13 @@
         }
       ],
       "Checks": [
-        "cloudtrail_multi_region_enabled",
-        "cloudtrail_cloudwatch_logging_enabled",
-        "config_recorder_all_regions_enabled",
-        "guardduty_is_enabled",
-        "securityhub_enabled"
+        "accessanalyzer_enabled_without_findings",
+        "wellarchitected_workload_no_high_or_medium_risks",
+        "securityhub_enabled",
+        "inspector2_active_findings_exist",
+        "accessanalyzer_enabled",
+        "guardduty_no_high_severity_findings",
+        "trustedadvisor_errors_and_warnings"
       ]
     },
     {
@@ -399,10 +423,25 @@
         }
       ],
       "Checks": [
-        "cloudtrail_multi_region_enabled",
         "config_recorder_all_regions_enabled",
-        "guardduty_is_enabled",
-        "securityhub_enabled"
+        "config_recorder_using_aws_service_role",
+        "accessanalyzer_enabled",
+        "securityhub_enabled",
+        "trustedadvisor_premium_support_plan_subscribed",
+        "trustedadvisor_errors_and_warnings",
+        "cloudtrail_multi_region_enabled_logging_management_events",
+        "cloudtrail_threat_detection_enumeration",
+        "cloudtrail_threat_detection_privilege_escalation",
+        "cloudtrail_threat_detection_llm_jacking",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_policy_changes",
+        "cloudwatch_log_metric_filter_security_group_changes",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "vpc_endpoint_connections_trust_boundaries",
+        "organizations_scp_check_deny_regions",
+        "organizations_tags_policies_enabled_and_attached",
+        "organizations_delegated_administrators"
       ]
     },
     {
@@ -417,12 +456,7 @@
           "Service": "aws"
         }
       ],
-      "Checks": [
-        "cloudtrail_multi_region_enabled",
-        "cloudtrail_cloudwatch_logging_enabled",
-        "config_recorder_all_regions_enabled",
-        "securityhub_enabled"
-      ]
+      "Checks": []
     },
     {
       "Id": "am_1",
@@ -436,10 +470,7 @@
           "Service": "aws"
         }
       ],
-      "Checks": [
-        "config_recorder_all_regions_enabled",
-        "ec2_instance_managed_by_ssm"
-      ]
+      "Checks": []
     },
     {
       "Id": "am_2",
@@ -453,10 +484,7 @@
           "Service": "aws"
         }
       ],
-      "Checks": [
-        "ec2_instance_managed_by_ssm",
-        "ssm_managed_compliant_patching"
-      ]
+      "Checks": []
     },
     {
       "Id": "am_3",
@@ -470,15 +498,7 @@
           "Service": "aws"
         }
       ],
-      "Checks": [
-        "apigateway_restapi_logging_enabled",
-        "cloudtrail_multi_region_enabled",
-        "elbv2_logging_enabled",
-        "elb_logging_enabled",
-        "redshift_cluster_audit_logging",
-        "s3_bucket_server_access_logging_enabled",
-        "vpc_flow_logs_enabled"
-      ]
+      "Checks": []
     },
     {
       "Id": "am_5",
@@ -506,7 +526,14 @@
           "Service": "iam"
         }
       ],
-      "Checks": []
+      "Checks": [
+        "organizations_account_part_of_organizations",
+        "organizations_delegated_administrators",
+        "iam_group_administrator_access_policy",
+        "iam_policy_attached_only_to_group_or_roles",
+        "iam_user_administrator_access_policy",
+        "iam_role_cross_account_readonlyaccess_policy"
+      ]
     },
     {
       "Id": "be_5",
@@ -521,10 +548,32 @@
         }
       ],
       "Checks": [
-        "elbv2_deletion_protection",
-        "rds_instance_backup_enabled",
-        "rds_instance_multi_az",
-        "s3_bucket_object_versioning"
+        "drs_job_exist",
+        "backup_vaults_exist",
+        "backup_vaults_encrypted",
+        "backup_reportplans_exist",
+        "rds_cluster_protected_by_backup_plan",
+        "rds_instance_protected_by_backup_plan",
+        "dynamodb_table_protected_by_backup_plan",
+        "s3_bucket_cross_region_replication",
+        "autoscaling_group_capacity_rebalance_enabled",
+        "autoscaling_group_multiple_az",
+        "vpc_endpoint_multi_az_enabled",
+        "directconnect_connection_redundancy",
+        "directconnect_virtual_interface_redundancy",
+        "vpc_subnet_different_az",
+        "vpc_subnet_no_public_ip_by_default",
+        "vpc_subnet_separate_private_public",
+        "elbv2_cross_zone_load_balancing_enabled",
+        "elb_cross_zone_load_balancing_enabled",
+        "efs_encryption_at_rest_enabled",
+        "firehose_stream_encrypted_at_rest",
+        "glue_ml_transform_encrypted_at_rest",
+        "kafka_cluster_encryption_at_rest_uses_cmk",
+        "kinesis_stream_encrypted_at_rest",
+        "opensearch_service_domains_encryption_at_rest_enabled",
+        "redshift_cluster_encrypted_at_rest",
+        "sns_topics_kms_encryption_at_rest_enabled"
       ]
     },
     {
@@ -540,9 +589,27 @@
         }
       ],
       "Checks": [
-        "guardduty_is_enabled",
-        "securityhub_enabled",
-        "ssm_managed_compliant_patching"
+        "acm_certificates_with_secure_key_algorithms",
+        "acm_certificates_expiration_check",
+        "awslambda_function_no_secrets_in_variables",
+        "awslambda_function_no_secrets_in_code",
+        "cloudtrail_threat_detection_llm_jacking",
+        "cloudtrail_threat_detection_privilege_escalation",
+        "ecr_repositories_not_publicly_accessible",
+        "rds_snapshots_public_access",
+        "route53_dangling_ip_subdomain_takeover",
+        "secretsmanager_not_publicly_accessible",
+        "s3_bucket_public_access",
+        "s3_bucket_public_write_acl",
+        "s3_bucket_cross_account_access",
+        "ssm_document_secrets",
+        "kms_cmk_not_deleted_unintentionally",
+        "kms_cmk_not_multi_region",
+        "glacier_vaults_policy_public_access",
+        "iam_policy_allows_privilege_escalation",
+        "iam_inline_policy_allows_privilege_escalation",
+        "ssm_documents_set_as_public",
+        "s3_bucket_shadow_resource_vulnerability"
       ]
     },
     {
@@ -557,10 +624,7 @@
           "Service": "aws"
         }
       ],
-      "Checks": [
-        "guardduty_is_enabled",
-        "securityhub_enabled"
-      ]
+      "Checks": []
     },
     {
       "Id": "ra_3",
@@ -575,8 +639,9 @@
         }
       ],
       "Checks": [
-        "guardduty_is_enabled",
-        "securityhub_enabled"
+        "cloudtrail_threat_detection_llm_jacking",
+        "cloudtrail_threat_detection_enumeration",
+        "cloudtrail_threat_detection_privilege_escalation"
       ]
     },
     {
@@ -592,26 +657,22 @@
         }
       ],
       "Checks": [
-        "cloudtrail_cloudwatch_logging_enabled",
-        "cloudwatch_changes_to_network_acls_alarm_configured",
-        "cloudwatch_changes_to_network_gateways_alarm_configured",
-        "cloudwatch_changes_to_network_route_tables_alarm_configured",
-        "cloudwatch_changes_to_vpcs_alarm_configured",
-        "config_recorder_all_regions_enabled",
-        "ec2_instance_imdsv2_enabled",
-        "guardduty_is_enabled",
-        "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
+        "cloudtrail_threat_detection_llm_jacking",
+        "cloudtrail_threat_detection_enumeration",
+        "cloudtrail_threat_detection_privilege_escalation",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
         "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
         "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
-        "cloudwatch_log_metric_filter_authentication_failures",
-        "cloudwatch_log_metric_filter_sign_in_without_mfa",
-        "cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk",
-        "cloudwatch_log_metric_filter_policy_changes",
-        "cloudwatch_log_metric_filter_root_usage",
-        "cloudwatch_log_metric_filter_security_group_changes",
-        "cloudwatch_log_metric_filter_unauthorized_api_calls",
-        "rds_instance_enhanced_monitoring_enabled",
-        "securityhub_enabled"
+        "cloudwatch_changes_to_network_gateways_alarm_configured",
+        "cloudwatch_changes_to_network_acls_alarm_configured",
+        "cloudwatch_changes_to_vpcs_alarm_configured",
+        "eventbridge_bus_cross_account_access",
+        "eventbridge_bus_exposed",
+        "route53_dangling_ip_subdomain_takeover",
+        "vpc_endpoint_connections_trust_boundaries",
+        "vpc_peering_routing_tables_with_least_privilege",
+        "vpc_endpoint_for_ec2_enabled"
       ]
     },
     {
@@ -626,24 +687,7 @@
           "Service": "aws"
         }
       ],
-      "Checks": [
-        "cloudtrail_cloudwatch_logging_enabled",
-        "config_recorder_all_regions_enabled",
-        "ec2_instance_imdsv2_enabled",
-        "guardduty_is_enabled",
-        "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
-        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
-        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
-        "cloudwatch_log_metric_filter_authentication_failures",
-        "cloudwatch_log_metric_filter_sign_in_without_mfa",
-        "cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk",
-        "cloudwatch_log_metric_filter_policy_changes",
-        "cloudwatch_log_metric_filter_root_usage",
-        "cloudwatch_log_metric_filter_security_group_changes",
-        "cloudwatch_log_metric_filter_unauthorized_api_calls",
-        "rds_instance_enhanced_monitoring_enabled",
-        "securityhub_enabled"
-      ]
+      "Checks": []
     },
     {
       "Id": "ac_1",
@@ -658,15 +702,27 @@
         }
       ],
       "Checks": [
-        "iam_password_policy_reuse_24",
+        "iam_root_mfa_enabled",
+        "iam_no_root_access_key",
+        "iam_user_console_access_unused",
+        "iam_user_accesskey_unused",
+        "iam_user_two_active_access_key",
+        "iam_root_credentials_management_enabled",
+        "accessanalyzer_enabled",
+        "cognito_user_pool_mfa_enabled",
+        "cognito_user_pool_password_policy_symbol",
+        "cognito_user_pool_password_policy_uppercase",
+        "cognito_user_pool_password_policy_lowercase",
+        "cognito_user_pool_password_policy_minimum_length_14",
+        "iam_policy_allows_privilege_escalation",
+        "iam_inline_policy_allows_privilege_escalation",
+        "iam_policy_attached_only_to_group_or_roles",
         "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_attached_policy_no_administrative_privileges",
-        "iam_inline_policy_no_administrative_privileges",
-        "iam_no_root_access_key",
-        "iam_rotate_access_key_90_days",
-        "iam_user_accesskey_unused",
-        "iam_user_console_access_unused",
-        "secretsmanager_automatic_rotation_enabled"
+        "iam_group_administrator_access_policy",
+        "iam_role_administratoraccess_policy",
+        "iam_policy_no_full_access_to_cloudtrail",
+        "iam_policy_no_full_access_to_kms"
       ]
     },
     {
@@ -682,24 +738,27 @@
         }
       ],
       "Checks": [
-        "ec2_ebs_public_snapshot",
-        "ec2_instance_public_ip",
-        "emr_cluster_master_nodes_no_public_ip",
-        "iam_root_hardware_mfa_enabled",
-        "iam_root_mfa_enabled",
-        "iam_user_mfa_enabled_console_access",
-        "awslambda_function_not_publicly_accessible",
-        "awslambda_function_url_public",
+        "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
+        "ec2_instance_port_ssh_exposed_to_internet",
+        "ec2_instance_port_rdp_exposed_to_internet",
+        "ec2_instance_port_telnet_exposed_to_internet",
+        "ec2_instance_imdsv2_enabled",
+        "ec2_launch_template_imdsv2_required",
+        "ec2_instance_managed_by_ssm",
+        "ssm_managed_compliant_patching",
         "rds_instance_no_public_access",
+        "dms_instance_no_public_access",
+        "ec2_ebs_snapshot_account_block_public_access",
+        "glacier_vaults_policy_public_access",
         "rds_snapshots_public_access",
         "redshift_cluster_public_access",
-        "s3_bucket_public_access",
-        "s3_bucket_policy_public_write_access",
+        "s3_access_point_public_access_block",
         "s3_account_level_public_access_blocks",
-        "sagemaker_notebook_instance_without_direct_internet_access_configured",
-        "ec2_securitygroup_default_restrict_traffic",
-        "ec2_networkacl_allow_ingress_any_port",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22"
+        "s3_bucket_level_public_access_block",
+        "s3_bucket_public_access",
+        "s3_multi_region_access_point_public_access_block"
       ]
     },
     {
@@ -715,12 +774,20 @@
         }
       ],
       "Checks": [
-        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_administrator_access_with_mfa",
+        "iam_group_administrator_access_policy",
+        "iam_user_administrator_access_policy",
+        "iam_role_administratoraccess_policy",
+        "iam_policy_attached_only_to_group_or_roles",
+        "iam_policy_allows_privilege_escalation",
+        "iam_inline_policy_allows_privilege_escalation",
         "iam_customer_attached_policy_no_administrative_privileges",
-        "iam_inline_policy_no_administrative_privileges",
-        "iam_no_root_access_key",
-        "iam_user_accesskey_unused",
-        "iam_user_console_access_unused"
+        "iam_customer_unattached_policy_no_administrative_privileges",
+        "accessanalyzer_enabled_without_findings",
+        "eventbridge_bus_cross_account_access",
+        "eventbridge_bus_exposed",
+        "iam_policy_no_full_access_to_cloudtrail",
+        "iam_policy_no_full_access_to_kms"
       ]
     },
     {
@@ -736,22 +803,20 @@
         }
       ],
       "Checks": [
-        "acm_certificates_expiration_check",
-        "ec2_ebs_public_snapshot",
-        "ec2_instance_public_ip",
-        "emr_cluster_master_nodes_no_public_ip",
-        "awslambda_function_not_publicly_accessible",
-        "awslambda_function_url_public",
-        "rds_instance_no_public_access",
-        "rds_snapshots_public_access",
-        "redshift_cluster_public_access",
-        "s3_bucket_public_access",
-        "s3_bucket_policy_public_write_access",
-        "s3_account_level_public_access_blocks",
-        "sagemaker_notebook_instance_without_direct_internet_access_configured",
+        "vpc_subnet_different_az",
+        "vpc_subnet_separate_private_public",
+        "vpc_endpoint_connections_trust_boundaries",
+        "vpc_peering_routing_tables_with_least_privilege",
+        "ec2_networkacl_unused",
         "ec2_securitygroup_default_restrict_traffic",
-        "ec2_networkacl_allow_ingress_any_port",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22"
+        "ec2_securitygroup_not_used",
+        "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
+        "ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mongodb_27017_27018",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_oracle_1521_2483",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601"
       ]
     },
     {
@@ -767,9 +832,20 @@
         }
       ],
       "Checks": [
-        "cloudtrail_multi_region_enabled",
-        "redshift_cluster_audit_logging",
-        "s3_bucket_server_access_logging_enabled"
+        "iam_root_mfa_enabled",
+        "iam_no_root_access_key",
+        "iam_rotate_access_key_90_days",
+        "iam_user_two_active_access_key",
+        "iam_user_with_temporary_credentials",
+        "iam_policy_attached_only_to_group_or_roles",
+        "iam_group_administrator_access_policy",
+        "iam_role_cross_account_readonlyaccess_policy",
+        "iam_policy_allows_privilege_escalation",
+        "iam_inline_policy_allows_privilege_escalation",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_customer_unattached_policy_no_administrative_privileges",
+        "accessanalyzer_enabled",
+        "cognito_user_pool_password_policy_symbol"
       ]
     },
     {
@@ -785,9 +861,25 @@
         }
       ],
       "Checks": [
-        "iam_root_hardware_mfa_enabled",
         "iam_root_mfa_enabled",
-        "iam_user_mfa_enabled_console_access"
+        "iam_user_mfa_enabled_console_access",
+        "cognito_user_pool_password_policy_symbol",
+        "cognito_user_pool_password_policy_number",
+        "cognito_user_pool_password_policy_lowercase",
+        "cognito_user_pool_password_policy_uppercase",
+        "cognito_user_pool_password_policy_minimum_length_14",
+        "cognito_user_pool_mfa_enabled",
+        "cognito_identity_pool_guest_access_disabled",
+        "apigatewayv2_api_authorizers_enabled",
+        "apigateway_restapi_authorizers_enabled",
+        "apigateway_restapi_public_with_authorizer",
+        "awslambda_function_not_publicly_accessible",
+        "awslambda_function_url_public",
+        "iam_policy_attached_only_to_group_or_roles",
+        "iam_inline_policy_allows_privilege_escalation",
+        "iam_inline_policy_no_full_access_to_cloudtrail",
+        "iam_policy_allows_privilege_escalation",
+        "iam_check_saml_providers_sts"
       ]
     },
     {
@@ -803,15 +895,29 @@
         }
       ],
       "Checks": [
+        "backup_vaults_encrypted",
+        "backup_recovery_point_encrypted",
         "cloudtrail_kms_encryption_enabled",
-        "ec2_ebs_volume_encryption",
-        "efs_encryption_at_rest_enabled",
-        "opensearch_service_domains_encryption_at_rest_enabled",
         "cloudwatch_log_group_kms_encryption_enabled",
-        "rds_instance_storage_encrypted",
+        "s3_bucket_kms_encryption",
         "s3_bucket_default_encryption",
-        "sagemaker_notebook_instance_encryption_enabled",
-        "sns_topics_kms_encryption_at_rest_enabled"
+        "efs_encryption_at_rest_enabled",
+        "dynamodb_tables_kms_cmk_encryption_enabled",
+        "rds_instance_storage_encrypted",
+        "rds_snapshots_encrypted",
+        "redshift_cluster_encrypted_at_rest",
+        "elasticache_redis_cluster_rest_encryption_enabled",
+        "neptune_cluster_storage_encrypted",
+        "opensearch_service_domains_encryption_at_rest_enabled",
+        "opensearch_service_domains_node_to_node_encryption_enabled",
+        "glue_data_catalogs_metadata_encryption_enabled",
+        "glue_data_catalogs_connection_passwords_encryption_enabled",
+        "glue_etl_jobs_amazon_s3_encryption_enabled",
+        "glue_etl_jobs_cloudwatch_logs_encryption_enabled",
+        "glue_etl_jobs_job_bookmark_encryption_enabled",
+        "kinesis_stream_encrypted_at_rest",
+        "firehose_stream_encrypted_at_rest",
+        "storagegateway_fileshare_encryption_enabled"
       ]
     },
     {
@@ -827,10 +933,18 @@
         }
       ],
       "Checks": [
-        "acm_certificates_expiration_check",
-        "elb_ssl_listeners",
-        "opensearch_service_domains_node_to_node_encryption_enabled",
-        "s3_bucket_secure_transport_policy"
+        "elasticache_redis_cluster_in_transit_encryption_enabled",
+        "cloudfront_distributions_origin_traffic_encrypted",
+        "cloudfront_distributions_https_enabled",
+        "s3_bucket_secure_transport_policy",
+        "rds_instance_transport_encrypted",
+        "transfer_server_in_transit_encryption_enabled",
+        "kafka_cluster_in_transit_encryption_enabled",
+        "kafka_connector_in_transit_encryption_enabled",
+        "dms_endpoint_ssl_enabled",
+        "dms_endpoint_redis_in_transit_encryption_enabled",
+        "opensearch_service_domains_https_communications_enforced",
+        "opensearch_service_domains_node_to_node_encryption_enabled"
       ]
     },
     {
@@ -846,9 +960,23 @@
         }
       ],
       "Checks": [
-        "ec2_instance_managed_by_ssm",
-        "ssm_managed_compliant_patching",
-        "ec2_elastic_ip_unassigned"
+        "dynamodb_table_deletion_protection_enabled",
+        "eks_cluster_deletion_protection_enabled",
+        "rds_cluster_deletion_protection",
+        "elbv2_deletion_protection",
+        "cloudtrail_bucket_requires_mfa_delete",
+        "kms_cmk_not_deleted_unintentionally",
+        "dlm_ebs_snapshot_lifecycle_policy_exists",
+        "backup_vaults_encrypted",
+        "backup_vaults_exist",
+        "backup_reportplans_exist",
+        "backup_recovery_point_encrypted",
+        "rds_instance_backup_enabled",
+        "rds_cluster_protected_by_backup_plan",
+        "ec2_ebs_volume_protected_by_backup_plan",
+        "s3_bucket_lifecycle_enabled",
+        "s3_bucket_default_encryption",
+        "s3_bucket_kms_encryption"
       ]
     },
     {
@@ -864,11 +992,28 @@
         }
       ],
       "Checks": [
-        "elbv2_deletion_protection",
-        "rds_instance_enhanced_monitoring_enabled",
-        "rds_instance_backup_enabled",
+        "dynamodb_table_deletion_protection_enabled",
+        "dynamodb_table_protected_by_backup_plan",
+        "eks_cluster_deletion_protection_enabled",
         "rds_instance_multi_az",
-        "s3_bucket_object_versioning"
+        "rds_instance_backup_enabled",
+        "rds_cluster_deletion_protection",
+        "rds_instance_deletion_protection",
+        "redshift_cluster_multi_az_enabled",
+        "dynamodb_table_autoscaling_enabled",
+        "autoscaling_group_capacity_rebalance_enabled",
+        "autoscaling_group_multiple_az",
+        "elb_cross_zone_load_balancing_enabled",
+        "elbv2_cross_zone_load_balancing_enabled",
+        "elb_is_in_multiple_az",
+        "directconnect_connection_redundancy",
+        "s3_bucket_cross_region_replication",
+        "s3_bucket_lifecycle_enabled",
+        "backup_plans_exist",
+        "backup_recovery_point_encrypted",
+        "backup_reportplans_exist",
+        "rds_cluster_protected_by_backup_plan",
+        "rds_instance_protected_by_backup_plan"
       ]
     },
     {
@@ -884,24 +1029,26 @@
         }
       ],
       "Checks": [
-        "cloudtrail_multi_region_enabled",
-        "cloudtrail_s3_dataevents_read_enabled",
-        "cloudtrail_s3_dataevents_write_enabled",
-        "ec2_ebs_public_snapshot",
-        "elbv2_logging_enabled",
-        "elb_logging_enabled",
-        "guardduty_is_enabled",
-        "awslambda_function_url_public",
-        "rds_instance_no_public_access",
-        "rds_snapshots_public_access",
-        "redshift_cluster_public_access",
-        "s3_bucket_server_access_logging_enabled",
         "s3_bucket_public_access",
-        "s3_bucket_policy_public_write_access",
-        "s3_account_level_public_access_blocks",
-        "sagemaker_notebook_instance_without_direct_internet_access_configured",
-        "securityhub_enabled",
-        "vpc_flow_logs_enabled"
+        "s3_bucket_public_write_acl",
+        "s3_bucket_public_list_acl",
+        "s3_bucket_cross_account_access",
+        "s3_bucket_kms_encryption",
+        "s3_bucket_acl_prohibited",
+        "cloudtrail_logs_s3_bucket_is_not_publicly_accessible",
+        "cloudtrail_kms_encryption_enabled",
+        "cloudwatch_log_group_not_publicly_accessible",
+        "cloudwatch_log_group_kms_encryption_enabled",
+        "secretsmanager_not_publicly_accessible",
+        "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
+        "ec2_ebs_snapshot_account_block_public_access",
+        "ec2_ebs_public_snapshot",
+        "rds_snapshots_public_access",
+        "ec2_ami_public",
+        "ssm_document_secrets",
+        "ec2_instance_secrets_user_data",
+        "awslambda_function_no_secrets_in_variables",
+        "awslambda_function_no_secrets_in_code"
       ]
     },
     {
@@ -932,14 +1079,7 @@
           "Service": "aws"
         }
       ],
-      "Checks": [
-        "cloudtrail_log_file_validation_enabled",
-        "ec2_instance_managed_by_ssm",
-        "ec2_instance_older_than_specific_days",
-        "elbv2_deletion_protection",
-        "ssm_managed_compliant_patching",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22"
-      ]
+      "Checks": []
     },
     {
       "Id": "ds_8",
@@ -953,10 +1093,7 @@
           "Service": "aws"
         }
       ],
-      "Checks": [
-        "ec2_instance_managed_by_ssm",
-        "securityhub_enabled"
-      ]
+      "Checks": []
     },
     {
       "Id": "ip_1",
@@ -971,9 +1108,18 @@
         }
       ],
       "Checks": [
-        "ec2_instance_managed_by_ssm",
-        "ec2_instance_older_than_specific_days",
-        "ssm_managed_compliant_patching"
+        "ec2_securitygroup_default_restrict_traffic",
+        "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
+        "ec2_networkacl_unused",
+        "ec2_securitygroup_not_used",
+        "ec2_instance_public_ip",
+        "iam_root_mfa_enabled",
+        "iam_administrator_access_with_mfa",
+        "iam_policy_attached_only_to_group_or_roles",
+        "iam_inline_policy_allows_privilege_escalation",
+        "iam_policy_allows_privilege_escalation",
+        "s3_bucket_public_access",
+        "s3_bucket_cross_account_access"
       ]
     },
     {
@@ -989,7 +1135,15 @@
         }
       ],
       "Checks": [
-        "ec2_instance_managed_by_ssm"
+        "codepipeline_project_repo_private",
+        "codebuild_project_not_publicly_accessible",
+        "codebuild_project_logging_enabled",
+        "codebuild_project_s3_logs_encrypted",
+        "codebuild_project_uses_allowed_github_organizations",
+        "codebuild_project_source_repo_url_no_sensitive_credentials",
+        "codebuild_project_no_secrets_in_variables",
+        "codebuild_project_user_controlled_buildspec",
+        "codebuild_project_older_90_days"
       ]
     },
     {
@@ -1004,9 +1158,7 @@
           "Service": "elb"
         }
       ],
-      "Checks": [
-        "elbv2_deletion_protection"
-      ]
+      "Checks": []
     },
     {
       "Id": "ip_4",
@@ -1021,9 +1173,21 @@
         }
       ],
       "Checks": [
-        "dynamodb_tables_pitr_enabled",
+        "backup_vaults_exist",
+        "backup_vaults_encrypted",
+        "backup_recovery_point_encrypted",
+        "backup_reportplans_exist",
+        "backup_plans_exist",
+        "documentdb_cluster_backup_enabled",
+        "dynamodb_table_protected_by_backup_plan",
+        "ec2_ebs_volume_protected_by_backup_plan",
+        "efs_have_backup_enabled",
+        "elasticache_redis_cluster_backup_enabled",
+        "fsx_file_system_copy_tags_to_backups_enabled",
+        "neptune_cluster_backup_enabled",
+        "rds_cluster_protected_by_backup_plan",
         "rds_instance_backup_enabled",
-        "s3_bucket_object_versioning"
+        "rds_instance_protected_by_backup_plan"
       ]
     },
     {
@@ -1038,7 +1202,21 @@
           "Service": "ec2"
         }
       ],
-      "Checks": []
+      "Checks": [
+        "cloudtrail_threat_detection_llm_jacking",
+        "cloudtrail_threat_detection_enumeration",
+        "cloudtrail_threat_detection_privilege_escalation",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_alarm_actions_alarm_state_configured",
+        "guardduty_is_enabled",
+        "guardduty_ec2_malware_protection_enabled",
+        "guardduty_eks_runtime_monitoring_enabled",
+        "inspector2_is_enabled",
+        "inspector2_active_findings_exist",
+        "secretsmanager_automatic_rotation_enabled",
+        "secretsmanager_secret_rotated_periodically"
+      ]
     },
     {
       "Id": "ip_8",
@@ -1053,18 +1231,15 @@
         }
       ],
       "Checks": [
-        "ec2_ebs_public_snapshot",
-        "ec2_instance_public_ip",
-        "eks_cluster_not_publicly_accessible",
-        "emr_cluster_master_nodes_no_public_ip",
-        "awslambda_function_url_public",
-        "rds_instance_no_public_access",
-        "rds_snapshots_public_access",
-        "redshift_cluster_public_access",
-        "s3_bucket_public_access",
-        "s3_bucket_policy_public_write_access",
-        "s3_account_level_public_access_blocks",
-        "sagemaker_notebook_instance_without_direct_internet_access_configured"
+        "cloudtrail_cloudwatch_logging_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+        "cloudwatch_alarm_actions_enabled",
+        "cloudwatch_alarm_actions_alarm_state_configured",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "cloudwatch_log_metric_filter_security_group_changes",
+        "cloudwatch_log_metric_filter_root_usage",
+        "cloudwatch_log_metric_filter_authentication_failures"
       ]
     },
     {
@@ -1080,13 +1255,8 @@
         }
       ],
       "Checks": [
-        "dynamodb_tables_pitr_enabled",
-        "efs_have_backup_enabled",
-        "elbv2_deletion_protection",
-        "rds_instance_backup_enabled",
-        "rds_instance_multi_az",
-        "redshift_cluster_automated_snapshot",
-        "s3_bucket_object_versioning"
+        "ssmincidents_enabled_with_plans",
+        "drs_job_exist"
       ]
     },
     {
@@ -1102,9 +1272,9 @@
         }
       ],
       "Checks": [
-        "config_recorder_all_regions_enabled",
-        "ec2_instance_managed_by_ssm",
-        "ssm_managed_compliant_patching"
+        "inspector2_is_enabled",
+        "guardduty_is_enabled",
+        "inspector2_active_findings_exist"
       ]
     },
     {
@@ -1119,9 +1289,7 @@
           "Service": "cloudtrail"
         }
       ],
-      "Checks": [
-        "cloudtrail_multi_region_enabled"
-      ]
+      "Checks": []
     },
     {
       "Id": "pt_1",
@@ -1136,13 +1304,22 @@
         }
       ],
       "Checks": [
-        "apigateway_restapi_logging_enabled",
-        "cloudtrail_multi_region_enabled",
-        "cloudtrail_cloudwatch_logging_enabled",
-        "elbv2_logging_enabled",
-        "elb_logging_enabled",
-        "s3_bucket_server_access_logging_enabled",
-        "vpc_flow_logs_enabled"
+        "cloudtrail_kms_encryption_enabled",
+        "cloudtrail_log_file_validation_enabled",
+        "cloudtrail_logs_s3_bucket_access_logging_enabled",
+        "cloudtrail_multi_region_enabled_logging_management_events",
+        "cloudtrail_threat_detection_enumeration",
+        "cloudtrail_threat_detection_privilege_escalation",
+        "cloudtrail_threat_detection_llm_jacking",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
+        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "cloudtrail_logs_s3_bucket_is_not_publicly_accessible",
+        "vpc_flow_logs_enabled",
+        "config_recorder_all_regions_enabled",
+        "config_recorder_using_aws_service_role"
       ]
     },
     {
@@ -1157,19 +1334,7 @@
           "Service": "aws"
         }
       ],
-      "Checks": [
-        "ec2_ebs_public_snapshot",
-        "iam_aws_attached_policy_no_administrative_privileges",
-        "iam_customer_attached_policy_no_administrative_privileges",
-        "iam_inline_policy_no_administrative_privileges",
-        "iam_no_root_access_key",
-        "awslambda_function_url_public",
-        "rds_snapshots_public_access",
-        "redshift_cluster_public_access",
-        "s3_bucket_public_access",
-        "s3_bucket_policy_public_write_access",
-        "s3_account_level_public_access_blocks"
-      ]
+      "Checks": []
     },
     {
       "Id": "pt_4",
@@ -1184,11 +1349,15 @@
         }
       ],
       "Checks": [
-        "awslambda_function_not_publicly_accessible",
-        "rds_instance_no_public_access",
-        "redshift_cluster_public_access",
-        "ec2_networkacl_allow_ingress_any_port",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22"
+        "cloudfront_distributions_https_enabled",
+        "cloudfront_distributions_origin_traffic_encrypted",
+        "vpc_flow_logs_enabled",
+        "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
+        "apigateway_restapi_public_with_authorizer",
+        "apigateway_restapi_authorizers_enabled",
+        "s3_bucket_secure_transport_policy",
+        "s3_bucket_kms_encryption",
+        "cloudtrail_kms_encryption_enabled"
       ]
     },
     {
@@ -1204,10 +1373,19 @@
         }
       ],
       "Checks": [
-        "elbv2_deletion_protection",
-        "rds_instance_backup_enabled",
-        "rds_instance_multi_az",
-        "s3_bucket_object_versioning"
+        "eks_cluster_deletion_protection_enabled",
+        "rds_cluster_deletion_protection",
+        "rds_instance_deletion_protection",
+        "dynamodb_table_deletion_protection_enabled",
+        "directconnect_connection_redundancy",
+        "vpc_endpoint_multi_az_enabled",
+        "elbv2_cross_zone_load_balancing_enabled",
+        "elb_cross_zone_load_balancing_enabled",
+        "autoscaling_group_capacity_rebalance_enabled",
+        "autoscaling_group_multiple_az",
+        "vpc_vpn_connection_tunnels_up",
+        "cloudfront_distributions_multiple_origin_failover_configured",
+        "s3_bucket_cross_region_replication"
       ]
     },
     {
@@ -1223,17 +1401,19 @@
         }
       ],
       "Checks": [
-        "apigateway_restapi_logging_enabled",
-        "cloudtrail_multi_region_enabled",
-        "cloudtrail_cloudwatch_logging_enabled",
-        "elbv2_logging_enabled",
-        "elb_logging_enabled",
-        "redshift_cluster_audit_logging",
-        "s3_bucket_server_access_logging_enabled",
-        "ec2_securitygroup_default_restrict_traffic",
         "vpc_flow_logs_enabled",
-        "ec2_networkacl_allow_ingress_any_port",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22"
+        "cloudtrail_cloudwatch_logging_enabled",
+        "cloudtrail_multi_region_enabled_logging_management_events",
+        "cloudtrail_threat_detection_enumeration",
+        "cloudtrail_threat_detection_privilege_escalation",
+        "cloudtrail_threat_detection_llm_jacking",
+        "vpc_endpoint_connections_trust_boundaries",
+        "vpc_endpoint_for_ec2_enabled",
+        "cloudwatch_log_metric_filter_security_group_changes",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
+        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls"
       ]
     },
     {
@@ -1249,8 +1429,21 @@
         }
       ],
       "Checks": [
-        "guardduty_is_enabled",
-        "securityhub_enabled"
+        "cloudtrail_threat_detection_llm_jacking",
+        "cloudtrail_threat_detection_enumeration",
+        "cloudtrail_threat_detection_privilege_escalation",
+        "cloudwatch_changes_to_network_gateways_alarm_configured",
+        "cloudwatch_changes_to_network_route_tables_alarm_configured",
+        "cloudwatch_changes_to_vpcs_alarm_configured",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "cloudwatch_log_metric_filter_root_usage",
+        "cloudwatch_log_metric_filter_policy_changes",
+        "cloudwatch_log_metric_filter_security_group_changes",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
+        "cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk"
       ]
     },
     {
@@ -1266,16 +1459,16 @@
         }
       ],
       "Checks": [
-        "apigateway_restapi_logging_enabled",
-        "cloudtrail_multi_region_enabled",
-        "cloudtrail_s3_dataevents_read_enabled",
-        "cloudtrail_s3_dataevents_write_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+        "cloudwatch_changes_to_network_gateways_alarm_configured",
+        "cloudwatch_changes_to_network_route_tables_alarm_configured",
+        "cloudwatch_log_metric_filter_aws_organizations_changes",
+        "cloudtrail_threat_detection_enumeration",
+        "cloudtrail_threat_detection_privilege_escalation",
+        "cloudtrail_threat_detection_llm_jacking",
         "cloudtrail_cloudwatch_logging_enabled",
-        "elbv2_logging_enabled",
-        "elb_logging_enabled",
-        "redshift_cluster_audit_logging",
-        "s3_bucket_server_access_logging_enabled",
-        "vpc_flow_logs_enabled"
+        "cloudtrail_multi_region_enabled_logging_management_events"
       ]
     },
     {
@@ -1290,17 +1483,7 @@
           "Service": "aws"
         }
       ],
-      "Checks": [
-        "cloudtrail_multi_region_enabled",
-        "cloudtrail_s3_dataevents_read_enabled",
-        "cloudtrail_s3_dataevents_write_enabled",
-        "elbv2_logging_enabled",
-        "elb_logging_enabled",
-        "guardduty_is_enabled",
-        "guardduty_no_high_severity_findings",
-        "s3_bucket_server_access_logging_enabled",
-        "securityhub_enabled"
-      ]
+      "Checks": []
     },
     {
       "Id": "ae_5",
@@ -1314,12 +1497,7 @@
           "Service": "aws"
         }
       ],
-      "Checks": [
-        "cloudwatch_changes_to_network_acls_alarm_configured",
-        "cloudwatch_changes_to_network_gateways_alarm_configured",
-        "cloudwatch_changes_to_network_route_tables_alarm_configured",
-        "cloudwatch_changes_to_vpcs_alarm_configured"
-      ]
+      "Checks": []
     },
     {
       "Id": "cm_1",
@@ -1334,16 +1512,24 @@
         }
       ],
       "Checks": [
-        "apigateway_restapi_logging_enabled",
-        "cloudtrail_multi_region_enabled",
-        "cloudtrail_s3_dataevents_read_enabled",
-        "cloudtrail_s3_dataevents_write_enabled",
-        "elbv2_logging_enabled",
-        "elb_logging_enabled",
+        "cloudtrail_multi_region_enabled_logging_management_events",
+        "cloudtrail_threat_detection_enumeration",
+        "cloudtrail_threat_detection_privilege_escalation",
+        "cloudtrail_threat_detection_llm_jacking",
+        "cloudtrail_insights_exist",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "cloudwatch_changes_to_network_gateways_alarm_configured",
+        "cloudwatch_changes_to_network_route_tables_alarm_configured",
+        "cloudwatch_changes_to_vpcs_alarm_configured",
+        "cloudwatch_changes_to_network_acls_alarm_configured",
+        "vpc_flow_logs_enabled",
         "guardduty_is_enabled",
-        "s3_bucket_server_access_logging_enabled",
-        "securityhub_enabled",
-        "vpc_flow_logs_enabled"
+        "inspector2_is_enabled",
+        "accessanalyzer_enabled_without_findings"
       ]
     },
     {
@@ -1358,28 +1544,7 @@
           "Service": "aws"
         }
       ],
-      "Checks": [
-        "cloudtrail_cloudwatch_logging_enabled",
-        "cloudwatch_changes_to_network_acls_alarm_configured",
-        "cloudwatch_changes_to_network_gateways_alarm_configured",
-        "cloudwatch_changes_to_network_route_tables_alarm_configured",
-        "cloudwatch_changes_to_vpcs_alarm_configured",
-        "config_recorder_all_regions_enabled",
-        "ec2_instance_imdsv2_enabled",
-        "guardduty_is_enabled",
-        "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
-        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
-        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
-        "cloudwatch_log_metric_filter_authentication_failures",
-        "cloudwatch_log_metric_filter_sign_in_without_mfa",
-        "cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk",
-        "cloudwatch_log_metric_filter_policy_changes",
-        "cloudwatch_log_metric_filter_root_usage",
-        "cloudwatch_log_metric_filter_security_group_changes",
-        "cloudwatch_log_metric_filter_unauthorized_api_calls",
-        "rds_instance_enhanced_monitoring_enabled",
-        "securityhub_enabled"
-      ]
+      "Checks": []
     },
     {
       "Id": "cm_3",
@@ -1394,12 +1559,14 @@
         }
       ],
       "Checks": [
-        "cloudtrail_multi_region_enabled",
-        "cloudtrail_s3_dataevents_read_enabled",
-        "cloudtrail_s3_dataevents_write_enabled",
-        "guardduty_is_enabled",
-        "s3_bucket_server_access_logging_enabled",
-        "securityhub_enabled"
+        "cloudtrail_threat_detection_privilege_escalation",
+        "cloudtrail_threat_detection_llm_jacking",
+        "cloudtrail_threat_detection_enumeration",
+        "cloudtrail_multi_region_enabled_logging_management_events",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled"
       ]
     },
     {
@@ -1415,8 +1582,8 @@
         }
       ],
       "Checks": [
-        "guardduty_is_enabled",
-        "securityhub_enabled"
+        "codebuild_project_source_repo_url_no_sensitive_credentials",
+        "codebuild_project_no_secrets_in_variables"
       ]
     },
     {
@@ -1431,18 +1598,7 @@
           "Service": "aws"
         }
       ],
-      "Checks": [
-        "cloudtrail_cloudwatch_logging_enabled",
-        "cloudwatch_changes_to_network_acls_alarm_configured",
-        "cloudwatch_changes_to_network_gateways_alarm_configured",
-        "cloudwatch_changes_to_network_route_tables_alarm_configured",
-        "cloudwatch_changes_to_vpcs_alarm_configured",
-        "ec2_instance_imdsv2_enabled",
-        "elbv2_waf_acl_attached",
-        "guardduty_is_enabled",
-        "guardduty_no_high_severity_findings",
-        "securityhub_enabled"
-      ]
+      "Checks": []
     },
     {
       "Id": "cm_6",
@@ -1457,12 +1613,9 @@
         }
       ],
       "Checks": [
-        "cloudtrail_multi_region_enabled",
-        "cloudtrail_s3_dataevents_read_enabled",
-        "cloudtrail_s3_dataevents_write_enabled",
-        "guardduty_is_enabled",
-        "s3_bucket_server_access_logging_enabled",
-        "securityhub_enabled"
+        "cloudtrail_threat_detection_llm_jacking",
+        "cloudtrail_threat_detection_enumeration",
+        "cloudtrail_threat_detection_privilege_escalation"
       ]
     },
     {
@@ -1478,16 +1631,26 @@
         }
       ],
       "Checks": [
-        "apigateway_restapi_logging_enabled",
-        "cloudtrail_multi_region_enabled",
-        "cloudtrail_s3_dataevents_read_enabled",
-        "cloudtrail_s3_dataevents_write_enabled",
-        "elbv2_logging_enabled",
-        "elb_logging_enabled",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "cloudtrail_threat_detection_privilege_escalation",
+        "cloudtrail_threat_detection_enumeration",
+        "cloudtrail_threat_detection_llm_jacking",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_security_group_changes",
+        "cloudwatch_log_metric_filter_root_usage",
+        "cloudwatch_log_metric_filter_aws_organizations_changes",
+        "cloudwatch_log_metric_filter_policy_changes",
+        "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
+        "cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk",
         "guardduty_is_enabled",
-        "s3_bucket_server_access_logging_enabled",
-        "securityhub_enabled",
-        "vpc_flow_logs_enabled"
+        "guardduty_ec2_malware_protection_enabled",
+        "guardduty_s3_protection_enabled",
+        "guardduty_rds_protection_enabled",
+        "guardduty_lambda_protection_enabled",
+        "guardduty_eks_runtime_monitoring_enabled"
       ]
     },
     {
@@ -1503,16 +1666,27 @@
         }
       ],
       "Checks": [
-        "cloudtrail_cloudwatch_logging_enabled",
-        "cloudwatch_changes_to_network_acls_alarm_configured",
+        "cloudtrail_threat_detection_llm_jacking",
+        "cloudtrail_threat_detection_enumeration",
+        "cloudtrail_threat_detection_privilege_escalation",
+        "cloudtrail_multi_region_enabled_logging_management_events",
+        "cloudtrail_insights_exist",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "cloudwatch_alarm_actions_alarm_state_configured",
+        "cloudwatch_alarm_actions_enabled",
+        "cloudwatch_log_metric_filter_security_group_changes",
+        "cloudwatch_log_metric_filter_root_usage",
         "cloudwatch_changes_to_network_gateways_alarm_configured",
         "cloudwatch_changes_to_network_route_tables_alarm_configured",
-        "cloudwatch_changes_to_vpcs_alarm_configured",
-        "ec2_instance_imdsv2_enabled",
-        "elbv2_waf_acl_attached",
-        "guardduty_is_enabled",
-        "guardduty_no_high_severity_findings",
-        "securityhub_enabled"
+        "cloudwatch_changes_to_network_acls_alarm_configured",
+        "eventbridge_bus_cross_account_access",
+        "eventbridge_bus_exposed",
+        "route53_dangling_ip_subdomain_takeover",
+        "s3_bucket_event_notifications_enabled",
+        "sns_subscription_not_using_http_endpoints"
       ]
     },
     {
@@ -1527,9 +1701,7 @@
           "Service": "ec2"
         }
       ],
-      "Checks": [
-        "ec2_instance_imdsv2_enabled"
-      ]
+      "Checks": []
     },
     {
       "Id": "an_2",
@@ -1543,9 +1715,7 @@
           "Service": "guardduty"
         }
       ],
-      "Checks": [
-        "guardduty_no_high_severity_findings"
-      ]
+      "Checks": []
     },
     {
       "Id": "mi_3",
@@ -1559,9 +1729,7 @@
           "Service": "guardduty"
         }
       ],
-      "Checks": [
-        "guardduty_no_high_severity_findings"
-      ]
+      "Checks": []
     },
     {
       "Id": "rp_1",
@@ -1576,13 +1744,7 @@
         }
       ],
       "Checks": [
-        "dynamodb_tables_pitr_enabled",
-        "efs_have_backup_enabled",
-        "elbv2_deletion_protection",
-        "rds_instance_backup_enabled",
-        "rds_instance_multi_az",
-        "redshift_cluster_automated_snapshot",
-        "s3_bucket_object_versioning"
+        "ssmincidents_enabled_with_plans"
       ]
     },
     {
@@ -1598,15 +1760,22 @@
         }
       ],
       "Checks": [
-        "dynamodb_tables_pitr_enabled",
+        "backup_vaults_exist",
+        "backup_vaults_encrypted",
+        "backup_recovery_point_encrypted",
+        "backup_reportplans_exist",
+        "backup_plans_exist",
+        "documentdb_cluster_backup_enabled",
+        "dynamodb_table_protected_by_backup_plan",
+        "ec2_ebs_volume_protected_by_backup_plan",
         "efs_have_backup_enabled",
-        "elbv2_deletion_protection",
+        "elasticache_redis_cluster_backup_enabled",
+        "fsx_file_system_copy_tags_to_backups_enabled",
+        "neptune_cluster_backup_enabled",
+        "rds_cluster_protected_by_backup_plan",
         "rds_instance_backup_enabled",
-        "rds_instance_multi_az",
-        "redshift_cluster_automated_snapshot",
-        "s3_bucket_object_versioning"
+        "rds_instance_protected_by_backup_plan"
       ]
     }
   ]
 }
-
