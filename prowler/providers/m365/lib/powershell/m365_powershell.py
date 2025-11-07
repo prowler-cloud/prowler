@@ -1,5 +1,4 @@
 import os
-from typing import Optional
 
 from prowler.lib.logger import logger
 from prowler.lib.powershell.powershell import PowerShellSession
@@ -124,7 +123,7 @@ class M365PowerShell(PowerShellSession):
                 '$graphToken = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$tenantID/oauth2/v2.0/token" -Method POST -Body $graphtokenBody | Select-Object -ExpandProperty Access_Token'
             )
 
-    def execute_connect(self, command: str, timeout: Optional[int] = None) -> str:
+    def execute_connect(self, command: str) -> str:
         """
         Execute a PowerShell connect command ensuring empty responses surface as timeouts.
 

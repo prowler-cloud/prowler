@@ -566,7 +566,7 @@ class Testm365PowerShell:
         )
         session = M365PowerShell(credentials, identity)
 
-        session.execute = MagicMock(return_value=None)
+        session.execute = MagicMock(side_effect=[None, ""])
         session.execute_connect = MagicMock(return_value="")
 
         result = session.test_teams_connection()
@@ -598,8 +598,8 @@ class Testm365PowerShell:
         )
         session = M365PowerShell(credentials, identity)
 
-        session.execute = MagicMock(return_value=None)
-        session.execute_connect = MagicMock(return_value="Permission denied")
+        session.execute = MagicMock(side_effect=[None, "Permission denied"])
+        session.execute_connect = MagicMock()
 
         with patch("prowler.lib.logger.logger.error") as mock_error:
             result = session.test_teams_connection()
@@ -608,6 +608,7 @@ class Testm365PowerShell:
         mock_error.assert_called_once_with(
             "Microsoft Teams connection failed: Permission denied"
         )
+        session.execute_connect.assert_not_called()
         session.close()
 
     @patch("subprocess.Popen")
