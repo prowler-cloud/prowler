@@ -6,7 +6,7 @@ class Migration(migrations.Migration):
     atomic = False
 
     dependencies = [
-        ("api", "0055_mongodbatlas_provider"),
+        ("api", "0056_remove_provider_unique_provider_uids_and_more"),
     ]
 
     operations = [
