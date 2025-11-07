@@ -7,7 +7,7 @@ from prowler.providers.m365.exceptions.exceptions import (
     M365CertificateCreationError,
     M365GraphConnectionError,
 )
-from prowler.providers.m365.lib.jwt.jwt_decoder import decode_jwt, decode_msal_token
+from prowler.providers.m365.lib.jwt.jwt_decoder import decode_msal_token
 from prowler.providers.m365.models import M365Credentials, M365IdentityInfo
 
 
@@ -218,20 +218,15 @@ class M365PowerShell(PowerShellSession):
             self.execute(
                 '$teamstokenBody = @{ Grant_Type = "client_credentials"; Scope = "48ac35b8-9aa8-4d74-927d-1f4a14a0b239/.default"; Client_Id = $clientID; Client_Secret = $clientSecret }'
             )
-            self.execute(
+            result = self.execute(
                 '$teamsToken = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$tenantID/oauth2/v2.0/token" -Method POST -Body $teamstokenBody | Select-Object -ExpandProperty Access_Token'
             )
-            permissions = decode_jwt(self.execute("Write-Output $teamsToken")).get(
-                "roles", []
-            )
-            if "application_access" not in permissions:
-                logger.error(
-                    "Microsoft Teams connection failed: Please check your permissions and try again."
-                )
-                return False
-            self.execute_connect(
+            result = self.execute_connect(
                 'Connect-MicrosoftTeams -AccessTokens @("$graphToken","$teamsToken")'
             )
+            if result != "":
+                logger.error(f"Microsoft Teams connection failed: {result}")
+                return False
             return True
         except Exception as e:
             logger.error(
@@ -266,8 +261,7 @@ class M365PowerShell(PowerShellSession):
                 )
                 return False
             self.execute_connect(
-                'Connect-ExchangeOnline -AccessToken $exchangeToken.AccessToken -Organization "$tenantID"',
-                timeout=self.CONNECT_TIMEOUT,
+                'Connect-ExchangeOnline -AccessToken $exchangeToken.AccessToken -Organization "$tenantID"'
             )
             return True
         except Exception as e:
@@ -279,8 +273,7 @@ class M365PowerShell(PowerShellSession):
     def test_exchange_certificate_connection(self) -> bool:
         """Test Exchange Online API connection using certificate and raise exception if it fails."""
         result = self.execute_connect(
-            "Connect-ExchangeOnline -Certificate $certificate -AppId $clientID -Organization $tenantDomain",
-            timeout=self.CONNECT_TIMEOUT,
+            "Connect-ExchangeOnline -Certificate $certificate -AppId $clientID -Organization $tenantDomain"
         )
         if "https://aka.ms/exov3-module" not in result:
             logger.error(f"Exchange Online Certificate connection failed: {result}")
