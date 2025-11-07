@@ -132,7 +132,7 @@ export const ResourceStatsCard = ({
   return (
     <Card
       ref={ref}
-      variant="innerBase"
+      variant="inner"
       className={cn(cardVariants({ variant, size }), "flex-col", className)}
       {...props}
     >

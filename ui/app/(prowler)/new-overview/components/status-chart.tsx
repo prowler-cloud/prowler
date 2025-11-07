@@ -96,7 +96,7 @@ export const StatusChart = ({
         </div>
 
         <Card
-          variant="innerBase"
+          variant="inner"
           padding="md"
           className="flex w-full flex-col items-start justify-center gap-4 lg:flex-row lg:justify-between"
         >

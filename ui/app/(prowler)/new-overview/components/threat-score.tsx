@@ -154,7 +154,7 @@ export function ThreatScore({
         {/* Info Box or Empty State */}
         {hasData ? (
           <Card
-            variant="innerBase"
+            variant="inner"
             padding="md"
             className="items-center justify-center"
           >
@@ -190,7 +190,7 @@ export function ThreatScore({
           </Card>
         ) : (
           <Card
-            variant="innerBase"
+            variant="inner"
             padding="md"
             className="items-center justify-center"
           >
