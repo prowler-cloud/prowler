@@ -20,9 +20,8 @@ const cspHeader = `
 const getSentryReportEndpoint = () => {
   if (!process.env.NEXT_PUBLIC_SENTRY_DSN) return null;
   try {
-    const sentryKey = process.env.NEXT_PUBLIC_SENTRY_DSN.split("@")[0]?.split(
-      "//",
-    )[1];
+    const sentryKey =
+      process.env.NEXT_PUBLIC_SENTRY_DSN.split("@")[0]?.split("//")[1];
     return sentryKey
       ? `https://o0.ingest.sentry.io/api/0/security/?sentry_key=${sentryKey}`
       : null;
@@ -62,15 +61,11 @@ const nextConfig = {
       },
     ];
 
-    // Add Report-To header if Sentry is configured
+    // Add Reporting-Endpoints header if Sentry is configured
     if (sentryEndpoint) {
       headers.push({
-        key: "Report-To",
-        value: JSON.stringify({
-          group: "csp-endpoint",
-          max_age: 10886400,
-          endpoints: [{ url: sentryEndpoint }],
-        }),
+        key: "Reporting-Endpoints",
+        value: `csp-endpoint="${sentryEndpoint}"`,
       });
     }
 
