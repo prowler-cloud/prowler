@@ -4,12 +4,17 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
 import { SelectModel } from "@/components/lighthouse/select-model";
+import type { LighthouseProvider } from "@/types/lighthouse";
 
 function SelectModelContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const provider = searchParams.get("provider") || "";
+  const provider = searchParams.get("provider") as LighthouseProvider | null;
   const mode = searchParams.get("mode") || "create";
+
+  if (!provider) {
+    return null;
+  }
 
   return (
     <SelectModel

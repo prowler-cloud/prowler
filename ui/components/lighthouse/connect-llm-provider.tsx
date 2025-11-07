@@ -9,6 +9,7 @@ import {
   updateLighthouseProviderByType,
 } from "@/actions/lighthouse/lighthouse";
 import { CustomButton } from "@/components/ui/custom";
+import type { LighthouseProvider } from "@/types/lighthouse";
 
 import { getMainFields, getProviderConfig } from "./llm-provider-registry";
 import {
@@ -18,7 +19,7 @@ import {
 } from "./llm-provider-utils";
 
 interface ConnectLLMProviderProps {
-  provider: string;
+  provider: LighthouseProvider;
   mode?: string;
 }
 

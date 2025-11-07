@@ -1,5 +1,7 @@
 "use client";
 
+import type { LighthouseProvider } from "@/types/lighthouse";
+
 export type LLMProviderFieldType = "text" | "password";
 
 export interface LLMProviderField {
@@ -12,13 +14,17 @@ export interface LLMProviderField {
 }
 
 export interface LLMProviderConfig {
-  id: string;
+  id: LighthouseProvider;
   name: string;
   description: string;
   icon: string;
   fields: LLMProviderField[];
 }
-export const LLM_PROVIDER_REGISTRY: Record<string, LLMProviderConfig> = {
+
+export const LLM_PROVIDER_REGISTRY: Record<
+  LighthouseProvider,
+  LLMProviderConfig
+> = {
   openai: {
     id: "openai",
     name: "OpenAI",
@@ -94,16 +100,18 @@ export const LLM_PROVIDER_REGISTRY: Record<string, LLMProviderConfig> = {
 };
 
 export const getProviderConfig = (
-  providerId: string,
+  providerType: LighthouseProvider,
 ): LLMProviderConfig | undefined => {
-  return LLM_PROVIDER_REGISTRY[providerId];
+  return LLM_PROVIDER_REGISTRY[providerType];
 };
 
 export const getAllProviders = (): LLMProviderConfig[] => {
   return Object.values(LLM_PROVIDER_REGISTRY);
 };
 
-export const getMainFields = (providerId: string): LLMProviderField[] => {
-  const config = getProviderConfig(providerId);
+export const getMainFields = (
+  providerType: LighthouseProvider,
+): LLMProviderField[] => {
+  const config = getProviderConfig(providerType);
   return config?.fields ?? [];
 };

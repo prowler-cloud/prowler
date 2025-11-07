@@ -1,18 +1,21 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-
 import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
 import {
   validateBaseUrl,
   validateCredentials,
 } from "@/lib/lighthouse/validation";
+import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
+import {
+  type LighthouseProvider,
+  PROVIDER_DISPLAY_NAMES,
+} from "@/types/lighthouse";
 
 /**
  * Create a new lighthouse provider configuration
  */
 export const createLighthouseProvider = async (config: {
-  provider_type: string;
+  provider_type: LighthouseProvider;
   credentials: Record<string, any>;
   base_url?: string;
 }) => {
@@ -58,11 +61,9 @@ export const createLighthouseProvider = async (config: {
       body: JSON.stringify(payload),
     });
 
-    const data = await response.json();
-    return data;
+    return handleApiResponse(response, "/lighthouse/config");
   } catch (error) {
-    console.error("[Server] Error in createLighthouseProvider:", error);
-    return { errors: [{ detail: String(error) }] };
+    return handleApiError(error);
   }
 };
 
@@ -81,11 +82,9 @@ export const testProviderConnection = async (providerId: string) => {
       headers,
     });
 
-    const data = await response.json();
-    return data;
+    return handleApiResponse(response);
   } catch (error) {
-    console.error("[Server] Error in testProviderConnection:", error);
-    return { errors: [{ detail: String(error) }] };
+    return handleApiError(error);
   }
 };
 
@@ -104,11 +103,9 @@ export const refreshProviderModels = async (providerId: string) => {
       headers,
     });
 
-    const data = await response.json();
-    return data;
+    return handleApiResponse(response);
   } catch (error) {
-    console.error("[Server] Error in refreshProviderModels:", error);
-    return { errors: [{ detail: String(error) }] };
+    return handleApiError(error);
   }
 };
 
@@ -125,74 +122,74 @@ export const getLighthouseProviders = async () => {
       headers,
     });
 
-    const data = await response.json();
-    return data;
+    return handleApiResponse(response);
   } catch (error) {
-    console.error("[Server] Error in getLighthouseProviders:", error);
-    return { errors: [{ detail: String(error) }] };
-  }
-};
-
-/**
- * Get lighthouse provider models (fetches all pages)
- */
-export const getLighthouseModels = async (providerType: string) => {
-  const headers = await getAuthHeaders({ contentType: false });
-  let url: string | null =
-    `${apiBaseUrl}/lighthouse/models?filter[provider_type]=${providerType}`;
-  const allModels: any[] = [];
-
-  try {
-    // Fetch all pages
-    while (url) {
-      const response = await fetch(url, {
-        method: "GET",
-        headers,
-      });
-
-      const data = await response.json();
-
-      if (data.errors) {
-        return data;
-      }
-
-      // Accumulate models from this page
-      if (data.data && Array.isArray(data.data)) {
-        allModels.push(...data.data);
-      }
-
-      // Check for next page
-      url = data.links?.next || null;
-    }
-
-    return { data: allModels };
-  } catch (error) {
-    console.error("[Server] Error in getLighthouseModels:", error);
-    return { errors: [{ detail: String(error) }] };
+    return handleApiError(error);
   }
 };
 
 /**
  * Get only model identifiers and names for a provider type.
- * Returns minimal data to the client to avoid over-serializing API payloads.
+ * Uses sparse fieldsets to only fetch model_id and model_name, avoiding over-fetching.
+ * Fetches all pages automatically.
  */
 export const getLighthouseModelIds = async (
-  providerType: string,
-): Promise<{
-  data?: Array<{ id: string; name: string }>;
-  errors?: Array<{ detail: string }>;
-}> => {
-  const result = await getLighthouseModels(providerType);
-  if ((result as any).errors) return result as any;
-  const models = Array.isArray((result as any).data)
-    ? (result as any).data
-        .map((m: any) => ({
-          id: m?.attributes?.model_id,
-          name: m?.attributes?.model_name || m?.attributes?.model_id,
-        }))
-        .filter((v: any) => typeof v.id === "string")
-    : [];
-  return { data: models };
+  providerType: LighthouseProvider,
+) => {
+  const headers = await getAuthHeaders({ contentType: false });
+
+  const url = new URL(`${apiBaseUrl}/lighthouse/models`);
+  url.searchParams.set("filter[provider_type]", providerType);
+  url.searchParams.set("fields[lighthouse-models]", "model_id,model_name");
+
+  try {
+    // Fetch first page
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      headers,
+    });
+
+    const data = await handleApiResponse(response);
+
+    if (data.errors) {
+      return data;
+    }
+
+    const allModels: any[] = [...(data.data || [])];
+
+    // Fetch remaining pages
+    let nextUrl = data.links?.next;
+    while (nextUrl) {
+      const pageResponse = await fetch(nextUrl, {
+        method: "GET",
+        headers,
+      });
+
+      const pageData = await handleApiResponse(pageResponse);
+
+      if (pageData.errors) {
+        return pageData;
+      }
+
+      if (pageData.data && Array.isArray(pageData.data)) {
+        allModels.push(...pageData.data);
+      }
+
+      nextUrl = pageData.links?.next;
+    }
+
+    // Transform to minimal format
+    const models = allModels
+      .map((m: any) => ({
+        id: m?.attributes?.model_id,
+        name: m?.attributes?.model_name || m?.attributes?.model_id,
+      }))
+      .filter((v: any) => typeof v.id === "string");
+
+    return { data: models };
+  } catch (error) {
+    return handleApiError(error);
+  }
 };
 
 /**
@@ -208,11 +205,9 @@ export const getTenantConfig = async () => {
       headers,
     });
 
-    const data = await response.json();
-    return data;
+    return handleApiResponse(response);
   } catch (error) {
-    console.error("[Server] Error in getTenantConfig:", error);
-    return { errors: [{ detail: String(error) }] };
+    return handleApiError(error);
   }
 };
 
@@ -221,7 +216,7 @@ export const getTenantConfig = async () => {
  */
 export const updateTenantConfig = async (config: {
   default_models?: Record<string, string>;
-  default_provider?: string;
+  default_provider?: LighthouseProvider;
   business_context?: string;
 }) => {
   const headers = await getAuthHeaders({ contentType: true });
@@ -241,12 +236,9 @@ export const updateTenantConfig = async (config: {
       body: JSON.stringify(payload),
     });
 
-    const data = await response.json();
-    revalidatePath("/lighthouse/config");
-    return data;
+    return handleApiResponse(response, "/lighthouse/config");
   } catch (error) {
-    console.error("[Server] Error in updateTenantConfig:", error);
-    return { errors: [{ detail: String(error) }] };
+    return handleApiError(error);
   }
 };
 
@@ -260,21 +252,24 @@ export const updateTenantConfig = async (config: {
  * - base_url: string | undefined (for OpenAI Compatible providers)
  */
 export const getProviderCredentials = async (
-  providerType?: string,
+  providerType?: LighthouseProvider,
 ): Promise<{ credentials: Record<string, any>; base_url?: string }> => {
   const headers = await getAuthHeaders({ contentType: false });
-  let url: string;
 
   // Note: fields[lighthouse-providers]=credentials is required to get decrypted credentials
   // base_url is not sensitive and is returned by default
+  const url = new URL(`${apiBaseUrl}/lighthouse/providers`);
   if (providerType) {
-    url = `${apiBaseUrl}/lighthouse/providers?filter[provider_type]=${providerType}&filter[is_active]=true&fields[lighthouse-providers]=credentials,base_url`;
-  } else {
-    url = `${apiBaseUrl}/lighthouse/providers?filter[is_active]=true&fields[lighthouse-providers]=credentials,base_url`;
+    url.searchParams.append("filter[provider_type]", providerType);
   }
+  url.searchParams.append("filter[is_active]", "true");
+  url.searchParams.append(
+    "fields[lighthouse-providers]",
+    "credentials,base_url",
+  );
 
   try {
-    const response = await fetch(url, {
+    const response = await fetch(url.toString(), {
       method: "GET",
       headers,
     });
@@ -282,7 +277,7 @@ export const getProviderCredentials = async (
     const data = await response.json();
 
     if (data?.data && data.data.length > 0) {
-      const provider = data.data[0].attributes;
+      const provider = data.data[0]?.attributes;
       return {
         credentials: provider.credentials || {},
         base_url: provider.base_url,
@@ -321,25 +316,12 @@ export const isLighthouseConfigured = async () => {
 };
 
 /**
- * Map provider type to display name
- */
-const getProviderDisplayName = (providerType: string): string => {
-  const displayNames: Record<string, string> = {
-    openai: "OpenAI",
-    bedrock: "Amazon Bedrock",
-    openai_compatible: "OpenAI Compatible",
-    anthropic: "Anthropic",
-    google: "Google",
-    azure: "Azure OpenAI",
-  };
-  return displayNames[providerType] || providerType;
-};
-
-/**
  * Get a single lighthouse provider by provider type
  * Server-side only - never exposes internal IDs to client
  */
-export const getLighthouseProviderByType = async (providerType: string) => {
+export const getLighthouseProviderByType = async (
+  providerType: LighthouseProvider,
+) => {
   const headers = await getAuthHeaders({ contentType: false });
   const url = new URL(`${apiBaseUrl}/lighthouse/providers`);
   url.searchParams.set("filter[provider_type]", providerType);
@@ -350,7 +332,7 @@ export const getLighthouseProviderByType = async (providerType: string) => {
       headers,
     });
 
-    const data = await response.json();
+    const data = await handleApiResponse(response);
 
     if (data.errors) {
       return data;
@@ -363,8 +345,7 @@ export const getLighthouseProviderByType = async (providerType: string) => {
 
     return { errors: [{ detail: "Provider configuration not found" }] };
   } catch (error) {
-    console.error("[Server] Error in getLighthouseProviderByType:", error);
-    return { errors: [{ detail: String(error) }] };
+    return handleApiError(error);
   }
 };
 
@@ -373,7 +354,7 @@ export const getLighthouseProviderByType = async (providerType: string) => {
  * Looks up the provider server-side, never exposes ID to client
  */
 export const updateLighthouseProviderByType = async (
-  providerType: string,
+  providerType: LighthouseProvider,
   config: {
     credentials?: Record<string, any>;
     base_url?: string;
@@ -431,12 +412,9 @@ export const updateLighthouseProviderByType = async (
       body: JSON.stringify(payload),
     });
 
-    const data = await response.json();
-    revalidatePath("/lighthouse/config");
-    return data;
+    return handleApiResponse(response, "/lighthouse/config");
   } catch (error) {
-    console.error("[Server] Error in updateLighthouseProviderByType:", error);
-    return { errors: [{ detail: String(error) }] };
+    return handleApiError(error);
   }
 };
 
@@ -444,7 +422,9 @@ export const updateLighthouseProviderByType = async (
  * Delete a lighthouse provider configuration by provider type
  * Looks up the provider server-side, never exposes ID to client
  */
-export const deleteLighthouseProviderByType = async (providerType: string) => {
+export const deleteLighthouseProviderByType = async (
+  providerType: LighthouseProvider,
+) => {
   try {
     // First, get the provider by type
     const providerResult = await getLighthouseProviderByType(providerType);
@@ -464,16 +444,9 @@ export const deleteLighthouseProviderByType = async (providerType: string) => {
       headers,
     });
 
-    if (response.status === 204 || response.status === 200) {
-      revalidatePath("/lighthouse/config");
-      return { success: true };
-    }
-
-    const data = await response.json();
-    return data;
+    return handleApiResponse(response, "/lighthouse/config");
   } catch (error) {
-    console.error("[Server] Error in deleteLighthouseProviderByType:", error);
-    return { errors: [{ detail: String(error) }] };
+    return handleApiError(error);
   }
 };
 
@@ -505,17 +478,23 @@ export const getLighthouseProvidersConfig = async () => {
     // Build provider configuration with only default models
     const providersConfig = await Promise.all(
       activeProviders.map(async (provider: any) => {
-        const providerType = provider.attributes.provider_type;
+        const providerType = provider.attributes
+          .provider_type as LighthouseProvider;
         const defaultModelId = defaultModels[providerType];
 
         // Fetch only the default model for this provider if it exists
         let defaultModel = null;
         if (defaultModelId) {
           const headers = await getAuthHeaders({ contentType: false });
-          const url = `${apiBaseUrl}/lighthouse/models?filter[provider_type]=${providerType}&filter[model_id]=${defaultModelId}`;
+          const url = new URL(`${apiBaseUrl}/lighthouse/models`);
+          url.searchParams.append("filter[provider_type]", providerType);
+          url.searchParams.append("filter[model_id]", defaultModelId);
 
           try {
-            const response = await fetch(url, { method: "GET", headers });
+            const response = await fetch(url.toString(), {
+              method: "GET",
+              headers,
+            });
             const data = await response.json();
             if (data.data && data.data.length > 0) {
               defaultModel = {
@@ -535,7 +514,7 @@ export const getLighthouseProvidersConfig = async () => {
 
         return {
           id: providerType,
-          name: getProviderDisplayName(providerType),
+          name: PROVIDER_DISPLAY_NAMES[providerType],
           models: defaultModel ? [defaultModel] : [],
         };
       }),

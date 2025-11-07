@@ -26,6 +26,7 @@ import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { cn } from "@/lib/utils";
+import type { LighthouseProvider } from "@/types/lighthouse";
 
 interface Model {
   id: string;
@@ -33,7 +34,7 @@ interface Model {
 }
 
 interface Provider {
-  id: string;
+  id: LighthouseProvider;
   name: string;
   models: Model[];
 }
@@ -47,8 +48,14 @@ interface SuggestedAction {
 interface ChatProps {
   hasConfig: boolean;
   providers: Provider[];
-  defaultProviderId?: string;
+  defaultProviderId?: LighthouseProvider;
   defaultModelId?: string;
+}
+
+interface SelectedModel {
+  providerType: LighthouseProvider | "";
+  modelId: string;
+  modelName: string;
 }
 
 const SUGGESTED_ACTIONS: SuggestedAction[] = [
@@ -83,7 +90,12 @@ export const Chat = ({
   const { toast } = useToast();
 
   // Consolidated UI state
-  const [uiState, setUiState] = useState({
+  const [uiState, setUiState] = useState<{
+    inputValue: string;
+    isDropdownOpen: boolean;
+    modelSearchTerm: string;
+    hoveredProvider: LighthouseProvider | "";
+  }>({
     inputValue: "",
     isDropdownOpen: false,
     modelSearchTerm: "",
@@ -96,15 +108,15 @@ export const Chat = ({
   // Provider and model management
   const [providers, setProviders] = useState<Provider[]>(initialProviders);
   const [providerLoadState, setProviderLoadState] = useState<{
-    loaded: Set<string>;
-    loading: Set<string>;
+    loaded: Set<LighthouseProvider>;
+    loading: Set<LighthouseProvider>;
   }>({
     loaded: new Set(),
     loading: new Set(),
   });
 
   // Initialize selectedModel with defaults from props
-  const [selectedModel, setSelectedModel] = useState(() => {
+  const [selectedModel, setSelectedModel] = useState<SelectedModel>(() => {
     const defaultProvider =
       initialProviders.find((p) => p.id === defaultProviderId) ||
       initialProviders[0];
@@ -113,7 +125,7 @@ export const Chat = ({
       defaultProvider?.models[0];
 
     return {
-      providerId: defaultProvider?.id || "",
+      providerType: defaultProvider?.id || "",
       modelId: defaultModel?.id || "",
       modelName: defaultModel?.name || "",
     };
@@ -124,59 +136,62 @@ export const Chat = ({
   selectedModelRef.current = selectedModel;
 
   // Load all models for a specific provider
-  const loadModelsForProvider = useCallback(async (providerId: string) => {
-    setProviderLoadState((prev) => {
-      // Skip if already loaded or currently loading
-      if (prev.loaded.has(providerId) || prev.loading.has(providerId)) {
-        return prev;
-      }
+  const loadModelsForProvider = useCallback(
+    async (providerType: LighthouseProvider) => {
+      setProviderLoadState((prev) => {
+        // Skip if already loaded or currently loading
+        if (prev.loaded.has(providerType) || prev.loading.has(providerType)) {
+          return prev;
+        }
 
-      // Mark as loading
-      return {
-        ...prev,
-        loading: new Set([...Array.from(prev.loading), providerId]),
-      };
-    });
+        // Mark as loading
+        return {
+          ...prev,
+          loading: new Set([...Array.from(prev.loading), providerType]),
+        };
+      });
 
-    try {
-      const response = await getLighthouseModelIds(providerId);
+      try {
+        const response = await getLighthouseModelIds(providerType);
 
-      if (response.errors) {
-        console.error(
-          `Error loading models for ${providerId}:`,
-          response.errors,
-        );
-        return;
-      }
+        if (response.errors) {
+          console.error(
+            `Error loading models for ${providerType}:`,
+            response.errors,
+          );
+          return;
+        }
 
-      if (response.data && Array.isArray(response.data)) {
-        // Use the model data directly from the API
-        const models: Model[] = response.data;
+        if (response.data && Array.isArray(response.data)) {
+          // Use the model data directly from the API
+          const models: Model[] = response.data;
 
-        // Update the provider's models
-        setProviders((prev) =>
-          prev.map((p) => (p.id === providerId ? { ...p, models } : p)),
-        );
+          // Update the provider's models
+          setProviders((prev) =>
+            prev.map((p) => (p.id === providerType ? { ...p, models } : p)),
+          );
 
-        // Mark as loaded and remove from loading
+          // Mark as loaded and remove from loading
+          setProviderLoadState((prev) => ({
+            loaded: new Set([...Array.from(prev.loaded), providerType]),
+            loading: new Set(
+              Array.from(prev.loading).filter((id) => id !== providerType),
+            ),
+          }));
+        }
+      } catch (error) {
+        console.error(`Error loading models for ${providerType}:`, error);
+        // Remove from loading state on error
         setProviderLoadState((prev) => ({
-          loaded: new Set([...Array.from(prev.loaded), providerId]),
+          ...prev,
           loading: new Set(
-            Array.from(prev.loading).filter((id) => id !== providerId),
+            Array.from(prev.loading).filter((id) => id !== providerType),
           ),
         }));
       }
-    } catch (error) {
-      console.error(`Error loading models for ${providerId}:`, error);
-      // Remove from loading state on error
-      setProviderLoadState((prev) => ({
-        ...prev,
-        loading: new Set(
-          Array.from(prev.loading).filter((id) => id !== providerId),
-        ),
-      }));
-    }
-  }, []);
+    },
+    [],
+  );
 
   const { messages, sendMessage, status, error, setMessages, regenerate } =
     useChat({
@@ -185,7 +200,7 @@ export const Chat = ({
         credentials: "same-origin",
         body: () => ({
           model: selectedModelRef.current.modelId,
-          provider: selectedModelRef.current.providerId,
+          provider: selectedModelRef.current.providerType,
         }),
       }),
       experimental_throttle: 100,
@@ -283,7 +298,7 @@ export const Chat = ({
   // Handle dropdown state changes
   useEffect(() => {
     if (uiState.isDropdownOpen && uiState.hoveredProvider) {
-      loadModelsForProvider(uiState.hoveredProvider);
+      loadModelsForProvider(uiState.hoveredProvider as LighthouseProvider);
     }
   }, [uiState.isDropdownOpen, uiState.hoveredProvider, loadModelsForProvider]);
 
@@ -309,8 +324,8 @@ export const Chat = ({
   }, [setMessages]);
 
   const handleModelSelect = useCallback(
-    (providerId: string, modelId: string, modelName: string) => {
-      setSelectedModel({ providerId, modelId, modelName });
+    (providerType: LighthouseProvider, modelId: string, modelName: string) => {
+      setSelectedModel({ providerType, modelId, modelName });
       setUiState((prev) => ({
         ...prev,
         isDropdownOpen: false,
@@ -637,8 +652,9 @@ export const Chat = ({
 
                       {/* Models list */}
                       <div className="flex-1 overflow-y-auto p-1">
-                        {providerLoadState.loading.has(
-                          uiState.hoveredProvider,
+                        {uiState.hoveredProvider &&
+                        providerLoadState.loading.has(
+                          uiState.hoveredProvider as LighthouseProvider,
                         ) ? (
                           <div className="flex items-center justify-center py-8">
                             <Loader size="sm" text="Loading models..." />
@@ -655,8 +671,9 @@ export const Chat = ({
                               key={model.id}
                               type="button"
                               onClick={() =>
+                                uiState.hoveredProvider &&
                                 handleModelSelect(
-                                  uiState.hoveredProvider,
+                                  uiState.hoveredProvider as LighthouseProvider,
                                   model.id,
                                   model.name,
                                 )
@@ -664,7 +681,7 @@ export const Chat = ({
                               className={cn(
                                 "focus:bg-accent focus:text-accent-foreground hover:ring-default-200 dark:hover:ring-default-700 relative flex w-full cursor-default items-center rounded-sm px-3 py-2 text-left text-sm outline-hidden transition-colors hover:bg-gray-100 hover:ring-1 dark:hover:bg-gray-800",
                                 selectedModel.modelId === model.id &&
-                                  selectedModel.providerId ===
+                                  selectedModel.providerType ===
                                     uiState.hoveredProvider
                                   ? "bg-accent text-accent-foreground"
                                   : "",

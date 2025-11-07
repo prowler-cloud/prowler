@@ -11,6 +11,7 @@ import { DeleteIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
+import type { LighthouseProvider } from "@/types/lighthouse";
 
 const formSchema = z.object({
   providerType: z.string(),
@@ -20,7 +21,7 @@ export const DeleteLLMProviderForm = ({
   providerType,
   setIsOpen,
 }: {
-  providerType: string;
+  providerType: LighthouseProvider;
   setIsOpen: Dispatch<SetStateAction<boolean>>;
 }) => {
   const router = useRouter();
@@ -31,7 +32,7 @@ export const DeleteLLMProviderForm = ({
   const isLoading = form.formState.isSubmitting;
 
   async function onSubmitClient(formData: FormData) {
-    const providerType = formData.get("providerType") as string;
+    const providerType = formData.get("providerType") as LighthouseProvider;
     const data = await deleteLighthouseProviderByType(providerType);
 
     if (data?.errors && data.errors.length > 0) {

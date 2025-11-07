@@ -6,6 +6,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import React from "react";
 
 import { VerticalSteps } from "@/components/providers/workflow/vertical-steps";
+import type { LighthouseProvider } from "@/types/lighthouse";
 
 import { getProviderConfig } from "../llm-provider-registry";
 
@@ -41,14 +42,12 @@ export const WorkflowConnectLLM = () => {
   const config = ROUTE_CONFIG[pathname] || { stepIndex: 0 };
   const currentStep = config.stepIndex;
 
-  const providerParam = searchParams.get("provider");
+  const provider = searchParams.get("provider") as LighthouseProvider | null;
   const mode = searchParams.get("mode");
   const isEditMode = mode === "edit";
 
   // Get provider name from registry
-  const providerConfig = providerParam
-    ? getProviderConfig(providerParam)
-    : null;
+  const providerConfig = provider ? getProviderConfig(provider) : null;
   const providerName = providerConfig?.name || "LLM Provider";
 
   return (

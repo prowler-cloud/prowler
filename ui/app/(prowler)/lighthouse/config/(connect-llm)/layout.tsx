@@ -15,6 +15,7 @@ import { DeleteLLMProviderForm } from "@/components/lighthouse/forms/delete-llm-
 import { WorkflowConnectLLM } from "@/components/lighthouse/workflow";
 import { NavigationHeader } from "@/components/ui";
 import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
+import type { LighthouseProvider } from "@/types/lighthouse";
 
 interface ConnectLLMLayoutProps {
   children: React.ReactNode;
@@ -24,7 +25,7 @@ export default function ConnectLLMLayout({ children }: ConnectLLMLayoutProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const mode = searchParams.get("mode");
-  const provider = searchParams.get("provider") || "";
+  const provider = searchParams.get("provider") as LighthouseProvider | null;
   const isEditMode = mode === "edit";
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDefaultProvider, setIsDefaultProvider] = useState(false);
@@ -47,11 +48,17 @@ export default function ConnectLLMLayout({ children }: ConnectLLMLayoutProps) {
   }, [provider]);
 
   const handleSetDefault = async () => {
+    if (!provider) return;
+
     await updateTenantConfig({
       default_provider: provider,
     });
     router.push("/lighthouse/config");
   };
+
+  if (!provider) {
+    return null;
+  }
 
   return (
     <>

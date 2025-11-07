@@ -9,6 +9,7 @@ import {
   updateTenantConfig,
 } from "@/actions/lighthouse/lighthouse";
 import { CustomButton } from "@/components/ui/custom";
+import type { LighthouseProvider } from "@/types/lighthouse";
 
 import {
   getProviderIdByType,
@@ -16,14 +17,14 @@ import {
 } from "./llm-provider-utils";
 
 // Recommended models per provider
-const RECOMMENDED_MODELS: Record<string, Set<string>> = {
+const RECOMMENDED_MODELS: Record<LighthouseProvider, Set<string>> = {
   openai: new Set(["gpt-5"]),
   bedrock: new Set([]),
   openai_compatible: new Set([]),
 };
 
 interface SelectModelProps {
-  provider: string;
+  provider: LighthouseProvider;
   mode?: string;
   onSelect: () => void;
 }
@@ -104,7 +105,7 @@ export const SelectModel = ({
       // Prepare update payload
       const updatePayload: {
         default_models: Record<string, string>;
-        default_provider?: string;
+        default_provider?: LighthouseProvider;
       } = {
         default_models: mergedDefaults,
       };

@@ -1,3 +1,4 @@
+import type { LighthouseProvider } from "@/types/lighthouse";
 import {
   baseUrlSchema,
   bedrockCredentialsSchema,
@@ -9,7 +10,7 @@ import {
  * Validate credentials based on provider type
  */
 export function validateCredentials(
-  providerType: string,
+  providerType: LighthouseProvider,
   credentials: Record<string, any>,
 ): { success: boolean; error?: string } {
   try {

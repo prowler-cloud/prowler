@@ -7,17 +7,18 @@ import {
 } from "@/actions/lighthouse/lighthouse";
 import { getTask } from "@/actions/task/tasks";
 import { checkTaskStatus } from "@/lib/helper";
+import type { LighthouseProvider } from "@/types/lighthouse";
 
 import { getProviderConfig } from "./llm-provider-registry";
 
 export type LLMCredentialsFormData = Record<string, string>;
 
 export const isProviderFormValid = (
-  providerId: string,
+  providerType: LighthouseProvider,
   formData: LLMCredentialsFormData,
   isEditMode: boolean = false,
 ): boolean => {
-  const config = getProviderConfig(providerId);
+  const config = getProviderConfig(providerType);
 
   if (!config) {
     return false;
@@ -33,10 +34,10 @@ export const isProviderFormValid = (
 };
 
 export const shouldTestConnection = (
-  providerId: string,
+  providerType: LighthouseProvider,
   formData: LLMCredentialsFormData,
 ): boolean => {
-  const config = getProviderConfig(providerId);
+  const config = getProviderConfig(providerType);
 
   if (!config) {
     return false;
@@ -122,7 +123,7 @@ export const testAndRefreshModels = async (
  * @throws Error if provider not found
  */
 export const getProviderIdByType = async (
-  providerType: string,
+  providerType: LighthouseProvider,
 ): Promise<string> => {
   const result = await getLighthouseProviderByType(providerType);
 
