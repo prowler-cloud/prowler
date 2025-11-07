@@ -10,13 +10,74 @@ import {
   type LighthouseProvider,
   PROVIDER_DISPLAY_NAMES,
 } from "@/types/lighthouse";
+import type {
+  BedrockCredentials,
+  OpenAICompatibleCredentials,
+  OpenAICredentials,
+} from "@/types/lighthouse/credentials";
+
+// API Response Types
+type ProviderCredentials =
+  | OpenAICredentials
+  | BedrockCredentials
+  | OpenAICompatibleCredentials;
+
+interface ApiError {
+  detail: string;
+}
+
+interface ApiLinks {
+  next?: string;
+}
+
+interface ApiResponse<T> {
+  data?: T;
+  errors?: ApiError[];
+  links?: ApiLinks;
+}
+
+interface LighthouseModelAttributes {
+  model_id: string;
+  model_name: string;
+}
+
+interface LighthouseModel {
+  id: string;
+  attributes: LighthouseModelAttributes;
+}
+
+interface LighthouseProviderAttributes {
+  provider_type: string;
+  credentials: ProviderCredentials;
+  base_url?: string;
+  is_active: boolean;
+}
+
+interface LighthouseProviderResource {
+  id: string;
+  attributes: LighthouseProviderAttributes;
+}
+
+interface ModelOption {
+  id: string;
+  name: string;
+}
+
+interface ProviderCredentialsAttributes {
+  credentials: ProviderCredentials;
+  base_url?: string;
+}
+
+interface ProviderCredentialsResponse {
+  attributes: ProviderCredentialsAttributes;
+}
 
 /**
  * Create a new lighthouse provider configuration
  */
 export const createLighthouseProvider = async (config: {
   provider_type: LighthouseProvider;
-  credentials: Record<string, any>;
+  credentials: ProviderCredentials;
   base_url?: string;
 }) => {
   const headers = await getAuthHeaders({ contentType: true });
@@ -155,7 +216,7 @@ export const getLighthouseModelIds = async (
       return data;
     }
 
-    const allModels: any[] = [...(data.data || [])];
+    const allModels: LighthouseModel[] = [...(data.data || [])];
 
     // Fetch remaining pages
     let nextUrl = data.links?.next;
@@ -179,12 +240,12 @@ export const getLighthouseModelIds = async (
     }
 
     // Transform to minimal format
-    const models = allModels
-      .map((m: any) => ({
-        id: m?.attributes?.model_id,
-        name: m?.attributes?.model_name || m?.attributes?.model_id,
+    const models: ModelOption[] = allModels
+      .map((m: LighthouseModel) => ({
+        id: m.attributes.model_id,
+        name: m.attributes.model_name || m.attributes.model_id,
       }))
-      .filter((v: any) => typeof v.id === "string");
+      .filter((v: ModelOption) => typeof v.id === "string");
 
     return { data: models };
   } catch (error) {
@@ -253,7 +314,10 @@ export const updateTenantConfig = async (config: {
  */
 export const getProviderCredentials = async (
   providerType?: LighthouseProvider,
-): Promise<{ credentials: Record<string, any>; base_url?: string }> => {
+): Promise<{
+  credentials: ProviderCredentials | Record<string, never>;
+  base_url?: string;
+}> => {
   const headers = await getAuthHeaders({ contentType: false });
 
   // Note: fields[lighthouse-providers]=credentials is required to get decrypted credentials
@@ -274,7 +338,8 @@ export const getProviderCredentials = async (
       headers,
     });
 
-    const data = await response.json();
+    const data: ApiResponse<ProviderCredentialsResponse[]> =
+      await response.json();
 
     if (data?.data && data.data.length > 0) {
       const provider = data.data[0]?.attributes;
@@ -306,7 +371,9 @@ export const isLighthouseConfigured = async () => {
     const hasActiveProvider =
       providers?.data &&
       Array.isArray(providers.data) &&
-      providers.data.some((p: any) => p.attributes?.is_active);
+      providers.data.some(
+        (p: LighthouseProviderResource) => p.attributes?.is_active,
+      );
 
     return hasTenantConfig && hasActiveProvider;
   } catch (error) {
@@ -356,7 +423,7 @@ export const getLighthouseProviderByType = async (
 export const updateLighthouseProviderByType = async (
   providerType: LighthouseProvider,
   config: {
-    credentials?: Record<string, any>;
+    credentials?: ProviderCredentials;
     base_url?: string;
     is_active?: boolean;
   },
@@ -366,7 +433,7 @@ export const updateLighthouseProviderByType = async (
     if (config.credentials && Object.keys(config.credentials).length > 0) {
       const credentialsValidation = validateCredentials(
         providerType,
-        config.credentials,
+        config.credentials as Record<string, string>,
       );
       if (!credentialsValidation.success) {
         return {
@@ -473,11 +540,13 @@ export const getLighthouseProvidersConfig = async () => {
 
     // Filter only active providers
     const activeProviders =
-      providers?.data?.filter((p: any) => p.attributes?.is_active) || [];
+      providers?.data?.filter(
+        (p: LighthouseProviderResource) => p.attributes?.is_active,
+      ) || [];
 
     // Build provider configuration with only default models
     const providersConfig = await Promise.all(
-      activeProviders.map(async (provider: any) => {
+      activeProviders.map(async (provider: LighthouseProviderResource) => {
         const providerType = provider.attributes
           .provider_type as LighthouseProvider;
         const defaultModelId = defaultModels[providerType];
