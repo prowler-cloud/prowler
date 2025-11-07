@@ -3397,7 +3397,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             ).distinct()
             summaries = summaries.filter(scan__provider__in=providers)
 
-        return summaries.select_related("scan__provider")
+        return summaries
 
     def _get_compliance_template(self, *, provider=None, scan_id=None):
         """Return the compliance template for the given provider or scan."""
@@ -3571,9 +3571,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             return self._list_without_region_aggregation(scan_id)
 
         # Get compliance template for provider to enrich with framework/version
-        compliance_template = self._get_compliance_template(
-            provider=summaries[0].scan.provider
-        )
+        compliance_template = self._get_compliance_template(scan_id=scan_id)
 
         # Convert to response format with framework/version enrichment
         response_data = []
