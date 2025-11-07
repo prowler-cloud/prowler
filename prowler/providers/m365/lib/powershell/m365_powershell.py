@@ -221,12 +221,12 @@ class M365PowerShell(PowerShellSession):
             result = self.execute(
                 '$teamsToken = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$tenantID/oauth2/v2.0/token" -Method POST -Body $teamstokenBody | Select-Object -ExpandProperty Access_Token'
             )
-            result = self.execute_connect(
-                'Connect-MicrosoftTeams -AccessTokens @("$graphToken","$teamsToken")'
-            )
             if result != "":
                 logger.error(f"Microsoft Teams connection failed: {result}")
                 return False
+            self.execute_connect(
+                'Connect-MicrosoftTeams -AccessTokens @("$graphToken","$teamsToken")'
+            )
             return True
         except Exception as e:
             logger.error(
