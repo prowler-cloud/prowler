@@ -3,6 +3,10 @@
 import { revalidatePath } from "next/cache";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
+import {
+  validateBaseUrl,
+  validateCredentials,
+} from "@/lib/lighthouse/validation";
 
 /**
  * Create a new lighthouse provider configuration
@@ -16,6 +20,27 @@ export const createLighthouseProvider = async (config: {
   const url = new URL(`${apiBaseUrl}/lighthouse/providers`);
 
   try {
+    // Validate credentials
+    const credentialsValidation = validateCredentials(
+      config.provider_type,
+      config.credentials,
+    );
+    if (!credentialsValidation.success) {
+      return {
+        errors: [{ detail: credentialsValidation.error }],
+      };
+    }
+
+    // Validate base_url if provided
+    if (config.base_url) {
+      const baseUrlValidation = validateBaseUrl(config.base_url);
+      if (!baseUrlValidation.success) {
+        return {
+          errors: [{ detail: baseUrlValidation.error }],
+        };
+      }
+    }
+
     const payload = {
       data: {
         type: "lighthouse-providers",
@@ -356,6 +381,29 @@ export const updateLighthouseProviderByType = async (
   },
 ) => {
   try {
+    // Validate credentials if provided
+    if (config.credentials && Object.keys(config.credentials).length > 0) {
+      const credentialsValidation = validateCredentials(
+        providerType,
+        config.credentials,
+      );
+      if (!credentialsValidation.success) {
+        return {
+          errors: [{ detail: credentialsValidation.error }],
+        };
+      }
+    }
+
+    // Validate base_url if provided
+    if (config.base_url) {
+      const baseUrlValidation = validateBaseUrl(config.base_url);
+      if (!baseUrlValidation.success) {
+        return {
+          errors: [{ detail: baseUrlValidation.error }],
+        };
+      }
+    }
+
     // First, get the provider by type
     const providerResult = await getLighthouseProviderByType(providerType);
 
