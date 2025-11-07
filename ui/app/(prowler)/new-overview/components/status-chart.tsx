@@ -59,14 +59,14 @@ export const StatusChart = ({
     {
       name: "Fail Findings",
       value: failFindingsData.total,
-      color: "#f43f5e", // Rose-500
+      color: "var(--bg-fail-primary)",
       percentage: Number(failPercentage),
       change: Number(failChange),
     },
     {
       name: "Pass Findings",
       value: passFindingsData.total,
-      color: "#4ade80", // Green-400
+      color: "var(--bg-pass-primary)",
       percentage: Number(passPercentage),
       change: Number(passChange),
     },
@@ -121,7 +121,7 @@ export const StatusChart = ({
           />
 
           <div className="flex w-full items-center justify-center lg:w-auto lg:self-stretch">
-            <div className="h-px w-full bg-slate-300 lg:h-full lg:w-px dark:bg-[rgba(39,39,42,1)]" />
+            <div className="bg-border-neutral-primary h-px w-full lg:h-full lg:w-px" />
           </div>
 
           <ResourceStatsCard
