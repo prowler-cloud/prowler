@@ -65,6 +65,7 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
         scan_id (str): The ID of the scan that was performed.
         provider_id (str): The primary key of the Provider instance that was scanned.
     """
+    """
     create_compliance_requirements_task.apply_async(
         kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
     )
@@ -84,7 +85,9 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
             ),
         ),
     ).apply_async()
-    perform_cartography_scan_task(scan_id=scan_id)
+    perform_cartography_scan_task.apply_async(kwargs={"scan_id": scan_id})
+    """
+    perform_cartography_scan_task.apply_async(kwargs={"scan_id": scan_id})
 
 
 @shared_task(base=RLSTask, name="provider-connection-check")
@@ -158,6 +161,7 @@ def perform_scan_task(
     Returns:
         dict: The result of the scan execution, typically including the status and results of the performed checks.
     """
+    """
     result = perform_prowler_scan(
         tenant_id=tenant_id,
         scan_id=scan_id,
@@ -168,6 +172,10 @@ def perform_scan_task(
     _perform_scan_complete_tasks(tenant_id, scan_id, provider_id)
 
     return result
+    """
+    _perform_scan_complete_tasks(tenant_id, scan_id, provider_id)
+
+    return
 
 
 @shared_task(base=RLSTask, bind=True, name="scan-perform-scheduled", queue="scans")
@@ -278,6 +286,21 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
 @shared_task(name="scan-summary", queue="overview")
 def perform_scan_summary_task(tenant_id: str, scan_id: str):
     return aggregate_findings(tenant_id=tenant_id, scan_id=scan_id)
+
+
+@shared_task(base=RLSTask, bind=True, name="cartography-scan-perform", queue="cartography")
+def perform_cartography_scan_task(self, scan_id: str):
+    """
+    Execute a Cartography ingestion for the given provider within the current tenant RLS context.
+
+    Args:
+        task_id (str): The Celery task ID.
+        scan_id (str): The Prowler scan identifier for obtaining the tenant and provider context.
+
+    Returns:
+        Any: The result from cartography_scan.run, including any per-ingestion failure details.
+    """
+    return cartography_scan(task_id=self.request.id, scan_id=scan_id)
 
 
 @shared_task(name="tenant-deletion", queue="deletion", autoretry_for=(Exception,))
@@ -707,18 +730,3 @@ def mute_historical_findings_task(tenant_id: str, mute_rule_id: str):
             - 'status' (str): Final status ('completed').
     """
     return mute_historical_findings(tenant_id, mute_rule_id)
-
-
-@shared_task(base=RLSTask, name="cartography-scan-perform", queue="cartography")
-@set_tenant
-def perform_cartography_scan_task(scan_id: str):
-    """
-    Execute a Cartography ingestion for the given provider within the current tenant RLS context.
-
-    Args:
-        provider_id (str): The primary key of the Provider instance to ingest into Neo4j.
-
-    Returns:
-        Any: The result from cartography_scan.run, including any per-ingestion failure details.
-    """
-    return cartography_scan(scan_id=scan_id)

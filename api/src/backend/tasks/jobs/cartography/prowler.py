@@ -6,17 +6,12 @@ from celery.utils.log import get_task_logger
 from django.db.models import Subquery
 
 from api.models import Provider, ResourceFindingMapping, Scan
+from config.env import env
 from prowler.config import config as ProwlerConfig
 
-# TODO: Use the right logger
-# logger = get_task_logger(__name__)
-import logging
-from config.custom_logging import BackendLogger
+logger = get_task_logger(__name__)
 
-logger = logging.getLogger(BackendLogger.API)
-
-# TODO: To environment variable and/or settings
-BATCH_SIZE = 1000
+BATCH_SIZE = env.int("NEO4J_INSERT_BATCH_SIZE", 500)
 
 ROOT_NODE_LABELS = {
     "aws": "AWSAccount",

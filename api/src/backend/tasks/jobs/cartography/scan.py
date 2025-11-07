@@ -13,37 +13,32 @@ from api.models import (
     Provider as ProwlerAPIProvider,
     Scan as ProwlerAPIScan,
     StateChoices,
+    Task as ProwlerAPITask,
 )
 from api.utils import initialize_prowler_provider
 from tasks.jobs.cartography import aws, db_utils, prowler
 
-# TODO: Use the right logger
-# logger = get_task_logger(__name__)
-import logging
-from config.custom_logging import BackendLogger
-
-logger = logging.getLogger(BackendLogger.API)
+logger = get_task_logger(__name__)
 
 CARTOGRAPHY_INGESTION_FUNCTIONS = {
     "aws": aws.start_aws_ingestion,
 }
 
 
-def run(scan_id: str) -> dict[str, Any]:
+def run(task_id: str, scan_id: str) -> dict[str, Any]:
     """
     Code based on Cartography version 0.117.0, specifically on `cartography.cli.main`, `cartography.cli.CLI.main`,
     `cartography.sync.run_with_config` and `cartography.sync.Sync.run`.
     """
 
     # Prowler necessary objects
+    prowler_api_task = ProwlerAPITask.objects.get(id=task_id)
     prowler_api_scan = ProwlerAPIScan.objects.get(id=scan_id)
-    prowler_api_provider = ProwlerAPIProvider.objects.get(
-        id=prowler_api_scan.provider_id
-    )
+    prowler_api_provider = ProwlerAPIProvider.objects.get(id=prowler_api_scan.provider_id)
     prowler_provider = initialize_prowler_provider(prowler_api_provider)
 
     # Attributes `neo4j_user` and `neo4j_password` are not really needed in this config object
-    config = CartographyConfig(
+    cartography_config = CartographyConfig(
         neo4j_uri=neo4j.get_neo4j_uri(),
         neo4j_database=neo4j.get_neo4j_tenant_database_name(
             str(prowler_api_provider.tenant_id)
@@ -52,23 +47,23 @@ def run(scan_id: str) -> dict[str, Any]:
     )
 
     cartography_scan = db_utils.create_cartography_scan(
-        prowler_api_scan, prowler_api_provider, config
+        prowler_api_task, prowler_api_scan, prowler_api_provider, cartography_config
     )
 
     ingestion_exceptions = {}
     try:
         logger.info(
-            f"Create Neo4j database {config.neo4j_database} for tenant {prowler_api_provider.tenant_id}"
+            f"Creating Neo4j database {cartography_config.neo4j_database} for tenant {prowler_api_provider.tenant_id}"
         )
-        neo4j.create_neo4j_database(config.neo4j_database)
+        neo4j.create_neo4j_database(cartography_config.neo4j_database)
         db_utils.update_cartography_scan_progress(cartography_scan, 1)
 
         logger.info(
-            f"Start Cartography scan: {prowler_api_provider.provider.upper()} provider {prowler_api_provider.id}"
+            f"Starting Cartography scan ({cartography_scan.id}) for {prowler_api_provider.provider.upper()} provider {prowler_api_provider.id}"
         )
-        with neo4j.get_neo4j_session(config.neo4j_database) as neo4j_session:
+        with neo4j.get_neo4j_session(cartography_config.neo4j_database) as neo4j_session:
             # Indexes creation
-            cartography_create_indexes.run(neo4j_session, config)
+            cartography_create_indexes.run(neo4j_session, cartography_config)
             prowler.create_indexes(neo4j_session)
             db_utils.update_cartography_scan_progress(cartography_scan, 2)
 
@@ -76,22 +71,23 @@ def run(scan_id: str) -> dict[str, Any]:
             ingestion_exceptions = _call_within_event_loop(
                 CARTOGRAPHY_INGESTION_FUNCTIONS[prowler_api_provider.provider],
                 neo4j_session,
-                config,
+                cartography_config,
                 prowler_api_provider,
                 prowler_provider,
+                cartography_scan,
             )
 
             # Post-processing
             cartography_analysis.run(
-                neo4j_session, config
+                neo4j_session, cartography_config
             )  # Just keeping it to be more Cartography compliant
             db_utils.update_cartography_scan_progress(cartography_scan, 95)
 
             # Adding Prowler nodes and relationships
-            prowler.analysis(neo4j_session, prowler_api_provider, config)
+            prowler.analysis(neo4j_session, prowler_api_provider, cartography_config)
 
         logger.info(
-            f"Done Cartography scan: {prowler_api_provider.provider.upper()} provider {prowler_api_provider.id}"
+            f"Completed Cartography scan ({cartography_scan.id}) for {prowler_api_provider.provider.upper()} provider {prowler_api_provider.id}"
         )
         db_utils.modify_cartography_scan(
             cartography_scan, StateChoices.COMPLETED, ingestion_exceptions
@@ -120,8 +116,7 @@ def _call_within_event_loop(fn, *args, **kwargs):
 
     finally:
         try:
-            # loop.run_until_complete(loop.shutdown_asyncgens())
-            pass
+            loop.run_until_complete(loop.shutdown_asyncgens())
 
         except Exception:
             pass

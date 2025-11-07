@@ -20,17 +20,12 @@ from api.models import (
 from prowler.providers.common.provider import Provider as ProwlerSDKProvider
 from tasks.jobs.cartography import db_utils
 
-# TODO: Use the right logger
-# logger = get_task_logger(__name__)
-import logging
-from config.custom_logging import BackendLogger
-
-logger = logging.getLogger(BackendLogger.API)
+logger = get_task_logger(__name__)
 
 
 def start_aws_ingestion(
     neo4j_session: neo4j.Session,
-    config: CartographyConfig,
+    cartography_config: CartographyConfig,
     prowler_api_provider: ProwlerAPIProvider,
     prowler_provider: ProwlerSDKProvider,
     cartography_scan: ProwlerAPICartographyScan,
@@ -45,10 +40,10 @@ def start_aws_ingestion(
 
     # Initialize variables common to all jobs
     common_job_parameters = {
-        "UPDATE_TAG": config.update_tag,
-        "permission_relationships_file": config.permission_relationships_file,
-        "aws_guardduty_severity_threshold": config.aws_guardduty_severity_threshold,
-        "aws_cloudtrail_management_events_lookback_hours": config.aws_cloudtrail_management_events_lookback_hours,
+        "UPDATE_TAG": cartography_config.update_tag,
+        "permission_relationships_file": cartography_config.permission_relationships_file,
+        "aws_guardduty_severity_threshold": cartography_config.aws_guardduty_severity_threshold,
+        "aws_cloudtrail_management_events_lookback_hours": cartography_config.aws_cloudtrail_management_events_lookback_hours,
     }
 
     # TODO: Check if there is a way to renew the session token if expired
@@ -61,7 +56,7 @@ def start_aws_ingestion(
         boto3_session,
         regions,
         prowler_api_provider.uid,
-        config.update_tag,
+        cartography_config.update_tag,
         common_job_parameters,
     )
 
@@ -69,7 +64,7 @@ def start_aws_ingestion(
     cartography_aws.organizations.sync(
         neo4j_session,
         {prowler_api_provider.alias: prowler_api_provider.uid},
-        config.update_tag,
+        cartography_config.update_tag,
         common_job_parameters,
     )
     db_utils.update_cartography_scan_progress(cartography_scan, 3)
@@ -81,7 +76,7 @@ def start_aws_ingestion(
         neo4j_session,
         boto3_session,
         prowler_api_provider.uid,
-        config.update_tag,
+        cartography_config.update_tag,
         common_job_parameters,
     )
     db_utils.update_cartography_scan_progress(cartography_scan, 4)
@@ -117,7 +112,7 @@ def start_aws_ingestion(
         group_type="AWSAccount",
         group_id=prowler_api_provider.uid,
         synced_type="AWSAccount",
-        update_tag=config.update_tag,
+        update_tag=cartography_config.update_tag,
         stat_handler=cartography_aws.stat_handler,
     )
     db_utils.update_cartography_scan_progress(cartography_scan, 92)

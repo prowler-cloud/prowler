@@ -9,23 +9,28 @@ from api.models import (
     Provider as ProwlerAPIProvider,
     Scan as ProwlerAPIScan,
     StateChoices,
+    Task as ProwlerAPITask,
 )
 
 
 def create_cartography_scan(
+    prowler_api_task: ProwlerAPITask,
     prowler_api_scan: ProwlerAPIScan,
     prowler_api_provider: ProwlerAPIProvider,
-    config: CartographyConfig,
+    cartography_config: CartographyConfig,
 ) -> ProwlerAPICartographyScan:
     with rls_transaction(prowler_api_scan.tenant_id):
         cartography_scan = ProwlerAPICartographyScan.objects.create(
+            tenant_id=prowler_api_scan.tenant_id,
+            task=prowler_api_task,
             provider=prowler_api_provider,
             scan=prowler_api_scan,
             state=StateChoices.EXECUTING,
             started_at=datetime.now(tz=timezone.utc),
-            update_tag=config.update_tag,
-            neo4j_database=config.neo4j_database,
+            update_tag=cartography_config.update_tag,
+            neo4j_database=cartography_config.neo4j_database,
         )
+        cartography_scan.save()
 
         return cartography_scan
 
@@ -37,13 +42,14 @@ def modify_cartography_scan(
 ) -> None:
     with rls_transaction(cartography_scan.tenant_id):
         now = datetime.now(tz=timezone.utc)
+        duration = int((now - cartography_scan.started_at).total_seconds())
+
         cartography_scan.state = state
         cartography_scan.progress = 100
         cartography_scan.completed_at = now
-        cartography_scan.duration = int(
-            (now - cartography_scan.started_at).total_seconds()
-        )
+        cartography_scan.duration = duration
         cartography_scan.ingestion_exceptions = ingestion_exceptions
+
         cartography_scan.save(
             update_fields=[
                 "state",
@@ -61,4 +67,5 @@ def update_cartography_scan_progress(
 ) -> None:
     with rls_transaction(cartography_scan.tenant_id):
         cartography_scan.progress = progress
+
         cartography_scan.save(update_fields=["progress"])
