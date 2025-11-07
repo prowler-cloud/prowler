@@ -137,7 +137,7 @@ class M365PowerShell(PowerShellSession):
         """
         connect_timeout = 15
         result = self.execute(command, timeout=connect_timeout)
-        return result or "Timeout"
+        return result or "'execute_connect' command timeout reached"
 
     def test_credentials(self, credentials: M365Credentials) -> bool:
         """
