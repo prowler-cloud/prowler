@@ -274,7 +274,7 @@ class EventMessageFormatter:
         message = f"RDS instance created: {db_instance_id} (class: {db_instance_class}, engine: {engine})"
 
         if publicly_accessible:
-            message += " - ⚠️ PUBLICLY ACCESSIBLE"
+            message += " - PUBLICLY ACCESSIBLE"
 
         # Add encryption info
         if "storageEncrypted" in request_params:
@@ -347,7 +347,7 @@ class EventMessageFormatter:
                 values = values_to_add if isinstance(values_to_add, list) else []
 
             if "all" in values:
-                return f"⚠️ RDS snapshot made PUBLIC: {snapshot_id}"
+                return f"RDS snapshot made PUBLIC: {snapshot_id}"
             elif values:
                 return f"RDS snapshot shared with accounts: {snapshot_id} - {', '.join(values)}"
 
@@ -403,7 +403,7 @@ class EventMessageFormatter:
                     if principal == "*" or (
                         isinstance(principal, dict) and principal.get("AWS") == "*"
                     ):
-                        return f"⚠️ S3 bucket policy changed to ALLOW PUBLIC ACCESS: {bucket_name}"
+                        return f"S3 bucket policy changed to ALLOW PUBLIC ACCESS: {bucket_name}"
             except Exception as e:
                 logger.error(f"Error parsing S3 bucket policy: {e}")
 
@@ -454,7 +454,7 @@ class EventMessageFormatter:
             if not restrict_public_buckets:
                 disabled_features.append("RestrictPublicBuckets")
 
-            return f"⚠️ S3 public access block DISABLED: {bucket_name} - {', '.join(disabled_features)}"
+            return f"S3 public access block DISABLED: {bucket_name} - {', '.join(disabled_features)}"
 
     @staticmethod
     def format_s3_encryption_changed(event: dict[str, Any]) -> str:
@@ -530,7 +530,7 @@ class EventMessageFormatter:
 
         if principal == "*":
             message = (
-                f"⚠️ Lambda function made PUBLIC: {function_name} - allows * to {action}"
+                f"Lambda function made PUBLIC: {function_name} - allows * to {action}"
             )
 
         if statement_id:
@@ -555,7 +555,7 @@ class EventMessageFormatter:
         message = f"Lambda function URL created: {function_name} - auth: {auth_type}"
 
         if auth_type == "NONE":
-            message = f"⚠️ Lambda function URL created with NO AUTH: {function_name}"
+            message = f"Lambda function URL created with NO AUTH: {function_name}"
 
         return message
 
@@ -609,7 +609,7 @@ class EventMessageFormatter:
         if "mapPublicIpOnLaunch" in request_params:
             auto_assign = request_params["mapPublicIpOnLaunch"].get("value", False)
             if auto_assign:
-                modifications.append("⚠️ AUTO-ASSIGN PUBLIC IP ENABLED")
+                modifications.append("AUTO-ASSIGN PUBLIC IP ENABLED")
             else:
                 modifications.append("auto-assign public IP disabled")
 
@@ -642,7 +642,7 @@ class EventMessageFormatter:
         message = f"Route created: {destination_cidr} -> {target} in {route_table_id}"
 
         if "igw-" in target and destination_cidr in ["0.0.0.0/0", "::/0"]:
-            message = f"⚠️ PUBLIC ROUTE created: {destination_cidr} -> {target} in {route_table_id}"
+            message = f"PUBLIC ROUTE created: {destination_cidr} -> {target} in {route_table_id}"
 
         return message
 
@@ -653,7 +653,7 @@ class EventMessageFormatter:
         igw_id = request_params.get("internetGatewayId", "unknown")
         vpc_id = request_params.get("vpcId", "unknown")
 
-        return f"⚠️ Internet gateway attached: {igw_id} to VPC {vpc_id}"
+        return f"Internet gateway attached: {igw_id} to VPC {vpc_id}"
 
     @staticmethod
     def format_vpc_endpoint_created(event: dict[str, Any]) -> str:
@@ -680,7 +680,7 @@ class EventMessageFormatter:
         )
 
         if scheme == "internet-facing":
-            message += " - ⚠️ INTERNET-FACING"
+            message += " - INTERNET-FACING"
 
         return message
 
@@ -708,7 +708,7 @@ class EventMessageFormatter:
                     break
 
         if protocol == "HTTP":
-            message = f"⚠️ Listener created with UNENCRYPTED protocol: {protocol}:{port}"
+            message = f"Listener created with UNENCRYPTED protocol: {protocol}:{port}"
 
         return message
 
@@ -774,7 +774,7 @@ class EventMessageFormatter:
         message = f"IAM policy attached: {policy_arn} to {target_type} {target_name}"
 
         if "AdministratorAccess" in policy_arn or "FullAccess" in policy_arn:
-            message = f"⚠️ PRIVILEGED policy attached: {policy_arn} to {target_type} {target_name}"
+            message = f"PRIVILEGED policy attached: {policy_arn} to {target_type} {target_name}"
 
         return message
 
@@ -810,7 +810,7 @@ class EventMessageFormatter:
         message = f"DynamoDB table created: {table_name}"
 
         if not encryption_enabled:
-            message += " - ⚠️ ENCRYPTION NOT ENABLED"
+            message += " - ENCRYPTION NOT ENABLED"
         else:
             sse_type = sse_specification.get("sSEType", "KMS")
             message += f" (encryption: {sse_type})"
@@ -833,7 +833,7 @@ class EventMessageFormatter:
         if enabled:
             return f"DynamoDB PITR enabled: {table_name}"
         else:
-            return f"⚠️ DynamoDB PITR disabled: {table_name}"
+            return f"DynamoDB PITR disabled: {table_name}"
 
     # ========== KMS Formatters ==========
 
@@ -864,7 +864,7 @@ class EventMessageFormatter:
         key_id = request_params.get("keyId", "unknown")
         pending_window_days = request_params.get("pendingWindowInDays", 30)
 
-        return f"⚠️ KMS KEY DELETION SCHEDULED: {key_id} (pending period: {pending_window_days} days)"
+        return f"KMS KEY DELETION SCHEDULED: {key_id} (pending period: {pending_window_days} days)"
 
     @staticmethod
     def format_kms_key_deletion_cancelled(event: dict[str, Any]) -> str:
@@ -880,7 +880,7 @@ class EventMessageFormatter:
         request_params = event.get("requestParameters", {})
         key_id = request_params.get("keyId", "unknown")
 
-        return f"⚠️ KMS KEY DISABLED: {key_id}"
+        return f"KMS KEY DISABLED: {key_id}"
 
     @staticmethod
     def format_kms_key_enabled(event: dict[str, Any]) -> str:
@@ -904,7 +904,7 @@ class EventMessageFormatter:
         request_params = event.get("requestParameters", {})
         key_id = request_params.get("keyId", "unknown")
 
-        return f"⚠️ KMS KEY ROTATION DISABLED: {key_id}"
+        return f"KMS KEY ROTATION DISABLED: {key_id}"
 
     @staticmethod
     def format_kms_key_policy_changed(event: dict[str, Any]) -> str:
@@ -933,7 +933,7 @@ class EventMessageFormatter:
                     if principal == "*" or (
                         isinstance(principal, dict) and principal.get("AWS") == "*"
                     ):
-                        message = f"⚠️ KMS KEY POLICY ALLOWS PUBLIC ACCESS: {key_id}"
+                        message = f"KMS KEY POLICY ALLOWS PUBLIC ACCESS: {key_id}"
                         break
             except Exception as e:
                 logger.error(f"Error parsing KMS key policy: {e}")
@@ -974,7 +974,7 @@ class EventMessageFormatter:
             if any(
                 op in operations for op in ["Decrypt", "Encrypt", "GenerateDataKey"]
             ):
-                message = f"⚠️ {message} - CROSS-ACCOUNT ACCESS GRANTED"
+                message = f"{message} - CROSS-ACCOUNT ACCESS GRANTED"
 
         return message
 
@@ -1006,7 +1006,7 @@ class EventMessageFormatter:
         if multi_region:
             message += " - Multi-region trail"
         if not log_file_validation:
-            message = f"⚠️ {message} - LOG FILE VALIDATION DISABLED"
+            message = f"{message} - LOG FILE VALIDATION DISABLED"
 
         return message
 
@@ -1016,7 +1016,7 @@ class EventMessageFormatter:
         request_params = event.get("requestParameters", {})
         trail_name = request_params.get("name", "unknown")
 
-        return f"⚠️ CLOUDTRAIL TRAIL DELETED: {trail_name}"
+        return f"CLOUDTRAIL TRAIL DELETED: {trail_name}"
 
     @staticmethod
     def format_cloudtrail_trail_updated(event: dict[str, Any]) -> str:
@@ -1031,7 +1031,7 @@ class EventMessageFormatter:
         if s3_bucket:
             message += f" (S3 bucket: {s3_bucket})"
         if log_file_validation is False:
-            message = f"⚠️ {message} - LOG FILE VALIDATION DISABLED"
+            message = f"{message} - LOG FILE VALIDATION DISABLED"
 
         return message
 
@@ -1041,7 +1041,7 @@ class EventMessageFormatter:
         request_params = event.get("requestParameters", {})
         trail_name = request_params.get("name", "unknown")
 
-        return f"⚠️ CLOUDTRAIL LOGGING STOPPED: {trail_name}"
+        return f"CLOUDTRAIL LOGGING STOPPED: {trail_name}"
 
     @staticmethod
     def format_cloudtrail_logging_started(event: dict[str, Any]) -> str:
@@ -1068,7 +1068,7 @@ class EventMessageFormatter:
 
         message = f"CloudTrail event selectors updated: {trail_name}"
         if management_disabled:
-            message = f"⚠️ {message} - MANAGEMENT EVENTS DISABLED"
+            message = f"{message} - MANAGEMENT EVENTS DISABLED"
 
         return message
 
@@ -1089,7 +1089,7 @@ class EventMessageFormatter:
         if availability_zone:
             message += f" in {availability_zone}"
         if not encrypted:
-            message = f"⚠️ {message} - ENCRYPTION NOT ENABLED"
+            message = f"{message} - ENCRYPTION NOT ENABLED"
 
         return message
 
@@ -1161,7 +1161,7 @@ class EventMessageFormatter:
         # Check if snapshot is made public
         for item in add_items:
             if item.get("group") == "all":
-                return f"⚠️ EBS SNAPSHOT MADE PUBLIC: {snapshot_id}"
+                return f"EBS SNAPSHOT MADE PUBLIC: {snapshot_id}"
 
         # Check for specific user IDs
         user_ids = [item.get("userId") for item in add_items if item.get("userId")]
@@ -1178,7 +1178,7 @@ class EventMessageFormatter:
     @staticmethod
     def format_ebs_encryption_disabled(event: dict[str, Any]) -> str:
         """Format DisableEbsEncryptionByDefault event."""
-        return "⚠️ EBS ENCRYPTION BY DEFAULT DISABLED FOR REGION"
+        return "EBS ENCRYPTION BY DEFAULT DISABLED FOR REGION"
 
     # ========== Secrets Manager Formatters ==========
 
@@ -1197,7 +1197,7 @@ class EventMessageFormatter:
         if description:
             message += f" - {description}"
         if not kms_key_id:
-            message = f"⚠️ {message} - USING DEFAULT ENCRYPTION KEY"
+            message = f"{message} - USING DEFAULT ENCRYPTION KEY"
 
         return message
 
@@ -1211,7 +1211,7 @@ class EventMessageFormatter:
         force_delete = request_params.get("forceDeleteWithoutRecovery", False)
 
         if force_delete:
-            return f"⚠️ SECRET PERMANENTLY DELETED (NO RECOVERY): {secret_id}"
+            return f"SECRET PERMANENTLY DELETED (NO RECOVERY): {secret_id}"
         else:
             return f"Secret deletion scheduled: {secret_id} (recovery window: {recovery_window} days)"
 
@@ -1272,7 +1272,7 @@ class EventMessageFormatter:
         request_params = event.get("requestParameters", {})
         secret_id = request_params.get("secretId", "unknown")
 
-        return f"⚠️ SECRET ROTATION DISABLED: {secret_id}"
+        return f"SECRET ROTATION DISABLED: {secret_id}"
 
     @staticmethod
     def format_secrets_manager_policy_changed(event: dict[str, Any]) -> str:
@@ -1297,7 +1297,7 @@ class EventMessageFormatter:
                     if principal == "*" or (
                         isinstance(principal, dict) and principal.get("AWS") == "*"
                     ):
-                        return f"⚠️ SECRET POLICY ALLOWS PUBLIC ACCESS: {secret_id}"
+                        return f"SECRET POLICY ALLOWS PUBLIC ACCESS: {secret_id}"
             except Exception as e:
                 logger.error(f"Error parsing secret policy: {e}")
 
@@ -1323,7 +1323,7 @@ class EventMessageFormatter:
         if comparison_operator and threshold:
             message += f" - {comparison_operator} {threshold}"
         if not actions_enabled:
-            message = f"⚠️ {message} - ACTIONS DISABLED"
+            message = f"{message} - ACTIONS DISABLED"
 
         return message
 
@@ -1337,7 +1337,7 @@ class EventMessageFormatter:
             if len(alarm_names) == 1:
                 return f"CloudWatch alarm deleted: {alarm_names[0]}"
             else:
-                return f"⚠️ CloudWatch alarms deleted: {len(alarm_names)} alarms ({', '.join(alarm_names[:3])}{'...' if len(alarm_names) > 3 else ''})"
+                return f"CloudWatch alarms deleted: {len(alarm_names)} alarms ({', '.join(alarm_names[:3])}{'...' if len(alarm_names) > 3 else ''})"
 
         return "CloudWatch alarm(s) deleted"
 
@@ -1357,7 +1357,7 @@ class EventMessageFormatter:
         if comparison_operator:
             changes.append(f"operator: {comparison_operator}")
         if actions_enabled is False:
-            changes.append("⚠️ actions disabled")
+            changes.append("actions disabled")
 
         message = f"CloudWatch alarm updated: {alarm_name}"
         if changes:
@@ -1388,11 +1388,11 @@ class EventMessageFormatter:
 
         if isinstance(alarm_names, list) and alarm_names:
             if len(alarm_names) == 1:
-                return f"⚠️ CLOUDWATCH ALARM ACTIONS DISABLED: {alarm_names[0]}"
+                return f"CLOUDWATCH ALARM ACTIONS DISABLED: {alarm_names[0]}"
             else:
-                return f"⚠️ CLOUDWATCH ALARM ACTIONS DISABLED: {len(alarm_names)} alarms"
+                return f"CLOUDWATCH ALARM ACTIONS DISABLED: {len(alarm_names)} alarms"
 
-        return "⚠️ CloudWatch alarm actions disabled"
+        return "CloudWatch alarm actions disabled"
 
     @staticmethod
     def format_cloudwatch_alarm_actions_enabled(event: dict[str, Any]) -> str:
@@ -1439,7 +1439,7 @@ class EventMessageFormatter:
             else:
                 message += f" - {retention_days} days"
                 if retention_days < 7:
-                    message = f"⚠️ {message} (SHORT RETENTION PERIOD)"
+                    message = f"{message} (SHORT RETENTION PERIOD)"
 
         return message
 
@@ -1486,9 +1486,9 @@ class EventMessageFormatter:
                 '"Principal":"*"' in attribute_value
                 or '"Principal":{"AWS":"*"}' in attribute_value
             ):
-                message = f"⚠️ SNS TOPIC POLICY ALLOWS PUBLIC ACCESS: {topic_arn}"
+                message = f"SNS TOPIC POLICY ALLOWS PUBLIC ACCESS: {topic_arn}"
             elif "Condition" not in attribute_value and "*" in attribute_value:
-                message = f"⚠️ {message} (contains wildcards without conditions)"
+                message = f"{message} (contains wildcards without conditions)"
 
         return message
 
@@ -1513,7 +1513,7 @@ class EventMessageFormatter:
 
         # Warn on potentially insecure protocols
         if protocol in ["http", "email", "email-json"]:
-            message = f"⚠️ {message} - UNENCRYPTED PROTOCOL"
+            message = f"{message} - UNENCRYPTED PROTOCOL"
 
         return message
 
@@ -1545,7 +1545,7 @@ class EventMessageFormatter:
         # Check for encryption
         kms_key = attributes.get("KmsMasterKeyId") if attributes else None
         if not kms_key:
-            message = f"⚠️ {message} - ENCRYPTION NOT ENABLED"
+            message = f"{message} - ENCRYPTION NOT ENABLED"
 
         return message
 
@@ -1577,7 +1577,7 @@ class EventMessageFormatter:
 
         # Check for encryption being disabled
         if "KmsMasterKeyId" in attributes and not attributes["KmsMasterKeyId"]:
-            message = f"⚠️ SQS QUEUE ENCRYPTION DISABLED: {queue_url}"
+            message = f"SQS QUEUE ENCRYPTION DISABLED: {queue_url}"
 
         return message
 
@@ -1595,9 +1595,9 @@ class EventMessageFormatter:
         # Check for public access in policy
         if policy:
             if '"Principal":"*"' in policy or '"Principal":{"AWS":"*"}' in policy:
-                message = f"⚠️ SQS QUEUE POLICY ALLOWS PUBLIC ACCESS: {queue_url}"
+                message = f"SQS QUEUE POLICY ALLOWS PUBLIC ACCESS: {queue_url}"
             elif "Condition" not in policy and "*" in policy:
-                message = f"⚠️ {message} (contains wildcards without conditions)"
+                message = f"{message} (contains wildcards without conditions)"
 
         return message
 
@@ -1628,7 +1628,7 @@ class EventMessageFormatter:
             kms_key = encryption_config.get("kmsKey", "default")
             message += f" - encrypted with KMS ({kms_key})"
         else:
-            message = f"⚠️ {message} - ENCRYPTION NOT CONFIGURED"
+            message = f"{message} - ENCRYPTION NOT CONFIGURED"
 
         return message
 
@@ -1711,10 +1711,10 @@ class EventMessageFormatter:
                 or '"Principal":{"AWS":"*"}' in policy_text
             ):
                 message = (
-                    f"⚠️ ECR REPOSITORY POLICY ALLOWS PUBLIC ACCESS: {repository_name}"
+                    f"ECR REPOSITORY POLICY ALLOWS PUBLIC ACCESS: {repository_name}"
                 )
             elif "Condition" not in policy_text and "*" in policy_text:
-                message = f"⚠️ {message} (contains wildcards without conditions)"
+                message = f"{message} (contains wildcards without conditions)"
 
         return message
 
@@ -1732,7 +1732,7 @@ class EventMessageFormatter:
         if scan_on_push:
             message += " - scan on push ENABLED"
         else:
-            message = f"⚠️ {message} - scan on push DISABLED"
+            message = f"{message} - scan on push DISABLED"
 
         return message
 
@@ -1792,7 +1792,7 @@ class EventMessageFormatter:
         )
         assign_public_ip = awsvpc_config.get("assignPublicIp", "")
         if assign_public_ip == "ENABLED":
-            message = f"⚠️ {message} - PUBLIC IP ASSIGNED"
+            message = f"{message} - PUBLIC IP ASSIGNED"
 
         return message
 
@@ -1868,7 +1868,7 @@ class EventMessageFormatter:
             ]
             if privileged_containers:
                 container_names = ", ".join(privileged_containers)
-                message = f"⚠️ {message} - PRIVILEGED CONTAINER(S): {container_names}"
+                message = f"{message} - PRIVILEGED CONTAINER(S): {container_names}"
 
         return message
 

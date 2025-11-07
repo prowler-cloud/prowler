@@ -44,10 +44,12 @@ class TestTimelineEvent:
             message="Instance created",
         )
 
-        event_dict = event.to_dict()
+        event_dict = event.dict()
 
-        assert event_dict["timestamp"] == "2025-10-15T14:23:45+00:00"
-        assert event_dict["event_type"] == "instance_created"
+        assert event_dict["timestamp"] == datetime(
+            2025, 10, 15, 14, 23, 45, tzinfo=timezone.utc
+        )
+        assert event_dict["event_type"] == EC2EventType.INSTANCE_CREATED
         assert event_dict["resource_id"] == "i-0abc123"
         assert event_dict["principal"] == "deploy-role"
 
@@ -104,10 +106,12 @@ class TestFindingEnrichment:
             created_at=datetime(2025, 10, 15, 14, 23, 45, tzinfo=timezone.utc),
         )
 
-        enrichment_dict = enrichment.to_dict()
+        enrichment_dict = enrichment.dict()
 
         assert enrichment_dict["created_by"] == "test-user"
-        assert enrichment_dict["created_at"] == "2025-10-15T14:23:45+00:00"
+        assert enrichment_dict["created_at"] == datetime(
+            2025, 10, 15, 14, 23, 45, tzinfo=timezone.utc
+        )
         assert enrichment_dict["timeline"] == []
 
     def test_get_age_days(self):

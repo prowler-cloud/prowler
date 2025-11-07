@@ -1,9 +1,10 @@
 """Data models for finding enrichment with CloudTrail timeline events."""
 
-from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
-from typing import Any
+from typing import Any, Optional
+
+from pydantic.v1 import BaseModel, validator
 
 
 # General resource events
@@ -295,36 +296,7 @@ class EventBridgeEventType(str, Enum):
     RULE_UPDATED = "eventbridge_rule_updated"
 
 
-# Union type for all event types
-TimelineEventType = (
-    GeneralEventType
-    | EC2EventType
-    | ELBEventType
-    | RDSEventType
-    | S3EventType
-    | LambdaEventType
-    | VPCEventType
-    | ELBv2EventType
-    | IAMEventType
-    | DynamoDBEventType
-    | KMSEventType
-    | CloudTrailEventType
-    | EBSEventType
-    | SecretsManagerEventType
-    | CloudWatchEventType
-    | SNSEventType
-    | SQSEventType
-    | ECREventType
-    | ECSEventType
-    | EKSEventType
-    | BackupEventType
-    | ACMEventType
-    | EventBridgeEventType
-)
-
-
-@dataclass
-class TimelineEvent:
+class TimelineEvent(BaseModel):
     """Represents a single event in the resource timeline from CloudTrail.
 
     Attributes:
@@ -340,36 +312,46 @@ class TimelineEvent:
 
     timestamp: datetime
     event_source: str
-    event_type: TimelineEventType
+    event_type: (
+        GeneralEventType
+        | EC2EventType
+        | ELBEventType
+        | RDSEventType
+        | S3EventType
+        | LambdaEventType
+        | VPCEventType
+        | ELBv2EventType
+        | IAMEventType
+        | DynamoDBEventType
+        | KMSEventType
+        | CloudTrailEventType
+        | EBSEventType
+        | SecretsManagerEventType
+        | CloudWatchEventType
+        | SNSEventType
+        | SQSEventType
+        | ECREventType
+        | ECSEventType
+        | EKSEventType
+        | BackupEventType
+        | ACMEventType
+        | EventBridgeEventType
+    )
     resource_type: str
     resource_id: str
     principal: str
     message: str
-    event_details: dict[str, Any] = field(default_factory=dict)
+    event_details: dict[str, Any] = {}
 
-    def __post_init__(self):
+    @validator("timestamp", pre=True)
+    def ensure_timezone_aware(cls, v):
         """Ensure timestamp is timezone-aware UTC."""
-        if self.timestamp.tzinfo is None:
-            from datetime import timezone
-
-            self.timestamp = self.timestamp.replace(tzinfo=timezone.utc)
-
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary for JSON serialization."""
-        return {
-            "timestamp": self.timestamp.isoformat(),
-            "event_source": self.event_source,
-            "event_type": self.event_type.value,
-            "resource_type": self.resource_type,
-            "resource_id": self.resource_id,
-            "principal": self.principal,
-            "message": self.message,
-            "event_details": self.event_details,
-        }
+        if isinstance(v, datetime) and v.tzinfo is None:
+            return v.replace(tzinfo=timezone.utc)
+        return v
 
 
-@dataclass
-class FindingEnrichment:
+class FindingEnrichment(BaseModel):
     """Enrichment data added to a finding from CloudTrail timeline.
 
     Attributes:
@@ -381,46 +363,29 @@ class FindingEnrichment:
         related_resources: Other resources involved in timeline events
     """
 
-    timeline: list[TimelineEvent] = field(default_factory=list)
-    created_by: str | None = None
-    created_at: datetime | None = None
-    last_modified_by: str | None = None
-    last_modified_at: datetime | None = None
-    related_resources: list[dict[str, str]] = field(default_factory=list)
+    timeline: list[TimelineEvent] = []
+    created_by: Optional[str] = None
+    created_at: Optional[datetime] = None
+    last_modified_by: Optional[str] = None
+    last_modified_at: Optional[datetime] = None
+    related_resources: list[dict[str, str]] = []
 
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary for JSON serialization."""
-        return {
-            "timeline": [event.to_dict() for event in self.timeline],
-            "created_by": self.created_by,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
-            "last_modified_by": self.last_modified_by,
-            "last_modified_at": (
-                self.last_modified_at.isoformat() if self.last_modified_at else None
-            ),
-            "related_resources": self.related_resources,
-        }
-
-    def get_age_days(self) -> int | None:
+    def get_age_days(self) -> Optional[int]:
         """Get the age of the resource in days since creation."""
         if not self.created_at:
             return None
-
-        from datetime import timezone
 
         now = datetime.now(timezone.utc)
         delta = now - self.created_at
         return delta.days
 
-    def get_exposure_duration_days(self) -> int | None:
+    def get_exposure_duration_days(self) -> Optional[int]:
         """Get how many days the resource has been in its current state.
 
         This is useful for determining how long a misconfiguration has existed.
         """
         if not self.last_modified_at:
             return None
-
-        from datetime import timezone
 
         now = datetime.now(timezone.utc)
         delta = now - self.last_modified_at

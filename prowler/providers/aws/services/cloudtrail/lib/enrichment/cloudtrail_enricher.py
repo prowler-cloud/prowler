@@ -24,7 +24,6 @@ from prowler.providers.aws.services.cloudtrail.lib.enrichment.models import (
     ECSEventType,
     ELBEventType,
     ELBv2EventType,
-    FindingEnrichment,
     GeneralEventType,
     IAMEventType,
     KMSEventType,
@@ -833,8 +832,15 @@ class CloudTrailEnricher:
                 resource_arn,
             )
 
-            # Convert timeline events to dictionaries
-            return [event.to_dict() for event in timeline_events]
+            # Convert timeline events to dictionaries with JSON-serializable values
+            return [
+                {
+                    **event.dict(),
+                    "timestamp": event.timestamp.isoformat(),
+                    "event_type": event.event_type.value,
+                }
+                for event in timeline_events
+            ]
 
         except ClientError as e:
             error_code = e.response.get("Error", {}).get("Code", "Unknown")
@@ -970,89 +976,6 @@ class CloudTrailEnricher:
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return None
-
-    def _create_enrichment(
-        self, timeline_events: list[TimelineEvent]
-    ) -> FindingEnrichment:
-        """Create FindingEnrichment from timeline events.
-
-        Extracts attribution info (who created, who last modified) from events.
-
-        Args:
-            timeline_events: List of timeline events
-
-        Returns:
-            FindingEnrichment object
-        """
-        if not timeline_events:
-            return FindingEnrichment()
-
-        # Sort events by timestamp
-        sorted_events = sorted(timeline_events, key=lambda e: e.timestamp)
-
-        # Extract creation info
-        created_by = None
-        created_at = None
-        for event in sorted_events:
-            if event.event_type in [
-                GeneralEventType.RESOURCE_CREATED,
-                EC2EventType.INSTANCE_CREATED,
-                EC2EventType.SECURITY_GROUP_CREATED,
-                EC2EventType.NETWORK_INTERFACE_CREATED,
-                ELBEventType.LOAD_BALANCER_CREATED,
-                RDSEventType.INSTANCE_CREATED,
-                RDSEventType.CLUSTER_CREATED,
-                S3EventType.BUCKET_CREATED,
-                LambdaEventType.FUNCTION_CREATED,
-                VPCEventType.VPC_CREATED,
-                VPCEventType.SUBNET_CREATED,
-                ELBv2EventType.LOAD_BALANCER_CREATED,
-                IAMEventType.USER_CREATED,
-                IAMEventType.ROLE_CREATED,
-                DynamoDBEventType.TABLE_CREATED,
-                KMSEventType.KEY_CREATED,
-                CloudTrailEventType.TRAIL_CREATED,
-                EBSEventType.VOLUME_CREATED,
-                EBSEventType.SNAPSHOT_CREATED,
-                SecretsManagerEventType.SECRET_CREATED,
-                CloudWatchEventType.ALARM_CREATED,
-                CloudWatchEventType.LOG_GROUP_CREATED,
-                SNSEventType.TOPIC_CREATED,
-                SQSEventType.QUEUE_CREATED,
-                ECREventType.REPOSITORY_CREATED,
-                ECSEventType.CLUSTER_CREATED,
-                ECSEventType.SERVICE_CREATED,
-            ]:
-                created_by = event.principal
-                created_at = event.timestamp
-                break
-
-        # Extract last modification info
-        last_modified_by = sorted_events[-1].principal if sorted_events else None
-        last_modified_at = sorted_events[-1].timestamp if sorted_events else None
-
-        # Extract related resources
-        related_resources = []
-        seen_resources = set()
-        for event in sorted_events:
-            resource_key = f"{event.resource_type}:{event.resource_id}"
-            if resource_key not in seen_resources:
-                related_resources.append(
-                    {
-                        "resource_type": event.resource_type,
-                        "resource_id": event.resource_id,
-                    }
-                )
-                seen_resources.add(resource_key)
-
-        return FindingEnrichment(
-            timeline=sorted_events,
-            created_by=created_by,
-            created_at=created_at,
-            last_modified_by=last_modified_by,
-            last_modified_at=last_modified_at,
-            related_resources=related_resources,
-        )
 
     def _get_supported_events(self, resource_type: str) -> dict:
         """Get supported CloudTrail events for a resource type.
