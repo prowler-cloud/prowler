@@ -18,7 +18,15 @@ from tasks.utils import CustomEncoder
 
 from api.db_router import MainRouter
 from api.exceptions import ProviderConnectionError
-from api.models import Finding, Provider, Resource, Scan, StateChoices, StatusChoices
+from api.models import (
+    Finding,
+    MuteRule,
+    Provider,
+    Resource,
+    Scan,
+    StateChoices,
+    StatusChoices,
+)
 from prowler.lib.check.models import Severity
 
 
@@ -738,6 +746,561 @@ class TestPerformScan:
 
         # Assert that failed_findings_count was reset to 0 during the scan
         assert resource.failed_findings_count == 0
+
+    def test_perform_prowler_scan_with_active_mute_rules(
+        self,
+        tenants_fixture,
+        scans_fixture,
+        providers_fixture,
+    ):
+        """Test active MuteRule mutes findings with correct reason"""
+        with (
+            patch("api.db_utils.rls_transaction"),
+            patch(
+                "tasks.jobs.scan.initialize_prowler_provider"
+            ) as mock_initialize_prowler_provider,
+            patch("tasks.jobs.scan.ProwlerScan") as mock_prowler_scan_class,
+            patch(
+                "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE",
+                new_callable=dict,
+            ),
+            patch("api.compliance.PROWLER_CHECKS", new_callable=dict),
+        ):
+            tenant = tenants_fixture[0]
+            scan = scans_fixture[0]
+            provider = providers_fixture[0]
+
+            provider.provider = Provider.ProviderChoices.AWS
+            provider.save()
+
+            tenant_id = str(tenant.id)
+            scan_id = str(scan.id)
+            provider_id = str(provider.id)
+
+            # Create active MuteRule with specific finding UIDs
+            mute_rule_reason = "Accepted risk - production exception"
+            finding_uid_1 = "finding_to_mute_1"
+            finding_uid_2 = "finding_to_mute_2"
+
+            MuteRule.objects.create(
+                tenant_id=tenant_id,
+                name="Production Exception Rule",
+                reason=mute_rule_reason,
+                enabled=True,
+                finding_uids=[finding_uid_1, finding_uid_2],
+            )
+
+            # Mock findings: one FAIL and one PASS, both should be muted
+            muted_fail_finding = MagicMock()
+            muted_fail_finding.uid = finding_uid_1
+            muted_fail_finding.status = StatusChoices.FAIL
+            muted_fail_finding.status_extended = "muted fail"
+            muted_fail_finding.severity = Severity.high
+            muted_fail_finding.check_id = "muted_fail_check"
+            muted_fail_finding.get_metadata.return_value = {"key": "value"}
+            muted_fail_finding.resource_uid = "resource_uid_1"
+            muted_fail_finding.resource_name = "resource_1"
+            muted_fail_finding.region = "us-east-1"
+            muted_fail_finding.service_name = "ec2"
+            muted_fail_finding.resource_type = "instance"
+            muted_fail_finding.resource_tags = {}
+            muted_fail_finding.muted = False
+            muted_fail_finding.raw = {}
+            muted_fail_finding.resource_metadata = {}
+            muted_fail_finding.resource_details = {}
+            muted_fail_finding.partition = "aws"
+            muted_fail_finding.compliance = {}
+
+            muted_pass_finding = MagicMock()
+            muted_pass_finding.uid = finding_uid_2
+            muted_pass_finding.status = StatusChoices.PASS
+            muted_pass_finding.status_extended = "muted pass"
+            muted_pass_finding.severity = Severity.medium
+            muted_pass_finding.check_id = "muted_pass_check"
+            muted_pass_finding.get_metadata.return_value = {"key": "value"}
+            muted_pass_finding.resource_uid = "resource_uid_2"
+            muted_pass_finding.resource_name = "resource_2"
+            muted_pass_finding.region = "us-east-1"
+            muted_pass_finding.service_name = "s3"
+            muted_pass_finding.resource_type = "bucket"
+            muted_pass_finding.resource_tags = {}
+            muted_pass_finding.muted = False
+            muted_pass_finding.raw = {}
+            muted_pass_finding.resource_metadata = {}
+            muted_pass_finding.resource_details = {}
+            muted_pass_finding.partition = "aws"
+            muted_pass_finding.compliance = {}
+
+            # Mock the ProwlerScan instance
+            mock_prowler_scan_instance = MagicMock()
+            mock_prowler_scan_instance.scan.return_value = [
+                (100, [muted_fail_finding, muted_pass_finding])
+            ]
+            mock_prowler_scan_class.return_value = mock_prowler_scan_instance
+
+            # Mock prowler_provider
+            mock_prowler_provider_instance = MagicMock()
+            mock_prowler_provider_instance.get_regions.return_value = ["us-east-1"]
+            mock_initialize_prowler_provider.return_value = (
+                mock_prowler_provider_instance
+            )
+
+            # Call the function under test
+            perform_prowler_scan(tenant_id, scan_id, provider_id, [])
+
+        # Verify findings are muted with correct reason
+        fail_finding_db = Finding.objects.get(uid=finding_uid_1)
+        pass_finding_db = Finding.objects.get(uid=finding_uid_2)
+
+        assert fail_finding_db.muted
+        assert fail_finding_db.muted_reason == mute_rule_reason
+        assert fail_finding_db.muted_at is not None
+
+        assert pass_finding_db.muted
+        assert pass_finding_db.muted_reason == mute_rule_reason
+        assert pass_finding_db.muted_at is not None
+
+        # Verify failed_findings_count is 0 for muted FAIL finding
+        resource_1 = Resource.objects.get(uid="resource_uid_1")
+        assert resource_1.failed_findings_count == 0
+
+    def test_perform_prowler_scan_with_inactive_mute_rules(
+        self,
+        tenants_fixture,
+        scans_fixture,
+        providers_fixture,
+    ):
+        """Test inactive MuteRule does not mute findings"""
+        with (
+            patch("api.db_utils.rls_transaction"),
+            patch(
+                "tasks.jobs.scan.initialize_prowler_provider"
+            ) as mock_initialize_prowler_provider,
+            patch("tasks.jobs.scan.ProwlerScan") as mock_prowler_scan_class,
+            patch(
+                "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE",
+                new_callable=dict,
+            ),
+            patch("api.compliance.PROWLER_CHECKS", new_callable=dict),
+        ):
+            tenant = tenants_fixture[0]
+            scan = scans_fixture[0]
+            provider = providers_fixture[0]
+
+            provider.provider = Provider.ProviderChoices.AWS
+            provider.save()
+
+            tenant_id = str(tenant.id)
+            scan_id = str(scan.id)
+            provider_id = str(provider.id)
+
+            # Create inactive MuteRule
+            finding_uid = "finding_inactive_rule"
+            MuteRule.objects.create(
+                tenant_id=tenant_id,
+                name="Inactive Rule",
+                reason="Should not apply",
+                enabled=False,
+                finding_uids=[finding_uid],
+            )
+
+            # Mock FAIL finding
+            fail_finding = MagicMock()
+            fail_finding.uid = finding_uid
+            fail_finding.status = StatusChoices.FAIL
+            fail_finding.status_extended = "test fail"
+            fail_finding.severity = Severity.high
+            fail_finding.check_id = "fail_check"
+            fail_finding.get_metadata.return_value = {"key": "value"}
+            fail_finding.resource_uid = "resource_uid_inactive"
+            fail_finding.resource_name = "resource_inactive"
+            fail_finding.region = "us-east-1"
+            fail_finding.service_name = "ec2"
+            fail_finding.resource_type = "instance"
+            fail_finding.resource_tags = {}
+            fail_finding.muted = False
+            fail_finding.raw = {}
+            fail_finding.resource_metadata = {}
+            fail_finding.resource_details = {}
+            fail_finding.partition = "aws"
+            fail_finding.compliance = {}
+
+            # Mock the ProwlerScan instance
+            mock_prowler_scan_instance = MagicMock()
+            mock_prowler_scan_instance.scan.return_value = [(100, [fail_finding])]
+            mock_prowler_scan_class.return_value = mock_prowler_scan_instance
+
+            # Mock prowler_provider
+            mock_prowler_provider_instance = MagicMock()
+            mock_prowler_provider_instance.get_regions.return_value = ["us-east-1"]
+            mock_initialize_prowler_provider.return_value = (
+                mock_prowler_provider_instance
+            )
+
+            # Call the function under test
+            perform_prowler_scan(tenant_id, scan_id, provider_id, [])
+
+        # Verify finding is NOT muted
+        finding_db = Finding.objects.get(uid=finding_uid)
+        assert not finding_db.muted
+        assert finding_db.muted_reason is None
+        assert finding_db.muted_at is None
+
+        # Verify failed_findings_count increments for FAIL finding
+        resource = Resource.objects.get(uid="resource_uid_inactive")
+        assert resource.failed_findings_count == 1
+
+    def test_perform_prowler_scan_mutelist_overrides_mute_rules(
+        self,
+        tenants_fixture,
+        scans_fixture,
+        providers_fixture,
+    ):
+        """Test mutelist processor takes precedence over MuteRule"""
+        with (
+            patch("api.db_utils.rls_transaction"),
+            patch(
+                "tasks.jobs.scan.initialize_prowler_provider"
+            ) as mock_initialize_prowler_provider,
+            patch("tasks.jobs.scan.ProwlerScan") as mock_prowler_scan_class,
+            patch(
+                "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE",
+                new_callable=dict,
+            ),
+            patch("api.compliance.PROWLER_CHECKS", new_callable=dict),
+        ):
+            tenant = tenants_fixture[0]
+            scan = scans_fixture[0]
+            provider = providers_fixture[0]
+
+            provider.provider = Provider.ProviderChoices.AWS
+            provider.save()
+
+            tenant_id = str(tenant.id)
+            scan_id = str(scan.id)
+            provider_id = str(provider.id)
+
+            # Create active MuteRule
+            finding_uid = "finding_both_rules"
+            MuteRule.objects.create(
+                tenant_id=tenant_id,
+                name="Manual Mute Rule",
+                reason="Muted by manual rule",
+                enabled=True,
+                finding_uids=[finding_uid],
+            )
+
+            # Mock finding with mutelist processor muted=True
+            muted_finding = MagicMock()
+            muted_finding.uid = finding_uid
+            muted_finding.status = StatusChoices.FAIL
+            muted_finding.status_extended = "test"
+            muted_finding.severity = Severity.high
+            muted_finding.check_id = "test_check"
+            muted_finding.get_metadata.return_value = {"key": "value"}
+            muted_finding.resource_uid = "resource_both"
+            muted_finding.resource_name = "resource_both"
+            muted_finding.region = "us-east-1"
+            muted_finding.service_name = "ec2"
+            muted_finding.resource_type = "instance"
+            muted_finding.resource_tags = {}
+            muted_finding.muted = True
+            muted_finding.raw = {}
+            muted_finding.resource_metadata = {}
+            muted_finding.resource_details = {}
+            muted_finding.partition = "aws"
+            muted_finding.compliance = {}
+
+            # Mock the ProwlerScan instance
+            mock_prowler_scan_instance = MagicMock()
+            mock_prowler_scan_instance.scan.return_value = [(100, [muted_finding])]
+            mock_prowler_scan_class.return_value = mock_prowler_scan_instance
+
+            # Mock prowler_provider
+            mock_prowler_provider_instance = MagicMock()
+            mock_prowler_provider_instance.get_regions.return_value = ["us-east-1"]
+            mock_initialize_prowler_provider.return_value = (
+                mock_prowler_provider_instance
+            )
+
+            # Call the function under test
+            perform_prowler_scan(tenant_id, scan_id, provider_id, [])
+
+        # Verify mutelist reason takes precedence
+        finding_db = Finding.objects.get(uid=finding_uid)
+        assert finding_db.muted
+        assert finding_db.muted_reason == "Muted by mutelist"
+        assert finding_db.muted_at is not None
+
+        # Verify failed_findings_count is 0
+        resource = Resource.objects.get(uid="resource_both")
+        assert resource.failed_findings_count == 0
+
+    def test_perform_prowler_scan_mute_rules_multiple_findings(
+        self,
+        tenants_fixture,
+        scans_fixture,
+        providers_fixture,
+    ):
+        """Test MuteRule with multiple finding UIDs mutes all findings"""
+        with (
+            patch("api.db_utils.rls_transaction"),
+            patch(
+                "tasks.jobs.scan.initialize_prowler_provider"
+            ) as mock_initialize_prowler_provider,
+            patch("tasks.jobs.scan.ProwlerScan") as mock_prowler_scan_class,
+            patch(
+                "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE",
+                new_callable=dict,
+            ),
+            patch("api.compliance.PROWLER_CHECKS", new_callable=dict),
+        ):
+            tenant = tenants_fixture[0]
+            scan = scans_fixture[0]
+            provider = providers_fixture[0]
+
+            provider.provider = Provider.ProviderChoices.AWS
+            provider.save()
+
+            tenant_id = str(tenant.id)
+            scan_id = str(scan.id)
+            provider_id = str(provider.id)
+
+            # Create MuteRule with multiple finding UIDs
+            mute_rule_reason = "Bulk exception for dev environment"
+            finding_uids = [
+                "bulk_finding_1",
+                "bulk_finding_2",
+                "bulk_finding_3",
+                "bulk_finding_4",
+            ]
+            MuteRule.objects.create(
+                tenant_id=tenant_id,
+                name="Bulk Mute Rule",
+                reason=mute_rule_reason,
+                enabled=True,
+                finding_uids=finding_uids,
+            )
+
+            # Mock multiple findings with mixed statuses
+            findings = []
+            for i, uid in enumerate(finding_uids):
+                finding = MagicMock()
+                finding.uid = uid
+                finding.status = (
+                    StatusChoices.FAIL if i % 2 == 0 else StatusChoices.PASS
+                )
+                finding.status_extended = f"test {i}"
+                finding.severity = Severity.medium
+                finding.check_id = f"check_{i}"
+                finding.get_metadata.return_value = {"key": f"value_{i}"}
+                finding.resource_uid = f"resource_bulk_{i}"
+                finding.resource_name = f"resource_{i}"
+                finding.region = "us-west-2"
+                finding.service_name = "lambda"
+                finding.resource_type = "function"
+                finding.resource_tags = {}
+                finding.muted = False
+                finding.raw = {}
+                finding.resource_metadata = {}
+                finding.resource_details = {}
+                finding.partition = "aws"
+                finding.compliance = {}
+                findings.append(finding)
+
+            # Mock the ProwlerScan instance
+            mock_prowler_scan_instance = MagicMock()
+            mock_prowler_scan_instance.scan.return_value = [(100, findings)]
+            mock_prowler_scan_class.return_value = mock_prowler_scan_instance
+
+            # Mock prowler_provider
+            mock_prowler_provider_instance = MagicMock()
+            mock_prowler_provider_instance.get_regions.return_value = ["us-west-2"]
+            mock_initialize_prowler_provider.return_value = (
+                mock_prowler_provider_instance
+            )
+
+            # Call the function under test
+            perform_prowler_scan(tenant_id, scan_id, provider_id, [])
+
+        # Verify all findings are muted with same reason
+        for uid in finding_uids:
+            finding_db = Finding.objects.get(uid=uid)
+            assert finding_db.muted
+            assert finding_db.muted_reason == mute_rule_reason
+            assert finding_db.muted_at is not None
+
+        # Verify all resources have failed_findings_count = 0
+        for i in range(len(finding_uids)):
+            resource = Resource.objects.get(uid=f"resource_bulk_{i}")
+            assert resource.failed_findings_count == 0
+
+    def test_perform_prowler_scan_mute_rules_error_handling(
+        self,
+        tenants_fixture,
+        scans_fixture,
+        providers_fixture,
+    ):
+        """Test scan continues when MuteRule loading fails"""
+        with (
+            patch("api.db_utils.rls_transaction"),
+            patch(
+                "tasks.jobs.scan.initialize_prowler_provider"
+            ) as mock_initialize_prowler_provider,
+            patch("tasks.jobs.scan.ProwlerScan") as mock_prowler_scan_class,
+            patch(
+                "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE",
+                new_callable=dict,
+            ),
+            patch("api.compliance.PROWLER_CHECKS", new_callable=dict),
+            patch("api.models.MuteRule.objects.filter") as mock_mute_rule_filter,
+        ):
+            tenant = tenants_fixture[0]
+            scan = scans_fixture[0]
+            provider = providers_fixture[0]
+
+            provider.provider = Provider.ProviderChoices.AWS
+            provider.save()
+
+            tenant_id = str(tenant.id)
+            scan_id = str(scan.id)
+            provider_id = str(provider.id)
+
+            # Mock MuteRule.objects.filter to raise exception
+            mock_mute_rule_filter.side_effect = Exception("Database error")
+
+            # Mock finding
+            finding = MagicMock()
+            finding.uid = "finding_error_handling"
+            finding.status = StatusChoices.FAIL
+            finding.status_extended = "test"
+            finding.severity = Severity.high
+            finding.check_id = "test_check"
+            finding.get_metadata.return_value = {"key": "value"}
+            finding.resource_uid = "resource_error"
+            finding.resource_name = "resource_error"
+            finding.region = "us-east-1"
+            finding.service_name = "ec2"
+            finding.resource_type = "instance"
+            finding.resource_tags = {}
+            finding.muted = False
+            finding.raw = {}
+            finding.resource_metadata = {}
+            finding.resource_details = {}
+            finding.partition = "aws"
+            finding.compliance = {}
+
+            # Mock the ProwlerScan instance
+            mock_prowler_scan_instance = MagicMock()
+            mock_prowler_scan_instance.scan.return_value = [(100, [finding])]
+            mock_prowler_scan_class.return_value = mock_prowler_scan_instance
+
+            # Mock prowler_provider
+            mock_prowler_provider_instance = MagicMock()
+            mock_prowler_provider_instance.get_regions.return_value = ["us-east-1"]
+            mock_initialize_prowler_provider.return_value = (
+                mock_prowler_provider_instance
+            )
+
+            # Call the function under test - should not raise
+            perform_prowler_scan(tenant_id, scan_id, provider_id, [])
+
+        # Verify scan completed successfully
+        scan.refresh_from_db()
+        assert scan.state == StateChoices.COMPLETED
+
+        # Verify finding is not muted (mute_rules_cache was empty dict)
+        finding_db = Finding.objects.get(uid="finding_error_handling")
+        assert not finding_db.muted
+        assert finding_db.muted_reason is None
+
+        # Verify failed_findings_count increments
+        resource = Resource.objects.get(uid="resource_error")
+        assert resource.failed_findings_count == 1
+
+    def test_perform_prowler_scan_muted_at_timestamp(
+        self,
+        tenants_fixture,
+        scans_fixture,
+        providers_fixture,
+    ):
+        """Test muted_at timestamp is set correctly for muted findings"""
+        with (
+            patch("api.db_utils.rls_transaction"),
+            patch(
+                "tasks.jobs.scan.initialize_prowler_provider"
+            ) as mock_initialize_prowler_provider,
+            patch("tasks.jobs.scan.ProwlerScan") as mock_prowler_scan_class,
+            patch(
+                "tasks.jobs.scan.PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE",
+                new_callable=dict,
+            ),
+            patch("api.compliance.PROWLER_CHECKS", new_callable=dict),
+        ):
+            tenant = tenants_fixture[0]
+            scan = scans_fixture[0]
+            provider = providers_fixture[0]
+
+            provider.provider = Provider.ProviderChoices.AWS
+            provider.save()
+
+            tenant_id = str(tenant.id)
+            scan_id = str(scan.id)
+            provider_id = str(provider.id)
+
+            # Create active MuteRule
+            finding_uid = "finding_timestamp_test"
+            MuteRule.objects.create(
+                tenant_id=tenant_id,
+                name="Timestamp Test Rule",
+                reason="Testing timestamp",
+                enabled=True,
+                finding_uids=[finding_uid],
+            )
+
+            # Mock finding
+            finding = MagicMock()
+            finding.uid = finding_uid
+            finding.status = StatusChoices.FAIL
+            finding.status_extended = "test"
+            finding.severity = Severity.high
+            finding.check_id = "test_check"
+            finding.get_metadata.return_value = {"key": "value"}
+            finding.resource_uid = "resource_timestamp"
+            finding.resource_name = "resource_timestamp"
+            finding.region = "us-east-1"
+            finding.service_name = "ec2"
+            finding.resource_type = "instance"
+            finding.resource_tags = {}
+            finding.muted = False
+            finding.raw = {}
+            finding.resource_metadata = {}
+            finding.resource_details = {}
+            finding.partition = "aws"
+            finding.compliance = {}
+
+            # Mock the ProwlerScan instance
+            mock_prowler_scan_instance = MagicMock()
+            mock_prowler_scan_instance.scan.return_value = [(100, [finding])]
+            mock_prowler_scan_class.return_value = mock_prowler_scan_instance
+
+            # Mock prowler_provider
+            mock_prowler_provider_instance = MagicMock()
+            mock_prowler_provider_instance.get_regions.return_value = ["us-east-1"]
+            mock_initialize_prowler_provider.return_value = (
+                mock_prowler_provider_instance
+            )
+
+            # Capture time before and after scan
+            before_scan = datetime.now(timezone.utc)
+            perform_prowler_scan(tenant_id, scan_id, provider_id, [])
+            after_scan = datetime.now(timezone.utc)
+
+        # Verify muted_at is within the scan time window
+        finding_db = Finding.objects.get(uid=finding_uid)
+        assert finding_db.muted
+        assert finding_db.muted_at is not None
+        assert before_scan <= finding_db.muted_at <= after_scan
 
 
 # TODO Add tests for aggregations

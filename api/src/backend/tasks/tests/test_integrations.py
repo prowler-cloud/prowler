@@ -9,6 +9,7 @@ from tasks.jobs.integrations import (
     upload_security_hub_integration,
 )
 
+from api.db_router import READ_REPLICA_ALIAS, MainRouter
 from api.models import Integration
 from api.utils import prowler_integration_connection_test
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHubConnection
@@ -880,7 +881,8 @@ class TestSecurityHubIntegrationUploads:
         # Verify RLS transaction was used correctly
         # Should be called twice: once for getting provider info, once for resetting regions
         assert mock_rls.call_count == 2
-        mock_rls.assert_any_call(tenant_id)
+        mock_rls.assert_any_call(tenant_id, using=READ_REPLICA_ALIAS)
+        mock_rls.assert_any_call(tenant_id, using=MainRouter.default_db)
 
         # Verify test_connection was called with integration credentials (not provider's)
         mock_test_connection.assert_called_once_with(
