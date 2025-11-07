@@ -284,6 +284,7 @@ class Provider(RowLevelSecurityProtectedModel):
         KUBERNETES = "kubernetes", _("Kubernetes")
         M365 = "m365", _("M365")
         GITHUB = "github", _("GitHub")
+        MONGODBATLAS = "mongodbatlas", _("MongoDB Atlas")
         IAC = "iac", _("IaC")
         ORACLECLOUD = "oraclecloud", _("Oracle Cloud Infrastructure")
 
@@ -378,6 +379,15 @@ class Provider(RowLevelSecurityProtectedModel):
                 detail="Oracle Cloud Infrastructure provider ID must be a valid tenancy OCID in the format: "
                 "ocid1.<resource_type>.<realm>.<region>.<unique_id>",
                 code="oraclecloud-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_mongodbatlas_uid(value):
+        if not re.match(r"^[0-9a-fA-F]{24}$", value):
+            raise ModelValidationError(
+                detail="MongoDB Atlas organization ID must be a 24-character hexadecimal string.",
+                code="mongodbatlas-uid",
                 pointer="/data/attributes/uid",
             )
 

@@ -1153,6 +1153,11 @@ class TestProviderViewSet:
                     "uid": "https://gitlab.com/user/project",
                     "alias": "GitLab Repo",
                 },
+                {
+                    "provider": "mongodbatlas",
+                    "uid": "64b1d3c0e4b03b1234567890",
+                    "alias": "Atlas Organization",
+                },
             ]
         ),
     )
@@ -1329,6 +1334,24 @@ class TestProviderViewSet:
                     "iac-uid",
                     "uid",
                 ),
+                (
+                    {
+                        "provider": "mongodbatlas",
+                        "uid": "64b1d3c0e4b03b123456789g",
+                        "alias": "test",
+                    },
+                    "mongodbatlas-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "mongodbatlas",
+                        "uid": "1234",
+                        "alias": "test",
+                    },
+                    "mongodbatlas-uid",
+                    "uid",
+                ),
             ]
         ),
     )
@@ -1502,22 +1525,22 @@ class TestProviderViewSet:
                 (
                     "uid.icontains",
                     "1",
-                    6,
-                ),  # Updated: includes OCI provider with "1" in UID
+                    7,
+                ),
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
-                ("inserted_at", TODAY, 7),  # Updated: 7 providers now (added OCI)
+                ("inserted_at", TODAY, 8),
                 (
                     "inserted_at.gte",
                     "2024-01-01",
-                    7,
-                ),  # Updated: 7 providers now (added OCI)
+                    8,
+                ),
                 ("inserted_at.lte", "2024-01-01", 0),
                 (
                     "updated_at.gte",
                     "2024-01-01",
-                    7,
-                ),  # Updated: 7 providers now (added OCI)
+                    8,
+                ),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
         ),
@@ -2055,6 +2078,15 @@ class TestProviderSecretViewSet:
                     "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
                     "region": "us-ashburn-1",
                     "pass_phrase": "my-secure-passphrase",
+                },
+            ),
+            # MongoDB Atlas credentials
+            (
+                Provider.ProviderChoices.MONGODBATLAS.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "atlas_public_key": "public-key",
+                    "atlas_private_key": "private-key",
                 },
             ),
         ],
