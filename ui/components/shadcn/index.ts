@@ -3,7 +3,6 @@ export * from "./button/button";
 export * from "./card/card";
 export * from "./card/resource-stats-card/resource-stats-card";
 export * from "./card/resource-stats-card/resource-stats-card-content";
-export * from "./card/resource-stats-card/resource-stats-card-divider";
 export * from "./card/resource-stats-card/resource-stats-card-header";
 export * from "./dropdown/dropdown";
 export * from "./select/select";
