@@ -46,7 +46,7 @@ export const openAIApiKeySchema = z
   .string()
   .min(1, "API key is required")
   .regex(
-    /^sk-(proj-)?[A-Za-z0-9]{32,}$/,
+    /^sk-(proj-)?[A-Za-z0-9_-]{32,}$/,
     "Invalid API key format. OpenAI keys should start with 'sk-' or 'sk-proj-' followed by at least 32 characters",
   );
 
