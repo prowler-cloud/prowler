@@ -14,6 +14,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - C5 compliance framework for Azure provider [(#9081)](https://github.com/prowler-cloud/prowler/pull/9081)
 - C5 compliance framework for the GCP provider [(#9097)](https://github.com/prowler-cloud/prowler/pull/9097)
 - HIPAA compliance framework for the GCP provider [(#8955)](https://github.com/prowler-cloud/prowler/pull/8955)
+- Add multiple compliance improvements [(#9145)](https://github.com/prowler-cloud/prowler/pull/9145)
+- Added validation for invalid checks, services, and categories in `load_checks_to_execute` function [(#8971)](https://github.com/prowler-cloud/prowler/pull/8971)
 
 ### Changed
 - Update AWS Direct Connect service metadata to new format [(#8855)](https://github.com/prowler-cloud/prowler/pull/8855)
@@ -33,6 +35,14 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS FSx service metadata to new format [(#9006)](https://github.com/prowler-cloud/prowler/pull/9006)
 - Update AWS Glacier service metadata to new format [(#9007)](https://github.com/prowler-cloud/prowler/pull/9007)
 - Update AWS CodeArtifact service metadata to new format [(#8850)](https://github.com/prowler-cloud/prowler/pull/8850)
+- Rename OCI provider to oraclecloud with oci alias [(#9126)](https://github.com/prowler-cloud/prowler/pull/9126)
+
+---
+
+## [v5.13.2] (Prowler UNRELEASED)
+
+### Fixed
+- Check `check_name` has no `resource_name` error for GCP provider [(#9169)](https://github.com/prowler-cloud/prowler/pull/9169)
 
 ---
 
@@ -44,6 +54,11 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Handle timestamp when transforming compliance findings in CCC [(#9042)](https://github.com/prowler-cloud/prowler/pull/9042)
 - Update `resource_id` for admincenter service and avoid unnecessary msgraph requests [(#9019)](https://github.com/prowler-cloud/prowler/pull/9019)
 - Fix `firehose_stream_encrypted_at_rest` description and findings clarity [(#9142)](https://github.com/prowler-cloud/prowler/pull/9142)
+
+---
+
+### Changed
+- Adapt IaC provider to be used in the Prowler App [(#8751)](https://github.com/prowler-cloud/prowler/pull/8751)
 
 ---
 

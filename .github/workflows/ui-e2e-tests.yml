@@ -28,6 +28,11 @@ jobs:
       E2E_AZURE_CLIENT_ID: ${{ secrets.E2E_AZURE_CLIENT_ID }}
       E2E_AZURE_SECRET_ID: ${{ secrets.E2E_AZURE_SECRET_ID }}
       E2E_AZURE_TENANT_ID: ${{ secrets.E2E_AZURE_TENANT_ID }}
+      E2E_M365_DOMAIN_ID: ${{ secrets.E2E_M365_DOMAIN_ID }}
+      E2E_M365_CLIENT_ID: ${{ secrets.E2E_M365_CLIENT_ID }}
+      E2E_M365_SECRET_ID: ${{ secrets.E2E_M365_SECRET_ID }}
+      E2E_M365_TENANT_ID: ${{ secrets.E2E_M365_TENANT_ID }}
+      E2E_M365_CERTIFICATE_CONTENT: ${{ secrets.E2E_M365_CERTIFICATE_CONTENT }}
       E2E_NEW_PASSWORD: ${{ secrets.E2E_NEW_PASSWORD }}
     steps:
       - name: Checkout repository
@@ -70,7 +75,7 @@ jobs:
             echo "All database fixtures loaded successfully!"
           '
       - name: Setup Node.js environment
-        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
         with:
           node-version: '20.x'
           cache: 'npm'
