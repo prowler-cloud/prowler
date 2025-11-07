@@ -230,6 +230,7 @@ class TestEventMessageFormatter:
         assert "postgres" in message
         assert "PUBLICLY ACCESSIBLE" in message or "PUBLIC" in message
         assert "False" in message or "encrypted" in message.lower()
+        assert "⚠" not in message  # No emoji
 
     def test_format_rds_instance_created_private(self):
         """Test formatting CreateDBInstance for private instance."""
@@ -278,6 +279,7 @@ class TestEventMessageFormatter:
 
         assert "snapshot-123" in message
         assert "PUBLIC" in message or "public" in message
+        assert "⚠" not in message  # No emoji
 
     def test_format_s3_bucket_created(self):
         """Test formatting CreateBucket event."""
@@ -315,6 +317,7 @@ class TestEventMessageFormatter:
 
         assert "public-bucket" in message
         assert "PUBLIC" in message or "public" in message
+        assert "⚠" not in message  # No emoji
 
     def test_format_s3_public_access_block_changed_disabled(self):
         """Test formatting PutPublicAccessBlock with block disabled."""
@@ -334,6 +337,7 @@ class TestEventMessageFormatter:
 
         assert "my-bucket" in message
         assert "DISABLED" in message or "disabled" in message
+        assert "⚠" not in message  # No emoji
 
     def test_format_s3_encryption_changed(self):
         """Test formatting PutBucketEncryption event."""
@@ -388,6 +392,7 @@ class TestEventMessageFormatter:
         assert "public-function" in message
         assert "PUBLIC" in message or "public" in message
         assert "lambda:InvokeFunction" in message or "InvokeFunction" in message
+        assert "⚠" not in message  # No emoji
 
     def test_format_lambda_function_url_created_no_auth(self):
         """Test formatting CreateFunctionUrlConfig with no auth."""
@@ -403,6 +408,7 @@ class TestEventMessageFormatter:
 
         assert "url-function" in message
         assert "NO AUTH" in message or "NONE" in message or "no auth" in message.lower()
+        assert "⚠" not in message  # No emoji
 
     def test_format_lambda_code_updated(self):
         """Test formatting UpdateFunctionCode event."""
@@ -432,6 +438,7 @@ class TestEventMessageFormatter:
 
         assert "subnet-123abc" in message
         assert "AUTO-ASSIGN PUBLIC IP" in message or "public" in message.lower()
+        assert "⚠" not in message  # No emoji
 
     def test_format_route_created_public(self):
         """Test formatting CreateRoute with internet gateway."""
@@ -448,6 +455,7 @@ class TestEventMessageFormatter:
         assert "0.0.0.0/0" in message
         assert "igw-456def" in message
         assert "PUBLIC ROUTE" in message or "public" in message.lower()
+        assert "⚠" not in message  # No emoji
 
     def test_format_internet_gateway_attached(self):
         """Test formatting AttachInternetGateway."""
@@ -478,6 +486,7 @@ class TestEventMessageFormatter:
         assert "my-alb" in message
         assert "application" in message
         assert "INTERNET-FACING" in message or "internet" in message.lower()
+        assert "⚠" not in message  # No emoji
 
     def test_format_elbv2_listener_created_http(self):
         """Test formatting CreateListener with HTTP protocol."""
@@ -494,6 +503,7 @@ class TestEventMessageFormatter:
         assert "HTTP" in message
         assert "80" in message
         assert "UNENCRYPTED" in message or "unencrypted" in message.lower()
+        assert "⚠" not in message  # No emoji
 
     def test_format_iam_role_created_with_service(self):
         """Test formatting CreateRole with service principal."""
@@ -540,6 +550,7 @@ class TestEventMessageFormatter:
         assert "AdministratorAccess" in message
         assert "MyAdminRole" in message
         assert "PRIVILEGED" in message or "privileged" in message.lower()
+        assert "⚠" not in message  # No emoji
 
     def test_format_iam_access_key_created(self):
         """Test formatting CreateAccessKey."""
@@ -566,6 +577,7 @@ class TestEventMessageFormatter:
 
         assert "MyTable" in message
         assert "ENCRYPTION NOT ENABLED" in message or "encryption" in message.lower()
+        assert "⚠" not in message  # No emoji
 
     def test_format_dynamodb_pitr_enabled(self):
         """Test formatting UpdateContinuousBackups with PITR enabled."""
@@ -632,7 +644,7 @@ class TestEventMessageFormatter:
 
         assert "1234abcd-12ab-34cd-56ef-1234567890ab" in message
         assert "30" in message
-        assert "⚠️" in message or "DELETION SCHEDULED" in message
+        assert "DELETION SCHEDULED" in message
 
     def test_format_kms_key_deletion_scheduled_short_window(self):
         """Test formatting ScheduleKeyDeletion with minimum pending period."""
@@ -658,7 +670,7 @@ class TestEventMessageFormatter:
         message = EventMessageFormatter.format_kms_key_disabled(event)
 
         assert "disabled-key-123" in message
-        assert "⚠️" in message or "DISABLED" in message
+        assert "DISABLED" in message
 
     def test_format_kms_key_enabled(self):
         """Test formatting EnableKey event."""
@@ -685,7 +697,7 @@ class TestEventMessageFormatter:
         message = EventMessageFormatter.format_kms_key_rotation_disabled(event)
 
         assert "no-rotation-key" in message
-        assert "⚠️" in message or "ROTATION DISABLED" in message
+        assert "ROTATION DISABLED" in message
 
     def test_format_kms_key_policy_changed_public(self):
         """Test formatting PutKeyPolicy with public access policy."""
@@ -713,7 +725,7 @@ class TestEventMessageFormatter:
         message = EventMessageFormatter.format_kms_key_policy_changed(event)
 
         assert "public-key-123" in message
-        assert "⚠️" in message or "PUBLIC ACCESS" in message
+        assert "PUBLIC ACCESS" in message
 
     def test_format_kms_key_policy_changed_aws_principal_wildcard(self):
         """Test formatting PutKeyPolicy with AWS principal wildcard."""
@@ -739,7 +751,7 @@ class TestEventMessageFormatter:
         message = EventMessageFormatter.format_kms_key_policy_changed(event)
 
         assert "wildcard-key" in message
-        assert "⚠️" in message or "PUBLIC ACCESS" in message
+        assert "PUBLIC ACCESS" in message
 
     def test_format_kms_key_policy_changed_normal(self):
         """Test formatting PutKeyPolicy with restricted policy."""
@@ -866,7 +878,7 @@ class TestEventMessageFormatter:
         message = EventMessageFormatter.format_cloudtrail_trail_created(event)
 
         assert "insecure-trail" in message
-        assert "⚠️" in message or "LOG FILE VALIDATION DISABLED" in message
+        assert "LOG FILE VALIDATION DISABLED" in message
 
     def test_format_cloudtrail_trail_deleted(self):
         """Test formatting DeleteTrail event."""
@@ -875,7 +887,7 @@ class TestEventMessageFormatter:
         message = EventMessageFormatter.format_cloudtrail_trail_deleted(event)
 
         assert "deleted-trail" in message
-        assert "⚠️" in message or "DELETED" in message
+        assert "DELETED" in message
 
     def test_format_cloudtrail_logging_stopped(self):
         """Test formatting StopLogging event."""
@@ -884,7 +896,7 @@ class TestEventMessageFormatter:
         message = EventMessageFormatter.format_cloudtrail_logging_stopped(event)
 
         assert "stopped-trail" in message
-        assert "⚠️" in message or "LOGGING STOPPED" in message
+        assert "LOGGING STOPPED" in message
 
     def test_format_cloudtrail_event_selectors_updated_management_disabled(self):
         """Test formatting PutEventSelectors with management events disabled."""
@@ -898,7 +910,7 @@ class TestEventMessageFormatter:
         message = EventMessageFormatter.format_cloudtrail_event_selectors_updated(event)
 
         assert "my-trail" in message
-        assert "⚠️" in message or "MANAGEMENT EVENTS DISABLED" in message
+        assert "MANAGEMENT EVENTS DISABLED" in message
 
     def test_format_ebs_volume_created_unencrypted(self):
         """Test formatting CreateVolume without encryption."""
@@ -917,7 +929,7 @@ class TestEventMessageFormatter:
         assert "vol-123abc" in message
         assert "100GB" in message
         assert "gp3" in message
-        assert "⚠️" in message or "ENCRYPTION NOT ENABLED" in message
+        assert "ENCRYPTION NOT ENABLED" in message
 
     def test_format_ebs_volume_created_encrypted(self):
         """Test formatting CreateVolume with encryption."""
@@ -965,7 +977,7 @@ class TestEventMessageFormatter:
         message = EventMessageFormatter.format_ebs_snapshot_shared(event)
 
         assert "snap-public-123" in message
-        assert "⚠️" in message or "PUBLIC" in message
+        assert "PUBLIC" in message
 
     def test_format_ebs_snapshot_shared_specific_account(self):
         """Test formatting ModifySnapshotAttribute sharing with specific account."""
@@ -992,7 +1004,7 @@ class TestEventMessageFormatter:
         """Test formatting DisableEbsEncryptionByDefault event."""
         message = EventMessageFormatter.format_ebs_encryption_disabled({})
 
-        assert "⚠️" in message or "DISABLED" in message
+        assert "DISABLED" in message
         assert "encryption" in message.lower() or "EBS" in message
 
     def test_format_secrets_manager_secret_created_no_custom_key(self):
@@ -1011,7 +1023,7 @@ class TestEventMessageFormatter:
 
         assert "my-secret" in message
         assert "Database credentials" in message
-        assert "⚠️" in message or "DEFAULT ENCRYPTION KEY" in message
+        assert "DEFAULT ENCRYPTION KEY" in message
 
     def test_format_secrets_manager_secret_created_with_custom_key(self):
         """Test formatting CreateSecret with custom KMS key."""
@@ -1040,11 +1052,7 @@ class TestEventMessageFormatter:
         message = EventMessageFormatter.format_secrets_manager_secret_deleted(event)
 
         assert "permanent-delete" in message
-        assert (
-            "⚠️" in message
-            or "PERMANENTLY DELETED" in message
-            or "NO RECOVERY" in message
-        )
+        assert "PERMANENTLY DELETED" in message or "NO RECOVERY" in message
 
     def test_format_secrets_manager_secret_deleted_with_recovery(self):
         """Test formatting DeleteSecret with recovery window."""
@@ -1083,7 +1091,7 @@ class TestEventMessageFormatter:
         message = EventMessageFormatter.format_secrets_manager_rotation_disabled(event)
 
         assert "no-rotation-secret" in message
-        assert "⚠️" in message or "ROTATION DISABLED" in message
+        assert "ROTATION DISABLED" in message
 
     def test_format_secrets_manager_policy_changed_public(self):
         """Test formatting PutResourcePolicy with public access."""
@@ -1110,7 +1118,7 @@ class TestEventMessageFormatter:
         message = EventMessageFormatter.format_secrets_manager_policy_changed(event)
 
         assert "public-secret" in message
-        assert "⚠️" in message or "PUBLIC ACCESS" in message
+        assert "PUBLIC ACCESS" in message
 
     def test_format_cloudwatch_alarm_created(self):
         """Test formatting PutMetricAlarm event."""
@@ -1140,7 +1148,7 @@ class TestEventMessageFormatter:
         message = EventMessageFormatter.format_cloudwatch_alarm_created(event)
 
         assert "DisabledAlarm" in message
-        assert "⚠️" in message or "ACTIONS DISABLED" in message
+        assert "ACTIONS DISABLED" in message
 
     def test_format_cloudwatch_alarm_deleted_single(self):
         """Test formatting DeleteAlarms for single alarm."""
@@ -1162,7 +1170,6 @@ class TestEventMessageFormatter:
         message = EventMessageFormatter.format_cloudwatch_alarm_deleted(event)
 
         assert "5 alarms" in message or "deleted" in message.lower()
-        assert "⚠️" in message or "alarms deleted" in message.lower()
 
     def test_format_cloudwatch_alarm_actions_disabled(self):
         """Test formatting DisableAlarmActions event."""
@@ -1171,7 +1178,7 @@ class TestEventMessageFormatter:
         message = EventMessageFormatter.format_cloudwatch_alarm_actions_disabled(event)
 
         assert "CriticalAlarm" in message
-        assert "⚠️" in message or "ACTIONS DISABLED" in message
+        assert "ACTIONS DISABLED" in message
 
     def test_format_cloudwatch_alarm_actions_disabled_multiple(self):
         """Test formatting DisableAlarmActions for multiple alarms."""
@@ -1180,7 +1187,6 @@ class TestEventMessageFormatter:
         message = EventMessageFormatter.format_cloudwatch_alarm_actions_disabled(event)
 
         assert "3 alarms" in message or "DISABLED" in message
-        assert "⚠️" in message
 
     def test_format_cloudwatch_alarm_state_changed(self):
         """Test formatting SetAlarmState event."""
@@ -1229,7 +1235,7 @@ class TestEventMessageFormatter:
 
         assert "/aws/lambda/test" in message
         assert "3 days" in message
-        assert "⚠️" in message or "SHORT RETENTION" in message
+        assert "SHORT RETENTION" in message
 
     def test_format_cloudwatch_log_retention_changed_normal(self):
         """Test formatting PutRetentionPolicy with normal retention."""
@@ -1287,7 +1293,7 @@ class TestEventMessageFormatter:
         message = EventMessageFormatter.format_sns_topic_attribute_changed(event)
 
         assert "public-topic" in message
-        assert "⚠️" in message or "PUBLIC ACCESS" in message
+        assert "PUBLIC ACCESS" in message
 
     def test_format_sns_subscription_created_http(self):
         """Test formatting Subscribe event with HTTP protocol."""
@@ -1303,7 +1309,7 @@ class TestEventMessageFormatter:
 
         assert "alerts" in message
         assert "http" in message
-        assert "⚠️" in message or "UNENCRYPTED" in message
+        assert "UNENCRYPTED" in message
 
     def test_format_sns_subscription_created_https(self):
         """Test formatting Subscribe event with HTTPS protocol."""
@@ -1364,7 +1370,7 @@ class TestEventMessageFormatter:
         message = EventMessageFormatter.format_sqs_queue_created(event)
 
         assert "insecure-queue" in message
-        assert "⚠️" in message or "ENCRYPTION NOT ENABLED" in message
+        assert "ENCRYPTION NOT ENABLED" in message
 
     def test_format_sqs_queue_deleted(self):
         """Test formatting DeleteQueue event."""
@@ -1390,7 +1396,7 @@ class TestEventMessageFormatter:
         message = EventMessageFormatter.format_sqs_queue_attribute_changed(event)
 
         assert "my-queue" in message
-        assert "⚠️" in message or "ENCRYPTION DISABLED" in message
+        assert "ENCRYPTION DISABLED" in message
 
     def test_format_sqs_queue_policy_changed_public(self):
         """Test formatting SetQueueAttributes with public policy."""
@@ -1406,7 +1412,7 @@ class TestEventMessageFormatter:
         message = EventMessageFormatter.format_sqs_queue_policy_changed(event)
 
         assert "public-queue" in message
-        assert "⚠️" in message or "PUBLIC ACCESS" in message
+        assert "PUBLIC ACCESS" in message
 
     # ========== ECR Formatter Tests ==========
 
@@ -1443,7 +1449,7 @@ class TestEventMessageFormatter:
         message = EventMessageFormatter.format_ecr_repository_created(event)
 
         assert "insecure-app" in message
-        assert "⚠️" in message or "ENCRYPTION NOT CONFIGURED" in message
+        assert "ENCRYPTION NOT CONFIGURED" in message
 
     def test_format_ecr_repository_deleted(self):
         """Test formatting DeleteRepository event."""
@@ -1492,7 +1498,7 @@ class TestEventMessageFormatter:
         message = EventMessageFormatter.format_ecr_repository_policy_set(event)
 
         assert "public-repo" in message
-        assert "⚠️" in message or "PUBLIC ACCESS" in message
+        assert "PUBLIC ACCESS" in message
 
     def test_format_ecr_image_scan_configured_enabled(self):
         """Test formatting PutImageScanningConfiguration with scan enabled."""
@@ -1507,7 +1513,7 @@ class TestEventMessageFormatter:
 
         assert "my-app" in message
         assert "ENABLED" in message
-        assert "⚠️" not in message
+        assert "⚠" not in message  # No emoji
 
     def test_format_ecr_image_scan_configured_disabled(self):
         """Test formatting PutImageScanningConfiguration with scan disabled."""
@@ -1521,7 +1527,7 @@ class TestEventMessageFormatter:
         message = EventMessageFormatter.format_ecr_image_scan_configured(event)
 
         assert "my-app" in message
-        assert "⚠️" in message or "DISABLED" in message
+        assert "DISABLED" in message
 
     # ========== ECS Formatter Tests ==========
 
@@ -1569,7 +1575,7 @@ class TestEventMessageFormatter:
 
         assert "web-service" in message
         assert "production" in message
-        assert "⚠️" in message or "PUBLIC IP" in message
+        assert "PUBLIC IP" in message
 
     def test_format_ecs_service_created_without_public_ip(self):
         """Test formatting CreateService event without public IP."""
@@ -1637,7 +1643,7 @@ class TestEventMessageFormatter:
 
         assert "web" in message
         assert "5" in message
-        assert "⚠️" in message or "PRIVILEGED" in message
+        assert "PRIVILEGED" in message
 
     def test_format_ecs_task_definition_registered_normal(self):
         """Test formatting RegisterTaskDefinition event without privileged container."""
