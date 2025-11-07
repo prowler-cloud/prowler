@@ -1172,6 +1172,161 @@ class TestProviderViewSet:
         assert Provider.objects.get().alias == provider_json_payload["alias"]
 
     @pytest.mark.parametrize(
+        "provider_json_payload",
+        (
+            [
+                {"provider": "aws", "uid": "111111111111", "alias": "test"},
+                {"provider": "gcp", "uid": "a12322-test54321", "alias": "test"},
+                {
+                    "provider": "kubernetes",
+                    "uid": "kubernetes-test-123456789",
+                    "alias": "test",
+                },
+                {
+                    "provider": "kubernetes",
+                    "uid": "arn:aws:eks:us-east-1:111122223333:cluster/test-cluster-long-name-123456789",
+                    "alias": "EKS",
+                },
+                {
+                    "provider": "kubernetes",
+                    "uid": "gke_aaaa-dev_europe-test1_dev-aaaa-test-cluster-long-name-123456789",
+                    "alias": "GKE",
+                },
+                {
+                    "provider": "kubernetes",
+                    "uid": "gke_project/cluster-name",
+                    "alias": "GKE",
+                },
+                {
+                    "provider": "kubernetes",
+                    "uid": "admin@k8s-demo",
+                    "alias": "test",
+                },
+                {
+                    "provider": "azure",
+                    "uid": "8851db6b-42e5-4533-aa9e-30a32d67e875",
+                    "alias": "test",
+                },
+                {
+                    "provider": "m365",
+                    "uid": "TestingPro.onmicrosoft.com",
+                    "alias": "test",
+                },
+                {
+                    "provider": "m365",
+                    "uid": "subdomain.domain.es",
+                    "alias": "test",
+                },
+                {
+                    "provider": "m365",
+                    "uid": "microsoft.net",
+                    "alias": "test",
+                },
+                {
+                    "provider": "m365",
+                    "uid": "subdomain1.subdomain2.subdomain3.subdomain4.domain.net",
+                    "alias": "test",
+                },
+                {
+                    "provider": "github",
+                    "uid": "test-user",
+                    "alias": "test",
+                },
+                {
+                    "provider": "github",
+                    "uid": "test-organization",
+                    "alias": "GitHub Org",
+                },
+                {
+                    "provider": "github",
+                    "uid": "prowler-cloud",
+                    "alias": "Prowler",
+                },
+                {
+                    "provider": "github",
+                    "uid": "microsoft",
+                    "alias": "Microsoft",
+                },
+                {
+                    "provider": "github",
+                    "uid": "a12345678901234567890123456789012345678",
+                    "alias": "Long Username",
+                },
+            ]
+        ),
+    )
+    @patch("api.v1.views.Task.objects.get")
+    @patch("api.v1.views.delete_provider_task.delay")
+    def test_providers_soft_delete(
+        self,
+        mock_delete_task,
+        mock_task_get,
+        authenticated_client,
+        provider_json_payload,
+        tasks_fixture,
+    ):
+        # Mock the Celery task response
+        prowler_task = tasks_fixture[0]
+        task_mock = Mock()
+        task_mock.id = prowler_task.id
+        mock_delete_task.return_value = task_mock
+        mock_task_get.return_value = prowler_task
+
+        # 1.Create a provider
+        response = authenticated_client.post(
+            reverse("provider-list"), data=provider_json_payload, format="json"
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert Provider.objects.count() == 1
+        provider_id = response.json()["data"]["id"]
+
+        # 2. Soft delete the provider using the actual API endpoint
+        response = authenticated_client.delete(
+            reverse("provider-detail", kwargs={"pk": provider_id})
+        )
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        assert Provider.objects.count() == 0
+        assert Provider.all_objects.count() == 1
+
+        mock_delete_task.assert_called_once_with(
+            provider_id=str(provider_id), tenant_id=ANY
+        )
+
+        # 3. Create a provider with the same UID should succeed (since the old one is soft deleted)
+        response = authenticated_client.post(
+            reverse("provider-list"), data=provider_json_payload, format="json"
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert Provider.objects.count() == 1
+        assert Provider.all_objects.count() == 2
+        provider_id = response.json()["data"]["id"]
+
+        # 4. Creating another provider with the same UID should fail (duplicate)
+        response = authenticated_client.post(
+            reverse("provider-list"), data=provider_json_payload, format="json"
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+        mock_delete_task.reset_mock()
+        mock_delete_task.return_value = task_mock
+
+        # 5. Delete the second provider
+        response = authenticated_client.delete(
+            reverse("provider-detail", kwargs={"pk": provider_id})
+        )
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        assert Provider.objects.count() == 0
+        assert Provider.all_objects.count() == 2
+
+        # 6. Creating a provider with the same UID should succeed again
+        response = authenticated_client.post(
+            reverse("provider-list"), data=provider_json_payload, format="json"
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert Provider.objects.count() == 1
+        assert Provider.all_objects.count() == 3
+
+    @pytest.mark.parametrize(
         "provider_json_payload, error_code, error_pointer",
         (
             [
