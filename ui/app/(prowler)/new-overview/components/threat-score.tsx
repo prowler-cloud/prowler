@@ -7,7 +7,13 @@ import type {
   SectionScores,
 } from "@/actions/overview/types";
 import { RadialChart } from "@/components/graphs/radial-chart";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Skeleton,
+} from "@/components/shadcn";
 
 const THREAT_LEVEL_CONFIG = {
   DANGER: {
@@ -192,6 +198,29 @@ export function ThreatScore({
             </p>
           </Card>
         )}
+      </CardContent>
+    </Card>
+  );
+}
+
+export function ThreatScoreSkeleton() {
+  return (
+    <Card
+      variant="base"
+      className="flex min-h-[372px] min-w-[328px] flex-col justify-between md:max-w-[312px]"
+    >
+      <CardHeader>
+        <Skeleton className="h-7 w-36 rounded-xl" />
+      </CardHeader>
+
+      <CardContent className="flex flex-1 flex-col justify-between space-y-4">
+        {/* Circular skeleton for radial chart */}
+        <div className="relative mx-auto h-[172px] w-full max-w-[250px]">
+          <Skeleton className="mx-auto size-[170px] rounded-full" />
+        </div>
+
+        {/* Bottom info box skeleton */}
+        <Skeleton className="h-[97px] w-full shrink-0 rounded-xl" />
       </CardContent>
     </Card>
   );

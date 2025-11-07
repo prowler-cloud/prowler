@@ -8,5 +8,6 @@ export * from "./card/resource-stats-card/resource-stats-card-header";
 export * from "./dropdown/dropdown";
 export * from "./select/select";
 export * from "./separator/separator";
+export * from "./skeleton/skeleton";
 export * from "./tabs/generic-tabs";
 export * from "./tabs/tabs";

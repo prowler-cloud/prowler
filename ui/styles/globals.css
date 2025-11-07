@@ -167,7 +167,7 @@
 
   /* Background Colors */
   --bg-neutral-primary: var(--color-zinc-950);
-  --bg-neutral-secondary: var(--color-slate-950);
+  --bg-neutral-secondary: var(--color-stone-950);
   --bg-neutral-tertiary: #121110;
   --bg-tag-primary: var(--color-slate-950);
   --bg-warning-primary: var(--color-orange-400);

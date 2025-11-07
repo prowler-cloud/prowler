@@ -11,9 +11,12 @@ import { SearchParamsProps } from "@/types";
 
 import { AccountsSelector } from "./components/accounts-selector";
 import { ProviderTypeSelector } from "./components/provider-type-selector";
-import { RiskSeverityChart } from "./components/risk-severity-chart";
-import { StatusChart } from "./components/status-chart";
-import { ThreatScore } from "./components/threat-score";
+import {
+  RiskSeverityChart,
+  RiskSeverityChartSkeleton,
+} from "./components/risk-severity-chart";
+import { StatusChart, StatusChartSkeleton } from "./components/status-chart";
+import { ThreatScore, ThreatScoreSkeleton } from "./components/threat-score";
 
 const FILTER_PREFIX = "filter[";
 
@@ -42,33 +45,15 @@ export default async function NewOverviewPage({
         <AccountsSelector providers={providersData?.data ?? []} />
       </div>
       <div className="flex flex-col gap-6 md:flex-row md:flex-wrap md:items-stretch">
-        <Suspense
-          fallback={
-            <div className="flex h-[400px] w-full items-center justify-center rounded-xl border border-zinc-900 bg-stone-950">
-              <p className="text-zinc-400">Loading...</p>
-            </div>
-          }
-        >
+        <Suspense fallback={<ThreatScoreSkeleton />}>
           <SSRThreatScore searchParams={resolvedSearchParams} />
         </Suspense>
 
-        <Suspense
-          fallback={
-            <div className="flex h-[400px] w-full items-center justify-center rounded-xl border border-zinc-900 bg-stone-950">
-              <p className="text-zinc-400">Loading...</p>
-            </div>
-          }
-        >
+        <Suspense fallback={<StatusChartSkeleton />}>
           <SSRCheckFindings searchParams={resolvedSearchParams} />
         </Suspense>
 
-        <Suspense
-          fallback={
-            <div className="flex h-[400px] w-full items-center justify-center rounded-xl border border-zinc-900 bg-stone-950">
-              <p className="text-zinc-400">Loading...</p>
-            </div>
-          }
-        >
+        <Suspense fallback={<RiskSeverityChartSkeleton />}>
           <SSRRiskSeverityChart searchParams={resolvedSearchParams} />
         </Suspense>
       </div>
