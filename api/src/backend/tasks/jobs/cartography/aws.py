@@ -43,7 +43,6 @@ def start_aws_ingestion(
         "aws_cloudtrail_management_events_lookback_hours": cartography_config.aws_cloudtrail_management_events_lookback_hours,
     }
 
-    # TODO: Check if there is a way to renew the session token if expired
     boto3_session = get_boto3_session(prowler_api_provider, prowler_sdk_provider)
     regions: list[str] = list(prowler_sdk_provider._enabled_regions)
     requested_syncs = list(cartography_aws.RESOURCE_FUNCTIONS.keys())
@@ -177,7 +176,7 @@ def sync_aws_account(
     for func_name in requested_syncs:
         if func_name in cartography_aws.RESOURCE_FUNCTIONS:
             logger.info(
-                f"Syncing function {func_name} from AWS account {prowler_api_provider.uid}"
+                f"Syncing function {func_name} for AWS account {prowler_api_provider.uid}"
             )
 
             # Updating progress, not really the right place but good enough
@@ -198,7 +197,9 @@ def sync_aws_account(
                     continue
 
             except Exception as e:
-                exception_message = utils.stringify_exception(e, f"Exception for AWS sync function: {func_name}")
+                exception_message = utils.stringify_exception(
+                    e, f"Exception for AWS sync function: {func_name}"
+                )
                 failed_syncs[func_name] = exception_message
 
                 logger.warning(

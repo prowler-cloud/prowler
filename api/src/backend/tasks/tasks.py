@@ -84,7 +84,9 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
             ),
         ),
     ).apply_async()
-    perform_cartography_scan_task.apply_async(kwargs={"tenant_id": tenant_id, "scan_id": scan_id})
+    perform_cartography_scan_task.apply_async(
+        kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
+    )
 
 
 @shared_task(base=RLSTask, name="provider-connection-check")

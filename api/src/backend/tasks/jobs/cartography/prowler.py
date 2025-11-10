@@ -112,9 +112,7 @@ def get_provider_last_scan_findings(
 ) -> list[dict[str, str]]:
     with rls_transaction(prowler_api_provider.tenant_id):
         latest_scan_id_subquery = (
-            Scan.objects.filter(
-                provider_id=prowler_api_provider.id
-            )
+            Scan.objects.filter(provider_id=prowler_api_provider.id)
             .order_by("-updated_at")
             .values("id")[:1]
         )

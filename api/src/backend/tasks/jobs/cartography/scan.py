@@ -1,3 +1,4 @@
+import logging
 import time
 import asyncio
 
@@ -19,6 +20,10 @@ from api.models import (
 from tasks.jobs.cartography import utils
 from api.utils import initialize_prowler_provider
 from tasks.jobs.cartography import aws, prowler
+
+# Without this Celery goes crazy with Cartography logging
+logging.getLogger("cartography").setLevel(logging.ERROR)
+logging.getLogger("neo4j").propagate = False
 
 logger = get_task_logger(__name__)
 
@@ -75,7 +80,6 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             prowler.create_indexes(neo4j_session)
             utils.update_cartography_scan_progress(cartography_scan, 2)
 
-            """
             # The real scan, where iterates over cloud services
             ingestion_exceptions = _call_within_event_loop(
                 CARTOGRAPHY_INGESTION_FUNCTIONS[prowler_api_provider.provider],
@@ -89,7 +93,6 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             # Post-processing: Just keeping it to be more Cartography compliant
             cartography_analysis.run(neo4j_session, cartography_config)
             utils.update_cartography_scan_progress(cartography_scan, 95)
-            """
 
             # Adding Prowler nodes and relationships
             prowler.analysis(neo4j_session, prowler_api_provider, cartography_config)
@@ -97,7 +100,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         logger.info(
             f"Completed Cartography scan ({cartography_scan.id}) for {prowler_api_provider.provider.upper()} provider {prowler_api_provider.id}"
         )
-        utils.modify_cartography_scan(
+        utils.finish_cartography_scan(
             cartography_scan, StateChoices.COMPLETED, ingestion_exceptions
         )
         return ingestion_exceptions
@@ -107,7 +110,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         logger.error(exception_message)
         ingestion_exceptions["global_cartography_scan_error"] = exception_message
 
-        utils.modify_cartography_scan(
+        utils.finish_cartography_scan(
             cartography_scan, StateChoices.FAILED, ingestion_exceptions
         )
         raise

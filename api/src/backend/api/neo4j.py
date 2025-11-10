@@ -1,3 +1,4 @@
+import logging
 import threading
 
 from contextlib import contextmanager
@@ -9,10 +10,13 @@ from django.conf import settings
 
 from tasks.jobs.cartography import ROOT_NODE_LABELS
 
+# Without this Celery goes crazy with Neo4j logging
+logging.getLogger("neo4j").setLevel(logging.ERROR)
+logging.getLogger("neo4j").propagate = False
+
 # Module-level process-wide driver singleton
 _driver: neo4j.Driver | None = None
 _lock = threading.Lock()
-
 
 # Base Neo4j functions
 

@@ -26,7 +26,7 @@ celery_app.conf.visibility_timeout = BROKER_VISIBILITY_TIMEOUT
 
 celery_app.autodiscover_tasks(["api"])
 
-# TODO: We should add something here about creating and closing a Neo4j driver
+# TODO: We should add something here about creating and closing a Neo4j driver
 
 
 class RLSTask(Task):

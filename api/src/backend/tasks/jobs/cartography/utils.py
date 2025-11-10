@@ -32,7 +32,7 @@ def create_cartography_scan(
     return cartography_scan
 
 
-def modify_cartography_scan(
+def finish_cartography_scan(
     cartography_scan: ProwlerAPICartographyScan,
     state: StateChoices,
     ingestion_exceptions: dict[str, Any],
