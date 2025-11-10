@@ -3,7 +3,7 @@ import queue
 import re
 import subprocess
 import threading
-from typing import Union
+from typing import Optional, Union
 
 from prowler.lib.logger import logger
 
@@ -55,6 +55,7 @@ class PowerShellSession:
             text=True,
             bufsize=1,
         )
+        self._last_command_timed_out = False
 
     def sanitize(self, credential: str) -> str:
         """
@@ -121,12 +122,14 @@ class PowerShellSession:
         self.process.stdin.write(f"Write-Output '{self.END}'\n")
         self.process.stdin.write(f"Write-Error '{self.END}'\n")
         return (
-            self.json_parse_output(self.read_output(timeout=timeout))
+            self.json_parse_output(self.read_output(timeout=timeout, command=command))
             if json_parse
-            else self.read_output(timeout=timeout)
+            else self.read_output(timeout=timeout, command=command)
         )
 
-    def read_output(self, timeout: int = 10, default: str = "") -> str:
+    def read_output(
+        self, timeout: int = 10, default: str = "", command: Optional[str] = None
+    ) -> str:
         """
         Read output from a process with timeout functionality.
 
@@ -154,6 +157,7 @@ class PowerShellSession:
         result_queue = queue.Queue()
         error_lines = []
         error_queue = queue.Queue()
+        self._last_command_timed_out = False
 
         def reader_thread():
             try:
@@ -190,12 +194,31 @@ class PowerShellSession:
             result = result_queue.get(timeout=timeout) or default
             error_result = error_queue.get(timeout=1)
         except queue.Empty:
-            result = default
+            self._last_command_timed_out = True
+            command_info = f": {command}" if command else ""
+            logger.error(
+                f"PowerShell command timed out after {timeout} seconds{command_info}"
+            )
+            thread.join(timeout=timeout)
+            error_thread.join(timeout=1)
+            try:
+                result = result_queue.get_nowait() or default
+            except queue.Empty:
+                result = default
+            try:
+                error_result = error_queue.get_nowait()
+            except queue.Empty:
+                error_result = None
 
         if error_result:
             logger.error(f"PowerShell error output: {error_result}")
 
         return result
+
+    @property
+    def last_command_timed_out(self) -> bool:
+        """Return whether the previous PowerShell command hit the timeout."""
+        return self._last_command_timed_out
 
     def json_parse_output(self, output: str) -> dict:
         """
