@@ -1,5 +1,5 @@
 {
-  "Provider": "oci",
+  "Provider": "oraclecloud",
   "CheckID": "kms_key_rotation_enabled",
   "CheckTitle": "Ensure customer created Customer Managed Key (CMK) is rotated at least annually",
   "CheckType": [

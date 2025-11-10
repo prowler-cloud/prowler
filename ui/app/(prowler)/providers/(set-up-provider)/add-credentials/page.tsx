@@ -30,8 +30,8 @@ export default async function AddCredentialsPage({ searchParams }: Props) {
     const formData = new FormData();
     formData.append("id", providerId);
     const providerResponse = await getProvider(formData);
-    if (providerResponse.success && providerResponse.data) {
-      providerUid = providerResponse.data.attributes?.uid;
+    if (providerResponse?.data?.attributes?.uid) {
+      providerUid = providerResponse.data.attributes.uid;
     }
   }
 

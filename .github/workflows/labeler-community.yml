@@ -1,34 +1,45 @@
-name: Label Community Contributors PRs
+name: Community PR labelling
 
 on:
-  pull_request:
-    types: [opened]
+  # We need "write" permissions on the PR to be able to add a label.
+  pull_request_target: # We need this to have labelling permissions. There are no user inputs here, so we should be fine.
+    types:
+      - opened
+
+permissions: {}
 
 jobs:
-  add-community-label:
+  label-if-community:
+    name: Add 'community' label if the PR is from a community contributor
+    if: github.repository == 'prowler-cloud/prowler'
     runs-on: ubuntu-latest
     permissions:
-      issues: write
       pull-requests: write
 
     steps:
-      - name: Label community contributors
+      - name: Check if author is org member
+        id: check_membership
         env:
           GH_TOKEN: ${{ github.token }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+          ORG: ${{ github.repository_owner }}
         run: |
-          # Fetch fresh PR data to get current author_association
-          ASSOCIATION=$(gh api /repos/${{ github.repository }}/pulls/${{ github.event.number }} --jq '.author_association')
-          AUTHOR=$(gh api /repos/${{ github.repository }}/pulls/${{ github.event.number }} --jq '.user.login')
-
-          echo "Author: $AUTHOR, Association: $ASSOCIATION"
-
-          # Members have associations like: OWNER, MEMBER, COLLABORATOR
-          # Non-members have: CONTRIBUTOR, FIRST_TIME_CONTRIBUTOR, FIRST_TIMER, NONE
-          if [[ "$ASSOCIATION" != "OWNER" && "$ASSOCIATION" != "MEMBER" && "$ASSOCIATION" != "COLLABORATOR" ]]; then
-            gh api /repos/${{ github.repository }}/issues/${{ github.event.number }}/labels \
-              -X POST \
-              -f labels[]='community'
-            echo "Added 'community' label for $ASSOCIATION contributor"
+          echo "Checking if $AUTHOR is a member of $ORG"
+          if gh api --method GET "orgs/$ORG/members/$AUTHOR" >/dev/null 2>&1; then
+            echo "is_member=true" >> $GITHUB_OUTPUT
+            echo "$AUTHOR is an organization member"
           else
-            echo "Skipped labeling for $ASSOCIATION"
+            echo "is_member=false" >> $GITHUB_OUTPUT
+            echo "$AUTHOR is not an organization member"
           fi
+
+      - name: Add community label
+        if: steps.check_membership.outputs.is_member == 'false'
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Adding 'community' label to PR #$PR_NUMBER"
+          gh api /repos/${{ github.repository }}/issues/${{ github.event.number }}/labels \
+            -X POST \
+            -f labels[]='community'

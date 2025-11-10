@@ -125,11 +125,11 @@ Each check **must** populate the `report.status` and `report.status_extended` fi
 
 The severity of each check is defined in the metadata file using the `Severity` field. Severity values are always lowercase and must be one of the predefined categories below.
 
-- `critical` – Issue that must be addressed immediately.
-- `high` – Issue that should be addressed as soon as possible.
-- `medium` – Issue that should be addressed within a reasonable timeframe.
-- `low` – Issue that can be addressed in the future.
-- `informational` – Not an issue but provides valuable information.
+- `critical` – Highest potential impact with broad exposure that could affect core security boundaries or business operations.
+- `high` – Substantial potential impact with significant exposure that could affect important security controls or resources.
+- `medium` – Moderate potential impact with limited exposure that weakens defense layers but has contained scope.
+- `low` – Minimal potential impact with negligible exposure that represents minor gaps in security posture.
+- `informational` – Provides valuable information but does not affect the security posture.
 
 If the check involves multiple scenarios that may alter its severity, adjustments can be made dynamically within the check's logic using the severity `report.check_metadata.Severity` attribute:
 
