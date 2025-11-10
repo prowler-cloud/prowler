@@ -1,5 +1,5 @@
 {
-  "Provider": "oci",
+  "Provider": "oraclecloud",
   "CheckID": "events_rule_idp_group_mapping_changes",
   "CheckTitle": "Ensure a notification is configured for IdP group mapping changes",
   "CheckType": [

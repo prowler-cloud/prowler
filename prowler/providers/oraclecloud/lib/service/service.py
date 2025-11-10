@@ -1,7 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from prowler.lib.logger import logger
-from prowler.providers.oraclecloud.oci_provider import OciProvider
+from prowler.providers.oraclecloud.oraclecloud_provider import OraclecloudProvider
 
 MAX_WORKERS = 10
 
@@ -16,13 +16,13 @@ class OCIService:
     - Handles compartment traversal
     """
 
-    def __init__(self, service: str, provider: OciProvider):
+    def __init__(self, service: str, provider: OraclecloudProvider):
         """
         Initialize the OCIService base class.
 
         Args:
             service (str): The OCI service name (e.g., 'compute', 'object_storage').
-            provider (OciProvider): The OCI provider instance.
+            provider (OraclecloudProvider): The Oracle Cloud Infrastructure provider instance.
         """
         # Audit Information
         self.provider = provider

@@ -5,16 +5,10 @@ on:
     branches:
       - 'master'
       - 'v5.*'
-    paths:
-      - 'api/**'
-      - '.github/workflows/api-code-quality.yml'
   pull_request:
     branches:
       - 'master'
       - 'v5.*'
-    paths:
-      - 'api/**'
-      - '.github/workflows/api-code-quality.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -45,6 +39,9 @@ jobs:
         id: check-changes
         uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
         with:
+          files: |
+            api/**
+            .github/workflows/api-code-quality.yml
           files_ignore: |
             api/docs/**
             api/README.md

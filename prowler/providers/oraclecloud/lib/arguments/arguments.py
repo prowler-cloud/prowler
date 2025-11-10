@@ -5,9 +5,11 @@ from prowler.providers.oraclecloud.config import OCI_DEFAULT_CONFIG_FILE, OCI_RE
 
 
 def init_parser(self):
-    """Init the OCI Provider CLI parser"""
+    """Init the Oracle Cloud Infrastructure Provider CLI parser"""
     oci_parser = self.subparsers.add_parser(
-        "oci", parents=[self.common_providers_parser], help="OCI Provider"
+        "oraclecloud",
+        parents=[self.common_providers_parser],
+        help="Oracle Cloud Infrastructure Provider",
     )
 
     # Config File Authentication Options
@@ -108,16 +110,5 @@ def validate_arguments(arguments: Namespace) -> tuple[bool, str]:
             False,
             "Cannot use --use-instance-principal with --oci-config-file or --profile options",
         )
-
-    # # Validate compartment OCIDs if provided
-    # if arguments.compartment_id:
-    #     for compartment_id in arguments.compartment_id:
-    #         if not OciProvider.validate_ocid(compartment_id, "compartment"):
-    #             # Check if it's a tenancy OCID (root compartment)
-    #             if not OciProvider.validate_ocid(compartment_id, "tenancy"):
-    #                 return (
-    #                     False,
-    #                     f"Invalid compartment OCID: {compartment_id}",
-    #                 )
 
     return (True, "")

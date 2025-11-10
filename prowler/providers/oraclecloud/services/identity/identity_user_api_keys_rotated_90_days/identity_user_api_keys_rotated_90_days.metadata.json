@@ -1,5 +1,5 @@
 {
-  "Provider": "oci",
+  "Provider": "oraclecloud",
   "CheckID": "identity_user_api_keys_rotated_90_days",
   "CheckTitle": "Ensure user API keys rotate within 90 days or less",
   "CheckType": [

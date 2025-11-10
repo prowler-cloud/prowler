@@ -1,5 +1,5 @@
 {
-  "Provider": "oci",
+  "Provider": "oraclecloud",
   "CheckID": "audit_log_retention_period_365_days",
   "CheckTitle": "Ensure audit log retention period is set to 365 days or greater",
   "CheckType": [
