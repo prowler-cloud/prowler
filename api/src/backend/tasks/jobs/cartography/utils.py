@@ -1,3 +1,5 @@
+import traceback
+
 from datetime import datetime, timezone
 from typing import Any
 
@@ -63,3 +65,10 @@ def update_cartography_scan_progress(
     with rls_transaction(cartography_scan.tenant_id):
         cartography_scan.progress = progress
         cartography_scan.save(update_fields=["progress"])
+
+
+def stringify_exception(exception: Exception, context: str) -> str:
+    timestamp = datetime.now(tz=timezone.utc)
+    exception_traceback = traceback.TracebackException.from_exception(exception)
+    traceback_string = "".join(exception_traceback.format())
+    return f"{timestamp} - {context}\n{traceback_string}"

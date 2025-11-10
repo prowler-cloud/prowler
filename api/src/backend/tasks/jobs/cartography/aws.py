@@ -1,9 +1,6 @@
 # Portions of this file are based on code from the Cartography project
 # (https://github.com/cartography-cncf/cartography), which is licensed under the Apache 2.0 License.
 
-import datetime
-import traceback
-
 from typing import Any
 
 import boto3
@@ -18,7 +15,7 @@ from api.models import (
     Provider as ProwlerAPIProvider,
 )
 from prowler.providers.common.provider import Provider as ProwlerSDKProvider
-from tasks.jobs.cartography import db_utils
+from tasks.jobs.cartography import utils
 
 logger = get_task_logger(__name__)
 
@@ -67,7 +64,7 @@ def start_aws_ingestion(
         cartography_config.update_tag,
         common_job_parameters,
     )
-    db_utils.update_cartography_scan_progress(cartography_scan, 3)
+    utils.update_cartography_scan_progress(cartography_scan, 3)
 
     # Adding an extra field
     common_job_parameters["AWS_ID"] = prowler_api_provider.uid
@@ -79,7 +76,7 @@ def start_aws_ingestion(
         cartography_config.update_tag,
         common_job_parameters,
     )
-    db_utils.update_cartography_scan_progress(cartography_scan, 4)
+    utils.update_cartography_scan_progress(cartography_scan, 4)
 
     failed_syncs = sync_aws_account(
         prowler_api_provider, requested_syncs, sync_args, cartography_scan
@@ -87,25 +84,25 @@ def start_aws_ingestion(
 
     if "permission_relationships" in requested_syncs:
         cartography_aws.RESOURCE_FUNCTIONS["permission_relationships"](**sync_args)
-    db_utils.update_cartography_scan_progress(cartography_scan, 88)
+    utils.update_cartography_scan_progress(cartography_scan, 88)
 
     if "resourcegroupstaggingapi" in requested_syncs:
         cartography_aws.RESOURCE_FUNCTIONS["resourcegroupstaggingapi"](**sync_args)
-    db_utils.update_cartography_scan_progress(cartography_scan, 89)
+    utils.update_cartography_scan_progress(cartography_scan, 89)
 
     cartography_aws.run_scoped_analysis_job(
         "aws_ec2_iaminstanceprofile.json",
         neo4j_session,
         common_job_parameters,
     )
-    db_utils.update_cartography_scan_progress(cartography_scan, 90)
+    utils.update_cartography_scan_progress(cartography_scan, 90)
 
     cartography_aws.run_analysis_job(
         "aws_lambda_ecr.json",
         neo4j_session,
         common_job_parameters,
     )
-    db_utils.update_cartography_scan_progress(cartography_scan, 91)
+    utils.update_cartography_scan_progress(cartography_scan, 91)
 
     cartography_aws.merge_module_sync_metadata(
         neo4j_session,
@@ -115,7 +112,7 @@ def start_aws_ingestion(
         update_tag=cartography_config.update_tag,
         stat_handler=cartography_aws.stat_handler,
     )
-    db_utils.update_cartography_scan_progress(cartography_scan, 92)
+    utils.update_cartography_scan_progress(cartography_scan, 92)
 
     # Removing the added extra field
     del common_job_parameters["AWS_ID"]
@@ -125,12 +122,12 @@ def start_aws_ingestion(
         neo4j_session,
         common_job_parameters,
     )
-    db_utils.update_cartography_scan_progress(cartography_scan, 93)
+    utils.update_cartography_scan_progress(cartography_scan, 93)
 
     cartography_aws._perform_aws_analysis(
         requested_syncs, neo4j_session, common_job_parameters
     )
-    db_utils.update_cartography_scan_progress(cartography_scan, 94)
+    utils.update_cartography_scan_progress(cartography_scan, 94)
 
     return failed_syncs
 
@@ -185,7 +182,7 @@ def sync_aws_account(
 
             # Updating progress, not really the right place but good enough
             current_progress += progress_step
-            db_utils.update_cartography_scan_progress(
+            utils.update_cartography_scan_progress(
                 cartography_scan, int(current_progress)
             )
 
@@ -201,16 +198,12 @@ def sync_aws_account(
                     continue
 
             except Exception as e:
-                timestamp = datetime.datetime.now()
-                exception_traceback = traceback.TracebackException.from_exception(e)
-                traceback_string = "".join(exception_traceback.format())
-                exception_message = f"{timestamp} - Exception for AWS sync function: {func_name}\n{traceback_string}"
+                exception_message = utils.stringify_exception(e, f"Exception for AWS sync function: {func_name}")
                 failed_syncs[func_name] = exception_message
 
                 logger.warning(
                     f"Caught exception syncing function {func_name} from AWS account {prowler_api_provider.uid}. We "
                     "are continuing on to the next AWS sync function.",
-                    exc_info=True,
                 )
 
                 continue

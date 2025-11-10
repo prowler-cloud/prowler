@@ -16,8 +16,9 @@ from api.models import (
     Scan as ProwlerAPIScan,
     StateChoices,
 )
+from tasks.jobs.cartography import utils
 from api.utils import initialize_prowler_provider
-from tasks.jobs.cartography import aws, db_utils, prowler
+from tasks.jobs.cartography import aws, prowler
 
 logger = get_task_logger(__name__)
 
@@ -51,7 +52,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         update_tag=int(time.time()),
     )
 
-    cartography_scan = db_utils.create_cartography_scan(
+    cartography_scan = utils.create_cartography_scan(
         tenant_id, scan_id, task_id, prowler_api_provider.id, cartography_config
     )
 
@@ -61,7 +62,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             f"Creating Neo4j database {cartography_config.neo4j_database} for tenant {prowler_api_provider.tenant_id}"
         )
         neo4j.create_neo4j_database(cartography_config.neo4j_database)
-        db_utils.update_cartography_scan_progress(cartography_scan, 1)
+        utils.update_cartography_scan_progress(cartography_scan, 1)
 
         logger.info(
             f"Starting Cartography scan ({cartography_scan.id}) for {prowler_api_provider.provider.upper()} provider {prowler_api_provider.id}"
@@ -72,8 +73,9 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             # Indexes creation
             cartography_create_indexes.run(neo4j_session, cartography_config)
             prowler.create_indexes(neo4j_session)
-            db_utils.update_cartography_scan_progress(cartography_scan, 2)
+            utils.update_cartography_scan_progress(cartography_scan, 2)
 
+            """
             # The real scan, where iterates over cloud services
             ingestion_exceptions = _call_within_event_loop(
                 CARTOGRAPHY_INGESTION_FUNCTIONS[prowler_api_provider.provider],
@@ -84,11 +86,10 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
                 cartography_scan,
             )
 
-            # Post-processing
-            cartography_analysis.run(
-                neo4j_session, cartography_config
-            )  # Just keeping it to be more Cartography compliant
-            db_utils.update_cartography_scan_progress(cartography_scan, 95)
+            # Post-processing: Just keeping it to be more Cartography compliant
+            cartography_analysis.run(neo4j_session, cartography_config)
+            utils.update_cartography_scan_progress(cartography_scan, 95)
+            """
 
             # Adding Prowler nodes and relationships
             prowler.analysis(neo4j_session, prowler_api_provider, cartography_config)
@@ -96,15 +97,17 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         logger.info(
             f"Completed Cartography scan ({cartography_scan.id}) for {prowler_api_provider.provider.upper()} provider {prowler_api_provider.id}"
         )
-        db_utils.modify_cartography_scan(
+        utils.modify_cartography_scan(
             cartography_scan, StateChoices.COMPLETED, ingestion_exceptions
         )
         return ingestion_exceptions
 
     except Exception as e:
-        logger.error(f"Cartography scan failed: {e}")
-        ingestion_exceptions["global_cartography_scan_error"] = str(e)
-        db_utils.modify_cartography_scan(
+        exception_message = utils.stringify_exception(e, "Cartography scan failed")
+        logger.error(exception_message)
+        ingestion_exceptions["global_cartography_scan_error"] = exception_message
+
+        utils.modify_cartography_scan(
             cartography_scan, StateChoices.FAILED, ingestion_exceptions
         )
         raise

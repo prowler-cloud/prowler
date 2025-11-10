@@ -1,7 +1,6 @@
 import warnings
 
 from celery import Celery, Task
-from celery.signals import worker_process_init, worker_process_shutdown
 
 from config.env import env
 
@@ -27,21 +26,7 @@ celery_app.conf.visibility_timeout = BROKER_VISIBILITY_TIMEOUT
 
 celery_app.autodiscover_tasks(["api"])
 
-
-@worker_process_init.connect
-def _init_neo4j_driver(**kwargs):
-    from api import (
-        neo4j,
-    )  # The import must be inside the function to avoid circular imports
-
-    neo4j.init_neo4j_driver()  # TODO: Check if there is some case, like TESTING, where we should skip this
-
-
-@worker_process_shutdown.connect
-def _close_neo4j_driver(**kwargs):
-    from api import neo4j  # Same as `_init_neo4j_driver`
-
-    neo4j.close_neo4j_driver()
+# TODO: We should add something here about creating and closing a Neo4j driver
 
 
 class RLSTask(Task):

@@ -65,7 +65,6 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
         scan_id (str): The ID of the scan that was performed.
         provider_id (str): The primary key of the Provider instance that was scanned.
     """
-    """
     create_compliance_requirements_task.apply_async(
         kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
     )
@@ -86,10 +85,6 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
         ),
     ).apply_async()
     perform_cartography_scan_task.apply_async(kwargs={"tenant_id": tenant_id, "scan_id": scan_id})
-    """
-    perform_cartography_scan_task.apply_async(
-        kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
-    )
 
 
 @shared_task(base=RLSTask, name="provider-connection-check")
@@ -163,7 +158,6 @@ def perform_scan_task(
     Returns:
         dict: The result of the scan execution, typically including the status and results of the performed checks.
     """
-    """
     result = perform_prowler_scan(
         tenant_id=tenant_id,
         scan_id=scan_id,
@@ -174,10 +168,6 @@ def perform_scan_task(
     _perform_scan_complete_tasks(tenant_id, scan_id, provider_id)
 
     return result
-    """
-    _perform_scan_complete_tasks(tenant_id, scan_id, provider_id)
-
-    return
 
 
 @shared_task(base=RLSTask, bind=True, name="scan-perform-scheduled", queue="scans")

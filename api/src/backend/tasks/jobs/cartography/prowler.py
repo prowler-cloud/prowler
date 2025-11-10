@@ -5,6 +5,7 @@ from cartography.config import Config as CartographyConfig
 from celery.utils.log import get_task_logger
 from django.db.models import Subquery
 
+from api.db_utils import rls_transaction
 from api.models import Provider, ResourceFindingMapping, Scan
 from config.env import env
 from prowler.config import config as ProwlerConfig
@@ -109,55 +110,56 @@ def analysis(
 def get_provider_last_scan_findings(
     prowler_api_provider: Provider,
 ) -> list[dict[str, str]]:
-    latest_scan_id_subquery = (
-        Scan.objects.filter(
-            provider_id=prowler_api_provider.id, completed_at__isnull=False
-        )
-        .order_by("-completed_at")
-        .values("id")[:1]
-    )
-
-    resource_finding_qs = ResourceFindingMapping.objects.filter(
-        finding__scan_id=Subquery(latest_scan_id_subquery),
-    ).values(
-        "resource__uid",
-        "finding__id",
-        "finding__uid",
-        "finding__inserted_at",
-        "finding__updated_at",
-        "finding__first_seen_at",
-        "finding__scan_id",
-        "finding__delta",
-        "finding__status",
-        "finding__status_extended",
-        "finding__severity",
-        "finding__check_id",
-        "finding__muted",
-        "finding__muted_reason",
-    )
-
-    findings = []
-    for resource_finding in resource_finding_qs:
-        findings.append(
-            {
-                "resource_uid": str(resource_finding["resource__uid"]),
-                "id": str(resource_finding["finding__id"]),
-                "uid": resource_finding["finding__uid"],
-                "inserted_at": resource_finding["finding__inserted_at"],
-                "updated_at": resource_finding["finding__updated_at"],
-                "first_seen_at": resource_finding["finding__first_seen_at"],
-                "scan_id": str(resource_finding["finding__scan_id"]),
-                "delta": resource_finding["finding__delta"],
-                "status": resource_finding["finding__status"],
-                "status_extended": resource_finding["finding__status_extended"],
-                "severity": resource_finding["finding__severity"],
-                "check_id": str(resource_finding["finding__check_id"]),
-                "muted": resource_finding["finding__muted"],
-                "muted_reason": resource_finding["finding__muted_reason"],
-            }
+    with rls_transaction(prowler_api_provider.tenant_id):
+        latest_scan_id_subquery = (
+            Scan.objects.filter(
+                provider_id=prowler_api_provider.id
+            )
+            .order_by("-updated_at")
+            .values("id")[:1]
         )
 
-    return findings
+        resource_finding_qs = ResourceFindingMapping.objects.filter(
+            finding__scan_id=Subquery(latest_scan_id_subquery),
+        ).values(
+            "resource__uid",
+            "finding__id",
+            "finding__uid",
+            "finding__inserted_at",
+            "finding__updated_at",
+            "finding__first_seen_at",
+            "finding__scan_id",
+            "finding__delta",
+            "finding__status",
+            "finding__status_extended",
+            "finding__severity",
+            "finding__check_id",
+            "finding__muted",
+            "finding__muted_reason",
+        )
+
+        findings = []
+        for resource_finding in resource_finding_qs:
+            findings.append(
+                {
+                    "resource_uid": str(resource_finding["resource__uid"]),
+                    "id": str(resource_finding["finding__id"]),
+                    "uid": resource_finding["finding__uid"],
+                    "inserted_at": resource_finding["finding__inserted_at"],
+                    "updated_at": resource_finding["finding__updated_at"],
+                    "first_seen_at": resource_finding["finding__first_seen_at"],
+                    "scan_id": str(resource_finding["finding__scan_id"]),
+                    "delta": resource_finding["finding__delta"],
+                    "status": resource_finding["finding__status"],
+                    "status_extended": resource_finding["finding__status_extended"],
+                    "severity": resource_finding["finding__severity"],
+                    "check_id": str(resource_finding["finding__check_id"]),
+                    "muted": resource_finding["finding__muted"],
+                    "muted_reason": resource_finding["finding__muted_reason"],
+                }
+            )
+
+        return findings
 
 
 def load_findings(
