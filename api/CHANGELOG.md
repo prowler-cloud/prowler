@@ -15,8 +15,14 @@ All notable changes to the **Prowler API** are documented in this file.
 - Support C5 compliance framework for the GCP provider [(#9097)](https://github.com/prowler-cloud/prowler/pull/9097)
 - Support for Amazon Bedrock and OpenAI compatible providers in Lighthouse AI [(#8957)](https://github.com/prowler-cloud/prowler/pull/8957)
 - OpenAPI schema integration with Mintlify documentation including compatibility fixes and dynamic server URL configuration
+- Support for MongoDB Atlas provider [(#9167)](https://github.com/prowler-cloud/prowler/pull/9167)
 
 ---
+
+## [1.14.2] (Prowler 5.13.2)
+
+### Fixed
+- Update unique constraint for `Provider` model to exclude soft-deleted entries, resolving duplicate errors when re-deleting providers.
 
 ## [1.14.1] (Prowler 5.13.1)
 

@@ -91,7 +91,7 @@ const PROVIDER_DATA: Record<
     label: "Infrastructure as Code",
     icon: IacProviderBadge,
   },
-  oci: {
+  oraclecloud: {
     label: "Oracle Cloud Infrastructure",
     icon: OracleCloudProviderBadge,
   },

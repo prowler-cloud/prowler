@@ -284,6 +284,7 @@ class Provider(RowLevelSecurityProtectedModel):
         KUBERNETES = "kubernetes", _("Kubernetes")
         M365 = "m365", _("M365")
         GITHUB = "github", _("GitHub")
+        MONGODBATLAS = "mongodbatlas", _("MongoDB Atlas")
         IAC = "iac", _("IaC")
         ORACLECLOUD = "oraclecloud", _("Oracle Cloud Infrastructure")
 
@@ -381,6 +382,15 @@ class Provider(RowLevelSecurityProtectedModel):
                 pointer="/data/attributes/uid",
             )
 
+    @staticmethod
+    def validate_mongodbatlas_uid(value):
+        if not re.match(r"^[0-9a-fA-F]{24}$", value):
+            raise ModelValidationError(
+                detail="MongoDB Atlas organization ID must be a 24-character hexadecimal string.",
+                code="mongodbatlas-uid",
+                pointer="/data/attributes/uid",
+            )
+
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=False)
@@ -415,7 +425,8 @@ class Provider(RowLevelSecurityProtectedModel):
 
         constraints = [
             models.UniqueConstraint(
-                fields=("tenant_id", "provider", "uid", "is_deleted"),
+                fields=("tenant_id", "provider", "uid"),
+                condition=Q(is_deleted=False),
                 name="unique_provider_uids",
             ),
             RowLevelSecurityConstraint(
