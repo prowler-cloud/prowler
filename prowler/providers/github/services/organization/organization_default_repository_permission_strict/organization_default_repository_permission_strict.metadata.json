@@ -12,9 +12,7 @@
   "Risk": "**Excessive default permissions** (`write`/`admin`) erode code **integrity** and **availability**.\n\nAny member-or a compromised account-can alter many repos, inject malicious commits, change tags/releases, or delete branches, enabling supply-chain compromise and large-scale disruptions.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.github.com/en/organizations/managing-user-access-to-your-organizations-repositories/managing-repository-roles/setting-base-permissions-for-an-organization",
-    "https://www.pulumi.com/registry/packages/github/api-docs/getorganization/",
-    "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/secrets-policies/secrets-policy-index/git-secrets-43"
+    "https://docs.github.com/en/organizations/managing-user-access-to-your-organizations-repositories/managing-repository-roles/setting-base-permissions-for-an-organization"
   ],
   "Remediation": {
     "Code": {
