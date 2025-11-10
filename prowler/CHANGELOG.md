@@ -19,6 +19,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Add multiple compliance improvements [(#9145)](https://github.com/prowler-cloud/prowler/pull/9145)
 - Added validation for invalid checks, services, and categories in `load_checks_to_execute` function [(#8971)](https://github.com/prowler-cloud/prowler/pull/8971)
 - NIST CSF 2.0 compliance framework for the AWS provider [(#9185)](https://github.com/prowler-cloud/prowler/pull/9185)
+- Add FedRAMP 20x KSI Low for AWS, Azure and GCP [(#9198)](https://github.com/prowler-cloud/prowler/pull/9198)
 
 ### Changed
 - Update AWS Direct Connect service metadata to new format [(#8855)](https://github.com/prowler-cloud/prowler/pull/8855)
