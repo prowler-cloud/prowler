@@ -2,10 +2,7 @@ import os
 
 from prowler.lib.logger import logger
 from prowler.lib.powershell.powershell import PowerShellSession
-from prowler.providers.m365.exceptions.exceptions import (
-    M365CertificateCreationError,
-    M365GraphConnectionError,
-)
+from prowler.providers.m365.exceptions.exceptions import M365CertificateCreationError
 from prowler.providers.m365.lib.jwt.jwt_decoder import decode_msal_token
 from prowler.providers.m365.models import M365Credentials, M365IdentityInfo
 
@@ -137,79 +134,6 @@ class M365PowerShell(PowerShellSession):
         connect_timeout = 15
         result = self.execute(command, timeout=connect_timeout)
         return result or "'execute_connect' command timeout reached"
-
-    def test_credentials(self, credentials: M365Credentials) -> bool:
-        """
-        Test Microsoft 365 credentials by attempting to authenticate against Entra ID.
-
-        Supports testing two authentication methods:
-        1. Application authentication (client_id/client_secret)
-        2. Certificate authentication (certificate_content in base64/client_id)
-
-        Args:
-            credentials (M365Credentials): The credentials object containing
-                authentication information to test.
-
-        Returns:
-            bool: True if credentials are valid and authentication succeeds, False otherwise.
-        """
-        # Test Certificate Auth
-        if credentials.certificate_content and credentials.client_id:
-            try:
-                logger.info("Testing  Microsoft Graph Certificate connection...")
-                self.test_graph_certificate_connection()
-                logger.info("Microsoft Graph Certificate connection successful")
-                teams_connection_successful = self.test_teams_certificate_connection()
-                if not teams_connection_successful:
-                    self.test_exchange_certificate_connection()
-                return True
-            except Exception as e:
-                logger.error(f"Microsoft Graph Cer connection failed: {e}")
-                raise M365GraphConnectionError(
-                    file=os.path.basename(__file__),
-                    original_exception=e,
-                    message="Check your Microsoft Application Certificate and ensure the app has proper permissions",
-                )
-        else:
-            try:
-                logger.info("Testing Microsoft Graph Client Secret connection...")
-                self.test_graph_connection()
-                logger.info("Microsoft Graph Client Secret connection successful")
-                return True
-            except Exception as e:
-                logger.error(f"Microsoft Graph Client Secret connection failed: {e}")
-                raise M365GraphConnectionError(
-                    file=os.path.basename(__file__),
-                    original_exception=e,
-                    message="Check your Microsoft Application Client Secret and ensure the app has proper permissions",
-                )
-
-    def test_graph_connection(self) -> bool:
-        """Test Microsoft Graph API connection and raise exception if it fails."""
-        try:
-            if self.execute("Write-Output $graphToken") == "":
-                raise M365GraphConnectionError(
-                    file=os.path.basename(__file__),
-                    message="Microsoft Graph token is empty or invalid.",
-                )
-            return True
-        except Exception as e:
-            logger.error(f"Microsoft Graph connection failed: {e}")
-            raise M365GraphConnectionError(
-                file=os.path.basename(__file__),
-                original_exception=e,
-                message=f"Failed to connect to Microsoft Graph API: {str(e)}",
-            )
-
-    def test_graph_certificate_connection(self) -> bool:
-        """Test Microsoft Graph API connection using certificate and raise exception if it fails."""
-        result = self.execute_connect(
-            "Connect-Graph -Certificate $certificate -AppId $clientID -TenantId $tenantID"
-        )
-        if "Welcome to Microsoft Graph!" not in result:
-            logger.error(f"Microsoft Graph Certificate connection failed: {result}")
-            return False
-        return True
 
     def test_teams_connection(self) -> bool:
         """Test Microsoft Teams API connection and raise exception if it fails."""
@@ -926,7 +850,10 @@ def initialize_m365_powershell_modules():
         bool: True if all modules were successfully initialized, False otherwise
     """
 
-    REQUIRED_MODULES = ["ExchangeOnlineManagement", "MicrosoftTeams", "MSAL.PS"]
+    REQUIRED_MODULES = [
+        "ExchangeOnlineManagement",
+        "MicrosoftTeams",
+    ]
 
     pwsh = PowerShellSession()
     try:
@@ -938,7 +865,7 @@ def initialize_m365_powershell_modules():
                 # Install module if not installed
                 if not result:
                     install_result = pwsh.execute(
-                        f'Install-Module "{module}" -Force -AllowClobber -Scope CurrentUser',
+                        f"Install-Module {module} -Force -AllowClobber -Scope CurrentUser",
                         timeout=60,
                     )
                     if install_result:
