@@ -1,9 +1,8 @@
 import { cva } from "class-variance-authority";
 import { LucideIcon } from "lucide-react";
 
+import { CardVariant } from "@/components/shadcn/card/card";
 import { cn } from "@/lib/utils";
-
-import { CardVariant } from "../card";
 
 export interface StatItem {
   icon: LucideIcon;

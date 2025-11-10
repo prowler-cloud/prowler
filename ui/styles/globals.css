@@ -72,6 +72,8 @@
   --text-neutral-secondary: var(--color-zinc-800);
   --text-neutral-tertiary: var(--color-zinc-500);
   --text-error-primary: var(--color-red-600);
+  --text-warning-primary: var(--color-orange-500);
+  --text-success-primary: var(--color-green-600);
 
   /* Background Colors */
   --bg-neutral-primary: #fdfdfd;
@@ -83,6 +85,7 @@
   --bg-warning-primary: var(--color-orange-500);
   --bg-fail-primary: var(--color-rose-500);
   --bg-fail-secondary: var(--color-rose-50);
+  --bg-data-muted: var(--color-neutral-500);
 
   /* Severity Colors */
   --bg-data-critical: #ff006a;
@@ -142,9 +145,9 @@
   --bg-button-primary-hover: var(--color-teal-200);
   --bg-button-secondary: var(--color-slate-700);
   --bg-button-secondary-press: var(--color-slate-800);
-  --bg-button-tertiary: var(--color-blue-500);
-  --bg-button-tertiary-hover: var(--color-blue-700);
-  --bg-button-tertiary-active: var(--color-blue-800);
+  --bg-button-tertiary: var(--color-blue-300);
+  --bg-button-tertiary-hover: var(--color-blue-400);
+  --bg-button-tertiary-active: var(--color-blue-600);
   --bg-button-disabled: var(--color-gray-600);
 
   /* Input Colors */
@@ -163,7 +166,9 @@
   --text-neutral-primary: var(--color-zinc-100);
   --text-neutral-secondary: var(--color-zinc-300);
   --text-neutral-tertiary: var(--color-zinc-500);
-  --text-error-primary: var(--color-rose-300);
+  --text-error-primary: var(--color-red-500);
+  --text-warning-primary: var(--color-orange-500);
+  --text-success-primary: var(--color-green-500);
 
   /* Background Colors */
   --bg-neutral-primary: var(--color-zinc-950);
@@ -175,6 +180,7 @@
   --bg-pass-secondary: var(--color-emerald-900);
   --bg-fail-primary: var(--color-rose-500);
   --bg-fail-secondary: #432232;
+  --bg-data-muted: var(--color-neutral-500);
 
   /* Severity Colors */
   --bg-data-critical: #ff006a;
@@ -247,7 +253,9 @@
   --color-text-neutral-primary: var(--text-neutral-primary);
   --color-text-neutral-secondary: var(--text-neutral-secondary);
   --color-text-neutral-tertiary: var(--text-neutral-tertiary);
-  --color-text-error: var(--text-error-primary);
+  --color-text-error-primary: var(--text-error-primary);
+  --color-text-warning-primary: var(--text-warning-primary);
+  --color-text-success-primary: var(--text-success-primary);
 
   /* Background Colors */
   --color-bg-neutral-primary: var(--bg-neutral-primary);
@@ -259,6 +267,7 @@
   --color-bg-warning: var(--bg-warning-primary);
   --color-bg-fail: var(--bg-fail-primary);
   --color-bg-fail-secondary: var(--bg-fail-secondary);
+  --color-bg-data-muted: var(--bg-data-muted);
 }
 
 /* ===== CONTAINER UTILITY ===== */

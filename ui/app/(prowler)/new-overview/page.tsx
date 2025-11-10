@@ -17,6 +17,7 @@ import {
 } from "./components/risk-severity-chart";
 import { StatusChart, StatusChartSkeleton } from "./components/status-chart";
 import { ThreatScore, ThreatScoreSkeleton } from "./components/threat-score";
+import { ComplianceWatchlist } from "./components/watchlist/";
 
 const FILTER_PREFIX = "filter[";
 
@@ -56,6 +57,8 @@ export default async function NewOverviewPage({
         <Suspense fallback={<RiskSeverityChartSkeleton />}>
           <SSRRiskSeverityChart searchParams={resolvedSearchParams} />
         </Suspense>
+
+        <ComplianceWatchlist />
       </div>
     </ContentLayout>
   );

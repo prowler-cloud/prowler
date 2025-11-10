@@ -10,10 +10,11 @@ import {
   CardHeader,
   CardTitle,
   CardVariant,
-  ResourceStatsCard,
   Skeleton,
 } from "@/components/shadcn";
 import { calculatePercentage } from "@/lib/utils";
+
+import { ResourceStatsCard } from "./resource-stats-card";
 
 interface StatusChartProps {
   failFindingsData: {

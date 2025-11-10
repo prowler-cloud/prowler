@@ -1,0 +1,169 @@
+import { SearchX } from "lucide-react";
+import Link from "next/link";
+import { ReactNode } from "react";
+
+import { Button } from "@/components/shadcn/button/button";
+import { Card, CardContent, CardTitle } from "@/components/shadcn/card/card";
+import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
+import { cn } from "@/lib/utils";
+
+const SCORE_CONFIG = {
+  FAIL: {
+    textColor: "text-text-error-primary",
+    minScore: 0,
+    maxScore: 30,
+  },
+  WARNING: {
+    textColor: "text-text-warning-primary",
+    minScore: 31,
+    maxScore: 60,
+  },
+  PASS: {
+    textColor: "text-text-success-primary",
+    minScore: 61,
+    maxScore: 100,
+  },
+} as const;
+
+const getScoreTextColor = (score: number): string => {
+  for (const config of Object.values(SCORE_CONFIG)) {
+    if (score >= config.minScore && score <= config.maxScore) {
+      return config.textColor;
+    }
+  }
+  return SCORE_CONFIG.WARNING.textColor;
+};
+
+export interface WatchlistItem {
+  icon: ReactNode;
+  label: string;
+  key: string;
+  value: string | number;
+}
+
+export interface WatchlistCardProps
+  extends React.HTMLAttributes<HTMLDivElement> {
+  title: string;
+  items: WatchlistItem[];
+  ctaLabel: string;
+  ctaHref: string;
+  emptyState?: {
+    message?: string;
+    description?: string;
+    linkText?: string;
+  };
+}
+
+export const WatchlistCard = ({
+  title,
+  items,
+  ctaLabel,
+  ctaHref,
+  emptyState,
+}: WatchlistCardProps) => {
+  const isEmpty = items.length === 0;
+
+  return (
+    <Card
+      variant="base"
+      className="flex min-h-[405px] min-w-[328px] flex-col md:max-w-[312px]"
+    >
+      <CardTitle>{title}</CardTitle>
+
+      <CardContent className="flex flex-1 flex-col gap-2">
+        {isEmpty ? (
+          <div className="flex flex-1 flex-col items-center justify-center gap-12 py-6">
+            {/* Icon and message */}
+            <div className="flex flex-col items-center gap-6 pb-[18px]">
+              <SearchX size={64} className="text-bg-data-muted" />
+              <p className="text-text-neutral-tertiary w-full text-center text-sm leading-6">
+                {emptyState?.message || "This space is looking empty."}
+              </p>
+            </div>
+
+            {/* Description with link */}
+            <p className="text-text-neutral-tertiary w-full text-sm leading-6">
+              {emptyState?.description && (
+                <>
+                  Visit the{" "}
+                  <Button variant="link" size="link-sm" asChild>
+                    <Link href={ctaHref}>
+                      {emptyState.linkText || ctaLabel}
+                    </Link>
+                  </Button>{" "}
+                  {emptyState.description}
+                </>
+              )}
+            </p>
+          </div>
+        ) : (
+          <>
+            {items.map((item) => {
+              // Parse numeric value if it's a percentage string (e.g., "10%")
+              const numericValue =
+                typeof item.value === "string"
+                  ? parseFloat(item.value.replace("%", ""))
+                  : item.value;
+
+              // Get color based on score
+              const valueColorClass = !isNaN(numericValue)
+                ? getScoreTextColor(numericValue)
+                : "text-text-neutral-tertiary";
+
+              return (
+                <div
+                  key={item.key}
+                  className="flex h-[54px] items-center justify-between gap-2 px-3 py-[11px]"
+                >
+                  <div className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-md bg-white">
+                    {item.icon}
+                  </div>
+
+                  <p className="text-text-neutral-secondary flex-1 text-sm leading-6">
+                    {item.label}
+                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <p
+                      className={cn(
+                        "text-sm leading-6 font-bold",
+                        valueColorClass,
+                      )}
+                    >
+                      {item.value}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+            <Button variant="link" size="link-sm" asChild className="mt-2">
+              <Link href={ctaHref}>{ctaLabel}</Link>
+            </Button>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+export function WatchlistCardSkeleton() {
+  return (
+    <Card
+      variant="base"
+      className="flex min-h-[500px] min-w-[328px] flex-col md:max-w-[312px]"
+    >
+      <CardTitle>
+        <Skeleton className="h-7 w-[168px] rounded-xl" />
+      </CardTitle>
+
+      <CardContent className="flex flex-1 flex-col justify-center gap-8">
+        {/* 6 skeleton rows */}
+        {Array.from({ length: 6 }).map((_, index) => (
+          <div key={index} className="flex h-7 w-full items-start gap-6">
+            <Skeleton className="h-7 w-[168px] rounded-xl" />
+            <Skeleton className="h-7 flex-1 rounded-xl" />
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
