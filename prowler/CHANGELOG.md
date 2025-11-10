@@ -8,6 +8,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Check `check_name` has no `resource_name` error for GCP provider [(#9169)](https://github.com/prowler-cloud/prowler/pull/9169)
 - Depth Truncation and parsing error in PowerShell queries [(#9181)](https://github.com/prowler-cloud/prowler/pull/9181)
 - Fix M365 Teams `--sp-env-auth` connection error and enhanced timeout logging [(#9191)](https://github.com/prowler-cloud/prowler/pull/9191)
+- Rename `get_oci_assessment_summary` to `get_oraclecloud_assessment_summary` in HTML output [(#9200)](https://github.com/prowler-cloud/prowler/pull/9200)
 
 ## [v5.13.1] (Prowler v5.13.1)
 
