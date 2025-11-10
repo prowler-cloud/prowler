@@ -1,5 +1,5 @@
 {
-  "Provider": "oci",
+  "Provider": "oraclecloud",
   "CheckID": "cloudguard_enabled",
   "CheckTitle": "Ensure Cloud Guard is enabled in the root compartment of the tenancy",
   "CheckType": [

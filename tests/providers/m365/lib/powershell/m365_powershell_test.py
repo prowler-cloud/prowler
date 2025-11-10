@@ -547,8 +547,7 @@ class Testm365PowerShell:
         session.close()
 
     @patch("subprocess.Popen")
-    @patch("prowler.providers.m365.lib.powershell.m365_powershell.decode_jwt")
-    def test_test_teams_connection_success(self, mock_decode_jwt, mock_popen):
+    def test_test_teams_connection_success(self, mock_popen):
         """Test test_teams_connection when token is valid"""
         mock_process = MagicMock()
         mock_popen.return_value = mock_process
@@ -567,30 +566,20 @@ class Testm365PowerShell:
         )
         session = M365PowerShell(credentials, identity)
 
-        # Mock execute to return valid responses
-        def mock_execute(command, *args, **kwargs):
-            if "Write-Output $teamsToken" in command:
-                return "valid_teams_token"
-            return None
-
-        session.execute = MagicMock(side_effect=mock_execute)
-        # Mock JWT decode to return proper permissions
-        mock_decode_jwt.return_value = {"roles": ["application_access"]}
+        session.execute = MagicMock(side_effect=[None, ""])
+        session.execute_connect = MagicMock(return_value="")
 
         result = session.test_teams_connection()
 
         assert result is True
-        # Verify all expected PowerShell commands were called
-        # 4 calls: teamstokenBody, teamsToken, Write-Output $teamsToken, Connect-MicrosoftTeams
-        assert session.execute.call_count == 4
-        mock_decode_jwt.assert_called_once_with("valid_teams_token")
+        assert session.execute.call_count == 2
+        session.execute_connect.assert_called_once_with(
+            'Connect-MicrosoftTeams -AccessTokens @("$graphToken","$teamsToken")'
+        )
         session.close()
 
     @patch("subprocess.Popen")
-    @patch("prowler.providers.m365.lib.powershell.m365_powershell.decode_jwt")
-    def test_test_teams_connection_missing_permissions(
-        self, mock_decode_jwt, mock_popen
-    ):
+    def test_test_teams_connection_missing_permissions(self, mock_popen):
         """Test test_teams_connection when token lacks required permissions"""
         mock_process = MagicMock()
         mock_popen.return_value = mock_process
@@ -609,23 +598,17 @@ class Testm365PowerShell:
         )
         session = M365PowerShell(credentials, identity)
 
-        # Mock execute to return valid token but decode returns no permissions
-        def mock_execute(command, *args, **kwargs):
-            if "Write-Output $teamsToken" in command:
-                return "valid_teams_token"
-            return None
-
-        session.execute = MagicMock(side_effect=mock_execute)
-        # Mock JWT decode to return missing required permission
-        mock_decode_jwt.return_value = {"roles": ["other_permission"]}
+        session.execute = MagicMock(side_effect=[None, "Permission denied"])
+        session.execute_connect = MagicMock()
 
         with patch("prowler.lib.logger.logger.error") as mock_error:
             result = session.test_teams_connection()
 
         assert result is False
         mock_error.assert_called_once_with(
-            "Microsoft Teams connection failed: Please check your permissions and try again."
+            "Microsoft Teams connection failed: Permission denied"
         )
+        session.execute_connect.assert_not_called()
         session.close()
 
     @patch("subprocess.Popen")
@@ -688,15 +671,17 @@ class Testm365PowerShell:
             return None
 
         session.execute = MagicMock(side_effect=mock_execute)
+        session.execute_connect = MagicMock(return_value=None)
         # Mock MSAL token decode to return proper permissions
         mock_decode_msal_token.return_value = {"roles": ["Exchange.ManageAsApp"]}
 
         result = session.test_exchange_connection()
 
         assert result is True
-        # Verify all expected PowerShell commands were called
-        # 4 calls: SecureSecret, exchangeToken, Write-Output $exchangeToken, Connect-ExchangeOnline
-        assert session.execute.call_count == 4
+        assert session.execute.call_count == 3
+        session.execute_connect.assert_called_once_with(
+            'Connect-ExchangeOnline -AccessToken $exchangeToken.AccessToken -Organization "$tenantID"'
+        )
         mock_decode_msal_token.assert_called_once_with("valid_exchange_token")
         session.close()
 
@@ -730,6 +715,7 @@ class Testm365PowerShell:
             return None
 
         session.execute = MagicMock(side_effect=mock_execute)
+        session.execute_connect = MagicMock(return_value=None)
         # Mock MSAL token decode to return missing required permission
         mock_decode_msal_token.return_value = {"roles": ["other_permission"]}
 
@@ -737,6 +723,7 @@ class Testm365PowerShell:
             result = session.test_exchange_connection()
 
         assert result is False
+        session.execute_connect.assert_not_called()
         mock_error.assert_called_once_with(
             "Exchange Online connection failed: Please check your permissions and try again."
         )
@@ -781,7 +768,7 @@ class Testm365PowerShell:
         mock_popen.return_value = mock_process
 
         credentials = M365Credentials()
-        identity = M365IdentityInfo()
+        identity = M365IdentityInfo(identity_id="expected-id")
         session = M365PowerShell(credentials, identity)
 
         # Test with clean base64 content
@@ -924,18 +911,17 @@ class Testm365PowerShell:
         mock_popen.return_value = mock_process
 
         credentials = M365Credentials()
-        identity = M365IdentityInfo()
+        identity = M365IdentityInfo(identity_id="expected-id")
         session = M365PowerShell(credentials, identity)
 
-        # Mock successful Exchange connection
-        session.execute = MagicMock(
+        session.execute_connect = MagicMock(
             return_value="Connected successfully https://aka.ms/exov3-module"
         )
 
         result = session.test_exchange_certificate_connection()
         assert result is True
 
-        session.execute.assert_called_once_with(
+        session.execute_connect.assert_called_once_with(
             "Connect-ExchangeOnline -Certificate $certificate -AppId $clientID -Organization $tenantDomain"
         )
 
@@ -948,19 +934,23 @@ class Testm365PowerShell:
         mock_popen.return_value = mock_process
 
         credentials = M365Credentials()
-        identity = M365IdentityInfo()
+        identity = M365IdentityInfo(identity_id="expected-id")
         session = M365PowerShell(credentials, identity)
 
-        # Mock failed Exchange connection
-        session.execute = MagicMock(
+        session.execute_connect = MagicMock(
             return_value="Connection failed: Authentication error"
         )
 
-        result = session.test_exchange_certificate_connection()
+        with patch("prowler.lib.logger.logger.error") as mock_error:
+            result = session.test_exchange_certificate_connection()
+
         assert result is False
 
-        session.execute.assert_called_once_with(
+        session.execute_connect.assert_called_once_with(
             "Connect-ExchangeOnline -Certificate $certificate -AppId $clientID -Organization $tenantDomain"
+        )
+        mock_error.assert_called_once_with(
+            "Exchange Online Certificate connection failed: Connection failed: Authentication error"
         )
 
         session.close()
@@ -979,18 +969,14 @@ class Testm365PowerShell:
             session = M365PowerShell(credentials, identity)
 
         # Mock successful Teams connection - the method returns bool
-        def mock_execute_side_effect(command):
-            if "Connect-MicrosoftTeams" in command:
-                # Return result that contains the identity_id for success
-                return "Connected successfully test_identity_id"
-            return ""
-
-        session.execute = MagicMock(side_effect=mock_execute_side_effect)
+        session.execute_connect = MagicMock(
+            return_value="Connected successfully test_identity_id"
+        )
 
         result = session.test_teams_certificate_connection()
         assert result is True
 
-        session.execute.assert_called_once_with(
+        session.execute_connect.assert_called_once_with(
             "Connect-MicrosoftTeams -Certificate $certificate -ApplicationId $clientID -TenantId $tenantID"
         )
 
@@ -1003,22 +989,21 @@ class Testm365PowerShell:
         mock_popen.return_value = mock_process
 
         credentials = M365Credentials()
-        identity = M365IdentityInfo()
+        identity = M365IdentityInfo(identity_id="expected-id")
         session = M365PowerShell(credentials, identity)
 
-        # Mock failed Teams connection
-        def mock_execute_side_effect(command, json_parse=False):
-            if "Connect-MicrosoftTeams" in command:
-                raise Exception("Connection failed: Authentication error")
-            return ""
+        session.execute_connect = MagicMock(return_value="Connection failed")
 
-        session.execute = MagicMock(side_effect=mock_execute_side_effect)
+        with patch("prowler.lib.logger.logger.error") as mock_error:
+            result = session.test_teams_certificate_connection()
 
-        # Should raise exception on connection failure
-        with pytest.raises(Exception) as exc_info:
-            session.test_teams_certificate_connection()
-
-        assert "Connection failed: Authentication error" in str(exc_info.value)
+        assert result is False
+        session.execute_connect.assert_called_once_with(
+            "Connect-MicrosoftTeams -Certificate $certificate -ApplicationId $clientID -TenantId $tenantID"
+        )
+        mock_error.assert_called_once_with(
+            "Microsoft Teams Certificate connection failed: Connection failed"
+        )
 
         session.close()
 
@@ -1090,7 +1075,7 @@ class Testm365PowerShell:
         # Mock certificate variable check and teams connection
         execute_calls = []
 
-        def mock_execute_side_effect(command, json_parse=False):
+        def mock_execute_side_effect(command):
             execute_calls.append(command)
             if "Write-Output $certificate" in command:
                 return "certificate_content"  # Non-empty means certificate exists
@@ -1123,7 +1108,7 @@ class Testm365PowerShell:
         # Mock certificate variable check and exchange connection
         execute_calls = []
 
-        def mock_execute_side_effect(command, json_parse=False):
+        def mock_execute_side_effect(command):
             execute_calls.append(command)
             if "Write-Output $certificate" in command:
                 return "certificate_content"  # Non-empty means certificate exists

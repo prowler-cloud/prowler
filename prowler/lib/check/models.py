@@ -588,8 +588,17 @@ class Check_Report_GCP(Check_Report):
             or getattr(resource, "name", None)
             or ""
         )
+
+        # Prefer the explicit resource_name argument, otherwise look for a name attribute on the resource
+        resource_name_candidate = resource_name or getattr(resource, "name", None)
+        if not resource_name_candidate and isinstance(resource, dict):
+            # Some callers pass a dict, so fall back to the dict entry if available
+            resource_name_candidate = resource.get("name")
+        if isinstance(resource_name_candidate, str):
+            # Trim whitespace so empty strings collapse to the default
+            resource_name_candidate = resource_name_candidate.strip()
         self.resource_name = (
-            resource_name or getattr(resource, "name", "") or "GCP Project"
+            str(resource_name_candidate) if resource_name_candidate else "GCP Project"
         )
         self.project_id = project_id or getattr(resource, "project_id", "")
         self.location = (

@@ -3,28 +3,20 @@ name: 'MCP: Container Build and Push'
 on:
   push:
     branches:
-      - "master"
+      - 'master'
     paths:
-      - "mcp_server/**"
-      - ".github/workflows/mcp-container-build-push.yml"
-
-  # Uncomment to test this workflow on PRs
-  # pull_request:
-  #   branches:
-  #     - "master"
-  #   paths:
-  #     - "mcp_server/**"
-  #     - ".github/workflows/mcp-container-build-push.yml"
-
+      - 'mcp_server/**'
+      - '.github/workflows/mcp-container-build-push.yml'
   release:
-    types: [published]
+    types:
+      - 'published'
 
 permissions:
   contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
   # Tags
@@ -41,6 +33,7 @@ jobs:
   setup:
     if: github.repository == 'prowler-cloud/prowler'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       short-sha: ${{ steps.set-short-sha.outputs.short-sha }}
     steps:
@@ -51,8 +44,12 @@ jobs:
   container-build-push:
     needs: setup
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Login to DockerHub
@@ -64,7 +61,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
 
-      - name: Build and push container (latest)
+      - name: Build and push MCP container (latest)
         if: github.event_name == 'push'
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
@@ -83,8 +80,23 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build and push container (release)
+      - name: Notify container push started
         if: github.event_name == 'release'
+        uses: ./.github/actions/slack-notification
+        env:
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_PLATFORM_DEPLOYMENTS }}
+          COMPONENT: MCP
+          RELEASE_TAG: ${{ env.RELEASE_TAG }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        with:
+          slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload-file-path: "./.github/scripts/slack-messages/container-release-started.json"
+
+      - name: Build and push MCP container (release)
+        if: github.event_name == 'release'
+        id: container-push
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: ${{ env.WORKING_DIRECTORY }}
@@ -103,8 +115,31 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Trigger deployment
-        if: github.event_name == 'push'
+      - name: Notify container push completed
+        if: github.event_name == 'release' && always()
+        uses: ./.github/actions/slack-notification
+        env:
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_PLATFORM_DEPLOYMENTS }}
+          COMPONENT: MCP
+          RELEASE_TAG: ${{ env.RELEASE_TAG }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        with:
+          slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload-file-path: "./.github/scripts/slack-messages/container-release-completed.json"
+          step-outcome: ${{ steps.container-push.outcome }}
+
+  trigger-deployment:
+    if: github.event_name == 'push'
+    needs: [setup, container-build-push]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+
+    steps:
+      - name: Trigger MCP deployment
         uses: peter-evans/repository-dispatch@5fc4efd1a4797ddb68ffd0714a238564e4cc0e6f # v4.0.0
         with:
           token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}

@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from shutil import rmtree
@@ -26,6 +27,12 @@ from tasks.jobs.integrations import (
     upload_s3_integration,
     upload_security_hub_integration,
 )
+from tasks.jobs.lighthouse_providers import (
+    check_lighthouse_provider_connection,
+    refresh_lighthouse_provider_models,
+)
+from tasks.jobs.muting import mute_historical_findings
+from tasks.jobs.report import generate_threatscore_report_job
 from tasks.jobs.scan import (
     aggregate_findings,
     create_compliance_requirements,
@@ -64,10 +71,15 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
         generate_outputs_task.si(
             scan_id=scan_id, provider_id=provider_id, tenant_id=tenant_id
         ),
-        check_integrations_task.si(
-            tenant_id=tenant_id,
-            provider_id=provider_id,
-            scan_id=scan_id,
+        group(
+            generate_threatscore_report_task.si(
+                tenant_id=tenant_id, scan_id=scan_id, provider_id=provider_id
+            ),
+            check_integrations_task.si(
+                tenant_id=tenant_id,
+                provider_id=provider_id,
+                scan_id=scan_id,
+            ),
         ),
     ).apply_async()
 
@@ -304,7 +316,7 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
 
     frameworks_bulk = Compliance.get_bulk(provider_type)
     frameworks_avail = get_compliance_frameworks(provider_type)
-    out_dir, comp_dir = _generate_output_directory(
+    out_dir, comp_dir, _ = _generate_output_directory(
         DJANGO_TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id
     )
 
@@ -407,7 +419,24 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
                 writer._data.clear()
 
     compressed = _compress_output_files(out_dir)
-    upload_uri = _upload_to_s3(tenant_id, compressed, scan_id)
+
+    upload_uri = _upload_to_s3(
+        tenant_id,
+        scan_id,
+        compressed,
+        os.path.basename(compressed),
+    )
+
+    compliance_dir_path = Path(comp_dir).parent
+    if compliance_dir_path.exists():
+        for artifact_path in sorted(compliance_dir_path.iterdir()):
+            if artifact_path.is_file():
+                _upload_to_s3(
+                    tenant_id,
+                    scan_id,
+                    str(artifact_path),
+                    f"compliance/{artifact_path.name}",
+                )
 
     # S3 integrations (need output_directory)
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
@@ -498,6 +527,24 @@ def check_lighthouse_connection_task(lighthouse_config_id: str, tenant_id: str =
             - 'available_models' (list): List of available models if connection is successful.
     """
     return check_lighthouse_connection(lighthouse_config_id=lighthouse_config_id)
+
+
+@shared_task(base=RLSTask, name="lighthouse-provider-connection-check")
+@set_tenant
+def check_lighthouse_provider_connection_task(
+    provider_config_id: str, tenant_id: str | None = None
+) -> dict:
+    """Task wrapper to validate provider credentials and set is_active."""
+    return check_lighthouse_provider_connection(provider_config_id=provider_config_id)
+
+
+@shared_task(base=RLSTask, name="lighthouse-provider-models-refresh")
+@set_tenant
+def refresh_lighthouse_provider_models_task(
+    provider_config_id: str, tenant_id: str | None = None
+) -> dict:
+    """Task wrapper to refresh provider models catalog for the given configuration."""
+    return refresh_lighthouse_provider_models(provider_config_id=provider_config_id)
 
 
 @shared_task(name="integration-check")
@@ -617,3 +664,43 @@ def jira_integration_task(
     return send_findings_to_jira(
         tenant_id, integration_id, project_key, issue_type, finding_ids
     )
+
+
+@shared_task(
+    base=RLSTask,
+    name="scan-threatscore-report",
+    queue="scan-reports",
+)
+def generate_threatscore_report_task(tenant_id: str, scan_id: str, provider_id: str):
+    """
+    Task to generate a threatscore report for a given scan.
+    Args:
+        tenant_id (str): The tenant identifier.
+        scan_id (str): The scan identifier.
+        provider_id (str): The provider identifier.
+    """
+    return generate_threatscore_report_job(
+        tenant_id=tenant_id, scan_id=scan_id, provider_id=provider_id
+    )
+
+
+@shared_task(name="findings-mute-historical")
+def mute_historical_findings_task(tenant_id: str, mute_rule_id: str):
+    """
+    Background task to mute all historical findings matching a mute rule.
+
+    This task processes findings in batches to avoid memory issues with large datasets.
+    It updates the Finding.muted, Finding.muted_at, and Finding.muted_reason fields
+    for all findings whose UID is in the mute rule's finding_uids list.
+
+    Args:
+        tenant_id (str): The tenant ID for RLS context.
+        mute_rule_id (str): The primary key of the MuteRule to apply.
+
+    Returns:
+        dict: A dictionary containing:
+            - 'findings_muted' (int): Total number of findings muted.
+            - 'rule_id' (str): The mute rule ID.
+            - 'status' (str): Final status ('completed').
+    """
+    return mute_historical_findings(tenant_id, mute_rule_id)

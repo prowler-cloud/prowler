@@ -12,32 +12,32 @@ class logging_sink_created(Check):
 
         for project in logging_client.project_ids:
             if project not in projects_with_logging_sink.keys():
+                project_obj = logging_client.projects.get(project)
                 report = Check_Report_GCP(
                     metadata=self.metadata(),
-                    resource=logging_client.projects[project],
+                    resource=project_obj,
+                    resource_id=project,
                     project_id=project,
                     location=logging_client.region,
-                    resource_name=(
-                        logging_client.projects[project].name
-                        if logging_client.projects[project].name
-                        else "GCP Project"
-                    ),
+                    resource_name=(getattr(project_obj, "name", None) or "GCP Project"),
                 )
                 report.status = "FAIL"
                 report.status_extended = f"There are no logging sinks to export copies of all the log entries in project {project}."
                 findings.append(report)
             else:
+                sink = projects_with_logging_sink[project]
+                sink_name = getattr(sink, "name", None) or "unknown"
                 report = Check_Report_GCP(
                     metadata=self.metadata(),
-                    resource=projects_with_logging_sink[project],
+                    resource=sink,
+                    resource_id=sink_name,
+                    project_id=project,
                     location=logging_client.region,
                     resource_name=(
-                        projects_with_logging_sink[project].name
-                        if projects_with_logging_sink[project].name
-                        else "Logging Sink"
+                        sink_name if sink_name != "unknown" else "Logging Sink"
                     ),
                 )
                 report.status = "PASS"
-                report.status_extended = f"Sink {projects_with_logging_sink[project].name} is enabled exporting copies of all the log entries in project {project}."
+                report.status_extended = f"Sink {sink_name} is enabled exporting copies of all the log entries in project {project}."
                 findings.append(report)
         return findings

@@ -1,5 +1,5 @@
 {
-  "Provider": "oci",
+  "Provider": "oraclecloud",
   "CheckID": "events_notification_topic_and_subscription_exists",
   "CheckTitle": "Create at least one notification topic and subscription to receive monitoring alerts",
   "CheckType": [

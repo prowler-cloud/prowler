@@ -1,31 +1,46 @@
 {
   "Provider": "aws",
   "CheckID": "cloudwatch_log_metric_filter_root_usage",
-  "CheckTitle": "Ensure a log metric filter and alarm exist for usage of root account.",
+  "CheckTitle": "Account has a CloudWatch Logs metric filter and alarm for root account usage",
   "CheckType": [
-    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "TTPs/Privilege Escalation"
   ],
   "ServiceName": "cloudwatch",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:cloudwatch:region:account-id:certificate/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCloudWatchAlarm",
-  "Description": "Ensure a log metric filter and alarm exist for usage of root account.",
-  "Risk": "Monitoring unauthorized API calls will help reveal application errors and may reduce time to detect malicious activity.",
-  "RelatedUrl": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
+  "Description": "**CloudTrail** logs in CloudWatch include a metric filter for **root account activity** (`{ $.userIdentity.type = \"Root\" && $.userIdentity.invokedBy NOT EXISTS && $.eventType != \"AwsServiceEvent\" }`) and a linked CloudWatch alarm that triggers when the filter matches.",
+  "Risk": "Without alerting on **root activity**, full-privilege actions can proceed unnoticed, impacting:\n- confidentiality via data access/exfiltration\n- integrity via policy/config tampering\n- availability via deletions or shutdowns\nDelayed detection increases blast radius and persistence.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatchLogs/root-account-usage-alarm.html",
+    "https://asecure.cloud/a/root_account_login/",
+    "https://support.icompaas.com/support/solutions/articles/62000083624-ensure-a-log-metric-filter-and-alarm-exist-for-usage-of-root-account",
+    "https://www.intelligentdiscovery.io/controls/cloudwatch/cloudwatch-alarm-root-account-usage",
+    "https://aws.amazon.com/blogs/security/how-to-receive-notifications-when-your-aws-accounts-root-access-keys-are-used/",
+    "https://www.tenable.com/audits/items/CIS_Amazon_Web_Services_Foundations_v1.5.0_L1.audit:000adfb028a1475075a6b5d2117f53f4"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_3",
-      "Terraform": "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_3#fix---buildtime"
+      "NativeIaC": "```yaml\n# CloudFormation: Create metric filter and alarm for root account usage\nResources:\n  RootUsageMetricFilter:\n    Type: AWS::Logs::MetricFilter\n    Properties:\n      LogGroupName: \"<example_resource_name>\"\n      FilterPattern: '{ $.userIdentity.type = \"Root\" && $.userIdentity.invokedBy NOT EXISTS && $.eventType != \"AwsServiceEvent\" }'  # CRITICAL: detects root user actions not invoked by services\n      MetricTransformations:\n        - MetricValue: \"1\"\n          MetricNamespace: \"<example_resource_name>\"  # CRITICAL: metric namespace used by the alarm\n          MetricName: \"<example_resource_name>\"       # CRITICAL: metric name used by the alarm\n\n  RootUsageAlarm:\n    Type: AWS::CloudWatch::Alarm\n    Properties:\n      ComparisonOperator: GreaterThanOrEqualToThreshold\n      EvaluationPeriods: 1\n      MetricName: \"<example_resource_name>\"   # CRITICAL: alarms on the metric created by the filter\n      Namespace: \"<example_resource_name>\"\n      Period: 300\n      Statistic: Sum\n      Threshold: 1\n```",
+      "Other": "1. In the AWS console, open CloudWatch > Logs > Log groups and select the CloudTrail log group\n2. Go to Metric filters > Create metric filter\n3. For Filter pattern, enter: { $.userIdentity.type = \"Root\" && $.userIdentity.invokedBy NOT EXISTS && $.eventType != \"AwsServiceEvent\" }\n4. Click Next, set any Filter name, set Metric namespace and Metric name, set Metric value to 1, then Create metric filter\n5. Select the new metric filter and click Create alarm\n6. Set Period to 5 minutes, Statistic to Sum, Threshold type Static with value 1, Evaluation periods 1, then Create alarm",
+      "Terraform": "```hcl\n# CloudWatch Logs metric filter for root account usage\nresource \"aws_cloudwatch_log_metric_filter\" \"<example_resource_name>\" {\n  name           = \"<example_resource_name>\"\n  log_group_name = \"<example_resource_name>\"\n  pattern        = \"{ $.userIdentity.type = \\\"Root\\\" && $.userIdentity.invokedBy NOT EXISTS && $.eventType != \\\"AwsServiceEvent\\\" }\" # CRITICAL: detects root user actions\n\n  metric_transformation {\n    name      = \"<example_resource_name>\"     # CRITICAL: metric used by the alarm\n    namespace = \"<example_resource_name>\"\n    value     = \"1\"\n  }\n}\n\n# Alarm on the root usage metric\nresource \"aws_cloudwatch_metric_alarm\" \"<example_resource_name>\" {\n  comparison_operator = \"GreaterThanOrEqualToThreshold\"\n  evaluation_periods  = 1\n  metric_name         = \"<example_resource_name>\"   # CRITICAL: matches metric filter\n  namespace           = \"<example_resource_name>\"\n  period              = 300\n  statistic           = \"Sum\"\n  threshold           = 1\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended that a metric filter and alarm be established for unauthorized requests.",
-      "Url": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html"
+      "Text": "Enable real-time alerts for **root activity** using a log metric filter and a high-priority alarm with notifications.\n\nReduce exposure: enforce **least privilege**, keep root for *break-glass* with MFA, disable root access keys, and route alerts into incident response for **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/cloudwatch_log_metric_filter_root_usage"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging",
+    "threat-detection"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Logging and Monitoring"
