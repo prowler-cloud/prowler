@@ -6,11 +6,11 @@
 /* ===== LIGHT THEME (ROOT) ===== */
 :root {
   /* ===== LEGACY VARIABLES (CHART COLORS) ===== */
-  --chart-info: #3C8DFF;
-  --chart-warning: #FDFBD4;
-  --chart-warning-emphasis: #FEC94D;
-  --chart-danger: #F77852;
-  --chart-danger-emphasis: #FF006A;
+  --chart-info: #3c8dff;
+  --chart-warning: #fdfbd4;
+  --chart-warning-emphasis: #fec94d;
+  --chart-danger: #f77852;
+  --chart-danger-emphasis: #ff006a;
   --chart-success-color: #16a34a;
   --chart-fail: #dc2626;
   --chart-radar-primary: #9d174d;
@@ -69,36 +69,40 @@
 
   /* Text Colors */
   --text-neutral-primary: var(--color-slate-950);
-  --text-neutral-secondary: var(--color-zinc-700);
+  --text-neutral-secondary: var(--color-zinc-800);
   --text-neutral-tertiary: var(--color-zinc-500);
   --text-error-primary: var(--color-red-600);
 
   /* Background Colors */
-  --bg-neutral-primary: #FDFDFD;
+  --bg-neutral-primary: #fdfdfd;
   --bg-neutral-secondary: var(--color-white);
-  --bg-neutral-tertiary: #FBFDFD;
+  --bg-neutral-tertiary: #fbfdfd;
   --bg-tag-primary: var(--color-slate-50);
   --bg-pass-primary: var(--color-emerald-400);
   --bg-pass-secondary: var(--color-emerald-50);
+  --bg-warning-primary: var(--color-orange-500);
   --bg-fail-primary: var(--color-rose-500);
   --bg-fail-secondary: var(--color-rose-50);
 
   /* Severity Colors */
-  --bg-data-critical: #FF006A;
-  --bg-data-high: #F77852;
-  --bg-data-medium: #FDD34F;
-  --bg-data-low: #F5F3CE;
-  --bg-data-info: #3C8DFF;
+  --bg-data-critical: #ff006a;
+  --bg-data-high: #f77852;
+  --bg-data-medium: #fdd34f;
+  --bg-data-low: #f5f3ce;
+  --bg-data-info: #3c8dff;
+
+  /* Chart Dots */
+  --chart-dots: var(--color-neutral-200);
 }
 
 /* ===== DARK THEME ===== */
 .dark {
   /* ===== LEGACY VARIABLES (CHART COLORS) ===== */
-  --chart-info: #3C8DFF;
-  --chart-warning: #FDFBD4;
-  --chart-warning-emphasis: #FEC94D;
-  --chart-danger: #F77852;
-  --chart-danger-emphasis: #FF006A;
+  --chart-info: #3c8dff;
+  --chart-warning: #fdfbd4;
+  --chart-warning-emphasis: #fec94d;
+  --chart-danger: #f77852;
+  --chart-danger-emphasis: #ff006a;
   --chart-success-color: #86da26;
   --chart-fail: #db2b49;
   --chart-radar-primary: #b51c80;
@@ -157,26 +161,30 @@
 
   /* Text Colors */
   --text-neutral-primary: var(--color-zinc-100);
-  --text-neutral-secondary: var(--color-zinc-400);
+  --text-neutral-secondary: var(--color-zinc-300);
   --text-neutral-tertiary: var(--color-zinc-500);
   --text-error-primary: var(--color-rose-300);
 
   /* Background Colors */
   --bg-neutral-primary: var(--color-zinc-950);
-  --bg-neutral-secondary: var(--color-slate-950);
+  --bg-neutral-secondary: var(--color-stone-950);
   --bg-neutral-tertiary: #121110;
   --bg-tag-primary: var(--color-slate-950);
+  --bg-warning-primary: var(--color-orange-400);
   --bg-pass-primary: var(--color-green-400);
   --bg-pass-secondary: var(--color-emerald-900);
   --bg-fail-primary: var(--color-rose-500);
   --bg-fail-secondary: #432232;
 
   /* Severity Colors */
-  --bg-data-critical: #FF006A;
-  --bg-data-high: #F77852;
-  --bg-data-medium: #FEC94D;
-  --bg-data-low: #FDFBD4;
-  --bg-data-info: #3C8DFF;
+  --bg-data-critical: #ff006a;
+  --bg-data-high: #f77852;
+  --bg-data-medium: #fec94d;
+  --bg-data-low: #fdfbd4;
+  --bg-data-info: #3c8dff;
+
+  /* Chart Dots */
+  --chart-dots: var(--text-neutral-primary);
 }
 
 /* ===== TAILWIND THEME MAPPINGS ===== */
@@ -248,6 +256,7 @@
   --color-bg-tag: var(--bg-tag-primary);
   --color-bg-pass: var(--bg-pass-primary);
   --color-bg-pass-secondary: var(--bg-pass-secondary);
+  --color-bg-warning: var(--bg-warning-primary);
   --color-bg-fail: var(--bg-fail-primary);
   --color-bg-fail-secondary: var(--bg-fail-secondary);
 }
