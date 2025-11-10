@@ -1,3 +1,4 @@
+import time
 from unittest.mock import MagicMock, patch
 
 from prowler.providers.m365.lib.powershell.m365_powershell import PowerShellSession
@@ -78,6 +79,7 @@ class TestPowerShellSession:
             mock_process.stdin.write.assert_any_call("Get-Command\n")
             mock_process.stdin.write.assert_any_call(f"Write-Output '{session.END}'\n")
             mock_process.stdin.write.assert_any_call(f"Write-Error '{session.END}'\n")
+            assert session.last_command_timed_out is False
 
         # Test 2: JSON parsing enabled
         mock_process.stdout.readline.side_effect = [
@@ -94,10 +96,22 @@ class TestPowerShellSession:
                 mock_json_parse.assert_called_once_with('{"key": "value"}')
 
         # Test 3: Timeout handling
-        mock_process.stdout.readline.side_effect = ["test output\n"]  # No END marker
+        def slow_readline_execute():
+            if not hasattr(slow_readline_execute, "called"):
+                slow_readline_execute.called = True
+                return "test output\n"
+            time.sleep(0.2)
+            return ""
+
+        mock_process.stdout.readline.side_effect = slow_readline_execute
         mock_process.stderr.readline.return_value = f"Write-Error: {session.END}\n"
-        result = session.execute("Get-Command", timeout=0.1)
-        assert result == ""
+        with patch("prowler.lib.logger.logger.error") as mock_error:
+            result = session.execute("Get-Command", timeout=0.1)
+            assert result == ""
+            assert session.last_command_timed_out is True
+            mock_error.assert_called_once_with(
+                "PowerShell command timed out after 0.1 seconds: Get-Command"
+            )
 
         # Test 4: Error handling
         mock_process.stdout.readline.side_effect = ["\n", f"{session.END}\n"]
@@ -134,6 +148,7 @@ class TestPowerShellSession:
         with patch.object(session, "remove_ansi", side_effect=lambda x: x):
             result = session.read_output()
             assert result == "Hello World"
+            assert session.last_command_timed_out is False
 
         # Test 2: Error in stderr
         mock_process.stdout.readline.side_effect = ["\n", f"{session.END}\n"]
@@ -148,18 +163,34 @@ class TestPowerShellSession:
                 mock_error.assert_called_once_with(
                     "PowerShell error output: Write-Error: This is an error"
                 )
+                assert session.last_command_timed_out is False
 
         # Test 3: Timeout in stdout
-        mock_process.stdout.readline.side_effect = ["test output\n"]  # No END marker
+        def slow_readline_output():
+            if not hasattr(slow_readline_output, "called"):
+                slow_readline_output.called = True
+                return "test output\n"
+            time.sleep(0.2)
+            return ""
+
+        mock_process.stdout.readline.side_effect = slow_readline_output
         mock_process.stderr.readline.return_value = f"Write-Error: {session.END}\n"
-        result = session.read_output(timeout=0.1, default="timeout")
-        assert result == "timeout"
+        with patch("prowler.lib.logger.logger.error") as mock_error:
+            result = session.read_output(
+                timeout=0.1, default="timeout", command="SlowCmd"
+            )
+            assert result == "timeout"
+            assert session.last_command_timed_out is True
+            mock_error.assert_called_once_with(
+                "PowerShell command timed out after 0.1 seconds: SlowCmd"
+            )
 
         # Test 4: Empty output
         mock_process.stdout.readline.side_effect = [f"{session.END}\n"]
         mock_process.stderr.readline.return_value = f"Write-Error: {session.END}\n"
         result = session.read_output()
         assert result == ""
+        assert session.last_command_timed_out is False
 
         session.close()
 
