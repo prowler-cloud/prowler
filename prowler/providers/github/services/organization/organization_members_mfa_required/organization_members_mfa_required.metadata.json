@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "critical",
-  "ResourceType": "",
+  "ResourceType": "GitHubOrganization",
   "Description": "GitHub organization settings require all members to use **two-factor authentication** (2FA).\n\nThe evaluation determines whether access to organization resources is conditioned on members having 2FA enabled.",
   "Risk": "Without enforced **2FA**, stolen or reused passwords enable account takeover, leading to:\n- Loss of code integrity via unauthorized commits\n- Confidential data exposure from repos and secrets\n- Availability impact from settings changes, token revocation, or deletions",
   "RelatedUrl": "",
