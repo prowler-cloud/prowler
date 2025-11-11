@@ -5,7 +5,7 @@ from enum import Enum
 from boto3.session import Session
 from botocore.config import Config
 
-from prowler.config.config import output_file_timestamp
+from prowler.config.config import get_output_timestamp
 from prowler.providers.aws.config import AWS_STS_GLOBAL_ENDPOINT_REGION
 from prowler.providers.aws.lib.arn.models import ARN
 from prowler.providers.common.models import ProviderOutputOptions
@@ -118,8 +118,9 @@ class AWSOutputOptions(ProviderOutputOptions):
             not hasattr(arguments, "output_filename")
             or arguments.output_filename is None
         ):
+            output_timestamp = get_output_timestamp()
             self.output_filename = (
-                f"prowler-output-{identity.account}-{output_file_timestamp}"
+                f"prowler-output-{identity.account}-{output_timestamp}"
             )
         else:
             self.output_filename = arguments.output_filename
