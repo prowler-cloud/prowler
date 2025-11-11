@@ -1,16 +1,16 @@
 // ThreatScore Snapshot Types
 // Corresponds to the ThreatScoreSnapshot model from the API
 
-export type CriticalRequirement = {
+export interface CriticalRequirement {
   requirement_id: string;
   risk_level: number;
   weight: number;
   title: string;
-};
+}
 
 export type SectionScores = Record<string, number>;
 
-export type ThreatScoreSnapshotAttributes = {
+export interface ThreatScoreSnapshotAttributes {
   id: string;
   inserted_at: string;
   scan: string | null;
@@ -27,20 +27,20 @@ export type ThreatScoreSnapshotAttributes = {
   total_findings: number;
   passed_findings: number;
   failed_findings: number;
-};
+}
 
-export type ThreatScoreSnapshot = {
+export interface ThreatScoreSnapshot {
   id: string;
   type: "threatscore-snapshots";
   attributes: ThreatScoreSnapshotAttributes;
-};
+}
 
-export type ThreatScoreResponse = {
+export interface ThreatScoreResponse {
   data: ThreatScoreSnapshot[];
-};
+}
 
 // Filters for ThreatScore endpoint
-export type ThreatScoreFilters = {
+export interface ThreatScoreFilters {
   snapshot_id?: string;
   provider_id?: string;
   provider_id__in?: string;
@@ -55,4 +55,4 @@ export type ThreatScoreFilters = {
   inserted_at__lte?: string;
   overall_score__gte?: string;
   overall_score__lte?: string;
-};
+}
