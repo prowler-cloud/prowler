@@ -64,7 +64,7 @@ export const LighthouseSettings = () => {
     if (isLoading) return;
     setIsLoading(true);
     try {
-      const config: any = {
+      const config: Record<string, string> = {
         business_context: data.businessContext || "",
       };
 

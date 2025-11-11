@@ -11,6 +11,14 @@ import { CustomButton } from "@/components/ui/custom";
 
 import { getAllProviders } from "./llm-provider-registry";
 
+interface LighthouseProviderResource {
+  id: string;
+  attributes: {
+    provider_type: string;
+    is_active: boolean;
+  };
+}
+
 type LLMProvider = {
   id: string;
   provider: string;
@@ -32,10 +40,13 @@ export const LLMProvidersTable = () => {
       try {
         // Fetch connected providers from API
         const result = await getLighthouseProviders();
-        const connectedProviders = new Map<string, any>();
+        const connectedProviders = new Map<
+          string,
+          LighthouseProviderResource
+        >();
 
         if (result.data && !result.errors) {
-          result.data.forEach((provider: any) => {
+          result.data.forEach((provider: LighthouseProviderResource) => {
             connectedProviders.set(provider.attributes.provider_type, provider);
           });
         }

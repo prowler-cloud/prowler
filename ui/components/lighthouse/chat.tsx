@@ -3,7 +3,7 @@
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { ChevronDown, Copy, Plus, RotateCcw } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Streamdown } from "streamdown";
 
 import { getLighthouseModelIds } from "@/actions/lighthouse/lighthouse";
@@ -136,62 +136,59 @@ export const Chat = ({
   selectedModelRef.current = selectedModel;
 
   // Load all models for a specific provider
-  const loadModelsForProvider = useCallback(
-    async (providerType: LighthouseProvider) => {
-      setProviderLoadState((prev) => {
-        // Skip if already loaded or currently loading
-        if (prev.loaded.has(providerType) || prev.loading.has(providerType)) {
-          return prev;
-        }
+  const loadModelsForProvider = async (providerType: LighthouseProvider) => {
+    setProviderLoadState((prev) => {
+      // Skip if already loaded or currently loading
+      if (prev.loaded.has(providerType) || prev.loading.has(providerType)) {
+        return prev;
+      }
 
-        // Mark as loading
-        return {
-          ...prev,
-          loading: new Set([...Array.from(prev.loading), providerType]),
-        };
-      });
+      // Mark as loading
+      return {
+        ...prev,
+        loading: new Set([...Array.from(prev.loading), providerType]),
+      };
+    });
 
-      try {
-        const response = await getLighthouseModelIds(providerType);
+    try {
+      const response = await getLighthouseModelIds(providerType);
 
-        if (response.errors) {
-          console.error(
-            `Error loading models for ${providerType}:`,
-            response.errors,
-          );
-          return;
-        }
+      if (response.errors) {
+        console.error(
+          `Error loading models for ${providerType}:`,
+          response.errors,
+        );
+        return;
+      }
 
-        if (response.data && Array.isArray(response.data)) {
-          // Use the model data directly from the API
-          const models: Model[] = response.data;
+      if (response.data && Array.isArray(response.data)) {
+        // Use the model data directly from the API
+        const models: Model[] = response.data;
 
-          // Update the provider's models
-          setProviders((prev) =>
-            prev.map((p) => (p.id === providerType ? { ...p, models } : p)),
-          );
+        // Update the provider's models
+        setProviders((prev) =>
+          prev.map((p) => (p.id === providerType ? { ...p, models } : p)),
+        );
 
-          // Mark as loaded and remove from loading
-          setProviderLoadState((prev) => ({
-            loaded: new Set([...Array.from(prev.loaded), providerType]),
-            loading: new Set(
-              Array.from(prev.loading).filter((id) => id !== providerType),
-            ),
-          }));
-        }
-      } catch (error) {
-        console.error(`Error loading models for ${providerType}:`, error);
-        // Remove from loading state on error
+        // Mark as loaded and remove from loading
         setProviderLoadState((prev) => ({
-          ...prev,
+          loaded: new Set([...Array.from(prev.loaded), providerType]),
           loading: new Set(
             Array.from(prev.loading).filter((id) => id !== providerType),
           ),
         }));
       }
-    },
-    [],
-  );
+    } catch (error) {
+      console.error(`Error loading models for ${providerType}:`, error);
+      // Remove from loading state on error
+      setProviderLoadState((prev) => ({
+        ...prev,
+        loading: new Set(
+          Array.from(prev.loading).filter((id) => id !== providerType),
+        ),
+      }));
+    }
+  };
 
   const { messages, sendMessage, status, error, setMessages, regenerate } =
     useChat({
@@ -253,7 +250,7 @@ export const Chat = ({
 
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
 
-  const restoreLastUserMessage = useCallback(() => {
+  const restoreLastUserMessage = () => {
     let restoredText = "";
 
     setMessages((currentMessages) => {
@@ -285,7 +282,7 @@ export const Chat = ({
     if (restoredText) {
       setUiState((prev) => ({ ...prev, inputValue: restoredText }));
     }
-  }, [setMessages]);
+  };
 
   // Auto-scroll to bottom when new messages arrive or when streaming
   useEffect(() => {
@@ -302,38 +299,34 @@ export const Chat = ({
     }
   }, [uiState.isDropdownOpen, uiState.hoveredProvider, loadModelsForProvider]);
 
-  // Memoize filtered models to avoid recalculation on every render
-  const filteredModels = useMemo(() => {
-    const currentProvider = providers.find(
-      (p) => p.id === uiState.hoveredProvider,
-    );
-    return (
-      currentProvider?.models.filter((model) =>
-        model.name
-          .toLowerCase()
-          .includes(uiState.modelSearchTerm.toLowerCase()),
-      ) || []
-    );
-  }, [providers, uiState.hoveredProvider, uiState.modelSearchTerm]);
+  // Filter models based on search term
+  const currentProvider = providers.find(
+    (p) => p.id === uiState.hoveredProvider,
+  );
+  const filteredModels =
+    currentProvider?.models.filter((model) =>
+      model.name.toLowerCase().includes(uiState.modelSearchTerm.toLowerCase()),
+    ) || [];
 
   // Handlers
-  const handleNewChat = useCallback(() => {
+  const handleNewChat = () => {
     setMessages([]);
     setErrorMessage(null);
     setUiState((prev) => ({ ...prev, inputValue: "" }));
-  }, [setMessages]);
+  };
 
-  const handleModelSelect = useCallback(
-    (providerType: LighthouseProvider, modelId: string, modelName: string) => {
-      setSelectedModel({ providerType, modelId, modelName });
-      setUiState((prev) => ({
-        ...prev,
-        isDropdownOpen: false,
-        modelSearchTerm: "", // Reset search when selecting
-      }));
-    },
-    [],
-  );
+  const handleModelSelect = (
+    providerType: LighthouseProvider,
+    modelId: string,
+    modelName: string,
+  ) => {
+    setSelectedModel({ providerType, modelId, modelName });
+    setUiState((prev) => ({
+      ...prev,
+      isDropdownOpen: false,
+      modelSearchTerm: "", // Reset search when selecting
+    }));
+  };
 
   return (
     <div className="bg-background relative flex h-[calc(100vh-(--spacing(16)))] min-w-0 flex-col">

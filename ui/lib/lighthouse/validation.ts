@@ -11,7 +11,7 @@ import {
  */
 export function validateCredentials(
   providerType: LighthouseProvider,
-  credentials: Record<string, any>,
+  credentials: Record<string, string>,
 ): { success: boolean; error?: string } {
   try {
     switch (providerType) {
@@ -31,9 +31,12 @@ export function validateCredentials(
         };
     }
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     const errorMessage =
-      error?.issues?.[0]?.message || error?.message || "Validation failed";
+      (error as { issues?: Array<{ message: string }>; message?: string })
+        ?.issues?.[0]?.message ||
+      (error as { message?: string })?.message ||
+      "Validation failed";
     return {
       success: false,
       error: errorMessage,
@@ -51,9 +54,12 @@ export function validateBaseUrl(baseUrl: string): {
   try {
     baseUrlSchema.parse(baseUrl);
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     const errorMessage =
-      error?.issues?.[0]?.message || error?.message || "Invalid base URL";
+      (error as { issues?: Array<{ message: string }>; message?: string })
+        ?.issues?.[0]?.message ||
+      (error as { message?: string })?.message ||
+      "Invalid base URL";
     return {
       success: false,
       error: errorMessage,
