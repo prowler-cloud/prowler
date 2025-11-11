@@ -47,6 +47,7 @@ from api.models import (
     StatusChoices,
     Task,
     TenantAPIKey,
+    ThreatScoreSnapshot,
     User,
     UserRoleRelationship,
 )
@@ -3626,3 +3627,64 @@ class MuteRuleUpdateSerializer(BaseWriteSerializer):
         ):
             raise ValidationError("A mute rule with this name already exists.")
         return value
+
+
+# ThreatScore Snapshots
+
+
+class ThreatScoreSnapshotSerializer(RLSSerializer):
+    """
+    Serializer for ThreatScore snapshots.
+    Read-only serializer for retrieving historical ThreatScore metrics.
+    """
+
+    id = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ThreatScoreSnapshot
+        fields = [
+            "id",
+            "inserted_at",
+            "scan",
+            "provider",
+            "compliance_id",
+            "overall_score",
+            "score_delta",
+            "section_scores",
+            "critical_requirements",
+            "total_requirements",
+            "passed_requirements",
+            "failed_requirements",
+            "manual_requirements",
+            "total_findings",
+            "passed_findings",
+            "failed_findings",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "inserted_at": {"read_only": True},
+            "scan": {"read_only": True},
+            "provider": {"read_only": True},
+            "compliance_id": {"read_only": True},
+            "overall_score": {"read_only": True},
+            "score_delta": {"read_only": True},
+            "section_scores": {"read_only": True},
+            "critical_requirements": {"read_only": True},
+            "total_requirements": {"read_only": True},
+            "passed_requirements": {"read_only": True},
+            "failed_requirements": {"read_only": True},
+            "manual_requirements": {"read_only": True},
+            "total_findings": {"read_only": True},
+            "passed_findings": {"read_only": True},
+            "failed_findings": {"read_only": True},
+        }
+
+    included_serializers = {
+        "scan": "api.v1.serializers.ScanIncludeSerializer",
+        "provider": "api.v1.serializers.ProviderIncludeSerializer",
+    }
+
+    def get_id(self, obj):
+        if getattr(obj, "_aggregated", False):
+            return "n/a"
+        return str(obj.id)
