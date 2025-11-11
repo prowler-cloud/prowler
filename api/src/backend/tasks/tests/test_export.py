@@ -1,7 +1,6 @@
 import os
 import uuid
 import zipfile
-from datetime import datetime
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -147,20 +146,14 @@ class TestOutputs:
         )
         mock_logger.assert_called()
 
-    @patch("tasks.jobs.export.rls_transaction")
-    @patch("tasks.jobs.export.Scan")
+    @patch("tasks.jobs.export.refresh_timestamps")
+    @patch(
+        "tasks.jobs.export.get_output_file_timestamp",
+        return_value="20230615103045",
+    )
     def test_generate_output_directory_creates_paths(
-        self, mock_scan, mock_rls_transaction, tmpdir
+        self, mock_get_output_file_timestamp, mock_refresh_timestamps, tmpdir
     ):
-        # Mock the scan object with a started_at timestamp
-        mock_scan_instance = MagicMock()
-        mock_scan_instance.started_at = datetime(2023, 6, 15, 10, 30, 45)
-        mock_scan.objects.get.return_value = mock_scan_instance
-
-        # Mock rls_transaction as a context manager
-        mock_rls_transaction.return_value.__enter__ = MagicMock()
-        mock_rls_transaction.return_value.__exit__ = MagicMock(return_value=False)
-
         base_tmp = Path(str(tmpdir.mkdir("generate_output")))
         base_dir = str(base_tmp)
         tenant_id = str(uuid.uuid4())
@@ -172,6 +165,8 @@ class TestOutputs:
             base_dir, provider, tenant_id, scan_id
         )
 
+        mock_refresh_timestamps.assert_called_once()
+        mock_get_output_file_timestamp.assert_called_once()
         assert os.path.isdir(os.path.dirname(path))
         assert os.path.isdir(os.path.dirname(compliance))
         assert os.path.isdir(os.path.dirname(threatscore))
@@ -180,20 +175,14 @@ class TestOutputs:
         assert compliance.endswith(f"{provider}-{expected_timestamp}")
         assert threatscore.endswith(f"{provider}-{expected_timestamp}")
 
-    @patch("tasks.jobs.export.rls_transaction")
-    @patch("tasks.jobs.export.Scan")
+    @patch("tasks.jobs.export.refresh_timestamps")
+    @patch(
+        "tasks.jobs.export.get_output_file_timestamp",
+        return_value="20230615103045",
+    )
     def test_generate_output_directory_invalid_character(
-        self, mock_scan, mock_rls_transaction, tmpdir
+        self, mock_get_output_file_timestamp, mock_refresh_timestamps, tmpdir
     ):
-        # Mock the scan object with a started_at timestamp
-        mock_scan_instance = MagicMock()
-        mock_scan_instance.started_at = datetime(2023, 6, 15, 10, 30, 45)
-        mock_scan.objects.get.return_value = mock_scan_instance
-
-        # Mock rls_transaction as a context manager
-        mock_rls_transaction.return_value.__enter__ = MagicMock()
-        mock_rls_transaction.return_value.__exit__ = MagicMock(return_value=False)
-
         base_tmp = Path(str(tmpdir.mkdir("generate_output")))
         base_dir = str(base_tmp)
         tenant_id = str(uuid.uuid4())
@@ -205,6 +194,8 @@ class TestOutputs:
             base_dir, provider, tenant_id, scan_id
         )
 
+        mock_refresh_timestamps.assert_called_once()
+        mock_get_output_file_timestamp.assert_called_once()
         assert os.path.isdir(os.path.dirname(path))
         assert os.path.isdir(os.path.dirname(compliance))
         assert os.path.isdir(os.path.dirname(threatscore))

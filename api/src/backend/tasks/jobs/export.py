@@ -8,13 +8,13 @@ from botocore.exceptions import ClientError, NoCredentialsError, ParamValidation
 from celery.utils.log import get_task_logger
 from django.conf import settings
 
-from api.db_utils import rls_transaction
-from api.models import Scan
 from prowler.config.config import (
     csv_file_suffix,
+    get_output_file_timestamp,
     html_file_suffix,
     json_asff_file_suffix,
     json_ocsf_file_suffix,
+    refresh_timestamps,
 )
 from prowler.lib.outputs.asff.asff import ASFF
 from prowler.lib.outputs.compliance.aws_well_architected.aws_well_architected import (
@@ -245,10 +245,6 @@ def _generate_output_directory(
     the prowler provider along with a timestamp. The resulting path is used to
     store the output files of a prowler scan.
 
-    Note:
-        This function depends on one external variable:
-          - `output_file_timestamp`: A timestamp (as a string) used to uniquely identify the output.
-
     Args:
         output_directory (str): The base output directory.
         prowler_provider (object): An identifier or descriptor for the prowler provider.
@@ -268,10 +264,10 @@ def _generate_output_directory(
     # Sanitize the prowler provider name to ensure it is a valid directory name
     prowler_provider_sanitized = re.sub(r"[^\w\-]", "-", prowler_provider)
 
-    with rls_transaction(tenant_id):
-        started_at = Scan.objects.get(id=scan_id).started_at
+    # Ensure we generate fresh timestamps per export run so folder names reflect execution time
+    refresh_timestamps()
+    timestamp = get_output_file_timestamp()
 
-    timestamp = started_at.strftime("%Y%m%d%H%M%S")
     path = (
         f"{output_directory}/{tenant_id}/{scan_id}/prowler-output-"
         f"{prowler_provider_sanitized}-{timestamp}"

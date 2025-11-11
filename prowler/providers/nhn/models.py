@@ -1,6 +1,6 @@
 from pydantic.v1 import BaseModel
 
-from prowler.config.config import get_output_timestamp
+from prowler.config.config import get_output_file_timestamp
 from prowler.providers.common.models import ProviderOutputOptions
 
 
@@ -43,15 +43,15 @@ class NHNOutputOptions(ProviderOutputOptions):
 
         # If --output-filename is not specified, build a default name.
         if not getattr(arguments, "output_filename", None):
-            output_timestamp = get_output_timestamp()
+            output_file_timestamp = get_output_file_timestamp()
             # If tenant_id exists, include it in the filename (e.g., prowler-output-nhn-<tenant_id>-20230101)
             if identity.tenant_id:
                 self.output_filename = (
-                    f"prowler-output-nhn-{identity.tenant_id}-{output_timestamp}"
+                    f"prowler-output-nhn-{identity.tenant_id}-{output_file_timestamp}"
                 )
             # Otherwise just 'prowler-output-nhn-<timestamp>'
             else:
-                self.output_filename = f"prowler-output-nhn-{output_timestamp}"
+                self.output_filename = f"prowler-output-nhn-{output_file_timestamp}"
         # If --output-filename was explicitly given, respect that
         else:
             self.output_filename = arguments.output_filename

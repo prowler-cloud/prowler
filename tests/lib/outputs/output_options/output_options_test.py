@@ -5,7 +5,7 @@ from unittest import mock
 
 from freezegun import freeze_time
 
-from prowler.config.config import get_output_timestamp
+from prowler.config.config import get_output_file_timestamp
 from prowler.providers.aws.models import AWSOutputOptions
 from prowler.providers.azure.models import AzureOutputOptions
 from prowler.providers.gcp.models import GCPOutputOptions
@@ -31,7 +31,7 @@ class Test_Output_Options:
 
         output_options = AWSOutputOptions(arguments, {}, identity)
 
-        expected_suffix = get_output_timestamp()
+        expected_suffix = get_output_file_timestamp()
 
         assert output_options.status == ["FAIL"]
         assert output_options.output_modes == ["csv", "json-asff"]
@@ -105,7 +105,7 @@ class Test_Output_Options:
             identity,
         )
 
-        expected_suffix = get_output_timestamp()
+        expected_suffix = get_output_file_timestamp()
 
         assert isinstance(output_options, AzureOutputOptions)
         assert output_options.status == []
