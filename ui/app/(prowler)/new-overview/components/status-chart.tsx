@@ -5,13 +5,13 @@ import { Bell, BellOff, ShieldCheck, TriangleAlert } from "lucide-react";
 import { DonutChart } from "@/components/graphs/donut-chart";
 import { DonutDataPoint } from "@/components/graphs/types";
 import {
-  BaseCard,
+  Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardVariant,
   ResourceStatsCard,
-  ResourceStatsCardContainer,
+  Skeleton,
 } from "@/components/shadcn";
 import { calculatePercentage } from "@/lib/utils";
 
@@ -60,27 +60,30 @@ export const StatusChart = ({
     {
       name: "Fail Findings",
       value: failFindingsData.total,
-      color: "#f43f5e", // Rose-500
+      color: "var(--bg-fail-primary)",
       percentage: Number(failPercentage),
       change: Number(failChange),
     },
     {
       name: "Pass Findings",
       value: passFindingsData.total,
-      color: "#4ade80", // Green-400
+      color: "var(--bg-pass-primary)",
       percentage: Number(passPercentage),
       change: Number(passChange),
     },
   ];
 
   return (
-    <BaseCard>
+    <Card
+      variant="base"
+      className="flex min-h-[372px] min-w-[312px] flex-1 flex-col justify-between md:min-w-[380px]"
+    >
       <CardHeader>
         <CardTitle>Check Findings</CardTitle>
       </CardHeader>
 
-      <CardContent className="space-y-2">
-        <div className="mx-auto max-h-[200px] max-w-[200px]">
+      <CardContent className="flex flex-1 flex-col justify-between space-y-4">
+        <div className="mx-auto h-[172px] w-[172px]">
           <DonutChart
             data={donutData}
             showLegend={false}
@@ -93,7 +96,11 @@ export const StatusChart = ({
           />
         </div>
 
-        <ResourceStatsCardContainer className="flex w-full flex-col items-start justify-center gap-4 lg:flex-row lg:justify-between">
+        <Card
+          variant="inner"
+          padding="md"
+          className="flex w-full flex-col items-start justify-center gap-4 lg:flex-row lg:justify-between"
+        >
           <ResourceStatsCard
             containerless
             badge={{
@@ -115,7 +122,7 @@ export const StatusChart = ({
           />
 
           <div className="flex w-full items-center justify-center lg:w-auto lg:self-stretch">
-            <div className="h-px w-full bg-slate-300 lg:h-full lg:w-px dark:bg-[rgba(39,39,42,1)]" />
+            <div className="bg-border-neutral-primary h-px w-full lg:h-full lg:w-px" />
           </div>
 
           <ResourceStatsCard
@@ -137,8 +144,31 @@ export const StatusChart = ({
             }
             className="w-full lg:min-w-0 lg:flex-1"
           />
-        </ResourceStatsCardContainer>
+        </Card>
       </CardContent>
-    </BaseCard>
+    </Card>
   );
 };
+
+export function StatusChartSkeleton() {
+  return (
+    <Card
+      variant="base"
+      className="flex min-h-[372px] min-w-[312px] flex-1 flex-col justify-between md:min-w-[380px]"
+    >
+      <CardHeader>
+        <Skeleton className="h-7 w-[260px] rounded-xl" />
+      </CardHeader>
+
+      <CardContent className="flex flex-1 flex-col justify-between space-y-4">
+        {/* Circular skeleton for donut chart */}
+        <div className="mx-auto h-[172px] w-[172px]">
+          <Skeleton className="size-[172px] rounded-full" />
+        </div>
+
+        {/* Bottom info box skeleton */}
+        <Skeleton className="h-[97px] w-full shrink-0 rounded-xl" />
+      </CardContent>
+    </Card>
+  );
+}

@@ -54,6 +54,7 @@ class MongodbatlasProvider(Provider):
         mutelist_content: dict = None,
         # Optional filters
         atlas_project_id: str = None,
+        atlas_organization_id: str = None,
     ):
         """
         MongoDB Atlas Provider constructor
@@ -67,6 +68,7 @@ class MongodbatlasProvider(Provider):
             mutelist_path: Path to the mutelist file
             mutelist_content: Mutelist content
             atlas_project_id: Project ID to filter
+            atlas_organization_id: Organization ID
         """
         logger.info("Instantiating MongoDB Atlas Provider...")
 
@@ -79,6 +81,7 @@ class MongodbatlasProvider(Provider):
 
         # Store filter options
         self._project_id = atlas_project_id
+        self._organization_id = atlas_organization_id
 
         # Audit Config
         if config_content:
@@ -292,6 +295,7 @@ class MongodbatlasProvider(Provider):
         atlas_public_key: str = "",
         atlas_private_key: str = "",
         raise_on_exception: bool = True,
+        provider_id: str = None,
     ) -> Connection:
         """
         Test connection to MongoDB Atlas
@@ -300,7 +304,7 @@ class MongodbatlasProvider(Provider):
             atlas_public_key: MongoDB Atlas API public key
             atlas_private_key: MongoDB Atlas API private key
             raise_on_exception: Whether to raise exceptions
-
+            provider_id: MongoDB Atlas project ID to validate access (added for API compatibility)
         Returns:
             Connection: Connection status
         """

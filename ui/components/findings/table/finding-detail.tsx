@@ -1,18 +1,17 @@
 "use client";
 
 import { Snippet } from "@heroui/snippet";
+import { Tooltip } from "@heroui/tooltip";
+import { ExternalLink, Link } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { CustomSection } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
-import {
-  CopyLinkButton,
-  EntityInfoShort,
-  InfoField,
-} from "@/components/ui/entities";
+import { EntityInfoShort, InfoField } from "@/components/ui/entities";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import { SeverityBadge } from "@/components/ui/table/severity-badge";
+import { buildGitFileUrl, extractLineRangeFromUid } from "@/lib/iac-utils";
 import { FindingProps, ProviderType } from "@/types";
 
 import { Muted } from "../muted";
@@ -60,14 +59,32 @@ export const FindingDetail = ({
   params.set("id", findingDetails.id);
   const url = `${window.location.origin}${currentUrl.pathname}?${params.toString()}`;
 
+  // Build Git URL for IaC findings
+  const gitUrl =
+    providerDetails.provider === "iac"
+      ? buildGitFileUrl(
+          providerDetails.uid,
+          resource.name,
+          extractLineRangeFromUid(attributes.uid) || "",
+        )
+      : null;
+
   return (
     <div className="flex flex-col gap-6 rounded-lg">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="dark:text-prowler-theme-pale/90 line-clamp-2 text-lg leading-tight font-medium text-gray-800">
+          <h2 className="dark:text-prowler-theme-pale/90 line-clamp-2 flex items-center gap-2 text-lg leading-tight font-medium text-gray-800">
             {renderValue(attributes.check_metadata.checktitle)}
-            <CopyLinkButton url={url} />
+            <Tooltip content="Copy finding link to clipboard" size="sm">
+              <button
+                onClick={() => navigator.clipboard.writeText(url)}
+                className="text-bg-data-info inline-flex cursor-pointer transition-opacity hover:opacity-80"
+                aria-label="Copy finding link to clipboard"
+              >
+                <Link size={16} />
+              </button>
+            </Tooltip>
           </h2>
         </div>
         <div className="flex items-center gap-x-4">
@@ -130,6 +147,9 @@ export const FindingDetail = ({
         </InfoField>
         <InfoField label="Finding UID" variant="simple">
           <CodeSnippet value={attributes.uid} />
+        </InfoField>
+        <InfoField label="Resource ID" variant="simple">
+          <CodeSnippet value={resource.uid} />
         </InfoField>
 
         {attributes.status === "FAIL" && (
@@ -235,15 +255,30 @@ export const FindingDetail = ({
       </CustomSection>
 
       {/* Resource Details */}
-      <CustomSection title="Resource Details">
-        <InfoField label="Resource ID" variant="simple">
-          <Snippet className="bg-gray-50 py-1 dark:bg-slate-800" hideSymbol>
-            <span className="text-xs whitespace-pre-line">
-              {renderValue(resource.uid)}
+      <CustomSection
+        title={
+          providerDetails.provider === "iac" ? (
+            <span className="flex items-center gap-2">
+              Resource Details
+              {gitUrl && (
+                <Tooltip content="Go to Resource in the Repository" size="sm">
+                  <a
+                    href={gitUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-bg-data-info inline-flex cursor-pointer"
+                    aria-label="Open resource in repository"
+                  >
+                    <ExternalLink size={16} className="inline" />
+                  </a>
+                </Tooltip>
+              )}
             </span>
-          </Snippet>
-        </InfoField>
-
+          ) : (
+            "Resource Details"
+          )
+        }
+      >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <InfoField label="Resource Name">
             {renderValue(resource.name)}

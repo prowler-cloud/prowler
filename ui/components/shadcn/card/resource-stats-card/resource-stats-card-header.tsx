@@ -16,7 +16,7 @@ const headerVariants = cva("flex w-full items-center gap-1", {
   },
 });
 
-const iconVariants = cva("text-zinc-300 dark:text-zinc-300", {
+const iconVariants = cva("text-text-neutral-secondary", {
   variants: {
     size: {
       sm: "h-3.5 w-3.5",
@@ -30,7 +30,7 @@ const iconVariants = cva("text-zinc-300 dark:text-zinc-300", {
 });
 
 const titleVariants = cva(
-  "leading-7 font-semibold text-zinc-300 dark:text-zinc-300",
+  "leading-7 font-semibold text-text-neutral-secondary",
   {
     variants: {
       size: {
@@ -45,21 +45,18 @@ const titleVariants = cva(
   },
 );
 
-const countVariants = cva(
-  "leading-4 font-normal text-zinc-300 dark:text-zinc-300",
-  {
-    variants: {
-      size: {
-        sm: "text-[9px]",
-        md: "text-[10px]",
-        lg: "text-xs",
-      },
-    },
-    defaultVariants: {
-      size: "md",
+const countVariants = cva("leading-4 font-normal text-text-neutral-secondary", {
+  variants: {
+    size: {
+      sm: "text-[9px]",
+      md: "text-[10px]",
+      lg: "text-xs",
     },
   },
-);
+  defaultVariants: {
+    size: "md",
+  },
+});
 
 export interface ResourceStatsCardHeaderProps
   extends React.HTMLAttributes<HTMLDivElement>,

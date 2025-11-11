@@ -1,20 +1,20 @@
 from prowler.config.config import timestamp
 from prowler.lib.check.compliance_models import Compliance
-from prowler.lib.outputs.compliance.cis.models import OCICISModel
+from prowler.lib.outputs.compliance.cis.models import OracleCloudCISModel
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
 from prowler.lib.outputs.finding import Finding
 
 
-class OCICIS(ComplianceOutput):
+class OracleCloudCIS(ComplianceOutput):
     """
-    This class represents the OCI CIS compliance output.
+    This class represents the Oracle Cloud CIS compliance output.
 
     Attributes:
         - _data (list): A list to store transformed data from findings.
         - _file_descriptor (TextIOWrapper): A file descriptor to write data to a file.
 
     Methods:
-        - transform: Transforms findings into OCI CIS compliance format.
+        - transform: Transforms findings into Oracle Cloud CIS compliance format.
     """
 
     def transform(
@@ -24,7 +24,7 @@ class OCICIS(ComplianceOutput):
         compliance_name: str,
     ) -> None:
         """
-        Transforms a list of findings into OCI CIS compliance format.
+        Transforms a list of findings into Oracle Cloud CIS compliance format.
 
         Parameters:
             - findings (list): A list of findings.
@@ -40,7 +40,7 @@ class OCICIS(ComplianceOutput):
             for requirement in compliance.Requirements:
                 if requirement.Id in finding_requirements:
                     for attribute in requirement.Attributes:
-                        compliance_row = OCICISModel(
+                        compliance_row = OracleCloudCISModel(
                             Provider=finding.provider,
                             Description=compliance.Description,
                             TenancyId=finding.account_uid,
@@ -74,7 +74,7 @@ class OCICIS(ComplianceOutput):
         for requirement in compliance.Requirements:
             if not requirement.Checks:
                 for attribute in requirement.Attributes:
-                    compliance_row = OCICISModel(
+                    compliance_row = OracleCloudCISModel(
                         Provider=compliance.Provider.lower(),
                         Description=compliance.Description,
                         TenancyId="",

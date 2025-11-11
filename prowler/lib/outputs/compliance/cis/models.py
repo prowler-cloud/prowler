@@ -207,9 +207,9 @@ class GithubCISModel(BaseModel):
     Name: str
 
 
-class OCICISModel(BaseModel):
+class OracleCloudCISModel(BaseModel):
     """
-    OCICISModel generates a finding's output in OCI CIS Compliance format.
+    OracleCloudCISModel generates a finding's output in Oracle Cloud CIS Compliance format.
     """
 
     Provider: str
@@ -248,7 +248,7 @@ CIS_GCP = GCPCISModel
 CIS_Kubernetes = KubernetesCISModel
 CIS_M365 = M365CISModel
 CIS_Github = GithubCISModel
-CIS_OCI = OCICISModel
+CIS_OracleCloud = OracleCloudCISModel
 
 
 # TODO: Create a parent class for the common fields of CIS and have the specific classes from each provider to inherit from it.

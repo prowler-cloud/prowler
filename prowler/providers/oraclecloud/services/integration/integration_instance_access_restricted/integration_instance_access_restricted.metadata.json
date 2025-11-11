@@ -1,5 +1,5 @@
 {
-  "Provider": "oci",
+  "Provider": "oraclecloud",
   "CheckID": "integration_instance_access_restricted",
   "CheckTitle": "Ensure Oracle Integration Cloud (OIC) access is restricted to allowed sources",
   "CheckType": [

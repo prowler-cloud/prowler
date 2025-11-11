@@ -1,5 +1,5 @@
 {
-  "Provider": "oci",
+  "Provider": "oraclecloud",
   "CheckID": "database_autonomous_database_access_restricted",
   "CheckTitle": "Ensure Oracle Autonomous Shared Database (ADB) access is restricted or deployed within a VCN",
   "CheckType": [
