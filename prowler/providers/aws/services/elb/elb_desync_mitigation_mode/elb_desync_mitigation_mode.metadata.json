@@ -18,12 +18,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/config-desync-mitigation-mode.html",
-    "https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/config-desync-mitigation-mode.html#update-desync-mitigation-mode",
-    "https://kloudle.com/academy/configuring-aws-load-balancers-to-protect-against-http-desync-attacks/",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/elb-controls.html#elb-14",
-    "https://github.com/hashicorp/terraform-provider-aws/issues/14696",
-    "https://docs.datadoghq.com/security/default_rules/def-000-pup/",
-    "https://docs.aws.amazon.com/config/latest/developerguide/clb-desync-mode-check.html",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELB/enable-configure-desync-mitigation-mode.html",
     "https://support.icompaas.com/support/solutions/articles/62000233337-ensure-classic-load-balancer-is-configured-with-defensive-or-strictest-desync-mitigation-mode"
   ],
@@ -39,9 +34,7 @@
       "Url": "https://hub.prowler.com/check/elb_desync_mitigation_mode"
     }
   },
-  "Categories": [
-    "vulnerabilities"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
