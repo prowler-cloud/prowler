@@ -439,7 +439,9 @@ def is_policy_public(
                             services = []
 
                         is_cross_service = any(
-                            s == "*" or s.endswith(".amazonaws.com") or s.endswith(".amazon.com")
+                            s == "*"
+                            or s.endswith(".amazonaws.com")
+                            or s.endswith(".amazon.com")
                             for s in services
                         )
 
@@ -452,7 +454,6 @@ def is_policy_public(
 
                         if is_cross_service and not is_exempt:
                             has_public_access = True
-
 
                 if has_public_access and (
                     not not_allowed_actions  # If not_allowed_actions is empty, the function will not consider the actions in the policy

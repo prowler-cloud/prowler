@@ -350,11 +350,8 @@ class Test_iam_role_cross_service_confused_deputy_prevention:
                 {
                     "Effect": "Allow",
                     "Principal": {
-                        "Service": [
-                            "scheduler.amazonaws.com",
-                            "events.amazonaws.com"
-                    ]
-                },
+                        "Service": ["scheduler.amazonaws.com", "events.amazonaws.com"]
+                    },
                     "Action": "sts:AssumeRole",
                 }
             ],
