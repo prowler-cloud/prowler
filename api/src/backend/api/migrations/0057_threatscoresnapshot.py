@@ -10,7 +10,7 @@ import api.rls
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0054_iac_provider"),
+        ("api", "0056_remove_provider_unique_provider_uids_and_more"),
     ]
 
     operations = [
