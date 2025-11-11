@@ -1,4 +1,4 @@
-import { getFindingsSeverityTrends } from "@/actions/overview/overview";
+import { getFindingsSeverityTrends } from "@/actions/overview/severity-trends";
 import { SearchParamsProps } from "@/types";
 
 import { pickFilterParams } from "../../lib/filter-params";

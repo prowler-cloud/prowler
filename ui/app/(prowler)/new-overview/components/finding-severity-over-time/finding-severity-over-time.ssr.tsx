@@ -1,4 +1,4 @@
-import { getFindingsSeverityTrends } from "@/actions/overview/overview";
+import { getFindingsSeverityTrends } from "@/actions/overview/severity-trends";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
 import { SearchParamsProps } from "@/types";
 
@@ -25,8 +25,10 @@ export const FindingSeverityOverTimeSSR = async ({
     severityTrends.data.length === 0
   ) {
     return (
-      <div className="flex h-[400px] w-full items-center justify-center rounded-xl border border-zinc-900 bg-stone-950">
-        <p className="text-zinc-400">Failed to load severity trends data</p>
+      <div className="border-border-neutral-primary bg-bg-neutral-secondary flex h-[400px] w-full items-center justify-center rounded-xl border">
+        <p className="text-text-neutral-tertiary">
+          Failed to load severity trends data
+        </p>
       </div>
     );
   }
