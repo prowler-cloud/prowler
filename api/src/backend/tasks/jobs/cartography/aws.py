@@ -150,7 +150,6 @@ def get_boto3_session(
             f"Provider {prowler_api_provider.uid} doesn't match AWS account {aws_account_id_from_session}."
         )
 
-    # TODO: Check if this is the right solution
     if boto3_session.region_name is None:
         global_region = prowler_sdk_provider.get_global_region()
         boto3_session._session.set_config_variable("region", global_region)
