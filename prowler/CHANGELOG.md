@@ -30,6 +30,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS EKS service metadata to new format [(#8890)](https://github.com/prowler-cloud/prowler/pull/8890)
 - Update AWS Elastic Beanstalk service metadata to new format [(#8934)](https://github.com/prowler-cloud/prowler/pull/8934)
 - Update AWS ElastiCache service metadata to new format [(#8933)](https://github.com/prowler-cloud/prowler/pull/8933)
+- Update GitHub Organization service metadata to new format [(#9094)](https://github.com/prowler-cloud/prowler/pull/9094)
 - Update AWS CodeBuild service metadata to new format [(#8851)](https://github.com/prowler-cloud/prowler/pull/8851)
 - Update GCP Artifact Registry service metadata to new format [(#9088)](https://github.com/prowler-cloud/prowler/pull/9088)
 - Update AWS EFS service metadata to new format [(#8889)](https://github.com/prowler-cloud/prowler/pull/8889)
@@ -39,7 +40,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS FSx service metadata to new format [(#9006)](https://github.com/prowler-cloud/prowler/pull/9006)
 - Update AWS Glacier service metadata to new format [(#9007)](https://github.com/prowler-cloud/prowler/pull/9007)
 - Update oraclecloud analytics service metadata to new format [(#9114)](https://github.com/prowler-cloud/prowler/pull/9114)
-
 - Update AWS CodeArtifact service metadata to new format [(#8850)](https://github.com/prowler-cloud/prowler/pull/8850)
 - Rename OCI provider to oraclecloud with oci alias [(#9126)](https://github.com/prowler-cloud/prowler/pull/9126)
 - Remove unnecessary tests for M365_PowerShell module [(#9204)](https://github.com/prowler-cloud/prowler/pull/9204)
