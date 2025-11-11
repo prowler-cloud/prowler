@@ -1,7 +1,7 @@
-"""CloudTrail enrichment service for Prowler findings.
+"""CloudTrail timeline service for Prowler.
 
-This module queries AWS CloudTrail to enrich security findings with timeline
-context showing who performed actions, what changed, and when events occurred.
+This module queries AWS CloudTrail to build timeline events for resources,
+showing who performed actions, what changed, and when events occurred.
 """
 
 import json
@@ -11,10 +11,10 @@ from typing import Any
 from botocore.exceptions import ClientError
 
 from prowler.lib.logger import logger
-from prowler.providers.aws.lib.cloudtrail_enrichment.formatters import (
+from prowler.providers.aws.lib.cloudtrail_timeline.formatters import (
     EventMessageFormatter,
 )
-from prowler.providers.aws.lib.cloudtrail_enrichment.models import (
+from prowler.providers.aws.lib.cloudtrail_timeline.models import (
     CloudTrailEventType,
     CloudWatchEventType,
     DynamoDBEventType,
@@ -38,10 +38,10 @@ from prowler.providers.aws.lib.cloudtrail_enrichment.models import (
 )
 
 
-class CloudTrailEnricher:
-    """Enriches findings with CloudTrail event timeline.
+class CloudTrailTimeline:
+    """Builds CloudTrail event timelines for AWS resources.
 
-    Queries CloudTrail to build a timeline of events for resources in findings,
+    Queries CloudTrail to build a timeline of events for resources,
     providing context about who created/modified resources and when.
     """
 
@@ -774,7 +774,7 @@ class CloudTrailEnricher:
         session,
         lookback_days: int = 90,
     ):
-        """Initialize CloudTrail enricher.
+        """Initialize CloudTrail timeline.
 
         Args:
             session: AWS session object to create CloudTrail clients
@@ -787,7 +787,7 @@ class CloudTrailEnricher:
         self.end_time = datetime.now(timezone.utc)
         self.start_time = self.end_time - timedelta(days=self.lookback_days)
 
-    def enrich_finding(
+    def get_resource_timeline(
         self, resource_id: str, resource_arn: str, region: str
     ) -> list[dict]:
         """Get CloudTrail timeline events for a resource.
@@ -803,12 +803,12 @@ class CloudTrailEnricher:
         try:
             if not resource_id:
                 logger.info(
-                    "CloudTrail - Skipping enrichment for resource without resource_id"
+                    "CloudTrail - Skipping timeline for resource without resource_id"
                 )
                 return []
 
             if not region:
-                logger.info("CloudTrail - Skipping enrichment - missing region")
+                logger.info("CloudTrail - Skipping timeline - missing region")
                 return []
 
             # Determine resource type from ARN
@@ -846,7 +846,7 @@ class CloudTrailEnricher:
             error_code = e.response.get("Error", {}).get("Code", "Unknown")
             if error_code == "AccessDeniedException":
                 logger.warning(
-                    "CloudTrail - Missing permissions to enrich findings. "
+                    "CloudTrail - Missing permissions to build timeline. "
                     "Add 'cloudtrail:LookupEvents' permission to continue."
                 )
             else:
@@ -931,7 +931,7 @@ class CloudTrailEnricher:
 
         Args:
             event: Raw CloudTrail event from API
-            resource_id: Resource ID being enriched
+            resource_id: Resource ID being used to build the timeline
             resource_type: AWS resource type
             supported_events: Mapping of supported event names to metadata
 
@@ -1060,7 +1060,7 @@ class CloudTrailEnricher:
             return self.ECS_EVENTS
         else:
             logger.info(
-                "CloudTrail - Unsupported resource type for enrichment: %s",
+                "CloudTrail - Unsupported resource type for timeline: %s",
                 resource_type,
             )
             return {}
