@@ -79,6 +79,42 @@ interface TooltipProps {
   payload?: TooltipPayload[];
 }
 
+interface CustomNodeProps {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  payload: SankeyNode & {
+    value: number;
+    newFindings?: number;
+    change?: number;
+  };
+  containerWidth: number;
+  onNodeHover?: (data: Omit<NodeTooltipState, "show">) => void;
+  onNodeMove?: (position: { x: number; y: number }) => void;
+  onNodeLeave?: () => void;
+}
+
+interface CustomLinkProps {
+  sourceX: number;
+  targetX: number;
+  sourceY: number;
+  targetY: number;
+  sourceControlX: number;
+  targetControlX: number;
+  linkWidth: number;
+  index: number;
+  payload: {
+    source?: { name: string };
+    target?: { name: string };
+    value?: number;
+  };
+  hoveredLink: number | null;
+  onLinkHover?: (index: number, data: Omit<LinkTooltipState, "show">) => void;
+  onLinkMove?: (position: { x: number; y: number }) => void;
+  onLinkLeave?: () => void;
+}
+
 const CustomTooltip = ({ active, payload }: TooltipProps) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
@@ -99,8 +135,17 @@ const CustomTooltip = ({ active, payload }: TooltipProps) => {
   return null;
 };
 
-const CustomNode = (props: any) => {
-  const { x, y, width, height, payload, containerWidth } = props;
+const CustomNode = ({
+  x,
+  y,
+  width,
+  height,
+  payload,
+  containerWidth,
+  onNodeHover,
+  onNodeMove,
+  onNodeLeave,
+}: CustomNodeProps) => {
   const isOut = x + width + 6 > containerWidth;
   const nodeName = payload.name;
   const color = COLORS[nodeName] || CHART_COLORS.defaultColor;
@@ -113,7 +158,7 @@ const CustomNode = (props: any) => {
     const rect = e.currentTarget.closest("svg") as SVGSVGElement;
     if (rect) {
       const bbox = rect.getBoundingClientRect();
-      props.onNodeHover?.({
+      onNodeHover?.({
         x: e.clientX - bbox.left,
         y: e.clientY - bbox.top,
         name: nodeName,
@@ -131,7 +176,7 @@ const CustomNode = (props: any) => {
     const rect = e.currentTarget.closest("svg") as SVGSVGElement;
     if (rect) {
       const bbox = rect.getBoundingClientRect();
-      props.onNodeMove?.({
+      onNodeMove?.({
         x: e.clientX - bbox.left,
         y: e.clientY - bbox.top,
       });
@@ -140,7 +185,7 @@ const CustomNode = (props: any) => {
 
   const handleMouseLeave = () => {
     if (!hasTooltip) return;
-    props.onNodeLeave?.();
+    onNodeLeave?.();
   };
 
   return (
@@ -184,26 +229,29 @@ const CustomNode = (props: any) => {
   );
 };
 
-const CustomLink = (props: any) => {
-  const {
-    sourceX,
-    targetX,
-    sourceY,
-    targetY,
-    sourceControlX,
-    targetControlX,
-    linkWidth,
-    index,
-  } = props;
-
-  const sourceName = props.payload.source?.name || "";
-  const targetName = props.payload.target?.name || "";
-  const value = props.payload.value || 0;
+const CustomLink = ({
+  sourceX,
+  targetX,
+  sourceY,
+  targetY,
+  sourceControlX,
+  targetControlX,
+  linkWidth,
+  index,
+  payload,
+  hoveredLink,
+  onLinkHover,
+  onLinkMove,
+  onLinkLeave,
+}: CustomLinkProps) => {
+  const sourceName = payload.source?.name || "";
+  const targetName = payload.target?.name || "";
+  const value = payload.value || 0;
   const color = COLORS[sourceName] || CHART_COLORS.defaultColor;
   const isHidden = targetName === "";
 
-  const isHovered = props.hoveredLink !== null && props.hoveredLink === index;
-  const hasHoveredLink = props.hoveredLink !== null;
+  const isHovered = hoveredLink !== null && hoveredLink === index;
+  const hasHoveredLink = hoveredLink !== null;
 
   const pathD = `
     M${sourceX},${sourceY + linkWidth / 2}
@@ -228,7 +276,7 @@ const CustomLink = (props: any) => {
       ?.parentElement as unknown as SVGSVGElement;
     if (rect) {
       const bbox = rect.getBoundingClientRect();
-      props.onLinkHover?.(index, {
+      onLinkHover?.(index, {
         x: e.clientX - bbox.left,
         y: e.clientY - bbox.top,
         sourceName,
@@ -244,7 +292,7 @@ const CustomLink = (props: any) => {
       ?.parentElement as unknown as SVGSVGElement;
     if (rect && isHovered) {
       const bbox = rect.getBoundingClientRect();
-      props.onLinkMove?.({
+      onLinkMove?.({
         x: e.clientX - bbox.left,
         y: e.clientY - bbox.top,
       });
@@ -252,7 +300,7 @@ const CustomLink = (props: any) => {
   };
 
   const handleMouseLeave = () => {
-    props.onLinkLeave?.();
+    onLinkLeave?.();
   };
 
   return (
@@ -329,26 +377,33 @@ export function SankeyChart({ data, height = 400 }: SankeyChartProps) {
     setNodeTooltip((prev) => ({ ...prev, show: false }));
   };
 
+  // Create callback references that wrap custom props and Recharts-injected props
+  const wrappedCustomNode = (props: CustomNodeProps) => (
+    <CustomNode
+      {...props}
+      onNodeHover={handleNodeHover}
+      onNodeMove={handleNodeMove}
+      onNodeLeave={handleNodeLeave}
+    />
+  );
+
+  const wrappedCustomLink = (props: CustomLinkProps) => (
+    <CustomLink
+      {...props}
+      hoveredLink={hoveredLink}
+      onLinkHover={handleLinkHover}
+      onLinkMove={handleLinkMove}
+      onLinkLeave={handleLinkLeave}
+    />
+  );
+
   return (
     <div className="relative">
       <ResponsiveContainer width="100%" height={height}>
         <Sankey
           data={data}
-          node={
-            <CustomNode
-              onNodeHover={handleNodeHover}
-              onNodeMove={handleNodeMove}
-              onNodeLeave={handleNodeLeave}
-            />
-          }
-          link={
-            <CustomLink
-              hoveredLink={hoveredLink}
-              onLinkHover={handleLinkHover}
-              onLinkMove={handleLinkMove}
-              onLinkLeave={handleLinkLeave}
-            />
-          }
+          node={wrappedCustomNode}
+          link={wrappedCustomLink}
           nodePadding={50}
           margin={{ top: 20, right: 160, bottom: 20, left: 160 }}
           sort={false}

@@ -41,6 +41,15 @@ interface TooltipPayloadItem {
   payload: LineDataPoint;
 }
 
+interface LegendPayload {
+  value: string;
+  color: string;
+}
+
+interface CustomLegendProps {
+  payload?: LegendPayload[];
+}
+
 const CustomLineTooltip = ({
   active,
   payload,
@@ -102,7 +111,7 @@ const CustomLineTooltip = ({
   );
 };
 
-const CustomLegend = ({ payload }: any) => {
+const CustomLegend = ({ payload }: CustomLegendProps) => {
   const severityOrder = [
     "Informational",
     "Low",
@@ -112,13 +121,13 @@ const CustomLegend = ({ payload }: any) => {
     "Muted",
   ];
 
-  const sortedPayload = [...payload].sort((a, b) => {
+  const sortedPayload = [...(payload || [])].sort((a, b) => {
     const indexA = severityOrder.indexOf(a.value);
     const indexB = severityOrder.indexOf(b.value);
     return indexA - indexB;
   });
 
-  const items = sortedPayload.map((entry: any) => ({
+  const items = sortedPayload.map((entry: LegendPayload) => ({
     label: entry.value,
     color: entry.color,
   }));
