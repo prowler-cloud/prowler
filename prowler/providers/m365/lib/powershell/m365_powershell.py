@@ -853,6 +853,7 @@ def initialize_m365_powershell_modules():
     REQUIRED_MODULES = [
         "ExchangeOnlineManagement",
         "MicrosoftTeams",
+        "MSAL.PS",
     ]
 
     pwsh = PowerShellSession()
