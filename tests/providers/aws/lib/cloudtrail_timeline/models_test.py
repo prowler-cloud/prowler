@@ -2,10 +2,10 @@
 
 from datetime import datetime, timedelta, timezone
 
-from prowler.providers.aws.lib.cloudtrail_enrichment.models import (
+from prowler.providers.aws.lib.cloudtrail_timeline.models import (
     EC2EventType,
-    FindingEnrichment,
     GeneralEventType,
+    ResourceTimeline,
     TimelineEvent,
 )
 
@@ -70,8 +70,8 @@ class TestTimelineEvent:
         assert event.timestamp.tzinfo == timezone.utc
 
 
-class TestFindingEnrichment:
-    """Tests for FindingEnrichment model."""
+class TestResourceTimeline:
+    """Tests for ResourceTimeline model."""
 
     def test_finding_enrichment_creation(self):
         """Test creating a finding enrichment."""
@@ -87,7 +87,7 @@ class TestFindingEnrichment:
             ),
         ]
 
-        enrichment = FindingEnrichment(
+        enrichment = ResourceTimeline(
             timeline=events,
             created_by="admin@company.com",
             created_at=datetime(2025, 10, 15, 14, 23, 45, tzinfo=timezone.utc),
@@ -101,7 +101,7 @@ class TestFindingEnrichment:
 
     def test_finding_enrichment_to_dict(self):
         """Test converting enrichment to dictionary."""
-        enrichment = FindingEnrichment(
+        enrichment = ResourceTimeline(
             created_by="test-user",
             created_at=datetime(2025, 10, 15, 14, 23, 45, tzinfo=timezone.utc),
         )
@@ -121,14 +121,14 @@ class TestFindingEnrichment:
             hour=0, minute=0, second=0, microsecond=0
         ) - timedelta(days=10)
 
-        enrichment = FindingEnrichment(created_at=ten_days_ago)
+        enrichment = ResourceTimeline(created_at=ten_days_ago)
 
         age_days = enrichment.get_age_days()
         assert age_days >= 10  # At least 10 days old
 
     def test_get_age_days_no_creation_date(self):
         """Test age calculation when no creation date available."""
-        enrichment = FindingEnrichment()
+        enrichment = ResourceTimeline()
         assert enrichment.get_age_days() is None
 
     def test_get_exposure_duration_days(self):
@@ -138,12 +138,12 @@ class TestFindingEnrichment:
             hour=0, minute=0, second=0, microsecond=0
         ) - timedelta(days=5)
 
-        enrichment = FindingEnrichment(last_modified_at=five_days_ago)
+        enrichment = ResourceTimeline(last_modified_at=five_days_ago)
 
         duration = enrichment.get_exposure_duration_days()
         assert duration >= 5  # At least 5 days
 
     def test_get_exposure_duration_days_no_modification_date(self):
         """Test exposure duration when no modification date available."""
-        enrichment = FindingEnrichment()
+        enrichment = ResourceTimeline()
         assert enrichment.get_exposure_duration_days() is None

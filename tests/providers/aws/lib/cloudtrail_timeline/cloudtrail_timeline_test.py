@@ -1,4 +1,4 @@
-"""Comprehensive tests for CloudTrailEnricher using moto."""
+"""Comprehensive tests for CloudTrailTimeline using moto."""
 
 import json
 from datetime import datetime, timezone
@@ -9,70 +9,70 @@ import pytest
 from botocore.exceptions import ClientError
 from moto import mock_aws
 
-from prowler.providers.aws.lib.cloudtrail_enrichment.cloudtrail_enricher import (
-    CloudTrailEnricher,
+from prowler.providers.aws.lib.cloudtrail_timeline.cloudtrail_timeline import (
+    CloudTrailTimeline,
 )
-from prowler.providers.aws.lib.cloudtrail_enrichment.models import EC2EventType
+from prowler.providers.aws.lib.cloudtrail_timeline.models import EC2EventType
 
 
-class TestCloudTrailEnricher:
-    """Tests for CloudTrailEnricher class."""
+class TestCloudTrailTimeline:
+    """Tests for CloudTrailTimeline class."""
 
-    def test_enricher_initialization(self):
-        """Test CloudTrailEnricher initialization."""
+    def test_timeline_initialization(self):
+        """Test CloudTrailTimeline initialization."""
         mock_session = Mock()
         mock_session.region_name = "us-east-1"
-        enricher = CloudTrailEnricher(session=mock_session, lookback_days=30)
+        timeline = CloudTrailTimeline(session=mock_session, lookback_days=30)
 
-        assert enricher.session == mock_session
-        assert enricher.lookback_days == 30
-        assert enricher.start_time is not None
-        assert enricher.end_time is not None
+        assert timeline.session == mock_session
+        assert timeline.lookback_days == 30
+        assert timeline.start_time is not None
+        assert timeline.end_time is not None
 
-    def test_enricher_default_lookback_days(self):
+    def test_timeline_default_lookback_days(self):
         """Test default lookback period is 90 days."""
         mock_session = Mock()
         mock_session.region_name = "us-east-1"
-        enricher = CloudTrailEnricher(session=mock_session)
+        timeline = CloudTrailTimeline(session=mock_session)
 
-        assert enricher.lookback_days == 90
+        assert timeline.lookback_days == 90
 
-    def test_enrich_finding_no_resource_id(self):
-        """Test enrichment returns empty list when resource_id is missing."""
+    def test_get_resource_timeline_no_resource_id(self):
+        """Test timeline retrieval returns empty list when resource_id is missing."""
         mock_session = Mock()
         mock_session.region_name = "us-east-1"
-        enricher = CloudTrailEnricher(session=mock_session)
+        timeline = CloudTrailTimeline(session=mock_session)
 
-        result = enricher.enrich_finding(
+        result = timeline.get_resource_timeline(
             "", "arn:aws:ec2:us-east-1:123:sg/test", "us-east-1"
         )
 
         assert result == []
 
-    def test_enrich_finding_no_region(self):
-        """Test enrichment returns empty list when region is missing."""
+    def test_get_resource_timeline_no_region(self):
+        """Test timeline retrieval returns empty list when region is missing."""
         mock_session = Mock()
         mock_session.region_name = "us-east-1"
-        enricher = CloudTrailEnricher(session=mock_session)
+        timeline = CloudTrailTimeline(session=mock_session)
 
-        result = enricher.enrich_finding(
+        result = timeline.get_resource_timeline(
             "sg-123", "arn:aws:ec2:us-east-1:123:sg/test", ""
         )
 
         assert result == []
 
     @patch(
-        "prowler.providers.aws.lib.cloudtrail_enrichment.cloudtrail_enricher.CloudTrailEnricher._lookup_resource_events"
+        "prowler.providers.aws.lib.cloudtrail_timeline.cloudtrail_timeline.CloudTrailTimeline._lookup_resource_events"
     )
-    def test_enrich_finding_no_events_found(self, mock_lookup):
-        """Test enrichment returns empty list when no events found."""
+    def test_get_resource_timeline_no_events_found(self, mock_lookup):
+        """Test timeline retrieval returns empty list when no events found."""
         mock_lookup.return_value = []
 
         mock_session = Mock()
         mock_session.region_name = "us-east-1"
-        enricher = CloudTrailEnricher(session=mock_session)
+        timeline = CloudTrailTimeline(session=mock_session)
 
-        result = enricher.enrich_finding(
+        result = timeline.get_resource_timeline(
             "sg-123",
             "arn:aws:ec2:us-east-1:123456789012:security-group/sg-123",
             "us-east-1",
@@ -81,11 +81,11 @@ class TestCloudTrailEnricher:
         assert result == []
 
     @patch(
-        "prowler.providers.aws.lib.cloudtrail_enrichment.cloudtrail_enricher.CloudTrailEnricher._lookup_resource_events"
+        "prowler.providers.aws.lib.cloudtrail_timeline.cloudtrail_timeline.CloudTrailTimeline._lookup_resource_events"
     )
-    def test_enrich_finding_with_events(self, mock_lookup):
-        """Test enrichment returns list of event dictionaries."""
-        from prowler.providers.aws.lib.cloudtrail_enrichment.models import TimelineEvent
+    def test_get_resource_timeline_with_events(self, mock_lookup):
+        """Test timeline retrieval returns list of event dictionaries."""
+        from prowler.providers.aws.lib.cloudtrail_timeline.models import TimelineEvent
 
         mock_events = [
             TimelineEvent(
@@ -111,9 +111,9 @@ class TestCloudTrailEnricher:
 
         mock_session = Mock()
         mock_session.region_name = "us-east-1"
-        enricher = CloudTrailEnricher(session=mock_session)
+        timeline = CloudTrailTimeline(session=mock_session)
 
-        result = enricher.enrich_finding(
+        result = timeline.get_resource_timeline(
             "sg-123",
             "arn:aws:ec2:us-east-1:123456789012:security-group/sg-123",
             "us-east-1",
@@ -124,18 +124,18 @@ class TestCloudTrailEnricher:
         assert result[0]["resource_id"] == "sg-123"
         assert result[1]["event_type"] == "sg_rule_added"
 
-    def test_enrich_finding_access_denied(self):
-        """Test enrichment handles AccessDeniedException gracefully."""
+    def test_get_resource_timeline_access_denied(self):
+        """Test timeline retrieval handles AccessDeniedException gracefully."""
         mock_session = Mock()
         mock_session.region_name = "us-east-1"
-        enricher = CloudTrailEnricher(session=mock_session)
+        timeline = CloudTrailTimeline(session=mock_session)
 
         # Mock CloudTrail client to raise AccessDeniedException
-        with patch.object(enricher, "_lookup_resource_events") as mock_lookup:
+        with patch.object(timeline, "_lookup_resource_events") as mock_lookup:
             error_response = {"Error": {"Code": "AccessDeniedException"}}
             mock_lookup.side_effect = ClientError(error_response, "LookupEvents")
 
-            result = enricher.enrich_finding(
+            result = timeline.get_resource_timeline(
                 "sg-123",
                 "arn:aws:ec2:us-east-1:123456789012:security-group/sg-123",
                 "us-east-1",
@@ -143,16 +143,16 @@ class TestCloudTrailEnricher:
 
             assert result == []
 
-    def test_enrich_finding_generic_exception(self):
-        """Test enrichment handles generic exceptions gracefully."""
+    def test_get_resource_timeline_generic_exception(self):
+        """Test timeline retrieval handles generic exceptions gracefully."""
         mock_session = Mock()
         mock_session.region_name = "us-east-1"
-        enricher = CloudTrailEnricher(session=mock_session)
+        timeline = CloudTrailTimeline(session=mock_session)
 
-        with patch.object(enricher, "_lookup_resource_events") as mock_lookup:
+        with patch.object(timeline, "_lookup_resource_events") as mock_lookup:
             mock_lookup.side_effect = Exception("Unexpected error")
 
-            result = enricher.enrich_finding(
+            result = timeline.get_resource_timeline(
                 "sg-123",
                 "arn:aws:ec2:us-east-1:123456789012:security-group/sg-123",
                 "us-east-1",
@@ -168,9 +168,9 @@ class TestResourceTypeDetection:
         """Test EC2 instance ARN detection."""
         mock_session = Mock()
         mock_session.region_name = "us-east-1"
-        enricher = CloudTrailEnricher(session=mock_session)
+        timeline = CloudTrailTimeline(session=mock_session)
 
-        resource_type = enricher._determine_resource_type_from_arn(
+        resource_type = timeline._determine_resource_type_from_arn(
             "arn:aws:ec2:us-east-1:123456789012:instance/i-1234567890abcdef0"
         )
 
@@ -180,9 +180,9 @@ class TestResourceTypeDetection:
         """Test security group ARN detection."""
         mock_session = Mock()
         mock_session.region_name = "us-east-1"
-        enricher = CloudTrailEnricher(session=mock_session)
+        timeline = CloudTrailTimeline(session=mock_session)
 
-        resource_type = enricher._determine_resource_type_from_arn(
+        resource_type = timeline._determine_resource_type_from_arn(
             "arn:aws:ec2:us-east-1:123456789012:security-group/sg-1234567890abcdef0"
         )
 
@@ -192,9 +192,9 @@ class TestResourceTypeDetection:
         """Test S3 bucket ARN detection."""
         mock_session = Mock()
         mock_session.region_name = "us-east-1"
-        enricher = CloudTrailEnricher(session=mock_session)
+        timeline = CloudTrailTimeline(session=mock_session)
 
-        resource_type = enricher._determine_resource_type_from_arn(
+        resource_type = timeline._determine_resource_type_from_arn(
             "arn:aws:s3:::my-bucket"
         )
 
@@ -204,9 +204,9 @@ class TestResourceTypeDetection:
         """Test Lambda function ARN detection."""
         mock_session = Mock()
         mock_session.region_name = "us-east-1"
-        enricher = CloudTrailEnricher(session=mock_session)
+        timeline = CloudTrailTimeline(session=mock_session)
 
-        resource_type = enricher._determine_resource_type_from_arn(
+        resource_type = timeline._determine_resource_type_from_arn(
             "arn:aws:lambda:us-east-1:123456789012:function:my-function"
         )
 
@@ -216,9 +216,9 @@ class TestResourceTypeDetection:
         """Test IAM role ARN detection."""
         mock_session = Mock()
         mock_session.region_name = "us-east-1"
-        enricher = CloudTrailEnricher(session=mock_session)
+        timeline = CloudTrailTimeline(session=mock_session)
 
-        resource_type = enricher._determine_resource_type_from_arn(
+        resource_type = timeline._determine_resource_type_from_arn(
             "arn:aws:iam::123456789012:role/my-role"
         )
 
@@ -228,9 +228,9 @@ class TestResourceTypeDetection:
         """Test IAM user ARN detection."""
         mock_session = Mock()
         mock_session.region_name = "us-east-1"
-        enricher = CloudTrailEnricher(session=mock_session)
+        timeline = CloudTrailTimeline(session=mock_session)
 
-        resource_type = enricher._determine_resource_type_from_arn(
+        resource_type = timeline._determine_resource_type_from_arn(
             "arn:aws:iam::123456789012:user/my-user"
         )
 
@@ -240,9 +240,9 @@ class TestResourceTypeDetection:
         """Test RDS instance ARN detection."""
         mock_session = Mock()
         mock_session.region_name = "us-east-1"
-        enricher = CloudTrailEnricher(session=mock_session)
+        timeline = CloudTrailTimeline(session=mock_session)
 
-        resource_type = enricher._determine_resource_type_from_arn(
+        resource_type = timeline._determine_resource_type_from_arn(
             "arn:aws:rds:us-east-1:123456789012:db:my-database"
         )
 
@@ -252,9 +252,9 @@ class TestResourceTypeDetection:
         """Test RDS cluster ARN detection."""
         mock_session = Mock()
         mock_session.region_name = "us-east-1"
-        enricher = CloudTrailEnricher(session=mock_session)
+        timeline = CloudTrailTimeline(session=mock_session)
 
-        resource_type = enricher._determine_resource_type_from_arn(
+        resource_type = timeline._determine_resource_type_from_arn(
             "arn:aws:rds:us-east-1:123456789012:db-cluster:my-cluster"
         )
 
@@ -264,9 +264,9 @@ class TestResourceTypeDetection:
         """Test KMS key ARN detection."""
         mock_session = Mock()
         mock_session.region_name = "us-east-1"
-        enricher = CloudTrailEnricher(session=mock_session)
+        timeline = CloudTrailTimeline(session=mock_session)
 
-        resource_type = enricher._determine_resource_type_from_arn(
+        resource_type = timeline._determine_resource_type_from_arn(
             "arn:aws:kms:us-east-1:123456789012:key/12345678-1234-1234-1234-123456789012"
         )
 
@@ -276,9 +276,9 @@ class TestResourceTypeDetection:
         """Test VPC ARN detection."""
         mock_session = Mock()
         mock_session.region_name = "us-east-1"
-        enricher = CloudTrailEnricher(session=mock_session)
+        timeline = CloudTrailTimeline(session=mock_session)
 
-        resource_type = enricher._determine_resource_type_from_arn(
+        resource_type = timeline._determine_resource_type_from_arn(
             "arn:aws:ec2:us-east-1:123456789012:vpc/vpc-1234567890abcdef0"
         )
 
@@ -288,9 +288,9 @@ class TestResourceTypeDetection:
         """Test subnet ARN detection."""
         mock_session = Mock()
         mock_session.region_name = "us-east-1"
-        enricher = CloudTrailEnricher(session=mock_session)
+        timeline = CloudTrailTimeline(session=mock_session)
 
-        resource_type = enricher._determine_resource_type_from_arn(
+        resource_type = timeline._determine_resource_type_from_arn(
             "arn:aws:ec2:us-east-1:123456789012:subnet/subnet-1234567890abcdef0"
         )
 
@@ -300,9 +300,9 @@ class TestResourceTypeDetection:
         """Test DynamoDB table ARN detection."""
         mock_session = Mock()
         mock_session.region_name = "us-east-1"
-        enricher = CloudTrailEnricher(session=mock_session)
+        timeline = CloudTrailTimeline(session=mock_session)
 
-        resource_type = enricher._determine_resource_type_from_arn(
+        resource_type = timeline._determine_resource_type_from_arn(
             "arn:aws:dynamodb:us-east-1:123456789012:table/my-table"
         )
 
@@ -312,9 +312,9 @@ class TestResourceTypeDetection:
         """Test Secrets Manager secret ARN detection."""
         mock_session = Mock()
         mock_session.region_name = "us-east-1"
-        enricher = CloudTrailEnricher(session=mock_session)
+        timeline = CloudTrailTimeline(session=mock_session)
 
-        resource_type = enricher._determine_resource_type_from_arn(
+        resource_type = timeline._determine_resource_type_from_arn(
             "arn:aws:secretsmanager:us-east-1:123456789012:secret:my-secret-abc123"
         )
 
@@ -324,9 +324,9 @@ class TestResourceTypeDetection:
         """Test SNS topic ARN detection."""
         mock_session = Mock()
         mock_session.region_name = "us-east-1"
-        enricher = CloudTrailEnricher(session=mock_session)
+        timeline = CloudTrailTimeline(session=mock_session)
 
-        resource_type = enricher._determine_resource_type_from_arn(
+        resource_type = timeline._determine_resource_type_from_arn(
             "arn:aws:sns:us-east-1:123456789012:my-topic"
         )
 
@@ -336,9 +336,9 @@ class TestResourceTypeDetection:
         """Test SQS queue ARN detection."""
         mock_session = Mock()
         mock_session.region_name = "us-east-1"
-        enricher = CloudTrailEnricher(session=mock_session)
+        timeline = CloudTrailTimeline(session=mock_session)
 
-        resource_type = enricher._determine_resource_type_from_arn(
+        resource_type = timeline._determine_resource_type_from_arn(
             "arn:aws:sqs:us-east-1:123456789012:my-queue"
         )
 
@@ -348,9 +348,9 @@ class TestResourceTypeDetection:
         """Test ECR repository ARN detection."""
         mock_session = Mock()
         mock_session.region_name = "us-east-1"
-        enricher = CloudTrailEnricher(session=mock_session)
+        timeline = CloudTrailTimeline(session=mock_session)
 
-        resource_type = enricher._determine_resource_type_from_arn(
+        resource_type = timeline._determine_resource_type_from_arn(
             "arn:aws:ecr:us-east-1:123456789012:repository/my-repo"
         )
 
@@ -360,9 +360,9 @@ class TestResourceTypeDetection:
         """Test ECS cluster ARN detection."""
         mock_session = Mock()
         mock_session.region_name = "us-east-1"
-        enricher = CloudTrailEnricher(session=mock_session)
+        timeline = CloudTrailTimeline(session=mock_session)
 
-        resource_type = enricher._determine_resource_type_from_arn(
+        resource_type = timeline._determine_resource_type_from_arn(
             "arn:aws:ecs:us-east-1:123456789012:cluster/my-cluster"
         )
 
@@ -372,9 +372,9 @@ class TestResourceTypeDetection:
         """Test empty ARN returns Unknown."""
         mock_session = Mock()
         mock_session.region_name = "us-east-1"
-        enricher = CloudTrailEnricher(session=mock_session)
+        timeline = CloudTrailTimeline(session=mock_session)
 
-        resource_type = enricher._determine_resource_type_from_arn("")
+        resource_type = timeline._determine_resource_type_from_arn("")
 
         assert resource_type == "AWS::Unknown"
 
@@ -382,9 +382,9 @@ class TestResourceTypeDetection:
         """Test invalid ARN returns Unknown."""
         mock_session = Mock()
         mock_session.region_name = "us-east-1"
-        enricher = CloudTrailEnricher(session=mock_session)
+        timeline = CloudTrailTimeline(session=mock_session)
 
-        resource_type = enricher._determine_resource_type_from_arn("invalid-arn")
+        resource_type = timeline._determine_resource_type_from_arn("invalid-arn")
 
         assert resource_type == "AWS::Unknown"
 
@@ -393,36 +393,36 @@ class TestLookupConfiguration:
     """Tests for CloudTrail lookup configuration."""
 
     def test_lookup_uses_correct_time_range(self):
-        """Test that enricher uses correct lookback period."""
+        """Test that timeline uses correct lookback period."""
         mock_session = Mock()
         mock_session.region_name = "us-east-1"
-        enricher = CloudTrailEnricher(session=mock_session, lookback_days=30)
+        timeline = CloudTrailTimeline(session=mock_session, lookback_days=30)
 
         # Verify time range is set correctly
-        assert enricher.lookback_days == 30
-        assert enricher.start_time is not None
-        assert enricher.end_time is not None
+        assert timeline.lookback_days == 30
+        assert timeline.start_time is not None
+        assert timeline.end_time is not None
 
         # Verify the time difference is approximately 30 days
-        time_diff = enricher.end_time - enricher.start_time
+        time_diff = timeline.end_time - timeline.start_time
         assert abs(time_diff.days - 30) <= 1  # Allow 1 day tolerance
 
 
 # Integration tests using moto
 @mock_aws
-class TestCloudTrailEnricherIntegration:
+class TestCloudTrailTimelineIntegration:
     """Integration tests using moto to mock AWS services."""
 
-    def test_enrich_finding_with_real_cloudtrail_client(self):
-        """Test enrichment with actual boto3 CloudTrail client (mocked by moto)."""
+    def test_get_resource_timeline_with_real_cloudtrail_client(self):
+        """Test timeline retrieval with actual boto3 CloudTrail client (mocked by moto)."""
         # Create real boto3 session (mocked by moto)
         session = boto3.Session(region_name="us-east-1")
 
         # Create enricher
-        enricher = CloudTrailEnricher(session=session, lookback_days=30)
+        timeline = CloudTrailTimeline(session=session, lookback_days=30)
 
         # Test with a security group
-        timeline_events = enricher.enrich_finding(
+        timeline_events = timeline.get_resource_timeline(
             resource_id="sg-123",
             resource_arn="arn:aws:ec2:us-east-1:123456789012:security-group/sg-123",
             region="us-east-1",
@@ -432,14 +432,14 @@ class TestCloudTrailEnricherIntegration:
         assert isinstance(timeline_events, list)
         assert timeline_events == []
 
-    def test_enrich_finding_creates_regional_clients(self):
-        """Test that enricher creates CloudTrail clients for different regions."""
+    def test_get_resource_timeline_creates_regional_clients(self):
+        """Test that timeline creates CloudTrail clients for different regions."""
         session = boto3.Session(region_name="us-east-1")
-        enricher = CloudTrailEnricher(session=session, lookback_days=7)
+        timeline = CloudTrailTimeline(session=session, lookback_days=7)
 
         # Test with different regions
         for region in ["us-east-1", "eu-west-1", "ap-southeast-1"]:
-            timeline_events = enricher.enrich_finding(
+            timeline_events = timeline.get_resource_timeline(
                 resource_id="sg-test",
                 resource_arn=f"arn:aws:ec2:{region}:123456789012:security-group/sg-test",
                 region=region,
@@ -448,12 +448,12 @@ class TestCloudTrailEnricherIntegration:
             # Should handle all regions without error
             assert isinstance(timeline_events, list)
 
-    def test_enrich_finding_returns_json_serializable(self):
+    def test_get_resource_timeline_returns_json_serializable(self):
         """Test that returned events are JSON serializable."""
         session = boto3.Session(region_name="us-east-1")
-        enricher = CloudTrailEnricher(session=session)
+        timeline = CloudTrailTimeline(session=session)
 
-        timeline_events = enricher.enrich_finding(
+        timeline_events = timeline.get_resource_timeline(
             resource_id="sg-123",
             resource_arn="arn:aws:ec2:us-east-1:123456789012:security-group/sg-123",
             region="us-east-1",
@@ -465,10 +465,10 @@ class TestCloudTrailEnricherIntegration:
         except (TypeError, ValueError):
             pytest.fail("Timeline events are not JSON serializable")
 
-    def test_multiple_enrichments_with_same_enricher(self):
-        """Test that one enricher instance can handle multiple resources."""
+    def test_multiple_timelines_with_same_instance(self):
+        """Test that one timeline instance can handle multiple resources."""
         session = boto3.Session(region_name="us-east-1")
-        enricher = CloudTrailEnricher(session=session, lookback_days=30)
+        timeline = CloudTrailTimeline(session=session, lookback_days=30)
 
         # Test multiple resources
         resources = [
@@ -478,7 +478,7 @@ class TestCloudTrailEnricherIntegration:
         ]
 
         for resource_id, resource_arn in resources:
-            timeline_events = enricher.enrich_finding(
+            timeline_events = timeline.get_resource_timeline(
                 resource_id=resource_id,
                 resource_arn=resource_arn,
                 region="us-east-1",
@@ -489,10 +489,10 @@ class TestCloudTrailEnricherIntegration:
 
 
 @mock_aws
-class TestCloudTrailEnricherWithEC2:
+class TestCloudTrailTimelineWithEC2:
     """Integration tests with EC2 resources created via moto."""
 
-    def test_enrich_ec2_instance(self):
+    def test_timeline_ec2_instance(self):
         """Test enriching an EC2 instance created with moto."""
         session = boto3.Session(region_name="us-east-1")
 
@@ -502,8 +502,8 @@ class TestCloudTrailEnricherWithEC2:
         instance_id = response["Instances"][0]["InstanceId"]
 
         # Enrich the instance
-        enricher = CloudTrailEnricher(session=session, lookback_days=7)
-        timeline_events = enricher.enrich_finding(
+        timeline = CloudTrailTimeline(session=session, lookback_days=7)
+        timeline_events = timeline.get_resource_timeline(
             resource_id=instance_id,
             resource_arn=f"arn:aws:ec2:us-east-1:123456789012:instance/{instance_id}",
             region="us-east-1",
@@ -512,7 +512,7 @@ class TestCloudTrailEnricherWithEC2:
         # Should return a list (may be empty since moto's CloudTrail is limited)
         assert isinstance(timeline_events, list)
 
-    def test_enrich_security_group(self):
+    def test_timeline_security_group(self):
         """Test enriching a security group created with moto."""
         session = boto3.Session(region_name="us-east-1")
 
@@ -525,8 +525,8 @@ class TestCloudTrailEnricherWithEC2:
         sg_id = response["GroupId"]
 
         # Enrich the security group
-        enricher = CloudTrailEnricher(session=session, lookback_days=7)
-        timeline_events = enricher.enrich_finding(
+        timeline = CloudTrailTimeline(session=session, lookback_days=7)
+        timeline_events = timeline.get_resource_timeline(
             resource_id=sg_id,
             resource_arn=f"arn:aws:ec2:us-east-1:123456789012:security-group/{sg_id}",
             region="us-east-1",
@@ -535,7 +535,7 @@ class TestCloudTrailEnricherWithEC2:
         # Should return a list
         assert isinstance(timeline_events, list)
 
-    def test_enrich_vpc(self):
+    def test_timeline_vpc(self):
         """Test enriching a VPC created with moto."""
         session = boto3.Session(region_name="us-east-1")
 
@@ -545,8 +545,8 @@ class TestCloudTrailEnricherWithEC2:
         vpc_id = response["Vpc"]["VpcId"]
 
         # Enrich the VPC
-        enricher = CloudTrailEnricher(session=session, lookback_days=7)
-        timeline_events = enricher.enrich_finding(
+        timeline = CloudTrailTimeline(session=session, lookback_days=7)
+        timeline_events = timeline.get_resource_timeline(
             resource_id=vpc_id,
             resource_arn=f"arn:aws:ec2:us-east-1:123456789012:vpc/{vpc_id}",
             region="us-east-1",
@@ -557,10 +557,10 @@ class TestCloudTrailEnricherWithEC2:
 
 
 @mock_aws
-class TestCloudTrailEnricherWithS3:
+class TestCloudTrailTimelineWithS3:
     """Integration tests with S3 resources created via moto."""
 
-    def test_enrich_s3_bucket(self):
+    def test_timeline_s3_bucket(self):
         """Test enriching an S3 bucket created with moto."""
         session = boto3.Session(region_name="us-east-1")
 
@@ -570,8 +570,8 @@ class TestCloudTrailEnricherWithS3:
         s3.create_bucket(Bucket=bucket_name)
 
         # Enrich the bucket
-        enricher = CloudTrailEnricher(session=session, lookback_days=7)
-        timeline_events = enricher.enrich_finding(
+        timeline = CloudTrailTimeline(session=session, lookback_days=7)
+        timeline_events = timeline.get_resource_timeline(
             resource_id=bucket_name,
             resource_arn=f"arn:aws:s3:::{bucket_name}",
             region="us-east-1",
@@ -582,10 +582,10 @@ class TestCloudTrailEnricherWithS3:
 
 
 @mock_aws
-class TestCloudTrailEnricherWithIAM:
+class TestCloudTrailTimelineWithIAM:
     """Integration tests with IAM resources created via moto."""
 
-    def test_enrich_iam_role(self):
+    def test_timeline_iam_role(self):
         """Test enriching an IAM role created with moto."""
         session = boto3.Session(region_name="us-east-1")
 
@@ -608,8 +608,8 @@ class TestCloudTrailEnricherWithIAM:
         )
 
         # Enrich the role
-        enricher = CloudTrailEnricher(session=session, lookback_days=7)
-        timeline_events = enricher.enrich_finding(
+        timeline = CloudTrailTimeline(session=session, lookback_days=7)
+        timeline_events = timeline.get_resource_timeline(
             resource_id=role_name,
             resource_arn=f"arn:aws:iam::123456789012:role/{role_name}",
             region="us-east-1",
@@ -618,7 +618,7 @@ class TestCloudTrailEnricherWithIAM:
         # Should return a list
         assert isinstance(timeline_events, list)
 
-    def test_enrich_iam_user(self):
+    def test_timeline_iam_user(self):
         """Test enriching an IAM user created with moto."""
         session = boto3.Session(region_name="us-east-1")
 
@@ -628,8 +628,8 @@ class TestCloudTrailEnricherWithIAM:
         iam.create_user(UserName=user_name)
 
         # Enrich the user
-        enricher = CloudTrailEnricher(session=session, lookback_days=7)
-        timeline_events = enricher.enrich_finding(
+        timeline = CloudTrailTimeline(session=session, lookback_days=7)
+        timeline_events = timeline.get_resource_timeline(
             resource_id=user_name,
             resource_arn=f"arn:aws:iam::123456789012:user/{user_name}",
             region="us-east-1",
@@ -640,10 +640,10 @@ class TestCloudTrailEnricherWithIAM:
 
 
 @mock_aws
-class TestCloudTrailEnricherWithRDS:
+class TestCloudTrailTimelineWithRDS:
     """Integration tests with RDS resources created via moto."""
 
-    def test_enrich_rds_instance(self):
+    def test_timeline_rds_instance(self):
         """Test enriching an RDS instance created with moto."""
         session = boto3.Session(region_name="us-east-1")
 
@@ -659,8 +659,8 @@ class TestCloudTrailEnricherWithRDS:
         )
 
         # Enrich the RDS instance
-        enricher = CloudTrailEnricher(session=session, lookback_days=7)
-        timeline_events = enricher.enrich_finding(
+        timeline = CloudTrailTimeline(session=session, lookback_days=7)
+        timeline_events = timeline.get_resource_timeline(
             resource_id=db_name,
             resource_arn=f"arn:aws:rds:us-east-1:123456789012:db:{db_name}",
             region="us-east-1",
@@ -671,10 +671,10 @@ class TestCloudTrailEnricherWithRDS:
 
 
 @mock_aws
-class TestCloudTrailEnricherWithLambda:
+class TestCloudTrailTimelineWithLambda:
     """Integration tests with Lambda resources created via moto."""
 
-    def test_enrich_lambda_function(self):
+    def test_timeline_lambda_function(self):
         """Test enriching a Lambda function created with moto."""
         session = boto3.Session(region_name="us-east-1")
 
@@ -710,8 +710,8 @@ class TestCloudTrailEnricherWithLambda:
         )
 
         # Enrich the Lambda function
-        enricher = CloudTrailEnricher(session=session, lookback_days=7)
-        timeline_events = enricher.enrich_finding(
+        timeline = CloudTrailTimeline(session=session, lookback_days=7)
+        timeline_events = timeline.get_resource_timeline(
             resource_id=function_name,
             resource_arn=f"arn:aws:lambda:us-east-1:123456789012:function:{function_name}",
             region="us-east-1",
@@ -722,16 +722,16 @@ class TestCloudTrailEnricherWithLambda:
 
 
 @mock_aws
-class TestCloudTrailEnricherErrorHandling:
+class TestCloudTrailTimelineErrorHandling:
     """Integration tests for error handling scenarios with moto."""
 
-    def test_enrich_nonexistent_resource(self):
+    def test_timeline_nonexistent_resource(self):
         """Test enriching a resource that doesn't exist."""
         session = boto3.Session(region_name="us-east-1")
-        enricher = CloudTrailEnricher(session=session)
+        timeline = CloudTrailTimeline(session=session)
 
         # Try to enrich non-existent resource
-        timeline_events = enricher.enrich_finding(
+        timeline_events = timeline.get_resource_timeline(
             resource_id="sg-nonexistent",
             resource_arn="arn:aws:ec2:us-east-1:123456789012:security-group/sg-nonexistent",
             region="us-east-1",
@@ -740,13 +740,13 @@ class TestCloudTrailEnricherErrorHandling:
         # Should handle gracefully and return empty list
         assert timeline_events == []
 
-    def test_enrich_with_malformed_arn(self):
+    def test_timeline_with_malformed_arn(self):
         """Test enriching with a malformed ARN."""
         session = boto3.Session(region_name="us-east-1")
-        enricher = CloudTrailEnricher(session=session)
+        timeline = CloudTrailTimeline(session=session)
 
         # Try with malformed ARN
-        timeline_events = enricher.enrich_finding(
+        timeline_events = timeline.get_resource_timeline(
             resource_id="test-resource",
             resource_arn="not-a-valid-arn",
             region="us-east-1",

@@ -1,4 +1,4 @@
-"""Data models for finding enrichment with CloudTrail timeline events."""
+"""Data models for CloudTrail timeline events."""
 
 from datetime import datetime, timezone
 from enum import Enum
@@ -351,8 +351,8 @@ class TimelineEvent(BaseModel):
         return v
 
 
-class FindingEnrichment(BaseModel):
-    """Enrichment data added to a finding from CloudTrail timeline.
+class ResourceTimeline(BaseModel):
+    """Timeline data for an AWS resource from CloudTrail.
 
     Attributes:
         timeline: List of timeline events for this resource
