@@ -46,7 +46,7 @@ export const FindingSeverityOverTime = ({
         setData(response.data);
       }
     } catch (error) {
-      console.error("Error fetching severity trends:", error);
+      console.error("Error fetching severity trends");
     } finally {
       setIsLoading(false);
     }
