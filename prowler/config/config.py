@@ -12,6 +12,8 @@ from prowler.lib.logger import logger
 
 timestamp = datetime.today()
 timestamp_utc = datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
+output_file_timestamp = timestamp.strftime("%Y%m%d%H%M%S")
+timestamp_iso = timestamp.isoformat(sep=" ", timespec="seconds")
 prowler_version = "5.14.0"
 html_logo_url = "https://github.com/prowler-cloud/prowler/"
 square_logo_img = "https://prowler.com/wp-content/uploads/logo-html.png"
@@ -21,6 +23,48 @@ gcp_logo = "https://user-images.githubusercontent.com/38561120/235928332-eb4accd
 
 orange_color = "\033[38;5;208m"
 banner_color = "\033[1;92m"
+
+
+def refresh_timestamps() -> datetime:
+    """
+    Refresh cached timestamps so every scan run gets its own suffixes.
+    """
+    global timestamp, timestamp_utc, output_file_timestamp, timestamp_iso
+
+    timestamp = datetime.today()
+    timestamp_utc = datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
+    output_file_timestamp = timestamp.strftime("%Y%m%d%H%M%S")
+    timestamp_iso = timestamp.isoformat(sep=" ", timespec="seconds")
+
+    return timestamp
+
+
+def get_timestamp() -> datetime:
+    """
+    Return the current naive timestamp used across outputs.
+    """
+    return timestamp
+
+
+def get_timestamp_utc() -> datetime:
+    """
+    Return the current UTC timestamp used for providers that require it.
+    """
+    return timestamp_utc
+
+
+def get_output_file_timestamp() -> str:
+    """
+    Return the formatted suffix used for naming output artifacts.
+    """
+    return output_file_timestamp
+
+
+def get_timestamp_iso() -> str:
+    """
+    Return the current timestamp formatted for human readable outputs.
+    """
+    return timestamp_iso
 
 
 class Provider(str, Enum):
@@ -64,8 +108,6 @@ aws_services_json_file = "aws_regions_by_service.json"
 # gcp_zones_json_file = "gcp_zones.json"
 
 default_output_directory = getcwd() + "/output"
-output_file_timestamp = timestamp.strftime("%Y%m%d%H%M%S")
-timestamp_iso = timestamp.isoformat(sep=" ", timespec="seconds")
 csv_file_suffix = ".csv"
 json_file_suffix = ".json"
 json_asff_file_suffix = ".asff.json"

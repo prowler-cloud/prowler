@@ -1,6 +1,6 @@
 from enum import Enum
 
-from prowler.config.config import timestamp
+from prowler.config.config import get_timestamp
 from prowler.lib.outputs.utils import unroll_tags
 from prowler.lib.utils.utils import outputs_unix_timestamp
 
@@ -9,7 +9,7 @@ from prowler.lib.utils.utils import outputs_unix_timestamp
 def fill_common_finding_data(finding: dict, unix_timestamp: bool) -> dict:
     finding_data = {
         "metadata": finding.check_metadata,
-        "timestamp": outputs_unix_timestamp(unix_timestamp, timestamp),
+        "timestamp": outputs_unix_timestamp(unix_timestamp, get_timestamp()),
         "status": finding.status,
         "status_extended": finding.status_extended,
         "muted": finding.muted,
