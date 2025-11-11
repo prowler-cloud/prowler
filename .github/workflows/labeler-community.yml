@@ -20,12 +20,39 @@ jobs:
       - name: Check if author is org member
         id: check_membership
         env:
-          GH_TOKEN: ${{ github.token }}
           AUTHOR: ${{ github.event.pull_request.user.login }}
-          ORG: ${{ github.repository_owner }}
         run: |
-          echo "Checking if $AUTHOR is a member of $ORG"
-          if gh api --method GET "orgs/$ORG/members/$AUTHOR" >/dev/null 2>&1; then
+          # Hardcoded list of prowler-cloud organization members
+          # This list includes members who have set their organization membership as private
+          ORG_MEMBERS=(
+            "AdriiiPRodri"
+            "Alan-TheGentleman"
+            "alejandrobailo"
+            "amitsharm"
+            "andoniaf"
+            "cesararroba"
+            "Chan9390"
+            "danibarranqueroo"
+            "HugoPBrito"
+            "jfagoagas"
+            "josemazo"
+            "lydiavilchez"
+            "mmuller88"
+            "MrCloudSec"
+            "pedrooot"
+            "prowler-bot"
+            "puchy22"
+            "rakan-pro"
+            "RosaRivasProwler"
+            "StylusFrost"
+            "toniblyx"
+            "vicferpoy"
+          )
+
+          echo "Checking if $AUTHOR is a member of prowler-cloud organization"
+
+          # Check if author is in the org members list
+          if printf '%s\n' "${ORG_MEMBERS[@]}" | grep -q "^${AUTHOR}$"; then
             echo "is_member=true" >> $GITHUB_OUTPUT
             echo "$AUTHOR is an organization member"
           else

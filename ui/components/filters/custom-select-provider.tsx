@@ -49,7 +49,7 @@ const providerDisplayData: Record<
     label: "Infrastructure as Code",
     component: <CustomProviderInputIac />,
   },
-  oci: {
+  oraclecloud: {
     label: "Oracle Cloud Infrastructure",
     component: <CustomProviderInputOracleCloud />,
   },

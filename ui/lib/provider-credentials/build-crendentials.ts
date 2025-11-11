@@ -304,7 +304,7 @@ export const buildSecretConfig = (
       secretType: "static",
       secret: buildIacSecret(formData),
     }),
-    oci: () => ({
+    oraclecloud: () => ({
       secretType: "static",
       secret: buildOracleCloudSecret(formData, providerUid),
     }),

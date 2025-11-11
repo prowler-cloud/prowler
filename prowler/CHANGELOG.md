@@ -13,7 +13,13 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `cloudstorage_bucket_logging_enabled` check for GCP provider [(#9091)](https://github.com/prowler-cloud/prowler/pull/9091)
 - C5 compliance framework for Azure provider [(#9081)](https://github.com/prowler-cloud/prowler/pull/9081)
 - C5 compliance framework for the GCP provider [(#9097)](https://github.com/prowler-cloud/prowler/pull/9097)
+- `organization_repository_creation_limited` check for GitHub provider [(#8844)](https://github.com/prowler-cloud/prowler/pull/8844)
 - HIPAA compliance framework for the GCP provider [(#8955)](https://github.com/prowler-cloud/prowler/pull/8955)
+- Add organization ID parameter for MongoDB Atlas provider [(#9167)](https://github.com/prowler-cloud/prowler/pull/9167)
+- Add multiple compliance improvements [(#9145)](https://github.com/prowler-cloud/prowler/pull/9145)
+- Added validation for invalid checks, services, and categories in `load_checks_to_execute` function [(#8971)](https://github.com/prowler-cloud/prowler/pull/8971)
+- NIST CSF 2.0 compliance framework for the AWS provider [(#9185)](https://github.com/prowler-cloud/prowler/pull/9185)
+- Add FedRAMP 20x KSI Low for AWS, Azure and GCP [(#9198)](https://github.com/prowler-cloud/prowler/pull/9198)
 
 ### Changed
 - Update AWS Direct Connect service metadata to new format [(#8855)](https://github.com/prowler-cloud/prowler/pull/8855)
@@ -32,12 +38,24 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS FMS service metadata to new format [(#9005)](https://github.com/prowler-cloud/prowler/pull/9005)
 - Update AWS FSx service metadata to new format [(#9006)](https://github.com/prowler-cloud/prowler/pull/9006)
 - Update AWS Glacier service metadata to new format [(#9007)](https://github.com/prowler-cloud/prowler/pull/9007)
+- Update oraclecloud analytics service metadata to new format [(#9114)](https://github.com/prowler-cloud/prowler/pull/9114)
+
 - Update AWS CodeArtifact service metadata to new format [(#8850)](https://github.com/prowler-cloud/prowler/pull/8850)
 - Rename OCI provider to oraclecloud with oci alias [(#9126)](https://github.com/prowler-cloud/prowler/pull/9126)
 
 ---
 
-## [v5.13.1] (Prowler UNRELEASED)
+## [v5.13.2] (Prowler UNRELEASED)
+
+### Fixed
+- Check `check_name` has no `resource_name` error for GCP provider [(#9169)](https://github.com/prowler-cloud/prowler/pull/9169)
+- Depth Truncation and parsing error in PowerShell queries [(#9181)](https://github.com/prowler-cloud/prowler/pull/9181)
+- Fix M365 Teams `--sp-env-auth` connection error and enhanced timeout logging [(#9191)](https://github.com/prowler-cloud/prowler/pull/9191)
+- Rename `get_oci_assessment_summary` to `get_oraclecloud_assessment_summary` in HTML output [(#9200)](https://github.com/prowler-cloud/prowler/pull/9200)
+
+---
+
+## [v5.13.1] (Prowler v5.13.1)
 
 ### Fixed
 - Add `resource_name` for checks under `logging` for the GCP provider [(#9023)](https://github.com/prowler-cloud/prowler/pull/9023)
