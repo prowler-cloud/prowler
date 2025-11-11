@@ -144,13 +144,11 @@ function MapTooltip({
       {location.change !== undefined && (
         <p className="text-text-neutral-secondary mt-1 text-sm font-medium">
           <span
-            className="font-bold"
-            style={{
-              color:
-                location.change > 0
-                  ? "var(--bg-pass-primary)"
-                  : "var(--bg-data-critical)",
-            }}
+            className={`font-bold ${
+              location.change > 0
+                ? "text-bg-pass-primary"
+                : "text-bg-data-critical"
+            }`}
           >
             {location.change > 0 ? "+" : ""}
             {location.change}%{" "}
@@ -403,10 +401,7 @@ export function ThreatMap({
             className="flex flex-1 flex-col overflow-hidden"
           >
             <div className="mb-4 flex items-center justify-between">
-              <h3
-                className="text-lg font-semibold"
-                style={{ color: "var(--text-neutral-primary)" }}
-              >
+              <h3 className="text-text-neutral-primary text-lg font-semibold">
                 Threat Map
               </h3>
               <div className="relative">
@@ -414,12 +409,7 @@ export function ThreatMap({
                   aria-label="Filter threat map by region"
                   value={selectedRegion}
                   onChange={(e) => setSelectedRegion(e.target.value)}
-                  style={{
-                    borderColor: "var(--border-neutral-primary)",
-                    backgroundColor: "var(--bg-neutral-secondary)",
-                    color: "var(--text-neutral-primary)",
-                  }}
-                  className="appearance-none rounded-lg border px-4 py-2 pr-10 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                  className="border-border-neutral-primary bg-bg-neutral-secondary text-text-neutral-primary appearance-none rounded-lg border px-4 py-2 pr-10 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                 >
                   <option value="All Regions">All Regions</option>
                   {data.regions.map((region) => (
@@ -430,8 +420,7 @@ export function ThreatMap({
                 </select>
                 <ChevronDown
                   size={16}
-                  className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2"
-                  style={{ color: "var(--text-neutral-tertiary)" }}
+                  className="text-text-neutral-tertiary pointer-events-none absolute top-1/2 right-3 -translate-y-1/2"
                 />
               </div>
             </div>
