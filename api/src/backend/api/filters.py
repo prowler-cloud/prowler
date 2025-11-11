@@ -199,12 +199,12 @@ class CommonFindingFilters(FilterSet):
         return queryset.filter(overall_query).distinct()
 
     def filter_categories(self, queryset, name, value):
-        return queryset.filter(check_metadata__Categories__contains=[value])
+        return queryset.filter(check_metadata__categories__contains=[value])
 
     def filter_categories_in(self, queryset, name, value):
         query = Q()
         for category in value:
-            query |= Q(check_metadata__Categories__contains=[category])
+            query |= Q(check_metadata__categories__contains=[category])
         return queryset.filter(query)
 
 
@@ -672,12 +672,12 @@ class LatestFindingFilter(CommonFindingFilters):
     categories__in = CharInFilter(method="filter_categories_in")
 
     def filter_categories(self, queryset, name, value):
-        return queryset.filter(check_metadata__Categories__contains=[value])
+        return queryset.filter(check_metadata__categories__contains=[value])
 
     def filter_categories_in(self, queryset, name, value):
         query = Q()
         for category in value:
-            query |= Q(check_metadata__Categories__contains=[category])
+            query |= Q(check_metadata__categories__contains=[category])
         return queryset.filter(query)
 
     class Meta:
