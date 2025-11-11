@@ -344,7 +344,7 @@ class TimelineEvent(BaseModel):
     event_details: dict[str, Any] = {}
 
     @validator("timestamp", pre=True)
-    def ensure_timezone_aware(cls, v):  # noqa: N805
+    def ensure_timezone_aware(v):
         """Ensure timestamp is timezone-aware UTC."""
         if isinstance(v, datetime) and v.tzinfo is None:
             return v.replace(tzinfo=timezone.utc)
