@@ -2705,7 +2705,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
         # Extract unique categories from check_metadata
         categories = set()
         for finding in filtered_queryset.only("check_metadata"):
-            check_categories = finding.check_metadata.get("Categories", [])
+            check_categories = finding.check_metadata.get("categories", [])
             if check_categories:
                 categories.update(check_categories)
         categories = sorted(list(categories))
@@ -2821,10 +2821,12 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
 
         # Extract unique categories from check_metadata
         categories = set()
-        for finding in self.filter_queryset(self.get_queryset()).filter(
-            tenant_id=tenant_id, scan_id__in=latest_scans_ids
-        ).only("check_metadata"):
-            check_categories = finding.check_metadata.get("Categories", [])
+        for finding in (
+            self.filter_queryset(self.get_queryset())
+            .filter(tenant_id=tenant_id, scan_id__in=latest_scans_ids)
+            .only("check_metadata")
+        ):
+            check_categories = finding.check_metadata.get("categories", [])
             if check_categories:
                 categories.update(check_categories)
         categories = sorted(list(categories))

@@ -345,7 +345,7 @@ def get_findings_metadata_no_aggregations(tenant_id: str, filtered_queryset):
     # Extract unique categories from check_metadata
     categories = set()
     for finding in filtered_queryset.only("check_metadata"):
-        check_categories = finding.check_metadata.get("Categories", [])
+        check_categories = finding.check_metadata.get("categories", [])
         if check_categories:
             categories.update(check_categories)
     categories = sorted(list(categories))
