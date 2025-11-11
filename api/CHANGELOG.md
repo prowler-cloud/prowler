@@ -18,17 +18,11 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
-## [1.14.3] (Prowler UNRELEASED)
+## [1.14.2] (Prowler UNRELEASED)
 
 ### Fixed
+- Update unique constraint for `Provider` model to exclude soft-deleted entries, resolving duplicate errors when re-deleting providers.[(#9054)](https://github.com/prowler-cloud/prowler/pull/9054)
 - Check if a check_id exists in PROWLER_CHECKS from generate_scan_compliance [(#9208)](https://github.com/prowler-cloud/prowler/pull/9208)
-
----
-
-## [1.14.2] (Prowler 5.13.2)
-
-### Fixed
-- Update unique constraint for `Provider` model to exclude soft-deleted entries, resolving duplicate errors when re-deleting providers.
 
 ## [1.14.1] (Prowler 5.13.1)
 
