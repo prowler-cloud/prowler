@@ -1,5 +1,9 @@
 import { AlertTriangle } from "lucide-react";
 
+import { cn } from "@/lib";
+
+import { CHART_COLORS } from "./constants";
+
 interface AlertPillProps {
   value: number;
   label?: string;
@@ -22,20 +26,19 @@ export function AlertPill({
   const textSizeClass = TEXT_SIZE_CLASSES[textSize];
 
   // Chart alert colors are theme-aware variables from globals.css
-  // Using inline styles necessary since colors vary by theme
   return (
     <div className="flex items-center gap-2">
       <div
         className="flex items-center gap-1 rounded-full px-2 py-1"
-        style={{ backgroundColor: "var(--chart-alert-bg)" }}
+        style={{ backgroundColor: CHART_COLORS.alertPillBg }}
       >
         <AlertTriangle
           size={iconSize}
-          style={{ color: "var(--chart-alert-text)" }}
+          style={{ color: CHART_COLORS.alertPillText }}
         />
         <span
-          className={`${textSizeClass} font-semibold`}
-          style={{ color: "var(--chart-alert-text)" }}
+          className={cn(textSizeClass, "font-semibold")}
+          style={{ color: CHART_COLORS.alertPillText }}
         >
           {value}
         </span>
