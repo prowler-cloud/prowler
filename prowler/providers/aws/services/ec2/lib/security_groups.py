@@ -3,7 +3,7 @@ from typing import Any
 
 
 def check_security_group(
-    ingress_rule: Any, protocol: str, ports: list = [], any_address: bool = False
+    ingress_rule: Any, protocol: str, ports: list | None = None, any_address: bool = False
 ) -> bool:
     """
     Check if the security group ingress rule has public access to the check_ports using the protocol
@@ -36,6 +36,9 @@ def check_security_group(
 
     @return: True if the security group has public access to the check_ports using the protocol
     """
+    if ports is None:
+        ports = []
+
     # Check for all traffic ingress rules regardless of the protocol
     if ingress_rule["IpProtocol"] == "-1":
         for ip_ingress_rule in ingress_rule["IpRanges"]:
@@ -71,37 +74,29 @@ def check_security_group(
         for ip_ingress_rule in ingress_rule["IpRanges"]:
             if _is_cidr_public(ip_ingress_rule["CidrIp"], any_address):
                 # If there are input ports to check
-                if ports:
-                    for port in ports:
-                        if (
-                            port in ingress_port_range
-                            and ingress_rule["IpProtocol"] == protocol
-                        ):
-                            return True
+                for port in ports:
+                    if (
+                        port in ingress_port_range
+                        and ingress_rule["IpProtocol"] == protocol
+                    ):
+                        return True
+
                 # If empty input ports check if all ports are open
-                if len(set(ingress_port_range)) == 65536:
-                    return True
-                # If None input ports check if any port is open
-                if ports is None:
-                    return True
+                return len(set(ingress_port_range)) == 65536
 
         # IPv6
         for ip_ingress_rule in ingress_rule["Ipv6Ranges"]:
             if _is_cidr_public(ip_ingress_rule["CidrIpv6"], any_address):
                 # If there are input ports to check
-                if ports:
-                    for port in ports:
-                        if (
-                            port in ingress_port_range
-                            and ingress_rule["IpProtocol"] == protocol
-                        ):
-                            return True
+                for port in ports:
+                    if (
+                        port in ingress_port_range
+                        and ingress_rule["IpProtocol"] == protocol
+                    ):
+                        return True
+                
                 # If empty input ports check if all ports are open
-                if len(set(ingress_port_range)) == 65536:
-                    return True
-                # If None input ports check if any port is open
-                if ports is None:
-                    return True
+                return len(set(ingress_port_range)) == 65536
 
     return False
 
@@ -120,3 +115,4 @@ def _is_cidr_public(cidr: str, any_address: bool = False) -> bool:
         return True
     if not any_address:
         return ipaddress.ip_network(cidr).is_global
+    return False
