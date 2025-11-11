@@ -47,43 +47,52 @@ interface NodeTooltipState {
   change?: number;
 }
 
-// Note: Using hex colors directly because Recharts SVG fill doesn't resolve CSS variables
+const TOOLTIP_OFFSET_PX = 10;
+
+// SVG fill attributes cannot resolve CSS variables, so we use the actual hex values
+// from the design system. These values match globals.css color definitions.
 const COLORS: Record<string, string> = {
   Success: "#86da26",
-  Fail: "#db2b49",
-  AWS: "#ff9900",
-  Azure: "#00bcd4",
-  Google: "#EA4335",
-  Critical: "#971348",
-  High: "#ff3077",
-  Medium: "#ff7d19",
-  Low: "#fdd34f",
-  Info: "#2e51b2",
-  Informational: "#2e51b2",
+  Fail: "#ff006a",
+  AWS: "#FF9900",
+  Azure: "#37BDF0",
+  "Google Cloud": "#EA4335",
+  Critical: "#ff006a",
+  High: "#f77852",
+  Medium: "#fec94d",
+  Low: "#fdfbd4",
+  Info: "#3c8dff",
+  Informational: "#3c8dff",
 };
 
-const CustomTooltip = ({ active, payload }: any) => {
+interface TooltipPayload {
+  payload: {
+    source?: { name: string };
+    target?: { name: string };
+    value?: number;
+    name?: string;
+  };
+}
+
+interface TooltipProps {
+  active?: boolean;
+  payload?: TooltipPayload[];
+}
+
+const CustomTooltip = ({ active, payload }: TooltipProps) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
+    const sourceName = data.source?.name || data.name;
+    const targetName = data.target?.name;
+    const value = data.value;
+
     return (
-      <div
-        className="rounded-lg border p-3 shadow-lg"
-        style={{
-          borderColor: CHART_COLORS.tooltipBorder,
-          backgroundColor: CHART_COLORS.tooltipBackground,
-        }}
-      >
-        <p
-          className="text-sm font-semibold"
-          style={{ color: CHART_COLORS.textPrimary }}
-        >
-          {data.name}
+      <div className="chart-tooltip">
+        <p className="chart-tooltip-title">
+          {sourceName}
+          {targetName ? ` → ${targetName}` : ""}
         </p>
-        {data.value && (
-          <p className="text-xs" style={{ color: CHART_COLORS.textSecondary }}>
-            Value: {data.value}
-          </p>
-        )}
+        {value && <p className="chart-tooltip-subtitle">{value}</p>}
       </div>
     );
   }
@@ -351,9 +360,9 @@ export function SankeyChart({ data, height = 400 }: SankeyChartProps) {
         <div
           className="pointer-events-none absolute z-50"
           style={{
-            left: `${Math.max(125, Math.min(linkTooltip.x, window.innerWidth - 125))}px`,
-            top: `${Math.max(linkTooltip.y - 80, 10)}px`,
-            transform: "translate(-50%, -100%)",
+            left: `${Math.max(TOOLTIP_OFFSET_PX, linkTooltip.x)}px`,
+            top: `${Math.max(TOOLTIP_OFFSET_PX, linkTooltip.y)}px`,
+            transform: `translate(${TOOLTIP_OFFSET_PX}px, -100%)`,
           }}
         >
           <ChartTooltip
@@ -376,9 +385,9 @@ export function SankeyChart({ data, height = 400 }: SankeyChartProps) {
         <div
           className="pointer-events-none absolute z-50"
           style={{
-            left: `${Math.max(125, Math.min(nodeTooltip.x, window.innerWidth - 125))}px`,
-            top: `${Math.max(nodeTooltip.y - 80, 10)}px`,
-            transform: "translate(-50%, -100%)",
+            left: `${Math.max(TOOLTIP_OFFSET_PX, nodeTooltip.x)}px`,
+            top: `${Math.max(TOOLTIP_OFFSET_PX, nodeTooltip.y)}px`,
+            transform: `translate(${TOOLTIP_OFFSET_PX}px, -100%)`,
           }}
         >
           <ChartTooltip

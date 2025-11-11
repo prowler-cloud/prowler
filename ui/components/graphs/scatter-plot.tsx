@@ -136,7 +136,7 @@ export function ScatterPlot({
 
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+      <ScatterChart margin={{ top: 20, right: 30, bottom: 60, left: 60 }}>
         <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.gridLine} />
         <XAxis
           type="number"
@@ -144,8 +144,8 @@ export function ScatterPlot({
           name={xLabel}
           label={{
             value: xLabel,
-            position: "insideBottom",
-            offset: -10,
+            position: "bottom",
+            offset: 10,
             fill: CHART_COLORS.textSecondary,
           }}
           tick={{ fill: CHART_COLORS.textSecondary }}
@@ -158,7 +158,8 @@ export function ScatterPlot({
           label={{
             value: yLabel,
             angle: -90,
-            position: "insideLeft",
+            position: "left",
+            offset: 10,
             fill: CHART_COLORS.textSecondary,
           }}
           tick={{ fill: CHART_COLORS.textSecondary }}

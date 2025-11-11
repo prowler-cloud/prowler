@@ -1,7 +1,5 @@
 import { AlertTriangle } from "lucide-react";
 
-import { cn } from "@/lib/utils";
-
 interface AlertPillProps {
   value: number;
   label?: string;
@@ -9,12 +7,22 @@ interface AlertPillProps {
   textSize?: "xs" | "sm" | "base";
 }
 
+const TEXT_SIZE_CLASSES = {
+  sm: "text-sm",
+  base: "text-base",
+  xs: "text-xs",
+} as const;
+
 export function AlertPill({
   value,
   label = "Fail Findings",
   iconSize = 12,
   textSize = "xs",
 }: AlertPillProps) {
+  const textSizeClass = TEXT_SIZE_CLASSES[textSize];
+
+  // Chart alert colors are theme-aware variables from globals.css
+  // Using inline styles necessary since colors vary by theme
   return (
     <div className="flex items-center gap-2">
       <div
@@ -26,13 +34,15 @@ export function AlertPill({
           style={{ color: "var(--chart-alert-text)" }}
         />
         <span
-          className={cn(`text-${textSize}`, "font-semibold")}
+          className={`${textSizeClass} font-semibold`}
           style={{ color: "var(--chart-alert-text)" }}
         >
           {value}
         </span>
       </div>
-      <span className={cn(`text-${textSize}`, "text-slate-400")}>{label}</span>
+      <span className="text-text-neutral-secondary text-sm font-medium">
+        {label}
+      </span>
     </div>
   );
 }

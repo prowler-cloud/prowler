@@ -176,7 +176,7 @@ function EmptyState() {
 
   return (
     <div
-      className="flex h-full min-h-[400px] items-center justify-center rounded-lg border p-6"
+      className="flex h-full min-h-[400px] w-full items-center justify-center rounded-lg border p-6"
       style={{
         borderColor: CHART_COLORS.tooltipBorder,
         backgroundColor: CHART_COLORS.tooltipBackground,

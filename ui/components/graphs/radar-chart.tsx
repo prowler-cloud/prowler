@@ -1,5 +1,6 @@
 "use client";
 
+import { type MouseEvent } from "react";
 import {
   PolarAngleAxis,
   PolarGrid,
@@ -32,36 +33,41 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-const CustomTooltip = ({ active, payload }: any) => {
+interface TooltipPayloadItem {
+  payload: RadarDataPoint;
+}
+
+interface TooltipProps {
+  active?: boolean;
+  payload?: TooltipPayloadItem[];
+}
+
+const CustomTooltip = ({ active, payload }: TooltipProps) => {
   if (active && payload && payload.length) {
     const data = payload[0];
     return (
-      <div
-        className="rounded-lg border p-3 shadow-lg"
-        style={{
-          borderColor: CHART_COLORS.tooltipBorder,
-          backgroundColor: CHART_COLORS.tooltipBackground,
-        }}
-      >
-        <p
-          className="text-sm font-semibold"
-          style={{ color: CHART_COLORS.textPrimary }}
-        >
+      <div className="border-border-neutral-tertiary bg-bg-neutral-tertiary pointer-events-none min-w-[200px] rounded-xl border p-3 shadow-lg">
+        <p className="text-text-neutral-primary text-sm font-semibold">
           {data.payload.category}
         </p>
         <div className="mt-1">
-          <AlertPill value={data.value} />
+          <AlertPill value={data.payload.value} />
         </div>
         {data.payload.change !== undefined && (
-          <p
-            className="mt-1 text-xs"
-            style={{ color: CHART_COLORS.textSecondary }}
-          >
-            <span className="font-bold">
-              {data.payload.change > 0 ? "+" : ""}
-              {data.payload.change}%
-            </span>{" "}
-            Since Last Scan
+          <p className="text-text-neutral-secondary mt-1 text-sm font-medium">
+            <span
+              className="font-bold"
+              style={{
+                color:
+                  data.payload.change > 0
+                    ? "var(--bg-pass-primary)"
+                    : "var(--bg-data-critical)",
+              }}
+            >
+              {(data.payload.change as number) > 0 ? "+" : ""}
+              {data.payload.change}%{" "}
+            </span>
+            since last scan
           </p>
         )}
       </div>
@@ -70,21 +76,46 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null;
 };
 
-const CustomDot = (props: any) => {
-  const { cx, cy, payload, selectedPoint, onSelectPoint } = props;
-  const currentCategory = payload.category || payload.name;
+interface DotShapeProps {
+  cx: number;
+  cy: number;
+  payload: RadarDataPoint & { name?: string };
+  key: string;
+}
+
+interface CustomDotProps extends DotShapeProps {
+  selectedPoint?: RadarDataPoint | null;
+  onSelectPoint?: (point: RadarDataPoint | null) => void;
+  data?: RadarDataPoint[];
+}
+
+const CustomDot = ({
+  cx,
+  cy,
+  payload,
+  selectedPoint,
+  onSelectPoint,
+  data,
+}: CustomDotProps) => {
+  const currentCategory = payload.name || payload.category;
   const isSelected = selectedPoint?.category === currentCategory;
 
-  const handleClick = (e: React.MouseEvent) => {
+  const handleClick = (e: MouseEvent) => {
     e.stopPropagation();
     if (onSelectPoint) {
-      if (isSelected) {
+      // Re-evaluate selection status at click time, not from closure
+      const currentlySelected = selectedPoint?.category === currentCategory;
+      if (currentlySelected) {
         onSelectPoint(null);
       } else {
-        const point = {
+        const fullDataItem = data?.find(
+          (d: RadarDataPoint) => d.category === currentCategory,
+        );
+        const point: RadarDataPoint = {
           category: currentCategory,
           value: payload.value,
           change: payload.change,
+          severityData: fullDataItem?.severityData || payload.severityData,
         };
         onSelectPoint(point);
       }
@@ -96,12 +127,12 @@ const CustomDot = (props: any) => {
       cx={cx}
       cy={cy}
       r={isSelected ? 9 : 6}
-      fill={
-        isSelected ? "var(--chart-success-color)" : "var(--chart-radar-primary)"
-      }
       fillOpacity={1}
       className={isSelected ? "drop-shadow-[0_0_8px_#86da26]" : ""}
       style={{
+        fill: isSelected
+          ? "var(--bg-button-primary)"
+          : "var(--chart-radar-primary)",
         cursor: onSelectPoint ? "pointer" : "default",
         pointerEvents: "all",
       }}
@@ -137,14 +168,17 @@ export function RadarChart({
           activeDot={false}
           dot={
             onSelectPoint
-              ? (dotProps: any) => {
-                  const { key, ...rest } = dotProps;
+              ? (dotProps: DotShapeProps) => {
+                  const { key, cx, cy, payload } = dotProps;
                   return (
                     <CustomDot
                       key={key}
-                      {...rest}
+                      cx={cx}
+                      cy={cy}
+                      payload={payload}
                       selectedPoint={selectedPoint}
                       onSelectPoint={onSelectPoint}
+                      data={data}
                     />
                   );
                 }

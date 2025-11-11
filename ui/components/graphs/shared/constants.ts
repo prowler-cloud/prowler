@@ -1,5 +1,6 @@
 export const SEVERITY_COLORS = {
   Informational: "var(--bg-data-info)",
+  Info: "var(--bg-data-info)",
   Low: "var(--bg-data-low)",
   Medium: "var(--bg-data-medium)",
   High: "var(--bg-data-high)",
@@ -7,9 +8,9 @@ export const SEVERITY_COLORS = {
 } as const;
 
 export const PROVIDER_COLORS = {
-  AWS: "var(--chart-provider-aws)",
-  Azure: "var(--chart-provider-azure)",
-  Google: "var(--chart-provider-google)",
+  AWS: "var(--bg-data-aws)",
+  Azure: "var(--bg-data-azure)",
+  Google: "var(--bg-data-gcp)",
 } as const;
 
 export const STATUS_COLORS = {
@@ -23,10 +24,10 @@ export const CHART_COLORS = {
   textPrimary: "var(--chart-text-primary)",
   textSecondary: "var(--chart-text-secondary)",
   gridLine: "var(--chart-border-emphasis)",
-  backgroundTrack: "rgba(51, 65, 85, 0.5)", // slate-700 with 50% opacity
+  backgroundTrack: "var(--bg-neutral-tertiary)",
   alertPillBg: "var(--chart-alert-bg)",
   alertPillText: "var(--chart-alert-text)",
-  defaultColor: "#64748b", // slate-500
+  defaultColor: "var(--text-neutral-tertiary)",
 } as const;
 
 export const CHART_DIMENSIONS = {
