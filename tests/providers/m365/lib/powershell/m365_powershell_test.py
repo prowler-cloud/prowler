@@ -312,7 +312,7 @@ class Testm365PowerShell:
             assert result is True
             # Verify that execute was called for each module
             assert (
-                mock_execute_obj.call_count == 2 * 3
+                mock_execute_obj.call_count == 3 * 3
             )  # number of modules * 3 commands each
             # Verify success messages were logged
             mock_info.assert_any_call(
@@ -381,11 +381,12 @@ class Testm365PowerShell:
             main()
 
             # Verify all info messages were logged in the correct order
-            assert mock_info.call_count == 3
+            assert mock_info.call_count == 4
             mock_info.assert_has_calls(
                 [
                     call("Successfully installed module ExchangeOnlineManagement"),
                     call("Successfully installed module MicrosoftTeams"),
+                    call("Successfully installed module MSAL.PS"),
                     call("M365 PowerShell modules initialized successfully"),
                 ]
             )
