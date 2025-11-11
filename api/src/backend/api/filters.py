@@ -668,18 +668,6 @@ class FindingFilter(CommonFindingFilters):
 
 
 class LatestFindingFilter(CommonFindingFilters):
-    categories = CharFilter(method="filter_categories")
-    categories__in = CharInFilter(method="filter_categories_in")
-
-    def filter_categories(self, queryset, name, value):
-        return queryset.filter(check_metadata__categories__contains=[value])
-
-    def filter_categories_in(self, queryset, name, value):
-        query = Q()
-        for category in value:
-            query |= Q(check_metadata__categories__contains=[category])
-        return queryset.filter(query)
-
     class Meta:
         model = Finding
         fields = {
