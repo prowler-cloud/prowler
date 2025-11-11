@@ -194,8 +194,7 @@
               {
                 "group": "Kubernetes",
                 "pages": [
-                  "user-guide/providers/kubernetes/in-cluster",
-                  "user-guide/providers/kubernetes/outside-cluster",
+                  "user-guide/providers/kubernetes/getting-started-k8s",
                   "user-guide/providers/kubernetes/misc"
                 ]
               },
