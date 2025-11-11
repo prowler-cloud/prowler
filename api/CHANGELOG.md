@@ -18,6 +18,13 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
+## [1.14.3] (Prowler UNRELEASED)
+
+### Fixed
+- Check if a check_id exists in PROWLER_CHECKS from generate_scan_compliance [(#9208)](https://github.com/prowler-cloud/prowler/pull/9208)
+
+---
+
 ## [1.14.2] (Prowler 5.13.2)
 
 ### Fixed
