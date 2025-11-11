@@ -762,9 +762,9 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
             provider_instance = scan_instance.provider
             prowler_provider = return_prowler_provider(provider_instance)
 
-        compliance_template = PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE[
-            provider_instance.provider
-        ]
+        compliance_template = PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE.get(
+            provider_instance.provider, {}
+        )
         modeled_threatscore_compliance_id = "ProwlerThreatScore-1.0"
         threatscore_requirements_by_check: dict[str, set[str]] = {}
         threatscore_framework = compliance_template.get(
@@ -836,12 +836,13 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
             region: deepcopy(compliance_template) for region in regions
         }
 
-        # Apply check statuses to compliance data
-        for region, check_status in check_status_by_region.items():
-            compliance_data = compliance_overview_by_region.setdefault(
-                region, deepcopy(compliance_template)
-            )
-            if compliance_data:
+        # Skip if provider has no compliance frameworks
+        if compliance_template:
+            # Apply check statuses to compliance data
+            for region, check_status in check_status_by_region.items():
+                compliance_data = compliance_overview_by_region.setdefault(
+                    region, deepcopy(compliance_template)
+                )
                 for check_name, status in check_status.items():
                     generate_scan_compliance(
                         compliance_data,
