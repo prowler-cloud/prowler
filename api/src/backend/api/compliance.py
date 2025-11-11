@@ -1,12 +1,9 @@
-import logging
 from types import MappingProxyType
 
 from api.models import Provider
 from prowler.config.config import get_available_compliance_frameworks
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.check.models import CheckMetadata
-
-logger = logging.getLogger(__name__)
 
 PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE = {}
 PROWLER_CHECKS = {}
@@ -147,13 +144,6 @@ def generate_scan_compliance(
     Returns:
         None: This function modifies the compliance_overview in place.
     """
-    # Skip if check_id is not in PROWLER_CHECKS for this provider
-    if check_id not in PROWLER_CHECKS.get(provider_type, {}):
-        logger.warning(
-            f"Check ID '{check_id}' not found in PROWLER_CHECKS for provider '{provider_type}'. "
-            "This may indicate a removed check or outdated finding data. Skipping compliance update."
-        )
-        return
 
     for compliance_id in PROWLER_CHECKS[provider_type][check_id]:
         for requirement in compliance_overview[compliance_id]["requirements"].values():

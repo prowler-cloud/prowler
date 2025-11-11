@@ -841,13 +841,14 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
             compliance_data = compliance_overview_by_region.setdefault(
                 region, deepcopy(compliance_template)
             )
-            for check_name, status in check_status.items():
-                generate_scan_compliance(
-                    compliance_data,
-                    provider_instance.provider,
-                    check_name,
-                    status,
-                )
+            if compliance_data:
+                for check_name, status in check_status.items():
+                    generate_scan_compliance(
+                        compliance_data,
+                        provider_instance.provider,
+                        check_name,
+                        status,
+                    )
 
         # Prepare compliance requirement rows
         compliance_requirement_rows: list[dict[str, Any]] = []
