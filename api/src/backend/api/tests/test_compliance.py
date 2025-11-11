@@ -208,6 +208,62 @@ class TestCompliance:
             is None
         )
 
+    @patch("api.compliance.logger")
+    @patch("api.compliance.PROWLER_CHECKS", new_callable=dict)
+    def test_generate_scan_compliance_missing_check_id(
+        self, mock_prowler_checks, mock_logger
+    ):
+        """Test that generate_scan_compliance handles missing check IDs gracefully."""
+        mock_prowler_checks["iac"] = {
+            "check1": {"compliance1"},
+        }
+
+        compliance_overview = {
+            "compliance1": {
+                "requirements": {
+                    "requirement1": {
+                        "checks": {"check1": None},
+                        "checks_status": {
+                            "pass": 0,
+                            "fail": 0,
+                            "manual": 0,
+                            "total": 1,
+                        },
+                        "status": "PASS",
+                    }
+                },
+                "requirements_status": {"passed": 1, "failed": 0, "manual": 0},
+            },
+        }
+
+        provider_type = "iac"
+        check_id = "CVE-2020-8203"  # This check doesn't exist in PROWLER_CHECKS
+        status = "PASS"
+
+        # This should not raise a KeyError
+        generate_scan_compliance(compliance_overview, provider_type, check_id, status)
+
+        # Verify that a warning was logged
+        mock_logger.warning.assert_called_once()
+        warning_message = mock_logger.warning.call_args[0][0]
+        assert "CVE-2020-8203" in warning_message
+        assert "iac" in warning_message
+        assert "not found" in warning_message
+
+        # Verify that the compliance overview was not modified
+        assert (
+            compliance_overview["compliance1"]["requirements"]["requirement1"][
+                "checks"
+            ]["check1"]
+            is None
+        )
+        assert (
+            compliance_overview["compliance1"]["requirements"]["requirement1"][
+                "checks_status"
+            ]["pass"]
+            == 0
+        )
+
     @patch("api.models.Provider.ProviderChoices")
     def test_generate_compliance_overview_template(self, mock_provider_choices):
         mock_provider_choices.values = ["aws"]
