@@ -836,6 +836,8 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
             region: deepcopy(compliance_template) for region in regions
         }
 
+        compliance_requirement_rows: list[dict[str, Any]] = []
+
         # Skip if provider has no compliance frameworks
         if compliance_template:
             # Apply check statuses to compliance data
@@ -851,50 +853,51 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
                         status,
                     )
 
-        # Prepare compliance requirement rows
-        compliance_requirement_rows: list[dict[str, Any]] = []
-        utc_datetime_now = datetime.now(tz=timezone.utc)
-        for region, compliance_data in compliance_overview_by_region.items():
-            for compliance_id, compliance in compliance_data.items():
-                modeled_compliance_id = _normalized_compliance_key(
-                    compliance["framework"], compliance["version"]
-                )
-                # Create an overview record for each requirement within each compliance framework
-                for requirement_id, requirement in compliance["requirements"].items():
-                    checks_status = requirement["checks_status"]
-                    compliance_requirement_rows.append(
-                        {
-                            "id": uuid.uuid4(),
-                            "tenant_id": tenant_id,
-                            "inserted_at": utc_datetime_now,
-                            "compliance_id": compliance_id,
-                            "framework": compliance["framework"],
-                            "version": compliance["version"] or "",
-                            "description": requirement.get("description") or "",
-                            "region": region,
-                            "requirement_id": requirement_id,
-                            "requirement_status": requirement["status"],
-                            "passed_checks": checks_status["pass"],
-                            "failed_checks": checks_status["fail"],
-                            "total_checks": checks_status["total"],
-                            "scan_id": scan_instance.id,
-                            "passed_findings": findings_count_by_compliance.get(
-                                region, {}
-                            )
-                            .get(modeled_compliance_id, {})
-                            .get(requirement_id, {})
-                            .get("pass", 0),
-                            "total_findings": findings_count_by_compliance.get(
-                                region, {}
-                            )
-                            .get(modeled_compliance_id, {})
-                            .get(requirement_id, {})
-                            .get("total", 0),
-                        }
+            # Prepare compliance requirement rows
+            utc_datetime_now = datetime.now(tz=timezone.utc)
+            for region, compliance_data in compliance_overview_by_region.items():
+                for compliance_id, compliance in compliance_data.items():
+                    modeled_compliance_id = _normalized_compliance_key(
+                        compliance["framework"], compliance["version"]
                     )
+                    # Create an overview record for each requirement within each compliance framework
+                    for requirement_id, requirement in compliance[
+                        "requirements"
+                    ].items():
+                        checks_status = requirement["checks_status"]
+                        compliance_requirement_rows.append(
+                            {
+                                "id": uuid.uuid4(),
+                                "tenant_id": tenant_id,
+                                "inserted_at": utc_datetime_now,
+                                "compliance_id": compliance_id,
+                                "framework": compliance["framework"],
+                                "version": compliance["version"] or "",
+                                "description": requirement.get("description") or "",
+                                "region": region,
+                                "requirement_id": requirement_id,
+                                "requirement_status": requirement["status"],
+                                "passed_checks": checks_status["pass"],
+                                "failed_checks": checks_status["fail"],
+                                "total_checks": checks_status["total"],
+                                "scan_id": scan_instance.id,
+                                "passed_findings": findings_count_by_compliance.get(
+                                    region, {}
+                                )
+                                .get(modeled_compliance_id, {})
+                                .get(requirement_id, {})
+                                .get("pass", 0),
+                                "total_findings": findings_count_by_compliance.get(
+                                    region, {}
+                                )
+                                .get(modeled_compliance_id, {})
+                                .get(requirement_id, {})
+                                .get("total", 0),
+                            }
+                        )
 
-        # Bulk create requirement records using PostgreSQL COPY
-        _persist_compliance_requirement_rows(tenant_id, compliance_requirement_rows)
+            # Bulk create requirement records using PostgreSQL COPY
+            _persist_compliance_requirement_rows(tenant_id, compliance_requirement_rows)
 
         return {
             "requirements_created": len(compliance_requirement_rows),
