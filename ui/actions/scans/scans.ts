@@ -3,6 +3,10 @@
 import { redirect } from "next/navigation";
 
 import { apiBaseUrl, getAuthHeaders, getErrorMessage } from "@/lib";
+import {
+  COMPLIANCE_REPORT_DISPLAY_NAMES,
+  type ComplianceReportType,
+} from "@/lib/compliance/compliance-report-types";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 
 export const getScans = async ({
@@ -270,14 +274,14 @@ export const getComplianceCsv = async (
 };
 
 /**
- * Generic function to get a compliance PDF report (ThreatScore or ENS)
+ * Generic function to get a compliance PDF report (ThreatScore, ENS, etc.)
  * @param scanId - The scan ID
- * @param reportType - Type of report: 'threatscore' or 'ens'
+ * @param reportType - Type of report (from COMPLIANCE_REPORT_TYPES)
  * @returns Promise with the PDF data or error
  */
 export const getCompliancePdfReport = async (
   scanId: string,
-  reportType: "threatscore" | "ens",
+  reportType: ComplianceReportType,
 ) => {
   const headers = await getAuthHeaders({ contentType: false });
 
@@ -299,8 +303,7 @@ export const getCompliancePdfReport = async (
 
     if (!response.ok) {
       const errorData = await response.json();
-      const reportName =
-        reportType === "threatscore" ? "ThreatScore" : "ENS RD2022";
+      const reportName = COMPLIANCE_REPORT_DISPLAY_NAMES[reportType];
       throw new Error(
         errorData?.errors?.detail ||
           `Unable to retrieve ${reportName} PDF report. Contact support if the issue continues.`,

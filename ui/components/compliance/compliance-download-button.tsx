@@ -5,11 +5,15 @@ import { DownloadIcon } from "lucide-react";
 import { useState } from "react";
 
 import { toast } from "@/components/ui";
+import {
+  COMPLIANCE_REPORT_BUTTON_LABELS,
+  type ComplianceReportType,
+} from "@/lib/compliance/compliance-report-types";
 import { downloadComplianceReportPdf } from "@/lib/helper";
 
 interface ComplianceDownloadButtonProps {
   scanId: string;
-  reportType: "threatscore" | "ens";
+  reportType: ComplianceReportType;
   label?: string;
 }
 
@@ -29,8 +33,7 @@ export const ComplianceDownloadButton = ({
     }
   };
 
-  const defaultLabel =
-    reportType === "threatscore" ? "PDF ThreatScore Report" : "PDF ENS Report";
+  const defaultLabel = COMPLIANCE_REPORT_BUTTON_LABELS[reportType];
 
   return (
     <Button
