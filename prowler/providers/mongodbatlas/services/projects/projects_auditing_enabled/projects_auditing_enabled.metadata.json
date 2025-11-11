@@ -7,7 +7,7 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "",
+  "ResourceType": "MongoDBAtlasProject",
   "Description": "**MongoDB Atlas projects** with **database auditing** capture database operations and administrative events. The evaluation looks for an active audit configuration and, *when present*, notes any configured `audit_filter` that scopes which events are recorded.",
   "Risk": "Without auditing, critical actions lack traceability, reducing **detectability** and impeding **forensics**. Attackers can mask unauthorized reads/writes and privilege changes, threatening data **confidentiality** and **integrity**, and weakening non-repudiation and incident response.",
   "RelatedUrl": "",

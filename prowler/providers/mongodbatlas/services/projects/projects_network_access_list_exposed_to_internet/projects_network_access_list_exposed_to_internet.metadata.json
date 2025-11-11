@@ -7,14 +7,11 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "",
+  "ResourceType": "MongoDBAtlasProject",
   "Description": "**MongoDB Atlas project network access list** configuration is evaluated for entries that allow access from anywhere (`0.0.0.0/0`, `::/0`, `0.0.0.0`, `::`) or for missing access lists, instead of restricting connections to specific IPs or CIDRs.",
   "Risk": "Internet-wide access enables scanning, brute force, and credential stuffing against database endpoints. A successful compromise can cause data exfiltration (**confidentiality**), unauthorized writes or drops (**integrity**), and service disruption or lockout (**availability**).",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://stackoverflow.com/questions/73745462/vpc-peering-between-atlas-cluster-and-aws-failing-without-0-0-0-0-0-ip-whitelist",
-    "https://mongodb.prakticum-team.ru/community/forums/t/i-cant-connect-to-mongodb-via-command-line/320158/7",
-    "https://www.mcloud.rs/blog/zastita-mongodb-baze-podataka/",
     "https://docs.atlas.mongodb.com/security/ip-access-list/"
   ],
   "Remediation": {
