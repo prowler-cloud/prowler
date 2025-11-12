@@ -188,7 +188,7 @@ function MapTooltip({
           <span
             className={cn(
               "font-bold",
-              location.change > 0 ? "text-text-success" : "text-error-primary",
+              location.change > 0 ? "text-text-success" : "text-bg-fail-primary",
             )}
           >
             {location.change > 0 ? "+" : ""}
