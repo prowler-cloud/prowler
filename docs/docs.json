@@ -110,6 +110,7 @@
                 ]
               },
               "user-guide/tutorials/prowler-app-lighthouse",
+              "user-guide/tutorials/prowler-cloud-public-ips",
               {
                 "group": "Tutorials",
                 "pages": [
@@ -194,8 +195,7 @@
               {
                 "group": "Kubernetes",
                 "pages": [
-                  "user-guide/providers/kubernetes/in-cluster",
-                  "user-guide/providers/kubernetes/outside-cluster",
+                  "user-guide/providers/kubernetes/getting-started-k8s",
                   "user-guide/providers/kubernetes/misc"
                 ]
               },

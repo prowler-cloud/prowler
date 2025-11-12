@@ -47,6 +47,7 @@ from api.models import (
     StatusChoices,
     Task,
     TenantAPIKey,
+    ThreatScoreSnapshot,
     User,
 )
 from api.rls import Tenant
@@ -997,4 +998,37 @@ class MuteRuleFilter(FilterSet):
             "enabled": ["exact"],
             "inserted_at": ["gte", "lte"],
             "updated_at": ["gte", "lte"],
+        }
+
+
+class ThreatScoreSnapshotFilter(FilterSet):
+    """
+    Filter for ThreatScore snapshots.
+    Allows filtering by scan, provider, compliance_id, and date ranges.
+    """
+
+    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
+    scan_id = UUIDFilter(field_name="scan__id", lookup_expr="exact")
+    scan_id__in = UUIDInFilter(field_name="scan__id", lookup_expr="in")
+    provider_id = UUIDFilter(field_name="provider__id", lookup_expr="exact")
+    provider_id__in = UUIDInFilter(field_name="provider__id", lookup_expr="in")
+    provider_type = ChoiceFilter(
+        field_name="provider__provider", choices=Provider.ProviderChoices.choices
+    )
+    provider_type__in = ChoiceInFilter(
+        field_name="provider__provider",
+        choices=Provider.ProviderChoices.choices,
+        lookup_expr="in",
+    )
+    compliance_id = CharFilter(field_name="compliance_id", lookup_expr="exact")
+    compliance_id__in = CharInFilter(field_name="compliance_id", lookup_expr="in")
+
+    class Meta:
+        model = ThreatScoreSnapshot
+        fields = {
+            "scan": ["exact", "in"],
+            "provider": ["exact", "in"],
+            "compliance_id": ["exact", "in"],
+            "inserted_at": ["date", "gte", "lte"],
+            "overall_score": ["exact", "gte", "lte"],
         }
