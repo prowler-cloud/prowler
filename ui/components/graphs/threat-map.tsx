@@ -30,13 +30,48 @@ const MAP_CONFIG = {
   transitionDuration: 300,
 } as const;
 
-const MAP_COLORS = {
-  landFill: "var(--chart-border-emphasis)",
-  landStroke: "var(--chart-border)",
-  pointDefault: "var(--text-error-primary)",
-  pointSelected: "var(--bg-button-primary)",
-  pointHover: "var(--text-error-primary)",
-} as const;
+// SVG-specific colors: must use actual color values, not Tailwind classes
+// as SVG fill/stroke attributes don't support class-based styling
+// Retrieves computed CSS variable values from globals.css theme variables at runtime
+interface MapColorsConfig {
+  landFill: string;
+  landStroke: string;
+  pointDefault: string;
+  pointSelected: string;
+  pointHover: string;
+}
+
+const DEFAULT_MAP_COLORS: MapColorsConfig = {
+  landFill: "#ffffff",
+  landStroke: "#cbd5e1",
+  pointDefault: "#dc2626",
+  pointSelected: "#10b981",
+  pointHover: "#dc2626",
+};
+
+function getMapColors(): MapColorsConfig {
+  if (typeof document === "undefined") return DEFAULT_MAP_COLORS;
+
+  const root = document.documentElement;
+  const style = getComputedStyle(root);
+  const getVar = (varName: string): string => {
+    const value = style.getPropertyValue(varName).trim();
+    return value && value.length > 0 ? value : "";
+  };
+
+  const colors: MapColorsConfig = {
+    landFill: getVar("--bg-neutral-secondary") || DEFAULT_MAP_COLORS.landFill,
+    landStroke:
+      getVar("--border-neutral-tertiary") || DEFAULT_MAP_COLORS.landStroke,
+    pointDefault:
+      getVar("--text-error-primary") || DEFAULT_MAP_COLORS.pointDefault,
+    pointSelected:
+      getVar("--bg-button-primary") || DEFAULT_MAP_COLORS.pointSelected,
+    pointHover: getVar("--text-error-primary") || DEFAULT_MAP_COLORS.pointHover,
+  };
+
+  return colors;
+}
 
 const RISK_LEVELS = {
   LOW_HIGH: "low-high",
@@ -252,6 +287,7 @@ export function ThreatMap({
 
     const projection = createProjection(width, height);
     const path = d3.geoPath().projection(projection);
+    const colors = getMapColors();
 
     // Render countries
     const mapGroup = createSVGElement<SVGGElement>("g", {
@@ -263,8 +299,8 @@ export function ThreatMap({
         if (pathData) {
           const pathElement = createSVGElement<SVGPathElement>("path", {
             d: pathData,
-            fill: MAP_COLORS.landFill,
-            stroke: MAP_COLORS.landStroke,
+            fill: colors.landFill,
+            stroke: colors.landStroke,
             "stroke-width": "0.5",
           });
           mapGroup.appendChild(pathElement);
@@ -319,9 +355,7 @@ export function ThreatMap({
       const radius = isSelected
         ? MAP_CONFIG.selectedPointRadius
         : MAP_CONFIG.pointRadius;
-      const color = isSelected
-        ? MAP_COLORS.pointSelected
-        : MAP_COLORS.pointDefault;
+      const color = isSelected ? colors.pointSelected : colors.pointDefault;
 
       // Add glow rings for all points (unselected and selected)
       group.appendChild(
