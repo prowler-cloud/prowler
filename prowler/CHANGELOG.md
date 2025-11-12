@@ -45,6 +45,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS CodeArtifact service metadata to new format [(#8850)](https://github.com/prowler-cloud/prowler/pull/8850)
 - Rename OCI provider to oraclecloud with oci alias [(#9126)](https://github.com/prowler-cloud/prowler/pull/9126)
 - Remove unnecessary tests for M365_PowerShell module [(#9204)](https://github.com/prowler-cloud/prowler/pull/9204)
+- Update oraclecloud blockstorage service metadata to new format [(#9222)](https://github.com/prowler-cloud/prowler/pull/9222)
+
 
 ---
 
