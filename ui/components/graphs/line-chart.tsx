@@ -4,7 +4,6 @@ import { Bell } from "lucide-react";
 import { useState } from "react";
 import {
   CartesianGrid,
-  Legend,
   Line,
   LineChart as RechartsLine,
   TooltipProps,
@@ -38,15 +37,6 @@ interface TooltipPayloadItem {
   stroke: string;
   name: string;
   payload: LineDataPoint;
-}
-
-interface LegendPayload {
-  value: string;
-  color: string;
-}
-
-interface CustomLegendProps {
-  payload?: LegendPayload[];
 }
 
 const CustomLineTooltip = ({
@@ -108,30 +98,6 @@ const CustomLineTooltip = ({
       </div>
     </div>
   );
-};
-
-const CustomLegend = ({ payload }: CustomLegendProps) => {
-  const severityOrder = [
-    "Informational",
-    "Low",
-    "Medium",
-    "High",
-    "Critical",
-    "Muted",
-  ];
-
-  const sortedPayload = [...(payload || [])].sort((a, b) => {
-    const indexA = severityOrder.indexOf(a.value);
-    const indexB = severityOrder.indexOf(b.value);
-    return indexA - indexB;
-  });
-
-  const items = sortedPayload.map((entry: LegendPayload) => ({
-    label: entry.value,
-    color: entry.color,
-  }));
-
-  return <ChartLegend items={items} />;
 };
 
 const chartConfig = {

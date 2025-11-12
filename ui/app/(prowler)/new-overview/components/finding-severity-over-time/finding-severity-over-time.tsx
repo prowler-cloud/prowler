@@ -110,14 +110,14 @@ export const FindingSeverityOverTime = ({
 
   return (
     <>
-      <div className="w-fit mb-8">
+      <div className="mb-8 w-fit">
         <TimeRangeSelector
           value={timeRange}
           onChange={handleTimeRangeChange}
           isLoading={isLoading}
         />
       </div>
-      <div className="w-full mb-4">
+      <div className="mb-4 w-full">
         <LineChart data={chartData} lines={lines} height={400} />
       </div>
     </>
@@ -127,7 +127,7 @@ export const FindingSeverityOverTime = ({
 export function FindingSeverityOverTimeSkeleton() {
   return (
     <>
-      <div className="w-fit mb-8">
+      <div className="mb-8 w-fit">
         <div className="flex gap-2">
           {Array.from({ length: 4 }).map((_, index) => (
             <Skeleton key={index} className="h-10 w-12 rounded-full" />
