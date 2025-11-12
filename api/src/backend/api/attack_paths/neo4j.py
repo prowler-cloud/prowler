@@ -8,7 +8,7 @@ import neo4j
 
 from django.conf import settings
 
-from tasks.jobs.cartography import ROOT_NODE_LABELS
+from tasks.jobs.attack_paths import ROOT_NODE_LABELS
 
 # Without this Celery goes crazy with Neo4j logging
 logging.getLogger("neo4j").setLevel(logging.ERROR)

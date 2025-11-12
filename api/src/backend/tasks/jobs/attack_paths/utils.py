@@ -6,18 +6,18 @@ from typing import Any
 from cartography.config import Config as CartographyConfig
 
 from api.db_utils import rls_transaction
-from api.models import CartographyScan as ProwlerAPICartographyScan, StateChoices
+from api.models import AttackPathsScan as ProwlerAPIAttackPathsScan, StateChoices
 
 
-def create_cartography_scan(
+def create_attack_paths_scan(
     tenant_id: str,
     scan_id: str,
     task_id: str,
     provider_id: int,
     cartography_config: CartographyConfig,
-) -> ProwlerAPICartographyScan:
+) -> ProwlerAPIAttackPathsScan:
     with rls_transaction(tenant_id):
-        cartography_scan = ProwlerAPICartographyScan.objects.create(
+        attack_paths_scan = ProwlerAPIAttackPathsScan.objects.create(
             tenant_id=tenant_id,
             task_id=task_id,
             provider_id=provider_id,
@@ -27,27 +27,27 @@ def create_cartography_scan(
             update_tag=cartography_config.update_tag,
             neo4j_database=cartography_config.neo4j_database,
         )
-        cartography_scan.save()
+        attack_paths_scan.save()
 
-    return cartography_scan
+    return attack_paths_scan
 
 
-def finish_cartography_scan(
-    cartography_scan: ProwlerAPICartographyScan,
+def finish_attack_paths_scan(
+    attack_paths_scan: ProwlerAPIAttackPathsScan,
     state: StateChoices,
     ingestion_exceptions: dict[str, Any],
 ) -> None:
-    with rls_transaction(cartography_scan.tenant_id):
+    with rls_transaction(attack_paths_scan.tenant_id):
         now = datetime.now(tz=timezone.utc)
-        duration = int((now - cartography_scan.started_at).total_seconds())
+        duration = int((now - attack_paths_scan.started_at).total_seconds())
 
-        cartography_scan.state = state
-        cartography_scan.progress = 100
-        cartography_scan.completed_at = now
-        cartography_scan.duration = duration
-        cartography_scan.ingestion_exceptions = ingestion_exceptions
+        attack_paths_scan.state = state
+        attack_paths_scan.progress = 100
+        attack_paths_scan.completed_at = now
+        attack_paths_scan.duration = duration
+        attack_paths_scan.ingestion_exceptions = ingestion_exceptions
 
-        cartography_scan.save(
+        attack_paths_scan.save(
             update_fields=[
                 "state",
                 "progress",
@@ -58,13 +58,13 @@ def finish_cartography_scan(
         )
 
 
-def update_cartography_scan_progress(
-    cartography_scan: ProwlerAPICartographyScan,
+def update_attack_paths_scan_progress(
+    attack_paths_scan: ProwlerAPIAttackPathsScan,
     progress: int,
 ) -> None:
-    with rls_transaction(cartography_scan.tenant_id):
-        cartography_scan.progress = progress
-        cartography_scan.save(update_fields=["progress"])
+    with rls_transaction(attack_paths_scan.tenant_id):
+        attack_paths_scan.progress = progress
+        attack_paths_scan.save(update_fields=["progress"])
 
 
 def stringify_exception(exception: Exception, context: str) -> str:

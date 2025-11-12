@@ -21,7 +21,7 @@ from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
 from prowler.lib.outputs.finding import Finding as FindingOutput
 from tasks.jobs.backfill import backfill_resource_scan_summaries
-from tasks.jobs.cartography import cartography_scan
+from tasks.jobs.attack_paths import attack_paths_scan
 from tasks.jobs.connection import (
     check_integration_connection,
     check_lighthouse_connection,
@@ -84,7 +84,7 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
             ),
         ),
     ).apply_async()
-    perform_cartography_scan_task.apply_async(
+    perform_attack_paths_scan_task.apply_async(
         kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
     )
 
@@ -283,11 +283,11 @@ def perform_scan_summary_task(tenant_id: str, scan_id: str):
 
 
 @shared_task(
-    base=RLSTask, bind=True, name="cartography-scan-perform", queue="cartography"
+    base=RLSTask, bind=True, name="attack-paths-scan-perform", queue="attack-paths"
 )
-def perform_cartography_scan_task(self, tenant_id: str, scan_id: str):
+def perform_attack_paths_scan_task(self, tenant_id: str, scan_id: str):
     """
-    Execute a Cartography ingestion for the given provider within the current tenant RLS context.
+    Execute an Attack Paths scan for the given provider within the current tenant RLS context.
 
     Args:
         self: The task instance (automatically passed when bind=True).
@@ -295,9 +295,9 @@ def perform_cartography_scan_task(self, tenant_id: str, scan_id: str):
         scan_id (str): The Prowler scan identifier for obtaining the tenant and provider context.
 
     Returns:
-        Any: The result from cartography_scan.run, including any per-ingestion failure details.
+        Any: The result from `attack_paths_scan.run`, including any per-scan failure details.
     """
-    return cartography_scan(
+    return attack_paths_scan(
         tenant_id=tenant_id, scan_id=scan_id, task_id=self.request.id
     )
 

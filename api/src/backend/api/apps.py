@@ -29,9 +29,9 @@ class ApiConfig(AppConfig):
     name = "api"
 
     def ready(self):
-        from api import neo4j
         from api import schema_extensions  # noqa: F401
         from api import signals  # noqa: F401
+        from api.attack_paths import neo4j
         from api.compliance import load_prowler_compliance
 
         # Generate required cryptographic keys if not present, but only if:

@@ -11,11 +11,11 @@ from cartography.intel import aws as cartography_aws
 from celery.utils.log import get_task_logger
 
 from api.models import (
-    CartographyScan as ProwlerAPICartographyScan,
+    AttackPathsScan as ProwlerAPIAttackPathsScan,
     Provider as ProwlerAPIProvider,
 )
 from prowler.providers.common.provider import Provider as ProwlerSDKProvider
-from tasks.jobs.cartography import utils
+from tasks.jobs.attack_paths import utils
 
 logger = get_task_logger(__name__)
 
@@ -25,13 +25,13 @@ def start_aws_ingestion(
     cartography_config: CartographyConfig,
     prowler_api_provider: ProwlerAPIProvider,
     prowler_sdk_provider: ProwlerSDKProvider,
-    cartography_scan: ProwlerAPICartographyScan,
+    attack_paths_scan: ProwlerAPIAttackPathsScan,
 ) -> dict[str, dict[str, str]]:
     """
     Code based on Cartography version 0.117.0, specifically on `cartography.intel.aws.__init__.py`.
 
     For the scan progress updates:
-        - The caller of this function (`tasks.jobs.cartography.scan.run`) has set it to 2.
+        - The caller of this function (`tasks.jobs.attack_paths.scan.run`) has set it to 2.
         - When the control returns to the caller, it will be set to 95.
     """
 
@@ -63,7 +63,7 @@ def start_aws_ingestion(
         cartography_config.update_tag,
         common_job_parameters,
     )
-    utils.update_cartography_scan_progress(cartography_scan, 3)
+    utils.update_attack_paths_scan_progress(attack_paths_scan, 3)
 
     # Adding an extra field
     common_job_parameters["AWS_ID"] = prowler_api_provider.uid
@@ -75,33 +75,33 @@ def start_aws_ingestion(
         cartography_config.update_tag,
         common_job_parameters,
     )
-    utils.update_cartography_scan_progress(cartography_scan, 4)
+    utils.update_attack_paths_scan_progress(attack_paths_scan, 4)
 
     failed_syncs = sync_aws_account(
-        prowler_api_provider, requested_syncs, sync_args, cartography_scan
+        prowler_api_provider, requested_syncs, sync_args, attack_paths_scan
     )
 
     if "permission_relationships" in requested_syncs:
         cartography_aws.RESOURCE_FUNCTIONS["permission_relationships"](**sync_args)
-    utils.update_cartography_scan_progress(cartography_scan, 88)
+    utils.update_attack_paths_scan_progress(attack_paths_scan, 88)
 
     if "resourcegroupstaggingapi" in requested_syncs:
         cartography_aws.RESOURCE_FUNCTIONS["resourcegroupstaggingapi"](**sync_args)
-    utils.update_cartography_scan_progress(cartography_scan, 89)
+    utils.update_attack_paths_scan_progress(attack_paths_scan, 89)
 
     cartography_aws.run_scoped_analysis_job(
         "aws_ec2_iaminstanceprofile.json",
         neo4j_session,
         common_job_parameters,
     )
-    utils.update_cartography_scan_progress(cartography_scan, 90)
+    utils.update_attack_paths_scan_progress(attack_paths_scan, 90)
 
     cartography_aws.run_analysis_job(
         "aws_lambda_ecr.json",
         neo4j_session,
         common_job_parameters,
     )
-    utils.update_cartography_scan_progress(cartography_scan, 91)
+    utils.update_attack_paths_scan_progress(attack_paths_scan, 91)
 
     cartography_aws.merge_module_sync_metadata(
         neo4j_session,
@@ -111,7 +111,7 @@ def start_aws_ingestion(
         update_tag=cartography_config.update_tag,
         stat_handler=cartography_aws.stat_handler,
     )
-    utils.update_cartography_scan_progress(cartography_scan, 92)
+    utils.update_attack_paths_scan_progress(attack_paths_scan, 92)
 
     # Removing the added extra field
     del common_job_parameters["AWS_ID"]
@@ -121,12 +121,12 @@ def start_aws_ingestion(
         neo4j_session,
         common_job_parameters,
     )
-    utils.update_cartography_scan_progress(cartography_scan, 93)
+    utils.update_attack_paths_scan_progress(attack_paths_scan, 93)
 
     cartography_aws._perform_aws_analysis(
         requested_syncs, neo4j_session, common_job_parameters
     )
-    utils.update_cartography_scan_progress(cartography_scan, 94)
+    utils.update_attack_paths_scan_progress(attack_paths_scan, 94)
 
     return failed_syncs
 
@@ -161,7 +161,7 @@ def sync_aws_account(
     prowler_api_provider: ProwlerAPIProvider,
     requested_syncs: list[str],
     sync_args: dict[str, Any],
-    cartography_scan: ProwlerAPICartographyScan,
+    attack_paths_scan: ProwlerAPIAttackPathsScan,
 ) -> dict[str, str]:
     current_progress = 4  # `cartography_aws._autodiscover_accounts`
     max_progress = (
@@ -181,7 +181,7 @@ def sync_aws_account(
             # Updating progress, not really the right place but good enough
             current_progress += progress_step
             utils.update_cartography_scan_progress(
-                cartography_scan, int(current_progress)
+                attack_paths_scan, int(current_progress)
             )
 
             try:

@@ -11,12 +11,12 @@ import api.rls
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0052_mute_rules"),
+        ("api", "0057_threatscoresnapshot"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name="CartographyScan",
+            name="AttackPathsScan",
             fields=[
                 (
                     "id",
@@ -72,8 +72,8 @@ class Migration(migrations.Migration):
                     "provider",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name="cartography_scans",
-                        related_query_name="cartography_scan",
+                        related_name="attack_paths_scans",
+                        related_query_name="attack_paths_scan",
                         to="api.provider",
                     ),
                 ),
@@ -83,8 +83,8 @@ class Migration(migrations.Migration):
                         blank=True,
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="cartography_scans",
-                        related_query_name="cartography_scan",
+                        related_name="attack_paths_scans",
+                        related_query_name="attack_paths_scan",
                         to="api.scan",
                     ),
                 ),
@@ -94,8 +94,8 @@ class Migration(migrations.Migration):
                         blank=True,
                         null=True,
                         on_delete=django.db.models.deletion.SET_NULL,
-                        related_name="cartography_scans",
-                        related_query_name="cartography_scan",
+                        related_name="attack_paths_scans",
+                        related_query_name="attack_paths_scan",
                         to="api.task",
                     ),
                 ),
@@ -107,7 +107,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "db_table": "cartography_scans",
+                "db_table": "attack_paths_scans",
                 "abstract": False,
                 "indexes": [
                     models.Index(
@@ -122,10 +122,10 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.AddConstraint(
-            model_name="cartographyscan",
+            model_name="attackpathsscan",
             constraint=api.rls.RowLevelSecurityConstraint(
                 "tenant_id",
-                name="rls_on_cartographyscan",
+                name="rls_on_attackpathsscan",
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ),

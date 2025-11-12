@@ -1,11 +1,11 @@
 from celery.utils.log import get_task_logger
 from django.db import DatabaseError
 
-from api import neo4j
+from api.attack_paths import neo4j
 from api.db_router import MainRouter
 from api.db_utils import batch_delete, rls_transaction
 from api.models import (
-    CartographyScan,
+    AttackPathsScan,
     Finding,
     Provider,
     Resource,
@@ -40,7 +40,7 @@ def delete_provider(tenant_id: str, pk: str):
             ("Findings", Finding.all_objects.filter(scan__provider=instance)),
             ("Resources", Resource.all_objects.filter(provider=instance)),
             ("Scans", Scan.all_objects.filter(provider=instance)),
-            ("CartographyScans", CartographyScan.all_objects.filter(provider=instance)),
+            ("AttackPathsScans", AttackPathsScan.all_objects.filter(provider=instance)),
         ]
 
     for step_name, queryset in deletion_steps:
@@ -51,7 +51,7 @@ def delete_provider(tenant_id: str, pk: str):
             logger.error(f"Error deleting {step_name}: {db_error}")
             raise
 
-    # Delete the Cartography's Neo4j data related to the provider
+    # Delete the Attack Paths' Neo4j data related to the provider
     neo4j.drop_neo4j_account_subgraph(
         instance.tenant_id, instance.provider, instance.uid
     )
@@ -86,7 +86,7 @@ def delete_tenant(pk: str):
 
     neo4j.drop_neo4j_tenant_database(
         tenant_id=pk
-    )  # Delete the Cartography's Neo4j database related to the tenant
+    )  # Delete the Attack Paths' Neo4j database related to the tenant
 
     Tenant.objects.using(MainRouter.admin_db).filter(id=pk).delete()
 

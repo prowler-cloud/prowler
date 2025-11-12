@@ -615,7 +615,7 @@ class Scan(RowLevelSecurityProtectedModel):
         resource_name = "scans"
 
 
-class CartographyScan(RowLevelSecurityProtectedModel):
+class AttackPathsScan(RowLevelSecurityProtectedModel):
     objects = ActiveProviderManager()
     all_objects = models.Manager()
 
@@ -637,24 +637,24 @@ class CartographyScan(RowLevelSecurityProtectedModel):
     provider = models.ForeignKey(
         "Provider",
         on_delete=models.CASCADE,
-        related_name="cartography_scans",
-        related_query_name="cartography_scan",
+        related_name="attack_paths_scans",
+        related_query_name="attack_paths_scan",
     )
     scan = models.ForeignKey(
         "Scan",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="cartography_scans",
-        related_query_name="cartography_scan",
+        related_name="attack_paths_scans",
+        related_query_name="attack_paths_scan",
     )
     task = models.ForeignKey(
         "Task",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="cartography_scans",
-        related_query_name="cartography_scan",
+        related_name="attack_paths_scans",
+        related_query_name="attack_paths_scan",
     )
 
     # Cartography specific metadata
@@ -665,7 +665,7 @@ class CartographyScan(RowLevelSecurityProtectedModel):
     ingestion_exceptions = models.JSONField(default=dict, null=True, blank=True)
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
-        db_table = "cartography_scans"
+        db_table = "attack_paths_scans"
 
         constraints = [
             RowLevelSecurityConstraint(
@@ -687,7 +687,7 @@ class CartographyScan(RowLevelSecurityProtectedModel):
         ]
 
     class JSONAPIMeta:
-        resource_name = "cartography-scans"
+        resource_name = "attack-paths-scans"
 
 
 class ResourceTag(RowLevelSecurityProtectedModel):
