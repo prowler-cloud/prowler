@@ -454,7 +454,7 @@ def prowler():
                 if provider != "aws":
                     error_message = (
                         f"ASFF output is only available for "
-                        f"the AWS provider, but {provider} was selected."
+                        f"the aws provider, but {provider} was selected."
                     )
                     logger.error(error_message)
                     raise ValueError(error_message)
