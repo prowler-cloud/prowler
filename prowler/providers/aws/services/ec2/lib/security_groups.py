@@ -3,7 +3,10 @@ from typing import Any
 
 
 def check_security_group(
-    ingress_rule: Any, protocol: str, ports: list | None = None, any_address: bool = False
+    ingress_rule: Any,
+    protocol: str,
+    ports: list | None = None,
+    any_address: bool = False,
 ) -> bool:
     """
     Check if the security group ingress rule has public access to the check_ports using the protocol
@@ -94,7 +97,6 @@ def check_security_group(
                         and ingress_rule["IpProtocol"] == protocol
                     ):
                         return True
-                
                 # If empty input ports check if all ports are open
                 return len(set(ingress_port_range)) == 65536
 
