@@ -83,10 +83,10 @@ def check_security_group(
                     ):
                         return True
 
-                # We did not find a specific port for the given protocol for 
+                # We did not find a specific port for the given protocol for
                 # a public cidr so let's see if all the ports are open
                 all_ports_open = len(set(ingress_port_range)) == 65536
-                
+
                 # At this point we might have all ports open, return True
                 # otherwise we didn't have any ports to check yet we have a public cidr
                 # so that is the same as all ports open for our purposes
@@ -103,11 +103,10 @@ def check_security_group(
                         and ingress_rule["IpProtocol"] == protocol
                     ):
                         return True
-                
-                # We did not find a specific port for the given protocol for 
+                # We did not find a specific port for the given protocol for
                 # a public cidr so let's see if all the ports are open
                 all_ports_open = len(set(ingress_port_range)) == 65536
-                
+
                 # At this point we might have all ports open, return True
                 # otherwise we didn't have any ports to check yet we have a public cidr
                 # so that is the same as all ports open for our purposes
