@@ -102,8 +102,8 @@ export function DonutChart({
     {
       name: "No data",
       value: 1,
-      fill: "var(--chart-border-emphasis)",
-      color: "var(--chart-border-emphasis)",
+      fill: "var(--border-neutral-tertiary)",
+      color: "var(--border-neutral-tertiary)",
       percentage: 0,
       change: undefined,
     },

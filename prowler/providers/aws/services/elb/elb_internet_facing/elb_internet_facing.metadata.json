@@ -1,31 +1,40 @@
 {
   "Provider": "aws",
   "CheckID": "elb_internet_facing",
-  "CheckTitle": "Check for internet facing Elastic Load Balancers.",
+  "CheckTitle": "Elastic Load Balancer is not internet-facing",
   "CheckType": [
-    "Data Protection"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Effects/Data Exposure",
+    "TTPs/Initial Access"
   ],
   "ServiceName": "elb",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsElbLoadBalancer",
-  "Description": "Check for internet facing Elastic Load Balancers.",
-  "Risk": "Publicly accessible load balancers could expose sensitive data to bad actors.",
+  "Description": "Elastic Load Balancers are evaluated for the `scheme` to determine whether they are **internet-facing** or internal, indicating if the endpoint is publicly reachable via a public DNS name.",
+  "Risk": "An unintended **internet-facing** load balancer exposes backends to the Internet, enabling reconnaissance, credential stuffing, and exploitation of app flaws. This can lead to data exposure (confidentiality), unauthorized changes (integrity), and **DDoS** or resource exhaustion (availability).",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/waf/latest/developerguide/web-acl-associating-aws-resource.html",
+    "https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-elasticloadbalancingv2-loadbalancer.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELB/internet-facing-load-balancers.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELB/internet-facing-load-balancers.html",
-      "Terraform": ""
+      "NativeIaC": "```yaml\n# CloudFormation: create an internal load balancer\nResources:\n  <example_resource_name>:\n    Type: AWS::ElasticLoadBalancingV2::LoadBalancer\n    Properties:\n      Scheme: internal  # CRITICAL: makes the load balancer internal (not internet-facing)\n      Subnets:\n        - <example_resource_id>\n        - <example_resource_id>\n      SecurityGroups:\n        - <example_resource_id>\n```",
+      "Other": "1. In AWS Console, go to EC2 > Load Balancers\n2. Click Create load balancer (Application or Network)\n3. Set Scheme to Internal\n4. Select at least two subnets and a security group; recreate listeners/target groups as needed\n5. Create the new load balancer and update DNS to its DNS name\n6. Delete the old internet-facing load balancer",
+      "Terraform": "```hcl\nresource \"aws_lb\" \"<example_resource_name>\" {\n  internal        = true  # CRITICAL: sets scheme to internal so it's not internet-facing\n  subnets         = [\"<example_resource_id>\", \"<example_resource_id>\"]\n  security_groups = [\"<example_resource_id>\"]\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure the load balancer should be publicly accessible. If publicly exposed ensure a WAF ACL is implemented.",
-      "Url": "https://docs.aws.amazon.com/waf/latest/developerguide/web-acl-associating-aws-resource.html"
+      "Text": "Use `internal` load balancers for private services and restrict exposure with **security groups**, subnets, and allowlists. For public endpoints, apply **defense in depth**: associate an **AWS WAF** web ACL (*when supported*), enforce **TLS**, least-privilege network rules, and consider **Shield** or rate limiting. Regularly review necessity of public access.",
+      "Url": "https://hub.prowler.com/check/elb_internet_facing"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
