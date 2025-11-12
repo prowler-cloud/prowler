@@ -14,6 +14,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🔄 Changed
 
 - Resource ID moved up in the findings detail page [(#9141)](https://github.com/prowler-cloud/prowler/pull/9141)
+- C5 compliance logo [(#9224)](https://github.com/prowler-cloud/prowler/pull/9224)
 
 ---
 

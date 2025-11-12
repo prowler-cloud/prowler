@@ -1,28 +1,38 @@
 {
   "Provider": "aws",
   "CheckID": "elb_insecure_ssl_ciphers",
-  "CheckTitle": "Check if Elastic Load Balancers have insecure SSL ciphers.",
+  "CheckTitle": "Elastic Load Balancer HTTPS listeners, if present, use the ELBSecurityPolicy-TLS-1-2-2017-01 policy",
   "CheckType": [
-    "Data Protection"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "Software and Configuration Checks/Industry and Regulatory Standards/PCI-DSS",
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls (USA)"
   ],
   "ServiceName": "elb",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsElbLoadBalancer",
-  "Description": "Check if Elastic Load Balancers have insecure SSL ciphers.",
-  "Risk": "Using insecure ciphers could affect privacy of in transit information.",
+  "Description": "Elastic Load Balancer HTTPS listeners are assessed for use of a **strong TLS policy**. Listeners associated with `ELBSecurityPolicy-TLS-1-2-2017-01` are considered to negotiate only modern protocols and ciphers, avoiding legacy SSL/TLS and weak suites.",
+  "Risk": "Legacy TLS or weak ciphers allow downgrades and man-in-the-middle decryption or tampering. Attackers can capture credentials, inject responses, and pivot, undermining data-in-transit **confidentiality** and **integrity**, and risking **availability** through failed handshakes.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELB/elb-security-policy.html",
+    "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html#describe-ssl-policies",
+    "https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/ssl-config-update.html",
+    "https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/elb-security-policy-table.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aws elb set-load-balancer-policies-of-listener --load-balancer-name <lb_name> --load-balancer-port 443 --policy-names ELBSecurityPolicy-TLS-1-2-2017-01",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELB/elb-security-policy.html",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_43#terraform"
+      "NativeIaC": "```yaml\n# CloudFormation: Classic ELB with TLS 1.2-only security policy on HTTPS listener\nResources:\n  <example_resource_name>:\n    Type: AWS::ElasticLoadBalancing::LoadBalancer\n    Properties:\n      AvailabilityZones:\n        - <example_az>\n      Listeners:\n        - LoadBalancerPort: 443\n          InstancePort: 443\n          Protocol: HTTPS\n          InstanceProtocol: HTTPS\n          SSLCertificateId: <example_certificate_arn>\n          PolicyNames:\n            - ELBSecurityPolicy-TLS-1-2-2017-01  # Critical: attach TLS 1.2-only policy to the HTTPS listener\n      Policies:\n        - PolicyName: ELBSecurityPolicy-TLS-1-2-2017-01  # Critical: create policy referencing the predefined TLS 1.2 policy\n          PolicyType: SSLNegotiationPolicyType\n          Attributes:\n            - Name: Reference-Security-Policy\n              Value: ELBSecurityPolicy-TLS-1-2-2017-01  # Critical: enforce TLS 1.2-only\n```",
+      "Other": "1. Open the AWS Management Console and go to EC2\n2. In the left menu, under Load Balancing, click Load Balancers\n3. Select your Classic Load Balancer\n4. On the Listeners tab, click Manage listeners (or Edit)\n5. Select the HTTPS (port 443) listener and under Security policy choose ELBSecurityPolicy-TLS-1-2-2017-01\n6. Click Save changes",
+      "Terraform": "```hcl\n# Create and attach TLS 1.2-only policy to a Classic ELB HTTPS listener\nresource \"aws_load_balancer_policy\" \"<example_resource_name>\" {\n  load_balancer_name = \"<example_resource_name>\"\n  policy_name        = \"ELBSecurityPolicy-TLS-1-2-2017-01\"  # Critical: policy named as required by the check\n  policy_type_name   = \"SSLNegotiationPolicyType\"\n\n  policy_attributes {\n    name  = \"Reference-Security-Policy\"\n    value = \"ELBSecurityPolicy-TLS-1-2-2017-01\"  # Critical: reference the predefined TLS 1.2 policy\n  }\n}\n\nresource \"aws_load_balancer_listener_policy\" \"<example_resource_name>\" {\n  load_balancer_name = \"<example_resource_name>\"\n  load_balancer_port = 443\n  policy_names       = [aws_load_balancer_policy.<example_resource_name>.policy_name]  # Critical: attach policy to HTTPS listener\n}\n```"
     },
     "Recommendation": {
-      "Text": "Use a Security policy with ciphers that are as strong as possible. Drop legacy and insecure ciphers.",
-      "Url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html#describe-ssl-policies"
+      "Text": "Standardize on ELB policies enforcing **TLS 1.2+** with modern AEAD ciphers; disable legacy protocols and weak suites. Enable server cipher order, retire outdated policies, and review regularly for crypto agility. Validate client compatibility, use strong certificates, and monitor negotiation results.",
+      "Url": "https://hub.prowler.com/check/elb_insecure_ssl_ciphers"
     }
   },
   "Categories": [
