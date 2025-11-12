@@ -16,6 +16,7 @@ import { RiskSeverityChartSkeleton } from "./components/risk-severity-chart";
 import { RiskSeverityChartSSR } from "./components/risk-severity-chart/risk-severity-chart.ssr";
 import { StatusChartSkeleton } from "./components/status-chart";
 import { ThreatScoreSkeleton, ThreatScoreSSR } from "./components/threat-score";
+import { ServiceWatchlist } from "./components/watchlist";
 import { ComplianceWatchlist } from "./components/watchlist/compliance-watchlist";
 
 export default async function NewOverviewPage({
@@ -52,7 +53,8 @@ export default async function NewOverviewPage({
           <FindingSeverityOverTimeSSR searchParams={resolvedSearchParams} />
         </Suspense>
       </div>
-      <div className="mt-6">
+      <div className="mt-6 flex gap-6">
+        <ServiceWatchlist />
         <GraphsTabsWrapper searchParams={resolvedSearchParams} />
       </div>
     </ContentLayout>

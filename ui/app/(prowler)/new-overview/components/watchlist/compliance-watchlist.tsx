@@ -4,6 +4,7 @@ import Image from "next/image";
 
 import AWSLogo from "@/components/icons/compliance/aws.svg";
 import CISLogo from "@/components/icons/compliance/cis.svg";
+import FedRAMPLogo from "@/components/icons/compliance/fedramp.svg";
 import ISOLogo from "@/components/icons/compliance/iso-27001.svg";
 import NISTLogo from "@/components/icons/compliance/nist.svg";
 import PCILogo from "@/components/icons/compliance/pci-dss.svg";
@@ -58,6 +59,18 @@ const MOCK_COMPLIANCE_ITEMS: WatchlistItem[] = [
     icon: <ComplianceIcon src={AWSLogo} />,
     label: "AWS Well-Architected Framework",
     value: "90%",
+  },
+  {
+    key: "fedramp",
+    icon: <ComplianceIcon src={FedRAMPLogo} />,
+    label: "FedRAMP",
+    value: "82%",
+  },
+  {
+    key: "nist-cif-2.0",
+    icon: <ComplianceIcon src={NISTLogo} />,
+    label: "NIST CIF - 2.0",
+    value: "10%",
   },
 ];
 
