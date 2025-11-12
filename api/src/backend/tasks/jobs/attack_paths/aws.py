@@ -172,6 +172,7 @@ def sync_aws_account(
 
     failed_syncs = {}
 
+    requested_syncs = ["iam", "iaminstanceprofiles", "s3", "ecs"]
     for func_name in requested_syncs:
         if func_name in cartography_aws.RESOURCE_FUNCTIONS:
             logger.info(
@@ -180,7 +181,7 @@ def sync_aws_account(
 
             # Updating progress, not really the right place but good enough
             current_progress += progress_step
-            utils.update_cartography_scan_progress(
+            utils.update_attack_paths_scan_progress(
                 attack_paths_scan, int(current_progress)
             )
 

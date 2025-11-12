@@ -1130,7 +1130,6 @@ class ScanComplianceReportSerializer(serializers.Serializer):
 
 class AttackPathsScanSerializer(RLSSerializer):
     state = StateEnumSerializerField(read_only=True)
-    last_activity_at = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = AttackPathsScan
@@ -1145,7 +1144,6 @@ class AttackPathsScanSerializer(RLSSerializer):
             "started_at",
             "completed_at",
             "duration",
-            "last_activity_at",
         ]
 
     included_serializers = {
@@ -1154,47 +1152,43 @@ class AttackPathsScanSerializer(RLSSerializer):
         "task": "api.v1.serializers.TaskSerializer",
     }
 
-    def get_last_activity_at(self, obj):
-        return obj.completed_at or obj.started_at or obj.inserted_at
 
-
-class AttackPathQueryParameterSerializer(serializers.Serializer):
+class AttackPathsQueryParameterSerializer(serializers.Serializer):
     name = serializers.CharField()
     label = serializers.CharField()
-    type = serializers.CharField(default="string")
-    required = serializers.BooleanField(default=True)
+    data_type = serializers.CharField(default="string")
     description = serializers.CharField(allow_null=True, required=False)
     placeholder = serializers.CharField(allow_null=True, required=False)
 
 
-class AttackPathQuerySerializer(serializers.Serializer):
+class AttackPathsQuerySerializer(serializers.Serializer):
     id = serializers.CharField()
     name = serializers.CharField()
     description = serializers.CharField()
     provider = serializers.CharField()
-    parameters = AttackPathQueryParameterSerializer(many=True)
+    parameters = AttackPathsQueryParameterSerializer(many=True)
 
     class JSONAPIMeta:
-        resource_name = "attack-path-queries"
+        resource_name = "attack-paths-queries"
 
 
-class AttackPathQueryRunRequestSerializer(serializers.Serializer):
+class AttackPathsQueryRunRequestSerializer(serializers.Serializer):
     id = serializers.CharField()
     parameters = serializers.DictField(
         child=serializers.JSONField(), allow_empty=True, required=False
     )
 
     class JSONAPIMeta:
-        resource_name = "attack-path-query-runs"
+        resource_name = "attack-paths-scans-queries-runs"
 
 
-class AttackPathNodeSerializer(serializers.Serializer):
+class AttackPathsNodeSerializer(serializers.Serializer):
     id = serializers.CharField()
     labels = serializers.ListField(child=serializers.CharField())
     properties = serializers.DictField(child=serializers.JSONField())
 
 
-class AttackPathRelationshipSerializer(serializers.Serializer):
+class AttackPathsRelationshipSerializer(serializers.Serializer):
     id = serializers.CharField()
     type = serializers.CharField()
     start = serializers.CharField()
@@ -1202,12 +1196,12 @@ class AttackPathRelationshipSerializer(serializers.Serializer):
     properties = serializers.DictField(child=serializers.JSONField())
 
 
-class AttackPathGraphSerializer(serializers.Serializer):
-    nodes = AttackPathNodeSerializer(many=True)
-    relationships = AttackPathRelationshipSerializer(many=True)
+class AttackPathsGraphSerializer(serializers.Serializer):
+    nodes = AttackPathsNodeSerializer(many=True)
+    relationships = AttackPathsRelationshipSerializer(many=True)
 
     class JSONAPIMeta:
-        resource_name = "attack-path-query-results"
+        resource_name = "attack-paths-scans-queries-runs-results"
 
 
 class ResourceTagSerializer(RLSSerializer):

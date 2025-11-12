@@ -27,6 +27,7 @@ from api.models import (
     Finding,
     Integration,
     Invitation,
+    AttackPathsScan,
     LighthouseProviderConfiguration,
     LighthouseProviderModels,
     Membership,
@@ -327,6 +328,23 @@ class ScanFilter(ProviderRelationshipFilterSet):
             "started_at": ["gte", "lte"],
             "next_scan_at": ["gte", "lte"],
             "trigger": ["exact"],
+        }
+
+
+class AttackPathsScanFilter(ProviderRelationshipFilterSet):
+    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
+    completed_at = DateFilter(field_name="completed_at", lookup_expr="date")
+    started_at = DateFilter(field_name="started_at", lookup_expr="date")
+    state = ChoiceFilter(choices=StateChoices.choices)
+    state__in = ChoiceInFilter(
+        field_name="state", choices=StateChoices.choices, lookup_expr="in"
+    )
+
+    class Meta:
+        model = AttackPathsScan
+        fields = {
+            "provider": ["exact", "in"],
+            "scan": ["exact", "in"],
         }
 
 

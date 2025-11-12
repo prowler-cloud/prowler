@@ -290,8 +290,8 @@ paths:
     get:
       operationId: attack_paths_scans_list
       description:
-        Retrieve the most recent Attack Paths scan for each provider within
-        the tenant.
+        Retrieve Attack Paths scans for the tenant with support for filtering,
+        ordering, and pagination.
       summary: List Attack Paths scans
       parameters:
         - in: query
@@ -329,6 +329,230 @@ paths:
             include query parameter to allow the client to customize which
             related resources should be returned.
           explode: false
+        - in: query
+          name: filter[provider]
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: filter[provider__in]
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+          description: Multiple values may be separated by commas.
+          explode: false
+          style: form
+        - in: query
+          name: filter[provider_type]
+          schema:
+            type: string
+            enum:
+              - aws
+              - azure
+              - gcp
+              - github
+              - iac
+              - mongodbatlas
+              - kubernetes
+              - m365
+              - oraclecloud
+        - in: query
+          name: filter[provider_type__in]
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - aws
+                - azure
+                - gcp
+                - github
+                - iac
+                - mongodbatlas
+                - kubernetes
+                - m365
+                - oraclecloud
+          description: Multiple values may be separated by commas.
+          explode: false
+          style: form
+        - in: query
+          name: filter[provider_uid]
+          schema:
+            type: string
+        - in: query
+          name: filter[provider_uid__in]
+          schema:
+            type: array
+            items:
+              type: string
+          description: Multiple values may be separated by commas.
+          explode: false
+          style: form
+        - in: query
+          name: filter[provider_uid__icontains]
+          schema:
+            type: string
+        - in: query
+          name: filter[provider_alias]
+          schema:
+            type: string
+        - in: query
+          name: filter[provider_alias__in]
+          schema:
+            type: array
+            items:
+              type: string
+          description: Multiple values may be separated by commas.
+          explode: false
+          style: form
+        - in: query
+          name: filter[provider_alias__icontains]
+          schema:
+            type: string
+        - in: query
+          name: filter[state]
+          schema:
+            type: string
+            enum:
+              - available
+              - scheduled
+              - executing
+              - completed
+              - failed
+              - cancelled
+        - in: query
+          name: filter[state__in]
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - available
+                - scheduled
+                - executing
+                - completed
+                - failed
+                - cancelled
+          description: Multiple values may be separated by commas.
+          explode: false
+          style: form
+        - in: query
+          name: filter[progress__gte]
+          schema:
+            type: integer
+        - in: query
+          name: filter[progress__lte]
+          schema:
+            type: integer
+        - in: query
+          name: filter[inserted_at]
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: filter[inserted_at__gte]
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: filter[inserted_at__lte]
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: filter[started_at]
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: filter[started_at__gte]
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: filter[started_at__lte]
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: filter[completed_at]
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: filter[completed_at__gte]
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: filter[completed_at__lte]
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: filter[scan]
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: filter[scan__in]
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+          description: Multiple values may be separated by commas.
+          explode: false
+          style: form
+        - in: query
+          name: filter[task]
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: filter[task__in]
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+          description: Multiple values may be separated by commas.
+          explode: false
+          style: form
+        - name: page[number]
+          required: false
+          in: query
+          description: A page number within the paginated result set.
+          schema:
+            type: integer
+        - name: page[size]
+          required: false
+          in: query
+          description: Number of results to return per page.
+          schema:
+            type: integer
+        - name: sort
+          required: false
+          in: query
+          description: "[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)"
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - inserted_at
+                - -inserted_at
+                - started_at
+                - -started_at
+                - completed_at
+                - -completed_at
+                - progress
+                - -progress
+                - state
+                - -state
+          explode: false
       tags:
         - Attack Paths
       security:
@@ -338,7 +562,7 @@ paths:
           content:
             application/vnd.api+json:
               schema:
-                $ref: "#/components/schemas/AttackPathsScanList"
+                $ref: "#/components/schemas/PaginatedAttackPathsScanList"
           description: ""
   /api/v1/attack-paths-scans/{id}:
     get:
@@ -386,7 +610,7 @@ paths:
           schema:
             type: string
             format: uuid
-          description: A UUID string identifying this attack paths scan.
+          description: A UUID string identifying this Attack Paths scan.
           required: true
       tags:
         - Attack Paths
@@ -403,16 +627,16 @@ paths:
     get:
       operationId: attack_paths_scans_queries_list
       description:
-        Retrieve the catalog of attack path queries available for this Attack
+        Retrieve the catalog of Attack Paths queries available for this Attack
         Paths scan.
-      summary: List attack path queries
+      summary: List Attack Paths queries
       parameters:
         - in: path
           name: id
           schema:
             type: string
             format: uuid
-          description: A UUID string identifying this attack paths scan.
+          description: A UUID string identifying this Attack Paths scan.
           required: true
       tags:
         - Attack Paths
@@ -425,27 +649,20 @@ paths:
               schema:
                 $ref: "#/components/schemas/AttackPathsQueryList"
           description: ""
-  /api/v1/attack-paths-scans/{attack_paths_scan_id}/queries/{attack_paths_query_id}/run:
+  /api/v1/attack-paths-scans/{id}/queries/run:
     post:
       operationId: attack_paths_scans_queries_run
       description:
-        Execute the selected attack path query against the Attack Paths graph
+        Execute the selected Attack Paths query against the Attack Paths graph
         and return the resulting subgraph.
-      summary: Execute an attack path query
+      summary: Execute an Attack Paths query
       parameters:
         - in: path
-          name: attack_paths_scan_id
+          name: id
           schema:
             type: string
             format: uuid
-          description: A UUID string identifying this attack paths scan.
-          required: true
-        - in: path
-          name: attack_paths_query_id
-          schema:
-            type: string
-            format: uuid
-          description: A UUID string identifying this attack paths query.
+          description: A UUID string identifying this Attack Paths scan.
           required: true
       tags:
         - Attack Paths
@@ -10631,12 +10848,9 @@ components:
           type: string
         label:
           type: string
-        type:
+        data_type:
           type: string
           default: string
-        required:
-          type: boolean
-          default: true
         description:
           type: string
           nullable: true
@@ -10659,7 +10873,7 @@ components:
             member is used to describe resource objects that share common attributes
             and relationships.
           enum:
-            - attack-paths-query-results
+            - attack-paths-scans-queries-runs-results
         id:
           type: string
           nullable: true
@@ -10697,7 +10911,7 @@ components:
             member is used to describe resource objects that share common attributes
             and relationships.
           enum:
-            - attack-paths-query-runs
+            - attack-paths-scans-queries-runs
         attributes:
           type: object
           required:
@@ -10898,7 +11112,7 @@ components:
               nullable: true
           required:
             - provider
-    AttackPathsScanList:
+    PaginatedAttackPathsScanList:
       type: object
       properties:
         data:

@@ -4,6 +4,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
+from django.conf import settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -22,7 +23,9 @@ class FakeNode:
 
 
 class FakeRelationship:
-    def __init__(self, element_id: str, start: str, end: str, rel_type: str, properties: dict):
+    def __init__(
+        self, element_id: str, start: str, end: str, rel_type: str, properties: dict
+    ):
         self.element_id = element_id
         self.type = rel_type
         self.start_node = SimpleNamespace(element_id=start)
@@ -35,49 +38,61 @@ class FakeRelationship:
 
 @pytest.mark.django_db
 class TestAttackPaths:
-    def test_attack_paths_scans_list_returns_latest_per_provider(
+    def test_attack_paths_scans_list_is_paginated_and_ordered(
         self, authenticated_client, providers_fixture
     ):
-        provider_one, provider_two, *_ = providers_fixture
-        now = timezone.now()
+        provider, *_ = providers_fixture
+        tenant_id = provider.tenant_id
+        page_size = settings.REST_FRAMEWORK["PAGE_SIZE"]
 
-        AttackPathsScan.objects.create(
-            tenant_id=provider_one.tenant_id,
-            provider=provider_one,
-            state=StateChoices.COMPLETED,
-            progress=100,
-            started_at=now - timedelta(hours=3),
-            completed_at=now - timedelta(hours=2),
+        AttackPathsScan.objects.filter(tenant_id=tenant_id).delete()
+
+        total_to_create = page_size + 1
+        base_time = timezone.now() - timedelta(minutes=total_to_create + 5)
+        created_scans: list[AttackPathsScan] = []
+
+        for index in range(total_to_create):
+            scan = AttackPathsScan.objects.create(
+                tenant_id=tenant_id,
+                provider=provider,
+                state=StateChoices.COMPLETED,
+                progress=50 + index,
+                started_at=base_time + timedelta(minutes=index),
+                completed_at=base_time + timedelta(minutes=index + 1),
+            )
+            AttackPathsScan.objects.filter(pk=scan.pk).update(
+                inserted_at=base_time + timedelta(minutes=index)
+            )
+            scan.refresh_from_db()
+            created_scans.append(scan)
+
+        total_scans = AttackPathsScan.objects.filter(tenant_id=tenant_id).count()
+        latest_scan = max(created_scans, key=lambda s: s.inserted_at)
+
+        paginated_response = authenticated_client.get(
+            reverse("attack-paths-scans-list")
         )
-        most_recent = AttackPathsScan.objects.create(
-            tenant_id=provider_one.tenant_id,
-            provider=provider_one,
-            state=StateChoices.EXECUTING,
-            progress=45,
-            started_at=now - timedelta(minutes=15),
+        assert paginated_response.status_code == 200
+
+        paginated_payload = paginated_response.json()
+        paginated_data = paginated_payload["data"]
+        assert len(paginated_data) == min(page_size, total_scans)
+        assert paginated_data[0]["id"] == str(latest_scan.id)
+        paginated_meta = paginated_payload.get("meta", {})
+        assert "pagination" in paginated_meta
+        assert paginated_meta["pagination"]["count"] == total_scans
+
+        unpaginated_response = authenticated_client.get(
+            reverse("attack-paths-scans-list"), {"page[disable]": "true"}
         )
-        other_provider_scan = AttackPathsScan.objects.create(
-            tenant_id=provider_two.tenant_id,
-            provider=provider_two,
-            state=StateChoices.COMPLETED,
-            progress=100,
-            started_at=now - timedelta(hours=2),
-            completed_at=now - timedelta(hours=1),
-        )
+        assert unpaginated_response.status_code == 200
+        unpaginated_payload = unpaginated_response.json()
+        unpaginated_data = unpaginated_payload["data"]
+        assert len(unpaginated_data) == total_scans
+        unpaginated_meta = unpaginated_payload.get("meta", {})
+        assert "pagination" not in unpaginated_meta
 
-        response = authenticated_client.get(reverse("attack-paths-scans-list"))
-        assert response.status_code == 200
-
-        payload = response.json()
-        data = payload["data"]
-        assert len(data) == 2
-        assert data[0]["id"] == str(most_recent.id)
-        assert {item["id"] for item in data} == {
-            str(most_recent.id),
-            str(other_provider_scan.id),
-        }
-
-    def test_attack_paths_scan_attack_path_queries_returns_definitions(
+    def test_attack_paths_queries_returns_definitions(
         self, authenticated_client, providers_fixture
     ):
         provider, *_ = providers_fixture
@@ -92,7 +107,7 @@ class TestAttackPaths:
         )
 
         response = authenticated_client.get(
-            reverse("attack-paths-queries", kwargs={"pk": scan.id})
+            reverse("attack-paths-scans-queries", kwargs={"pk": scan.id})
         )
         assert response.status_code == 200
 
@@ -100,7 +115,7 @@ class TestAttackPaths:
         data = payload["data"]
         assert len(data) >= 1
         first_query = data[0]
-        assert first_query["type"] == "attack-path-queries"
+        assert first_query["type"] == "attack-paths-queries"
         assert "attributes" in first_query
         assert first_query["attributes"]["provider"] == provider.provider
 
@@ -119,7 +134,7 @@ class TestAttackPaths:
 
         payload = {
             "data": {
-                "type": "attack-path-query-runs",
+                "type": "attack-paths-scans-queries-runs",
                 "attributes": {
                     "id": "aws-ec2-instance-security-groups",
                     "parameters": {"instance_id": "i-1234567890"},
@@ -128,7 +143,7 @@ class TestAttackPaths:
         }
 
         response = authenticated_client.post(
-            reverse("attack-paths-run-query", kwargs={"pk": scan.id}),
+            reverse("attack-paths-scans-queries-run", kwargs={"pk": scan.id}),
             data=json.dumps(payload),
             content_type=API_JSON_CONTENT_TYPE,
         )
@@ -164,7 +179,7 @@ class TestAttackPaths:
 
             payload = {
                 "data": {
-                    "type": "attack-path-query-runs",
+                    "type": "attack-paths-scans-queries-runs",
                     "attributes": {
                         "id": "aws-ec2-instance-security-groups",
                         "parameters": {"instance_id": "i-01"},
@@ -173,16 +188,14 @@ class TestAttackPaths:
             }
 
             response = authenticated_client.post(
-                reverse(
-                    "attack-paths-run-query", kwargs={"pk": scan.id}
-                ),
+                reverse("attack-paths-scans-queries-run", kwargs={"pk": scan.id}),
                 data=json.dumps(payload),
                 content_type=API_JSON_CONTENT_TYPE,
             )
 
         assert response.status_code == 200
         body = response.json()
-        assert body["data"]["type"] == "attack-path-query-results"
+        assert body["data"]["type"] == "attack-paths-scans-queries-results"
         attributes = body["data"]["attributes"]
         assert len(attributes["nodes"]) == 1
         assert len(attributes["relationships"]) == 1
