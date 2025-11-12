@@ -14,7 +14,7 @@ import {
 } from "@/components/shadcn";
 import { calculatePercentage } from "@/lib/utils";
 
-import { ResourceStatsCard } from "./resource-stats-card";
+import { ResourceStatsCard } from "../resource-stats-card";
 
 interface StatusChartProps {
   failFindingsData: {
