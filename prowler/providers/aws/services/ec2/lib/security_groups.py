@@ -32,8 +32,7 @@ def check_security_group(
 
     @param protocol: Protocol to check. If -1, all protocols will be checked.
 
-
-    @param ports: List of ports to check. If empty, any port will be checked. If None, any port will be checked. (Default: [])
+    @param ports: List of ports to check. If None or an empty list, any port will be checked. (Default: None)
 
     @param any_address: If True, only 0.0.0.0/0 or "::/0" will be public and do not search for public addresses. (Default: False)
 
@@ -84,8 +83,15 @@ def check_security_group(
                     ):
                         return True
 
-                # If empty input ports check if all ports are open
-                return len(set(ingress_port_range)) == 65536
+                # We did not find a specific port for the given protocol for 
+                # a public cidr so let's see if all the ports are open
+                all_ports_open = len(set(ingress_port_range)) == 65536
+                
+                # At this point we might have all ports open, return True
+                # otherwise we didn't have any ports to check yet we have a public cidr
+                # so that is the same as all ports open for our purposes
+                ports_are_empty = not ports
+                return all_ports_open or ports_are_empty
 
         # IPv6
         for ip_ingress_rule in ingress_rule["Ipv6Ranges"]:
@@ -97,8 +103,16 @@ def check_security_group(
                         and ingress_rule["IpProtocol"] == protocol
                     ):
                         return True
-                # If empty input ports check if all ports are open
-                return len(set(ingress_port_range)) == 65536
+                
+                # We did not find a specific port for the given protocol for 
+                # a public cidr so let's see if all the ports are open
+                all_ports_open = len(set(ingress_port_range)) == 65536
+                
+                # At this point we might have all ports open, return True
+                # otherwise we didn't have any ports to check yet we have a public cidr
+                # so that is the same as all ports open for our purposes
+                ports_are_empty = not ports
+                return all_ports_open or ports_are_empty
 
     return False
 
