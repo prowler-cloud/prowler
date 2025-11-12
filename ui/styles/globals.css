@@ -42,9 +42,9 @@
   --border-data-emphasis: rgba(0, 0, 0, 0.1);
 
   /* Background Colors */
-  --bg-neutral-primary: #FDFDFD;
+  --bg-neutral-primary: #fdfdfd;
   --bg-neutral-secondary: var(--color-white);
-  --bg-neutral-tertiary: #FBFDFD;
+  --bg-neutral-tertiary: #fbfdfd;
   --bg-tag-primary: var(--color-slate-50);
   --bg-pass-primary: var(--color-emerald-400);
   --bg-pass-secondary: var(--color-emerald-50);
@@ -61,11 +61,12 @@
   --bg-data-github: var(--color-slate-950);
 
   /* Severity Colors */
-  --bg-data-critical: #FF006A;
-  --bg-data-high: #F77852;
-  --bg-data-medium: #FDD34F;
-  --bg-data-low: #F5F3CE;
-  --bg-data-info: #3C8DFF;
+  --bg-data-critical: #ff006a;
+  --bg-data-high: #f77852;
+  --bg-data-medium: #fdd34f;
+  --bg-data-low: #f5f3ce;
+  --bg-data-info: #3c8dff;
+  --bg-data-muted: var(--color-neutral-500);
 
   /* Chart Dots */
   --chart-dots: var(--color-neutral-200);
@@ -129,11 +130,12 @@
   --bg-data-github: var(--color-neutral-100);
 
   /* Severity Colors */
-  --bg-data-critical: #FF006A;
-  --bg-data-high: #F77852;
-  --bg-data-medium: #FEC94D;
-  --bg-data-low: #FDFBD4;
-  --bg-data-info: #3C8DFF;
+  --bg-data-critical: #ff006a;
+  --bg-data-high: #f77852;
+  --bg-data-medium: #fec94d;
+  --bg-data-low: #fdfbd4;
+  --bg-data-info: #3c8dff;
+  --bg-data-muted: var(--color-neutral-500);
 
   /* Chart Dots */
   --chart-dots: var(--text-neutral-primary);
@@ -172,6 +174,7 @@
   --color-bg-data-medium: var(--bg-data-medium);
   --color-bg-data-low: var(--bg-data-low);
   --color-bg-data-info: var(--bg-data-info);
+  --color-bg-data-muted: var(--bg-data-muted);
 
   /* Button Colors */
   --color-button-primary: var(--bg-button-primary);

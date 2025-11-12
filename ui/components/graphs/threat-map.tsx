@@ -16,7 +16,6 @@ import type {
   Topology,
 } from "topojson-specification";
 
-import { cn } from "@/lib";
 import { Card } from "@/components/shadcn/card/card";
 
 import { HorizontalBarChart } from "./horizontal-bar-chart";
@@ -252,9 +251,8 @@ export function ThreatMap({
     width: MAP_CONFIG.defaultWidth,
     height,
   });
-  const [mapColors, setMapColors] = useState<MapColorsConfig>(
-    DEFAULT_MAP_COLORS,
-  );
+  const [mapColors, setMapColors] =
+    useState<MapColorsConfig>(DEFAULT_MAP_COLORS);
 
   const filteredLocations =
     selectedRegion === "All Regions"
