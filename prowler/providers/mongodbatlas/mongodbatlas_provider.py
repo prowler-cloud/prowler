@@ -17,6 +17,7 @@ from prowler.providers.mongodbatlas.exceptions.exceptions import (
     MongoDBAtlasAuthenticationError,
     MongoDBAtlasCredentialsError,
     MongoDBAtlasIdentityError,
+    MongoDBAtlasInvalidOrganizationIdError,
     MongoDBAtlasSessionError,
 )
 from prowler.providers.mongodbatlas.lib.mutelist.mutelist import MongoDBAtlasMutelist
@@ -314,10 +315,17 @@ class MongodbatlasProvider(Provider):
                 atlas_private_key=atlas_private_key,
             )
 
-            MongodbatlasProvider.setup_identity(session)
+            identity = MongodbatlasProvider.setup_identity(session)
+
+            if provider_id and identity.organization_id != provider_id:
+                raise MongoDBAtlasInvalidOrganizationIdError(
+                    file=os.path.basename(__file__),
+                    message=f"The provided credentials do not have access to the organization with the provided ID: {provider_id}",
+                )
 
             return Connection(is_connected=True)
-
+        except MongoDBAtlasInvalidOrganizationIdError:
+            raise
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

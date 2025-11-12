@@ -49,15 +49,15 @@ const chartConfig = {
   },
   success: {
     label: "Success",
-    color: "hsl(var(--chart-success))",
+    color: "var(--color-bg-pass)",
   },
   fail: {
     label: "Fail",
-    color: "hsl(var(--chart-fail))",
+    color: "var(--color-bg-fail)",
   },
   muted: {
     label: "Muted",
-    color: "hsl(var(--chart-muted))",
+    color: "var(--color-bg-neutral-tertiary)",
   },
 } satisfies ChartConfig;
 

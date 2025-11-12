@@ -30,6 +30,10 @@ class MongoDBAtlasBaseException(ProwlerException):
             "message": "MongoDB Atlas API rate limit exceeded",
             "remediation": "Reduce the number of API requests or wait before making more requests.",
         },
+        (8006, "MongoDBAtlasInvalidOrganizationIdError"): {
+            "message": "The provided credentials do not have access to the organization with the provided ID",
+            "remediation": "Check the organization ID and ensure it is a valid organization ID and that the credentials have access to it.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -112,6 +116,18 @@ class MongoDBAtlasRateLimitError(MongoDBAtlasBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             code=8005,
+            file=file,
+            original_exception=original_exception,
+            message=message,
+        )
+
+
+class MongoDBAtlasInvalidOrganizationIdError(MongoDBAtlasBaseException):
+    """Exception for MongoDB Atlas invalid organization ID errors"""
+
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            code=8006,
             file=file,
             original_exception=original_exception,
             message=message,

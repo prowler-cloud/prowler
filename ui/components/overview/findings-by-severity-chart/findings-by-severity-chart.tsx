@@ -23,27 +23,27 @@ export interface ChartConfig {
 const chartConfig = {
   critical: {
     label: "Critical",
-    color: "hsl(var(--chart-critical))",
+    color: "var(--color-bg-data-critical)",
     link: "/findings?filter%5Bstatus__in%5D=FAIL&filter%5Bseverity__in%5D=critical",
   },
   high: {
     label: "High",
-    color: "hsl(var(--chart-fail))",
+    color: "var(--color-bg-data-high)",
     link: "/findings?filter%5Bstatus__in%5D=FAIL&filter%5Bseverity__in%5D=high",
   },
   medium: {
     label: "Medium",
-    color: "hsl(var(--chart-medium))",
+    color: "var(--color-bg-data-medium)",
     link: "/findings?filter%5Bstatus__in%5D=FAIL&filter%5Bseverity__in%5D=medium",
   },
   low: {
     label: "Low",
-    color: "hsl(var(--chart-low))",
+    color: "var(--color-bg-data-low)",
     link: "/findings?filter%5Bstatus__in%5D=FAIL&filter%5Bseverity__in%5D=low",
   },
   informational: {
     label: "Informational",
-    color: "hsl(var(--chart-informational))",
+    color: "var(--color-bg-data-info)",
     link: "/findings?filter%5Bstatus__in%5D=FAIL&filter%5Bseverity__in%5D=informational",
   },
 } satisfies ChartConfig;

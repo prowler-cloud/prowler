@@ -37,10 +37,7 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
     <div className="w-full space-y-6">
       {title && (
         <div>
-          <h3
-            className="text-lg font-semibold"
-            style={{ color: "var(--text-neutral-primary)" }}
-          >
+          <h3 className="text-text-neutral-primary text-lg font-semibold">
             {title}
           </h3>
         </div>
@@ -59,16 +56,15 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
           return (
             <div
               key={item.name}
-              className="flex gap-6"
+              className="flex items-center gap-10"
               onMouseEnter={() => !isEmpty && setHoveredIndex(index)}
               onMouseLeave={() => !isEmpty && setHoveredIndex(null)}
             >
               {/* Label */}
               <div className="w-20 shrink-0">
                 <span
-                  className="text-sm font-medium"
+                  className="text-text-neutral-secondary text-sm font-medium"
                   style={{
-                    color: "var(--text-neutral-secondary)",
                     opacity: isFaded ? 0.5 : 1,
                     transition: "opacity 0.2s",
                   }}
@@ -138,9 +134,8 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
 
               {/* Percentage and Count */}
               <div
-                className="flex w-[90px] shrink-0 items-center gap-2 text-sm"
+                className="text-text-neutral-secondary ml-6 flex w-[90px] shrink-0 items-center gap-2 text-sm"
                 style={{
-                  color: "var(--text-neutral-secondary)",
                   opacity: isFaded ? 0.5 : 1,
                   transition: "opacity 0.2s",
                 }}
@@ -148,12 +143,7 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
                 <span className="w-[26px] text-right font-medium">
                   {isEmpty ? "0" : item.percentage}%
                 </span>
-                <span
-                  className="font-medium"
-                  style={{ color: "var(--text-neutral-secondary)" }}
-                >
-                  •
-                </span>
+                <span className="font-medium">•</span>
                 <span className="font-bold">
                   {isEmpty ? "0" : item.value.toLocaleString()}
                 </span>

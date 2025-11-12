@@ -8,9 +8,7 @@ export interface CriticalRequirement {
   title: string;
 }
 
-export interface SectionScores {
-  [sectionName: string]: number;
-}
+export type SectionScores = Record<string, number>;
 
 export interface ThreatScoreSnapshotAttributes {
   id: string;
@@ -18,8 +16,8 @@ export interface ThreatScoreSnapshotAttributes {
   scan: string | null;
   provider: string | null;
   compliance_id: string;
-  overall_score: string; // Decimal as string from API
-  score_delta: string | null; // Decimal as string from API
+  overall_score: string;
+  score_delta: string | null;
   section_scores: SectionScores;
   critical_requirements: CriticalRequirement[];
   total_requirements: number;

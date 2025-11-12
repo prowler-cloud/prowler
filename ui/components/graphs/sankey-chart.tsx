@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Rectangle, ResponsiveContainer, Sankey, Tooltip } from "recharts";
 
 import { ChartTooltip } from "./shared/chart-tooltip";
-import { CHART_COLORS } from "./shared/constants";
 
 interface SankeyNode {
   name: string;
@@ -47,54 +46,148 @@ interface NodeTooltipState {
   change?: number;
 }
 
-// Note: Using hex colors directly because Recharts SVG fill doesn't resolve CSS variables
-const COLORS: Record<string, string> = {
-  Success: "#86da26",
-  Fail: "#db2b49",
-  AWS: "#ff9900",
-  Azure: "#00bcd4",
-  Google: "#EA4335",
-  Critical: "#971348",
-  High: "#ff3077",
-  Medium: "#ff7d19",
-  Low: "#fdd34f",
-  Info: "#2e51b2",
-  Informational: "#2e51b2",
+const TOOLTIP_OFFSET_PX = 10;
+
+// Map color names to CSS variable names defined in globals.css
+const COLOR_MAP: Record<string, string> = {
+  Success: "--color-bg-pass",
+  Fail: "--color-bg-fail",
+  AWS: "--color-bg-data-aws",
+  Azure: "--color-bg-data-azure",
+  "Google Cloud": "--color-bg-data-gcp",
+  Critical: "--color-bg-data-critical",
+  High: "--color-bg-data-high",
+  Medium: "--color-bg-data-medium",
+  Low: "--color-bg-data-low",
+  Info: "--color-bg-data-info",
+  Informational: "--color-bg-data-info",
 };
 
-const CustomTooltip = ({ active, payload }: any) => {
+/**
+ * Compute color value from CSS variable name at runtime.
+ * SVG fill attributes cannot directly resolve CSS variables,
+ * so we extract computed values from globals.css CSS variables.
+ * Falls back to black (#000000) if variable not found or access fails.
+ *
+ * @param colorName - Key in COLOR_MAP (e.g., "AWS", "Fail")
+ * @returns Computed CSS variable value or fallback color
+ */
+const getColorVariable = (colorName: string): string => {
+  const varName = COLOR_MAP[colorName];
+  if (!varName) return "#000000";
+
+  try {
+    if (typeof document === "undefined") {
+      // SSR context - return fallback
+      return "#000000";
+    }
+    return (
+      getComputedStyle(document.documentElement)
+        .getPropertyValue(varName)
+        .trim() || "#000000"
+    );
+  } catch (error: unknown) {
+    // CSS variables not loaded or access failed - return fallback
+    return "#000000";
+  }
+};
+
+// Initialize all color variables from CSS
+const initializeColors = (): Record<string, string> => {
+  const colors: Record<string, string> = {};
+  for (const [colorName] of Object.entries(COLOR_MAP)) {
+    colors[colorName] = getColorVariable(colorName);
+  }
+  return colors;
+};
+
+interface TooltipPayload {
+  payload: {
+    source?: { name: string };
+    target?: { name: string };
+    value?: number;
+    name?: string;
+  };
+}
+
+interface TooltipProps {
+  active?: boolean;
+  payload?: TooltipPayload[];
+}
+
+interface CustomNodeProps {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  payload: SankeyNode & {
+    value: number;
+    newFindings?: number;
+    change?: number;
+  };
+  containerWidth: number;
+  colors: Record<string, string>;
+  onNodeHover?: (data: Omit<NodeTooltipState, "show">) => void;
+  onNodeMove?: (position: { x: number; y: number }) => void;
+  onNodeLeave?: () => void;
+}
+
+interface CustomLinkProps {
+  sourceX: number;
+  targetX: number;
+  sourceY: number;
+  targetY: number;
+  sourceControlX: number;
+  targetControlX: number;
+  linkWidth: number;
+  index: number;
+  payload: {
+    source?: { name: string };
+    target?: { name: string };
+    value?: number;
+  };
+  hoveredLink: number | null;
+  colors: Record<string, string>;
+  onLinkHover?: (index: number, data: Omit<LinkTooltipState, "show">) => void;
+  onLinkMove?: (position: { x: number; y: number }) => void;
+  onLinkLeave?: () => void;
+}
+
+const CustomTooltip = ({ active, payload }: TooltipProps) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
+    const sourceName = data.source?.name || data.name;
+    const targetName = data.target?.name;
+    const value = data.value;
+
     return (
-      <div
-        className="rounded-lg border p-3 shadow-lg"
-        style={{
-          borderColor: CHART_COLORS.tooltipBorder,
-          backgroundColor: CHART_COLORS.tooltipBackground,
-        }}
-      >
-        <p
-          className="text-sm font-semibold"
-          style={{ color: CHART_COLORS.textPrimary }}
-        >
-          {data.name}
+      <div className="chart-tooltip">
+        <p className="chart-tooltip-title">
+          {sourceName}
+          {targetName ? ` → ${targetName}` : ""}
         </p>
-        {data.value && (
-          <p className="text-xs" style={{ color: CHART_COLORS.textSecondary }}>
-            Value: {data.value}
-          </p>
-        )}
+        {value && <p className="chart-tooltip-subtitle">{value}</p>}
       </div>
     );
   }
   return null;
 };
 
-const CustomNode = (props: any) => {
-  const { x, y, width, height, payload, containerWidth } = props;
+const CustomNode = ({
+  x,
+  y,
+  width,
+  height,
+  payload,
+  containerWidth,
+  colors,
+  onNodeHover,
+  onNodeMove,
+  onNodeLeave,
+}: CustomNodeProps) => {
   const isOut = x + width + 6 > containerWidth;
   const nodeName = payload.name;
-  const color = COLORS[nodeName] || CHART_COLORS.defaultColor;
+  const color = colors[nodeName] || "var(--color-text-neutral-tertiary)";
   const isHidden = nodeName === "";
   const hasTooltip = !isHidden && payload.newFindings;
 
@@ -104,7 +197,7 @@ const CustomNode = (props: any) => {
     const rect = e.currentTarget.closest("svg") as SVGSVGElement;
     if (rect) {
       const bbox = rect.getBoundingClientRect();
-      props.onNodeHover?.({
+      onNodeHover?.({
         x: e.clientX - bbox.left,
         y: e.clientY - bbox.top,
         name: nodeName,
@@ -122,7 +215,7 @@ const CustomNode = (props: any) => {
     const rect = e.currentTarget.closest("svg") as SVGSVGElement;
     if (rect) {
       const bbox = rect.getBoundingClientRect();
-      props.onNodeMove?.({
+      onNodeMove?.({
         x: e.clientX - bbox.left,
         y: e.clientY - bbox.top,
       });
@@ -131,7 +224,7 @@ const CustomNode = (props: any) => {
 
   const handleMouseLeave = () => {
     if (!hasTooltip) return;
-    props.onNodeLeave?.();
+    onNodeLeave?.();
   };
 
   return (
@@ -156,7 +249,7 @@ const CustomNode = (props: any) => {
             x={isOut ? x - 6 : x + width + 6}
             y={y + height / 2}
             fontSize="14"
-            fill={CHART_COLORS.textPrimary}
+            fill="var(--color-text-neutral-primary)"
           >
             {nodeName}
           </text>
@@ -165,7 +258,7 @@ const CustomNode = (props: any) => {
             x={isOut ? x - 6 : x + width + 6}
             y={y + height / 2 + 13}
             fontSize="12"
-            fill={CHART_COLORS.textSecondary}
+            fill="var(--color-text-neutral-secondary)"
           >
             {payload.value}
           </text>
@@ -175,26 +268,30 @@ const CustomNode = (props: any) => {
   );
 };
 
-const CustomLink = (props: any) => {
-  const {
-    sourceX,
-    targetX,
-    sourceY,
-    targetY,
-    sourceControlX,
-    targetControlX,
-    linkWidth,
-    index,
-  } = props;
-
-  const sourceName = props.payload.source?.name || "";
-  const targetName = props.payload.target?.name || "";
-  const value = props.payload.value || 0;
-  const color = COLORS[sourceName] || CHART_COLORS.defaultColor;
+const CustomLink = ({
+  sourceX,
+  targetX,
+  sourceY,
+  targetY,
+  sourceControlX,
+  targetControlX,
+  linkWidth,
+  index,
+  payload,
+  hoveredLink,
+  colors,
+  onLinkHover,
+  onLinkMove,
+  onLinkLeave,
+}: CustomLinkProps) => {
+  const sourceName = payload.source?.name || "";
+  const targetName = payload.target?.name || "";
+  const value = payload.value || 0;
+  const color = colors[sourceName] || "var(--color-text-neutral-tertiary)";
   const isHidden = targetName === "";
 
-  const isHovered = props.hoveredLink !== null && props.hoveredLink === index;
-  const hasHoveredLink = props.hoveredLink !== null;
+  const isHovered = hoveredLink !== null && hoveredLink === index;
+  const hasHoveredLink = hoveredLink !== null;
 
   const pathD = `
     M${sourceX},${sourceY + linkWidth / 2}
@@ -219,7 +316,7 @@ const CustomLink = (props: any) => {
       ?.parentElement as unknown as SVGSVGElement;
     if (rect) {
       const bbox = rect.getBoundingClientRect();
-      props.onLinkHover?.(index, {
+      onLinkHover?.(index, {
         x: e.clientX - bbox.left,
         y: e.clientY - bbox.top,
         sourceName,
@@ -235,7 +332,7 @@ const CustomLink = (props: any) => {
       ?.parentElement as unknown as SVGSVGElement;
     if (rect && isHovered) {
       const bbox = rect.getBoundingClientRect();
-      props.onLinkMove?.({
+      onLinkMove?.({
         x: e.clientX - bbox.left,
         y: e.clientY - bbox.top,
       });
@@ -243,7 +340,7 @@ const CustomLink = (props: any) => {
   };
 
   const handleMouseLeave = () => {
-    props.onLinkLeave?.();
+    onLinkLeave?.();
   };
 
   return (
@@ -264,6 +361,7 @@ const CustomLink = (props: any) => {
 
 export function SankeyChart({ data, height = 400 }: SankeyChartProps) {
   const [hoveredLink, setHoveredLink] = useState<number | null>(null);
+  const [colors, setColors] = useState<Record<string, string>>({});
   const [linkTooltip, setLinkTooltip] = useState<LinkTooltipState>({
     show: false,
     x: 0,
@@ -282,6 +380,11 @@ export function SankeyChart({ data, height = 400 }: SankeyChartProps) {
     value: 0,
     color: "",
   });
+
+  // Initialize colors from CSS variables on mount
+  useEffect(() => {
+    setColors(initializeColors());
+  }, []);
 
   const handleLinkHover = (
     index: number,
@@ -320,26 +423,45 @@ export function SankeyChart({ data, height = 400 }: SankeyChartProps) {
     setNodeTooltip((prev) => ({ ...prev, show: false }));
   };
 
+  // Create callback references that wrap custom props and Recharts-injected props
+  const wrappedCustomNode = (
+    props: Omit<
+      CustomNodeProps,
+      "colors" | "onNodeHover" | "onNodeMove" | "onNodeLeave"
+    >,
+  ) => (
+    <CustomNode
+      {...props}
+      colors={colors}
+      onNodeHover={handleNodeHover}
+      onNodeMove={handleNodeMove}
+      onNodeLeave={handleNodeLeave}
+    />
+  );
+
+  const wrappedCustomLink = (
+    props: Omit<
+      CustomLinkProps,
+      "colors" | "hoveredLink" | "onLinkHover" | "onLinkMove" | "onLinkLeave"
+    >,
+  ) => (
+    <CustomLink
+      {...props}
+      colors={colors}
+      hoveredLink={hoveredLink}
+      onLinkHover={handleLinkHover}
+      onLinkMove={handleLinkMove}
+      onLinkLeave={handleLinkLeave}
+    />
+  );
+
   return (
     <div className="relative">
       <ResponsiveContainer width="100%" height={height}>
         <Sankey
           data={data}
-          node={
-            <CustomNode
-              onNodeHover={handleNodeHover}
-              onNodeMove={handleNodeMove}
-              onNodeLeave={handleNodeLeave}
-            />
-          }
-          link={
-            <CustomLink
-              hoveredLink={hoveredLink}
-              onLinkHover={handleLinkHover}
-              onLinkMove={handleLinkMove}
-              onLinkLeave={handleLinkLeave}
-            />
-          }
+          node={wrappedCustomNode}
+          link={wrappedCustomLink}
           nodePadding={50}
           margin={{ top: 20, right: 160, bottom: 20, left: 160 }}
           sort={false}
@@ -351,9 +473,9 @@ export function SankeyChart({ data, height = 400 }: SankeyChartProps) {
         <div
           className="pointer-events-none absolute z-50"
           style={{
-            left: `${Math.max(125, Math.min(linkTooltip.x, window.innerWidth - 125))}px`,
-            top: `${Math.max(linkTooltip.y - 80, 10)}px`,
-            transform: "translate(-50%, -100%)",
+            left: `${Math.max(TOOLTIP_OFFSET_PX, linkTooltip.x)}px`,
+            top: `${Math.max(TOOLTIP_OFFSET_PX, linkTooltip.y)}px`,
+            transform: `translate(${TOOLTIP_OFFSET_PX}px, -100%)`,
           }}
         >
           <ChartTooltip
@@ -376,9 +498,9 @@ export function SankeyChart({ data, height = 400 }: SankeyChartProps) {
         <div
           className="pointer-events-none absolute z-50"
           style={{
-            left: `${Math.max(125, Math.min(nodeTooltip.x, window.innerWidth - 125))}px`,
-            top: `${Math.max(nodeTooltip.y - 80, 10)}px`,
-            transform: "translate(-50%, -100%)",
+            left: `${Math.max(TOOLTIP_OFFSET_PX, nodeTooltip.x)}px`,
+            top: `${Math.max(TOOLTIP_OFFSET_PX, nodeTooltip.y)}px`,
+            transform: `translate(${TOOLTIP_OFFSET_PX}px, -100%)`,
           }}
         >
           <ChartTooltip
