@@ -16,6 +16,7 @@ import type {
   Topology,
 } from "topojson-specification";
 
+import { cn } from "@/lib";
 import { Card } from "@/components/shadcn/card/card";
 
 import { HorizontalBarChart } from "./horizontal-bar-chart";
@@ -33,6 +34,7 @@ const MAP_CONFIG = {
 // SVG-specific colors: must use actual color values, not Tailwind classes
 // as SVG fill/stroke attributes don't support class-based styling
 // Retrieves computed CSS variable values from globals.css theme variables at runtime
+// Fallback hex colors are used only when CSS variables cannot be computed (SSR context)
 interface MapColorsConfig {
   landFill: string;
   landStroke: string;
@@ -42,10 +44,15 @@ interface MapColorsConfig {
 }
 
 const DEFAULT_MAP_COLORS: MapColorsConfig = {
-  landFill: "#ffffff",
+  // Fallback: gray-300 (neutral-300) - used for map land fill in light theme
+  landFill: "#d1d5db",
+  // Fallback: slate-300 - used for map borders
   landStroke: "#cbd5e1",
+  // Fallback: red-600 - error color for points
   pointDefault: "#dc2626",
+  // Fallback: emerald-500 - success color for selected points
   pointSelected: "#10b981",
+  // Fallback: red-600 - error color for hover points
   pointHover: "#dc2626",
 };
 
@@ -60,7 +67,7 @@ function getMapColors(): MapColorsConfig {
   };
 
   const colors: MapColorsConfig = {
-    landFill: getVar("--bg-neutral-secondary") || DEFAULT_MAP_COLORS.landFill,
+    landFill: getVar("--bg-neutral-map") || DEFAULT_MAP_COLORS.landFill,
     landStroke:
       getVar("--border-neutral-tertiary") || DEFAULT_MAP_COLORS.landStroke,
     pointDefault:
@@ -179,11 +186,10 @@ function MapTooltip({
       {location.change !== undefined && (
         <p className="text-text-neutral-secondary mt-1 text-sm font-medium">
           <span
-            className={`font-bold ${
-              location.change > 0
-                ? "text-bg-pass-primary"
-                : "text-bg-data-critical"
-            }`}
+            className={cn(
+              "font-bold",
+              location.change > 0 ? "text-text-success" : "text-error-primary",
+            )}
           >
             {location.change > 0 ? "+" : ""}
             {location.change}%{" "}
