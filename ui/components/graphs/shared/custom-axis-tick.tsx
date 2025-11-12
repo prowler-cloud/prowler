@@ -1,5 +1,3 @@
-import { CHART_COLORS } from "./constants";
-
 export const AXIS_FONT_SIZE = 14;
 const TODAY_FONT_SIZE = 12;
 
@@ -32,7 +30,7 @@ export const CustomXAxisTickWithToday = Object.assign(
           y={20}
           dy={4}
           textAnchor="middle"
-          fill={CHART_COLORS.textSecondary}
+          fill="var(--color-text-neutral-secondary)"
           fontSize={AXIS_FONT_SIZE}
         >
           {payload.value}
@@ -42,7 +40,7 @@ export const CustomXAxisTickWithToday = Object.assign(
             x={0}
             y={36}
             textAnchor="middle"
-            fill={CHART_COLORS.textSecondary}
+            fill="var(--color-text-neutral-secondary)"
             fontSize={TODAY_FONT_SIZE}
             fontWeight={400}
           >
@@ -65,7 +63,7 @@ export const CustomXAxisTick = Object.assign(
           y={20}
           dy={4}
           textAnchor="middle"
-          fill={CHART_COLORS.textSecondary}
+          fill="var(--color-text-neutral-secondary)"
           fontSize={AXIS_FONT_SIZE}
         >
           {payload.value}

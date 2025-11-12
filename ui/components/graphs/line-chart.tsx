@@ -120,16 +120,6 @@ const CustomLegend = ({ payload }: CustomLegendProps) => {
     "Muted",
   ];
 
-  // Map severity names to their corresponding CSS variable colors
-  const severityColorMap: Record<string, string> = {
-    Informational: "var(--bg-data-info)",
-    Low: "var(--bg-data-low)",
-    Medium: "var(--bg-data-medium)",
-    High: "var(--bg-data-high)",
-    Critical: "var(--bg-data-critical)",
-    Muted: "var(--bg-data-muted)",
-  };
-
   const sortedPayload = [...(payload || [])].sort((a, b) => {
     const indexA = severityOrder.indexOf(a.value);
     const indexB = severityOrder.indexOf(b.value);

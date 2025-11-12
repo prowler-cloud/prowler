@@ -4,7 +4,6 @@ import { useState } from "react";
 
 import { getSeverityTrendsByTimeRange } from "@/actions/overview/severity-trends";
 import { LineChart } from "@/components/graphs/line-chart";
-import { SEVERITY_COLORS } from "@/components/graphs/shared/constants";
 import { LineConfig, LineDataPoint } from "@/components/graphs/types";
 import { Skeleton } from "@/components/shadcn";
 
@@ -75,27 +74,27 @@ export const FindingSeverityOverTime = ({
   const lines: LineConfig[] = [
     {
       dataKey: "informational",
-      color: SEVERITY_COLORS.Informational,
+      color: "var(--color-bg-data-info)",
       label: "Informational",
     },
     {
       dataKey: "low",
-      color: SEVERITY_COLORS.Low,
+      color: "var(--color-bg-data-low)",
       label: "Low",
     },
     {
       dataKey: "medium",
-      color: SEVERITY_COLORS.Medium,
+      color: "var(--color-bg-data-medium)",
       label: "Medium",
     },
     {
       dataKey: "high",
-      color: SEVERITY_COLORS.High,
+      color: "var(--color-bg-data-high)",
       label: "High",
     },
     {
       dataKey: "critical",
-      color: SEVERITY_COLORS.Critical,
+      color: "var(--color-bg-data-critical)",
       label: "Critical",
     },
   ];
@@ -104,7 +103,7 @@ export const FindingSeverityOverTime = ({
   if (data.some((item) => item.muted !== undefined)) {
     lines.push({
       dataKey: "muted",
-      color: "hsl(var(--chart-muted))",
+      color: "var(--color-bg-data-muted)",
       label: "Muted",
     });
   }

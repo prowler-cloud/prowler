@@ -17,6 +17,10 @@
   --bg-button-tertiary-active: var(--color-indigo-600);
   --bg-button-disabled: var(--color-neutral-300);
 
+  /* Radar Map */
+  --bg-radar-map: #b51c8033;
+  --bg-radar-button: #b51c80;
+
   /* Neutral Map */
   --bg-neutral-map: var(--color-neutral-300);
 

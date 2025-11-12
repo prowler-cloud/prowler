@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Rectangle, ResponsiveContainer, Sankey, Tooltip } from "recharts";
 
 import { ChartTooltip } from "./shared/chart-tooltip";
-import { CHART_COLORS } from "./shared/constants";
 
 interface SankeyNode {
   name: string;
@@ -49,20 +48,57 @@ interface NodeTooltipState {
 
 const TOOLTIP_OFFSET_PX = 10;
 
-// SVG fill attributes cannot resolve CSS variables, so we use the actual hex values
-// from the design system. These values match globals.css color definitions.
-const COLORS: Record<string, string> = {
-  Success: "#86da26",
-  Fail: "#ff006a",
-  AWS: "#FF9900",
-  Azure: "#37BDF0",
-  "Google Cloud": "#EA4335",
-  Critical: "#ff006a",
-  High: "#f77852",
-  Medium: "#fec94d",
-  Low: "#fdfbd4",
-  Info: "#3c8dff",
-  Informational: "#3c8dff",
+// Map color names to CSS variable names defined in globals.css
+const COLOR_MAP: Record<string, string> = {
+  Success: "--color-bg-pass",
+  Fail: "--color-bg-fail",
+  AWS: "--color-bg-data-aws",
+  Azure: "--color-bg-data-azure",
+  "Google Cloud": "--color-bg-data-gcp",
+  Critical: "--color-bg-data-critical",
+  High: "--color-bg-data-high",
+  Medium: "--color-bg-data-medium",
+  Low: "--color-bg-data-low",
+  Info: "--color-bg-data-info",
+  Informational: "--color-bg-data-info",
+};
+
+/**
+ * Compute color value from CSS variable name at runtime.
+ * SVG fill attributes cannot directly resolve CSS variables,
+ * so we extract computed values from globals.css CSS variables.
+ * Falls back to black (#000000) if variable not found or access fails.
+ *
+ * @param colorName - Key in COLOR_MAP (e.g., "AWS", "Fail")
+ * @returns Computed CSS variable value or fallback color
+ */
+const getColorVariable = (colorName: string): string => {
+  const varName = COLOR_MAP[colorName];
+  if (!varName) return "#000000";
+
+  try {
+    if (typeof document === "undefined") {
+      // SSR context - return fallback
+      return "#000000";
+    }
+    return (
+      getComputedStyle(document.documentElement)
+        .getPropertyValue(varName)
+        .trim() || "#000000"
+    );
+  } catch (error: unknown) {
+    // CSS variables not loaded or access failed - return fallback
+    return "#000000";
+  }
+};
+
+// Initialize all color variables from CSS
+const initializeColors = (): Record<string, string> => {
+  const colors: Record<string, string> = {};
+  for (const [colorName] of Object.entries(COLOR_MAP)) {
+    colors[colorName] = getColorVariable(colorName);
+  }
+  return colors;
 };
 
 interface TooltipPayload {
@@ -90,6 +126,7 @@ interface CustomNodeProps {
     change?: number;
   };
   containerWidth: number;
+  colors: Record<string, string>;
   onNodeHover?: (data: Omit<NodeTooltipState, "show">) => void;
   onNodeMove?: (position: { x: number; y: number }) => void;
   onNodeLeave?: () => void;
@@ -110,6 +147,7 @@ interface CustomLinkProps {
     value?: number;
   };
   hoveredLink: number | null;
+  colors: Record<string, string>;
   onLinkHover?: (index: number, data: Omit<LinkTooltipState, "show">) => void;
   onLinkMove?: (position: { x: number; y: number }) => void;
   onLinkLeave?: () => void;
@@ -142,13 +180,14 @@ const CustomNode = ({
   height,
   payload,
   containerWidth,
+  colors,
   onNodeHover,
   onNodeMove,
   onNodeLeave,
 }: CustomNodeProps) => {
   const isOut = x + width + 6 > containerWidth;
   const nodeName = payload.name;
-  const color = COLORS[nodeName] || CHART_COLORS.defaultColor;
+  const color = colors[nodeName] || "var(--color-text-neutral-tertiary)";
   const isHidden = nodeName === "";
   const hasTooltip = !isHidden && payload.newFindings;
 
@@ -210,7 +249,7 @@ const CustomNode = ({
             x={isOut ? x - 6 : x + width + 6}
             y={y + height / 2}
             fontSize="14"
-            fill={CHART_COLORS.textPrimary}
+            fill="var(--color-text-neutral-primary)"
           >
             {nodeName}
           </text>
@@ -219,7 +258,7 @@ const CustomNode = ({
             x={isOut ? x - 6 : x + width + 6}
             y={y + height / 2 + 13}
             fontSize="12"
-            fill={CHART_COLORS.textSecondary}
+            fill="var(--color-text-neutral-secondary)"
           >
             {payload.value}
           </text>
@@ -240,6 +279,7 @@ const CustomLink = ({
   index,
   payload,
   hoveredLink,
+  colors,
   onLinkHover,
   onLinkMove,
   onLinkLeave,
@@ -247,7 +287,7 @@ const CustomLink = ({
   const sourceName = payload.source?.name || "";
   const targetName = payload.target?.name || "";
   const value = payload.value || 0;
-  const color = COLORS[sourceName] || CHART_COLORS.defaultColor;
+  const color = colors[sourceName] || "var(--color-text-neutral-tertiary)";
   const isHidden = targetName === "";
 
   const isHovered = hoveredLink !== null && hoveredLink === index;
@@ -321,6 +361,7 @@ const CustomLink = ({
 
 export function SankeyChart({ data, height = 400 }: SankeyChartProps) {
   const [hoveredLink, setHoveredLink] = useState<number | null>(null);
+  const [colors, setColors] = useState<Record<string, string>>({});
   const [linkTooltip, setLinkTooltip] = useState<LinkTooltipState>({
     show: false,
     x: 0,
@@ -339,6 +380,11 @@ export function SankeyChart({ data, height = 400 }: SankeyChartProps) {
     value: 0,
     color: "",
   });
+
+  // Initialize colors from CSS variables on mount
+  useEffect(() => {
+    setColors(initializeColors());
+  }, []);
 
   const handleLinkHover = (
     index: number,
@@ -378,18 +424,30 @@ export function SankeyChart({ data, height = 400 }: SankeyChartProps) {
   };
 
   // Create callback references that wrap custom props and Recharts-injected props
-  const wrappedCustomNode = (props: CustomNodeProps) => (
+  const wrappedCustomNode = (
+    props: Omit<
+      CustomNodeProps,
+      "colors" | "onNodeHover" | "onNodeMove" | "onNodeLeave"
+    >,
+  ) => (
     <CustomNode
       {...props}
+      colors={colors}
       onNodeHover={handleNodeHover}
       onNodeMove={handleNodeMove}
       onNodeLeave={handleNodeLeave}
     />
   );
 
-  const wrappedCustomLink = (props: CustomLinkProps) => (
+  const wrappedCustomLink = (
+    props: Omit<
+      CustomLinkProps,
+      "colors" | "hoveredLink" | "onLinkHover" | "onLinkMove" | "onLinkLeave"
+    >,
+  ) => (
     <CustomLink
       {...props}
+      colors={colors}
       hoveredLink={hoveredLink}
       onLinkHover={handleLinkHover}
       onLinkMove={handleLinkMove}

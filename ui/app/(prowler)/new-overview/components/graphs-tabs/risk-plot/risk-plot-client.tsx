@@ -16,15 +16,17 @@ import { HorizontalBarChart } from "@/components/graphs/horizontal-bar-chart";
 import { AlertPill } from "@/components/graphs/shared/alert-pill";
 import { ChartLegend } from "@/components/graphs/shared/chart-legend";
 import {
-  CHART_COLORS,
-  PROVIDER_COLORS,
-} from "@/components/graphs/shared/constants";
-import {
   AXIS_FONT_SIZE,
   CustomXAxisTick,
 } from "@/components/graphs/shared/custom-axis-tick";
 import { getSeverityColorByRiskScore } from "@/components/graphs/shared/utils";
 import type { BarDataPoint } from "@/components/graphs/types";
+
+const PROVIDER_COLORS = {
+  AWS: "var(--color-bg-data-aws)",
+  Azure: "var(--color-bg-data-azure)",
+  Google: "var(--color-bg-data-gcp)",
+};
 
 export interface ScatterPoint {
   x: number;
@@ -62,11 +64,16 @@ const CustomTooltip = ({ active, payload }: TooltipProps) => {
     const severityColor = getSeverityColorByRiskScore(data.x);
 
     return (
-      <div className="chart-tooltip">
-        <p className="chart-tooltip-title">{data.name}</p>
-        <p className="chart-tooltip-subtitle">
+      <div className="border-border-neutral-tertiary bg-bg-neutral-tertiary pointer-events-none min-w-[200px] rounded-xl border p-3 shadow-lg">
+        <p className="text-text-neutral-primary mb-2 text-sm font-semibold">
+          {data.name}
+        </p>
+        <p className="text-text-neutral-secondary text-sm font-medium">
           {/* Dynamic color from getSeverityColorByRiskScore - required inline style */}
-          <span style={{ color: severityColor }}>{data.x}</span> Risk Score
+          <span style={{ color: severityColor, fontWeight: "bold" }}>
+            {data.x}
+          </span>{" "}
+          Risk Score
         </p>
         <div className="mt-2">
           <AlertPill value={data.y} />
@@ -91,7 +98,7 @@ const CustomScatterDot = ({
   const fill = isSelected
     ? selectedColor
     : PROVIDER_COLORS[payload.provider as keyof typeof PROVIDER_COLORS] ||
-      CHART_COLORS.defaultColor;
+      "var(--color-text-neutral-tertiary)";
 
   const handleClick = () => {
     const fullDataItem = allData?.find(
@@ -235,7 +242,7 @@ export function RiskPlotClient({ data }: RiskPlotClientProps) {
                       value: "Risk Score",
                       position: "bottom",
                       offset: 10,
-                      fill: CHART_COLORS.textSecondary,
+                      fill: "var(--color-text-neutral-secondary)",
                     }}
                     tick={CustomXAxisTick}
                     tickLine={false}
@@ -251,10 +258,10 @@ export function RiskPlotClient({ data }: RiskPlotClientProps) {
                       angle: -90,
                       position: "left",
                       offset: 10,
-                      fill: CHART_COLORS.textSecondary,
+                      fill: "var(--color-text-neutral-secondary)",
                     }}
                     tick={{
-                      fill: CHART_COLORS.textSecondary,
+                      fill: "var(--color-text-neutral-secondary)",
                       fontSize: AXIS_FONT_SIZE,
                     }}
                     tickLine={false}
@@ -273,7 +280,7 @@ export function RiskPlotClient({ data }: RiskPlotClientProps) {
                       fill={
                         PROVIDER_COLORS[
                           provider as keyof typeof PROVIDER_COLORS
-                        ] || CHART_COLORS.defaultColor
+                        ] || "var(--color-text-neutral-tertiary)"
                       }
                       shape={createScatterDotShape(
                         selectedPoint,

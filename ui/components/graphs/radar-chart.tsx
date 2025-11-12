@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/chart/Chart";
 
 import { AlertPill } from "./shared/alert-pill";
-import { CHART_COLORS } from "./shared/constants";
 import { RadarDataPoint } from "./types";
 
 interface RadarChartProps {
@@ -56,12 +55,12 @@ const CustomTooltip = ({ active, payload }: TooltipProps) => {
         {data.payload.change !== undefined && (
           <p className="text-text-neutral-secondary mt-1 text-sm font-medium">
             <span
-              className="font-bold"
               style={{
                 color:
                   data.payload.change > 0
                     ? "var(--bg-pass-primary)"
                     : "var(--bg-data-critical)",
+                fontWeight: "bold",
               }}
             >
               {(data.payload.change as number) > 0 ? "+" : ""}
@@ -128,11 +127,10 @@ const CustomDot = ({
       cy={cy}
       r={isSelected ? 9 : 6}
       fillOpacity={1}
-      className={isSelected ? "drop-shadow-[0_0_8px_#86da26]" : ""}
       style={{
         fill: isSelected
           ? "var(--bg-button-primary)"
-          : "var(--chart-radar-primary)",
+          : "var(--bg-radar-button)",
         cursor: onSelectPoint ? "pointer" : "default",
         pointerEvents: "all",
       }}
@@ -158,13 +156,13 @@ export function RadarChart({
         <ChartTooltip cursor={false} content={<CustomTooltip />} />
         <PolarAngleAxis
           dataKey="category"
-          tick={{ fill: CHART_COLORS.textPrimary }}
+          tick={{ fill: "var(--color-text-neutral-primary)" }}
         />
         <PolarGrid strokeOpacity={0.3} />
         <Radar
           dataKey={dataKey}
-          fill="var(--chart-radar-primary)"
-          fillOpacity={0.2}
+          fill="var(--bg-radar-map)"
+          fillOpacity={1}
           activeDot={false}
           dot={
             onSelectPoint
@@ -184,7 +182,7 @@ export function RadarChart({
                 }
               : {
                   r: 6,
-                  fill: "var(--chart-radar-primary)",
+                  fill: "var(--bg-radar-map)",
                   fillOpacity: 1,
                 }
           }
