@@ -30,6 +30,7 @@ jobs:
 
   label-community:
     name: Add 'community' label if the PR is from a community contributor
+    needs: labeler
     if: github.repository == 'prowler-cloud/prowler' && github.event.action == 'opened'
     runs-on: ubuntu-latest
     permissions:
