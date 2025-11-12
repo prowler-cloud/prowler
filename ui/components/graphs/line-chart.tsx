@@ -20,7 +20,6 @@ import {
 
 import { AlertPill } from "./shared/alert-pill";
 import { ChartLegend } from "./shared/chart-legend";
-import { CHART_COLORS } from "./shared/constants";
 import {
   AXIS_FONT_SIZE,
   CustomXAxisTickWithToday,
@@ -121,6 +120,16 @@ const CustomLegend = ({ payload }: CustomLegendProps) => {
     "Muted",
   ];
 
+  // Map severity names to their corresponding CSS variable colors
+  const severityColorMap: Record<string, string> = {
+    Informational: "var(--bg-data-info)",
+    Low: "var(--bg-data-low)",
+    Medium: "var(--bg-data-medium)",
+    High: "var(--bg-data-high)",
+    Critical: "var(--bg-data-critical)",
+    Muted: "var(--bg-data-muted)",
+  };
+
   const sortedPayload = [...(payload || [])].sort((a, b) => {
     const indexA = severityOrder.indexOf(a.value);
     const indexB = severityOrder.indexOf(b.value);
@@ -137,7 +146,7 @@ const CustomLegend = ({ payload }: CustomLegendProps) => {
 
 const chartConfig = {
   default: {
-    color: "var(--chart-1)",
+    color: "var(--color-bg-data-azure)",
   },
 } satisfies ChartConfig;
 
@@ -176,7 +185,7 @@ export function LineChart({ data, lines, height = 400 }: LineChartProps) {
           axisLine={false}
           tickMargin={8}
           tick={{
-            fill: CHART_COLORS.textSecondary,
+            fill: "var(--color-text-neutral-secondary)",
             fontSize: AXIS_FONT_SIZE,
           }}
         />

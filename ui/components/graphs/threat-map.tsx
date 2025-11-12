@@ -249,11 +249,36 @@ export function ThreatMap({
     width: MAP_CONFIG.defaultWidth,
     height,
   });
+  const [mapColors, setMapColors] = useState<MapColorsConfig>(
+    DEFAULT_MAP_COLORS,
+  );
 
   const filteredLocations =
     selectedRegion === "All Regions"
       ? data.locations
       : data.locations.filter((loc) => loc.region === selectedRegion);
+
+  // Monitor theme changes and update colors
+  useEffect(() => {
+    const updateColors = () => {
+      setMapColors(getMapColors());
+    };
+
+    // Update colors immediately
+    updateColors();
+
+    // Watch for theme changes (dark class on document)
+    const observer = new MutationObserver(() => {
+      updateColors();
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   // Fetch world data once on mount
   useEffect(() => {
@@ -293,7 +318,7 @@ export function ThreatMap({
 
     const projection = createProjection(width, height);
     const path = d3.geoPath().projection(projection);
-    const colors = getMapColors();
+    const colors = mapColors;
 
     // Render countries
     const mapGroup = createSVGElement<SVGGElement>("g", {
@@ -428,6 +453,7 @@ export function ThreatMap({
     hoveredLocation,
     worldData,
     isLoadingMap,
+    mapColors,
   ]);
 
   return (
