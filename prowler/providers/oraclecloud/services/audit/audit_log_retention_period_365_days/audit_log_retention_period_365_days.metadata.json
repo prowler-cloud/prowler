@@ -12,12 +12,8 @@
   "Risk": "**Insufficient audit retention** or missing configuration shrinks the **detection window** and breaks **accountability**.\n\nEvidence for older actions may be unavailable, enabling attackers to evade detection, mask **data exfiltration**, and impede **forensic reconstruction** and compliance reporting.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "http://man.hubwiz.com/docset/Terraform.docset/Contents/Resources/Documents/docs/providers/oci/r/audit_configuration.html",
-    "https://www.pulumi.com/registry/packages/oci/api-docs/audit/configuration/",
     "https://docs.oracle.com/en-us/iaas/Content/Audit/Tasks/settingretentionperiod.htm",
-    "https://manualzz.com/doc/46527286/oracle-cloud-infrastructure-user-guide",
-    "https://docs.oracle.com/en-us/iaas/tools/terraform-provider-oci/4.88.1/docs/r/audit_configuration.html",
-    "https://stackoverflow.com/questions/65393643/terraform-oci-oci-audit-configuration-timing-out"
+    "https://docs.oracle.com/en-us/iaas/tools/terraform-provider-oci/4.88.1/docs/r/audit_configuration.html"
   ],
   "Remediation": {
     "Code": {
