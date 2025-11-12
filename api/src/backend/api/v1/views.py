@@ -3233,15 +3233,50 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
 @extend_schema_view(
     list=extend_schema(
         tags=["Compliance Overview"],
-        summary="List compliance overviews for a scan",
-        description="Retrieve an overview of all the compliance in a given scan.",
+        summary="List compliance overviews",
+        description=(
+            "Retrieve an overview of all compliance frameworks. "
+            "If scan_id is provided, returns compliance data for that specific scan. "
+            "If scan_id is omitted, returns compliance data aggregated from the latest completed scan of each provider."
+        ),
         parameters=[
             OpenApiParameter(
                 name="filter[scan_id]",
-                required=True,
+                required=False,
                 type=OpenApiTypes.UUID,
                 location=OpenApiParameter.QUERY,
-                description="Related scan ID.",
+                description=(
+                    "Optional scan ID. If provided, returns compliance for that scan. "
+                    "If omitted, returns compliance for the latest completed scan per provider."
+                ),
+            ),
+            OpenApiParameter(
+                name="filter[provider_id]",
+                required=False,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.QUERY,
+                description="Filter by specific provider ID.",
+            ),
+            OpenApiParameter(
+                name="filter[provider_id__in]",
+                required=False,
+                type={"type": "array", "items": {"type": "string", "format": "uuid"}},
+                location=OpenApiParameter.QUERY,
+                description="Filter by multiple provider IDs (comma-separated).",
+            ),
+            OpenApiParameter(
+                name="filter[provider_type]",
+                required=False,
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="Filter by provider type (e.g., aws, azure, gcp).",
+            ),
+            OpenApiParameter(
+                name="filter[provider_type__in]",
+                required=False,
+                type={"type": "array", "items": {"type": "string"}},
+                location=OpenApiParameter.QUERY,
+                description="Filter by multiple provider types (comma-separated).",
             ),
         ],
         responses={
@@ -3400,30 +3435,63 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
 
     def list(self, request, *args, **kwargs):
         scan_id = request.query_params.get("filter[scan_id]")
-        if not scan_id:
-            raise ValidationError(
-                [
-                    {
-                        "detail": "This query parameter is required.",
-                        "status": 400,
-                        "source": {"pointer": "filter[scan_id]"},
-                        "code": "required",
-                    }
-                ]
+        tenant_id = self.request.tenant_id
+
+        if scan_id:
+            # Specific scan requested - use task management
+            try:
+                if task := self.get_task_response_if_running(
+                    task_name="scan-compliance-overviews",
+                    task_kwargs={
+                        "tenant_id": tenant_id,
+                        "scan_id": scan_id,
+                    },
+                    raise_on_not_found=False,
+                ):
+                    return task
+            except TaskFailedException:
+                return Response(
+                    {"detail": "Task failed to generate compliance overview data."},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+            queryset = self.filter_queryset(self.get_queryset())
+        else:
+            # No scan_id provided - use latest scans per provider
+            # First, check if provider filters are present
+            provider_id = request.query_params.get("filter[provider_id]")
+            provider_id__in = request.query_params.get("filter[provider_id__in]")
+            provider_type = request.query_params.get("filter[provider_type]")
+            provider_type__in = request.query_params.get("filter[provider_type__in]")
+
+            scan_filters = {"tenant_id": tenant_id, "state": StateChoices.COMPLETED}
+
+            # Apply provider ID filters
+            if provider_id:
+                scan_filters["provider_id"] = provider_id
+            elif provider_id__in:
+                # Convert comma-separated string to list
+                provider_ids = [pid.strip() for pid in provider_id__in.split(",")]
+                scan_filters["provider_id__in"] = provider_ids
+
+            # Apply provider type filters
+            if provider_type:
+                scan_filters["provider__provider"] = provider_type
+            elif provider_type__in:
+                # Convert comma-separated string to list
+                provider_types = [pt.strip() for pt in provider_type__in.split(",")]
+                scan_filters["provider__provider__in"] = provider_types
+
+            latest_scan_ids = (
+                Scan.all_objects.filter(**scan_filters)
+                .order_by("provider_id", "-inserted_at")
+                .distinct("provider_id")
+                .values_list("id", flat=True)
             )
-        try:
-            if task := self.get_task_response_if_running(
-                task_name="scan-compliance-overviews",
-                task_kwargs={"tenant_id": self.request.tenant_id, "scan_id": scan_id},
-                raise_on_not_found=False,
-            ):
-                return task
-        except TaskFailedException:
-            return Response(
-                {"detail": "Task failed to generate compliance overview data."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+
+            base_queryset = self.get_queryset()
+            queryset = self.filter_queryset(
+                base_queryset.filter(scan_id__in=latest_scan_ids)
             )
-        queryset = self.filter_queryset(self.filter_queryset(self.get_queryset()))
 
         requirement_status_subquery = queryset.values(
             "compliance_id", "requirement_id"

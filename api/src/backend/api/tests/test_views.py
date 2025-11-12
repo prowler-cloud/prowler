@@ -5854,6 +5854,28 @@ class TestComplianceOverviewViewSet:
             assert "requirements_manual" in attributes
             assert "total_requirements" in attributes
 
+    def test_compliance_overview_list_without_scan_id(
+        self, authenticated_client, compliance_requirements_overviews_fixture
+    ):
+        # Ensure the endpoint works without passing a scan filter
+        response = authenticated_client.get(reverse("complianceoverview-list"))
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 3
+
+        # Validate payload structure
+        first_item = data[0]
+        assert "id" in first_item
+        assert "attributes" in first_item
+        attributes = first_item["attributes"]
+        assert "framework" in attributes
+        assert "version" in attributes
+        assert "requirements_passed" in attributes
+        assert "requirements_failed" in attributes
+        assert "requirements_manual" in attributes
+        assert "total_requirements" in attributes
+
     def test_compliance_overview_metadata(
         self, authenticated_client, compliance_requirements_overviews_fixture
     ):
