@@ -11,7 +11,7 @@
 import { browserTracingIntegration } from "@sentry/browser";
 import * as Sentry from "@sentry/nextjs";
 
-const isDevelopment = process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT === "dev";
+const isDevelopment = process.env.NEXT_PUBLIC_SENTRY_ENVIRONMENT === "local";
 
 /**
  * Initialize Sentry error tracking and performance monitoring

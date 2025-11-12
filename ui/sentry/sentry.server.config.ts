@@ -15,7 +15,7 @@ Sentry.init({
   dsn: process.env.SENTRY_DSN,
 
   // 🌍 Environment configuration
-  environment: process.env.SENTRY_ENVIRONMENT || "development",
+  environment: process.env.SENTRY_ENVIRONMENT || "local",
 
   // 📦 Release tracking
   release: process.env.SENTRY_RELEASE,
