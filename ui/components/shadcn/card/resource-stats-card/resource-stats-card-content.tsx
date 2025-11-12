@@ -3,27 +3,19 @@ import { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
+import { CardVariant } from "../card";
+
 export interface StatItem {
   icon: LucideIcon;
   label: string;
 }
 
-export const CardVariant = {
-  default: "default",
-  fail: "fail",
-  pass: "pass",
-  warning: "warning",
-  info: "info",
-} as const;
-
-export type CardVariant = (typeof CardVariant)[keyof typeof CardVariant];
-
 const variantColors = {
-  default: "#868994",
-  fail: "#f54280",
-  pass: "#4ade80",
-  warning: "#fbbf24",
-  info: "#60a5fa",
+  default: "var(--bg-neutral-tertiary)",
+  fail: "var(--bg-fail-primary)",
+  pass: "var(--bg-pass-primary)",
+  warning: "var(--bg-warning-primary)",
+  info: "var(--bg-data-info)",
 } as const;
 
 type BadgeVariant = keyof typeof variantColors;
@@ -34,8 +26,8 @@ const badgeVariants = cva(
     variants: {
       variant: {
         [CardVariant.default]: "bg-slate-100 dark:bg-[#535359]",
-        [CardVariant.fail]: "bg-red-100 dark:bg-[#432232]",
-        [CardVariant.pass]: "bg-green-100 dark:bg-[#204237]",
+        [CardVariant.fail]: "bg-bg-fail-secondary",
+        [CardVariant.pass]: "bg-bg-pass-secondary",
         [CardVariant.warning]: "bg-amber-100 dark:bg-[#3d3520]",
         [CardVariant.info]: "bg-blue-100 dark:bg-[#1e3a5f]",
       },
@@ -66,7 +58,7 @@ const badgeIconVariants = cva("", {
 });
 
 const labelTextVariants = cva(
-  "leading-6 font-semibold text-slate-900 dark:text-zinc-300 whitespace-nowrap",
+  "leading-6 font-semibold text-text-neutral-secondary whitespace-nowrap",
   {
     variants: {
       size: {
@@ -81,7 +73,7 @@ const labelTextVariants = cva(
   },
 );
 
-const statIconVariants = cva("text-slate-600 dark:text-zinc-300", {
+const statIconVariants = cva("text-text-neutral-secondary", {
   variants: {
     size: {
       sm: "h-2.5 w-2.5",
@@ -95,7 +87,7 @@ const statIconVariants = cva("text-slate-600 dark:text-zinc-300", {
 });
 
 const statLabelVariants = cva(
-  "leading-5 font-medium text-slate-700 dark:text-zinc-300",
+  "leading-5 font-medium text-text-neutral-secondary",
   {
     variants: {
       size: {

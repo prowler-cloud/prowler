@@ -1,5 +1,5 @@
 import { Page, expect } from "@playwright/test";
-import { SignInPage, SignInCredentials } from "./page-objects/sign-in-page";
+import { SignInPage, SignInCredentials } from "./sign-in/sign-in-page";
 
 export const ERROR_MESSAGES = {
   INVALID_CREDENTIALS: "Invalid email or password",
@@ -160,6 +160,18 @@ export async function authenticateAndSaveState(
 
   // Save authentication state
   await page.context().storageState({ path: storagePath });
+}
+
+/**
+ * Generate a random base36 suffix of specified length
+ * Used for creating unique test data to avoid conflicts
+ */
+export function makeSuffix(len: number): string {
+  let s = "";
+  while (s.length < len) {
+    s += Math.random().toString(36).slice(2);
+  }
+  return s.slice(0, len);
 }
 
 export async function getSession(page: Page) {

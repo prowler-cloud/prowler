@@ -21,6 +21,8 @@ from prowler.lib.outputs.compliance.aws_well_architected.aws_well_architected im
     AWSWellArchitected,
 )
 from prowler.lib.outputs.compliance.c5.c5_aws import AWSC5
+from prowler.lib.outputs.compliance.c5.c5_azure import AzureC5
+from prowler.lib.outputs.compliance.c5.c5_gcp import GCPC5
 from prowler.lib.outputs.compliance.ccc.ccc_aws import CCC_AWS
 from prowler.lib.outputs.compliance.ccc.ccc_azure import CCC_Azure
 from prowler.lib.outputs.compliance.ccc.ccc_gcp import CCC_GCP
@@ -30,6 +32,7 @@ from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
 from prowler.lib.outputs.compliance.cis.cis_github import GithubCIS
 from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
 from prowler.lib.outputs.compliance.cis.cis_m365 import M365CIS
+from prowler.lib.outputs.compliance.cis.cis_oraclecloud import OracleCloudCIS
 from prowler.lib.outputs.compliance.ens.ens_aws import AWSENS
 from prowler.lib.outputs.compliance.ens.ens_azure import AzureENS
 from prowler.lib.outputs.compliance.ens.ens_gcp import GCPENS
@@ -87,6 +90,7 @@ COMPLIANCE_CLASS_MAP = {
         (lambda name: name.startswith("iso27001_"), AzureISO27001),
         (lambda name: name == "ccc_azure", CCC_Azure),
         (lambda name: name == "prowler_threatscore_azure", ProwlerThreatScoreAzure),
+        (lambda name: name == "c5_azure", AzureC5),
     ],
     "gcp": [
         (lambda name: name.startswith("cis_"), GCPCIS),
@@ -95,6 +99,7 @@ COMPLIANCE_CLASS_MAP = {
         (lambda name: name.startswith("iso27001_"), GCPISO27001),
         (lambda name: name == "prowler_threatscore_gcp", ProwlerThreatScoreGCP),
         (lambda name: name == "ccc_gcp", CCC_GCP),
+        (lambda name: name == "c5_gcp", GCPC5),
     ],
     "kubernetes": [
         (lambda name: name.startswith("cis_"), KubernetesCIS),
@@ -107,6 +112,13 @@ COMPLIANCE_CLASS_MAP = {
     ],
     "github": [
         (lambda name: name.startswith("cis_"), GithubCIS),
+    ],
+    "iac": [
+        # IaC provider doesn't have specific compliance frameworks yet
+        # Trivy handles its own compliance checks
+    ],
+    "oraclecloud": [
+        (lambda name: name.startswith("cis_"), OracleCloudCIS),
     ],
 }
 

@@ -1,68 +1,90 @@
-# This is a basic workflow to help you get started with Actions
-
-name: SDK - Refresh AWS services' regions
+name: 'SDK: Refresh AWS Regions'
 
 on:
   schedule:
-    - cron: "0 9 * * 1" # runs at 09:00 UTC every Monday
+    - cron: '0 9 * * 1' # Every Monday at 09:00 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
 
 env:
-  GITHUB_BRANCH: "master"
-  AWS_REGION_DEV: us-east-1
+  PYTHON_VERSION: '3.12'
+  AWS_REGION: 'us-east-1'
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  refresh-aws-regions:
+    if: github.repository == 'prowler-cloud/prowler'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       id-token: write
       pull-requests: write
       contents: write
-    # Steps represent a sequence of tasks that will be executed as part of the job
-    steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          ref: ${{ env.GITHUB_BRANCH }}
 
-      - name: setup python
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: 'master'
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
         with:
-          python-version: 3.9 #install the python needed
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
 
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install boto3
+        run: pip install boto3
 
-      - name: Configure AWS Credentials -- DEV
-        uses: aws-actions/configure-aws-credentials@a03048d87541d1d9fcf2ecf528a4a65ba9bd7838 # v5.0.0
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@00943011d9042930efac3dcd3a170e4273319bc8 # v5.1.0
         with:
-          aws-region: ${{ env.AWS_REGION_DEV }}
+          aws-region: ${{ env.AWS_REGION }}
           role-to-assume: ${{ secrets.DEV_IAM_ROLE_ARN }}
-          role-session-name: refresh-AWS-regions-dev
+          role-session-name: prowler-refresh-aws-regions
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: python3 util/update_aws_services_regions.py
+      - name: Update AWS services regions
+        run: python util/update_aws_services_regions.py
 
-      # Create pull request
-      - name: Create Pull Request
+      - name: Create pull request
+        id: create-pr
         uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
         with:
-          author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
           token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
-          commit-message: "feat(regions_update): Update regions for AWS services"
-          branch: "aws-services-regions-updated-${{ github.sha }}"
-          labels: "status/waiting-for-revision, severity/low, provider/aws, no-changelog"
-          title: "chore(regions_update): Changes in regions for AWS services"
+          author: 'prowler-bot <179230569+prowler-bot@users.noreply.github.com>'
+          committer: 'github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>'
+          commit-message: 'feat(aws): update regions for AWS services'
+          branch: 'aws-regions-update-${{ github.run_number }}'
+          title: 'feat(aws): Update regions for AWS services'
+          labels: |
+            status/waiting-for-revision
+            severity/low
+            provider/aws
+            no-changelog
           body: |
             ### Description
 
-            This PR updates the regions for AWS services.
+            Automated update of AWS service regions from the official AWS IP ranges.
+
+            **Trigger:** ${{ github.event_name == 'schedule' && 'Scheduled (weekly)' || github.event_name == 'workflow_dispatch' && 'Manual' || 'Workflow update' }}
+            **Run:** [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+            ### Checklist
+
+            - [x] This is an automated update from AWS official sources
+            - [x] No manual review of region data required
 
             ### License
 
             By submitting this pull request, I confirm that my contribution is made under the terms of the Apache 2.0 license.
+
+      - name: PR creation result
+        run: |
+          if [[ "${{ steps.create-pr.outputs.pull-request-number }}" ]]; then
+            echo "✓ Pull request #${{ steps.create-pr.outputs.pull-request-number }} created successfully"
+            echo "URL: ${{ steps.create-pr.outputs.pull-request-url }}"
+          else
+            echo "✓ No changes detected - AWS regions are up to date"
+          fi
