@@ -143,68 +143,75 @@ const chartConfig = {
 export function LineChart({ data, lines, height = 400 }: LineChartProps) {
   const [hoveredLine, setHoveredLine] = useState<string | null>(null);
 
+  const legendItems = lines.map((line) => ({
+    label: line.label,
+    color: line.color,
+  }));
+
   return (
-    <ChartContainer
-      config={chartConfig}
-      className="w-full"
-      style={{ height, aspectRatio: "auto" }}
-    >
-      <RechartsLine
-        data={data}
-        margin={{
-          top: 10,
-          left: 50,
-          right: 30,
-          bottom: 20,
-        }}
+    <div className="w-full">
+      <ChartContainer
+        config={chartConfig}
+        className="w-full overflow-hidden"
+        style={{ height, aspectRatio: "auto" }}
       >
-        <CartesianGrid
-          vertical={false}
-          strokeOpacity={1}
-          stroke="var(--border-neutral-secondary)"
-        />
-        <XAxis
-          dataKey="date"
-          tickLine={false}
-          axisLine={false}
-          tickMargin={8}
-          tick={CustomXAxisTickWithToday}
-        />
-        <YAxis
-          tickLine={false}
-          axisLine={false}
-          tickMargin={8}
-          tick={{
-            fill: "var(--color-text-neutral-secondary)",
-            fontSize: AXIS_FONT_SIZE,
+        <RechartsLine
+          data={data}
+          margin={{
+            top: 10,
+            left: 0,
+            right: 8,
+            bottom: 20,
           }}
-        />
-        <ChartTooltip cursor={false} content={<CustomLineTooltip />} />
-        <Legend
-          content={<CustomLegend />}
-          wrapperStyle={{ paddingTop: "40px" }}
-        />
-        {lines.map((line) => {
-          const isHovered = hoveredLine === line.dataKey;
-          const isFaded = hoveredLine !== null && !isHovered;
-          return (
-            <Line
-              key={line.dataKey}
-              type="natural"
-              dataKey={line.dataKey}
-              stroke={line.color}
-              strokeWidth={2}
-              strokeOpacity={isFaded ? 0.5 : 1}
-              name={line.label}
-              dot={{ fill: line.color, r: 4 }}
-              activeDot={{ r: 6 }}
-              onMouseEnter={() => setHoveredLine(line.dataKey)}
-              onMouseLeave={() => setHoveredLine(null)}
-              style={{ transition: "stroke-opacity 0.2s" }}
-            />
-          );
-        })}
-      </RechartsLine>
-    </ChartContainer>
+        >
+          <CartesianGrid
+            vertical={false}
+            strokeOpacity={1}
+            stroke="var(--border-neutral-secondary)"
+          />
+          <XAxis
+            dataKey="date"
+            tickLine={false}
+            axisLine={false}
+            tickMargin={8}
+            tick={CustomXAxisTickWithToday}
+          />
+          <YAxis
+            tickLine={false}
+            axisLine={false}
+            tickMargin={8}
+            tick={{
+              fill: "var(--color-text-neutral-secondary)",
+              fontSize: AXIS_FONT_SIZE,
+            }}
+          />
+          <ChartTooltip cursor={false} content={<CustomLineTooltip />} />
+          {lines.map((line) => {
+            const isHovered = hoveredLine === line.dataKey;
+            const isFaded = hoveredLine !== null && !isHovered;
+            return (
+              <Line
+                key={line.dataKey}
+                type="natural"
+                dataKey={line.dataKey}
+                stroke={line.color}
+                strokeWidth={2}
+                strokeOpacity={isFaded ? 0.5 : 1}
+                name={line.label}
+                dot={{ fill: line.color, r: 4 }}
+                activeDot={{ r: 6 }}
+                onMouseEnter={() => setHoveredLine(line.dataKey)}
+                onMouseLeave={() => setHoveredLine(null)}
+                style={{ transition: "stroke-opacity 0.2s" }}
+              />
+            );
+          })}
+        </RechartsLine>
+      </ChartContainer>
+
+      <div className="mt-4">
+        <ChartLegend items={legendItems} />
+      </div>
+    </div>
   );
 }

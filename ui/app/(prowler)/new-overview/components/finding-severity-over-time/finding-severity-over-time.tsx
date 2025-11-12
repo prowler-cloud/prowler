@@ -110,15 +110,14 @@ export const FindingSeverityOverTime = ({
 
   return (
     <>
-      <div className="mb-16">
+      <div className="w-fit mb-8">
         <TimeRangeSelector
           value={timeRange}
           onChange={handleTimeRangeChange}
           isLoading={isLoading}
         />
       </div>
-
-      <div className="w-full">
+      <div className="w-full mb-4">
         <LineChart data={chartData} lines={lines} height={400} />
       </div>
     </>
@@ -127,18 +126,15 @@ export const FindingSeverityOverTime = ({
 
 export function FindingSeverityOverTimeSkeleton() {
   return (
-    <div className="border-border-neutral-primary bg-bg-neutral-secondary rounded-lg border p-4">
-      <div className="mb-16 flex gap-2">
-        {/* Time range selector skeleton */}
-        {Array.from({ length: 4 }).map((_, index) => (
-          <Skeleton key={index} className="h-10 w-12 rounded-full" />
-        ))}
+    <>
+      <div className="w-fit mb-8">
+        <div className="flex gap-2">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Skeleton key={index} className="h-10 w-12 rounded-full" />
+          ))}
+        </div>
       </div>
-
-      <div className="w-full">
-        {/* Line chart skeleton */}
-        <Skeleton className="h-[400px] w-full rounded-lg" />
-      </div>
-    </div>
+      <Skeleton className="h-[400px] w-full rounded-lg" />
+    </>
   );
 }
