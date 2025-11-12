@@ -16,15 +16,10 @@
   "Risk": "Without **ELB access logs**, you lose **visibility** into edge traffic, reducing detection of reconnaissance, brute-force, and exploitation attempts. This hampers forensics and incident timelines, risking undetected data exfiltration (confidentiality), untraceable changes (integrity), and delayed response to outages or DDoS (availability).",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://medium.com/@pramodyasachin/how-to-save-aws-application-load-balancer-access-logs-in-the-s3-bucket-b81bef4da29",
     "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/enable-access-logs.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELB/elb-access-log.html",
     "https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/access-log-collection.html",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ElasticBeanstalk/enable-access-logs.html",
-    "https://docs.amazonaws.cn/en_us/elasticloadbalancing/latest/application/load-balancer-access-logs.html",
-    "https://docs.prowler.com/checks/aws/logging-policies/bc_aws_logging_23#terraform",
-    "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/enable-access-logging.html",
-    "https://docs.cgn.portal.checkpoint.com/docs/d9_aws_log_15"
+    "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/enable-access-logging.html"
   ],
   "Remediation": {
     "Code": {
@@ -39,8 +34,7 @@
     }
   },
   "Categories": [
-    "logging",
-    "forensics-ready"
+    "logging"
   ],
   "DependsOn": [],
   "RelatedTo": [],

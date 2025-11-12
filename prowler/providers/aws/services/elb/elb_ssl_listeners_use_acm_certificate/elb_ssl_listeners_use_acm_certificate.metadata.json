@@ -16,8 +16,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/securityhub/latest/userguide/elb-controls.html#elb-2",
-    "https://docs.aws.amazon.com/config/latest/developerguide/elb-acm-certificate-required.html",
-    "https://repost.aws/es/knowledge-center/associate-acm-certificate-alb-nlb"
+    "https://docs.aws.amazon.com/config/latest/developerguide/elb-acm-certificate-required.html"
   ],
   "Remediation": {
     "Code": {

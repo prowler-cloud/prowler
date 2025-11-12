@@ -19,9 +19,7 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELB/elb-listener-security.html",
-    "https://aws.github.io/aws-elb-best-practices/security/data_protection/",
-    "https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/elb-security-policy-table.html",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/elb-controls.html"
+    "https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/elb-security-policy-table.html"
   ],
   "Remediation": {
     "Code": {

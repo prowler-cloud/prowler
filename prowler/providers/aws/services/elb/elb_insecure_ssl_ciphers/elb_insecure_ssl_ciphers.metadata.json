@@ -19,12 +19,9 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELB/elb-security-policy.html",
-    "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_43#terraform",
     "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html#describe-ssl-policies",
     "https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/ssl-config-update.html",
-    "https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/elb-security-policy-table.html",
-    "https://aws.amazon.com/about-aws/whats-new/2017/02/elastic-load-balancing-support-for-tls-1-1-and-tls-1-2-pre-defined-security-policies/",
-    "https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/elb-ssl-security-policy.html"
+    "https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/elb-security-policy-table.html"
   ],
   "Remediation": {
     "Code": {

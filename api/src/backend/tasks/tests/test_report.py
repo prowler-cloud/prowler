@@ -1,19 +1,25 @@
 import uuid
+from datetime import timedelta
+from decimal import Decimal
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import matplotlib
 import pytest
+from django.utils import timezone
+from freezegun import freeze_time
 from tasks.jobs.report import (
-    _aggregate_requirement_statistics_from_database,
-    _calculate_requirements_data_from_statistics,
     _load_findings_for_requirement_checks,
     generate_threatscore_report,
     generate_threatscore_report_job,
 )
+from tasks.jobs.threatscore_utils import (
+    _aggregate_requirement_statistics_from_database,
+    _calculate_requirements_data_from_statistics,
+)
 from tasks.tasks import generate_threatscore_report_task
 
-from api.models import Finding, StatusChoices
+from api.models import Finding, Scan, StateChoices, StatusChoices, ThreatScoreSnapshot
 from prowler.lib.check.models import Severity
 
 matplotlib.use("Agg")  # Use non-interactive backend for tests
@@ -39,6 +45,7 @@ class TestGenerateThreatscoreReport:
             assert result == {"upload": False}
             mock_filter.assert_called_once_with(scan_id=self.scan_id)
 
+    @patch("tasks.jobs.report.ThreatScoreSnapshot.objects.create")
     @patch("tasks.jobs.report.rmtree")
     @patch("tasks.jobs.report._upload_to_s3")
     @patch("tasks.jobs.report.generate_threatscore_report")
@@ -53,6 +60,7 @@ class TestGenerateThreatscoreReport:
         mock_generate_report,
         mock_upload,
         mock_rmtree,
+        mock_snapshot_create,
     ):
         mock_scan_summary_filter.return_value.exists.return_value = True
 
@@ -95,8 +103,10 @@ class TestGenerateThreatscoreReport:
             Path("/tmp/threatscore_path_threatscore_report.pdf").parent,
             ignore_errors=True,
         )
+        mock_snapshot_create.assert_called_once()
 
-    def test_generate_threatscore_report_fails_upload(self):
+    @patch("tasks.jobs.report.ThreatScoreSnapshot.objects.create")
+    def test_generate_threatscore_report_fails_upload(self, mock_snapshot_create):
         with (
             patch("tasks.jobs.report.ScanSummary.objects.filter") as mock_filter,
             patch("tasks.jobs.report.Provider.objects.get") as mock_provider_get,
@@ -125,8 +135,12 @@ class TestGenerateThreatscoreReport:
             )
 
             assert result == {"upload": False}
+            mock_snapshot_create.assert_called_once()
 
-    def test_generate_threatscore_report_logs_rmtree_exception(self, caplog):
+    @patch("tasks.jobs.report.ThreatScoreSnapshot.objects.create")
+    def test_generate_threatscore_report_logs_rmtree_exception(
+        self, mock_snapshot_create, caplog
+    ):
         with (
             patch("tasks.jobs.report.ScanSummary.objects.filter") as mock_filter,
             patch("tasks.jobs.report.Provider.objects.get") as mock_provider_get,
@@ -160,8 +174,10 @@ class TestGenerateThreatscoreReport:
                     provider_id=self.provider_id,
                 )
                 assert "Error deleting output files" in caplog.text
+                mock_snapshot_create.assert_called_once()
 
-    def test_generate_threatscore_report_azure_provider(self):
+    @patch("tasks.jobs.report.ThreatScoreSnapshot.objects.create")
+    def test_generate_threatscore_report_azure_provider(self, mock_snapshot_create):
         with (
             patch("tasks.jobs.report.ScanSummary.objects.filter") as mock_filter,
             patch("tasks.jobs.report.Provider.objects.get") as mock_provider_get,
@@ -200,6 +216,135 @@ class TestGenerateThreatscoreReport:
                 only_failed=True,
                 min_risk_level=4,
             )
+            mock_snapshot_create.assert_called_once()
+
+    @patch("tasks.jobs.report.rmtree")
+    @patch(
+        "tasks.jobs.report._upload_to_s3",
+        return_value="s3://bucket/threatscore/threatscore_report.pdf",
+    )
+    @patch("tasks.jobs.report.generate_threatscore_report")
+    @patch("tasks.jobs.report._generate_output_directory")
+    @patch("tasks.jobs.report.ScanSummary.objects.filter")
+    @patch("tasks.jobs.report.compute_threatscore_metrics")
+    @pytest.mark.django_db
+    @freeze_time("2025-01-10T12:00:00Z")
+    def test_generate_threatscore_report_persists_snapshot_and_delta(
+        self,
+        mock_compute_metrics,
+        mock_scan_summary_filter,
+        mock_generate_output_directory,
+        mock_generate_report,
+        mock_upload,
+        mock_rmtree,
+        tenants_fixture,
+        providers_fixture,
+    ):
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+
+        scan_previous = Scan.objects.create(
+            tenant=tenant,
+            provider=provider,
+            name="previous-threatscore-scan",
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            started_at=timezone.now() - timedelta(hours=4),
+            completed_at=timezone.now() - timedelta(hours=3),
+        )
+        ThreatScoreSnapshot.objects.create(
+            tenant=tenant,
+            scan=scan_previous,
+            provider=provider,
+            compliance_id="prowler_threatscore_aws",
+            overall_score=Decimal("70.00"),
+            score_delta=None,
+            section_scores={"1. IAM": "65.00"},
+            critical_requirements=[],
+            total_requirements=50,
+            passed_requirements=35,
+            failed_requirements=15,
+            manual_requirements=0,
+            total_findings=40,
+            passed_findings=25,
+            failed_findings=15,
+        )
+
+        scan_current = Scan.objects.create(
+            tenant=tenant,
+            provider=provider,
+            name="current-threatscore-scan",
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            started_at=timezone.now() - timedelta(hours=2),
+            completed_at=timezone.now() - timedelta(hours=1),
+        )
+
+        mock_scan_summary_filter.return_value.exists.return_value = True
+        mock_generate_output_directory.return_value = (
+            "/tmp/output",
+            "/tmp/compressed",
+            "/tmp/threatscore_path",
+        )
+
+        metrics = {
+            "overall_score": 85.5,
+            "score_delta": 10.0,
+            "section_scores": {"1. IAM": 82.3, "2. Attack Surface": 60.0},
+            "critical_requirements": [
+                {
+                    "requirement_id": "req_new",
+                    "title": "New high-risk requirement",
+                    "section": "1. IAM",
+                    "subsection": "Root Account",
+                    "risk_level": 5,
+                    "weight": 150,
+                    "passed_findings": 7,
+                    "total_findings": 10,
+                    "description": "Critical requirement description",
+                }
+            ],
+            "total_requirements": 140,
+            "passed_requirements": 100,
+            "failed_requirements": 40,
+            "manual_requirements": 0,
+            "total_findings": 200,
+            "passed_findings": 150,
+            "failed_findings": 50,
+        }
+        mock_compute_metrics.return_value = metrics
+
+        result = generate_threatscore_report_job(
+            tenant_id=str(tenant.id),
+            scan_id=str(scan_current.id),
+            provider_id=str(provider.id),
+        )
+
+        assert result == {"upload": True}
+        mock_compute_metrics.assert_called_once_with(
+            tenant_id=str(tenant.id),
+            scan_id=str(scan_current.id),
+            provider_id=str(provider.id),
+            compliance_id="prowler_threatscore_aws",
+            min_risk_level=4,
+        )
+        mock_generate_report.assert_called_once()
+        mock_upload.assert_called_once()
+        mock_rmtree.assert_called_once()
+
+        snapshots = ThreatScoreSnapshot.objects.filter(
+            tenant=tenant, provider=provider
+        ).order_by("inserted_at")
+        assert snapshots.count() == 2
+
+        new_snapshot = ThreatScoreSnapshot.objects.get(scan=scan_current)
+        assert new_snapshot.compliance_id == "prowler_threatscore_aws"
+        assert Decimal(new_snapshot.overall_score) == Decimal("85.50")
+        assert Decimal(new_snapshot.score_delta) == Decimal("15.50")
+        assert new_snapshot.section_scores == metrics["section_scores"]
+        assert new_snapshot.critical_requirements == metrics["critical_requirements"]
+        assert new_snapshot.total_requirements == metrics["total_requirements"]
+        assert new_snapshot.total_findings == metrics["total_findings"]
 
 
 @pytest.mark.django_db
