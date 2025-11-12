@@ -1,7 +1,6 @@
 "use client";
 
 import { MessageCircleWarning, ThumbsUp } from "lucide-react";
-import Link from "next/link";
 
 import type {
   CriticalRequirement,
@@ -9,50 +8,33 @@ import type {
 } from "@/actions/overview/types";
 import { RadialChart } from "@/components/graphs/radial-chart";
 import {
-  SEVERITY_COLORS,
-  STATUS_COLORS,
-} from "@/components/graphs/shared/constants";
-import {
-  BaseCard,
+  Card,
   CardContent,
   CardHeader,
   CardTitle,
+  Skeleton,
 } from "@/components/shadcn";
 
 const THREAT_LEVEL_CONFIG = {
-  CRITICAL: {
+  DANGER: {
     label: "Critical Risk",
-    color: "text-red-500",
-    chartColor: SEVERITY_COLORS.Critical,
+    color: "var(--bg-fail-primary)",
+    chartColor: "var(--bg-fail-primary)",
     minScore: 0,
-    maxScore: 20,
+    maxScore: 30,
   },
-  HIGH: {
-    label: "High Risk",
-    color: "text-orange-500",
-    chartColor: SEVERITY_COLORS.High,
-    minScore: 21,
-    maxScore: 40,
-  },
-  MODERATE: {
-    label: "Moderately Secure",
-    color: "text-yellow-500",
-    chartColor: SEVERITY_COLORS.Medium,
-    minScore: 41,
+  WARNING: {
+    label: "Moderate Risk",
+    color: "var(--bg-warning-primary)",
+    chartColor: "var(--bg-warning-primary)",
+    minScore: 31,
     maxScore: 60,
   },
-  LOW: {
-    label: "Low Risk",
-    color: "text-blue-500",
-    chartColor: SEVERITY_COLORS.Low,
+  SUCCESS: {
+    label: "Secure",
+    color: "var(--bg-pass-primary)",
+    chartColor: "var(--bg-pass-primary)",
     minScore: 61,
-    maxScore: 80,
-  },
-  SECURE: {
-    label: "Highly Secure",
-    color: "text-green-500",
-    chartColor: STATUS_COLORS.Success,
-    minScore: 81,
     maxScore: 100,
   },
 } as const;
@@ -74,7 +56,7 @@ function getThreatLevel(score: number): ThreatLevelKey {
       return key as ThreatLevelKey;
     }
   }
-  return "MODERATE";
+  return "WARNING";
 }
 
 // Convert section scores to tooltip data for the radial chart
@@ -84,15 +66,12 @@ function convertSectionScoresToTooltipData(
   if (!sectionScores) return [];
 
   return Object.entries(sectionScores).map(([name, value]) => {
-    // Determine color based on score value
-    let color: string = SEVERITY_COLORS.Critical;
-    if (value >= 80) color = STATUS_COLORS.Success;
-    else if (value >= 60) color = SEVERITY_COLORS.Low;
-    else if (value >= 40) color = SEVERITY_COLORS.Medium;
-    else if (value >= 20) color = SEVERITY_COLORS.High;
-
     // Round to nearest integer
     const roundedValue = Math.round(value);
+
+    // Determine color based on the same ranges as THREAT_LEVEL_CONFIG
+    const threatLevel = getThreatLevel(roundedValue);
+    const color = THREAT_LEVEL_CONFIG[threatLevel].chartColor;
 
     return { name, value: roundedValue, color };
   });
@@ -122,22 +101,10 @@ export function ThreatScore({
   sectionScores,
   criticalRequirements,
 }: ThreatScoreProps) {
-  if (score === null || score === undefined) {
-    return (
-      <BaseCard className="flex min-h-[372px] min-w-[312px] flex-col justify-between md:max-w-[312px]">
-        <CardHeader>
-          <CardTitle>Prowler Threat Score</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-1 items-center justify-center">
-          <p className="text-chart-text-primary">
-            No ThreatScore data available
-          </p>
-        </CardContent>
-      </BaseCard>
-    );
-  }
+  const hasData = score !== null && score !== undefined;
+  const displayScore = hasData ? score : 0;
 
-  const threatLevel = getThreatLevel(score);
+  const threatLevel = getThreatLevel(displayScore);
   const config = THREAT_LEVEL_CONFIG[threatLevel];
 
   // Convert section scores to tooltip data
@@ -147,20 +114,23 @@ export function ThreatScore({
   const gaps = extractTopGaps(criticalRequirements, 2);
 
   return (
-    <BaseCard className="flex min-h-[372px] min-w-[328px] flex-col justify-between md:max-w-[312px]">
+    <Card
+      variant="base"
+      className="flex min-h-[372px] min-w-[328px] flex-col justify-between md:max-w-[312px]"
+    >
       <CardHeader>
         <CardTitle>Prowler Threat Score</CardTitle>
       </CardHeader>
 
-      <CardContent className="space-y-2">
+      <CardContent className="flex flex-1 flex-col justify-between space-y-4">
         {/* Radial Chart */}
-        <div className="relative mx-auto h-[150px] w-full max-w-[250px]">
-          <div className="absolute top-0 left-1/2 z-10 h-full w-full -translate-x-1/2">
+        <div className="relative mx-auto h-[172px] w-full max-w-[250px]">
+          <div className="absolute top-0 left-1/2 z-1 w-full -translate-x-1/2">
             <RadialChart
-              percentage={score}
+              percentage={displayScore}
               label="Score"
               color={config.chartColor}
-              backgroundColor="rgba(100, 100, 100, 0.2)"
+              backgroundColor="var(--bg-neutral-tertiary)"
               height={206}
               innerRadius={90}
               outerRadius={115}
@@ -171,54 +141,87 @@ export function ThreatScore({
             />
           </div>
           {/* Overlaid Text (centered) */}
-          <div className="pointer-events-none absolute top-[75%] left-1/2 z-0 -translate-x-1/2 -translate-y-1/2 text-center">
-            <p className="text-sm text-nowrap text-slate-900 dark:text-zinc-300">
-              {config.label}
-            </p>
-          </div>
+          {hasData && (
+            <div className="pointer-events-none absolute top-[65%] left-1/2 z-0 -translate-x-1/2 -translate-y-1/2 text-center">
+              <p className="text-text-neutral-secondary text-sm text-nowrap">
+                {config.label}
+              </p>
+            </div>
+          )}
         </div>
 
-        {/* Info Box */}
-        <div className="flex-1 rounded-xl border border-slate-300 bg-[#F8FAFC80] px-3 py-[9px] backdrop-blur-[46px] dark:border-[rgba(38,38,38,0.70)] dark:bg-[rgba(23,23,23,0.50)]">
-          <div className="flex flex-col gap-1.5 text-sm leading-6 text-zinc-800 dark:text-zinc-300">
-            {/* Improvement Message */}
-            {scoreDelta !== undefined &&
-              scoreDelta !== null &&
-              scoreDelta !== 0 && (
-                <div className="flex items-center gap-1">
-                  <ThumbsUp size={14} className="flex-shrink-0" />
+        {/* Info Box or Empty State */}
+        {hasData ? (
+          <Card
+            variant="inner"
+            padding="md"
+            className="items-center justify-center"
+          >
+            <div className="text-text-neutral-secondary flex flex-col gap-1.5 text-sm leading-6">
+              {/* Improvement Message */}
+              {scoreDelta !== undefined &&
+                scoreDelta !== null &&
+                scoreDelta !== 0 && (
+                  <div className="flex items-center gap-1">
+                    <ThumbsUp size={14} className="flex-shrink-0" />
+                    <p>
+                      Threat score has{" "}
+                      {scoreDelta > 0 ? "improved" : "decreased"} by{" "}
+                      {Math.abs(scoreDelta)}%
+                    </p>
+                  </div>
+                )}
+
+              {/* Gaps Message */}
+              {gaps.length > 0 && (
+                <div className="flex items-start gap-1">
+                  <MessageCircleWarning
+                    size={14}
+                    className="mt-1 flex-shrink-0"
+                  />
                   <p>
-                    Threat score has {scoreDelta > 0 ? "improved" : "decreased"}{" "}
-                    by {Math.abs(scoreDelta)}%
+                    Major gaps include {gaps.slice(0, 2).join(", ")}
+                    {gaps.length > 2 && ` & ${gaps.length - 2} more...`}
                   </p>
                 </div>
               )}
-
-            {/* Gaps Message */}
-            {gaps.length > 0 && (
-              <div className="flex items-start gap-1">
-                <MessageCircleWarning
-                  size={14}
-                  className="mt-1 flex-shrink-0"
-                />
-                <p>
-                  Major gaps include {gaps.slice(0, 2).join(", ")}
-                  {gaps.length > 2 && ` & ${gaps.length - 2} more...`}
-                </p>
-              </div>
-            )}
-
-            {/* View Remediation Plan Button */}
-            <div className="flex justify-center">
-              <Link href="/compliance">
-                <span className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-300">
-                  View Remediation Plan
-                </span>
-              </Link>
             </div>
-          </div>
-        </div>
+          </Card>
+        ) : (
+          <Card
+            variant="inner"
+            padding="md"
+            className="items-center justify-center"
+          >
+            <p className="text-text-neutral-secondary text-sm">
+              Threat Score Data Unavailable
+            </p>
+          </Card>
+        )}
       </CardContent>
-    </BaseCard>
+    </Card>
+  );
+}
+
+export function ThreatScoreSkeleton() {
+  return (
+    <Card
+      variant="base"
+      className="flex min-h-[372px] min-w-[328px] flex-col justify-between md:max-w-[312px]"
+    >
+      <CardHeader>
+        <Skeleton className="h-7 w-36 rounded-xl" />
+      </CardHeader>
+
+      <CardContent className="flex flex-1 flex-col justify-between space-y-4">
+        {/* Circular skeleton for radial chart */}
+        <div className="relative mx-auto h-[172px] w-full max-w-[250px]">
+          <Skeleton className="mx-auto size-[170px] rounded-full" />
+        </div>
+
+        {/* Bottom info box skeleton */}
+        <Skeleton className="h-[97px] w-full shrink-0 rounded-xl" />
+      </CardContent>
+    </Card>
   );
 }
