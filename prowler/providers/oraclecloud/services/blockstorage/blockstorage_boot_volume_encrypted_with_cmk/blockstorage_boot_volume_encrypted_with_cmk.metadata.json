@@ -13,9 +13,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-BlockVolume/block-volumes-encrypted-with-cmks.html",
-    "https://docs.oracle.com/en-us/iaas/",
-    "https://docs.public.content.oci.oraclecloud.com/en-us/iaas/Content/Block/Concepts/managingblockencryptionkeys.htm",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-BlockVolume/boot-volumes-encrypted-with-cmks.html"
+    "https://docs.public.content.oci.oraclecloud.com/en-us/iaas/Content/Block/Concepts/managingblockencryptionkeys.htm"
   ],
   "Remediation": {
     "Code": {
