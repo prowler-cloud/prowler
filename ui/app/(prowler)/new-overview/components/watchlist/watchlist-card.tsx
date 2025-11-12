@@ -3,7 +3,12 @@ import Link from "next/link";
 import { ReactNode } from "react";
 
 import { Button } from "@/components/shadcn/button/button";
-import { Card, CardContent, CardTitle } from "@/components/shadcn/card/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardTitle,
+} from "@/components/shadcn/card/card";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +36,7 @@ const getScoreTextColor = (score: number): string => {
       return config.textColor;
     }
   }
+
   return SCORE_CONFIG.WARNING.textColor;
 };
 
@@ -66,11 +72,11 @@ export const WatchlistCard = ({
   return (
     <Card
       variant="base"
-      className="flex min-h-[405px] min-w-[328px] flex-col md:max-w-[312px]"
+      className="flex min-h-[405px] min-w-[328px] flex-1 flex-col justify-between md:max-w-[312px]"
     >
       <CardTitle>{title}</CardTitle>
 
-      <CardContent className="flex flex-1 flex-col gap-2">
+      <CardContent className="flex flex-col gap-2">
         {isEmpty ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-12 py-6">
             {/* Icon and message */}
@@ -119,7 +125,7 @@ export const WatchlistCard = ({
                     {item.icon}
                   </div>
 
-                  <p className="text-text-neutral-secondary flex-1 text-sm leading-6">
+                  <p className="text-text-neutral-secondary flex-1 truncate text-sm leading-6">
                     {item.label}
                   </p>
                   <div className="flex items-center gap-1.5">
@@ -135,12 +141,15 @@ export const WatchlistCard = ({
                 </div>
               );
             })}
-            <Button variant="link" size="link-sm" asChild className="mt-2">
-              <Link href={ctaHref}>{ctaLabel}</Link>
-            </Button>
           </>
         )}
       </CardContent>
+
+      <CardFooter className="mb-6">
+        <Button variant="link" size="link-sm" asChild className="w-full">
+          <Link href={ctaHref}>{ctaLabel}</Link>
+        </Button>
+      </CardFooter>
     </Card>
   );
 };

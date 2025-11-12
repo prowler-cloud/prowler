@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 
+import AWSLogo from "@/components/icons/compliance/aws.svg";
 import CISLogo from "@/components/icons/compliance/cis.svg";
 import ISOLogo from "@/components/icons/compliance/iso-27001.svg";
 import NISTLogo from "@/components/icons/compliance/nist.svg";
@@ -51,6 +52,12 @@ const MOCK_COMPLIANCE_ITEMS: WatchlistItem[] = [
     icon: <ComplianceIcon src={SOC2Logo} />,
     label: "SOC 2",
     value: "82%",
+  },
+  {
+    key: "aws-well-architected-framework",
+    icon: <ComplianceIcon src={AWSLogo} />,
+    label: "AWS Well-Architected Framework",
+    value: "90%",
   },
 ];
 
