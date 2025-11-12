@@ -18,7 +18,6 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html#describe-ssl-policies",
-    "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_43#terraform",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/security-policy.html"
   ],
   "Remediation": {

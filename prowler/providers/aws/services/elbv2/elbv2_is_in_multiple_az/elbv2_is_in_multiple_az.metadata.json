@@ -17,11 +17,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/availability-zones.html",
-    "https://docs.aws.amazon.com/securityhub/latest/userguide/elb-controls.html#elb-13",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/enable-multi-az.html",
-    "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-subnets.html",
-    "https://awscli.amazonaws.com/v2/documentation/api/2.0.34/reference/elbv2/set-subnets.html",
-    "https://docs.aws.amazon.com/cli/latest/reference/elbv2/set-subnets.html",
     "https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/how-elastic-load-balancing-works.html#availability-zones"
   ],
   "Remediation": {

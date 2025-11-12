@@ -16,7 +16,6 @@
   "Risk": "Absent **ALB access logs** reduces **visibility** and hampers **incident detection** and **forensics**. Malicious requests, credential stuffing, or data exfiltration via the load balancer can go unnoticed, undermining **confidentiality** and **integrity**, and delaying recovery from **availability** incidents.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/logging-policies/bc_aws_logging_22#terraform",
     "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/access-log.html"
   ],
@@ -33,8 +32,7 @@
     }
   },
   "Categories": [
-    "logging",
-    "forensics-ready"
+    "logging"
   ],
   "DependsOn": [],
   "RelatedTo": [],

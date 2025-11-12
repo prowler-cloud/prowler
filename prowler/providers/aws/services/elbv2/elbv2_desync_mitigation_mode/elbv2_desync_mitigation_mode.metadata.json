@@ -20,11 +20,6 @@
     "https://docs.aws.amazon.com/securityhub/latest/userguide/elb-controls.html#elb-12",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/drop-invalid-header-fields-enabled.html",
     "https://support.icompaas.com/support/solutions/articles/62000233515-ensure-the-application-load-balancer-is-configured-with-strictest-desync-mitigation-mode",
-    "https://docs.compose-x.io/syntax/compose_x/elbv2.html",
-    "https://github.com/terraform-aws-modules/terraform-aws-alb",
-    "https://docs.firetail.ai/docs/findings/aws-alb-desync-not-defensive-or-strictest/",
-    "https://repost.aws/questions/QUPAjkIW8eQl-MvW_A6UWTeA/i-want-to-allow-underscore-https-header-in-load-balancer",
-    "https://aws.amazon.com/about-aws/whats-new/2020/08/application-and-classic-load-balancers-adding-defense-in-depth-with-introduction-of-desync-mitigation-mode/",
     "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/application-load-balancers.html#desync-mitigation-mode"
   ],
   "Remediation": {
@@ -39,9 +34,7 @@
       "Url": "https://hub.prowler.com/check/elbv2_desync_mitigation_mode"
     }
   },
-  "Categories": [
-    "vulnerabilities"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

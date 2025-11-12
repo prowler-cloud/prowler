@@ -16,13 +16,7 @@
   "Risk": "Exposed `HTTP` paths allow traffic to travel in plaintext, enabling interception, credential theft, session hijacking, and response tampering. This weakens confidentiality and integrity and makes **MITM** on public or shared networks feasible.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/networking-policies/networking_36#aws-ec2-console",
-    "https://stackoverflow.com/questions/59397703/aws-eb-config-file-redirect-http-to-https",
-    "https://jvlewis.dev/how-to-redirect-http-to-https-using-only-aws-application-load-balancer-d46a583cd248",
-    "https://fuzzyblog.io/blog/aws/2017/02/03/redirecting-http-to-https-with-aws-and-elb.html",
-    "https://docs.amazonaws.cn/en_us/config/latest/developerguide/alb-http-to-https-redirection-check.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/elb-controls.html#elb-1",
-    "https://docs.aws.amazon.com/config/latest/developerguide/alb-http-to-https-redirection-check.html",
     "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/create-https-listener.html"
   ],
   "Remediation": {

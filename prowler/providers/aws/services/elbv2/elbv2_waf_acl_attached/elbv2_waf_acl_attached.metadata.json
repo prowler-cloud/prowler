@@ -30,9 +30,7 @@
       "Url": "https://hub.prowler.com/check/elbv2_waf_acl_attached"
     }
   },
-  "Categories": [
-    "threat-detection"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
