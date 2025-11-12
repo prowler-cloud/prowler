@@ -19095,7 +19095,5 @@ tags:
     alternative to the Mutelist Processor if you need to mute specific findings across
     your tenant with a specific reason.
 servers:
-- url: http://localhost:8080
-  description: Local Development Server
 - url: https://api.prowler.com
-  description: Prowler Cloud API (Production)
+  description: Prowler Cloud API
