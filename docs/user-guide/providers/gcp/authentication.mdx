@@ -108,16 +108,58 @@ This method uses a service account with a downloaded key file for authentication
 
 ### Create Service Account and Key
 
-1. Go to the [Service Accounts page](https://console.cloud.google.com/iam-admin/serviceaccounts) in the GCP Console
-2. Click "Create Service Account"
-3. Fill in the service account details and click "Create and Continue"
-4. Grant the service account the "Reader" role
-5. Click "Done"
-6. Find your service account in the list and click on it
-7. Go to the "Keys" tab
-8. Click "Add Key" > "Create new key"
-9. Select "JSON" and click "Create"
-10. Save the downloaded key file securely
+1. Go to the [Service Accounts page](https://console.cloud.google.com/iam-admin/serviceaccounts) in the GCP Console.
+
+   ![Service account list for the project](/user-guide/providers/gcp/img/service-accounts.png)
+
+2. Click **Create Service Account**.
+
+   ![Create service account form](/user-guide/providers/gcp/img/create-service-account.png)
+
+3. Click **Done** to skip the optional steps for now.
+4. Go to the service account page, look for the service account you just created and click on it.
+5. Go to the **Keys** tab.
+
+   ![Keys tab in the service account details](/user-guide/providers/gcp/img/service-account-keys.png)
+
+6. Click **Add Key** > **Create new key**.
+7. Select **JSON** and click **Create**.
+
+   ![Choose JSON key type before downloading the key](/user-guide/providers/gcp/img/service-account-json.png)
+
+8. Save the downloaded key file securely.
+
+### Create and assign the needed Roles
+
+Prowler need the following roles to be assigned to the service account:
+- **Viewer (`roles/viewer`)**
+- **Service Usage Consumer (`roles/serviceusage.serviceUsageConsumer`)**
+- **ProwlerRole** (custom role to be created in the steps below)
+
+
+#### Create the ProwlerRole
+
+1. Open the Google Cloud Console and navigate to **IAM & Admin → Roles**.
+   ![Roles overview for Lucky-Coast project](/user-guide/providers/gcp/img/roles-section.png)
+2. Click **Create role**, then fill in:
+   - **Title**: `ProwlerRole`
+   - **ID**: `ProwlerRole`
+   - **Description**: short reminder such as “Needed role to execute Prowler with Service Account authentication.”
+   - **Role launch stage**: `Alpha` (or another stage approved by your org).
+3. Select **Add permissions**, search for each permission listed above (filter by **Storage Admin** if that is faster), check the boxes, and click **Add**.
+   ![Adding storage.buckets.getIamPolicy permission](/user-guide/providers/gcp/img/storage-buckets-getIamPolicy.png)
+4. Click **Create** to publish the role.
+
+#### Assign the roles to the service account
+
+1. Go to **IAM & Admin → Service Accounts** and open the account used by Prowler.
+2. On the **Permissions** tab choose **Manage access**.
+3. Add the following roles to the service account:
+   - **Viewer (`roles/viewer`)**
+   - **Service Usage Consumer (`roles/serviceusage.serviceUsageConsumer`)**
+   - **ProwlerRole (custom)**
+4. Save the changes.
+   ![Service account with Viewer, Service Usage Consumer, and ProwlerRole assigned](/user-guide/providers/gcp/img/final-permissions.png)
 
 ### Using with Prowler CLI
 
