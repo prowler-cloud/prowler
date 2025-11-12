@@ -453,9 +453,8 @@ def prowler():
             if mode == "json-asff":
                 if provider != "aws":
                     error_message = (
-                        f"ASFF output (--output-formats json-asff) is only available for "
-                        f"the AWS provider, but {provider} was selected. Remove "
-                        f"json-asff from --output-formats or run with -p aws."
+                        f"ASFF output is only available for "
+                        f"the AWS provider, but {provider} was selected."
                     )
                     logger.error(error_message)
                     raise ValueError(error_message)
