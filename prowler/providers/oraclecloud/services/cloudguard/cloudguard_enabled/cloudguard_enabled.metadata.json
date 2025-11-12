@@ -1,34 +1,33 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "cloudguard_enabled",
-  "CheckTitle": "Ensure Cloud Guard is enabled in the root compartment of the tenancy",
-  "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS OCI Foundations Benchmark"
-  ],
+  "CheckTitle": "Cloud Guard is enabled in the root compartment of the tenancy",
+  "CheckType": [],
   "ServiceName": "cloudguard",
   "SubServiceName": "",
-  "ResourceIdTemplate": "oci:cloudguard:configuration",
+  "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "OciCloudGuard",
-  "Description": "Ensure Cloud Guard is enabled in the root compartment of the tenancy",
-  "Risk": "Without Cloud Guard, security threats may not be detected and remediated.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/cloud-guard/home.htm",
+  "ResourceType": "Compartment",
+  "Description": "**OCI Cloud Guard** status in the tenancy's root compartment is evaluated, expecting `ENABLED` to indicate the service is active for organization-wide detection and response.",
+  "Risk": "Without **Cloud Guard** at the root, signals across compartments can be missed, allowing misconfigurations and malicious activity to persist. This undermines confidentiality (undetected data access), integrity (unauthorized changes), and availability (ongoing abuse without automated response).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en-us/iaas/cloud-guard/home.htm"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "oci cloud-guard configuration update --compartment-id <tenancy-ocid> --status ENABLED --reporting-region <region>",
+      "CLI": "oci cloud-guard cloud-guard-configuration update --compartment-id <tenancy-ocid> --status ENABLED --reporting-region <region>",
       "NativeIaC": "",
-      "Other": "1. Navigate to Security > Cloud Guard\n2. Enable Cloud Guard\n3. Select reporting region\n4. Configure detectors and responders",
-      "Terraform": "resource \"oci_cloud_guard_cloud_guard_configuration\" \"example\" {\n  compartment_id = var.tenancy_ocid\n  reporting_region = var.region\n  status = \"ENABLED\"\n}"
+      "Other": "1. In the OCI Console, go to Security > Cloud Guard\n2. Ensure the root compartment is selected\n3. Click Enable Cloud Guard\n4. Choose a Reporting region\n5. Click Enable",
+      "Terraform": "```hcl\nresource \"oci_cloud_guard_cloud_guard_configuration\" \"<example_resource_name>\" {\n  compartment_id   = var.tenancy_ocid\n  reporting_region = var.region\n  status           = \"ENABLED\" # Critical: Turns on Cloud Guard in the root compartment\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure Cloud Guard is enabled in the root compartment of the tenancy",
-      "Url": "https://hub.prowler.com/check/oci/cloudguard_enabled"
+      "Text": "Enable **Cloud Guard** at the tenancy root to centralize monitoring and automated response. Apply **defense in depth** by using detectors/responders, integrate alerts with monitoring, and enforce **least privilege** for its roles. Regularly tune policies and review findings to prevent blind spots.",
+      "Url": "https://hub.prowler.com/check/cloudguard_enabled"
     }
   },
   "Categories": [
-    "monitoring"
+    "threat-detection"
   ],
   "DependsOn": [],
   "RelatedTo": [],
