@@ -10,6 +10,39 @@ from api.models import LighthouseProviderConfiguration, LighthouseProviderModels
 logger = get_task_logger(__name__)
 
 
+def _extract_error_message(e: Exception) -> str:
+    """
+    Extract a user-friendly error message from various exception types.
+
+    This function handles exceptions from different providers (OpenAI, AWS Bedrock)
+    and extracts the most relevant error message for display to users.
+
+    Args:
+        e: The exception to extract a message from.
+
+    Returns:
+        str: A user-friendly error message.
+    """
+    # For OpenAI SDK errors (>= v1.0)
+    # OpenAI exceptions have a 'body' attribute with error details
+    if hasattr(e, "body") and isinstance(e.body, dict):
+        if "message" in e.body:
+            return e.body["message"]
+        # Sometimes nested under 'error' key
+        if "error" in e.body and isinstance(e.body["error"], dict):
+            return e.body["error"].get("message", str(e))
+
+    # For boto3 ClientError
+    # Boto3 exceptions have a 'response' attribute with error details
+    if hasattr(e, "response") and isinstance(e.response, dict):
+        error_info = e.response.get("Error", {})
+        if error_info.get("Message"):
+            return error_info["Message"]
+
+    # Fallback to string representation for unknown error types
+    return str(e)
+
+
 def _extract_openai_api_key(
     provider_cfg: LighthouseProviderConfiguration,
 ) -> str | None:
@@ -179,12 +212,13 @@ def check_lighthouse_provider_connection(provider_config_id: str) -> Dict:
         return {"connected": True, "error": None}
 
     except Exception as e:
+        error_message = _extract_error_message(e)
         logger.warning(
-            "%s connection check failed: %s", provider_cfg.provider_type, str(e)
+            "%s connection check failed: %s", provider_cfg.provider_type, error_message
         )
         provider_cfg.is_active = False
         provider_cfg.save()
-        return {"connected": False, "error": str(e)}
+        return {"connected": False, "error": error_message}
 
 
 def _fetch_openai_models(api_key: str) -> Dict[str, str]:
@@ -414,12 +448,13 @@ def refresh_lighthouse_provider_models(provider_config_id: str) -> Dict:
             }
 
     except Exception as e:
+        error_message = _extract_error_message(e)
         logger.warning(
             "Unexpected error refreshing %s models: %s",
             provider_cfg.provider_type,
-            str(e),
+            error_message,
         )
-        return {"created": 0, "updated": 0, "deleted": 0, "error": str(e)}
+        return {"created": 0, "updated": 0, "deleted": 0, "error": error_message}
 
     # Upsert models into the catalog
     created = 0
