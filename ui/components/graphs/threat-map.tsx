@@ -186,10 +186,13 @@ function MapTooltip({
       {location.change !== undefined && (
         <p className="text-text-neutral-secondary mt-1 text-sm font-medium">
           <span
-            className={cn(
-              "font-bold",
-              location.change > 0 ? "text-text-success" : "text-bg-fail-primary",
-            )}
+            className="font-bold"
+            style={{
+              color:
+                location.change > 0
+                  ? "var(--bg-pass-primary)"
+                  : "var(--bg-fail-primary)",
+            }}
           >
             {location.change > 0 ? "+" : ""}
             {location.change}%{" "}
