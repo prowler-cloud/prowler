@@ -1,0 +1,191 @@
+import { RiskPlotClient, type ScatterPoint } from "./risk-plot-client";
+
+// Mock data - Risk Score (0-10) vs Failed Findings count
+const mockScatterData: ScatterPoint[] = [
+  {
+    x: 9.2,
+    y: 1456,
+    provider: "AWS",
+    name: "Amazon RDS",
+    severityData: [
+      { name: "Critical", value: 456 },
+      { name: "High", value: 600 },
+      { name: "Medium", value: 250 },
+      { name: "Low", value: 120 },
+      { name: "Info", value: 30 },
+    ],
+  },
+  {
+    x: 8.5,
+    y: 892,
+    provider: "AWS",
+    name: "Amazon EC2",
+    severityData: [
+      { name: "Critical", value: 280 },
+      { name: "High", value: 350 },
+      { name: "Medium", value: 180 },
+      { name: "Low", value: 70 },
+      { name: "Info", value: 12 },
+    ],
+  },
+  {
+    x: 7.1,
+    y: 445,
+    provider: "AWS",
+    name: "Amazon S3",
+    severityData: [
+      { name: "Critical", value: 140 },
+      { name: "High", value: 180 },
+      { name: "Medium", value: 90 },
+      { name: "Low", value: 30 },
+      { name: "Info", value: 5 },
+    ],
+  },
+  {
+    x: 6.3,
+    y: 678,
+    provider: "AWS",
+    name: "AWS Lambda",
+    severityData: [
+      { name: "Critical", value: 214 },
+      { name: "High", value: 270 },
+      { name: "Medium", value: 135 },
+      { name: "Low", value: 54 },
+      { name: "Info", value: 5 },
+    ],
+  },
+  {
+    x: 4.2,
+    y: 156,
+    provider: "AWS",
+    name: "AWS Backup",
+    severityData: [
+      { name: "Critical", value: 49 },
+      { name: "High", value: 62 },
+      { name: "Medium", value: 31 },
+      { name: "Low", value: 12 },
+      { name: "Info", value: 2 },
+    ],
+  },
+  {
+    x: 8.8,
+    y: 1023,
+    provider: "Azure",
+    name: "Azure SQL Database",
+    severityData: [
+      { name: "Critical", value: 323 },
+      { name: "High", value: 410 },
+      { name: "Medium", value: 205 },
+      { name: "Low", value: 82 },
+      { name: "Info", value: 3 },
+    ],
+  },
+  {
+    x: 7.9,
+    y: 834,
+    provider: "Azure",
+    name: "Azure Virtual Machines",
+    severityData: [
+      { name: "Critical", value: 263 },
+      { name: "High", value: 334 },
+      { name: "Medium", value: 167 },
+      { name: "Low", value: 67 },
+      { name: "Info", value: 3 },
+    ],
+  },
+  {
+    x: 6.4,
+    y: 567,
+    provider: "Azure",
+    name: "Azure Storage",
+    severityData: [
+      { name: "Critical", value: 179 },
+      { name: "High", value: 227 },
+      { name: "Medium", value: 113 },
+      { name: "Low", value: 45 },
+      { name: "Info", value: 3 },
+    ],
+  },
+  {
+    x: 5.1,
+    y: 289,
+    provider: "Azure",
+    name: "Azure Key Vault",
+    severityData: [
+      { name: "Critical", value: 91 },
+      { name: "High", value: 115 },
+      { name: "Medium", value: 58 },
+      { name: "Low", value: 23 },
+      { name: "Info", value: 2 },
+    ],
+  },
+  {
+    x: 7.6,
+    y: 712,
+    provider: "Google",
+    name: "Cloud SQL",
+    severityData: [
+      { name: "Critical", value: 225 },
+      { name: "High", value: 285 },
+      { name: "Medium", value: 142 },
+      { name: "Low", value: 57 },
+      { name: "Info", value: 3 },
+    ],
+  },
+  {
+    x: 6.9,
+    y: 623,
+    provider: "Google",
+    name: "Compute Engine",
+    severityData: [
+      { name: "Critical", value: 197 },
+      { name: "High", value: 249 },
+      { name: "Medium", value: 124 },
+      { name: "Low", value: 50 },
+      { name: "Info", value: 3 },
+    ],
+  },
+  {
+    x: 5.8,
+    y: 412,
+    provider: "Google",
+    name: "Cloud Storage",
+    severityData: [
+      { name: "Critical", value: 130 },
+      { name: "High", value: 165 },
+      { name: "Medium", value: 82 },
+      { name: "Low", value: 33 },
+      { name: "Info", value: 2 },
+    ],
+  },
+  {
+    x: 4.5,
+    y: 198,
+    provider: "Google",
+    name: "Cloud Run",
+    severityData: [
+      { name: "Critical", value: 63 },
+      { name: "High", value: 79 },
+      { name: "Medium", value: 39 },
+      { name: "Low", value: 16 },
+      { name: "Info", value: 1 },
+    ],
+  },
+  {
+    x: 8.9,
+    y: 945,
+    provider: "AWS",
+    name: "Amazon RDS Aurora",
+    severityData: [
+      { name: "Critical", value: 299 },
+      { name: "High", value: 378 },
+      { name: "Medium", value: 189 },
+      { name: "Low", value: 76 },
+      { name: "Info", value: 3 },
+    ],
+  },
+];
+
+export function RiskPlotView() {
+  return <RiskPlotClient data={mockScatterData} />;
+}
