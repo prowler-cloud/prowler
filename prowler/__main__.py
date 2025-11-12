@@ -451,13 +451,6 @@ def prowler():
                 csv_output.batch_write_data_to_file()
 
             if mode == "json-asff":
-                if provider != "aws":
-                    error_message = (
-                        f"ASFF output is only available for "
-                        f"the aws provider, but {provider} was selected."
-                    )
-                    logger.error(error_message)
-                    raise ValueError(error_message)
                 asff_output = ASFF(
                     findings=finding_outputs,
                     file_path=f"{filename}{json_asff_file_suffix}",
