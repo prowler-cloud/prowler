@@ -22,13 +22,13 @@ class Migration(migrations.Migration):
                     ("kubernetes", "Kubernetes"),
                     ("m365", "M365"),
                     ("github", "GitHub"),
-                    ("oci", "Oracle Cloud Infrastructure"),
+                    ("oraclecloud", "Oracle Cloud Infrastructure"),
                 ],
                 default="aws",
             ),
         ),
         migrations.RunSQL(
-            "ALTER TYPE provider ADD VALUE IF NOT EXISTS 'oci';",
+            "ALTER TYPE provider ADD VALUE IF NOT EXISTS 'oraclecloud';",
             reverse_sql=migrations.RunSQL.noop,
         ),
     ]

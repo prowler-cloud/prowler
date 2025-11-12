@@ -8,8 +8,6 @@ import {
   Tooltip,
 } from "recharts";
 
-import { CHART_COLORS } from "./shared/constants";
-
 export interface TooltipItem {
   name: string;
   value: number;
@@ -42,18 +40,18 @@ const CustomTooltip = ({ active, payload }: any) => {
     return null;
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 shadow-lg dark:border-[#202020] dark:bg-[#121110]">
+    <div className="bg-bg-neutral-tertiary border-border-neutral-tertiary rounded-xl border px-3 py-1.5 shadow-lg">
       <div className="flex flex-col gap-0.5">
         {tooltipItems.map((item: TooltipItem, index: number) => (
           <div key={index} className="flex items-end gap-1">
-            <p className="text-xs leading-5 font-medium text-slate-900 dark:text-[#f4f4f5]">
+            <p className="text-text-neutral-primary text-xs leading-5 font-medium">
               {item.name}
             </p>
-            <div className="mb-[4px] flex-1 border-b border-dotted border-slate-400 dark:border-slate-600" />
+            <div className="border-text-neutral-primary mb-[4px] flex-1 border-b border-dotted" />
             <p
               className="text-xs leading-5 font-medium"
               style={{
-                color: item.color || "var(--chart-text-primary)",
+                color: item.color || "var(--text-neutral-primary)",
               }}
             >
               {item.value}%
@@ -67,8 +65,8 @@ const CustomTooltip = ({ active, payload }: any) => {
 
 export function RadialChart({
   percentage,
-  color = "var(--chart-success-color)",
-  backgroundColor = CHART_COLORS.tooltipBackground,
+  color = "var(--bg-pass-primary)",
+  backgroundColor = "var(--bg-neutral-tertiary)",
   height = 250,
   innerRadius = 60,
   outerRadius = 100,
@@ -154,24 +152,18 @@ export function RadialChart({
               const y = centerY - middleRadius * Math.sin(currentAngleRad);
 
               return (
-                <circle
-                  key={i}
-                  cx={x}
-                  cy={y}
-                  r={2}
-                  fill="rgba(255, 255, 255, 0.3)"
-                />
+                <circle key={i} cx={x} cy={y} r={2} fill="var(--chart-dots)" />
               );
             })}
 
         <text
           x="50%"
-          y="40%"
+          y="38%"
           textAnchor="middle"
           dominantBaseline="middle"
           className="text-2xl font-bold"
           style={{
-            fill: "var(--chart-text-primary)",
+            fill: "var(--text-neutral-secondary)",
           }}
         >
           {percentage}%

@@ -169,6 +169,14 @@
   },
   {
     "section": "dependencies",
+    "name": "@sentry/nextjs",
+    "from": "10.11.0",
+    "to": "10.11.0",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T15:52:15.849Z"
+  },
+  {
+    "section": "dependencies",
     "name": "@tailwindcss/postcss",
     "from": "4.1.13",
     "to": "4.1.13",
@@ -725,7 +733,7 @@
     "from": "3.4.1",
     "to": "3.4.1",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2025-10-22T15:52:15.849Z"
   },
   {
     "section": "devDependencies",

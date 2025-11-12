@@ -32,7 +32,7 @@ from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
 from prowler.lib.outputs.compliance.cis.cis_github import GithubCIS
 from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
 from prowler.lib.outputs.compliance.cis.cis_m365 import M365CIS
-from prowler.lib.outputs.compliance.cis.cis_oci import OCICIS
+from prowler.lib.outputs.compliance.cis.cis_oraclecloud import OracleCloudCIS
 from prowler.lib.outputs.compliance.ens.ens_aws import AWSENS
 from prowler.lib.outputs.compliance.ens.ens_azure import AzureENS
 from prowler.lib.outputs.compliance.ens.ens_gcp import GCPENS
@@ -117,8 +117,8 @@ COMPLIANCE_CLASS_MAP = {
         # IaC provider doesn't have specific compliance frameworks yet
         # Trivy handles its own compliance checks
     ],
-    "oci": [
-        (lambda name: name.startswith("cis_"), OCICIS),
+    "oraclecloud": [
+        (lambda name: name.startswith("cis_"), OracleCloudCIS),
     ],
 }
 

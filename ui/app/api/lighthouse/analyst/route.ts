@@ -1,4 +1,5 @@
 import { toUIMessageStream } from "@ai-sdk/langchain";
+import * as Sentry from "@sentry/nextjs";
 import { createUIMessageStreamResponse, UIMessage } from "ai";
 
 import { getTenantConfig } from "@/actions/lighthouse/lighthouse";
@@ -9,6 +10,7 @@ import {
   initLighthouseWorkflow,
   type RuntimeConfig,
 } from "@/lib/lighthouse/workflow";
+import { SentryErrorSource, SentryErrorType } from "@/sentry";
 
 export async function POST(req: Request) {
   try {
@@ -110,7 +112,23 @@ export async function POST(req: Request) {
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : String(error);
-          // For errors, send a plain string that toUIMessageStream will convert to text chunks
+
+          // Capture stream processing errors
+          Sentry.captureException(error, {
+            tags: {
+              api_route: "lighthouse_analyst",
+              error_type: SentryErrorType.STREAM_PROCESSING,
+              error_source: SentryErrorSource.API_ROUTE,
+            },
+            level: "error",
+            contexts: {
+              lighthouse: {
+                event_type: "stream_error",
+                message_count: processedMessages.length,
+              },
+            },
+          });
+
           controller.enqueue(`[LIGHTHOUSE_ANALYST_ERROR]: ${errorMessage}`);
           controller.close();
         }
@@ -123,6 +141,25 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error("Error in POST request:", error);
+
+    // Capture API route errors
+    Sentry.captureException(error, {
+      tags: {
+        api_route: "lighthouse_analyst",
+        error_type: SentryErrorType.REQUEST_PROCESSING,
+        error_source: SentryErrorSource.API_ROUTE,
+        method: "POST",
+      },
+      level: "error",
+      contexts: {
+        request: {
+          method: req.method,
+          url: req.url,
+          headers: Object.fromEntries(req.headers.entries()),
+        },
+      },
+    });
+
     return Response.json(
       { error: await getErrorMessage(error) },
       { status: 500 },

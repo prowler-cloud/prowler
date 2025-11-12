@@ -30,7 +30,7 @@ const PROVIDER_ICON: Record<ProviderType, ReactNode> = {
   m365: <M365ProviderBadge width={18} height={18} />,
   github: <GitHubProviderBadge width={18} height={18} />,
   iac: <IacProviderBadge width={18} height={18} />,
-  oci: <OracleCloudProviderBadge width={18} height={18} />,
+  oraclecloud: <OracleCloudProviderBadge width={18} height={18} />,
 };
 
 interface AccountsSelectorProps {
