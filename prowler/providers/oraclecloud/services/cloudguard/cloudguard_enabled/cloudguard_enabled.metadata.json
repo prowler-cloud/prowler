@@ -27,7 +27,7 @@
     }
   },
   "Categories": [
-    "threat-detection"
+    "forensics-ready"
   ],
   "DependsOn": [],
   "RelatedTo": [],
