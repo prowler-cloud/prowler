@@ -43,6 +43,7 @@
     "@radix-ui/react-toast": "1.2.14",
     "@react-aria/ssr": "3.9.4",
     "@react-aria/visually-hidden": "3.8.12",
+    "@sentry/nextjs": "10.11.0",
     "@tailwindcss/postcss": "4.1.13",
     "@tailwindcss/typography": "0.5.16",
     "@tanstack/react-table": "8.21.3",
