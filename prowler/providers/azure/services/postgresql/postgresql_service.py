@@ -7,14 +7,6 @@ from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
 
 
-@dataclass
-class EntraIdAdmin:
-    object_id: str
-    principal_name: str
-    principal_type: str
-    tenant_id: str
-
-
 class PostgreSQL(AzureService):
     def __init__(self, provider: AzureProvider):
         super().__init__(PostgreSQLManagementClient, provider)
@@ -200,6 +192,14 @@ class Firewall:
     name: str
     start_ip: str
     end_ip: str
+
+
+@dataclass
+class EntraIdAdmin:
+    object_id: str
+    principal_name: str
+    principal_type: str
+    tenant_id: str
 
 
 @dataclass
