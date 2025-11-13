@@ -193,7 +193,89 @@ test.describe("Add Provider", () => {
         await scansPage.verifyScheduledScanStatus(accountId);
       },
     );
+
+    test(
+      "should add a new AWS provider with assume role credentials using AWS SDK",
+      {
+        tag: [
+          "@critical",
+          "@e2e",
+          "@providers",
+          "@aws",
+          "@serial",
+          "@PROVIDER-E2E-011",
+        ],
+      },
+      async ({ page }) => {
+        // Validate required environment variables from environment variables
+        const awsAccessKeyId = process.env.AWS_ACCESS_KEY_ID;
+        const awsSecretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
+
+        // Validate required environment variables
+        if (!accountId || !awsAccessKeyId || !awsSecretAccessKey || !roleArn) {
+          throw new Error(
+            "E2E_AWS_PROVIDER_ACCOUNT_ID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and E2E_AWS_PROVIDER_ROLE_ARN environment variables are not set",
+          );
+        }
+
+        // Prepare test data for AWS provider
+        const awsProviderData: AWSProviderData = {
+          accountId: accountId,
+          alias: "Test E2E AWS Account - Credentials",
+        };
+
+        // Prepare role-based credentials
+        const roleCredentials: AWSProviderCredential = {
+          type: AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN,
+          sdkAccessKeyId: accessKey,
+          sdkSecretAccessKey: secretKey,
+          roleArn: roleArn,
+        };
+
+        // Navigate to providers page
+        await providersPage.goto();
+        await providersPage.verifyPageLoaded();
+
+        // Start adding new provider
+        await providersPage.clickAddProvider();
+        await providersPage.verifyConnectAccountPageLoaded();
+
+        // Select AWS provider
+        await providersPage.selectAWSProvider();
+
+        // Fill provider details
+        await providersPage.fillAWSProviderDetails(awsProviderData);
+        await providersPage.clickNext();
+
+        // Select role credentials type
+        await providersPage.selectCredentialsType(
+          AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN,
+        );
+        await providersPage.verifyCredentialsPageLoaded();
+
+        // Select Authentication Method
+        await providersPage.selectAuthenticationMethod(
+          AWS_CREDENTIAL_OPTIONS.AWS_SDK_DEFAULT,
+        );
+
+        // Fill role credentials
+        await providersPage.fillRoleCredentials(roleCredentials);
+        await providersPage.clickNext();
+
+        // Launch scan
+        await providersPage.verifyLaunchScanPageLoaded();
+        await providersPage.clickNext();
+
+        // Wait for redirect to provider page
+        scansPage = new ScansPage(page);
+        await scansPage.verifyPageLoaded();
+
+        // Verify scan status is "Scheduled scan"
+        await scansPage.verifyScheduledScanStatus(accountId);
+      },
+    );
   });
+  
 
   test.describe.serial("Add AZURE Provider", () => {
     // Providers page object
