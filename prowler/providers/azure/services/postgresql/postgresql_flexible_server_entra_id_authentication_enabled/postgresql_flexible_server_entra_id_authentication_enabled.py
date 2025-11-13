@@ -18,9 +18,10 @@ class postgresql_flexible_server_entra_id_authentication_enabled(Check):
                 report.status = "FAIL"
 
                 # Check if Entra ID authentication is enabled
+                # Note: active_directory_auth is already normalized to uppercase in service layer
                 if (
                     not server.active_directory_auth
-                    or server.active_directory_auth.upper() != "ENABLED"
+                    or server.active_directory_auth != "ENABLED"
                 ):
                     report.status_extended = f"Flexible Postgresql server {server.name} from subscription {subscription} has Microsoft Entra ID authentication disabled"
                 else:

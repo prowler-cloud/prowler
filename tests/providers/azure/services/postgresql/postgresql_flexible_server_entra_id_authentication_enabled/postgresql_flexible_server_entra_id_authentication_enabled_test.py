@@ -1,7 +1,10 @@
 from unittest import mock
 from uuid import uuid4
 
-from prowler.providers.azure.services.postgresql.postgresql_service import Server
+from prowler.providers.azure.services.postgresql.postgresql_service import (
+    EntraIdAdmin,
+    Server,
+)
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
     set_mocked_azure_provider,
@@ -41,6 +44,7 @@ class Test_postgresql_flexible_server_entra_id_authentication_enabled:
                     id=postgresql_server_id,
                     name=postgresql_server_name,
                     resource_group="resource_group",
+                    location="location",
                     require_secure_transport="ON",
                     active_directory_auth="DISABLED",
                     entra_id_admins=[],
@@ -50,7 +54,6 @@ class Test_postgresql_flexible_server_entra_id_authentication_enabled:
                     connection_throttling="ON",
                     log_retention_days="3",
                     firewall=None,
-                    location="location",
                 )
             ]
         }
@@ -92,6 +95,7 @@ class Test_postgresql_flexible_server_entra_id_authentication_enabled:
                     id=postgresql_server_id,
                     name=postgresql_server_name,
                     resource_group="resource_group",
+                    location="location",
                     require_secure_transport="ON",
                     active_directory_auth="ENABLED",
                     entra_id_admins=[],
@@ -101,7 +105,6 @@ class Test_postgresql_flexible_server_entra_id_authentication_enabled:
                     connection_throttling="ON",
                     log_retention_days="3",
                     firewall=None,
-                    location="location",
                 )
             ]
         }
@@ -143,15 +146,16 @@ class Test_postgresql_flexible_server_entra_id_authentication_enabled:
                     id=postgresql_server_id,
                     name=postgresql_server_name,
                     resource_group="resource_group",
+                    location="location",
                     require_secure_transport="ON",
                     active_directory_auth="ENABLED",
                     entra_id_admins=[
-                        {
-                            "object_id": str(uuid4()),
-                            "principal_name": "Test Admin User",
-                            "principal_type": "User",
-                            "tenant_id": str(uuid4()),
-                        }
+                        EntraIdAdmin(
+                            object_id=str(uuid4()),
+                            principal_name="Test Admin User",
+                            principal_type="User",
+                            tenant_id=str(uuid4()),
+                        )
                     ],
                     log_checkpoints="ON",
                     log_connections="ON",
@@ -159,7 +163,6 @@ class Test_postgresql_flexible_server_entra_id_authentication_enabled:
                     connection_throttling="ON",
                     log_retention_days="3",
                     firewall=None,
-                    location="location",
                 )
             ]
         }

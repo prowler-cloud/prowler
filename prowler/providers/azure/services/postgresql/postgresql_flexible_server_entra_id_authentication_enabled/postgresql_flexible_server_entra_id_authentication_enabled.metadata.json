@@ -26,5 +26,5 @@
   "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "."
+  "Notes": "This check verifies both that Entra ID authentication is enabled AND that at least one administrator is configured, as authentication without administrators leaves the feature unusable."
 }

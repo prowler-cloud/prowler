@@ -21,11 +21,15 @@ class PostgreSQL(AzureService):
                 flexible_servers_list = client.servers.list()
                 for postgresql_server in flexible_servers_list:
                     resource_group = self._get_resource_group(postgresql_server.id)
+                    # Fetch full server object once to extract multiple properties
+                    server_details = client.servers.get(
+                        resource_group, postgresql_server.name
+                    )
                     require_secure_transport = self._get_require_secure_transport(
                         subscription, resource_group, postgresql_server.name
                     )
-                    active_directory_auth = self._get_active_directory_auth(
-                        subscription, resource_group, postgresql_server.name
+                    active_directory_auth = self._extract_active_directory_auth(
+                        server_details
                     )
                     entra_id_admins = self._get_entra_id_admins(
                         subscription, resource_group, postgresql_server.name
@@ -48,14 +52,13 @@ class PostgreSQL(AzureService):
                     firewall = self._get_firewall(
                         subscription, resource_group, postgresql_server.name
                     )
-                    location = self._get_location(
-                        subscription, resource_group, postgresql_server.name
-                    )
+                    location = server_details.location
                     flexible_servers[subscription].append(
                         Server(
                             id=postgresql_server.id,
                             name=postgresql_server.name,
                             resource_group=resource_group,
+                            location=location,
                             require_secure_transport=require_secure_transport,
                             active_directory_auth=active_directory_auth,
                             entra_id_admins=entra_id_admins,
@@ -65,7 +68,6 @@ class PostgreSQL(AzureService):
                             connection_throttling=connection_throttling,
                             log_retention_days=log_retention_days,
                             firewall=firewall,
-                            location=location,
                         )
                     )
             except Exception as error:
@@ -108,15 +110,9 @@ class PostgreSQL(AzureService):
         )
         return log_disconnections.value.upper()
 
-    def _get_location(self, subscription, resouce_group_name, server_name):
-        client = self.clients[subscription]
-        location = client.servers.get(resouce_group_name, server_name).location
-        return location
-
-    def _get_active_directory_auth(self, subscription, resouce_group_name, server_name):
-        client = self.clients[subscription]
+    def _extract_active_directory_auth(self, server):
+        """Extract active directory auth from a server object (no API call)."""
         try:
-            server = client.servers.get(resouce_group_name, server_name)
             auth_config = getattr(server, "auth_config", None)
             active_directory_auth = (
                 getattr(auth_config, "active_directory_auth", None)
@@ -132,7 +128,7 @@ class PostgreSQL(AzureService):
                 else None
             )
         except Exception as e:
-            logger.error(f"Error getting active directory auth for {server_name}: {e}")
+            logger.error(f"Error extracting active directory auth: {e}")
             return None
 
     def _get_entra_id_admins(self, subscription, resource_group_name, server_name):
@@ -144,12 +140,12 @@ class PostgreSQL(AzureService):
             admin_list = []
             for admin in admins:
                 admin_list.append(
-                    {
-                        "object_id": admin.object_id,
-                        "principal_name": admin.principal_name,
-                        "principal_type": admin.principal_type,
-                        "tenant_id": admin.tenant_id,
-                    }
+                    EntraIdAdmin(
+                        object_id=admin.object_id,
+                        principal_name=admin.principal_name,
+                        principal_type=admin.principal_type,
+                        tenant_id=admin.tenant_id,
+                    )
                 )
             return admin_list
         except Exception as e:
@@ -199,17 +195,25 @@ class Firewall:
 
 
 @dataclass
+class EntraIdAdmin:
+    object_id: str
+    principal_name: str
+    principal_type: str
+    tenant_id: str
+
+
+@dataclass
 class Server:
     id: str
     name: str
     resource_group: str
+    location: str
     require_secure_transport: str
+    active_directory_auth: str
+    entra_id_admins: list[EntraIdAdmin]
     log_checkpoints: str
     log_connections: str
     log_disconnections: str
     connection_throttling: str
     log_retention_days: str
     firewall: list[Firewall]
-    location: str
-    active_directory_auth: str = None
-    entra_id_admins: list = None
