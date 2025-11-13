@@ -42,8 +42,8 @@ class ObjectStorageService:
             from stackit.objectstorage import ApiClient, DefaultApi
 
             # Create configuration with API token
+            # Note: project_id is passed to API methods, not to Configuration
             config = Configuration(
-                project_id=self.project_id,
                 service_account_token=self.api_token,
             )
 
