@@ -25,8 +25,8 @@ class dms_instance_no_public_access(Check):
                                 if check_security_group(
                                     ingress_rule,
                                     "-1",
-                                    ports=None,
                                     any_address=True,
+                                    all_ports=True,
                                 ):
                                     report.status = "FAIL"
                                     report.status_extended = f"DMS Replication Instance {instance.id} is set as publicly accessible and security group {security_group.name} ({security_group.id}) is open to the Internet."
