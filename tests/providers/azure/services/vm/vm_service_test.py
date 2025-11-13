@@ -425,36 +425,43 @@ class Test_VirtualMachine_SecurityProfile_Validation:
 
             return [mock_vm]
 
+        # Create mock client with properly configured virtual_machines attribute
+        mock_client = MagicMock()
+        # Explicitly create virtual_machines as a MagicMock to ensure it has list_all method
+        # This prevents AttributeError in GitHub Actions where it might be a dict
+        mock_client.virtual_machines = MagicMock()
+        mock_client.virtual_machines.list_all.side_effect = mock_list_vms
+
         with (
             patch.object(VirtualMachines, "_get_disks", return_value={}),
             patch.object(VirtualMachines, "_get_vm_scale_sets", return_value={}),
+            patch.object(VirtualMachines, "_get_virtual_machines", return_value={}),
         ):
             vm_service = VirtualMachines(set_mocked_azure_provider())
-            mock_client = MagicMock()
-            mock_client.virtual_machines.list_all.side_effect = mock_list_vms
+            # Replace the client with our mocked one
             vm_service.clients[AZURE_SUBSCRIPTION_ID] = mock_client
 
-            # Re-run _get_virtual_machines with mocked client
-            # This simulates the actual service flow
-            virtual_machines = vm_service._get_virtual_machines()
+        # Now call _get_virtual_machines with the mocked client (patch is removed)
+        # This simulates the actual service flow
+        virtual_machines = vm_service._get_virtual_machines()
 
-            # Verify VM was created successfully without ValidationError
-            assert len(virtual_machines[AZURE_SUBSCRIPTION_ID]) == 1
+        # Verify VM was created successfully without ValidationError
+        assert len(virtual_machines[AZURE_SUBSCRIPTION_ID]) == 1
 
-            vm_id = list(virtual_machines[AZURE_SUBSCRIPTION_ID].keys())[0]
-            vm = virtual_machines[AZURE_SUBSCRIPTION_ID][vm_id]
+        vm_id = list(virtual_machines[AZURE_SUBSCRIPTION_ID].keys())[0]
+        vm = virtual_machines[AZURE_SUBSCRIPTION_ID][vm_id]
 
-            # Verify the VM object is valid
-            assert vm.resource_name == "test-vm-full-sim"
-            assert vm.location == "eastus"
+        # Verify the VM object is valid
+        assert vm.resource_name == "test-vm-full-sim"
+        assert vm.location == "eastus"
 
-            # Verify SecurityProfile was converted correctly (not Azure SDK object)
-            assert vm.security_profile is not None
-            assert isinstance(vm.security_profile, SecurityProfile)
-            assert vm.security_profile.security_type == "TrustedLaunch"
+        # Verify SecurityProfile was converted correctly (not Azure SDK object)
+        assert vm.security_profile is not None
+        assert isinstance(vm.security_profile, SecurityProfile)
+        assert vm.security_profile.security_type == "TrustedLaunch"
 
-            # Verify UefiSettings was converted correctly
-            assert vm.security_profile.uefi_settings is not None
-            assert isinstance(vm.security_profile.uefi_settings, UefiSettings)
-            assert vm.security_profile.uefi_settings.secure_boot_enabled is True
-            assert vm.security_profile.uefi_settings.v_tpm_enabled is True
+        # Verify UefiSettings was converted correctly
+        assert vm.security_profile.uefi_settings is not None
+        assert isinstance(vm.security_profile.uefi_settings, UefiSettings)
+        assert vm.security_profile.uefi_settings.secure_boot_enabled is True
+        assert vm.security_profile.uefi_settings.v_tpm_enabled is True
