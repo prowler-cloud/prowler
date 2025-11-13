@@ -106,18 +106,47 @@ prowler gcp --project-ids <project-id>
 
 This method uses a service account with a downloaded key file for authentication.
 
-### Create Service Account and Key
+### Step 1: Review or Create IAM Roles
 
-1. Go to the [Service Accounts page](https://console.cloud.google.com/iam-admin/serviceaccounts) in the GCP Console
-2. Click "Create Service Account"
-3. Fill in the service account details and click "Create and Continue"
-4. Grant the service account the "Reader" role
-5. Click "Done"
-6. Find your service account in the list and click on it
-7. Go to the "Keys" tab
-8. Click "Add Key" > "Create new key"
-9. Select "JSON" and click "Create"
-10. Save the downloaded key file securely
+To keep permissions focused:
+1. Create a custom role named **ProwlerRole** that explicitly includes the permissions your compliance team approves. Click **Create role**, set the title to *ProwlerRole*, keep the ID readable (for example, `prowler_role`)
+2. Add the required permission `storage.buckets.getIamPolicy` (the permission highlighted in the screenshots). To make it easier, filter the permissions by `Storage Admin` role.
+
+![Create a custom Prowler role](/user-guide/providers/gcp/img/roles-section.png)
+
+![Sample permissions for a custom Prowler role](/user-guide/providers/gcp/img/prowler-role.png)
+
+### Step 2: Create the Service Account
+
+1. Navigate to **IAM & Admin > Service Accounts** and make sure the correct project is selected.
+
+    ![Service accounts landing page](/user-guide/providers/gcp/img/service-account-page.png)
+
+2. Select **Create service account**, provide a name, ID, and a short description that states the purpose (for example, “Service account to execute Prowler”), then click **Create and continue**.
+
+    ![Create service account wizard](/user-guide/providers/gcp/img/create-service-account.png)
+
+3. Assign the roles you prepared earlier:
+    - **ProwlerRole** for `cloudstorage` service checks.
+    - **Viewer** for broad read-only visibility.
+    - **Service Usage Consumer** so Prowler can inspect API states.
+
+    ![Assign roles to the service account](/user-guide/providers/gcp/img/service-account-permissions.png)
+2. Continue through the wizard and finish. No principals need to be granted access in step 3 unless you want other identities to impersonate this account.
+
+
+
+### Step 4: Generate a JSON Key
+
+1. Open the newly created service account, move to the **Keys** tab, and choose **Add key > Create new key**.
+
+    ![Add a new key to the service account](/user-guide/providers/gcp/img/create-new-key.png)
+
+2. Select **JSON** as the key type and click **Create**. The browser downloads the file exactly once.
+
+    ![Select JSON as the key type](/user-guide/providers/gcp/img/json-key.png)
+
+3. Once created, make sure to store the Key Securely.
 
 ### Using with Prowler CLI
 
