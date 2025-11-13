@@ -10,9 +10,9 @@ This guide provides comprehensive instructions to configure SAML-based Single Si
 
 This document is divided into two main sections:
 
-- **User Guide**: For organization administrators to configure SAML SSO through Prowler App.
+- **[User Guide](#user-guide-configuration)**: For organization administrators to configure SAML SSO through Prowler App.
 
-- **Developer and Administrator Guide**: For developers and system administrators running self-hosted Prowler App instances, providing technical details on environment configuration, API usage, and testing.
+- **[Developer and Administrator Guide](#developer-and-administrator-guide)**: For developers and system administrators running self-hosted Prowler App instances, providing technical details on environment configuration, API usage, and testing.
 
 ---
 
@@ -53,58 +53,65 @@ On the profile page, find the "SAML SSO Integration" card and click "Enable" to 
 
 ![Enable SAML Integration](/images/prowler-app/saml/saml-step-2.png)
 
-<Info>
-**Choose Your Method**
+Next step will indicate how to fill the IdP configuration based on your Identity Provider.
 
-**Use Step 3A (Generic Method)** for any SAML 2.0 compliant Identity Provider or when you need custom configuration.
+#### Step 3: Configure the Identity Provider (IdP)
+Choose Your Method:
 
-**Use Step 3B (Okta App Catalog)** if you're using Okta and want a simplified setup process with pre-configured settings.
+- Use [**Generic Method**](#generic-method) for any SAML 2.0 compliant Identity Provider or when you need custom configuration.
+- Use [**Okta App Catalog**](#okta-app-catalog) if you're using Okta and want a simplified setup process with pre-configured settings.
 
-</Info>
-#### Step 3A: Configure the Identity Provider (IdP) - Generic
+<Tabs>
+    <Tab title="Generic Method">
+        Prowler App displays the SAML configuration information needed to configure the IdP. Use this information to create a new SAML application in the IdP.
 
-Prowler App displays the SAML configuration information needed to configure the IdP. Use this information to create a new SAML application in the IdP.
+        1.  **Assertion Consumer Service (ACS) URL**: The endpoint in Prowler that will receive the SAML assertion from the IdP.
+        2.  **Audience URI (Entity ID)**: A unique identifier for the Prowler application (Service Provider).
 
-1.  **Assertion Consumer Service (ACS) URL**: The endpoint in Prowler that will receive the SAML assertion from the IdP.
-2.  **Audience URI (Entity ID)**: A unique identifier for the Prowler application (Service Provider).
+        To configure the IdP, copy the **ACS URL** and **Audience URI** from Prowler App and use them to set up a new SAML application.
 
-To configure the IdP, copy the **ACS URL** and **Audience URI** from Prowler App and use them to set up a new SAML application.
+        ![IdP configuration](/images/prowler-app/saml/idp_config.png)
 
-![IdP configuration](/images/prowler-app/saml/idp_config.png)
+        <Info>
+        **IdP Configuration**
 
-<Info>
-**IdP Configuration**
+        The exact steps for configuring an IdP vary depending on the provider (Okta, Azure AD, etc.). Please refer to the IdP's documentation for instructions on creating a SAML application. For SSO integration with Azure AD / Entra ID, see our [Entra ID configuration instructions](/user-guide/tutorials/prowler-app-sso-entra).
 
-The exact steps for configuring an IdP vary depending on the provider (Okta, Azure AD, etc.). Please refer to the IdP's documentation for instructions on creating a SAML application. For SSO integration with Azure AD / Entra ID, see our [Entra ID configuration instructions](/user-guide/tutorials/prowler-app-sso-entra).
+        </Info>
 
-</Info>
-#### Step 3B: Configure Prowler from App Catalog - Okta
+    </Tab>
+    <Tab title="Okta App Catalog">
+        Instead of creating a custom SAML integration, Okta administrators can configure Prowler Cloud directly from Okta's application catalog.
 
-Instead of creating a custom SAML integration, Okta administrators can configure Prowler Cloud directly from Okta's application catalog:
+        You can find a walkthrough video [here](https://youtu.be/NjSp5owvCdY).
 
-1. **Access App Catalog**: Navigate to the IdP's application catalog (e.g., [Browse App Catalog](https://www.okta.com/integrations/) in Okta).
+        1. **Access App Catalog**: Navigate to the IdP's application catalog (e.g., [Browse App Catalog](https://www.okta.com/integrations/) in Okta).
 
-    ![Browse App Catalog](/images/prowler-app/saml/app-catalog-browse.png)
+            ![Browse App Catalog](/images/prowler-app/saml/app-catalog-browse.png)
 
-2. **Search for Prowler Cloud**: Use the search functionality to find "Prowler Cloud" in the app catalog. The official Prowler Cloud application will appear in the search results.
+        2. **Search for Prowler Cloud**: Use the search functionality to find "Prowler Cloud" in the app catalog. The official Prowler Cloud application will appear in the search results.
 
-    ![Search for Prowler](/images/prowler-app/saml/app-catalog-browse-prowler.png)
+            ![Search for Prowler](/images/prowler-app/saml/app-catalog-browse-prowler.png)
 
-3. **Select Prowler Cloud Application**: Click on the Prowler Cloud application from the search results to view its details page.
+        3. **Select Prowler Cloud Application**: Click on the Prowler Cloud application from the search results to view its details page.
 
-    ![Prowler Application Details](/images/prowler-app/saml/app-catalog-browse-prowler-add.png)
+            ![Prowler Application Details](/images/prowler-app/saml/app-catalog-browse-prowler-add.png)
 
-4. **Add Integration**: Click the "Add Integration" button to begin adding Prowler Cloud to the organization's applications.
+        4. **Add Integration**: Click the "Add Integration" button to begin adding Prowler Cloud to the organization's applications.
 
-5. **Configure General Settings**: In the "Add Prowler Cloud" configuration screen, the integration automatically configures the necessary settings.
+        5. **Configure General Settings**: In the "Add Prowler Cloud" configuration screen, the integration automatically configures the necessary settings.
 
-    ![Add Prowler Configuration](/images/prowler-app/saml/app-catalog-browse-prowler-configure.png)
+            ![Add Prowler Configuration](/images/prowler-app/saml/app-catalog-browse-prowler-configure.png)
 
-6. **Assign Users**: Navigate to the **Assignments** tab and assign the appropriate users or groups to the Prowler application by clicking "Assign" and selecting "Assign to People" or "Assign to Groups".
+        6. **Assign Users**: Navigate to the **Assignments** tab and assign the appropriate users or groups to the Prowler application by clicking "Assign" and selecting "Assign to People" or "Assign to Groups".
 
-With this step, the Okta app catalog configuration is complete. Users can now access Prowler Cloud using either [IdP-initiated](#idp-initiated-sso) or [SP-initiated SSO](#sp-initiated-sso) flows.
+            With this step, the Okta app catalog configuration is complete. Users can now access Prowler Cloud using either [IdP-initiated](#idp-initiated-sso) or [SP-initiated SSO](#sp-initiated-sso) flows.
 
-**If you used Step 3B (Okta App Catalog)**, jump to [Step 6: Save and Verify Configuration](#step-6-save-and-verify-configuration).
+        7. **Download Metadata XML**: Inside the "Sign On" section, go to the "Metadata URL" and download the metadata XML file.
+
+            Jump to [Step 5: Upload IdP Metadata to Prowler](#step-5-upload-idp-metadata-to-prowler).
+    </Tab>
+</Tabs>
 
 #### Step 4: Configure Attribute Mapping in the IdP
 
