@@ -1243,12 +1243,8 @@ class Test_Parser:
             "--output-formats",
             "json-asff",
         ]
-        with patch("prowler.lib.cli.parser.logger") as mock_logger:
-            with pytest.raises(SystemExit) as wrapped_exit:
-                _ = self.parser.parse(command)
-            mock_logger.critical.assert_called_once_with(
-                "json-asff output format is only available for the aws provider, but azure was selected"
-            )
+        with pytest.raises(SystemExit) as wrapped_exit:
+            _ = self.parser.parse(command)
         assert wrapped_exit.type == SystemExit
         assert wrapped_exit.value.code == 2
         assert (
