@@ -12,7 +12,6 @@ from prowler.config.config import (
     default_output_directory,
 )
 from prowler.lib.check.models import Severity
-from prowler.lib.logger import logger
 from prowler.lib.outputs.common import Status
 from prowler.providers.common.arguments import (
     init_providers_parser,
@@ -141,7 +140,6 @@ Detailed documentation at https://docs.prowler.com
             args.provider, getattr(args, "output_formats", None)
         )
         if not asff_is_valid:
-            logger.critical(asff_error)
             self.parser.error(asff_error)
 
         return args
