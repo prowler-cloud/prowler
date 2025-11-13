@@ -265,23 +265,37 @@ class StackitProvider(Provider):
                     raise ValueError(error_msg)
                 return Connection(error=ValueError(error_msg))
 
-            # 2) Test connection by attempting to initialize a client
-            # This is a placeholder - actual implementation would use the StackIT SDK
-            # to make a test API call once we integrate the SDK properly
+            # 2) Test connection by attempting to create an S3 client
+            # StackIT Object Storage is S3-compatible, so we use boto3
             try:
-                # Import here to avoid circular dependencies and to test if SDK is available
-                import stackit.objectstorage
+                import boto3
+                from botocore.client import Config
+
+                # Create S3 client with StackIT endpoint
+                s3_client = boto3.client(
+                    "s3",
+                    endpoint_url="https://object.storage.eu01.onstackit.cloud",
+                    aws_access_key_id=project_id,
+                    aws_secret_access_key=api_token,
+                    config=Config(
+                        signature_version="s3v4",
+                        s3={"addressing_style": "path"},
+                    ),
+                )
+
+                # Test with a simple API call (list buckets)
+                s3_client.list_buckets()
 
                 logger.info(
-                    "StackIT test_connection: SDK import successful. Credentials appear valid."
+                    "StackIT test_connection: Successfully connected to Object Storage."
                 )
                 return Connection(is_connected=True)
-            except ImportError:
-                error_msg = "StackIT SDK (stackit-objectstorage) is not installed. Run: pip install stackit-objectstorage"
+            except Exception as test_error:
+                error_msg = f"Failed to connect to StackIT Object Storage: {str(test_error)}"
                 logger.error(error_msg)
                 if raise_on_exception:
-                    raise ImportError(error_msg)
-                return Connection(error=ImportError(error_msg))
+                    raise Exception(error_msg)
+                return Connection(error=Exception(error_msg))
 
         except Exception as e:
             logger.critical(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}")
