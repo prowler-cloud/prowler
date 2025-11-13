@@ -179,14 +179,3 @@ prowler <provider> --list-categories
 ```console
 prowler <provider> --categories secrets
 ```
-
-- Filter by categories in the Dashboard:
-
-After running Prowler with specific categories, you can filter the results in the dashboard:
-
-```console
-prowler aws --categories internet-exposed
-prowler dashboard
-```
-
-The dashboard includes a **Category** filter dropdown that allows you to view only findings from specific categories like `internet-exposed`, `encryption`, `logging`, etc.
