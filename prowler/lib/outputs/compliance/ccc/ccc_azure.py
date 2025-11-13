@@ -1,4 +1,4 @@
-from prowler.config.config import timestamp
+from prowler.config.config import get_timestamp_iso
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.compliance.ccc.models import CCC_AzureModel
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
@@ -45,7 +45,7 @@ class CCC_Azure(ComplianceOutput):
                             Description=compliance.Description,
                             SubscriptionId=finding.account_uid,
                             Location=finding.region,
-                            AssessmentDate=str(timestamp),
+                            AssessmentDate=get_timestamp_iso(),
                             Requirements_Id=requirement.Id,
                             Requirements_Description=requirement.Description,
                             Requirements_Attributes_FamilyName=attribute.FamilyName,
@@ -74,7 +74,7 @@ class CCC_Azure(ComplianceOutput):
                         Description=compliance.Description,
                         SubscriptionId="",
                         Location="",
-                        AssessmentDate=str(timestamp),
+                        AssessmentDate=get_timestamp_iso(),
                         Requirements_Id=requirement.Id,
                         Requirements_Description=requirement.Description,
                         Requirements_Attributes_FamilyName=attribute.FamilyName,

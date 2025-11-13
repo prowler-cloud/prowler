@@ -1,4 +1,4 @@
-from prowler.config.config import timestamp
+from prowler.config.config import get_timestamp
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
 from prowler.lib.outputs.compliance.ens.models import AWSENSModel
@@ -34,6 +34,8 @@ class AWSENS(ComplianceOutput):
         Returns:
             - None
         """
+        current_timestamp = get_timestamp()
+
         for finding in findings:
             # Get the compliance requirements for the finding
             finding_requirements = finding.compliance.get(compliance_name, [])
@@ -45,7 +47,7 @@ class AWSENS(ComplianceOutput):
                             Description=compliance.Description,
                             AccountId=finding.account_uid,
                             Region=finding.region,
-                            AssessmentDate=str(timestamp),
+                            AssessmentDate=str(current_timestamp),
                             Requirements_Id=requirement.Id,
                             Requirements_Description=requirement.Description,
                             Requirements_Attributes_IdGrupoControl=attribute.IdGrupoControl,
@@ -80,7 +82,7 @@ class AWSENS(ComplianceOutput):
                         Description=compliance.Description,
                         AccountId="",
                         Region="",
-                        AssessmentDate=str(timestamp),
+                        AssessmentDate=str(current_timestamp),
                         Requirements_Id=requirement.Id,
                         Requirements_Description=requirement.Description,
                         Requirements_Attributes_IdGrupoControl=attribute.IdGrupoControl,

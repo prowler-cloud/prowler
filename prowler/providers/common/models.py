@@ -4,6 +4,7 @@ from os.path import isdir
 
 from pydantic.v1 import BaseModel
 
+from prowler.config.config import refresh_timestamps
 from prowler.providers.common.provider import Provider
 
 
@@ -28,6 +29,9 @@ class ProviderOutputOptions:
     unix_timestamp: bool
 
     def __init__(self, arguments, bulk_checks_metadata):
+        # Refresh timestamps so each scan run uses a fresh cache for output suffixes.
+        refresh_timestamps()
+
         self.status = getattr(arguments, "status", None)
         self.output_modes = getattr(arguments, "output_formats", None)
         self.output_directory = getattr(arguments, "output_directory", None)

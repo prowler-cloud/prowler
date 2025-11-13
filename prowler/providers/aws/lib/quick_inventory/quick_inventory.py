@@ -9,9 +9,9 @@ from tabulate import tabulate
 
 from prowler.config.config import (
     csv_file_suffix,
+    get_output_file_timestamp,
     json_file_suffix,
     orange_color,
-    output_file_timestamp,
 )
 from prowler.lib.logger import logger
 from prowler.providers.aws.aws_provider import AwsProvider
@@ -231,6 +231,7 @@ def create_output(resources: list, provider: AwsProvider, args):
         json_output = []
         # Check if custom output filename was input, if not, set the default
         if not hasattr(args, "output_filename") or args.output_filename is None:
+            output_file_timestamp = get_output_file_timestamp()
             output_file = (
                 f"prowler-inventory-{provider.identity.account}-{output_file_timestamp}"
             )

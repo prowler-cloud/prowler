@@ -7,7 +7,7 @@ from boto3 import Session
 from botocore.client import ClientError
 from botocore.exceptions import NoCredentialsError, ProfileNotFound
 
-from prowler.config.config import timestamp_utc
+from prowler.config.config import get_timestamp_utc
 from prowler.lib.logger import logger
 from prowler.lib.outputs.asff.asff import AWSSecurityFindingFormat
 from prowler.providers.aws.aws_provider import AwsProvider
@@ -400,7 +400,7 @@ class SecurityHub:
                     for finding in page["Findings"]:
                         if finding["Id"] not in current_findings_ids:
                             finding["RecordState"] = "ARCHIVED"
-                            finding["UpdatedAt"] = timestamp_utc.strftime(
+                            finding["UpdatedAt"] = get_timestamp_utc().strftime(
                                 "%Y-%m-%dT%H:%M:%SZ"
                             )
 

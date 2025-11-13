@@ -14,6 +14,7 @@ from prowler.config.config import (
     json_asff_file_suffix,
     json_ocsf_file_suffix,
     orange_color,
+    refresh_timestamps,
 )
 from prowler.lib.banner import print_banner
 from prowler.lib.check.check import (
@@ -122,6 +123,9 @@ def prowler():
     # Refactor(CLI)
     parser = ProwlerArgumentParser()
     args = parser.parse()
+
+    # Always start a run with fresh timestamps so outputs reflect execution time.
+    refresh_timestamps()
 
     # Save Arguments
     provider = args.provider

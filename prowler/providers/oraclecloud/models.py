@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
 
-from prowler.config.config import output_file_timestamp
+from prowler.config.config import get_output_file_timestamp
 from prowler.providers.common.models import ProviderOutputOptions
 
 
@@ -90,7 +90,7 @@ class OCIOutputOptions(ProviderOutputOptions):
                 else identity.tenancy_id
             )
             self.output_filename = (
-                f"prowler-output-{tenancy_identifier}-{output_file_timestamp}"
+                f"prowler-output-{tenancy_identifier}-{get_output_file_timestamp()}"
             )
         else:
             self.output_filename = arguments.output_filename
