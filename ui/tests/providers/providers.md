@@ -265,3 +265,61 @@
 - Provider cleanup performed before each test to ensure clean state
 - Requires valid Microsoft 365 tenant with certificate-based authentication
 - Certificate must be properly configured and have sufficient permissions for security scanning
+
+---
+
+## Test Case: `PROVIDER-E2E-006` - Add Kubernetes Provider with Kubeconfig Content
+
+**Priority:** `critical`
+
+**Tags:**
+
+- type → @e2e, @serial
+- feature → @providers
+- provider → @kubernetes
+
+**Description/Objective:** Validates the complete flow of adding a new Kubernetes provider using kubeconfig content authentication
+
+**Preconditions:**
+
+- Admin user authentication required (admin.auth.setup setup)
+- Environment variables configured: E2E_KUBERNETES_CONTEXT, E2E_KUBERNETES_KUBECONFIG_PATH
+- Kubeconfig file must exist at the specified path
+- Remove any existing provider with the same Context before starting the test
+- This test must be run serially and never in parallel with other tests, as it requires the Context not to be already registered beforehand.
+
+### Flow Steps:
+
+1. Navigate to providers page
+2. Click "Add Provider" button
+3. Select Kubernetes provider type
+4. Fill provider details (context and alias)
+5. Verify credentials page is loaded
+6. Fill Kubernetes credentials (kubeconfig content)
+7. Launch initial scan
+8. Verify redirect to provider management page
+
+### Expected Result:
+
+- Kubernetes provider successfully added with kubeconfig content
+- Initial scan launched successfully
+- User redirected to provider details page
+
+### Key verification points:
+
+- Provider page loads correctly
+- Connect account page displays Kubernetes option
+- Provider details form accepts context and alias
+- Credentials page loads with kubeconfig content field
+- Kubeconfig content is properly filled in the correct field
+- Launch scan page appears
+- Successful redirect to provider page after scan launch
+
+### Notes:
+
+- Test uses environment variables for Kubernetes context and kubeconfig file path
+- Kubeconfig content is read from file and used for authentication
+- Provider cleanup performed before each test to ensure clean state
+- Requires valid Kubernetes cluster with accessible kubeconfig
+- Kubeconfig must have sufficient permissions for security scanning
+- Test validates that kubeconfig content goes to the correct field (not the context field)
