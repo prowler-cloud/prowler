@@ -138,7 +138,7 @@ export const Accordion = ({
             title: "text-sm",
             subtitle: "text-xs text-gray-500",
             trigger:
-              "py-2 px-2 rounded-lg data-[hover=true]:bg-gray-50 dark:data-[hover=true]:bg-gray-800/50 w-full flex items-center",
+              "py-2 px-2 rounded-lg data-[hover=true]:bg-bg-neutral-tertiary data-[open=true]:bg-bg-neutral-tertiary w-full flex items-center transition-colors",
             content: "px-0 py-1",
           }}
         >

@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 
 import { logOut } from "@/actions/auth";
 import { AddIcon, InfoIcon } from "@/components/icons";
+import { Button as ShadcnButton } from "@/components/shadcn/button/button";
 import { CollapseMenuButton } from "@/components/ui/sidebar/collapse-menu-button";
 import {
   Tooltip,
@@ -22,7 +23,6 @@ import { GroupProps } from "@/types";
 import { RolePermissionAttributes } from "@/types/users";
 
 import { Button } from "../button/button";
-import { CustomButton } from "../custom/custom-button";
 import { ScrollArea } from "../scroll-area/scroll-area";
 
 interface MenuHideRule {
@@ -87,17 +87,23 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
   return (
     <>
       <div className="px-2">
-        <CustomButton
-          asLink="/scans"
+        <ShadcnButton
+          asChild
           className={cn(isOpen ? "w-full" : "w-fit")}
-          ariaLabel="Launch Scan"
-          variant="solid"
-          color="action"
-          size="md"
-          endContent={isOpen ? <AddIcon size={20} /> : null}
+          variant="default"
+          size="default"
         >
-          {isOpen ? "Launch Scan" : <AddIcon size={20} />}
-        </CustomButton>
+          <Link href="/scans" aria-label="Launch Scan">
+            {isOpen ? (
+              <>
+                Launch Scan
+                <AddIcon size={20} />
+              </>
+            ) : (
+              <AddIcon size={20} />
+            )}
+          </Link>
+        </ShadcnButton>
       </div>
       <ScrollArea className="[&>div>div[style]]:block!">
         <nav className="mt-2 h-full w-full lg:mt-6">
