@@ -216,6 +216,14 @@ class TestPowerShellSession:
         result = session.json_parse_output('prefix [{"key": "value"}] suffix')
         assert result == [{"key": "value"}]
 
+        result = session.json_parse_output(
+            'INFO {context data} {"key": "value", "list": [1, 2]} extra'
+        )
+        assert result == {"key": "value", "list": [1, 2]}
+
+        result = session.json_parse_output('{"key": "value"} trailing {log}')
+        assert result == {"key": "value"}
+
         # Test non-JSON text returns empty dict
         result = session.json_parse_output("just some text")
         assert result == {}

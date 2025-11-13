@@ -2,6 +2,7 @@ from unittest.mock import patch
 
 from prowler.providers.gcp.services.cloudstorage.cloudstorage_service import (
     CloudStorage,
+    RetentionPolicy,
 )
 from tests.providers.gcp.gcp_fixtures import (
     GCP_PROJECT_ID,
@@ -35,9 +36,17 @@ class TestCloudStorageService:
             assert cloudstorage_client.buckets[0].region == "US"
             assert cloudstorage_client.buckets[0].uniform_bucket_level_access
             assert cloudstorage_client.buckets[0].public
-            assert cloudstorage_client.buckets[0].retention_policy == {
-                "retentionPeriod": 10
-            }
+
+            assert isinstance(
+                cloudstorage_client.buckets[0].retention_policy, RetentionPolicy
+            )
+            assert (
+                cloudstorage_client.buckets[0].retention_policy.retention_period == 10
+            )
+            assert cloudstorage_client.buckets[0].retention_policy.is_locked is False
+            assert (
+                cloudstorage_client.buckets[0].retention_policy.effective_time is None
+            )
             assert cloudstorage_client.buckets[0].project_id == GCP_PROJECT_ID
 
             assert cloudstorage_client.buckets[1].name == "bucket2"

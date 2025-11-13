@@ -45,6 +45,10 @@ export const ProviderCredentialFields = {
   GITHUB_APP_ID: "github_app_id",
   GITHUB_APP_KEY: "github_app_key_content",
 
+  // IaC fields
+  REPOSITORY_URL: "repository_url",
+  ACCESS_TOKEN: "access_token",
+
   // OCI fields
   OCI_USER: "user",
   OCI_FINGERPRINT: "fingerprint",
@@ -81,6 +85,8 @@ export const ErrorPointers = {
   OAUTH_APP_TOKEN: "/data/attributes/secret/oauth_app_token",
   GITHUB_APP_ID: "/data/attributes/secret/github_app_id",
   GITHUB_APP_KEY: "/data/attributes/secret/github_app_key_content",
+  REPOSITORY_URL: "/data/attributes/secret/repository_url",
+  ACCESS_TOKEN: "/data/attributes/secret/access_token",
   CERTIFICATE_CONTENT: "/data/attributes/secret/certificate_content",
   OCI_USER: "/data/attributes/secret/user",
   OCI_FINGERPRINT: "/data/attributes/secret/fingerprint",

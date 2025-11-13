@@ -23,15 +23,15 @@ const chartConfig = {
   },
   pass: {
     label: "Pass",
-    color: "hsl(var(--chart-success))",
+    color: "var(--color-bg-pass)",
   },
   fail: {
     label: "Fail",
-    color: "hsl(var(--chart-fail))",
+    color: "var(--color-bg-fail)",
   },
   manual: {
     label: "Manual",
-    color: "hsl(var(--chart-warning))",
+    color: "var(--color-bg-warning)",
   },
 } satisfies ChartConfig;
 

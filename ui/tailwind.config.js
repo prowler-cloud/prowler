@@ -4,9 +4,10 @@ const { heroui } = require("@heroui/theme");
 module.exports = {
   darkMode: ["class"],
   content: [
-    "./components/**/*.{ts,jsx,tsx,mdx}",
-    "./app/**/*.{ts,jsx,tsx,mdx}",
+    "./components/**/*.{ts,jsx,tsx}",
+    "./app/**/*.{ts,jsx,tsx}",
     "./node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}",
+    "!./docs/**/*",
   ],
   prefix: "",
   theme: {

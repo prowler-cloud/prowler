@@ -18,27 +18,27 @@ class MockOCIModule(MagicMock):
         return MagicMock()
 
 
-# Only mock if oci import fails (missing dependencies)
+# Only mock if oraclecloud import fails (missing dependencies)
 try:
     pass
 except (ImportError, ModuleNotFoundError):
     # Create mock OCI module
     mock_oci = MockOCIModule()
-    sys.modules["oci"] = mock_oci
-    sys.modules["oci.auth"] = mock_oci.auth
-    sys.modules["oci.config"] = mock_oci.config
-    sys.modules["oci.identity"] = mock_oci.identity
-    sys.modules["oci.core"] = mock_oci.core
-    sys.modules["oci.object_storage"] = mock_oci.object_storage
-    sys.modules["oci.key_management"] = mock_oci.key_management
-    sys.modules["oci.file_storage"] = mock_oci.file_storage
-    sys.modules["oci.block_storage"] = mock_oci.block_storage
-    sys.modules["oci.database"] = mock_oci.database
-    sys.modules["oci.events"] = mock_oci.events
-    sys.modules["oci.cloud_guard"] = mock_oci.cloud_guard
-    sys.modules["oci.audit"] = mock_oci.audit
-    sys.modules["oci.analytics"] = mock_oci.analytics
-    sys.modules["oci.integration"] = mock_oci.integration
-    sys.modules["oci.logging"] = mock_oci.logging
-    sys.modules["oci.pagination"] = mock_oci.pagination
-    sys.modules["oci.exceptions"] = mock_oci.exceptions
+    sys.modules["oraclecloud"] = mock_oci
+    sys.modules["oraclecloud.auth"] = mock_oci.auth
+    sys.modules["oraclecloud.config"] = mock_oci.config
+    sys.modules["oraclecloud.identity"] = mock_oci.identity
+    sys.modules["oraclecloud.core"] = mock_oci.core
+    sys.modules["oraclecloud.object_storage"] = mock_oci.object_storage
+    sys.modules["oraclecloud.key_management"] = mock_oci.key_management
+    sys.modules["oraclecloud.file_storage"] = mock_oci.file_storage
+    sys.modules["oraclecloud.block_storage"] = mock_oci.block_storage
+    sys.modules["oraclecloud.database"] = mock_oci.database
+    sys.modules["oraclecloud.events"] = mock_oci.events
+    sys.modules["oraclecloud.cloud_guard"] = mock_oci.cloud_guard
+    sys.modules["oraclecloud.audit"] = mock_oci.audit
+    sys.modules["oraclecloud.analytics"] = mock_oci.analytics
+    sys.modules["oraclecloud.integration"] = mock_oci.integration
+    sys.modules["oraclecloud.logging"] = mock_oci.logging
+    sys.modules["oraclecloud.pagination"] = mock_oci.pagination
+    sys.modules["oraclecloud.exceptions"] = mock_oci.exceptions

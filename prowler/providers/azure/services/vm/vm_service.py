@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from enum import Enum
 from typing import List, Optional
 
@@ -294,16 +293,14 @@ class VirtualMachines(AzureService):
         return vm_instance_ids
 
 
-@dataclass
-class UefiSettings:
+class UefiSettings(BaseModel):
     secure_boot_enabled: bool
     v_tpm_enabled: bool
 
 
-@dataclass
-class SecurityProfile:
-    security_type: str
-    uefi_settings: Optional[UefiSettings]
+class SecurityProfile(BaseModel):
+    security_type: Optional[str] = None
+    uefi_settings: Optional[UefiSettings] = None
 
 
 class OperatingSystemType(Enum):

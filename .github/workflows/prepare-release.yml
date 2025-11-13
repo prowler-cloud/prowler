@@ -47,7 +47,7 @@ jobs:
         git config --global user.name 'prowler-bot'
         git config --global user.email '179230569+prowler-bot@users.noreply.github.com'
 
-    - name: Parse version and read changelogs
+    - name: Parse version and determine branch
       run: |
         # Validate version format (reusing pattern from sdk-bump-version.yml)
         if [[ $PROWLER_VERSION =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
@@ -64,65 +64,82 @@ jobs:
           BRANCH_NAME="v${MAJOR_VERSION}.${MINOR_VERSION}"
           echo "BRANCH_NAME=${BRANCH_NAME}" >> "${GITHUB_ENV}"
 
-          # Function to extract the latest version from changelog
-          extract_latest_version() {
-            local changelog_file="$1"
-            if [ -f "$changelog_file" ]; then
-              # Extract the first version entry (most recent) from changelog
-              # Format: ## [version] (1.2.3) or ## [vversion] (v1.2.3)
-              local version=$(grep -m 1 '^## \[' "$changelog_file" | sed 's/^## \[\(.*\)\].*/\1/' | sed 's/^v//' | tr -d '[:space:]')
-              echo "$version"
-            else
-              echo ""
-            fi
-          }
-
-          # Read actual versions from changelogs (source of truth)
-          UI_VERSION=$(extract_latest_version "ui/CHANGELOG.md")
-          API_VERSION=$(extract_latest_version "api/CHANGELOG.md")
-          SDK_VERSION=$(extract_latest_version "prowler/CHANGELOG.md")
-          MCP_VERSION=$(extract_latest_version "mcp_server/CHANGELOG.md")
-
-          echo "UI_VERSION=${UI_VERSION}" >> "${GITHUB_ENV}"
-          echo "API_VERSION=${API_VERSION}" >> "${GITHUB_ENV}"
-          echo "SDK_VERSION=${SDK_VERSION}" >> "${GITHUB_ENV}"
-          echo "MCP_VERSION=${MCP_VERSION}" >> "${GITHUB_ENV}"
-
-          if [ -n "$UI_VERSION" ]; then
-            echo "Read UI version from changelog: $UI_VERSION"
-          else
-            echo "Warning: No UI version found in ui/CHANGELOG.md"
-          fi
-
-          if [ -n "$API_VERSION" ]; then
-            echo "Read API version from changelog: $API_VERSION"
-          else
-            echo "Warning: No API version found in api/CHANGELOG.md"
-          fi
-
-          if [ -n "$SDK_VERSION" ]; then
-            echo "Read SDK version from changelog: $SDK_VERSION"
-          else
-            echo "Warning: No SDK version found in prowler/CHANGELOG.md"
-          fi
-
-          if [ -n "$MCP_VERSION" ]; then
-            echo "Read MCP version from changelog: $MCP_VERSION"
-          else
-            echo "Warning: No MCP version found in mcp_server/CHANGELOG.md"
-          fi
-
           echo "Prowler version: $PROWLER_VERSION"
           echo "Branch name: $BRANCH_NAME"
-          echo "UI version: $UI_VERSION"
-          echo "API version: $API_VERSION"
-          echo "SDK version: $SDK_VERSION"
-          echo "MCP version: $MCP_VERSION"
           echo "Is minor release: $([ $PATCH_VERSION -eq 0 ] && echo 'true' || echo 'false')"
         else
           echo "Invalid version syntax: '$PROWLER_VERSION' (must be N.N.N)" >&2
           exit 1
         fi
+
+    - name: Checkout release branch
+      run: |
+        echo "Checking out branch $BRANCH_NAME for release $PROWLER_VERSION..."
+        if git show-ref --verify --quiet "refs/heads/$BRANCH_NAME"; then
+          echo "Branch $BRANCH_NAME exists locally, checking out..."
+          git checkout "$BRANCH_NAME"
+        elif git show-ref --verify --quiet "refs/remotes/origin/$BRANCH_NAME"; then
+          echo "Branch $BRANCH_NAME exists remotely, checking out..."
+          git checkout -b "$BRANCH_NAME" "origin/$BRANCH_NAME"
+        else
+          echo "ERROR: Branch $BRANCH_NAME does not exist. For minor releases (X.Y.0), create it manually first. For patch releases (X.Y.Z), the branch should already exist."
+          exit 1
+        fi
+
+    - name: Read changelog versions from release branch
+      run: |
+        # Function to extract the latest version from changelog
+        extract_latest_version() {
+          local changelog_file="$1"
+          if [ -f "$changelog_file" ]; then
+            # Extract the first version entry (most recent) from changelog
+            # Format: ## [version] (1.2.3) or ## [vversion] (v1.2.3)
+            local version=$(grep -m 1 '^## \[' "$changelog_file" | sed 's/^## \[\(.*\)\].*/\1/' | sed 's/^v//' | tr -d '[:space:]')
+            echo "$version"
+          else
+            echo ""
+          fi
+        }
+
+        # Read actual versions from changelogs (source of truth)
+        UI_VERSION=$(extract_latest_version "ui/CHANGELOG.md")
+        API_VERSION=$(extract_latest_version "api/CHANGELOG.md")
+        SDK_VERSION=$(extract_latest_version "prowler/CHANGELOG.md")
+        MCP_VERSION=$(extract_latest_version "mcp_server/CHANGELOG.md")
+
+        echo "UI_VERSION=${UI_VERSION}" >> "${GITHUB_ENV}"
+        echo "API_VERSION=${API_VERSION}" >> "${GITHUB_ENV}"
+        echo "SDK_VERSION=${SDK_VERSION}" >> "${GITHUB_ENV}"
+        echo "MCP_VERSION=${MCP_VERSION}" >> "${GITHUB_ENV}"
+
+        if [ -n "$UI_VERSION" ]; then
+          echo "Read UI version from changelog: $UI_VERSION"
+        else
+          echo "Warning: No UI version found in ui/CHANGELOG.md"
+        fi
+
+        if [ -n "$API_VERSION" ]; then
+          echo "Read API version from changelog: $API_VERSION"
+        else
+          echo "Warning: No API version found in api/CHANGELOG.md"
+        fi
+
+        if [ -n "$SDK_VERSION" ]; then
+          echo "Read SDK version from changelog: $SDK_VERSION"
+        else
+          echo "Warning: No SDK version found in prowler/CHANGELOG.md"
+        fi
+
+        if [ -n "$MCP_VERSION" ]; then
+          echo "Read MCP version from changelog: $MCP_VERSION"
+        else
+          echo "Warning: No MCP version found in mcp_server/CHANGELOG.md"
+        fi
+
+        echo "UI version: $UI_VERSION"
+        echo "API version: $API_VERSION"
+        echo "SDK version: $SDK_VERSION"
+        echo "MCP version: $MCP_VERSION"
 
     - name: Extract and combine changelog entries
       run: |
@@ -255,21 +272,6 @@ jobs:
         echo "Combined changelog preview:"
         cat combined_changelog.md
 
-    - name: Checkout release branch for patch release
-      if: ${{ env.PATCH_VERSION != '0' }}
-      run: |
-        echo "Patch release detected, checking out existing branch $BRANCH_NAME..."
-        if git show-ref --verify --quiet "refs/heads/$BRANCH_NAME"; then
-          echo "Branch $BRANCH_NAME exists locally, checking out..."
-          git checkout "$BRANCH_NAME"
-        elif git show-ref --verify --quiet "refs/remotes/origin/$BRANCH_NAME"; then
-          echo "Branch $BRANCH_NAME exists remotely, checking out..."
-          git checkout -b "$BRANCH_NAME" "origin/$BRANCH_NAME"
-        else
-          echo "ERROR: Branch $BRANCH_NAME should exist for patch release $PROWLER_VERSION"
-          exit 1
-        fi
-
     - name: Verify SDK version in pyproject.toml
       run: |
         CURRENT_VERSION=$(grep '^version = ' pyproject.toml | sed -E 's/version = "([^"]+)"/\1/' | tr -d '[:space:]')
@@ -322,18 +324,6 @@ jobs:
           exit 1
         fi
         echo "✓ api/src/backend/api/v1/views.py version: $CURRENT_API_VERSION"
-
-    - name: Checkout release branch for minor release
-      if: ${{ env.PATCH_VERSION == '0' }}
-      run: |
-        echo "Minor release detected (patch = 0), checking out existing branch $BRANCH_NAME..."
-        if git show-ref --verify --quiet "refs/remotes/origin/$BRANCH_NAME"; then
-          echo "Branch $BRANCH_NAME exists remotely, checking out..."
-          git checkout -b "$BRANCH_NAME" "origin/$BRANCH_NAME"
-        else
-          echo "ERROR: Branch $BRANCH_NAME should exist for minor release $PROWLER_VERSION. Please create it manually first."
-          exit 1
-        fi
 
     - name: Update API prowler dependency for minor release
       if: ${{ env.PATCH_VERSION == '0' }}
@@ -392,7 +382,7 @@ jobs:
           no-changelog
 
     - name: Create draft release
-      uses: softprops/action-gh-release@6cbd405e2c4e67a21c47fa9e383d020e4e28b836 # v2.3.3
+      uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090 # v2.4.1
       with:
         tag_name: ${{ env.PROWLER_VERSION }}
         name: Prowler ${{ env.PROWLER_VERSION }}

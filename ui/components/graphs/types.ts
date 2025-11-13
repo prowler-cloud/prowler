@@ -34,6 +34,7 @@ export interface RadarDataPoint {
   category: string;
   value: number;
   change?: number;
+  severityData?: BarDataPoint[];
 }
 
 export interface ScatterDataPoint {

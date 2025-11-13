@@ -7,7 +7,6 @@ from shutil import rmtree
 import matplotlib.pyplot as plt
 from celery.utils.log import get_task_logger
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE, DJANGO_TMP_OUTPUT_DIRECTORY
-from django.db.models import Count, Q
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import letter
@@ -26,11 +25,22 @@ from reportlab.platypus import (
     TableStyle,
 )
 from tasks.jobs.export import _generate_output_directory, _upload_to_s3
+from tasks.jobs.threatscore import compute_threatscore_metrics
+from tasks.jobs.threatscore_utils import (
+    _aggregate_requirement_statistics_from_database,
+    _calculate_requirements_data_from_statistics,
+)
 from tasks.utils import batched
 
 from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import rls_transaction
-from api.models import Finding, Provider, ScanSummary, StatusChoices
+from api.models import (
+    Finding,
+    Provider,
+    ScanSummary,
+    StatusChoices,
+    ThreatScoreSnapshot,
+)
 from api.utils import initialize_prowler_provider
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.finding import Finding as FindingOutput
@@ -434,56 +444,6 @@ def _add_pdf_footer(canvas_obj: canvas.Canvas, doc: SimpleDocTemplate) -> None:
     canvas_obj.drawString(width - text_width - 30, 20, powered_text)
 
 
-def _aggregate_requirement_statistics_from_database(
-    tenant_id: str, scan_id: str
-) -> dict[str, dict[str, int]]:
-    """
-    Aggregate finding statistics by check_id using database aggregation.
-
-    This function uses Django ORM aggregation to calculate pass/fail statistics
-    entirely in the database, avoiding the need to load findings into memory.
-
-    Args:
-        tenant_id (str): The tenant ID for Row-Level Security context.
-        scan_id (str): The ID of the scan to retrieve findings for.
-
-    Returns:
-        dict[str, dict[str, int]]: Dictionary mapping check_id to statistics:
-            - 'passed' (int): Number of passed findings for this check
-            - 'total' (int): Total number of findings for this check
-
-    Example:
-        {
-            'aws_iam_user_mfa_enabled': {'passed': 10, 'total': 15},
-            'aws_s3_bucket_public_access': {'passed': 0, 'total': 5}
-        }
-    """
-    requirement_statistics_by_check_id = {}
-
-    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-        # Use database aggregation to calculate stats without loading findings into memory
-        aggregated_statistics_queryset = (
-            Finding.all_objects.filter(tenant_id=tenant_id, scan_id=scan_id)
-            .values("check_id")
-            .annotate(
-                total_findings=Count("id"),
-                passed_findings=Count("id", filter=Q(status=StatusChoices.PASS)),
-            )
-        )
-
-        for aggregated_stat in aggregated_statistics_queryset:
-            check_id = aggregated_stat["check_id"]
-            requirement_statistics_by_check_id[check_id] = {
-                "passed": aggregated_stat["passed_findings"],
-                "total": aggregated_stat["total_findings"],
-            }
-
-    logger.info(
-        f"Aggregated statistics for {len(requirement_statistics_by_check_id)} unique checks"
-    )
-    return requirement_statistics_by_check_id
-
-
 def _load_findings_for_requirement_checks(
     tenant_id: str, scan_id: str, check_ids: list[str], prowler_provider
 ) -> dict[str, list[FindingOutput]]:
@@ -542,84 +502,6 @@ def _load_findings_for_requirement_checks(
     )
 
     return dict(findings_by_check_id)
-
-
-def _calculate_requirements_data_from_statistics(
-    compliance_obj, requirement_statistics_by_check_id: dict[str, dict[str, int]]
-) -> tuple[dict[str, dict], list[dict]]:
-    """
-    Calculate requirement status and statistics using pre-aggregated database statistics.
-
-    This function uses O(n) lookups with pre-aggregated statistics from the database,
-    avoiding the need to iterate over all findings for each requirement.
-
-    Args:
-        compliance_obj: The compliance framework object containing requirements.
-        requirement_statistics_by_check_id (dict[str, dict[str, int]]): Pre-aggregated statistics
-            mapping check_id to {'passed': int, 'total': int} counts.
-
-    Returns:
-        tuple[dict[str, dict], list[dict]]: A tuple containing:
-            - attributes_by_requirement_id: Dictionary mapping requirement IDs to their attributes.
-            - requirements_list: List of requirement dictionaries with status and statistics.
-    """
-    attributes_by_requirement_id = {}
-    requirements_list = []
-
-    compliance_framework = getattr(compliance_obj, "Framework", "N/A")
-    compliance_version = getattr(compliance_obj, "Version", "N/A")
-
-    for requirement in compliance_obj.Requirements:
-        requirement_id = requirement.Id
-        requirement_description = getattr(requirement, "Description", "")
-        requirement_checks = getattr(requirement, "Checks", [])
-        requirement_attributes = getattr(requirement, "Attributes", [])
-
-        # Store requirement metadata for later use
-        attributes_by_requirement_id[requirement_id] = {
-            "attributes": {
-                "req_attributes": requirement_attributes,
-                "checks": requirement_checks,
-            },
-            "description": requirement_description,
-        }
-
-        # Calculate aggregated passed and total findings for this requirement
-        total_passed_findings = 0
-        total_findings_count = 0
-
-        for check_id in requirement_checks:
-            if check_id in requirement_statistics_by_check_id:
-                check_statistics = requirement_statistics_by_check_id[check_id]
-                total_findings_count += check_statistics["total"]
-                total_passed_findings += check_statistics["passed"]
-
-        # Determine overall requirement status based on findings
-        if total_findings_count > 0:
-            if total_passed_findings == total_findings_count:
-                requirement_status = StatusChoices.PASS
-            else:
-                # Partial pass or complete fail both count as FAIL
-                requirement_status = StatusChoices.FAIL
-        else:
-            # No findings means manual review required
-            requirement_status = StatusChoices.MANUAL
-
-        requirements_list.append(
-            {
-                "id": requirement_id,
-                "attributes": {
-                    "framework": compliance_framework,
-                    "version": compliance_version,
-                    "status": requirement_status,
-                    "description": requirement_description,
-                    "passed_findings": total_passed_findings,
-                    "total_findings": total_findings_count,
-                },
-            }
-        )
-
-    return attributes_by_requirement_id, requirements_list
 
 
 def generate_threatscore_report(
@@ -1262,8 +1144,9 @@ def generate_threatscore_report_job(
     2. Checks provider type compatibility
     3. Generates the output directory
     4. Calls generate_threatscore_report to create the PDF
-    5. Uploads the PDF to S3
-    6. Cleans up temporary files
+    5. Computes and stores ThreatScore metrics snapshot
+    6. Uploads the PDF to S3
+    7. Cleans up temporary files
 
     Args:
         tenant_id (str): The tenant ID for Row-Level Security context.
@@ -1316,6 +1199,66 @@ def generate_threatscore_report_job(
         only_failed=True,
         min_risk_level=4,
     )
+
+    # Compute and store ThreatScore metrics snapshot
+    logger.info(f"Computing ThreatScore metrics for scan {scan_id}")
+    try:
+        metrics = compute_threatscore_metrics(
+            tenant_id=tenant_id,
+            scan_id=scan_id,
+            provider_id=provider_id,
+            compliance_id=compliance_id,
+            min_risk_level=4,
+        )
+
+        # Create snapshot in database
+        with rls_transaction(tenant_id):
+            # Get previous snapshot for the same provider to calculate delta
+            previous_snapshot = (
+                ThreatScoreSnapshot.objects.filter(
+                    tenant_id=tenant_id,
+                    provider_id=provider_id,
+                    compliance_id=compliance_id,
+                )
+                .order_by("-inserted_at")
+                .first()
+            )
+
+            # Calculate score delta (improvement)
+            score_delta = None
+            if previous_snapshot:
+                score_delta = metrics["overall_score"] - float(
+                    previous_snapshot.overall_score
+                )
+
+            snapshot = ThreatScoreSnapshot.objects.create(
+                tenant_id=tenant_id,
+                scan_id=scan_id,
+                provider_id=provider_id,
+                compliance_id=compliance_id,
+                overall_score=metrics["overall_score"],
+                score_delta=score_delta,
+                section_scores=metrics["section_scores"],
+                critical_requirements=metrics["critical_requirements"],
+                total_requirements=metrics["total_requirements"],
+                passed_requirements=metrics["passed_requirements"],
+                failed_requirements=metrics["failed_requirements"],
+                manual_requirements=metrics["manual_requirements"],
+                total_findings=metrics["total_findings"],
+                passed_findings=metrics["passed_findings"],
+                failed_findings=metrics["failed_findings"],
+            )
+
+            delta_msg = (
+                f" (delta: {score_delta:+.2f}%)" if score_delta is not None else ""
+            )
+            logger.info(
+                f"ThreatScore snapshot created with ID {snapshot.id} "
+                f"(score: {snapshot.overall_score}%{delta_msg})"
+            )
+    except Exception as e:
+        # Log error but don't fail the job if snapshot creation fails
+        logger.error(f"Error creating ThreatScore snapshot: {e}")
 
     upload_uri = _upload_to_s3(
         tenant_id,

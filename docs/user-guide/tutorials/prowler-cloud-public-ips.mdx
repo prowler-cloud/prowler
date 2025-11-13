@@ -1,0 +1,29 @@
+---
+title: 'Prowler Cloud Public IPs'
+---
+
+## Overview
+
+Prowler Cloud uses a dedicated egress IPv4 address for all outbound connections to customer infrastructure. This enables organizations to implement network-level security controls by whitelisting Prowler's IP address.
+
+## Use Cases
+
+Whitelisting Prowler's egress IP address enables:
+
+- **Credential Usage Control**: Restrict where cloud provider credentials can be used from across AWS, Azure, GCP, and other providers
+- **Kubernetes Security**: Limit inbound HTTPS traffic to clusters by allowing only Prowler's IP address
+- **Compliance Requirements**: Meet security policies requiring allowlisting of external services
+
+## Query the Egress IP Address
+
+Retrieve Prowler Cloud's current egress IP address using the following command:
+
+```bash
+dig egress.prowler.com +short
+```
+
+This command returns the IPv4 address that Prowler Cloud uses for all outbound connections to customer infrastructure.
+
+<Note>
+The egress IP address is stable, but it is recommended to periodically verify it remains current by querying `egress.prowler.com`.
+</Note>

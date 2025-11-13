@@ -47,6 +47,7 @@ from api.models import (
     StatusChoices,
     Task,
     TenantAPIKey,
+    ThreatScoreSnapshot,
     User,
     UserRoleRelationship,
 )
@@ -1362,12 +1363,16 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 serializer = GCPProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.GITHUB.value:
                 serializer = GithubProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.IAC.value:
+                serializer = IacProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.KUBERNETES.value:
                 serializer = KubernetesProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.M365.value:
                 serializer = M365ProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.OCI.value:
+            elif provider_type == Provider.ProviderChoices.ORACLECLOUD.value:
                 serializer = OracleCloudProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.MONGODBATLAS.value:
+                serializer = MongoDBAtlasProviderSecret(data=secret)
             else:
                 raise serializers.ValidationError(
                     {"provider": f"Provider type not supported {provider_type}"}
@@ -1464,6 +1469,14 @@ class GCPServiceAccountProviderSecret(serializers.Serializer):
         resource_name = "provider-secrets"
 
 
+class MongoDBAtlasProviderSecret(serializers.Serializer):
+    atlas_public_key = serializers.CharField()
+    atlas_private_key = serializers.CharField()
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
 class KubernetesProviderSecret(serializers.Serializer):
     kubeconfig_content = serializers.CharField()
 
@@ -1476,6 +1489,14 @@ class GithubProviderSecret(serializers.Serializer):
     oauth_app_token = serializers.CharField(required=False)
     github_app_id = serializers.IntegerField(required=False)
     github_app_key_content = serializers.CharField(required=False)
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
+class IacProviderSecret(serializers.Serializer):
+    repository_url = serializers.CharField()
+    access_token = serializers.CharField(required=False)
 
     class Meta:
         resource_name = "provider-secrets"
@@ -3606,3 +3627,64 @@ class MuteRuleUpdateSerializer(BaseWriteSerializer):
         ):
             raise ValidationError("A mute rule with this name already exists.")
         return value
+
+
+# ThreatScore Snapshots
+
+
+class ThreatScoreSnapshotSerializer(RLSSerializer):
+    """
+    Serializer for ThreatScore snapshots.
+    Read-only serializer for retrieving historical ThreatScore metrics.
+    """
+
+    id = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ThreatScoreSnapshot
+        fields = [
+            "id",
+            "inserted_at",
+            "scan",
+            "provider",
+            "compliance_id",
+            "overall_score",
+            "score_delta",
+            "section_scores",
+            "critical_requirements",
+            "total_requirements",
+            "passed_requirements",
+            "failed_requirements",
+            "manual_requirements",
+            "total_findings",
+            "passed_findings",
+            "failed_findings",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "inserted_at": {"read_only": True},
+            "scan": {"read_only": True},
+            "provider": {"read_only": True},
+            "compliance_id": {"read_only": True},
+            "overall_score": {"read_only": True},
+            "score_delta": {"read_only": True},
+            "section_scores": {"read_only": True},
+            "critical_requirements": {"read_only": True},
+            "total_requirements": {"read_only": True},
+            "passed_requirements": {"read_only": True},
+            "failed_requirements": {"read_only": True},
+            "manual_requirements": {"read_only": True},
+            "total_findings": {"read_only": True},
+            "passed_findings": {"read_only": True},
+            "failed_findings": {"read_only": True},
+        }
+
+    included_serializers = {
+        "scan": "api.v1.serializers.ScanIncludeSerializer",
+        "provider": "api.v1.serializers.ProviderIncludeSerializer",
+    }
+
+    def get_id(self, obj):
+        if getattr(obj, "_aggregated", False):
+            return "n/a"
+        return str(obj.id)

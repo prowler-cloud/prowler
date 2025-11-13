@@ -501,13 +501,28 @@ def providers_fixture(tenants_fixture):
         tenant_id=tenant.id,
     )
     provider7 = Provider.objects.create(
-        provider="oci",
+        provider="oraclecloud",
         uid="ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
         alias="oci_testing",
         tenant_id=tenant.id,
     )
+    provider8 = Provider.objects.create(
+        provider="mongodbatlas",
+        uid="64b1d3c0e4b03b1234567890",
+        alias="mongodbatlas_testing",
+        tenant_id=tenant.id,
+    )
 
-    return provider1, provider2, provider3, provider4, provider5, provider6, provider7
+    return (
+        provider1,
+        provider2,
+        provider3,
+        provider4,
+        provider5,
+        provider6,
+        provider7,
+        provider8,
+    )
 
 
 @pytest.fixture

@@ -1,5 +1,8 @@
 "use client";
 
+// Import Sentry client-side initialization
+import "@/app/instrumentation.client";
+
 import { HeroUIProvider } from "@heroui/system";
 import { useRouter } from "next/navigation";
 import { SessionProvider } from "next-auth/react";

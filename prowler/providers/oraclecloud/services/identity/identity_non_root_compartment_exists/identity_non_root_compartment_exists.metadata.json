@@ -1,5 +1,5 @@
 {
-  "Provider": "oci",
+  "Provider": "oraclecloud",
   "CheckID": "identity_non_root_compartment_exists",
   "CheckTitle": "Create at least one non-root compartment in your tenancy to store cloud resources",
   "CheckType": [],

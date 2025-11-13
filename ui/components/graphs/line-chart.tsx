@@ -4,26 +4,30 @@ import { Bell } from "lucide-react";
 import { useState } from "react";
 import {
   CartesianGrid,
-  Legend,
   Line,
   LineChart as RechartsLine,
-  ResponsiveContainer,
-  Tooltip,
   TooltipProps,
   XAxis,
   YAxis,
 } from "recharts";
 
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+} from "@/components/ui/chart/Chart";
+
 import { AlertPill } from "./shared/alert-pill";
 import { ChartLegend } from "./shared/chart-legend";
-import { CHART_COLORS } from "./shared/constants";
+import {
+  AXIS_FONT_SIZE,
+  CustomXAxisTickWithToday,
+} from "./shared/custom-axis-tick";
 import { LineConfig, LineDataPoint } from "./types";
 
 interface LineChartProps {
   data: LineDataPoint[];
   lines: LineConfig[];
-  xLabel?: string;
-  yLabel?: string;
   height?: number;
 }
 
@@ -48,19 +52,8 @@ const CustomLineTooltip = ({
   const totalValue = typedPayload.reduce((sum, item) => sum + item.value, 0);
 
   return (
-    <div
-      className="rounded-lg border p-3 shadow-lg"
-      style={{
-        backgroundColor: "var(--chart-background)",
-        borderColor: "var(--chart-border-emphasis)",
-      }}
-    >
-      <p
-        className="mb-3 text-xs"
-        style={{ color: "var(--chart-text-secondary)" }}
-      >
-        {label}
-      </p>
+    <div className="border-border-neutral-tertiary bg-bg-neutral-tertiary pointer-events-none min-w-[200px] rounded-xl border p-3 shadow-lg">
+      <p className="text-text-neutral-secondary mb-3 text-xs">{label}</p>
 
       <div className="mb-3">
         <AlertPill value={totalValue} textSize="sm" />
@@ -78,31 +71,22 @@ const CustomLineTooltip = ({
                   className="h-2 w-2 rounded-full"
                   style={{ backgroundColor: item.stroke }}
                 />
-                <span
-                  className="text-sm"
-                  style={{ color: "var(--chart-text-primary)" }}
-                >
+                <span className="text-text-neutral-primary text-sm">
                   {item.value}
                 </span>
               </div>
               {newFindings !== undefined && (
                 <div className="flex items-center gap-2">
-                  <Bell size={14} style={{ color: "var(--chart-fail)" }} />
-                  <span
-                    className="text-xs"
-                    style={{ color: "var(--chart-text-secondary)" }}
-                  >
+                  <Bell size={14} className="text-text-neutral-secondary" />
+                  <span className="text-text-neutral-secondary text-xs">
                     {newFindings} New Findings
                   </span>
                 </div>
               )}
               {change !== undefined && typeof change === "number" && (
-                <p
-                  className="text-xs"
-                  style={{ color: "var(--chart-text-secondary)" }}
-                >
+                <p className="text-text-neutral-secondary text-xs">
                   <span className="font-bold">
-                    {change > 0 ? "+" : ""}
+                    {(change as number) > 0 ? "+" : ""}
                     {change}%
                   </span>{" "}
                   Since Last Scan
@@ -116,96 +100,84 @@ const CustomLineTooltip = ({
   );
 };
 
-const CustomLegend = ({ payload }: any) => {
-  const severityOrder = [
-    "Informational",
-    "Low",
-    "Medium",
-    "High",
-    "Critical",
-    "Muted",
-  ];
+const chartConfig = {
+  default: {
+    color: "var(--color-bg-data-azure)",
+  },
+} satisfies ChartConfig;
 
-  const sortedPayload = [...payload].sort((a, b) => {
-    const indexA = severityOrder.indexOf(a.value);
-    const indexB = severityOrder.indexOf(b.value);
-    return indexA - indexB;
-  });
-
-  const items = sortedPayload.map((entry: any) => ({
-    label: entry.value,
-    color: entry.color,
-  }));
-
-  return <ChartLegend items={items} />;
-};
-
-export function LineChart({
-  data,
-  lines,
-  xLabel,
-  yLabel,
-  height = 400,
-}: LineChartProps) {
+export function LineChart({ data, lines, height = 400 }: LineChartProps) {
   const [hoveredLine, setHoveredLine] = useState<string | null>(null);
 
+  const legendItems = lines.map((line) => ({
+    label: line.label,
+    color: line.color,
+  }));
+
   return (
-    <ResponsiveContainer width="100%" height={height}>
-      <RechartsLine
-        data={data}
-        margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+    <div className="w-full">
+      <ChartContainer
+        config={chartConfig}
+        className="w-full overflow-hidden"
+        style={{ height, aspectRatio: "auto" }}
       >
-        <CartesianGrid strokeDasharray="3 3" stroke={CHART_COLORS.gridLine} />
-        <XAxis
-          dataKey="date"
-          label={
-            xLabel
-              ? {
-                  value: xLabel,
-                  position: "insideBottom",
-                  offset: -10,
-                  fill: CHART_COLORS.textSecondary,
-                }
-              : undefined
-          }
-          tick={{ fill: CHART_COLORS.textSecondary, fontSize: 12 }}
-        />
-        <YAxis
-          label={
-            yLabel
-              ? {
-                  value: yLabel,
-                  angle: -90,
-                  position: "insideLeft",
-                  fill: CHART_COLORS.textSecondary,
-                }
-              : undefined
-          }
-          tick={{ fill: CHART_COLORS.textSecondary, fontSize: 12 }}
-        />
-        <Tooltip content={<CustomLineTooltip />} />
-        <Legend content={<CustomLegend />} />
-        {lines.map((line) => {
-          const isHovered = hoveredLine === line.dataKey;
-          const isFaded = hoveredLine !== null && !isHovered;
-          return (
-            <Line
-              key={line.dataKey}
-              type="monotone"
-              dataKey={line.dataKey}
-              stroke={line.color}
-              strokeWidth={2}
-              strokeOpacity={isFaded ? 0.5 : 1}
-              name={line.label}
-              dot={{ fill: line.color, r: 4, opacity: isFaded ? 0.5 : 1 }}
-              activeDot={{ r: 6 }}
-              onMouseEnter={() => setHoveredLine(line.dataKey)}
-              onMouseLeave={() => setHoveredLine(null)}
-              style={{ transition: "stroke-opacity 0.2s" }}
-            />
-          );
-        })}
-      </RechartsLine>
-    </ResponsiveContainer>
+        <RechartsLine
+          data={data}
+          margin={{
+            top: 10,
+            left: 0,
+            right: 8,
+            bottom: 20,
+          }}
+        >
+          <CartesianGrid
+            vertical={false}
+            strokeOpacity={1}
+            stroke="var(--border-neutral-secondary)"
+          />
+          <XAxis
+            dataKey="date"
+            tickLine={false}
+            axisLine={false}
+            tickMargin={8}
+            tick={CustomXAxisTickWithToday}
+          />
+          <YAxis
+            tickLine={false}
+            axisLine={false}
+            tickMargin={8}
+            tick={{
+              fill: "var(--color-text-neutral-secondary)",
+              fontSize: AXIS_FONT_SIZE,
+            }}
+          />
+          <ChartTooltip cursor={false} content={<CustomLineTooltip />} />
+          {lines.map((line) => {
+            const isHovered = hoveredLine === line.dataKey;
+            const isFaded = hoveredLine !== null && !isHovered;
+            return (
+              <Line
+                key={line.dataKey}
+                type="natural"
+                dataKey={line.dataKey}
+                stroke={line.color}
+                strokeWidth={2}
+                strokeOpacity={isFaded ? 0.5 : 1}
+                name={line.label}
+                dot={{ fill: line.color, r: 4 }}
+                activeDot={{ r: 6 }}
+                onMouseEnter={() => setHoveredLine(line.dataKey)}
+                onMouseLeave={() => setHoveredLine(null)}
+                style={{ transition: "stroke-opacity 0.2s" }}
+              />
+            );
+          })}
+        </RechartsLine>
+      </ChartContainer>
+
+      <div className="mt-4">
+        <ChartLegend items={legendItems} />
+      </div>
+    </div>
   );
 }

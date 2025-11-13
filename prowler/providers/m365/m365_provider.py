@@ -444,12 +444,7 @@ class M365Provider(Provider):
             try:
                 if init_modules:
                     initialize_m365_powershell_modules()
-                if test_session.test_credentials(credentials):
-                    return credentials
-                raise M365ConfigCredentialsError(
-                    file=os.path.basename(__file__),
-                    message="The provided credentials are not valid.",
-                )
+                return credentials
             finally:
                 test_session.close()
 

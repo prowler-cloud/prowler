@@ -157,7 +157,7 @@ export const useCredentialsForm = ({
           };
         }
         return baseDefaults;
-      case "oci":
+      case "oraclecloud":
         return {
           ...baseDefaults,
           [ProviderCredentialFields.OCI_USER]: "",
