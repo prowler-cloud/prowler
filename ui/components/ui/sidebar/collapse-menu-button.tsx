@@ -7,6 +7,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
+import { Button } from "@/components/shadcn/button/button";
 import {
   Collapsible,
   CollapsibleContent,
@@ -22,8 +23,6 @@ import {
 } from "@/components/ui/dropdown-menu/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { CollapseMenuButtonProps } from "@/types";
-
-import { Button } from "../button/button";
 
 export const CollapseMenuButton = ({
   icon: Icon,

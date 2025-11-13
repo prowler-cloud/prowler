@@ -1,13 +1,12 @@
 "use client";
 
 import { Divider } from "@heroui/divider";
-import { Ellipsis, LogOut } from "lucide-react";
+import { Ellipsis } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { logOut } from "@/actions/auth";
 import { AddIcon, InfoIcon } from "@/components/icons";
-import { Button as ShadcnButton } from "@/components/shadcn/button/button";
+import { Button } from "@/components/shadcn/button/button";
 import { CollapseMenuButton } from "@/components/ui/sidebar/collapse-menu-button";
 import {
   Tooltip,
@@ -22,7 +21,6 @@ import { useUIStore } from "@/store/ui/store";
 import { GroupProps } from "@/types";
 import { RolePermissionAttributes } from "@/types/users";
 
-import { Button } from "../button/button";
 import { ScrollArea } from "../scroll-area/scroll-area";
 
 interface MenuHideRule {
@@ -85,9 +83,9 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
   const filteredMenuList = hideMenuItems(menuList, labelsToHide);
 
   return (
-    <>
+    <div className="flex h-full flex-col">
       <div className="px-2">
-        <ShadcnButton
+        <Button
           asChild
           className={cn(isOpen ? "w-full" : "w-fit")}
           variant="default"
@@ -103,18 +101,14 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
               <AddIcon size={20} />
             )}
           </Link>
-        </ShadcnButton>
+        </Button>
       </div>
-      <ScrollArea className="[&>div>div[style]]:block!">
+      <ScrollArea className="flex-1 [&>div>div[style]]:block!">
         <nav className="mt-2 h-full w-full lg:mt-6">
-          <ul className="flex min-h-[calc(100vh-16px-60px-40px-16px-32px-40px-32px-44px)] flex-col items-start gap-1 px-2 lg:min-h-[calc(100vh-16px-60px-40px-16px-64px-16px-41px)]">
+          <ul className="flex flex-col items-start gap-1 px-2">
             {filteredMenuList.map(({ groupLabel, menus }, index) => (
               <li
-                className={cn(
-                  "w-full",
-                  groupLabel ? "pt-2" : "",
-                  index === filteredMenuList.length - 2 && "mt-auto!",
-                )}
+                className={cn("w-full", groupLabel ? "pt-2" : "")}
                 key={index}
               >
                 {(menus.length > 0 && isOpen && groupLabel) ||
@@ -209,36 +203,8 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
           </ul>
         </nav>
       </ScrollArea>
-      <div className="flex w-full grow items-end">
-        <TooltipProvider disableHoverableContent>
-          <Tooltip delayDuration={100}>
-            <TooltipTrigger asChild>
-              <Button
-                onClick={() => logOut()}
-                variant="outline"
-                className="mt-5 h-10 w-full justify-center"
-              >
-                <span className={cn(isOpen === false ? "" : "mr-4")}>
-                  <LogOut size={18} />
-                </span>
-                <p
-                  className={cn(
-                    "whitespace-nowrap",
-                    isOpen === false ? "hidden opacity-0" : "opacity-100",
-                  )}
-                >
-                  Sign out
-                </p>
-              </Button>
-            </TooltipTrigger>
-            {isOpen === false && (
-              <TooltipContent side="right">Sign out</TooltipContent>
-            )}
-          </Tooltip>
-        </TooltipProvider>
-      </div>
 
-      <div className="text-muted-foreground border-border mt-2 flex items-center justify-center gap-2 border-t pt-2 text-center text-xs">
+      <div className="text-muted-foreground border-border-neutral-secondary mt-auto flex items-center justify-center gap-2 border-t pt-4 text-center text-xs">
         <span>{process.env.NEXT_PUBLIC_PROWLER_RELEASE_VERSION}</span>
         {process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true" && (
           <>
@@ -257,6 +223,6 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
           </>
         )}
       </div>
-    </>
+    </div>
   );
 };

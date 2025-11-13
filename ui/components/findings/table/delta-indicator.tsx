@@ -22,7 +22,7 @@ export const DeltaIndicator = ({ delta }: DeltaIndicatorProps) => {
             ariaLabel="Learn more about findings"
             color="transparent"
             size="sm"
-            className="text-primary h-auto min-w-0 p-0"
+            className="text-button-primary h-auto min-w-0 p-0"
             asLink="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app/#step-8-analyze-the-findings"
             target="_blank"
           >

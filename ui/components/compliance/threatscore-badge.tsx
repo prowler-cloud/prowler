@@ -121,7 +121,7 @@ export const ThreatScoreBadge = ({
         <div className="flex gap-2">
           <Button
             size="sm"
-            variant="ghost"
+            variant="outline"
             className="flex-1"
             onClick={handleDownloadPdf}
             disabled={isDownloadingPdf || isDownloadingCsv}
@@ -134,7 +134,7 @@ export const ThreatScoreBadge = ({
           </Button>
           <Button
             size="sm"
-            variant="ghost"
+            variant="outline"
             className="flex-1"
             onClick={handleDownloadCsv}
             disabled={isDownloadingCsv || isDownloadingPdf}

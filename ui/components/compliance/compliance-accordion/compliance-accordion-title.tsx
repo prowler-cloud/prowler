@@ -57,8 +57,8 @@ export const ComplianceAccordionTitle = ({
                   delay={0}
                   closeDelay={0}
                 >
-                  <div
-                    className="h-full bg-[#3CEC6D] transition-all duration-200 hover:brightness-110"
+                  <span
+                    className="inline-block h-full bg-[#3CEC6D] transition-all duration-200 hover:brightness-110"
                     style={{
                       width: `${passPercentage}%`,
                       marginRight: pass > 0 ? "2px" : "0",
@@ -81,8 +81,8 @@ export const ComplianceAccordionTitle = ({
                   delay={0}
                   closeDelay={0}
                 >
-                  <div
-                    className="h-full bg-[#FB718F] transition-all duration-200 hover:brightness-110"
+                  <span
+                    className="inline-block h-full bg-[#FB718F] transition-all duration-200 hover:brightness-110"
                     style={{
                       width: `${failPercentage}%`,
                       marginRight: manual > 0 ? "2px" : "0",
@@ -105,8 +105,8 @@ export const ComplianceAccordionTitle = ({
                   delay={0}
                   closeDelay={0}
                 >
-                  <div
-                    className="h-full bg-[#868994] transition-all duration-200 hover:brightness-110"
+                  <span
+                    className="inline-block h-full bg-[#868994] transition-all duration-200 hover:brightness-110"
                     style={{ width: `${manualPercentage}%` }}
                   />
                 </Tooltip>
