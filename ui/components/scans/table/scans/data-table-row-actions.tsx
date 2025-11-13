@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@heroui/button";
 import {
   Dropdown,
   DropdownItem,
@@ -17,6 +16,7 @@ import { DownloadIcon } from "lucide-react";
 import { useState } from "react";
 
 import { VerticalDotsIcon } from "@/components/icons";
+import { Button } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
 import { CustomAlertModal } from "@/components/ui/custom";
 import { downloadScanZip } from "@/lib/helper";
@@ -57,8 +57,8 @@ export function DataTableRowActions<ScanProps>({
           placement="bottom"
         >
           <DropdownTrigger>
-            <Button isIconOnly radius="full" size="sm" variant="light">
-              <VerticalDotsIcon className="text-default-400" />
+            <Button variant="ghost" size="icon-sm" className="rounded-full">
+              <VerticalDotsIcon className="text-slate-400" />
             </Button>
           </DropdownTrigger>
           <DropdownMenu

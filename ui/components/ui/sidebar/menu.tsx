@@ -136,7 +136,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                     </Tooltip>
                   </TooltipProvider>
                 ) : (
-                  <p className="pb-2"></p>
+                  <p className=""></p>
                 )}
                 {menus.map((menu, index) => {
                   const {
@@ -162,7 +162,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                                   ? "secondary"
                                   : "ghost"
                               }
-                              className="mb-1 h-auto w-full justify-start py-1"
+                              className="mb-0 h-auto w-full justify-start py-2"
                               asChild
                             >
                               <Link href={href} target={target}>

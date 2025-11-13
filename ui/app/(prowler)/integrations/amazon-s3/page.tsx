@@ -70,19 +70,19 @@ export default async function S3Integrations({
             <CardContent className="pt-0">
               <ul className="grid grid-cols-1 gap-2 text-sm text-gray-600 md:grid-cols-2 dark:text-gray-300">
                 <li className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                  <span className="bg-button-primary h-1.5 w-1.5 rounded-full" />
                   Automated scan result exports
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                  <span className="bg-button-primary h-1.5 w-1.5 rounded-full" />
                   Multi-Cloud support
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                  <span className="bg-button-primary h-1.5 w-1.5 rounded-full" />
                   Configurable export paths
                 </li>
                 <li className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                  <span className="bg-button-primary h-1.5 w-1.5 rounded-full" />
                   IAM role and static credentials
                 </li>
               </ul>

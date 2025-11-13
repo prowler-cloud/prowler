@@ -1,13 +1,15 @@
 "use client";
 
-import { Button } from "@heroui/button";
-import { Checkbox, CheckboxGroup } from "@heroui/checkbox";
-import { Divider } from "@heroui/divider";
-import { Popover, PopoverContent, PopoverTrigger } from "@heroui/popover";
-import { ScrollShadow } from "@heroui/scroll-shadow";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo } from "react";
 
-import { PlusCircleIcon } from "@/components/icons";
+import {
+  Select,
+  SelectAllItem,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/shadcn";
 
 interface CustomDropdownSelectionProps {
   label: string;
@@ -17,130 +19,48 @@ interface CustomDropdownSelectionProps {
   selectedKeys?: string[];
 }
 
-const selectedTagClass =
-  "inline-flex items-center border py-1 text-xs transition-colors border-transparent bg-default-500 text-secondary-foreground hover:bg-default-500/80 rounded-md px-2 font-normal";
-
 export const CustomDropdownSelection: React.FC<
   CustomDropdownSelectionProps
 > = ({ label, name, values, onChange, selectedKeys = [] }) => {
-  const [selectedValues, setSelectedValues] = useState<Set<string>>(
-    new Set(selectedKeys),
-  );
-
   const allValues = useMemo(() => values.map((item) => item.id), [values]);
 
-  // Update internal state when selectedKeys changes
-  useEffect(() => {
-    const newSelection = new Set(selectedKeys);
-    if (selectedKeys.length === allValues.length) {
-      newSelection.add("all");
-    }
-    setSelectedValues(newSelection);
-  }, [selectedKeys, allValues]);
-
-  const onSelectionChange = useCallback(
-    (keys: string[]) => {
-      const newSelection = new Set(keys);
-
-      if (newSelection.has("all")) {
-        // Handle "Select All" behavior
-        if (newSelection.size === allValues.length + 1) {
-          setSelectedValues(new Set(["all", ...allValues]));
-          onChange(name, allValues); // Exclude "all" in the callback
-        } else {
-          newSelection.delete("all");
-          setSelectedValues(newSelection);
-          onChange(name, Array.from(newSelection));
-        }
-      } else {
-        setSelectedValues(newSelection);
-        onChange(name, Array.from(newSelection));
-      }
+  const handleMultiValueChange = useCallback(
+    (newValues: string[]) => {
+      onChange(name, newValues);
     },
-    [allValues, name, onChange],
+    [name, onChange],
   );
 
-  const handleSelectAllClick = useCallback(() => {
-    if (selectedValues.has("all")) {
-      setSelectedValues(new Set());
-      onChange(name, []);
-    } else {
-      const newSelection = new Set(["all", ...allValues]);
-      setSelectedValues(newSelection);
-      onChange(name, allValues);
-    }
-  }, [allValues, name, onChange, selectedValues]);
+  // Sync internal state when selectedKeys prop changes
+  useEffect(() => {
+    // This ensures the component updates when parent changes selectedKeys
+  }, [selectedKeys]);
 
   return (
-    <div className="relative flex w-full flex-col gap-2">
-      <Popover backdrop="transparent" placement="bottom-start">
-        <PopoverTrigger>
-          <Button
-            className="border-input hover:bg-accent hover:text-accent-foreground border-border-neutral-secondary bg-bg-neutral-secondary inline-flex h-10 items-center justify-center rounded-md border border-dashed px-3 text-xs font-medium whitespace-nowrap shadow-sm transition-colors focus-visible:outline-none disabled:opacity-50"
-            startContent={<PlusCircleIcon size={16} />}
-            size="md"
-          >
-            <h3 className="text-small">{label}</h3>
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="border-border-neutral-secondary bg-bg-neutral-secondary w-80 border">
-          <div className="flex w-full flex-col gap-6 p-2">
-            <CheckboxGroup
-              color="default"
-              label={label}
-              value={Array.from(selectedValues)}
-              onValueChange={onSelectionChange}
-              className="font-bold"
-            >
-              <Checkbox
-                classNames={{
-                  label: "text-small font-normal",
-                  wrapper: "checkbox-update",
-                }}
-                value="all"
-                isSelected={selectedValues.has("all")}
-                onChange={handleSelectAllClick}
-              >
-                Select All
-              </Checkbox>
-              <Divider orientation="horizontal" className="mt-2" />
-              <ScrollShadow
-                hideScrollBar
-                className="flex max-h-96 max-w-56 flex-col gap-y-2 py-2"
-              >
-                {values.map(({ id, name }) => (
-                  <Checkbox
-                    classNames={{
-                      label: "text-small font-normal",
-                      wrapper: "checkbox-update",
-                    }}
-                    key={id}
-                    value={id}
-                  >
-                    {name}
-                  </Checkbox>
-                ))}
-              </ScrollShadow>
-            </CheckboxGroup>
-          </div>
-        </PopoverContent>
-      </Popover>
-
-      {/* Selected Values Display */}
-      {selectedValues.size > 0 && (
-        <div className="mt-2 flex flex-wrap gap-2">
-          {Array.from(selectedValues)
-            .filter((value) => value !== "all")
-            .map((value) => {
-              const selectedItem = values.find((item) => item.id === value);
-              return (
-                <span key={value} className={selectedTagClass}>
-                  {selectedItem?.name || value}
-                </span>
-              );
-            })}
-        </div>
-      )}
+    <div className="flex flex-col gap-2">
+      <p className="text-sm font-medium">{label}</p>
+      <Select
+        multiple
+        selectedValues={selectedKeys}
+        onMultiValueChange={handleMultiValueChange}
+        ariaLabel={label}
+      >
+        <SelectTrigger>
+          <SelectValue placeholder={`Select ${label.toLowerCase()}`}>
+            {selectedKeys.length > 0
+              ? `${selectedKeys.length} ${selectedKeys.length > 1 ? "items" : "item"} selected`
+              : `Select ${label.toLowerCase()}`}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectAllItem allValues={allValues} />
+          {values.map((item) => (
+            <SelectItem key={item.id} value={item.id}>
+              {item.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 };

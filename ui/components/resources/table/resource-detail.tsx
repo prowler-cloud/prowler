@@ -322,7 +322,7 @@ export const ResourceDetail = ({
                       <SeverityBadge severity={severity || "-"} />
                       <StatusFindingBadge status={status || "-"} />
                       <InfoIcon
-                        className="text-primary cursor-pointer"
+                        className="text-button-primary cursor-pointer"
                         size={16}
                         onClick={() => navigateToFinding(id)}
                       />

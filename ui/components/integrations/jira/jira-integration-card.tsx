@@ -1,9 +1,10 @@
 "use client";
 
 import { SettingsIcon } from "lucide-react";
+import Link from "next/link";
 
 import { JiraIcon } from "@/components/icons/services/IconServices";
-import { CustomButton } from "@/components/ui/custom";
+import { Button } from "@/components/shadcn";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 
 import { Card, CardContent, CardHeader } from "../../shadcn";
@@ -34,15 +35,12 @@ export const JiraIntegrationCard = () => {
             </div>
           </div>
           <div className="flex items-center gap-2 self-end sm:self-center">
-            <CustomButton
-              size="sm"
-              variant="bordered"
-              startContent={<SettingsIcon size={14} />}
-              asLink="/integrations/jira"
-              ariaLabel="Manage Jira integrations"
-            >
-              Manage
-            </CustomButton>
+            <Button asChild size="sm" variant="outline">
+              <Link href="/integrations/jira">
+                <SettingsIcon size={14} />
+                Manage
+              </Link>
+            </Button>
           </div>
         </div>
       </CardHeader>

@@ -6,12 +6,9 @@ import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { createProviderGroup } from "@/actions/manage-groups";
+import { Button } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
-import {
-  CustomButton,
-  CustomDropdownSelection,
-  CustomInput,
-} from "@/components/ui/custom";
+import { CustomDropdownSelection, CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { ApiError } from "@/types";
 
@@ -178,18 +175,10 @@ export const AddGroupForm = ({
 
         {/* Submit Button */}
         <div className="flex w-full justify-end sm:gap-6">
-          <CustomButton
-            type="submit"
-            ariaLabel="Create Group"
-            className="w-1/2"
-            variant="solid"
-            color="action"
-            size="md"
-            isLoading={isLoading}
-            startContent={!isLoading && <SaveIcon size={24} />}
-          >
-            {isLoading ? <>Loading</> : <span>Create Group</span>}
-          </CustomButton>
+          <Button type="submit" className="w-1/2" disabled={isLoading}>
+            {!isLoading && <SaveIcon size={24} />}
+            {isLoading ? "Loading" : "Create Group"}
+          </Button>
         </div>
       </form>
     </Form>

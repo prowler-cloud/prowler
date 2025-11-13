@@ -16,8 +16,9 @@ import {
   IntegrationCardHeader,
   IntegrationSkeleton,
 } from "@/components/integrations/shared";
+import { Button } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
-import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
+import { CustomAlertModal } from "@/components/ui/custom";
 import { DataTablePagination } from "@/components/ui/table/data-table-pagination";
 import { triggerTestConnectionWithDelay } from "@/lib/integrations/test-connection-helper";
 import { MetaDataProps } from "@/types";
@@ -264,38 +265,33 @@ export const SecurityHubIntegrationsManager = ({
         title="Delete Security Hub Integration"
         description="This action cannot be undone. This will permanently delete your Security Hub integration."
       >
-        <div className="flex w-full justify-center gap-6">
-          <CustomButton
+        <div className="flex w-full justify-end gap-4">
+          <Button
             type="button"
-            ariaLabel="Cancel"
-            className="w-full bg-transparent"
-            variant="faded"
+            variant="ghost"
             size="lg"
-            onPress={() => {
+            onClick={() => {
               setIsDeleteOpen(false);
               setIntegrationToDelete(null);
             }}
-            isDisabled={isDeleting !== null}
+            disabled={isDeleting !== null}
           >
-            <span>Cancel</span>
-          </CustomButton>
+            Cancel
+          </Button>
 
-          <CustomButton
+          <Button
             type="button"
-            ariaLabel="Delete"
-            className="w-full"
-            variant="solid"
-            color="danger"
+            variant="destructive"
             size="lg"
-            isLoading={isDeleting !== null}
-            startContent={!isDeleting && <Trash2Icon size={24} />}
-            onPress={() =>
+            disabled={isDeleting !== null}
+            onClick={() =>
               integrationToDelete &&
               handleDeleteIntegration(integrationToDelete.id)
             }
           >
+            {!isDeleting && <Trash2Icon size={24} />}
             {isDeleting ? "Deleting..." : "Delete"}
-          </CustomButton>
+          </Button>
         </div>
       </CustomAlertModal>
 
@@ -334,14 +330,10 @@ export const SecurityHubIntegrationsManager = ({
                 : `${integrations.length} integration${integrations.length !== 1 ? "s" : ""} configured`}
             </p>
           </div>
-          <CustomButton
-            color="action"
-            startContent={<PlusIcon size={16} />}
-            onPress={handleAddIntegration}
-            ariaLabel="Add integration"
-          >
+          <Button onClick={handleAddIntegration}>
+            <PlusIcon size={16} />
             Add Integration
-          </CustomButton>
+          </Button>
         </div>
 
         {isOperationLoading ? (

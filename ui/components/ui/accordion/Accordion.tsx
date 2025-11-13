@@ -40,9 +40,14 @@ const AccordionContent = ({
   selectedKeys?: string[];
   onSelectionChange?: (keys: string[]) => void;
 }) => {
+  // Normalize possible array content to automatically assign stable keys
+  const normalizedContent = Array.isArray(content)
+    ? React.Children.toArray(content)
+    : content;
+
   return (
     <div className="text-sm text-gray-700 dark:text-gray-300">
-      {content}
+      {normalizedContent}
       {items && items.length > 0 && (
         <div className="mt-4 ml-2 border-l-2 border-gray-200 pl-4 dark:border-gray-700">
           <Accordion
@@ -143,6 +148,7 @@ export const Accordion = ({
           }}
         >
           <AccordionContent
+            key={`${item.key}-content`}
             content={item.content}
             items={item.items}
             selectedKeys={selectedKeys}

@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@heroui/button";
 import {
   Dropdown,
   DropdownItem,
@@ -17,6 +16,7 @@ import clsx from "clsx";
 import { useState } from "react";
 
 import { VerticalDotsIcon } from "@/components/icons";
+import { Button } from "@/components/shadcn";
 import { CustomAlertModal } from "@/components/ui/custom";
 
 import { DeleteForm, EditForm } from "../forms";
@@ -71,8 +71,8 @@ export function DataTableRowActions<UserProps>({
           placement="bottom"
         >
           <DropdownTrigger>
-            <Button isIconOnly radius="full" size="sm" variant="light">
-              <VerticalDotsIcon className="text-default-400" />
+            <Button variant="ghost" size="icon-sm" className="rounded-full">
+              <VerticalDotsIcon className="text-slate-400" />
             </Button>
           </DropdownTrigger>
           <DropdownMenu
