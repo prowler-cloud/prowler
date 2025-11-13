@@ -60,13 +60,7 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
         )}
       </div>
       <Spacer y={8} />
-      {customFilters && (
-        <DataTableFilterCustom
-          filters={customFilters}
-          showClearButton={showClearButton}
-          defaultOpen
-        />
-      )}
+      {customFilters && <DataTableFilterCustom filters={customFilters} />}
     </div>
   );
 };

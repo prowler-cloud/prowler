@@ -11,9 +11,14 @@ interface HorizontalBarChartProps {
   data: BarDataPoint[];
   height?: number;
   title?: string;
+  labelWidth?: string;
 }
 
-export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
+export function HorizontalBarChart({
+  data,
+  title,
+  labelWidth = "w-20",
+}: HorizontalBarChartProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   const total = data.reduce((sum, d) => sum + (Number(d.value) || 0), 0);
@@ -61,13 +66,14 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
               onMouseLeave={() => !isEmpty && setHoveredIndex(null)}
             >
               {/* Label */}
-              <div className="w-20 shrink-0">
+              <div className={`${labelWidth} shrink-0`}>
                 <span
-                  className="text-text-neutral-secondary text-sm font-medium"
+                  className="text-text-neutral-secondary block truncate text-sm font-medium"
                   style={{
                     opacity: isFaded ? 0.5 : 1,
                     transition: "opacity 0.2s",
                   }}
+                  title={item.name}
                 >
                   {item.name === "Informational" ? "Info" : item.name}
                 </span>

@@ -8,16 +8,15 @@ import {
   getComplianceRequirements,
 } from "@/actions/compliances";
 import {
-  BarChart,
-  BarChartSkeleton,
   ClientAccordionWrapper,
   ComplianceHeader,
-  ComplianceScanInfo,
-  HeatmapChart,
-  HeatmapChartSkeleton,
-  PieChart,
-  PieChartSkeleton,
+  RequirementsStatusCard,
+  RequirementsStatusCardSkeleton,
+  // SectionsFailureRateCard,
+  // SectionsFailureRateCardSkeleton,
   SkeletonAccordion,
+  TopFailedSectionsCard,
+  TopFailedSectionsCardSkeleton,
 } from "@/components/compliance";
 import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
 import { ContentLayout } from "@/components/ui";
@@ -57,19 +56,6 @@ const ComplianceIconSmall = ({
         fill
         className="h-8 w-8 min-w-8 rounded-md border border-gray-300 bg-white object-contain p-[2px]"
       />
-    </div>
-  );
-};
-
-const ChartsWrapper = ({
-  children,
-}: {
-  children: React.ReactNode;
-  logoPath?: string;
-}) => {
-  return (
-    <div className="mb-8 flex w-full flex-wrap items-center justify-center gap-12 lg:justify-start lg:gap-24">
-      {children}
     </div>
   );
 };
@@ -137,42 +123,33 @@ export default async function ComplianceDetail({
         )
       }
     >
-      {selectedScanId && selectedScan && (
-        <div className="flex max-w-[328px] flex-col items-start">
-          <div className="rounded-lg bg-gray-50 p-2 dark:bg-gray-800">
-            <ComplianceScanInfo scan={selectedScan} />
+      <ComplianceHeader
+        scans={[]}
+        uniqueRegions={uniqueRegions}
+        showSearch={false}
+        framework={compliancetitle}
+        showProviders={false}
+        logoPath={logoPath}
+        complianceTitle={compliancetitle}
+        selectedScan={selectedScan}
+      />
+      {attributesData?.data?.[0]?.attributes?.framework ===
+        "ProwlerThreatScore" &&
+        selectedScanId && (
+          <div className="flex w-full justify-end">
+            <ThreatScoreDownloadButton scanId={selectedScanId} />
           </div>
-          <Spacer y={8} />
-        </div>
-      )}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1">
-          <ComplianceHeader
-            scans={[]}
-            uniqueRegions={uniqueRegions}
-            showSearch={false}
-            framework={compliancetitle}
-            showProviders={false}
-          />
-        </div>
-        {attributesData?.data?.[0]?.attributes?.framework ===
-          "ProwlerThreatScore" &&
-          selectedScanId && (
-            <div className="flex-shrink-0 pt-1">
-              <ThreatScoreDownloadButton scanId={selectedScanId} />
-            </div>
-          )}
-      </div>
+        )}
 
       <Suspense
         key={searchParamsKey}
         fallback={
           <div className="flex flex-col gap-8">
-            <ChartsWrapper logoPath={logoPath}>
-              <PieChartSkeleton />
-              <BarChartSkeleton />
-              <HeatmapChartSkeleton />
-            </ChartsWrapper>
+            <div className="flex flex-col gap-6 md:flex-row md:flex-wrap md:items-stretch">
+              <RequirementsStatusCardSkeleton />
+              <TopFailedSectionsCardSkeleton />
+              {/* <SectionsFailureRateCardSkeleton /> */}
+            </div>
             <SkeletonAccordion />
           </div>
         }
@@ -182,7 +159,6 @@ export default async function ComplianceDetail({
           scanId={selectedScanId || ""}
           region={regionFilter}
           filter={cisProfileFilter}
-          logoPath={logoPath}
           attributesData={attributesData}
         />
       </Suspense>
@@ -195,14 +171,12 @@ const SSRComplianceContent = async ({
   scanId,
   region,
   filter,
-  logoPath,
   attributesData,
 }: {
   complianceId: string;
   scanId: string;
   region?: string;
   filter?: string;
-  logoPath?: string;
   attributesData: AttributesData;
 }) => {
   const requirementsData = await getComplianceRequirements({
@@ -215,11 +189,11 @@ const SSRComplianceContent = async ({
   if (!scanId || type === "tasks") {
     return (
       <div className="flex flex-col gap-8">
-        <ChartsWrapper logoPath={logoPath}>
-          <PieChart pass={0} fail={0} manual={0} />
-          <BarChart sections={[]} />
-          <HeatmapChart categories={[]} />
-        </ChartsWrapper>
+        <div className="flex flex-col gap-6 md:flex-row md:flex-wrap md:items-stretch">
+          <RequirementsStatusCard pass={0} fail={0} manual={0} />
+          <TopFailedSectionsCard sections={[]} />
+          {/* <SectionsFailureRateCard categories={[]} /> */}
+        </div>
         <ClientAccordionWrapper items={[]} defaultExpandedKeys={[]} />
       </div>
     );
@@ -232,7 +206,7 @@ const SSRComplianceContent = async ({
     requirementsData,
     filter,
   );
-  const categoryHeatmapData = mapper.calculateCategoryHeatmapData(data);
+  // const categoryHeatmapData = mapper.calculateCategoryHeatmapData(data);
   const totalRequirements: RequirementsTotals = data.reduce(
     (acc: RequirementsTotals, framework: Framework) => ({
       pass: acc.pass + framework.pass,
@@ -246,15 +220,15 @@ const SSRComplianceContent = async ({
 
   return (
     <div className="flex flex-col gap-8">
-      <ChartsWrapper logoPath={logoPath}>
-        <PieChart
+      <div className="flex flex-col gap-6 md:flex-row md:items-stretch">
+        <RequirementsStatusCard
           pass={totalRequirements.pass}
           fail={totalRequirements.fail}
           manual={totalRequirements.manual}
         />
-        <BarChart sections={topFailedSections} />
-        <HeatmapChart categories={categoryHeatmapData} />
-      </ChartsWrapper>
+        <TopFailedSectionsCard sections={topFailedSections} />
+        {/* <SectionsFailureRateCard categories={categoryHeatmapData} /> */}
+      </div>
 
       <Spacer className="h-1 w-full rounded-full bg-gray-200 dark:bg-gray-800" />
       <ClientAccordionWrapper

@@ -1,27 +1,28 @@
 "use client";
 
-import React, { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import React from "react";
 import { useCallback, useMemo } from "react";
 
-import { ClearFiltersButton } from "@/components/filters";
-import { CustomFilterIcon } from "@/components/icons";
-import { CustomButton, CustomDropdownFilter } from "@/components/ui/custom";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/shadcn";
 import { useUrlFilters } from "@/hooks/use-url-filters";
 import { FilterOption } from "@/types";
 
 export interface DataTableFilterCustomProps {
   filters: FilterOption[];
-  defaultOpen?: boolean;
-  showClearButton?: boolean;
 }
 
 export const DataTableFilterCustom = ({
   filters,
-  defaultOpen = true,
-  showClearButton = false,
 }: DataTableFilterCustomProps) => {
   const { updateFilter } = useUrlFilters();
-  const [showFilters, setShowFilters] = useState(defaultOpen);
+  const searchParams = useSearchParams();
 
   // Sort filters by index property, with fallback to original order for filters without index
   const sortedFilters = useMemo(() => {
@@ -45,46 +46,50 @@ export const DataTableFilterCustom = ({
     [updateFilter],
   );
 
+  const getSelectedValues = useCallback(
+    (key: string): string[] => {
+      const filterKey = key.startsWith("filter[") ? key : `filter[${key}]`;
+      const paramValue = searchParams.get(filterKey);
+      return paramValue ? paramValue.split(",") : [];
+    },
+    [searchParams],
+  );
+
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-row gap-4">
-        <CustomButton
-          ariaLabel={showFilters ? "Hide Filters" : "Show Filters"}
-          variant="flat"
-          color={showFilters ? "action" : "primary"}
-          size="md"
-          startContent={<CustomFilterIcon size={16} />}
-          onPress={() => setShowFilters(!showFilters)}
-          className="w-full max-w-fit"
-        >
-          <h3 className="text-small">
-            {showFilters ? "Hide Filters" : "Show Filters"}
-          </h3>
-        </CustomButton>
-
-        {showClearButton && <ClearFiltersButton />}
-      </div>
-
-      <div
-        className={`transition-all duration-700 ease-in-out ${
-          showFilters
-            ? "w-full translate-x-0 overflow-visible opacity-100"
-            : "mt-[-16px] max-h-0 -translate-x-full overflow-hidden opacity-0"
-        }`}
-      >
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-          {sortedFilters.map((filter) => (
-            <CustomDropdownFilter
-              key={filter.key}
-              filter={{
-                ...filter,
-                labelCheckboxGroup: filter.labelCheckboxGroup,
-              }}
-              onFilterChange={pushDropdownFilter}
-            />
-          ))}
-        </div>
-      </div>
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+      {sortedFilters.map((filter) => {
+        const selectedValues = getSelectedValues(filter.key);
+        return (
+          <Select
+            key={filter.key}
+            multiple
+            selectedValues={selectedValues}
+            onMultiValueChange={(values) =>
+              pushDropdownFilter(filter.key, values)
+            }
+            ariaLabel={filter.labelCheckboxGroup}
+          >
+            <SelectTrigger size="sm">
+              <SelectValue placeholder={filter.labelCheckboxGroup}>
+                {selectedValues.length > 0 && (
+                  <span className="truncate">
+                    {selectedValues.length === 1
+                      ? selectedValues[0]
+                      : `${selectedValues.length} selected`}
+                  </span>
+                )}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {filter.values.map((value) => (
+                <SelectItem key={value} value={value}>
+                  {value}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        );
+      })}
     </div>
   );
 };

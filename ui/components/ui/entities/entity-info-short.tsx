@@ -41,7 +41,7 @@ export const EntityInfoShort: React.FC<EntityInfoProps> = ({
             </Tooltip>
           )}
         </div>
-        <div className="flex max-w-[120px] flex-col">
+        <div className="relative top-1 flex max-w-[120px] flex-col">
           {entityAlias && (
             <Tooltip content={entityAlias} placement="top" size="sm">
               <span className="text-default-500 truncate text-xs text-ellipsis">
