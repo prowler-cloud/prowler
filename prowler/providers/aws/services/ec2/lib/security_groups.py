@@ -79,7 +79,7 @@ def check_security_group(
 
         for ip_ingress_rule in all_ingress_rules:
             # We only check public CIDRs
-            if _is_cidr_public(ip_ingress_rule["CidrIp"], any_address):
+            if _is_cidr_public(ip_ingress_rule.get("CidrIp", ip_ingress_rule.get("CidrIpv6")), any_address):
                 for port in ports:
                     if (
                         port in ingress_port_range
