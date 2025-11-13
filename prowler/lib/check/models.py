@@ -8,6 +8,7 @@ from enum import Enum
 from typing import Any, Dict, Optional, Set
 
 from pydantic.v1 import BaseModel, Field, ValidationError, validator
+from pydantic.v1.error_wrappers import ErrorWrapper
 
 from prowler.config.config import Provider
 from prowler.lib.check.compliance_models import Compliance
@@ -157,7 +158,11 @@ class CheckMetadata(BaseModel):
             raise ValueError("ServiceName must be a non-empty string")
 
         check_id = values.get("CheckID")
-        if check_id and values.get("Provider") != "iac":
+        if (
+            check_id
+            and values.get("Provider") != "iac"
+            and values.get("Provider") != "llm"
+        ):
             service_from_check_id = check_id.split("_")[0]
             if service_name != service_from_check_id:
                 raise ValueError(
@@ -173,7 +178,11 @@ class CheckMetadata(BaseModel):
         if not check_id:
             raise ValueError("CheckID must be a non-empty string")
 
-        if check_id and values.get("Provider") != "iac":
+        if (
+            check_id
+            and values.get("Provider") != "iac"
+            and values.get("Provider") != "llm"
+        ):
             if "-" in check_id:
                 raise ValueError(
                     f"CheckID {check_id} contains a hyphen, which is not allowed"
@@ -436,17 +445,31 @@ class Check(ABC, CheckMetadata):
 
     def __init__(self, **data):
         """Check's init function. Calls the CheckMetadataModel init."""
+        file_path = os.path.abspath(sys.modules[self.__module__].__file__)[:-3]
+
         # Parse the Check's metadata file
-        metadata_file = (
-            os.path.abspath(sys.modules[self.__module__].__file__)[:-3]
-            + ".metadata.json"
-        )
+        metadata_file = file_path + ".metadata.json"
         # Store it to validate them with Pydantic
         data = CheckMetadata.parse_file(metadata_file).dict()
         # Calls parents init function
         super().__init__(**data)
-        # TODO: verify that the CheckID is the same as the filename and classname
-        # to mimic the test done at test_<provider>_checks_metadata_is_valid
+
+        # Verify names consistency
+        check_id = self.CheckID
+        class_name = self.__class__.__name__
+        file_name = file_path.split(sep="/")[-1]
+
+        errors = []
+        if check_id != class_name:
+            errors.append(f"CheckID '{check_id}' != class name '{class_name}'")
+        if check_id != file_name:
+            errors.append(f"CheckID '{check_id}' != file name '{file_name}'")
+
+        if errors:
+            formatted_errors = [
+                ErrorWrapper(ValueError(err), loc=("CheckID",)) for err in errors
+            ]
+            raise ValidationError(formatted_errors, model=CheckMetadata)
 
     def metadata(self) -> dict:
         """Return the JSON representation of the check's metadata"""
@@ -565,8 +588,17 @@ class Check_Report_GCP(Check_Report):
             or getattr(resource, "name", None)
             or ""
         )
+
+        # Prefer the explicit resource_name argument, otherwise look for a name attribute on the resource
+        resource_name_candidate = resource_name or getattr(resource, "name", None)
+        if not resource_name_candidate and isinstance(resource, dict):
+            # Some callers pass a dict, so fall back to the dict entry if available
+            resource_name_candidate = resource.get("name")
+        if isinstance(resource_name_candidate, str):
+            # Trim whitespace so empty strings collapse to the default
+            resource_name_candidate = resource_name_candidate.strip()
         self.resource_name = (
-            resource_name or getattr(resource, "name", "") or "GCP Project"
+            str(resource_name_candidate) if resource_name_candidate else "GCP Project"
         )
         self.project_id = project_id or getattr(resource, "project_id", "")
         self.location = (
@@ -574,6 +606,46 @@ class Check_Report_GCP(Check_Report):
             or getattr(resource, "location", "")
             or getattr(resource, "region", "")
         )
+
+
+@dataclass
+class Check_Report_OCI(Check_Report):
+    """Contains the OCI Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    compartment_id: str
+    region: str
+
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        region: str = None,
+        resource_name: str = None,
+        resource_id: str = None,
+        compartment_id: str = None,
+    ) -> None:
+        """Initialize the OCI Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource. Defaults to None.
+            region: The region of the resource.
+            resource_name: The name of the resource related with the finding.
+            resource_id: The OCID of the resource related with the finding.
+            compartment_id: The compartment OCID of the resource.
+        """
+        super().__init__(metadata, resource)
+        self.resource_id = (
+            resource_id
+            or getattr(resource, "id", None)
+            or getattr(resource, "name", None)
+            or ""
+        )
+        self.resource_name = resource_name or getattr(resource, "name", "")
+        self.compartment_id = compartment_id or getattr(resource, "compartment_id", "")
+        self.region = region or getattr(resource, "region", "")
 
 
 @dataclass
@@ -692,6 +764,31 @@ class CheckReportIAC(Check_Report):
             if finding.get("CauseMetadata", {}).get("StartLine", "")
             else ""
         )
+
+
+@dataclass
+class CheckReportLLM(Check_Report):
+    """Contains the LLM Check's finding information."""
+
+    prompt: str
+    response: str
+    model: str
+
+    def __init__(self, metadata: dict = {}, finding: dict = {}) -> None:
+        """
+        Initialize the LLM Check's finding information from a promptfoo finding dict.
+
+        Args:
+            metadata (Dict): Optional check metadata (can be None).
+            finding (dict): A single finding result from promptfoo's JSON output.
+        """
+        super().__init__(metadata, finding)
+
+        self.prompt = finding.get("prompt", {}).get("raw", "No prompt available.")
+        self.response = finding.get("response", {}).get(
+            "output", "No output available."
+        )
+        self.model = finding.get("provider", {}).get("id", "No model available.")
 
 
 @dataclass

@@ -364,3 +364,144 @@ class Test_elb_ssl_listeners_use_acm_certificate:
             assert result[0].resource_arn == elb_arn
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION
+
+    @mock_aws
+    def test_elb_with_HTTPS_listener_IAM_certificate(self):
+        """Test ELB with HTTPS listener using IAM certificate (not ACM) - should return FAIL"""
+        elb = client("elb", region_name=AWS_REGION)
+        ec2 = resource("ec2", region_name=AWS_REGION)
+
+        # Create IAM certificate (not ACM)
+        iam_certificate_arn = (
+            f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:server-certificate/test-certificate"
+        )
+
+        security_group = ec2.create_security_group(
+            GroupName="sg01", Description="Test security group sg01"
+        )
+
+        elb.create_load_balancer(
+            LoadBalancerName="my-lb",
+            Listeners=[
+                {
+                    "Protocol": "https",
+                    "LoadBalancerPort": 80,
+                    "InstancePort": 8080,
+                    "SSLCertificateId": iam_certificate_arn,
+                },
+            ],
+            AvailabilityZones=[AWS_REGION_EU_WEST_1_AZA],
+            Scheme="internal",
+            SecurityGroups=[security_group.id],
+        )
+
+        from prowler.providers.aws.services.acm.acm_service import ACM
+        from prowler.providers.aws.services.elb.elb_service import ELB
+
+        aws_mocked_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_mocked_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elb.elb_ssl_listeners_use_acm_certificate.elb_ssl_listeners_use_acm_certificate.elb_client",
+                new=ELB(aws_mocked_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elb.elb_ssl_listeners_use_acm_certificate.elb_ssl_listeners_use_acm_certificate.acm_client",
+                new=ACM(aws_mocked_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.elb.elb_ssl_listeners_use_acm_certificate.elb_ssl_listeners_use_acm_certificate import (
+                elb_ssl_listeners_use_acm_certificate,
+            )
+
+            check = elb_ssl_listeners_use_acm_certificate()
+
+            # This should now work correctly and return FAIL for IAM certificate
+            # (unless there's still a KeyError in the current implementation)
+            result = check.execute()
+
+            # Expected behavior: FAIL because IAM certificate is not managed by ACM
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == "ELB my-lb has HTTPS/SSL listeners that are using certificates not managed by ACM."
+            )
+            assert result[0].resource_id == "my-lb"
+            assert result[0].resource_arn == elb_arn
+            assert result[0].resource_tags == []
+            assert result[0].region == AWS_REGION
+
+    @mock_aws
+    def test_elb_with_HTTPS_listener_certificate_not_in_acm(self):
+        """Test ELB with HTTPS listener using certificate that triggers not in acm_client.certificates condition"""
+        elb = client("elb", region_name=AWS_REGION)
+        ec2 = resource("ec2", region_name=AWS_REGION)
+
+        # Create a certificate ARN that will NOT be in ACM (simulating IAM certificate or any non-ACM certificate)
+        # This will trigger the first condition: listener.certificate_arn not in acm_client.certificates
+        non_acm_certificate_arn = (
+            f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:server-certificate/non-acm-cert"
+        )
+
+        security_group = ec2.create_security_group(
+            GroupName="sg01", Description="Test security group sg01"
+        )
+
+        elb.create_load_balancer(
+            LoadBalancerName="my-lb",
+            Listeners=[
+                {
+                    "Protocol": "https",
+                    "LoadBalancerPort": 80,
+                    "InstancePort": 8080,
+                    "SSLCertificateId": non_acm_certificate_arn,
+                },
+            ],
+            AvailabilityZones=[AWS_REGION_EU_WEST_1_AZA],
+            Scheme="internal",
+            SecurityGroups=[security_group.id],
+        )
+
+        from prowler.providers.aws.services.acm.acm_service import ACM
+        from prowler.providers.aws.services.elb.elb_service import ELB
+
+        aws_mocked_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_mocked_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elb.elb_ssl_listeners_use_acm_certificate.elb_ssl_listeners_use_acm_certificate.elb_client",
+                new=ELB(aws_mocked_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.elb.elb_ssl_listeners_use_acm_certificate.elb_ssl_listeners_use_acm_certificate.acm_client",
+                new=ACM(aws_mocked_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.elb.elb_ssl_listeners_use_acm_certificate.elb_ssl_listeners_use_acm_certificate import (
+                elb_ssl_listeners_use_acm_certificate,
+            )
+
+            check = elb_ssl_listeners_use_acm_certificate()
+            result = check.execute()
+
+            # This should trigger the first condition: listener.certificate_arn not in acm_client.certificates
+            # and return FAIL without ever reaching the second part of the OR condition
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == "ELB my-lb has HTTPS/SSL listeners that are using certificates not managed by ACM."
+            )
+            assert result[0].resource_id == "my-lb"
+            assert result[0].resource_arn == elb_arn
+            assert result[0].resource_tags == []
+            assert result[0].region == AWS_REGION

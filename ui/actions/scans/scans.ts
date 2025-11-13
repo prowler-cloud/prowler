@@ -2,13 +2,9 @@
 
 import { redirect } from "next/navigation";
 
-import {
-  apiBaseUrl,
-  getAuthHeaders,
-  getErrorMessage,
-  handleApiError,
-  handleApiResponse,
-} from "@/lib";
+import { apiBaseUrl, getAuthHeaders, getErrorMessage } from "@/lib";
+import { addScanOperation } from "@/lib/sentry-breadcrumbs";
+import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 
 export const getScans = async ({
   page = 1,
@@ -44,7 +40,7 @@ export const getScans = async ({
   try {
     const response = await fetch(url.toString(), { headers });
 
-    return handleApiResponse(response, "/scans");
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching scans:", error);
     return undefined;
@@ -94,6 +90,11 @@ export const scanOnDemand = async (formData: FormData) => {
     return { error: "Provider ID is required" };
   }
 
+  addScanOperation("create", undefined, {
+    provider_id: String(providerId),
+    scan_name: scanName ? String(scanName) : undefined,
+  });
+
   const url = new URL(`${apiBaseUrl}/scans`);
 
   try {
@@ -118,8 +119,13 @@ export const scanOnDemand = async (formData: FormData) => {
       body: JSON.stringify(requestBody),
     });
 
-    return handleApiResponse(response, "/scans");
+    const result = await handleApiResponse(response, "/scans");
+    if (result?.data?.id) {
+      addScanOperation("start", result.data.id);
+    }
+    return result;
   } catch (error) {
+    addScanOperation("create");
     return handleApiError(error);
   }
 };
@@ -266,6 +272,48 @@ export const getComplianceCsv = async (
       success: true,
       data: base64,
       filename: `scan-${scanId}-compliance-${complianceId}.csv`,
+    };
+  } catch (error) {
+    return {
+      error: getErrorMessage(error),
+    };
+  }
+};
+
+export const getThreatScorePdf = async (scanId: string) => {
+  const headers = await getAuthHeaders({ contentType: false });
+
+  const url = new URL(`${apiBaseUrl}/scans/${scanId}/threatscore`);
+
+  try {
+    const response = await fetch(url.toString(), { headers });
+
+    if (response.status === 202) {
+      const json = await response.json();
+      const taskId = json?.data?.id;
+      const state = json?.data?.attributes?.state;
+      return {
+        pending: true,
+        state,
+        taskId,
+      };
+    }
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(
+        errorData?.errors?.detail ||
+          "Unable to retrieve ThreatScore PDF report. Contact support if the issue continues.",
+      );
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const base64 = Buffer.from(arrayBuffer).toString("base64");
+
+    return {
+      success: true,
+      data: base64,
+      filename: `scan-${scanId}-threatscore.pdf`,
     };
   } catch (error) {
     return {

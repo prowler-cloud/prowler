@@ -1,7 +1,9 @@
 "use client";
 
+import { Checkbox } from "@heroui/checkbox";
+import { Divider } from "@heroui/divider";
+import { Tooltip } from "@heroui/tooltip";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Checkbox, Divider, Tooltip } from "@nextui-org/react";
 import { clsx } from "clsx";
 import { InfoIcon, SaveIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -20,7 +22,7 @@ import { Form } from "@/components/ui/form";
 import { getErrorMessage, permissionFormFields } from "@/lib";
 import { ApiError, editRoleFormSchema } from "@/types";
 
-type FormValues = z.infer<typeof editRoleFormSchema>;
+type FormValues = z.input<typeof editRoleFormSchema>;
 
 export const EditRoleForm = ({
   roleId,
@@ -169,7 +171,7 @@ export const EditRoleForm = ({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmitClient)}
-        className="flex flex-col space-y-6"
+        className="flex flex-col gap-6"
       >
         <CustomInput
           control={form.control}
@@ -183,7 +185,7 @@ export const EditRoleForm = ({
           isInvalid={!!form.formState.errors.name}
         />
 
-        <div className="flex flex-col space-y-4">
+        <div className="flex flex-col gap-4">
           <span className="text-lg font-semibold">Admin Permissions</span>
 
           {/* Select All Checkbox */}
@@ -224,7 +226,7 @@ export const EditRoleForm = ({
                     <div className="flex w-fit items-center justify-center">
                       <InfoIcon
                         className={clsx(
-                          "cursor-pointer text-default-400 group-data-[selected=true]:text-foreground",
+                          "text-default-400 group-data-[selected=true]:text-foreground cursor-pointer",
                         )}
                         aria-hidden={"true"}
                         width={16}
@@ -238,10 +240,10 @@ export const EditRoleForm = ({
         <Divider className="my-4" />
 
         {!unlimitedVisibility && (
-          <div className="flex flex-col space-y-4">
+          <div className="flex flex-col gap-4">
             <span className="text-lg font-semibold">Groups visibility</span>
 
-            <p className="text-small font-medium text-default-700">
+            <p className="text-small text-default-700 font-medium">
               Select the groups this role will have access to. If no groups are
               selected and unlimited visibility is not enabled, the role will
               not have access to any accounts.
@@ -270,7 +272,7 @@ export const EditRoleForm = ({
             )}
           </div>
         )}
-        <div className="flex w-full justify-end sm:space-x-6">
+        <div className="flex w-full justify-end sm:gap-6">
           <CustomButton
             type="submit"
             ariaLabel="Update Role"

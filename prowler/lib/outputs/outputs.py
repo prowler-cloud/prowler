@@ -24,6 +24,12 @@ def stdout_report(finding, color, verbose, status, fix):
         details = finding.location
     if finding.check_metadata.Provider == "nhn":
         details = finding.location
+    if finding.check_metadata.Provider == "llm":
+        details = finding.check_metadata.CheckID
+    if finding.check_metadata.Provider == "iac":
+        details = finding.check_metadata.CheckID
+    if finding.check_metadata.Provider == "oraclecloud":
+        details = finding.region
 
     if (verbose or fix) and (not status or finding.status in status):
         if finding.muted:

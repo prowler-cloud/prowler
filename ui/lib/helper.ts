@@ -1,6 +1,8 @@
-import { revalidatePath } from "next/cache";
-
-import { getComplianceCsv, getExportsZip } from "@/actions/scans";
+import {
+  getComplianceCsv,
+  getExportsZip,
+  getThreatScorePdf,
+} from "@/actions/scans";
 import { getTask } from "@/actions/task";
 import { auth } from "@/auth.config";
 import { useToast } from "@/components/ui";
@@ -139,13 +141,15 @@ export const downloadScanZip = async (
   }
 };
 
-export const downloadComplianceCsv = async (
-  scanId: string,
-  complianceId: string,
+/**
+ * Generic function to download a file from base64 data
+ */
+const downloadFile = async (
+  result: any,
+  outputType: string,
+  successMessage: string,
   toast: ReturnType<typeof useToast>["toast"],
 ): Promise<void> => {
-  const result = await getComplianceCsv(scanId, complianceId);
-
   if (result?.pending) {
     toast({
       title: "The report is still being generated",
@@ -162,7 +166,7 @@ export const downloadComplianceCsv = async (
         bytes[i] = binaryString.charCodeAt(i);
       }
 
-      const blob = new Blob([bytes], { type: "text/csv" });
+      const blob = new Blob([bytes], { type: outputType });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -174,7 +178,7 @@ export const downloadComplianceCsv = async (
 
       toast({
         title: "Download Complete",
-        description: "The compliance report has been downloaded successfully.",
+        description: successMessage,
       });
     } catch (error) {
       toast({
@@ -201,6 +205,33 @@ export const downloadComplianceCsv = async (
     title: "Download Failed",
     description: "Unexpected response. Please try again later.",
   });
+};
+
+export const downloadComplianceCsv = async (
+  scanId: string,
+  complianceId: string,
+  toast: ReturnType<typeof useToast>["toast"],
+): Promise<void> => {
+  const result = await getComplianceCsv(scanId, complianceId);
+  await downloadFile(
+    result,
+    "text/csv",
+    "The compliance report has been downloaded successfully.",
+    toast,
+  );
+};
+
+export const downloadThreatScorePdf = async (
+  scanId: string,
+  toast: ReturnType<typeof useToast>["toast"],
+): Promise<void> => {
+  const result = await getThreatScorePdf(scanId);
+  await downloadFile(
+    result,
+    "application/pdf",
+    "The ThreatScore PDF report has been downloaded successfully.",
+    toast,
+  );
 };
 
 export const isGoogleOAuthEnabled =
@@ -340,85 +371,3 @@ export const permissionFormFields: PermissionInfo[] = [
     description: "Provides access to billing settings and invoices",
   },
 ];
-
-// Helper function to handle API responses consistently
-export const handleApiResponse = async (
-  response: Response,
-  pathToRevalidate?: string,
-  parse = true,
-) => {
-  if (!response.ok) {
-    // Read error body safely; prefer JSON, fallback to plain text
-    const rawErrorText = await response.text().catch(() => "");
-    let errorData: any = null;
-    try {
-      errorData = rawErrorText ? JSON.parse(rawErrorText) : null;
-    } catch {
-      errorData = null;
-    }
-
-    const errorsArray = Array.isArray(errorData?.errors)
-      ? (errorData.errors as any[])
-      : undefined;
-    const errorDetail =
-      errorsArray?.[0]?.detail ||
-      errorData?.error ||
-      errorData?.message ||
-      (rawErrorText && rawErrorText.trim()) ||
-      response.statusText ||
-      "Oops! Something went wrong.";
-
-    //5XX errors
-    if (response.status >= 500) {
-      throw new Error(
-        errorDetail ||
-          `Server error (${response.status}): The server encountered an error. Please try again later.`,
-      );
-    }
-
-    return errorsArray
-      ? { error: errorDetail, errors: errorsArray, status: response.status }
-      : ({ error: errorDetail, status: response.status } as any);
-  }
-
-  // Handle empty or no-content responses gracefully (e.g., 204, empty body)
-  if (response.status === 204) {
-    if (pathToRevalidate && pathToRevalidate !== "") {
-      revalidatePath(pathToRevalidate);
-    }
-    return { success: true, status: response.status } as any;
-  }
-
-  // Read raw text to determine if there's a body to parse
-  const rawText = await response.text();
-  const hasBody = rawText && rawText.trim().length > 0;
-
-  if (!hasBody) {
-    if (pathToRevalidate && pathToRevalidate !== "") {
-      revalidatePath(pathToRevalidate);
-    }
-    return { success: true, status: response.status } as any;
-  }
-
-  let data: any;
-  try {
-    data = JSON.parse(rawText);
-  } catch (e) {
-    // If body isn't valid JSON, return as text payload
-    data = { data: rawText };
-  }
-
-  if (pathToRevalidate && pathToRevalidate !== "") {
-    revalidatePath(pathToRevalidate);
-  }
-
-  return parse ? parseStringify(data) : data;
-};
-
-// Helper function to handle API errors consistently
-export const handleApiError = (error: unknown): { error: string } => {
-  console.error(error);
-  return {
-    error: getErrorMessage(error),
-  };
-};

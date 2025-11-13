@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
-import { apiBaseUrl, getAuthHeaders, handleApiResponse } from "@/lib/helper";
+import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
+import { handleApiResponse } from "@/lib/server-actions-helper";
 import { samlConfigFormSchema } from "@/types/formSchemas";
 
 export const createSamlConfig = async (_prevState: any, formData: FormData) => {
@@ -39,7 +40,18 @@ export const createSamlConfig = async (_prevState: any, formData: FormData) => {
       }),
     });
 
-    await handleApiResponse(response, "/integrations", false);
+    const result = await handleApiResponse(response, "/integrations", false);
+    if (result.error) {
+      return {
+        errors: {
+          general:
+            result.error instanceof Error
+              ? result.error.message
+              : "Error creating SAML configuration. Please try again.",
+        },
+      };
+    }
+
     return { success: "SAML configuration created successfully!" };
   } catch (error) {
     console.error("Error creating SAML config:", error);

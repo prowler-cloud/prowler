@@ -3,16 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import {
-  apiBaseUrl,
-  getAuthHeaders,
-  getFormValue,
-  handleApiError,
-  handleApiResponse,
-  wait,
-} from "@/lib";
+import { apiBaseUrl, getAuthHeaders, getFormValue, wait } from "@/lib";
 import { buildSecretConfig } from "@/lib/provider-credentials/build-crendentials";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
+import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import { ProvidersApiResponse, ProviderType } from "@/types/providers";
 
 export const getProviders = async ({
@@ -45,7 +39,7 @@ export const getProviders = async ({
       headers,
     });
 
-    return handleApiResponse(response, "/providers");
+    return handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching providers:", error);
     return undefined;
@@ -63,7 +57,7 @@ export const getProvider = async (formData: FormData) => {
       headers,
     });
 
-    return handleApiResponse(response, "/providers");
+    return handleApiResponse(response);
   } catch (error) {
     return handleApiError(error);
   }
@@ -139,9 +133,35 @@ export const addCredentialsProvider = async (formData: FormData) => {
     formData,
     ProviderCredentialFields.PROVIDER_TYPE,
   ) as ProviderType;
+  const providerUid = getFormValue(
+    formData,
+    ProviderCredentialFields.PROVIDER_UID,
+  ) as string | undefined;
 
   try {
-    const { secretType, secret } = buildSecretConfig(formData, providerType);
+    // For IaC provider, fetch the provider data to get the repository URL from uid
+    if (providerType === "iac") {
+      const providerUrl = new URL(`${apiBaseUrl}/providers/${providerId}`);
+      const providerResponse = await fetch(providerUrl.toString(), {
+        headers: await getAuthHeaders({ contentType: false }),
+      });
+
+      if (providerResponse.ok) {
+        const providerData = await providerResponse.json();
+        const providerUid = providerData?.data?.attributes?.uid;
+
+        // Add the repository URL to formData using the provider's uid
+        if (providerUid) {
+          formData.append(ProviderCredentialFields.REPOSITORY_URL, providerUid);
+        }
+      }
+    }
+
+    const { secretType, secret } = buildSecretConfig(
+      formData,
+      providerType,
+      providerUid,
+    );
 
     const response = await fetch(url.toString(), {
       method: "POST",

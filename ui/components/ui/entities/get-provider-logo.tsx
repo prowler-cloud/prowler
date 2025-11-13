@@ -5,8 +5,10 @@ import {
   AzureProviderBadge,
   GCPProviderBadge,
   GitHubProviderBadge,
+  IacProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
+  OracleCloudProviderBadge,
 } from "@/components/icons/providers-badge";
 import { ProviderType } from "@/types";
 
@@ -24,6 +26,10 @@ export const getProviderLogo = (provider: ProviderType) => {
       return <M365ProviderBadge width={35} height={35} />;
     case "github":
       return <GitHubProviderBadge width={35} height={35} />;
+    case "iac":
+      return <IacProviderBadge width={35} height={35} />;
+    case "oraclecloud":
+      return <OracleCloudProviderBadge width={35} height={35} />;
     default:
       return null;
   }
@@ -43,6 +49,10 @@ export const getProviderName = (provider: ProviderType): string => {
       return "Microsoft 365";
     case "github":
       return "GitHub";
+    case "iac":
+      return "Infrastructure as Code";
+    case "oraclecloud":
+      return "Oracle Cloud Infrastructure";
     default:
       return "Unknown Provider";
   }

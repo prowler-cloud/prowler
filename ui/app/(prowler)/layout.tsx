@@ -1,5 +1,6 @@
 import "@/styles/globals.css";
 
+import * as Sentry from "@sentry/nextjs";
 import { Metadata, Viewport } from "next";
 import React from "react";
 
@@ -21,6 +22,9 @@ export const metadata: Metadata = {
   description: siteConfig.description,
   icons: {
     icon: "/favicon.ico",
+  },
+  other: {
+    ...Sentry.getTraceData(),
   },
 };
 
@@ -45,7 +49,7 @@ export default async function RootLayout({
       <body
         suppressHydrationWarning
         className={cn(
-          "min-h-screen bg-background font-sans antialiased",
+          "bg-background min-h-screen font-sans antialiased",
           fontSans.variable,
         )}
       >

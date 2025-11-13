@@ -3,10 +3,15 @@ import { getAuthUrl, isGithubOAuthEnabled } from "@/lib/helper";
 import { isGoogleOAuthEnabled } from "@/lib/helper";
 import { SearchParamsProps } from "@/types";
 
-const SignUp = ({ searchParams }: { searchParams: SearchParamsProps }) => {
+const SignUp = async ({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParamsProps>;
+}) => {
+  const resolvedSearchParams = await searchParams;
   const invitationToken =
-    typeof searchParams?.invitation_token === "string"
-      ? searchParams.invitation_token
+    typeof resolvedSearchParams?.invitation_token === "string"
+      ? resolvedSearchParams.invitation_token
       : null;
 
   const GOOGLE_AUTH_URL = getAuthUrl("google");

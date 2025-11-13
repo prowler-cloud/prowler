@@ -1,28 +1,35 @@
 {
   "Provider": "aws",
   "CheckID": "elbv2_nlb_tls_termination_enabled",
-  "CheckTitle": "Check if Network Load Balancers (NLB) has TLS termination enabled.",
+  "CheckTitle": "ELBv2 Network Load Balancer has TLS termination enabled",
   "CheckType": [
-    "Data Protection"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/PCI-DSS",
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls (USA)"
   ],
   "ServiceName": "elbv2",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsElbv2LoadBalancer",
-  "Description": "Check if Network Load Balancers (NLB) has TLS listeners.",
-  "Risk": "Ensure that your Amazon Network Load Balancers (NLBs) are configured to terminate TLS connections in order to optimize the performance of the backend servers while encrypting the communication between the load balancer and the associated targets (i.e. server instances).",
-  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/network-load-balancer-listener-security.html#",
+  "Description": "**Network Load Balancers** with listeners using the `TLS` protocol indicate **TLS termination** at the load balancer. The evaluation identifies NLBs that have at least one `TLS` listener versus those using plain `TCP`/`UDP` or deferring encryption to targets.",
+  "Risk": "Lack of NLB-level TLS termination can leave transit data unencrypted or managed inconsistently on instances, undermining **confidentiality** and **integrity**. It also shifts handshake CPU cost to targets, reducing **availability** and making them more susceptible to connection floods and downgrade or weak-cipher exposures.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/listener-update-rules.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/network-load-balancer-listener-security.html#"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aws elbv2 create-listener --load-balancer-arn <nlb_arn> --protocol TLS --port 443 --ssl-policy ELBSecurityPolicy-TLS13-1-2-2021-06 --certificates CertificateArn=<certificate_arn> --default-actions Type=forward,TargetGroupArn=<target_group_arn>",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/network-load-balancer-listener-security.html#",
-      "Terraform": ""
+      "NativeIaC": "```yaml\n# CloudFormation: Add a TLS listener to enable TLS termination on the NLB\nResources:\n  \"<example_resource_name>\":\n    Type: AWS::ElasticLoadBalancingV2::Listener\n    Properties:\n      LoadBalancerArn: \"<example_resource_arn>\"\n      Protocol: TLS  # critical: enables TLS termination on the NLB\n      Port: 443\n      SslPolicy: ELBSecurityPolicy-TLS13-1-2-2021-06  # critical: required when Protocol is TLS\n      Certificates:\n        - CertificateArn: \"<example_resource_arn>\"  # critical: server certificate for TLS termination\n      DefaultActions:\n        - Type: forward\n          TargetGroupArn: \"<example_resource_arn>\"\n```",
+      "Other": "1. In the AWS Console, go to EC2 > Load Balancers and select your Network Load Balancer\n2. Open the Listeners tab and click Add listener\n3. Set Protocol to TLS and Port to 443\n4. Select an ACM certificate and a security policy\n5. Set Default action to Forward to your target group\n6. Click Save changes",
+      "Terraform": "```hcl\n# Terraform: Add a TLS listener to enable TLS termination on the NLB\nresource \"aws_lb_listener\" \"<example_resource_name>\" {\n  load_balancer_arn = \"<example_resource_arn>\"\n  port              = 443\n  protocol          = \"TLS\"  # critical: enables TLS termination\n  ssl_policy        = \"ELBSecurityPolicy-TLS13-1-2-2021-06\"  # critical: required for TLS\n  certificate_arn   = \"<example_resource_arn>\"  # critical: server certificate for TLS termination\n\n  default_action {\n    type             = \"forward\"\n    target_group_arn = \"<example_resource_arn>\"\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "When Transport Layer Security (TLS) termination is enabled, you can offload the encryption and decryption of the TLS traffic from your backend application servers to your Amazon Network Load Balancer, enhancing the performance of your backend servers while keeping the workload secure. ",
-      "Url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/listener-update-rules.html"
+      "Text": "Enable **TLS listeners** to terminate client encryption at the NLB and enforce centralized, modern cipher policies and certificate rotation. Apply **defense in depth** by re-encrypting to targets when needed, limit backend access to the NLB, and automate certificate lifecycle with secure storage and monitoring for deprecated protocols.",
+      "Url": "https://hub.prowler.com/check/elbv2_nlb_tls_termination_enabled"
     }
   },
   "Categories": [

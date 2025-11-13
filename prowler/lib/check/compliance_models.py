@@ -200,6 +200,32 @@ class Prowler_ThreatScore_Requirement_Attribute(BaseModel):
     Weight: int
 
 
+# CCC Requirement Attribute
+class CCC_Requirement_Attribute(BaseModel):
+    """CCC Requirement Attribute"""
+
+    FamilyName: str
+    FamilyDescription: str
+    Section: str
+    SubSection: str
+    SubSectionObjective: str
+    Applicability: list[str]
+    Recommendation: str
+    SectionThreatMappings: list[dict]
+    SectionGuidelineMappings: list[dict]
+
+
+# C5 Germany Requirement Attribute
+class C5Germany_Requirement_Attribute(BaseModel):
+    """C5 Germany Requirement Attribute"""
+
+    Section: str
+    SubSection: str
+    Type: str
+    AboutCriteria: str
+    ComplementaryCriteria: str
+
+
 # Base Compliance Model
 # TODO: move this to compliance folder
 class Compliance_Requirement(BaseModel):
@@ -216,6 +242,8 @@ class Compliance_Requirement(BaseModel):
             AWS_Well_Architected_Requirement_Attribute,
             KISA_ISMSP_Requirement_Attribute,
             Prowler_ThreatScore_Requirement_Attribute,
+            CCC_Requirement_Attribute,
+            C5Germany_Requirement_Attribute,
             # Generic_Compliance_Requirement_Attribute must be the last one since it is the fallback for generic compliance framework
             Generic_Compliance_Requirement_Attribute,
         ]

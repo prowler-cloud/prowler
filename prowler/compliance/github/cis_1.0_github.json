@@ -476,7 +476,9 @@
     {
       "Id": "1.2.2",
       "Description": "Limit the ability to create repositories to trusted users and teams.",
-      "Checks": [],
+      "Checks": [
+        "organization_repository_creation_limited"
+      ],
       "Attributes": [
         {
           "Section": "1 Source Code",
@@ -753,7 +755,9 @@
     {
       "Id": "1.3.8",
       "Description": "Base permissions define the permission level automatically granted to all organization members. Define strict base access permissions for all of the repositories in the organization, including new ones.",
-      "Checks": [],
+      "Checks": [
+        "organization_default_repository_permission_strict"
+      ],
       "Attributes": [
         {
           "Section": "1 Source Code",
