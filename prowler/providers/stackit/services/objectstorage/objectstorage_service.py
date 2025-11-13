@@ -39,7 +39,7 @@ class ObjectStorageService:
         try:
             # Import the StackIT SDK
             from stackit import core
-            from stackit.objectstorage import ObjectStorageClient
+            from stackit.objectstorage import ApiClient, DefaultApi
 
             # Create configuration with API token
             config = core.Configuration(
@@ -47,8 +47,9 @@ class ObjectStorageService:
                 service_account_token=self.api_token,
             )
 
-            # Initialize the Object Storage client
-            client = ObjectStorageClient(config)
+            # Initialize the API client and Object Storage API
+            api_client = ApiClient(config)
+            client = DefaultApi(api_client)
             return client
 
         except ImportError as e:

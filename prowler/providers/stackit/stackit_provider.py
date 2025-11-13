@@ -269,7 +269,7 @@ class StackitProvider(Provider):
             # 2) Test connection by attempting to use the StackIT SDK
             try:
                 from stackit import core
-                from stackit.objectstorage import ObjectStorageClient
+                from stackit.objectstorage import ApiClient, DefaultApi
 
                 # Create configuration with API token
                 config = core.Configuration(
@@ -277,8 +277,9 @@ class StackitProvider(Provider):
                     service_account_token=api_token,
                 )
 
-                # Initialize the Object Storage client
-                client = ObjectStorageClient(config)
+                # Initialize the API client and Object Storage API
+                api_client = ApiClient(config)
+                client = DefaultApi(api_client)
 
                 # Test with a simple API call (list buckets)
                 client.list_buckets(project_id=project_id)
