@@ -27,10 +27,22 @@ class ObjectStorageService:
         """
         self.provider = provider
         self.project_id = provider.identity.project_id
-        self.api_token = provider.session.get("api_token")
+
+        # Get Object Storage credentials from session
+        self.objectstorage_access_key = provider.session.get("objectstorage_access_key")
+        self.objectstorage_secret_key = provider.session.get("objectstorage_secret_key")
 
         # Initialize buckets list
         self.buckets: list[Bucket] = []
+
+        # Check if Object Storage credentials are available
+        if not self.objectstorage_access_key or not self.objectstorage_secret_key:
+            logger.info(
+                "Object Storage credentials not provided. Skipping Object Storage bucket discovery. "
+                "To scan Object Storage, generate credentials in STACKIT Portal and provide them via "
+                "--stackit-objectstorage-access-key and --stackit-objectstorage-secret-key."
+            )
+            return
 
         # Fetch all buckets and their configurations
         self._list_buckets()
@@ -40,17 +52,22 @@ class ObjectStorageService:
         Get or create the S3-compatible client for StackIT Object Storage.
 
         Returns:
-            boto3 S3 client configured for StackIT endpoints
+            boto3 S3 client configured for StackIT endpoints, or None if credentials are missing
         """
+        # Check if credentials are available
+        if not self.objectstorage_access_key or not self.objectstorage_secret_key:
+            logger.warning(
+                "Object Storage credentials not available. Cannot create S3 client."
+            )
+            return None
+
         try:
-            # Create S3 client with StackIT-specific configuration
-            # Note: StackIT uses service account tokens for authentication
-            # The exact authentication method may need adjustment based on StackIT's API
+            # Create S3 client with StackIT Object Storage credentials
             s3_client = boto3.client(
                 "s3",
                 endpoint_url=self.STACKIT_S3_ENDPOINT,
-                aws_access_key_id=self.project_id,
-                aws_secret_access_key=self.api_token,
+                aws_access_key_id=self.objectstorage_access_key,
+                aws_secret_access_key=self.objectstorage_secret_key,
                 config=Config(
                     signature_version="s3v4",
                     s3={"addressing_style": "path"},

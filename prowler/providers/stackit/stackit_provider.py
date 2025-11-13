@@ -62,6 +62,8 @@ class StackitProvider(Provider):
         self,
         api_token: str = None,
         project_id: str = None,
+        objectstorage_access_key: str = None,
+        objectstorage_secret_key: str = None,
         config_path: str = None,
         fixer_config: dict = None,
         mutelist_path: str = None,
@@ -73,6 +75,8 @@ class StackitProvider(Provider):
         Args:
             - api_token: The StackIT API token for authentication
             - project_id: The StackIT project ID to audit
+            - objectstorage_access_key: Object Storage S3 access key (optional)
+            - objectstorage_secret_key: Object Storage S3 secret key (optional)
             - config_path: The path to the configuration file.
             - fixer_config: The fixer configuration.
             - mutelist_path: The path to the mutelist file.
@@ -83,6 +87,12 @@ class StackitProvider(Provider):
         # 1) Store argument values
         self._api_token = api_token or os.getenv("STACKIT_API_TOKEN")
         self._project_id = project_id or os.getenv("STACKIT_PROJECT_ID")
+        self._objectstorage_access_key = objectstorage_access_key or os.getenv(
+            "STACKIT_OBJECTSTORAGE_ACCESS_KEY"
+        )
+        self._objectstorage_secret_key = objectstorage_secret_key or os.getenv(
+            "STACKIT_OBJECTSTORAGE_SECRET_KEY"
+        )
 
         # Validate required credentials
         if not self._api_token:
@@ -99,6 +109,15 @@ class StackitProvider(Provider):
             )
             raise StackITInvalidProjectIdError(
                 message="StackIT project ID is required for auditing"
+            )
+
+        # Object Storage credentials are optional but recommended
+        if not self._objectstorage_access_key or not self._objectstorage_secret_key:
+            logger.warning(
+                "Object Storage credentials not provided. Object Storage checks will be skipped. "
+                "Generate credentials in STACKIT Portal (Object Storage > Credentials) and provide via "
+                "--stackit-objectstorage-access-key and --stackit-objectstorage-secret-key or environment variables "
+                "STACKIT_OBJECTSTORAGE_ACCESS_KEY and STACKIT_OBJECTSTORAGE_SECRET_KEY."
             )
 
         # 2) Load audit_config, fixer_config, mutelist
@@ -210,6 +229,23 @@ class StackitProvider(Provider):
             f"  Project ID: {self._project_id}",
             f"  API Token: {'*' * (len(self._api_token) - 4) + self._api_token[-4:] if self._api_token and len(self._api_token) > 4 else '****'}",
         ]
+
+        # Add Object Storage credentials if provided
+        if self._objectstorage_access_key:
+            masked_access_key = (
+                self._objectstorage_access_key[:8] + "..." + self._objectstorage_access_key[-4:]
+                if len(self._objectstorage_access_key) > 12
+                else "****"
+            )
+            report_lines.append(f"  Object Storage Access Key: {masked_access_key}")
+        else:
+            report_lines.append("  Object Storage Access Key: Not provided")
+
+        if self._objectstorage_secret_key:
+            report_lines.append("  Object Storage Secret Key: ****")
+        else:
+            report_lines.append("  Object Storage Secret Key: Not provided")
+
         report_title = (
             f"{Style.BRIGHT}Using the StackIT credentials below:{Style.RESET_ALL}"
         )
@@ -219,14 +255,16 @@ class StackitProvider(Provider):
         """
         Set up the StackIT session configuration.
 
-        This creates a session dictionary containing the API token and project ID
-        that will be used by service clients to initialize the StackIT SDK.
+        This creates a session dictionary containing credentials
+        that will be used by service clients.
         """
         try:
             # Store session configuration for use by service clients
             self._session = {
                 "api_token": self._api_token,
                 "project_id": self._project_id,
+                "objectstorage_access_key": self._objectstorage_access_key,
+                "objectstorage_secret_key": self._objectstorage_secret_key,
             }
             logger.info("StackIT session configuration set up successfully.")
         except Exception as e:
