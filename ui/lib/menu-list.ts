@@ -157,18 +157,6 @@ export const getMenuList = ({
       groupLabel: "",
       menus: [
         {
-          href: "https://hub.prowler.com/",
-          label: "Prowler Hub",
-          icon: ProwlerShort,
-          target: "_blank",
-          tooltip: "Looking for all available checks? learn more.",
-        },
-      ],
-    },
-    {
-      groupLabel: "",
-      menus: [
-        {
           href: "",
           label: "Support & Help",
           icon: SupportIcon,
@@ -202,6 +190,18 @@ export const getMenuList = ({
             },
           ],
           defaultOpen: false,
+        },
+      ],
+    },
+    {
+      groupLabel: "",
+      menus: [
+        {
+          href: "https://hub.prowler.com/",
+          label: "Prowler Hub",
+          icon: ProwlerShort,
+          target: "_blank",
+          tooltip: "Looking for all available checks? learn more.",
         },
       ],
     },

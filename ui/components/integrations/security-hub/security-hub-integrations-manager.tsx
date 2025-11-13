@@ -351,8 +351,8 @@ export const SecurityHubIntegrationsManager = ({
               const providerDetails = getProviderDetails(integration);
 
               return (
-                <Card key={integration.id} variant="inner">
-                  <CardHeader className="pb-2">
+                <Card key={integration.id} variant="base">
+                  <CardHeader>
                     <IntegrationCardHeader
                       icon={<AWSSecurityHubIcon size={32} />}
                       title={providerDetails.displayName}

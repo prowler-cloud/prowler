@@ -44,7 +44,7 @@ export const CollapseMenuButton = ({
       open={isCollapsed}
       onOpenChange={setIsCollapsed}
       defaultOpen={defaultOpen}
-      className="w-full"
+      className="mb-1 w-full"
     >
       <CollapsibleTrigger
         className="[&[data-state=open]>div>div>svg]:rotate-180"
@@ -52,7 +52,7 @@ export const CollapseMenuButton = ({
       >
         <Button
           variant={isSubmenuActive ? "secondary" : "ghost"}
-          className="mb-1 h-auto w-full justify-start py-1"
+          className="h-auto w-full justify-start py-1"
         >
           <div className="flex w-full items-center justify-between">
             <div className="flex items-center">
@@ -183,21 +183,22 @@ export const CollapseMenuButton = ({
         <DropdownMenuTrigger asChild>
           <Button
             variant={isSubmenuActive ? "secondary" : "ghost"}
-            className="mb-1 h-auto w-full justify-start py-1"
+            className={cn(
+              "mb-1 h-auto py-1",
+              isOpen ? "w-full justify-start" : "w-14",
+            )}
           >
-            <div className="flex w-full items-center justify-between">
+            <div
+              className={cn(
+                "flex w-full items-center",
+                isOpen ? "justify-between" : "justify-center",
+              )}
+            >
               <div className="flex items-center">
                 <span className={cn(isOpen === false ? "" : "mr-4")}>
                   <Icon size={18} />
                 </span>
-                <p
-                  className={cn(
-                    "max-w-[200px] truncate",
-                    isOpen === false ? "opacity-0" : "opacity-100",
-                  )}
-                >
-                  {label}
-                </p>
+                {isOpen && <p className="max-w-[200px] truncate">{label}</p>}
               </div>
             </div>
           </Button>

@@ -298,8 +298,8 @@ export const S3IntegrationsManager = ({
         ) : integrations.length > 0 ? (
           <div className="grid gap-4">
             {integrations.map((integration) => (
-              <Card key={integration.id} variant="inner">
-                <CardHeader className="pb-2">
+              <Card key={integration.id} variant="base">
+                <CardHeader>
                   <IntegrationCardHeader
                     icon={<AmazonS3Icon size={32} />}
                     title={
