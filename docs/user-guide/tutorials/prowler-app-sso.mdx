@@ -53,10 +53,10 @@ On the profile page, find the "SAML SSO Integration" card and click "Enable" to 
 
 ![Enable SAML Integration](/images/prowler-app/saml/saml-step-2.png)
 
-Next step will indicate how to fill the IdP configuration based on your Identity Provider.
+Next section will explain how to fill the IdP configuration based on your Identity Provider.
 
 #### Step 3: Configure the Identity Provider (IdP)
-Choose Your Method:
+Choose a Method:
 
 - Use [**Generic Method**](#generic-method) for any SAML 2.0 compliant Identity Provider or when you need custom configuration.
 - Use [**Okta App Catalog**](#okta-app-catalog) if you're using Okta and want a simplified setup process with pre-configured settings.
@@ -93,7 +93,7 @@ Choose Your Method:
 
             ![Search for Prowler](/images/prowler-app/saml/app-catalog-browse-prowler.png)
 
-        3. **Select Prowler Cloud Application**: Click on the Prowler Cloud application from the search results to view its details page.
+        3. **Select Prowler Cloud Application**: Click the Prowler Cloud application from the search results to view its details page.
 
             ![Prowler Application Details](/images/prowler-app/saml/app-catalog-browse-prowler-add.png)
 
@@ -103,7 +103,7 @@ Choose Your Method:
 
             ![Add Prowler Configuration](/images/prowler-app/saml/app-catalog-browse-prowler-configure.png)
 
-        6. **Assign Users**: Navigate to the **Assignments** tab and assign the appropriate users or groups to the Prowler application by clicking "Assign" and selecting "Assign to People" or "Assign to Groups".
+        6. **Assign Users**: Navigate to the "Assignments" tab and assign the appropriate users or groups to the Prowler application by clicking "Assign" and selecting "Assign to People" or "Assign to Groups".
 
             With this step, the Okta app catalog configuration is complete. Users can now access Prowler Cloud using either [IdP-initiated](#idp-initiated-sso) or [SP-initiated SSO](#sp-initiated-sso) flows.
 
@@ -127,7 +127,7 @@ For Prowler App to correctly identify and provision users, configure the IdP to 
 <Info>
 **IdP Attribute Mapping**
 
-Note that the attribute name is just an example and may be different depending on the IdP. For instance, if the IdP provides a 'division' attribute, it can be mapped to 'userType'.
+Note that the attribute name is just an example and may be different depending on the IdP. For instance, if the IdP provides a `division` attribute, it can be mapped to `userType`.
 ![IdP configuration](/images/prowler-app/saml/saml_attribute_statements.png)
 
 </Info>
