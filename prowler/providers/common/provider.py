@@ -276,6 +276,17 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
+                elif "oraclecloud" in provider_class_name.lower():
+                    provider_class(
+                        oci_config_file=arguments.oci_config_file,
+                        profile=arguments.profile,
+                        region=arguments.region,
+                        compartment_ids=arguments.compartment_id,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                        use_instance_principal=arguments.use_instance_principal,
+                    )
 
         except TypeError as error:
             logger.critical(

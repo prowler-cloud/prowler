@@ -755,10 +755,6 @@ class TestJiraIntegration:
 
         call_args = mock_post.call_args
 
-        mock_post.assert_called_once()
-
-        call_args = mock_post.call_args
-
         expected_url = (
             "https://api.atlassian.com/ex/jira/valid_cloud_id/rest/api/3/issue"
         )
