@@ -1,9 +1,8 @@
 "use client";
 
-import { CrossIcon } from "@/components/icons";
 import { useUrlFilters } from "@/hooks/use-url-filters";
 
-import { CustomButton } from "../ui/custom/custom-button";
+import { Button } from "../shadcn";
 
 export interface ClearFiltersButtonProps {
   className?: string;
@@ -12,7 +11,6 @@ export interface ClearFiltersButtonProps {
 }
 
 export const ClearFiltersButton = ({
-  className = "w-full md:w-fit",
   text = "Clear all filters",
   ariaLabel = "Reset",
 }: ClearFiltersButtonProps) => {
@@ -23,16 +21,8 @@ export const ClearFiltersButton = ({
   }
 
   return (
-    <CustomButton
-      ariaLabel={ariaLabel}
-      className={className}
-      onPress={clearAllFilters}
-      variant="dashed"
-      size="md"
-      endContent={<CrossIcon size={24} />}
-      radius="sm"
-    >
+    <Button aria-label={ariaLabel} onClick={clearAllFilters} variant="link">
       {text}
-    </CustomButton>
+    </Button>
   );
 };

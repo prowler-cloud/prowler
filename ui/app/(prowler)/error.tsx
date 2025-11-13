@@ -4,6 +4,7 @@ import { Icon } from "@iconify/react";
 import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
 
+import { Button } from "@/components/shadcn";
 import {
   Card,
   CardContent,
@@ -11,7 +12,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/shadcn/card/card";
-import { CustomButton } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { SentryErrorSource, SentryErrorType } from "@/sentry";
 
@@ -104,16 +104,10 @@ export default function Error({
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-start gap-3">
-            <CustomButton
-              onPress={reset}
-              variant="solid"
-              color="primary"
-              size="sm"
-              startContent={<Icon icon="tabler:refresh" className="h-4 w-4" />}
-              ariaLabel="Try Again"
-            >
+            <Button onClick={reset} size="sm" className="gap-2">
+              <Icon icon="tabler:refresh" className="h-4 w-4" />
               Try Again
-            </CustomButton>
+            </Button>
             <CustomLink href="/" target="_self" className="font-bold">
               Go to Overview
             </CustomLink>
