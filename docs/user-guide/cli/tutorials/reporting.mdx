@@ -59,7 +59,7 @@ Prowler natively supports the following reporting output formats:
 
 - CSV
 - JSON-OCSF
-- JSON-ASFF
+- JSON-ASFF (AWS only)
 - HTML
 
 Hereunder is the structure for each of the supported report formats by Prowler:
@@ -285,10 +285,10 @@ The JSON-OCSF output format implements the [Detection Finding](https://schema.oc
 Each finding is a `json` object within a list.
 
 </Note>
-### JSON-ASFF
+### JSON-ASFF (AWS Only)
 
 <Note>
-Only available when using `--security-hub` or `--output-formats json-asff`
+Only available when using `--security-hub` or `--output-formats json-asff` with the AWS provider.
 
 </Note>
 The following code is an example output of the [JSON-ASFF](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-format-syntax.html) format:

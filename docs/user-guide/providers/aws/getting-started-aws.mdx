@@ -84,6 +84,17 @@ For detailed instructions on how to create the role, see [Authentication > Assum
     ![Next button in Prowler Cloud](/images/providers/next-button-prowler-cloud.png)
     ![Launch Scan](/images/providers/launch-scan-button-prowler-cloud.png)
 
+<Note>
+Check if your AWS Security Token Service (STS) has the EU (Ireland) endpoint active. If not, we will not be able to connect to your AWS account.
+
+If that is the case your STS configuration may look like this:
+
+<img src="/images/sts-configuration.png" alt="AWS Role" width="800" />
+
+To solve this issue, please activate the EU (Ireland) STS endpoint.
+
+</Note>
+
 ---
 
 #### Credentials (Static Access Keys)

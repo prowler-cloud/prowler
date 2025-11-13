@@ -1,30 +1,39 @@
 {
   "Provider": "aws",
   "CheckID": "elbv2_is_in_multiple_az",
-  "CheckTitle": "Elastic Load Balancer V2 (ELBv2) is Configured Across Multiple Availability Zones (AZs)",
-  "CheckType": [],
+  "CheckTitle": "ELBv2 load balancer is configured across multiple Availability Zones",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Denial of Service"
+  ],
   "ServiceName": "elbv2",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsElbv2LoadBalancer",
-  "Description": "Ensure whether Elastic Load Balancer V2 (Application, Network, or Gateway Load Balancer) is configured to operate across multiple Availability Zones (AZs). Ensuring that your load balancer is spread across at least two AZs helps maintain high availability and fault tolerance in case of an AZ failure.",
-  "Risk": "If an ELBv2 is not configured across multiple AZs, there is a risk that an Availability Zone failure could lead to downtime for your application. This could result in a single point of failure, impacting the availability and reliability of your services.",
-  "RelatedUrl": "https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/how-elastic-load-balancing-works.html#availability-zones",
+  "Description": "ELBv2 load balancers (Application, Network, or Gateway) are assessed for distribution across multiple **Availability Zones**. The finding indicates whether each load balancer spans at least the configured minimum number of AZs (default `2`).",
+  "Risk": "Limiting a load balancer to one AZ introduces a single point of failure. An AZ outage, zonal degradation, or imbalanced target capacity can cause downtime, dropped connections, and deployment risk, undermining service **availability** and resiliency.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/availability-zones.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/enable-multi-az.html",
+    "https://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/how-elastic-load-balancing-works.html#availability-zones"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/elb-controls.html#elb-13",
-      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/enable-multi-az.html"
+      "CLI": "aws elbv2 set-subnets --load-balancer-arn <LOAD_BALANCER_ARN> --subnets <SUBNET_ID_A> <SUBNET_ID_B>",
+      "NativeIaC": "```yaml\n# CloudFormation: ensure the ELBv2 spans at least two AZs by specifying two subnets\nResources:\n  <example_resource_name>:\n    Type: AWS::ElasticLoadBalancingV2::LoadBalancer\n    Properties:\n      Subnets:\n        - <subnet_id_a>  # critical: add a second AZ/subnet\n        - <subnet_id_b>  # critical: ensures the load balancer spans >=2 AZs\n```",
+      "Other": "1. Open AWS Console > EC2 > Load Balancers\n2. Select the load balancer\n3. Go to the Network mapping tab and click Edit subnets\n4. Enable at least two Availability Zones by selecting one subnet in each of two AZs\n5. Click Save changes",
+      "Terraform": "```hcl\n# Ensure ELBv2 spans at least two Availability Zones\nresource \"aws_lb\" \"<example_resource_name>\" {\n  subnets = [\n    \"<subnet_id_a>\",  # critical: add a second AZ/subnet\n    \"<subnet_id_b>\"   # critical: ensures the load balancer spans >=2 AZs\n  ]\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended to configure your ELBv2 to operate across at least two Availability Zones to enhance fault tolerance and availability.",
-      "Url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-subnets.html"
+      "Text": "Operate each load balancer across at least **two AZs** and ensure every enabled AZ has healthy, scaled targets.\n- Distribute capacity per AZ; use autoscaling\n- Keep health checks effective\n- Consider cross-zone load balancing to absorb bursts\n- Regularly test failover",
+      "Url": "https://hub.prowler.com/check/elbv2_is_in_multiple_az"
     }
   },
   "Categories": [
-    "redundancy"
+    "resilience"
   ],
   "DependsOn": [],
   "RelatedTo": [],

@@ -283,3 +283,77 @@ class Test_Defender_Service:
         assert policy1.name == "JITPolicy1"
         assert policy1.location == "eastus"
         assert set(policy1.vm_ids) == {"vm-1", "vm-2"}
+
+
+def mock_defender_get_assessments_with_none(_):
+    """Mock Defender assessments with None and valid statuses"""
+    return {
+        AZURE_SUBSCRIPTION_ID: {
+            "Assessment None": Assesment(
+                resource_id="/subscriptions/test/assessment1",
+                resource_name="assessment-none",
+                status=None,  # None status
+            ),
+            "Assessment Healthy": Assesment(
+                resource_id="/subscriptions/test/assessment2",
+                resource_name="assessment-healthy",
+                status="Healthy",
+            ),
+            "Assessment Unhealthy": Assesment(
+                resource_id="/subscriptions/test/assessment3",
+                resource_name="assessment-unhealthy",
+                status="Unhealthy",
+            ),
+        }
+    }
+
+
+@patch(
+    "prowler.providers.azure.services.defender.defender_service.Defender._get_assessments",
+    new=mock_defender_get_assessments_with_none,
+)
+class Test_Defender_Service_Assessments_None_Handling:
+    """Test Defender service handling of None values in assessments"""
+
+    def test_assessment_with_none_status(self):
+        """Test that Defender handles assessments with None status gracefully"""
+        defender = Defender(set_mocked_azure_provider())
+
+        # Check assessment with None status
+        assessment = defender.assessments[AZURE_SUBSCRIPTION_ID]["Assessment None"]
+        assert assessment.resource_id == "/subscriptions/test/assessment1"
+        assert assessment.resource_name == "assessment-none"
+        assert assessment.status is None
+
+    def test_assessment_with_valid_status(self):
+        """Test that Defender handles assessments with valid status"""
+        defender = Defender(set_mocked_azure_provider())
+
+        # Check assessment with Healthy status
+        assessment = defender.assessments[AZURE_SUBSCRIPTION_ID]["Assessment Healthy"]
+        assert assessment.resource_id == "/subscriptions/test/assessment2"
+        assert assessment.resource_name == "assessment-healthy"
+        assert assessment.status == "Healthy"
+
+    def test_assessment_with_multiple_mixed_statuses(self):
+        """Test that Defender handles mix of None and valid statuses"""
+        defender = Defender(set_mocked_azure_provider())
+
+        # Should have all 3 assessments
+        assert len(defender.assessments[AZURE_SUBSCRIPTION_ID]) == 3
+
+        # Check None status
+        assessment_none = defender.assessments[AZURE_SUBSCRIPTION_ID]["Assessment None"]
+        assert assessment_none.status is None
+
+        # Check Healthy status
+        assessment_healthy = defender.assessments[AZURE_SUBSCRIPTION_ID][
+            "Assessment Healthy"
+        ]
+        assert assessment_healthy.status == "Healthy"
+
+        # Check Unhealthy status
+        assessment_unhealthy = defender.assessments[AZURE_SUBSCRIPTION_ID][
+            "Assessment Unhealthy"
+        ]
+        assert assessment_unhealthy.status == "Unhealthy"
