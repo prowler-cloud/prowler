@@ -268,11 +268,11 @@ class StackitProvider(Provider):
 
             # 2) Test connection by attempting to use the StackIT SDK
             try:
-                from stackit import core
+                from stackit.core.configuration import Configuration
                 from stackit.objectstorage import ApiClient, DefaultApi
 
                 # Create configuration with API token
-                config = core.Configuration(
+                config = Configuration(
                     project_id=project_id,
                     service_account_token=api_token,
                 )

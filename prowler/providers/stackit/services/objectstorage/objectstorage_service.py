@@ -38,11 +38,11 @@ class ObjectStorageService:
         """
         try:
             # Import the StackIT SDK
-            from stackit import core
+            from stackit.core.configuration import Configuration
             from stackit.objectstorage import ApiClient, DefaultApi
 
             # Create configuration with API token
-            config = core.Configuration(
+            config = Configuration(
                 project_id=self.project_id,
                 service_account_token=self.api_token,
             )
