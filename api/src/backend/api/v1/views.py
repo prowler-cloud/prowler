@@ -2238,12 +2238,13 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         parameters = self._prepare_query_parameters(
             query_definition, serializer.validated_data.get("parameters", {})
         )
+        parameters["provider_uid"] = str(attack_paths_scan.provider.uid)
 
-        graph_payload = self._execute_attack_paths_query(
+        graph = self._execute_attack_paths_query(
             attack_paths_scan, query_definition, parameters
         )
 
-        response_serializer = AttackPathsGraphSerializer(graph_payload)
+        response_serializer = AttackPathsGraphSerializer(graph)
         return Response(response_serializer.data, status=status.HTTP_200_OK)
 
     @staticmethod
@@ -2304,7 +2305,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         try:
             with neo4j.get_neo4j_session(attack_paths_scan.neo4j_database) as session:
                 result = session.run(definition.cypher, parameters=parameters)
-                graph = self._serialize_graph_records(result)
+                graph = self._serialize_graph(result.graph())
 
         except neo4j_exceptions.Neo4jError as exc:
             logger.error(f"Neo4j query failed for Attack Paths query `{definition.id}`: {exc}")
@@ -2315,62 +2316,33 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
 
         return graph
 
-    def _serialize_graph_records(self, records):
-        nodes = {}
-        relationships = {}
+    def _serialize_graph(self, graph):
+        nodes = []
+        for node in graph.nodes:
+            nodes.append(
+                {
+                    "id": node.element_id,
+                    "labels": node.labels,
+                    "properties": node._properties,
+                },
+            )
 
-        for record in records:
-            record_nodes = record.get("nodes") or []
-            record_relationships = record.get("relationships") or []
-
-            for node in record_nodes:
-                nodes.setdefault(
-                    node.element_id,
-                    {
-                        "id": node.element_id,
-                        "labels": sorted(list(getattr(node, "labels", []))),
-                        "properties": self._serialize_properties(node.items()),
-                    },
-                )
-
-            for relationship in record_relationships:
-                relationships.setdefault(
-                    relationship.element_id,
-                    {
-                        "id": relationship.element_id,
-                        "type": relationship.type,
-                        "start": getattr(relationship.start_node, "element_id", None),
-                        "end": getattr(relationship.end_node, "element_id", None),
-                        "properties": self._serialize_properties(relationship.items()),
-                    },
-                )
+        relationships = []
+        for relationship in graph.relationships:
+            relationships.append(
+                {
+                    "id": relationship.element_id,
+                    "label": relationship.type,
+                    "source": relationship.start_node.element_id,
+                    "target": relationship.end_node.element_id,
+                    "properties": relationship._properties,
+                },
+            )
 
         return {
-            "nodes": list(nodes.values()),
-            "relationships": list(relationships.values()),
+            "nodes": nodes,
+            "relationships": relationships,
         }
-
-    def _serialize_properties(self, items):
-        return {
-            key: self._serialize_value(value)
-            for key, value in dict(items or {}).items()
-        }
-
-    def _serialize_value(self, value):
-        if isinstance(value, (list, tuple, set)):
-            return [self._serialize_value(item) for item in value]
-
-        if isinstance(value, dict):
-            return {key: self._serialize_value(val) for key, val in value.items()}
-
-        if hasattr(value, "isoformat"):
-            try:
-                return value.isoformat()
-
-            except (TypeError, ValueError):
-                return str(value)
-
-        return value
 
 
 @extend_schema_view(

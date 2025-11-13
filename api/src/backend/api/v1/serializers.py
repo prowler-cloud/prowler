@@ -1190,9 +1190,9 @@ class AttackPathsNodeSerializer(serializers.Serializer):
 
 class AttackPathsRelationshipSerializer(serializers.Serializer):
     id = serializers.CharField()
-    type = serializers.CharField()
-    start = serializers.CharField()
-    end = serializers.CharField()
+    label = serializers.CharField()
+    source = serializers.CharField()
+    target = serializers.CharField()
     properties = serializers.DictField(child=serializers.JSONField())
 
 

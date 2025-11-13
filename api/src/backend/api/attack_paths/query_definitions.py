@@ -40,6 +40,19 @@ def get_query_by_id(query_id: str) -> AttackPathsQueryDefinition | None:
 _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
     "aws": [
         AttackPathsQueryDefinition(
+            id="aws-s3-buckets",
+            name="S3 buckets",
+            description=(
+                "Explore all S3 buckets in the AWS account "
+            ),
+            provider="aws",
+            cypher=(
+                "MATCH (a:AWSAccount {id: $provider_uid})-[r]-(s:S3Bucket) "
+                "RETURN a, s, r"
+            ),
+            parameters=[],
+        ),
+        AttackPathsQueryDefinition(
             id="aws-ec2-instance-security-groups",
             name="EC2 instance security group exposure",
             description=(
