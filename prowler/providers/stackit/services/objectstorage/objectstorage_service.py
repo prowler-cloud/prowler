@@ -1,6 +1,3 @@
-import boto3
-from botocore.client import Config
-from botocore.exceptions import ClientError, EndpointConnectionError
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
@@ -11,12 +8,9 @@ class ObjectStorageService:
     """
     StackIT Object Storage Service class to handle bucket operations.
 
-    This service uses boto3 with S3-compatible endpoints to access
-    StackIT Object Storage, which is S3-compatible.
+    This service uses the StackIT Python SDK to access Object Storage
+    using API token authentication.
     """
-
-    # StackIT Object Storage endpoint
-    STACKIT_S3_ENDPOINT = "https://object.storage.eu01.onstackit.cloud"
 
     def __init__(self, provider: StackitProvider):
         """
@@ -27,57 +21,44 @@ class ObjectStorageService:
         """
         self.provider = provider
         self.project_id = provider.identity.project_id
-
-        # Get Object Storage credentials from session
-        self.objectstorage_access_key = provider.session.get("objectstorage_access_key")
-        self.objectstorage_secret_key = provider.session.get("objectstorage_secret_key")
+        self.api_token = provider.session.get("api_token")
 
         # Initialize buckets list
         self.buckets: list[Bucket] = []
 
-        # Check if Object Storage credentials are available
-        if not self.objectstorage_access_key or not self.objectstorage_secret_key:
-            logger.info(
-                "Object Storage credentials not provided. Skipping Object Storage bucket discovery. "
-                "To scan Object Storage, generate credentials in STACKIT Portal and provide them via "
-                "--stackit-objectstorage-access-key and --stackit-objectstorage-secret-key."
-            )
-            return
-
         # Fetch all buckets and their configurations
         self._list_buckets()
 
-    def _get_s3_client(self):
+    def _get_stackit_client(self):
         """
-        Get or create the S3-compatible client for StackIT Object Storage.
+        Get or create the StackIT Object Storage client using the SDK.
 
         Returns:
-            boto3 S3 client configured for StackIT endpoints, or None if credentials are missing
+            StackIT Object Storage client configured with API token
         """
-        # Check if credentials are available
-        if not self.objectstorage_access_key or not self.objectstorage_secret_key:
-            logger.warning(
-                "Object Storage credentials not available. Cannot create S3 client."
+        try:
+            # Import the StackIT SDK
+            from stackit import core
+            from stackit.objectstorage import ObjectStorageClient
+
+            # Create configuration with API token
+            config = core.Configuration(
+                project_id=self.project_id,
+                service_account_token=self.api_token,
+            )
+
+            # Initialize the Object Storage client
+            client = ObjectStorageClient(config)
+            return client
+
+        except ImportError as e:
+            logger.error(
+                f"StackIT SDK not available: {e}. "
+                "Please ensure stackit-core and stackit-objectstorage are installed."
             )
             return None
-
-        try:
-            # Create S3 client with StackIT Object Storage credentials
-            s3_client = boto3.client(
-                "s3",
-                endpoint_url=self.STACKIT_S3_ENDPOINT,
-                aws_access_key_id=self.objectstorage_access_key,
-                aws_secret_access_key=self.objectstorage_secret_key,
-                config=Config(
-                    signature_version="s3v4",
-                    s3={"addressing_style": "path"},
-                ),
-            )
-            return s3_client
         except Exception as e:
-            logger.error(
-                f"Error initializing StackIT Object Storage S3 client: {e}"
-            )
+            logger.error(f"Error initializing StackIT Object Storage client: {e}")
             return None
 
     def _list_buckets(self):
@@ -88,60 +69,61 @@ class ObjectStorageService:
         containing information about each bucket including encryption status.
         """
         try:
-            s3_client = self._get_s3_client()
-            if not s3_client:
+            client = self._get_stackit_client()
+            if not client:
                 logger.warning(
-                    "Cannot list buckets: S3 client not available"
+                    "Cannot list buckets: StackIT Object Storage client not available"
                 )
                 return
 
-            # List all buckets using S3 API
+            # List all buckets using the SDK
             try:
-                response = s3_client.list_buckets()
-                buckets_list = response.get("Buckets", [])
-            except EndpointConnectionError as e:
-                logger.error(
-                    f"Cannot connect to StackIT Object Storage endpoint: {e}. "
-                    f"Please verify the endpoint {self.STACKIT_S3_ENDPOINT} is correct "
-                    "and accessible."
-                )
-                return
-            except ClientError as e:
-                error_code = e.response.get("Error", {}).get("Code", "Unknown")
-                if error_code == "InvalidAccessKeyId":
-                    logger.error(
-                        "Invalid credentials. Please verify your API token and project ID."
-                    )
-                elif error_code == "SignatureDoesNotMatch":
-                    logger.error(
-                        "Authentication failed. The API token may be invalid or expired."
-                    )
+                # Call the list buckets API
+                response = client.list_buckets(project_id=self.project_id)
+
+                # Extract buckets from response
+                if hasattr(response, "buckets"):
+                    buckets_list = response.buckets
+                elif isinstance(response, dict):
+                    buckets_list = response.get("buckets", [])
+                elif isinstance(response, list):
+                    buckets_list = response
                 else:
-                    logger.error(
-                        f"Error listing buckets: {e.response.get('Error', {}).get('Message', str(e))}"
+                    logger.warning(
+                        f"Unexpected response type from list_buckets: {type(response)}"
                     )
-                return
+                    buckets_list = []
+
             except Exception as e:
-                logger.error(f"Unexpected error listing buckets: {e}")
+                logger.error(f"Error listing buckets via SDK: {e}")
                 return
 
             # Process each bucket
             for bucket_data in buckets_list:
                 try:
-                    bucket_name = bucket_data.get("Name", "")
-                    creation_date = bucket_data.get("CreationDate", None)
-
-                    # Get bucket location/region
-                    region = self._get_bucket_location(s3_client, bucket_name)
+                    # Extract bucket information
+                    if hasattr(bucket_data, "name"):
+                        bucket_name = bucket_data.name
+                        bucket_id = getattr(bucket_data, "id", bucket_name)
+                        region = getattr(bucket_data, "region", "eu01")
+                    elif isinstance(bucket_data, dict):
+                        bucket_name = bucket_data.get("name", "")
+                        bucket_id = bucket_data.get("id", bucket_name)
+                        region = bucket_data.get("region", "eu01")
+                    else:
+                        logger.warning(
+                            f"Unexpected bucket data type: {type(bucket_data)}"
+                        )
+                        continue
 
                     # Check bucket encryption
                     encryption_enabled = self._check_bucket_encryption(
-                        s3_client, bucket_name
+                        client, bucket_name
                     )
 
                     # Create Bucket object
                     bucket = Bucket(
-                        id=bucket_name,
+                        id=bucket_id,
                         name=bucket_name,
                         project_id=self.project_id,
                         region=region,
@@ -150,9 +132,7 @@ class ObjectStorageService:
                     self.buckets.append(bucket)
 
                 except Exception as e:
-                    logger.error(
-                        f"Error processing bucket {bucket_data.get('Name', 'unknown')}: {e}"
-                    )
+                    logger.error(f"Error processing bucket: {e}")
                     continue
 
             logger.info(f"Successfully listed {len(self.buckets)} buckets")
@@ -160,81 +140,63 @@ class ObjectStorageService:
         except Exception as e:
             logger.error(f"Error listing StackIT Object Storage buckets: {e}")
 
-    def _get_bucket_location(self, s3_client, bucket_name: str) -> str:
-        """
-        Get the location/region of a bucket.
-
-        Args:
-            s3_client: The boto3 S3 client
-            bucket_name: The name of the bucket
-
-        Returns:
-            str: The bucket location/region
-        """
-        try:
-            response = s3_client.get_bucket_location(Bucket=bucket_name)
-            location = response.get("LocationConstraint", "eu01")
-            # If LocationConstraint is None, it means the default region
-            return location if location else "eu01"
-        except ClientError as e:
-            logger.debug(
-                f"Cannot determine location for bucket {bucket_name}: {e}"
-            )
-            return "eu01"
-        except Exception as e:
-            logger.debug(
-                f"Error getting location for bucket {bucket_name}: {e}"
-            )
-            return "eu01"
-
-    def _check_bucket_encryption(self, s3_client, bucket_name: str) -> bool:
+    def _check_bucket_encryption(self, client, bucket_name: str) -> bool:
         """
         Check if a bucket has encryption enabled.
 
         Args:
-            s3_client: The boto3 S3 client
+            client: The StackIT Object Storage client
             bucket_name: The name of the bucket to check
 
         Returns:
             bool: True if encryption is enabled, False otherwise
         """
         try:
-            # Try to get bucket encryption configuration
-            response = s3_client.get_bucket_encryption(Bucket=bucket_name)
+            # Get bucket encryption configuration via SDK
+            try:
+                encryption_config = client.get_bucket_encryption(
+                    project_id=self.project_id, bucket_name=bucket_name
+                )
 
-            # If we get a response, encryption is enabled
-            rules = response.get("ServerSideEncryptionConfiguration", {}).get(
-                "Rules", []
-            )
-            if rules:
-                # Check if there's at least one encryption rule
-                for rule in rules:
-                    sse_algorithm = (
-                        rule.get("ApplyServerSideEncryptionByDefault", {}).get(
-                            "SSEAlgorithm"
-                        )
+                # Check if encryption is enabled based on response structure
+                if hasattr(encryption_config, "enabled"):
+                    return encryption_config.enabled
+                elif hasattr(encryption_config, "algorithm"):
+                    # If an algorithm is set, encryption is enabled
+                    return True
+                elif isinstance(encryption_config, dict):
+                    return (
+                        encryption_config.get("enabled", False)
+                        or encryption_config.get("algorithm") is not None
                     )
-                    if sse_algorithm:
-                        logger.debug(
-                            f"Bucket {bucket_name} has encryption enabled with algorithm: {sse_algorithm}"
-                        )
-                        return True
-            return False
+                else:
+                    # If we got a valid response object, assume encryption is enabled
+                    return True
 
-        except ClientError as e:
-            error_code = e.response.get("Error", {}).get("Code", "")
-            if error_code == "ServerSideEncryptionConfigurationNotFoundError":
-                # No encryption configuration = encryption is not enabled
+            except AttributeError as e:
+                # Method might not exist in current SDK version
                 logger.debug(
-                    f"Bucket {bucket_name} does not have encryption enabled"
+                    f"Cannot determine encryption status for bucket {bucket_name}: {e}"
                 )
                 return False
-            else:
-                # Other error - log and assume not encrypted
-                logger.debug(
-                    f"Error checking encryption for bucket {bucket_name}: {error_code}"
-                )
-                return False
+            except Exception as e:
+                # Check if it's a "not configured" error
+                error_str = str(e).lower()
+                if (
+                    "not found" in error_str
+                    or "not configured" in error_str
+                    or "does not exist" in error_str
+                ):
+                    logger.debug(
+                        f"Bucket {bucket_name} does not have encryption configured"
+                    )
+                    return False
+                else:
+                    logger.debug(
+                        f"Error checking encryption for bucket {bucket_name}: {e}"
+                    )
+                    return False
+
         except Exception as e:
             logger.debug(
                 f"Cannot determine encryption status for bucket {bucket_name}: {e}"
@@ -247,7 +209,7 @@ class Bucket(BaseModel):
     Represents a StackIT Object Storage bucket.
 
     Attributes:
-        id: The unique identifier of the bucket (same as name for S3)
+        id: The unique identifier of the bucket
         name: The name of the bucket
         project_id: The StackIT project ID containing the bucket
         region: The region where the bucket is located

@@ -18,18 +18,3 @@ def init_parser(self):
         default=None,
         help="StackIT Project ID to audit (alternatively set via STACKIT_PROJECT_ID environment variable)",
     )
-
-    # Object Storage credentials
-    stackit_objstorage_subparser = stackit_parser.add_argument_group("Object Storage Credentials")
-    stackit_objstorage_subparser.add_argument(
-        "--stackit-objectstorage-access-key",
-        nargs="?",
-        default=None,
-        help="StackIT Object Storage Access Key (generate in STACKIT Portal under Object Storage > Credentials, alternatively set via STACKIT_OBJECTSTORAGE_ACCESS_KEY environment variable)",
-    )
-    stackit_objstorage_subparser.add_argument(
-        "--stackit-objectstorage-secret-key",
-        nargs="?",
-        default=None,
-        help="StackIT Object Storage Secret Key (generate in STACKIT Portal under Object Storage > Credentials, alternatively set via STACKIT_OBJECTSTORAGE_SECRET_KEY environment variable)",
-    )

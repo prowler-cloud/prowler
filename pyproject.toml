@@ -7,7 +7,9 @@ requires = ["poetry-core>=2.0"]
 authors = [{name = "Toni de la Fuente", email = "toni@blyx.com"}]
 classifiers = [
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "License :: OSI Approved :: Apache Software License"
 ]
 dependencies = [
@@ -64,6 +66,8 @@ dependencies = [
   "schema==0.7.5",
   "shodan==1.31.0",
   "slack-sdk==3.34.0",
+  "stackit-core>=0.2.0",
+  "stackit-objectstorage>=0.1.0",
   "tabulate==0.9.0",
   "tzlocal==5.3.1",
   "py-iam-expand==0.1.0",
@@ -75,7 +79,7 @@ license = "Apache-2.0"
 maintainers = [{name = "Prowler Engineering", email = "engineering@prowler.com"}]
 name = "prowler"
 readme = "README.md"
-requires-python = ">3.9.1,<3.13"
+requires-python = ">=3.10,<3.13"
 version = "5.14.0"
 
 [project.scripts]

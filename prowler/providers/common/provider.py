@@ -241,8 +241,6 @@ class Provider(ABC):
                     provider_class(
                         api_token=arguments.stackit_api_token,
                         project_id=arguments.stackit_project_id,
-                        objectstorage_access_key=arguments.stackit_objectstorage_access_key,
-                        objectstorage_secret_key=arguments.stackit_objectstorage_secret_key,
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,

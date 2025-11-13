@@ -62,8 +62,6 @@ class StackitProvider(Provider):
         self,
         api_token: str = None,
         project_id: str = None,
-        objectstorage_access_key: str = None,
-        objectstorage_secret_key: str = None,
         config_path: str = None,
         fixer_config: dict = None,
         mutelist_path: str = None,
@@ -75,8 +73,6 @@ class StackitProvider(Provider):
         Args:
             - api_token: The StackIT API token for authentication
             - project_id: The StackIT project ID to audit
-            - objectstorage_access_key: Object Storage S3 access key (optional)
-            - objectstorage_secret_key: Object Storage S3 secret key (optional)
             - config_path: The path to the configuration file.
             - fixer_config: The fixer configuration.
             - mutelist_path: The path to the mutelist file.
@@ -87,12 +83,6 @@ class StackitProvider(Provider):
         # 1) Store argument values
         self._api_token = api_token or os.getenv("STACKIT_API_TOKEN")
         self._project_id = project_id or os.getenv("STACKIT_PROJECT_ID")
-        self._objectstorage_access_key = objectstorage_access_key or os.getenv(
-            "STACKIT_OBJECTSTORAGE_ACCESS_KEY"
-        )
-        self._objectstorage_secret_key = objectstorage_secret_key or os.getenv(
-            "STACKIT_OBJECTSTORAGE_SECRET_KEY"
-        )
 
         # Validate required credentials
         if not self._api_token:
@@ -109,15 +99,6 @@ class StackitProvider(Provider):
             )
             raise StackITInvalidProjectIdError(
                 message="StackIT project ID is required for auditing"
-            )
-
-        # Object Storage credentials are optional but recommended
-        if not self._objectstorage_access_key or not self._objectstorage_secret_key:
-            logger.warning(
-                "Object Storage credentials not provided. Object Storage checks will be skipped. "
-                "Generate credentials in STACKIT Portal (Object Storage > Credentials) and provide via "
-                "--stackit-objectstorage-access-key and --stackit-objectstorage-secret-key or environment variables "
-                "STACKIT_OBJECTSTORAGE_ACCESS_KEY and STACKIT_OBJECTSTORAGE_SECRET_KEY."
             )
 
         # 2) Load audit_config, fixer_config, mutelist
@@ -230,22 +211,6 @@ class StackitProvider(Provider):
             f"  API Token: {'*' * (len(self._api_token) - 4) + self._api_token[-4:] if self._api_token and len(self._api_token) > 4 else '****'}",
         ]
 
-        # Add Object Storage credentials if provided
-        if self._objectstorage_access_key:
-            masked_access_key = (
-                self._objectstorage_access_key[:8] + "..." + self._objectstorage_access_key[-4:]
-                if len(self._objectstorage_access_key) > 12
-                else "****"
-            )
-            report_lines.append(f"  Object Storage Access Key: {masked_access_key}")
-        else:
-            report_lines.append("  Object Storage Access Key: Not provided")
-
-        if self._objectstorage_secret_key:
-            report_lines.append("  Object Storage Secret Key: ****")
-        else:
-            report_lines.append("  Object Storage Secret Key: Not provided")
-
         report_title = (
             f"{Style.BRIGHT}Using the StackIT credentials below:{Style.RESET_ALL}"
         )
@@ -263,8 +228,6 @@ class StackitProvider(Provider):
             self._session = {
                 "api_token": self._api_token,
                 "project_id": self._project_id,
-                "objectstorage_access_key": self._objectstorage_access_key,
-                "objectstorage_secret_key": self._objectstorage_secret_key,
             }
             logger.info("StackIT session configuration set up successfully.")
         except Exception as e:
@@ -281,7 +244,7 @@ class StackitProvider(Provider):
         Test connection to StackIT by validating credentials.
 
         This method attempts to validate the API token and project ID
-        by making a simple API call to StackIT services.
+        by making a simple API call to StackIT services using the SDK.
 
         Args:
             api_token (str): StackIT API token
@@ -303,33 +266,35 @@ class StackitProvider(Provider):
                     raise ValueError(error_msg)
                 return Connection(error=ValueError(error_msg))
 
-            # 2) Test connection by attempting to create an S3 client
-            # StackIT Object Storage is S3-compatible, so we use boto3
+            # 2) Test connection by attempting to use the StackIT SDK
             try:
-                import boto3
-                from botocore.client import Config
+                from stackit import core
+                from stackit.objectstorage import ObjectStorageClient
 
-                # Create S3 client with StackIT endpoint
-                s3_client = boto3.client(
-                    "s3",
-                    endpoint_url="https://object.storage.eu01.onstackit.cloud",
-                    aws_access_key_id=project_id,
-                    aws_secret_access_key=api_token,
-                    config=Config(
-                        signature_version="s3v4",
-                        s3={"addressing_style": "path"},
-                    ),
+                # Create configuration with API token
+                config = core.Configuration(
+                    project_id=project_id,
+                    service_account_token=api_token,
                 )
+
+                # Initialize the Object Storage client
+                client = ObjectStorageClient(config)
 
                 # Test with a simple API call (list buckets)
-                s3_client.list_buckets()
+                client.list_buckets(project_id=project_id)
 
                 logger.info(
-                    "StackIT test_connection: Successfully connected to Object Storage."
+                    "StackIT test_connection: Successfully connected using StackIT SDK."
                 )
                 return Connection(is_connected=True)
+            except ImportError as e:
+                error_msg = f"StackIT SDK not available: {e}. Please ensure stackit-core and stackit-objectstorage are installed."
+                logger.error(error_msg)
+                if raise_on_exception:
+                    raise ImportError(error_msg)
+                return Connection(error=ImportError(error_msg))
             except Exception as test_error:
-                error_msg = f"Failed to connect to StackIT Object Storage: {str(test_error)}"
+                error_msg = f"Failed to connect to StackIT using SDK: {str(test_error)}"
                 logger.error(error_msg)
                 if raise_on_exception:
                     raise Exception(error_msg)
