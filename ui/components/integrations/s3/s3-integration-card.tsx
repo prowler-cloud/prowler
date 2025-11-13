@@ -35,7 +35,7 @@ export const S3IntegrationCard = () => {
             </div>
           </div>
           <div className="flex items-center gap-2 self-end sm:self-center">
-            <Button asChild size="sm" variant="outline">
+            <Button asChild size="sm">
               <Link href="/integrations/amazon-s3">
                 <SettingsIcon size={14} />
                 Manage

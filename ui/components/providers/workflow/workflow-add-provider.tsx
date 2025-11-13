@@ -74,7 +74,8 @@ export const WorkflowAddProvider = () => {
         classNames={{
           base: "px-0.5 mb-5",
           label: "text-small",
-          value: "text-small text-default-400",
+          value: "text-small text-button-primary",
+          indicator: "bg-button-primary",
         }}
         label="Steps"
         maxValue={steps.length - 1}

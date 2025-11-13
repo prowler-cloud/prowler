@@ -3,6 +3,7 @@
 import { Checkbox } from "@heroui/checkbox";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Icon } from "@iconify/react";
+import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -15,8 +16,8 @@ import {
 import { scanOnDemand, scheduleDaily } from "@/actions/scans";
 import { getTask } from "@/actions/task/tasks";
 import { CheckIcon, RocketIcon } from "@/components/icons";
+import { Button } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
-import { CustomButton } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { Form } from "@/components/ui/form";
 import { checkTaskStatus } from "@/lib/helper";
@@ -307,45 +308,44 @@ export const TestConnectionForm = ({
               <span>Back to providers</span>
             </CustomLink>
           ) : connectionStatus?.error ? (
-            <CustomButton
-              onPress={isUpdated ? () => router.back() : onResetCredentials}
+            <Button
+              onClick={isUpdated ? () => router.back() : onResetCredentials}
               type="button"
-              ariaLabel={"Save"}
-              className="w-1/2"
-              variant="solid"
-              color="warning"
-              size="md"
-              isLoading={isResettingCredentials}
-              startContent={!isResettingCredentials && <CheckIcon size={24} />}
-              isDisabled={isResettingCredentials}
+              variant="secondary"
+              size="lg"
+              disabled={isResettingCredentials}
             >
               {isResettingCredentials ? (
-                <>Loading</>
+                <Loader2 className="animate-spin" />
               ) : (
-                <span>
-                  {isUpdated ? "Update credentials" : "Reset credentials"}
-                </span>
+                <CheckIcon size={24} />
               )}
-            </CustomButton>
+              {isResettingCredentials
+                ? "Loading"
+                : isUpdated
+                  ? "Update credentials"
+                  : "Reset credentials"}
+            </Button>
           ) : (
-            <CustomButton
+            <Button
               type={
                 isUpdated && connectionStatus?.connected ? "button" : "submit"
               }
-              ariaLabel={"Save"}
-              className="w-1/3"
-              variant="solid"
-              color="action"
-              size="md"
-              isLoading={isLoading}
-              endContent={!isLoading && !isUpdated && <RocketIcon size={24} />}
+              variant="default"
+              size="lg"
+              disabled={isLoading}
             >
               {isLoading ? (
-                <>Loading</>
+                <Loader2 className="animate-spin" />
               ) : (
-                <span>{isUpdated ? "Check connection" : "Launch scan"}</span>
+                !isUpdated && <RocketIcon size={24} />
               )}
-            </CustomButton>
+              {isLoading
+                ? "Loading"
+                : isUpdated
+                  ? "Check connection"
+                  : "Launch scan"}
+            </Button>
           )}
         </div>
       </form>

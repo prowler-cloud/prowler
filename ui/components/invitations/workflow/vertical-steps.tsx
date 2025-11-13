@@ -123,7 +123,7 @@ export const VerticalSteps = React.forwardRef<
 
       switch (color) {
         case "primary":
-          userColor = "[--step-color:hsl(var(--heroui-primary))]";
+          userColor = "[--step-color:var(--bg-button-primary)]";
           fgColor = "[--step-fg-color:hsl(var(--heroui-primary-foreground))]";
           break;
         case "secondary":

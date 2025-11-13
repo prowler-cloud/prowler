@@ -209,13 +209,12 @@ export const VerticalSteps = React.forwardRef<
                               },
                               active: {
                                 backgroundColor: "transparent",
-                                borderColor: "var(--active-border-color)",
-                                color: "var(--active-color)",
+                                borderColor: "var(--bg-button-primary)",
+                                color: "var(--bg-button-primary)",
                               },
                               complete: {
-                                backgroundColor:
-                                  "var(--complete-background-color)",
-                                borderColor: "var(--complete-border-color)",
+                                backgroundColor: "var(--bg-button-primary)",
+                                borderColor: "var(--bg-button-primary)",
                               },
                             }}
                           >

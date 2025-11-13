@@ -44,6 +44,7 @@ export const WorkflowSendInvite = () => {
           base: "px-0.5 mb-3 sm:mb-5",
           label: "text-xs sm:text-small",
           value: "text-xs sm:text-small text-default-400",
+          indicator: "bg-button-primary",
         }}
         label="Steps"
         maxValue={steps.length - 1}
