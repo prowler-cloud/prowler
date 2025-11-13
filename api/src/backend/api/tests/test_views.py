@@ -6181,6 +6181,8 @@ class TestComplianceOverviewViewSet:
             ("framework", "framework", 1),
             ("version", "version", 1),
             ("region", "region", 1),
+            ("region__in", "region", 1),
+            ("region.in", "region", 1),
         ],
     )
     def test_compliance_overview_filters(

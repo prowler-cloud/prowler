@@ -20,12 +20,16 @@ All notable changes to the **Prowler API** are documented in this file.
 ### Changed
 - Optimized database write queries for scan related tasks [(#9190)](https://github.com/prowler-cloud/prowler/pull/9190)
 
+### Security
+- Django updated to the latest 5.1 security release, 5.1.14, due to problems with potential [SQL injection](https://github.com/prowler-cloud/prowler/security/dependabot/113) and [denial-of-service vulnerability](https://github.com/prowler-cloud/prowler/security/dependabot/114) [(#9176)](https://github.com/prowler-cloud/prowler/pull/9176)
+
 ---
 
 ## [1.14.2] (Prowler 5.13.2)
 
 ### Fixed
-- Update unique constraint for `Provider` model to exclude soft-deleted entries, resolving duplicate errors when re-deleting providers.
+- Update unique constraint for `Provider` model to exclude soft-deleted entries, resolving duplicate errors when re-deleting providers.[(#9054)](https://github.com/prowler-cloud/prowler/pull/9054)
+- Remove compliance generation for providers without compliance frameworks [(#9208)](https://github.com/prowler-cloud/prowler/pull/9208)
 
 ## [1.14.1] (Prowler 5.13.1)
 

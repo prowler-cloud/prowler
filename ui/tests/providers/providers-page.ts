@@ -689,4 +689,23 @@ export class ProvidersPage extends BasePage {
     await this.goto();
     await expect(this.providersTable).toBeVisible({ timeout: 10000 });
   }
+
+  async selectAuthenticationMethod(method: AWSCredentialType): Promise<void> {
+    // Select the authentication method
+
+     // Search botton that contains text AWS SDK Default or Prowler Cloud will assume or Access & Secret Key
+     const button = this.page.locator('button').filter({ hasText: /AWS SDK Default|Prowler Cloud will assume|Access & Secret Key/i });
+     await button.click();
+
+    if (method === AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN) {
+     
+      const modal = this.page.locator('[role="dialog"], .modal, [data-testid*="modal"]').first();
+      await expect(modal).toBeVisible({ timeout: 10000 });
+
+      // Select the role credentials
+      this.page.getByRole('option', { name: 'Access & Secret Key' }).click({ force: true });
+    } else {
+      throw new Error(`Invalid authentication method: ${method}`);
+    }
+  }
 }

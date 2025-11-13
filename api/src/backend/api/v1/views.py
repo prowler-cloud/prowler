@@ -3527,9 +3527,10 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         Fall back to detailed ComplianceRequirementOverview query when region filter is applied.
         This uses the original aggregation logic across filtered regions.
         """
+        regions = region_filter.split(",") if "," in region_filter else [region_filter]
         queryset = self.filter_queryset(self.get_queryset()).filter(
             scan_id=scan_id,
-            region=region_filter,
+            region__in=regions,
         )
 
         data = self._aggregate_compliance_overview(queryset)
@@ -3575,7 +3576,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                 ]
             )
 
-        region_filter = request.query_params.get("filter[region]")
+        region_filter = request.query_params.get("filter[region]") or request.query_params.get("filter[region__in]")
 
         if region_filter:
             # Fall back to detailed query with region filtering

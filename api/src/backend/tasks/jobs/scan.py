@@ -1040,113 +1040,115 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
                         (compliance_id, requirement_id)
                     )
 
-        # Aggregate findings by region using SQL for optimal performance
-        check_status_by_region, findings_count_by_compliance = (
-            _aggregate_findings_by_region(
-                tenant_id, scan_id, modeled_threatscore_compliance_id
-            )
-        )
-
-        # Only process regions that have findings (optimization: reduces row count)
-        regions = list(check_status_by_region.keys())
-
-        region_requirement_stats: dict[str, dict[str, dict[str, dict[str, int]]]] = (
-            defaultdict(lambda: defaultdict(dict))
-        )
-        for region, check_status in check_status_by_region.items():
-            for check_name, status in check_status.items():
-                targets = requirement_lookup.get(check_name)
-                if not targets:
-                    continue
-                status_lower = (status or "").lower()
-                if status_lower not in {"pass", "fail"}:
-                    continue
-                for compliance_id, requirement_id in targets:
-                    compliance_stats = region_requirement_stats[region].setdefault(
-                        compliance_id, {}
-                    )
-                    requirement_stats = compliance_stats.setdefault(
-                        requirement_id, {"passed_checks": 0, "failed_checks": 0}
-                    )
-                    if status_lower == "pass":
-                        requirement_stats["passed_checks"] += 1
-                    else:
-                        requirement_stats["failed_checks"] += 1
-
-        # Prepare compliance requirement rows and compute summaries in single pass
         compliance_requirement_rows: list[dict[str, Any]] = []
-        utc_datetime_now = datetime.now(tz=timezone.utc)
-
-        # Track requirement statuses across regions for summaries
+        regions = []
         requirement_statuses = defaultdict(
             lambda: {"fail_count": 0, "pass_count": 0, "total_count": 0}
         )
 
-        # Pre-compute shared strings (optimization: reduces string conversions)
-        tenant_id_str = str(tenant_id)
-        scan_id_str = str(scan_instance.id)
-
-        for region in regions:
-            region_stats = region_requirement_stats.get(region, {})
-            for compliance_id, compliance in compliance_template.items():
-                modeled_compliance_id = _normalized_compliance_key(
-                    compliance["framework"], compliance["version"]
+        # Skip if provider has no compliance frameworks
+        if compliance_template:
+            # Aggregate findings by region using SQL for optimal performance
+            check_status_by_region, findings_count_by_compliance = (
+                _aggregate_findings_by_region(
+                    tenant_id, scan_id, modeled_threatscore_compliance_id
                 )
-                compliance_stats = region_stats.get(compliance_id, {})
-                # Create an overview record for each requirement within each compliance framework
-                for requirement_id, requirement in compliance["requirements"].items():
-                    stats = compliance_stats.get(requirement_id)
-                    passed_checks = stats["passed_checks"] if stats else 0
-                    failed_checks = stats["failed_checks"] if stats else 0
-                    total_checks = len(requirement["checks"])
-                    if total_checks == 0:
-                        requirement_status = "MANUAL"
-                    elif failed_checks > 0:
-                        requirement_status = "FAIL"
-                    else:
-                        requirement_status = "PASS"
+            )
 
-                    compliance_requirement_rows.append(
-                        {
-                            "id": uuid.uuid4(),
-                            "tenant_id": tenant_id_str,
-                            "inserted_at": utc_datetime_now,
-                            "compliance_id": compliance_id,
-                            "framework": compliance["framework"],
-                            "version": compliance["version"] or "",
-                            "description": requirement.get("description") or "",
-                            "region": region,
-                            "requirement_id": requirement_id,
-                            "requirement_status": requirement_status,
-                            "passed_checks": passed_checks,
-                            "failed_checks": failed_checks,
-                            "total_checks": total_checks,
-                            "scan_id": scan_id_str,
-                            "passed_findings": findings_count_by_compliance.get(
-                                region, {}
-                            )
-                            .get(modeled_compliance_id, {})
-                            .get(requirement_id, {})
-                            .get("pass", 0),
-                            "total_findings": findings_count_by_compliance.get(
-                                region, {}
-                            )
-                            .get(modeled_compliance_id, {})
-                            .get(requirement_id, {})
-                            .get("total", 0),
-                        }
+            # Only process regions that have findings (optimization: reduces row count)
+            regions = list(check_status_by_region.keys())
+
+            region_requirement_stats: dict[str, dict[str, dict[str, dict[str, int]]]] = (
+                defaultdict(lambda: defaultdict(dict))
+            )
+            for region, check_status in check_status_by_region.items():
+                for check_name, status in check_status.items():
+                    targets = requirement_lookup.get(check_name)
+                    if not targets:
+                        continue
+                    status_lower = (status or "").lower()
+                    if status_lower not in {"pass", "fail"}:
+                        continue
+                    for compliance_id, requirement_id in targets:
+                        compliance_stats = region_requirement_stats[region].setdefault(
+                            compliance_id, {}
+                        )
+                        requirement_stats = compliance_stats.setdefault(
+                            requirement_id, {"passed_checks": 0, "failed_checks": 0}
+                        )
+                        if status_lower == "pass":
+                            requirement_stats["passed_checks"] += 1
+                        else:
+                            requirement_stats["failed_checks"] += 1
+
+            # Prepare compliance requirement rows and compute summaries in single pass
+            utc_datetime_now = datetime.now(tz=timezone.utc)
+
+            # Pre-compute shared strings (optimization: reduces string conversions)
+            tenant_id_str = str(tenant_id)
+            scan_id_str = str(scan_instance.id)
+
+            for region in regions:
+                region_stats = region_requirement_stats.get(region, {})
+                for compliance_id, compliance in compliance_template.items():
+                    modeled_compliance_id = _normalized_compliance_key(
+                        compliance["framework"], compliance["version"]
                     )
+                    compliance_stats = region_stats.get(compliance_id, {})
+                    # Create an overview record for each requirement within each compliance framework
+                    for requirement_id, requirement in compliance["requirements"].items():
+                        stats = compliance_stats.get(requirement_id)
+                        passed_checks = stats["passed_checks"] if stats else 0
+                        failed_checks = stats["failed_checks"] if stats else 0
+                        total_checks = len(requirement["checks"])
+                        if total_checks == 0:
+                            requirement_status = "MANUAL"
+                        elif failed_checks > 0:
+                            requirement_status = "FAIL"
+                        else:
+                            requirement_status = "PASS"
 
-                    # Update summary tracking (single-pass optimization)
-                    key = (compliance_id, requirement_id)
-                    requirement_statuses[key]["total_count"] += 1
-                    if requirement_status == "FAIL":
-                        requirement_statuses[key]["fail_count"] += 1
-                    elif requirement_status == "PASS":
-                        requirement_statuses[key]["pass_count"] += 1
+                        compliance_requirement_rows.append(
+                            {
+                                "id": uuid.uuid4(),
+                                "tenant_id": tenant_id_str,
+                                "inserted_at": utc_datetime_now,
+                                "compliance_id": compliance_id,
+                                "framework": compliance["framework"],
+                                "version": compliance["version"] or "",
+                                "description": requirement.get("description") or "",
+                                "region": region,
+                                "requirement_id": requirement_id,
+                                "requirement_status": requirement_status,
+                                "passed_checks": passed_checks,
+                                "failed_checks": failed_checks,
+                                "total_checks": total_checks,
+                                "scan_id": scan_id_str,
+                                "passed_findings": findings_count_by_compliance.get(
+                                    region, {}
+                                )
+                                .get(modeled_compliance_id, {})
+                                .get(requirement_id, {})
+                                .get("pass", 0),
+                                "total_findings": findings_count_by_compliance.get(
+                                    region, {}
+                                )
+                                .get(modeled_compliance_id, {})
+                                .get(requirement_id, {})
+                                .get("total", 0),
+                            }
+                        )
 
-        # Bulk create requirement records using PostgreSQL COPY
-        _persist_compliance_requirement_rows(tenant_id, compliance_requirement_rows)
+                        # Update summary tracking (single-pass optimization)
+                        key = (compliance_id, requirement_id)
+                        requirement_statuses[key]["total_count"] += 1
+                        if requirement_status == "FAIL":
+                            requirement_statuses[key]["fail_count"] += 1
+                        elif requirement_status == "PASS":
+                            requirement_statuses[key]["pass_count"] += 1
+
+            # Bulk create requirement records using PostgreSQL COPY
+            _persist_compliance_requirement_rows(tenant_id, compliance_requirement_rows)
 
         # Create pre-aggregated summaries for fast compliance overview lookups
         _create_compliance_summaries(tenant_id, scan_id, requirement_statuses)
