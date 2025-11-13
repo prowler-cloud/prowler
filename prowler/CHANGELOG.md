@@ -51,6 +51,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update oraclecloud cloudguard service metadata to new format [(#9223)](https://github.com/prowler-cloud/prowler/pull/9223)
 - Update oraclecloud blockstorage service metadata to new format [(#9222)](https://github.com/prowler-cloud/prowler/pull/9222)
 - Update oraclecloud audit service metadata to new format [(#9221)](https://github.com/prowler-cloud/prowler/pull/9221)
+- Raise ASFF output error for non-AWS providers [(#9225)](https://github.com/prowler-cloud/prowler/pull/9225)
 
 ---
 
