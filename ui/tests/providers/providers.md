@@ -118,6 +118,65 @@
 
 ---
 
+## Test Case: `PROVIDER-E2E-011` - Add AWS Provider with Assume Role via AWS SDK Defaults
+
+**Priority:** `critical`
+
+**Tags:**
+
+- type → @e2e, @serial
+- feature → @providers
+- provider → @aws
+
+**Description/Objective:** Validates adding an AWS provider assuming a role while sourcing credentials from the AWS SDK default chain (e.g., `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`) instead of manually entered keys.
+
+**Preconditions:**
+
+- Admin user authentication required (admin.auth.setup setup)
+- Environment variables configured: E2E_AWS_PROVIDER_ACCOUNT_ID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, E2E_AWS_PROVIDER_ROLE_ARN
+- Remove any existing provider with the same Account ID before starting the test
+- This test must be run serially and never in parallel with other tests, as it requires the Account ID not to be already registered beforehand
+
+### Flow Steps:
+
+1. Navigate to providers page
+2. Click "Add Provider" button
+3. Select AWS provider type
+4. Fill provider details (account ID and alias)
+5. Select "role" authentication type
+6. Switch authentication method to "Use AWS SDK default credentials"
+7. Fill role ARN using AWS SDK credential inputs
+8. Launch initial scan
+9. Verify redirect to Scans page
+10. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+
+### Expected Result:
+
+- AWS provider successfully added using AWS SDK default credentials to assume the role
+- Initial scan launched successfully
+- User redirected to Scans page
+- Scheduled scan appears in Scans table with correct provider and scan name
+
+### Key verification points:
+
+- Provider page loads correctly
+- Connect account page displays AWS option
+- Credentials form exposes AWS SDK default authentication method
+- Role ARN field accepts provided value when SDK method is selected
+- Launch scan page appears
+- Successful redirect to Scans page after scan launch
+- Provider exists in Scans table (verified by account ID)
+- Scan name field contains "scheduled scan"
+
+### Notes:
+
+- Test leverages AWS SDK default credential chain (environment-configured keys) for Access Key and Secret Key
+- Environment variable `E2E_AWS_PROVIDER_ROLE_ARN` must reference a valid assumable role
+- Provider cleanup performed before each test to ensure clean state
+- Requires valid AWS account with permissions to assume the target role
+
+---
+
 ## Test Case: `PROVIDER-E2E-003` - Add Azure Provider with Static Credentials
 
 **Priority:** `critical`

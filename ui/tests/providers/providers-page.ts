@@ -41,7 +41,8 @@ export interface GitHubProviderData {
 // AWS credential options
 export const AWS_CREDENTIAL_OPTIONS = {
   AWS_ROLE_ARN: "role",
-  AWS_CREDENTIALS: "credentials"
+  AWS_CREDENTIALS: "credentials",
+  AWS_SDK_DEFAULT: "aws-sdk-default"
 } as const;
 
 // AWS credential type
@@ -53,6 +54,8 @@ export interface AWSProviderCredential {
   roleArn?: string;
   externalId?: string;
   accessKeyId?: string;
+  sdkAccessKeyId?: string;
+  sdkSecretAccessKey?: string;
   secretAccessKey?: string;
 }
 
@@ -1010,5 +1013,27 @@ export class ProvidersPage extends BasePage {
     // Wait for redirect to provider page
     const scansPage = new ScansPage(this.page);
     await scansPage.verifyPageLoaded();
+  }
+
+  async selectAuthenticationMethod(method: AWSCredentialType): Promise<void> {
+    // Select the authentication method
+
+    // Search botton that contains text AWS SDK Default or Prowler Cloud will assume or Access & Secret Key
+    const button = this.page.locator('button').filter({ hasText: /AWS SDK Default|Prowler Cloud will assume|Access & Secret Key/i });
+    await button.click();
+
+    if (method === AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN) {
+
+      const modal = this.page.locator('[role="dialog"], .modal, [data-testid*="modal"]').first();
+      await expect(modal).toBeVisible({ timeout: 10000 });
+
+      // Select the role credentials
+      this.page.getByRole('option', { name: 'Access & Secret Key' }).click({ force: true });
+    } else if (method === AWS_CREDENTIAL_OPTIONS.AWS_SDK_DEFAULT) {
+      // Select the AWS SDK Default
+      this.page.getByRole('option', { name: 'AWS SDK Default' }).click({ force: true });
+    } else {
+      throw new Error(`Invalid authentication method: ${method}`);
+    }
   }
 }
