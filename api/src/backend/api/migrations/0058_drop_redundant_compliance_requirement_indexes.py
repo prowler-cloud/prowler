@@ -21,5 +21,5 @@ class Migration(migrations.Migration):
         RemoveIndexConcurrently(
             model_name="compliancerequirementoverview",
             name="cro_scan_comp_req_idx",
-        )
+        ),
     ]
