@@ -3,7 +3,6 @@
 import { Spacer } from "@heroui/spacer";
 import Image from "next/image";
 
-import { FilterControls } from "@/components/filters";
 import { DataTableFilterCustom } from "@/components/ui/table/data-table-filter-custom";
 import { ScanEntity } from "@/types/scans";
 
@@ -75,26 +74,22 @@ export const ComplianceHeader = ({
     <>
       {hasContent && (
         <div className="flex w-full items-start justify-between gap-6">
-          <div className="flex h-32 flex-1 flex-col justify-end gap-4">
+          <div className="flex flex-1 flex-col justify-end gap-4">
             {selectedScan && <ComplianceScanInfo scan={selectedScan} />}
-            {(showProviders || showSearch) && (
-              <div className="flex items-start justify-start gap-4">
-                {showProviders && <DataCompliance scans={scans} />}
-                {showSearch && <FilterControls search />}
-              </div>
-            )}
+
+            {showProviders && <DataCompliance scans={scans} />}
             {!hideFilters && allFilters.length > 0 && (
               <DataTableFilterCustom filters={allFilters} />
             )}
           </div>
           {logoPath && complianceTitle && (
             <div className="hidden shrink-0 sm:block">
-              <div className="relative h-32 w-32">
+              <div className="relative h-24 w-24">
                 <Image
                   src={logoPath}
                   alt={`${complianceTitle} logo`}
                   fill
-                  className="rounded-lg border border-gray-300 bg-white object-contain p-4"
+                  className="rounded-lg border border-gray-300 bg-white object-contain p-0"
                 />
               </div>
             </div>

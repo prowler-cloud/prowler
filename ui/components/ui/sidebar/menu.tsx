@@ -156,7 +156,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                                   ? "secondary"
                                   : "ghost"
                               }
-                              className="mb-1 h-8 w-full justify-start"
+                              className="mb-1 h-auto w-full justify-start py-1"
                               asChild
                             >
                               <Link href={href} target={target}>

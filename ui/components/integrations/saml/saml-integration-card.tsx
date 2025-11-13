@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardBody, CardHeader } from "@heroui/card";
 import { CheckIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 
@@ -9,6 +8,7 @@ import { useToast } from "@/components/ui";
 import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 
+import { Card, CardContent, CardHeader } from "../../shadcn";
 import { SamlConfigForm } from "./saml-config-form";
 
 export const SamlIntegrationCard = ({ samlConfig }: { samlConfig?: any }) => {
@@ -60,8 +60,8 @@ export const SamlIntegrationCard = ({ samlConfig }: { samlConfig?: any }) => {
         />
       </CustomAlertModal>
 
-      <Card className="dark:bg-prowler-blue-400">
-        <CardHeader className="gap-2">
+      <Card variant="base" padding="lg">
+        <CardHeader>
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <h4 className="text-lg font-bold">SAML SSO Integration</h4>
@@ -81,7 +81,7 @@ export const SamlIntegrationCard = ({ samlConfig }: { samlConfig?: any }) => {
             </p>
           </div>
         </CardHeader>
-        <CardBody>
+        <CardContent>
           <div className="flex items-center justify-between">
             <div className="text-sm">
               <span className="font-medium">Status: </span>
@@ -113,7 +113,7 @@ export const SamlIntegrationCard = ({ samlConfig }: { samlConfig?: any }) => {
               )}
             </div>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
     </>
   );

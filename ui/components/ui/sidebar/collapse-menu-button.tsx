@@ -53,7 +53,7 @@ export const CollapseMenuButton = ({
       >
         <Button
           variant={isSubmenuActive ? "secondary" : "ghost"}
-          className="mb-1 h-7 w-full justify-start"
+          className="mb-1 h-auto w-full justify-start py-1"
         >
           <div className="flex w-full items-center justify-between">
             <div className="flex items-center">
@@ -108,7 +108,7 @@ export const CollapseMenuButton = ({
                     <Button
                       variant={isActive ? "secondary" : "ghost"}
                       className={cn(
-                        "ml-4 h-8 w-full justify-start",
+                        "ml-3 h-auto w-[calc(100%-12px)] justify-start py-1",
                         "cursor-not-allowed opacity-50",
                       )}
                       disabled={true}
@@ -140,7 +140,7 @@ export const CollapseMenuButton = ({
                 key={index}
                 variant={isActive ? "secondary" : "ghost"}
                 className={cn(
-                  "ml-4 h-8 w-full justify-start",
+                  "ml-3 h-auto w-[calc(100%-12px)] justify-start py-1",
                   disabled && "cursor-not-allowed opacity-50",
                 )}
                 asChild={!disabled}
@@ -184,7 +184,7 @@ export const CollapseMenuButton = ({
         <DropdownMenuTrigger asChild>
           <Button
             variant={isSubmenuActive ? "secondary" : "ghost"}
-            className="mb-1 h-10 w-full justify-start"
+            className="mb-1 h-auto w-full justify-start py-1"
           >
             <div className="flex w-full items-center justify-between">
               <div className="flex items-center">
@@ -229,7 +229,8 @@ export const CollapseMenuButton = ({
                       disabled={true}
                       className={cn(
                         "cursor-not-allowed opacity-50",
-                        isActive && "bg-default-100 dark:bg-prowler-blue-400",
+                        isActive &&
+                          "border-2 border-slate-950 dark:border-white",
                       )}
                     >
                       <div className="flex items-center gap-2">
@@ -249,7 +250,7 @@ export const CollapseMenuButton = ({
                 disabled={disabled}
                 className={cn(
                   disabled && "cursor-not-allowed opacity-50",
-                  isActive && "bg-default-100 dark:bg-prowler-blue-400",
+                  isActive && "border-2 border-slate-950 dark:border-white",
                 )}
               >
                 {disabled ? (

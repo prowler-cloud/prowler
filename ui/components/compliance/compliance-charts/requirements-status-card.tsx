@@ -76,7 +76,7 @@ export function RequirementsStatusCard({
 
         <Card
           variant="inner"
-          className="flex w-full flex-row items-center justify-around"
+          className="flex w-full flex-col items-center justify-around md:flex-row"
         >
           <ResourceStatsCard
             containerless

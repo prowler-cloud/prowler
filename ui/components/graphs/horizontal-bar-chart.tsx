@@ -66,7 +66,7 @@ export function HorizontalBarChart({
               onMouseLeave={() => !isEmpty && setHoveredIndex(null)}
             >
               {/* Label */}
-              <div className={`${labelWidth} shrink-0`}>
+              <div className={`w-20 md:${labelWidth} shrink-0`}>
                 <span
                   className="text-text-neutral-secondary block truncate text-sm font-medium"
                   style={{
@@ -140,17 +140,17 @@ export function HorizontalBarChart({
 
               {/* Percentage and Count */}
               <div
-                className="text-text-neutral-secondary ml-6 flex w-[90px] shrink-0 items-center gap-2 text-sm"
+                className="text-text-neutral-secondary ml-6 flex min-w-[90px] shrink-0 items-center gap-2 text-sm"
                 style={{
                   opacity: isFaded ? 0.5 : 1,
                   transition: "opacity 0.2s",
                 }}
               >
-                <span className="w-[26px] text-right font-medium">
+                <span className="min-w-[26px] text-right font-medium">
                   {isEmpty ? "0" : item.percentage}%
                 </span>
-                <span className="font-medium">•</span>
-                <span className="font-bold">
+                <span className="shrink-0 font-medium">•</span>
+                <span className="font-bold whitespace-nowrap">
                   {isEmpty ? "0" : item.value.toLocaleString()}
                 </span>
               </div>

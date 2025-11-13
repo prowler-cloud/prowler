@@ -1,6 +1,5 @@
 import { Spacer } from "@heroui/spacer";
-import Image from "next/image";
-import React, { Suspense } from "react";
+import { Suspense } from "react";
 
 import {
   getComplianceAttributes,
@@ -41,25 +40,6 @@ interface ComplianceDetailSearchParams {
   pageSize?: string;
 }
 
-const ComplianceIconSmall = ({
-  logoPath,
-  title,
-}: {
-  logoPath: string;
-  title: string;
-}) => {
-  return (
-    <div className="relative h-6 w-6 shrink-0">
-      <Image
-        src={logoPath}
-        alt={`${title} logo`}
-        fill
-        className="h-8 w-8 min-w-8 rounded-md border border-gray-300 bg-white object-contain p-[2px]"
-      />
-    </div>
-  );
-};
-
 export default async function ComplianceDetail({
   params,
   searchParams,
@@ -84,8 +64,8 @@ export default async function ComplianceDetail({
 
   const formattedTitle = compliancetitle.split("-").join(" ");
   const pageTitle = version
-    ? `Compliance Details: ${formattedTitle} - ${version}`
-    : `Compliance Details: ${formattedTitle}`;
+    ? `${formattedTitle} - ${version}`
+    : `${formattedTitle}`;
 
   let selectedScan: ScanEntity | null = null;
 
@@ -108,21 +88,10 @@ export default async function ComplianceDetail({
 
   // Use compliance_name from attributes if available, otherwise fallback to formatted title
   const complianceName = attributesData?.data?.[0]?.attributes?.compliance_name;
-  const finalPageTitle = complianceName
-    ? `Compliance Details: ${complianceName}`
-    : pageTitle;
+  const finalPageTitle = complianceName ? `${complianceName}` : pageTitle;
 
   return (
-    <ContentLayout
-      title={finalPageTitle}
-      icon={
-        logoPath ? (
-          <ComplianceIconSmall logoPath={logoPath} title={compliancetitle} />
-        ) : (
-          "fluent-mdl2:compliance-audit"
-        )
-      }
-    >
+    <ContentLayout title={finalPageTitle}>
       <ComplianceHeader
         scans={[]}
         uniqueRegions={uniqueRegions}

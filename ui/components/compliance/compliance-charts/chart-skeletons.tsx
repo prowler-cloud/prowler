@@ -4,7 +4,7 @@ export function RequirementsStatusCardSkeleton() {
   return (
     <Card
       variant="base"
-      className="flex min-h-[372px] flex-col justify-between"
+      className="flex min-h-[372px] min-w-[328px] flex-col justify-between md:max-w-[312px]"
     >
       <CardHeader>
         <Skeleton className="h-7 w-[260px] rounded-xl" />

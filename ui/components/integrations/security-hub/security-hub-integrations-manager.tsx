@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Chip } from "@heroui/chip";
 import { format } from "date-fns";
 import { PlusIcon, Trash2Icon } from "lucide-react";
@@ -25,6 +24,7 @@ import { MetaDataProps } from "@/types";
 import { IntegrationProps } from "@/types/integrations";
 import { ProviderProps } from "@/types/providers";
 
+import { Card, CardContent, CardHeader } from "../../shadcn";
 import { SecurityHubIntegrationForm } from "./security-hub-integration-form";
 
 interface SecurityHubIntegrationsManagerProps {
@@ -359,7 +359,7 @@ export const SecurityHubIntegrationsManager = ({
               const providerDetails = getProviderDetails(integration);
 
               return (
-                <Card key={integration.id} className="dark:bg-gray-800">
+                <Card key={integration.id} variant="inner">
                   <CardHeader className="pb-2">
                     <IntegrationCardHeader
                       icon={<AWSSecurityHubIcon size={32} />}
@@ -388,7 +388,7 @@ export const SecurityHubIntegrationsManager = ({
                       }}
                     />
                   </CardHeader>
-                  <CardBody className="pt-0">
+                  <CardContent className="pt-0">
                     <div className="flex flex-col gap-3">
                       {enabledRegions.length > 0 && (
                         <div className="flex flex-wrap gap-1">
@@ -428,7 +428,7 @@ export const SecurityHubIntegrationsManager = ({
                         />
                       </div>
                     </div>
-                  </CardBody>
+                  </CardContent>
                 </Card>
               );
             })}

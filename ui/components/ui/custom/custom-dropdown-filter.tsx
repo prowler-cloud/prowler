@@ -216,7 +216,7 @@ export const CustomDropdownFilter = ({
       >
         <PopoverTrigger>
           <Button
-            className="border-input hover:bg-accent hover:text-accent-foreground bg-background dark:bg-prowler-blue-800 inline-flex h-auto min-h-10 items-center justify-between rounded-md border px-3 py-2 text-xs font-medium whitespace-nowrap shadow-sm transition-colors focus-visible:outline-none disabled:opacity-50"
+            className="border-input hover:bg-accent hover:text-accent-foreground border-border-neutral-secondary bg-bg-neutral-secondary inline-flex h-auto min-h-10 items-center justify-between rounded-md border px-3 py-2 text-xs font-medium whitespace-nowrap shadow-sm transition-colors focus-visible:outline-none disabled:opacity-50"
             endContent={
               <ChevronDown
                 className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
@@ -269,7 +269,7 @@ export const CustomDropdownFilter = ({
             </div>
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="dark:bg-prowler-blue-800 w-auto min-w-80">
+        <PopoverContent className="border-border-neutral-secondary bg-bg-neutral-secondary w-auto min-w-80 border">
           <div className="flex w-full flex-col gap-4 p-2">
             <CheckboxGroup
               color="default"

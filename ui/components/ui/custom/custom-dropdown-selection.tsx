@@ -76,14 +76,14 @@ export const CustomDropdownSelection: React.FC<
       <Popover backdrop="transparent" placement="bottom-start">
         <PopoverTrigger>
           <Button
-            className="border-input hover:bg-accent hover:text-accent-foreground bg-background dark:bg-prowler-blue-800 inline-flex h-10 items-center justify-center rounded-md border border-dashed px-3 text-xs font-medium whitespace-nowrap shadow-sm transition-colors focus-visible:outline-none disabled:opacity-50"
+            className="border-input hover:bg-accent hover:text-accent-foreground border-border-neutral-secondary bg-bg-neutral-secondary inline-flex h-10 items-center justify-center rounded-md border border-dashed px-3 text-xs font-medium whitespace-nowrap shadow-sm transition-colors focus-visible:outline-none disabled:opacity-50"
             startContent={<PlusCircleIcon size={16} />}
             size="md"
           >
             <h3 className="text-small">{label}</h3>
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="dark:bg-prowler-blue-800 w-80">
+        <PopoverContent className="border-border-neutral-secondary bg-bg-neutral-secondary w-80 border">
           <div className="flex w-full flex-col gap-6 p-2">
             <CheckboxGroup
               color="default"

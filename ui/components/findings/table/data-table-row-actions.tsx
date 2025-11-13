@@ -38,7 +38,7 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
 
       <div className="relative flex items-center justify-end gap-2">
         <Dropdown
-          className="dark:bg-prowler-blue-800 shadow-xl"
+          className="border-border-neutral-secondary bg-bg-neutral-secondary border shadow-xl"
           placement="bottom"
         >
           <DropdownTrigger>

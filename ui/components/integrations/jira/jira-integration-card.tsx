@@ -1,16 +1,17 @@
 "use client";
 
-import { Card, CardBody, CardHeader } from "@heroui/card";
 import { SettingsIcon } from "lucide-react";
 
 import { JiraIcon } from "@/components/icons/services/IconServices";
 import { CustomButton } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 
+import { Card, CardContent, CardHeader } from "../../shadcn";
+
 export const JiraIntegrationCard = () => {
   return (
-    <Card className="dark:bg-gray-800">
-      <CardHeader className="gap-2">
+    <Card variant="base" padding="lg">
+      <CardHeader>
         <div className="flex w-full flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <JiraIcon size={40} />
@@ -45,14 +46,12 @@ export const JiraIntegrationCard = () => {
           </div>
         </div>
       </CardHeader>
-      <CardBody>
-        <div className="flex flex-col gap-4">
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            Configure and manage your Jira integrations to automatically create
-            issues for security findings in your Jira projects.
-          </p>
-        </div>
-      </CardBody>
+      <CardContent>
+        <p className="text-sm text-gray-600 dark:text-gray-300">
+          Configure and manage your Jira integrations to automatically create
+          issues for security findings in your Jira projects.
+        </p>
+      </CardContent>
     </Card>
   );
 };

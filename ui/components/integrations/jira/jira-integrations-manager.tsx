@@ -1,6 +1,5 @@
 "use client";
 
-import { Card, CardBody, CardHeader } from "@heroui/card";
 import { format } from "date-fns";
 import { PlusIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
@@ -23,6 +22,7 @@ import { triggerTestConnectionWithDelay } from "@/lib/integrations/test-connecti
 import { MetaDataProps } from "@/types";
 import { IntegrationProps } from "@/types/integrations";
 
+import { Card, CardContent, CardHeader } from "../../shadcn";
 import { JiraIntegrationForm } from "./jira-integration-form";
 
 interface JiraIntegrationsManagerProps {
@@ -300,7 +300,7 @@ export const JiraIntegrationsManager = ({
         ) : integrations.length > 0 ? (
           <div className="grid gap-4">
             {integrations.map((integration) => (
-              <Card key={integration.id} className="dark:bg-gray-800">
+              <Card key={integration.id} variant="inner">
                 <CardHeader className="pb-2">
                   <IntegrationCardHeader
                     icon={<JiraIcon size={32} />}
@@ -311,7 +311,7 @@ export const JiraIntegrationsManager = ({
                   />
                 </CardHeader>
 
-                <CardBody className="pt-0">
+                <CardContent className="pt-0">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="text-xs text-gray-500 dark:text-gray-300">
                       {integration.attributes.connection_last_checked_at && (
@@ -335,7 +335,7 @@ export const JiraIntegrationsManager = ({
                       isTesting={isTesting === integration.id}
                     />
                   </div>
-                </CardBody>
+                </CardContent>
               </Card>
             ))}
           </div>

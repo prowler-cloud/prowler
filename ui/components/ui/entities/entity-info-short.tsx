@@ -41,7 +41,7 @@ export const EntityInfoShort: React.FC<EntityInfoProps> = ({
             </Tooltip>
           )}
         </div>
-        <div className="relative top-1 flex max-w-[120px] flex-col">
+        <div className="flex max-w-[120px] flex-col gap-1">
           {entityAlias && (
             <Tooltip content={entityAlias} placement="top" size="sm">
               <span className="text-default-500 truncate text-xs text-ellipsis">
@@ -52,7 +52,7 @@ export const EntityInfoShort: React.FC<EntityInfoProps> = ({
           <SnippetChip
             value={entityId ?? ""}
             hideCopyButton={hideCopyButton}
-            icon={<IdIcon size={16} />}
+            icon={<IdIcon className="size-4" />}
           />
         </div>
       </div>
