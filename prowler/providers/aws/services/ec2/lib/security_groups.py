@@ -7,9 +7,10 @@ def check_security_group(
     protocol: str,
     ports: list | None = None,
     any_address: bool = False,
+    all_ports: bool = False,
 ) -> bool:
     """
-    Check if the security group ingress rule has public access to the check_ports using the protocol
+    Check if the security group ingress rule has public access to the check_ports using the protocol.
 
     @param ingress_rule: AWS Security Group IpPermissions Ingress Rule
     {
@@ -32,9 +33,11 @@ def check_security_group(
 
     @param protocol: Protocol to check. If -1, all protocols will be checked.
 
-    @param ports: List of ports to check. If None or an empty list, any port will be checked. (Default: None)
+    @param ports: List of ports to check. If not provided all ports will be checked unless all_ports is False. (Default: None)
 
     @param any_address: If True, only 0.0.0.0/0 or "::/0" will be public and do not search for public addresses. (Default: False)
+
+    @param all_ports: If True, empty ports list will be treated as all ports. (Default: False)
 
     @return: True if the security group has public access to the check_ports using the protocol
     """
@@ -59,59 +62,40 @@ def check_security_group(
 
     # Check for specific ports in ingress rules
     if "FromPort" in ingress_rule:
-        # If there is a port range
+
+        # If the ports are not the same create a covering range.
+        # Note range is exclusive of the end value so we add 1 to the ToPort.
         if ingress_rule["FromPort"] != ingress_rule["ToPort"]:
-            # Calculate port range, adding 1
-            diff = (ingress_rule["ToPort"] - ingress_rule["FromPort"]) + 1
-            ingress_port_range = []
-            for x in range(diff):
-                ingress_port_range.append(int(ingress_rule["FromPort"]) + x)
-        # If FromPort and ToPort are the same
+            ingress_port_range = set(
+                range(ingress_rule["FromPort"], ingress_rule["ToPort"] + 1)
+            )
         else:
-            ingress_port_range = []
-            ingress_port_range.append(int(ingress_rule["FromPort"]))
+            ingress_port_range = {int(ingress_rule["FromPort"])}
 
-        # Test Security Group
-        # IPv4
-        for ip_ingress_rule in ingress_rule["IpRanges"]:
+        # Combine IPv4 and IPv6 ranges to facilitate a single check loop.
+        all_ingress_rules = []
+        all_ingress_rules.extend(ingress_rule["IpRanges"])
+        all_ingress_rules.extend(ingress_rule["Ipv6Ranges"])
+
+        for ip_ingress_rule in all_ingress_rules:
+            # We only check public CIDRs
             if _is_cidr_public(ip_ingress_rule["CidrIp"], any_address):
-                # If there are input ports to check
                 for port in ports:
                     if (
                         port in ingress_port_range
                         and ingress_rule["IpProtocol"] == protocol
                     ):
+                        # Direct match for a port in the specified port range
                         return True
 
                 # We did not find a specific port for the given protocol for
                 # a public cidr so let's see if all the ports are open
-                all_ports_open = len(set(ingress_port_range)) == 65536
+                all_ports_open = len(ingress_port_range) == 65536
 
-                # At this point we might have all ports open, return True
-                # otherwise we didn't have any ports to check yet we have a public cidr
-                # so that is the same as all ports open for our purposes
-                ports_are_empty = not ports
-                return all_ports_open or ports_are_empty
+                # Use the all_ports flag to determine if empty ports should be treated as all ports.
+                empty_ports_same_as_all_ports_open = all_ports and not ports
 
-        # IPv6
-        for ip_ingress_rule in ingress_rule["Ipv6Ranges"]:
-            if _is_cidr_public(ip_ingress_rule["CidrIpv6"], any_address):
-                # If there are input ports to check
-                for port in ports:
-                    if (
-                        port in ingress_port_range
-                        and ingress_rule["IpProtocol"] == protocol
-                    ):
-                        return True
-                # We did not find a specific port for the given protocol for
-                # a public cidr so let's see if all the ports are open
-                all_ports_open = len(set(ingress_port_range)) == 65536
-
-                # At this point we might have all ports open, return True
-                # otherwise we didn't have any ports to check yet we have a public cidr
-                # so that is the same as all ports open for our purposes
-                ports_are_empty = not ports
-                return all_ports_open or ports_are_empty
+                return all_ports_open or empty_ports_same_as_all_ports_open
 
     return False
 
