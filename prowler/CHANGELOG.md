@@ -46,6 +46,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS CodeArtifact service metadata to new format [(#8850)](https://github.com/prowler-cloud/prowler/pull/8850)
 - Rename OCI provider to oraclecloud with oci alias [(#9126)](https://github.com/prowler-cloud/prowler/pull/9126)
 - Remove unnecessary tests for M365_PowerShell module [(#9204)](https://github.com/prowler-cloud/prowler/pull/9204)
+- Raise ASFF output error for non-AWS providers [(#9225)](https://github.com/prowler-cloud/prowler/pull/9225)
 
 ---
 
@@ -57,7 +58,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - False negative in `iam_role_cross_service_confused_deputy_prevention` check [(#9213)](https://github.com/prowler-cloud/prowler/pull/9213)
 - Fix M365 Teams `--sp-env-auth` connection error and enhanced timeout logging [(#9191)](https://github.com/prowler-cloud/prowler/pull/9191)
 - Rename `get_oci_assessment_summary` to `get_oraclecloud_assessment_summary` in HTML output [(#9200)](https://github.com/prowler-cloud/prowler/pull/9200)
-- Fix ASFF output for non-AWS providers [(#9225)](https://github.com/prowler-cloud/prowler/pull/9225)
 
 ---
 
