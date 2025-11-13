@@ -31,11 +31,17 @@ def init_parser(self):
     )
     github_auth_subparser.add_argument(
         "--github-app-key",
-        "--github-app-key-path",
         nargs="?",
-        help="GitHub App Key Path to log in against GitHub",
+        help="GitHub App Key content (PEM format) to log in against GitHub",
         default=None,
         metavar="GITHUB_APP_KEY",
+    )
+    github_auth_subparser.add_argument(
+        "--github-app-key-path",
+        nargs="?",
+        help="Path to GitHub App private key file",
+        default=None,
+        metavar="GITHUB_APP_KEY_PATH",
     )
 
     github_scoping_subparser = github_parser.add_argument_group("Scan Scoping")
@@ -55,3 +61,31 @@ def init_parser(self):
         default=None,
         metavar="ORGANIZATION",
     )
+
+
+def validate_arguments(arguments) -> tuple[bool, str]:
+    """
+    Validate GitHub provider arguments
+
+    Args:
+        arguments: Parsed command line arguments
+
+    Returns:
+        tuple[bool, str]: (is_valid, error_message)
+    """
+
+    if arguments.github_app_key and arguments.github_app_key_path:
+        return (
+            False,
+            "Cannot specify both --github-app-key and --github-app-key-path simultaneously",
+        )
+
+    if arguments.github_app_id and not (
+        arguments.github_app_key or arguments.github_app_key_path
+    ):
+        return (
+            False,
+            "GitHub App ID requires either --github-app-key or --github-app-key-path",
+        )
+
+    return True, ""

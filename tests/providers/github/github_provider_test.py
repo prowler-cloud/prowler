@@ -39,6 +39,7 @@ class TestGitHubProvider:
         oauth_app_token = None
         github_app_id = None
         github_app_key = None
+        github_app_key_path = None
         fixer_config = load_and_validate_config_file(
             "github", default_fixer_config_file_path
         )
@@ -62,6 +63,7 @@ class TestGitHubProvider:
                 oauth_app_token,
                 github_app_id,
                 github_app_key,
+                github_app_key_path,
             )
 
             assert provider._type == "github"
@@ -80,7 +82,7 @@ class TestGitHubProvider:
         personal_access_token = None
         oauth_app_token = OAUTH_TOKEN
         github_app_id = None
-        github_app_key = None
+        github_app_key_path = None
         fixer_config = load_and_validate_config_file(
             "github", default_fixer_config_file_path
         )
@@ -103,7 +105,7 @@ class TestGitHubProvider:
                 personal_access_token,
                 oauth_app_token,
                 github_app_id,
-                github_app_key,
+                github_app_key_path,
             )
 
             assert provider._type == "github"
@@ -118,11 +120,13 @@ class TestGitHubProvider:
             }
             assert provider._fixer_config == fixer_config
 
-    def test_github_provider_App(self):
+    def test_github_provider_App_with_key_path(self):
         personal_access_token = None
         oauth_app_token = None
         github_app_id = APP_ID
-        github_app_key = APP_KEY
+        github_app_key = None
+        github_app_key_path = APP_KEY
+        github_app_key_content = None
         fixer_config = load_and_validate_config_file(
             "github", default_fixer_config_file_path
         )
@@ -144,12 +148,112 @@ class TestGitHubProvider:
             provider = GithubProvider(
                 personal_access_token,
                 oauth_app_token,
-                github_app_id,
                 github_app_key,
+                github_app_key_path,
+                github_app_key_content,
+                github_app_id,
             )
 
             assert provider._type == "github"
             assert provider.session == GithubSession(token="", id=APP_ID, key=APP_KEY)
+            assert provider.identity == GithubAppIdentityInfo(
+                app_id=APP_ID, app_name=APP_NAME, installations=["test-org"]
+            )
+            assert provider._audit_config == {
+                "inactive_not_archived_days_threshold": 180,
+            }
+            assert provider._fixer_config == fixer_config
+
+    def test_github_provider_App_with_key_content(self):
+        personal_access_token = None
+        oauth_app_token = None
+        github_app_id = APP_ID
+        github_app_key = (
+            "-----BEGIN RSA PRIVATE KEY-----\ntest-key\n-----END RSA PRIVATE KEY-----"
+        )
+        github_app_key_path = None
+        github_app_key_content = None
+        fixer_config = load_and_validate_config_file(
+            "github", default_fixer_config_file_path
+        )
+
+        with (
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_session",
+                return_value=GithubSession(token="", id=APP_ID, key=github_app_key),
+            ),
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_identity",
+                return_value=GithubAppIdentityInfo(
+                    app_id=APP_ID,
+                    app_name=APP_NAME,
+                    installations=["test-org"],
+                ),
+            ),
+        ):
+            provider = GithubProvider(
+                personal_access_token,
+                oauth_app_token,
+                github_app_key,
+                github_app_key_path,
+                github_app_key_content,
+                github_app_id,
+            )
+
+            assert provider._type == "github"
+            assert provider.session == GithubSession(
+                token="", id=APP_ID, key=github_app_key
+            )
+            assert provider.identity == GithubAppIdentityInfo(
+                app_id=APP_ID, app_name=APP_NAME, installations=["test-org"]
+            )
+            assert provider._audit_config == {
+                "inactive_not_archived_days_threshold": 180,
+            }
+            assert provider._fixer_config == fixer_config
+
+    def test_github_provider_App_with_legacy_key_content(self):
+        personal_access_token = None
+        oauth_app_token = None
+        github_app_id = APP_ID
+        github_app_key = None
+        github_app_key_path = None
+        github_app_key_content = (
+            "-----BEGIN RSA PRIVATE KEY-----\ntest-key\n-----END RSA PRIVATE KEY-----"
+        )
+        fixer_config = load_and_validate_config_file(
+            "github", default_fixer_config_file_path
+        )
+
+        with (
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_session",
+                return_value=GithubSession(
+                    token="", id=APP_ID, key=github_app_key_content
+                ),
+            ),
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_identity",
+                return_value=GithubAppIdentityInfo(
+                    app_id=APP_ID,
+                    app_name=APP_NAME,
+                    installations=["test-org"],
+                ),
+            ),
+        ):
+            provider = GithubProvider(
+                personal_access_token,
+                oauth_app_token,
+                github_app_key,
+                github_app_key_path,
+                github_app_key_content,
+                github_app_id,
+            )
+
+            assert provider._type == "github"
+            assert provider.session == GithubSession(
+                token="", id=APP_ID, key=github_app_key_content
+            )
             assert provider.identity == GithubAppIdentityInfo(
                 app_id=APP_ID, app_name=APP_NAME, installations=["test-org"]
             )
@@ -202,8 +306,8 @@ class TestGitHubProvider:
             assert connection.is_connected is True
             assert connection.error is None
 
-    def test_test_connection_with_github_app_success(self):
-        """Test successful connection with GitHub App credentials."""
+    def test_test_connection_with_github_app_key_path_success(self):
+        """Test successful connection with GitHub App key path."""
         with (
             patch(
                 "prowler.providers.github.github_provider.GithubProvider.setup_session",
@@ -217,7 +321,57 @@ class TestGitHubProvider:
             ),
         ):
             connection = GithubProvider.test_connection(
-                github_app_id=APP_ID, github_app_key=APP_KEY
+                github_app_id=APP_ID, github_app_key_path=APP_KEY
+            )
+
+            assert isinstance(connection, Connection)
+            assert connection.is_connected is True
+            assert connection.error is None
+
+    def test_test_connection_with_github_app_key_content_success(self):
+        """Test successful connection with GitHub App key content."""
+        key_content = (
+            "-----BEGIN RSA PRIVATE KEY-----\ntest-key\n-----END RSA PRIVATE KEY-----"
+        )
+        with (
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_session",
+                return_value=GithubSession(token="", id=APP_ID, key=key_content),
+            ),
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_identity",
+                return_value=GithubAppIdentityInfo(
+                    app_id=APP_ID, app_name=APP_NAME, installations=["test-org"]
+                ),
+            ),
+        ):
+            connection = GithubProvider.test_connection(
+                github_app_id=APP_ID, github_app_key=key_content
+            )
+
+            assert isinstance(connection, Connection)
+            assert connection.is_connected is True
+            assert connection.error is None
+
+    def test_test_connection_with_github_app_legacy_key_content_success(self):
+        """Test successful connection with GitHub App legacy key content."""
+        key_content = (
+            "-----BEGIN RSA PRIVATE KEY-----\ntest-key\n-----END RSA PRIVATE KEY-----"
+        )
+        with (
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_session",
+                return_value=GithubSession(token="", id=APP_ID, key=key_content),
+            ),
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_identity",
+                return_value=GithubAppIdentityInfo(
+                    app_id=APP_ID, app_name=APP_NAME, installations=["test-org"]
+                ),
+            ),
+        ):
+            connection = GithubProvider.test_connection(
+                github_app_id=APP_ID, github_app_key_content=key_content
             )
 
             assert isinstance(connection, Connection)
@@ -279,7 +433,7 @@ class TestGitHubProvider:
         ):
             with pytest.raises(GithubInvalidCredentialsError):
                 GithubProvider.test_connection(
-                    github_app_id=APP_ID, github_app_key="invalid-key"
+                    github_app_id=APP_ID, github_app_key_path="invalid-key"
                 )
 
     def test_test_connection_with_invalid_app_credentials_no_raise(self):
@@ -298,13 +452,111 @@ class TestGitHubProvider:
         ):
             connection = GithubProvider.test_connection(
                 github_app_id=APP_ID,
-                github_app_key="invalid-key",
+                github_app_key_path="invalid-key",
                 raise_on_exception=False,
             )
 
             assert isinstance(connection, Connection)
             assert connection.is_connected is False
             assert isinstance(connection.error, GithubInvalidCredentialsError)
+
+    def test_test_connection_github_app_key_path_with_content_raises_exception(self):
+        """Test connection when github_app_key_path receives key content instead of file path."""
+        key_content = (
+            "-----BEGIN RSA PRIVATE KEY-----\ntest-key\n-----END RSA PRIVATE KEY-----"
+        )
+
+        with (
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_session",
+                side_effect=GithubEnvironmentVariableError(
+                    file="github_provider.py",
+                    message="--github-app-key-path expects a file path, not key content. Use --github-app-key for key content instead.",
+                ),
+            ),
+            patch("prowler.providers.github.github_provider.logger") as mock_logger,
+        ):
+            with pytest.raises(GithubEnvironmentVariableError) as exc_info:
+                GithubProvider.test_connection(
+                    github_app_id=APP_ID, github_app_key_path=key_content
+                )
+
+            assert "--github-app-key-path expects a file path" in str(exc_info.value)
+            mock_logger.critical.assert_called_once()
+
+    def test_test_connection_github_app_key_with_file_path_raises_exception(self):
+        """Test connection when github_app_key receives file path instead of key content."""
+        file_path = "/path/to/key.pem"
+
+        with (
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_session",
+                side_effect=GithubEnvironmentVariableError(
+                    file="github_provider.py",
+                    message="--github-app-key expects key content, not a file path. Use --github-app-key-path for file paths instead.",
+                ),
+            ),
+            patch("prowler.providers.github.github_provider.logger") as mock_logger,
+        ):
+            with pytest.raises(GithubEnvironmentVariableError) as exc_info:
+                GithubProvider.test_connection(
+                    github_app_id=APP_ID, github_app_key=file_path
+                )
+
+            assert "--github-app-key expects key content" in str(exc_info.value)
+            mock_logger.critical.assert_called_once()
+
+    def test_test_connection_github_app_key_path_with_content_no_raise(self):
+        """Test connection when github_app_key_path receives key content without raising exception."""
+        key_content = (
+            "-----BEGIN RSA PRIVATE KEY-----\ntest-key\n-----END RSA PRIVATE KEY-----"
+        )
+
+        with (
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_session",
+                side_effect=GithubEnvironmentVariableError(
+                    file="github_provider.py",
+                    message="--github-app-key-path expects a file path, not key content. Use --github-app-key for key content instead.",
+                ),
+            ),
+            patch("prowler.providers.github.github_provider.logger") as mock_logger,
+        ):
+            connection = GithubProvider.test_connection(
+                github_app_id=APP_ID,
+                github_app_key_path=key_content,
+                raise_on_exception=False,
+            )
+
+            assert isinstance(connection, Connection)
+            assert connection.is_connected is False
+            assert isinstance(connection.error, GithubEnvironmentVariableError)
+            assert "--github-app-key-path expects a file path" in str(connection.error)
+            mock_logger.critical.assert_called_once()
+
+    def test_test_connection_github_app_key_with_file_path_no_raise(self):
+        """Test connection when github_app_key receives file path without raising exception."""
+        file_path = "/path/to/key.pem"
+
+        with (
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_session",
+                side_effect=GithubEnvironmentVariableError(
+                    file="github_provider.py",
+                    message="--github-app-key expects key content, not a file path. Use --github-app-key-path for file paths instead.",
+                ),
+            ),
+            patch("prowler.providers.github.github_provider.logger") as mock_logger,
+        ):
+            connection = GithubProvider.test_connection(
+                github_app_id=APP_ID, github_app_key=file_path, raise_on_exception=False
+            )
+
+            assert isinstance(connection, Connection)
+            assert connection.is_connected is False
+            assert isinstance(connection.error, GithubEnvironmentVariableError)
+            assert "--github-app-key expects key content" in str(connection.error)
+            mock_logger.critical.assert_called_once()
 
     def test_test_connection_setup_session_error_raises_exception(self):
         """Test connection when setup_session raises an exception."""
@@ -537,6 +789,103 @@ class TestGitHubProvider:
             assert isinstance(connection, Connection)
             assert connection.is_connected is False
             assert isinstance(connection.error, GithubInvalidProviderIdError)
+
+    def test_setup_session_with_github_app_key_path_env_var(self):
+        """Test setup_session with GITHUB_APP_KEY_PATH environment variable."""
+        import os
+        import tempfile
+
+        key_content = (
+            "-----BEGIN RSA PRIVATE KEY-----\ntest-key\n-----END RSA PRIVATE KEY-----"
+        )
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".pem", delete=False) as f:
+            f.write(key_content)
+            temp_path = f.name
+
+        try:
+            with patch.dict(
+                os.environ,
+                {"GITHUB_APP_ID": str(APP_ID), "GITHUB_APP_KEY_PATH": temp_path},
+            ):
+                # Clear other env vars that might interfere
+                for key in [
+                    "GITHUB_PERSONAL_ACCESS_TOKEN",
+                    "GITHUB_OAUTH_APP_TOKEN",
+                    "GITHUB_APP_KEY",
+                ]:
+                    if key in os.environ:
+                        del os.environ[key]
+
+                session = GithubProvider.setup_session()
+
+                assert session.id == str(APP_ID)
+                assert session.key == key_content
+                assert session.token == ""
+        finally:
+            os.unlink(temp_path)
+
+    def test_setup_session_with_github_app_key_env_var_content(self):
+        """Test setup_session with GITHUB_APP_KEY environment variable containing key content."""
+        import os
+
+        key_content = (
+            "-----BEGIN RSA PRIVATE KEY-----\ntest-key\n-----END RSA PRIVATE KEY-----"
+        )
+
+        with patch.dict(
+            os.environ, {"GITHUB_APP_ID": str(APP_ID), "GITHUB_APP_KEY": key_content}
+        ):
+            # Clear other env vars that might interfere
+            for key in [
+                "GITHUB_PERSONAL_ACCESS_TOKEN",
+                "GITHUB_OAUTH_APP_TOKEN",
+                "GITHUB_APP_KEY_PATH",
+            ]:
+                if key in os.environ:
+                    del os.environ[key]
+
+            session = GithubProvider.setup_session()
+
+            assert session.id == str(APP_ID)
+            assert session.key == key_content
+            assert session.token == ""
+
+    def test_setup_session_with_github_app_key_env_var_file_path(self):
+        """Test setup_session with GITHUB_APP_KEY environment variable containing file path should raise error."""
+        import os
+        import tempfile
+
+        key_content = (
+            "-----BEGIN RSA PRIVATE KEY-----\ntest-key\n-----END RSA PRIVATE KEY-----"
+        )
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".pem", delete=False) as f:
+            f.write(key_content)
+            temp_path = f.name
+
+        try:
+            with patch.dict(
+                os.environ, {"GITHUB_APP_ID": str(APP_ID), "GITHUB_APP_KEY": temp_path}
+            ):
+                # Clear other env vars that might interfere
+                for key in [
+                    "GITHUB_PERSONAL_ACCESS_TOKEN",
+                    "GITHUB_OAUTH_APP_TOKEN",
+                    "GITHUB_APP_KEY_PATH",
+                ]:
+                    if key in os.environ:
+                        del os.environ[key]
+
+                with pytest.raises(GithubSetUpSessionError) as exc_info:
+                    GithubProvider.setup_session()
+
+                assert "GITHUB_APP_KEY must contain RSA key content" in str(
+                    exc_info.value
+                )
+                assert "Use GITHUB_APP_KEY_PATH for file paths" in str(exc_info.value)
+        finally:
+            os.unlink(temp_path)
 
     def test_validate_provider_id_with_valid_user(self):
         """Test validate_provider_id with valid user (matches authenticated user)."""
