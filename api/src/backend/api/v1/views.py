@@ -3576,7 +3576,9 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                 ]
             )
 
-        region_filter = request.query_params.get("filter[region]") or request.query_params.get("filter[region__in]")
+        region_filter = request.query_params.get(
+            "filter[region]"
+        ) or request.query_params.get("filter[region__in]")
 
         if region_filter:
             # Fall back to detailed query with region filtering

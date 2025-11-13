@@ -1058,9 +1058,9 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
             # Only process regions that have findings (optimization: reduces row count)
             regions = list(check_status_by_region.keys())
 
-            region_requirement_stats: dict[str, dict[str, dict[str, dict[str, int]]]] = (
-                defaultdict(lambda: defaultdict(dict))
-            )
+            region_requirement_stats: dict[
+                str, dict[str, dict[str, dict[str, int]]]
+            ] = defaultdict(lambda: defaultdict(dict))
             for region, check_status in check_status_by_region.items():
                 for check_name, status in check_status.items():
                     targets = requirement_lookup.get(check_name)
@@ -1096,7 +1096,9 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
                     )
                     compliance_stats = region_stats.get(compliance_id, {})
                     # Create an overview record for each requirement within each compliance framework
-                    for requirement_id, requirement in compliance["requirements"].items():
+                    for requirement_id, requirement in compliance[
+                        "requirements"
+                    ].items():
                         stats = compliance_stats.get(requirement_id)
                         passed_checks = stats["passed_checks"] if stats else 0
                         failed_checks = stats["failed_checks"] if stats else 0
