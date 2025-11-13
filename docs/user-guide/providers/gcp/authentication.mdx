@@ -106,7 +106,7 @@ prowler gcp --project-ids <project-id>
 
 This method uses a service account with a downloaded key file for authentication.
 
-### Step 1: Review or Create IAM Roles
+### Step 1: Create ProwlerRole
 
 To keep permissions focused:
 1. Create a custom role named **ProwlerRole** that explicitly includes the permissions your compliance team approves. Click **Create role**, set the title to *ProwlerRole*, keep the ID readable (for example, `prowler_role`)
