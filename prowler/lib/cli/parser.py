@@ -26,16 +26,17 @@ class ProwlerArgumentParser:
         self.parser = argparse.ArgumentParser(
             prog="prowler",
             formatter_class=RawTextHelpFormatter,
-            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,nhn,mongodbatlas,dashboard,iac} ...",
+            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,nhn,mongodbatlas,oraclecloud,dashboard,iac} ...",
             epilog="""
 Available Cloud Providers:
-  {aws,azure,gcp,kubernetes,m365,github,iac,llm,nhn,mongodbatlas}
+  {aws,azure,gcp,kubernetes,m365,github,iac,llm,nhn,mongodbatlas,oraclecloud}
     aws                 AWS Provider
     azure               Azure Provider
     gcp                 GCP Provider
     kubernetes          Kubernetes Provider
     m365                Microsoft 365 Provider
     github              GitHub Provider
+    oraclecloud         Oracle Cloud Infrastructure Provider
     iac                 IaC Provider (Beta)
     llm                 LLM Provider (Beta)
     nhn                 NHN Provider (Unofficial)
@@ -112,6 +113,9 @@ Detailed documentation at https://docs.prowler.com
             # Microsoft 365
             elif sys.argv[1] == "microsoft365":
                 sys.argv[1] = "m365"
+            # Oracle Cloud Infrastructure
+            elif sys.argv[1] == "oci":
+                sys.argv[1] = "oraclecloud"
 
         # Parse arguments
         args = self.parser.parse_args()
