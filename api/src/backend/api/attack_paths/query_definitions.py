@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 
 
+# Dataclases for handling API's Attack Path query definitions and their parameters
 @dataclass
 class AttackPathsQueryParameterDefinition:
     """
@@ -28,6 +29,7 @@ class AttackPathsQueryDefinition:
     parameters: list[AttackPathsQueryParameterDefinition] = field(default_factory=list)
 
 
+# Accessor functions for API's Attack Paths query definitions
 def get_queries_for_provider(provider: str) -> list[AttackPathsQueryDefinition]:
     return _QUERY_DEFINITIONS.get(provider, [])
 
@@ -36,15 +38,13 @@ def get_query_by_id(query_id: str) -> AttackPathsQueryDefinition | None:
     return _QUERIES_BY_ID.get(query_id)
 
 
-# Placeholder definitions that will be expanded with additional queries.
+# API's Attack Paths query definitions
 _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
     "aws": [
         AttackPathsQueryDefinition(
             id="aws-s3-buckets",
             name="S3 buckets",
-            description=(
-                "Explore all S3 buckets in the AWS account "
-            ),
+            description=("Explore all S3 buckets in the AWS account "),
             provider="aws",
             cypher=(
                 "MATCH (a:AWSAccount {id: $provider_uid})-[r]-(s:S3Bucket) "

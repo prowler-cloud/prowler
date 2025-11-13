@@ -9,7 +9,7 @@ from cartography.intel import analysis as cartography_analysis
 from cartography.intel import create_indexes as cartography_create_indexes
 from celery.utils.log import get_task_logger
 
-from api.attack_paths import neo4j
+from api.attack_paths import database as graph_database
 from api.db_utils import rls_transaction
 from django.db.models import Subquery
 from api.models import (
@@ -17,9 +17,8 @@ from api.models import (
     Scan as ProwlerAPIScan,
     StateChoices,
 )
-from tasks.jobs.attack_paths import utils
 from api.utils import initialize_prowler_provider
-from tasks.jobs.attack_paths import aws, prowler
+from tasks.jobs.attack_paths import aws, db_utils, prowler, utils
 
 # Without this Celery goes crazy with Cartography logging
 logging.getLogger("cartography").setLevel(logging.ERROR)
@@ -50,14 +49,14 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
 
     # Attributes `neo4j_user` and `neo4j_password` are not really needed in this config object
     cartography_config = CartographyConfig(
-        neo4j_uri=neo4j.get_neo4j_uri(),
-        neo4j_database=neo4j.get_neo4j_tenant_database_name(
+        neo4j_uri=graph_database.get_uri(),
+        neo4j_database=graph_database.get_tenant_database_name(
             str(prowler_api_provider.tenant_id)
         ),
         update_tag=int(time.time()),
     )
 
-    attack_paths_scan = utils.create_attack_paths_scan(
+    attack_paths_scan = db_utils.create_attack_paths_scan(
         tenant_id, scan_id, task_id, prowler_api_provider.id, cartography_config
     )
 
@@ -66,19 +65,19 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         logger.info(
             f"Creating Neo4j database {cartography_config.neo4j_database} for tenant {prowler_api_provider.tenant_id}"
         )
-        neo4j.create_neo4j_database(cartography_config.neo4j_database)
-        utils.update_attack_paths_scan_progress(attack_paths_scan, 1)
+        graph_database.create_database(cartography_config.neo4j_database)
+        db_utils.update_attack_paths_scan_progress(attack_paths_scan, 1)
 
         logger.info(
             f"Starting Cartography ({attack_paths_scan.id}) for {prowler_api_provider.provider.upper()} provider {prowler_api_provider.id}"
         )
-        with neo4j.get_neo4j_session(
+        with graph_database.get_session(
             cartography_config.neo4j_database
         ) as neo4j_session:
             # Indexes creation
             cartography_create_indexes.run(neo4j_session, cartography_config)
             prowler.create_indexes(neo4j_session)
-            utils.update_attack_paths_scan_progress(attack_paths_scan, 2)
+            db_utils.update_attack_paths_scan_progress(attack_paths_scan, 2)
 
             # The real scan, where iterates over cloud services
             ingestion_exceptions = _call_within_event_loop(
@@ -92,7 +91,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
 
             # Post-processing: Just keeping it to be more Cartography compliant
             cartography_analysis.run(neo4j_session, cartography_config)
-            utils.update_attack_paths_scan_progress(attack_paths_scan, 95)
+            db_utils.update_attack_paths_scan_progress(attack_paths_scan, 95)
 
             # Adding Prowler nodes and relationships
             prowler.analysis(neo4j_session, prowler_api_provider, cartography_config)
@@ -100,7 +99,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         logger.info(
             f"Completed Cartography ({attack_paths_scan.id}) for {prowler_api_provider.provider.upper()} provider {prowler_api_provider.id}"
         )
-        utils.finish_attack_paths_scan(
+        db_utils.finish_attack_paths_scan(
             attack_paths_scan, StateChoices.COMPLETED, ingestion_exceptions
         )
         return ingestion_exceptions
@@ -110,7 +109,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         logger.error(exception_message)
         ingestion_exceptions["global_cartography_error"] = exception_message
 
-        utils.finish_attack_paths_scan(
+        db_utils.finish_attack_paths_scan(
             attack_paths_scan, StateChoices.FAILED, ingestion_exceptions
         )
         raise

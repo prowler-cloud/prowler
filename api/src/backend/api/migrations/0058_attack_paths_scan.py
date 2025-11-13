@@ -61,7 +61,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    "neo4j_database",
+                    "graph_database",
                     models.CharField(blank=True, max_length=128, null=True),
                 ),
                 (

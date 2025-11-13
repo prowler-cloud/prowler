@@ -1160,6 +1160,9 @@ class AttackPathsQueryParameterSerializer(serializers.Serializer):
     description = serializers.CharField(allow_null=True, required=False)
     placeholder = serializers.CharField(allow_null=True, required=False)
 
+    class JSONAPIMeta:
+        resource_name = "attack-paths-query-parameter"
+
 
 class AttackPathsQuerySerializer(serializers.Serializer):
     id = serializers.CharField()
@@ -1169,7 +1172,7 @@ class AttackPathsQuerySerializer(serializers.Serializer):
     parameters = AttackPathsQueryParameterSerializer(many=True)
 
     class JSONAPIMeta:
-        resource_name = "attack-paths-queries"
+        resource_name = "attack-paths-query"
 
 
 class AttackPathsQueryRunRequestSerializer(serializers.Serializer):
@@ -1179,13 +1182,16 @@ class AttackPathsQueryRunRequestSerializer(serializers.Serializer):
     )
 
     class JSONAPIMeta:
-        resource_name = "attack-paths-scans-queries-runs"
+        resource_name = "attack-paths-query-run-request"
 
 
 class AttackPathsNodeSerializer(serializers.Serializer):
     id = serializers.CharField()
     labels = serializers.ListField(child=serializers.CharField())
     properties = serializers.DictField(child=serializers.JSONField())
+
+    class JSONAPIMeta:
+        resource_name = "attack-paths-query-result-node"
 
 
 class AttackPathsRelationshipSerializer(serializers.Serializer):
@@ -1195,13 +1201,16 @@ class AttackPathsRelationshipSerializer(serializers.Serializer):
     target = serializers.CharField()
     properties = serializers.DictField(child=serializers.JSONField())
 
+    class JSONAPIMeta:
+        resource_name = "attack-paths-query-result-relationship"
 
-class AttackPathsGraphSerializer(serializers.Serializer):
+
+class AttackPathsQueryResultSerializer(serializers.Serializer):
     nodes = AttackPathsNodeSerializer(many=True)
     relationships = AttackPathsRelationshipSerializer(many=True)
 
     class JSONAPIMeta:
-        resource_name = "attack-paths-scans-queries-runs-results"
+        resource_name = "attack-paths-query-result"
 
 
 class ResourceTagSerializer(RLSSerializer):

@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from api.models import AttackPathsScan, StateChoices
-from conftest import API_JSON_CONTENT_TYPE
+from conftest import API_JSON_CONTENT_TYPE, NO_TENANT_HTTP_STATUS
 
 
 class FakeNode:
@@ -92,6 +92,55 @@ class TestAttackPaths:
         unpaginated_meta = unpaginated_payload.get("meta", {})
         assert "pagination" not in unpaginated_meta
 
+    def test_attack_paths_scans_list_requires_authentication(self, client):
+        response = client.get(reverse("attack-paths-scans-list"))
+
+        assert response.status_code == NO_TENANT_HTTP_STATUS
+
+    def test_attack_paths_queries_require_authentication(
+        self, client, providers_fixture
+    ):
+        provider, *_ = providers_fixture
+        scan = AttackPathsScan.objects.create(
+            tenant_id=provider.tenant_id,
+            provider=provider,
+            state=StateChoices.COMPLETED,
+            progress=100,
+        )
+
+        response = client.get(
+            reverse("attack-paths-scans-queries", kwargs={"pk": scan.id})
+        )
+
+        assert response.status_code == NO_TENANT_HTTP_STATUS
+
+    def test_attack_paths_run_requires_authentication(self, client, providers_fixture):
+        provider, *_ = providers_fixture
+        scan = AttackPathsScan.objects.create(
+            tenant_id=provider.tenant_id,
+            provider=provider,
+            state=StateChoices.COMPLETED,
+            progress=100,
+        )
+
+        payload = {
+            "data": {
+                "type": "attack-paths-query-runs",
+                "attributes": {
+                    "id": "aws-ec2-instance-security-groups",
+                    "parameters": {"instance_id": "i-1234567890"},
+                },
+            }
+        }
+
+        response = client.post(
+            reverse("attack-paths-scans-queries-run", kwargs={"pk": scan.id}),
+            data=json.dumps(payload),
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert response.status_code == NO_TENANT_HTTP_STATUS
+
     def test_attack_paths_queries_returns_definitions(
         self, authenticated_client, providers_fixture
     ):
@@ -103,7 +152,7 @@ class TestAttackPaths:
             progress=100,
             started_at=timezone.now() - timedelta(hours=1),
             completed_at=timezone.now() - timedelta(minutes=5),
-            neo4j_database="tenant-db",
+            graph_database="tenant-db",
         )
 
         response = authenticated_client.get(
@@ -129,12 +178,12 @@ class TestAttackPaths:
             state=StateChoices.EXECUTING,
             progress=70,
             started_at=timezone.now() - timedelta(minutes=10),
-            neo4j_database="tenant-db",
+            graph_database="tenant-db",
         )
 
         payload = {
             "data": {
-                "type": "attack-paths-scans-queries-runs",
+                "type": "attack-paths-query-runs",
                 "attributes": {
                     "id": "aws-ec2-instance-security-groups",
                     "parameters": {"instance_id": "i-1234567890"},
@@ -162,7 +211,7 @@ class TestAttackPaths:
             progress=100,
             started_at=timezone.now() - timedelta(hours=1),
             completed_at=timezone.now() - timedelta(minutes=2),
-            neo4j_database="tenant-db",
+            graph_database="tenant-db",
         )
 
         nodes = [FakeNode("1", ["AwsEc2Instance"], {"id": "i-01"})]
@@ -172,14 +221,14 @@ class TestAttackPaths:
 
         mock_result = [{"nodes": nodes, "relationships": relationships}]
 
-        with patch("api.v1.views.neo4j.get_neo4j_session") as mocked_session:
+        with patch("api.v1.views.neo4j.get_session") as mocked_session:
             context_manager = mocked_session.return_value
             session = context_manager.__enter__.return_value
             session.run.return_value = mock_result
 
             payload = {
                 "data": {
-                    "type": "attack-paths-scans-queries-runs",
+                    "type": "attack-paths-query-runs",
                     "attributes": {
                         "id": "aws-ec2-instance-security-groups",
                         "parameters": {"instance_id": "i-01"},

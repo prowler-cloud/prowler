@@ -31,7 +31,7 @@ class ApiConfig(AppConfig):
     def ready(self):
         from api import schema_extensions  # noqa: F401
         from api import signals  # noqa: F401
-        from api.attack_paths import neo4j
+        from api.attack_paths import database as graph_database
         from api.compliance import load_prowler_compliance
 
         # Generate required cryptographic keys if not present, but only if:
@@ -44,8 +44,8 @@ class ApiConfig(AppConfig):
         if not getattr(
             settings, "TESTING", False
         ):  # TODO: Remove this when we have attack paths tests
-            neo4j.init_neo4j_driver()
-            atexit.register(neo4j.close_neo4j_driver)
+            graph_database.init_driver()
+            atexit.register(graph_database.close_driver)
 
         load_prowler_compliance()
 

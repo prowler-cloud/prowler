@@ -8,7 +8,6 @@ from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
-from typing import Any
 from urllib.parse import urljoin
 
 import sentry_sdk
@@ -63,7 +62,6 @@ from drf_spectacular.utils import (
 )
 from drf_spectacular.views import SpectacularAPIView
 from drf_spectacular_jsonapi.schemas.openapi import JsonApiAutoSchema
-from neo4j import exceptions as neo4j_exceptions
 from rest_framework import permissions, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import (
@@ -80,8 +78,7 @@ from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from api.attack_paths import (
     get_queries_for_provider,
     get_query_by_id,
-    neo4j,
-    AttackPathsQueryDefinition,
+    views_helpers as attack_paths_views_helpers,
 )
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
 from api.compliance import (
@@ -168,9 +165,9 @@ from api.utils import (
 from api.uuid_utils import datetime_to_uuid7, uuid7_start
 from api.v1.mixins import DisablePaginationMixin, PaginateByPkMixin, TaskManagementMixin
 from api.v1.serializers import (
-    AttackPathsGraphSerializer,
     AttackPathsQueryRunRequestSerializer,
     AttackPathsQuerySerializer,
+    AttackPathsQueryResultSerializer,
     AttackPathsScanSerializer,
     ComplianceOverviewAttributesSerializer,
     ComplianceOverviewDetailSerializer,
@@ -2116,16 +2113,11 @@ class TaskViewSet(BaseRLSViewSet):
         )
 
 
-# TODO: Auth
-# TODO: Fill responses rightly, also in `specs/v1.yaml`
 @extend_schema_view(
     list=extend_schema(
         tags=["Attack Paths"],
         summary="List Attack Paths scans",
-        description=(
-            "Retrieve Attack Paths scans for the tenant with support "
-            "for filtering, ordering, and pagination."
-        ),
+        description="Retrieve Attack Paths scans for the tenant with support for filtering, ordering, and pagination.",
     ),
     retrieve=extend_schema(
         tags=["Attack Paths"],
@@ -2136,17 +2128,27 @@ class TaskViewSet(BaseRLSViewSet):
         tags=["Attack Paths"],
         summary="List attack paths queries",
         description="Retrieve the catalog of Attack Paths queries available for this Attack Paths scan.",
-        responses={200: AttackPathsQuerySerializer(many=True)},
+        responses={
+            200: OpenApiResponse(AttackPathsQuerySerializer(many=True)),
+            404: OpenApiResponse(
+                description="No queries found for the selected provider"
+            ),
+        },
     ),
     run_attack_paths_query=extend_schema(
         tags=["Attack Paths"],
         summary="Execute an Attack Paths query",
-        description=(
-            "Execute the selected Attack Paths query against the "
-            "Attack Paths graph and return the resulting subgraph.",
-        ),
+        description="Execute the selected Attack Paths query against the Attack Paths graph and return the resulting subgraph.",
         request=AttackPathsQueryRunRequestSerializer,
-        responses={200: AttackPathsGraphSerializer},
+        responses={
+            200: OpenApiResponse(AttackPathsQueryResultSerializer),
+            400: OpenApiResponse(
+                description="Bad request (e.g., Unknown Attack Paths query for the selected provider)"
+            ),
+            500: OpenApiResponse(
+                description="Attack Paths query execution failed due to a database error"
+            ),
+        },
     ),
 )
 class AttackPathsScanViewSet(BaseRLSViewSet):
@@ -2169,7 +2171,6 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
 
         else:
             self.required_permissions = [Permissions.MANAGE_SCANS]
-
 
     def get_serializer_class(self):
         if self.action == "run_attack_paths_query":
@@ -2198,6 +2199,13 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
     def attack_paths_queries(self, request, pk=None):
         attack_paths_scan = self.get_object()
         queries = get_queries_for_provider(attack_paths_scan.provider.provider)
+
+        if not queries:
+            return Response(
+                {"detail": "No queries found for the selected provider"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
         serializer = AttackPathsQuerySerializer(queries, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -2213,16 +2221,20 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         if attack_paths_scan.state != StateChoices.COMPLETED:
             raise ValidationError(
                 {
-                    "detail": "The Attack Paths scan must be completed before running attack path queries."
+                    "detail": "The Attack Paths scan must be completed before running Attack Paths queries"
                 }
             )
 
-        if not attack_paths_scan.neo4j_database:
-            raise ValidationError(
-                {"detail": "The Attack Paths scan does not reference a Neo4j database."}
+        if not attack_paths_scan.graph_database:
+            logger.error(
+                f"The Attack Paths Scan {attack_paths_scan.id} does not reference a graph database"
+            )
+            return Response(
+                {"detail": "The Attack Paths scan does not reference a graph database"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-        payload = self._normalize_run_payload(request.data)
+        payload = attack_paths_views_helpers.normalize_run_payload(request.data)
         serializer = AttackPathsQueryRunRequestSerializer(data=payload)
         serializer.is_valid(raise_exception=True)
 
@@ -2232,117 +2244,21 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
             or query_definition.provider != attack_paths_scan.provider.provider
         ):
             raise ValidationError(
-                {"id": "Unknown attack path query for the selected provider."}
+                {"id": "Unknown Attack Paths query for the selected provider"}
             )
 
-        parameters = self._prepare_query_parameters(
-            query_definition, serializer.validated_data.get("parameters", {})
+        parameters = attack_paths_views_helpers.prepare_query_parameters(
+            query_definition,
+            serializer.validated_data.get("parameters", {}),
+            attack_paths_scan.provider.uid,
         )
-        parameters["provider_uid"] = str(attack_paths_scan.provider.uid)
 
-        graph = self._execute_attack_paths_query(
+        graph = attack_paths_views_helpers.execute_attack_paths_query(
             attack_paths_scan, query_definition, parameters
         )
 
-        response_serializer = AttackPathsGraphSerializer(graph)
+        response_serializer = AttackPathsQueryResultSerializer(graph)
         return Response(response_serializer.data, status=status.HTTP_200_OK)
-
-    @staticmethod
-    def _normalize_run_payload(raw_data):
-        if not isinstance(raw_data, dict):  # Let the serializer to handle this
-            return raw_data
-
-        if "data" in raw_data and isinstance(raw_data.get("data"), dict):
-            data_section = raw_data.get("data") or {}
-            attributes = data_section.get("attributes") or {}
-            payload = {
-                "id": attributes.get("id", data_section.get("id")),
-                "parameters": attributes.get("parameters"),
-            }
-            # Remove `None` parameters to allow defaults downstream
-            if payload.get("parameters") is None:
-                payload.pop("parameters")
-            return payload
-        return raw_data
-
-    def _prepare_query_parameters(
-        self,
-        definition: AttackPathsQueryDefinition,
-        provided_parameters: dict[str, Any],
-    ) -> dict[str, Any]:
-        parameters = dict(provided_parameters or {})
-        expected_names = {parameter.name for parameter in definition.parameters}
-        provided_names = set(parameters.keys())
-
-        unexpected = provided_names - expected_names
-        if unexpected:
-            raise ValidationError(
-                {
-                    "parameters": (
-                        f"Unknown parameter(s): {', '.join(sorted(unexpected))}."
-                    )
-                }
-            )
-
-        missing = expected_names - provided_names
-        if missing:
-            raise ValidationError(
-                {
-                    "parameters": (
-                        f"Missing required parameter(s): {', '.join(sorted(missing))}."
-                    )
-                }
-            )
-
-        return parameters
-
-    def _execute_attack_paths_query(
-        self,
-        attack_paths_scan: AttackPathsScan,
-        definition: AttackPathsQueryDefinition,
-        parameters: dict[str, Any],
-    ) -> dict[str, Any]:
-        try:
-            with neo4j.get_neo4j_session(attack_paths_scan.neo4j_database) as session:
-                result = session.run(definition.cypher, parameters=parameters)
-                graph = self._serialize_graph(result.graph())
-
-        except neo4j_exceptions.Neo4jError as exc:
-            logger.error(f"Neo4j query failed for Attack Paths query `{definition.id}`: {exc}")
-            return Response(
-                {"detail": "Attack Paths query execution failed due to a database error."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-
-        return graph
-
-    def _serialize_graph(self, graph):
-        nodes = []
-        for node in graph.nodes:
-            nodes.append(
-                {
-                    "id": node.element_id,
-                    "labels": node.labels,
-                    "properties": node._properties,
-                },
-            )
-
-        relationships = []
-        for relationship in graph.relationships:
-            relationships.append(
-                {
-                    "id": relationship.element_id,
-                    "label": relationship.type,
-                    "source": relationship.start_node.element_id,
-                    "target": relationship.end_node.element_id,
-                    "properties": relationship._properties,
-                },
-            )
-
-        return {
-            "nodes": nodes,
-            "relationships": relationships,
-        }
 
 
 @extend_schema_view(

@@ -662,7 +662,7 @@ class AttackPathsScan(RowLevelSecurityProtectedModel):
     update_tag = models.BigIntegerField(
         null=True, blank=True, help_text="Cartography update tag (epoch)"
     )
-    neo4j_database = models.CharField(max_length=128, null=True, blank=True)
+    graph_database = models.CharField(max_length=128, null=True, blank=True)
     ingestion_exceptions = models.JSONField(default=dict, null=True, blank=True)
 
     class Meta(RowLevelSecurityProtectedModel.Meta):

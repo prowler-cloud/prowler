@@ -24,7 +24,7 @@ NODE_UID_FIELDS = {
 
 INDEX_STATEMENTS = [
     "CREATE INDEX prowler_finding_id IF NOT EXISTS FOR (n:ProwlerFinding) ON (n.id);",
-    "CREATE INDEX prowler_finding_account_id IF NOT EXISTS FOR (n:ProwlerFinding) ON (n.account_id);",
+    "CREATE INDEX prowler_finding_provider_uid IF NOT EXISTS FOR (n:ProwlerFinding) ON (n.provider_uid);",
     "CREATE INDEX prowler_finding_lastupdated IF NOT EXISTS FOR (n:ProwlerFinding) ON (n.lastupdated);",
     "CREATE INDEX prowler_finding_check_id IF NOT EXISTS FOR (n:ProwlerFinding) ON (n.check_id);",
     "CREATE INDEX prowler_finding_severity IF NOT EXISTS FOR (n:ProwlerFinding) ON (n.severity);",
@@ -33,7 +33,7 @@ INDEX_STATEMENTS = [
 INSERT_STATEMENT_TEMPLATE = """
     UNWIND $findings_data AS finding_data
 
-    MATCH (account:__ROOT_NODE_LABEL__ {id: $account_id})
+    MATCH (account:__ROOT_NODE_LABEL__ {id: $provider_uid})
     MATCH (account)-->(resource)
         WHERE resource.__NODE_UID_FIELD__ = finding_data.resource_uid
             OR resource.id = finding_data.resource_uid
@@ -53,7 +53,7 @@ INSERT_STATEMENT_TEMPLATE = """
             finding.check_id = finding_data.check_id,
             finding.muted = finding_data.muted,
             finding.muted_reason = finding_data.muted_reason,
-            finding.account_id = $account_id,
+            finding.provider_uid = $provider_uid,
             finding.firstseen = timestamp(),
             finding.lastupdated = $last_updated,
             finding._module_name = 'cartography:prowler',
@@ -65,7 +65,7 @@ INSERT_STATEMENT_TEMPLATE = """
 
     MERGE (resource)-[rel:HAS_FINDING]->(finding)
         ON CREATE SET
-            rel.account_id = $account_id,
+            rel.provider_uid = $provider_uid,
             rel.firstseen = timestamp(),
             rel.lastupdated = $last_updated,
             rel._module_name = 'cartography:prowler',
@@ -75,7 +75,7 @@ INSERT_STATEMENT_TEMPLATE = """
 """
 
 CLEANUP_STATEMENT = """
-    MATCH (finding:ProwlerFinding {account_id: $account_id})
+    MATCH (finding:ProwlerFinding {provider_uid: $provider_uid})
         WHERE finding.lastupdated < $last_updated
 
     WITH finding LIMIT $batch_size
@@ -175,7 +175,7 @@ def load_findings(
         query = query.replace(replace_key, replace_value)
 
     parameters = {
-        "account_id": str(prowler_api_provider.uid),
+        "provider_uid": str(prowler_api_provider.uid),
         "last_updated": config.update_tag,
         "prowler_version": ProwlerConfig.prowler_version,
     }
@@ -200,7 +200,7 @@ def cleanup_findings(
     config: CartographyConfig,
 ) -> None:
     parameters = {
-        "account_id": str(prowler_api_provider.uid),
+        "provider_uid": str(prowler_api_provider.uid),
         "last_updated": config.update_tag,
         "batch_size": BATCH_SIZE,
     }
