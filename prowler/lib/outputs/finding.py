@@ -311,7 +311,7 @@ class Finding(BaseModel):
                     provider, "identity.project_id"
                 )
                 output_data["account_name"] = get_nested_attribute(
-                    provider, "identity.project_name", default=""
+                    provider, "identity.project_name"
                 )
                 output_data["resource_name"] = check_output.resource_name
                 output_data["resource_uid"] = check_output.resource_id
