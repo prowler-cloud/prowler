@@ -89,10 +89,7 @@ class IaaSService:
             # List all security groups using the SDK
             try:
                 # Call the list security groups API
-                # STACKIT has regions: eu01 (Germany South) and eu02 (Austria West)
-                response = client.list_security_groups(
-                    project_id=self.project_id, region="eu01"
-                )
+                response = client.list_security_groups(project_id=self.project_id)
 
                 # Extract security groups from response
                 if hasattr(response, "items"):
@@ -172,7 +169,6 @@ class IaaSService:
             response = client.list_security_group_rules(
                 project_id=self.project_id,
                 security_group_id=security_group_id,
-                region="eu01",
             )
 
             # Extract rules from response
