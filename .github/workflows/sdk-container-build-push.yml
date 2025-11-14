@@ -222,6 +222,18 @@ jobs:
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.container-build-push.outputs.latest_tag }}-amd64 \
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.container-build-push.outputs.latest_tag }}-arm64
 
+      - name: Install regctl
+        if: always()
+        uses: regclient/actions/regctl-installer@main
+
+      - name: Cleanup intermediate architecture tags
+        if: always()
+        run: |
+          echo "Cleaning up intermediate tags..."
+          regctl tag delete "${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.container-build-push.outputs.latest_tag }}-amd64" || true
+          regctl tag delete "${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.container-build-push.outputs.latest_tag }}-arm64" || true
+          echo "Cleanup completed"
+
   dispatch-v3-deployment:
     if: needs.container-build-push.outputs.prowler_version_major == '3'
     needs: container-build-push
