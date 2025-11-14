@@ -201,7 +201,7 @@ export const getMenuList = ({
           label: "Prowler Hub",
           icon: ProwlerShort,
           target: "_blank",
-          tooltip: "Looking for all available checks? learn more.",
+          // tooltip: "Looking for all available checks? learn more.",
         },
       ],
     },

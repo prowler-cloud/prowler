@@ -198,6 +198,7 @@ export const EditRoleForm = ({
               label: "text-small",
               wrapper: "checkbox-update",
             }}
+            color="default"
           >
             Grant all admin permissions
           </Checkbox>
@@ -219,6 +220,7 @@ export const EditRoleForm = ({
                       label: "text-small",
                       wrapper: "checkbox-update",
                     }}
+                    color="default"
                   >
                     {label}
                   </Checkbox>

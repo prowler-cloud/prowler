@@ -278,9 +278,10 @@ export const TestConnectionForm = ({
             {...form.register("runOnce")}
             isSelected={!!form.watch("runOnce")}
             classNames={{
-              label: "text-small text-default-500",
+              label: "text-small",
               wrapper: "checkbox-update",
             }}
+            color="default"
           >
             Run a single scan (no recurring schedule).
           </Checkbox>

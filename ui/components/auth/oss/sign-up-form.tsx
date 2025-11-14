@@ -11,8 +11,9 @@ import { AuthFooterLink } from "@/components/auth/oss/auth-footer-link";
 import { AuthLayout } from "@/components/auth/oss/auth-layout";
 import { PasswordRequirementsMessage } from "@/components/auth/oss/password-validator";
 import { SocialButtons } from "@/components/auth/oss/social-buttons";
+import { Button } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
-import { CustomButton, CustomInput } from "@/components/ui/custom";
+import { CustomInput } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import {
   Form,
@@ -194,6 +195,7 @@ export const SignUpForm = ({
                       size="sm"
                       checked={field.value}
                       onChange={(e) => field.onChange(e.target.checked)}
+                      color="default"
                     >
                       I agree with the&nbsp;
                       <CustomLink
@@ -211,20 +213,15 @@ export const SignUpForm = ({
             />
           )}
 
-          <CustomButton
+          <Button
             type="submit"
-            ariaLabel="Sign up"
-            ariaDisabled={isLoading}
+            aria-label="Sign up"
+            aria-disabled={isLoading}
             className="w-full"
-            variant="solid"
-            color="action"
-            size="md"
-            radius="md"
-            isLoading={isLoading}
-            isDisabled={isLoading}
+            disabled={isLoading}
           >
-            {isLoading ? <span>Loading</span> : <span>Sign up</span>}
-          </CustomButton>
+            {isLoading ? "Loading..." : "Sign up"}
+          </Button>
         </form>
       </Form>
 
