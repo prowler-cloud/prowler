@@ -31,16 +31,15 @@ class iaas_security_group_database_unrestricted(Check):
         findings = []
 
         for security_group in iaas_client.security_groups:
+            # Only check security groups that are actively in use
+            if not security_group.in_use:
+                continue
             exposed_databases = []
 
             # Check each ingress rule
             for rule in security_group.rules:
                 # Only check ingress TCP rules that are unrestricted
-                if (
-                    rule.is_ingress()
-                    and rule.is_tcp()
-                    and rule.is_unrestricted()
-                ):
+                if rule.is_ingress() and rule.is_tcp() and rule.is_unrestricted():
                     # Check if rule allows any database ports
                     for port, db_name in DATABASE_PORTS.items():
                         if rule.includes_port(port):
@@ -61,9 +60,7 @@ class iaas_security_group_database_unrestricted(Check):
                 )
             else:
                 report.status = "PASS"
-                report.status_extended = (
-                    f"Security group '{security_group.name}' does not allow unrestricted database access."
-                )
+                report.status_extended = f"Security group '{security_group.name}' does not allow unrestricted database access."
 
             report.resource_id = security_group.id
             report.resource_name = security_group.name

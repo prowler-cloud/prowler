@@ -20,14 +20,13 @@ class iaas_security_group_rdp_unrestricted(Check):
         findings = []
 
         for security_group in iaas_client.security_groups:
+            # Only check security groups that are actively in use
+            if not security_group.in_use:
+                continue
             # Check each ingress rule
             for rule in security_group.rules:
                 # Only check ingress TCP rules that are unrestricted
-                if (
-                    rule.is_ingress()
-                    and rule.is_tcp()
-                    and rule.is_unrestricted()
-                ):
+                if rule.is_ingress() and rule.is_tcp() and rule.is_unrestricted():
                     # Check if rule allows RDP (port 3389)
                     if rule.includes_port(3389):
                         # Create a finding report for this security group
@@ -56,9 +55,7 @@ class iaas_security_group_rdp_unrestricted(Check):
                 )
 
                 report.status = "PASS"
-                report.status_extended = (
-                    f"Security group '{security_group.name}' does not allow unrestricted RDP access."
-                )
+                report.status_extended = f"Security group '{security_group.name}' does not allow unrestricted RDP access."
                 report.resource_id = security_group.id
                 report.resource_name = security_group.name
                 report.location = security_group.region

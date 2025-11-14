@@ -1,5 +1,6 @@
 import os
 from typing import Optional
+from uuid import UUID
 
 from colorama import Style
 
@@ -13,6 +14,7 @@ from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 from prowler.providers.stackit.exceptions.exceptions import (
+    StackITAPIError,
     StackITInvalidProjectIdError,
     StackITNonExistentTokenError,
     StackITSetUpIdentityError,
@@ -84,24 +86,21 @@ class StackitProvider(Provider):
         self._api_token = api_token or os.getenv("STACKIT_API_TOKEN")
         self._project_id = project_id or os.getenv("STACKIT_PROJECT_ID")
 
-        # Validate required credentials
-        if not self._api_token:
+        # 2) Validate credentials format (following Azure's validation pattern)
+        try:
+            self.validate_arguments(self._api_token, self._project_id)
+        except StackITNonExistentTokenError:
             logger.critical(
                 "StackIT API token is required. Provide it via --stackit-api-token or STACKIT_API_TOKEN environment variable."
             )
-            raise StackITNonExistentTokenError(
-                message="StackIT API token is required for authentication"
-            )
-
-        if not self._project_id:
+            raise
+        except StackITInvalidProjectIdError:
             logger.critical(
-                "StackIT project ID is required. Provide it via --stackit-project-id or STACKIT_PROJECT_ID environment variable."
+                "StackIT project ID must be a valid UUID. Provide it via --stackit-project-id or STACKIT_PROJECT_ID environment variable."
             )
-            raise StackITInvalidProjectIdError(
-                message="StackIT project ID is required for auditing"
-            )
+            raise
 
-        # 2) Load audit_config, fixer_config, mutelist
+        # 3) Load audit_config, fixer_config, mutelist
         self._fixer_config = fixer_config if fixer_config else {}
         if not config_path:
             config_path = default_config_file_path
@@ -114,7 +113,7 @@ class StackitProvider(Provider):
                 mutelist_path = get_default_mute_file_path(self._type)
             self._mutelist = StackITMutelist(mutelist_path=mutelist_path)
 
-        # 3) Initialize session configuration
+        # 4) Initialize session configuration
         self._session = None
         try:
             self.setup_session()
@@ -125,7 +124,7 @@ class StackitProvider(Provider):
                 message=f"Failed to set up StackIT session: {str(e)}",
             )
 
-        # 4) Create StackITIdentityInfo object
+        # 5) Create StackITIdentityInfo object
         try:
             self._identity = StackITIdentityInfo(
                 project_id=self._project_id,
@@ -139,7 +138,7 @@ class StackitProvider(Provider):
                 message=f"Failed to set up StackIT identity: {str(e)}",
             )
 
-        # 5) Register as global provider
+        # 6) Register as global provider
         Provider.set_global_provider(self)
 
     @property
@@ -188,27 +187,48 @@ class StackitProvider(Provider):
     @staticmethod
     def validate_arguments(api_token: str, project_id: str) -> None:
         """
-        Ensures that api_token and project_id are not empty.
+        Validates StackIT static arguments format before use.
+
+        This method follows the same pattern as Azure provider validation,
+        validating format before attempting API calls for better error messages
+        and faster failure on invalid input.
 
         Args:
             api_token: The StackIT API token
-            project_id: The StackIT project ID
+            project_id: The StackIT project ID (must be valid UUID format)
 
         Raises:
-            ValueError: If api_token or project_id is missing
+            StackITNonExistentTokenError: If api_token is missing or invalid
+            StackITInvalidProjectIdError: If project_id is missing or not a valid UUID
         """
-        if not api_token:
-            raise ValueError("StackIT Provider requires an API token.")
-        if not project_id:
-            raise ValueError("StackIT Provider requires a project ID.")
+        # Validate API token is not empty
+        if not api_token or not api_token.strip():
+            raise StackITNonExistentTokenError(
+                message="StackIT API token is required for authentication"
+            )
+
+        # Validate project_id is not empty
+        if not project_id or not project_id.strip():
+            raise StackITInvalidProjectIdError(
+                message="StackIT project ID is required for auditing"
+            )
+
+        # Validate project_id is a valid UUID format
+        # StackIT uses UUIDs for project IDs, similar to Azure subscription IDs
+        try:
+            UUID(project_id)
+        except ValueError as e:
+            raise StackITInvalidProjectIdError(
+                original_exception=e,
+                message=f"StackIT project ID must be a valid UUID format, got: {project_id}",
+            )
 
     def print_credentials(self) -> None:
         """
         Prints the StackIT credentials in a simple box format.
         """
         report_lines = [
-            f"  Project ID: {self._project_id}",
-            f"  API Token: {'*' * (len(self._api_token) - 4) + self._api_token[-4:] if self._api_token and len(self._api_token) > 4 else '****'}",
+            f"  Project ID: {self._project_id}\n  API Token: ***REDACTED***",
         ]
 
         report_title = (
@@ -260,7 +280,9 @@ class StackitProvider(Provider):
         try:
             # 1) Validate arguments
             if not api_token or not project_id:
-                error_msg = "StackIT test_connection error: missing api_token or project_id"
+                error_msg = (
+                    "StackIT test_connection error: missing api_token or project_id"
+                )
                 logger.error(error_msg)
                 if raise_on_exception:
                     raise ValueError(error_msg)
@@ -268,40 +290,28 @@ class StackitProvider(Provider):
 
             # 2) Test connection by attempting to use the StackIT SDK
             try:
-                import os
                 from stackit.core.configuration import Configuration
                 from stackit.objectstorage import DefaultApi
 
-                # The SDK expects STACKIT_SERVICE_ACCOUNT_TOKEN environment variable
-                # Set it temporarily if not already set
-                original_token = os.environ.get("STACKIT_SERVICE_ACCOUNT_TOKEN")
-                os.environ["STACKIT_SERVICE_ACCOUNT_TOKEN"] = api_token
+                # Pass the API token directly to Configuration (thread-safe approach)
+                # This avoids manipulating global environment variables
+                # Note: project_id is passed to API methods, not to Configuration
+                config = Configuration(service_account_token=api_token)
 
-                try:
-                    # Create configuration - it will read from environment variable
-                    # Note: project_id is passed to API methods, not to Configuration
-                    config = Configuration()
+                # Create DefaultApi client directly with Configuration
+                # DefaultApi takes Configuration directly, not ApiClient
+                client = DefaultApi(config)
 
-                    # Create DefaultApi client directly with Configuration
-                    # DefaultApi takes Configuration directly, not ApiClient
-                    client = DefaultApi(config)
+                # Test with a simple API call (list buckets)
+                # STACKIT has regions: eu01 (Germany South) and eu02 (Austria West)
+                client.list_buckets(project_id=project_id, region="eu01")
 
-                    # Test with a simple API call (list buckets)
-                    # STACKIT has regions: eu01 (Germany South) and eu02 (Austria West)
-                    client.list_buckets(project_id=project_id, region="eu01")
-
-                    logger.info(
-                        "StackIT test_connection: Successfully connected using StackIT SDK."
-                    )
-                    return Connection(is_connected=True)
-                finally:
-                    # Restore original environment variable
-                    if original_token is None:
-                        os.environ.pop("STACKIT_SERVICE_ACCOUNT_TOKEN", None)
-                    else:
-                        os.environ["STACKIT_SERVICE_ACCOUNT_TOKEN"] = original_token
+                logger.info(
+                    "StackIT test_connection: Successfully connected using StackIT SDK."
+                )
+                return Connection(is_connected=True)
             except ImportError as e:
-                error_msg = f"StackIT SDK not available: {e}. Please ensure stackit-core and stackit-objectstorage are installed."
+                error_msg = f"StackIT SDK not available: {e}. Please ensure stackit-core and stackit-iaas are installed."
                 logger.error(error_msg)
                 if raise_on_exception:
                     raise ImportError(error_msg)
@@ -310,8 +320,14 @@ class StackitProvider(Provider):
                 error_msg = f"Failed to connect to StackIT using SDK: {str(test_error)}"
                 logger.error(error_msg)
                 if raise_on_exception:
-                    raise Exception(error_msg)
-                return Connection(error=Exception(error_msg))
+                    raise StackITAPIError(
+                        original_exception=test_error, message=error_msg
+                    )
+                return Connection(
+                    error=StackITAPIError(
+                        original_exception=test_error, message=error_msg
+                    )
+                )
 
         except Exception as e:
             logger.critical(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}")

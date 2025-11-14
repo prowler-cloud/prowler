@@ -20,6 +20,9 @@ class iaas_security_group_all_traffic_unrestricted(Check):
         findings = []
 
         for security_group in iaas_client.security_groups:
+            # Only check security groups that are actively in use
+            if not security_group.in_use:
+                continue
             unrestricted_rules = []
 
             # Check each ingress rule
@@ -33,8 +36,7 @@ class iaas_security_group_all_traffic_unrestricted(Check):
                             f"Rule '{rule.id}' allows all ports ({rule.protocol}) from {rule.ip_range}"
                         )
                     elif (
-                        rule.port_range_min == 0
-                        or rule.port_range_min == 1
+                        rule.port_range_min == 0 or rule.port_range_min == 1
                     ) and rule.port_range_max >= 65535:
                         # Port range covers all or nearly all ports
                         unrestricted_rules.append(
@@ -50,14 +52,10 @@ class iaas_security_group_all_traffic_unrestricted(Check):
             if unrestricted_rules:
                 report.status = "FAIL"
                 rules_list = "; ".join(unrestricted_rules)
-                report.status_extended = (
-                    f"Security group '{security_group.name}' allows unrestricted access to all traffic: {rules_list}."
-                )
+                report.status_extended = f"Security group '{security_group.name}' allows unrestricted access to all traffic: {rules_list}."
             else:
                 report.status = "PASS"
-                report.status_extended = (
-                    f"Security group '{security_group.name}' does not allow unrestricted access to all traffic."
-                )
+                report.status_extended = f"Security group '{security_group.name}' does not allow unrestricted access to all traffic."
 
             report.resource_id = security_group.id
             report.resource_name = security_group.name

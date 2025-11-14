@@ -28,6 +28,17 @@ class IaaSService:
         # Initialize security groups list
         self.security_groups: list[SecurityGroup] = []
 
+        # Initialize server NICs list and used security group IDs
+        self.server_nics: list = []
+        self.public_nic_ids: set[str] = set()  # NICs with public IPs
+        self.in_use_sg_ids: set[str] = set()
+
+        # Fetch public IPs first to determine which NICs are publicly accessible
+        self._list_public_ips()
+
+        # Fetch all server NICs to determine which security groups are in use
+        self._list_server_nics()
+
         # Fetch all security groups and their rules
         self._list_security_groups()
 
@@ -40,28 +51,16 @@ class IaaSService:
         """
         try:
             # Import the StackIT SDK
-            import os
             from stackit.core.configuration import Configuration
             from stackit.iaas import DefaultApi
 
-            # The SDK expects STACKIT_SERVICE_ACCOUNT_TOKEN environment variable
-            # Set it temporarily if not already set
-            original_token = os.environ.get("STACKIT_SERVICE_ACCOUNT_TOKEN")
-            os.environ["STACKIT_SERVICE_ACCOUNT_TOKEN"] = self.api_token
+            # Pass the API token directly to Configuration (thread-safe approach)
+            # This avoids manipulating global environment variables
+            config = Configuration(service_account_token=self.api_token)
 
-            try:
-                # Create configuration - it will read from environment variable
-                config = Configuration()
-
-                # Create DefaultApi client directly with Configuration
-                client = DefaultApi(config)
-                return client
-            finally:
-                # Restore original environment variable
-                if original_token is None:
-                    os.environ.pop("STACKIT_SERVICE_ACCOUNT_TOKEN", None)
-                else:
-                    os.environ["STACKIT_SERVICE_ACCOUNT_TOKEN"] = original_token
+            # Create DefaultApi client directly with Configuration
+            client = DefaultApi(config)
+            return client
 
         except ImportError as e:
             logger.error(
@@ -138,6 +137,7 @@ class IaaSService:
                         project_id=self.project_id,
                         region=region,
                         rules=rules,
+                        in_use=sg_id in self.in_use_sg_ids,
                     )
                     self.security_groups.append(security_group)
 
@@ -187,31 +187,63 @@ class IaaSService:
             for rule_data in rules_list:
                 try:
                     if hasattr(rule_data, "id"):
+                        # Extract protocol name from Protocol object
+                        protocol_obj = getattr(rule_data, "protocol", None)
+                        protocol_name = None
+                        if protocol_obj and hasattr(protocol_obj, "name"):
+                            protocol_name = protocol_obj.name
+
+                        # Extract port range from PortRange object
+                        port_range_obj = getattr(rule_data, "port_range", None)
+                        port_min = None
+                        port_max = None
+                        if port_range_obj:
+                            if hasattr(port_range_obj, "min"):
+                                port_min = port_range_obj.min
+                            if hasattr(port_range_obj, "max"):
+                                port_max = port_range_obj.max
+
                         rule = SecurityGroupRule(
                             id=getattr(rule_data, "id", ""),
                             direction=getattr(rule_data, "direction", ""),
-                            protocol=getattr(rule_data, "protocol", ""),
-                            ip_range=getattr(rule_data, "ip_range", ""),
-                            port_range_min=getattr(
-                                rule_data, "port_range_min", None
-                            ),
-                            port_range_max=getattr(
-                                rule_data, "port_range_max", None
-                            ),
+                            protocol=protocol_name,
+                            ip_range=getattr(rule_data, "ip_range", None),
+                            port_range_min=port_min,
+                            port_range_max=port_max,
                         )
                     elif isinstance(rule_data, dict):
+                        # Handle dict response (if API returns dict instead of objects)
+                        protocol_data = rule_data.get("protocol")
+                        protocol_name = None
+                        if isinstance(protocol_data, dict):
+                            protocol_name = protocol_data.get("name")
+                        elif isinstance(protocol_data, str):
+                            protocol_name = protocol_data
+
+                        port_range_data = rule_data.get("port_range")
+                        port_min = None
+                        port_max = None
+                        if isinstance(port_range_data, dict):
+                            port_min = port_range_data.get("min")
+                            port_max = port_range_data.get("max")
+
                         rule = SecurityGroupRule(
                             id=rule_data.get("id", ""),
                             direction=rule_data.get("direction", ""),
-                            protocol=rule_data.get("protocol", ""),
-                            ip_range=rule_data.get("ip_range", ""),
-                            port_range_min=rule_data.get("port_range_min"),
-                            port_range_max=rule_data.get("port_range_max"),
+                            protocol=protocol_name,
+                            ip_range=rule_data.get("ip_range"),
+                            port_range_min=port_min,
+                            port_range_max=port_max,
                         )
                     else:
                         continue
 
                     rules.append(rule)
+                    logger.debug(
+                        f"Parsed rule: id={rule.id}, direction={rule.direction}, "
+                        f"protocol={rule.protocol}, ip_range={rule.ip_range}, "
+                        f"ports={rule.port_range_min}-{rule.port_range_max}"
+                    )
 
                 except Exception as e:
                     logger.debug(f"Error processing rule: {e}")
@@ -224,24 +256,179 @@ class IaaSService:
 
         return rules
 
+    def _list_public_ips(self):
+        """
+        List all public IPs in the StackIT project and build a set of NIC IDs
+        that have public IPs attached.
 
-class SecurityGroup(BaseModel):
-    """
-    Represents a StackIT IaaS Security Group.
+        This method populates self.public_nic_ids with the NIC IDs that are
+        publicly accessible via public IP addresses.
+        """
+        try:
+            client = self._get_stackit_client()
+            if not client:
+                logger.warning(
+                    "Cannot list public IPs: StackIT IaaS client not available"
+                )
+                return
 
-    Attributes:
-        id: The unique identifier of the security group
-        name: The name of the security group
-        project_id: The StackIT project ID containing the security group
-        region: The region where the security group is located
-        rules: List of security group rules
-    """
+            try:
+                # Call the list public IPs API
+                response = client.list_public_ips(project_id=self.project_id)
 
-    id: str
-    name: str
-    project_id: str
-    region: str = "eu01"
-    rules: list["SecurityGroupRule"] = []
+                # Extract public IPs from response
+                if hasattr(response, "items"):
+                    public_ips_list = response.items
+                elif isinstance(response, dict):
+                    public_ips_list = response.get("items", [])
+                elif isinstance(response, list):
+                    public_ips_list = response
+                else:
+                    logger.warning(
+                        f"Unexpected response type from list_public_ips: {type(response)}"
+                    )
+                    public_ips_list = []
+
+                # Extract NIC IDs that have public IPs
+                for public_ip in public_ips_list:
+                    try:
+                        if hasattr(public_ip, "network_interface"):
+                            nic_id = public_ip.network_interface
+                        elif isinstance(public_ip, dict):
+                            nic_id = public_ip.get(
+                                "network_interface"
+                            ) or public_ip.get("networkInterface")
+                        else:
+                            continue
+
+                        if nic_id:
+                            self.public_nic_ids.add(nic_id)
+
+                    except Exception as e:
+                        logger.debug(f"Error extracting NIC ID from public IP: {e}")
+                        continue
+
+                logger.info(
+                    f"Successfully listed {len(public_ips_list)} public IPs "
+                    f"attached to {len(self.public_nic_ids)} NICs."
+                )
+
+            except Exception as e:
+                logger.error(f"Error listing public IPs via SDK: {e}")
+                return
+
+        except Exception as e:
+            logger.error(f"Error listing StackIT public IPs: {e}")
+
+    def _list_server_nics(self):
+        """
+        List all server network interfaces (NICs) in the StackIT project.
+
+        This method fetches all NICs and determines which security groups are
+        actively in use by checking which security groups are attached to NICs.
+        """
+        try:
+            client = self._get_stackit_client()
+            if not client:
+                logger.warning(
+                    "Cannot list server NICs: StackIT IaaS client not available"
+                )
+                return
+
+            try:
+                # Call the list project NICs API
+                response = client.list_project_nics(project_id=self.project_id)
+
+                # Extract NICs from response
+                if hasattr(response, "items"):
+                    nics_list = response.items
+                elif isinstance(response, dict):
+                    nics_list = response.get("items", [])
+                elif isinstance(response, list):
+                    nics_list = response
+                else:
+                    logger.warning(
+                        f"Unexpected response type from list_project_nics: {type(response)}"
+                    )
+                    nics_list = []
+
+                self.server_nics = nics_list
+
+                # Extract security group IDs that are in use (on public NICs only)
+                self.in_use_sg_ids = self._get_used_security_group_ids()
+
+                # Count NICs with public IPs for logging
+                public_nic_count = sum(
+                    1
+                    for nic in self.server_nics
+                    if (
+                        (hasattr(nic, "id") and nic.id in self.public_nic_ids)
+                        or (
+                            isinstance(nic, dict)
+                            and nic.get("id") in self.public_nic_ids
+                        )
+                    )
+                )
+
+                logger.info(
+                    f"Successfully listed {len(self.server_nics)} NICs "
+                    f"({public_nic_count} with public IPs). "
+                    f"Found {len(self.in_use_sg_ids)} security groups attached to public NICs."
+                )
+
+            except Exception as e:
+                logger.error(f"Error listing server NICs via SDK: {e}")
+                return
+
+        except Exception as e:
+            logger.error(f"Error listing StackIT server NICs: {e}")
+
+    def _get_used_security_group_ids(self) -> set[str]:
+        """
+        Get the set of security group IDs that are actively attached to NICs
+        with public IP addresses (internet-accessible).
+
+        Only security groups on NICs with public IPs are considered "in use"
+        for security checks, as private NICs are not reachable from the internet.
+
+        Returns:
+            set[str]: Set of security group IDs that are attached to public NICs
+        """
+        used_sg_ids = set()
+
+        for nic in self.server_nics:
+            try:
+                # Get the NIC ID
+                if hasattr(nic, "id"):
+                    nic_id = nic.id
+                elif isinstance(nic, dict):
+                    nic_id = nic.get("id")
+                else:
+                    continue
+
+                # Only consider security groups on NICs with public IPs
+                if nic_id not in self.public_nic_ids:
+                    continue
+
+                # Extract security groups from NIC
+                if hasattr(nic, "security_groups"):
+                    sg_list = nic.security_groups
+                elif isinstance(nic, dict):
+                    sg_list = nic.get("security_groups", [])
+                else:
+                    continue
+
+                # Add all security group IDs to the set
+                if sg_list:
+                    for sg_id in sg_list:
+                        if sg_id:  # Ignore None or empty strings
+                            used_sg_ids.add(sg_id)
+
+            except Exception as e:
+                logger.debug(f"Error extracting security groups from NIC: {e}")
+                continue
+
+        return used_sg_ids
 
 
 class SecurityGroupRule(BaseModel):
@@ -265,9 +452,11 @@ class SecurityGroupRule(BaseModel):
     port_range_max: Optional[int] = None
 
     def is_unrestricted(self) -> bool:
-        """Check if the rule allows access from anywhere (0.0.0.0/0 or ::/0)."""
-        if not self.ip_range:
-            return False
+        """Check if the rule allows access from anywhere (0.0.0.0/0, ::/0, or None for unrestricted)."""
+        # None means no IP restriction (allows all sources) - this is unrestricted!
+        if self.ip_range is None:
+            return True
+        # Explicit unrestricted ranges
         return self.ip_range in ["0.0.0.0/0", "::/0"]
 
     def is_ingress(self) -> bool:
@@ -278,8 +467,9 @@ class SecurityGroupRule(BaseModel):
 
     def is_tcp(self) -> bool:
         """Check if the rule is TCP protocol."""
-        if not self.protocol:
-            return False
+        # None means all protocols (including TCP) - treat as TCP-applicable
+        if self.protocol is None:
+            return True
         return self.protocol.lower() in ["tcp", "all"]
 
     def includes_port(self, port: int) -> bool:
@@ -288,3 +478,24 @@ class SecurityGroupRule(BaseModel):
             # If no port range specified, rule applies to all ports
             return True
         return self.port_range_min <= port <= self.port_range_max
+
+
+class SecurityGroup(BaseModel):
+    """
+    Represents a StackIT IaaS Security Group.
+
+    Attributes:
+        id: The unique identifier of the security group
+        name: The name of the security group
+        project_id: The StackIT project ID containing the security group
+        region: The region where the security group is located
+        rules: List of security group rules
+        in_use: Whether the security group is actively attached to any resources
+    """
+
+    id: str
+    name: str
+    project_id: str
+    region: str = "eu01"
+    rules: list[SecurityGroupRule] = []
+    in_use: bool = False
