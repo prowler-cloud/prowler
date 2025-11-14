@@ -282,7 +282,8 @@ class StackitProvider(Provider):
                 client = DefaultApi(config)
 
                 # Test with a simple API call (list buckets)
-                client.list_buckets(project_id=project_id)
+                # STACKIT has regions: eu01 (Germany South) and eu02 (Austria West)
+                client.list_buckets(project_id=project_id, region="eu01")
 
                 logger.info(
                     "StackIT test_connection: Successfully connected using StackIT SDK."

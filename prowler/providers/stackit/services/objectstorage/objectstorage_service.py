@@ -79,8 +79,11 @@ class ObjectStorageService:
 
             # List all buckets using the SDK
             try:
-                # Call the list buckets API
-                response = client.list_buckets(project_id=self.project_id)
+                # Call the list buckets API with region
+                # STACKIT has regions: eu01 (Germany South) and eu02 (Austria West)
+                response = client.list_buckets(
+                    project_id=self.project_id, region="eu01"
+                )
 
                 # Extract buckets from response
                 if hasattr(response, "buckets"):
