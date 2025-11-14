@@ -1,9 +1,9 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import { LucideIcon } from "lucide-react";
 
+import { Card, CardVariant } from "@/components/shadcn/card/card";
 import { cn } from "@/lib/utils";
 
-import { Card, CardVariant } from "../card";
 import type { StatItem } from "./resource-stats-card-content";
 import { ResourceStatsCardContent } from "./resource-stats-card-content";
 import { ResourceStatsCardHeader } from "./resource-stats-card-header";
