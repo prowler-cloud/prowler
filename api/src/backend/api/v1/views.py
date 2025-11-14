@@ -2194,6 +2194,10 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
     def create(self, request, *args, **kwargs):
         raise MethodNotAllowed(method="POST")
 
+    @extend_schema(exclude=True)
+    def destroy(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="DELETE")
+
     @action(
         detail=True,
         methods=["get"],
@@ -5197,7 +5201,7 @@ class TenantApiKeyViewSet(BaseRLSViewSet):
 
     @extend_schema(exclude=True)
     def destroy(self, request, *args, **kwargs):
-        raise MethodNotAllowed(method="DESTROY")
+        raise MethodNotAllowed(method="DELETE")
 
     @action(detail=True, methods=["delete"])
     def revoke(self, request, *args, **kwargs):
