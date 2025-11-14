@@ -2556,10 +2556,11 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
         except ClientError as e:
-            error_code = e.response.get("Error", {}).get("Code", "Unknown")
-            error_message = e.response.get("Error", {}).get("Message", str(e))
+            logger.error(
+                f"AWS API error when retrieving CloudTrail timeline: {str(e)}", exc_info=True
+            )
             return Response(
-                {"error": f"AWS API error: {error_code}", "detail": error_message},
+                {"error": "There was a problem communicating with AWS. Please try again later."},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
         except Exception as e:
