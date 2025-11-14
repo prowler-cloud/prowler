@@ -2156,6 +2156,8 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
     http_method_names = ["get"]
     filterset_class = ResourceFilter
     ordering = ["-failed_findings_count", "-updated_at"]
+    # Allow custom query parameters for timeline endpoint
+    allowed_query_parameters = ["lookback_days"]
     ordering_fields = [
         "provider_uid",
         "uid",
@@ -2239,8 +2241,8 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         return ResourceFilter
 
     def filter_queryset(self, queryset):
-        # Do not apply filters when retrieving specific resource
-        if self.action == "retrieve":
+        # Do not apply filters when retrieving specific resource or timeline
+        if self.action in ["retrieve", "timeline"]:
             return queryset
         return super().filter_queryset(queryset)
 
@@ -2459,6 +2461,115 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         serializer = self.get_serializer(data=result)
         serializer.is_valid(raise_exception=True)
         return Response(serializer.data)
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_name="timeline",
+        url_path=r"timeline(?:/(?P<lookback_days>[0-9]+))?",
+    )
+    def timeline(self, request, pk=None, lookback_days=None):
+        """Get CloudTrail timeline events for a resource.
+
+        Returns a timeline of CloudTrail events showing who modified the resource and when.
+        Only available for AWS resources.
+
+        URL parameters:
+        - lookback_days: Number of days to look back (default: 90, max: 365)
+          Usage: /resources/{id}/timeline or /resources/{id}/timeline/30
+        """
+        resource = self.get_object()
+
+        # Check if this is an AWS resource
+        if resource.provider.provider != "aws":
+            return Response(
+                {
+                    "error": "Timeline is only available for AWS resources",
+                    "detail": f"Resource provider is '{resource.provider.provider}', but timeline requires 'aws'",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Get lookback_days parameter (default: 90, max: 365)
+        try:
+            if lookback_days is None:
+                lookback_days = 90
+            else:
+                lookback_days = int(lookback_days)
+
+            if lookback_days < 1 or lookback_days > 365:
+                return Response(
+                    {"error": "lookback_days must be between 1 and 365"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        except ValueError:
+            return Response(
+                {"error": "lookback_days must be a valid integer"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            # Import CloudTrailTimeline here to avoid loading it globally
+            from api.utils import initialize_prowler_provider
+            from prowler.providers.aws.lib.cloudtrail_timeline.cloudtrail_timeline import (
+                CloudTrailTimeline,
+            )
+
+            # Initialize Prowler AWS provider (this handles credentials and session)
+            prowler_provider = initialize_prowler_provider(resource.provider)
+
+            # Get the boto3 session from the Prowler provider
+            session = prowler_provider._session.current_session
+
+            # Create CloudTrail timeline service
+            timeline_service = CloudTrailTimeline(
+                session=session, lookback_days=lookback_days
+            )
+
+            # Get timeline events
+            events = timeline_service.get_resource_timeline(
+                resource_id=resource.uid,
+                resource_arn=resource.uid,  # The uid should contain the ARN
+                region=resource.region,
+            )
+
+            return Response(
+                {
+                    "resource_id": resource.uid,
+                    "resource_name": resource.name,
+                    "resource_type": resource.type,
+                    "region": resource.region,
+                    "lookback_days": lookback_days,
+                    "event_count": len(events),
+                    "events": events,
+                }
+            )
+
+        except ImportError as e:
+            return Response(
+                {"error": f"CloudTrail timeline module not available: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+        except NoCredentialsError:
+            return Response(
+                {"error": "AWS credentials not found for this provider"},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+        except ClientError as e:
+            error_code = e.response.get("Error", {}).get("Code", "Unknown")
+            error_message = e.response.get("Error", {}).get("Message", str(e))
+            return Response(
+                {"error": f"AWS API error: {error_code}", "detail": error_message},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except Exception as e:
+            logger.error(
+                f"Error retrieving CloudTrail timeline: {str(e)}", exc_info=True
+            )
+            return Response(
+                {"error": f"Failed to retrieve timeline: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
 
 @extend_schema_view(
