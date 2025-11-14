@@ -1,0 +1,38 @@
+api:
+  envFrom:
+    - secretRef:
+        name: db-credentials
+    - secretRef:
+        name: prowler-django-secrets
+
+celeryWorker:
+  envFrom:
+    - secretRef:
+        name: db-credentials
+    - secretRef:
+        name: prowler-django-secrets
+
+celeryBeat:
+  envFrom:
+    - secretRef:
+        name: db-credentials
+    - secretRef:
+        name: prowler-django-secrets
+
+django:
+  enabled: true
+
+extraObjects:
+  - apiVersion: v1
+    kind: Secret
+    metadata:
+      name: db-credentials
+    type: Opaque
+    data:
+      POSTGRES_HOST: cG9zdGdyZXMtcG9zdGdyZXNxbA== #postgres-postgresql
+      POSTGRES_PORT: NTQzMg== #5432
+      POSTGRES_ADMIN_USER: cHJvd2xlcg== #prowler
+      POSTGRES_ADMIN_PASSWORD: cG9zdGdyZXM= #postgres
+      POSTGRES_USER: cHJvd2xlcg== #prowler
+      POSTGRES_PASSWORD: cG9zdGdyZXM= #postgres
+      POSTGRES_DB: cHJvd2xlcl9kYg== #prowler_db
