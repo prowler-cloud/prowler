@@ -36,6 +36,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
     Code based on Cartography version 0.117.0, specifically on `cartography.cli.main`, `cartography.cli.CLI.main`,
     `cartography.sync.run_with_config` and `cartography.sync.Sync.run`.
     """
+    ingestion_exceptions = {}  # This will hold any exceptions raised during ingestion
 
     # Prowler necessary objects
     with rls_transaction(tenant_id):
@@ -46,6 +47,10 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             id=Subquery(provider_id_subquery)
         )
         prowler_sdk_provider = initialize_prowler_provider(prowler_api_provider)
+
+    # If the provider is still not supported, just return the current `ingestion_exceptions`, that is empty
+    if prowler_api_provider.provider not in CARTOGRAPHY_INGESTION_FUNCTIONS:
+        return ingestion_exceptions
 
     # Attributes `neo4j_user` and `neo4j_password` are not really needed in this config object
     cartography_config = CartographyConfig(
@@ -60,7 +65,6 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         tenant_id, scan_id, task_id, prowler_api_provider.id, cartography_config
     )
 
-    ingestion_exceptions = {}
     try:
         logger.info(
             f"Creating Neo4j database {cartography_config.neo4j_database} for tenant {prowler_api_provider.tenant_id}"
@@ -69,7 +73,8 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         db_utils.update_attack_paths_scan_progress(attack_paths_scan, 1)
 
         logger.info(
-            f"Starting Cartography ({attack_paths_scan.id}) for {prowler_api_provider.provider.upper()} provider {prowler_api_provider.id}"
+            f"Starting Cartography ({attack_paths_scan.id}) for "
+            f"{prowler_api_provider.provider.upper()} provider {prowler_api_provider.id}"
         )
         with graph_database.get_session(
             cartography_config.neo4j_database
@@ -97,7 +102,8 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             prowler.analysis(neo4j_session, prowler_api_provider, cartography_config)
 
         logger.info(
-            f"Completed Cartography ({attack_paths_scan.id}) for {prowler_api_provider.provider.upper()} provider {prowler_api_provider.id}"
+            f"Completed Cartography ({attack_paths_scan.id}) for "
+            f"{prowler_api_provider.provider.upper()} provider {prowler_api_provider.id}"
         )
         db_utils.finish_attack_paths_scan(
             attack_paths_scan, StateChoices.COMPLETED, ingestion_exceptions

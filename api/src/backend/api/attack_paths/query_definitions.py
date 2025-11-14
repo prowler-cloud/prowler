@@ -72,6 +72,12 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                     description="Full identifier of the EC2 instance, e.g. i-0abc123456789def0.",
                     placeholder="i-0abc123456789def0",
                 ),
+                AttackPathsQueryParameterDefinition(
+                    name="security_group_id",
+                    label="Security Group ID",
+                    description="Full identifier of the security group, e.g. sg-0abc123456789def0.",
+                    placeholder="sg-0abc123456789def0",
+                ),
             ],
         ),
         AttackPathsQueryDefinition(
