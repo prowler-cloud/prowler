@@ -16,7 +16,8 @@ Prowler for Google Cloud requires the following permissions:
 ### IAM Roles
 - **Viewer (`roles/viewer`)** – Must be granted at the **project, folder, or organization** level to allow scanning of target projects.
 - **Service Usage Consumer (`roles/serviceusage.serviceUsageConsumer`)** IAM Role – Required for resource scanning.
-- **Custom `ProwlerRole` (recommended)** – Include granular permissions that might be missing from the basic Reader role. At minimum, add `storage.buckets.getIamPolicy` so Prowler can inspect Cloud Storage IAM policies when evaluating relevant checks.
+- **Custom `ProwlerRole`** – Include granular permissions that are not included in the Viewer role:
+    - `storage.buckets.getIamPolicy`
 
 ### Project-Level Settings
 
