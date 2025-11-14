@@ -413,9 +413,7 @@ class Entra(M365Service):
                             True if (user.on_premises_sync_enabled) else False
                         ),
                         directory_roles_ids=user_roles_map.get(user.id, []),
-                        is_mfa_capable=(
-                            registration_details.get(user.id, False)
-                        ),
+                        is_mfa_capable=(registration_details.get(user.id, False)),
                         account_enabled=not self.user_accounts_status.get(
                             user.id, {}
                         ).get("AccountDisabled", False),
