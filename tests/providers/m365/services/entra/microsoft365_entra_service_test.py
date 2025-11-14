@@ -401,10 +401,14 @@ class Test_Entra_Service:
             value=[
                 SimpleNamespace(id="user-1", is_mfa_capable=True),
                 SimpleNamespace(id="user-6", is_mfa_capable=True),
-            ]
+            ],
+            odata_next_link=None,
         )
         registration_details_builder = SimpleNamespace(
-            get=AsyncMock(return_value=registration_details_response)
+            get=AsyncMock(return_value=registration_details_response),
+            with_url=MagicMock(
+                return_value=SimpleNamespace(get=AsyncMock(return_value=None))
+            ),
         )
         reports_builder = SimpleNamespace(
             authentication_methods=SimpleNamespace(
@@ -429,3 +433,44 @@ class Test_Entra_Service:
         assert users["user-6"].account_enabled is False
         assert users["user-1"].is_mfa_capable is True
         assert users["user-2"].is_mfa_capable is False
+
+    def test__get_user_registration_details_handles_pagination(self):
+        entra_service = Entra.__new__(Entra)
+
+        registration_response_page_one = SimpleNamespace(
+            value=[
+                SimpleNamespace(id="user-1", is_mfa_capable=True),
+            ],
+            odata_next_link="next-link",
+        )
+        registration_response_page_two = SimpleNamespace(
+            value=[
+                SimpleNamespace(id="user-2", is_mfa_capable=False),
+            ],
+            odata_next_link=None,
+        )
+
+        registration_builder_next = SimpleNamespace(
+            get=AsyncMock(return_value=registration_response_page_two)
+        )
+        registration_builder = SimpleNamespace(
+            get=AsyncMock(return_value=registration_response_page_one),
+            with_url=MagicMock(return_value=registration_builder_next),
+        )
+
+        entra_service.client = SimpleNamespace(
+            reports=SimpleNamespace(
+                authentication_methods=SimpleNamespace(
+                    user_registration_details=registration_builder
+                )
+            )
+        )
+
+        registration_details = asyncio.run(
+            entra_service._get_user_registration_details()
+        )
+
+        assert registration_details == {"user-1": True, "user-2": False}
+        registration_builder.get.assert_awaited()
+        registration_builder.with_url.assert_called_once_with("next-link")
+        registration_builder_next.get.assert_awaited()

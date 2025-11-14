@@ -402,18 +402,7 @@ class Entra(M365Service):
                 for member in members:
                     user_roles_map.setdefault(member.id, []).append(role_template_id)
 
-            try:
-                registration_details_list = (
-                    await self.client.reports.authentication_methods.user_registration_details.get()
-                )
-                registration_details = {
-                    detail.id: detail for detail in registration_details_list.value
-                }
-            except Exception as error:
-                logger.error(
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
-                registration_details = {}
+            registration_details = await self._get_user_registration_details()
 
             while users_response:
                 for user in getattr(users_response, "value", []) or []:
@@ -425,9 +414,7 @@ class Entra(M365Service):
                         ),
                         directory_roles_ids=user_roles_map.get(user.id, []),
                         is_mfa_capable=(
-                            registration_details.get(user.id, {}).is_mfa_capable
-                            if registration_details.get(user.id, None) is not None
-                            else False
+                            registration_details.get(user.id, False)
                         ),
                         account_enabled=not self.user_accounts_status.get(
                             user.id, {}
@@ -443,6 +430,42 @@ class Entra(M365Service):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return users
+
+    async def _get_user_registration_details(self):
+        registration_details = {}
+        try:
+            registration_builder = (
+                self.client.reports.authentication_methods.user_registration_details
+            )
+            registration_response = await registration_builder.get()
+
+            while registration_response:
+                for detail in getattr(registration_response, "value", []) or []:
+                    registration_details.update(
+                        {detail.id: getattr(detail, "is_mfa_capable", False)}
+                    )
+
+                next_link = getattr(registration_response, "odata_next_link", None)
+                if not next_link:
+                    break
+                registration_response = await registration_builder.with_url(
+                    next_link
+                ).get()
+
+        except Exception as error:
+            if (
+                error.__class__.__name__ == "ODataError"
+                and error.__dict__.get("response_status_code", None) == 403
+            ):
+                logger.error(
+                    "You need 'Reports.Read.All' permission to access user registration details. It only can be granted through Service Principal authentication."
+                )
+            else:
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+        return registration_details
 
 
 class ConditionalAccessPolicyState(Enum):
