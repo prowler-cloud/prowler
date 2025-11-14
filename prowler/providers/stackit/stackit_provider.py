@@ -271,10 +271,11 @@ class StackitProvider(Provider):
                 from stackit.core.configuration import Configuration
                 from stackit.objectstorage import ApiClient, DefaultApi
 
-                # Create configuration with API token
+                # Create configuration with API token and Object Storage endpoint
                 # Note: project_id is passed to API methods, not to Configuration
                 config = Configuration(
                     service_account_token=api_token,
+                    custom_endpoint="https://objectstorage.api.eu01.stackit.cloud",
                 )
 
                 # Initialize the API client and Object Storage API
