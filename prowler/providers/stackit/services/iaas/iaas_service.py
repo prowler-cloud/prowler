@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
@@ -249,29 +251,35 @@ class SecurityGroupRule(BaseModel):
     Attributes:
         id: The unique identifier of the rule
         direction: The direction of the rule (ingress/egress)
-        protocol: The protocol (tcp/udp/icmp/all)
-        ip_range: The IP range (CIDR notation)
+        protocol: The protocol (tcp/udp/icmp/all) - can be None for some rules
+        ip_range: The IP range (CIDR notation) - can be None for some rules
         port_range_min: The minimum port number
         port_range_max: The maximum port number
     """
 
     id: str
     direction: str
-    protocol: str
-    ip_range: str
-    port_range_min: int = None
-    port_range_max: int = None
+    protocol: Optional[str] = None
+    ip_range: Optional[str] = None
+    port_range_min: Optional[int] = None
+    port_range_max: Optional[int] = None
 
     def is_unrestricted(self) -> bool:
         """Check if the rule allows access from anywhere (0.0.0.0/0 or ::/0)."""
+        if not self.ip_range:
+            return False
         return self.ip_range in ["0.0.0.0/0", "::/0"]
 
     def is_ingress(self) -> bool:
         """Check if the rule is an ingress rule."""
+        if not self.direction:
+            return False
         return self.direction.lower() == "ingress"
 
     def is_tcp(self) -> bool:
         """Check if the rule is TCP protocol."""
+        if not self.protocol:
+            return False
         return self.protocol.lower() in ["tcp", "all"]
 
     def includes_port(self, port: int) -> bool:
