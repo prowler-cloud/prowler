@@ -268,27 +268,38 @@ class StackitProvider(Provider):
 
             # 2) Test connection by attempting to use the StackIT SDK
             try:
+                import os
                 from stackit.core.configuration import Configuration
                 from stackit.objectstorage import DefaultApi
 
-                # Create configuration with API token
-                # Note: project_id is passed to API methods, not to Configuration
-                config = Configuration(
-                    service_account_token=api_token,
-                )
+                # The SDK expects STACKIT_SERVICE_ACCOUNT_TOKEN environment variable
+                # Set it temporarily if not already set
+                original_token = os.environ.get("STACKIT_SERVICE_ACCOUNT_TOKEN")
+                os.environ["STACKIT_SERVICE_ACCOUNT_TOKEN"] = api_token
 
-                # Create DefaultApi client directly with Configuration
-                # DefaultApi takes Configuration directly, not ApiClient
-                client = DefaultApi(config)
+                try:
+                    # Create configuration - it will read from environment variable
+                    # Note: project_id is passed to API methods, not to Configuration
+                    config = Configuration()
 
-                # Test with a simple API call (list buckets)
-                # STACKIT has regions: eu01 (Germany South) and eu02 (Austria West)
-                client.list_buckets(project_id=project_id, region="eu01")
+                    # Create DefaultApi client directly with Configuration
+                    # DefaultApi takes Configuration directly, not ApiClient
+                    client = DefaultApi(config)
 
-                logger.info(
-                    "StackIT test_connection: Successfully connected using StackIT SDK."
-                )
-                return Connection(is_connected=True)
+                    # Test with a simple API call (list buckets)
+                    # STACKIT has regions: eu01 (Germany South) and eu02 (Austria West)
+                    client.list_buckets(project_id=project_id, region="eu01")
+
+                    logger.info(
+                        "StackIT test_connection: Successfully connected using StackIT SDK."
+                    )
+                    return Connection(is_connected=True)
+                finally:
+                    # Restore original environment variable
+                    if original_token is None:
+                        os.environ.pop("STACKIT_SERVICE_ACCOUNT_TOKEN", None)
+                    else:
+                        os.environ["STACKIT_SERVICE_ACCOUNT_TOKEN"] = original_token
             except ImportError as e:
                 error_msg = f"StackIT SDK not available: {e}. Please ensure stackit-core and stackit-objectstorage are installed."
                 logger.error(error_msg)

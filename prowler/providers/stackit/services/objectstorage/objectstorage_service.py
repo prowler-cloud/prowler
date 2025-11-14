@@ -38,19 +38,30 @@ class ObjectStorageService:
         """
         try:
             # Import the StackIT SDK
+            import os
             from stackit.core.configuration import Configuration
             from stackit.objectstorage import DefaultApi
 
-            # Create configuration with API token
-            # Note: project_id is passed to API methods, not to Configuration
-            config = Configuration(
-                service_account_token=self.api_token,
-            )
+            # The SDK expects STACKIT_SERVICE_ACCOUNT_TOKEN environment variable
+            # Set it temporarily if not already set
+            original_token = os.environ.get("STACKIT_SERVICE_ACCOUNT_TOKEN")
+            os.environ["STACKIT_SERVICE_ACCOUNT_TOKEN"] = self.api_token
 
-            # Create DefaultApi client directly with Configuration
-            # DefaultApi takes Configuration directly, not ApiClient
-            client = DefaultApi(config)
-            return client
+            try:
+                # Create configuration - it will read from environment variable
+                # Note: project_id is passed to API methods, not to Configuration
+                config = Configuration()
+
+                # Create DefaultApi client directly with Configuration
+                # DefaultApi takes Configuration directly, not ApiClient
+                client = DefaultApi(config)
+                return client
+            finally:
+                # Restore original environment variable
+                if original_token is None:
+                    os.environ.pop("STACKIT_SERVICE_ACCOUNT_TOKEN", None)
+                else:
+                    os.environ["STACKIT_SERVICE_ACCOUNT_TOKEN"] = original_token
 
         except ImportError as e:
             logger.error(
