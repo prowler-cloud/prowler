@@ -58,6 +58,7 @@ export default async function Findings({
   const uniqueServices = metadataInfoData?.data?.attributes?.services || [];
   const uniqueResourceTypes =
     metadataInfoData?.data?.attributes?.resource_types || [];
+  const uniqueCategories = metadataInfoData?.data?.attributes?.categories || [];
 
   // Extract provider UIDs and details using helper functions
   const providerUIDs = providersData ? extractProviderUIDs(providersData) : [];
@@ -93,6 +94,7 @@ export default async function Findings({
         uniqueRegions={uniqueRegions}
         uniqueServices={uniqueServices}
         uniqueResourceTypes={uniqueResourceTypes}
+        uniqueCategories={uniqueCategories}
       />
       <Spacer y={8} />
       <Suspense key={searchParamsKey} fallback={<SkeletonTableFindings />}>
