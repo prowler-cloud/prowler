@@ -2,102 +2,40 @@
 
 ## Current Status
 
-The StackIT provider has been successfully integrated into Prowler with the following completed items:
+The StackIT provider has been successfully integrated into Prowler with critical security checks!
 
 ### ✅ Completed
 1. Created provider directory structure and core files
 2. Implemented StackITProvider class with API token authentication
 3. Added StackIT arguments (--stackit-api-token, --stackit-project-id)
-4. Created ObjectStorage service with bucket listing and encryption check
-5. Implemented objectstorage_bucket_encryption check
-6. Added CheckReportStackIT model
-7. Registered provider in common/provider.py
-8. Added StackIT support in __main__.py, summary_table.py, and finding.py
-9. Created compliance directory structure
-10. Bumped Python minimum version to 3.10+ to support stackit-core SDK
-11. Added stackit-core and stackit-objectstorage dependencies to pyproject.toml
-12. Fixed SDK imports (DefaultApi instead of ObjectStorageClient)
-13. Fixed Configuration import path (stackit.core.configuration.Configuration)
-14. Fixed Configuration parameters (removed project_id from init)
+4. Added CheckReportStackIT model
+5. Registered provider in common/provider.py
+6. Added StackIT support in __main__.py, summary_table.py, finding.py, and outputs.py
+7. Created compliance directory structure
+8. Bumped Python minimum version to 3.10+ to support stackit-core SDK
+9. Added stackit-core, stackit-iaas, and stackit-objectstorage dependencies to pyproject.toml
+10. Fixed SDK imports (DefaultApi takes Configuration directly)
+11. Fixed Configuration authentication (uses STACKIT_SERVICE_ACCOUNT_TOKEN env var)
+12. Fixed output generation (added StackIT support in stdout_report)
+13. Implemented IaaS service with security group discovery
+14. Implemented 4 critical security group checks:
+    - iaas_security_group_ssh_unrestricted (port 22)
+    - iaas_security_group_rdp_unrestricted (port 3389)
+    - iaas_security_group_database_unrestricted (MySQL, PostgreSQL, MongoDB, Redis, SQL Server, CouchDB)
+    - iaas_security_group_all_traffic_unrestricted (all ports/protocols)
 
-### ❌ Current Issue
+### ✅ Latest Changes (Commit: 4ab5389)
 
-**Error**: `'ApiClient' object has no attribute 'custom_endpoint'`
+**Replaced objectstorage service with iaas service**
+- Removed objectstorage_bucket_encryption check (encryption enabled by default)
+- Created IaaSService class for security group operations
+- Added stackit-iaas>=0.1.0 dependency
+- Implemented 4 CRITICAL severity security group checks
+- All checks focus on ingress TCP rules from 0.0.0.0/0 or ::/0
 
-**Location**: `prowler/providers/stackit/services/objectstorage/objectstorage_service.py:62`
+## Next Steps
 
-**Root Cause**: The ApiClient needs additional configuration or the endpoint needs to be set in the Configuration object before creating the ApiClient.
-
-## Plan for Tomorrow
-
-### 1. Research StackIT SDK Endpoint Configuration
-
-**Goal**: Understand how to properly configure the API endpoint for Object Storage
-
-**Tasks**:
-- [ ] Check if `Configuration` needs `custom_endpoint` parameter set
-- [ ] Research the default endpoint for StackIT Object Storage API
-- [ ] Look at stackit-objectstorage examples in the SDK repository
-- [ ] Check what the `custom_endpoint` should be for Object Storage
-
-**Expected Endpoint Format**: Likely something like:
-- `https://objectstorage.api.eu01.stackit.cloud` or
-- `https://api.stackit.cloud/objectstorage/v1` or
-- Similar pattern based on StackIT API structure
-
-**Investigation Commands**:
-```python
-from stackit.objectstorage import ApiClient
-import inspect
-print(inspect.getsource(ApiClient.__init__))
-```
-
-```python
-from stackit.core.configuration import Configuration
-config = Configuration(service_account_token="dummy")
-print(dir(config))
-print(config.__dict__)
-```
-
-### 2. Fix ApiClient Initialization
-
-**Current Code** (`objectstorage_service.py:39-53`):
-```python
-config = Configuration(
-    service_account_token=self.api_token,
-)
-
-api_client = ApiClient(config)
-client = DefaultApi(api_client)
-```
-
-**Likely Fix Option 1** - Add custom_endpoint to Configuration:
-```python
-config = Configuration(
-    service_account_token=self.api_token,
-    custom_endpoint="https://objectstorage.api.eu01.stackit.cloud",  # TBD: Find correct endpoint
-)
-
-api_client = ApiClient(config)
-client = DefaultApi(api_client)
-```
-
-**Likely Fix Option 2** - Set endpoint on ApiClient:
-```python
-config = Configuration(
-    service_account_token=self.api_token,
-)
-
-api_client = ApiClient(config)
-api_client.configuration.host = "https://objectstorage.api.eu01.stackit.cloud"  # TBD
-client = DefaultApi(api_client)
-```
-
-**Files to Update**:
-- `prowler/providers/stackit/services/objectstorage/objectstorage_service.py:39-53`
-- `prowler/providers/stackit/stackit_provider.py:307-322` (test_connection method)
-
-### 3. Test the Fix
+### 1. Test the IaaS Security Group Checks
 
 **Test Command**:
 ```bash
@@ -105,34 +43,52 @@ prowler stackit --stackit-api-token <token> --stackit-project-id <project-id>
 ```
 
 **Expected Behavior**:
-- No more "custom_endpoint" errors
-- Successfully list buckets from StackIT Object Storage
-- Display encryption status for each bucket
-- Generate findings for buckets without encryption
+- Successfully authenticate with StackIT API
+- Discover security groups in the project
+- Execute all 4 security group checks
+- Generate findings for any insecure rules
 
-### 4. Handle Potential Additional Issues
+### 2. Potential Issues to Watch For
 
-**Possible Next Issues**:
-- API method signature mismatch (e.g., how to call `list_buckets()`)
-- Response parsing issues (buckets attribute structure)
-- Encryption check API method name or parameters
-- Region/location extraction from bucket data
+**Possible Issues**:
+- SDK import errors if `stackit-iaas` package not installed
+- API method signature differences from documentation
+- Response parsing issues (security groups/rules structure)
+- Region parameter requirements
+- Port range handling edge cases
 
-**Debugging Strategy**:
-- Add verbose logging to see API responses
-- Print bucket data structure when received
-- Check SDK documentation for correct API method signatures
+**Debugging Commands**:
+```python
+# Test SDK imports
+from stackit.iaas import DefaultApi
+from stackit.core.configuration import Configuration
 
-### 5. Code Quality Improvements
+# Test API calls
+import os
+os.environ["STACKIT_SERVICE_ACCOUNT_TOKEN"] = "your-token"
+config = Configuration()
+client = DefaultApi(config)
+response = client.list_security_groups(project_id="your-project", region="eu01")
+```
 
-Once the basic functionality works:
+### 3. Future Enhancements
 
-- [ ] Add error handling for specific StackIT API errors
-- [ ] Add retry logic for transient failures
-- [ ] Improve logging messages
-- [ ] Add unit tests for ObjectStorage service
-- [ ] Add integration test example
-- [ ] Update documentation/README
+**Additional Checks to Consider**:
+- iaas_server_public_ip_exposed - Check if VMs have public IPs
+- iaas_network_isolated - Check if networks are properly segmented
+- iaas_volume_encrypted - Check if storage volumes are encrypted
+- iaas_server_backup_enabled - Check if backups are configured
+
+**Multi-Region Support**:
+- Currently hardcoded to "eu01" region
+- Add --stackit-region argument to support eu01/eu02
+- Loop through all regions when discovering resources
+
+**Code Quality Improvements**:
+- Add unit tests for IaaSService
+- Add integration tests with mock API responses
+- Improve error handling for specific API errors
+- Add retry logic for transient failures
 
 ## Key Information
 
