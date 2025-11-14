@@ -2190,6 +2190,10 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
 
         return queryset.select_related("provider", "scan", "task")
 
+    @extend_schema(exclude=True)
+    def create(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="POST")
+
     @action(
         detail=True,
         methods=["get"],
