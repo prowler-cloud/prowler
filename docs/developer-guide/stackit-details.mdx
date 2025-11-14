@@ -52,19 +52,68 @@ The StackIT provider implementation follows the general [Provider structure](/de
 
 ## Authentication
 
-### API Token Generation
+### Service Account Creation and Key Generation
 
-StackIT uses service account tokens for API authentication. To create a service account token:
+StackIT uses service account keys for API authentication. There are two authentication flows available:
 
-1. Navigate to the [StackIT Portal](https://portal.stackit.cloud/)
-2. Select your project
-3. Go to **Service Accounts** in the left sidebar
-4. Click **Create Service Account**
-5. Provide a name and description for the service account
-6. Assign the necessary permissions:
-   - For IaaS security checks: `iaas.viewer` or `project.owner`
-7. Click **Create** and copy the generated API token
-8. **Important**: Save the token securely - it will only be displayed once
+#### Authentication Flow Comparison
+
+| Feature | Key Flow (Recommended) | Token Flow (Deprecated) |
+|---------|----------------------|------------------------|
+| Security | High (short-lived tokens) | Lower (long-lived tokens) |
+| Key Type | RSA key-pair based | Service account token |
+| Status | Recommended | **Deprecated - Removed Dec 17, 2025** |
+
+**Important**: The Token Flow is scheduled for deprecation and will be removed on **December 17, 2025**. Use the Key Flow for all new implementations.
+
+### Creating a Service Account Key (Recommended Method)
+
+#### Method 1: Via StackIT Portal
+
+1. **Navigate to Service Accounts**
+   - Go to the [StackIT Portal](https://portal.stackit.cloud/)
+   - Select your project
+   - Click on **Service Accounts** in the left sidebar
+
+2. **Create or Select Service Account**
+   - If you don't have a service account, click **Create Service Account**
+   - Provide a name and description
+   - Assign necessary permissions:
+     - For IaaS security checks: `iaas.viewer` or `project.owner`
+     - For comprehensive audits: `project.owner`
+
+3. **Generate Service Account Key**
+   - Select your service account
+   - Navigate to **Service Account Keys**
+   - Click **Create key**
+   - Choose one of the following options:
+     - **STACKIT-generated key pair** (Recommended): Let STACKIT automatically generate an RSA key-pair
+     - **User-provided key pair**: Upload your own RSA 2048 public key
+
+4. **Download and Save the Key**
+   - Download the generated service account key file (JSON format)
+   - **Important**: Save the key securely - it contains your private key and will only be available once
+   - Store the key file in a secure location (e.g., `~/.stackit/sa_key.json`)
+
+#### Method 2: Via StackIT CLI
+
+```bash
+# Install STACKIT CLI (if not already installed)
+# Follow instructions at: https://github.com/stackitcloud/stackit-cli
+
+# Create service account key (STACKIT-generated)
+stackit service-account key create --email my-service-account@example.com
+
+# Or create with your own RSA 2048 public key
+# First, generate your RSA key pair:
+openssl genrsa -out private-key.pem 2048
+openssl rsa -in private-key.pem -pubout -out public-key.pem
+
+# Then create the key with your public key:
+stackit service-account key create \
+  --email my-service-account@example.com \
+  --public-key "$(cat public-key.pem)"
+```
 
 ### Finding Your Project ID
 
@@ -74,11 +123,29 @@ Your StackIT project ID is a UUID that can be found:
 2. In the project settings page
 3. Using the StackIT CLI: `stackit project list`
 
-### Authentication Methods
+### Authentication Configuration
 
-StackIT provider supports two authentication methods:
+#### Using Service Account Key File (Key Flow - Recommended)
 
-#### Method 1: Environment Variables (Recommended)
+```bash
+# Set the path to your service account key file
+export STACKIT_SERVICE_ACCOUNT_KEY_PATH="$HOME/.stackit/sa_key.json"
+export STACKIT_PROJECT_ID="12345678-1234-1234-1234-123456789abc"
+
+prowler stackit
+```
+
+Or via command-line arguments:
+
+```bash
+prowler stackit \
+  --stackit-service-account-key-path "$HOME/.stackit/sa_key.json" \
+  --stackit-project-id "12345678-1234-1234-1234-123456789abc"
+```
+
+#### Using Service Account Token (Token Flow - Deprecated)
+
+**⚠️ Warning**: This method is deprecated and will be removed on December 17, 2025.
 
 ```bash
 export STACKIT_SERVICE_ACCOUNT_TOKEN="your-api-token-here"
@@ -87,7 +154,7 @@ export STACKIT_PROJECT_ID="12345678-1234-1234-1234-123456789abc"
 prowler stackit
 ```
 
-#### Method 2: Command-Line Arguments
+Or via command-line arguments:
 
 ```bash
 prowler stackit \
@@ -96,6 +163,25 @@ prowler stackit \
 ```
 
 **Note**: Command-line arguments take precedence over environment variables.
+
+### Credential Lookup Order
+
+The StackIT SDK searches for credentials in the following order:
+
+1. **Explicit configuration** in code (service account key path or token)
+2. **Environment variables**:
+   - `STACKIT_SERVICE_ACCOUNT_KEY_PATH` (Key Flow)
+   - `STACKIT_SERVICE_ACCOUNT_TOKEN` (Token Flow - deprecated)
+   - `STACKIT_PROJECT_ID`
+3. **Credentials file**: `$HOME/.stackit/credentials.json`
+
+Example credentials file format:
+```json
+{
+  "STACKIT_SERVICE_ACCOUNT_KEY_PATH": "/home/user/.stackit/sa_key.json",
+  "STACKIT_PROJECT_ID": "12345678-1234-1234-1234-123456789abc"
+}
+```
 
 ## Configuration
 
