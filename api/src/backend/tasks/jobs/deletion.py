@@ -52,15 +52,16 @@ def delete_provider(tenant_id: str, pk: str):
             raise
 
     # Delete the Attack Paths' Neo4j data related to the provider
-    graph_database.drop_provider_subgraph(
-        instance.tenant_id, instance.provider, instance.uid
-    )
+    try:
+        graph_database.drop_provider_subgraph(instance.tenant_id, instance.provider, instance.uid)
+    except graph_database.GraphDatabaseQueryException as gdb_error:
+        logger.error(f"Error deleting Provider subgraph: {gdb_error}")
+        raise
 
     try:
         with rls_transaction(tenant_id):
             _, provider_summary = instance.delete()
         deletion_summary.update(provider_summary)
-
     except DatabaseError as db_error:
         logger.error(f"Error deleting Provider: {db_error}")
         raise
@@ -85,9 +86,11 @@ def delete_tenant(pk: str):
         summary = delete_provider(pk, provider.id)
         deletion_summary.update(summary)
 
-    graph_database.drop_tenant_database(
-        tenant_id=pk
-    )  # Delete the Attack Paths' Neo4j database related to the tenant
+    try:
+        graph_database.drop_tenant_database(tenant_id=pk)
+    except graph_database.GraphDatabaseQueryException as gdb_error:
+        logger.error(f"Error deleting Tenant graph database: {gdb_error}")
+        raise
 
     Tenant.objects.using(MainRouter.admin_db).filter(id=pk).delete()
 

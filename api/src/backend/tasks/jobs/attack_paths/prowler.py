@@ -86,6 +86,14 @@ CLEANUP_STATEMENT = """
 """
 
 
+def get_root_node_label(provider_type: str) -> str:
+    return ROOT_NODE_LABELS.get(provider_type, "UnknownProviderAccount")
+
+
+def get_node_uid_field(provider_type: str) -> str:
+    return NODE_UID_FIELDS.get(provider_type, "UnknownProviderUID")
+
+
 def create_indexes(neo4j_session: neo4j.Session) -> None:
     """
     Code based on Cartography version 0.117.0, specifically on `cartography.intel.create_indexes.run`.
@@ -167,8 +175,8 @@ def load_findings(
     config: CartographyConfig,
 ) -> None:
     replacements = {
-        "__ROOT_NODE_LABEL__": ROOT_NODE_LABELS[prowler_api_provider.provider],
-        "__NODE_UID_FIELD__": NODE_UID_FIELDS[prowler_api_provider.provider],
+        "__ROOT_NODE_LABEL__": get_root_node_label(prowler_api_provider.provider),
+        "__NODE_UID_FIELD__": get_node_uid_field(prowler_api_provider.provider),
     }
     query = INSERT_STATEMENT_TEMPLATE
     for replace_key, replace_value in replacements.items():

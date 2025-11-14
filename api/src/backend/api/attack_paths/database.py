@@ -7,8 +7,9 @@ from typing import Any, Iterator
 import neo4j
 
 from django.conf import settings
+import neo4j.exceptions
 
-from tasks.jobs.attack_paths import ROOT_NODE_LABELS
+from tasks.jobs.attack_paths import get_root_node_label
 
 # Without this Celery goes crazy with Neo4j logging
 logging.getLogger("neo4j").setLevel(logging.ERROR)
@@ -67,7 +68,7 @@ def get_session(database: str | None = None) -> Iterator[neo4j.Session]:
 
 
 def run_query(
-    query: str, parameters: dict[str, Any] | None, database: str | None
+    query: str, parameters: dict[str, Any] | None = None, database: str | None = None
 ) -> neo4j.Result:
     try:
         with get_session(database) as session:
@@ -79,7 +80,7 @@ def run_query(
             return result
 
     except neo4j.exceptions.Neo4jError as exc:
-        raise GraphDatabaseQueryException from exc
+        raise GraphDatabaseQueryException(message=exc.message, code=exc.code) from exc
 
 
 def create_database(database: str) -> None:
@@ -89,16 +90,14 @@ def create_database(database: str) -> None:
     )
 
 
-def drop_database(database: str) -> None:
-    run_query(
-        query="DROP DATABASE $database IF EXISTS DESTROY DATA",
-        parameters={"database": database},
-    )
+def drop_database(database: str):
+    # Because we use hyphens in database names, we need to use backticks and not parameters
+    run_query(query=f"DROP DATABASE `{database}` IF EXISTS DESTROY DATA")
 
 
-def drop_subgraph(database: str, root_node_label: str, root_node_id: str) -> None:
+def drop_subgraph(database: str, root_node_label: str, root_node_id: str) -> int:
     query = """
-        MATCH (a:__ROOT_NODE_LABEL__ {id: $root_node_id}})
+        MATCH (a:__ROOT_NODE_LABEL__ {id: $root_node_id})
         CALL apoc.path.subgraphNodes(a, {})
         YIELD node
         DETACH DELETE node
@@ -108,7 +107,15 @@ def drop_subgraph(database: str, root_node_label: str, root_node_id: str) -> Non
     result = run_query(
         query=query, parameters={"root_node_id": root_node_id}, database=database
     )
-    return result.single()["deleted_nodes_count"]
+
+    try:
+        deleted_nodes_count = result.single()["deleted_nodes_count"]
+
+    except neo4j.exceptions.ResultConsumedError:
+        deleted_nodes_count = 0
+
+    return deleted_nodes_count
+
 
 
 # Neo4j functions related to Prowler + Cartography
@@ -119,23 +126,32 @@ def get_tenant_database_name(tenant_id: str) -> str:
     return f"{prefix}{tenant_id}"
 
 
-def drop_tenant_database(tenant_id: str) -> None:
+def drop_tenant_database(tenant_id: str) -> bool:
     database = get_tenant_database_name(tenant_id)
-    drop_database(database)
+    return drop_database(database)
 
 
 def drop_provider_subgraph(
     tenant_id: str, provider_type: str, provider_uid: str
-) -> None:
+) -> int:
     database = get_tenant_database_name(tenant_id)
-    root_node_label = ROOT_NODE_LABELS[provider_type]
+    root_node_label = get_root_node_label(provider_type)
     root_node_id = provider_uid
 
-    drop_subgraph(database, root_node_label, root_node_id)
+    return drop_subgraph(database, root_node_label, root_node_id)
 
 
 # Exceptions
 
 
 class GraphDatabaseQueryException(Exception):
-    pass
+    def __init__(self, message: str, code: str | None = None) -> None:
+        super().__init__(message)
+        self.message = message
+        self.code = code
+
+    def __str__(self) -> str:
+        if self.code:
+            return f"{self.code}: {self.message}"
+
+        return self.message

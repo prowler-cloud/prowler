@@ -172,7 +172,6 @@ def sync_aws_account(
 
     failed_syncs = {}
 
-    requested_syncs = ["iam", "iaminstanceprofiles", "s3", "ecs"]
     for func_name in requested_syncs:
         if func_name in cartography_aws.RESOURCE_FUNCTIONS:
             logger.info(
