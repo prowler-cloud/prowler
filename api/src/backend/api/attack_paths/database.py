@@ -63,36 +63,27 @@ def close_driver() -> None:  # TODO: Use it
 
 @contextmanager
 def get_session(database: str | None = None) -> Iterator[neo4j.Session]:
-    with get_driver().session(database=database) as session:
-        yield session
-
-
-def run_query(
-    query: str,
-    parameters: dict[str, Any] | None = None,
-    database: str | None = None,
-    as_graph: bool = False,
-) -> neo4j.Result:
     try:
-        with get_session(database) as session:
-            result = session.run(query=query, parameters=parameters)
-            return result.graph() if as_graph else result
-            # Getting the `graph()` outside the session fails
+        with get_driver().session(database=database) as session:
+            yield session
 
     except neo4j.exceptions.Neo4jError as exc:
-        raise GraphDatabaseQueryException(message=exc.message, code=exc.code) from exc
+        raise GraphDatabaseQueryException(message=exc.message, code=exc.code)
 
 
 def create_database(database: str) -> None:
-    run_query(
-        query="CREATE DATABASE $database IF NOT EXISTS",
-        parameters={"database": database},
-    )
+    query = "CREATE DATABASE $database IF NOT EXISTS"
+    parameters = {"database": database}
+
+    with get_session() as session:
+        session.run(query, parameters)
 
 
 def drop_database(database: str):
-    # Because we use hyphens in database names, we need to use backticks and not parameters
-    run_query(query=f"DROP DATABASE `{database}` IF EXISTS DESTROY DATA")
+    query = f"DROP DATABASE `{database}` IF EXISTS DESTROY DATA"
+
+    with get_session() as session:
+        session.run(query)
 
 
 def drop_subgraph(database: str, root_node_label: str, root_node_id: str) -> int:
@@ -103,18 +94,16 @@ def drop_subgraph(database: str, root_node_label: str, root_node_id: str) -> int
         DETACH DELETE node
         RETURN COUNT(node) AS deleted_nodes_count
     """.replace("__ROOT_NODE_LABEL__", root_node_label)
+    parameters = {"root_node_id": root_node_id}
 
-    result = run_query(
-        query=query, parameters={"root_node_id": root_node_id}, database=database
-    )
+    with get_session(database) as session:
+        result = session.run(query, parameters)
 
-    try:
-        deleted_nodes_count = result.single()["deleted_nodes_count"]
+        try:
+            return result.single()["deleted_nodes_count"]
 
-    except neo4j.exceptions.ResultConsumedError:
-        deleted_nodes_count = 0
-
-    return deleted_nodes_count
+        except neo4j.exceptions.ResultConsumedError:
+            return 0  # As there are no nodes to delete, the result is empty
 
 
 # Neo4j functions related to Prowler + Cartography

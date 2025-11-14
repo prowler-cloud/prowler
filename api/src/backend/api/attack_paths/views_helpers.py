@@ -1,10 +1,9 @@
 import logging
 
-from math import log
 from typing import Any
 
 from rest_framework import status
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import APIException, ValidationError
 from rest_framework_json_api.views import Response
 
 from api.attack_paths import database as graph_database, AttackPathsQueryDefinition
@@ -67,20 +66,13 @@ def execute_attack_paths_query(
     parameters: dict[str, Any],
 ) -> dict[str, Any]:
     try:
-        graph = graph_database.run_query(
-            definition.cypher,
-            parameters,
-            attack_paths_scan.graph_database,
-            as_graph=True,
-        )
-        return _serialize_graph(graph)
+        with graph_database.get_session(attack_paths_scan.graph_database) as session:
+            result = session.run(definition.cypher, parameters)
+            return _serialize_graph(result.graph())
 
     except graph_database.GraphDatabaseQueryException as exc:
         logger.error(f"Query failed for Attack Paths query `{definition.id}`: {exc}")
-        return Response(
-            {"detail": "Attack Paths query execution failed due to a database error"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
+        raise APIException("Attack Paths query execution failed due to a database error")
 
 
 def _serialize_graph(graph):

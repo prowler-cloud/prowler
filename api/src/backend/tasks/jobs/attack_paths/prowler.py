@@ -196,10 +196,7 @@ def load_findings(
             f"Loading findings batch {i // BATCH_SIZE + 1} / {(total_length + BATCH_SIZE - 1) // BATCH_SIZE}"
         )
 
-        neo4j_session.run(
-            query=query,
-            parameters=parameters,
-        )
+        neo4j_session.run(query, parameters)
 
 
 def cleanup_findings(
@@ -218,10 +215,7 @@ def cleanup_findings(
     while deleted_count > 0:
         logger.info(f"Cleaning findings batch {batch}")
 
-        result = neo4j_session.run(
-            query=CLEANUP_STATEMENT,
-            parameters=parameters,
-        )
+        result = neo4j_session.run(CLEANUP_STATEMENT, parameters)
 
         deleted_count = result.single().get("deleted_findings_count", 0)
         batch += 1
