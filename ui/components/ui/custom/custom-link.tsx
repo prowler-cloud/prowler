@@ -33,13 +33,10 @@ export const CustomLink = React.forwardRef<HTMLAnchorElement, CustomLinkProps>(
         ref={ref}
         href={href}
         scroll={scroll}
-        className={cn(
-          `text-${size} text-primary font-medium text-nowrap break-all decoration-1 hover:underline`,
-          className,
-        )}
         aria-label={ariaLabel}
         target={target}
-        rel="noopener noreferrer"
+        rel={target === "_blank" ? "noopener noreferrer" : undefined}
+        className={cn(`text-${size} text-button-tertiary p-0`, className)}
         {...props}
       >
         {children}

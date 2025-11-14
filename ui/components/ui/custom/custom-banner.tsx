@@ -1,8 +1,9 @@
 "use client";
 
 import { InfoIcon } from "lucide-react";
+import Link from "next/link";
 
-import { CustomButton } from ".";
+import { Button, Card, CardContent } from "@/components/shadcn";
 
 interface CustomBannerProps {
   title: string;
@@ -18,30 +19,31 @@ export const CustomBanner = ({
   buttonLink = "/",
 }: CustomBannerProps) => {
   return (
-    <div className="border-system-warning-light shadow-box dark:bg-prowler-blue-400 flex items-center justify-start rounded-lg border px-4 py-6">
-      <div className="flex w-full flex-col items-start gap-6 md:flex-row md:items-center md:justify-between md:gap-8">
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-start gap-3">
-            <InfoIcon className="h-6 w-6 text-gray-800 dark:text-white" />
-            <h2 className="text-lg font-bold text-gray-800 dark:text-white">
-              {title}
-            </h2>
+    <Card variant="inner">
+      <CardContent className="flex items-center justify-start">
+        <div className="flex w-full flex-col items-start gap-6 md:flex-row md:items-center md:justify-between md:gap-8">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-start gap-3">
+              <InfoIcon className="text-bg-data-info h-6 w-6" />
+              <h2 className="text-lg font-bold text-gray-800 dark:text-white">
+                {title}
+              </h2>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              {message}
+            </p>
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-300">{message}</p>
+          <div className="w-full md:w-auto md:shrink-0">
+            <Button
+              asChild
+              className="w-full justify-center md:w-fit"
+              size="default"
+            >
+              <Link href={buttonLink}>{buttonLabel}</Link>
+            </Button>
+          </div>
         </div>
-        <div className="w-full md:w-auto md:shrink-0">
-          <CustomButton
-            asLink={buttonLink}
-            className="w-full justify-center md:w-fit"
-            ariaLabel={buttonLabel}
-            variant="solid"
-            color="action"
-            size="md"
-          >
-            {buttonLabel}
-          </CustomButton>
-        </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };

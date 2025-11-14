@@ -22,6 +22,11 @@ export default async function NewOverviewPage({
 }: {
   searchParams: Promise<SearchParamsProps>;
 }) {
+  //if cloud env throw a 500 err
+  if (process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true") {
+    throw new Error("500");
+  }
+
   const resolvedSearchParams = await searchParams;
   const providersData = await getProviders({ page: 1, pageSize: 200 });
 

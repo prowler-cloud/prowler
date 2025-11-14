@@ -53,7 +53,9 @@ const FindingDetailsCell = ({ row }: { row: any }) => {
   return (
     <div className="flex justify-center">
       <TriggerSheet
-        triggerComponent={<InfoIcon className="text-primary" size={16} />}
+        triggerComponent={
+          <InfoIcon className="text-button-primary" size={16} />
+        }
         title="Finding Details"
         description="View the finding details"
         defaultOpen={isOpen}

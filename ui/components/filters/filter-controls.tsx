@@ -55,18 +55,15 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
         {regions && <CustomRegionSelection />}
         {accounts && <CustomAccountSelection />}
         {mutedFindings && <CustomCheckboxMutedFindings />}
-        {!customFilters && hasFilters && showClearButton && (
-          <ClearFiltersButton />
+
+        {hasFilters && showClearButton && (
+          <div className="flex flex-1 justify-end">
+            <ClearFiltersButton />
+          </div>
         )}
       </div>
       <Spacer y={8} />
-      {customFilters && (
-        <DataTableFilterCustom
-          filters={customFilters}
-          showClearButton={showClearButton}
-          defaultOpen
-        />
-      )}
+      {customFilters && <DataTableFilterCustom filters={customFilters} />}
     </div>
   );
 };

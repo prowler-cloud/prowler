@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import React from "react";
 
+import { Button } from "@/components/shadcn/button/button";
+
 import { InfoIcon } from "../icons/Icons";
-import { CustomButton } from "../ui/custom";
 
 export const NoScansAvailable = () => {
   return (
@@ -23,16 +25,11 @@ export const NoScansAvailable = () => {
                 </p>
               </div>
             </div>
-            <CustomButton
-              asLink="/scans"
-              className="shrink-0"
-              ariaLabel="Go to Scans page"
-              variant="solid"
-              color="action"
-              size="sm"
-            >
-              Go to Scans
-            </CustomButton>
+            <Button asChild variant="secondary" size="sm" className="shrink-0">
+              <Link href="/scans" aria-label="Go to Scans page">
+                Go to Scans
+              </Link>
+            </Button>
           </div>
         </div>
       </div>

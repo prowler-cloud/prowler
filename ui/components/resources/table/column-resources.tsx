@@ -43,7 +43,9 @@ const ResourceDetailsCell = ({ row }: { row: any }) => {
   return (
     <div className="flex w-9 items-center justify-center">
       <TriggerSheet
-        triggerComponent={<InfoIcon className="text-primary" size={16} />}
+        triggerComponent={
+          <InfoIcon className="text-button-primary" size={16} />
+        }
         title="Resource Details"
         description="View the Resource details"
         defaultOpen={isOpen}

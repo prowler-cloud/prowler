@@ -1,11 +1,11 @@
 "use client";
 
-import { Card, CardBody } from "@heroui/card";
-import { Divider } from "@heroui/divider";
 import { Snippet } from "@heroui/snippet";
+import Link from "next/link";
 
 import { AddIcon } from "../icons";
-import { CustomButton } from "../ui/custom";
+import { Button, Card, CardContent, CardHeader } from "../shadcn";
+import { Separator } from "../shadcn/separator/separator";
 import { DateWithTime } from "../ui/entities";
 
 interface InvitationDetailsProps {
@@ -53,17 +53,9 @@ export const InvitationDetails = ({ attributes }: InvitationDetailsProps) => {
 
   return (
     <div className="flex flex-col gap-x-4 gap-y-8">
-      <Card
-        isBlurred
-        className="bg-background/60 dark:bg-prowler-blue-800 border-none"
-        shadow="sm"
-      >
-        <CardBody>
-          <h2 className="text-md text-foreground/90 font-bold">
-            Invitation details
-          </h2>
-          <Divider className="my-4" />
-
+      <Card variant="base" padding="lg">
+        <CardHeader>Invitation details</CardHeader>
+        <CardContent>
           <div className="flex flex-col gap-3">
             <InfoField label="Email">{attributes.email}</InfoField>
 
@@ -88,8 +80,8 @@ export const InvitationDetails = ({ attributes }: InvitationDetailsProps) => {
             </div>
           </div>
 
-          <Divider className="my-4" />
-          <h3 className="text-small text-foreground/90 pb-2 font-bold">
+          <Separator className="my-4" />
+          <h3 className="pb-2 text-sm font-bold text-gray-900 dark:text-gray-100">
             Share this link with the user:
           </h3>
 
@@ -102,24 +94,20 @@ export const InvitationDetails = ({ attributes }: InvitationDetailsProps) => {
               variant="bordered"
               className="overflow-hidden bg-gray-50 py-1 text-ellipsis whitespace-nowrap dark:bg-slate-800"
             >
-              <p className="no-scrollbar text-small w-fit overflow-hidden overflow-x-scroll text-ellipsis whitespace-nowrap">
+              <p className="no-scrollbar w-fit overflow-hidden overflow-x-scroll text-sm text-ellipsis whitespace-nowrap">
                 {invitationLink}
               </p>
             </Snippet>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
       <div className="flex w-full items-center justify-end">
-        <CustomButton
-          asLink="/invitations/"
-          ariaLabel="Send Invitation"
-          variant="solid"
-          color="action"
-          size="md"
-          endContent={<AddIcon size={20} />}
-        >
-          Back to Invitations
-        </CustomButton>
+        <Button asChild size="default" className="gap-2">
+          <Link href="/invitations/">
+            Back to Invitations
+            <AddIcon size={20} />
+          </Link>
+        </Button>
       </div>
     </div>
   );

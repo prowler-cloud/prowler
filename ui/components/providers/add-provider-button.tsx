@@ -1,19 +1,18 @@
 "use client";
 
+import Link from "next/link";
+
+import { Button } from "@/components/shadcn";
+
 import { AddIcon } from "../icons";
-import { CustomButton } from "../ui/custom";
 
 export const AddProviderButton = () => {
   return (
-    <CustomButton
-      asLink="/providers/connect-account"
-      ariaLabel="Add Cloud Provider"
-      variant="solid"
-      color="action"
-      size="md"
-      endContent={<AddIcon size={20} />}
-    >
-      Add Cloud Provider
-    </CustomButton>
+    <Button asChild>
+      <Link href="/providers/connect-account">
+        Add Cloud Provider
+        <AddIcon size={20} />
+      </Link>
+    </Button>
   );
 };

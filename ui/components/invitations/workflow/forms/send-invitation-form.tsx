@@ -8,8 +8,9 @@ import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { sendInvite } from "@/actions/invitations/invitation";
+import { Button } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
-import { CustomButton, CustomInput } from "@/components/ui/custom";
+import { CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { ApiError } from "@/types";
 
@@ -145,18 +146,22 @@ export const SendInvitationForm = ({
 
         {/* Submit Button */}
         <div className="flex w-full justify-end sm:gap-6">
-          <CustomButton
+          <Button
             type="submit"
-            ariaLabel="Send Invitation"
             className="w-1/2"
-            variant="solid"
-            color="action"
+            variant="default"
             size="lg"
-            isLoading={isLoading}
-            startContent={!isLoading && <SaveIcon size={24} />}
+            disabled={isLoading}
           >
-            {isLoading ? <>Loading</> : <span>Send Invitation</span>}
-          </CustomButton>
+            {isLoading ? (
+              <>Loading</>
+            ) : (
+              <>
+                <SaveIcon size={20} />
+                <span>Send Invitation</span>
+              </>
+            )}
+          </Button>
         </div>
       </form>
     </Form>

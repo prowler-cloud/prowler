@@ -1,5 +1,12 @@
-import { Select, SelectItem } from "@heroui/select";
+"use client";
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/shadcn/select/select";
 import { ProviderType, ScanProps } from "@/types";
 
 import { ComplianceScanInfo } from "./compliance-scan-info";
@@ -21,37 +28,34 @@ export const ScanSelector = ({
   selectedScanId,
   onSelectionChange,
 }: SelectScanComplianceDataProps) => {
+  const selectedScan = scans.find((item) => item.id === selectedScanId);
+
   return (
     <Select
-      aria-label="Select a Scan"
-      placeholder="Select a scan"
-      classNames={{
-        trigger: "w-full min-w-[365px] rounded-lg",
-        popoverContent: "rounded-lg",
-      }}
-      size="lg"
-      labelPlacement="outside"
-      selectedKeys={new Set([selectedScanId])}
-      onSelectionChange={(keys) => {
-        const newSelectedId = Array.from(keys)[0] as string;
-        if (newSelectedId && newSelectedId !== selectedScanId) {
-          onSelectionChange(newSelectedId);
+      value={selectedScanId}
+      onValueChange={(value) => {
+        if (value && value !== selectedScanId) {
+          onSelectionChange(value);
         }
       }}
-      renderValue={() => {
-        const selectedItem = scans.find((item) => item.id === selectedScanId);
-        return selectedItem ? (
-          <ComplianceScanInfo scan={selectedItem} />
-        ) : (
-          "Select a scan"
-        );
-      }}
+      ariaLabel="Select a Scan"
     >
-      {scans.map((scan) => (
-        <SelectItem key={scan.id} textValue={scan.attributes.name || "- -"}>
-          <ComplianceScanInfo scan={scan} />
-        </SelectItem>
-      ))}
+      <SelectTrigger className="w-full min-w-[365px]">
+        <SelectValue placeholder="Select a scan">
+          {selectedScan ? (
+            <ComplianceScanInfo scan={selectedScan} />
+          ) : (
+            "Select a scan"
+          )}
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        {scans.map((scan) => (
+          <SelectItem key={scan.id} value={scan.id}>
+            <ComplianceScanInfo scan={scan} />
+          </SelectItem>
+        ))}
+      </SelectContent>
     </Select>
   );
 };

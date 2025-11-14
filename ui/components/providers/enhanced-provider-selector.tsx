@@ -1,12 +1,12 @@
 "use client";
 
-import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import { Select, SelectItem } from "@heroui/select";
 import { CheckSquare, Search, Square } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Control } from "react-hook-form";
 
+import { Button } from "@/components/shadcn";
 import { FormControl, FormField, FormMessage } from "@/components/ui/form";
 import { ProviderProps, ProviderType } from "@/types/providers";
 
@@ -128,17 +128,15 @@ export const EnhancedProviderSelector = ({
                     </span>
                     <Button
                       size="sm"
-                      variant="light"
-                      onPress={handleSelectAll}
-                      startContent={
-                        isAllSelected ? (
-                          <CheckSquare size={16} />
-                        ) : (
-                          <Square size={16} />
-                        )
-                      }
+                      variant="ghost"
+                      onClick={handleSelectAll}
                       className="h-7 text-xs"
                     >
+                      {isAllSelected ? (
+                        <CheckSquare size={16} />
+                      ) : (
+                        <Square size={16} />
+                      )}
                       {isAllSelected ? "Deselect All" : "Select All"}
                     </Button>
                   </div>

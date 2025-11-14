@@ -441,30 +441,30 @@ export const SendToJiraModal = ({
 
           {/* No integrations or none connected message */}
           {!isFetchingIntegrations &&
-            (integrations.length === 0 || !hasConnectedIntegration) && (
-              <CustomBanner
-                title="Jira integration is not available"
-                message="Please add or connect an integration first"
-                buttonLabel="Configure"
-                buttonLink="/integrations/jira"
-              />
-            )}
-
-          <FormButtons
-            setIsOpen={setOpenForFormButtons}
-            onCancel={() => onOpenChange(false)}
-            submitText="Send to Jira"
-            cancelText="Cancel"
-            loadingText="Sending..."
-            isDisabled={
-              !form.formState.isValid ||
-              form.formState.isSubmitting ||
-              isFetchingIntegrations ||
-              integrations.length === 0 ||
-              !hasConnectedIntegration
-            }
-            rightIcon={<Send size={20} />}
-          />
+          (integrations.length === 0 || !hasConnectedIntegration) ? (
+            <CustomBanner
+              title="Jira integration is not available"
+              message="Please add or connect an integration first"
+              buttonLabel="Configure"
+              buttonLink="/integrations/jira"
+            />
+          ) : (
+            <FormButtons
+              setIsOpen={setOpenForFormButtons}
+              onCancel={() => onOpenChange(false)}
+              submitText="Send to Jira"
+              cancelText="Cancel"
+              loadingText="Sending..."
+              isDisabled={
+                !form.formState.isValid ||
+                form.formState.isSubmitting ||
+                isFetchingIntegrations ||
+                integrations.length === 0 ||
+                !hasConnectedIntegration
+              }
+              rightIcon={<Send size={20} />}
+            />
+          )}
         </form>
       </Form>
     </CustomAlertModal>

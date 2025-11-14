@@ -8,10 +8,9 @@ import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { updateUser, updateUserRole } from "@/actions/users/users";
-import { SaveIcon } from "@/components/icons";
 import { useToast } from "@/components/ui";
-import { CustomButton, CustomInput } from "@/components/ui/custom";
-import { Form } from "@/components/ui/form";
+import { CustomInput } from "@/components/ui/custom";
+import { Form, FormButtons } from "@/components/ui/form";
 import { editUserFormSchema } from "@/types";
 
 export const EditForm = ({
@@ -208,33 +207,7 @@ export const EditForm = ({
         </div>
         <input type="hidden" name="userId" value={userId} />
 
-        <div className="flex w-full justify-center sm:gap-6">
-          <CustomButton
-            type="button"
-            ariaLabel="Cancel"
-            className="w-full bg-transparent"
-            variant="faded"
-            size="lg"
-            radius="lg"
-            onPress={() => setIsOpen(false)}
-            isDisabled={isLoading}
-          >
-            <span>Cancel</span>
-          </CustomButton>
-
-          <CustomButton
-            type="submit"
-            ariaLabel="Save"
-            className="w-full"
-            variant="solid"
-            color="action"
-            size="lg"
-            isLoading={isLoading}
-            startContent={!isLoading && <SaveIcon size={24} />}
-          >
-            {isLoading ? <>Loading</> : <span>Save</span>}
-          </CustomButton>
-        </div>
+        <FormButtons setIsOpen={setIsOpen} isDisabled={isLoading} />
       </form>
     </Form>
   );

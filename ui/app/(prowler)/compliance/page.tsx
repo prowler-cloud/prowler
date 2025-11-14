@@ -1,4 +1,3 @@
-export const dynamic = "force-dynamic";
 import { Suspense } from "react";
 
 import {
@@ -138,7 +137,7 @@ export default async function Compliance({
       {selectedScanId ? (
         <>
           <div className="mb-6 flex flex-col gap-6">
-            <div className="flex items-start justify-between gap-6">
+            <div className="flex flex-col items-start justify-between lg:flex-row lg:gap-6">
               <div className="flex-1">
                 <ComplianceHeader
                   scans={expandedScansData}

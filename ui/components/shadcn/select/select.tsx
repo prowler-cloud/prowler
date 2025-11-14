@@ -204,7 +204,7 @@ function SelectContent({
   className,
   children,
   position = "popper",
-  align = "center",
+  align = "start",
   ...props
 }: ComponentProps<typeof SelectPrimitive.Content>) {
   return (
@@ -309,6 +309,69 @@ function SelectSeparator({
   );
 }
 
+function SelectAllItem({
+  className,
+  children = "Select All",
+  allValues = [],
+  ...props
+}: Omit<ComponentProps<"div">, "children"> & {
+  children?: React.ReactNode;
+  allValues?: string[];
+}) {
+  const { multiple, selectedValues, onMultiValueChange } =
+    useContext(SelectContext);
+
+  if (!multiple || !onMultiValueChange) {
+    return null;
+  }
+
+  const allSelected =
+    allValues.length > 0 && selectedValues?.length === allValues.length;
+
+  const handleSelectAll = () => {
+    if (allSelected) {
+      // Deselect all
+      onMultiValueChange([]);
+    } else {
+      // Select all
+      onMultiValueChange(allValues);
+    }
+  };
+
+  return (
+    <div
+      role="option"
+      aria-selected={allSelected}
+      data-slot="select-all-item"
+      className={cn(
+        "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex w-full cursor-pointer items-center gap-2 rounded-lg py-2.5 pr-10 pl-3 text-base outline-hidden select-none hover:bg-slate-200 focus:ring-2 focus:ring-slate-600 focus:ring-inset dark:hover:bg-slate-700/50 dark:focus:ring-slate-400 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
+        allSelected && "bg-slate-100 dark:bg-slate-800/50",
+        "font-semibold",
+        className,
+      )}
+      onClick={handleSelectAll}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleSelectAll();
+        }
+      }}
+      tabIndex={0}
+      {...props}
+    >
+      <span className="flex min-w-0 items-center gap-2">{children}</span>
+      <span
+        className="absolute right-3 flex size-4 items-center justify-center"
+        aria-hidden="true"
+      >
+        {allSelected && (
+          <CheckIcon className="size-5 text-slate-950 dark:text-white" />
+        )}
+      </span>
+    </div>
+  );
+}
+
 function SelectScrollUpButton({
   className,
   ...props
@@ -347,6 +410,7 @@ function SelectScrollDownButton({
 
 export {
   Select,
+  SelectAllItem,
   SelectContent,
   SelectGroup,
   SelectItem,

@@ -97,7 +97,9 @@ export async function verifyNormalModeActive(page: Page) {
 }
 
 export async function logout(page: Page) {
-  await page.getByRole("button", { name: "Sign out" }).click();
+  const navbar = page.locator("header");
+  await navbar.waitFor({ state: "visible" });
+  await navbar.getByRole("button", { name: "Sign out" }).click();
 }
 
 export async function verifyLogoutSuccess(page: Page) {
@@ -146,7 +148,9 @@ export async function authenticateAndSaveState(
   storagePath: string,
 ) {
   if (!email || !password) {
-    throw new Error('Email and password are required for authentication and save state');
+    throw new Error(
+      "Email and password are required for authentication and save state",
+    );
   }
 
   // Create SignInPage instance

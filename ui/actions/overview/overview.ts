@@ -123,7 +123,7 @@ export const getThreatScore = async ({
 } = {}) => {
   const headers = await getAuthHeaders({ contentType: false });
 
-  const url = new URL(`${apiBaseUrl}/overviews/threat-score`);
+  const url = new URL(`${apiBaseUrl}/overviews/threatscore`);
 
   // Handle multiple filters
   Object.entries(filters).forEach(([key, value]) => {

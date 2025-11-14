@@ -69,7 +69,6 @@ export default async function Resources({
             values: uniqueServices,
           },
         ]}
-        defaultOpen={true}
       />
       <Spacer y={8} />
       <Suspense key={searchParamsKey} fallback={<SkeletonTableResources />}>

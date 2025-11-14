@@ -1,9 +1,9 @@
 "use client";
 
-import { Button } from "@heroui/button";
 import { DownloadIcon } from "lucide-react";
 import { useState } from "react";
 
+import { Button } from "@/components/shadcn/button/button";
 import { toast } from "@/components/ui";
 import { downloadThreatScorePdf } from "@/lib/helper";
 
@@ -27,18 +27,15 @@ export const ThreatScoreDownloadButton = ({
 
   return (
     <Button
-      color="success"
-      variant="solid"
-      startContent={
-        <DownloadIcon
-          className={isDownloading ? "animate-download-icon" : ""}
-          size={16}
-        />
-      }
-      onPress={handleDownload}
-      isLoading={isDownloading}
+      variant="default"
       size="sm"
+      onClick={handleDownload}
+      disabled={isDownloading}
     >
+      <DownloadIcon
+        className={isDownloading ? "animate-download-icon" : ""}
+        size={16}
+      />
       PDF ThreatScore Report
     </Button>
   );

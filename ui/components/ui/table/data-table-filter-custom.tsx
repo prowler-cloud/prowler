@@ -1,30 +1,31 @@
 "use client";
 
-import React, { useState } from "react";
-import { useCallback, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 
-import { ClearFiltersButton } from "@/components/filters";
-import { CustomFilterIcon } from "@/components/icons";
-import { CustomButton, CustomDropdownFilter } from "@/components/ui/custom";
+import {
+  Select,
+  SelectAllItem,
+  SelectContent,
+  SelectItem,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/shadcn";
 import { useUrlFilters } from "@/hooks/use-url-filters";
 import { FilterOption } from "@/types";
 
 export interface DataTableFilterCustomProps {
   filters: FilterOption[];
-  defaultOpen?: boolean;
-  showClearButton?: boolean;
 }
 
 export const DataTableFilterCustom = ({
   filters,
-  defaultOpen = true,
-  showClearButton = false,
 }: DataTableFilterCustomProps) => {
   const { updateFilter } = useUrlFilters();
-  const [showFilters, setShowFilters] = useState(defaultOpen);
+  const searchParams = useSearchParams();
 
   // Sort filters by index property, with fallback to original order for filters without index
-  const sortedFilters = useMemo(() => {
+  const sortedFilters = () => {
     return [...filters].sort((a, b) => {
       // If both have index, sort by index
       if (a.index !== undefined && b.index !== undefined) {
@@ -36,55 +37,70 @@ export const DataTableFilterCustom = ({
       // If neither has index, maintain original order
       return 0;
     });
-  }, [filters]);
+  };
 
-  const pushDropdownFilter = useCallback(
-    (key: string, values: string[]) => {
-      updateFilter(key, values.length > 0 ? values : null);
-    },
-    [updateFilter],
-  );
+  const pushDropdownFilter = (filter: FilterOption, values: string[]) => {
+    // If this filter defaults to "all selected" and the user selected all items,
+    // clear the URL param to represent "no specific filter" (i.e., all).
+    const allSelected =
+      filter.values.length > 0 && values.length === filter.values.length;
+
+    if (filter.defaultToSelectAll && allSelected) {
+      updateFilter(filter.key, null);
+      return;
+    }
+
+    updateFilter(filter.key, values.length > 0 ? values : null);
+  };
+
+  const getSelectedValues = (key: string): string[] => {
+    const filterKey = key.startsWith("filter[") ? key : `filter[${key}]`;
+    const paramValue = searchParams.get(filterKey);
+    return paramValue ? paramValue.split(",") : [];
+  };
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-row gap-4">
-        <CustomButton
-          ariaLabel={showFilters ? "Hide Filters" : "Show Filters"}
-          variant="flat"
-          color={showFilters ? "action" : "primary"}
-          size="md"
-          startContent={<CustomFilterIcon size={16} />}
-          onPress={() => setShowFilters(!showFilters)}
-          className="w-full max-w-fit"
-        >
-          <h3 className="text-small">
-            {showFilters ? "Hide Filters" : "Show Filters"}
-          </h3>
-        </CustomButton>
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+      {sortedFilters()
+        .filter((filter) => filter.values.length > 1)
+        .map((filter) => {
+          const selectedValues = getSelectedValues(filter.key);
 
-        {showClearButton && <ClearFiltersButton />}
-      </div>
-
-      <div
-        className={`transition-all duration-700 ease-in-out ${
-          showFilters
-            ? "w-full translate-x-0 overflow-visible opacity-100"
-            : "mt-[-16px] max-h-0 -translate-x-full overflow-hidden opacity-0"
-        }`}
-      >
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-          {sortedFilters.map((filter) => (
-            <CustomDropdownFilter
+          return (
+            <Select
               key={filter.key}
-              filter={{
-                ...filter,
-                labelCheckboxGroup: filter.labelCheckboxGroup,
-              }}
-              onFilterChange={pushDropdownFilter}
-            />
-          ))}
-        </div>
-      </div>
+              multiple
+              selectedValues={selectedValues}
+              onMultiValueChange={(values) =>
+                pushDropdownFilter(filter, values)
+              }
+              ariaLabel={filter.labelCheckboxGroup}
+            >
+              <SelectTrigger size="sm">
+                <SelectValue placeholder={filter.labelCheckboxGroup}>
+                  {selectedValues.length > 0 && (
+                    <span className="truncate">
+                      {selectedValues.length === 1
+                        ? selectedValues[0]
+                        : `${selectedValues.length} selected`}
+                    </span>
+                  )}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectAllItem allValues={filter.values}>
+                  Select All
+                </SelectAllItem>
+                <SelectSeparator />
+                {filter.values.map((value) => (
+                  <SelectItem key={value} value={value}>
+                    {value}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          );
+        })}
     </div>
   );
 };

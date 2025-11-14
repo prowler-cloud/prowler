@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@heroui/button";
 import {
   Dropdown,
   DropdownItem,
@@ -14,6 +13,7 @@ import { useState } from "react";
 import { SendToJiraModal } from "@/components/findings/send-to-jira-modal";
 import { VerticalDotsIcon } from "@/components/icons";
 import { JiraIcon } from "@/components/icons/services/IconServices";
+import { Button } from "@/components/shadcn";
 import type { FindingProps } from "@/types/components";
 
 interface DataTableRowActionsProps {
@@ -38,12 +38,12 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
 
       <div className="relative flex items-center justify-end gap-2">
         <Dropdown
-          className="dark:bg-prowler-blue-800 shadow-xl"
+          className="border-border-neutral-secondary bg-bg-neutral-secondary border shadow-xl"
           placement="bottom"
         >
           <DropdownTrigger>
-            <Button isIconOnly radius="full" size="sm" variant="light">
-              <VerticalDotsIcon className="text-default-400" />
+            <Button variant="ghost" size="icon-sm" className="rounded-full">
+              <VerticalDotsIcon className="text-slate-400" />
             </Button>
           </DropdownTrigger>
           <DropdownMenu

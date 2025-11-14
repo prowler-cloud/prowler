@@ -62,13 +62,13 @@ export function FeedsClient({ feedData, error }: FeedsClientProps) {
           <BellRing
             size={18}
             className={cn(
-              hasFeeds && hasUnseenFeeds && "text-prowler-green animate-pulse",
+              hasFeeds && hasUnseenFeeds && "text-button-primary animate-pulse",
             )}
           />
           {hasFeeds && hasUnseenFeeds && (
             <span className="absolute top-0 right-0 flex h-2 w-2">
-              <span className="bg-prowler-green absolute inline-flex h-full w-full animate-ping rounded-full opacity-75"></span>
-              <span className="bg-prowler-green relative inline-flex h-2 w-2 rounded-full"></span>
+              <span className="bg-button-primary absolute inline-flex h-full w-full animate-ping rounded-full opacity-75"></span>
+              <span className="bg-button-primary relative inline-flex h-2 w-2 rounded-full"></span>
             </span>
           )}
         </Button>
@@ -143,7 +143,7 @@ function FeedTimelineItem({ item, isLast }: FeedTimelineItemProps) {
     <div className="group relative flex gap-3 px-3 py-2">
       {/* Timeline dot */}
       <div className="relative flex flex-col items-center">
-        <div className="border-prowler-green bg-prowler-green z-10 h-2 w-2 rounded-full border-2" />
+        <div className="border-button-primary bg-button-primary z-10 h-2 w-2 rounded-full border-2" />
         {!isLast && (
           <div className="h-full w-px bg-slate-200 dark:bg-slate-700" />
         )}
@@ -158,13 +158,13 @@ function FeedTimelineItem({ item, isLast }: FeedTimelineItemProps) {
           className="backdrop-blur-0 block space-y-1 rounded-[12px] border border-transparent p-2 transition-all hover:border-slate-300 hover:bg-[#F8FAFC80] hover:backdrop-blur-[46px] dark:hover:border-[rgba(38,38,38,0.70)] dark:hover:bg-[rgba(23,23,23,0.50)]"
         >
           <div className="flex items-start justify-between gap-2">
-            <h4 className="group-hover:text-prowler-green dark:group-hover:text-prowler-green min-w-0 flex-1 text-sm leading-tight font-semibold break-words text-slate-900 dark:text-white">
+            <h4 className="group-hover:text-button-primary dark:group-hover:text-button-primary min-w-0 flex-1 text-sm leading-tight font-semibold break-words text-slate-900 dark:text-white">
               {item.title}
             </h4>
             {version && (
               <Badge
                 variant="secondary"
-                className="border-prowler-green bg-prowler-green/10 text-prowler-green dark:bg-prowler-green/20 shrink-0 text-[10px] font-semibold"
+                className="border-button-primary bg-button-primary/10 text-button-primary dark:bg-button-primary/20 shrink-0 text-[10px] font-semibold"
               >
                 v{version}
               </Badge>
@@ -182,7 +182,7 @@ function FeedTimelineItem({ item, isLast }: FeedTimelineItemProps) {
               {relativeTime}
             </time>
 
-            <div className="text-prowler-green flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+            <div className="text-button-primary flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
               <span className="text-[11px] font-medium">Read more</span>
               <ExternalLink size={10} />
             </div>

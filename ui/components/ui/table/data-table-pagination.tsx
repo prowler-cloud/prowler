@@ -27,7 +27,7 @@ interface DataTablePaginationProps {
 }
 
 const baseLinkClass =
-  "relative block rounded border-0 bg-transparent px-3 py-1.5 text-gray-800 outline-none transition-all duration-300 hover:bg-gray-200 hover:text-gray-800 focus:shadow-none dark:text-prowler-theme-green";
+  "relative block rounded border-0 bg-transparent px-3 py-1.5 text-button-primary outline-none transition-all duration-300 hover:bg-gray-200 hover:text-gray-800 focus:shadow-none";
 
 const disabledLinkClass =
   "text-gray-300 dark:text-gray-600 hover:bg-transparent hover:text-gray-300 dark:hover:text-gray-600 cursor-default pointer-events-none";

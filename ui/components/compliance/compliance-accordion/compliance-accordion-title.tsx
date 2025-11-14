@@ -24,7 +24,7 @@ export const ComplianceAccordionTitle = ({
     <div className="flex flex-col items-start justify-between gap-1 md:flex-row md:items-center md:gap-2">
       <div className="overflow-hidden md:min-w-0 md:flex-1">
         <span
-          className="block max-w-[600px] truncate overflow-hidden text-sm text-ellipsis"
+          className="block max-w-[200px] truncate text-sm text-ellipsis sm:max-w-[300px] md:max-w-[400px] lg:max-w-[600px]"
           title={label}
         >
           {label.charAt(0).toUpperCase() + label.slice(1)}
@@ -57,8 +57,8 @@ export const ComplianceAccordionTitle = ({
                   delay={0}
                   closeDelay={0}
                 >
-                  <div
-                    className="h-full bg-[#3CEC6D] transition-all duration-200 hover:brightness-110"
+                  <span
+                    className="inline-block h-full bg-[#3CEC6D] transition-all duration-200 hover:brightness-110"
                     style={{
                       width: `${passPercentage}%`,
                       marginRight: pass > 0 ? "2px" : "0",
@@ -81,8 +81,8 @@ export const ComplianceAccordionTitle = ({
                   delay={0}
                   closeDelay={0}
                 >
-                  <div
-                    className="h-full bg-[#FB718F] transition-all duration-200 hover:brightness-110"
+                  <span
+                    className="inline-block h-full bg-[#FB718F] transition-all duration-200 hover:brightness-110"
                     style={{
                       width: `${failPercentage}%`,
                       marginRight: manual > 0 ? "2px" : "0",
@@ -105,8 +105,8 @@ export const ComplianceAccordionTitle = ({
                   delay={0}
                   closeDelay={0}
                 >
-                  <div
-                    className="h-full bg-[#868994] transition-all duration-200 hover:brightness-110"
+                  <span
+                    className="inline-block h-full bg-[#868994] transition-all duration-200 hover:brightness-110"
                     style={{ width: `${manualPercentage}%` }}
                   />
                 </Tooltip>

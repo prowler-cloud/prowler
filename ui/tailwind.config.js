@@ -199,7 +199,7 @@ module.exports = {
               foreground: "#000000",
             },
             focus: "#9FD655",
-            background: "#030921",
+            background: "#09090B",
           },
         },
         light: {
