@@ -1,7 +1,6 @@
 "use client";
 
 import { useDisclosure } from "@heroui/use-disclosure";
-import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -19,7 +18,6 @@ import { MetaDataProps } from "@/types";
 
 import { ApiKeySuccessModal } from "./api-key-success-modal";
 import { createApiKeyColumns } from "./api-keys/column-api-keys";
-import { ICON_SIZE } from "./api-keys/constants";
 import { EnrichedApiKey } from "./api-keys/types";
 import { CreateApiKeyModal } from "./create-api-key-modal";
 import { EditApiKeyNameModal } from "./edit-api-key-name-modal";
@@ -75,7 +73,7 @@ export const ApiKeysCardClient = ({
     <>
       <Card variant="base" padding="none" className="p-4">
         <CardHeader>
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-2">
             <CardTitle>API Keys</CardTitle>
             <p className="text-xs text-gray-500">
               Manage API keys for programmatic access.{" "}
@@ -86,7 +84,6 @@ export const ApiKeysCardClient = ({
           </div>
           <CardAction>
             <Button variant="default" size="sm" onClick={createModal.onOpen}>
-              <Plus size={ICON_SIZE} />
               Create API Key
             </Button>
           </CardAction>

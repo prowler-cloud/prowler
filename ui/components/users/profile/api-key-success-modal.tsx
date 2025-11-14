@@ -2,13 +2,13 @@
 
 import { Snippet } from "@heroui/snippet";
 
+import { Button } from "@/components/shadcn";
 import {
   Alert,
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert/Alert";
 import { CustomAlertModal } from "@/components/ui/custom/custom-alert-modal";
-import { CustomButton } from "@/components/ui/custom/custom-button";
 
 interface ApiKeySuccessModalProps {
   isOpen: boolean;
@@ -55,13 +55,9 @@ export const ApiKeySuccessModal = ({
         </div>
       </div>
 
-      <CustomButton
-        ariaLabel="Close and confirm API key saved"
-        color="action"
-        onPress={onClose}
-      >
+      <Button aria-label="Close and confirm API key saved" onClick={onClose}>
         Acknowledged
-      </CustomButton>
+      </Button>
     </CustomAlertModal>
   );
 };

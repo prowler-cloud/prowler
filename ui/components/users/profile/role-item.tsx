@@ -53,7 +53,7 @@ export const RoleItem = ({
   const permissions = getRolePermissions(attributes);
 
   return (
-    <Card variant="inner" className="p-2">
+    <Card variant="inner">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Chip size="sm" variant="flat" color="primary">
@@ -76,7 +76,7 @@ export const RoleItem = ({
       {isExpanded && (
         <div
           id={detailsId}
-          className="animate-fadeIn mt-3 border-t pt-3"
+          className="animate-fadeIn border-border-neutral-primary border-t pt-4"
           role="region"
           aria-label={`Details for role ${roleName}`}
         >

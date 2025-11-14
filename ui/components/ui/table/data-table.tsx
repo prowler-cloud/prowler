@@ -60,7 +60,7 @@ export function DataTable<TData, TValue>({
 
   return (
     <>
-      <div className="rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col justify-between gap-4 overflow-auto border p-4">
+      <div className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col justify-between gap-4 overflow-auto border p-4">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
