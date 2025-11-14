@@ -68,16 +68,16 @@ def get_session(database: str | None = None) -> Iterator[neo4j.Session]:
 
 
 def run_query(
-    query: str, parameters: dict[str, Any] | None = None, database: str | None = None
+    query: str,
+    parameters: dict[str, Any] | None = None,
+    database: str | None = None,
+    as_graph: bool = False,
 ) -> neo4j.Result:
     try:
         with get_session(database) as session:
-            result = session.run(
-                query=query,
-                parameters=parameters,
-            )
-
-            return result
+            result = session.run(query=query, parameters=parameters)
+            return result.graph() if as_graph else result
+            # Getting the `graph()` outside the session fails
 
     except neo4j.exceptions.Neo4jError as exc:
         raise GraphDatabaseQueryException(message=exc.message, code=exc.code) from exc
@@ -115,7 +115,6 @@ def drop_subgraph(database: str, root_node_label: str, root_node_id: str) -> int
         deleted_nodes_count = 0
 
     return deleted_nodes_count
-
 
 
 # Neo4j functions related to Prowler + Cartography
