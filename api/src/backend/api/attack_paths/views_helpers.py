@@ -72,7 +72,9 @@ def execute_attack_paths_query(
 
     except graph_database.GraphDatabaseQueryException as exc:
         logger.error(f"Query failed for Attack Paths query `{definition.id}`: {exc}")
-        raise APIException("Attack Paths query execution failed due to a database error")
+        raise APIException(
+            "Attack Paths query execution failed due to a database error"
+        )
 
 
 def _serialize_graph(graph):
