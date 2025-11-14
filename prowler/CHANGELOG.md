@@ -43,9 +43,15 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS FSx service metadata to new format [(#9006)](https://github.com/prowler-cloud/prowler/pull/9006)
 - Update AWS Glacier service metadata to new format [(#9007)](https://github.com/prowler-cloud/prowler/pull/9007)
 - Update oraclecloud analytics service metadata to new format [(#9114)](https://github.com/prowler-cloud/prowler/pull/9114)
+- Update AWS ELB service metadata to new format [(#8935)](https://github.com/prowler-cloud/prowler/pull/8935)
 - Update AWS CodeArtifact service metadata to new format [(#8850)](https://github.com/prowler-cloud/prowler/pull/8850)
 - Rename OCI provider to oraclecloud with oci alias [(#9126)](https://github.com/prowler-cloud/prowler/pull/9126)
 - Remove unnecessary tests for M365_PowerShell module [(#9204)](https://github.com/prowler-cloud/prowler/pull/9204)
+- Update AWS ELB v2 service metadata to new format [(#9001)](https://github.com/prowler-cloud/prowler/pull/9001)
+- Update oraclecloud cloudguard service metadata to new format [(#9223)](https://github.com/prowler-cloud/prowler/pull/9223)
+- Update oraclecloud blockstorage service metadata to new format [(#9222)](https://github.com/prowler-cloud/prowler/pull/9222)
+- Update oraclecloud audit service metadata to new format [(#9221)](https://github.com/prowler-cloud/prowler/pull/9221)
+- Raise ASFF output error for non-AWS providers [(#9225)](https://github.com/prowler-cloud/prowler/pull/9225)
 
 ---
 
@@ -57,6 +63,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - False negative in `iam_role_cross_service_confused_deputy_prevention` check [(#9213)](https://github.com/prowler-cloud/prowler/pull/9213)
 - Fix M365 Teams `--sp-env-auth` connection error and enhanced timeout logging [(#9191)](https://github.com/prowler-cloud/prowler/pull/9191)
 - Rename `get_oci_assessment_summary` to `get_oraclecloud_assessment_summary` in HTML output [(#9200)](https://github.com/prowler-cloud/prowler/pull/9200)
+- Fix Validation and other errors in Azure provider [(#8915)](https://github.com/prowler-cloud/prowler/pull/8915)
 
 ---
 
