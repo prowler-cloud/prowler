@@ -222,6 +222,13 @@
                 ]
               },
               {
+                "group": "GitHub Actions",
+                "pages": [
+                  "user-guide/providers/github-actions/getting-started-github-actions",
+                  "user-guide/providers/github-actions/authentication"
+                ]
+              },
+              {
                 "group": "MongoDB Atlas",
                 "pages": [
                   "user-guide/providers/mongodbatlas/getting-started-mongodbatlas",
