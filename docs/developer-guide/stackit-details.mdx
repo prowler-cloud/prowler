@@ -54,19 +54,9 @@ The StackIT provider implementation follows the general [Provider structure](/de
 
 ### Service Account Creation and Key Generation
 
-StackIT uses service account keys for API authentication. There are two authentication flows available:
+StackIT uses service account keys for API authentication. Service account keys are RSA key-pair based and provide secure, short-lived access tokens.
 
-#### Authentication Flow Comparison
-
-| Feature | Key Flow (Recommended) | Token Flow (Deprecated) |
-|---------|----------------------|------------------------|
-| Security | High (short-lived tokens) | Lower (long-lived tokens) |
-| Key Type | RSA key-pair based | Service account token |
-| Status | Recommended | **Deprecated - Removed Dec 17, 2025** |
-
-**Important**: The Token Flow is scheduled for deprecation and will be removed on **December 17, 2025**. Use the Key Flow for all new implementations.
-
-### Creating a Service Account Key (Recommended Method)
+### Creating a Service Account Key
 
 #### Method 1: Via StackIT Portal
 
@@ -123,65 +113,63 @@ Your StackIT project ID is a UUID that can be found:
 2. In the project settings page
 3. Using the StackIT CLI: `stackit project list`
 
-### Authentication Configuration
+### Generating Access Tokens from Service Account Keys
 
-#### Using Service Account Key File (Key Flow - Recommended)
+Prowler requires an access token for authentication, which can be generated from your service account key file using the StackIT CLI.
+
+**Important**: Prowler does not directly use the service account key file (`.json`). You must first generate an access token from the key file.
+
+#### Step 1: Install StackIT CLI
 
 ```bash
-# Set the path to your service account key file
-export STACKIT_SERVICE_ACCOUNT_KEY_PATH="$HOME/.stackit/sa_key.json"
+# Follow installation instructions at:
+# https://github.com/stackitcloud/stackit-cli
+```
+
+#### Step 2: Generate Access Token
+
+```bash
+# Generate an access token from your service account key
+stackit auth activate-service-account \
+  --service-account-key-path ~/Downloads/sa-key-ae9ede46-2c81-4663-ad04-3dd992d6c565.json \
+  --only-print-access-token
+```
+
+This will output a temporary access token that you can use with Prowler.
+
+#### Step 3: Use the Access Token with Prowler
+
+##### Option 1: Environment Variables
+
+```bash
+export STACKIT_SERVICE_ACCOUNT_TOKEN="<access-token-from-step-2>"
 export STACKIT_PROJECT_ID="12345678-1234-1234-1234-123456789abc"
 
 prowler stackit
 ```
 
-Or via command-line arguments:
+##### Option 2: Command-Line Arguments
 
 ```bash
 prowler stackit \
-  --stackit-service-account-key-path "$HOME/.stackit/sa_key.json" \
+  --stackit-api-token "<access-token-from-step-2>" \
   --stackit-project-id "12345678-1234-1234-1234-123456789abc"
 ```
 
-#### Using Service Account Token (Token Flow - Deprecated)
-
-**⚠️ Warning**: This method is deprecated and will be removed on December 17, 2025.
-
-```bash
-export STACKIT_SERVICE_ACCOUNT_TOKEN="your-api-token-here"
-export STACKIT_PROJECT_ID="12345678-1234-1234-1234-123456789abc"
-
-prowler stackit
-```
-
-Or via command-line arguments:
-
-```bash
-prowler stackit \
-  --stackit-api-token "your-api-token-here" \
-  --stackit-project-id "12345678-1234-1234-1234-123456789abc"
-```
-
-**Note**: Command-line arguments take precedence over environment variables.
+**Note**: Access tokens are short-lived. If your scan fails with authentication errors, regenerate a new access token using the CLI command above.
 
 ### Credential Lookup Order
 
-The StackIT SDK searches for credentials in the following order:
+Prowler searches for credentials in the following order:
 
-1. **Explicit configuration** in code (service account key path or token)
+1. **Command-line arguments**:
+   - `--stackit-api-token`
+   - `--stackit-project-id`
 2. **Environment variables**:
-   - `STACKIT_SERVICE_ACCOUNT_KEY_PATH` (Key Flow)
-   - `STACKIT_SERVICE_ACCOUNT_TOKEN` (Token Flow - deprecated)
+   - `STACKIT_SERVICE_ACCOUNT_TOKEN`
    - `STACKIT_PROJECT_ID`
-3. **Credentials file**: `$HOME/.stackit/credentials.json`
 
-Example credentials file format:
-```json
-{
-  "STACKIT_SERVICE_ACCOUNT_KEY_PATH": "/home/user/.stackit/sa_key.json",
-  "STACKIT_PROJECT_ID": "12345678-1234-1234-1234-123456789abc"
-}
-```
+**Note**: Command-line arguments take precedence over environment variables.
 
 ## Configuration
 
