@@ -50,14 +50,16 @@ class Test_postgresql_flexible_server_allow_access_services_disabled:
                     id=postgresql_server_id,
                     name=postgresql_server_name,
                     resource_group="resource_group",
+                    location="location",
                     require_secure_transport="OFF",
+                    active_directory_auth=None,
+                    entra_id_admins=[],
                     log_checkpoints="OFF",
                     log_connections="OFF",
                     log_disconnections="OFF",
                     connection_throttling="OFF",
                     log_retention_days="3",
                     firewall=[firewall],
-                    location="location",
                 )
             ]
         }
@@ -105,14 +107,16 @@ class Test_postgresql_flexible_server_allow_access_services_disabled:
                     id=postgresql_server_id,
                     name=postgresql_server_name,
                     resource_group="resource_group",
+                    location="location",
                     require_secure_transport="OFF",
+                    active_directory_auth=None,
+                    entra_id_admins=[],
                     log_checkpoints="OFF",
                     log_connections="OFF",
                     log_disconnections="OFF",
                     connection_throttling="OFF",
                     log_retention_days="3",
                     firewall=[firewall],
-                    location="location",
                 )
             ]
         }

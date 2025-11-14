@@ -34,7 +34,11 @@ export const convertVercelMessageToLangChainMessage = (
   }
 };
 
-export const getModelParams = (config: any): ModelParams => {
+export const getModelParams = (config: {
+  model: string;
+  max_tokens?: number;
+  temperature?: number;
+}): ModelParams => {
   const modelId = config.model;
 
   const params: ModelParams = {

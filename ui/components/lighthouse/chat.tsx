@@ -2,17 +2,42 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { Copy, Play, Plus, RotateCcw, Square } from "lucide-react";
+import { ChevronDown, Copy, Plus, RotateCcw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Streamdown } from "streamdown";
 
-import { Action, Actions } from "@/components/lighthouse/actions";
+import { getLighthouseModelIds } from "@/actions/lighthouse/lighthouse";
+import { Action, Actions } from "@/components/lighthouse/ai-elements/actions";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/lighthouse/ai-elements/dropdown-menu";
+import {
+  PromptInput,
+  PromptInputBody,
+  PromptInputSubmit,
+  PromptInputTextarea,
+  PromptInputToolbar,
+  PromptInputTools,
+} from "@/components/lighthouse/ai-elements/prompt-input";
 import { Loader } from "@/components/lighthouse/loader";
-import { MemoizedMarkdown } from "@/components/lighthouse/memoized-markdown";
 import { useToast } from "@/components/ui";
-import { CustomButton, CustomTextarea } from "@/components/ui/custom";
+import { CustomButton } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
-import { Form } from "@/components/ui/form";
+import { cn } from "@/lib/utils";
+import type { LighthouseProvider } from "@/types/lighthouse";
+
+interface Model {
+  id: string;
+  name: string;
+}
+
+interface Provider {
+  id: LighthouseProvider;
+  name: string;
+  models: Model[];
+}
 
 interface SuggestedAction {
   title: string;
@@ -22,22 +47,158 @@ interface SuggestedAction {
 
 interface ChatProps {
   hasConfig: boolean;
-  isActive: boolean;
+  providers: Provider[];
+  defaultProviderId?: LighthouseProvider;
+  defaultModelId?: string;
 }
 
-interface ChatFormData {
-  message: string;
+interface SelectedModel {
+  providerType: LighthouseProvider | "";
+  modelId: string;
+  modelName: string;
 }
 
-export const Chat = ({ hasConfig, isActive }: ChatProps) => {
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+const SUGGESTED_ACTIONS: SuggestedAction[] = [
+  {
+    title: "Are there any exposed S3",
+    label: "buckets in my AWS accounts?",
+    action: "List exposed S3 buckets in my AWS accounts",
+  },
+  {
+    title: "What is the risk of having",
+    label: "RDS databases unencrypted?",
+    action: "What is the risk of having RDS databases unencrypted?",
+  },
+  {
+    title: "What is the CIS 1.10 compliance status",
+    label: "of my Kubernetes cluster?",
+    action: "What is the CIS 1.10 compliance status of my Kubernetes cluster?",
+  },
+  {
+    title: "List my highest privileged",
+    label: "AWS IAM users with full admin access?",
+    action: "List my highest privileged AWS IAM users with full admin access",
+  },
+];
+
+export const Chat = ({
+  hasConfig,
+  providers: initialProviders,
+  defaultProviderId,
+  defaultModelId,
+}: ChatProps) => {
   const { toast } = useToast();
+
+  // Consolidated UI state
+  const [uiState, setUiState] = useState<{
+    inputValue: string;
+    isDropdownOpen: boolean;
+    modelSearchTerm: string;
+    hoveredProvider: LighthouseProvider | "";
+  }>({
+    inputValue: "",
+    isDropdownOpen: false,
+    modelSearchTerm: "",
+    hoveredProvider: defaultProviderId || initialProviders[0]?.id || "",
+  });
+
+  // Error handling
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Provider and model management
+  const [providers, setProviders] = useState<Provider[]>(initialProviders);
+  const [providerLoadState, setProviderLoadState] = useState<{
+    loaded: Set<LighthouseProvider>;
+    loading: Set<LighthouseProvider>;
+  }>({
+    loaded: new Set(),
+    loading: new Set(),
+  });
+
+  // Initialize selectedModel with defaults from props
+  const [selectedModel, setSelectedModel] = useState<SelectedModel>(() => {
+    const defaultProvider =
+      initialProviders.find((p) => p.id === defaultProviderId) ||
+      initialProviders[0];
+    const defaultModel =
+      defaultProvider?.models.find((m) => m.id === defaultModelId) ||
+      defaultProvider?.models[0];
+
+    return {
+      providerType: defaultProvider?.id || "",
+      modelId: defaultModel?.id || "",
+      modelName: defaultModel?.name || "",
+    };
+  });
+
+  // Keep ref in sync with selectedModel for stable access in callbacks
+  const selectedModelRef = useRef(selectedModel);
+  selectedModelRef.current = selectedModel;
+
+  // Load all models for a specific provider
+  const loadModelsForProvider = async (providerType: LighthouseProvider) => {
+    setProviderLoadState((prev) => {
+      // Skip if already loaded or currently loading
+      if (prev.loaded.has(providerType) || prev.loading.has(providerType)) {
+        return prev;
+      }
+
+      // Mark as loading
+      return {
+        ...prev,
+        loading: new Set([...Array.from(prev.loading), providerType]),
+      };
+    });
+
+    try {
+      const response = await getLighthouseModelIds(providerType);
+
+      if (response.errors) {
+        console.error(
+          `Error loading models for ${providerType}:`,
+          response.errors,
+        );
+        return;
+      }
+
+      if (response.data && Array.isArray(response.data)) {
+        // Use the model data directly from the API
+        const models: Model[] = response.data;
+
+        // Update the provider's models
+        setProviders((prev) =>
+          prev.map((p) => (p.id === providerType ? { ...p, models } : p)),
+        );
+
+        // Mark as loaded and remove from loading
+        setProviderLoadState((prev) => ({
+          loaded: new Set([...Array.from(prev.loaded), providerType]),
+          loading: new Set(
+            Array.from(prev.loading).filter((id) => id !== providerType),
+          ),
+        }));
+      }
+    } catch (error) {
+      console.error(`Error loading models for ${providerType}:`, error);
+      // Remove from loading state on error
+      setProviderLoadState((prev) => ({
+        ...prev,
+        loading: new Set(
+          Array.from(prev.loading).filter((id) => id !== providerType),
+        ),
+      }));
+    }
+  };
 
   const { messages, sendMessage, status, error, setMessages, regenerate } =
     useChat({
       transport: new DefaultChatTransport({
         api: "/api/lighthouse/analyst",
         credentials: "same-origin",
+        body: () => ({
+          model: selectedModelRef.current.modelId,
+          provider: selectedModelRef.current.providerType,
+        }),
       }),
       experimental_throttle: 100,
       onFinish: ({ message }) => {
@@ -65,6 +226,7 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
               );
             }),
           );
+          restoreLastUserMessage();
         }
       },
       onError: (error) => {
@@ -74,59 +236,53 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
           error?.message?.includes("<html>") &&
           error?.message?.includes("<title>403 Forbidden</title>")
         ) {
+          restoreLastUserMessage();
           setErrorMessage("403 Forbidden");
           return;
         }
 
+        restoreLastUserMessage();
         setErrorMessage(
           error?.message || "An error occurred. Please retry your message.",
         );
       },
     });
 
-  const form = useForm<ChatFormData>({
-    defaultValues: {
-      message: "",
-    },
-  });
-
-  const messageValue = form.watch("message");
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
-  const latestUserMsgRef = useRef<HTMLDivElement | null>(null);
-  const messageValueRef = useRef<string>("");
 
-  // Keep ref in sync with current value
-  messageValueRef.current = messageValue;
+  const restoreLastUserMessage = () => {
+    let restoredText = "";
 
-  // Restore last user message to input when any error occurs
-  useEffect(() => {
-    if (errorMessage) {
-      // Capture current messages to avoid dependency issues
-      setMessages((currentMessages) => {
-        const lastUserMessage = currentMessages
-          .filter((m) => m.role === "user")
-          .pop();
+    setMessages((currentMessages) => {
+      const nextMessages = [...currentMessages];
 
-        if (lastUserMessage) {
-          const textPart = lastUserMessage.parts.find((p) => p.type === "text");
-          if (textPart && "text" in textPart) {
-            form.setValue("message", textPart.text);
-          }
-          // Remove the last user message from history since it's now in the input
-          return currentMessages.slice(0, -1);
+      for (let index = nextMessages.length - 1; index >= 0; index -= 1) {
+        const current = nextMessages[index];
+
+        if (current.role !== "user") {
+          continue;
         }
 
-        return currentMessages;
-      });
-    }
-  }, [errorMessage, form, setMessages]);
+        const textPart = current.parts.find(
+          (part): part is { type: "text"; text: string } =>
+            part.type === "text" && "text" in part,
+        );
 
-  // Reset form when message is sent
-  useEffect(() => {
-    if (status === "submitted") {
-      form.reset({ message: "" });
+        if (textPart) {
+          restoredText = textPart.text;
+        }
+
+        nextMessages.splice(index, 1);
+        break;
+      }
+
+      return nextMessages;
+    });
+
+    if (restoredText) {
+      setUiState((prev) => ({ ...prev, inputValue: restoredText }));
     }
-  }, [status, form]);
+  };
 
   // Auto-scroll to bottom when new messages arrive or when streaming
   useEffect(() => {
@@ -136,71 +292,40 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
     }
   }, [messages, status]);
 
-  const onFormSubmit = form.handleSubmit((data) => {
-    // Block submission while streaming or submitted
-    if (status === "streaming" || status === "submitted") {
-      return;
-    }
-
-    if (data.message.trim()) {
-      // Clear error on new submission
-      setErrorMessage(null);
-      sendMessage({ text: data.message });
-      form.reset();
-    }
-  });
-
-  // Global keyboard shortcut handler
+  // Handle dropdown state changes
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        // Block enter key while streaming or submitted
-        if (
-          messageValue?.trim() &&
-          status !== "streaming" &&
-          status !== "submitted"
-        ) {
-          onFormSubmit();
-        }
-      }
-    };
+    if (uiState.isDropdownOpen && uiState.hoveredProvider) {
+      loadModelsForProvider(uiState.hoveredProvider as LighthouseProvider);
+    }
+  }, [uiState.isDropdownOpen, uiState.hoveredProvider, loadModelsForProvider]);
 
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [messageValue, onFormSubmit, status]);
+  // Filter models based on search term
+  const currentProvider = providers.find(
+    (p) => p.id === uiState.hoveredProvider,
+  );
+  const filteredModels =
+    currentProvider?.models.filter((model) =>
+      model.name.toLowerCase().includes(uiState.modelSearchTerm.toLowerCase()),
+    ) || [];
 
-  const suggestedActions: SuggestedAction[] = [
-    {
-      title: "Are there any exposed S3",
-      label: "buckets in my AWS accounts?",
-      action: "List exposed S3 buckets in my AWS accounts",
-    },
-    {
-      title: "What is the risk of having",
-      label: "RDS databases unencrypted?",
-      action: "What is the risk of having RDS databases unencrypted?",
-    },
-    {
-      title: "What is the CIS 1.10 compliance status",
-      label: "of my Kubernetes cluster?",
-      action:
-        "What is the CIS 1.10 compliance status of my Kubernetes cluster?",
-    },
-    {
-      title: "List my highest privileged",
-      label: "AWS IAM users with full admin access?",
-      action: "List my highest privileged AWS IAM users with full admin access",
-    },
-  ];
-
-  // Determine if chat should be disabled
-  const shouldDisableChat = !hasConfig || !isActive;
-
+  // Handlers
   const handleNewChat = () => {
     setMessages([]);
     setErrorMessage(null);
-    form.reset({ message: "" });
+    setUiState((prev) => ({ ...prev, inputValue: "" }));
+  };
+
+  const handleModelSelect = (
+    providerType: LighthouseProvider,
+    modelId: string,
+    modelName: string,
+  ) => {
+    setSelectedModel({ providerType, modelId, modelName });
+    setUiState((prev) => ({
+      ...prev,
+      isDropdownOpen: false,
+      modelSearchTerm: "", // Reset search when selecting
+    }));
   };
 
   return (
@@ -223,18 +348,14 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
         </div>
       )}
 
-      {shouldDisableChat && (
+      {!hasConfig && (
         <div className="bg-background/80 absolute inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
           <div className="bg-card max-w-md rounded-lg p-6 text-center shadow-lg">
             <h3 className="mb-2 text-lg font-semibold">
-              {!hasConfig
-                ? "OpenAI API Key Required"
-                : "OpenAI API Key Invalid"}
+              LLM Provider Configuration Required
             </h3>
             <p className="text-muted-foreground mb-4">
-              {!hasConfig
-                ? "Please configure your OpenAI API key to use Lighthouse AI."
-                : "OpenAI API key is invalid. Please update your key to use Lighthouse AI."}
+              Please configure an LLM provider to use Lighthouse AI.
             </p>
             <CustomLink
               href="/lighthouse/config"
@@ -242,7 +363,7 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
               target="_self"
               size="sm"
             >
-              Configure API Key
+              Configure Provider
             </CustomLink>
           </div>
         </div>
@@ -300,7 +421,7 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
           <div className="w-full max-w-2xl">
             <h2 className="mb-4 text-center font-sans text-xl">Suggestions</h2>
             <div className="grid gap-2 sm:grid-cols-2">
-              {suggestedActions.map((action, index) => (
+              {SUGGESTED_ACTIONS.map((action, index) => (
                 <CustomButton
                   key={`suggested-action-${index}`}
                   ariaLabel={`Send message: ${action.action}`}
@@ -324,12 +445,6 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
           ref={messagesContainerRef}
         >
           {messages.map((message, idx) => {
-            const lastUserIdx = messages
-              .map((m, i) => (m.role === "user" ? i : -1))
-              .filter((i) => i !== -1)
-              .pop();
-            const isLatestUserMsg =
-              message.role === "user" && lastUserIdx === idx;
             const isLastMessage = idx === messages.length - 1;
             const messageText = message.parts
               .filter((p) => p.type === "text")
@@ -348,7 +463,6 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
             return (
               <div key={uniqueKey}>
                 <div
-                  ref={isLatestUserMsg ? latestUserMsgRef : undefined}
                   className={`flex ${
                     message.role === "user" ? "justify-end" : "justify-start"
                   }`}
@@ -365,12 +479,23 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
                       <Loader size="default" text="Thinking..." />
                     ) : (
                       <div
-                        className={`prose dark:prose-invert ${message.role === "user" ? "dark:text-black!" : ""}`}
+                        className={
+                          message.role === "user" ? "dark:text-black!" : ""
+                        }
                       >
-                        <MemoizedMarkdown
-                          id={message.id}
-                          content={messageText}
-                        />
+                        <Streamdown
+                          parseIncompleteMarkdown={true}
+                          shikiTheme={["github-light", "github-dark"]}
+                          controls={{
+                            code: true,
+                            table: true,
+                            mermaid: true,
+                          }}
+                          allowedLinkPrefixes={["*"]}
+                          allowedImagePrefixes={["*"]}
+                        >
+                          {messageText}
+                        </Streamdown>
                       </div>
                     )}
                   </div>
@@ -384,8 +509,8 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
                     <div className="mt-2 flex justify-start">
                       <Actions className="max-w-[80%]">
                         <Action
+                          tooltip="Copy message"
                           label="Copy"
-                          icon={<Copy className="h-3 w-3" />}
                           onClick={() => {
                             navigator.clipboard.writeText(messageText);
                             toast({
@@ -393,12 +518,16 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
                               description: "Message copied to clipboard",
                             });
                           }}
-                        />
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Action>
                         <Action
+                          tooltip="Regenerate response"
                           label="Retry"
-                          icon={<RotateCcw className="h-3 w-3" />}
                           onClick={() => regenerate()}
-                        />
+                        >
+                          <RotateCcw className="h-3 w-3" />
+                        </Action>
                       </Actions>
                     </div>
                   )}
@@ -418,52 +547,162 @@ export const Chat = ({ hasConfig, isActive }: ChatProps) => {
         </div>
       )}
 
-      <Form {...form}>
-        <form
-          onSubmit={onFormSubmit}
-          className="mx-auto flex w-full gap-2 px-4 pb-16 md:max-w-3xl md:pb-16"
+      <div className="mx-auto w-full px-4 pb-16 md:max-w-3xl md:pb-16">
+        <PromptInput
+          onSubmit={(message) => {
+            if (status === "streaming" || status === "submitted") {
+              return;
+            }
+            if (message.text?.trim()) {
+              setErrorMessage(null);
+              sendMessage({
+                text: message.text,
+              });
+              setUiState((prev) => ({ ...prev, inputValue: "" }));
+            }
+          }}
         >
-          <div className="flex w-full items-end gap-2">
-            <div className="w-full flex-1">
-              <CustomTextarea
-                control={form.control}
-                name="message"
-                label=""
-                placeholder={
-                  error || errorMessage
-                    ? "Edit your message and try again..."
-                    : "Type your message..."
-                }
-                variant="bordered"
-                minRows={1}
-                maxRows={6}
-                fullWidth={true}
-                disableAutosize={false}
-              />
-            </div>
-            <CustomButton
-              type="submit"
-              ariaLabel={
-                status === "streaming" || status === "submitted"
-                  ? "Generating response..."
-                  : "Send message"
+          <PromptInputBody>
+            <PromptInputTextarea
+              placeholder={
+                error || errorMessage
+                  ? "Edit your message and try again..."
+                  : "Type your message..."
               }
-              isDisabled={
+              value={uiState.inputValue}
+              onChange={(e) =>
+                setUiState((prev) => ({ ...prev, inputValue: e.target.value }))
+              }
+            />
+          </PromptInputBody>
+
+          <PromptInputToolbar>
+            <PromptInputTools>
+              {/* Model Selector */}
+              <DropdownMenu
+                open={uiState.isDropdownOpen}
+                onOpenChange={(open) =>
+                  setUiState((prev) => ({ ...prev, isDropdownOpen: open }))
+                }
+              >
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="hover:bg-accent text-muted-foreground hover:text-foreground flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors"
+                  >
+                    <span>{selectedModel.modelName}</span>
+                    <ChevronDown className="h-4 w-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="start"
+                  className="bg-background w-[400px] border p-0 shadow-lg"
+                >
+                  <div className="flex h-[300px]">
+                    {/* Left column - Providers */}
+                    <div className="border-default-200 dark:border-default-100 bg-muted/30 w-[180px] overflow-y-auto border-r p-1">
+                      {providers.map((provider) => (
+                        <div
+                          key={provider.id}
+                          onMouseEnter={() => {
+                            setUiState((prev) => ({
+                              ...prev,
+                              hoveredProvider: provider.id,
+                              modelSearchTerm: "", // Reset search when changing provider
+                            }));
+                            loadModelsForProvider(provider.id);
+                          }}
+                          className={cn(
+                            "flex cursor-default items-center justify-between rounded-sm px-3 py-2 text-sm transition-colors",
+                            uiState.hoveredProvider === provider.id
+                              ? "bg-gray-100 dark:bg-gray-800"
+                              : "hover:ring-default-200 dark:hover:ring-default-700 hover:bg-gray-100 hover:ring-1 dark:hover:bg-gray-800",
+                          )}
+                        >
+                          <span className="font-medium">{provider.name}</span>
+                          <ChevronDown className="h-4 w-4 -rotate-90" />
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Right column - Models */}
+                    <div className="flex flex-1 flex-col">
+                      {/* Search bar */}
+                      <div className="border-default-200 dark:border-default-100 border-b p-2">
+                        <input
+                          type="text"
+                          placeholder="Search models..."
+                          value={uiState.modelSearchTerm}
+                          onChange={(e) =>
+                            setUiState((prev) => ({
+                              ...prev,
+                              modelSearchTerm: e.target.value,
+                            }))
+                          }
+                          className="placeholder:text-muted-foreground w-full rounded-md border border-gray-200 bg-transparent px-3 py-1.5 text-sm outline-hidden focus:border-gray-400 dark:border-gray-700 dark:focus:border-gray-500"
+                        />
+                      </div>
+
+                      {/* Models list */}
+                      <div className="flex-1 overflow-y-auto p-1">
+                        {uiState.hoveredProvider &&
+                        providerLoadState.loading.has(
+                          uiState.hoveredProvider as LighthouseProvider,
+                        ) ? (
+                          <div className="flex items-center justify-center py-8">
+                            <Loader size="sm" text="Loading models..." />
+                          </div>
+                        ) : filteredModels.length === 0 ? (
+                          <div className="text-muted-foreground flex items-center justify-center py-8 text-sm">
+                            {uiState.modelSearchTerm
+                              ? "No models found"
+                              : "No models available"}
+                          </div>
+                        ) : (
+                          filteredModels.map((model) => (
+                            <button
+                              key={model.id}
+                              type="button"
+                              onClick={() =>
+                                uiState.hoveredProvider &&
+                                handleModelSelect(
+                                  uiState.hoveredProvider as LighthouseProvider,
+                                  model.id,
+                                  model.name,
+                                )
+                              }
+                              className={cn(
+                                "focus:bg-accent focus:text-accent-foreground hover:ring-default-200 dark:hover:ring-default-700 relative flex w-full cursor-default items-center rounded-sm px-3 py-2 text-left text-sm outline-hidden transition-colors hover:bg-gray-100 hover:ring-1 dark:hover:bg-gray-800",
+                                selectedModel.modelId === model.id &&
+                                  selectedModel.providerType ===
+                                    uiState.hoveredProvider
+                                  ? "bg-accent text-accent-foreground"
+                                  : "",
+                              )}
+                            >
+                              {model.name}
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </PromptInputTools>
+
+            {/* Submit Button */}
+            <PromptInputSubmit
+              status={status}
+              disabled={
                 status === "streaming" ||
                 status === "submitted" ||
-                !messageValue?.trim()
+                !uiState.inputValue?.trim()
               }
-              className="bg-primary text-primary-foreground hover:bg-primary/90 dark:bg-primary/90 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg p-2 disabled:opacity-50"
-            >
-              {status === "streaming" || status === "submitted" ? (
-                <Square className="h-5 w-5" />
-              ) : (
-                <Play className="h-5 w-5" />
-              )}
-            </CustomButton>
-          </div>
-        </form>
-      </Form>
+            />
+          </PromptInputToolbar>
+        </PromptInput>
+      </div>
     </div>
   );
 };
