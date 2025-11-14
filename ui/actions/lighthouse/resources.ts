@@ -10,7 +10,7 @@ export async function getLighthouseResources({
   page?: number;
   query?: string;
   sort?: string;
-  filters?: any;
+  filters?: Record<string, string | number | boolean>;
   fields?: string[];
 }) {
   const headers = await getAuthHeaders({ contentType: false });
@@ -62,7 +62,7 @@ export async function getLighthouseLatestResources({
   page?: number;
   query?: string;
   sort?: string;
-  filters?: any;
+  filters?: Record<string, string | number | boolean>;
   fields?: string[];
 }) {
   const headers = await getAuthHeaders({ contentType: false });
