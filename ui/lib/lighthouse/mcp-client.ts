@@ -1,5 +1,5 @@
-import { MultiServerMCPClient } from "@langchain/mcp-adapters";
 import type { StructuredTool } from "@langchain/core/tools";
+import { MultiServerMCPClient } from "@langchain/mcp-adapters";
 
 import { getAuthContext } from "@/lib/lighthouse/auth-context";
 
@@ -29,12 +29,12 @@ const mcpState = globalForMCP.mcp;
 
 export async function initializeMCPClient(): Promise<void> {
   if (mcpState.initializationAttempted && mcpState.mcpAvailable) {
-    console.log("[MCP Client] Already initialized, skipping...");
+    // Return if MCP Client already initialized
     return;
   }
 
   if (mcpState.initializationPromise) {
-    console.log("[MCP Client] Initialization in progress, waiting...");
+    // If initialization in progress, return promise
     return mcpState.initializationPromise;
   }
 
@@ -43,10 +43,6 @@ export async function initializeMCPClient(): Promise<void> {
 
     try {
       const mcpServerUrl = process.env.MCP_SERVER_URL || "";
-
-      console.log(
-        `[MCP Client] Initializing MCP client with URL: ${mcpServerUrl}`,
-      );
 
       mcpState.mcpClient = new MultiServerMCPClient({
         additionalToolNamePrefix: "",
@@ -57,7 +53,6 @@ export async function initializeMCPClient(): Promise<void> {
           },
         },
         beforeToolCall: ({
-          serverName,
           name,
           args,
         }: {
@@ -72,9 +67,6 @@ export async function initializeMCPClient(): Promise<void> {
 
           const accessToken = getAuthContext();
           if (!accessToken) {
-            console.warn(
-              `[MCP Client] No auth context available for tool call: ${name}`,
-            );
             return { args };
           }
 
@@ -94,9 +86,6 @@ export async function initializeMCPClient(): Promise<void> {
       mcpState.mcpAvailable = false;
       mcpState.mcpClient = null;
       mcpState.mcpTools = [];
-      console.warn(
-        "[MCP Client] MCP tools will not be available. Lighthouse will operate in degraded mode.",
-      );
     } finally {
       mcpState.initializationPromise = null;
     }

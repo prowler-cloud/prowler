@@ -7,14 +7,11 @@ import {
 import type { ProviderType } from "@/lib/lighthouse/llm-factory";
 import { createLLM } from "@/lib/lighthouse/llm-factory";
 import {
+  getMCPTools,
   initializeMCPClient,
   isMCPAvailable,
-  getMCPTools,
 } from "@/lib/lighthouse/mcp-client";
-import {
-  describeTool,
-  executeTool,
-} from "@/lib/lighthouse/tools/meta-tool";
+import { describeTool, executeTool } from "@/lib/lighthouse/tools/meta-tool";
 import { getModelParams } from "@/lib/lighthouse/utils";
 
 export interface RuntimeConfig {
@@ -57,7 +54,8 @@ function generateToolListing(): string {
     listing += `- **${tool.name}**: ${desc}\n`;
   }
 
-  listing += "\nUse describe_tool with exact tool name to see full schema and parameters.\n";
+  listing +=
+    "\nUse describe_tool with exact tool name to see full schema and parameters.\n";
 
   return listing;
 }
@@ -106,7 +104,6 @@ You have access to TWO meta-tools:
 export async function initLighthouseWorkflow(runtimeConfig?: RuntimeConfig) {
   await initializeMCPClient();
 
-  const mcpIsAvailable = isMCPAvailable();
   const toolListing = generateToolListing();
 
   const systemPrompt = LIGHTHOUSE_SYSTEM_PROMPT_TEMPLATE.replace(

@@ -5,8 +5,8 @@ import { createUIMessageStreamResponse, UIMessage } from "ai";
 import { getTenantConfig } from "@/actions/lighthouse/lighthouse";
 import { auth } from "@/auth.config";
 import { getErrorMessage } from "@/lib/helper";
-import { getCurrentDataSection } from "@/lib/lighthouse/data";
 import { authContextStorage } from "@/lib/lighthouse/auth-context";
+import { getCurrentDataSection } from "@/lib/lighthouse/data";
 import { convertVercelMessageToLangChainMessage } from "@/lib/lighthouse/utils";
 import {
   initLighthouseWorkflow,
@@ -117,28 +117,28 @@ export async function POST(req: Request) {
           } catch (error) {
             const errorMessage =
               error instanceof Error ? error.message : String(error);
-            
+
             // Capture stream processing errors
             Sentry.captureException(error, {
-            tags: {
-              api_route: "lighthouse_analyst",
-              error_type: SentryErrorType.STREAM_PROCESSING,
-              error_source: SentryErrorSource.API_ROUTE,
-            },
-            level: "error",
-            contexts: {
-              lighthouse: {
-                event_type: "stream_error",
-                message_count: processedMessages.length,
+              tags: {
+                api_route: "lighthouse_analyst",
+                error_type: SentryErrorType.STREAM_PROCESSING,
+                error_source: SentryErrorSource.API_ROUTE,
               },
-            },
-          });
+              level: "error",
+              contexts: {
+                lighthouse: {
+                  event_type: "stream_error",
+                  message_count: processedMessages.length,
+                },
+              },
+            });
 
-          controller.enqueue(`[LIGHTHOUSE_ANALYST_ERROR]: ${errorMessage}`);
-          controller.close();
-        }
-      },
-    });
+            controller.enqueue(`[LIGHTHOUSE_ANALYST_ERROR]: ${errorMessage}`);
+            controller.close();
+          }
+        },
+      });
 
       return createUIMessageStreamResponse({
         stream: toUIMessageStream(stream),
@@ -165,9 +165,6 @@ export async function POST(req: Request) {
       },
     });
 
-    return Response.json(
-      { error: getErrorMessage(error) },
-      { status: 500 },
-    );
+    return Response.json({ error: getErrorMessage(error) }, { status: 500 });
   }
 }

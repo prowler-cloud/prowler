@@ -1,11 +1,8 @@
-import { tool } from "@langchain/core/tools";
 import type { StructuredTool } from "@langchain/core/tools";
+import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 
-import {
-  getMCPTools,
-  isMCPAvailable,
-} from "@/lib/lighthouse/mcp-client";
+import { getMCPTools, isMCPAvailable } from "@/lib/lighthouse/mcp-client";
 
 /**
  * Get all available tools (MCP only)
@@ -47,8 +44,10 @@ export const describeTool = tool(
       found: true,
       name: targetTool.name,
       description: targetTool.description || "No description available",
-      schema: targetTool.schema ? JSON.stringify(targetTool.schema, null, 2) : "{}",
-      message: `Tool schema retrieved. Use execute_tool to run it.`,
+      schema: targetTool.schema
+        ? JSON.stringify(targetTool.schema, null, 2)
+        : "{}",
+      message: "Tool schema retrieved. Use execute_tool to run it.",
     };
   },
   {
@@ -86,15 +85,17 @@ export const executeTool = tool(
     if (!targetTool) {
       return {
         error: `Tool '${toolName}' not found. Use describe_tool to check available tools.`,
-        suggestion: "Check the tool list in your system prompt for exact tool names. You must always provide the toolName key in the JSON object.",
+        suggestion:
+          "Check the tool list in your system prompt for exact tool names. You must always provide the toolName key in the JSON object.",
       };
     }
 
     try {
       // Use undefined for empty inputs, otherwise use the provided input
-      const input = !toolInput || Object.keys(toolInput).length === 0
-        ? undefined
-        : toolInput;
+      const input =
+        !toolInput || Object.keys(toolInput).length === 0
+          ? undefined
+          : toolInput;
 
       // Execute the tool directly - let errors propagate so LLM can handle retries
       const result = await targetTool.invoke(input);
