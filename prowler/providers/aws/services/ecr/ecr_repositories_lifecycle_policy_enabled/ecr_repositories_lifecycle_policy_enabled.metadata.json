@@ -15,13 +15,11 @@
   "Risk": "Without **lifecycle policies**, images accumulate indefinitely, leading to:\n- **Availability** issues when quotas block pushes and CI/CD\n- **Integrity** risk from redeploying outdated, vulnerable images\n- **Cost** growth from unnecessary storage",
   "RelatedUrl": "",
   "AdditionalURLs": [
+    "https://docs.aws.amazon.com/AmazonECR/latest/userguide/LifecyclePolicies.html",
+    "https://docs.aws.amazon.com/AmazonECR/latest/userguide/lp_creation.html",
     "https://aws.plainenglish.io/automation-deletion-untagged-container-image-in-amazon-ecr-using-ecr-lifecycle-policy-995eae2f5b8d",
     "https://blog.stackademic.com/title-implementing-lifecycle-policies-in-aws-ecr-a-practical-guide-3860b612b477",
-    "https://www.pulumi.com/answers/setting-up-aws-ecr-lifecycle-policy-on-pulumi/",
-    "https://docs.aws.amazon.com/AmazonECR/latest/userguide/lp_creation.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ECR/lifecycle-policy-in-use.html",
-    "https://erik-ekberg.medium.com/save-money-with-aws-ecr-lifecycle-policies-9149f82597bc",
-    "https://docs.aws.amazon.com/AmazonECR/latest/userguide/LifecyclePolicies.html"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ECR/lifecycle-policy-in-use.html"
   ],
   "Remediation": {
     "Code": {

@@ -4,8 +4,7 @@
   "CheckTitle": "ECR repository has image tag immutability enabled",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices",
-    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
-    "TTPs/Defense Evasion"
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
   ],
   "ServiceName": "ecr",
   "SubServiceName": "",

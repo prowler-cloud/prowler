@@ -18,7 +18,6 @@
     "https://www.geeksforgeeks.org/devops/how-to-manage-image-security-and-vulnerabilities-in-ecr/",
     "https://aws.amazon.com/blogs/aws/amazon-inspector-enhances-container-security-by-mapping-amazon-ecr-images-to-running-containers/",
     "https://docs.aws.amazon.com/inspector/latest/user/scanning-ecr.html",
-    "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning.html#describe-scan-findings",
     "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning-enhanced.html",
     "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning.html",
     "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning-basic.html"

@@ -4,9 +4,7 @@
   "CheckTitle": "ECR registry has image scanning on push enabled for all repositories",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices",
-    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
-    "Software and Configuration Checks/Vulnerabilities",
-    "Software and Configuration Checks/Patch Management"
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
   ],
   "ServiceName": "ecr",
   "SubServiceName": "",
@@ -21,7 +19,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "aws ecr put-registry-scanning-configuration --scanning-configuration '{\"scanType\":\"ENHANCED\",\"rules\":[{\"scanFrequency\":\"SCAN_ON_PUSH\",\"repositoryFilters\":[{\"filter\":\"*\",\"filterType\":\"WILDCARD\"}]}]}'",
+      "CLI": "aws ecr put-registry-scanning-configuration --rules 'scanFrequency=SCAN_ON_PUSH,repositoryFilters=[{filter=string,filterType=WILDCARD}]'",
       "NativeIaC": "",
       "Other": "1. Open the AWS Management Console and go to Amazon ECR\n2. In the left menu, click Account settings (or Settings), then find Registry scanning\n3. Click Edit\n4. Set Scanning type to Enhanced scanning\n5. Enable Scan on push\n6. Under Repository filters, set Filter type to WILDCARD and Filter to *\n7. Click Save",
       "Terraform": "```hcl\nresource \"aws_ecr_registry_scanning_configuration\" \"<example_resource_name>\" {\n  scan_type = \"ENHANCED\"\n\n  rule {\n    scan_frequency = \"SCAN_ON_PUSH\"  # Ensures scan on push\n    repository_filter {\n      filter      = \"*\"               # Applies to all repositories\n      filter_type = \"WILDCARD\"\n    }\n  }\n}\n```"
@@ -32,8 +30,7 @@
     }
   },
   "Categories": [
-    "vulnerabilities",
-    "container-security"
+    "vulnerabilities"
   ],
   "DependsOn": [],
   "RelatedTo": [],
