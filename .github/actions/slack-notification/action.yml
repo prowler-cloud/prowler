@@ -12,7 +12,7 @@ inputs:
     required: false
     default: ''
   step-outcome:
-    description: 'Outcome of a step to determine status (success/failure) - automatically sets STATUS_EMOJI and STATUS_TEXT env vars'
+    description: 'Outcome of a step to determine status (success/failure) - automatically sets STATUS_TEXT and STATUS_COLOR env vars'
     required: false
     default: ''
 outputs:
@@ -23,35 +23,45 @@ runs:
   using: 'composite'
   steps:
     - name: Determine status
-      if: inputs.step-outcome != ''
       id: status
       shell: bash
       run: |
         if [[ "${{ inputs.step-outcome }}" == "success" ]]; then
-          echo "STATUS_EMOJI=[✓]" >> $GITHUB_ENV
-          echo "STATUS_TEXT=completed successfully!" >> $GITHUB_ENV
+          echo "STATUS_TEXT=Completed" >> $GITHUB_ENV
+          echo "STATUS_COLOR=#6aa84f" >> $GITHUB_ENV
+        elif [[ "${{ inputs.step-outcome }}" == "failure" ]]; then
+          echo "STATUS_TEXT=Failed" >> $GITHUB_ENV
+          echo "STATUS_COLOR=#fc3434" >> $GITHUB_ENV
         else
-          echo "STATUS_EMOJI=[✗]" >> $GITHUB_ENV
-          echo "STATUS_TEXT=failed" >> $GITHUB_ENV
+          # No outcome provided - pending/in progress state
+          echo "STATUS_COLOR=#dbab09" >> $GITHUB_ENV
         fi
 
     - name: Send Slack notification (new message)
       if: inputs.update-ts == ''
       id: slack-notification-post
       uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
+      env:
+        SLACK_PAYLOAD_FILE_PATH: ${{ inputs.payload-file-path }}
       with:
         method: chat.postMessage
         token: ${{ inputs.slack-bot-token }}
         payload-file-path: ${{ inputs.payload-file-path }}
+        payload-templated: true
+        errors: true
 
     - name: Update Slack notification
       if: inputs.update-ts != ''
       id: slack-notification-update
       uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
+      env:
+        SLACK_PAYLOAD_FILE_PATH: ${{ inputs.payload-file-path }}
       with:
         method: chat.update
         token: ${{ inputs.slack-bot-token }}
         payload-file-path: ${{ inputs.payload-file-path }}
+        payload-templated: true
+        errors: true
 
     - name: Set output
       id: slack-notification
@@ -62,4 +72,3 @@ runs:
         else
           echo "ts=${{ inputs.update-ts }}" >> $GITHUB_OUTPUT
         fi
-

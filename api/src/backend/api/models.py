@@ -284,7 +284,9 @@ class Provider(RowLevelSecurityProtectedModel):
         KUBERNETES = "kubernetes", _("Kubernetes")
         M365 = "m365", _("M365")
         GITHUB = "github", _("GitHub")
-        OCI = "oci", _("Oracle Cloud Infrastructure")
+        MONGODBATLAS = "mongodbatlas", _("MongoDB Atlas")
+        IAC = "iac", _("IaC")
+        ORACLECLOUD = "oraclecloud", _("Oracle Cloud Infrastructure")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -356,14 +358,36 @@ class Provider(RowLevelSecurityProtectedModel):
             )
 
     @staticmethod
-    def validate_oci_uid(value):
+    def validate_iac_uid(value):
+        # Validate that it's a valid repository URL (git URL format)
+        if not re.match(
+            r"^(https?://|git@|ssh://)[^\s/]+[^\s]*\.git$|^(https?://)[^\s/]+[^\s]*$",
+            value,
+        ):
+            raise ModelValidationError(
+                detail="IaC provider ID must be a valid repository URL (e.g., https://github.com/user/repo or https://github.com/user/repo.git).",
+                code="iac-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_oraclecloud_uid(value):
         if not re.match(
             r"^ocid1\.([a-z0-9_-]+)\.([a-z0-9_-]+)\.([a-z0-9_-]*)\.([a-z0-9]+)$", value
         ):
             raise ModelValidationError(
                 detail="Oracle Cloud Infrastructure provider ID must be a valid tenancy OCID in the format: "
                 "ocid1.<resource_type>.<realm>.<region>.<unique_id>",
-                code="oci-uid",
+                code="oraclecloud-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_mongodbatlas_uid(value):
+        if not re.match(r"^[0-9a-fA-F]{24}$", value):
+            raise ModelValidationError(
+                detail="MongoDB Atlas organization ID must be a 24-character hexadecimal string.",
+                code="mongodbatlas-uid",
                 pointer="/data/attributes/uid",
             )
 
@@ -401,7 +425,8 @@ class Provider(RowLevelSecurityProtectedModel):
 
         constraints = [
             models.UniqueConstraint(
-                fields=("tenant_id", "provider", "uid", "is_deleted"),
+                fields=("tenant_id", "provider", "uid"),
+                condition=Q(is_deleted=False),
                 name="unique_provider_uids",
             ),
             RowLevelSecurityConstraint(
@@ -822,6 +847,9 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
     muted = models.BooleanField(default=False, null=False)
     muted_reason = models.TextField(
         blank=True, null=True, validators=[MinLengthValidator(3)], max_length=500
+    )
+    muted_at = models.DateTimeField(
+        null=True, blank=True, help_text="Timestamp when this finding was muted"
     )
     compliance = models.JSONField(default=dict, null=True, blank=True)
 
@@ -1343,33 +1371,68 @@ class ComplianceRequirementOverview(RowLevelSecurityProtectedModel):
             ),
         ]
         indexes = [
-            models.Index(fields=["tenant_id", "scan_id"], name="cro_tenant_scan_idx"),
-            models.Index(
-                fields=["tenant_id", "scan_id", "compliance_id"],
-                name="cro_scan_comp_idx",
-            ),
             models.Index(
                 fields=["tenant_id", "scan_id", "compliance_id", "region"],
                 name="cro_scan_comp_reg_idx",
-            ),
-            models.Index(
-                fields=["tenant_id", "scan_id", "compliance_id", "requirement_id"],
-                name="cro_scan_comp_req_idx",
-            ),
-            models.Index(
-                fields=[
-                    "tenant_id",
-                    "scan_id",
-                    "compliance_id",
-                    "requirement_id",
-                    "region",
-                ],
-                name="cro_scan_comp_req_reg_idx",
             ),
         ]
 
     class JSONAPIMeta:
         resource_name = "compliance-requirements-overviews"
+
+
+class ComplianceOverviewSummary(RowLevelSecurityProtectedModel):
+    """
+    Pre-aggregated compliance overview aggregated across ALL regions.
+    One row per (scan_id, compliance_id) combination.
+
+    This table optimizes the common case where users view overall compliance
+    without filtering by region. For region-specific views, the detailed
+    ComplianceRequirementOverview table is used instead.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+
+    scan = models.ForeignKey(
+        Scan,
+        on_delete=models.CASCADE,
+        related_name="compliance_summaries",
+        related_query_name="compliance_summary",
+    )
+
+    compliance_id = models.TextField(blank=False)
+
+    # Pre-aggregated scores (computed across ALL regions)
+    requirements_passed = models.IntegerField(default=0)
+    requirements_failed = models.IntegerField(default=0)
+    requirements_manual = models.IntegerField(default=0)
+    total_requirements = models.IntegerField(default=0)
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "compliance_overview_summaries"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "scan_id", "compliance_id"),
+                name="unique_compliance_summary_per_scan",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "DELETE"],
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "scan_id"],
+                name="cos_tenant_scan_idx",
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "compliance-overview-summaries"
 
 
 class ScanSummary(RowLevelSecurityProtectedModel):
@@ -1935,6 +1998,59 @@ class LighthouseConfiguration(RowLevelSecurityProtectedModel):
         resource_name = "lighthouse-configurations"
 
 
+class MuteRule(RowLevelSecurityProtectedModel):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    # Rule metadata
+    name = models.CharField(
+        max_length=100,
+        validators=[MinLengthValidator(3)],
+        help_text="Human-readable name for this rule",
+    )
+    reason = models.TextField(
+        validators=[MinLengthValidator(3)],
+        max_length=500,
+        help_text="Reason for muting",
+    )
+    enabled = models.BooleanField(
+        default=True, help_text="Whether this rule is currently enabled"
+    )
+
+    # Audit fields
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="created_mute_rules",
+        help_text="User who created this rule",
+    )
+
+    # Rule criteria - array of finding UIDs
+    finding_uids = ArrayField(
+        models.CharField(max_length=255), help_text="List of finding UIDs to mute"
+    )
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "mute_rules"
+
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+            models.UniqueConstraint(
+                fields=("tenant_id", "name"),
+                name="unique_mute_rule_name_per_tenant",
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "mute-rules"
+
+
 class Processor(RowLevelSecurityProtectedModel):
     class ProcessorChoices(models.TextChoices):
         MUTELIST = "mutelist", _("Mutelist")
@@ -1983,6 +2099,8 @@ class LighthouseProviderConfiguration(RowLevelSecurityProtectedModel):
 
     class LLMProviderChoices(models.TextChoices):
         OPENAI = "openai", _("OpenAI")
+        BEDROCK = "bedrock", _("AWS Bedrock")
+        OPENAI_COMPATIBLE = "openai_compatible", _("OpenAI Compatible")
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
@@ -2104,7 +2222,7 @@ class LighthouseTenantConfiguration(RowLevelSecurityProtectedModel):
         ]
 
     class JSONAPIMeta:
-        resource_name = "lighthouse-config"
+        resource_name = "lighthouse-configurations"
 
 
 class LighthouseProviderModels(RowLevelSecurityProtectedModel):
@@ -2153,3 +2271,140 @@ class LighthouseProviderModels(RowLevelSecurityProtectedModel):
                 name="lh_prov_models_cfg_idx",
             ),
         ]
+
+    class JSONAPIMeta:
+        resource_name = "lighthouse-models"
+
+
+class ThreatScoreSnapshot(RowLevelSecurityProtectedModel):
+    """
+    Stores historical ThreatScore metrics for a given scan.
+    Snapshots are created automatically after each ThreatScore report generation.
+    """
+
+    objects = models.Manager()
+    all_objects = models.Manager()
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+
+    scan = models.ForeignKey(
+        Scan,
+        on_delete=models.CASCADE,
+        related_name="threatscore_snapshots",
+        related_query_name="threatscore_snapshot",
+    )
+
+    provider = models.ForeignKey(
+        Provider,
+        on_delete=models.CASCADE,
+        related_name="threatscore_snapshots",
+        related_query_name="threatscore_snapshot",
+    )
+
+    compliance_id = models.CharField(
+        max_length=100,
+        blank=False,
+        null=False,
+        help_text="Compliance framework ID (e.g., 'prowler_threatscore_aws')",
+    )
+
+    # Overall ThreatScore metrics
+    overall_score = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        help_text="Overall ThreatScore percentage (0-100)",
+    )
+
+    # Score improvement/degradation compared to previous snapshot
+    score_delta = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Score change compared to previous snapshot (positive = improvement)",
+    )
+
+    # Section breakdown stored as JSON
+    # Format: {"1. IAM": 85.5, "2. Attack Surface": 92.3, ...}
+    section_scores = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="ThreatScore breakdown by section",
+    )
+
+    # Critical requirements metadata stored as JSON
+    # Format: [{"requirement_id": "...", "risk_level": 5, "weight": 150, ...}, ...]
+    critical_requirements = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="List of critical failed requirements (risk >= 4)",
+    )
+
+    # Summary statistics
+    total_requirements = models.IntegerField(
+        default=0,
+        help_text="Total number of requirements evaluated",
+    )
+
+    passed_requirements = models.IntegerField(
+        default=0,
+        help_text="Number of requirements with PASS status",
+    )
+
+    failed_requirements = models.IntegerField(
+        default=0,
+        help_text="Number of requirements with FAIL status",
+    )
+
+    manual_requirements = models.IntegerField(
+        default=0,
+        help_text="Number of requirements with MANUAL status",
+    )
+
+    total_findings = models.IntegerField(
+        default=0,
+        help_text="Total number of findings across all requirements",
+    )
+
+    passed_findings = models.IntegerField(
+        default=0,
+        help_text="Number of findings with PASS status",
+    )
+
+    failed_findings = models.IntegerField(
+        default=0,
+        help_text="Number of findings with FAIL status",
+    )
+
+    def __str__(self):
+        return f"ThreatScore {self.overall_score}% for scan {self.scan_id} ({self.inserted_at})"
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "threatscore_snapshots"
+
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "scan_id"],
+                name="threatscore_snap_t_scan_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "provider_id"],
+                name="threatscore_snap_t_prov_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "inserted_at"],
+                name="threatscore_snap_t_time_idx",
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "threatscore-snapshots"

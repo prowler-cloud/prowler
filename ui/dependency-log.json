@@ -33,11 +33,19 @@
   },
   {
     "section": "dependencies",
+    "name": "@langchain/aws",
+    "from": "0.1.15",
+    "to": "0.1.15",
+    "strategy": "installed",
+    "generatedAt": "2025-11-03T07:43:34.628Z"
+  },
+  {
+    "section": "dependencies",
     "name": "@langchain/core",
     "from": "0.3.77",
-    "to": "0.3.77",
+    "to": "0.3.78",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2025-11-03T07:43:34.628Z"
   },
   {
     "section": "dependencies",
@@ -59,9 +67,9 @@
     "section": "dependencies",
     "name": "@langchain/openai",
     "from": "0.5.18",
-    "to": "0.5.18",
+    "to": "0.6.16",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2025-11-03T07:43:34.628Z"
   },
   {
     "section": "dependencies",
@@ -121,6 +129,14 @@
   },
   {
     "section": "dependencies",
+    "name": "@radix-ui/react-separator",
+    "from": "1.1.7",
+    "to": "1.1.7",
+    "strategy": "installed",
+    "generatedAt": "2025-10-30T10:22:21.335Z"
+  },
+  {
+    "section": "dependencies",
     "name": "@radix-ui/react-slot",
     "from": "1.2.3",
     "to": "1.2.3",
@@ -150,6 +166,14 @@
     "to": "3.8.12",
     "strategy": "installed",
     "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@sentry/nextjs",
+    "from": "10.11.0",
+    "to": "10.11.0",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T15:52:15.849Z"
   },
   {
     "section": "dependencies",
@@ -385,6 +409,14 @@
   },
   {
     "section": "dependencies",
+    "name": "streamdown",
+    "from": "1.3.0",
+    "to": "1.3.0",
+    "strategy": "installed",
+    "generatedAt": "2025-11-03T07:43:34.628Z"
+  },
+  {
+    "section": "dependencies",
     "name": "tailwind-merge",
     "from": "3.3.1",
     "to": "3.3.1",
@@ -473,6 +505,14 @@
   },
   {
     "section": "devDependencies",
+    "name": "@types/geojson",
+    "from": "7946.0.16",
+    "to": "7946.0.16",
+    "strategy": "installed",
+    "generatedAt": "2025-10-30T10:22:21.335Z"
+  },
+  {
+    "section": "devDependencies",
     "name": "@types/node",
     "from": "20.5.7",
     "to": "20.5.7",
@@ -502,6 +542,14 @@
     "to": "3.1.5",
     "strategy": "installed",
     "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "@types/topojson-specification",
+    "from": "1.0.5",
+    "to": "1.0.5",
+    "strategy": "installed",
+    "generatedAt": "2025-10-30T10:22:21.335Z"
   },
   {
     "section": "devDependencies",
@@ -685,7 +733,7 @@
     "from": "3.4.1",
     "to": "3.4.1",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2025-10-22T15:52:15.849Z"
   },
   {
     "section": "devDependencies",

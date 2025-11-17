@@ -1,4 +1,17 @@
 {
-  "channel": "$SLACK_CHANNEL_ID",
-  "text": "$STATUS_EMOJI $COMPONENT container release $RELEASE_TAG push $STATUS_TEXT <$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID|View run>"
+  "channel": "${{ env.SLACK_CHANNEL_ID }}",
+  "attachments": [
+    {
+      "color": "${{ env.STATUS_COLOR }}",
+      "blocks": [
+        {
+          "type": "section",
+          "text": {
+            "type": "mrkdwn",
+            "text": "*Status:*\n${{ env.STATUS_TEXT }}\n\n${{ env.COMPONENT }} container release ${{ env.RELEASE_TAG }} push ${{ env.STATUS_TEXT }}\n\n<${{ env.GITHUB_SERVER_URL }}/${{ env.GITHUB_REPOSITORY }}/actions/runs/${{ env.GITHUB_RUN_ID }}|View run>"
+          }
+        }
+      ]
+    }
+  ]
 }

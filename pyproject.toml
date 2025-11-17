@@ -26,6 +26,7 @@ dependencies = [
   "azure-mgmt-monitor==6.0.2",
   "azure-mgmt-network==28.1.0",
   "azure-mgmt-rdbms==10.1.0",
+  "azure-mgmt-postgresqlflexibleservers==1.1.0",
   "azure-mgmt-recoveryservices==3.1.0",
   "azure-mgmt-recoveryservicesbackup==9.2.0",
   "azure-mgmt-resource==23.3.0",
@@ -83,7 +84,7 @@ prowler = "prowler.__main__:prowler"
 
 [project.urls]
 "Changelog" = "https://github.com/prowler-cloud/prowler/releases"
-"Documentation" = "https://docs.prowler.cloud"
+"Documentation" = "https://docs.prowler.com"
 "Homepage" = "https://github.com/prowler-cloud/prowler"
 "Issue tracker" = "https://github.com/prowler-cloud/prowler/issues"
 
