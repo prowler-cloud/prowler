@@ -110,6 +110,16 @@ export const addProviderFormSchema = z
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
         providerUid: z.string(),
       }),
+      z.object({
+        providerType: z.literal("iac"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z.string(),
+      }),
+      z.object({
+        providerType: z.literal("oraclecloud"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z.string(),
+      }),
     ]),
   );
 
@@ -168,12 +178,13 @@ export const addCredentialsFormSchema = (
                       .min(1, "Client ID is required"),
                     [ProviderCredentialFields.CLIENT_SECRET]: z
                       .string()
-                      .min(1, "Client Secret is required"),
+                      .optional(),
+                    [ProviderCredentialFields.CERTIFICATE_CONTENT]: z
+                      .string()
+                      .optional(),
                     [ProviderCredentialFields.TENANT_ID]: z
                       .string()
                       .min(1, "Tenant ID is required"),
-                    [ProviderCredentialFields.USER]: z.string().optional(),
-                    [ProviderCredentialFields.PASSWORD]: z.string().optional(),
                   }
                 : providerType === "github"
                   ? {
@@ -190,27 +201,60 @@ export const addCredentialsFormSchema = (
                         .string()
                         .optional(),
                     }
-                  : {}),
+                  : providerType === "iac"
+                    ? {
+                        [ProviderCredentialFields.REPOSITORY_URL]: z
+                          .string()
+                          .optional(),
+                        [ProviderCredentialFields.ACCESS_TOKEN]: z
+                          .string()
+                          .optional(),
+                      }
+                    : providerType === "oraclecloud"
+                      ? {
+                          [ProviderCredentialFields.OCI_USER]: z
+                            .string()
+                            .min(1, "User OCID is required"),
+                          [ProviderCredentialFields.OCI_FINGERPRINT]: z
+                            .string()
+                            .min(1, "Fingerprint is required"),
+                          [ProviderCredentialFields.OCI_KEY_CONTENT]: z
+                            .string()
+                            .min(1, "Private Key Content is required"),
+                          [ProviderCredentialFields.OCI_TENANCY]: z
+                            .string()
+                            .min(1, "Tenancy OCID is required"),
+                          [ProviderCredentialFields.OCI_REGION]: z
+                            .string()
+                            .min(1, "Region is required"),
+                          [ProviderCredentialFields.OCI_PASS_PHRASE]: z
+                            .union([z.string(), z.literal("")])
+                            .optional(),
+                        }
+                      : {}),
     })
     .superRefine((data: Record<string, any>, ctx) => {
       if (providerType === "m365") {
-        const hasUser = !!data[ProviderCredentialFields.USER];
-        const hasPassword = !!data[ProviderCredentialFields.PASSWORD];
-
-        if (hasUser && !hasPassword) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "If you provide a user, you must also provide a password",
-            path: [ProviderCredentialFields.PASSWORD],
-          });
-        }
-
-        if (hasPassword && !hasUser) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "If you provide a password, you must also provide a user",
-            path: [ProviderCredentialFields.USER],
-          });
+        // Validate based on the via parameter
+        if (via === "app_client_secret") {
+          const clientSecret = data[ProviderCredentialFields.CLIENT_SECRET];
+          if (!clientSecret || clientSecret.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              message: "Client Secret is required",
+              path: [ProviderCredentialFields.CLIENT_SECRET],
+            });
+          }
+        } else if (via === "app_certificate") {
+          const certificateContent =
+            data[ProviderCredentialFields.CERTIFICATE_CONTENT];
+          if (!certificateContent || certificateContent.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              message: "Certificate Content is required",
+              path: [ProviderCredentialFields.CERTIFICATE_CONTENT],
+            });
+          }
         }
       }
 
@@ -219,7 +263,7 @@ export const addCredentialsFormSchema = (
         if (via === "personal_access_token") {
           if (!data[ProviderCredentialFields.PERSONAL_ACCESS_TOKEN]) {
             ctx.addIssue({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: "Personal Access Token is required",
               path: [ProviderCredentialFields.PERSONAL_ACCESS_TOKEN],
             });
@@ -227,7 +271,7 @@ export const addCredentialsFormSchema = (
         } else if (via === "oauth_app") {
           if (!data[ProviderCredentialFields.OAUTH_APP_TOKEN]) {
             ctx.addIssue({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: "OAuth App Token is required",
               path: [ProviderCredentialFields.OAUTH_APP_TOKEN],
             });
@@ -235,14 +279,14 @@ export const addCredentialsFormSchema = (
         } else if (via === "github_app") {
           if (!data[ProviderCredentialFields.GITHUB_APP_ID]) {
             ctx.addIssue({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: "GitHub App ID is required",
               path: [ProviderCredentialFields.GITHUB_APP_ID],
             });
           }
           if (!data[ProviderCredentialFields.GITHUB_APP_KEY]) {
             ctx.addIssue({
-              code: z.ZodIssueCode.custom,
+              code: "custom",
               message: "GitHub App Private Key is required",
               path: [ProviderCredentialFields.GITHUB_APP_KEY],
             });
@@ -390,7 +434,7 @@ export const mutedFindingsConfigFormSchema = z.object({
       const yamlValidation = validateYaml(val);
       if (!yamlValidation.isValid) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: `Invalid YAML format: ${yamlValidation.error}`,
         });
         return;
@@ -399,7 +443,7 @@ export const mutedFindingsConfigFormSchema = z.object({
       const mutelistValidation = validateMutelistYaml(val);
       if (!mutelistValidation.isValid) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: `Invalid mutelist structure: ${mutelistValidation.error}`,
         });
       }
