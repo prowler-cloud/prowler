@@ -27,7 +27,8 @@
     }
   },
   "Categories": [
-    "internet-exposed"
+    "internet-exposed",
+    "container-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

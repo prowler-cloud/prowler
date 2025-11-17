@@ -3,7 +3,6 @@
   "CheckID": "ecs_service_fargate_latest_platform_version",
   "CheckTitle": "ECS Fargate service uses the latest Fargate platform version",
   "CheckType": [
-    "Software and Configuration Checks/Patch Management",
     "Software and Configuration Checks/AWS Security Best Practices"
   ],
   "ServiceName": "ecs",
@@ -18,8 +17,6 @@
     "https://servian.dev/setting-up-fargate-for-ecs-exec-8f5cc8d7d80e",
     "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/platform-fargate.html",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ECS/platform-version.html",
-    "https://asecure.cloud/a/cfgrule_ecs-fargate-latest-platform-version/",
-    "https://docs.datadoghq.com/security/default_rules/aws-ecs-service-ecs-fargate-services-should-automatically-use-the-latest-fargate-platform-version/",
     "https://docs.aws.amazon.com/config/latest/developerguide/ecs-fargate-latest-platform-version.html",
     "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/ecs-controls.html#ecs-10"

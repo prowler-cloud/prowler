@@ -22,7 +22,6 @@
     "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-networking.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/ecs-controls.html#ecs-6",
     "https://docs.aws.amazon.com/config/latest/developerguide/ecs-task-definition-user-for-host-mode-check.html",
-    "https://support.icompaas.com/support/solutions/articles/62000233979-ensure-amazon-ecs-task-definitions-using-host-network-mode-do-not-allow-privileged-or-root-user-acc",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/ecs-controls.html",
     "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/update-task-definition-console-v2.html"
   ],

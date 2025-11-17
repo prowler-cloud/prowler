@@ -15,7 +15,6 @@
   "Risk": "Without **Container Insights**, ECS operations lack **telemetry** to spot failures and anomalies. Missed CPU/memory/network spikes and restart loops degrade **availability** and delay response. Absent baselines impede detecting abuse (e.g., **cryptomining** or data egress bursts), risking **confidentiality** and unexpected **costs**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://repost.aws/knowledge-center/cloudwatch-container-insights-ecs",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/ecs-controls.html#ecs-12",
     "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/cloudwatch-container-insights.html",
     "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-metrics-ECS.html",

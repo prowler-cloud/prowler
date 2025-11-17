@@ -3,8 +3,7 @@
   "CheckID": "ecs_service_no_assign_public_ip",
   "CheckTitle": "ECS service does not have automatic public IP assignment",
   "CheckType": [
-    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
-    "TTPs/Initial Access"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability"
   ],
   "ServiceName": "ecs",
   "SubServiceName": "",
@@ -15,9 +14,6 @@
   "Risk": "Automatic **public IPs** make tasks directly reachable from the Internet, enabling:\n- Port scanning and remote exploitation\n- Brute-force against admin endpoints\n- Data exfiltration via exposed APIs\nThis jeopardizes **confidentiality**, **integrity**, and **availability**, and can facilitate lateral movement within the VPC.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://repost.aws/questions/QUrl_ipsfVRhmB16dFKrBy-w/why-ecs-services-should-not-have-public-ip-addresses-assigned-to-them-automatically",
-    "https://support.icompaas.com/support/solutions/articles/62000233442--ensure-ecs-services-should-not-assign-public-ips-automatically",
-    "https://docs.datadoghq.com/security/default_rules/def-000-8zx/",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/ecs-controls.html#ecs-2",
     "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/security.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/ecs-controls.html",

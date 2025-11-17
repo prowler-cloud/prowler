@@ -25,7 +25,9 @@
       "Url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-tag-mutability.html"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "container-security"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

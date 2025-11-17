@@ -15,12 +15,7 @@
   "Risk": "**Blocking log mode** can stall writes to stdout/stderr, making containers unresponsive, failing health checks, and causing task restarts or startup failures if log groups/streams can't be created. This reduces **availability** and may trigger cascading instability across dependent services.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/awssupport/latest/user/fault-tolerance-checks.html#amazon-ec2-awslogs-driver-blockingmode",
-    "https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ecs/client/describe_task_definition.html",
-    "https://dzone.com/articles/docker-logging-optimization-scalability-performance",
     "https://docs.aws.amazon.com/config/latest/developerguide/ecs-task-definition-log-configuration.html",
-    "https://dalefro.medium.com/non-blocking-docker-logging-ebd3e1a1e89d",
-    "https://support.icompaas.com/support/solutions/articles/62000233427-ensure-ecs-task-definition-containers-have-logging-configured-with-non-blocking-mode",
     "https://www.amazonaws.cn/en/blog-selection/preventing-log-loss-with-non-blocking-mode-in-the-awslogs-container-log-driver/",
     "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/using_awslogs.html#specify-log-config"
   ],
