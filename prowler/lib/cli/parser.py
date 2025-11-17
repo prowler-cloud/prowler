@@ -311,7 +311,7 @@ Detailed documentation at https://docs.prowler.com
             "--checks-folder",
             "-x",
             nargs="?",
-            help="Specify external directory with custom checks (each check must have a folder with the required files, see more in https://docs.prowler.com/developer-guide/configurable-checks).",
+            help="Specify external directory with custom checks (each check must have a folder with the required files, see more in https://docs.prowler.com/user-guide/cli/tutorials/misc#custom-checks-in-prowler).",
         )
 
     def __init_list_checks_parser__(self):
