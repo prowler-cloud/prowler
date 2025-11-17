@@ -44,7 +44,7 @@ jobs:
 
   container-build-push:
     needs: setup
-    runs-on: ${{ matrix.runner }} 
+    runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
         include:
@@ -149,7 +149,7 @@ jobs:
 
       - name: Install regctl
         if: always()
-        uses: regclient/actions/regctl-installer@main
+        uses: regclient/actions/regctl-installer@f61d18f46c86af724a9c804cb9ff2a6fec741c7c # main
 
       - name: Cleanup intermediate architecture tags
         if: always()
