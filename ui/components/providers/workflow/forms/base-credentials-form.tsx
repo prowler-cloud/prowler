@@ -20,6 +20,7 @@ import {
   KubernetesCredentials,
   M365CertificateCredentials,
   M365ClientSecretCredentials,
+  MongoDBAtlasCredentials,
   OCICredentials,
   ProviderType,
 } from "@/types";
@@ -37,6 +38,7 @@ import { AzureCredentialsForm } from "./via-credentials/azure-credentials-form";
 import { GitHubCredentialsForm } from "./via-credentials/github-credentials-form";
 import { IacCredentialsForm } from "./via-credentials/iac-credentials-form";
 import { KubernetesCredentialsForm } from "./via-credentials/k8s-credentials-form";
+import { MongoDBAtlasCredentialsForm } from "./via-credentials/mongodbatlas-credentials-form";
 import { OracleCloudCredentialsForm } from "./via-credentials/oraclecloud-credentials-form";
 
 type BaseCredentialsFormProps = {
@@ -170,6 +172,13 @@ export const BaseCredentialsForm = ({
         {providerType === "oraclecloud" && (
           <OracleCloudCredentialsForm
             control={form.control as unknown as Control<OCICredentials>}
+          />
+        )}
+        {providerType === "mongodbatlas" && (
+          <MongoDBAtlasCredentialsForm
+            control={
+              form.control as unknown as Control<MongoDBAtlasCredentials>
+            }
           />
         )}
 

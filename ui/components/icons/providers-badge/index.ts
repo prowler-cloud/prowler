@@ -5,4 +5,5 @@ export * from "./github-provider-badge";
 export * from "./iac-provider-badge";
 export * from "./ks8-provider-badge";
 export * from "./m365-provider-badge";
+export * from "./mongodbatlas-provider-badge";
 export * from "./oraclecloud-provider-badge";
