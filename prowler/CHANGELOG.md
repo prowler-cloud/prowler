@@ -55,6 +55,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update oraclecloud audit service metadata to new format [(#9221)](https://github.com/prowler-cloud/prowler/pull/9221)
 - Raise ASFF output error for non-AWS providers [(#9225)](https://github.com/prowler-cloud/prowler/pull/9225)
 - Update AWS ECR service metadata to new format [(#8872)](https://github.com/prowler-cloud/prowler/pull/8872)
+- Update AWS ECS service metadata to new format [(#8888)](https://github.com/prowler-cloud/prowler/pull/8888)
 
 ---
 
@@ -129,6 +130,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS Directory Service service metadata to new format [(#8859)](https://github.com/prowler-cloud/prowler/pull/8859)
 - Update AWS CloudFront service metadata to new format [(#8829)](https://github.com/prowler-cloud/prowler/pull/8829)
 - Deprecate user authentication for M365 provider [(#8865)](https://github.com/prowler-cloud/prowler/pull/8865)
+
 
 ### Fixed
 - Fix SNS topics showing empty AWS_ResourceID in Quick Inventory output [(#8762)](https://github.com/prowler-cloud/prowler/issues/8762)
