@@ -62,17 +62,21 @@ export const CollapsibleMenu = ({
             isSidebarOpen ? "w-full justify-start" : "w-14 justify-center",
           )}
         >
-          <div className="flex items-center">
-            <span className={isSidebarOpen ? "mr-4" : ""}>
-              <Icon size={18} />
-            </span>
-            {isSidebarOpen && <p className="max-w-[150px] truncate">{label}</p>}
-          </div>
-          {isSidebarOpen && (
-            <ChevronDown
-              size={18}
-              className="ml-auto transition-transform duration-200"
-            />
+          {isSidebarOpen ? (
+            <div className="flex w-full items-center justify-between">
+              <div className="flex items-center">
+                <span className="mr-4">
+                  <Icon size={18} />
+                </span>
+                <p className="max-w-[150px] truncate">{label}</p>
+              </div>
+              <ChevronDown
+                size={18}
+                className="transition-transform duration-200"
+              />
+            </div>
+          ) : (
+            <Icon size={18} />
           )}
         </Button>
       </CollapsibleTrigger>

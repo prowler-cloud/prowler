@@ -43,7 +43,7 @@ export const MenuItem = ({
             variant={isActive ? "secondary" : "ghost"}
             className={cn(
               "h-auto px-4 py-1",
-              isOpen ? "w-full justify-start" : "w-14",
+              isOpen ? "w-full justify-start" : "w-14 justify-center",
             )}
             asChild
           >

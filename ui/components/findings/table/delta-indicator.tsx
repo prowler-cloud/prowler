@@ -26,7 +26,7 @@ export const DeltaIndicator = ({ delta }: DeltaIndicatorProps) => {
             asChild
           >
             <a
-              href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app/#step-8-analyze-the-findings"
+              href="https://docs.prowler.com/user-guide/tutorials/prowler-app#step-8:-analyze-the-findings"
               target="_blank"
               rel="noopener noreferrer"
             >
