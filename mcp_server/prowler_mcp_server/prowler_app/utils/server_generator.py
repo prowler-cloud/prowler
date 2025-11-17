@@ -51,10 +51,11 @@ class OpenAPIToMCPGenerator:
         self.spec = self._load_spec()
         self.generated_tools = []
         self.imports = set()
+        self.needs_query_array_normalizer = False
         self.type_mapping = {
             "string": "str",
-            "integer": "int | str",
-            "number": "float | str",
+            "integer": "str",
+            "number": "str",
             "boolean": "bool | str",
             "array": "list[Any] | str",
             "object": "dict[str, Any] | str",
@@ -525,13 +526,13 @@ class OpenAPIToMCPGenerator:
         python_name = param["python_name"]
         original_type = param.get("original_type", "string")
 
-        if original_type == "integer":
-            return f"int({python_name}) if isinstance({python_name}, str) else {python_name}"
-        elif original_type == "number":
-            return f"float({python_name}) if isinstance({python_name}, str) else {python_name}"
-        elif original_type == "boolean":
-            return f"({python_name}.lower() in ['true', '1', 'yes'] if isinstance({python_name}, str) else bool({python_name}))"
+        if original_type == "boolean":
+            # Convert string to boolean using simple comparison
+            return f"({python_name}.lower() in ('true', '1', 'yes', 'on') if isinstance({python_name}, str) else {python_name})"
         elif original_type == "array":
+            if param.get("in") == "query":
+                self.needs_query_array_normalizer = True
+                return f"_normalize_query_array({python_name})"
             return f"json.loads({python_name}) if isinstance({python_name}, str) else {python_name}"
         elif original_type == "object":
             return f"json.loads({python_name}) if isinstance({python_name}, str) else {python_name}"
@@ -708,6 +709,7 @@ class OpenAPIToMCPGenerator:
         lines.append("        return {")
         lines.append('            "success": True,')
         lines.append('            "data": data.get("data", data),')
+        lines.append('            "meta": data.get("meta", {}),')
         lines.append("        }")
         lines.append("")
 
@@ -864,6 +866,44 @@ class OpenAPIToMCPGenerator:
         # Add other imports
         for imp in other_imports:
             output_lines.append(imp)
+
+        if self.needs_query_array_normalizer:
+            output_lines.append("")
+            output_lines.append("")
+            output_lines.append("def _normalize_query_array(value):")
+            output_lines.append(
+                '    """Normalize query array inputs to comma-separated strings."""'
+            )
+            output_lines.append("    if isinstance(value, str):")
+            output_lines.append("        stripped = value.strip()")
+            output_lines.append("        if not stripped:")
+            output_lines.append("            return stripped")
+            output_lines.append(
+                "        if stripped.startswith('[') and stripped.endswith(']'):"
+            )
+            output_lines.append("            try:")
+            output_lines.append("                parsed = json.loads(stripped)")
+            output_lines.append("            except json.JSONDecodeError:")
+            output_lines.append("                return stripped")
+            output_lines.append("            if isinstance(parsed, list):")
+            output_lines.append(
+                "                return ','.join(str(item) for item in parsed)"
+            )
+            output_lines.append("        return stripped")
+            output_lines.append("    if isinstance(value, (list, tuple, set)):")
+            output_lines.append("        return ','.join(str(item) for item in value)")
+            output_lines.append(
+                "    if hasattr(value, '__iter__') and not isinstance(value, dict):"
+            )
+            output_lines.append("        try:")
+            output_lines.append(
+                "            return ','.join(str(item) for item in value)"
+            )
+            output_lines.append("        except TypeError:")
+            output_lines.append("            return str(value)")
+            output_lines.append("    if isinstance(value, dict):")
+            output_lines.append("        return ','.join(str(key) for key in value)")
+            output_lines.append("    return str(value)")
 
         output_lines.append("")
         output_lines.append("# Initialize MCP server")

@@ -1,38 +1,264 @@
- @import "tailwindcss";
- @config "../tailwind.config.js";
+@import "tailwindcss";
+@config "../tailwind.config.js";
+@source "../node_modules/streamdown/dist/index.js";
 
-@layer base {
-  :root {
-    --chart-success: 146 80% 35%;
-    --chart-fail: 339 90% 51%;
-    --chart-muted: 45 93% 47%;
-    --chart-critical: 336 75% 39%;
-    --chart-high: 339 90% 51%;
-    --chart-medium: 26 100% 55%;
-    --chart-low: 46 97% 65%;
-    --chart-1: 12 76% 61%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-  }
+@custom-variant dark (&:where(.dark, .dark *));
 
-  .dark {
-    --chart-success: 146 80% 35%;
-    --chart-fail: 339 90% 51%;
-    --chart-muted: 45 93% 47%;
-    --chart-critical: 336 75% 39%;
-    --chart-high: 339 90% 51%;
-    --chart-medium: 26 100% 55%;
-    --chart-low: 46 97% 65%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+/* ===== LIGHT THEME (ROOT) ===== */
+:root {
+  /* ===== NEW VARIABLES (PROWLER-307) - SEMANTIC COLORS ===== */
+  /* Button Colors */
+  --bg-button-primary: var(--color-emerald-300);
+  --bg-button-primary-hover: var(--color-teal-200);
+  --bg-button-primary-press: var(--color-emerald-400);
+  --bg-button-secondary: var(--color-slate-950);
+  --bg-button-secondary-press: var(--color-slate-800);
+  --bg-button-tertiary: var(--color-blue-600);
+  --bg-button-tertiary-hover: var(--color-blue-500);
+  --bg-button-tertiary-active: var(--color-indigo-600);
+  --bg-button-disabled: var(--color-neutral-300);
+
+  /* Radar Map */
+  --bg-radar-map: #b51c8033;
+  --bg-radar-button: #b51c80;
+
+  /* Neutral Map */
+  --bg-neutral-map: var(--color-neutral-300);
+
+  /* Input Colors */
+  --bg-input-primary: var(--color-white);
+  --border-input-primary: var(--color-slate-400);
+  --border-input-primary-press: var(--color-slate-700);
+  --border-input-primary-fill: var(--color-slate-500);
+
+  /* Text Colors */
+  --text-neutral-primary: var(--color-slate-950);
+  --text-neutral-secondary: var(--color-zinc-800);
+  --text-neutral-tertiary: var(--color-zinc-500);
+  --text-error-primary: var(--color-red-600);
+  --text-success-primary: var(--color-green-600);
+
+  /* Border Colors */
+  --border-error-primary: var(--color-red-500);
+  --border-neutral-primary: var(--color-neutral-200);
+  --border-neutral-secondary: var(--color-slate-200);
+  --border-neutral-tertiary: var(--color-slate-300);
+  --border-tag-primary: var(--color-gray-400);
+  --border-data-emphasis: rgba(0, 0, 0, 0.1);
+
+  /* Background Colors */
+  --bg-neutral-primary: #fdfdfd;
+  --bg-neutral-secondary: var(--color-white);
+  --bg-neutral-tertiary: #fbfdfd;
+  --bg-tag-primary: var(--color-slate-50);
+  --bg-pass-primary: var(--color-emerald-400);
+  --bg-pass-secondary: var(--color-emerald-50);
+  --bg-warning-primary: var(--color-orange-500);
+  --bg-fail-primary: var(--color-rose-500);
+  --bg-fail-secondary: var(--color-rose-50);
+
+  /* Data Background Colors */
+  --bg-data-azure: var(--color-sky-400);
+  --bg-data-kubernetes: var(--color-indigo-600);
+  --bg-data-aws: var(--color-amber-500);
+  --bg-data-gcp: var(--color-red-500);
+  --bg-data-m365: var(--color-green-400);
+  --bg-data-github: var(--color-slate-950);
+
+  /* Severity Colors */
+  --bg-data-critical: #ff006a;
+  --bg-data-high: #f77852;
+  --bg-data-medium: #fdd34f;
+  --bg-data-low: #f5f3ce;
+  --bg-data-info: #3c8dff;
+  --bg-data-muted: var(--color-neutral-500);
+
+  /* Chart Dots */
+  --chart-dots: var(--color-neutral-200);
+}
+
+/* ===== DARK THEME ===== */
+.dark {
+  /* ===== NEW VARIABLES (PROWLER-307) - SEMANTIC COLORS ===== */
+  /* Button Colors */
+  --bg-button-primary: var(--color-emerald-300);
+  --bg-button-primary-hover: var(--color-teal-200);
+  --bg-button-primary-press: var(--color-emerald-400);
+  --bg-button-secondary: var(--color-white);
+  --bg-button-secondary-press: var(--color-emerald-100);
+  --bg-button-tertiary: var(--color-blue-300);
+  --bg-button-tertiary-hover: var(--color-blue-400);
+  --bg-button-tertiary-active: var(--color-blue-600);
+  --bg-button-disabled: var(--color-neutral-700);
+
+  /* Neutral Map */
+  --bg-neutral-map: var(--color-gray-800);
+
+  /* Input Colors */
+  --bg-input-primary: var(--color-neutral-900);
+  --border-input-primary: var(--color-neutral-800);
+  --border-input-primary-press: var(--color-neutral-800);
+  --border-input-primary-fill: var(--color-neutral-800);
+
+  /* Text Colors */
+  --text-neutral-primary: var(--color-zinc-100);
+  --text-neutral-secondary: var(--color-zinc-300);
+  --text-neutral-tertiary: var(--color-zinc-400);
+  --text-error-primary: var(--color-red-500);
+  --text-success-primary: var(--color-green-500);
+
+  /* Border Colors */
+  --border-error-primary: var(--color-red-400);
+  --border-neutral-primary: var(--color-zinc-800);
+  --border-neutral-secondary: var(--color-zinc-900);
+  --border-neutral-tertiary: var(--color-zinc-900);
+  --border-tag-primary: var(--color-slate-700);
+  --border-data-emphasis: rgba(255, 255, 255, 0.1);
+
+  /* Background Colors */
+  --bg-neutral-primary: var(--color-zinc-950);
+  --bg-neutral-secondary: var(--color-stone-950);
+  --bg-neutral-tertiary: #121110;
+  --bg-tag-primary: var(--color-slate-950);
+  --bg-pass-primary: var(--color-green-400);
+  --bg-pass-secondary: var(--color-emerald-900);
+  --bg-warning-primary: var(--color-orange-400);
+  --bg-fail-primary: var(--color-rose-500);
+  --bg-fail-secondary: #432232;
+
+  /* Data Background Colors */
+  --bg-data-azure: var(--color-sky-400);
+  --bg-data-kubernetes: var(--color-indigo-600);
+  --bg-data-aws: var(--color-amber-500);
+  --bg-data-gcp: var(--color-red-500);
+  --bg-data-m365: var(--color-green-400);
+  --bg-data-github: var(--color-neutral-100);
+
+  /* Severity Colors */
+  --bg-data-critical: #ff006a;
+  --bg-data-high: #f77852;
+  --bg-data-medium: #fec94d;
+  --bg-data-low: #fdfbd4;
+  --bg-data-info: #3c8dff;
+  --bg-data-muted: var(--color-neutral-500);
+
+  /* Chart Dots */
+  --chart-dots: var(--text-neutral-primary);
+}
+
+/* ===== TAILWIND THEME MAPPINGS ===== */
+@theme {
+  /* Remap base variables to --color- prefix for Tailwind compatibility */
+  /* ===== LEGACY CHART COLORS ===== */
+  --color-chart-info: var(--chart-info);
+  --color-chart-warning: var(--chart-warning);
+  --color-chart-warning-emphasis: var(--chart-warning-emphasis);
+  --color-chart-danger: var(--chart-danger);
+  --color-chart-danger-emphasis: var(--chart-danger-emphasis);
+  --color-chart-success: var(--chart-success-color);
+  --color-chart-fail: var(--chart-fail);
+  --color-chart-radar-primary: var(--chart-radar-primary);
+  --color-chart-text-primary: var(--chart-text-primary);
+  --color-chart-text-secondary: var(--chart-text-secondary);
+  --color-chart-border: var(--chart-border);
+  --color-chart-border-emphasis: var(--chart-border-emphasis);
+  --color-chart-background: var(--chart-background);
+  --color-chart-alert-bg: var(--chart-alert-bg);
+  --color-chart-alert-text: var(--chart-alert-text);
+
+  /* ===== NEW SEMANTIC COLORS (PROWLER-307) ===== */
+  /* Data Background Colors */
+  --color-bg-data-azure: var(--bg-data-azure);
+  --color-bg-data-kubernetes: var(--bg-data-kubernetes);
+  --color-bg-data-aws: var(--bg-data-aws);
+  --color-bg-data-gcp: var(--bg-data-gcp);
+  --color-bg-data-m365: var(--bg-data-m365);
+  --color-bg-data-github: var(--bg-data-github);
+  --color-bg-data-critical: var(--bg-data-critical);
+  --color-bg-data-high: var(--bg-data-high);
+  --color-bg-data-medium: var(--bg-data-medium);
+  --color-bg-data-low: var(--bg-data-low);
+  --color-bg-data-info: var(--bg-data-info);
+  --color-bg-data-muted: var(--bg-data-muted);
+
+  /* Button Colors */
+  --color-button-primary: var(--bg-button-primary);
+  --color-button-primary-hover: var(--bg-button-primary-hover);
+  --color-button-primary-press: var(--bg-button-primary-press);
+  --color-button-secondary: var(--bg-button-secondary);
+  --color-button-secondary-press: var(--bg-button-secondary-press);
+  --color-button-tertiary: var(--bg-button-tertiary);
+  --color-button-tertiary-hover: var(--bg-button-tertiary-hover);
+  --color-button-tertiary-active: var(--bg-button-tertiary-active);
+  --color-button-disabled: var(--bg-button-disabled);
+
+  /* Input Colors */
+  --color-input-primary: var(--bg-input-primary);
+  --color-input-border: var(--border-input-primary);
+  --color-input-border-press: var(--border-input-primary-press);
+  --color-input-border-fill: var(--border-input-primary-fill);
+
+  /* Neutral Map Colors */
+  --color-bg-neutral-map: var(--bg-neutral-map);
+
+  /* Success Colors */
+  --color-text-success: var(--text-success-primary);
+
+  /* Border Colors */
+  --color-border-error: var(--border-error-primary);
+  --color-border-neutral-primary: var(--border-neutral-primary);
+  --color-border-neutral-secondary: var(--border-neutral-secondary);
+  --color-border-neutral-tertiary: var(--border-neutral-tertiary);
+  --color-border-tag: var(--border-tag-primary);
+  --color-border-data-emphasis: var(--border-data-emphasis);
+
+  /* Text Colors */
+  --color-text-neutral-primary: var(--text-neutral-primary);
+  --color-text-neutral-secondary: var(--text-neutral-secondary);
+  --color-text-neutral-tertiary: var(--text-neutral-tertiary);
+  --color-text-error: var(--text-error-primary);
+
+  /* Background Colors */
+  --color-bg-neutral-primary: var(--bg-neutral-primary);
+  --color-bg-neutral-secondary: var(--bg-neutral-secondary);
+  --color-bg-neutral-tertiary: var(--bg-neutral-tertiary);
+  --color-bg-tag: var(--bg-tag-primary);
+  --color-bg-pass: var(--bg-pass-primary);
+  --color-bg-pass-secondary: var(--bg-pass-secondary);
+  --color-bg-warning: var(--bg-warning-primary);
+  --color-bg-fail: var(--bg-fail-primary);
+  --color-bg-fail-secondary: var(--bg-fail-secondary);
+}
+
+/* ===== CONTAINER UTILITY ===== */
+@utility container {
+  margin-inline: auto;
+  padding-inline: 2rem;
+}
+
+/* ===== COMPONENT LAYER ===== */
+@layer components {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
   }
 }
 
+/* ===== UTILITY LAYER ===== */
 @layer utilities {
+  /* Screen reader only - visually hidden but accessible */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
   /* Hide scrollbar */
   .no-scrollbar {
     scrollbar-width: none; /* Firefox */
@@ -43,13 +269,58 @@
     display: none; /* Chrome, Safari, Opera */
   }
 
-  .checkbox-update {
-     margin-right: 0.5rem;
-     background-color: var(--background);
+  /* Minimal scrollbar styles */
+  .minimal-scrollbar {
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: rgb(203 213 225 / 0.5) transparent; /* thumb and track for Firefox */
   }
-}
 
-@layer components {
+  .minimal-scrollbar:hover {
+    scrollbar-color: rgb(148 163 184 / 0.7) transparent; /* darker thumb on hover */
+  }
+
+  /* Webkit browsers (Chrome, Safari, Edge) */
+  .minimal-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .minimal-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .minimal-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgb(203 213 225 / 0.5);
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
+  }
+
+  .minimal-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(148 163 184 / 0.7);
+  }
+
+  /* Dark mode */
+  .dark .minimal-scrollbar {
+    scrollbar-color: rgb(71 85 105 / 0.5) transparent;
+  }
+
+  .dark .minimal-scrollbar:hover {
+    scrollbar-color: rgb(100 116 139 / 0.7) transparent;
+  }
+
+  .dark .minimal-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgb(71 85 105 / 0.5);
+  }
+
+  .dark .minimal-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(100 116 139 / 0.7);
+  }
+
+  .checkbox-update {
+    margin-right: 0.5rem;
+    background-color: var(--background);
+  }
+
+  /* Download icon animation */
   .animate-download-icon polyline,
   .animate-download-icon line {
     animation: dropArrow 0.6s ease-out infinite;
@@ -58,10 +329,10 @@
   }
 }
 
+/* ===== BASE LAYER ===== */
 @layer base {
-  /* is set to default by tailwind 4 */
-  button:not(:disabled),
-  [role="button"]:not(:disabled) {
-    cursor: pointer;
+  /* Global base styles */
+  body {
+    @apply bg-background text-foreground;
   }
 }
