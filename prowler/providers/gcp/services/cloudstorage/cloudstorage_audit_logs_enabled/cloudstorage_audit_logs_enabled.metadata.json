@@ -1,6 +1,6 @@
 {
   "Provider": "gcp",
-  "CheckID": "cloudstorage_bucket_data_access_audit_logs_enabled",
+  "CheckID": "cloudstorage_audit_logs_enabled",
   "CheckTitle": "Ensure Data Access Audit Logs are enabled for Cloud Storage",
   "CheckType": [],
   "ServiceName": "cloudstorage",
@@ -24,7 +24,7 @@
     },
     "Recommendation": {
       "Text": "Enable Data Access audit logs (DATA_READ and DATA_WRITE) for Cloud Storage at the project level to track all read and write operations on storage objects for security monitoring and compliance.",
-      "Url": "https://hub.prowler.com/check/cloudstorage_bucket_data_access_audit_logs_enabled"
+      "Url": "https://hub.prowler.com/check/cloudstorage_audit_logs_enabled"
     }
   },
   "Categories": [
