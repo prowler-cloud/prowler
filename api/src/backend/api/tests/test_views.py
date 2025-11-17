@@ -6758,7 +6758,9 @@ class TestOverviewViewSet:
         self, authenticated_client, scan_summaries_fixture
     ):
         response = authenticated_client.get(reverse("overview-services"))
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_200_OK
+        # Should return services from latest scans
+        assert len(response.json()["data"]) == 2
 
     def test_overview_services_list(self, authenticated_client, scan_summaries_fixture):
         response = authenticated_client.get(
