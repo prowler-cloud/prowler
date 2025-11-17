@@ -7,7 +7,6 @@ from prowler.providers.m365.services.exchange.exchange_service import (
     ExternalMailConfig,
     MailboxAuditConfig,
     MailboxAuditProperties,
-    MailboxPolicy,
     Organization,
     RoleAssignmentPolicy,
     TransportConfig,
@@ -273,7 +272,7 @@ class Test_Exchange_Service:
             }
         ]
     )
-    def test_get_mailbox_policy(self, mock_get_mailbox_policy):
+    def test_get_mailbox_policy(self):
         with (
             mock.patch(
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online",
@@ -298,7 +297,7 @@ class Test_Exchange_Service:
             "AdditionalStorageProvidersAvailable": False,
         }
     )
-    def test_get_mailbox_policy_single_dict(self, mock_get_mailbox_policy):
+    def test_get_mailbox_policy_single_dict(self):
         with (
             mock.patch(
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online",
