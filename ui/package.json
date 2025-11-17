@@ -29,6 +29,7 @@
     "@hookform/resolvers": "5.2.2",
     "@langchain/aws": "1.0.1",
     "@langchain/core": "1.0.5",
+    "@langchain/mcp-adapters": "1.0.0",
     "@langchain/openai": "1.1.1",
     "@next/third-parties": "15.3.5",
     "@radix-ui/react-alert-dialog": "1.1.14",
