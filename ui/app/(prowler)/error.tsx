@@ -83,11 +83,11 @@ export default function Error({
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card variant="base" className="w-full max-w-lg">
         <CardHeader>
-          <Icon
-            icon={is500Error ? "tabler:server-off" : "tabler:rocket-off"}
-            className="mt-0.5 h-5 w-5 text-red-500"
-          />
-          <div className="flex items-start">
+          <div className="flex items-start gap-3">
+            <Icon
+              icon={is500Error ? "tabler:server-off" : "tabler:rocket-off"}
+              className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-500"
+            />
             <div className="flex flex-col gap-2">
               <CardTitle className="text-lg">
                 {is500Error
