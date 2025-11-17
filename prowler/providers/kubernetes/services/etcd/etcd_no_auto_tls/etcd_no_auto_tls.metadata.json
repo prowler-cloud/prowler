@@ -8,14 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
-  "Description": "**etcd** configuration is reviewed for the `--auto-tls` option, which enables automatically generated self-signed certificates for client TLS.\n\nPresence of this flag indicates self-signed TLS is used; absence indicates client TLS relies on externally managed certificates.",
+  "Description": "**Etcd** configuration is reviewed for the `--auto-tls` option, which enables automatically generated self-signed certificates for client TLS.\n\nPresence of this flag indicates self-signed TLS is used; absence indicates client TLS relies on externally managed certificates.",
   "Risk": "Using **self-signed auto TLS** weakens identity assurance, enabling spoofed endpoints and **man-in-the-middle** on etcd client traffic. Attackers could read or alter Kubernetes state in etcd, impacting **confidentiality** and **integrity**, and facilitating control-plane takeover or data exfiltration.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/",
     "https://etcd.io/docs/latest/op-guide/security/",
-    "https://etcd.io/docs/v3.2/op-guide/security/",
-    "https://manpages.ubuntu.com/manpages/questing/man1/etcd.1.html"
+    "https://etcd.io/docs/v3.2/op-guide/security/"
   ],
   "Remediation": {
     "Code": {

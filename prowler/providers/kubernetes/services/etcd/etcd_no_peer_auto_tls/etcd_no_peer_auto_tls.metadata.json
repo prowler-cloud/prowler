@@ -8,17 +8,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
-  "Description": "**etcd peer TLS** configuration is evaluated by checking etcd containers for the `--peer-auto-tls` flag. Presence of `--peer-auto-tls` indicates peers use automatically generated self-signed certificates for inter-peer connections.",
+  "Description": "**Etcd peer TLS** configuration is evaluated by checking etcd containers for the `--peer-auto-tls` flag. Presence of `--peer-auto-tls` indicates peers use automatically generated self-signed certificates for inter-peer connections.",
   "Risk": "With `--peer-auto-tls`, traffic is encrypted but peer identity isn't verified, enabling:\n- MITM on peer links\n- Rogue member joins to read/modify data\n- Quorum disruption\n\nThis degrades **confidentiality**, **integrity**, and **availability** of control-plane state replicated in etcd.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://documentation.ubuntu.com/canonical-kubernetes/latest/snap/howto/security/cis-assessment/",
-    "https://docs.datadoghq.com/security/default_rules/cis-kubernetes-1.5.1-2.6/",
     "https://etcd.io/docs/latest/op-guide/security/",
     "https://etcd.io/docs/v3.4/op-guide/security/",
-    "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/",
-    "https://orca.security/resources/cloud-risk-encyclopedia/k8s-etcd-is-using-peer-auto-tls-argument/",
-    "https://docs.rke2.io/security/cis_self_assessment16"
+    "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/"
   ],
   "Remediation": {
     "Code": {

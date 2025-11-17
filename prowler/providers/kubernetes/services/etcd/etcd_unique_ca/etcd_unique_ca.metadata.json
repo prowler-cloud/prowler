@@ -8,17 +8,12 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
-  "Description": "**etcd** configuration is assessed to ensure it trusts a **unique Certificate Authority** via `--trusted-ca-file`, distinct from the API server's `--client-ca-file`. If the same CA file is used, etcd shares the cluster CA; differing files imply separation, though CA content should still be verified.",
+  "Description": "**Etcd** configuration is assessed to ensure it trusts a **unique Certificate Authority** via `--trusted-ca-file`, distinct from the API server's `--client-ca-file`. If the same CA file is used, etcd shares the cluster CA; differing files imply separation, though CA content should still be verified.",
   "Risk": "Using the Kubernetes CA for etcd allows any cert signed by that CA to authenticate to the datastore. Theft or mis-issuance enables unauthorized reads/writes, causing secret exposure (confidentiality), state tampering (integrity), and potential control-plane disruption (availability).",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://etcd.io/docs/latest/op-guide/security/",
-    "https://docs.mirantis.com/mke/3.8/cis-benchmarks.html",
-    "https://plerion.com/resources/cloud-knowledge-base/k8s/ensure-that-a-unique-certificate-authority-is-used-for-etcd-manual",
-    "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/#limiting-access-of-etcd-clusters",
-    "https://www.tenable.com/audits/items/CIS_Kubernetes_v1.5.1_Level_2.audit:0a23cf1482e57883446ce3cb608c9e60",
-    "https://docs.datadoghq.com/security/default_rules/cis-kubernetes-1.5.1-2.7/",
-    "https://docs.rke2.io/security/cis_self_assessment16"
+    "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/#limiting-access-of-etcd-clusters"
   ],
   "Remediation": {
     "Code": {

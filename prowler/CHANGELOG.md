@@ -21,7 +21,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS ElastiCache service metadata to new format [(#8933)](https://github.com/prowler-cloud/prowler/pull/8933)
 - Update Kubernetes etcd service metadata to new format [(#9096)](https://github.com/prowler-cloud/prowler/pull/9096)
 
-
 ---
 
 ## [v5.13.1] (Prowler UNRELEASED)

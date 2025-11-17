@@ -13,12 +13,11 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://etcd.io/docs/latest/op-guide/security/",
-    "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/#securing-communication",
-    "https://github.com/etcd-io/etcd"
+    "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/#securing-communication"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "kubectl -n kube-system patch pod <example_resource_name> --type='json' -p='[{\"op\":\"add\",\"path\":\"/spec/containers/0/command/-\",\"value\":\"--peer-cert-file=</path/to/peer-cert-file>\"},{\"op\":\"add\",\"path\":\"/spec/containers/0/command/-\",\"value\":\"--peer-key-file=</path/to/peer-key-file>\"}]'",
+      "CLI": "",
       "NativeIaC": "",
       "Other": "1. SSH to the control plane node running etcd\n2. Open /etc/kubernetes/manifests/etcd.yaml\n3. Under spec.containers[0].command add:\n   - --peer-cert-file=</path/to/peer-cert-file>\n   - --peer-key-file=</path/to/peer-key-file>\n4. Save the file; kubelet will restart the etcd Pod automatically\n5. Verify the etcd container command includes both flags",
       "Terraform": "```hcl\nresource \"kubernetes_pod\" \"<example_resource_name>\" {\n  metadata {\n    name = \"<example_resource_name>\"\n  }\n  spec {\n    container {\n      name  = \"etcd\"\n      image = \"quay.io/coreos/etcd:latest\"\n      command = [\n        \"etcd\",\n        \"--peer-cert-file=</path/to/peer-cert-file>\", # Critical: enables TLS for peer connections\n        \"--peer-key-file=</path/to/peer-key-file>\"   # Critical: key for the peer TLS cert\n      ]\n    }\n  }\n}\n```"

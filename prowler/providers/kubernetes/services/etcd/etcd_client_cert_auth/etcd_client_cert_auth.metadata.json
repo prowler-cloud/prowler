@@ -1,24 +1,19 @@
 {
   "Provider": "kubernetes",
   "CheckID": "etcd_client_cert_auth",
-  "CheckTitle": "etcd pod has client certificate authentication enabled (--client-cert-auth=true)",
+  "CheckTitle": "Etcd pod has client certificate authentication enabled (--client-cert-auth=true)",
   "CheckType": [],
   "ServiceName": "etcd",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
-  "Description": "**etcd** is configured to require **TLS client certificate authentication** when the etcd container includes `--client-cert-auth`, so client access is validated with trusted certificates.",
+  "Description": "**Etcd** is configured to require **TLS client certificate authentication** when the etcd container includes `--client-cert-auth`, so client access is validated with trusted certificates.",
   "Risk": "Without **mTLS client auth**, any reachable client can query or mutate etcd:\n- Confidentiality: exposure of Secrets and cluster metadata\n- Integrity: tampering with RBAC, pods, and configs\n- Availability: destructive writes can disrupt the control plane",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://etcd.io/docs/latest/op-guide/security/",
-    "https://medium.com/@uzzal2k5/etcd-etcd-cluster-configuration-for-kubernetes-779455337db6",
-    "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/#limiting-access-of-etcd-clusters",
-    "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/",
-    "https://notes.kodekloud.com/docs/CKA-Certification-Course-Certified-Kubernetes-Administrator/Security/TLS-in-Kubernetes-Certificate-Creation",
-    "https://blog.scottlowe.org/2018/08/21/bootstrapping-etcd-cluster-with-tls-using-kubeadm/",
-    "https://infotechys.com/configuring-secure-etcd-with-ssl-tls-on-rhel-8/"
+    "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/"
   ],
   "Remediation": {
     "Code": {
