@@ -65,6 +65,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Fix M365 Teams `--sp-env-auth` connection error and enhanced timeout logging [(#9191)](https://github.com/prowler-cloud/prowler/pull/9191)
 - Rename `get_oci_assessment_summary` to `get_oraclecloud_assessment_summary` in HTML output [(#9200)](https://github.com/prowler-cloud/prowler/pull/9200)
 - Fix Validation and other errors in Azure provider [(#8915)](https://github.com/prowler-cloud/prowler/pull/8915)
+- Support multiple Exchange mailbox policies in M365 `exchange_mailbox_policy_additional_storage_restricted` check [(#9241)](https://github.com/prowler-cloud/prowler/pull/9241)
 
 ---
 
