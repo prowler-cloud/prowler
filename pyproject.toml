@@ -84,7 +84,7 @@ prowler = "prowler.__main__:prowler"
 
 [project.urls]
 "Changelog" = "https://github.com/prowler-cloud/prowler/releases"
-"Documentation" = "https://docs.prowler.cloud"
+"Documentation" = "https://docs.prowler.com"
 "Homepage" = "https://github.com/prowler-cloud/prowler"
 "Issue tracker" = "https://github.com/prowler-cloud/prowler/issues"
 

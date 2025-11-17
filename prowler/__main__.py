@@ -430,7 +430,7 @@ def prowler():
         else:
             # Refactor(CLI)
             logger.critical(
-                "Slack integration needs SLACK_API_TOKEN and SLACK_CHANNEL_NAME environment variables (see more in https://docs.prowler.cloud/en/latest/tutorials/integrations/#slack)."
+                "Slack integration needs SLACK_API_TOKEN and SLACK_CHANNEL_NAME environment variables (see more in https://docs.prowler.com/user-guide/cli/tutorials/integrations#configuration-of-the-integration-with-slack)."
             )
             sys.exit(1)
 
