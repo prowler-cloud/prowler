@@ -573,7 +573,6 @@ def prowler():
                 generated_outputs["compliance"].append(prowler_threatscore)
                 prowler_threatscore.batch_write_data_to_file()
             elif compliance_name.startswith("ccc_"):
-
                 filename = (
                     f"{output_options.output_directory}/compliance/"
                     f"{output_options.output_filename}_{compliance_name}.csv"

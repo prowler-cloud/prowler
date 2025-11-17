@@ -1371,33 +1371,68 @@ class ComplianceRequirementOverview(RowLevelSecurityProtectedModel):
             ),
         ]
         indexes = [
-            models.Index(fields=["tenant_id", "scan_id"], name="cro_tenant_scan_idx"),
-            models.Index(
-                fields=["tenant_id", "scan_id", "compliance_id"],
-                name="cro_scan_comp_idx",
-            ),
             models.Index(
                 fields=["tenant_id", "scan_id", "compliance_id", "region"],
                 name="cro_scan_comp_reg_idx",
-            ),
-            models.Index(
-                fields=["tenant_id", "scan_id", "compliance_id", "requirement_id"],
-                name="cro_scan_comp_req_idx",
-            ),
-            models.Index(
-                fields=[
-                    "tenant_id",
-                    "scan_id",
-                    "compliance_id",
-                    "requirement_id",
-                    "region",
-                ],
-                name="cro_scan_comp_req_reg_idx",
             ),
         ]
 
     class JSONAPIMeta:
         resource_name = "compliance-requirements-overviews"
+
+
+class ComplianceOverviewSummary(RowLevelSecurityProtectedModel):
+    """
+    Pre-aggregated compliance overview aggregated across ALL regions.
+    One row per (scan_id, compliance_id) combination.
+
+    This table optimizes the common case where users view overall compliance
+    without filtering by region. For region-specific views, the detailed
+    ComplianceRequirementOverview table is used instead.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+
+    scan = models.ForeignKey(
+        Scan,
+        on_delete=models.CASCADE,
+        related_name="compliance_summaries",
+        related_query_name="compliance_summary",
+    )
+
+    compliance_id = models.TextField(blank=False)
+
+    # Pre-aggregated scores (computed across ALL regions)
+    requirements_passed = models.IntegerField(default=0)
+    requirements_failed = models.IntegerField(default=0)
+    requirements_manual = models.IntegerField(default=0)
+    total_requirements = models.IntegerField(default=0)
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "compliance_overview_summaries"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "scan_id", "compliance_id"),
+                name="unique_compliance_summary_per_scan",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "DELETE"],
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "scan_id"],
+                name="cos_tenant_scan_idx",
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "compliance-overview-summaries"
 
 
 class ScanSummary(RowLevelSecurityProtectedModel):
@@ -2239,3 +2274,137 @@ class LighthouseProviderModels(RowLevelSecurityProtectedModel):
 
     class JSONAPIMeta:
         resource_name = "lighthouse-models"
+
+
+class ThreatScoreSnapshot(RowLevelSecurityProtectedModel):
+    """
+    Stores historical ThreatScore metrics for a given scan.
+    Snapshots are created automatically after each ThreatScore report generation.
+    """
+
+    objects = models.Manager()
+    all_objects = models.Manager()
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+
+    scan = models.ForeignKey(
+        Scan,
+        on_delete=models.CASCADE,
+        related_name="threatscore_snapshots",
+        related_query_name="threatscore_snapshot",
+    )
+
+    provider = models.ForeignKey(
+        Provider,
+        on_delete=models.CASCADE,
+        related_name="threatscore_snapshots",
+        related_query_name="threatscore_snapshot",
+    )
+
+    compliance_id = models.CharField(
+        max_length=100,
+        blank=False,
+        null=False,
+        help_text="Compliance framework ID (e.g., 'prowler_threatscore_aws')",
+    )
+
+    # Overall ThreatScore metrics
+    overall_score = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        help_text="Overall ThreatScore percentage (0-100)",
+    )
+
+    # Score improvement/degradation compared to previous snapshot
+    score_delta = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Score change compared to previous snapshot (positive = improvement)",
+    )
+
+    # Section breakdown stored as JSON
+    # Format: {"1. IAM": 85.5, "2. Attack Surface": 92.3, ...}
+    section_scores = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="ThreatScore breakdown by section",
+    )
+
+    # Critical requirements metadata stored as JSON
+    # Format: [{"requirement_id": "...", "risk_level": 5, "weight": 150, ...}, ...]
+    critical_requirements = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="List of critical failed requirements (risk >= 4)",
+    )
+
+    # Summary statistics
+    total_requirements = models.IntegerField(
+        default=0,
+        help_text="Total number of requirements evaluated",
+    )
+
+    passed_requirements = models.IntegerField(
+        default=0,
+        help_text="Number of requirements with PASS status",
+    )
+
+    failed_requirements = models.IntegerField(
+        default=0,
+        help_text="Number of requirements with FAIL status",
+    )
+
+    manual_requirements = models.IntegerField(
+        default=0,
+        help_text="Number of requirements with MANUAL status",
+    )
+
+    total_findings = models.IntegerField(
+        default=0,
+        help_text="Total number of findings across all requirements",
+    )
+
+    passed_findings = models.IntegerField(
+        default=0,
+        help_text="Number of findings with PASS status",
+    )
+
+    failed_findings = models.IntegerField(
+        default=0,
+        help_text="Number of findings with FAIL status",
+    )
+
+    def __str__(self):
+        return f"ThreatScore {self.overall_score}% for scan {self.scan_id} ({self.inserted_at})"
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "threatscore_snapshots"
+
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "scan_id"],
+                name="threatscore_snap_t_scan_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "provider_id"],
+                name="threatscore_snap_t_prov_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "inserted_at"],
+                name="threatscore_snap_t_time_idx",
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "threatscore-snapshots"

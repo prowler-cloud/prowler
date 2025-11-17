@@ -189,6 +189,7 @@ class Test_ec2_instance_uses_single_eni:
 
             assert len(result) == 0
 
+    @mock_aws
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call_v2)
     def test_ec2_instance_no_eni(self):
 
@@ -222,6 +223,7 @@ class Test_ec2_instance_uses_single_eni:
                 == "EC2 Instance i-0123456789abcdef0 has no network interfaces attached."
             )
 
+    @mock_aws
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_instance_multiple_enis(self):
 
@@ -295,6 +297,7 @@ class Test_ec2_instance_uses_single_eni:
                 == f"EC2 Instance {instance.id} uses only one ENI: ( Interfaces: ['{network_interface.id}'] )."
             )
 
+    @mock_aws
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call_v3)
     def test_instance_one_efa_multiple_trunks(self):
 
