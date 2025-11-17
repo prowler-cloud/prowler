@@ -193,10 +193,10 @@
   --color-button-disabled: var(--bg-button-disabled);
 
   /* Input Colors */
-  --color-input-primary: var(--bg-input-primary);
-  --color-input-border: var(--border-input-primary);
-  --color-input-border-press: var(--border-input-primary-press);
-  --color-input-border-fill: var(--border-input-primary-fill);
+  --color-bg-input-primary: var(--bg-input-primary);
+  --color-border-input-primary: var(--border-input-primary);
+  --color-border-input-primary-press: var(--border-input-primary-press);
+  --color-border-input-primary-fill: var(--border-input-primary-fill);
 
   /* Neutral Map Colors */
   --color-bg-neutral-map: var(--bg-neutral-map);

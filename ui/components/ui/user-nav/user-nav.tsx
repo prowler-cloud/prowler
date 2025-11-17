@@ -31,7 +31,7 @@ export const UserNav = () => {
       <Button
         variant="outline"
         size="icon-sm"
-        className="border-input-border-fill rounded-full"
+        className="border-border-input-primary-fill rounded-full"
         asChild
       >
         <CustomLink href="/profile" target="_self" aria-label="Account">
@@ -47,7 +47,7 @@ export const UserNav = () => {
       <Button
         variant="ghost"
         size="icon-sm"
-        className="border-input-border-fill rounded-full"
+        className="border-border-input-primary-fill rounded-full"
         onClick={() => logOut()}
         aria-label="Sign out"
       >
