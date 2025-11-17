@@ -105,7 +105,7 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
                       color={isDisabled ? "secondary" : "action"}
                       variant="solid"
                       onPress={() => handleSelectScan(scan.id)}
-                      className="min-w-20"
+                      className="w-full max-w-24"
                     >
                       {getSelectButtonLabel(scan)}
                     </CustomButton>

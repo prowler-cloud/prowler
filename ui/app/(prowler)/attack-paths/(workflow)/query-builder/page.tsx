@@ -38,6 +38,7 @@ export default function QueryBuilderPage() {
   const [queriesLoading, setQueriesLoading] = useState(true);
   const [queriesError, setQueriesError] = useState<string | null>(null);
   const graphRef = useRef<AttackPathGraphRef>(null);
+  const hasResetRef = useRef(false);
 
   const methods = useForm({
     mode: "onChange",
@@ -45,7 +46,10 @@ export default function QueryBuilderPage() {
 
   // Reset graph state when component mounts
   useEffect(() => {
-    graphState.resetGraph();
+    if (!hasResetRef.current) {
+      hasResetRef.current = true;
+      graphState.resetGraph();
+    }
   }, [graphState]);
 
   // Load available queries on mount
