@@ -15,10 +15,14 @@ All notable changes to the **Prowler API** are documented in this file.
 - Support C5 compliance framework for the GCP provider [(#9097)](https://github.com/prowler-cloud/prowler/pull/9097)
 - Support for Amazon Bedrock and OpenAI compatible providers in Lighthouse AI [(#8957)](https://github.com/prowler-cloud/prowler/pull/8957)
 - Tenant-wide ThreatScore overview aggregation and snapshot persistence with backfill support [(#9148)](https://github.com/prowler-cloud/prowler/pull/9148)
+- Added `metadata`, `details`, and `partition` attributes to `/resources` endpoint & `details`, and `partition` to `/findings` endpoint [(#9098)](https://github.com/prowler-cloud/prowler/pull/9098)
 - Support for MongoDB Atlas provider [(#9167)](https://github.com/prowler-cloud/prowler/pull/9167)
 
 ### Changed
 - Optimized database write queries for scan related tasks [(#9190)](https://github.com/prowler-cloud/prowler/pull/9190)
+
+### Fixed
+- Scans no longer fail when findings have UIDs exceeding 300 characters; such findings are now skipped with detailed logging [(#9246)](https://github.com/prowler-cloud/prowler/pull/9246)
 
 ### Security
 - Django updated to the latest 5.1 security release, 5.1.14, due to problems with potential [SQL injection](https://github.com/prowler-cloud/prowler/security/dependabot/113) and [denial-of-service vulnerability](https://github.com/prowler-cloud/prowler/security/dependabot/114) [(#9176)](https://github.com/prowler-cloud/prowler/pull/9176)
@@ -28,7 +32,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ## [1.14.2] (Prowler 5.13.2)
 
 ### Fixed
-- Update unique constraint for `Provider` model to exclude soft-deleted entries, resolving duplicate errors when re-deleting providers.[(#9054)](https://github.com/prowler-cloud/prowler/pull/9054)
+- Update unique constraint for `Provider` model to exclude soft-deleted entries, resolving duplicate errors when re-deleting providers [(#9054)](https://github.com/prowler-cloud/prowler/pull/9054)
 - Remove compliance generation for providers without compliance frameworks [(#9208)](https://github.com/prowler-cloud/prowler/pull/9208)
 
 ## [1.14.1] (Prowler 5.13.1)
