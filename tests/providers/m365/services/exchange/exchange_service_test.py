@@ -272,7 +272,7 @@ class Test_Exchange_Service:
             }
         ],
     )
-    def test_get_mailbox_policy(self):
+    def test_get_mailbox_policy(self, _mock_get_mailbox_policy):
         with (
             mock.patch(
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online",
@@ -297,7 +297,7 @@ class Test_Exchange_Service:
             "AdditionalStorageProvidersAvailable": False,
         },
     )
-    def test_get_mailbox_policy_single_dict(self):
+    def test_get_mailbox_policy_single_dict(self, _mock_get_mailbox_policy):
         with (
             mock.patch(
                 "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online",
