@@ -6,6 +6,11 @@ import { usePathname } from "next/navigation";
 
 import { AddIcon, InfoIcon } from "@/components/icons";
 import { Button } from "@/components/shadcn/button/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
 import { ScrollArea } from "@/components/ui/scroll-area/scroll-area";
 import { CollapsibleMenu } from "@/components/ui/sidebar/collapsible-menu";
 import { MenuItem } from "@/components/ui/sidebar/menu-item";
@@ -71,16 +76,21 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
     <div className="flex h-full flex-col overflow-hidden">
       {/* Launch Scan Button */}
       <div className="shrink-0 px-2">
-        <Button
-          asChild
-          className={cn(isOpen ? "w-full" : "w-14")}
-          variant="default"
-          size="default"
-        >
-          <Link href="/scans" aria-label="Launch Scan">
-            {isOpen ? "Launch Scan" : <AddIcon className="size-5" />}
-          </Link>
-        </Button>
+        <Tooltip delayDuration={100}>
+          <TooltipTrigger asChild>
+            <Button
+              asChild
+              className={cn(isOpen ? "w-full" : "w-14")}
+              variant="default"
+              size="default"
+            >
+              <Link href="/scans" aria-label="Launch Scan">
+                {isOpen ? "Launch Scan" : <AddIcon className="size-5" />}
+              </Link>
+            </Button>
+          </TooltipTrigger>
+          {!isOpen && <TooltipContent side="right">Launch Scan</TooltipContent>}
+        </Tooltip>
       </div>
 
       {/* Menu Items */}
@@ -122,22 +132,42 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
 
       {/* Footer */}
       <div className="text-muted-foreground border-border-neutral-secondary flex shrink-0 items-center justify-center gap-2 border-t pt-4 pb-2 text-center text-xs">
-        <span>{process.env.NEXT_PUBLIC_PROWLER_RELEASE_VERSION}</span>
-        {process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true" && (
+        {isOpen ? (
           <>
-            <Divider orientation="vertical" />
-            <Link
-              href="https://status.prowler.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1"
-            >
-              <InfoIcon size={16} />
-              <span className="text-muted-foreground font-normal opacity-80 transition-opacity hover:font-bold hover:opacity-100">
-                Service Status
-              </span>
-            </Link>
+            <span>{process.env.NEXT_PUBLIC_PROWLER_RELEASE_VERSION}</span>
+            {process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true" && (
+              <>
+                <Divider orientation="vertical" />
+                <Link
+                  href="https://status.prowler.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1"
+                >
+                  <InfoIcon size={16} />
+                  <span className="text-muted-foreground font-normal opacity-80 transition-opacity hover:font-bold hover:opacity-100">
+                    Service Status
+                  </span>
+                </Link>
+              </>
+            )}
           </>
+        ) : (
+          process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true" && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  href="https://status.prowler.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center"
+                >
+                  <InfoIcon size={16} />
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right">Service Status</TooltipContent>
+            </Tooltip>
+          )
         )}
       </div>
     </div>

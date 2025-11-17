@@ -6,6 +6,11 @@ import { useEffect, useState } from "react";
 
 import { Button } from "@/components/shadcn/button/button";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
+import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
@@ -51,35 +56,42 @@ export const CollapsibleMenu = ({
       defaultOpen={defaultOpen}
       className="mb-1 w-full"
     >
-      <CollapsibleTrigger
-        className="[&[data-state=open]>div>div>svg]:rotate-180"
-        asChild
-      >
-        <Button
-          variant={isSubmenuActive ? "secondary" : "ghost"}
-          className={cn(
-            "h-auto px-4 py-1",
-            isSidebarOpen ? "w-full justify-start" : "w-14 justify-center",
-          )}
-        >
-          {isSidebarOpen ? (
-            <div className="flex w-full items-center justify-between">
-              <div className="flex items-center">
-                <span className="mr-4">
-                  <Icon size={18} />
-                </span>
-                <p className="max-w-[150px] truncate">{label}</p>
-              </div>
-              <ChevronDown
-                size={18}
-                className="transition-transform duration-200"
-              />
-            </div>
-          ) : (
-            <Icon size={18} />
-          )}
-        </Button>
-      </CollapsibleTrigger>
+      <Tooltip delayDuration={100}>
+        <TooltipTrigger asChild>
+          <CollapsibleTrigger
+            className="[&[data-state=open]>div>div>svg]:rotate-180"
+            asChild
+          >
+            <Button
+              variant={isSubmenuActive ? "secondary" : "ghost"}
+              className={cn(
+                "h-auto px-4 py-1",
+                isSidebarOpen ? "w-full justify-start" : "w-14 justify-center",
+              )}
+            >
+              {isSidebarOpen ? (
+                <div className="flex w-full items-center justify-between">
+                  <div className="flex items-center">
+                    <span className="mr-4">
+                      <Icon size={18} />
+                    </span>
+                    <p className="max-w-[150px] truncate">{label}</p>
+                  </div>
+                  <ChevronDown
+                    size={18}
+                    className="transition-transform duration-200"
+                  />
+                </div>
+              ) : (
+                <Icon size={18} />
+              )}
+            </Button>
+          </CollapsibleTrigger>
+        </TooltipTrigger>
+        {!isSidebarOpen && (
+          <TooltipContent side="right">{label}</TooltipContent>
+        )}
+      </Tooltip>
       <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
         {submenus.map((submenu, index) => (
           <SubmenuItem key={index} {...submenu} />

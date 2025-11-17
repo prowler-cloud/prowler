@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 
+import { ComplianceScanInfo } from "@/components/compliance/compliance-header/compliance-scan-info";
 import {
   Select,
   SelectAllItem,
@@ -11,8 +12,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/shadcn";
+import { EntityInfoShort } from "@/components/ui/entities/entity-info-short";
 import { useUrlFilters } from "@/hooks/use-url-filters";
-import { FilterOption } from "@/types";
+import { isScanEntity } from "@/lib/helper-filters";
+import {
+  FilterEntity,
+  FilterOption,
+  ProviderEntity,
+  ScanEntity,
+} from "@/types";
 
 export interface DataTableFilterCustomProps {
   filters: FilterOption[];
@@ -23,6 +31,33 @@ export const DataTableFilterCustom = ({
 }: DataTableFilterCustomProps) => {
   const { updateFilter } = useUrlFilters();
   const searchParams = useSearchParams();
+
+  // Helper function to get entity from valueLabelMapping
+  const getEntityForValue = (
+    filter: FilterOption,
+    value: string,
+  ): FilterEntity | undefined => {
+    if (!filter.valueLabelMapping) return undefined;
+    const entry = filter.valueLabelMapping.find((mapping) => mapping[value]);
+    return entry ? entry[value] : undefined;
+  };
+
+  // Render custom content for entity (scan or provider)
+  const renderEntityContent = (entity: FilterEntity) => {
+    if (isScanEntity(entity as ScanEntity)) {
+      return <ComplianceScanInfo scan={entity as ScanEntity} />;
+    }
+    // Provider entity
+    const providerEntity = entity as ProviderEntity;
+    return (
+      <EntityInfoShort
+        cloudProvider={providerEntity.provider}
+        entityAlias={providerEntity.alias ?? undefined}
+        entityId={providerEntity.uid}
+        hideCopyButton
+      />
+    );
+  };
 
   // Sort filters by index property, with fallback to original order for filters without index
   const sortedFilters = () => {
@@ -81,8 +116,18 @@ export const DataTableFilterCustom = ({
                   {selectedValues.length > 0 && (
                     <span className="truncate">
                       {selectedValues.length === 1
-                        ? selectedValues[0]
-                        : `${selectedValues.length} selected`}
+                        ? // Show custom content for single selection
+                          (() => {
+                            const entity = getEntityForValue(
+                              filter,
+                              selectedValues[0],
+                            );
+                            return entity
+                              ? renderEntityContent(entity)
+                              : selectedValues[0];
+                          })()
+                        : // Show count for multiple selections
+                          `${selectedValues.length} selected`}
                     </span>
                   )}
                 </SelectValue>
@@ -92,11 +137,14 @@ export const DataTableFilterCustom = ({
                   Select All
                 </SelectAllItem>
                 <SelectSeparator />
-                {filter.values.map((value) => (
-                  <SelectItem key={value} value={value}>
-                    {value}
-                  </SelectItem>
-                ))}
+                {filter.values.map((value) => {
+                  const entity = getEntityForValue(filter, value);
+                  return (
+                    <SelectItem key={value} value={value}>
+                      {entity ? renderEntityContent(entity) : value}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           );

@@ -108,7 +108,7 @@ export const getMenuList = ({
               href: "/providers",
               label: "Mutelist",
               icon: VolumeX,
-              disabled: hasProviders === false,
+              disabled: hasProviders === true,
               active: false,
               onClick: (event: MouseEvent<HTMLAnchorElement>) => {
                 if (hasProviders === false) {
@@ -201,7 +201,7 @@ export const getMenuList = ({
           label: "Prowler Hub",
           icon: ProwlerShort,
           target: "_blank",
-          // tooltip: "Looking for all available checks? learn more.",
+          tooltip: "Looking for all available checks? learn more.",
         },
       ],
     },

@@ -14,6 +14,11 @@ import {
   DropdownMenuTrigger,
   Separator,
 } from "@/components/shadcn";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
 import { hasNewFeeds, markFeedsAsSeen } from "@/lib/feeds-storage";
 import { cn } from "@/lib/utils";
 
@@ -49,30 +54,39 @@ export function FeedsClient({ feedData, error }: FeedsClientProps) {
 
   return (
     <DropdownMenu onOpenChange={handleOpenChange}>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="outline"
-          className="border-border-input-primary-fill relative h-8 w-8 rounded-full bg-transparent p-2"
-          aria-label={
-            hasUnseenFeeds
-              ? "New updates available - Click to view"
-              : "Check for updates"
-          }
-        >
-          <BellRing
-            size={18}
-            className={cn(
-              hasFeeds && hasUnseenFeeds && "text-button-primary animate-pulse",
-            )}
-          />
-          {hasFeeds && hasUnseenFeeds && (
-            <span className="absolute top-0 right-0 flex h-2 w-2">
-              <span className="bg-button-primary absolute inline-flex h-full w-full animate-ping rounded-full opacity-75"></span>
-              <span className="bg-button-primary relative inline-flex h-2 w-2 rounded-full"></span>
-            </span>
-          )}
-        </Button>
-      </DropdownMenuTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              className="border-border-input-primary-fill relative h-8 w-8 rounded-full bg-transparent p-2"
+              aria-label={
+                hasUnseenFeeds
+                  ? "New updates available - Click to view"
+                  : "Check for updates"
+              }
+            >
+              <BellRing
+                size={18}
+                className={cn(
+                  hasFeeds &&
+                    hasUnseenFeeds &&
+                    "text-button-primary animate-pulse",
+                )}
+              />
+              {hasFeeds && hasUnseenFeeds && (
+                <span className="absolute top-0 right-0 flex h-2 w-2">
+                  <span className="bg-button-primary absolute inline-flex h-full w-full animate-ping rounded-full opacity-75"></span>
+                  <span className="bg-button-primary relative inline-flex h-2 w-2 rounded-full"></span>
+                </span>
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+        </TooltipTrigger>
+        <TooltipContent>
+          {hasUnseenFeeds ? "New updates available" : "Latest Updates"}
+        </TooltipContent>
+      </Tooltip>
 
       <DropdownMenuContent
         align="end"
