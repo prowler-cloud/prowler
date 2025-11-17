@@ -1,32 +1,40 @@
 {
   "Provider": "aws",
   "CheckID": "ecr_repositories_scan_images_on_push_enabled",
-  "CheckTitle": "[DEPRECATED] Check if ECR image scan on push is enabled",
+  "CheckTitle": "[DEPRECATED] ECR repository has image scanning on push enabled",
   "CheckType": [
-    "Identify",
-    "Vulnerability, patch, and version management"
+    "Software and Configuration Checks/Vulnerabilities/CVE",
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
   ],
   "ServiceName": "ecr",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEcrRepository",
-  "Description": "[DEPRECATED] Check if ECR image scan on push is enabled",
-  "Risk": "Amazon ECR image scanning helps in identifying software vulnerabilities in your container images. Amazon ECR uses the Common Vulnerabilities and Exposures (CVEs) database from the open-source Clair project and provides a list of scan findings. ",
+  "Description": "[DEPRECATED]\n**Amazon ECR repositories** are evaluated for **image scanning on push**; when configured, new image uploads automatically trigger a vulnerability scan (`scan_on_push`).",
+  "Risk": "Without **scan on push**, images with known CVEs can enter registries and reach runtime unnoticed, undermining **integrity** and **confidentiality** through exploitable packages. Attackers may achieve code execution and lateral movement. Delayed detection increases operational risk and extends remediation timelines.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ECR/scan-on-push.html",
+    "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning-basic-enabling.html",
+    "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws ecr create-repository --repository-name <repo_name> --image-scanning-configuration scanOnPush=true--region <region_name>",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/general_8#cli-command",
-      "Other": "",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/general_8#fix---buildtime"
+      "CLI": "aws ecr put-image-scanning-configuration --repository-name <repo_name> --image-scanning-configuration scanOnPush=true",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::ECR::Repository\n    Properties:\n      ImageScanningConfiguration:\n        ScanOnPush: true  # Critical: enables image scanning on push for this repository\n```",
+      "Other": "1. Open the AWS Console and go to Amazon ECR\n2. Click Repositories and select the target repository\n3. Click Edit\n4. Enable the Scan on push toggle\n5. Click Save",
+      "Terraform": "```hcl\nresource \"aws_ecr_repository\" \"<example_resource_name>\" {\n  name = \"<example_resource_name>\"\n\n  image_scanning_configuration {\n    scan_on_push = true # Critical: enables scanning on image push\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable ECR image scanning and review the scan findings for information about the security of the container images that are being deployed.",
-      "Url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/image-scanning.html"
+      "Text": "Enable **image scanning on push** (`scan_on_push`) for all repositories and use findings as promotion gates. Prefer **continuous/enhanced scanning** for defense in depth, set severity thresholds, and block or quarantine noncompliant images. Integrate results with CI/CD and adopt **shift-left** vulnerability management.",
+      "Url": "https://hub.prowler.com/check/ecr_repositories_scan_images_on_push_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
