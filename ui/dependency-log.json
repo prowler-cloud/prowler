@@ -34,42 +34,26 @@
   {
     "section": "dependencies",
     "name": "@langchain/aws",
-    "from": "0.1.15",
-    "to": "0.1.15",
+    "from": "1.0.1",
+    "to": "1.0.1",
     "strategy": "installed",
-    "generatedAt": "2025-11-03T07:43:34.628Z"
+    "generatedAt": "2025-11-17T12:06:00.064Z"
   },
   {
     "section": "dependencies",
     "name": "@langchain/core",
-    "from": "0.3.77",
-    "to": "0.3.78",
+    "from": "1.0.5",
+    "to": "1.0.5",
     "strategy": "installed",
-    "generatedAt": "2025-11-03T07:43:34.628Z"
-  },
-  {
-    "section": "dependencies",
-    "name": "@langchain/langgraph",
-    "from": "0.4.9",
-    "to": "0.4.9",
-    "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
-  },
-  {
-    "section": "dependencies",
-    "name": "@langchain/langgraph-supervisor",
-    "from": "0.0.20",
-    "to": "0.0.20",
-    "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2025-11-17T12:06:00.064Z"
   },
   {
     "section": "dependencies",
     "name": "@langchain/openai",
-    "from": "0.5.18",
-    "to": "0.6.16",
+    "from": "1.1.1",
+    "to": "1.1.1",
     "strategy": "installed",
-    "generatedAt": "2025-11-03T07:43:34.628Z"
+    "generatedAt": "2025-11-17T12:06:00.064Z"
   },
   {
     "section": "dependencies",
@@ -294,6 +278,14 @@
     "to": "4.0.0",
     "strategy": "installed",
     "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "langchain",
+    "from": "1.0.4",
+    "to": "1.0.4",
+    "strategy": "installed",
+    "generatedAt": "2025-11-17T12:06:00.064Z"
   },
   {
     "section": "dependencies",

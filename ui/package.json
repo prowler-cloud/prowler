@@ -27,11 +27,9 @@
     "@ai-sdk/react": "2.0.59",
     "@heroui/react": "2.8.4",
     "@hookform/resolvers": "5.2.2",
-    "@langchain/aws": "0.1.15",
-    "@langchain/core": "0.3.78",
-    "@langchain/langgraph": "0.4.9",
-    "@langchain/langgraph-supervisor": "0.0.20",
-    "@langchain/openai": "0.6.16",
+    "@langchain/aws": "1.0.1",
+    "@langchain/core": "1.0.5",
+    "@langchain/openai": "1.1.1",
     "@next/third-parties": "15.3.5",
     "@radix-ui/react-alert-dialog": "1.1.14",
     "@radix-ui/react-dialog": "1.1.14",
@@ -60,6 +58,7 @@
     "jose": "5.10.0",
     "js-yaml": "4.1.0",
     "jwt-decode": "4.0.0",
+    "langchain": "1.0.4",
     "lucide-react": "0.543.0",
     "marked": "15.0.12",
     "next": "15.5.3",
@@ -137,9 +136,6 @@
     "@react-aria/interactions": {
       "react": "19.2.0"
     }
-  },
-  "resolutions": {
-    "@langchain/core": "0.3.77"
   },
   "version": "0.0.1"
 }
