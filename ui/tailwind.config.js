@@ -176,11 +176,26 @@ module.exports = {
           "50%": { opacity: "1" },
           "100%": { transform: "translateY(0)", opacity: "1" },
         },
+        first: {
+          "0%": { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(360deg)" },
+        },
+        second: {
+          "0%": { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(360deg)" },
+        },
+        third: {
+          "0%": { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(360deg)" },
+        },
       },
       animation: {
         "collapsible-down": "collapsible-down 0.2s ease-out",
         "collapsible-up": "collapsible-up 0.2s ease-out",
         "drop-arrow": "dropArrow 0.6s ease-out infinite",
+        first: "first 20s linear infinite",
+        second: "second 30s linear infinite",
+        third: "third 25s linear infinite",
       },
       screens: {
         "3xl": "1920px", // Add breakpoint to optimize layouts for large screens.

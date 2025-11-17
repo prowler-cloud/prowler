@@ -3,7 +3,6 @@ import { Suspense } from "react";
 
 import { getLatestFindings } from "@/actions/findings/findings";
 import { getProviders } from "@/actions/providers";
-import { LighthouseBanner } from "@/components/lighthouse";
 import { LinkToFindings } from "@/components/overview";
 import { ColumnNewFindingsToDate } from "@/components/overview/new-findings-table/table/column-new-findings-to-date";
 import { SkeletonTableNewFindings } from "@/components/overview/new-findings-table/table/skeleton-table-new-findings";
@@ -12,6 +11,7 @@ import { DataTable } from "@/components/ui/table";
 import { createDict } from "@/lib/helper";
 import { FindingProps, SearchParamsProps } from "@/types";
 
+import { LighthouseBanner } from "../../components/lighthouse/banner";
 import { AccountsSelector } from "./new-overview/components/accounts-selector";
 import { CheckFindingsSSR } from "./new-overview/components/check-findings";
 import { ProviderTypeSelector } from "./new-overview/components/provider-type-selector";
@@ -129,6 +129,7 @@ const SSRDataNewFindingsTable = async ({
 
   return (
     <>
+      <LighthouseBanner />
       <div className="relative flex w-full">
         <div className="flex w-full items-center gap-2">
           <h3 className="text-sm font-bold uppercase">
@@ -143,8 +144,6 @@ const SSRDataNewFindingsTable = async ({
         </div>
       </div>
       <Spacer y={4} />
-
-      <LighthouseBanner />
 
       <DataTable
         key={`dashboard-${Date.now()}`}

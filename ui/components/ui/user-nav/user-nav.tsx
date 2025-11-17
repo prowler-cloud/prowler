@@ -28,7 +28,12 @@ export const UserNav = () => {
 
   return (
     <div className="flex items-center gap-2">
-      <Button variant="outline" size="icon" className="rounded-full" asChild>
+      <Button
+        variant="outline"
+        size="icon-sm"
+        className="border-input-border-fill rounded-full"
+        asChild
+      >
         <CustomLink href="/profile" target="_self" aria-label="Account">
           <Avatar className="h-8 w-8">
             <AvatarImage src="#" alt="Avatar" />
@@ -41,8 +46,8 @@ export const UserNav = () => {
 
       <Button
         variant="ghost"
-        size="icon"
-        className="rounded-full"
+        size="icon-sm"
+        className="border-input-border-fill rounded-full"
         onClick={() => logOut()}
         aria-label="Sign out"
       >

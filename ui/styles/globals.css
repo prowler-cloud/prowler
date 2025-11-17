@@ -98,7 +98,7 @@
   --bg-input-primary: var(--color-neutral-900);
   --border-input-primary: var(--color-neutral-800);
   --border-input-primary-press: var(--color-neutral-800);
-  --border-input-primary-fill: var(--color-neutral-800);
+  --border-input-primary-fill: var(--color-neutral-300);
 
   /* Text Colors */
   --text-neutral-primary: var(--color-zinc-100);

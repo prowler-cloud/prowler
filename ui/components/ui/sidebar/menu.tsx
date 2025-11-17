@@ -1,19 +1,14 @@
 "use client";
 
 import { Divider } from "@heroui/divider";
-import { Ellipsis } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { AddIcon, InfoIcon } from "@/components/icons";
 import { Button } from "@/components/shadcn/button/button";
-import { CollapseMenuButton } from "@/components/ui/sidebar/collapse-menu-button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip/tooltip";
+import { ScrollArea } from "@/components/ui/scroll-area/scroll-area";
+import { CollapsibleMenu } from "@/components/ui/sidebar/collapsible-menu";
+import { MenuItem } from "@/components/ui/sidebar/menu-item";
 import { useAuth } from "@/hooks";
 import { getMenuList } from "@/lib/menu-list";
 import { cn } from "@/lib/utils";
@@ -21,14 +16,11 @@ import { useUIStore } from "@/store/ui/store";
 import { GroupProps } from "@/types";
 import { RolePermissionAttributes } from "@/types/users";
 
-import { ScrollArea } from "../scroll-area/scroll-area";
-
 interface MenuHideRule {
   label: string;
   condition: (permissions: RolePermissionAttributes) => boolean;
 }
 
-// Configuration for hiding menu items based on permissions
 const MENU_HIDE_RULES: MenuHideRule[] = [
   {
     label: "Billing",
@@ -38,30 +30,22 @@ const MENU_HIDE_RULES: MenuHideRule[] = [
     label: "Integrations",
     condition: (permissions) => permissions?.manage_integrations === false,
   },
-  // Add more rules as needed:
-  // {
-  //   label: "Users",
-  //   condition: (permissions) => !permissions?.manage_users
-  // },
-  // {
-  //   label: "Configuration",
-  //   condition: (permissions) => !permissions?.manage_providers
-  // },
 ];
 
-const hideMenuItems = (menuGroups: GroupProps[], labelsToHide: string[]) => {
-  return menuGroups.map((group) => ({
-    ...group,
-    menus: group.menus
-      .filter((menu) => !labelsToHide.includes(menu.label))
-      .map((menu) => ({
-        ...menu,
-        submenus:
-          menu.submenus?.filter(
+const filterMenus = (menuGroups: GroupProps[], labelsToHide: string[]) => {
+  return menuGroups
+    .map((group) => ({
+      ...group,
+      menus: group.menus
+        .filter((menu) => !labelsToHide.includes(menu.label))
+        .map((menu) => ({
+          ...menu,
+          submenus: menu.submenus?.filter(
             (submenu) => !labelsToHide.includes(submenu.label),
-          ) || [],
-      })),
-  }));
+          ),
+        })),
+    }))
+    .filter((group) => group.menus.length > 0);
 };
 
 export const Menu = ({ isOpen }: { isOpen: boolean }) => {
@@ -69,6 +53,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
   const { permissions } = useAuth();
   const { hasProviders, openMutelistModal, requestMutelistModalOpen } =
     useUIStore();
+
   const menuList = getMenuList({
     pathname,
     hasProviders,
@@ -80,10 +65,11 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
     rule.condition(permissions),
   ).map((rule) => rule.label);
 
-  const filteredMenuList = hideMenuItems(menuList, labelsToHide);
+  const filteredMenuList = filterMenus(menuList, labelsToHide);
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
+      {/* Launch Scan Button */}
       <div className="shrink-0 px-2">
         <Button
           asChild
@@ -96,101 +82,36 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
           </Link>
         </Button>
       </div>
+
+      {/* Menu Items */}
       <div className="flex-1 overflow-hidden">
         <ScrollArea className="h-full [&>div>div[style]]:block!">
           <nav className="mt-2 w-full lg:mt-6">
             <ul className="flex flex-col items-start gap-1 px-2 pb-4">
-              {filteredMenuList.map(({ groupLabel, menus }, index) => (
-                <li
-                  className={cn("w-full", groupLabel ? "pt-2" : "")}
-                  key={index}
-                >
-                  {(menus.length > 0 && isOpen && groupLabel) ||
-                  isOpen === undefined ? (
-                    <p className="text-muted-foreground max-w-[248px] truncate px-4 pb-2 text-xs font-normal">
-                      {groupLabel}
-                    </p>
-                  ) : !isOpen && isOpen !== undefined && groupLabel ? (
-                    <TooltipProvider>
-                      <Tooltip delayDuration={100}>
-                        <TooltipTrigger className="w-full">
-                          <div className="flex w-full items-center justify-center">
-                            <Ellipsis className="h-5 w-5" />
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent className="z-100" side="right">
-                          <p>{groupLabel}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  ) : (
-                    <p className=""></p>
-                  )}
-                  {menus.map((menu, index) => {
-                    const {
-                      href,
-                      label,
-                      icon: Icon,
-                      active,
-                      submenus,
-                      defaultOpen,
-                      target,
-                      tooltip,
-                    } = menu;
-                    return !submenus || submenus.length === 0 ? (
-                      <div className="w-full" key={index}>
-                        <TooltipProvider disableHoverableContent>
-                          <Tooltip delayDuration={100}>
-                            <TooltipTrigger asChild>
-                              <Button
-                                variant={
-                                  (active === undefined &&
-                                    pathname.startsWith(href)) ||
-                                  active
-                                    ? "secondary"
-                                    : "ghost"
-                                }
-                                className={cn(
-                                  isOpen ? "w-full justify-start" : "w-14",
-                                )}
-                                asChild
-                              >
-                                <Link href={href} target={target}>
-                                  <span
-                                    className={cn(
-                                      isOpen === false ? "" : "mr-4",
-                                    )}
-                                  >
-                                    <Icon size={18} />
-                                  </span>
-                                  {isOpen && (
-                                    <p className="max-w-[200px] truncate">
-                                      {label}
-                                    </p>
-                                  )}
-                                </Link>
-                              </Button>
-                            </TooltipTrigger>
-                            {tooltip && (
-                              <TooltipContent side="right">
-                                {tooltip}
-                              </TooltipContent>
-                            )}
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-                    ) : (
-                      <div className="w-full" key={index}>
-                        <CollapseMenuButton
-                          icon={Icon}
-                          label={label}
-                          submenus={submenus}
-                          isOpen={isOpen}
-                          defaultOpen={defaultOpen ?? false}
+              {filteredMenuList.map((group, groupIndex) => (
+                <li key={groupIndex} className="w-full">
+                  {group.menus.map((menu, menuIndex) => (
+                    <div key={menuIndex} className="w-full">
+                      {menu.submenus && menu.submenus.length > 0 ? (
+                        <CollapsibleMenu
+                          icon={menu.icon}
+                          label={menu.label}
+                          submenus={menu.submenus}
+                          defaultOpen={menu.defaultOpen}
                         />
-                      </div>
-                    );
-                  })}
+                      ) : (
+                        <MenuItem
+                          href={menu.href}
+                          label={menu.label}
+                          icon={menu.icon}
+                          active={menu.active}
+                          target={menu.target}
+                          tooltip={menu.tooltip}
+                          isOpen={isOpen}
+                        />
+                      )}
+                    </div>
+                  ))}
                 </li>
               ))}
             </ul>
@@ -198,6 +119,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
         </ScrollArea>
       </div>
 
+      {/* Footer */}
       <div className="text-muted-foreground border-border-neutral-secondary flex shrink-0 items-center justify-center gap-2 border-t pt-4 pb-2 text-center text-xs">
         <span>{process.env.NEXT_PUBLIC_PROWLER_RELEASE_VERSION}</span>
         {process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true" && (

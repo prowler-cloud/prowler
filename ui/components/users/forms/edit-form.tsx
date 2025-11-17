@@ -8,6 +8,7 @@ import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { updateUser, updateUserRole } from "@/actions/users/users";
+import { Card } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
 import { CustomInput } from "@/components/ui/custom";
 import { Form, FormButtons } from "@/components/ui/form";
@@ -110,25 +111,23 @@ export const EditForm = ({
         onSubmit={form.handleSubmit(onSubmitClient)}
         className="flex flex-col gap-4"
       >
-        <div className="flex flex-row justify-center gap-4 rounded-lg bg-gray-50 p-3">
-          <div className="text-small flex items-center text-gray-600">
+        <Card
+          variant="inner"
+          className="flex flex-row items-center justify-center gap-4"
+        >
+          <div className="text-small flex items-center">
             <UserIcon className="mr-2 h-4 w-4" />
-            <span className="text-gray-500">Name:</span>
-            <span className="ml-2 font-semibold text-gray-900">{userName}</span>
+            <span className="text-text-neutral-secondary">Name:</span>
+            <span className="ml-2 font-semibold">{userName}</span>
           </div>
-          <div className="text-small flex items-center text-gray-600">
+          <div className="text-small flex items-center">
             <ShieldIcon className="mr-2 h-4 w-4" />
-            <span className="text-gray-500">
-              Role:
-              <span className="ml-2 font-semibold text-gray-900">
-                {currentRole ? currentRole : "No role"}
-              </span>
-            </span>
-            <span className="ml-2 font-semibold text-gray-900">
-              {currentRole}
+            <span className="text-text-neutral-secondary">Role:</span>
+            <span className="ml-2 font-semibold">
+              {currentRole ? currentRole : "No role"}
             </span>
           </div>
-        </div>
+        </Card>
         <div className="flex flex-row gap-4">
           <div className="w-1/2">
             <CustomInput

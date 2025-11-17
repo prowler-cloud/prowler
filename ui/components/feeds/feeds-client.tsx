@@ -52,7 +52,7 @@ export function FeedsClient({ feedData, error }: FeedsClientProps) {
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
-          className="relative h-8 w-8 rounded-full bg-transparent p-2"
+          className="border-input-border-fill relative h-8 w-8 rounded-full bg-transparent p-2"
           aria-label={
             hasUnseenFeeds
               ? "New updates available - Click to view"
