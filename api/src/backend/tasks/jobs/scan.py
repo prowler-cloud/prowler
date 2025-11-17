@@ -492,15 +492,14 @@ def _process_finding_micro_batch(
 
         # TEMPORARY WORKAROUND: Skip findings with UID > 300 chars
         # TODO: Remove this after implementing text field migration for finding.uid
-        # See: https://github.com/prowler-cloud/prowler/issues/XXXXX
         if len(finding_uid) > 300:
             skipped_findings_count += 1
             logger.warning(
                 f"Skipping finding with UID exceeding 300 characters. "
                 f"Length: {len(finding_uid)}, "
                 f"Check: {finding.check_id}, "
-                f"Resource: {finding.resource_name[:100]}, "
-                f"UID prefix: {finding_uid[:100]}..."
+                f"Resource: {finding.resource_name}, "
+                f"UID: {finding_uid}"
             )
             continue
 
