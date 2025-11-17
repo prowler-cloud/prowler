@@ -270,7 +270,7 @@ class Test_Exchange_Service:
                 "Id": "test",
                 "AdditionalStorageProvidersAvailable": True,
             }
-        ]
+        ],
     )
     def test_get_mailbox_policy(self):
         with (
@@ -295,7 +295,7 @@ class Test_Exchange_Service:
         return_value={
             "Id": "test_single",
             "AdditionalStorageProvidersAvailable": False,
-        }
+        },
     )
     def test_get_mailbox_policy_single_dict(self):
         with (

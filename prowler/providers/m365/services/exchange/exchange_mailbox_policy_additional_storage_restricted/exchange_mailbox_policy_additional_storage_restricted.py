@@ -29,15 +29,11 @@ class exchange_mailbox_policy_additional_storage_restricted(Check):
                     resource_id=mailbox_policy.id,
                 )
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"Exchange mailbox policy '{mailbox_policy.id}' allows additional storage providers."
-                )
+                report.status_extended = f"Exchange mailbox policy '{mailbox_policy.id}' allows additional storage providers."
 
                 if not mailbox_policy.additional_storage_enabled:
                     report.status = "PASS"
-                    report.status_extended = (
-                        f"Exchange mailbox policy '{mailbox_policy.id}' restricts additional storage providers."
-                    )
+                    report.status_extended = f"Exchange mailbox policy '{mailbox_policy.id}' restricts additional storage providers."
 
                 findings.append(report)
 

@@ -45,7 +45,10 @@ class Test_exchange_mailbox_policy_additional_storage_restricted:
                 == "Exchange mailbox policy 'OwaMailboxPolicy-Default' restricts additional storage providers."
             )
             assert result[0].resource == exchange_client.mailbox_policies[0].dict()
-            assert result[0].resource_name == "Exchange Mailbox Policy - OwaMailboxPolicy-Default"
+            assert (
+                result[0].resource_name
+                == "Exchange Mailbox Policy - OwaMailboxPolicy-Default"
+            )
             assert result[0].resource_id == "OwaMailboxPolicy-Default"
             assert result[0].location == "global"
 
@@ -90,7 +93,10 @@ class Test_exchange_mailbox_policy_additional_storage_restricted:
                 == "Exchange mailbox policy 'OwaMailboxPolicy-Default' allows additional storage providers."
             )
             assert result[0].resource == exchange_client.mailbox_policies[0].dict()
-            assert result[0].resource_name == "Exchange Mailbox Policy - OwaMailboxPolicy-Default"
+            assert (
+                result[0].resource_name
+                == "Exchange Mailbox Policy - OwaMailboxPolicy-Default"
+            )
             assert result[0].resource_id == "OwaMailboxPolicy-Default"
             assert result[0].location == "global"
 
@@ -150,12 +156,8 @@ class Test_exchange_mailbox_policy_additional_storage_restricted:
                 MailboxPolicy(
                     id="OwaMailboxPolicy-Default", additional_storage_enabled=False
                 ),
-                MailboxPolicy(
-                    id="OWA-Policy-2", additional_storage_enabled=True
-                ),
-                MailboxPolicy(
-                    id="OWA-Policy-3", additional_storage_enabled=False
-                )
+                MailboxPolicy(id="OWA-Policy-2", additional_storage_enabled=True),
+                MailboxPolicy(id="OWA-Policy-3", additional_storage_enabled=False),
             ]
 
             check = exchange_mailbox_policy_additional_storage_restricted()
