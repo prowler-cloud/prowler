@@ -168,6 +168,7 @@ from api.rls import Tenant
 from api.utils import (
     CustomOAuth2Client,
     get_findings_metadata_no_aggregations,
+    initialize_prowler_provider,
     validate_invitation,
 )
 from api.uuid_utils import datetime_to_uuid7, uuid7_start
@@ -222,6 +223,7 @@ from api.v1.serializers import (
     ProviderUpdateSerializer,
     ResourceMetadataSerializer,
     ResourceSerializer,
+    ResourceTimelineSerializer,
     RoleCreateSerializer,
     RoleProviderGroupRelationshipSerializer,
     RoleSerializer,
@@ -248,6 +250,9 @@ from api.v1.serializers import (
     UserRoleRelationshipSerializer,
     UserSerializer,
     UserUpdateSerializer,
+)
+from prowler.providers.aws.lib.cloudtrail_timeline.cloudtrail_timeline import (
+    CloudTrailTimeline,
 )
 
 logger = logging.getLogger(BackendLogger.API)
@@ -2156,8 +2161,12 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
     http_method_names = ["get"]
     filterset_class = ResourceFilter
     ordering = ["-failed_findings_count", "-updated_at"]
-    # Allow custom query parameters for timeline endpoint
-    allowed_query_parameters = ["lookback_days"]
+
+    # Timeline constants
+    TIMELINE_DEFAULT_LOOKBACK_DAYS = 90
+    TIMELINE_MIN_LOOKBACK_DAYS = 1
+    TIMELINE_MAX_LOOKBACK_DAYS = 365
+
     ordering_fields = [
         "provider_uid",
         "uid",
@@ -2462,60 +2471,79 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         serializer.is_valid(raise_exception=True)
         return Response(serializer.data)
 
+    @extend_schema(
+        tags=["Resource"],
+        summary="Get CloudTrail timeline for a resource",
+        description=(
+            "Retrieve CloudTrail events showing modification history for an AWS resource. "
+            "Returns timeline of who modified the resource and when. Only available for AWS resources."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name="filter[lookback_days]",
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                description="Number of days to look back (default: 90, min: 1, max: 365)",
+                required=False,
+            ),
+        ],
+        responses={
+            200: ResourceTimelineSerializer,
+            400: OpenApiResponse(description="Invalid provider or parameters"),
+            401: OpenApiResponse(description="AWS credentials not available"),
+            503: OpenApiResponse(description="AWS service unavailable"),
+        },
+    )
     @action(
         detail=True,
         methods=["get"],
         url_name="timeline",
-        url_path=r"timeline(?:/(?P<lookback_days>[0-9]+))?",
+        serializer_class=ResourceTimelineSerializer,
     )
-    def timeline(self, request, pk=None, lookback_days=None):
-        """Get CloudTrail timeline events for a resource.
-
-        Returns a timeline of CloudTrail events showing who modified the resource and when.
-        Only available for AWS resources.
-
-        URL parameters:
-        - lookback_days: Number of days to look back (default: 90, max: 365)
-          Usage: /resources/{id}/timeline or /resources/{id}/timeline/30
-        """
+    def timeline(self, request, pk=None):
+        """Get CloudTrail timeline events for a resource."""
         resource = self.get_object()
 
-        # Check if this is an AWS resource
+        # Validate provider
         if resource.provider.provider != "aws":
-            return Response(
+            raise ValidationError(
                 {
-                    "error": "Timeline is only available for AWS resources",
-                    "detail": f"Resource provider is '{resource.provider.provider}', but timeline requires 'aws'",
+                    "detail": "Timeline is only available for AWS resources",
+                    "provider": resource.provider.provider,
                 },
-                status=status.HTTP_400_BAD_REQUEST,
+                code="invalid_provider",
             )
 
-        # Get lookback_days parameter (default: 90, max: 365)
-        try:
-            if lookback_days is None:
-                lookback_days = 90
-            else:
-                lookback_days = int(lookback_days)
-
-            if lookback_days < 1 or lookback_days > 365:
-                return Response(
-                    {"error": "lookback_days must be between 1 and 365"},
-                    status=status.HTTP_400_BAD_REQUEST,
+        # Validate and parse lookback_days from query params
+        lookback_days_str = request.query_params.get("filter[lookback_days]")
+        if lookback_days_str is None:
+            lookback_days = self.TIMELINE_DEFAULT_LOOKBACK_DAYS
+        else:
+            try:
+                lookback_days = int(lookback_days_str)
+            except (ValueError, TypeError):
+                raise ValidationError(
+                    {"filter[lookback_days]": "Must be a valid integer"},
+                    code="invalid",
                 )
-        except ValueError:
-            return Response(
-                {"error": "lookback_days must be a valid integer"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+
+            if not (
+                self.TIMELINE_MIN_LOOKBACK_DAYS
+                <= lookback_days
+                <= self.TIMELINE_MAX_LOOKBACK_DAYS
+            ):
+                raise ValidationError(
+                    {
+                        "filter[lookback_days]": (
+                            f"Must be between {self.TIMELINE_MIN_LOOKBACK_DAYS} "
+                            f"and {self.TIMELINE_MAX_LOOKBACK_DAYS}"
+                        )
+                    },
+                    code="out_of_range",
+                )
 
         try:
-            # Import CloudTrailTimeline here to avoid loading it globally
-            from api.utils import initialize_prowler_provider
-            from prowler.providers.aws.lib.cloudtrail_timeline.cloudtrail_timeline import (
-                CloudTrailTimeline,
-            )
-
-            # Initialize Prowler AWS provider (this handles credentials and session)
+            # Initialize Prowler AWS provider using existing utility
             prowler_provider = initialize_prowler_provider(resource.provider)
 
             # Get the boto3 session from the Prowler provider
@@ -2529,46 +2557,63 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             # Get timeline events
             events = timeline_service.get_resource_timeline(
                 resource_id=resource.uid,
-                resource_arn=resource.uid,  # The uid should contain the ARN
+                resource_arn=resource.uid,
                 region=resource.region,
             )
 
-            return Response(
-                {
-                    "resource_id": resource.uid,
-                    "resource_name": resource.name,
-                    "resource_type": resource.type,
-                    "region": resource.region,
-                    "lookback_days": lookback_days,
-                    "event_count": len(events),
-                    "events": events,
-                }
-            )
+            # Prepare response data
+            response_data = {
+                "resource_id": resource.uid,
+                "resource_name": resource.name,
+                "resource_type": resource.type,
+                "region": resource.region,
+                "lookback_days": lookback_days,
+                "event_count": len(events),
+                "events": events,
+            }
 
-        except ImportError as e:
-            return Response(
-                {"error": f"CloudTrail timeline module not available: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+            # Serialize and return
+            serializer = self.get_serializer(data=response_data)
+            serializer.is_valid(raise_exception=True)
+            return Response(serializer.data)
+
         except NoCredentialsError:
-            return Response(
-                {"error": "AWS credentials not found for this provider"},
-                status=status.HTTP_401_UNAUTHORIZED,
+            raise ValidationError(
+                {"detail": "AWS credentials not found for this provider"},
+                code="no_credentials",
             )
         except ClientError as e:
             logger.error(
-                f"AWS API error when retrieving CloudTrail timeline: {str(e)}", exc_info=True
+                f"AWS API error retrieving CloudTrail timeline: {str(e)}",
+                exc_info=True,
             )
             return Response(
-                {"error": "There was a problem communicating with AWS. Please try again later."},
+                {
+                    "errors": [
+                        {
+                            "detail": "Unable to communicate with AWS. Please try again later.",
+                            "status": "503",
+                            "code": "service_unavailable",
+                        }
+                    ]
+                },
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
         except Exception as e:
             logger.error(
                 f"Error retrieving CloudTrail timeline: {str(e)}", exc_info=True
             )
+            sentry_sdk.capture_exception(e)
             return Response(
-                {"error": f"Failed to retrieve timeline: {str(e)}"},
+                {
+                    "errors": [
+                        {
+                            "detail": "Failed to retrieve timeline",
+                            "status": "500",
+                            "code": "internal_error",
+                        }
+                    ]
+                },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 

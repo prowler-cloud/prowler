@@ -3849,6 +3849,243 @@ class TestResourceViewSet:
         assert attributes["regions"] == [latest_scan_resource.region]
         assert attributes["types"] == [latest_scan_resource.type]
 
+    # Timeline endpoint tests
+    def test_timeline_non_aws_provider(self, authenticated_client, azure_provider):
+        """Test timeline endpoint rejects non-AWS providers."""
+        from api.models import Resource
+
+        resource = Resource.objects.create(
+            uid="test-resource-id",
+            name="Test Resource",
+            type="test-type",
+            region="us-east-1",
+            service="test-service",
+            provider=azure_provider,
+            tenant_id=authenticated_client.tenant_id,
+        )
+
+        response = authenticated_client.get(
+            reverse("resource-timeline", kwargs={"pk": resource.id})
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "invalid_provider"
+
+    @pytest.mark.parametrize(
+        "lookback_days,expected_status,expected_code",
+        [
+            ("abc", status.HTTP_400_BAD_REQUEST, "invalid"),  # Non-integer
+            ("0", status.HTTP_400_BAD_REQUEST, "out_of_range"),  # Below min
+            ("366", status.HTTP_400_BAD_REQUEST, "out_of_range"),  # Above max
+            ("-5", status.HTTP_400_BAD_REQUEST, "out_of_range"),  # Negative
+        ],
+    )
+    def test_timeline_invalid_lookback_days(
+        self,
+        authenticated_client,
+        aws_provider,
+        lookback_days,
+        expected_status,
+        expected_code,
+    ):
+        """Test timeline endpoint validates lookback_days parameter."""
+        from api.models import Resource
+
+        resource = Resource.objects.create(
+            uid="arn:aws:ec2:us-east-1:123456789012:instance/i-test",
+            name="Test Instance",
+            type="instance",
+            region="us-east-1",
+            service="ec2",
+            provider=aws_provider,
+            tenant_id=authenticated_client.tenant_id,
+        )
+
+        response = authenticated_client.get(
+            reverse("resource-timeline", kwargs={"pk": resource.id}),
+            {"filter[lookback_days]": lookback_days},
+        )
+
+        assert response.status_code == expected_status
+        assert response.json()["errors"][0]["code"] == expected_code
+
+    @patch("api.v1.views.initialize_prowler_provider")
+    @patch("api.v1.views.CloudTrailTimeline")
+    def test_timeline_success(
+        self,
+        mock_cloudtrail_timeline,
+        mock_initialize_provider,
+        authenticated_client,
+        aws_provider,
+    ):
+        """Test successful timeline retrieval."""
+        from api.models import Resource
+
+        # Create test resource
+        resource = Resource.objects.create(
+            uid="arn:aws:ec2:us-east-1:123456789012:instance/i-test123",
+            name="Test EC2 Instance",
+            type="instance",
+            region="us-east-1",
+            service="ec2",
+            provider=aws_provider,
+            tenant_id=authenticated_client.tenant_id,
+        )
+
+        # Mock provider session
+        mock_session = Mock()
+        mock_provider = Mock()
+        mock_provider._session.current_session = mock_session
+        mock_initialize_provider.return_value = mock_provider
+
+        # Mock CloudTrail timeline response
+        mock_timeline_instance = Mock()
+        mock_events = [
+            {
+                "event_time": "2024-01-15T10:30:00Z",
+                "event_name": "RunInstances",
+                "event_source": "ec2.amazonaws.com",
+                "username": "admin@example.com",
+                "user_identity_type": "IAMUser",
+                "source_ip_address": "203.0.113.1",
+                "user_agent": "aws-cli/2.0.0",
+            },
+            {
+                "event_time": "2024-01-16T14:20:00Z",
+                "event_name": "StopInstances",
+                "event_source": "ec2.amazonaws.com",
+                "username": "operator@example.com",
+                "user_identity_type": "IAMUser",
+            },
+        ]
+        mock_timeline_instance.get_resource_timeline.return_value = mock_events
+        mock_cloudtrail_timeline.return_value = mock_timeline_instance
+
+        # Make request
+        response = authenticated_client.get(
+            reverse("resource-timeline", kwargs={"pk": resource.id}),
+            {"filter[lookback_days]": "30"},
+        )
+
+        # Assertions
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]["attributes"]
+
+        assert data["resource_id"] == resource.uid
+        assert data["resource_name"] == resource.name
+        assert data["resource_type"] == resource.type
+        assert data["region"] == resource.region
+        assert data["lookback_days"] == 30
+        assert data["event_count"] == 2
+        assert len(data["events"]) == 2
+
+        # Verify CloudTrail was called with correct parameters
+        mock_cloudtrail_timeline.assert_called_once_with(
+            session=mock_session, lookback_days=30
+        )
+        mock_timeline_instance.get_resource_timeline.assert_called_once_with(
+            resource_id=resource.uid,
+            resource_arn=resource.uid,
+            region=resource.region,
+        )
+
+    @patch("api.v1.views.initialize_prowler_provider")
+    def test_timeline_default_lookback_days(
+        self, mock_initialize_provider, authenticated_client, aws_provider
+    ):
+        """Test timeline uses default lookback_days when not provided."""
+        from api.models import Resource
+
+        resource = Resource.objects.create(
+            uid="arn:aws:s3:::test-bucket",
+            name="Test Bucket",
+            type="bucket",
+            region="us-east-1",
+            service="s3",
+            provider=aws_provider,
+            tenant_id=authenticated_client.tenant_id,
+        )
+
+        # Mock to raise NoCredentialsError to avoid full execution
+        mock_initialize_provider.side_effect = NoCredentialsError()
+
+        response = authenticated_client.get(
+            reverse("resource-timeline", kwargs={"pk": resource.id})
+        )
+
+        # Should get credentials error, but this confirms default was used
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "no_credentials" in response.json()["errors"][0]["code"]
+
+    @patch("api.v1.views.initialize_prowler_provider")
+    def test_timeline_aws_credentials_error(
+        self, mock_initialize_provider, authenticated_client, aws_provider
+    ):
+        """Test timeline handles AWS credentials errors."""
+        from api.models import Resource
+
+        resource = Resource.objects.create(
+            uid="arn:aws:rds:us-west-2:123456789012:db:test-db",
+            name="Test Database",
+            type="db-instance",
+            region="us-west-2",
+            service="rds",
+            provider=aws_provider,
+            tenant_id=authenticated_client.tenant_id,
+        )
+
+        mock_initialize_provider.side_effect = NoCredentialsError()
+
+        response = authenticated_client.get(
+            reverse("resource-timeline", kwargs={"pk": resource.id})
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "no_credentials"
+
+    @patch("api.v1.views.initialize_prowler_provider")
+    @patch("api.v1.views.CloudTrailTimeline")
+    def test_timeline_aws_client_error(
+        self,
+        mock_cloudtrail_timeline,
+        mock_initialize_provider,
+        authenticated_client,
+        aws_provider,
+    ):
+        """Test timeline handles AWS API errors."""
+        from api.models import Resource
+
+        resource = Resource.objects.create(
+            uid="arn:aws:lambda:eu-west-1:123456789012:function:test-func",
+            name="Test Function",
+            type="function",
+            region="eu-west-1",
+            service="lambda",
+            provider=aws_provider,
+            tenant_id=authenticated_client.tenant_id,
+        )
+
+        # Mock provider
+        mock_session = Mock()
+        mock_provider = Mock()
+        mock_provider._session.current_session = mock_session
+        mock_initialize_provider.return_value = mock_provider
+
+        # Mock ClientError
+        mock_timeline_instance = Mock()
+        mock_timeline_instance.get_resource_timeline.side_effect = ClientError(
+            {"Error": {"Code": "AccessDenied", "Message": "Access denied"}},
+            "LookupEvents",
+        )
+        mock_cloudtrail_timeline.return_value = mock_timeline_instance
+
+        response = authenticated_client.get(
+            reverse("resource-timeline", kwargs={"pk": resource.id})
+        )
+
+        assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+        assert response.json()["errors"][0]["code"] == "service_unavailable"
+
 
 @pytest.mark.django_db
 class TestFindingViewSet:

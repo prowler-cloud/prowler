@@ -3698,3 +3698,40 @@ class ThreatScoreSnapshotSerializer(RLSSerializer):
         if getattr(obj, "_aggregated", False):
             return "n/a"
         return str(obj.id)
+
+
+# Resource Timeline Serializers
+
+
+class TimelineEventSerializer(serializers.Serializer):
+    """Serializer for individual CloudTrail timeline events."""
+
+    event_time = serializers.DateTimeField()
+    event_name = serializers.CharField()
+    event_source = serializers.CharField()
+    username = serializers.CharField()
+    user_identity_type = serializers.CharField()
+    source_ip_address = serializers.CharField(allow_null=True, required=False)
+    user_agent = serializers.CharField(allow_null=True, required=False)
+    request_parameters = serializers.JSONField(allow_null=True, required=False)
+    response_elements = serializers.JSONField(allow_null=True, required=False)
+    error_code = serializers.CharField(allow_null=True, required=False)
+    error_message = serializers.CharField(allow_null=True, required=False)
+
+    class Meta:
+        resource_name = "timeline-events"
+
+
+class ResourceTimelineSerializer(serializers.Serializer):
+    """Serializer for resource CloudTrail timeline data."""
+
+    resource_id = serializers.CharField()
+    resource_name = serializers.CharField()
+    resource_type = serializers.CharField()
+    region = serializers.CharField()
+    lookback_days = serializers.IntegerField()
+    event_count = serializers.IntegerField()
+    events = TimelineEventSerializer(many=True)
+
+    class Meta:
+        resource_name = "resource-timeline"
