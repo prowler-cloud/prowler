@@ -33,6 +33,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS EKS service metadata to new format [(#8890)](https://github.com/prowler-cloud/prowler/pull/8890)
 - Update AWS Elastic Beanstalk service metadata to new format [(#8934)](https://github.com/prowler-cloud/prowler/pull/8934)
 - Update AWS ElastiCache service metadata to new format [(#8933)](https://github.com/prowler-cloud/prowler/pull/8933)
+- Update Kubernetes etcd service metadata to new format [(#9096)](https://github.com/prowler-cloud/prowler/pull/9096)
 - Update MongoDB Atlas projects service metadata to new format [(#9093)](https://github.com/prowler-cloud/prowler/pull/9093)
 - Update GitHub Organization service metadata to new format [(#9094)](https://github.com/prowler-cloud/prowler/pull/9094)
 - Update AWS CodeBuild service metadata to new format [(#8851)](https://github.com/prowler-cloud/prowler/pull/8851)
@@ -54,7 +55,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update oraclecloud audit service metadata to new format [(#9221)](https://github.com/prowler-cloud/prowler/pull/9221)
 - Raise ASFF output error for non-AWS providers [(#9225)](https://github.com/prowler-cloud/prowler/pull/9225)
 - Update AWS ECR service metadata to new format [(#8872)](https://github.com/prowler-cloud/prowler/pull/8872)
-
 
 ---
 
