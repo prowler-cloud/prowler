@@ -72,13 +72,6 @@ def mock_exchange_get_transport_config(_):
     )
 
 
-def mock_exchange_get_mailbox_policy(_):
-    return MailboxPolicy(
-        id="test",
-        additional_storage_enabled=True,
-    )
-
-
 def mock_exchange_get_role_assignment_policies(_):
     return [
         RoleAssignmentPolicy(
@@ -272,13 +265,19 @@ class Test_Exchange_Service:
             exchange_client.powershell.close()
 
     @patch(
-        "prowler.providers.m365.services.exchange.exchange_service.Exchange._get_mailbox_policy",
-        new=mock_exchange_get_mailbox_policy,
+        "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_mailbox_policy",
+        return_value=[
+            {
+                "Id": "test",
+                "AdditionalStorageProvidersAvailable": True,
+            }
+        ]
     )
-    def test_get_mailbox_policy(self):
+    def test_get_mailbox_policy(self, mock_get_mailbox_policy):
         with (
             mock.patch(
-                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online",
+                return_value=True,
             ),
         ):
             exchange_client = Exchange(
@@ -286,9 +285,35 @@ class Test_Exchange_Service:
                     identity=M365IdentityInfo(tenant_domain=DOMAIN)
                 )
             )
-            mailbox_policy = exchange_client.mailbox_policy
-            assert mailbox_policy.id == "test"
-            assert mailbox_policy.additional_storage_enabled is True
+            mailbox_policies = exchange_client.mailbox_policies
+            assert len(mailbox_policies) == 1
+            assert mailbox_policies[0].id == "test"
+            assert mailbox_policies[0].additional_storage_enabled is True
+            exchange_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_mailbox_policy",
+        return_value={
+            "Id": "test_single",
+            "AdditionalStorageProvidersAvailable": False,
+        }
+    )
+    def test_get_mailbox_policy_single_dict(self, mock_get_mailbox_policy):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online",
+                return_value=True,
+            ),
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            mailbox_policies = exchange_client.mailbox_policies
+            assert len(mailbox_policies) == 1
+            assert mailbox_policies[0].id == "test_single"
+            assert mailbox_policies[0].additional_storage_enabled is False
             exchange_client.powershell.close()
 
     @patch(
