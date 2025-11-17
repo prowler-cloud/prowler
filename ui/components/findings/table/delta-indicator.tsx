@@ -23,7 +23,7 @@ export const DeltaIndicator = ({ delta }: DeltaIndicatorProps) => {
             color="transparent"
             size="sm"
             className="text-primary h-auto min-w-0 p-0"
-            asLink="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app/#step-8-analyze-the-findings"
+            asLink="https://docs.prowler.com/user-guide/tutorials/prowler-app#step-8:-analyze-the-findings"
             target="_blank"
           >
             Learn more
