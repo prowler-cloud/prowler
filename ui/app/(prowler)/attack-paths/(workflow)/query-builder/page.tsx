@@ -20,6 +20,7 @@ import {
 import type { AttackPathGraphRef } from "@/components/attack-paths/graph/attack-path-graph";
 import { useToast } from "@/components/ui";
 import { useGraphState } from "@/hooks/attack-paths/use-graph-state";
+import { exportGraphAsSVG } from "@/lib/attack-paths/export";
 import type { AttackPathQuery, GraphNode } from "@/types/attack-paths";
 
 /**
@@ -241,13 +242,30 @@ export default function QueryBuilderPage() {
               onZoomIn={() => graphRef.current?.zoomIn()}
               onZoomOut={() => graphRef.current?.zoomOut()}
               onFitToScreen={() => graphRef.current?.resetZoom()}
-              onExport={() =>
-                toast({
-                  title: "Info",
-                  description: "Export functionality coming soon",
-                  variant: "default",
-                })
-              }
+              onExport={() => {
+                try {
+                  const svgElement = graphRef.current?.getSVGElement();
+                  if (svgElement) {
+                    exportGraphAsSVG(svgElement, "attack-path-graph.svg");
+                    toast({
+                      title: "Success",
+                      description: "Graph exported as SVG",
+                      variant: "default",
+                    });
+                  } else {
+                    throw new Error("Could not find graph element");
+                  }
+                } catch (error) {
+                  toast({
+                    title: "Error",
+                    description:
+                      error instanceof Error
+                        ? error.message
+                        : "Failed to export graph",
+                    variant: "destructive",
+                  });
+                }
+              }}
             />
 
             <div className="flex items-start gap-8">

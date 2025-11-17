@@ -25,6 +25,7 @@ export interface AttackPathGraphRef {
   zoomOut: () => void;
   resetZoom: () => void;
   getZoomLevel: () => number;
+  getSVGElement: () => SVGSVGElement | null;
 }
 
 interface AttackPathGraphProps {
@@ -100,6 +101,7 @@ const AttackPathGraphComponent = forwardRef<
       }
     },
     getZoomLevel: () => zoomLevel,
+    getSVGElement: () => svgRef.current,
   }));
 
   useEffect(() => {
