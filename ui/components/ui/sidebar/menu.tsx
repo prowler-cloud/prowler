@@ -98,6 +98,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                           label={menu.label}
                           submenus={menu.submenus}
                           defaultOpen={menu.defaultOpen}
+                          isOpen={isOpen}
                         />
                       ) : (
                         <MenuItem

@@ -76,7 +76,7 @@ export const DataTableFilterCustom = ({
               }
               ariaLabel={filter.labelCheckboxGroup}
             >
-              <SelectTrigger size="sm">
+              <SelectTrigger size="default">
                 <SelectValue placeholder={filter.labelCheckboxGroup}>
                   {selectedValues.length > 0 && (
                     <span className="truncate">
