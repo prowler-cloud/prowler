@@ -37,8 +37,8 @@ CODE_REVIEW_ENABLED=$(echo "$CODE_REVIEW_ENABLED" | tr '[:upper:]' '[:lower:]')
 echo -e "${BLUE}ℹ️  Code Review Status: ${CODE_REVIEW_ENABLED}${NC}"
 echo ""
 
-# Get staged files (what will be committed)
-STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(tsx?|jsx?)$' || true)
+# Get staged files in the UI folder only (what will be committed)
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM -- 'ui/**' | grep -E '\.(tsx?|jsx?)$' || true)
 
 if [ "$CODE_REVIEW_ENABLED" = "true" ]; then
   if [ -z "$STAGED_FILES" ]; then
@@ -133,7 +133,14 @@ else
   echo ""
 fi
 
-# Run healthcheck (typecheck and lint check)
+# Check if there are any UI files to validate
+if [ -z "$STAGED_FILES" ] && [ "$CODE_REVIEW_ENABLED" = "true" ]; then
+  echo -e "${YELLOW}⏭️  No UI files to validate, skipping healthcheck${NC}"
+  echo ""
+  exit 0
+fi
+
+# Run healthcheck (typecheck and lint check) only if there are UI changes
 echo -e "${BLUE}🏥 Running healthcheck...${NC}"
 echo ""
 

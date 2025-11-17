@@ -2,6 +2,7 @@ import {
   Bookmark,
   CloudCog,
   Cog,
+  GitBranch,
   Group,
   LayoutGrid,
   Mail,
@@ -83,6 +84,17 @@ export const getMenuList = ({
           label: "Lighthouse AI",
           icon: LighthouseIcon,
           active: pathname === "/lighthouse",
+        },
+      ],
+    },
+    {
+      groupLabel: "",
+      menus: [
+        {
+          href: "/attack-paths",
+          label: "Attack Paths",
+          icon: GitBranch,
+          active: pathname.startsWith("/attack-paths"),
         },
       ],
     },
