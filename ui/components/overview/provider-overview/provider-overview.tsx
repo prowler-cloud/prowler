@@ -11,6 +11,7 @@ import {
   IacProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
+  MongoDBAtlasProviderBadge,
   OracleCloudProviderBadge,
 } from "@/components/icons/providers-badge";
 import { CustomButton } from "@/components/ui/custom/custom-button";
@@ -43,6 +44,8 @@ export const ProvidersOverview = ({
         return <IacProviderBadge width={30} height={30} />;
       case "oraclecloud":
         return <OracleCloudProviderBadge width={30} height={30} />;
+      case "mongodbatlas":
+        return <MongoDBAtlasProviderBadge width={30} height={30} />;
       default:
         return null;
     }
@@ -57,6 +60,7 @@ export const ProvidersOverview = ({
     github: "GitHub",
     iac: "IaC",
     oraclecloud: "OCI",
+    mongodbatlas: "MongoDB Atlas",
   };
 
   const providers = PROVIDER_TYPES.map((providerType) => ({

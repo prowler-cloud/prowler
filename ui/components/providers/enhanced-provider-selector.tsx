@@ -19,6 +19,7 @@ const providerTypeLabels: Record<ProviderType, string> = {
   github: "GitHub",
   iac: "Infrastructure as Code",
   oraclecloud: "Oracle Cloud Infrastructure",
+  mongodbatlas: "MongoDB Atlas",
 };
 
 interface EnhancedProviderSelectorProps {

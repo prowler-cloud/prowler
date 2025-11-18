@@ -4,6 +4,7 @@ export const PROVIDER_TYPES = [
   "gcp",
   "kubernetes",
   "m365",
+  "mongodbatlas",
   "github",
   "iac",
   "oraclecloud",

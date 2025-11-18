@@ -120,6 +120,11 @@ export const addProviderFormSchema = z
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
         providerUid: z.string(),
       }),
+      z.object({
+        providerType: z.literal("mongodbatlas"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z.string(),
+      }),
     ]),
   );
 
@@ -231,7 +236,16 @@ export const addCredentialsFormSchema = (
                             .union([z.string(), z.literal("")])
                             .optional(),
                         }
-                      : {}),
+                      : providerType === "mongodbatlas"
+                        ? {
+                            [ProviderCredentialFields.ATLAS_PUBLIC_KEY]: z
+                              .string()
+                              .min(1, "Atlas Public Key is required"),
+                            [ProviderCredentialFields.ATLAS_PRIVATE_KEY]: z
+                              .string()
+                              .min(1, "Atlas Private Key is required"),
+                          }
+                        : {}),
     })
     .superRefine((data: Record<string, any>, ctx) => {
       if (providerType === "m365") {

@@ -264,6 +264,12 @@ export type OCICredentials = {
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
+export type MongoDBAtlasCredentials = {
+  [ProviderCredentialFields.ATLAS_PUBLIC_KEY]: string;
+  [ProviderCredentialFields.ATLAS_PRIVATE_KEY]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
 export type CredentialsFormSchema =
   | AWSCredentials
   | AzureCredentials
@@ -272,7 +278,8 @@ export type CredentialsFormSchema =
   | KubernetesCredentials
   | IacCredentials
   | M365Credentials
-  | OCICredentials;
+  | OCICredentials
+  | MongoDBAtlasCredentials;
 
 export interface SearchParamsProps {
   [key: string]: string | string[] | undefined;

@@ -11,6 +11,7 @@ import {
   IacProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
+  MongoDBAtlasProviderBadge,
   OracleCloudProviderBadge,
 } from "@/components/icons/providers-badge";
 import {
@@ -31,6 +32,7 @@ const PROVIDER_ICON: Record<ProviderType, ReactNode> = {
   github: <GitHubProviderBadge width={18} height={18} />,
   iac: <IacProviderBadge width={18} height={18} />,
   oraclecloud: <OracleCloudProviderBadge width={18} height={18} />,
+  mongodbatlas: <MongoDBAtlasProviderBadge width={18} height={18} />,
 };
 
 interface AccountsSelectorProps {

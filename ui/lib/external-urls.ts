@@ -42,6 +42,11 @@ export const getProviderHelpText = (provider: string) => {
         text: "Need help connecting your Oracle Cloud account?",
         link: "https://goto.prowler.com/provider-oraclecloud",
       };
+    case "mongodbatlas":
+      return {
+        text: "Need help connecting your MongoDB Atlas organization?",
+        link: "https://goto.prowler.com/provider-mongodbatlas",
+      };
     default:
       return {
         text: "How to setup a provider?",

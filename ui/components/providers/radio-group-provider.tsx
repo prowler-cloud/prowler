@@ -15,6 +15,7 @@ import {
   IacProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
+  MongoDBAtlasProviderBadge,
   OracleCloudProviderBadge,
 } from "../icons/providers-badge";
 import { CustomRadio } from "../ui/custom";
@@ -66,6 +67,12 @@ export const RadioGroupProvider: React.FC<RadioGroupProviderProps> = ({
                 <div className="flex items-center">
                   <M365ProviderBadge size={26} />
                   <span className="ml-2">Microsoft 365</span>
+                </div>
+              </CustomRadio>
+              <CustomRadio description="MongoDB Atlas" value="mongodbatlas">
+                <div className="flex items-center">
+                  <MongoDBAtlasProviderBadge size={26} />
+                  <span className="ml-2">MongoDB Atlas</span>
                 </div>
               </CustomRadio>
               <CustomRadio description="Kubernetes" value="kubernetes">

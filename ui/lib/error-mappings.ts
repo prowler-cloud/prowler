@@ -28,4 +28,6 @@ export const PROVIDER_CREDENTIALS_ERROR_MAPPING: Record<string, string> = {
   [ErrorPointers.ROLE_SESSION_NAME]: ProviderCredentialFields.ROLE_SESSION_NAME,
   [ErrorPointers.SERVICE_ACCOUNT_KEY]:
     ProviderCredentialFields.SERVICE_ACCOUNT_KEY,
+  [ErrorPointers.ATLAS_PUBLIC_KEY]: ProviderCredentialFields.ATLAS_PUBLIC_KEY,
+  [ErrorPointers.ATLAS_PRIVATE_KEY]: ProviderCredentialFields.ATLAS_PRIVATE_KEY,
 };
