@@ -84,9 +84,8 @@ def check_security_group(
                 any_address,
             ):
                 for port in ports:
-                    if (
-                        port in ingress_port_range
-                        and ingress_rule["IpProtocol"] == protocol
+                    if port in ingress_port_range and (
+                        ingress_rule["IpProtocol"] == protocol or protocol == "-1"
                     ):
                         # Direct match for a port in the specified port range
                         return True
