@@ -266,12 +266,17 @@ export function MultiSelectValue({
 export function MultiSelectContent({
   search = true,
   children,
+  width = "default",
   ...props
 }: {
   search?: boolean | { placeholder?: string; emptyMessage?: string };
   children: ReactNode;
+  width?: "default" | "wide";
 } & Omit<ComponentPropsWithoutRef<typeof Command>, "children">) {
   const canSearch = typeof search === "object" ? true : search;
+
+  const widthClasses =
+    width === "wide" ? "w-auto min-w-[400px] max-w-[600px]" : "min-w-[8rem]";
 
   return (
     <>
@@ -283,7 +288,10 @@ export function MultiSelectContent({
       <PopoverContent
         align="start"
         data-slot="multiselect-content"
-        className="bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 border-border-input-primary bg-bg-input-primary relative z-50 min-w-[8rem] rounded-lg border p-0"
+        className={cn(
+          "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 border-border-input-primary bg-bg-input-primary relative z-50 rounded-lg border p-0",
+          widthClasses,
+        )}
       >
         <Command {...props} className="rounded-lg">
           {canSearch ? (
