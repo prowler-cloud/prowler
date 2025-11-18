@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/entities";
 import { SeverityBadge, StatusFindingBadge } from "@/components/ui/table";
 import { createDict } from "@/lib";
+import { buildAwsConsoleUrl } from "@/lib/aws-utils";
 import { buildGitFileUrl } from "@/lib/iac-utils";
 import { FindingProps, ProviderType, ResourceProps } from "@/types";
 
@@ -164,11 +165,13 @@ export const ResourceDetail = ({
   const providerData = resource.relationships.provider.data.attributes;
   const allFindings = findingsData;
 
-  // Build Git URL for IaC resources
-  const gitUrl =
+  // Build external resource URL based on provider
+  const externalUrl =
     providerData.provider === "iac"
       ? buildGitFileUrl(providerData.uid, attributes.name, "")
-      : null;
+      : providerData.provider === "aws" && attributes.uid
+        ? buildAwsConsoleUrl(attributes.uid)
+        : null;
 
   if (selectedFindingId) {
     const findingTitle =
@@ -196,22 +199,31 @@ export const ResourceDetail = ({
       {/* Resource Details section */}
       <CustomSection
         title={
-          providerData.provider === "iac" ? (
+          externalUrl ? (
             <span className="flex items-center gap-2">
               Resource Details
-              {gitUrl && (
-                <Tooltip content="Go to Resource in the Repository" size="sm">
-                  <a
-                    href={gitUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-bg-data-info inline-flex cursor-pointer"
-                    aria-label="Open resource in repository"
-                  >
-                    <ExternalLink size={16} className="inline" />
-                  </a>
-                </Tooltip>
-              )}
+              <Tooltip
+                content={
+                  providerData.provider === "iac"
+                    ? "Go to Resource in the Repository"
+                    : "Go to Resource in AWS Console"
+                }
+                size="sm"
+              >
+                <a
+                  href={externalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-bg-data-info inline-flex cursor-pointer"
+                  aria-label={
+                    providerData.provider === "iac"
+                      ? "Open resource in repository"
+                      : "Open resource in AWS Console"
+                  }
+                >
+                  <ExternalLink size={16} className="inline" />
+                </a>
+              </Tooltip>
             </span>
           ) : (
             "Resource Details"
