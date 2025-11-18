@@ -1,5 +1,7 @@
 "use client";
 
+import { XCircle } from "lucide-react";
+
 import { useUrlFilters } from "@/hooks/use-url-filters";
 
 import { Button } from "../shadcn";
@@ -22,6 +24,7 @@ export const ClearFiltersButton = ({
 
   return (
     <Button aria-label={ariaLabel} onClick={clearAllFilters} variant="link">
+      <XCircle className="mr-1.5 size-4" />
       {text}
     </Button>
   );

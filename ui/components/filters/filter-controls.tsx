@@ -48,19 +48,20 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
 
   return (
     <div className="flex flex-col">
-      <div className="grid grid-cols-1 items-center gap-x-4 gap-y-4 md:grid-cols-2 xl:grid-cols-4">
-        {search && <CustomSearchInput />}
-        {providers && <CustomSelectProvider />}
-        {date && <CustomDatePicker />}
-        {regions && <CustomRegionSelection />}
-        {accounts && <CustomAccountSelection />}
-        {mutedFindings && <CustomCheckboxMutedFindings />}
-
-        {hasFilters && showClearButton && (
-          <div className="flex flex-1 justify-end">
-            <ClearFiltersButton />
-          </div>
-        )}
+      <div className="flex flex-col items-start gap-4 md:flex-row md:items-center">
+        <div className="grid w-full flex-1 grid-cols-1 items-center gap-x-4 gap-y-4 md:grid-cols-2 xl:grid-cols-4">
+          {search && <CustomSearchInput />}
+          {providers && <CustomSelectProvider />}
+          {date && <CustomDatePicker />}
+          {regions && <CustomRegionSelection />}
+          {accounts && <CustomAccountSelection />}
+          {
+            <div className="flex items-center gap-4">
+              {mutedFindings && <CustomCheckboxMutedFindings />}
+              {hasFilters && showClearButton && <ClearFiltersButton />}
+            </div>
+          }
+        </div>
       </div>
       <Spacer y={8} />
       {customFilters && <DataTableFilterCustom filters={customFilters} />}
