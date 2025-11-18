@@ -32,8 +32,7 @@
     }
   },
   "Categories": [
-    "container-security",
-    "software-supply-chain"
+    "container-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

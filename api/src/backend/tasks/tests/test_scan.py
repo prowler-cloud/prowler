@@ -1543,6 +1543,108 @@ class TestProcessFindingMicroBatch:
         assert resource_cache[finding.resource_uid].service == finding.service_name
         assert tag_cache.keys() == {("team", "devsec")}
 
+    def test_process_finding_micro_batch_skips_long_uid(
+        self, tenants_fixture, scans_fixture
+    ):
+        """Test that findings with UID > 300 chars are skipped (temporary workaround)."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = scan.provider
+
+        # Create a finding with UID > 300 chars
+        long_uid = (
+            "prowler-aws-ec2_instance_public_ip-123456789012-us-east-1-" + "x" * 250
+        )
+        assert len(long_uid) > 300
+
+        finding_with_long_uid = FakeFinding(
+            uid=long_uid,
+            status=StatusChoices.FAIL,
+            status_extended="public instance",
+            severity=Severity.high,
+            check_id="ec2_instance_public_ip",
+            resource_uid="arn:aws:ec2:us-east-1:123456789012:instance/i-long",
+            resource_name="i-long-uid-instance",
+            region="us-east-1",
+            service_name="ec2",
+            resource_type="instance",
+            resource_tags={},
+            resource_metadata={},
+            resource_details={},
+            partition="aws",
+            raw={},
+            compliance={},
+            metadata={},
+            muted=False,
+        )
+
+        # Create a normal finding that should be processed
+        normal_finding = FakeFinding(
+            uid="finding-normal",
+            status=StatusChoices.PASS,
+            status_extended="all good",
+            severity=Severity.low,
+            check_id="s3_bucket_encryption",
+            resource_uid="arn:aws:s3:::bucket-normal",
+            resource_name="bucket-normal",
+            region="us-east-1",
+            service_name="s3",
+            resource_type="bucket",
+            resource_tags={},
+            resource_metadata={},
+            resource_details={},
+            partition="aws",
+            raw={},
+            compliance={},
+            metadata={},
+            muted=False,
+        )
+
+        resource_cache = {}
+        tag_cache = {}
+        last_status_cache = {}
+        resource_failed_findings_cache = {}
+        unique_resources: set[tuple[str, str]] = set()
+        scan_resource_cache: set[tuple[str, str, str, str]] = set()
+        mute_rules_cache = {}
+
+        with (
+            patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
+            patch("api.db_utils.rls_transaction", new=noop_rls_transaction),
+            patch("tasks.jobs.scan.logger") as mock_logger,
+        ):
+            _process_finding_micro_batch(
+                str(tenant.id),
+                [finding_with_long_uid, normal_finding],
+                scan,
+                provider,
+                resource_cache,
+                tag_cache,
+                last_status_cache,
+                resource_failed_findings_cache,
+                unique_resources,
+                scan_resource_cache,
+                mute_rules_cache,
+            )
+
+        # Verify the long UID finding was NOT created
+        assert not Finding.objects.filter(uid=long_uid).exists()
+
+        # Verify the normal finding WAS created
+        assert Finding.objects.filter(uid=normal_finding.uid).exists()
+
+        # Verify logging was called for skipped finding
+        assert mock_logger.warning.called
+        warning_calls = [str(call) for call in mock_logger.warning.call_args_list]
+        assert any(
+            "Skipping finding with UID exceeding 300 characters" in str(call)
+            for call in warning_calls
+        )
+        assert any(
+            f"Scan {scan.id}: Skipped 1 finding(s)" in str(call)
+            for call in warning_calls
+        )
+
 
 @pytest.mark.django_db
 class TestCreateComplianceRequirements:
