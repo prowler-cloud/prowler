@@ -2,9 +2,7 @@ import logging
 
 from typing import Any
 
-from rest_framework import status
 from rest_framework.exceptions import APIException, ValidationError
-from rest_framework_json_api.views import Response
 
 from api.attack_paths import database as graph_database, AttackPathsQueryDefinition
 from api.models import AttackPathsScan
@@ -56,8 +54,28 @@ def prepare_query_parameters(
             }
         )
 
-    parameters["provider_uid"] = str(provider_uid)
-    return parameters
+    clean_parameters = {
+        "provider_uid": str(provider_uid),
+    }
+
+    for definition_parameter in definition.parameters:
+        raw_value = provided_parameters[definition_parameter.name]
+
+        try:
+            casted_value = definition_parameter.cast(raw_value)
+
+        except (ValueError, TypeError) as exc:
+            raise ValidationError(
+                {
+                    "parameters": (
+                        f"Invalid value for parameter `{definition_parameter.name}`: {str(exc)}"
+                    )
+                }
+            )
+
+        clean_parameters[definition_parameter.name] = casted_value
+
+    return clean_parameters
 
 
 def execute_attack_paths_query(
@@ -83,8 +101,8 @@ def _serialize_graph(graph):
         nodes.append(
             {
                 "id": node.element_id,
-                "labels": node.labels,
-                "properties": node._properties,
+                "labels": list(node.labels),
+                "properties": _serialize_properties(node._properties),
             },
         )
 
@@ -96,7 +114,7 @@ def _serialize_graph(graph):
                 "label": relationship.type,
                 "source": relationship.start_node.element_id,
                 "target": relationship.end_node.element_id,
-                "properties": relationship._properties,
+                "properties": _serialize_properties(relationship._properties),
             },
         )
 
@@ -104,3 +122,22 @@ def _serialize_graph(graph):
         "nodes": nodes,
         "relationships": relationships,
     }
+
+
+def _serialize_properties(properties: dict[str, Any]) -> dict[str, Any]:
+    """Convert Neo4j property values into JSON-serializable primitives."""
+
+    def _serialize_value(value: Any) -> Any:
+        # Neo4j temporal and spatial values expose `to_native` returning Python primitives
+        if hasattr(value, "to_native") and callable(value.to_native):
+            return _serialize_value(value.to_native())
+
+        if isinstance(value, (list, tuple)):
+            return [_serialize_value(item) for item in value]
+
+        if isinstance(value, dict):
+            return {key: _serialize_value(val) for key, val in value.items()}
+
+        return value
+
+    return {key: _serialize_value(val) for key, val in properties.items()}

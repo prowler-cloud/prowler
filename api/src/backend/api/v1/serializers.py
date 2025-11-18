@@ -1130,6 +1130,7 @@ class ScanComplianceReportSerializer(serializers.Serializer):
 
 class AttackPathsScanSerializer(RLSSerializer):
     state = StateEnumSerializerField(read_only=True)
+    provider_alias = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = AttackPathsScan
@@ -1138,6 +1139,7 @@ class AttackPathsScanSerializer(RLSSerializer):
             "state",
             "progress",
             "provider",
+            "provider_alias",
             "scan",
             "task",
             "inserted_at",
@@ -1151,6 +1153,10 @@ class AttackPathsScanSerializer(RLSSerializer):
         "scan": "api.v1.serializers.ScanIncludeSerializer",
         "task": "api.v1.serializers.TaskSerializer",
     }
+
+    def get_provider_alias(self, obj):
+        provider = getattr(obj, "provider", None)
+        return provider.alias if provider else None
 
 
 class AttackPathsQueryParameterSerializer(serializers.Serializer):

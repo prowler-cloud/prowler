@@ -2145,6 +2145,9 @@ class TaskViewSet(BaseRLSViewSet):
             400: OpenApiResponse(
                 description="Bad request (e.g., Unknown Attack Paths query for the selected provider)"
             ),
+            404: OpenApiResponse(
+                description="No attack paths found for the given query and parameters"
+            ),
             500: OpenApiResponse(
                 description="Attack Paths query execution failed due to a database error"
             ),
@@ -2265,8 +2268,12 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
             attack_paths_scan, query_definition, parameters
         )
 
+        status_code = status.HTTP_200_OK
+        if not graph.get("nodes"):
+            status_code = status.HTTP_404_NOT_FOUND
+
         response_serializer = AttackPathsQueryResultSerializer(graph)
-        return Response(response_serializer.data, status=status.HTTP_200_OK)
+        return Response(response_serializer.data, status=status_code)
 
 
 @extend_schema_view(

@@ -2,7 +2,7 @@ import logging
 import threading
 
 from contextlib import contextmanager
-from typing import Any, Iterator
+from typing import Iterator
 
 import neo4j
 

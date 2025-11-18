@@ -297,6 +297,7 @@ paths:
             - state
             - progress
             - provider
+            - provider_alias
             - scan
             - task
             - inserted_at
@@ -557,6 +558,7 @@ paths:
             - state
             - progress
             - provider
+            - provider_alias
             - scan
             - task
             - inserted_at
@@ -614,6 +616,7 @@ paths:
             - state
             - progress
             - provider
+            - provider_alias
             - scan
             - task
             - inserted_at
@@ -696,6 +699,8 @@ paths:
         '400':
           description: Bad request (e.g., Unknown Attack Paths query for the selected
             provider)
+        '404':
+          description: No attack paths found for the given query and parameters
         '500':
           description: Attack Paths query execution failed due to a database error
   /api/v1/compliance-overviews:
@@ -10951,6 +10956,9 @@ components:
               type: integer
               maximum: 2147483647
               minimum: -2147483648
+            provider_alias:
+              type: string
+              readOnly: true
             inserted_at:
               type: string
               format: date-time
