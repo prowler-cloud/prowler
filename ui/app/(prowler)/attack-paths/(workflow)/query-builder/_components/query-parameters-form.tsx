@@ -44,7 +44,6 @@ export const QueryParametersForm = ({
           key={param.name}
           name={param.name}
           control={control}
-          defaultValue={param.data_type === "boolean" ? false : ""}
           render={({ field }) => {
             if (param.data_type === "boolean") {
               return (
