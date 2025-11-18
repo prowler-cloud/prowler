@@ -27,7 +27,7 @@ The StackIT provider implementation follows the general [Provider structure](/de
 - **Location:** [`prowler/providers/stackit/models.py`](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/stackit/models.py)
 - **Purpose:** Define structured data for StackIT identity, region configuration, and resource models.
 - **Key StackIT Models:**
-    - `StackITIdentityInfo`: Holds StackIT identity metadata, including project ID and region.
+    - `StackITIdentityInfo`: Holds StackIT identity metadata, including project ID and project name (fetched automatically from Resource Manager API).
     - `StackITRegionConfig`: Stores the region configuration (currently supports `eu01`).
     - Resource models for IaaS services: `SecurityGroup`, `SecurityGroupRule`, `Server`, `NetworkInterface`.
 
@@ -269,6 +269,16 @@ The StackIT provider currently implements 4 security checks focused on network s
 
 ### Important Implementation Notes
 
+**Self-Referencing Security Group Rules:**
+
+Security group rules with `remoteSecurityGroupId` set are automatically filtered out from unrestricted access checks. These rules only allow traffic from instances within the same security group (self-referencing), not from the internet, and are therefore not flagged as security risks.
+
+**Rule Display Names:**
+
+All findings include user-friendly rule descriptions when available. If a security group rule has a description field set (the name shown in the StackIT UI), it will be displayed in the finding message along with the rule ID:
+- With description: `'Allow SSH from office' (sgr-abc123)`
+- Without description: `'sgr-abc123'`
+
 **Network Interface (NIC) Filtering:**
 
 All checks focus on security groups attached to NICs with public IP addresses. The implementation:
@@ -414,13 +424,21 @@ prowler stackit \
 
 ### Authentication Errors
 
+**Error:** `StackIT API token is invalid or has expired`
+
+**Solutions:**
+1. Generate a new access token using: `stackit auth activate-service-account --service-account-key-path <path> --only-print-access-token`
+2. Verify the service account key file is valid and not expired
+3. Check that the service account has the necessary permissions (`iaas.viewer` or `project.owner`)
+4. Ensure the token is properly set in environment variable or command-line argument
+5. Note: Access tokens are short-lived and need to be regenerated periodically
+
 **Error:** `StackIT credentials not found or are invalid`
 
 **Solutions:**
-1. Verify your API token is correct and not expired
-2. Check that the token has the necessary permissions (`iaas.viewer` or higher)
-3. Ensure the token is properly set in environment variable or command-line argument
-4. Verify there are no extra spaces or newlines in the token
+1. Ensure both API token and project ID are provided
+2. Check that credentials are set via environment variables or command-line arguments
+3. Verify there are no extra spaces or newlines in the credentials
 
 **Error:** `Invalid StackIT project ID format`
 
@@ -499,10 +517,13 @@ The best reference to understand how to implement a new service is following the
 - **Thread Safety**: Never manipulate `os.environ` for credentials - use direct token passing via `Configuration(service_account_token=api_token)`.
 - All StackIT resources are represented as Pydantic `BaseModel` classes, providing type safety and structured access to resource attributes.
 - StackIT SDK calls are wrapped in try/except blocks, with specific handling for API errors, always logging errors.
+- **Centralized Error Handling**: Use `provider.handle_api_error(exception)` for consistent authentication error detection across all services.
+- **SDK Warning Suppression**: StackIT SDK prints deprecation warnings to stderr - use the `suppress_stderr()` context manager during SDK initialization and API calls.
 - **Unrestricted Access Detection**: In StackIT API, `None` values mean "allow all" (more permissive than explicit 0.0.0.0/0).
   - `protocol=None` → All protocols allowed
   - `ip_range=None` → All source IPs allowed (unrestricted!)
   - `port_range=None` → All ports allowed
+  - `remote_security_group_id` set → Only allows traffic from the same security group (not unrestricted!)
 
 ### IaaS Service Specific Patterns
 
@@ -517,10 +538,26 @@ nics = client.list_project_nics(project_id=self._project_id)
 # Only flag security groups attached to NICs with public IPs
 ```
 
+**Centralized Authentication Error Handling:**
+```python
+def _handle_api_call(self, api_function, *args, **kwargs):
+    """Wrapper for API calls with centralized error handling."""
+    try:
+        with suppress_stderr():  # Suppress SDK warnings
+            return api_function(*args, **kwargs)
+    except Exception as e:
+        # Use centralized error handler from provider
+        self.provider.handle_api_error(e)  # Detects 401 and raises StackITInvalidTokenError
+```
+
 **Unrestricted Access Detection:**
 ```python
 def is_unrestricted(rule):
     """Check if a rule allows unrestricted access."""
+    # Filter out self-referencing rules
+    if rule.remote_security_group_id is not None:
+        return False
+    # Check for unrestricted IP ranges
     return rule.ip_range is None or rule.ip_range in ["0.0.0.0/0", "::/0"]
 
 def is_tcp(rule):
