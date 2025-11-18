@@ -20,7 +20,10 @@ class cloudstorage_bucket_uses_vpc_service_controls(Check):
 
         protected_projects = {}
         for perimeter in accesscontextmanager_client.service_perimeters:
-            if "storage.googleapis.com" in perimeter.restricted_services:
+            if any(
+                service == "storage.googleapis.com"
+                for service in perimeter.restricted_services
+            ):
                 for resource in perimeter.resources:
                     protected_projects[resource] = perimeter.title
 

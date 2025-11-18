@@ -1,7 +1,7 @@
 from pydantic.v1 import BaseModel
 
+import prowler.providers.gcp.config as config
 from prowler.lib.logger import logger
-from prowler.providers.gcp.config import DEFAULT_RETRY_ATTEMPTS
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.gcp.lib.service.service import GCPService
 from prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_client import (
@@ -23,7 +23,9 @@ class AccessContextManager(GCPService):
                     request = self.client.accessPolicies().list(
                         parent=f"organizations/{org.id}"
                     )
-                    response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
+                    response = request.execute(
+                        num_retries=config.DEFAULT_RETRY_ATTEMPTS
+                    )
                     access_policies = response.get("accessPolicies", [])
                 except Exception as error:
                     logger.error(
@@ -40,17 +42,17 @@ class AccessContextManager(GCPService):
                         )
                         while request is not None:
                             response = request.execute(
-                                num_retries=DEFAULT_RETRY_ATTEMPTS
+                                num_retries=config.DEFAULT_RETRY_ATTEMPTS
                             )
 
                             for perimeter in response.get("servicePerimeters", []):
                                 status = perimeter.get("status", {})
                                 spec = perimeter.get("spec", {})
 
-                                config = status if status else spec
+                                perimeter_config = status if status else spec
 
-                                resources = config.get("resources", [])
-                                restricted_services = config.get(
+                                resources = perimeter_config.get("resources", [])
+                                restricted_services = perimeter_config.get(
                                     "restrictedServices", []
                                 )
 
