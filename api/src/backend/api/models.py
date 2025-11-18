@@ -1446,33 +1446,68 @@ class ComplianceRequirementOverview(RowLevelSecurityProtectedModel):
             ),
         ]
         indexes = [
-            models.Index(fields=["tenant_id", "scan_id"], name="cro_tenant_scan_idx"),
-            models.Index(
-                fields=["tenant_id", "scan_id", "compliance_id"],
-                name="cro_scan_comp_idx",
-            ),
             models.Index(
                 fields=["tenant_id", "scan_id", "compliance_id", "region"],
                 name="cro_scan_comp_reg_idx",
-            ),
-            models.Index(
-                fields=["tenant_id", "scan_id", "compliance_id", "requirement_id"],
-                name="cro_scan_comp_req_idx",
-            ),
-            models.Index(
-                fields=[
-                    "tenant_id",
-                    "scan_id",
-                    "compliance_id",
-                    "requirement_id",
-                    "region",
-                ],
-                name="cro_scan_comp_req_reg_idx",
             ),
         ]
 
     class JSONAPIMeta:
         resource_name = "compliance-requirements-overviews"
+
+
+class ComplianceOverviewSummary(RowLevelSecurityProtectedModel):
+    """
+    Pre-aggregated compliance overview aggregated across ALL regions.
+    One row per (scan_id, compliance_id) combination.
+
+    This table optimizes the common case where users view overall compliance
+    without filtering by region. For region-specific views, the detailed
+    ComplianceRequirementOverview table is used instead.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+
+    scan = models.ForeignKey(
+        Scan,
+        on_delete=models.CASCADE,
+        related_name="compliance_summaries",
+        related_query_name="compliance_summary",
+    )
+
+    compliance_id = models.TextField(blank=False)
+
+    # Pre-aggregated scores (computed across ALL regions)
+    requirements_passed = models.IntegerField(default=0)
+    requirements_failed = models.IntegerField(default=0)
+    requirements_manual = models.IntegerField(default=0)
+    total_requirements = models.IntegerField(default=0)
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "compliance_overview_summaries"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "scan_id", "compliance_id"),
+                name="unique_compliance_summary_per_scan",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "DELETE"],
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "scan_id"],
+                name="cos_tenant_scan_idx",
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "compliance-overview-summaries"
 
 
 class ScanSummary(RowLevelSecurityProtectedModel):

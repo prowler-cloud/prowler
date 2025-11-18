@@ -20,8 +20,11 @@ from config.django.base import DJANGO_FINDINGS_BATCH_SIZE, DJANGO_TMP_OUTPUT_DIR
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
 from prowler.lib.outputs.finding import Finding as FindingOutput
-from tasks.jobs.backfill import backfill_resource_scan_summaries
 from tasks.jobs.attack_paths import attack_paths_scan
+from tasks.jobs.backfill import (
+    backfill_compliance_summaries,
+    backfill_resource_scan_summaries,
+)
 from tasks.jobs.connection import (
     check_integration_connection,
     check_lighthouse_connection,
@@ -517,6 +520,21 @@ def backfill_scan_resource_summaries_task(tenant_id: str, scan_id: str):
         scan_id (str): The scan identifier.
     """
     return backfill_resource_scan_summaries(tenant_id=tenant_id, scan_id=scan_id)
+
+
+@shared_task(name="backfill-compliance-summaries", queue="backfill")
+def backfill_compliance_summaries_task(tenant_id: str, scan_id: str):
+    """
+    Tries to backfill compliance overview summaries for a completed scan.
+
+    This task aggregates compliance requirement data across regions
+    to create pre-computed summary records for fast compliance overview queries.
+
+    Args:
+        tenant_id (str): The tenant identifier.
+        scan_id (str): The scan identifier.
+    """
+    return backfill_compliance_summaries(tenant_id=tenant_id, scan_id=scan_id)
 
 
 @shared_task(base=RLSTask, name="scan-compliance-overviews", queue="compliance")

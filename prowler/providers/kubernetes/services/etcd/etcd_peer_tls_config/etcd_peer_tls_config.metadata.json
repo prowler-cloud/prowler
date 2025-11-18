@@ -1,31 +1,35 @@
 {
   "Provider": "kubernetes",
   "CheckID": "etcd_peer_tls_config",
-  "CheckTitle": "Ensure that the --peer-cert-file and --peer-key-file arguments are set as appropriate for etcd",
+  "CheckTitle": "Etcd pod uses TLS for peer connections",
   "CheckType": [],
   "ServiceName": "etcd",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "EtcdService",
-  "Description": "This check ensures that etcd is configured to use TLS encryption for peer connections, which is crucial for securing sensitive data stored in etcd. It verifies the presence of peer certificate and key file arguments in etcd configuration.",
-  "Risk": "Not configuring TLS for peer connections in etcd can lead to potential data breaches and unauthorized access.",
-  "RelatedUrl": "https://etcd.io/docs/latest/op-guide/security/",
+  "ResourceType": "Pod",
+  "Description": "**Etcd peer communication** is treated as secure when **TLS** is configured with a peer certificate and key (e.g., `--peer-cert-file` and `--peer-key-file`). The assessment inspects etcd containers for these options to determine whether server-to-server traffic is encrypted and authenticated.",
+  "Risk": "Without **TLS** on peer links, attackers can intercept or alter Raft traffic, enabling node impersonation and **consensus manipulation**. This endangers **confidentiality** (exposed cluster state), **integrity** (tampered writes), and **availability** (quorum disruption), cascading into control-plane instability.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://etcd.io/docs/latest/op-guide/security/",
+    "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/#securing-communication"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--peer-client-file=</path/to/peer-cert-file> --peer-key-file=</path/to/peer-key-file>",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-peer-cert-file-and-peer-key-file-arguments-are-set-as-appropriate",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. SSH to the control plane node running etcd\n2. Open /etc/kubernetes/manifests/etcd.yaml\n3. Under spec.containers[0].command add:\n   - --peer-cert-file=</path/to/peer-cert-file>\n   - --peer-key-file=</path/to/peer-key-file>\n4. Save the file; kubelet will restart the etcd Pod automatically\n5. Verify the etcd container command includes both flags",
+      "Terraform": "```hcl\nresource \"kubernetes_pod\" \"<example_resource_name>\" {\n  metadata {\n    name = \"<example_resource_name>\"\n  }\n  spec {\n    container {\n      name  = \"etcd\"\n      image = \"quay.io/coreos/etcd:latest\"\n      command = [\n        \"etcd\",\n        \"--peer-cert-file=</path/to/peer-cert-file>\", # Critical: enables TLS for peer connections\n        \"--peer-key-file=</path/to/peer-key-file>\"   # Critical: key for the peer TLS cert\n      ]\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Secure etcd peer connections with TLS encryption.",
-      "Url": "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/#securing-communication"
+      "Text": "Enforce **TLS** for etcd peer communication with unique certificates per member and mutual authentication. Apply strong cipher suites and modern protocol versions, rotate keys, and separate CAs for peers and clients. Limit network access to peer ports to trusted nodes, following **least privilege** and **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/etcd_peer_tls_config"
     }
   },
   "Categories": [
     "encryption",
-    "internet-exposed"
+    "cluster-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

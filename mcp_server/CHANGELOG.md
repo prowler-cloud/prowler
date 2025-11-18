@@ -2,6 +2,11 @@
 
 All notable changes to the **Prowler MCP Server** are documented in this file.
 
+## [0.1.1] (Prowler UNRELEASED)
+
+### Fixed
+- Fix documentation MCP Server to return list of dictionaries [(#9205)](https://github.com/prowler-cloud/prowler/pull/9205)
+
 ## [0.1.0] (Prowler 5.13.0)
 
 ### Added

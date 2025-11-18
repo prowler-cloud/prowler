@@ -6896,6 +6896,9 @@ paths:
             - findings
             - failed_findings_count
             - url
+            - metadata
+            - details
+            - partition
             - type
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -7229,6 +7232,9 @@ paths:
             - findings
             - failed_findings_count
             - url
+            - metadata
+            - details
+            - partition
             - type
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -7288,6 +7294,9 @@ paths:
             - findings
             - failed_findings_count
             - url
+            - metadata
+            - details
+            - partition
             - type
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -17950,6 +17959,18 @@ components:
             failed_findings_count:
               type: integer
               readOnly: true
+            metadata:
+              type: string
+              readOnly: true
+              nullable: true
+            details:
+              type: string
+              readOnly: true
+              nullable: true
+            partition:
+              type: string
+              readOnly: true
+              nullable: true
             type:
               type: string
               readOnly: true
