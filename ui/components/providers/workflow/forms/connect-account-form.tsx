@@ -201,7 +201,6 @@ export const ConnectAccountForm = () => {
               placeholder={providerFieldDetails.placeholder}
               variant="bordered"
               isRequired
-              isInvalid={!!form.formState.errors.providerUid}
             />
             <CustomInput
               control={form.control}
@@ -212,7 +211,6 @@ export const ConnectAccountForm = () => {
               placeholder="Enter the provider alias"
               variant="bordered"
               isRequired={false}
-              isInvalid={!!form.formState.errors.providerAlias}
             />
           </>
         )}

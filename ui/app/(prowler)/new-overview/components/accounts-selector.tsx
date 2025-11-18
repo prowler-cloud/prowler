@@ -124,12 +124,7 @@ export function AccountsSelector({ providers }: AccountsSelectorProps) {
         >
           {selectedLabel() || <MultiSelectValue placeholder="All accounts" />}
         </MultiSelectTrigger>
-        <MultiSelectContent
-          search={{
-            placeholder: "Search accounts...",
-            emptyMessage: "No accounts found",
-          }}
-        >
+        <MultiSelectContent search={false}>
           {visibleProviders.length > 0 ? (
             visibleProviders.map((p) => {
               const id = p.id;

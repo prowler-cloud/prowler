@@ -184,12 +184,7 @@ export const ProviderTypeSelector = ({
         >
           {selectedLabel() || <MultiSelectValue placeholder="All providers" />}
         </MultiSelectTrigger>
-        <MultiSelectContent
-          search={{
-            placeholder: "Search providers...",
-            emptyMessage: "No providers found",
-          }}
-        >
+        <MultiSelectContent search={false}>
           {availableTypes.length > 0 ? (
             availableTypes.map((providerType) => (
               <MultiSelectItem

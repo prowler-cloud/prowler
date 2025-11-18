@@ -123,46 +123,39 @@ export const DataTableFilterCustom = ({
 
   return (
     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-      {sortedFilters()
-        .filter((filter) => filter.values.length > 1)
-        .map((filter) => {
-          const selectedValues = getSelectedValues(filter.key);
+      {sortedFilters().map((filter) => {
+        const selectedValues = getSelectedValues(filter.key);
 
-          return (
-            <MultiSelect
-              key={filter.key}
-              values={selectedValues}
-              onValuesChange={(values) => pushDropdownFilter(filter, values)}
-            >
-              <MultiSelectTrigger size="default">
-                <MultiSelectValue placeholder={filter.labelCheckboxGroup} />
-              </MultiSelectTrigger>
-              <MultiSelectContent
-                search={{
-                  placeholder: `Search ${filter.labelCheckboxGroup.toLowerCase()}...`,
-                  emptyMessage: "No results found",
-                }}
-              >
-                <MultiSelectSelectAll allValues={filter.values}>
-                  Select All
-                </MultiSelectSelectAll>
-                <MultiSelectSeparator />
-                {filter.values.map((value) => {
-                  const entity = getEntityForValue(filter, value);
-                  return (
-                    <MultiSelectItem
-                      key={value}
-                      value={value}
-                      badgeLabel={getBadgeLabel(entity, value)}
-                    >
-                      {entity ? renderEntityContent(entity) : value}
-                    </MultiSelectItem>
-                  );
-                })}
-              </MultiSelectContent>
-            </MultiSelect>
-          );
-        })}
+        return (
+          <MultiSelect
+            key={filter.key}
+            values={selectedValues}
+            onValuesChange={(values) => pushDropdownFilter(filter, values)}
+          >
+            <MultiSelectTrigger size="default">
+              <MultiSelectValue placeholder={filter.labelCheckboxGroup} />
+            </MultiSelectTrigger>
+            <MultiSelectContent search={false}>
+              <MultiSelectSelectAll allValues={filter.values}>
+                Select All
+              </MultiSelectSelectAll>
+              <MultiSelectSeparator />
+              {filter.values.map((value) => {
+                const entity = getEntityForValue(filter, value);
+                return (
+                  <MultiSelectItem
+                    key={value}
+                    value={value}
+                    badgeLabel={getBadgeLabel(entity, value)}
+                  >
+                    {entity ? renderEntityContent(entity) : value}
+                  </MultiSelectItem>
+                );
+              })}
+            </MultiSelectContent>
+          </MultiSelect>
+        );
+      })}
     </div>
   );
 };
