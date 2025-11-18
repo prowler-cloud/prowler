@@ -263,8 +263,14 @@ class StackitProvider(Provider):
         """
         Fetch the project name from the StackIT Resource Manager API.
 
+        This also serves as a credential validation check - if the API token is
+        invalid or expired, this will fail during provider initialization.
+
         Returns:
             str: The project name, or empty string if unavailable
+
+        Raises:
+            StackITInvalidTokenError: If the API token is invalid or expired
         """
         try:
             from stackit.core.configuration import Configuration
@@ -274,7 +280,7 @@ class StackitProvider(Provider):
             config = Configuration(service_account_token=self._api_token)
             client = DefaultApi(config)
 
-            # Fetch project details
+            # Fetch project details - this validates the token
             response = client.get_project(id=self._project_id)
 
             # Extract project name from response
@@ -296,6 +302,22 @@ class StackitProvider(Provider):
             )
             return ""
         except Exception as e:
+            # Check if this is an authentication error (401 Unauthorized)
+            if hasattr(e, "status") and e.status == 401:
+                logger.critical(
+                    "StackIT API token is invalid or has expired. "
+                    "Please generate a new token using: "
+                    "stackit auth activate-service-account --service-account-key-path <path> --only-print-access-token"
+                )
+                from prowler.providers.stackit.exceptions.exceptions import (
+                    StackITInvalidTokenError,
+                )
+
+                raise StackITInvalidTokenError(
+                    file=os.path.basename(__file__),
+                    original_exception=e,
+                    message="StackIT API token is invalid or has expired. Please generate a new token.",
+                )
             logger.warning(
                 f"Unable to fetch project name from StackIT API: {e}. "
                 f"Project name will not be displayed in reports."
