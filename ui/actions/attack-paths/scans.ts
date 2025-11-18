@@ -1,12 +1,8 @@
 "use server";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
-import { mockScansResponse } from "@/lib/attack-paths/mock-data";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 import { AttackPathScan, AttackPathScansResponse } from "@/types/attack-paths";
-
-// Flag to enable/disable mock data for development
-const USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCK_ATTACK_PATHS === "true";
 
 /**
  * Fetch list of attack path scans (latest scan for each provider)
@@ -14,10 +10,6 @@ const USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCK_ATTACK_PATHS === "true";
 export const getAttackPathScans = async (): Promise<
   AttackPathScansResponse | undefined
 > => {
-  if (USE_MOCK_DATA) {
-    return mockScansResponse;
-  }
-
   const headers = await getAuthHeaders({ contentType: false });
 
   try {

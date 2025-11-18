@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -15,11 +15,11 @@ export const useQueryBuilder = (availableQueries: AttackPathQuery[]) => {
   const [selectedQuery, setSelectedQuery] = useState<string | null>(null);
 
   // Generate dynamic Zod schema based on selected query parameters
-  const getValidationSchema = () => {
+  const getValidationSchema = (queryId: string | null) => {
     const schemaObject: Record<string, z.ZodTypeAny> = {};
 
-    if (selectedQuery) {
-      const query = availableQueries.find((q) => q.id === selectedQuery);
+    if (queryId) {
+      const query = availableQueries.find((q) => q.id === queryId);
 
       if (query) {
         query.attributes.parameters.forEach((param) => {
@@ -35,7 +35,6 @@ export const useQueryBuilder = (availableQueries: AttackPathQuery[]) => {
             fieldSchema = z.boolean().default(false);
           }
 
-          // All query parameters are required regardless of param.required flag
           schemaObject[param.name] = fieldSchema;
         });
       }
@@ -44,10 +43,31 @@ export const useQueryBuilder = (availableQueries: AttackPathQuery[]) => {
     return z.object(schemaObject);
   };
 
+  const getDefaultValues = (queryId: string | null) => {
+    const defaults: Record<string, unknown> = {};
+
+    const query = availableQueries.find((q) => q.id === queryId);
+    if (query) {
+      query.attributes.parameters.forEach((param) => {
+        defaults[param.name] = param.data_type === "boolean" ? false : "";
+      });
+    }
+
+    return defaults;
+  };
+
   const form = useForm({
-    resolver: zodResolver(getValidationSchema()),
+    resolver: zodResolver(getValidationSchema(selectedQuery)),
     mode: "onChange",
+    defaultValues: getDefaultValues(selectedQuery),
   });
+
+  // Update form when selectedQuery changes
+  useEffect(() => {
+    form.reset(getDefaultValues(selectedQuery), {
+      keepDirtyValues: false,
+    });
+  }, [selectedQuery]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const selectedQueryData = availableQueries.find(
     (q) => q.id === selectedQuery,

@@ -4,7 +4,7 @@ import { Spacer } from "@heroui/spacer";
 import { ArrowLeft, Maximize2, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import { FormProvider } from "react-hook-form";
 
 import { executeQuery, getAvailableQueries } from "@/actions/attack-paths";
 import { Button, Card, CardContent } from "@/components/shadcn";
@@ -30,6 +30,7 @@ import {
 } from "./_components";
 import type { AttackPathGraphRef } from "./_components/graph/attack-path-graph";
 import { useGraphState } from "./_hooks/use-graph-state";
+import { useQueryBuilder } from "./_hooks/use-query-builder";
 import { exportGraphAsSVG } from "./_lib/export";
 
 /**
@@ -43,8 +44,6 @@ export default function QueryBuilderPage() {
   const graphState = useGraphState();
   const { toast } = useToast();
 
-  const [queries, setQueries] = useState<AttackPathQuery[]>([]);
-  const [selectedQueryId, setSelectedQueryId] = useState<string | null>(null);
   const [queriesLoading, setQueriesLoading] = useState(true);
   const [queriesError, setQueriesError] = useState<string | null>(null);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
@@ -52,9 +51,10 @@ export default function QueryBuilderPage() {
   const fullscreenGraphRef = useRef<AttackPathGraphRef>(null);
   const hasResetRef = useRef(false);
 
-  const methods = useForm({
-    mode: "onChange",
-  });
+  const [queries, setQueries] = useState<AttackPathQuery[]>([]);
+
+  // Use custom hook for query builder form state and validation
+  const queryBuilder = useQueryBuilder(queries);
 
   // Reset graph state when component mounts
   useEffect(() => {
@@ -105,8 +105,7 @@ export default function QueryBuilderPage() {
   }, [scanId, toast]);
 
   const handleQueryChange = (queryId: string) => {
-    setSelectedQueryId(queryId);
-    methods.reset();
+    queryBuilder.handleQueryChange(queryId);
   };
 
   const showErrorToast = (title: string, description: string) => {
@@ -118,13 +117,13 @@ export default function QueryBuilderPage() {
   };
 
   const handleExecuteQuery = async () => {
-    if (!scanId || !selectedQueryId) {
+    if (!scanId || !queryBuilder.selectedQuery) {
       showErrorToast("Error", "Please select both a scan and a query");
       return;
     }
 
     // Validate form before executing query
-    const isValid = await methods.trigger();
+    const isValid = await queryBuilder.form.trigger();
     if (!isValid) {
       showErrorToast(
         "Validation Error",
@@ -137,8 +136,15 @@ export default function QueryBuilderPage() {
     graphState.setError(null);
 
     try {
-      const parameters = methods.getValues();
-      const result = await executeQuery(scanId, selectedQueryId, parameters);
+      const parameters = queryBuilder.getQueryParameters() as Record<
+        string,
+        string | number | boolean
+      >;
+      const result = await executeQuery(
+        scanId,
+        queryBuilder.selectedQuery,
+        parameters,
+      );
 
       if (result?.data?.attributes) {
         graphState.updateGraphData(result.data.attributes);
@@ -234,18 +240,16 @@ export default function QueryBuilderPage() {
             </p>
           ) : (
             <>
-              <FormProvider {...methods}>
+              <FormProvider {...queryBuilder.form}>
                 <QuerySelector
                   queries={queries}
-                  selectedQueryId={selectedQueryId}
+                  selectedQueryId={queryBuilder.selectedQuery}
                   onQueryChange={handleQueryChange}
                 />
 
-                {selectedQueryId && (
+                {queryBuilder.selectedQuery && (
                   <QueryParametersForm
-                    selectedQuery={queries.find(
-                      (q) => q.id === selectedQueryId,
-                    )}
+                    selectedQuery={queryBuilder.selectedQueryData}
                   />
                 )}
               </FormProvider>
@@ -253,7 +257,7 @@ export default function QueryBuilderPage() {
               <div className="flex gap-3">
                 <ExecuteButton
                   isLoading={graphState.loading}
-                  isDisabled={!selectedQueryId}
+                  isDisabled={!queryBuilder.selectedQuery}
                   onExecute={handleExecuteQuery}
                 />
               </div>

@@ -1,10 +1,6 @@
 "use server";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
-import {
-  mockGraphQueryResult,
-  mockQueriesResponse,
-} from "@/lib/attack-paths/mock-data";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 import {
   AttackPathQueriesResponse,
@@ -12,19 +8,12 @@ import {
   ExecuteQueryRequest,
 } from "@/types/attack-paths";
 
-// Flag to enable/disable mock data for development
-const USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCK_ATTACK_PATHS === "true";
-
 /**
  * Fetch available queries for a specific attack path scan
  */
 export const getAvailableQueries = async (
   scanId: string,
 ): Promise<AttackPathQueriesResponse | undefined> => {
-  if (USE_MOCK_DATA) {
-    return mockQueriesResponse;
-  }
-
   const headers = await getAuthHeaders({ contentType: false });
 
   try {
@@ -54,12 +43,6 @@ export const executeQuery = async (
   queryId: string,
   parameters?: Record<string, string | number | boolean>,
 ): Promise<AttackPathQueryResult | undefined> => {
-  if (USE_MOCK_DATA) {
-    // Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    return mockGraphQueryResult;
-  }
-
   const headers = await getAuthHeaders({ contentType: true });
 
   const requestBody: ExecuteQueryRequest = {
