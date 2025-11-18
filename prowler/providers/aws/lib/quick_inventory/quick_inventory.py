@@ -297,7 +297,7 @@ def create_output(resources: list, provider: AwsProvider, args):
 
         csv_file.close()
         print(
-            f"\n{Fore.YELLOW}WARNING: Only resources that have or have had tags will appear (except for IAM and S3).\nSee more in https://docs.prowler.cloud/en/latest/tutorials/quick-inventory/#objections{Style.RESET_ALL}"
+            f"\n{Fore.YELLOW}WARNING: Only resources that have or have had tags will appear (except for IAM and S3).\nSee more in https://docs.prowler.com/user-guide/cli/tutorials/quick-inventory/#objections{Style.RESET_ALL}"
         )
         print("\nMore details in files:")
         print(f" - CSV: {args.output_directory}/{output_file + csv_file_suffix}")

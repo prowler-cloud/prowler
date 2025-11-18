@@ -105,23 +105,25 @@ from rest_framework_json_api import serializers
                         "type": "string",
                         "description": "The Azure application (client) ID for authentication in Azure AD.",
                     },
-                    "client_secret": {
-                        "type": "string",
-                        "description": "The client secret associated with the application (client) ID, providing "
-                        "secure access.",
-                    },
                     "tenant_id": {
                         "type": "string",
                         "description": "The Azure tenant ID, representing the directory where the application is "
                         "registered.",
                     },
+                    "client_secret": {
+                        "type": "string",
+                        "description": "The client secret associated with the application (client) ID, providing "
+                        "secure access.",
+                    },
                     "user": {
                         "type": "email",
                         "description": "User microsoft email address.",
+                        "deprecated": True,
                     },
                     "password": {
                         "type": "string",
                         "description": "User password.",
+                        "deprecated": True,
                     },
                 },
                 "required": [
@@ -130,6 +132,30 @@ from rest_framework_json_api import serializers
                     "tenant_id",
                     "user",
                     "password",
+                ],
+            },
+            {
+                "type": "object",
+                "title": "M365 Certificate Credentials",
+                "properties": {
+                    "client_id": {
+                        "type": "string",
+                        "description": "The Azure application (client) ID for authentication in Azure AD.",
+                    },
+                    "tenant_id": {
+                        "type": "string",
+                        "description": "The Azure tenant ID, representing the directory where the application is "
+                        "registered.",
+                    },
+                    "certificate_content": {
+                        "type": "string",
+                        "description": "The certificate content in base64 format for certificate-based authentication.",
+                    },
+                },
+                "required": [
+                    "client_id",
+                    "tenant_id",
+                    "certificate_content",
                 ],
             },
             {
@@ -212,6 +238,71 @@ from rest_framework_json_api import serializers
                     },
                 },
                 "required": ["github_app_id", "github_app_key"],
+            },
+            {
+                "type": "object",
+                "title": "IaC Repository Credentials",
+                "properties": {
+                    "repository_url": {
+                        "type": "string",
+                        "description": "Repository URL to scan for IaC files.",
+                    },
+                    "access_token": {
+                        "type": "string",
+                        "description": "Optional access token for private repositories.",
+                    },
+                },
+                "required": ["repository_url"],
+            },
+            {
+                "type": "object",
+                "title": "Oracle Cloud Infrastructure (OCI) API Key Credentials",
+                "properties": {
+                    "user": {
+                        "type": "string",
+                        "description": "The OCID of the user to authenticate with.",
+                    },
+                    "fingerprint": {
+                        "type": "string",
+                        "description": "The fingerprint of the API signing key.",
+                    },
+                    "key_file": {
+                        "type": "string",
+                        "description": "The path to the private key file for API signing. Either key_file or key_content must be provided.",
+                    },
+                    "key_content": {
+                        "type": "string",
+                        "description": "The content of the private key for API signing (base64 encoded). Either key_file or key_content must be provided.",
+                    },
+                    "tenancy": {
+                        "type": "string",
+                        "description": "The OCID of the tenancy.",
+                    },
+                    "region": {
+                        "type": "string",
+                        "description": "The OCI region identifier (e.g., us-ashburn-1, us-phoenix-1).",
+                    },
+                    "pass_phrase": {
+                        "type": "string",
+                        "description": "The passphrase for the private key, if encrypted.",
+                    },
+                },
+                "required": ["user", "fingerprint", "tenancy", "region"],
+            },
+            {
+                "type": "object",
+                "title": "MongoDB Atlas API Key",
+                "properties": {
+                    "atlas_public_key": {
+                        "type": "string",
+                        "description": "MongoDB Atlas API public key.",
+                    },
+                    "atlas_private_key": {
+                        "type": "string",
+                        "description": "MongoDB Atlas API private key.",
+                    },
+                },
+                "required": ["atlas_public_key", "atlas_private_key"],
             },
         ]
     }

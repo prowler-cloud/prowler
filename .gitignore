@@ -39,21 +39,92 @@ secrets-*/
 # JUnit Reports
 junit-reports/
 
-# VSCode files
-.vscode/
+# Test and coverage artifacts
+*_coverage.xml
+pytest_*.xml
+.coverage
+htmlcov/
 
-# Cursor files
+# VSCode files and settings
+.vscode/
+*.code-workspace
+.vscode-test/
+
+# VSCode extension settings and workspaces
+.history/
+.ionide/
+
+# MCP Server Settings (various locations)
+**/cline_mcp_settings.json
+**/mcp_settings.json
+**/mcp-config.json
+**/mcpServers.json
+.mcp/
+
+# AI Coding Assistants - Cursor
 .cursorignore
 .cursor/
+.cursorrules
 
-# RooCode files
+# AI Coding Assistants - RooCode
 .roo/
 .rooignore
 .roomodes
 
-# Cline files
+# AI Coding Assistants - Cline (formerly Claude Dev)
 .cline/
 .clineignore
+.clinerules
+
+# AI Coding Assistants - Continue
+.continue/
+continue.json
+.continuerc
+.continuerc.json
+
+# AI Coding Assistants - GitHub Copilot
+.copilot/
+.github/copilot/
+
+# AI Coding Assistants - Amazon Q Developer (formerly CodeWhisperer)
+.aws/
+.codewhisperer/
+.amazonq/
+.aws-toolkit/
+
+# AI Coding Assistants - Tabnine
+.tabnine/
+tabnine_config.json
+
+# AI Coding Assistants - Kiro
+.kiro/
+.kiroignore
+kiro.config.json
+
+# AI Coding Assistants - Aider
+.aider/
+.aider.chat.history.md
+.aider.input.history
+.aider.tags.cache.v3/
+
+# AI Coding Assistants - Windsurf
+.windsurf/
+.windsurfignore
+
+# AI Coding Assistants - Replit Agent
+.replit
+.replitignore
+
+# AI Coding Assistants - Supermaven
+.supermaven/
+
+# AI Coding Assistants - Sourcegraph Cody
+.cody/
+
+# AI Coding Assistants - General
+.ai/
+.aiconfig
+ai-config.json
 
 # Terraform
 .terraform*
@@ -64,7 +135,6 @@ junit-reports/
 ui/.env*
 api/.env*
 mcp_server/.env*
-.env.local
 
 # Coverage
 .coverage*
@@ -83,3 +153,6 @@ CLAUDE.md
 # MCP Server
 mcp_server/prowler_mcp_server/prowler_app/server.py
 mcp_server/prowler_mcp_server/prowler_app/utils/schema.yaml
+
+# Compliance report
+*.pdf

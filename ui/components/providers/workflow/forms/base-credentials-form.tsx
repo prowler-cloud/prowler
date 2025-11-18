@@ -16,8 +16,11 @@ import {
   AzureCredentials,
   GCPDefaultCredentials,
   GCPServiceAccountKey,
+  IacCredentials,
   KubernetesCredentials,
-  M365Credentials,
+  M365CertificateCredentials,
+  M365ClientSecretCredentials,
+  OCICredentials,
   ProviderType,
 } from "@/types";
 
@@ -26,14 +29,20 @@ import { AWSStaticCredentialsForm } from "./select-credentials-type/aws/credenti
 import { AWSRoleCredentialsForm } from "./select-credentials-type/aws/credentials-type/aws-role-credentials-form";
 import { GCPDefaultCredentialsForm } from "./select-credentials-type/gcp/credentials-type";
 import { GCPServiceAccountKeyForm } from "./select-credentials-type/gcp/credentials-type/gcp-service-account-key-form";
+import {
+  M365CertificateCredentialsForm,
+  M365ClientSecretCredentialsForm,
+} from "./select-credentials-type/m365";
 import { AzureCredentialsForm } from "./via-credentials/azure-credentials-form";
 import { GitHubCredentialsForm } from "./via-credentials/github-credentials-form";
+import { IacCredentialsForm } from "./via-credentials/iac-credentials-form";
 import { KubernetesCredentialsForm } from "./via-credentials/k8s-credentials-form";
-import { M365CredentialsForm } from "./via-credentials/m365-credentials-form";
+import { OracleCloudCredentialsForm } from "./via-credentials/oraclecloud-credentials-form";
 
 type BaseCredentialsFormProps = {
   providerType: ProviderType;
   providerId: string;
+  providerUid?: string;
   onSubmit: (formData: FormData) => Promise<any>;
   successNavigationUrl: string;
   submitButtonText?: string;
@@ -43,6 +52,7 @@ type BaseCredentialsFormProps = {
 export const BaseCredentialsForm = ({
   providerType,
   providerId,
+  providerUid,
   onSubmit,
   successNavigationUrl,
   submitButtonText = "Next",
@@ -58,6 +68,7 @@ export const BaseCredentialsForm = ({
   } = useCredentialsForm({
     providerType,
     providerId,
+    providerUid,
     onSubmit,
     successNavigationUrl,
   });
@@ -80,6 +91,13 @@ export const BaseCredentialsForm = ({
           name={ProviderCredentialFields.PROVIDER_TYPE}
           value={providerType}
         />
+        {providerUid && (
+          <input
+            type="hidden"
+            name={ProviderCredentialFields.PROVIDER_UID}
+            value={providerUid}
+          />
+        )}
 
         <ProviderTitleDocs providerType={providerType} />
 
@@ -103,11 +121,22 @@ export const BaseCredentialsForm = ({
             control={form.control as unknown as Control<AzureCredentials>}
           />
         )}
-        {providerType === "m365" && (
-          <M365CredentialsForm
-            control={form.control as unknown as Control<M365Credentials>}
-          />
-        )}
+        {providerType === "m365" &&
+          searchParamsObj.get("via") === "app_client_secret" && (
+            <M365ClientSecretCredentialsForm
+              control={
+                form.control as unknown as Control<M365ClientSecretCredentials>
+              }
+            />
+          )}
+        {providerType === "m365" &&
+          searchParamsObj.get("via") === "app_certificate" && (
+            <M365CertificateCredentialsForm
+              control={
+                form.control as unknown as Control<M365CertificateCredentials>
+              }
+            />
+          )}
         {providerType === "gcp" &&
           searchParamsObj.get("via") === "service-account" && (
             <GCPServiceAccountKeyForm
@@ -131,6 +160,16 @@ export const BaseCredentialsForm = ({
           <GitHubCredentialsForm
             control={form.control}
             credentialsType={searchParamsObj.get("via") || undefined}
+          />
+        )}
+        {providerType === "iac" && (
+          <IacCredentialsForm
+            control={form.control as unknown as Control<IacCredentials>}
+          />
+        )}
+        {providerType === "oraclecloud" && (
+          <OracleCloudCredentialsForm
+            control={form.control as unknown as Control<OCICredentials>}
           />
         )}
 
@@ -159,6 +198,15 @@ export const BaseCredentialsForm = ({
             size="lg"
             isLoading={isLoading}
             endContent={!isLoading && <ChevronRightIcon size={24} />}
+            onPress={(e) => {
+              const formElement = e.target as HTMLElement;
+              const form = formElement.closest("form");
+              if (form) {
+                form.dispatchEvent(
+                  new Event("submit", { bubbles: true, cancelable: true }),
+                );
+              }
+            }}
           >
             {isLoading ? <>Loading</> : <span>{submitButtonText}</span>}
           </CustomButton>

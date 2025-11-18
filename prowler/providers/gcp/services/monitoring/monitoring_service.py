@@ -33,8 +33,36 @@ class Monitoring(GCPService):
 
                     for policy in response.get("alertPolicies", []):
                         filters = []
-                        for condition in policy["conditions"]:
-                            filters.append(condition["conditionThreshold"]["filter"])
+                        for condition in policy.get("conditions", []):
+                            # Handle different condition types
+                            if "conditionThreshold" in condition:
+                                filter_value = condition["conditionThreshold"].get(
+                                    "filter", ""
+                                )
+                                if filter_value:
+                                    filters.append(filter_value)
+                            elif "conditionAbsent" in condition:
+                                filter_value = condition["conditionAbsent"].get(
+                                    "filter", ""
+                                )
+                                if filter_value:
+                                    filters.append(filter_value)
+                            elif "conditionMatchedLog" in condition:
+                                filter_value = condition["conditionMatchedLog"].get(
+                                    "filter", ""
+                                )
+                                if filter_value:
+                                    filters.append(filter_value)
+                            elif "conditionMonitoringQueryLanguage" in condition:
+                                query = condition[
+                                    "conditionMonitoringQueryLanguage"
+                                ].get("query", "")
+                                if query:
+                                    filters.append(query)
+                            else:
+                                logger.warning(
+                                    f"Unknown condition type in alert policy {policy.get('name', 'Unknown')}: {condition.keys()}"
+                                )
                         self.alert_policies.append(
                             AlertPolicy(
                                 name=policy["name"],

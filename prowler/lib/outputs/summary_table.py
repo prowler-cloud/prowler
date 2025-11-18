@@ -67,6 +67,13 @@ def display_summary_table(
         elif provider.type == "llm":
             entity_type = "LLM"
             audited_entities = provider.model
+        elif provider.type == "oraclecloud":
+            entity_type = "Tenancy"
+            audited_entities = (
+                provider.identity.tenancy_name
+                if provider.identity.tenancy_name != "unknown"
+                else provider.identity.tenancy_id
+            )
 
         # Check if there are findings and that they are not all MANUAL
         if findings and not all(finding.status == "MANUAL" for finding in findings):

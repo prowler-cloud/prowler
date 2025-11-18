@@ -511,6 +511,9 @@ gcp:
   # gcp.iam_service_account_unused
   # gcp.iam_sa_user_managed_key_unused
   max_unused_account_days: 180
+  # GCP Storage Sufficient Retention Period
+  # gcp.cloudstorage_bucket_sufficient_retention_period
+  storage_min_retention_days: 90
 
 # Kubernetes Configuration
 kubernetes:

@@ -27,7 +27,10 @@ from api.models import (
     Finding,
     Integration,
     Invitation,
+    LighthouseProviderConfiguration,
+    LighthouseProviderModels,
     Membership,
+    MuteRule,
     OverviewStatusChoices,
     PermissionChoices,
     Processor,
@@ -44,6 +47,7 @@ from api.models import (
     StatusChoices,
     Task,
     TenantAPIKey,
+    ThreatScoreSnapshot,
     User,
 )
 from api.rls import Tenant
@@ -220,10 +224,39 @@ class MembershipFilter(FilterSet):
 
 
 class ProviderFilter(FilterSet):
-    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
-    updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
-    connected = BooleanFilter()
+    inserted_at = DateFilter(
+        field_name="inserted_at",
+        lookup_expr="date",
+        help_text="""Filter by date when the provider was added
+        (format: YYYY-MM-DD)""",
+    )
+    updated_at = DateFilter(
+        field_name="updated_at",
+        lookup_expr="date",
+        help_text="""Filter by date when the provider was updated
+        (format: YYYY-MM-DD)""",
+    )
+    connected = BooleanFilter(
+        help_text="""Filter by connection status. Set to True to return only
+        connected providers, or False to return only providers with failed
+        connections. If not specified, both connected and failed providers are
+        included. Providers with no connection attempt (status is null) are
+        excluded from this filter."""
+    )
     provider = ChoiceFilter(choices=Provider.ProviderChoices.choices)
+    provider__in = ChoiceInFilter(
+        field_name="provider",
+        choices=Provider.ProviderChoices.choices,
+        lookup_expr="in",
+    )
+    provider_type = ChoiceFilter(
+        choices=Provider.ProviderChoices.choices, field_name="provider"
+    )
+    provider_type__in = ChoiceInFilter(
+        field_name="provider",
+        choices=Provider.ProviderChoices.choices,
+        lookup_expr="in",
+    )
 
     class Meta:
         model = Provider
@@ -649,8 +682,16 @@ class LatestFindingFilter(CommonFindingFilters):
 
 
 class ProviderSecretFilter(FilterSet):
-    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
-    updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
+    inserted_at = DateFilter(
+        field_name="inserted_at",
+        lookup_expr="date",
+        help_text="Filter by date when the secret was added (format: YYYY-MM-DD)",
+    )
+    updated_at = DateFilter(
+        field_name="updated_at",
+        lookup_expr="date",
+        help_text="Filter by date when the secret was updated (format: YYYY-MM-DD)",
+    )
     provider = UUIDFilter(field_name="provider__id", lookup_expr="exact")
 
     class Meta:
@@ -736,6 +777,7 @@ class ComplianceOverviewFilter(FilterSet):
 class ScanSummaryFilter(FilterSet):
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
     provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
+    provider_id__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
     provider_type = ChoiceFilter(
         field_name="scan__provider__provider", choices=Provider.ProviderChoices.choices
     )
@@ -897,4 +939,96 @@ class TenantApiKeyFilter(FilterSet):
             "prefix": ["exact", "icontains"],
             "revoked": ["exact"],
             "name": ["exact", "icontains"],
+        }
+
+
+class LighthouseProviderConfigFilter(FilterSet):
+    provider_type = ChoiceFilter(
+        choices=LighthouseProviderConfiguration.LLMProviderChoices.choices
+    )
+    provider_type__in = ChoiceInFilter(
+        choices=LighthouseProviderConfiguration.LLMProviderChoices.choices,
+        field_name="provider_type",
+        lookup_expr="in",
+    )
+    is_active = BooleanFilter()
+
+    class Meta:
+        model = LighthouseProviderConfiguration
+        fields = {
+            "provider_type": ["exact", "in"],
+            "is_active": ["exact"],
+        }
+
+
+class LighthouseProviderModelsFilter(FilterSet):
+    provider_type = ChoiceFilter(
+        choices=LighthouseProviderConfiguration.LLMProviderChoices.choices,
+        field_name="provider_configuration__provider_type",
+    )
+    provider_type__in = ChoiceInFilter(
+        choices=LighthouseProviderConfiguration.LLMProviderChoices.choices,
+        field_name="provider_configuration__provider_type",
+        lookup_expr="in",
+    )
+
+    # Allow filtering by model id
+    model_id = CharFilter(field_name="model_id", lookup_expr="exact")
+    model_id__icontains = CharFilter(field_name="model_id", lookup_expr="icontains")
+    model_id__in = CharInFilter(field_name="model_id", lookup_expr="in")
+
+    class Meta:
+        model = LighthouseProviderModels
+        fields = {
+            "model_id": ["exact", "icontains", "in"],
+        }
+
+
+class MuteRuleFilter(FilterSet):
+    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
+    updated_at = DateFilter(field_name="updated_at", lookup_expr="date")
+    created_by = UUIDFilter(field_name="created_by__id", lookup_expr="exact")
+
+    class Meta:
+        model = MuteRule
+        fields = {
+            "id": ["exact", "in"],
+            "name": ["exact", "icontains"],
+            "reason": ["icontains"],
+            "enabled": ["exact"],
+            "inserted_at": ["gte", "lte"],
+            "updated_at": ["gte", "lte"],
+        }
+
+
+class ThreatScoreSnapshotFilter(FilterSet):
+    """
+    Filter for ThreatScore snapshots.
+    Allows filtering by scan, provider, compliance_id, and date ranges.
+    """
+
+    inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
+    scan_id = UUIDFilter(field_name="scan__id", lookup_expr="exact")
+    scan_id__in = UUIDInFilter(field_name="scan__id", lookup_expr="in")
+    provider_id = UUIDFilter(field_name="provider__id", lookup_expr="exact")
+    provider_id__in = UUIDInFilter(field_name="provider__id", lookup_expr="in")
+    provider_type = ChoiceFilter(
+        field_name="provider__provider", choices=Provider.ProviderChoices.choices
+    )
+    provider_type__in = ChoiceInFilter(
+        field_name="provider__provider",
+        choices=Provider.ProviderChoices.choices,
+        lookup_expr="in",
+    )
+    compliance_id = CharFilter(field_name="compliance_id", lookup_expr="exact")
+    compliance_id__in = CharInFilter(field_name="compliance_id", lookup_expr="in")
+
+    class Meta:
+        model = ThreatScoreSnapshot
+        fields = {
+            "scan": ["exact", "in"],
+            "provider": ["exact", "in"],
+            "compliance_id": ["exact", "in"],
+            "inserted_at": ["date", "gte", "lte"],
+            "overall_score": ["exact", "gte", "lte"],
         }

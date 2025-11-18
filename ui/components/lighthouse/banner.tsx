@@ -1,7 +1,7 @@
 import { Bot } from "lucide-react";
 import Link from "next/link";
 
-import { getLighthouseConfig } from "@/actions/lighthouse/lighthouse";
+import { isLighthouseConfigured } from "@/actions/lighthouse/lighthouse";
 
 interface BannerConfig {
   message: string;
@@ -28,9 +28,9 @@ const renderBanner = ({ message, href, gradient }: BannerConfig) => (
 
 export const LighthouseBanner = async () => {
   try {
-    const lighthouseConfig = await getLighthouseConfig();
+    const isConfigured = await isLighthouseConfigured();
 
-    if (!lighthouseConfig) {
+    if (!isConfigured) {
       return renderBanner({
         message: "Enable Lighthouse to secure your cloud with AI insights",
         href: "/lighthouse/config",

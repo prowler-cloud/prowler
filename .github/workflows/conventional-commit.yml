@@ -1,23 +1,31 @@
-name: Prowler - Conventional Commit
+name: 'Tools: Conventional Commit'
 
 on:
   pull_request:
-    types:
-      - "opened"
-      - "edited"
-      - "synchronize"
     branches:
-      - "master"
-      - "v3"
-      - "v4.*"
-      - "v5.*"
+      - 'master'
+      - 'v3'
+      - 'v4.*'
+      - 'v5.*'
+    types:
+      - 'opened'
+      - 'edited'
+      - 'synchronize'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   conventional-commit-check:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: read
+
     steps:
-      - name: conventional-commit-check
-        id: conventional-commit-check
-        uses: agenthunt/conventional-commit-checker-action@9e552d650d0e205553ec7792d447929fc78e012b # v2.0.0
+      - name: Check PR title format
+        uses: agenthunt/conventional-commit-checker-action@f1823f632e95a64547566dcd2c7da920e67117ad # v2.0.1
         with:
-            pr-title-regex: '^([^\s(]+)(?:\(([^)]+)\))?: (.+)'
+          pr-title-regex: '^(feat|fix|docs|style|refactor|perf|test|chore|build|ci|revert)(\([^)]+\))?!?: .+'

@@ -112,7 +112,9 @@ class Defender(AzureService):
                             assessment.display_name: Assesment(
                                 resource_id=assessment.id,
                                 resource_name=assessment.name,
-                                status=assessment.status.code,
+                                status=getattr(
+                                    getattr(assessment, "status", None), "code", None
+                                ),
                             )
                         }
                     )
@@ -304,7 +306,7 @@ class AutoProvisioningSetting(BaseModel):
 class Assesment(BaseModel):
     resource_id: str
     resource_name: str
-    status: str
+    status: Optional[str] = None
 
 
 class Setting(BaseModel):
