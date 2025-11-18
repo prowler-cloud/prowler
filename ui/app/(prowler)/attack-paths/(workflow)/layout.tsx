@@ -1,7 +1,8 @@
 import { Spacer } from "@heroui/spacer";
 
-import { WorkflowAttackPaths } from "@/components/attack-paths/workflow";
 import { Navbar } from "@/components/ui/nav-bar/navbar";
+
+import { WorkflowAttackPaths } from "./_components";
 
 /**
  * Workflow layout for Attack Paths wizard

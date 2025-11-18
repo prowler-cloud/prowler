@@ -9,16 +9,17 @@ import {
   useState,
 } from "react";
 
-import {
-  getNodeColor,
-  GRAPH_EDGE_COLOR,
-  GRAPH_SELECTION_COLOR,
-} from "@/lib/attack-paths/graph-colors";
 import type {
   AttackPathGraphData,
   GraphNode,
   GraphNodePropertyValue,
 } from "@/types/attack-paths";
+
+import {
+  getNodeColor,
+  GRAPH_EDGE_COLOR,
+  GRAPH_SELECTION_COLOR,
+} from "../../_lib/graph-colors";
 
 export interface AttackPathGraphRef {
   zoomIn: () => void;

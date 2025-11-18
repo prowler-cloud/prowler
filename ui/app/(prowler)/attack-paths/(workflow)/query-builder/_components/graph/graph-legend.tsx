@@ -7,7 +7,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip/tooltip";
-import { GRAPH_NODE_COLORS } from "@/lib/attack-paths/graph-colors";
+
+import { GRAPH_NODE_COLORS } from "../../_lib/graph-colors";
 
 interface LegendItem {
   label: string;

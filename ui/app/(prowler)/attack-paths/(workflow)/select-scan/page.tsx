@@ -3,10 +3,8 @@ import { Spacer } from "@heroui/spacer";
 import { Suspense } from "react";
 
 import { getAttackPathScans } from "@/actions/attack-paths";
-import {
-  AWSConnectionWarning,
-  ScanListTable,
-} from "@/components/attack-paths/scan-selection";
+
+import { AWSConnectionWarning, ScanListTable } from "./_components";
 
 /**
  * Step 1: Attack Path Scan Selection

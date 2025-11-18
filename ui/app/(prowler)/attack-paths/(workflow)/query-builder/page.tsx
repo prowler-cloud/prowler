@@ -7,17 +7,6 @@ import { useEffect, useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 
 import { executeQuery, getAvailableQueries } from "@/actions/attack-paths";
-import {
-  AttackPathGraph,
-  ExecuteButton,
-  GraphControls,
-  GraphLegend,
-  GraphLoading,
-  NodeDetailPanel,
-  QueryParametersForm,
-  QuerySelector,
-} from "@/components/attack-paths";
-import type { AttackPathGraphRef } from "@/components/attack-paths/graph/attack-path-graph";
 import { Button, Card, CardContent } from "@/components/shadcn";
 import {
   Dialog,
@@ -27,9 +16,21 @@ import {
   DialogTrigger,
   useToast,
 } from "@/components/ui";
-import { useGraphState } from "@/hooks/attack-paths/use-graph-state";
-import { exportGraphAsSVG } from "@/lib/attack-paths/export";
 import type { AttackPathQuery, GraphNode } from "@/types/attack-paths";
+
+import {
+  AttackPathGraph,
+  ExecuteButton,
+  GraphControls,
+  GraphLegend,
+  GraphLoading,
+  NodeDetailPanel,
+  QueryParametersForm,
+  QuerySelector,
+} from "./_components";
+import type { AttackPathGraphRef } from "./_components/graph/attack-path-graph";
+import { useGraphState } from "./_hooks/use-graph-state";
+import { exportGraphAsSVG } from "./_lib/export";
 
 /**
  * Step 2: Query Builder & Graph Visualization
