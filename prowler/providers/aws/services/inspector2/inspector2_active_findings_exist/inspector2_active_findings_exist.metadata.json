@@ -1,33 +1,45 @@
 {
   "Provider": "aws",
   "CheckID": "inspector2_active_findings_exist",
-  "CheckTitle": "Check if Inspector2 active findings exist",
-  "CheckAliases": [
-    "inspector2_findings_exist"
+  "CheckTitle": "Inspector2 is enabled with no active findings",
+  "CheckType": [
+    "Software and Configuration Checks/Vulnerabilities/CVE",
+    "Software and Configuration Checks/Patch Management",
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Industry and Regulatory Standards/AWS Foundational Security Best Practices"
   ],
-  "CheckType": [],
   "ServiceName": "inspector2",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:inspector2:region:account-id/detector-id",
-  "Severity": "medium",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
   "ResourceType": "Other",
-  "Description": "This check determines if there are any active findings in your AWS account that have been detected by AWS Inspector2. Inspector2 is an automated security assessment service that helps improve the security and compliance of applications deployed on AWS.",
-  "Risk": "Without using AWS Inspector, you may not be aware of all the security vulnerabilities in your AWS resources, which could lead to unauthorized access, data breaches, or other security incidents.",
-  "RelatedUrl": "https://docs.aws.amazon.com/inspector/latest/user/findings-understanding.html",
+  "Description": "**Amazon Inspector2** active findings are assessed across eligible resources when the service is `ENABLED`.\n\nIndicates whether any findings remain in the **Active** state versus none.",
+  "Risk": "**Unremediated Inspector2 findings** mean known vulnerabilities or exposures persist on workloads.\n\nThis enables:\n- Unauthorized access and data exfiltration (C)\n- Code tampering and privilege escalation (I)\n- Service disruption via exploitation or malware (A)",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Inspector/amazon-inspector-findings.html",
+    "https://docs.aws.amazon.com/inspector/latest/user/findings-understanding.html",
+    "https://docs.aws.amazon.com/inspector/latest/user/what-is-inspector.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Inspector/amazon-inspector-findings.html",
-      "Terraform": ""
+      "CLI": "aws inspector2 create-filter --name <example_resource_name> --action SUPPRESS --filter-criteria '{\"findingStatus\":[{\"comparison\":\"EQUALS\",\"value\":\"ACTIVE\"}]}'",
+      "NativeIaC": "```yaml\n# CloudFormation: Suppress all ACTIVE Inspector findings\nResources:\n  <example_resource_name>:\n    Type: AWS::InspectorV2::Filter\n    Properties:\n      Name: <example_resource_name>\n      Action: SUPPRESS  # critical: converts matching findings to Suppressed, not Active\n      FilterCriteria:\n        FindingStatus:\n          - Comparison: EQUALS\n            Value: ACTIVE  # critical: targets all active findings\n```",
+      "Other": "1. In the AWS Console, go to Amazon Inspector\n2. Open Suppression rules (or Filters) and click Create suppression rule\n3. Set condition: Finding status = Active\n4. Set action to Suppress and click Create\n5. Verify the Active findings count is 0 on the dashboard",
+      "Terraform": "```hcl\n# Terraform: Suppress all ACTIVE Inspector findings\nresource \"aws_inspector2_filter\" \"<example_resource_name>\" {\n  name   = \"<example_resource_name>\"\n  action = \"SUPPRESS\"  # critical: converts matching findings to Suppressed, not Active\n\n  filter_criteria {\n    finding_status {\n      comparison = \"EQUALS\"\n      value      = \"ACTIVE\"  # critical: targets all active findings\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Review the active findings from Inspector2",
-      "Url": "https://docs.aws.amazon.com/inspector/latest/user/what-is-inspector.html"
+      "Text": "Prioritize and remediate **Active findings** quickly: patch hosts and runtimes, update/rebuild images, fix vulnerable code, and close unintended exposure.\n\nApply **least privilege**, use **defense in depth**, and avoid broad suppressions. Integrate findings into CI/CD and vulnerability management for continuous prevention.",
+      "Url": "https://hub.prowler.com/check/inspector2_active_findings_exist"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "",
+  "CheckAliases": [
+    "inspector2_findings_exist"
+  ]
 }
