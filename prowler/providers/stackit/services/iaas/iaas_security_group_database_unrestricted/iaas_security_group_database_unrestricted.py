@@ -60,7 +60,7 @@ class iaas_security_group_database_unrestricted(Check):
                 databases_list = ", ".join(exposed_databases)
                 report.status_extended = (
                     f"Security group '{security_group.name}' allows unrestricted database access "
-                    f"to: {databases_list} from {exposing_rule.get_ip_range_display()}."
+                    f"to: {databases_list} from {exposing_rule.get_ip_range_display()} via rule {exposing_rule.get_rule_display_name()}."
                 )
             else:
                 report.status = "PASS"
