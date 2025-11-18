@@ -60,7 +60,8 @@ class IaaSService:
             # Suppress StackIT SDK deprecation warnings about region configuration
             # These warnings are not actionable as we follow the current SDK patterns
             with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", message=".*STACKIT will move.*")
+                warnings.filterwarnings("ignore", category=DeprecationWarning)
+                warnings.filterwarnings("ignore", category=FutureWarning)
 
                 # Pass the API token directly to Configuration (thread-safe approach)
                 # This avoids manipulating global environment variables
@@ -99,7 +100,8 @@ class IaaSService:
         try:
             # Suppress StackIT SDK deprecation warnings during API calls
             with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", message=".*STACKIT will move.*")
+                warnings.filterwarnings("ignore", category=DeprecationWarning)
+                warnings.filterwarnings("ignore", category=FutureWarning)
                 return api_function(*args, **kwargs)
         except Exception as e:
             # Check if this is an authentication error (401 Unauthorized)
@@ -128,32 +130,23 @@ class IaaSService:
                 )
                 return
 
-            # List all security groups using the SDK
-            try:
-                # Call the list security groups API with centralized error handling
-                response = self._handle_api_call(
-                    client.list_security_groups, project_id=self.project_id
+            # Call the list security groups API with centralized error handling
+            response = self._handle_api_call(
+                client.list_security_groups, project_id=self.project_id
+            )
+
+            # Extract security groups from response
+            if hasattr(response, "items"):
+                security_groups_list = response.items
+            elif isinstance(response, dict):
+                security_groups_list = response.get("items", [])
+            elif isinstance(response, list):
+                security_groups_list = response
+            else:
+                logger.warning(
+                    f"Unexpected response type from list_security_groups: {type(response)}"
                 )
-
-                # Extract security groups from response
-                if hasattr(response, "items"):
-                    security_groups_list = response.items
-                elif isinstance(response, dict):
-                    security_groups_list = response.get("items", [])
-                elif isinstance(response, list):
-                    security_groups_list = response
-                else:
-                    logger.warning(
-                        f"Unexpected response type from list_security_groups: {type(response)}"
-                    )
-                    security_groups_list = []
-
-            except StackITInvalidTokenError:
-                # Re-raise authentication errors so they propagate to the user
-                raise
-            except Exception as e:
-                logger.error(f"Error listing security groups via SDK: {e}")
-                return
+                security_groups_list = []
 
             # Process each security group
             for sg_data in security_groups_list:
@@ -195,6 +188,9 @@ class IaaSService:
                 f"Successfully listed {len(self.security_groups)} security groups"
             )
 
+        except StackITInvalidTokenError:
+            # Re-raise authentication errors so they propagate to the user
+            raise
         except Exception as e:
             logger.error(f"Error listing StackIT IaaS security groups: {e}")
 
@@ -327,56 +323,51 @@ class IaaSService:
                 )
                 return
 
-            try:
-                # Call the list public IPs API with centralized error handling
-                response = self._handle_api_call(
-                    client.list_public_ips, project_id=self.project_id
+            # Call the list public IPs API with centralized error handling
+            response = self._handle_api_call(
+                client.list_public_ips, project_id=self.project_id
+            )
+
+            # Extract public IPs from response
+            if hasattr(response, "items"):
+                public_ips_list = response.items
+            elif isinstance(response, dict):
+                public_ips_list = response.get("items", [])
+            elif isinstance(response, list):
+                public_ips_list = response
+            else:
+                logger.warning(
+                    f"Unexpected response type from list_public_ips: {type(response)}"
                 )
+                public_ips_list = []
 
-                # Extract public IPs from response
-                if hasattr(response, "items"):
-                    public_ips_list = response.items
-                elif isinstance(response, dict):
-                    public_ips_list = response.get("items", [])
-                elif isinstance(response, list):
-                    public_ips_list = response
-                else:
-                    logger.warning(
-                        f"Unexpected response type from list_public_ips: {type(response)}"
-                    )
-                    public_ips_list = []
-
-                # Extract NIC IDs that have public IPs
-                for public_ip in public_ips_list:
-                    try:
-                        if hasattr(public_ip, "network_interface"):
-                            nic_id = public_ip.network_interface
-                        elif isinstance(public_ip, dict):
-                            nic_id = public_ip.get(
-                                "network_interface"
-                            ) or public_ip.get("networkInterface")
-                        else:
-                            continue
-
-                        if nic_id:
-                            self.public_nic_ids.add(nic_id)
-
-                    except Exception as e:
-                        logger.debug(f"Error extracting NIC ID from public IP: {e}")
+            # Extract NIC IDs that have public IPs
+            for public_ip in public_ips_list:
+                try:
+                    if hasattr(public_ip, "network_interface"):
+                        nic_id = public_ip.network_interface
+                    elif isinstance(public_ip, dict):
+                        nic_id = public_ip.get(
+                            "network_interface"
+                        ) or public_ip.get("networkInterface")
+                    else:
                         continue
 
-                logger.info(
-                    f"Successfully listed {len(public_ips_list)} public IPs "
-                    f"attached to {len(self.public_nic_ids)} NICs."
-                )
+                    if nic_id:
+                        self.public_nic_ids.add(nic_id)
 
-            except StackITInvalidTokenError:
-                # Re-raise authentication errors so they propagate to the user
-                raise
-            except Exception as e:
-                logger.error(f"Error listing public IPs via SDK: {e}")
-                return
+                except Exception as e:
+                    logger.debug(f"Error extracting NIC ID from public IP: {e}")
+                    continue
 
+            logger.info(
+                f"Successfully listed {len(public_ips_list)} public IPs "
+                f"attached to {len(self.public_nic_ids)} NICs."
+            )
+
+        except StackITInvalidTokenError:
+            # Re-raise authentication errors so they propagate to the user
+            raise
         except Exception as e:
             logger.error(f"Error listing StackIT public IPs: {e}")
 
@@ -395,56 +386,51 @@ class IaaSService:
                 )
                 return
 
-            try:
-                # Call the list project NICs API with centralized error handling
-                response = self._handle_api_call(
-                    client.list_project_nics, project_id=self.project_id
+            # Call the list project NICs API with centralized error handling
+            response = self._handle_api_call(
+                client.list_project_nics, project_id=self.project_id
+            )
+
+            # Extract NICs from response
+            if hasattr(response, "items"):
+                nics_list = response.items
+            elif isinstance(response, dict):
+                nics_list = response.get("items", [])
+            elif isinstance(response, list):
+                nics_list = response
+            else:
+                logger.warning(
+                    f"Unexpected response type from list_project_nics: {type(response)}"
                 )
+                nics_list = []
 
-                # Extract NICs from response
-                if hasattr(response, "items"):
-                    nics_list = response.items
-                elif isinstance(response, dict):
-                    nics_list = response.get("items", [])
-                elif isinstance(response, list):
-                    nics_list = response
-                else:
-                    logger.warning(
-                        f"Unexpected response type from list_project_nics: {type(response)}"
-                    )
-                    nics_list = []
+            self.server_nics = nics_list
 
-                self.server_nics = nics_list
+            # Extract security group IDs that are in use (on public NICs only)
+            self.in_use_sg_ids = self._get_used_security_group_ids()
 
-                # Extract security group IDs that are in use (on public NICs only)
-                self.in_use_sg_ids = self._get_used_security_group_ids()
-
-                # Count NICs with public IPs for logging
-                public_nic_count = sum(
-                    1
-                    for nic in self.server_nics
-                    if (
-                        (hasattr(nic, "id") and nic.id in self.public_nic_ids)
-                        or (
-                            isinstance(nic, dict)
-                            and nic.get("id") in self.public_nic_ids
-                        )
+            # Count NICs with public IPs for logging
+            public_nic_count = sum(
+                1
+                for nic in self.server_nics
+                if (
+                    (hasattr(nic, "id") and nic.id in self.public_nic_ids)
+                    or (
+                        isinstance(nic, dict)
+                        and nic.get("id") in self.public_nic_ids
                     )
                 )
+            )
 
-                logger.info(
-                    f"Successfully listed {len(self.server_nics)} NICs "
-                    f"({public_nic_count} with public IPs). "
-                    f"Found {len(self.in_use_sg_ids)} security groups attached to public NICs."
-                )
+            logger.info(
+                f"Successfully listed {len(self.server_nics)} NICs "
+                f"({public_nic_count} with public IPs). "
+                f"Found {len(self.in_use_sg_ids)} security groups attached to public NICs."
+            )
 
-            except StackITInvalidTokenError:
-                # Re-raise authentication errors so they propagate to the user
-                raise
-            except Exception as e:
-                logger.error(f"Error listing server NICs via SDK: {e}")
-                return
-
+        except StackITInvalidTokenError:
+            # Re-raise authentication errors so they propagate to the user
+            raise
         except Exception as e:
             logger.error(f"Error listing StackIT server NICs: {e}")
 
