@@ -136,7 +136,7 @@ export const SendInvitationForm = ({
                 )}
               </Select>
               {form.formState.errors.roleId && (
-                <p className="mt-2 text-sm text-red-600">
+                <p className="text-text-error mt-2 text-sm">
                   {form.formState.errors.roleId.message}
                 </p>
               )}

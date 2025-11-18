@@ -389,7 +389,7 @@ export const SecurityHubIntegrationsManager = ({
                               key={region}
                               size="sm"
                               variant="flat"
-                              className="bg-default-100"
+                              className="bg-bg-neutral-secondary"
                             >
                               {region}
                             </Chip>

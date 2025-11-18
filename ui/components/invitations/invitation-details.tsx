@@ -35,9 +35,11 @@ const InfoField = ({
   children: React.ReactNode;
 }) => (
   <div className="flex flex-col gap-1">
-    <span className="text-xs font-bold text-gray-500">{label}</span>
-    <div className="flex items-center rounded-lg bg-gray-50 p-3">
-      <span className="text-small text-gray-900">{children}</span>
+    <span className="text-text-neutral-secondary text-xs font-bold">
+      {label}
+    </span>
+    <div className="border-border-input-primary bg-bg-input-primary flex items-center rounded-lg border p-3">
+      <span className="text-small text-text-neutral-primary">{children}</span>
     </div>
   </div>
 );
@@ -81,7 +83,7 @@ export const InvitationDetails = ({ attributes }: InvitationDetailsProps) => {
           </div>
 
           <Separator className="my-4" />
-          <h3 className="pb-2 text-sm font-bold text-gray-900 dark:text-gray-100">
+          <h3 className="text-text-neutral-primary pb-2 text-sm font-bold">
             Share this link with the user:
           </h3>
 
@@ -92,7 +94,7 @@ export const InvitationDetails = ({ attributes }: InvitationDetailsProps) => {
               }}
               hideSymbol
               variant="bordered"
-              className="overflow-hidden bg-gray-50 py-1 text-ellipsis whitespace-nowrap dark:bg-slate-800"
+              className="bg-bg-neutral-secondary overflow-hidden py-1 text-ellipsis whitespace-nowrap"
             >
               <p className="no-scrollbar w-fit overflow-hidden overflow-x-scroll text-sm text-ellipsis whitespace-nowrap">
                 {invitationLink}

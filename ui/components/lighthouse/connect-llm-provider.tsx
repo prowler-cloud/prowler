@@ -166,7 +166,7 @@ export const ConnectLLMProvider = ({
   if (!providerConfig) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="text-text-error-primary text-sm">
+        <div className="text-text-error text-sm">
           Provider configuration not found: {provider}
         </div>
       </div>
@@ -204,7 +204,7 @@ export const ConnectLLMProvider = ({
 
       {error && (
         <div className="border-border-error-primary bg-bg-fail-secondary rounded-lg border p-4">
-          <p className="text-text-error-primary text-sm">{error}</p>
+          <p className="text-text-error text-sm">{error}</p>
         </div>
       )}
 
@@ -217,7 +217,7 @@ export const ConnectLLMProvider = ({
             >
               {field.label}{" "}
               {!isEditMode && field.required && (
-                <span className="text-text-error-primary">*</span>
+                <span className="text-text-error">*</span>
               )}
               {isEditMode && (
                 <span className="text-text-neutral-tertiary text-xs">

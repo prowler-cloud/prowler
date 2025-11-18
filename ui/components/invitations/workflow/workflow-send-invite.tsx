@@ -47,11 +47,11 @@ export const WorkflowSendInvite = () => {
           indicator: "bg-button-primary",
         }}
         label="Steps"
-        maxValue={steps.length - 1}
+        maxValue={steps.length}
         minValue={0}
         showValueLabel={true}
         size="sm"
-        value={currentStep}
+        value={currentStep + 1}
         valueLabel={`${currentStep + 1} of ${steps.length}`}
       />
 
@@ -60,14 +60,14 @@ export const WorkflowSendInvite = () => {
         <VerticalSteps
           hideProgressBars
           currentStep={currentStep}
-          stepClassName="border border-default-200 dark:border-default-50 aria-[current]:bg-default-100 dark:aria-[current]:bg-prowler-blue-800 cursor-default"
+          stepClassName="border border-border-neutral-primary aria-[current]:border-button-primary aria-[current]:text-text-neutral-primary cursor-default"
           steps={steps}
         />
       </div>
 
       {/* Mobile: Compact current step indicator */}
       <div className="sm:hidden">
-        <div className="text-default-400 border-l-2 border-blue-500 py-1 pl-3 text-xs">
+        <div className="text-text-neutral-secondary border-button-primary border-l-2 py-1 pl-3 text-xs">
           <div className="font-medium">
             Current: {steps[currentStep]?.title}
           </div>

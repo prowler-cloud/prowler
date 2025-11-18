@@ -340,7 +340,7 @@ export const Chat = ({
           <div className="flex items-start">
             <div className="shrink-0">
               <svg
-                className="text-text-error-primary h-5 w-5"
+                className="text-text-error h-5 w-5"
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
@@ -352,9 +352,7 @@ export const Chat = ({
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-text-error-primary text-sm font-medium">
-                Error
-              </h3>
+              <h3 className="text-text-error text-sm font-medium">Error</h3>
               <p className="text-text-neutral-secondary mt-1 text-sm">
                 {errorMessage ||
                   error?.message ||

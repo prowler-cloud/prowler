@@ -66,7 +66,7 @@ export const CustomTextarea = <T extends FieldValues>({
               {...field}
             />
           </FormControl>
-          <FormMessage className="text-system-error dark:text-system-error" />
+          <FormMessage className="text-text-error" />
         </>
       )}
     />

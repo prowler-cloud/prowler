@@ -6,7 +6,6 @@
 
 /* ===== LIGHT THEME (ROOT) ===== */
 :root {
-  /* ===== NEW VARIABLES (PROWLER-307) - SEMANTIC COLORS ===== */
   /* Button Colors */
   --bg-button-primary: var(--color-emerald-300);
   --bg-button-primary-hover: var(--color-teal-200);
@@ -79,7 +78,6 @@
 
 /* ===== DARK THEME ===== */
 .dark {
-  /* ===== NEW VARIABLES (PROWLER-307) - SEMANTIC COLORS ===== */
   /* Button Colors */
   --bg-button-primary: var(--color-emerald-300);
   --bg-button-primary-hover: var(--color-teal-200);
@@ -148,25 +146,6 @@
 
 /* ===== TAILWIND THEME MAPPINGS ===== */
 @theme {
-  /* Remap base variables to --color- prefix for Tailwind compatibility */
-  /* ===== LEGACY CHART COLORS ===== */
-  --color-chart-info: var(--chart-info);
-  --color-chart-warning: var(--chart-warning);
-  --color-chart-warning-emphasis: var(--chart-warning-emphasis);
-  --color-chart-danger: var(--chart-danger);
-  --color-chart-danger-emphasis: var(--chart-danger-emphasis);
-  --color-chart-success: var(--chart-success-color);
-  --color-chart-fail: var(--chart-fail);
-  --color-chart-radar-primary: var(--chart-radar-primary);
-  --color-chart-text-primary: var(--chart-text-primary);
-  --color-chart-text-secondary: var(--chart-text-secondary);
-  --color-chart-border: var(--chart-border);
-  --color-chart-border-emphasis: var(--chart-border-emphasis);
-  --color-chart-background: var(--chart-background);
-  --color-chart-alert-bg: var(--chart-alert-bg);
-  --color-chart-alert-text: var(--chart-alert-text);
-
-  /* ===== NEW SEMANTIC COLORS (PROWLER-307) ===== */
   /* Data Background Colors */
   --color-bg-data-azure: var(--bg-data-azure);
   --color-bg-data-kubernetes: var(--bg-data-kubernetes);

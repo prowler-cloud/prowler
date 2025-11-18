@@ -177,7 +177,7 @@ export const SelectModel = ({
 
       {error && (
         <div className="border-border-error-primary bg-bg-fail-secondary rounded-lg border p-4">
-          <p className="text-text-error-primary text-sm">{error}</p>
+          <p className="text-text-error text-sm">{error}</p>
         </div>
       )}
 

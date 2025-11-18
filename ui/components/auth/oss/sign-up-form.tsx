@@ -207,7 +207,7 @@ export const SignUpForm = ({
                       &nbsp;of Prowler
                     </Checkbox>
                   </FormControl>
-                  <FormMessage className="text-system-error dark:text-system-error" />
+                  <FormMessage className="text-text-error" />
                 </>
               )}
             />
