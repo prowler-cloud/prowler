@@ -267,6 +267,32 @@ The StackIT provider currently implements 4 security checks focused on network s
   - Flags unrestricted IP ranges
   - Critical security misconfiguration requiring immediate remediation
 
+### Important Implementation Notes
+
+**Network Interface (NIC) Filtering:**
+
+All checks focus on security groups attached to NICs with public IP addresses. The implementation:
+
+1. **Discovers all public IPs** in the project
+2. **Identifies which NICs** have those public IPs assigned
+3. **Flags security groups** attached to those public NICs as "in use"
+4. **Reports only on "in use" security groups** (internet-exposed resources)
+
+**Unattached NICs:**
+
+NICs with public IPs are checked **even if not currently attached to a server**. This is intentional because:
+- Unattached NICs with unrestricted security groups are "misconfigurations waiting to happen"
+- If the NIC is attached to a server later, it's immediately exposed
+- Defense-in-depth approach: flag potential issues before they become active threats
+
+**Unrestricted IP Ranges:**
+
+The StackIT API represents "unrestricted" in two ways:
+- **`ip_range=null`**: No IP restriction specified (implicit unrestricted)
+- **`ip_range="0.0.0.0/0"` or `"::/0"`**: Explicitly configured to allow all IPs
+
+Both are flagged as unrestricted. A `null` value is **more permissive** than an explicit range and applies to all protocols/ports if other fields are also `null`.
+
 ## Requirements
 
 ### Python Version
