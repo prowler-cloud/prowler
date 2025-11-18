@@ -11,6 +11,8 @@ import { CustomInput } from "@/components/ui/custom";
 import { Form, FormButtons } from "@/components/ui/form";
 import { editInviteFormSchema } from "@/types";
 
+import { Card, CardContent } from "../../shadcn";
+
 export const EditForm = ({
   invitationId,
   invitationEmail,
@@ -93,22 +95,24 @@ export const EditForm = ({
         onSubmit={form.handleSubmit(onSubmitClient)}
         className="flex flex-col gap-4"
       >
-        <div className="flex flex-row justify-center gap-4 rounded-lg bg-gray-50 p-3">
-          <div className="text-small flex items-center text-gray-600">
-            <MailIcon className="mr-2 h-4 w-4" />
-            <span className="text-gray-500">Email:</span>
-            <span className="ml-2 font-semibold text-gray-900">
-              {invitationEmail}
-            </span>
-          </div>
-          <div className="text-small flex items-center text-gray-600">
-            <ShieldIcon className="mr-2 h-4 w-4" />
-            <span className="text-gray-500">Role:</span>
-            <span className="ml-2 font-semibold text-gray-900">
-              {currentRole}
-            </span>
-          </div>
-        </div>
+        <Card variant="inner">
+          <CardContent className="flex flex-row justify-center gap-4">
+            <div className="text-small text-text-neutral-secondary flex items-center">
+              <MailIcon className="text-text-neutral-secondary mr-2 h-4 w-4" />
+              <span className="text-text-neutral-secondary">Email:</span>
+              <span className="text-text-neutral-secondary ml-2 font-semibold">
+                {invitationEmail}
+              </span>
+            </div>
+            <div className="text-small flex items-center text-gray-600">
+              <ShieldIcon className="text-text-neutral-secondary mr-2 h-4 w-4" />
+              <span className="text-text-neutral-secondary">Role:</span>
+              <span className="text-text-neutral-secondary ml-2 font-semibold">
+                {currentRole}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
 
         <div>
           <CustomInput
