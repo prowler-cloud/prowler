@@ -336,6 +336,99 @@ poetry run pytest tests/providers/stackit/ -v
 - StackIT provider documentation now matches or exceeds other providers
 - Code-level documentation (docstrings, type hints) is already excellent
 
+### ✅ Priority 6: User Experience Improvements (COMPLETED!)
+**Feature**: Improve output quality, error messages, and overall user experience
+
+**Status**: ✅ **All UX Improvements Implemented!**
+
+**Completed Enhancements**:
+
+#### 1. ✅ Self-Referencing Security Group Rule Filtering
+**File Modified**: `prowler/providers/stackit/services/iaas/iaas_service.py`
+- **Added**: `remote_security_group_id` field to SecurityGroupRule model
+- **Enhanced**: `is_unrestricted()` method to filter out self-referencing rules
+- **Impact**: Default security group rules (that only allow traffic from same SG) are no longer flagged
+- **Benefit**: Reduces false positives - only truly unrestricted rules trigger findings
+
+#### 2. ✅ Rule Display Names in Findings
+**File Modified**: `prowler/providers/stackit/services/iaas/iaas_service.py`
+- **Added**: `description` field to SecurityGroupRule model
+- **Added**: `get_rule_display_name()` helper method
+- **Updated**: All 4 checks to display rule descriptions
+- **Example Output**:
+  - With description: `'Allow SSH from office' (sgr-abc123)`
+  - Without description: `'sgr-abc123'`
+- **Benefit**: Much more readable findings for users who set rule descriptions in StackIT UI
+
+#### 3. ✅ User-Friendly IP Range Display
+**File Modified**: `prowler/providers/stackit/services/iaas/iaas_service.py`
+- **Added**: `get_ip_range_display()` helper method
+- **Replaces**: Confusing `None` values with `"anywhere (0.0.0.0/0, ::/0)"`
+- **Updated**: All 4 checks to use this helper
+- **Benefit**: Clear, understandable findings instead of cryptic "None" in messages
+
+#### 4. ✅ Project Name Display in Reports
+**Files Modified**:
+- `prowler/providers/stackit/stackit_provider.py` - `_get_project_name()` method
+- `prowler/providers/stackit/models.py` - Added `project_name` field
+- `prowler/lib/outputs/summary_table.py` - Display project name in summary
+- **Added**: stackit-resourcemanager dependency to fetch project metadata
+- **Impact**: Reports show "Project: my-prod-env" instead of UUID
+- **Benefit**: More user-friendly output, easier to identify which project was scanned
+
+#### 5. ✅ Centralized Authentication Error Handling
+**Files Modified**:
+- `prowler/providers/stackit/stackit_provider.py` - Added `handle_api_error()` static method
+- `prowler/providers/stackit/services/iaas/iaas_service.py` - Use centralized handler
+- **Removed**: 27 lines of duplicated authentication error detection code
+- **Pattern**: Single source of truth for 401 error handling
+- **Benefit**: Consistent error messages, easier maintenance, DRY principle
+
+#### 6. ✅ Clean Authentication Error Output
+**Files Modified**:
+- `prowler/providers/stackit/stackit_provider.py` - Token validation during initialization
+- **Removed**: Verbose HTTP headers and response body from error output
+- **Before**: 3 duplicate CRITICAL messages with HTTP details (100+ lines)
+- **After**: Single clean message with actionable instructions
+- **Example Output**:
+  ```
+  CRITICAL: StackIT API token is invalid or has expired.
+  Generate a new token with: stackit auth activate-service-account --service-account-key-path <path> --only-print-access-token
+  ```
+
+#### 7. ✅ SDK Warning Suppression
+**Files Modified**:
+- `prowler/providers/stackit/services/iaas/iaas_service.py` - Added `suppress_stderr()` context manager
+- `prowler/providers/stackit/stackit_provider.py` - Suppress warnings during token validation
+- **Suppressed**: StackIT SDK deprecation warnings that users can't act on
+- **Impact**: Clean output without repetitive "STACKIT will move to..." messages
+- **Benefit**: Professional, non-cluttered output
+
+#### 8. ✅ CodeQL Security Compliance
+**File Modified**: `prowler/providers/stackit/lib/mutelist/mutelist.py`
+- **Fixed**: Method signature mismatch warning
+- **Changed**: `is_finding_muted(self, finding)` to `is_finding_muted(self, *, finding: CheckReportStackIT)`
+- **Impact**: Keyword-only parameter matches calling convention
+- **Benefit**: Passes GitHub Advanced Security checks
+
+#### 9. ✅ Documentation Updates
+**File Modified**: `docs/developer-guide/stackit-details.mdx`
+- **Added**: Self-referencing rule filtering documentation
+- **Added**: Rule display names feature documentation
+- **Updated**: Authentication error handling section
+- **Added**: Centralized error handling pattern examples
+- **Added**: SDK warning suppression pattern
+- **Updated**: Code examples with latest improvements
+
+**UX Improvements Summary**:
+- ✅ **Reduced false positives** - Self-referencing rules filtered
+- ✅ **Clearer findings** - Rule names and IP ranges displayed clearly
+- ✅ **Better reports** - Project names instead of UUIDs
+- ✅ **Consistent errors** - Centralized authentication handling
+- ✅ **Clean output** - No SDK warnings, concise error messages
+- ✅ **Security compliance** - CodeQL warnings fixed
+- ✅ **Maintainability** - DRY principle, centralized patterns
+
 ## 📚 Key Technical Details
 
 ### StackIT Security Group Rule Structure
