@@ -127,7 +127,6 @@ export const DataTableFilterCustom = ({
         .filter((filter) => filter.values.length > 1)
         .map((filter) => {
           const selectedValues = getSelectedValues(filter.key);
-          const hasEntityMapping = !!filter.valueLabelMapping;
 
           return (
             <MultiSelect
@@ -139,7 +138,6 @@ export const DataTableFilterCustom = ({
                 <MultiSelectValue placeholder={filter.labelCheckboxGroup} />
               </MultiSelectTrigger>
               <MultiSelectContent
-                width={hasEntityMapping ? "wide" : "default"}
                 search={{
                   placeholder: `Search ${filter.labelCheckboxGroup.toLowerCase()}...`,
                   emptyMessage: "No results found",

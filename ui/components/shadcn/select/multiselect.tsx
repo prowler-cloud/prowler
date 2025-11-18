@@ -204,17 +204,6 @@ export function MultiSelectValue({
     [checkOverflow],
   );
 
-  if (selectedValues.size === 0 && placeholder) {
-    return (
-      <span
-        data-slot="multiselect-value"
-        className="text-bg-button-secondary min-w-0 overflow-hidden font-normal"
-      >
-        {placeholder}
-      </span>
-    );
-  }
-
   return (
     <div
       {...props}
@@ -226,6 +215,11 @@ export function MultiSelectValue({
         className,
       )}
     >
+      {placeholder && (
+        <span className="text-bg-button-secondary shrink-0 font-normal">
+          {placeholder}
+        </span>
+      )}
       {Array.from(selectedValues)
         .filter((value) => items.has(value))
         .map((value) => (
@@ -276,7 +270,7 @@ export function MultiSelectContent({
   const canSearch = typeof search === "object" ? true : search;
 
   const widthClasses =
-    width === "wide" ? "w-auto min-w-[400px] max-w-[600px]" : "min-w-[8rem]";
+    width === "wide" ? "w-auto min-w-[400px] max-w-[600px]" : "w-auto";
 
   return (
     <>
@@ -344,7 +338,7 @@ export function MultiSelectItem({
       value={value}
       data-slot="multiselect-item"
       className={cn(
-        "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-bg-button-secondary text-bg-button-secondary relative flex w-full cursor-pointer items-center gap-2 rounded-lg px-4 py-3 text-sm outline-hidden select-none hover:bg-slate-200 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 dark:hover:bg-slate-700/50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
+        "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-bg-button-secondary text-bg-button-secondary flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg px-4 py-3 text-sm outline-hidden select-none hover:bg-slate-200 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 dark:hover:bg-slate-700/50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
         isSelected && "bg-slate-100 dark:bg-slate-800/50",
         className,
       )}
@@ -353,10 +347,10 @@ export function MultiSelectItem({
         onSelect?.(value);
       }}
     >
-      <span className="flex min-w-0 items-center gap-2">{children}</span>
+      <span className="flex min-w-0 flex-1 items-center gap-2">{children}</span>
       <CheckIcon
         className={cn(
-          "text-bg-button-secondary absolute right-4 size-5",
+          "text-bg-button-secondary size-5 shrink-0",
           isSelected ? "opacity-100" : "opacity-0",
         )}
       />
