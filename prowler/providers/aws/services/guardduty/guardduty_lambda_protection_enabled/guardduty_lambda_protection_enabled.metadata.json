@@ -1,32 +1,40 @@
 {
   "Provider": "aws",
   "CheckID": "guardduty_lambda_protection_enabled",
-  "CheckTitle": "Check if GuardDuty Lambda Protection is enabled.",
+  "CheckTitle": "GuardDuty detector has Lambda Protection enabled",
   "CheckType": [
-    "Software and Configuration Checks/AWS Security Best Practices"
+    "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
   ],
   "ServiceName": "guardduty",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:guardduty:region:account-id/detector-id",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsGuardDutyDetector",
-  "Description": "GuardDuty Lambda Protection helps you identify potential security threats when an AWS Lambda function gets invoked. After you enable Lambda Protection, GuardDuty starts monitoring Lambda network activity logs associated with the Lambda functions in your AWS account.",
-  "Risk": "If Lambda Protection is not enabled, GuardDuty will not be able to monitor Lambda network activity logs and may miss potential security threats.",
-  "RelatedUrl": "https://docs.aws.amazon.com/guardduty/latest/ug/lambda-protection.html",
+  "Description": "**Amazon GuardDuty detectors** with **Lambda Protection** enabled analyze **Lambda invocation network activity logs** across your account.\n\nEvaluation determines whether the detector has `Lambda Protection` turned on.",
+  "Risk": "Without **Lambda Protection**, Lambda network traffic is uninspected, enabling:\n- **C2 callbacks** and data exfiltration (confidentiality)\n- Malicious code altering data or configs (integrity)\n- Lateral movement or abuse causing disruption (availability)",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/guardduty-controls.html#guardduty-6",
+    "https://docs.aws.amazon.com/guardduty/latest/ug/configure-lambda-protection-standalone-acc.html",
+    "https://docs.aws.amazon.com/guardduty/latest/ug/lambda-protection.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws guardduty update-detector --detector-id <detector-id> --features Name=LAMBDA_NETWORK_LOGS,Status=ENABLED",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/guardduty-controls.html#guardduty-6",
-      "Terraform": ""
+      "CLI": "aws guardduty update-detector --detector-id <detector-id> --features '[{\"Name\":\"LAMBDA_NETWORK_LOGS\",\"Status\":\"ENABLED\"}]'",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::GuardDuty::Detector\n    Properties:\n      Enable: true\n      Features:\n        - Name: LAMBDA_NETWORK_LOGS  # Critical: selects Lambda Protection feature\n          Status: ENABLED            # Critical: enables Lambda Protection\n```",
+      "Other": "1. Open the AWS Console and go to GuardDuty\n2. In the left pane, select Settings > Lambda Protection\n3. Click Enable\n4. Click Confirm to save",
+      "Terraform": "```hcl\nresource \"aws_guardduty_detector\" \"<example_resource_name>\" {\n  enable = true\n  features {\n    name   = \"LAMBDA_NETWORK_LOGS\"  # Critical: selects Lambda Protection feature\n    status = \"ENABLED\"               # Critical: enables Lambda Protection\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable Lambda Protection in your GuardDuty detector to start monitoring Lambda Network Activity in your account.",
-      "Url": "https://docs.aws.amazon.com/guardduty/latest/ug/configure-lambda-protection-standalone-acc.html"
+      "Text": "Enable **Lambda Protection** on all detectors in every active Region and account.\n\nApply **least privilege** to Lambda roles, restrict egress with network controls, and integrate findings with alerting and response for **defense in depth**. *In multi-account setups*, manage centrally for consistent coverage.",
+      "Url": "https://hub.prowler.com/check/guardduty_lambda_protection_enabled"
     }
   },
-  "Categories": [],
-  "Notes": "",
+  "Categories": [
+    "threat-detection"
+  ],
   "DependsOn": [],
-  "RelatedTo": []
+  "RelatedTo": [],
+  "Notes": ""
 }
