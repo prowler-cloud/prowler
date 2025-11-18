@@ -9,6 +9,7 @@ import pytest
 from botocore.exceptions import ClientError
 from tasks.jobs.export import (
     _compress_output_files,
+    _generate_compliance_output_directory,
     _generate_output_directory,
     _upload_to_s3,
     get_s3_client,
@@ -168,7 +169,7 @@ class TestOutputs:
         provider = "aws"
         expected_timestamp = "20230615103045"
 
-        # Test without compliance_framework (returns standard and compliance paths)
+        # Test _generate_output_directory (returns standard and compliance paths)
         path, compliance = _generate_output_directory(
             base_dir, provider, tenant_id, scan_id
         )
@@ -179,8 +180,8 @@ class TestOutputs:
         assert compliance.endswith(f"{provider}-{expected_timestamp}")
         assert "/compliance/" in compliance
 
-        # Test with compliance_framework="threatscore" (returns single path)
-        threatscore = _generate_output_directory(
+        # Test _generate_compliance_output_directory with "threatscore"
+        threatscore = _generate_compliance_output_directory(
             base_dir, provider, tenant_id, scan_id, compliance_framework="threatscore"
         )
 
@@ -188,8 +189,8 @@ class TestOutputs:
         assert threatscore.endswith(f"{provider}-{expected_timestamp}")
         assert "/threatscore/" in threatscore
 
-        # Test with compliance_framework="ens" (returns single path)
-        ens = _generate_output_directory(
+        # Test _generate_compliance_output_directory with "ens"
+        ens = _generate_compliance_output_directory(
             base_dir, provider, tenant_id, scan_id, compliance_framework="ens"
         )
 
@@ -218,7 +219,7 @@ class TestOutputs:
         provider = "aws/test@check"
         expected_timestamp = "20230615103045"
 
-        # Test provider name sanitization without compliance_framework
+        # Test provider name sanitization with _generate_output_directory
         path, compliance = _generate_output_directory(
             base_dir, provider, tenant_id, scan_id
         )
@@ -228,11 +229,11 @@ class TestOutputs:
         assert path.endswith(f"aws-test-check-{expected_timestamp}")
         assert compliance.endswith(f"aws-test-check-{expected_timestamp}")
 
-        # Test provider name sanitization with compliance_framework
-        threatscore = _generate_output_directory(
+        # Test provider name sanitization with _generate_compliance_output_directory
+        threatscore = _generate_compliance_output_directory(
             base_dir, provider, tenant_id, scan_id, compliance_framework="threatscore"
         )
-        ens = _generate_output_directory(
+        ens = _generate_compliance_output_directory(
             base_dir, provider, tenant_id, scan_id, compliance_framework="ens"
         )
 

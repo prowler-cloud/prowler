@@ -1996,6 +1996,7 @@ class ScanViewSet(BaseRLSViewSet):
         if running_resp:
             return running_resp
 
+        # TODO: add detailed response if the compliance framework is not supported for the provider
         if not scan.output_location:
             return Response(
                 {
@@ -2035,6 +2036,7 @@ class ScanViewSet(BaseRLSViewSet):
         if running_resp:
             return running_resp
 
+        # TODO: add detailed response if the compliance framework is not supported for the provider
         if not scan.output_location:
             return Response(
                 {

@@ -25,7 +25,7 @@ from reportlab.platypus import (
     Table,
     TableStyle,
 )
-from tasks.jobs.export import _generate_output_directory, _upload_to_s3
+from tasks.jobs.export import _generate_compliance_output_directory, _upload_to_s3
 from tasks.utils import batched
 
 from api.db_router import READ_REPLICA_ALIAS
@@ -2849,14 +2849,14 @@ def generate_compliance_reports(
     # Generate output directories for each compliance framework
     try:
         logger.info("Generating output directories")
-        threatscore_path = _generate_output_directory(
+        threatscore_path = _generate_compliance_output_directory(
             DJANGO_TMP_OUTPUT_DIRECTORY,
             provider_uid,
             tenant_id,
             scan_id,
             compliance_framework="threatscore",
         )
-        ens_path = _generate_output_directory(
+        ens_path = _generate_compliance_output_directory(
             DJANGO_TMP_OUTPUT_DIRECTORY,
             provider_uid,
             tenant_id,
