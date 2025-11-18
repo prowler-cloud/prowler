@@ -74,6 +74,35 @@ class IaaSService:
             logger.error(f"Error initializing StackIT IaaS client: {e}")
             return None
 
+    def _handle_api_call(self, api_function, *args, **kwargs):
+        """
+        Centralized API call handler with authentication error detection.
+
+        Args:
+            api_function: The API function to call
+            *args: Positional arguments to pass to the API function
+            **kwargs: Keyword arguments to pass to the API function
+
+        Returns:
+            The API response
+
+        Raises:
+            StackITInvalidTokenError: If authentication fails (401)
+        """
+        try:
+            return api_function(*args, **kwargs)
+        except Exception as e:
+            # Check if this is an authentication error (401 Unauthorized)
+            if hasattr(e, "status") and e.status == 401:
+                logger.error(f"Authentication failed when calling StackIT API: {e}")
+                raise StackITInvalidTokenError(
+                    file=os.path.basename(__file__),
+                    original_exception=e,
+                    message="StackIT API token is invalid or has expired. Please generate a new token.",
+                )
+            # Re-raise other exceptions
+            raise
+
     def _list_security_groups(self):
         """
         List all security groups in the StackIT project and fetch their rules.
@@ -91,8 +120,10 @@ class IaaSService:
 
             # List all security groups using the SDK
             try:
-                # Call the list security groups API
-                response = client.list_security_groups(project_id=self.project_id)
+                # Call the list security groups API with centralized error handling
+                response = self._handle_api_call(
+                    client.list_security_groups, project_id=self.project_id
+                )
 
                 # Extract security groups from response
                 if hasattr(response, "items"):
@@ -108,16 +139,6 @@ class IaaSService:
                     security_groups_list = []
 
             except Exception as e:
-                # Check if this is an authentication error (401 Unauthorized)
-                if hasattr(e, "status") and e.status == 401:
-                    logger.error(
-                        f"Authentication failed when calling StackIT API: {e}"
-                    )
-                    raise StackITInvalidTokenError(
-                        file=os.path.basename(__file__),
-                        original_exception=e,
-                        message="StackIT API token is invalid or has expired. Please generate a new token.",
-                    )
                 logger.error(f"Error listing security groups via SDK: {e}")
                 return
 
@@ -294,8 +315,10 @@ class IaaSService:
                 return
 
             try:
-                # Call the list public IPs API
-                response = client.list_public_ips(project_id=self.project_id)
+                # Call the list public IPs API with centralized error handling
+                response = self._handle_api_call(
+                    client.list_public_ips, project_id=self.project_id
+                )
 
                 # Extract public IPs from response
                 if hasattr(response, "items"):
@@ -335,16 +358,6 @@ class IaaSService:
                 )
 
             except Exception as e:
-                # Check if this is an authentication error (401 Unauthorized)
-                if hasattr(e, "status") and e.status == 401:
-                    logger.error(
-                        f"Authentication failed when calling StackIT API: {e}"
-                    )
-                    raise StackITInvalidTokenError(
-                        file=os.path.basename(__file__),
-                        original_exception=e,
-                        message="StackIT API token is invalid or has expired. Please generate a new token.",
-                    )
                 logger.error(f"Error listing public IPs via SDK: {e}")
                 return
 
@@ -367,8 +380,10 @@ class IaaSService:
                 return
 
             try:
-                # Call the list project NICs API
-                response = client.list_project_nics(project_id=self.project_id)
+                # Call the list project NICs API with centralized error handling
+                response = self._handle_api_call(
+                    client.list_project_nics, project_id=self.project_id
+                )
 
                 # Extract NICs from response
                 if hasattr(response, "items"):
@@ -408,16 +423,6 @@ class IaaSService:
                 )
 
             except Exception as e:
-                # Check if this is an authentication error (401 Unauthorized)
-                if hasattr(e, "status") and e.status == 401:
-                    logger.error(
-                        f"Authentication failed when calling StackIT API: {e}"
-                    )
-                    raise StackITInvalidTokenError(
-                        file=os.path.basename(__file__),
-                        original_exception=e,
-                        message="StackIT API token is invalid or has expired. Please generate a new token.",
-                    )
                 logger.error(f"Error listing server NICs via SDK: {e}")
                 return
 
