@@ -1273,7 +1273,7 @@ class TestGenerateComplianceReportsOptimized:
     @patch("tasks.jobs.report._upload_to_s3")
     @patch("tasks.jobs.report.generate_ens_report")
     @patch("tasks.jobs.report.generate_threatscore_report")
-    @patch("tasks.jobs.report._generate_output_directory")
+    @patch("tasks.jobs.report._generate_compliance_output_directory")
     @patch("tasks.jobs.report._aggregate_requirement_statistics_from_database")
     @patch("tasks.jobs.report.Provider")
     @patch("tasks.jobs.report.ScanSummary")
