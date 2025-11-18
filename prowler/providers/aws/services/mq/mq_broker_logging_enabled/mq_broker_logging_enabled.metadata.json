@@ -1,28 +1,41 @@
 {
   "Provider": "aws",
   "CheckID": "mq_broker_logging_enabled",
-  "CheckTitle": "MQ brokers should stream audit logs to CloudWatch.",
+  "CheckTitle": "MQ broker has general logging enabled and, for ActiveMQ, audit logging enabled",
   "CheckType": [
-    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
   ],
   "ServiceName": "mq",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:mq:region:account-id:broker:broker-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsAmazonMQBroker",
-  "Description": "Ensure MQ brokers are configured to stream audit logs to CloudWatch to enhance monitoring and detect security-related issues.",
-  "Risk": "Without streaming audit logs to CloudWatch, monitoring and alerting on suspicious activity or security incidents is limited. This reduces visibility into the broker's operations and potential security breaches.",
-  "RelatedUrl": "https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/security-logging-monitoring.html",
+  "Description": "**Amazon MQ brokers** have logging to **CloudWatch Logs** enabled per engine type: **ActiveMQ** requires both `general` and `audit` logs; **RabbitMQ** requires `general` logs.",
+  "Risk": "Missing broker logs creates blind spots in authentication events, administrative changes, and broker failures. Adversaries can act without detection, enabling unauthorized access and message tampering (confidentiality/integrity) and hindering incident response and root-cause analysis (availability).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/configure-logging-monitoring-activemq.html",
+    "https://www.linkedin.com/pulse/cracking-mystery-why-amazon-mq-activemq-logs-werent-showing-anupoju-ldszc",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/mq-controls.html#mq-2",
+    "https://kbilel.com/2021/11/04/implement-message-sending-and-receiving-with-spring-boot-amazon-mq-activemq/",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MQ/log-exports.html",
+    "https://support.icompaas.com/support/solutions/articles/62000233373-mq-brokers-should-stream-audit-logs-to-cloudwatch",
+    "https://docs.aws.amazon.com/cli/latest/reference/mq/create-broker.html",
+    "https://bobcares.com/blog/amazon-mq-for-activemq-troubleshooting/",
+    "https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/security-logging-monitoring.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws mq update-broker --broker-id <broker-id> --logs 'audit=true'",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/logging-policies/bc_aws_logging_10/#terraform",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/mq-controls.html#mq-2",
-      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MQ/log-exports.html"
+      "CLI": "aws mq update-broker --broker-id <example_resource_id> --logs Audit=true,General=true",
+      "NativeIaC": "```yaml\n# CloudFormation: Enable Amazon MQ logging\nResources:\n  <example_resource_name>:\n    Type: AWS::AmazonMQ::Broker\n    Properties:\n      BrokerName: <example_resource_name>\n      EngineType: ACTIVEMQ\n      HostInstanceType: mq.t3.micro\n      DeploymentMode: SINGLE_INSTANCE\n      PubliclyAccessible: true\n      Users:\n        - Username: <example_user>\n          Password: <example_password>\n      Logs:\n        General: true  # Critical: enables general logs to CloudWatch\n        Audit: true    # Critical: enables audit logs (required for ActiveMQ)\n```",
+      "Other": "1. In the AWS Console, go to Amazon MQ > Brokers\n2. Select <example_resource_name> and choose Edit\n3. In Log settings:\n   - For ActiveMQ: enable General logs and Audit logs\n   - For RabbitMQ: enable General logs only\n4. Save changes and reboot if prompted",
+      "Terraform": "```hcl\n# Terraform: Enable Amazon MQ logging\nresource \"aws_mq_broker\" \"<example_resource_name>\" {\n  broker_name         = \"<example_resource_name>\"\n  engine_type         = \"ACTIVEMQ\"\n  host_instance_type  = \"mq.t3.micro\"\n  deployment_mode     = \"SINGLE_INSTANCE\"\n  publicly_accessible = true\n\n  user {\n    username = \"<example_user>\"\n    password = \"<example_password>\"\n  }\n\n  logs {\n    general = true  # Critical: enables general logs\n    audit   = true  # Critical: enables audit logs (ActiveMQ)\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure MQ brokers are configured to stream audit logs to CloudWatch to enhance monitoring and detect security-related issues.",
-      "Url": "https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/configure-logging-monitoring-activemq.html"
+      "Text": "Enable centralized **CloudWatch Logs** for brokers. For **ActiveMQ**, turn on both `general` and `audit` logs; for **RabbitMQ**, enable `general` logs.\n\nApply **least privilege** to log access, set retention, and create alerts for anomalous events to strengthen **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/mq_broker_logging_enabled"
     }
   },
   "Categories": [
