@@ -14,13 +14,14 @@ import {
 } from "@/components/shadcn";
 import { EntityInfoShort } from "@/components/ui/entities/entity-info-short";
 import { useUrlFilters } from "@/hooks/use-url-filters";
-import { isScanEntity } from "@/lib/helper-filters";
+import { isConnectionStatus, isScanEntity } from "@/lib/helper-filters";
 import {
   FilterEntity,
   FilterOption,
   ProviderEntity,
   ScanEntity,
 } from "@/types";
+import { ProviderConnectionStatus } from "@/types/providers";
 
 export interface DataTableFilterCustomProps {
   filters: FilterOption[];
@@ -42,10 +43,14 @@ export const DataTableFilterCustom = ({
     return entry ? entry[value] : undefined;
   };
 
-  // Render custom content for entity (scan or provider)
+  // Render custom content for entity (scan, provider, or connection status)
   const renderEntityContent = (entity: FilterEntity) => {
     if (isScanEntity(entity as ScanEntity)) {
       return <ComplianceScanInfo scan={entity as ScanEntity} />;
+    }
+    if (isConnectionStatus(entity)) {
+      const connectionStatus = entity as ProviderConnectionStatus;
+      return <span>{connectionStatus.label}</span>;
     }
     // Provider entity
     const providerEntity = entity as ProviderEntity;
