@@ -124,12 +124,13 @@ class StackitProvider(Provider):
                 message=f"Failed to set up StackIT session: {str(e)}",
             )
 
-        # 5) Create StackITIdentityInfo object
+        # 5) Create StackITIdentityInfo object and fetch project name
         try:
+            project_name = self._get_project_name()
             self._identity = StackITIdentityInfo(
                 project_id=self._project_id,
-                project_name="",  # Will be populated by service calls if available
-                account_id="",  # Will be populated by service calls if available
+                project_name=project_name,
+                account_id="",  # Not available in StackIT SDK
             )
         except Exception as e:
             logger.critical(f"Error setting up StackIT identity: {e}")
@@ -253,6 +254,49 @@ class StackitProvider(Provider):
         except Exception as e:
             logger.critical(f"Error in setup_session: {e}")
             raise e
+
+    def _get_project_name(self) -> str:
+        """
+        Fetch the project name from the StackIT Resource Manager API.
+
+        Returns:
+            str: The project name, or empty string if unavailable
+        """
+        try:
+            from stackit.core.configuration import Configuration
+            from stackit.resourcemanager import DefaultApi
+
+            # Configure SDK with API token (thread-safe)
+            config = Configuration(service_account_token=self._api_token)
+            client = DefaultApi(config)
+
+            # Fetch project details
+            response = client.get_project(project_id=self._project_id)
+
+            # Extract project name from response
+            if hasattr(response, "name"):
+                project_name = response.name
+            elif isinstance(response, dict):
+                project_name = response.get("name", "")
+            else:
+                project_name = ""
+
+            logger.info(f"Successfully retrieved project name: {project_name}")
+            return project_name
+
+        except ImportError:
+            logger.warning(
+                "stackit-resourcemanager package not available. "
+                "Project name will not be displayed in reports. "
+                "Install with: pip install stackit-resourcemanager"
+            )
+            return ""
+        except Exception as e:
+            logger.warning(
+                f"Unable to fetch project name from StackIT API: {e}. "
+                f"Project name will not be displayed in reports."
+            )
+            return ""
 
     @staticmethod
     def test_connection(

@@ -304,14 +304,17 @@ Both are flagged as unrestricted. A `null` value is **more permissive** than an 
 
 The StackIT provider requires the following Python packages (automatically installed with Prowler):
 
-- **stackit-core** (v0.1.0+): Core SDK for StackIT API authentication and configuration
-- **stackit-iaas** (v0.1.0+): IaaS service SDK for managing compute resources
+- **stackit-core** (v0.2.0+): Core SDK for StackIT API authentication and configuration
+- **stackit-iaas** (v0.9.0+): IaaS service SDK for managing compute resources
+- **stackit-resourcemanager** (v0.6.0+): Resource Manager SDK for fetching project metadata (e.g., project names)
 
 These dependencies are defined in `pyproject.toml` and installed automatically with:
 
 ```bash
 poetry install
 ```
+
+**Note:** The `stackit-resourcemanager` package enables automatic retrieval of project names for display in reports. If this package is not available, Prowler will still function normally but project names will be empty in the output.
 
 ## Region Support
 
