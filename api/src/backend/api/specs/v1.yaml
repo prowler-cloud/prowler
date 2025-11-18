@@ -5120,6 +5120,90 @@ paths:
               schema:
                 $ref: '#/components/schemas/OverviewServiceResponse'
           description: ''
+  /api/v1/overviews/threatscore:
+    get:
+      operationId: overviews_threatscore_retrieve
+      description: Retrieve ThreatScore metrics. By default, returns the latest snapshot
+        for each provider. Use snapshot_id to retrieve a specific historical snapshot.
+      summary: Get ThreatScore snapshots
+      parameters:
+      - in: query
+        name: fields[threatscore-snapshots]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - inserted_at
+            - scan
+            - provider
+            - compliance_id
+            - overall_score
+            - score_delta
+            - section_scores
+            - critical_requirements
+            - total_requirements
+            - passed_requirements
+            - failed_requirements
+            - manual_requirements
+            - total_findings
+            - passed_findings
+            - failed_findings
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - scan
+            - provider
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      - in: query
+        name: provider_id
+        schema:
+          type: string
+          format: uuid
+        description: Filter by specific provider ID
+      - in: query
+        name: provider_id__in
+        schema:
+          type: string
+        description: Filter by multiple provider IDs (comma-separated UUIDs)
+      - in: query
+        name: provider_type
+        schema:
+          type: string
+        description: Filter by provider type (aws, azure, gcp, etc.)
+      - in: query
+        name: provider_type__in
+        schema:
+          type: string
+        description: Filter by multiple provider types (comma-separated)
+      - in: query
+        name: snapshot_id
+        schema:
+          type: string
+          format: uuid
+        description: Retrieve a specific snapshot by ID. If not provided, returns
+          latest snapshots.
+      tags:
+      - Overviews
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/ThreatScoreSnapshotResponse'
+          description: ''
   /api/v1/processors:
     get:
       operationId: processors_list
@@ -6762,6 +6846,60 @@ paths:
               schema:
                 $ref: '#/components/schemas/ResourceResponse'
           description: ''
+  /api/v1/resources/{id}/timeline:
+    get:
+      operationId: resources_timeline_retrieve
+      description: Retrieve CloudTrail events showing modification history for an
+        AWS resource. Returns timeline of who modified the resource and when. Only
+        available for AWS resources.
+      summary: Get CloudTrail timeline for a resource
+      parameters:
+      - in: query
+        name: fields[resource-timeline]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - resource_id
+            - resource_name
+            - resource_type
+            - region
+            - lookback_days
+            - event_count
+            - events
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[lookback_days]
+        schema:
+          type: integer
+        description: 'Number of days to look back (default: 90, min: 1, max: 365)'
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this resource.
+        required: true
+      tags:
+      - Resource
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/SerializerMetaclassResponse'
+          description: ''
+        '400':
+          description: Invalid provider or parameters
+        '401':
+          description: AWS credentials not available
+        '503':
+          description: AWS service unavailable
   /api/v1/resources/latest:
     get:
       operationId: resources_latest_retrieve
@@ -17218,6 +17356,48 @@ components:
           $ref: '#/components/schemas/Resource'
       required:
       - data
+    ResourceTimeline:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - resource-timeline
+        id: {}
+        attributes:
+          type: object
+          properties:
+            resource_id:
+              type: string
+            resource_name:
+              type: string
+            resource_type:
+              type: string
+            region:
+              type: string
+            lookback_days:
+              type: integer
+            event_count:
+              type: integer
+            events:
+              type: array
+              items:
+                $ref: '#/components/schemas/TimelineEvent'
+          required:
+          - resource_id
+          - resource_name
+          - resource_type
+          - region
+          - lookback_days
+          - event_count
+          - events
     Role:
       type: object
       required:
@@ -18581,6 +18761,194 @@ components:
           $ref: '#/components/schemas/Tenant'
       required:
       - data
+    ThreatScoreSnapshot:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - threatscore-snapshots
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+              readOnly: true
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            compliance_id:
+              type: string
+              readOnly: true
+              description: Compliance framework ID (e.g., 'prowler_threatscore_aws')
+            overall_score:
+              type: string
+              format: decimal
+              pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+              readOnly: true
+              description: Overall ThreatScore percentage (0-100)
+            score_delta:
+              type: string
+              format: decimal
+              pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+              readOnly: true
+              nullable: true
+              description: Score change compared to previous snapshot (positive =
+                improvement)
+            section_scores:
+              readOnly: true
+              description: ThreatScore breakdown by section
+            critical_requirements:
+              readOnly: true
+              description: List of critical failed requirements (risk >= 4)
+            total_requirements:
+              type: integer
+              readOnly: true
+              description: Total number of requirements evaluated
+            passed_requirements:
+              type: integer
+              readOnly: true
+              description: Number of requirements with PASS status
+            failed_requirements:
+              type: integer
+              readOnly: true
+              description: Number of requirements with FAIL status
+            manual_requirements:
+              type: integer
+              readOnly: true
+              description: Number of requirements with MANUAL status
+            total_findings:
+              type: integer
+              readOnly: true
+              description: Total number of findings across all requirements
+            passed_findings:
+              type: integer
+              readOnly: true
+              description: Number of findings with PASS status
+            failed_findings:
+              type: integer
+              readOnly: true
+              description: Number of findings with FAIL status
+        relationships:
+          type: object
+          properties:
+            scan:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - scans
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              readOnly: true
+            provider:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - providers
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              readOnly: true
+    ThreatScoreSnapshotResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ThreatScoreSnapshot'
+      required:
+      - data
+    TimelineEvent:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - timeline-events
+        id: {}
+        attributes:
+          type: object
+          properties:
+            event_time:
+              type: string
+              format: date-time
+            event_name:
+              type: string
+            event_source:
+              type: string
+            username:
+              type: string
+            user_identity_type:
+              type: string
+            source_ip_address:
+              type: string
+              nullable: true
+            user_agent:
+              type: string
+              nullable: true
+            request_parameters:
+              nullable: true
+            response_elements:
+              nullable: true
+            error_code:
+              type: string
+              nullable: true
+            error_message:
+              type: string
+              nullable: true
+          required:
+          - event_time
+          - event_name
+          - event_source
+          - username
+          - user_identity_type
     Token:
       type: object
       required:

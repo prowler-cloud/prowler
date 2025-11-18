@@ -109,8 +109,6 @@ REST_FRAMEWORK = {
     ),
     "TEST_REQUEST_DEFAULT_FORMAT": "vnd.api+json",
     "JSON_API_UNIFORM_EXCEPTIONS": True,
-    # Allow custom query parameters for specific endpoints
-    "ALLOWED_QUERY_PARAMETERS": ["lookback_days"],
     "DEFAULT_THROTTLE_CLASSES": [
         "rest_framework.throttling.ScopedRateThrottle",
     ],
