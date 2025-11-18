@@ -37,25 +37,24 @@ class cloudstorage_audit_logs_enabled(Check):
 
             required_logs = {"DATA_READ", "DATA_WRITE"}
 
-            if required_logs.issubset(log_types_set):
-                report.status = "PASS"
-                report.status_extended = (
-                    f"Project {project.id} has Data Access audit logs "
-                    f"(DATA_READ and DATA_WRITE) enabled for Cloud Storage."
-                )
+            if project.audit_logging:
+                if required_logs.issubset(log_types_set):
+                    report.status = "PASS"
+                    report.status_extended = f"Project {project.id} has Data Access audit logs (DATA_READ and DATA_WRITE) enabled for Cloud Storage."
+                else:
+                    report.status = "FAIL"
+                    if not log_types_set:
+                        report.status_extended = f"Project {project.id} has Audit Logs enabled for other services but not for Cloud Storage."
+                    else:
+                        report.status_extended = (
+                            f"Project {project.id} has Audit Logs enabled for Cloud Storage but is missing some required log types"
+                            f"(missing: {', '.join(sorted(required_logs - log_types_set))})."
+                        )
             else:
                 report.status = "FAIL"
-                if not log_types_set:
-                    report.status_extended = (
-                        f"Project {project.id} does not have Data Access audit logs "
-                        f"enabled for Cloud Storage."
-                    )
-                else:
-                    missing_logs = required_logs - log_types_set
-                    report.status_extended = (
-                        f"Project {project.id} is missing Data Access audit logs "
-                        f"for Cloud Storage (missing: {', '.join(sorted(missing_logs))})."
-                    )
+                report.status_extended = (
+                    f"Project {project.id} does not have Audit Logs enabled."
+                )
 
             findings.append(report)
 
