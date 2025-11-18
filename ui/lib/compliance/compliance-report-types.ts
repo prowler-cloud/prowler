@@ -12,6 +12,7 @@
 export const COMPLIANCE_REPORT_TYPES = {
   THREATSCORE: "threatscore",
   ENS: "ens",
+  NIS2: "nis2",
   // Future report types can be added here:
   // CIS: "cis",
   // NIST: "nist",
@@ -32,6 +33,7 @@ export const COMPLIANCE_REPORT_DISPLAY_NAMES: Record<
 > = {
   [COMPLIANCE_REPORT_TYPES.THREATSCORE]: "ThreatScore",
   [COMPLIANCE_REPORT_TYPES.ENS]: "ENS RD2022",
+  [COMPLIANCE_REPORT_TYPES.NIS2]: "NIS2",
   // Add display names for future report types here
 };
 
@@ -44,6 +46,7 @@ export const COMPLIANCE_REPORT_BUTTON_LABELS: Record<
 > = {
   [COMPLIANCE_REPORT_TYPES.THREATSCORE]: "PDF ThreatScore Report",
   [COMPLIANCE_REPORT_TYPES.ENS]: "PDF ENS Report",
+  [COMPLIANCE_REPORT_TYPES.NIS2]: "PDF NIS2 Report",
   // Add button labels for future report types here
 };
 
@@ -54,6 +57,7 @@ export const COMPLIANCE_REPORT_BUTTON_LABELS: Record<
 const FRAMEWORK_TO_REPORT_TYPE: Record<string, ComplianceReportType> = {
   ProwlerThreatScore: COMPLIANCE_REPORT_TYPES.THREATSCORE,
   ENS: COMPLIANCE_REPORT_TYPES.ENS,
+  NIS2: COMPLIANCE_REPORT_TYPES.NIS2,
   // Add new framework mappings here as PDF support is added:
   // "CIS-1.5": COMPLIANCE_REPORT_TYPES.CIS,
   // "NIST-800-53": COMPLIANCE_REPORT_TYPES.NIST,
