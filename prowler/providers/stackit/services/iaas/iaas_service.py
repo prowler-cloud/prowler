@@ -203,6 +203,15 @@ class IaaSService:
                             if hasattr(port_range_obj, "max"):
                                 port_max = port_range_obj.max
 
+                        # Extract remote_security_group_id (try both snake_case and camelCase)
+                        remote_sg_id = getattr(
+                            rule_data, "remote_security_group_id", None
+                        )
+                        if remote_sg_id is None:
+                            remote_sg_id = getattr(
+                                rule_data, "remoteSecurityGroupId", None
+                            )
+
                         rule = SecurityGroupRule(
                             id=getattr(rule_data, "id", ""),
                             direction=getattr(rule_data, "direction", ""),
@@ -211,9 +220,7 @@ class IaaSService:
                             port_range_min=port_min,
                             port_range_max=port_max,
                             description=getattr(rule_data, "description", None),
-                            remote_security_group_id=getattr(
-                                rule_data, "remote_security_group_id", None
-                            ),
+                            remote_security_group_id=remote_sg_id,
                         )
                     elif isinstance(rule_data, dict):
                         # Handle dict response (if API returns dict instead of objects)
@@ -231,6 +238,11 @@ class IaaSService:
                             port_min = port_range_data.get("min")
                             port_max = port_range_data.get("max")
 
+                        # Extract remote_security_group_id (try both snake_case and camelCase)
+                        remote_sg_id = rule_data.get("remote_security_group_id")
+                        if remote_sg_id is None:
+                            remote_sg_id = rule_data.get("remoteSecurityGroupId")
+
                         rule = SecurityGroupRule(
                             id=rule_data.get("id", ""),
                             direction=rule_data.get("direction", ""),
@@ -239,9 +251,7 @@ class IaaSService:
                             port_range_min=port_min,
                             port_range_max=port_max,
                             description=rule_data.get("description"),
-                            remote_security_group_id=rule_data.get(
-                                "remote_security_group_id"
-                            ),
+                            remote_security_group_id=remote_sg_id,
                         )
                     else:
                         continue
