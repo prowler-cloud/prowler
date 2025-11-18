@@ -23,18 +23,19 @@ export const useQueryBuilder = (availableQueries: AttackPathQuery[]) => {
 
       if (query) {
         query.attributes.parameters.forEach((param) => {
-          let fieldSchema: z.ZodTypeAny = z.string();
+          let fieldSchema: z.ZodTypeAny = z
+            .string()
+            .min(1, `${param.label} is required`);
 
           if (param.data_type === "number") {
-            fieldSchema = z.coerce.number();
+            fieldSchema = z.coerce.number().refine((val) => val >= 0, {
+              message: `${param.label} must be a non-negative number`,
+            });
           } else if (param.data_type === "boolean") {
             fieldSchema = z.boolean().default(false);
           }
 
-          if (!param.required) {
-            fieldSchema = fieldSchema.optional();
-          }
-
+          // All query parameters are required regardless of param.required flag
           schemaObject[param.name] = fieldSchema;
         });
       }

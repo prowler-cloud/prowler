@@ -109,13 +109,27 @@ export default function QueryBuilderPage() {
     methods.reset();
   };
 
+  const showErrorToast = (title: string, description: string) => {
+    toast({
+      title,
+      description,
+      variant: "destructive",
+    });
+  };
+
   const handleExecuteQuery = async () => {
     if (!scanId || !selectedQueryId) {
-      toast({
-        title: "Error",
-        description: "Please select both a scan and a query",
-        variant: "destructive",
-      });
+      showErrorToast("Error", "Please select both a scan and a query");
+      return;
+    }
+
+    // Validate form before executing query
+    const isValid = await methods.trigger();
+    if (!isValid) {
+      showErrorToast(
+        "Validation Error",
+        "Please fill in all required parameters",
+      );
       return;
     }
 
@@ -135,21 +149,13 @@ export default function QueryBuilderPage() {
         });
       } else {
         graphState.setError("No data returned from query");
-        toast({
-          title: "Error",
-          description: "Query returned no data",
-          variant: "destructive",
-        });
+        showErrorToast("Error", "Query returned no data");
       }
     } catch (error) {
       const errorMsg =
         error instanceof Error ? error.message : "Failed to execute query";
       graphState.setError(errorMsg);
-      toast({
-        title: "Error",
-        description: errorMsg,
-        variant: "destructive",
-      });
+      showErrorToast("Error", errorMsg);
     } finally {
       graphState.stopLoading();
     }
