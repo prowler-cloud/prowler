@@ -49,6 +49,14 @@
   },
   {
     "section": "dependencies",
+    "name": "@langchain/mcp-adapters",
+    "from": "1.0.0",
+    "to": "1.0.0",
+    "strategy": "installed",
+    "generatedAt": "2025-11-18T09:31:32.289Z"
+  },
+  {
+    "section": "dependencies",
     "name": "@langchain/openai",
     "from": "1.1.1",
     "to": "1.1.1",
