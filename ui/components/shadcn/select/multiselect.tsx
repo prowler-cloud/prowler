@@ -412,7 +412,7 @@ export function MultiSelectSelectAll({
       aria-selected={allSelected}
       data-slot="multiselect-select-all"
       className={cn(
-        "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-bg-button-secondary text-bg-button-secondary relative flex w-full cursor-pointer items-center gap-2 rounded-lg px-4 py-3 text-sm outline-hidden select-none hover:bg-slate-200 dark:hover:bg-slate-700/50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
+        "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-bg-button-secondary text-bg-button-secondary flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg px-4 py-3 text-sm outline-hidden select-none hover:bg-slate-200 dark:hover:bg-slate-700/50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
         allSelected && "bg-slate-100 dark:bg-slate-800/50",
         "font-semibold",
         className,
@@ -427,10 +427,10 @@ export function MultiSelectSelectAll({
       tabIndex={0}
       {...props}
     >
-      <span className="flex min-w-0 items-center gap-2">{children}</span>
+      <span className="flex min-w-0 flex-1 items-center gap-2">{children}</span>
       <CheckIcon
         className={cn(
-          "text-bg-button-secondary absolute right-4 size-5",
+          "text-bg-button-secondary size-5 shrink-0",
           allSelected ? "opacity-100" : "opacity-0",
         )}
       />

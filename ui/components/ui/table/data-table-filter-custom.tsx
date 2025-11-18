@@ -1,6 +1,6 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 import { ComplianceScanInfo } from "@/components/compliance/compliance-header/compliance-scan-info";
 import {
@@ -32,6 +32,7 @@ export const DataTableFilterCustom = ({
 }: DataTableFilterCustomProps) => {
   const { updateFilter } = useUrlFilters();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
 
   // Helper function to get entity from valueLabelMapping
   const getEntityForValue = (
@@ -88,17 +89,27 @@ export const DataTableFilterCustom = ({
 
   // Sort filters by index property, with fallback to original order for filters without index
   const sortedFilters = () => {
-    return [...filters].sort((a, b) => {
-      // If both have index, sort by index
-      if (a.index !== undefined && b.index !== undefined) {
-        return a.index - b.index;
-      }
-      // If only one has index, prioritize the one with index
-      if (a.index !== undefined) return -1;
-      if (b.index !== undefined) return 1;
-      // If neither has index, maintain original order
-      return 0;
-    });
+    const isCompliancePage = pathname.startsWith("/compliance");
+
+    return [...filters]
+      .filter((filter) => {
+        // If we're on /compliance page and filter has only one value, hide it
+        if (isCompliancePage && filter.values.length === 1) {
+          return false;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        // If both have index, sort by index
+        if (a.index !== undefined && b.index !== undefined) {
+          return a.index - b.index;
+        }
+        // If only one has index, prioritize the one with index
+        if (a.index !== undefined) return -1;
+        if (b.index !== undefined) return 1;
+        // If neither has index, maintain original order
+        return 0;
+      });
   };
 
   const pushDropdownFilter = (filter: FilterOption, values: string[]) => {
