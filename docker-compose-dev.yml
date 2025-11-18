@@ -132,7 +132,11 @@ services:
         required: false
     ports:
       - "${MCP_SERVER_PORT:-8000}:8000"
-    command: ["main", "--transport", "http", "--host", "0.0.0.0", "--port", "8000"]
+    volumes:
+      - ./mcp_server/prowler_mcp_server:/app/prowler_mcp_server
+      - ./mcp_server/pyproject.toml:/app/pyproject.toml
+      - ./mcp_server/entrypoint.sh:/app/entrypoint.sh
+    command: ["uvicorn", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8000/health || exit 1"]
       interval: 10s
