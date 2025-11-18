@@ -33,12 +33,19 @@ export const SocialButtons = ({
       <span>
         <Button
           variant="outline"
-          className="w-full gap-2"
-          asChild
+          className="w-full"
+          asChild={isGoogleOAuthEnabled}
           disabled={!isGoogleOAuthEnabled}
         >
-          <a href={googleAuthUrl}>
-            <Icon icon="flat-color-icons:google" width={24} />
+          <a href={googleAuthUrl} className="flex items-center gap-2">
+            <Icon
+              icon={
+                isGoogleOAuthEnabled
+                  ? "flat-color-icons:google"
+                  : "simple-icons:google"
+              }
+              width={24}
+            />
             Continue with Google
           </a>
         </Button>
@@ -61,12 +68,12 @@ export const SocialButtons = ({
       <span>
         <Button
           variant="outline"
-          className="w-full gap-2"
-          asChild
+          className="w-full"
+          asChild={isGithubOAuthEnabled}
           disabled={!isGithubOAuthEnabled}
         >
-          <a href={githubAuthUrl}>
-            <Icon className="text-default-500" icon="fe:github" width={24} />
+          <a href={githubAuthUrl} className="flex items-center gap-2">
+            <Icon icon="simple-icons:github" width={24} />
             Continue with Github
           </a>
         </Button>
