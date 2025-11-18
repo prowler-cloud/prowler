@@ -16,6 +16,7 @@ from prowler.providers.common.provider import Provider
 from prowler.providers.stackit.exceptions.exceptions import (
     StackITAPIError,
     StackITInvalidProjectIdError,
+    StackITInvalidTokenError,
     StackITNonExistentTokenError,
     StackITSetUpIdentityError,
     StackITSetUpSessionError,
@@ -131,6 +132,9 @@ class StackitProvider(Provider):
                 project_id=self._project_id,
                 project_name=project_name,
             )
+        except StackITInvalidTokenError:
+            # Re-raise authentication errors without wrapping to avoid verbose output
+            raise
         except Exception as e:
             logger.critical(f"Error setting up StackIT identity: {e}")
             raise StackITSetUpIdentityError(
@@ -273,15 +277,30 @@ class StackitProvider(Provider):
             StackITInvalidTokenError: If the API token is invalid or expired
         """
         try:
+            import contextlib
+            import sys
+
             from stackit.core.configuration import Configuration
             from stackit.resourcemanager import DefaultApi
 
-            # Configure SDK with API token (thread-safe)
-            config = Configuration(service_account_token=self._api_token)
-            client = DefaultApi(config)
+            # Suppress SDK stderr warnings during initialization
+            @contextlib.contextmanager
+            def suppress_stderr():
+                original_stderr = sys.stderr
+                try:
+                    sys.stderr = open(os.devnull, 'w')
+                    yield
+                finally:
+                    sys.stderr.close()
+                    sys.stderr = original_stderr
 
-            # Fetch project details - this validates the token
-            response = client.get_project(id=self._project_id)
+            # Configure SDK with API token (thread-safe), suppressing warnings
+            with suppress_stderr():
+                config = Configuration(service_account_token=self._api_token)
+                client = DefaultApi(config)
+
+                # Fetch project details - this validates the token
+                response = client.get_project(id=self._project_id)
 
             # Extract project name from response
             if hasattr(response, "name"):
@@ -306,17 +325,17 @@ class StackitProvider(Provider):
             if hasattr(e, "status") and e.status == 401:
                 logger.critical(
                     "StackIT API token is invalid or has expired. "
-                    "Please generate a new token using: "
-                    "stackit auth activate-service-account --service-account-key-path <path> --only-print-access-token"
+                    "Generate a new token with: stackit auth activate-service-account --service-account-key-path <path> --only-print-access-token"
                 )
                 from prowler.providers.stackit.exceptions.exceptions import (
                     StackITInvalidTokenError,
                 )
 
+                # Create a clean error message without HTTP details
                 raise StackITInvalidTokenError(
                     file=os.path.basename(__file__),
-                    original_exception=e,
-                    message="StackIT API token is invalid or has expired. Please generate a new token.",
+                    original_exception=None,  # Don't include verbose HTTP details
+                    message="Invalid or expired API token",
                 )
             logger.warning(
                 f"Unable to fetch project name from StackIT API: {e}. "
