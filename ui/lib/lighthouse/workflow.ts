@@ -1,8 +1,12 @@
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { createSupervisor } from "@langchain/langgraph-supervisor";
-import { ChatOpenAI } from "@langchain/openai";
 
-import { getAIKey, getLighthouseConfig } from "@/actions/lighthouse/lighthouse";
+import {
+  getProviderCredentials,
+  getTenantConfig,
+} from "@/actions/lighthouse/lighthouse";
+import type { ProviderType } from "@/lib/lighthouse/llm-factory";
+import { createLLM } from "@/lib/lighthouse/llm-factory";
 import {
   complianceAgentPrompt,
   findingsAgentPrompt,
@@ -49,26 +53,51 @@ import {
 } from "@/lib/lighthouse/tools/users";
 import { getModelParams } from "@/lib/lighthouse/utils";
 
-export async function initLighthouseWorkflow() {
-  const apiKey = await getAIKey();
-  const lighthouseConfig = await getLighthouseConfig();
+export interface RuntimeConfig {
+  model?: string;
+  provider?: string;
+}
 
-  const modelParams = getModelParams(lighthouseConfig);
+export async function initLighthouseWorkflow(runtimeConfig?: RuntimeConfig) {
+  const tenantConfigResult = await getTenantConfig();
+  const tenantConfig = tenantConfigResult?.data?.attributes;
 
-  // Initialize models without API keys
-  const llm = new ChatOpenAI({
-    model: lighthouseConfig.model,
-    apiKey: apiKey,
+  // Get the default provider and model
+  const defaultProvider = tenantConfig?.default_provider || "openai";
+  const defaultModels = tenantConfig?.default_models || {};
+  const defaultModel = defaultModels[defaultProvider] || "gpt-4o";
+
+  // Determine provider type and model ID from runtime config or defaults
+  const providerType = (runtimeConfig?.provider ||
+    defaultProvider) as ProviderType;
+  const modelId = runtimeConfig?.model || defaultModel;
+
+  // Get provider credentials and configuration
+  const providerConfig = await getProviderCredentials(providerType);
+  const { credentials, base_url: baseUrl } = providerConfig;
+
+  // Get model parameters
+  const modelParams = getModelParams({ model: modelId });
+
+  // Initialize models using the LLM factory
+  const llm = createLLM({
+    provider: providerType,
+    model: modelId,
+    credentials,
+    baseUrl,
+    streaming: true,
     tags: ["agent"],
-    ...modelParams,
+    modelParams,
   });
 
-  const supervisorllm = new ChatOpenAI({
-    model: lighthouseConfig.model,
-    apiKey: apiKey,
+  const supervisorllm = createLLM({
+    provider: providerType,
+    model: modelId,
+    credentials,
+    baseUrl,
     streaming: true,
     tags: ["supervisor"],
-    ...modelParams,
+    modelParams,
   });
 
   const providerAgent = createReactAgent({

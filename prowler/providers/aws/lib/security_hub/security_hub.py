@@ -256,7 +256,7 @@ class SecurityHub:
                 security_hub_client.list_enabled_products_for_import()
             ):
                 logger.warning(
-                    f"Security Hub is enabled in {region} but Prowler integration does not accept findings. More info: https://docs.prowler.cloud/en/latest/tutorials/aws/securityhub/"
+                    f"Security Hub is enabled in {region} but Prowler integration does not accept findings. More info: https://docs.prowler.com/user-guide/providers/aws/securityhub#aws-security-hub-integration-with-prowler"
                 )
                 return region, None
             else:

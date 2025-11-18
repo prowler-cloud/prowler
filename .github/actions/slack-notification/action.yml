@@ -12,7 +12,7 @@ inputs:
     required: false
     default: ''
   step-outcome:
-    description: 'Outcome of a step to determine status (success/failure) - automatically sets STATUS_EMOJI, STATUS_TEXT, and STATUS_COLOR env vars'
+    description: 'Outcome of a step to determine status (success/failure) - automatically sets STATUS_TEXT and STATUS_COLOR env vars'
     required: false
     default: ''
 outputs:
@@ -27,16 +27,14 @@ runs:
       shell: bash
       run: |
         if [[ "${{ inputs.step-outcome }}" == "success" ]]; then
-          echo "STATUS_EMOJI=[✓]" >> $GITHUB_ENV
-          echo "STATUS_TEXT=succeeded" >> $GITHUB_ENV
-          echo "STATUS_COLOR=6aa84f" >> $GITHUB_ENV
+          echo "STATUS_TEXT=Completed" >> $GITHUB_ENV
+          echo "STATUS_COLOR=#6aa84f" >> $GITHUB_ENV
         elif [[ "${{ inputs.step-outcome }}" == "failure" ]]; then
-          echo "STATUS_EMOJI=[✗]" >> $GITHUB_ENV
-          echo "STATUS_TEXT=failed" >> $GITHUB_ENV
-          echo "STATUS_COLOR=fc3434" >> $GITHUB_ENV
+          echo "STATUS_TEXT=Failed" >> $GITHUB_ENV
+          echo "STATUS_COLOR=#fc3434" >> $GITHUB_ENV
         else
           # No outcome provided - pending/in progress state
-          echo "STATUS_COLOR=dbab09" >> $GITHUB_ENV
+          echo "STATUS_COLOR=#dbab09" >> $GITHUB_ENV
         fi
 
     - name: Send Slack notification (new message)

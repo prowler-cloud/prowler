@@ -1,18 +1,27 @@
 import { toUIMessageStream } from "@ai-sdk/langchain";
+import * as Sentry from "@sentry/nextjs";
 import { createUIMessageStreamResponse, UIMessage } from "ai";
 
-import { getLighthouseConfig } from "@/actions/lighthouse/lighthouse";
+import { getTenantConfig } from "@/actions/lighthouse/lighthouse";
 import { getErrorMessage } from "@/lib/helper";
 import { getCurrentDataSection } from "@/lib/lighthouse/data";
 import { convertVercelMessageToLangChainMessage } from "@/lib/lighthouse/utils";
-import { initLighthouseWorkflow } from "@/lib/lighthouse/workflow";
+import {
+  initLighthouseWorkflow,
+  type RuntimeConfig,
+} from "@/lib/lighthouse/workflow";
+import { SentryErrorSource, SentryErrorType } from "@/sentry";
 
 export async function POST(req: Request) {
   try {
     const {
       messages,
+      model,
+      provider,
     }: {
       messages: UIMessage[];
+      model?: string;
+      provider?: string;
     } = await req.json();
 
     if (!messages) {
@@ -23,8 +32,9 @@ export async function POST(req: Request) {
     const processedMessages = [...messages];
 
     // Get AI configuration to access business context
-    const lighthouseConfig = await getLighthouseConfig();
-    const businessContext = lighthouseConfig.business_context;
+    const tenantConfigResult = await getTenantConfig();
+    const businessContext =
+      tenantConfigResult?.data?.attributes?.business_context;
 
     // Get current user data
     const currentData = await getCurrentDataSection();
@@ -63,7 +73,13 @@ export async function POST(req: Request) {
     // Insert all context messages at the beginning
     processedMessages.unshift(...contextMessages);
 
-    const app = await initLighthouseWorkflow();
+    // Prepare runtime config with client-provided model
+    const runtimeConfig: RuntimeConfig = {
+      model,
+      provider,
+    };
+
+    const app = await initLighthouseWorkflow(runtimeConfig);
 
     const agentStream = app.streamEvents(
       {
@@ -96,7 +112,23 @@ export async function POST(req: Request) {
         } catch (error) {
           const errorMessage =
             error instanceof Error ? error.message : String(error);
-          // For errors, send a plain string that toUIMessageStream will convert to text chunks
+
+          // Capture stream processing errors
+          Sentry.captureException(error, {
+            tags: {
+              api_route: "lighthouse_analyst",
+              error_type: SentryErrorType.STREAM_PROCESSING,
+              error_source: SentryErrorSource.API_ROUTE,
+            },
+            level: "error",
+            contexts: {
+              lighthouse: {
+                event_type: "stream_error",
+                message_count: processedMessages.length,
+              },
+            },
+          });
+
           controller.enqueue(`[LIGHTHOUSE_ANALYST_ERROR]: ${errorMessage}`);
           controller.close();
         }
@@ -109,6 +141,25 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error("Error in POST request:", error);
+
+    // Capture API route errors
+    Sentry.captureException(error, {
+      tags: {
+        api_route: "lighthouse_analyst",
+        error_type: SentryErrorType.REQUEST_PROCESSING,
+        error_source: SentryErrorSource.API_ROUTE,
+        method: "POST",
+      },
+      level: "error",
+      contexts: {
+        request: {
+          method: req.method,
+          url: req.url,
+          headers: Object.fromEntries(req.headers.entries()),
+        },
+      },
+    });
+
     return Response.json(
       { error: await getErrorMessage(error) },
       { status: 500 },
