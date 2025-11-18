@@ -22,11 +22,9 @@ module.exports = {
       colors: {
         prowler: {
           theme: {
-            midnight: "#030921",
             pale: "#f3fcff",
             green: "#8ce112",
             purple: "#5001d0",
-            coral: "#ff5356",
             orange: "#f69000",
             yellow: "#ffdf16",
           },
@@ -86,44 +84,6 @@ module.exports = {
         },
         danger: "#E11D48",
         action: "#9FD655",
-      },
-      fontFamily: {
-        sans: ["var(--font-sans)"],
-        mono: ["var(--font-geist-mono)"],
-      },
-      boxShadow: {
-        "box-light":
-          "-16px -16px 40px rgba(255, 255, 255, 0.8), 16px 4px 64px rgba(18, 61, 101, 0.3), inset -8px -6px 80px rgba(255, 255, 255, 0.18)",
-        "button-curved-default":
-          "-4px -2px 16px rgba(255, 255, 255, 0.7), 4px 2px 16px rgba(136, 165, 191, 0.38)",
-        "button-curved-pressed":
-          "inset -4px -4px 16px rgba(255, 255, 255, 0.8), inset 4px 4px 12px rgba(136, 165, 191, 0.4)",
-        "button-flat-nopressed":
-          "-4px -2px 16px #FFFFFF, 4px 2px 16px rgba(136, 165, 191, 0.48)",
-        "button-flat-pressed":
-          "inset -3px -3px 7px #FFFFFF, inset 3px 3px 7px rgba(136, 165, 191, 0.48)",
-        "box-down-light":
-          "inset -3px -3px 7px #FFFFFF, inset 2px 2px 5px rgba(136, 165, 191, 0.38)",
-        "box-up":
-          "-4px -2px 16px #FFFFFF, 4px 2px 16px rgba(136, 165, 191, 0.54)",
-        "box-dark":
-          "-4px -2px 16px rgba(195, 200, 205, 0.09), 4px 4px 18px rgba(0, 0, 0, 0.5)",
-        "box-dark-out": "inset 2px 2px 2px rgba(26, 32, 38, 0.4)",
-        "buttons-box-dark":
-          "-5px -6px 16px rgba(195, 200, 205, 0.04), 22px 22px 60px rgba(0, 0, 0, 0.5)",
-        "button-curved-default-dark":
-          "-4px -4px 16px rgba(195, 200, 205, 0.06), 4px 4px 18px rgba(0, 0, 0, 0.6)",
-        "button-curved-pressed-dark":
-          "-4px -2px 16px rgba(195, 200, 205, 0.07), 4px 4px 18px rgba(0, 0, 0, 0.44)",
-        "sky-light":
-          "-16px 20px 40px rgba(215, 215, 215, 0.3), -2px 2px 24px rgba(22, 28, 47, 0.3), -16px 28px 120px rgba(0, 0, 0, 0.1)",
-        "midnight-dark":
-          "-16px 20px 40px rgba(3, 9, 33, 0.3), -2px 2px 24px rgba(3, 9, 33, 0.6), -16px 28px 120px rgba(3, 9, 33, 0.1)",
-        switcher:
-          "0px -6px 24px #FFFFFF, 0px 7px 16px rgba(104, 132, 157, 0.5)",
-        up: "0.3rem 0.3rem 0.6rem #c8d0e7, -0.2rem -0.2rem 0.5rem #fff",
-        down: "inset 0.2rem 0.2rem 0.5rem #c8d0e7, inset -0.2rem -0.2rem 0.5rem #fff",
-        box: "rgba(0, 0, 0, 0.05) 0px 0px 0px 1px",
       },
       animation: {
         "fade-in": "fade-in 200ms ease-out 0s 1 normal forwards running",
@@ -210,17 +170,17 @@ module.exports = {
         dark: {
           colors: {
             primary: {
-              DEFAULT: "#9FD655",
+              DEFAULT: "#6ee7b7",
               foreground: "#000000",
             },
-            focus: "#9FD655",
+            focus: "#6ee7b7",
             background: "#09090B",
           },
         },
         light: {
           colors: {
             primary: {
-              DEFAULT: "#9FD655",
+              DEFAULT: "#6ee7b7",
               foreground: "#000000",
             },
           },
