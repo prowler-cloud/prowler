@@ -50,11 +50,7 @@ export const SelectScanProvider = <
               Select a cloud provider to launch a scan
             </span>
             <FormControl>
-              <Select
-                value={field.value}
-                onValueChange={field.onChange}
-                ariaLabel="Select a cloud provider"
-              >
+              <Select value={field.value} onValueChange={field.onChange}>
                 <SelectTrigger>
                   <SelectValue placeholder="Choose a cloud provider">
                     {selectedItem ? (

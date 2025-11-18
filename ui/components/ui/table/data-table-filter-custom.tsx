@@ -4,14 +4,14 @@ import { useSearchParams } from "next/navigation";
 
 import { ComplianceScanInfo } from "@/components/compliance/compliance-header/compliance-scan-info";
 import {
-  Select,
-  SelectAllItem,
-  SelectContent,
-  SelectItem,
-  SelectSeparator,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/shadcn";
+  MultiSelect,
+  MultiSelectContent,
+  MultiSelectItem,
+  MultiSelectSelectAll,
+  MultiSelectSeparator,
+  MultiSelectTrigger,
+  MultiSelectValue,
+} from "@/components/shadcn/select/multiselect";
 import { EntityInfoShort } from "@/components/ui/entities/entity-info-short";
 import { useUrlFilters } from "@/hooks/use-url-filters";
 import { isConnectionStatus, isScanEntity } from "@/lib/helper-filters";
@@ -41,6 +41,28 @@ export const DataTableFilterCustom = ({
     if (!filter.valueLabelMapping) return undefined;
     const entry = filter.valueLabelMapping.find((mapping) => mapping[value]);
     return entry ? entry[value] : undefined;
+  };
+
+  // Helper function to get badge label from entity
+  const getBadgeLabel = (
+    entity: FilterEntity | undefined,
+    value: string,
+  ): string => {
+    if (!entity) return value;
+
+    if (isScanEntity(entity as ScanEntity)) {
+      const scanEntity = entity as ScanEntity;
+      return (
+        scanEntity.providerInfo?.alias || scanEntity.providerInfo?.uid || value
+      );
+    }
+    if (isConnectionStatus(entity)) {
+      const connectionStatus = entity as ProviderConnectionStatus;
+      return connectionStatus.label;
+    }
+    // Provider entity
+    const providerEntity = entity as ProviderEntity;
+    return providerEntity.alias || providerEntity.uid || value;
   };
 
   // Render custom content for entity (scan, provider, or connection status)
@@ -107,51 +129,38 @@ export const DataTableFilterCustom = ({
           const selectedValues = getSelectedValues(filter.key);
 
           return (
-            <Select
+            <MultiSelect
               key={filter.key}
-              multiple
-              selectedValues={selectedValues}
-              onMultiValueChange={(values) =>
-                pushDropdownFilter(filter, values)
-              }
-              ariaLabel={filter.labelCheckboxGroup}
+              values={selectedValues}
+              onValuesChange={(values) => pushDropdownFilter(filter, values)}
             >
-              <SelectTrigger size="default">
-                <SelectValue placeholder={filter.labelCheckboxGroup}>
-                  {selectedValues.length > 0 && (
-                    <span className="truncate">
-                      {selectedValues.length === 1
-                        ? // Show custom content for single selection
-                          (() => {
-                            const entity = getEntityForValue(
-                              filter,
-                              selectedValues[0],
-                            );
-                            return entity
-                              ? renderEntityContent(entity)
-                              : selectedValues[0];
-                          })()
-                        : // Show count for multiple selections
-                          `${selectedValues.length} selected`}
-                    </span>
-                  )}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectAllItem allValues={filter.values}>
+              <MultiSelectTrigger size="default">
+                <MultiSelectValue placeholder={filter.labelCheckboxGroup} />
+              </MultiSelectTrigger>
+              <MultiSelectContent
+                search={{
+                  placeholder: `Search ${filter.labelCheckboxGroup.toLowerCase()}...`,
+                  emptyMessage: "No results found",
+                }}
+              >
+                <MultiSelectSelectAll allValues={filter.values}>
                   Select All
-                </SelectAllItem>
-                <SelectSeparator />
+                </MultiSelectSelectAll>
+                <MultiSelectSeparator />
                 {filter.values.map((value) => {
                   const entity = getEntityForValue(filter, value);
                   return (
-                    <SelectItem key={value} value={value}>
+                    <MultiSelectItem
+                      key={value}
+                      value={value}
+                      badgeLabel={getBadgeLabel(entity, value)}
+                    >
                       {entity ? renderEntityContent(entity) : value}
-                    </SelectItem>
+                    </MultiSelectItem>
                   );
                 })}
-              </SelectContent>
-            </Select>
+              </MultiSelectContent>
+            </MultiSelect>
           );
         })}
     </div>

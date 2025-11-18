@@ -6,6 +6,7 @@ export * from "./card/resource-stats-card/resource-stats-card-content";
 export * from "./card/resource-stats-card/resource-stats-card-header";
 export * from "./combobox";
 export * from "./dropdown/dropdown";
+export * from "./select/multiselect";
 export * from "./select/select";
 export * from "./separator/separator";
 export * from "./skeleton/skeleton";

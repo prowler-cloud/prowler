@@ -54,14 +54,11 @@ export const CollapsibleMenu = ({
       open={isCollapsed}
       onOpenChange={setIsCollapsed}
       defaultOpen={defaultOpen}
-      className="mb-1 w-full"
+      className="group mb-1 w-full"
     >
       <Tooltip delayDuration={100}>
         <TooltipTrigger asChild>
-          <CollapsibleTrigger
-            className="[&[data-state=open]>div>div>svg]:rotate-180"
-            asChild
-          >
+          <CollapsibleTrigger asChild>
             <Button
               variant={isSubmenuActive ? "menu-active" : "menu-inactive"}
               className={cn(
@@ -78,7 +75,7 @@ export const CollapsibleMenu = ({
                   </div>
                   <ChevronDown
                     size={18}
-                    className="transition-transform duration-200"
+                    className="transition-transform duration-200 group-data-[state=open]:rotate-180"
                   />
                 </div>
               ) : (

@@ -38,7 +38,6 @@ export const ScanSelector = ({
           onSelectionChange(value);
         }
       }}
-      ariaLabel="Select a Scan"
     >
       <SelectTrigger className="w-full min-w-[365px]">
         <SelectValue placeholder="Select a scan">

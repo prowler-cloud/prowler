@@ -1,15 +1,14 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo } from "react";
+import React, { useCallback } from "react";
 
 import {
-  Select,
-  SelectAllItem,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/shadcn";
+  MultiSelect,
+  MultiSelectContent,
+  MultiSelectItem,
+  MultiSelectTrigger,
+  MultiSelectValue,
+} from "@/components/shadcn/select/multiselect";
 
 interface CustomDropdownSelectionProps {
   label: string;
@@ -22,45 +21,33 @@ interface CustomDropdownSelectionProps {
 export const CustomDropdownSelection: React.FC<
   CustomDropdownSelectionProps
 > = ({ label, name, values, onChange, selectedKeys = [] }) => {
-  const allValues = useMemo(() => values.map((item) => item.id), [values]);
-
-  const handleMultiValueChange = useCallback(
+  const handleValuesChange = useCallback(
     (newValues: string[]) => {
       onChange(name, newValues);
     },
     [name, onChange],
   );
 
-  // Sync internal state when selectedKeys prop changes
-  useEffect(() => {
-    // This ensures the component updates when parent changes selectedKeys
-  }, [selectedKeys]);
-
   return (
     <div className="flex flex-col gap-2">
       <p className="text-sm font-medium">{label}</p>
-      <Select
-        multiple
-        selectedValues={selectedKeys}
-        onMultiValueChange={handleMultiValueChange}
-        ariaLabel={label}
-      >
-        <SelectTrigger>
-          <SelectValue placeholder={`Select ${label.toLowerCase()}`}>
-            {selectedKeys.length > 0
-              ? `${selectedKeys.length} ${selectedKeys.length > 1 ? "items" : "item"} selected`
-              : `Select ${label.toLowerCase()}`}
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectAllItem allValues={allValues} />
+      <MultiSelect values={selectedKeys} onValuesChange={handleValuesChange}>
+        <MultiSelectTrigger>
+          <MultiSelectValue placeholder={`Select ${label.toLowerCase()}`} />
+        </MultiSelectTrigger>
+        <MultiSelectContent
+          search={{
+            placeholder: `Search ${label.toLowerCase()}...`,
+            emptyMessage: "No results found",
+          }}
+        >
           {values.map((item) => (
-            <SelectItem key={item.id} value={item.id}>
+            <MultiSelectItem key={item.id} value={item.id}>
               {item.name}
-            </SelectItem>
+            </MultiSelectItem>
           ))}
-        </SelectContent>
-      </Select>
+        </MultiSelectContent>
+      </MultiSelect>
     </div>
   );
 };

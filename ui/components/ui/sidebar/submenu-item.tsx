@@ -39,18 +39,15 @@ export const SubmenuItem = ({
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <span className="inline-block w-full">
-            <Button
-              className="pointer-events-none ml-3 h-auto w-[calc(100%-12px)] cursor-not-allowed justify-start py-1"
-              disabled
-            >
-              <div className="border-default-200 mr-4 h-full border-l" />
-              <span className="mr-2">
-                <Icon size={16} />
-              </span>
-              <p className="max-w-[170px] truncate">{label}</p>
-            </Button>
-          </span>
+          <Button
+            className="pointer-events-none mt-1 w-[calc(100%-12px)] cursor-not-allowed justify-start py-1"
+            disabled
+          >
+            <span className="mr-2">
+              <Icon size={16} />
+            </span>
+            <p className="max-w-[170px] truncate">{label}</p>
+          </Button>
         </TooltipTrigger>
         <TooltipContent side="right">
           The mutelist will be enabled after adding a provider
