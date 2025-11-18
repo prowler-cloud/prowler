@@ -62,12 +62,19 @@ export const CustomDatePicker = () => {
     <div className="flex w-full flex-col md:gap-2">
       <DatePicker
         aria-label="Select a Date"
-        label="Date"
-        labelPlacement="inside"
+        classNames={{
+          inputWrapper:
+            "border-border-input-primary border bg-bg-input-primary hover:bg-bg-neutral-secondary min-h-10",
+        }}
+        popoverProps={{
+          classNames: {
+            content: "border border-border-neutral-secondary",
+          },
+        }}
         CalendarTopContent={
           <ButtonGroup
             fullWidth
-            className="bg-content1 dark:bg-prowler-blue-400 [&>button]:border-default-200/60 [&>button]:text-default-500 px-3 pt-3 pb-2"
+            className="bg-bg-neutral-secondary [&>button]:border-border-neutral-secondary [&>button]:text-text-neutral-secondary px-3 pt-3 pb-2"
             radius="full"
             size="sm"
             variant="flat"

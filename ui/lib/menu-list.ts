@@ -108,7 +108,7 @@ export const getMenuList = ({
               href: "/providers",
               label: "Mutelist",
               icon: VolumeX,
-              disabled: hasProviders === true,
+              disabled: hasProviders === false,
               active: false,
               onClick: (event: MouseEvent<HTMLAnchorElement>) => {
                 if (hasProviders === false) {

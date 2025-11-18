@@ -63,9 +63,8 @@ export const CollapsibleMenu = ({
             asChild
           >
             <Button
-              variant={isSubmenuActive ? "secondary" : "ghost"}
+              variant={isSubmenuActive ? "menu-active" : "menu-inactive"}
               className={cn(
-                "h-auto px-4 py-1",
                 isSidebarOpen ? "w-full justify-start" : "w-14 justify-center",
               )}
             >
@@ -92,7 +91,7 @@ export const CollapsibleMenu = ({
           <TooltipContent side="right">{label}</TooltipContent>
         )}
       </Tooltip>
-      <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
+      <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down flex flex-col items-end overflow-hidden">
         {submenus.map((submenu, index) => (
           <SubmenuItem key={index} {...submenu} />
         ))}

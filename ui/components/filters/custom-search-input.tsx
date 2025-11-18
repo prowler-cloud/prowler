@@ -56,14 +56,17 @@ export const CustomSearchInput: React.FC = () => {
     <Input
       variant="flat"
       classNames={{
-        label: "tracking-tight font-light !text-default-600 text-sm z-0! pb-1",
+        input: "text-text-neutral-secondary",
+        inputWrapper:
+          "border-border-input-primary border bg-bg-input-primary hover:bg-bg-neutral-secondary min-h-10",
+        clearButton: "text-text-neutral-secondary",
       }}
       aria-label="Search"
-      label="Search"
       placeholder="Search..."
-      labelPlacement="inside"
       value={searchQuery}
-      startContent={<SearchIcon className="text-default-400" width={16} />}
+      startContent={
+        <SearchIcon className="text-text-neutral-secondary" width={16} />
+      }
       onChange={(e) => {
         const value = e.target.value;
         setSearchQuery(value);
@@ -72,7 +75,7 @@ export const CustomSearchInput: React.FC = () => {
       endContent={
         searchQuery && (
           <button onClick={clearIconSearch} className="focus:outline-none">
-            <XCircle className="text-default-400 h-4 w-4" />
+            <XCircle className="text-text-neutral-secondary h-4 w-4" />
           </button>
         )
       }

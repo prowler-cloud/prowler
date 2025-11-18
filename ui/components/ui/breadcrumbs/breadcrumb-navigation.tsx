@@ -107,14 +107,19 @@ export function BreadcrumbNavigation({
   const renderTitleWithIcon = (titleText: string, isLink: boolean = false) => (
     <>
       {typeof icon === "string" ? (
-        <Icon className="text-default-500" height={24} icon={icon} width={24} />
+        <Icon
+          className="text-text-neutral-primary"
+          height={24}
+          icon={icon}
+          width={24}
+        />
       ) : icon ? (
         <div className="flex h-8 w-8 items-center justify-center *:h-full *:w-full">
           {icon}
         </div>
       ) : null}
       <h1
-        className={`text-default-700 max-w-[200px] truncate text-sm font-bold sm:max-w-none ${isLink ? "hover:text-primary transition-colors" : ""}`}
+        className={`text-text-neutral-primary max-w-[200px] truncate text-sm font-bold sm:max-w-none ${isLink ? "hover:text-primary transition-colors" : ""}`}
       >
         {titleText}
       </h1>
@@ -150,7 +155,7 @@ export function BreadcrumbNavigation({
               >
                 {breadcrumb.icon && typeof breadcrumb.icon === "string" ? (
                   <Icon
-                    className="text-default-500"
+                    className="text-text-neutral-primary"
                     height={24}
                     icon={breadcrumb.icon}
                     width={24}
@@ -160,18 +165,18 @@ export function BreadcrumbNavigation({
                     {breadcrumb.icon}
                   </div>
                 ) : null}
-                <span className="text-default-700 hover:text-primary max-w-[150px] truncate text-sm font-bold transition-colors sm:max-w-none">
+                <span className="text-text-neutral-primary hover:text-primary max-w-[150px] truncate text-sm font-bold transition-colors sm:max-w-none">
                   {breadcrumb.name}
                 </span>
               </Link>
             ) : breadcrumb.isClickable && breadcrumb.onClick ? (
               <button
                 onClick={breadcrumb.onClick}
-                className="text-primary hover:text-primary-600 flex cursor-pointer items-center gap-2 text-sm font-medium transition-colors"
+                className="text-text-neutral-primary hover:text-text-neutral-primary-hover flex cursor-pointer items-center gap-2 text-sm font-medium transition-colors"
               >
                 {breadcrumb.icon && typeof breadcrumb.icon === "string" ? (
                   <Icon
-                    className="text-default-500"
+                    className="text-text-neutral-primary"
                     height={24}
                     icon={breadcrumb.icon}
                     width={24}

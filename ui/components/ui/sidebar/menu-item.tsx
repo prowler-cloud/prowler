@@ -41,9 +41,8 @@ export const MenuItem = ({
     <Tooltip delayDuration={100}>
       <TooltipTrigger asChild>
         <Button
-          variant={isActive ? "secondary" : "ghost"}
+          variant={isActive ? "menu-active" : "menu-inactive"}
           className={cn(
-            "h-auto px-4 py-1",
             isOpen ? "w-full justify-start" : "w-14 justify-center",
           )}
           asChild

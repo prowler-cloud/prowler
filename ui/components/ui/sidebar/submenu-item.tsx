@@ -10,7 +10,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
-import { cn } from "@/lib/utils";
 import { IconComponent } from "@/types";
 
 interface SubmenuItemProps {
@@ -42,8 +41,7 @@ export const SubmenuItem = ({
         <TooltipTrigger asChild>
           <span className="inline-block w-full">
             <Button
-              variant={isActive ? "secondary" : "ghost"}
-              className="pointer-events-none ml-3 h-auto w-[calc(100%-12px)] cursor-not-allowed justify-start py-1 opacity-50"
+              className="pointer-events-none ml-3 h-auto w-[calc(100%-12px)] cursor-not-allowed justify-start py-1"
               disabled
             >
               <div className="border-default-200 mr-4 h-full border-l" />
@@ -63,11 +61,8 @@ export const SubmenuItem = ({
 
   return (
     <Button
-      variant={isActive ? "secondary" : "ghost"}
-      className={cn(
-        "ml-3 h-auto w-[calc(100%-12px)] justify-start py-1",
-        disabled && "cursor-not-allowed opacity-50",
-      )}
+      variant={isActive ? "menu-active" : "menu-inactive"}
+      className="mt-1 w-[calc(100%-12px)] justify-start py-1"
       asChild={!disabled}
       disabled={disabled}
     >
@@ -77,7 +72,6 @@ export const SubmenuItem = ({
         className="flex items-center"
         onClick={onClick}
       >
-        <div className="border-default-200 mr-4 h-full border-l" />
         <span className="mr-2">
           <Icon size={16} />
         </span>

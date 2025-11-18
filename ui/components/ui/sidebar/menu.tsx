@@ -97,7 +97,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
       <div className="flex-1 overflow-hidden">
         <ScrollArea className="h-full [&>div>div[style]]:block!">
           <nav className="mt-2 w-full lg:mt-6">
-            <ul className="flex flex-col items-start gap-1 px-2 pb-4">
+            <ul className="mx-2 flex flex-col items-start gap-1 pb-4">
               {filteredMenuList.map((group, groupIndex) => (
                 <li key={groupIndex} className="w-full">
                   {group.menus.map((menu, menuIndex) => (
