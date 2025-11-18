@@ -38,7 +38,7 @@ class iaas_security_group_rdp_unrestricted(Check):
                         report.status = "FAIL"
                         report.status_extended = (
                             f"Security group '{security_group.name}' allows unrestricted RDP access (port 3389) "
-                            f"from {rule.ip_range} via rule '{rule.id}'."
+                            f"from {rule.get_ip_range_display()} via rule '{rule.id}'."
                         )
                         report.resource_id = security_group.id
                         report.resource_name = security_group.name

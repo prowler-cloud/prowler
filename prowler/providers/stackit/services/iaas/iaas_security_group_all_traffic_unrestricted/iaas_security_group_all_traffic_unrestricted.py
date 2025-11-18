@@ -33,14 +33,14 @@ class iaas_security_group_all_traffic_unrestricted(Check):
                     if rule.port_range_min is None or rule.port_range_max is None:
                         # No port range specified - allows all ports
                         unrestricted_rules.append(
-                            f"Rule '{rule.id}' allows all ports ({rule.protocol}) from {rule.ip_range}"
+                            f"Rule '{rule.id}' allows all ports ({rule.protocol or 'all protocols'}) from {rule.get_ip_range_display()}"
                         )
                     elif (
                         rule.port_range_min == 0 or rule.port_range_min == 1
                     ) and rule.port_range_max >= 65535:
                         # Port range covers all or nearly all ports
                         unrestricted_rules.append(
-                            f"Rule '{rule.id}' allows all ports (1-65535) ({rule.protocol}) from {rule.ip_range}"
+                            f"Rule '{rule.id}' allows all ports (1-65535) ({rule.protocol or 'all protocols'}) from {rule.get_ip_range_display()}"
                         )
 
             # Create a finding report for this security group

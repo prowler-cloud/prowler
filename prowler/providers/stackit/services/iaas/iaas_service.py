@@ -479,6 +479,17 @@ class SecurityGroupRule(BaseModel):
             return True
         return self.port_range_min <= port <= self.port_range_max
 
+    def get_ip_range_display(self) -> str:
+        """
+        Get a user-friendly display string for the IP range.
+
+        Returns:
+            str: Human-readable IP range description
+        """
+        if self.ip_range is None:
+            return "anywhere (0.0.0.0/0, ::/0)"
+        return self.ip_range
+
 
 class SecurityGroup(BaseModel):
     """

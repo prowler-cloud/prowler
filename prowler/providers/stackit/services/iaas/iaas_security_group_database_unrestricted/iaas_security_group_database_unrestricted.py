@@ -35,6 +35,7 @@ class iaas_security_group_database_unrestricted(Check):
             if not security_group.in_use:
                 continue
             exposed_databases = []
+            exposing_rule = None
 
             # Check each ingress rule
             for rule in security_group.rules:
@@ -44,6 +45,9 @@ class iaas_security_group_database_unrestricted(Check):
                     for port, db_name in DATABASE_PORTS.items():
                         if rule.includes_port(port):
                             exposed_databases.append(f"{db_name} (port {port})")
+                    # Track the first exposing rule for the message
+                    if exposed_databases and not exposing_rule:
+                        exposing_rule = rule
 
             # Create a finding report for this security group
             report = CheckReportStackIT(
@@ -56,7 +60,7 @@ class iaas_security_group_database_unrestricted(Check):
                 databases_list = ", ".join(exposed_databases)
                 report.status_extended = (
                     f"Security group '{security_group.name}' allows unrestricted database access "
-                    f"to: {databases_list} from the internet."
+                    f"to: {databases_list} from {exposing_rule.get_ip_range_display()}."
                 )
             else:
                 report.status = "PASS"
