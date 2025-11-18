@@ -16,6 +16,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Resource ID moved up in the findings detail page [(#9141)](https://github.com/prowler-cloud/prowler/pull/9141)
 - C5 compliance logo [(#9224)](https://github.com/prowler-cloud/prowler/pull/9224)
+- Integrated Prowler MCP server with Lighthouse AI for dynamic tool execution [(#9255)](https://github.com/prowler-cloud/prowler/pull/9255)
 
 ---
 
