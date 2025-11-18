@@ -62,7 +62,7 @@ export const GraphLegend = () => {
               <Tooltip key={item.label}>
                 <TooltipTrigger asChild>
                   <div
-                    className="flex items-center gap-2 cursor-help"
+                    className="flex cursor-help items-center gap-2"
                     role="img"
                     aria-label={`${item.label}: ${item.description}`}
                   >
@@ -71,7 +71,7 @@ export const GraphLegend = () => {
                       style={{ backgroundColor: item.color, opacity: 0.8 }}
                       aria-hidden="true"
                     />
-                    <span className="text-xs text-text-neutral-secondary dark:text-text-neutral-secondary">
+                    <span className="text-text-neutral-secondary dark:text-text-neutral-secondary text-xs">
                       {item.label}
                     </span>
                   </div>

@@ -97,7 +97,11 @@ const AttackPathGraphComponent = forwardRef<
       }
     },
     resetZoom: () => {
-      if (svgSelectionRef.current && zoomBehaviorRef.current && containerRef.current) {
+      if (
+        svgSelectionRef.current &&
+        zoomBehaviorRef.current &&
+        containerRef.current
+      ) {
         const bounds = containerRef.current.node()?.getBBox();
         if (!bounds) return;
 
@@ -106,7 +110,8 @@ const AttackPathGraphComponent = forwardRef<
 
         const midX = bounds.x + bounds.width / 2;
         const midY = bounds.y + bounds.height / 2;
-        const scale = 0.8 / Math.max(bounds.width / fullWidth, bounds.height / fullHeight);
+        const scale =
+          0.8 / Math.max(bounds.width / fullWidth, bounds.height / fullHeight);
         const tx = fullWidth / 2 - scale * midX;
         const ty = fullHeight / 2 - scale * midY;
 
@@ -115,7 +120,7 @@ const AttackPathGraphComponent = forwardRef<
           .duration(300)
           .call(
             zoomBehaviorRef.current.transform,
-            d3.zoomIdentity.translate(tx, ty).scale(scale)
+            d3.zoomIdentity.translate(tx, ty).scale(scale),
           );
       }
     },
@@ -269,11 +274,13 @@ const AttackPathGraphComponent = forwardRef<
       });
 
     // Add zoom behavior
-    const zoom = d3.zoom<SVGSVGElement, unknown>().on("zoom", (event: d3.D3ZoomEvent<SVGSVGElement, unknown>) => {
-      const transform = event.transform;
-      container.attr("transform", transform);
-      setZoomLevel(transform.k);
-    });
+    const zoom = d3
+      .zoom<SVGSVGElement, unknown>()
+      .on("zoom", (event: d3.D3ZoomEvent<SVGSVGElement, unknown>) => {
+        const transform = event.transform;
+        container.attr("transform", transform.toString());
+        setZoomLevel(transform.k);
+      });
     zoomBehaviorRef.current = zoom;
 
     svg.call(zoom);
@@ -298,13 +305,14 @@ const AttackPathGraphComponent = forwardRef<
 
         const midX = bounds.x + bounds.width / 2;
         const midY = bounds.y + bounds.height / 2;
-        const scale = 0.8 / Math.max(bounds.width / fullWidth, bounds.height / fullHeight);
+        const scale =
+          0.8 / Math.max(bounds.width / fullWidth, bounds.height / fullHeight);
         const tx = fullWidth / 2 - scale * midX;
         const ty = fullHeight / 2 - scale * midY;
 
         svgSelectionRef.current.call(
           zoomBehaviorRef.current.transform,
-          d3.zoomIdentity.translate(tx, ty).scale(scale)
+          d3.zoomIdentity.translate(tx, ty).scale(scale),
         );
       }
     };
@@ -335,7 +343,10 @@ const AttackPathGraphComponent = forwardRef<
         .attr("x2", getTargetX)
         .attr("y2", getTargetY);
 
-      nodeGroup.attr("transform", (d: D3Node) => `translate(${d.x || 0},${d.y || 0})`);
+      nodeGroup.attr(
+        "transform",
+        (d: D3Node) => `translate(${d.x || 0},${d.y || 0})`,
+      );
 
       // Center graph once when simulation starts settling
       if (simulation.alpha() < 0.5 && !hasAutocenteredRef.current) {
@@ -379,9 +390,11 @@ const AttackPathGraphComponent = forwardRef<
       return d.id === selectedNodeId ? 3 : 0;
     };
 
-    const nodeGroup = containerRef.current.selectAll<SVGCircleElement, D3Node>("g.node");
+    const nodeGroup = containerRef.current.selectAll<SVGCircleElement, D3Node>(
+      "g.node",
+    );
     nodeGroup
-      .selectAll("circle")
+      .selectAll<SVGCircleElement, D3Node>("circle")
       .attr("stroke", updateSelection)
       .attr("stroke-width", updateWidth);
   }, [selectedNodeId]);
@@ -389,7 +402,7 @@ const AttackPathGraphComponent = forwardRef<
   return (
     <svg
       ref={svgRef}
-      className="dark:bg-bg-neutral-secondary h-full w-full rounded-lg bg-bg-neutral-secondary"
+      className="dark:bg-bg-neutral-secondary bg-bg-neutral-secondary h-full w-full rounded-lg"
     />
   );
 });

@@ -24,9 +24,7 @@ export default function AttackPathsWorkflowLayout({
         <Spacer y={2} />
 
         {/* Step Content - Full Width Below */}
-        <div>
-          {children}
-        </div>
+        <div>{children}</div>
       </div>
     </>
   );

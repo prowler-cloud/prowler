@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, Maximize2, ZoomIn, ZoomOut, Minimize2 } from "lucide-react";
+import { Download, Minimize2, ZoomIn, ZoomOut } from "lucide-react";
 
 import { Button } from "@/components/shadcn";
 import {
@@ -29,7 +29,7 @@ export const GraphControls = ({
 }: GraphControlsProps) => {
   return (
     <div className="mb-4 flex items-center justify-end">
-      <div className="flex gap-1 rounded-lg border border-border-neutral-primary bg-bg-neutral-tertiary p-1">
+      <div className="border-border-neutral-primary bg-bg-neutral-tertiary flex gap-1 rounded-lg border p-1">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
