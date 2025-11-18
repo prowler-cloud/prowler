@@ -1,11 +1,13 @@
 "use client";
 
 import { Icon } from "@iconify/react";
+import * as Sentry from "@sentry/nextjs";
 import { useEffect } from "react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui";
 import { CustomButton } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
+import { SentryErrorSource, SentryErrorType } from "@/sentry";
 
 export default function Error({
   error,
@@ -29,9 +31,39 @@ export default function Error({
         digest: error.digest,
         timestamp: new Date().toISOString(),
       });
-      // TODO: sent to sentry
+
+      // Send to Sentry with high priority
+      Sentry.captureException(error, {
+        tags: {
+          error_boundary: "app",
+          error_type: SentryErrorType.SERVER_ERROR,
+          error_source: SentryErrorSource.ERROR_BOUNDARY,
+          status_code: "500",
+          digest: error.digest,
+        },
+        level: "error",
+        fingerprint: ["server-error", error.message],
+        contexts: {
+          error_details: {
+            is_server_error: true,
+            timestamp: new Date().toISOString(),
+          },
+        },
+      });
     } else {
       console.error("Application error:", error);
+
+      // Send other errors to Sentry with normal priority
+      Sentry.captureException(error, {
+        tags: {
+          error_boundary: "app",
+          error_type: SentryErrorType.APPLICATION_ERROR,
+          error_source: SentryErrorSource.ERROR_BOUNDARY,
+          digest: error.digest,
+        },
+        level: "warning",
+        fingerprint: ["app-error", error.message],
+      });
     }
   }, [error]);
 

@@ -6,6 +6,10 @@ import {
 import { getTask } from "@/actions/task";
 import { auth } from "@/auth.config";
 import { useToast } from "@/components/ui";
+import {
+  COMPLIANCE_REPORT_DISPLAY_NAMES,
+  type ComplianceReportType,
+} from "@/lib/compliance/compliance-report-types";
 import { AuthSocialProvider, MetaDataProps, PermissionInfo } from "@/types";
 
 export const baseUrl = process.env.AUTH_URL || "http://localhost:3000";
@@ -222,23 +226,18 @@ export const downloadComplianceCsv = async (
 };
 
 /**
- * Generic function to download a compliance PDF report (ThreatScore or ENS)
+ * Generic function to download a compliance PDF report (ThreatScore, ENS, etc.)
  * @param scanId - The scan ID
- * @param reportType - Type of report: 'threatscore' or 'ens'
+ * @param reportType - Type of report (from COMPLIANCE_REPORT_TYPES)
  * @param toast - Toast notification function
  */
 export const downloadComplianceReportPdf = async (
   scanId: string,
-  reportType: "threatscore" | "ens" | "nis2",
+  reportType: ComplianceReportType,
   toast: ReturnType<typeof useToast>["toast"],
 ): Promise<void> => {
   const result = await getCompliancePdfReport(scanId, reportType);
-  const reportName =
-    reportType === "threatscore"
-      ? "ThreatScore"
-      : reportType === "ens"
-        ? "ENS RD2022"
-        : "NIS2";
+  const reportName = COMPLIANCE_REPORT_DISPLAY_NAMES[reportType];
   await downloadFile(
     result,
     "application/pdf",

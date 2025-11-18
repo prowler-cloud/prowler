@@ -11,6 +11,7 @@ import {
   BarChart,
   BarChartSkeleton,
   ClientAccordionWrapper,
+  ComplianceDownloadButton,
   ComplianceHeader,
   ComplianceScanInfo,
   HeatmapChart,
@@ -22,14 +23,13 @@ import {
 import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
 import { ContentLayout } from "@/components/ui";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
+import { getReportTypeForFramework } from "@/lib/compliance/compliance-report-types";
 import {
   AttributesData,
   Framework,
   RequirementsTotals,
 } from "@/types/compliance";
 import { ScanEntity } from "@/types/scans";
-
-import { ComplianceDownloadButton } from "./compliance-download-button";
 
 interface ComplianceDetailSearchParams {
   complianceId: string;
@@ -155,34 +155,19 @@ export default async function ComplianceDetail({
             showProviders={false}
           />
         </div>
-        {attributesData?.data?.[0]?.attributes?.framework ===
-          "ProwlerThreatScore" &&
-          selectedScanId && (
+        {(() => {
+          const framework = attributesData?.data?.[0]?.attributes?.framework;
+          const reportType = getReportTypeForFramework(framework);
+
+          return selectedScanId && reportType ? (
             <div className="flex-shrink-0 pt-1">
               <ComplianceDownloadButton
                 scanId={selectedScanId}
-                reportType="threatscore"
+                reportType={reportType}
               />
             </div>
-          )}
-        {attributesData?.data?.[0]?.attributes?.framework === "ENS" &&
-          selectedScanId && (
-            <div className="flex-shrink-0 pt-1">
-              <ComplianceDownloadButton
-                scanId={selectedScanId}
-                reportType="ens"
-              />
-            </div>
-          )}
-        {attributesData?.data?.[0]?.attributes?.framework === "NIS2" &&
-          selectedScanId && (
-            <div className="flex-shrink-0 pt-1">
-              <ComplianceDownloadButton
-                scanId={selectedScanId}
-                reportType="nis2"
-              />
-            </div>
-          )}
+          ) : null;
+        })()}
       </div>
 
       <Suspense

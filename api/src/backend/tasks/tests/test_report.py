@@ -22,8 +22,6 @@ from tasks.jobs.report import (
     COLOR_MEDIUM_RISK,
     COLOR_NIS2_PRIMARY,
     COLOR_SAFE,
-    _aggregate_requirement_statistics_from_database,
-    _calculate_requirements_data_from_statistics,
     _create_dimensions_radar_chart,
     _create_ens_dimension_badges,
     _create_ens_nivel_badge,
@@ -49,6 +47,10 @@ from tasks.jobs.report import (
     generate_compliance_reports_job,
     generate_nis2_report,
     generate_threatscore_report,
+)
+from tasks.jobs.threatscore_utils import (
+    _aggregate_requirement_statistics_from_database,
+    _calculate_requirements_data_from_statistics,
 )
 
 from api.models import Finding, StatusChoices

@@ -9,6 +9,7 @@ import { useState } from "react";
 
 import { ThreatScoreLogo } from "@/components/compliance/threatscore-logo";
 import { toast } from "@/components/ui";
+import { COMPLIANCE_REPORT_TYPES } from "@/lib/compliance/compliance-report-types";
 import {
   downloadComplianceCsv,
   downloadComplianceReportPdf,
@@ -80,7 +81,11 @@ export const ThreatScoreBadge = ({
   const handleDownloadPdf = async () => {
     setIsDownloadingPdf(true);
     try {
-      await downloadComplianceReportPdf(scanId, "threatscore", toast);
+      await downloadComplianceReportPdf(
+        scanId,
+        COMPLIANCE_REPORT_TYPES.THREATSCORE,
+        toast,
+      );
     } finally {
       setIsDownloadingPdf(false);
     }

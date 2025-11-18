@@ -869,7 +869,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7087703783970b51
+          x-spec-enum-id: eca8c51e6bd28935
           enum:
           - aws
           - azure
@@ -878,6 +878,7 @@ paths:
           - iac
           - kubernetes
           - m365
+          - mongodbatlas
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -886,6 +887,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
@@ -894,14 +896,16 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7087703783970b51
+            x-spec-enum-id: eca8c51e6bd28935
             enum:
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
+            - mongodbatlas
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -912,6 +916,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
@@ -1403,7 +1408,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7087703783970b51
+          x-spec-enum-id: eca8c51e6bd28935
           enum:
           - aws
           - azure
@@ -1412,6 +1417,7 @@ paths:
           - iac
           - kubernetes
           - m365
+          - mongodbatlas
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -1420,6 +1426,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
@@ -1428,14 +1435,16 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7087703783970b51
+            x-spec-enum-id: eca8c51e6bd28935
             enum:
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
+            - mongodbatlas
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -1446,6 +1455,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
@@ -1845,7 +1855,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7087703783970b51
+          x-spec-enum-id: eca8c51e6bd28935
           enum:
           - aws
           - azure
@@ -1854,6 +1864,7 @@ paths:
           - iac
           - kubernetes
           - m365
+          - mongodbatlas
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -1862,6 +1873,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
@@ -1870,14 +1882,16 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7087703783970b51
+            x-spec-enum-id: eca8c51e6bd28935
             enum:
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
+            - mongodbatlas
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -1888,6 +1902,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
@@ -2285,7 +2300,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7087703783970b51
+          x-spec-enum-id: eca8c51e6bd28935
           enum:
           - aws
           - azure
@@ -2294,6 +2309,7 @@ paths:
           - iac
           - kubernetes
           - m365
+          - mongodbatlas
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -2302,6 +2318,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
@@ -2310,14 +2327,16 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7087703783970b51
+            x-spec-enum-id: eca8c51e6bd28935
             enum:
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
+            - mongodbatlas
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -2328,6 +2347,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
@@ -2713,7 +2733,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7087703783970b51
+          x-spec-enum-id: eca8c51e6bd28935
           enum:
           - aws
           - azure
@@ -2722,6 +2742,7 @@ paths:
           - iac
           - kubernetes
           - m365
+          - mongodbatlas
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -2730,6 +2751,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
@@ -2738,14 +2760,16 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7087703783970b51
+            x-spec-enum-id: eca8c51e6bd28935
             enum:
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
+            - mongodbatlas
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -2756,6 +2780,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
@@ -4545,7 +4570,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7087703783970b51
+          x-spec-enum-id: eca8c51e6bd28935
           enum:
           - aws
           - azure
@@ -4554,6 +4579,7 @@ paths:
           - iac
           - kubernetes
           - m365
+          - mongodbatlas
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -4562,6 +4588,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
@@ -4570,14 +4597,16 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7087703783970b51
+            x-spec-enum-id: eca8c51e6bd28935
             enum:
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
+            - mongodbatlas
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -4588,6 +4617,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
@@ -4729,7 +4759,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7087703783970b51
+          x-spec-enum-id: eca8c51e6bd28935
           enum:
           - aws
           - azure
@@ -4738,6 +4768,7 @@ paths:
           - iac
           - kubernetes
           - m365
+          - mongodbatlas
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -4746,6 +4777,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
@@ -4754,14 +4786,16 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7087703783970b51
+            x-spec-enum-id: eca8c51e6bd28935
             enum:
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
+            - mongodbatlas
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -4772,6 +4806,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
@@ -4979,7 +5014,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7087703783970b51
+          x-spec-enum-id: eca8c51e6bd28935
           enum:
           - aws
           - azure
@@ -4988,6 +5023,7 @@ paths:
           - iac
           - kubernetes
           - m365
+          - mongodbatlas
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -4996,6 +5032,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
@@ -5004,14 +5041,16 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7087703783970b51
+            x-spec-enum-id: eca8c51e6bd28935
             enum:
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
+            - mongodbatlas
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -5022,6 +5061,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
@@ -5709,7 +5749,7 @@ paths:
         name: filter[provider]
         schema:
           type: string
-          x-spec-enum-id: 7087703783970b51
+          x-spec-enum-id: eca8c51e6bd28935
           enum:
           - aws
           - azure
@@ -5718,6 +5758,7 @@ paths:
           - iac
           - kubernetes
           - m365
+          - mongodbatlas
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -5726,6 +5767,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
@@ -5734,14 +5776,16 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7087703783970b51
+            x-spec-enum-id: eca8c51e6bd28935
             enum:
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
+            - mongodbatlas
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -5752,6 +5796,8 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
         style: form
@@ -5759,14 +5805,16 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7087703783970b51
+          x-spec-enum-id: eca8c51e6bd28935
           enum:
           - aws
           - azure
           - gcp
           - github
+          - iac
           - kubernetes
           - m365
+          - mongodbatlas
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -5775,6 +5823,8 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
         name: filter[provider_type__in]
@@ -5782,14 +5832,16 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7087703783970b51
+            x-spec-enum-id: eca8c51e6bd28935
             enum:
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
+            - mongodbatlas
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -5800,6 +5852,8 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
         style: form
@@ -6335,6 +6389,9 @@ paths:
             - findings
             - failed_findings_count
             - url
+            - metadata
+            - details
+            - partition
             - type
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -6398,7 +6455,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7087703783970b51
+          x-spec-enum-id: eca8c51e6bd28935
           enum:
           - aws
           - azure
@@ -6407,6 +6464,7 @@ paths:
           - iac
           - kubernetes
           - m365
+          - mongodbatlas
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -6415,6 +6473,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
@@ -6423,14 +6482,16 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7087703783970b51
+            x-spec-enum-id: eca8c51e6bd28935
             enum:
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
+            - mongodbatlas
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -6441,6 +6502,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
@@ -6663,6 +6725,9 @@ paths:
             - findings
             - failed_findings_count
             - url
+            - metadata
+            - details
+            - partition
             - type
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -6722,6 +6787,9 @@ paths:
             - findings
             - failed_findings_count
             - url
+            - metadata
+            - details
+            - partition
             - type
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
@@ -6770,7 +6838,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7087703783970b51
+          x-spec-enum-id: eca8c51e6bd28935
           enum:
           - aws
           - azure
@@ -6779,6 +6847,7 @@ paths:
           - iac
           - kubernetes
           - m365
+          - mongodbatlas
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -6787,6 +6856,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
@@ -6795,14 +6865,16 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7087703783970b51
+            x-spec-enum-id: eca8c51e6bd28935
             enum:
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
+            - mongodbatlas
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -6813,6 +6885,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
@@ -7043,7 +7116,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7087703783970b51
+          x-spec-enum-id: eca8c51e6bd28935
           enum:
           - aws
           - azure
@@ -7052,6 +7125,7 @@ paths:
           - iac
           - kubernetes
           - m365
+          - mongodbatlas
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -7060,6 +7134,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
@@ -7068,14 +7143,16 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7087703783970b51
+            x-spec-enum-id: eca8c51e6bd28935
             enum:
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
+            - mongodbatlas
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -7086,6 +7163,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
@@ -7322,7 +7400,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7087703783970b51
+          x-spec-enum-id: eca8c51e6bd28935
           enum:
           - aws
           - azure
@@ -7331,6 +7409,7 @@ paths:
           - iac
           - kubernetes
           - m365
+          - mongodbatlas
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -7339,6 +7418,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
@@ -7347,14 +7427,16 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7087703783970b51
+            x-spec-enum-id: eca8c51e6bd28935
             enum:
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
+            - mongodbatlas
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -7365,6 +7447,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
@@ -8164,7 +8247,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: 7087703783970b51
+          x-spec-enum-id: eca8c51e6bd28935
           enum:
           - aws
           - azure
@@ -8173,6 +8256,7 @@ paths:
           - iac
           - kubernetes
           - m365
+          - mongodbatlas
           - oraclecloud
         description: |-
           * `aws` - AWS
@@ -8181,6 +8265,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
       - in: query
@@ -8189,14 +8274,16 @@ paths:
           type: array
           items:
             type: string
-            x-spec-enum-id: 7087703783970b51
+            x-spec-enum-id: eca8c51e6bd28935
             enum:
             - aws
             - azure
             - gcp
             - github
+            - iac
             - kubernetes
             - m365
+            - mongodbatlas
             - oraclecloud
         description: |-
           Multiple values may be separated by commas.
@@ -8207,6 +8294,7 @@ paths:
           * `kubernetes` - Kubernetes
           * `m365` - M365
           * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
           * `iac` - IaC
           * `oraclecloud` - Oracle Cloud Infrastructure
         explode: false
@@ -14418,6 +14506,18 @@ components:
                     - fingerprint
                     - tenancy
                     - region
+                  - type: object
+                    title: MongoDB Atlas API Key
+                    properties:
+                      atlas_public_key:
+                        type: string
+                        description: MongoDB Atlas API public key.
+                      atlas_private_key:
+                        type: string
+                        description: MongoDB Atlas API private key.
+                    required:
+                    - atlas_public_key
+                    - atlas_private_key
                   writeOnly: true
               required:
               - secret
@@ -15412,6 +15512,8 @@ components:
               - kubernetes
               - m365
               - github
+              - mongodbatlas
+              - iac
               - oraclecloud
               type: string
               description: |-
@@ -15421,8 +15523,10 @@ components:
                 * `kubernetes` - Kubernetes
                 * `m365` - M365
                 * `github` - GitHub
+                * `mongodbatlas` - MongoDB Atlas
+                * `iac` - IaC
                 * `oraclecloud` - Oracle Cloud Infrastructure
-              x-spec-enum-id: 7087703783970b51
+              x-spec-enum-id: eca8c51e6bd28935
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -15534,9 +15638,11 @@ components:
               - kubernetes
               - m365
               - github
+              - mongodbatlas
+              - iac
               - oraclecloud
               type: string
-              x-spec-enum-id: 7087703783970b51
+              x-spec-enum-id: eca8c51e6bd28935
               description: |-
                 Type of provider to create.
 
@@ -15546,6 +15652,8 @@ components:
                 * `kubernetes` - Kubernetes
                 * `m365` - M365
                 * `github` - GitHub
+                * `mongodbatlas` - MongoDB Atlas
+                * `iac` - IaC
                 * `oraclecloud` - Oracle Cloud Infrastructure
             uid:
               type: string
@@ -15590,9 +15698,11 @@ components:
                   - kubernetes
                   - m365
                   - github
+                  - mongodbatlas
+                  - iac
                   - oraclecloud
                   type: string
-                  x-spec-enum-id: 7087703783970b51
+                  x-spec-enum-id: eca8c51e6bd28935
                   description: |-
                     Type of provider to create.
 
@@ -15602,6 +15712,8 @@ components:
                     * `kubernetes` - Kubernetes
                     * `m365` - M365
                     * `github` - GitHub
+                    * `mongodbatlas` - MongoDB Atlas
+                    * `iac` - IaC
                     * `oraclecloud` - Oracle Cloud Infrastructure
                 uid:
                   type: string
@@ -16353,6 +16465,18 @@ components:
                 - fingerprint
                 - tenancy
                 - region
+              - type: object
+                title: MongoDB Atlas API Key
+                properties:
+                  atlas_public_key:
+                    type: string
+                    description: MongoDB Atlas API public key.
+                  atlas_private_key:
+                    type: string
+                    description: MongoDB Atlas API private key.
+                required:
+                - atlas_public_key
+                - atlas_private_key
               writeOnly: true
           required:
           - secret_type
@@ -16666,6 +16790,18 @@ components:
                     - fingerprint
                     - tenancy
                     - region
+                  - type: object
+                    title: MongoDB Atlas API Key
+                    properties:
+                      atlas_public_key:
+                        type: string
+                        description: MongoDB Atlas API public key.
+                      atlas_private_key:
+                        type: string
+                        description: MongoDB Atlas API private key.
+                    required:
+                    - atlas_public_key
+                    - atlas_private_key
                   writeOnly: true
               required:
               - secret_type
@@ -16993,6 +17129,18 @@ components:
                 - fingerprint
                 - tenancy
                 - region
+              - type: object
+                title: MongoDB Atlas API Key
+                properties:
+                  atlas_public_key:
+                    type: string
+                    description: MongoDB Atlas API public key.
+                  atlas_private_key:
+                    type: string
+                    description: MongoDB Atlas API private key.
+                required:
+                - atlas_public_key
+                - atlas_private_key
               writeOnly: true
           required:
           - secret
@@ -17081,6 +17229,18 @@ components:
             failed_findings_count:
               type: integer
               readOnly: true
+            metadata:
+              type: string
+              readOnly: true
+              nullable: true
+            details:
+              type: string
+              readOnly: true
+              nullable: true
+            partition:
+              type: string
+              readOnly: true
+              nullable: true
             type:
               type: string
               readOnly: true
