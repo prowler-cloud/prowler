@@ -1,28 +1,36 @@
 {
   "Provider": "aws",
   "CheckID": "glue_development_endpoints_job_bookmark_encryption_enabled",
-  "CheckTitle": "Check if Glue development endpoints have Job bookmark encryption enabled.",
+  "CheckTitle": "Glue development endpoint has Job Bookmark encryption enabled",
   "CheckType": [
-    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
   ],
   "ServiceName": "glue",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:glue:region:account-id:certificate/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
-  "Description": "Check if Glue development endpoints have Job bookmark encryption enabled.",
-  "Risk": "If not enabled sensitive information at rest is not protected.",
-  "RelatedUrl": "https://docs.aws.amazon.com/glue/latest/dg/console-security-configurations.html",
+  "Description": "**AWS Glue development endpoints** are assessed for an attached **security configuration** where **job bookmark encryption** is enabled. Endpoints lacking a security configuration are also identified.",
+  "Risk": "Unencrypted job bookmarks stored in S3 can be read or altered, exposing dataset paths, partitions, and processing state. This enables data discovery, state tampering, and replay/skip of workloads, impacting **confidentiality**, **integrity**, and **availability** of ETL pipelines.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/glue/latest/dg/console-security-configurations.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Glue/job-bookmark-encryption-enabled.html",
+    "https://coder.social/gmirsky/terraform-aws-glue",
+    "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_41#terraform",
+    "https://github.com/hashicorp/cdktf-aws-cdk/blob/main/docs/glueSecurityConfiguration.md"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws glue create-security-configuration --name jb-encrypted-sec-config --encryption-configuration {'JobBookmarksEncryption': [{'JobBookmarksEncryptionMode': 'SSE-KMS','KmsKeyArn': <kms_arn>}]}",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_41#cloudformation",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Glue/job-bookmark-encryption-enabled.html",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_41#terraform"
+      "CLI": "",
+      "NativeIaC": "```yaml\n# CloudFormation: Enable Job Bookmark encryption and attach to the Dev Endpoint\nResources:\n  GlueSecurityConfiguration:\n    Type: AWS::Glue::SecurityConfiguration\n    Properties:\n      Name: <example_resource_name>\n      EncryptionConfiguration:\n        JobBookmarksEncryption:\n          JobBookmarksEncryptionMode: CSE-KMS  # Critical: enables Job Bookmark encryption\n          KmsKeyArn: <example_kms_key_arn>     # Critical: KMS key used for Job Bookmark encryption\n\n  GlueDevEndpoint:\n    Type: AWS::Glue::DevEndpoint\n    Properties:\n      RoleArn: <example_role_arn>\n      SecurityConfiguration: !Ref GlueSecurityConfiguration  # Critical: attach the security configuration to the Dev Endpoint\n```",
+      "Other": "1. In the AWS Console, go to Glue > Security configurations > Add security configuration\n2. Enter a name, then under Advanced settings enable Job bookmark encryption and select a KMS key (or enter its ARN); Save\n3. Go to Glue > Dev endpoints\n4. Create a new Dev endpoint (or recreate the existing one) and set Security configuration to the configuration created in step 2\n5. Create the endpoint to apply the setting",
+      "Terraform": "```hcl\n# Terraform: Enable Job Bookmark encryption and attach to the Dev Endpoint\nresource \"aws_glue_security_configuration\" \"<example_resource_name>\" {\n  name = \"<example_resource_name>\"\n\n  encryption_configuration {\n    job_bookmarks_encryption {\n      job_bookmarks_encryption_mode = \"CSE-KMS\"   # Critical: enables Job Bookmark encryption\n      kms_key_arn                   = \"<example_kms_key_arn>\"  # Critical: KMS key used for Job Bookmark encryption\n    }\n  }\n}\n\nresource \"aws_glue_dev_endpoint\" \"<example_resource_name>\" {\n  name                   = \"<example_resource_name>\"\n  role_arn               = \"<example_role_arn>\"\n  security_configuration = aws_glue_security_configuration.<example_resource_name>.name  # Critical: attach the security configuration\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable Encryption in the Security configurations.",
-      "Url": "https://docs.aws.amazon.com/glue/latest/dg/console-security-configurations.html"
+      "Text": "Attach a **security configuration** to each development endpoint and enable **job bookmark encryption** with a managed KMS key. Apply **least privilege** to S3 and KMS, rotate keys, and align logs and data stores with consistent encryption for **defense in depth**. Regularly audit endpoints for missing or outdated configurations.",
+      "Url": "https://hub.prowler.com/check/glue_development_endpoints_job_bookmark_encryption_enabled"
     }
   },
   "Categories": [

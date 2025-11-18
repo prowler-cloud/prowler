@@ -1,28 +1,39 @@
 {
   "Provider": "aws",
   "CheckID": "glue_data_catalogs_metadata_encryption_enabled",
-  "CheckTitle": "Check if Glue data catalog settings have metadata encryption enabled.",
+  "CheckTitle": "Glue Data Catalog metadata is encrypted with KMS",
   "CheckType": [
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
     "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
   ],
   "ServiceName": "glue",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:glue:region:account-id:certificate/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
-  "Description": "Check if Glue data catalog settings have metadata encryption enabled.",
-  "Risk": "If not enabled sensitive information at rest is not protected.",
+  "Description": "**AWS Glue Data Catalog** metadata is encrypted at rest when catalog settings use **SSE-KMS** with a KMS key.\n\nCatalogs that do not configure `SSE-KMS` for metadata are considered unencrypted.",
+  "Risk": "Unencrypted catalog metadata exposes schemas, partitions, and data locations, reducing **confidentiality**.\n\nAdversaries or over-privileged users can conduct **reconnaissance** and plan lateral movement; tampering with definitions can corrupt queries and results, impacting **integrity**.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Glue/data-catalog-encryption-at-rest.html",
+    "https://developers.rapticore.com/docs/aws-glue-data-catalog-objects-and-connection-passwords-are-unencrypted",
+    "https://docs.aws.amazon.com/glue/latest/dg/encrypt-glue-data-catalog.html",
+    "https://learnthecontent.com/exam/aws/tutorial-aws-certified-data-engineer-associate-dea-c01/s/data-encryption-options-available-in-aws-analytics-services-for-example-amazon-redshift-amazon-emr-aws-glue",
+    "https://docs.amazonaws.cn/en_us/athena/latest/ug/encryption.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Glue/data-catalog-encryption-at-rest-with-cmk.html",
+    "https://support.icompaas.com/support/solutions/articles/62000233381-ensure-glue-data-catalogs-are-not-publicly-accessible-",
+    "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_37#terraform"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws glue put-data-catalog-encryption-settings --data-catalog-encryption-settings EncryptionAtRest={CatalogEncryptionMode=SSE-KMS,SseAwsKmsKeyId=<ksm_key_arn>",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_37#cloudformation",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Glue/data-catalog-encryption-at-rest.html",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_37#terraform"
+      "CLI": "aws glue put-data-catalog-encryption-settings --data-catalog-encryption-settings '{\"EncryptionAtRest\":{\"CatalogEncryptionMode\":\"SSE-KMS\"}}'",
+      "NativeIaC": "```yaml\n# Enable Glue Data Catalog metadata encryption with KMS\nResources:\n  <example_resource_name>:\n    Type: AWS::Glue::DataCatalogEncryptionSettings\n    Properties:\n      DataCatalogEncryptionSettings:\n        EncryptionAtRest:\n          CatalogEncryptionMode: SSE-KMS  # Critical: enables KMS encryption for catalog metadata\n```",
+      "Other": "1. In the AWS Console, go to AWS Glue\n2. Open Data Catalog > Settings\n3. Under Security configuration and encryption, check Metadata encryption\n4. Leave the default AWS managed key selected (or choose a KMS key)\n5. Click Save",
+      "Terraform": "```hcl\n# Enable Glue Data Catalog metadata encryption with KMS\nresource \"aws_glue_data_catalog_encryption_settings\" \"<example_resource_name>\" {\n  data_catalog_encryption_settings {\n    encryption_at_rest {\n      catalog_encryption_mode = \"SSE-KMS\" # Critical: turns on KMS encryption for catalog metadata\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable Encryption. Use a CMK where possible. It will provide additional management and privacy benefits.",
-      "Url": "https://docs.aws.amazon.com/glue/latest/dg/encrypt-glue-data-catalog.html"
+      "Text": "Enable metadata encryption with **`SSE-KMS`**, preferably using a **customer-managed KMS key** for control and rotation.\n\nApply **least privilege** to KMS and catalog access, restrict who can change settings, and monitor key usage. Use **defense in depth** by encrypting related analytics assets consistently.",
+      "Url": "https://hub.prowler.com/check/glue_data_catalogs_metadata_encryption_enabled"
     }
   },
   "Categories": [

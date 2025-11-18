@@ -1,28 +1,38 @@
 {
   "Provider": "aws",
   "CheckID": "glue_development_endpoints_s3_encryption_enabled",
-  "CheckTitle": "Check if Glue development endpoints have S3 encryption enabled.",
+  "CheckTitle": "Glue development endpoint has S3 encryption enabled",
   "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
     "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
   ],
   "ServiceName": "glue",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:glue:region:account-id:certificate/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
-  "Description": "Check if Glue development endpoints have S3 encryption enabled.",
-  "Risk": "Data exfiltration could happen if information is not protected. KMS keys provide additional security level to IAM policies.",
-  "RelatedUrl": "https://docs.aws.amazon.com/glue/latest/dg/encryption-security-configuration.html",
+  "Description": "**AWS Glue development endpoints** are evaluated for an attached **security configuration** with **S3 encryption**. Endpoints lacking a security configuration, or with `s3_encryption` set to `DISABLED`, are flagged by this check.",
+  "Risk": "Unencrypted S3 writes from dev endpoints leave ETL outputs, temp data, and scripts readable at rest. A misconfigured bucket or stolen creds can expose sensitive content, harming **confidentiality** and triggering compliance issues.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.roastdev.com/post/aws-glue-interview-questions-and-answers-updated-2025",
+    "https://aws.plainenglish.io/automate-glue-development-endpoint-8f2386dd34c2",
+    "https://docs.aws.amazon.com/sdk-for-ruby/v3/api/Aws/Glue/Client.html",
+    "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_41#terraform",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Glue/s3-encryption-enabled.html",
+    "https://docs.aws.amazon.com/glue/latest/dg/encryption-security-configuration.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws glue create-security-configuration --name s3-encrypted-sec-config --encryption-configuration {'S3Encryption': [{'S3EncryptionMode': 'SSE-KMS','KmsKeyArn': <kms_arn>}]}",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_41#cloudformation",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Glue/s3-encryption-enabled.html",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_41#terraform"
+      "CLI": "",
+      "NativeIaC": "```yaml\n# CloudFormation: Glue Dev Endpoint with S3 encryption via Security Configuration\nResources:\n  SecurityConfig:\n    Type: AWS::Glue::SecurityConfiguration\n    Properties:\n      Name: <example_resource_name>\n      EncryptionConfiguration:\n        S3Encryption:\n          - S3EncryptionMode: SSE-S3  # CRITICAL: enables S3 encryption for the security configuration\n\n  DevEndpoint:\n    Type: AWS::Glue::DevEndpoint\n    Properties:\n      EndpointName: <example_resource_name>\n      RoleArn: <example_role_arn>\n      SecurityConfiguration: !Ref SecurityConfig  # CRITICAL: attaches the encrypted security configuration to the dev endpoint\n```",
+      "Other": "1. In the AWS Console, go to AWS Glue > Security configurations > Create security configuration\n2. Under S3 encryption, select Server-side encryption (SSE-S3) and save\n3. Go to AWS Glue > Development endpoints > Create development endpoint\n4. Fill required fields and set Security configuration to the one created in step 2\n5. Create the endpoint and delete the old endpoint (without encryption) if it exists",
+      "Terraform": "```hcl\n# Terraform: Glue Dev Endpoint with S3 encryption\nresource \"aws_glue_security_configuration\" \"secure\" {\n  name = \"<example_resource_name>\"\n  encryption_configuration {\n    s3_encryption {\n      s3_encryption_mode = \"SSE-S3\"  # CRITICAL: enables S3 encryption\n    }\n  }\n}\n\nresource \"aws_glue_dev_endpoint\" \"dev\" {\n  name     = \"<example_resource_name>\"\n  role_arn = \"<example_role_arn>\"\n\n  security_configuration = aws_glue_security_configuration.secure.name  # CRITICAL: attaches encrypted security configuration\n}\n```"
     },
     "Recommendation": {
-      "Text": "Specify AWS KMS keys to use for input and output from S3 and EBS.",
-      "Url": "https://docs.aws.amazon.com/glue/latest/dg/encryption-security-configuration.html"
+      "Text": "Attach a **Glue security configuration** to each dev endpoint with **S3 encryption** enabled; prefer `SSE-KMS` with customer-managed keys. Enforce **least privilege** on IAM and KMS key policies, and extend encryption to logs and bookmarks for **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/glue_development_endpoints_s3_encryption_enabled"
     }
   },
   "Categories": [
