@@ -131,7 +131,7 @@ services:
       - path: .env
         required: false
     ports:
-      - "${MCP_SERVER_PORT:-8000}:8000"
+      - "8000:8000"
     volumes:
       - ./mcp_server/prowler_mcp_server:/app/prowler_mcp_server
       - ./mcp_server/pyproject.toml:/app/pyproject.toml
