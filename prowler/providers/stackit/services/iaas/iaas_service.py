@@ -1,4 +1,5 @@
 import os
+import warnings
 from typing import Optional
 
 from pydantic.v1 import BaseModel
@@ -56,12 +57,18 @@ class IaaSService:
             from stackit.core.configuration import Configuration
             from stackit.iaas import DefaultApi
 
-            # Pass the API token directly to Configuration (thread-safe approach)
-            # This avoids manipulating global environment variables
-            config = Configuration(service_account_token=self.api_token)
+            # Suppress StackIT SDK deprecation warnings about region configuration
+            # These warnings are not actionable as we follow the current SDK patterns
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", message=".*STACKIT will move.*")
 
-            # Create DefaultApi client directly with Configuration
-            client = DefaultApi(config)
+                # Pass the API token directly to Configuration (thread-safe approach)
+                # This avoids manipulating global environment variables
+                config = Configuration(service_account_token=self.api_token)
+
+                # Create DefaultApi client directly with Configuration
+                client = DefaultApi(config)
+
             return client
 
         except ImportError as e:
@@ -90,7 +97,10 @@ class IaaSService:
             StackITInvalidTokenError: If authentication fails (401)
         """
         try:
-            return api_function(*args, **kwargs)
+            # Suppress StackIT SDK deprecation warnings during API calls
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", message=".*STACKIT will move.*")
+                return api_function(*args, **kwargs)
         except Exception as e:
             # Check if this is an authentication error (401 Unauthorized)
             if hasattr(e, "status") and e.status == 401:
@@ -138,6 +148,9 @@ class IaaSService:
                     )
                     security_groups_list = []
 
+            except StackITInvalidTokenError:
+                # Re-raise authentication errors so they propagate to the user
+                raise
             except Exception as e:
                 logger.error(f"Error listing security groups via SDK: {e}")
                 return
@@ -357,6 +370,9 @@ class IaaSService:
                     f"attached to {len(self.public_nic_ids)} NICs."
                 )
 
+            except StackITInvalidTokenError:
+                # Re-raise authentication errors so they propagate to the user
+                raise
             except Exception as e:
                 logger.error(f"Error listing public IPs via SDK: {e}")
                 return
@@ -422,6 +438,9 @@ class IaaSService:
                     f"Found {len(self.in_use_sg_ids)} security groups attached to public NICs."
                 )
 
+            except StackITInvalidTokenError:
+                # Re-raise authentication errors so they propagate to the user
+                raise
             except Exception as e:
                 logger.error(f"Error listing server NICs via SDK: {e}")
                 return
