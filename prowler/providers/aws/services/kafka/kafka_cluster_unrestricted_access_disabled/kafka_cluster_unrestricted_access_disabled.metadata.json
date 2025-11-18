@@ -1,29 +1,41 @@
 {
   "Provider": "aws",
   "CheckID": "kafka_cluster_unrestricted_access_disabled",
-  "CheckTitle": "Ensure Kafka Cluster has unrestricted access disabled",
-  "CheckType": [],
+  "CheckTitle": "Kafka cluster requires authentication",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "TTPs/Initial Access/Unauthorized Access",
+    "Effects/Data Exposure"
+  ],
   "ServiceName": "kafka",
-  "SubServiceName": "cluster",
-  "ResourceIdTemplate": "arn:partition:kafka:region:account-id:cluster",
-  "Severity": "high",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
   "ResourceType": "AwsMskCluster",
-  "Description": "Kafka Clusters should not have unrestricted access enabled. Unrestricted access allows anyone to access the Kafka Cluster without any authentication. It is recommended to disable unrestricted access to prevent unauthorized access to the Kafka Cluster.",
-  "Risk": "Unrestricted access to Kafka Clusters can lead to unauthorized access to the cluster and its data. It is recommended to restrict access to Kafka Clusters to only authorized entities.",
-  "RelatedUrl": "https://docs.aws.amazon.com/msk/latest/developerguide/msk-configure-security.html",
+  "Description": "Amazon MSK clusters are evaluated for **unauthenticated client access**. Serverless clusters inherently require authentication; provisioned clusters are checked for configurations that allow **unrestricted connections** rather than authenticated clients.",
+  "Risk": "Allowing **unauthenticated access** lets anyone connect and:\n- Read sensitive topics (confidentiality)\n- Publish or alter data (integrity)\n- Overload brokers and consumers (availability)\n\nThis enables message exfiltration, stream poisoning, and abuse of trusted data pipelines.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/msk/latest/developerguide/msk-configure-security.html",
+    "https://docs.aws.amazon.com/msk/latest/developerguide/security.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MSK/unrestricted-access-to-brokers.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws kafka update-security --region region_name --cluster-arn cluster_arn --current-version kafka_version_of_cluster --client-authentication 'Unauthenticated={Enabled=false}'",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MSK/unrestricted-access-to-brokers.html",
-      "Terraform": ""
+      "CLI": "aws kafka update-security --cluster-arn <example_resource_arn> --current-version <example_current_version> --client-authentication 'Unauthenticated={Enabled=false}'",
+      "NativeIaC": "```yaml\n# CloudFormation: Disable unauthenticated client access for MSK\nResources:\n  <example_resource_name>:\n    Type: AWS::MSK::Cluster\n    Properties:\n      ClusterName: <example_resource_name>\n      KafkaVersion: <example_kafka_version>\n      NumberOfBrokerNodes: 2\n      BrokerNodeGroupInfo:\n        InstanceType: <example_instance_type>\n        ClientSubnets:\n          - <subnet_id_1>\n          - <subnet_id_2>\n        StorageInfo:\n          EbsStorageInfo:\n            VolumeSize: 1000\n      ClientAuthentication:\n        Unauthenticated:\n          Enabled: false  # CRITICAL: Disables unauthenticated client access\n```",
+      "Other": "1. Open the AWS Console and go to Amazon MSK\n2. Select your cluster and open the Security tab\n3. Click Edit under Client authentication\n4. Turn off/clear Unauthenticated access\n5. Save changes to apply the update",
+      "Terraform": "```hcl\n# Terraform: Disable unauthenticated client access for MSK\nresource \"aws_msk_cluster\" \"<example_resource_name>\" {\n  cluster_name           = \"<example_resource_name>\"\n  kafka_version          = \"<example_kafka_version>\"\n  number_of_broker_nodes = 2\n\n  broker_node_group_info {\n    instance_type   = \"<example_instance_type>\"\n    client_subnets  = [\"<subnet_id_1>\", \"<subnet_id_2>\"]\n    ebs_volume_size = 1000\n  }\n\n  client_authentication {\n    unauthenticated = false  # CRITICAL: Disables unauthenticated client access\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended to restrict access to Kafka Clusters to only authorized entities. Ensure that the Kafka Cluster's security settings are properly configured to prevent unauthorized access.",
-      "Url": "https://docs.aws.amazon.com/msk/latest/developerguide/security.html"
+      "Text": "Disable **unauthenticated access** and require **strong client authentication** (mTLS or IAM/SASL).\n- Enforce **least privilege** with scoped ACLs\n- Restrict network paths via private connectivity and tight security groups\n- Encrypt in transit, monitor access, and rotate credentials regularly",
+      "Url": "https://hub.prowler.com/check/kafka_cluster_unrestricted_access_disabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -1,31 +1,40 @@
 {
   "Provider": "aws",
   "CheckID": "kafka_cluster_uses_latest_version",
-  "CheckTitle": "MSK cluster should use the latest version.",
+  "CheckTitle": "MSK cluster uses the latest Kafka version or is serverless with AWS-managed version",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/Patch Management",
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
   ],
   "ServiceName": "kafka",
-  "SubServiceName": "cluster",
-  "ResourceIdTemplate": "arn:partition:kafka:region:account-id:cluster",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsMskCluster",
-  "Description": "Ensure that your Amazon Managed Streaming for Apache Kafka (MSK) cluster is using the latest version to benefit from the latest security features, bug fixes, and performance improvements.",
-  "Risk": "Running an outdated version of Amazon MSK may expose your cluster to security vulnerabilities, bugs, and performance issues.",
-  "RelatedUrl": "https://docs.aws.amazon.com/lightsail/latest/userguide/amazon-lightsail-databases.html",
+  "Description": "**Amazon MSK clusters** are evaluated for use of the latest supported **Apache Kafka version**. Provisioned clusters are compared to the most recent release, while **serverless clusters** are treated as automatically managed for versioning.",
+  "Risk": "Outdated Kafka enables exploitation of known flaws and weak cryptography, risking data exposure or tampering (**confidentiality/integrity**). Missing fixes increase broker crashes and partition instability (**availability**). After end of support, silent auto-upgrades can trigger unexpected behavior and compatibility issues.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/msk/latest/developerguide/version-support.html#version-upgrades",
+    "https://docs.aws.amazon.com/lightsail/latest/userguide/amazon-lightsail-databases.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MSK/enable-apache-kafka-latest-security-features.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws kafka update-cluster-configuration --cluster-arn <arn_cluster> --current-version <current_version> --target-version <latest_version>",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MSK/enable-apache-kafka-latest-security-features.html",
-      "Terraform": ""
+      "CLI": "aws kafka update-cluster-kafka-version --cluster-arn <example_resource_id> --current-version <current_version> --target-kafka-version <latest_version>",
+      "NativeIaC": "```yaml\n# CloudFormation: Upgrade MSK cluster to latest Kafka version\nResources:\n  <example_resource_name>:\n    Type: AWS::MSK::Cluster\n    Properties:\n      ClusterName: <example_resource_name>\n      KafkaVersion: <latest_version>  # CRITICAL: set to the latest Kafka version to pass the check\n      NumberOfBrokerNodes: 2\n      BrokerNodeGroupInfo:\n        InstanceType: kafka.m5.large\n        ClientSubnets:\n          - <example_resource_id>\n          - <example_resource_id>\n```",
+      "Other": "1. Open the AWS Management Console and go to Amazon MSK\n2. Select your cluster and choose Actions > Update cluster\n3. In Kafka version, select the latest available version\n4. Review and start the upgrade (Update/Start upgrade)\n5. Wait until the operation completes and the cluster status returns to Active",
+      "Terraform": "```hcl\n# Terraform: Upgrade MSK cluster to latest Kafka version\nresource \"aws_msk_cluster\" \"<example_resource_name>\" {\n  cluster_name           = \"<example_resource_name>\"\n  kafka_version          = \"<latest_version>\"  # CRITICAL: set to the latest Kafka version to pass the check\n  number_of_broker_nodes = 2\n\n  broker_node_group_info {\n    instance_type  = \"kafka.m5.large\"\n    client_subnets = [\"<example_resource_id>\", \"<example_resource_id>\"]\n\n    storage_info {\n      ebs_storage_info { volume_size = 1000 }\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "To upgrade your Amazon MSK cluster to the latest version, use the AWS Management Console, AWS CLI, or SDKs to update the cluster configuration. For more information, refer to the official Amazon MSK documentation.",
-      "Url": "https://docs.aws.amazon.com/msk/latest/developerguide/version-support.html#version-upgrades"
+      "Text": "Adopt a controlled upgrade strategy:\n- Track MSK version support and upgrade before end of support\n- Test in staging and schedule maintenance windows\n- Use blue/green or rolling upgrades to reduce downtime\n- Validate client compatibility and security settings\n- Consider serverless MSK if automatic versioning fits your risk model",
+      "Url": "https://hub.prowler.com/check/kafka_cluster_uses_latest_version"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

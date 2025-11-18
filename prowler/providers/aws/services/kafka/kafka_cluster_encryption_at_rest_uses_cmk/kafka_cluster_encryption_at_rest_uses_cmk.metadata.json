@@ -1,31 +1,43 @@
 {
   "Provider": "aws",
   "CheckID": "kafka_cluster_encryption_at_rest_uses_cmk",
-  "CheckTitle": "Ensure Kafka Cluster Encryption at Rest Uses Customer Managed Keys (CMK)",
+  "CheckTitle": "Kafka cluster has encryption at rest enabled with a customer managed key (CMK) or is serverless",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices/Data Encryption",
+    "Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Industry and Regulatory Standards/NIST 800-53 Controls (USA)",
+    "Industry and Regulatory Standards/PCI-DSS",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "kafka",
-  "SubServiceName": "Kafka Cluster",
-  "ResourceIdTemplate": "arn:partition:kafka:region:account-id:cluster",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsMskCluster",
-  "Description": "Kafka Cluster data stored at rest should be encrypted using Customer Managed Keys (CMK) for enhanced security and control over the encryption process.",
-  "Risk": "Using default AWS-managed encryption keys might not meet certain compliance or regulatory requirements. With CMKs, you have more control over the encryption process and can rotate keys, define access policies, and enable key auditing.",
-  "RelatedUrl": "https://docs.aws.amazon.com/msk/latest/developerguide/msk-encryption.html",
+  "Description": "Amazon MSK clusters are inspected for **encryption at rest** using a **customer-managed KMS key** for data volumes. Serverless clusters are inherently encrypted. Provisioned clusters are recognized only when the configured `DataVolumeKMSKeyId` corresponds to a customer-managed key.",
+  "Risk": "Relying on service-managed keys weakens **confidentiality** and **accountability**: you can't enforce granular key policies, separation of duties, or independent rotation. This limits incident response (e.g., disabling the key for crypto-shredding) and reduces auditability, increasing impact of credential misuse or broker compromise.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/msk/latest/developerguide/msk-encryption.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MSK/msk-encryption-at-rest-with-cmk.html",
+    "https://docs.aws.amazon.com/msk/latest/developerguide/msk-working-with-encryption.html",
+    "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_32/#terraform"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MSK/msk-encryption-at-rest-with-cmk.html",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_32/#terraform"
+      "NativeIaC": "```yaml\n# CloudFormation: MSK cluster using a customer managed KMS key for encryption at rest\nResources:\n  <example_resource_name>:\n    Type: AWS::MSK::Cluster\n    Properties:\n      ClusterName: <example_resource_name>\n      KafkaVersion: <KAFKA_VERSION>\n      NumberOfBrokerNodes: 2\n      BrokerNodeGroupInfo:\n        InstanceType: kafka.m5.large\n        ClientSubnets:\n          - <example_subnet_id_a>\n          - <example_subnet_id_b>\n        SecurityGroups:\n          - <example_security_group_id>\n      EncryptionInfo:\n        EncryptionAtRest:\n          DataVolumeKMSKeyId: <example_kms_key_arn>  # Critical: use a customer managed KMS key ARN to enable CMK encryption at rest\n```",
+      "Other": "1. In the AWS Console, go to Amazon MSK > Clusters\n2. Click Create cluster\n3. Choose Provisioned (or choose Serverless to pass by default)\n4. In Encryption settings, for At-rest encryption, select Customer managed key and choose your CMK (not alias/aws/kafka)\n5. Create the cluster, migrate clients to it, then delete the old cluster that used the AWS managed key",
+      "Terraform": "```hcl\n# MSK cluster using a customer managed KMS key for encryption at rest\nresource \"aws_msk_cluster\" \"<example_resource_name>\" {\n  cluster_name           = \"<example_resource_name>\"\n  kafka_version          = \"<KAFKA_VERSION>\"\n  number_of_broker_nodes = 2\n\n  broker_node_group_info {\n    instance_type  = \"kafka.m5.large\"\n    client_subnets = [\"<example_subnet_id_a>\", \"<example_subnet_id_b>\"]\n    security_groups = [\"<example_security_group_id>\"]\n  }\n\n  encryption_info {\n    encryption_at_rest_kms_key_arn = \"<example_kms_key_arn>\" # Critical: customer managed KMS key to pass the check\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended to use Customer Managed Keys (CMK) for Kafka Cluster encryption at rest to maintain control and flexibility over the encryption process.",
-      "Url": "https://docs.aws.amazon.com/msk/latest/developerguide/msk-working-with-encryption.html"
+      "Text": "Use a **customer-managed KMS key** for MSK at-rest encryption. Apply **least privilege** in key policies and grants, enable **key rotation**, and log key use for auditing. Enforce **separation of duties** between MSK admins and KMS key custodians, and regularly review access, aliases, and pending-deletion states.",
+      "Url": "https://hub.prowler.com/check/kafka_cluster_encryption_at_rest_uses_cmk"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

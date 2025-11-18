@@ -1,29 +1,40 @@
 {
   "Provider": "aws",
   "CheckID": "kafka_cluster_mutual_tls_authentication_enabled",
-  "CheckTitle": "Ensure Mutual TLS Authentication is Enabled for Kafka Cluster",
-  "CheckType": [],
+  "CheckTitle": "Kafka cluster has TLS authentication enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "TTPs/Initial Access"
+  ],
   "ServiceName": "kafka",
-  "SubServiceName": "cluster",
-  "ResourceIdTemplate": "arn:partition:kafka:region:account-id:cluster",
-  "Severity": "medium",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
   "ResourceType": "AwsMskCluster",
-  "Description": "Mutual TLS Authentication ensures that both the client and the server are authenticated, providing an additional layer of security for communication within the Kafka cluster.",
-  "Risk": "Without Mutual TLS Authentication, the cluster is vulnerable to man-in-the-middle attacks, and unauthorized clients may be able to access the cluster.",
-  "RelatedUrl": "https://docs.aws.amazon.com/msk/latest/developerguide/msk-authentication.html",
+  "Description": "Amazon MSK clusters enforce **client authentication** on client-to-broker connections. Serverless clusters use TLS-based authentication by default; provisioned clusters must have **mutual TLS (mTLS)** explicitly enabled.",
+  "Risk": "Without **mTLS**, adversaries can impersonate clients or intercept sessions, compromising **confidentiality** and **integrity**. Unauthorized producers/consumers can read or alter topics, poison data streams, and flood brokers, degrading **availability** and impacting downstream systems.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MSK/enable-mutual-tls-authentication-for-kafka-clients.html",
+    "https://docs.aws.amazon.com/msk/latest/developerguide/msk-update-security.html",
+    "https://docs.aws.amazon.com/msk/latest/developerguide/msk-authentication.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MSK/enable-mutual-tls-authentication-for-kafka-clients.html",
-      "Terraform": ""
+      "CLI": "aws kafka update-security --cluster-arn <CLUSTER_ARN> --current-version <CURRENT_VERSION> --client-authentication 'Tls={CertificateAuthorityArnList=[\"<ACM_PCA_ARN>\"]}' --encryption-info 'EncryptionInTransit={ClientBroker=TLS}'",
+      "NativeIaC": "```yaml\n# CloudFormation: Enable mTLS for an MSK cluster\nResources:\n  <example_resource_name>:\n    Type: AWS::MSK::Cluster\n    Properties:\n      ClusterName: <example_resource_name>\n      KafkaVersion: <example_kafka_version>\n      NumberOfBrokerNodes: 2\n      BrokerNodeGroupInfo:\n        InstanceType: kafka.m5.large\n        ClientSubnets:\n          - <subnet_id_1>\n          - <subnet_id_2>\n      ClientAuthentication:\n        Tls:\n          CertificateAuthorityArnList:\n            - <acm_pca_arn>  # CRITICAL: Enables mutual TLS using this Private CA\n      EncryptionInfo:\n        EncryptionInTransit:\n          ClientBroker: TLS  # CRITICAL: Required when enabling mTLS\n```",
+      "Other": "1. In the AWS Console, go to Amazon MSK > Clusters and select the provisioned cluster (state must be ACTIVE)\n2. Choose Actions > Update security (or Security > Edit)\n3. Under Client authentication, enable TLS and add your AWS Private CA ARN(s)\n4. Under Encryption in transit, set Client-broker to TLS\n5. Save/Update and wait for the update to complete",
+      "Terraform": "```hcl\n# Terraform: Enable mTLS for an MSK cluster\nresource \"aws_msk_cluster\" \"<example_resource_name>\" {\n  cluster_name           = \"<example_resource_name>\"\n  kafka_version          = \"<example_kafka_version>\"\n  number_of_broker_nodes = 2\n\n  broker_node_group_info {\n    instance_type  = \"kafka.m5.large\"\n    client_subnets = [\"<subnet_id_1>\", \"<subnet_id_2>\"]\n  }\n\n  client_authentication {\n    tls {\n      certificate_authority_arns = [\"<acm_pca_arn>\"]  # CRITICAL: Enables mutual TLS with this Private CA\n    }\n  }\n\n  encryption_info {\n    encryption_in_transit {\n      client_broker = \"TLS\"  # CRITICAL: Required when enabling mTLS\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended to enable Mutual TLS Authentication for your Kafka cluster to ensure secure communication between clients and brokers.",
-      "Url": "https://docs.aws.amazon.com/msk/latest/developerguide/msk-update-security.html"
+      "Text": "Enable **mutual TLS** for client-broker traffic and disable `PLAINTEXT` listeners. Issue short-lived client certificates from a managed CA with rotation. Apply **least privilege** using Kafka ACLs, restrict network access to trusted sources, and monitor authentication events as part of **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/kafka_cluster_mutual_tls_authentication_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
