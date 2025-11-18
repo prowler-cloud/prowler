@@ -191,7 +191,7 @@ else:
     if "RESOURCE_ID" in data.columns:
         data.rename(columns={"RESOURCE_ID": "RESOURCE_UID"}, inplace=True)
 
-    # Remove dupplicates on the finding_uid colummn but keep the last one taking into account the timestamp
+    # Remove duplicates on the finding_uid column but keep the last one taking into account the timestamp
     data["DATE"] = data["TIMESTAMP"].dt.date
     data = (
         data.sort_values("TIMESTAMP")
