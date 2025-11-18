@@ -210,6 +210,7 @@ class IaaSService:
                             ip_range=getattr(rule_data, "ip_range", None),
                             port_range_min=port_min,
                             port_range_max=port_max,
+                            description=getattr(rule_data, "description", None),
                         )
                     elif isinstance(rule_data, dict):
                         # Handle dict response (if API returns dict instead of objects)
@@ -234,6 +235,7 @@ class IaaSService:
                             ip_range=rule_data.get("ip_range"),
                             port_range_min=port_min,
                             port_range_max=port_max,
+                            description=rule_data.get("description"),
                         )
                     else:
                         continue
@@ -442,6 +444,7 @@ class SecurityGroupRule(BaseModel):
         ip_range: The IP range (CIDR notation) - can be None for some rules
         port_range_min: The minimum port number
         port_range_max: The maximum port number
+        description: The user-defined description/name of the rule (optional)
     """
 
     id: str
@@ -450,6 +453,7 @@ class SecurityGroupRule(BaseModel):
     ip_range: Optional[str] = None
     port_range_min: Optional[int] = None
     port_range_max: Optional[int] = None
+    description: Optional[str] = None
 
     def is_unrestricted(self) -> bool:
         """Check if the rule allows access from anywhere (0.0.0.0/0, ::/0, or None for unrestricted)."""
@@ -489,6 +493,17 @@ class SecurityGroupRule(BaseModel):
         if self.ip_range is None:
             return "anywhere (0.0.0.0/0, ::/0)"
         return self.ip_range
+
+    def get_rule_display_name(self) -> str:
+        """
+        Get a user-friendly display name for the rule.
+
+        Returns:
+            str: Rule description if available, otherwise rule ID
+        """
+        if self.description:
+            return f"'{self.description}' ({self.id})"
+        return f"'{self.id}'"
 
 
 class SecurityGroup(BaseModel):
