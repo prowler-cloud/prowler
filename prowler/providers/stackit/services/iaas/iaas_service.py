@@ -211,6 +211,9 @@ class IaaSService:
                             port_range_min=port_min,
                             port_range_max=port_max,
                             description=getattr(rule_data, "description", None),
+                            remote_security_group_id=getattr(
+                                rule_data, "remote_security_group_id", None
+                            ),
                         )
                     elif isinstance(rule_data, dict):
                         # Handle dict response (if API returns dict instead of objects)
@@ -236,6 +239,9 @@ class IaaSService:
                             port_range_min=port_min,
                             port_range_max=port_max,
                             description=rule_data.get("description"),
+                            remote_security_group_id=rule_data.get(
+                                "remote_security_group_id"
+                            ),
                         )
                     else:
                         continue
@@ -244,7 +250,8 @@ class IaaSService:
                     logger.debug(
                         f"Parsed rule: id={rule.id}, direction={rule.direction}, "
                         f"protocol={rule.protocol}, ip_range={rule.ip_range}, "
-                        f"ports={rule.port_range_min}-{rule.port_range_max}"
+                        f"ports={rule.port_range_min}-{rule.port_range_max}, "
+                        f"remote_sg={rule.remote_security_group_id}"
                     )
 
                 except Exception as e:
@@ -445,6 +452,7 @@ class SecurityGroupRule(BaseModel):
         port_range_min: The minimum port number
         port_range_max: The maximum port number
         description: The user-defined description/name of the rule (optional)
+        remote_security_group_id: The ID of a security group to allow traffic from (optional)
     """
 
     id: str
@@ -454,9 +462,15 @@ class SecurityGroupRule(BaseModel):
     port_range_min: Optional[int] = None
     port_range_max: Optional[int] = None
     description: Optional[str] = None
+    remote_security_group_id: Optional[str] = None
 
     def is_unrestricted(self) -> bool:
         """Check if the rule allows access from anywhere (0.0.0.0/0, ::/0, or None for unrestricted)."""
+        # If remote_security_group_id is set, the rule only allows traffic from that security group
+        # This is NOT unrestricted access - it's restricted to instances in the same security group
+        if self.remote_security_group_id is not None:
+            return False
+
         # None means no IP restriction (allows all sources) - this is unrestricted!
         if self.ip_range is None:
             return True
