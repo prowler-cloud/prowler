@@ -271,7 +271,7 @@ class StackitProvider(Provider):
             client = DefaultApi(config)
 
             # Fetch project details
-            response = client.get_project(project_id=self._project_id)
+            response = client.get_project(id=self._project_id)
 
             # Extract project name from response
             if hasattr(response, "name"):
