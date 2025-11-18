@@ -130,7 +130,6 @@ class StackitProvider(Provider):
             self._identity = StackITIdentityInfo(
                 project_id=self._project_id,
                 project_name=project_name,
-                account_id="",  # Not available in StackIT SDK
             )
         except Exception as e:
             logger.critical(f"Error setting up StackIT identity: {e}")
@@ -228,9 +227,14 @@ class StackitProvider(Provider):
         """
         Prints the StackIT credentials in a simple box format.
         """
-        report_lines = [
-            f"  Project ID: {self._project_id}\n  API Token: ***REDACTED***",
-        ]
+        # Build credential lines
+        lines = []
+        if self._identity.project_name:
+            lines.append(f"  Project Name: {self._identity.project_name}")
+        lines.append(f"  Project ID: {self._project_id}")
+        lines.append("  API Token: ***REDACTED***")
+
+        report_lines = ["\n".join(lines)]
 
         report_title = (
             f"{Style.BRIGHT}Using the StackIT credentials below:{Style.RESET_ALL}"

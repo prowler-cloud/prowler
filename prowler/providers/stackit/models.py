@@ -10,13 +10,11 @@ class StackITIdentityInfo(BaseModel):
 
     Attributes:
         - project_id (str): The StackIT project ID being audited.
-        - project_name (str): The name of the StackIT project (optional).
-        - account_id (str): The account ID associated with the StackIT account.
+        - project_name (str): The name of the StackIT project (fetched from Resource Manager API).
     """
 
     project_id: str
     project_name: str = ""
-    account_id: str = ""
 
 
 class StackITOutputOptions(ProviderOutputOptions):
