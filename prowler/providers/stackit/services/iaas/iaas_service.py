@@ -1,4 +1,6 @@
+import contextlib
 import os
+import sys
 import warnings
 from typing import Optional
 
@@ -7,6 +9,18 @@ from pydantic.v1 import BaseModel
 from prowler.lib.logger import logger
 from prowler.providers.stackit.exceptions.exceptions import StackITInvalidTokenError
 from prowler.providers.stackit.stackit_provider import StackitProvider
+
+
+@contextlib.contextmanager
+def suppress_stderr():
+    """Context manager to suppress stderr output."""
+    original_stderr = sys.stderr
+    try:
+        sys.stderr = open(os.devnull, 'w')
+        yield
+    finally:
+        sys.stderr.close()
+        sys.stderr = original_stderr
 
 
 class IaaSService:
@@ -57,9 +71,9 @@ class IaaSService:
             from stackit.core.configuration import Configuration
             from stackit.iaas import DefaultApi
 
-            # Suppress StackIT SDK deprecation warnings about region configuration
-            # These warnings are not actionable as we follow the current SDK patterns
-            with warnings.catch_warnings():
+            # Suppress StackIT SDK deprecation warnings and print() messages to stderr
+            # The SDK prints warnings directly to stderr which can't be caught by warnings module
+            with suppress_stderr(), warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=DeprecationWarning)
                 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -98,8 +112,8 @@ class IaaSService:
             StackITInvalidTokenError: If authentication fails (401)
         """
         try:
-            # Suppress StackIT SDK deprecation warnings during API calls
-            with warnings.catch_warnings():
+            # Suppress StackIT SDK stderr warnings and deprecation warnings during API calls
+            with suppress_stderr(), warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=DeprecationWarning)
                 warnings.filterwarnings("ignore", category=FutureWarning)
                 return api_function(*args, **kwargs)
