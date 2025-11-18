@@ -74,6 +74,10 @@ const AttackPathGraphComponent = forwardRef<
     HTMLElement,
     unknown
   > | null>(null);
+  /** Track whether graph has been auto-centered to avoid repeated centering as simulation settles */
+  const hasAutocenteredRef = useRef(false);
+  /** Track drag state to distinguish node clicks from drag interactions */
+  const draggedRef = useRef(false);
 
   useImperativeHandle(ref, () => ({
     zoomIn: () => {
@@ -93,11 +97,26 @@ const AttackPathGraphComponent = forwardRef<
       }
     },
     resetZoom: () => {
-      if (svgSelectionRef.current && zoomBehaviorRef.current) {
+      if (svgSelectionRef.current && zoomBehaviorRef.current && containerRef.current) {
+        const bounds = containerRef.current.node()?.getBBox();
+        if (!bounds) return;
+
+        const fullWidth = svgRef.current?.clientWidth || 800;
+        const fullHeight = svgRef.current?.clientHeight || 500;
+
+        const midX = bounds.x + bounds.width / 2;
+        const midY = bounds.y + bounds.height / 2;
+        const scale = 0.8 / Math.max(bounds.width / fullWidth, bounds.height / fullHeight);
+        const tx = fullWidth / 2 - scale * midX;
+        const ty = fullHeight / 2 - scale * midY;
+
         svgSelectionRef.current
           .transition()
           .duration(300)
-          .call(zoomBehaviorRef.current.transform, d3.zoomIdentity);
+          .call(
+            zoomBehaviorRef.current.transform,
+            d3.zoomIdentity.translate(tx, ty).scale(scale)
+          );
       }
     },
     getZoomLevel: () => zoomLevel,
@@ -107,9 +126,9 @@ const AttackPathGraphComponent = forwardRef<
   useEffect(() => {
     if (!svgRef.current || !data.nodes || data.nodes.length === 0) return;
 
-    // Set dimensions
+    // Set dimensions based on container size
     const width = svgRef.current.clientWidth || 800;
-    const height = 500;
+    const height = svgRef.current.clientHeight || 500;
 
     // Clear previous content
     d3.select(svgRef.current).selectAll("*").remove();
@@ -224,11 +243,15 @@ const AttackPathGraphComponent = forwardRef<
     nodeGroup
       .append("circle")
       .attr("r", 20)
-      .attr("fill", (d) => getNodeColor(d.labels))
+      .attr("fill", (d: D3Node) => getNodeColor(d.labels))
       .attr("opacity", 0.8)
-      .on("click", (event, d) => {
+      .on("click", (event: PointerEvent, d: D3Node) => {
         event.stopPropagation();
-        onNodeClick?.(d);
+        // Only trigger click if no drag occurred
+        if (!draggedRef.current) {
+          onNodeClick?.(d);
+        }
+        draggedRef.current = false;
       });
 
     // Add labels to nodes
@@ -240,25 +263,13 @@ const AttackPathGraphComponent = forwardRef<
       .attr("fill", "white")
       .attr("font-weight", "bold")
       .attr("pointer-events", "none")
-      .text((d) => {
+      .text((d: D3Node): string => {
         const label = String(d.properties?.name || d.id.substring(0, 6));
         return label.length > 10 ? label.substring(0, 10) + "..." : label;
       });
 
-    // Highlight selected node
-    if (selectedNodeId) {
-      nodeGroup
-        .selectAll("circle")
-        .attr("stroke", (d) =>
-          (d as D3Node).id === selectedNodeId ? GRAPH_SELECTION_COLOR : "none",
-        )
-        .attr("stroke-width", (d) =>
-          (d as D3Node).id === selectedNodeId ? 3 : 0,
-        );
-    }
-
     // Add zoom behavior
-    const zoom = d3.zoom<SVGSVGElement, unknown>().on("zoom", (event) => {
+    const zoom = d3.zoom<SVGSVGElement, unknown>().on("zoom", (event: d3.D3ZoomEvent<SVGSVGElement, unknown>) => {
       const transform = event.transform;
       container.attr("transform", transform);
       setZoomLevel(transform.k);
@@ -267,15 +278,69 @@ const AttackPathGraphComponent = forwardRef<
 
     svg.call(zoom);
 
-    // Update positions on simulation tick
-    simulation.on("tick", () => {
-      link
-        .attr("x1", (d) => (d.source as D3Node).x || 0)
-        .attr("y1", (d) => (d.source as D3Node).y || 0)
-        .attr("x2", (d) => (d.target as D3Node).x || 0)
-        .attr("y2", (d) => (d.target as D3Node).y || 0);
+    // Reset auto-center flag for new data
+    hasAutocenteredRef.current = false;
 
-      nodeGroup.attr("transform", (d) => `translate(${d.x || 0},${d.y || 0})`);
+    // Function to center the graph
+    const centerGraph = () => {
+      if (
+        svgSelectionRef.current &&
+        zoomBehaviorRef.current &&
+        containerRef.current &&
+        !hasAutocenteredRef.current
+      ) {
+        hasAutocenteredRef.current = true;
+        const bounds = containerRef.current.node()?.getBBox();
+        if (!bounds) return;
+
+        const fullWidth = svgRef.current?.clientWidth || 800;
+        const fullHeight = svgRef.current?.clientHeight || 500;
+
+        const midX = bounds.x + bounds.width / 2;
+        const midY = bounds.y + bounds.height / 2;
+        const scale = 0.8 / Math.max(bounds.width / fullWidth, bounds.height / fullHeight);
+        const tx = fullWidth / 2 - scale * midX;
+        const ty = fullHeight / 2 - scale * midY;
+
+        svgSelectionRef.current.call(
+          zoomBehaviorRef.current.transform,
+          d3.zoomIdentity.translate(tx, ty).scale(scale)
+        );
+      }
+    };
+
+    // Helper to safely get node coordinates from link source/target
+    const getSourceX = (d: D3Link): number => {
+      const source = d.source as D3Node;
+      return source.x || 0;
+    };
+    const getSourceY = (d: D3Link): number => {
+      const source = d.source as D3Node;
+      return source.y || 0;
+    };
+    const getTargetX = (d: D3Link): number => {
+      const target = d.target as D3Node;
+      return target.x || 0;
+    };
+    const getTargetY = (d: D3Link): number => {
+      const target = d.target as D3Node;
+      return target.y || 0;
+    };
+
+    // Update positions on simulation tick
+    simulation.on("tick", (): void => {
+      link
+        .attr("x1", getSourceX)
+        .attr("y1", getSourceY)
+        .attr("x2", getTargetX)
+        .attr("y2", getTargetY);
+
+      nodeGroup.attr("transform", (d: D3Node) => `translate(${d.x || 0},${d.y || 0})`);
+
+      // Center graph once when simulation starts settling
+      if (simulation.alpha() < 0.5 && !hasAutocenteredRef.current) {
+        centerGraph();
+      }
     });
 
     // Drag functions
@@ -286,6 +351,7 @@ const AttackPathGraphComponent = forwardRef<
     }
 
     function dragged(event: d3.D3DragEvent<SVGGElement, D3Node, D3Node>) {
+      draggedRef.current = true;
       event.subject.fx = event.x;
       event.subject.fy = event.y;
     }
@@ -299,12 +365,31 @@ const AttackPathGraphComponent = forwardRef<
     return () => {
       simulation.stop();
     };
-  }, [data, onNodeClick, selectedNodeId]);
+  }, [data, onNodeClick]);
+
+  // Separate effect to update selection highlight without rebuilding graph
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const updateSelection = (d: D3Node) => {
+      return d.id === selectedNodeId ? GRAPH_SELECTION_COLOR : "none";
+    };
+
+    const updateWidth = (d: D3Node) => {
+      return d.id === selectedNodeId ? 3 : 0;
+    };
+
+    const nodeGroup = containerRef.current.selectAll<SVGCircleElement, D3Node>("g.node");
+    nodeGroup
+      .selectAll("circle")
+      .attr("stroke", updateSelection)
+      .attr("stroke-width", updateWidth);
+  }, [selectedNodeId]);
 
   return (
     <svg
       ref={svgRef}
-      className="dark:bg-prowler-blue-400 h-96 w-full rounded-lg bg-gray-50"
+      className="dark:bg-bg-neutral-secondary h-full w-full rounded-lg bg-bg-neutral-secondary"
     />
   );
 });

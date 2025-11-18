@@ -31,7 +31,29 @@ export const exportGraphAsSVG = (
   if (!svgElement) return;
 
   try {
-    const svgData = new XMLSerializer().serializeToString(svgElement);
+    // Clone the SVG element to avoid modifying the original
+    const clonedSvg = svgElement.cloneNode(true) as SVGSVGElement;
+
+    // Export at fixed high resolution (1920x1080)
+    const exportWidth = 1920;
+    const exportHeight = 1080;
+
+    // Calculate scale factor based on current dimensions
+    const currentWidth = svgElement.clientWidth || 800;
+    const scale = exportWidth / currentWidth;
+
+    // Update dimensions
+    clonedSvg.setAttribute("width", `${exportWidth}`);
+    clonedSvg.setAttribute("height", `${exportHeight}`);
+    clonedSvg.setAttribute("viewBox", `0 0 ${exportWidth} ${exportHeight}`);
+
+    // Apply scaling transform
+    const gElement = clonedSvg.querySelector("g");
+    if (gElement) {
+      gElement.setAttribute("transform", `scale(${scale})`);
+    }
+
+    const svgData = new XMLSerializer().serializeToString(clonedSvg);
     const blob = new Blob([svgData], { type: "image/svg+xml" });
     downloadBlob(blob, filename);
   } catch (error) {

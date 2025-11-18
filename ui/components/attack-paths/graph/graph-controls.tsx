@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, Maximize2, ZoomIn, ZoomOut } from "lucide-react";
+import { Download, Maximize2, ZoomIn, ZoomOut, Minimize2 } from "lucide-react";
 
 import { Button } from "@/components/shadcn";
 import {
@@ -29,7 +29,7 @@ export const GraphControls = ({
 }: GraphControlsProps) => {
   return (
     <div className="mb-4 flex items-center justify-end">
-      <div className="flex gap-1 rounded-lg border border-gray-200 bg-white p-1 dark:border-gray-700 dark:bg-gray-900">
+      <div className="flex gap-1 rounded-lg border border-border-neutral-primary bg-bg-neutral-tertiary p-1">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -67,10 +67,10 @@ export const GraphControls = ({
                 onClick={onFitToScreen}
                 className="h-8 w-8 p-0"
               >
-                <Maximize2 size={18} />
+                <Minimize2 size={18} />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Fit to screen</TooltipContent>
+            <TooltipContent>Fit graph to view</TooltipContent>
           </Tooltip>
 
           <Tooltip>

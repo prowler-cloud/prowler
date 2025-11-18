@@ -56,20 +56,22 @@ export const GraphLegend = () => {
   return (
     <Card className="w-fit border-0">
       <CardContent className="gap-3 p-4">
-        <p className="dark:text-prowler-theme-pale/90 mb-4 text-sm font-semibold">
-          Node Legend
-        </p>
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col items-center gap-4 lg:flex-row lg:flex-wrap">
           <TooltipProvider>
             {legendItems.map((item) => (
               <Tooltip key={item.label}>
                 <TooltipTrigger asChild>
-                  <div className="flex items-center gap-2">
+                  <div
+                    className="flex items-center gap-2 cursor-help"
+                    role="img"
+                    aria-label={`${item.label}: ${item.description}`}
+                  >
                     <div
                       className="h-4 w-4 rounded-full"
                       style={{ backgroundColor: item.color, opacity: 0.8 }}
+                      aria-hidden="true"
                     />
-                    <span className="text-xs text-gray-600 dark:text-gray-400">
+                    <span className="text-xs text-text-neutral-secondary dark:text-text-neutral-secondary">
                       {item.label}
                     </span>
                   </div>
