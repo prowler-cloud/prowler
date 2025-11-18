@@ -1,29 +1,43 @@
 {
   "Provider": "aws",
   "CheckID": "kafka_cluster_enhanced_monitoring_enabled",
-  "CheckTitle": "Ensure Enhanced Monitoring is Enabled for MSK (Kafka) Brokers",
-  "CheckType": [],
+  "CheckTitle": "Amazon MSK cluster has enhanced monitoring enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
   "ServiceName": "kafka",
-  "SubServiceName": "cluster",
-  "ResourceIdTemplate": "arn:partition:kafka:region:account-id:cluster",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsMskCluster",
-  "Description": "Enhanced monitoring provides additional visibility into the performance and behavior of MSK (Kafka) brokers. By enabling enhanced monitoring, you can gain insights into potential issues and optimize the performance of your Kafka clusters.",
-  "Risk": "Without enhanced monitoring, you may have limited visibility into the performance and health of your MSK brokers, which could lead to undetected issues and potential performance degradation.",
-  "RelatedUrl": "https://docs.aws.amazon.com/msk/latest/developerguide/monitoring.html",
+  "Description": "**Amazon MSK clusters** are assessed for **enhanced monitoring** levels beyond `DEFAULT` (e.g., `PER_BROKER`, `PER_TOPIC_PER_BROKER`, `PER_TOPIC_PER_PARTITION`).\n\n*Serverless clusters* include enhanced monitoring by design; provisioned clusters are evaluated by their configured monitoring level.",
+  "Risk": "Insufficient metrics limit visibility into **broker health**, **replication state**, and **consumer lag**, delaying response to incidents.\n\nThis increases risk of **availability loss** (saturation, throttling) and can mask **integrity issues** such as under-replicated partitions, raising data-loss impact during failures.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/msk/latest/developerguide/metrics-details.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MSK/enable-enhanced-monitoring-for-apache-kafka-brokers.html#",
+    "https://github.com/angelabad/terraform-aws-msk-cluster",
+    "https://codefarm0.medium.com/we-finally-tamed-kafka-lag-in-ecs-using-just-terraform-and-msk-native-metrics-627b5fd19325",
+    "https://www.ibm.com/docs/en/instana-observability/286?topic=technologies-monitoring-amazon-msk",
+    "https://library.tf/modules/aws-terraform-module/msk-cluster/aws/latest",
+    "https://docs.aws.amazon.com/msk/latest/developerguide/monitoring.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws kafka update-monitoring --region region_cluster --cluster-arn arn_cluster --current-version version_cluster --enhanced-monitoring PER_BROKER",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MSK/enable-enhanced-monitoring-for-apache-kafka-brokers.html#",
-      "Terraform": ""
+      "CLI": "aws kafka update-monitoring --cluster-arn <CLUSTER_ARN> --current-version <CURRENT_VERSION> --enhanced-monitoring PER_BROKER",
+      "NativeIaC": "```yaml\n# CloudFormation: Enable enhanced monitoring on an MSK cluster\nResources:\n  <example_resource_name>:\n    Type: AWS::MSK::Cluster\n    Properties:\n      ClusterName: <example_resource_name>\n      KafkaVersion: <example_kafka_version>\n      NumberOfBrokerNodes: 2\n      BrokerNodeGroupInfo:\n        ClientSubnets:\n          - <example_subnet_id_1>\n          - <example_subnet_id_2>\n        InstanceType: kafka.t3.small\n      EnhancedMonitoring: PER_BROKER  # Critical: sets enhanced monitoring above DEFAULT to pass the check\n```",
+      "Other": "1. Open the AWS Console and go to Amazon MSK\n2. Select your provisioned cluster\n3. Click Edit\n4. Under Monitoring, set Enhanced monitoring to PER_BROKER (or higher)\n5. Save changes and wait for the update to complete",
+      "Terraform": "```hcl\n# Terraform: Enable enhanced monitoring on an MSK cluster\nresource \"aws_msk_cluster\" \"<example_resource_name>\" {\n  cluster_name           = \"<example_resource_name>\"\n  kafka_version          = \"<example_kafka_version>\"\n  number_of_broker_nodes = 2\n\n  broker_node_group_info {\n    instance_type  = \"kafka.t3.small\"\n    client_subnets = [\"<example_subnet_id_1>\", \"<example_subnet_id_2>\"]\n  }\n\n  enhanced_monitoring = \"PER_BROKER\" # Critical: sets monitoring above DEFAULT to pass the check\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended to enable enhanced monitoring for MSK (Kafka) brokers to gain deeper insights into the performance and behavior of your clusters.",
-      "Url": "https://docs.aws.amazon.com/msk/latest/developerguide/metrics-details.html"
+      "Text": "Select an enhanced level (e.g., `PER_BROKER` or finer) and establish **observability**: prioritize telemetry for broker resources, replication health, and consumer lag. Configure alerts and dashboards aligned to SLOs to enable proactive scaling and rapid incident containment. *Balance granularity with cost*.",
+      "Url": "https://hub.prowler.com/check/kafka_cluster_enhanced_monitoring_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
