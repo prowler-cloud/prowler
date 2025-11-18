@@ -42,7 +42,7 @@ export async function initializeMCPClient(): Promise<void> {
     mcpState.initializationAttempted = true;
 
     try {
-      const mcpServerUrl = process.env.MCP_SERVER_URL || "";
+      const mcpServerUrl = process.env.PROWLER_MCP_SERVER_URL || "";
 
       mcpState.mcpClient = new MultiServerMCPClient({
         additionalToolNamePrefix: "",
