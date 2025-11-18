@@ -1,7 +1,6 @@
 import contextlib
 import os
 import sys
-import warnings
 from typing import Optional
 
 from pydantic.v1 import BaseModel
@@ -71,12 +70,9 @@ class IaaSService:
             from stackit.core.configuration import Configuration
             from stackit.iaas import DefaultApi
 
-            # Suppress StackIT SDK deprecation warnings and print() messages to stderr
-            # The SDK prints warnings directly to stderr which can't be caught by warnings module
-            with suppress_stderr(), warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=DeprecationWarning)
-                warnings.filterwarnings("ignore", category=FutureWarning)
-
+            # Suppress StackIT SDK print() messages to stderr
+            # The SDK prints warnings directly to stderr using print()
+            with suppress_stderr():
                 # Pass the API token directly to Configuration (thread-safe approach)
                 # This avoids manipulating global environment variables
                 config = Configuration(service_account_token=self.api_token)
@@ -112,10 +108,8 @@ class IaaSService:
             StackITInvalidTokenError: If authentication fails (401)
         """
         try:
-            # Suppress StackIT SDK stderr warnings and deprecation warnings during API calls
-            with suppress_stderr(), warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=DeprecationWarning)
-                warnings.filterwarnings("ignore", category=FutureWarning)
+            # Suppress StackIT SDK stderr messages during API calls
+            with suppress_stderr():
                 return api_function(*args, **kwargs)
         except Exception as e:
             # Check if this is an authentication error (401 Unauthorized)
