@@ -1,31 +1,41 @@
 {
   "Provider": "aws",
   "CheckID": "kinesis_stream_encrypted_at_rest",
-  "CheckTitle": "Kinesis streams should be encrypted at rest.",
+  "CheckTitle": "Kinesis stream is encrypted at rest with KMS",
   "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
     "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls"
   ],
   "ServiceName": "kinesis",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:kinesis::account-id:stream/stream-name",
-  "Severity": "medium",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
   "ResourceType": "AwsKinesisStream",
-  "Description": "Ensure Kinesis streams use server-side encryption with AWS KMS keys for data protection.",
-  "Risk": "If Kinesis streams are not encrypted at rest, sensitive data stored in the stream could be exposed to unauthorized access or breaches. This could lead to potential data theft or misuse of unencrypted data.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingKMSEncryption.html",
+  "Description": "**Amazon Kinesis Data Streams** with **server-side encryption** use **AWS KMS** to protect records at rest. The evaluation determines whether a stream has `SSE-KMS` configured with a KMS key; streams lacking KMS-based at rest encryption are identified.",
+  "Risk": "Without **SSE-KMS**, records in shards may be exposed in plaintext if storage, backups, or analytics exports are accessed, undermining **confidentiality**. Absence of KMS controls also reduces **integrity** and oversight by removing key policies, rotation, and audit trails-enabling covert data exfiltration or insider misuse.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/kinesis-controls.html#kinesis-1",
+    "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_22/#terraform",
+    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingKMSEncryption.html",
+    "https://docs.aws.amazon.com/streams/latest/dev/getting-started-with-sse.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws kinesis start-stream-encryption --stream-name <your-stream-name> --encryption-type KMS --key-id <your-kms-key-id>",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_22/#cloudformation",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/kinesis-controls.html#kinesis-1",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_22/#terraform"
+      "CLI": "aws kinesis start-stream-encryption --stream-name <KINESIS_STREAM_NAME> --encryption-type KMS --key-id alias/aws/kinesis",
+      "NativeIaC": "```yaml\n# CloudFormation: enable KMS encryption on a Kinesis stream\nResources:\n  <example_resource_name>:\n    Type: AWS::Kinesis::Stream\n    Properties:\n      ShardCount: 1\n      StreamEncryption:\n        EncryptionType: KMS  # Critical: enables KMS encryption at rest\n        KeyId: alias/aws/kinesis  # Critical: uses AWS managed Kinesis KMS key\n```",
+      "Other": "1. Open the AWS Console and go to Amazon Kinesis > Data streams\n2. Select the stream\n3. On the Details tab, click Edit in Server-side encryption\n4. Select Enabled\n5. Choose the (Default) aws/kinesis KMS key\n6. Click Save",
+      "Terraform": "```hcl\n# Enable KMS encryption on a Kinesis stream\nresource \"aws_kinesis_stream\" \"<example_resource_name>\" {\n  name            = \"<example_resource_name>\"\n  shard_count     = 1\n  encryption_type = \"KMS\"            # Critical: enables KMS encryption at rest\n  kms_key_id      = \"alias/aws/kinesis\" # Critical: uses AWS managed Kinesis KMS key\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable server-side encryption for Kinesis streams using AWS KMS keys to ensure that all data is encrypted before it is stored, protecting data at rest and reducing the risk of unauthorized access.",
-      "Url": "https://docs.aws.amazon.com/streams/latest/dev/getting-started-with-sse.html"
+      "Text": "Enable **SSE-KMS** on all streams.\n- Use **customer-managed keys** for rotation and ownership\n- Enforce **least privilege** on KMS grants; limit cross-account use\n- Monitor key usage and require encryption in CI/CD",
+      "Url": "https://hub.prowler.com/check/kinesis_stream_encrypted_at_rest"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
