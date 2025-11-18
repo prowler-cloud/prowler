@@ -1,20 +1,14 @@
 import { MetaDataProps } from "@/types";
-import {
-  AttackPathQueriesResponse,
-  AttackPathQuery,
-  AttackPathScan,
-  AttackPathScansResponse,
-} from "@/types/attack-paths";
+import { AttackPathScan, AttackPathScansResponse } from "@/types/attack-paths";
 
 /**
- * Adapts raw API responses to enriched domain models
+ * Adapts raw scan API responses to enriched domain models
  * - Transforms raw scan data with computed properties
- * - Enriches queries with metadata
  * - Co-locates related data for better performance
  * - Preserves pagination metadata for list operations
  *
  * Uses plugin architecture for extensibility:
- * - Each adapter function handles a specific response type
+ * - Handles scan-specific response transformation
  * - Can be composed with backend service plugins
  * - Maintains separation of concerns between API layer and business logic
  */
@@ -57,44 +51,6 @@ export function adaptAttackPathScansResponse(
         version: "1.0",
       }
     : undefined;
-
-  return { data: enrichedData, metadata };
-}
-
-/**
- * Adapt attack path queries response with enriched data
- *
- * @param response - Raw API response from attack-paths-scans/{id}/queries endpoint
- * @returns Enriched queries data with metadata
- */
-export function adaptAttackPathQueriesResponse(
-  response: AttackPathQueriesResponse | undefined,
-): {
-  data: AttackPathQuery[];
-  metadata?: MetaDataProps;
-} {
-  if (!response?.data) {
-    return { data: [] };
-  }
-
-  // Enrich query data with computed properties
-  const enrichedData = response.data.map((query) => ({
-    ...query,
-    // Can add computed properties here, e.g.:
-    // parameterCount: query.attributes.parameters.length,
-    // requiredParameters: query.attributes.parameters.filter(p => p.required),
-    // hasParameters: query.attributes.parameters.length > 0,
-  }));
-
-  const metadata: MetaDataProps | undefined = {
-    pagination: {
-      page: 1,
-      pages: 1,
-      count: enrichedData.length,
-      itemsPerPage: [10, 25, 50, 100],
-    },
-    version: "1.0",
-  };
 
   return { data: enrichedData, metadata };
 }
