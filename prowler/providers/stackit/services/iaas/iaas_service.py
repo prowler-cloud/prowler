@@ -6,7 +6,6 @@ from typing import Optional
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
-from prowler.providers.stackit.exceptions.exceptions import StackITInvalidTokenError
 from prowler.providers.stackit.stackit_provider import StackitProvider
 
 
@@ -112,16 +111,8 @@ class IaaSService:
             with suppress_stderr():
                 return api_function(*args, **kwargs)
         except Exception as e:
-            # Check if this is an authentication error (401 Unauthorized)
-            if hasattr(e, "status") and e.status == 401:
-                logger.error(f"Authentication failed when calling StackIT API: {e}")
-                raise StackITInvalidTokenError(
-                    file=os.path.basename(__file__),
-                    original_exception=e,
-                    message="StackIT API token is invalid or has expired. Please generate a new token.",
-                )
-            # Re-raise other exceptions
-            raise
+            # Use centralized error handler from provider
+            self.provider.handle_api_error(e)
 
     def _list_security_groups(self):
         """

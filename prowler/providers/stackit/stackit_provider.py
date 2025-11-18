@@ -321,27 +321,48 @@ class StackitProvider(Provider):
             )
             return ""
         except Exception as e:
-            # Check if this is an authentication error (401 Unauthorized)
-            if hasattr(e, "status") and e.status == 401:
-                logger.critical(
-                    "StackIT API token is invalid or has expired. "
-                    "Generate a new token with: stackit auth activate-service-account --service-account-key-path <path> --only-print-access-token"
-                )
-                from prowler.providers.stackit.exceptions.exceptions import (
-                    StackITInvalidTokenError,
-                )
-
-                # Create a clean error message without HTTP details
-                raise StackITInvalidTokenError(
-                    file=os.path.basename(__file__),
-                    original_exception=None,  # Don't include verbose HTTP details
-                    message="Invalid or expired API token",
-                )
+            # Use centralized error handler for authentication errors
+            try:
+                StackitProvider.handle_api_error(e)
+            except StackITInvalidTokenError:
+                # Re-raise authentication errors to fail provider initialization
+                raise
+            # For other errors, log warning and continue
             logger.warning(
                 f"Unable to fetch project name from StackIT API: {e}. "
                 f"Project name will not be displayed in reports."
             )
             return ""
+
+    @staticmethod
+    def handle_api_error(exception: Exception) -> None:
+        """
+        Centralized handler for StackIT API errors across all services.
+
+        Detects authentication errors (401) and raises StackITInvalidTokenError.
+        This method should be called by all services when catching API exceptions.
+
+        Args:
+            exception: The exception caught from a StackIT API call
+
+        Raises:
+            StackITInvalidTokenError: If the error is a 401 Unauthorized
+            Exception: Re-raises the original exception if not a 401
+        """
+        # Check if this is an authentication error (401 Unauthorized)
+        if hasattr(exception, "status") and exception.status == 401:
+            logger.critical(
+                "StackIT API token is invalid or has expired. "
+                "Generate a new token with: stackit auth activate-service-account "
+                "--service-account-key-path <path> --only-print-access-token"
+            )
+            raise StackITInvalidTokenError(
+                file="stackit_provider.py",
+                original_exception=None,  # Don't include verbose HTTP details
+                message="Invalid or expired API token",
+            )
+        # Re-raise other exceptions
+        raise exception
 
     @staticmethod
     def test_connection(
