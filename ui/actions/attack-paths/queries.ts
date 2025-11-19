@@ -11,7 +11,7 @@ import {
 } from "@/types/attack-paths";
 
 // Validation schema for UUID - RFC 9562/4122 compliant
-const UUIDSchema = z.string().uuid();
+const UUIDSchema = z.uuid();
 
 /**
  * Fetch available queries for a specific attack path scan
