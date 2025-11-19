@@ -33,7 +33,7 @@
     }
   },
   "Categories": [
-    "vulnerabilities"
+    "container-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

@@ -1,5 +1,3 @@
-/** biome-ignore-all lint/performance/noImgElement: "AI Elements is framework agnostic" */
-
 "use client";
 
 import type { ChatStatus, FileUIPart } from "ai";
@@ -37,9 +35,9 @@ import {
   useState,
 } from "react";
 
+import { Button } from "@/components/shadcn/button/button";
 import { cn } from "@/lib/utils";
 
-import { Button } from "./button";
 import {
   DropdownMenu,
   DropdownMenuContent,

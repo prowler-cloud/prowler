@@ -121,6 +121,14 @@
   },
   {
     "section": "dependencies",
+    "name": "@radix-ui/react-popover",
+    "from": "1.1.15",
+    "to": "1.1.15",
+    "strategy": "installed",
+    "generatedAt": "2025-11-19T12:28:39.510Z"
+  },
+  {
+    "section": "dependencies",
     "name": "@radix-ui/react-select",
     "from": "2.2.5",
     "to": "2.2.5",
@@ -238,6 +246,14 @@
     "to": "2.1.1",
     "strategy": "installed",
     "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "cmdk",
+    "from": "1.1.1",
+    "to": "1.1.1",
+    "strategy": "installed",
+    "generatedAt": "2025-11-19T12:28:39.510Z"
   },
   {
     "section": "dependencies",

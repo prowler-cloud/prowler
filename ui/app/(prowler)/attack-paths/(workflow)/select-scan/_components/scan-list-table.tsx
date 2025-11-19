@@ -11,7 +11,7 @@ import {
 } from "@heroui/table";
 import { useRouter } from "next/navigation";
 
-import { CustomButton } from "@/components/ui/custom";
+import { Button } from "@/components/shadcn/button/button";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import { EntityInfoShort } from "@/components/ui/entities/entity-info-short";
 import type { ProviderType } from "@/types";
@@ -102,17 +102,16 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
                 </TableCell>
                 <TableCell>
                   <div className="flex justify-end">
-                    <CustomButton
+                    <Button
                       type="button"
-                      ariaLabel="Select scan"
-                      isDisabled={isDisabled}
-                      color={isDisabled ? "secondary" : "action"}
-                      variant="solid"
-                      onPress={() => handleSelectScan(scan.id)}
+                      aria-label="Select scan"
+                      disabled={isDisabled}
+                      variant={isDisabled ? "secondary" : "default"}
+                      onClick={() => handleSelectScan(scan.id)}
                       className="w-full max-w-24"
                     >
                       {getSelectButtonLabel(scan)}
-                    </CustomButton>
+                    </Button>
                   </div>
                 </TableCell>
               </TableRow>

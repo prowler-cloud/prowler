@@ -32,7 +32,7 @@ export const ProviderInfo: React.FC<ProviderInfoProps> = ({
         return (
           <Tooltip content="Provider connection failed" className="text-xs">
             <div className="rounded-medium border-danger bg-system-error-lighter flex items-center justify-center border-2 p-1">
-              <ConnectionFalse className="text-danger" size={24} />
+              <ConnectionFalse className="text-text-error" size={24} />
             </div>
           </Tooltip>
         );
