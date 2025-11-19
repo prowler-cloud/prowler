@@ -1,13 +1,11 @@
 "use client";
 
 import { Spacer } from "@heroui/spacer";
-import { useSearchParams } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React from "react";
 
 import { FilterOption } from "@/types";
 
 import { DataTableFilterCustom } from "../ui/table";
-import { ClearFiltersButton } from "./clear-filters-button";
 import { CustomAccountSelection } from "./custom-account-selection";
 import { CustomCheckboxMutedFindings } from "./custom-checkbox-muted-findings";
 import { CustomDatePicker } from "./custom-date-picker";
@@ -23,7 +21,6 @@ export interface FilterControlsProps {
   accounts?: boolean;
   mutedFindings?: boolean;
   customFilters?: FilterOption[];
-  showClearButton?: boolean;
 }
 
 export const FilterControls: React.FC<FilterControlsProps> = ({
@@ -33,19 +30,8 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
   regions = false,
   accounts = false,
   mutedFindings = false,
-  showClearButton = true,
   customFilters,
 }) => {
-  const searchParams = useSearchParams();
-  const [hasFilters, setHasFilters] = useState(false);
-
-  useEffect(() => {
-    const hasFilters = Array.from(searchParams.keys()).some(
-      (key) => key.startsWith("filter[") || key === "sort",
-    );
-    setHasFilters(hasFilters);
-  }, [searchParams]);
-
   return (
     <div className="flex flex-col">
       <div className="flex flex-col items-start gap-4 md:flex-row md:items-center">
@@ -55,12 +41,7 @@ export const FilterControls: React.FC<FilterControlsProps> = ({
           {date && <CustomDatePicker />}
           {regions && <CustomRegionSelection />}
           {accounts && <CustomAccountSelection />}
-          {
-            <div className="flex items-center gap-4">
-              {mutedFindings && <CustomCheckboxMutedFindings />}
-              {hasFilters && showClearButton && <ClearFiltersButton />}
-            </div>
-          }
+          {mutedFindings && <CustomCheckboxMutedFindings />}
         </div>
       </div>
       <Spacer y={8} />
