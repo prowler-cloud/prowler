@@ -1,0 +1,32 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "sls_alert_rds_config_changes",
+  "CheckTitle": "Ensure alert is configured for rds configuration changes",
+  "CheckType": [],
+  "ServiceName": "sls",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "medium",
+  "ResourceType": "Alert",
+  "Description": "Ensures that an alert is configured in SLS to monitor and notify on RDS instance configuration changes.",
+  "Risk": "Unauthorized RDS configuration changes can weaken database security or cause service disruptions.",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/rds-config-changes-alert.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create and enable an alert in SLS to monitor rds configuration changes from ActionTrail logs.",
+      "Url": "https://www.alibabacloud.com/help/en/sls/user-guide/create-an-alert-rule"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check looks for enabled alerts that monitor rds configuration changes."
+}

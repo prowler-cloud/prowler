@@ -1,0 +1,37 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "ecs_disk_encryption_enabled",
+  "CheckTitle": "Ensure ECS Disk Encryption is Enabled",
+  "CheckType": [
+    "Security",
+    "Encryption"
+  ],
+  "ServiceName": "ecs",
+  "SubServiceName": "disk",
+  "ResourceIdTemplate": "arn:acs:ecs:region:account-id:disk/disk-id",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloud::ECS::Disk",
+  "Description": "Ensure that all ECS disks (system disks and data disks) are encrypted to protect data at rest. Disk encryption provides an additional layer of security by encrypting data stored on ECS instances using Alibaba Cloud KMS.",
+  "Risk": "Unencrypted disks can expose sensitive data if the physical storage media is compromised, if disk snapshots are inadvertently shared, or if unauthorized users gain access to the disk. Without encryption, data at rest is vulnerable to unauthorized access.",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/ECS/disk-encryption.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "# Note: Encryption must be enabled when creating a disk. Existing disks cannot be encrypted in-place.\n# Create a snapshot of the unencrypted disk, then create a new encrypted disk from the snapshot:\naliyun ecs CreateSnapshot --DiskId <disk-id> --SnapshotName encrypted-snapshot\naliyun ecs CreateDisk --SnapshotId <snapshot-id> --Encrypted true --KMSKeyId <kms-key-id>",
+      "NativeIaC": "",
+      "Other": "For existing disks, you must create a snapshot, create a new encrypted disk from the snapshot, detach the old disk, attach the new encrypted disk, and then delete the old disk.",
+      "Terraform": "resource \"alicloud_disk\" \"encrypted_disk\" {\n  disk_name   = \"encrypted-disk\"\n  size        = 100\n  category    = \"cloud_essd\"\n  encrypted   = true\n  kms_key_id  = var.kms_key_id\n  zone_id     = \"cn-hangzhou-h\"\n}"
+    },
+    "Recommendation": {
+      "Text": "Enable disk encryption for all new ECS disks. For existing unencrypted disks, create encrypted copies using snapshots and KMS. Use customer-managed KMS keys for enhanced control over encryption keys. Regularly rotate encryption keys and audit key usage.",
+      "Url": "https://www.alibabacloud.com/help/en/ecs/user-guide/encryption-overview"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "data-protection"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "ECS disk encryption cannot be enabled on existing disks. You must create new encrypted disks or create encrypted copies from snapshots. Consider enabling default encryption at the account level to ensure all new disks are automatically encrypted.",
+  "Compliance": []
+}

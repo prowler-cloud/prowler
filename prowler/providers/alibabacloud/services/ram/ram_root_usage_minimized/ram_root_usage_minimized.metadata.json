@@ -1,0 +1,25 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "ram_root_usage_minimized",
+  "CheckTitle": "Ensure root account usage is minimized",
+  "CheckType": [],
+  "ServiceName": "ram",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "medium",
+  "ResourceType": "Account",
+  "Description": "Ensures that root account usage is minimized. Root account should only be used for account management.",
+  "Risk": "Regular use of root account increases risk of credential compromise and accidental damage.",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/RAM/root-usage.html",
+  "Remediation": {
+    "Code": {"CLI": "", "NativeIaC": "", "Other": "", "Terraform": ""},
+    "Recommendation": {
+      "Text": "Stop using root account for day-to-day operations. Use RAM users with appropriate permissions instead.",
+      "Url": "https://www.alibabacloud.com/help/en/ram/user-guide/overview-of-ram"
+    }
+  },
+  "Categories": ["identity-and-access"],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

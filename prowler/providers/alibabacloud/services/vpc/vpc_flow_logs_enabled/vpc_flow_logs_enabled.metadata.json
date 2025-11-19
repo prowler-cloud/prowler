@@ -1,0 +1,32 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "vpc_flow_logs_enabled",
+  "CheckTitle": "Ensure VPC flow logs are enabled",
+  "CheckType": [],
+  "ServiceName": "vpc",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "medium",
+  "ResourceType": "VPC",
+  "Description": "Ensures that VPC flow logs are enabled for network traffic monitoring and security analysis. Flow logs capture information about IP traffic going to and from network interfaces in VPCs.",
+  "Risk": "Without flow logs, it is difficult to monitor network traffic, detect suspicious activity, troubleshoot connectivity issues, or investigate security incidents.",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/VPC/flow-logs.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable VPC flow logs for all VPCs. Go to VPC Console > Flow Logs and create flow logs to capture network traffic for analysis.",
+      "Url": "https://www.alibabacloud.com/help/en/vpc/user-guide/flow-log-overview"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

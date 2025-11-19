@@ -1,0 +1,22 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "sls_alert_unauthorized_api_calls",
+  "CheckTitle": "Ensure alert is configured for unauthorized API calls",
+  "CheckType": [],
+  "ServiceName": "sls",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn",
+  "Severity": "high",
+  "ResourceType": "Alert",
+  "Description": "Ensures that an alert is configured in SLS to monitor and notify on unauthorized API calls.",
+  "Risk": "Without monitoring for unauthorized API calls, security incidents may go undetected, allowing attackers to continue malicious activities.",
+  "RelatedUrl": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/unauthorized-api-calls-alert.html",
+  "Remediation": {
+    "Code": {"CLI": "", "NativeIaC": "", "Other": "", "Terraform": ""},
+    "Recommendation": {"Text": "Create and enable an alert in SLS to monitor unauthorized API calls from ActionTrail logs.", "Url": "https://www.alibabacloud.com/help/en/sls/user-guide/create-an-alert-rule"}
+  },
+  "Categories": ["logging"],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check looks for enabled alerts that monitor unauthorized or failed API calls in ActionTrail logs."
+}
