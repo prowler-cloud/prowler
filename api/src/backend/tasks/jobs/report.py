@@ -1168,7 +1168,7 @@ def generate_threatscore_report_job(
         provider_uid = provider_obj.uid
         provider_type = provider_obj.provider
 
-        if provider_type not in ["aws", "azure", "gcp", "m365"]:
+        if provider_type not in ["aws", "azure", "gcp", "m365", "kubernetes"]:
             logger.info(
                 f"Provider {provider_id} is not supported for threatscore report"
             )
