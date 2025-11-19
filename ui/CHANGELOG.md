@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.14.0] (Unreleased)
+## [1.14.0] (Prowler v5.14.0)
 
 ### 🚀 Added
 
@@ -17,13 +17,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Resource ID moved up in the findings detail page [(#9141)](https://github.com/prowler-cloud/prowler/pull/9141)
 - C5 compliance logo [(#9224)](https://github.com/prowler-cloud/prowler/pull/9224)
-
----
-
-## [1.13.1]
-
-### 🔄 Changed
-
 - Upgrade React to version 19.2.0 [(#9039)](https://github.com/prowler-cloud/prowler/pull/9039)
 
 ---
@@ -210,7 +203,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ---
 
-## [v1.8.1] (Prowler 5.8.1)
+## [v1.8.1] (Prowler v5.8.1)
 
 ### 🔄 Changed
 
