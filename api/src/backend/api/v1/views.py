@@ -3234,15 +3234,50 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
 @extend_schema_view(
     list=extend_schema(
         tags=["Compliance Overview"],
-        summary="List compliance overviews for a scan",
-        description="Retrieve an overview of all the compliance in a given scan.",
+        summary="List compliance overviews",
+        description=(
+            "Retrieve an overview of all compliance frameworks. "
+            "If scan_id is provided, returns compliance data for that specific scan. "
+            "If scan_id is omitted, returns compliance data aggregated from the latest completed scan of each provider."
+        ),
         parameters=[
             OpenApiParameter(
                 name="filter[scan_id]",
-                required=True,
+                required=False,
                 type=OpenApiTypes.UUID,
                 location=OpenApiParameter.QUERY,
-                description="Related scan ID.",
+                description=(
+                    "Optional scan ID. If provided, returns compliance for that scan. "
+                    "If omitted, returns compliance for the latest completed scan per provider."
+                ),
+            ),
+            OpenApiParameter(
+                name="filter[provider_id]",
+                required=False,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.QUERY,
+                description="Filter by specific provider ID.",
+            ),
+            OpenApiParameter(
+                name="filter[provider_id__in]",
+                required=False,
+                type={"type": "array", "items": {"type": "string", "format": "uuid"}},
+                location=OpenApiParameter.QUERY,
+                description="Filter by multiple provider IDs (comma-separated).",
+            ),
+            OpenApiParameter(
+                name="filter[provider_type]",
+                required=False,
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="Filter by provider type (e.g., aws, azure, gcp).",
+            ),
+            OpenApiParameter(
+                name="filter[provider_type__in]",
+                required=False,
+                type={"type": "array", "items": {"type": "string"}},
+                location=OpenApiParameter.QUERY,
+                description="Filter by multiple provider types (comma-separated).",
             ),
         ],
         responses={
@@ -3563,57 +3598,93 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
 
     def list(self, request, *args, **kwargs):
         scan_id = request.query_params.get("filter[scan_id]")
-        if not scan_id:
-            raise ValidationError(
-                [
+        tenant_id = self.request.tenant_id
+
+        if scan_id:
+            # Specific scan requested - use optimized summaries with region support
+            region_filter = request.query_params.get(
+                "filter[region]"
+            ) or request.query_params.get("filter[region__in]")
+
+            if region_filter:
+                # Fall back to detailed query with region filtering
+                return self._list_with_region_filter(scan_id, region_filter)
+
+            summaries = list(self._compliance_summaries_queryset(scan_id))
+            if not summaries:
+                # Trigger async backfill for next time
+                backfill_compliance_summaries_task.delay(
+                    tenant_id=self.request.tenant_id, scan_id=scan_id
+                )
+                # Use fallback aggregation for this request
+                return self._list_without_region_aggregation(scan_id)
+
+            # Get compliance template for provider to enrich with framework/version
+            compliance_template = self._get_compliance_template(scan_id=scan_id)
+
+            # Convert to response format with framework/version enrichment
+            response_data = []
+            for summary in summaries:
+                compliance_metadata = compliance_template.get(summary.compliance_id, {})
+                response_data.append(
                     {
-                        "detail": "This query parameter is required.",
-                        "status": 400,
-                        "source": {"pointer": "filter[scan_id]"},
-                        "code": "required",
+                        "id": summary.compliance_id,
+                        "compliance_id": summary.compliance_id,
+                        "framework": compliance_metadata.get("framework", ""),
+                        "version": compliance_metadata.get("version", ""),
+                        "requirements_passed": summary.requirements_passed,
+                        "requirements_failed": summary.requirements_failed,
+                        "requirements_manual": summary.requirements_manual,
+                        "total_requirements": summary.total_requirements,
                     }
-                ]
+                )
+
+            serializer = self.get_serializer(response_data, many=True)
+            return Response(serializer.data)
+        else:
+            # No scan_id provided - use latest scans per provider
+            # First, check if provider filters are present
+            provider_id = request.query_params.get("filter[provider_id]")
+            provider_id__in = request.query_params.get("filter[provider_id__in]")
+            provider_type = request.query_params.get("filter[provider_type]")
+            provider_type__in = request.query_params.get("filter[provider_type__in]")
+
+            scan_filters = {"tenant_id": tenant_id, "state": StateChoices.COMPLETED}
+
+            # Apply provider ID filters
+            if provider_id:
+                scan_filters["provider_id"] = provider_id
+            elif provider_id__in:
+                # Convert comma-separated string to list
+                provider_ids = [pid.strip() for pid in provider_id__in.split(",")]
+                scan_filters["provider_id__in"] = provider_ids
+
+            # Apply provider type filters
+            if provider_type:
+                scan_filters["provider__provider"] = provider_type
+            elif provider_type__in:
+                # Convert comma-separated string to list
+                provider_types = [pt.strip() for pt in provider_type__in.split(",")]
+                scan_filters["provider__provider__in"] = provider_types
+
+            latest_scan_ids = (
+                Scan.all_objects.filter(**scan_filters)
+                .order_by("provider_id", "-inserted_at")
+                .distinct("provider_id")
+                .values_list("id", flat=True)
             )
 
-        region_filter = request.query_params.get(
-            "filter[region]"
-        ) or request.query_params.get("filter[region__in]")
-
-        if region_filter:
-            # Fall back to detailed query with region filtering
-            return self._list_with_region_filter(scan_id, region_filter)
-
-        summaries = list(self._compliance_summaries_queryset(scan_id))
-        if not summaries:
-            # Trigger async backfill for next time
-            backfill_compliance_summaries_task.delay(
-                tenant_id=self.request.tenant_id, scan_id=scan_id
-            )
-            # Use fallback aggregation for this request
-            return self._list_without_region_aggregation(scan_id)
-
-        # Get compliance template for provider to enrich with framework/version
-        compliance_template = self._get_compliance_template(scan_id=scan_id)
-
-        # Convert to response format with framework/version enrichment
-        response_data = []
-        for summary in summaries:
-            compliance_metadata = compliance_template.get(summary.compliance_id, {})
-            response_data.append(
-                {
-                    "id": summary.compliance_id,
-                    "compliance_id": summary.compliance_id,
-                    "framework": compliance_metadata.get("framework", ""),
-                    "version": compliance_metadata.get("version", ""),
-                    "requirements_passed": summary.requirements_passed,
-                    "requirements_failed": summary.requirements_failed,
-                    "requirements_manual": summary.requirements_manual,
-                    "total_requirements": summary.total_requirements,
-                }
+            base_queryset = self.get_queryset()
+            queryset = self.filter_queryset(
+                base_queryset.filter(scan_id__in=latest_scan_ids)
             )
 
-        serializer = self.get_serializer(response_data, many=True)
-        return Response(serializer.data)
+            # Aggregate compliance data across latest scans
+            compliance_template = self._get_compliance_template()
+            data = self._aggregate_compliance_overview(
+                queryset, template_metadata=compliance_template
+            )
+            return Response(data)
 
     @action(detail=False, methods=["get"], url_name="metadata")
     def metadata(self, request):
