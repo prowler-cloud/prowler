@@ -1,8 +1,18 @@
 "use client";
 
 import { Badge } from "@/components/shadcn/badge/badge";
-import { cn } from "@/lib/utils";
+import { SeverityBadge } from "@/components/ui/table/severity-badge";
 import type { GraphNode } from "@/types/attack-paths";
+
+const SEVERITY_LEVELS = {
+  informational: "informational",
+  low: "low",
+  medium: "medium",
+  high: "high",
+  critical: "critical",
+} as const;
+
+type Severity = (typeof SEVERITY_LEVELS)[keyof typeof SEVERITY_LEVELS];
 
 interface NodeFindingsProps {
   node: GraphNode;
@@ -24,24 +34,14 @@ export const NodeFindings = ({ node, allNodes = [] }: NodeFindingsProps) => {
     return null;
   }
 
-  const getSeverityColor = (
+  const normalizeSeverity = (
     severity?: string | number | boolean | null,
-  ): string => {
+  ): Severity => {
     const sev = String(severity || "").toLowerCase();
-    switch (sev) {
-      case "critical":
-        return "bg-bg-data-critical";
-      case "high":
-        return "bg-bg-data-high";
-      case "medium":
-        return "bg-bg-data-medium";
-      case "low":
-        return "bg-bg-data-low";
-      case "info":
-        return "bg-bg-data-info";
-      default:
-        return "bg-bg-data-muted";
+    if (sev in SEVERITY_LEVELS) {
+      return sev as Severity;
     }
+    return "informational";
   };
 
   const getStatusVariant = (
@@ -64,14 +64,9 @@ export const NodeFindings = ({ node, allNodes = [] }: NodeFindingsProps) => {
             <div className="flex-1">
               <div className="flex items-center gap-2">
                 {finding.properties?.severity && (
-                  <Badge
-                    className={cn(
-                      getSeverityColor(finding.properties.severity),
-                      "text-text-neutral-primary",
-                    )}
-                  >
-                    {String(finding.properties.severity)}
-                  </Badge>
+                  <SeverityBadge
+                    severity={normalizeSeverity(finding.properties.severity)}
+                  />
                 )}
                 <h5 className="dark:text-prowler-theme-pale/90 text-sm font-medium">
                   {String(
