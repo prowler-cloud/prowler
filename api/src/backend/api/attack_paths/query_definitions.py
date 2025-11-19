@@ -51,11 +51,10 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 MATCH path = (aws:AWSAccount {id: $provider_uid})--(rds:RDSInstance)
 
                 UNWIND nodes(path) as n
-                OPTIONAL MATCH (n)--(pf:ProwlerFinding)
+                OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
                 WHERE pf.status = 'FAIL'
 
-                WITH path, collect(DISTINCT pf) as dpf
-                RETURN path, dpf
+                RETURN path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
             """,
             parameters=[],
         ),
@@ -69,11 +68,10 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 WHERE rds.storage_encrypted = false
 
                 UNWIND nodes(path) as n
-                OPTIONAL MATCH (n)--(pf:ProwlerFinding)
+                OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
                 WHERE pf.status = 'FAIL'
 
-                WITH path, collect(DISTINCT pf) as dpf
-                RETURN path, dpf
+                RETURN path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
             """,
             parameters=[],
         ),
@@ -87,11 +85,10 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 WHERE s3.anonymous_access = true
 
                 UNWIND nodes(path) as n
-                OPTIONAL MATCH (n)--(pf:ProwlerFinding)
+                OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
                 WHERE pf.status = 'FAIL'
 
-                WITH path, collect(DISTINCT pf) as dpf
-                RETURN path, dpf
+                RETURN path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
             """,
             parameters=[],
         ),
@@ -106,11 +103,10 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                     AND any(x IN stmt.action WHERE x = '*')
 
                 UNWIND nodes(path) as n
-                OPTIONAL MATCH (n)--(pf:ProwlerFinding)
+                OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
                 WHERE pf.status = 'FAIL'
 
-                WITH path, collect(DISTINCT pf) as dpf
-                RETURN path, dpf
+                RETURN path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
             """,
             parameters=[],
         ),
@@ -125,11 +121,10 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                     AND any(x IN stmt.action WHERE x = "iam:DeletePolicy")
 
                 UNWIND nodes(path) as n
-                OPTIONAL MATCH (n)--(pf:ProwlerFinding)
+                OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
                 WHERE pf.status = 'FAIL'
 
-                WITH path, collect(DISTINCT pf) as dpf
-                RETURN path, dpf
+                RETURN path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
             """,
             parameters=[],
         ),
@@ -144,11 +139,10 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                     AND any(x IN stmt.action WHERE toLower(x) CONTAINS "create")
 
                 UNWIND nodes(path) as n
-                OPTIONAL MATCH (n)--(pf:ProwlerFinding)
+                OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
                 WHERE pf.status = 'FAIL'
 
-                WITH path, collect(DISTINCT pf) as dpf
-                RETURN path, dpf
+                RETURN path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
             """,
             parameters=[],
         ),
@@ -161,10 +155,10 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 MATCH path = (aws:AWSAccount {id: $provider_uid})--(instance:EC2Instance {exposed_internet: true})
 
                 UNWIND nodes(path) as n
-                OPTIONAL MATCH (n)--(pf:ProwlerFinding)
+                OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
                 WHERE pf.status = 'FAIL'
 
-                WITH path, collect(DISTINCT pf) as dpf
+                WITH path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
                 RETURN path, dpf
             """,
             parameters=[],
@@ -187,10 +181,10 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                     [node IN [aws, open, sg, ipi, ir, dns] WHERE node IS NOT NULL] AS path
 
                 UNWIND path as n
-                OPTIONAL MATCH (n)--(pf:ProwlerFinding)
+                OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
                 WHERE pf.status = 'FAIL'
 
-                RETURN path, collect(DISTINCT pf) as dpf
+                RETURN path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
             """,
             parameters=[],
         ),
@@ -204,11 +198,10 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 WHERE elb.exposed_internet = true
 
                 UNWIND nodes(path) as n
-                OPTIONAL MATCH (n)--(pf:ProwlerFinding)
+                OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
                 WHERE pf.status = 'FAIL'
 
-                WITH path, collect(DISTINCT pf) as dpf
-                RETURN path, dpf
+                RETURN path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
             """,
             parameters=[],
         ),
@@ -222,11 +215,10 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 WHERE elbv2.exposed_internet = true
 
                 UNWIND nodes(path) as n
-                OPTIONAL MATCH (n)--(pf:ProwlerFinding)
+                OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
                 WHERE pf.status = 'FAIL'
 
-                WITH path, collect(DISTINCT pf) as dpf
-                RETURN path, dpf
+                RETURN path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
             """,
             parameters=[],
         ),
@@ -258,10 +250,10 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 [node IN [aws, x, y] WHERE node IS NOT NULL] AS path
 
             UNWIND path as n
-            OPTIONAL MATCH (n)--(pf:ProwlerFinding)
+            OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
             WHERE pf.status = 'FAIL'
 
-            RETURN path, collect(DISTINCT pf) as dpf
+            RETURN path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
             """,
             parameters=[
                 AttackPathsQueryParameterDefinition(
@@ -269,14 +261,6 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                     label="IP address",
                     description="Public IP address, e.g. 192.0.2.0.",
                     placeholder="192.0.2.0",
-                ),
-                AttackPathsQueryParameterDefinition(
-                    name="juan",
-                    label="juancho",
-                    description="arrea",
-                    placeholder=4,
-                    data_type="integer",
-                    cast=int,
                 ),
             ],
         ),
