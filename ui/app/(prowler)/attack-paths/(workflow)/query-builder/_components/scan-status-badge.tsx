@@ -22,7 +22,7 @@ export const ScanStatusBadge = ({
     return (
       <Badge
         variant="outline"
-        className="gap-2 border-amber-600 bg-amber-50 text-amber-900 dark:border-amber-400 dark:bg-amber-950 dark:text-amber-200"
+        className="gap-2 border-border-tag bg-bg-warning text-text-neutral-primary dark:border-border-tag dark:bg-bg-warning dark:text-text-neutral-primary"
       >
         <Loader2 size={14} className="animate-spin" />
         <span>In Progress ({progress}%)</span>
@@ -34,7 +34,7 @@ export const ScanStatusBadge = ({
     return (
       <Badge
         variant="outline"
-        className="gap-2 border-green-600 bg-green-50 text-green-900 dark:border-green-400 dark:bg-green-950 dark:text-green-200"
+        className="gap-2 border-border-tag bg-bg-pass-secondary text-text-neutral-primary dark:border-border-tag dark:bg-bg-pass-secondary dark:text-text-neutral-primary"
       >
         <span>Completed</span>
       </Badge>
