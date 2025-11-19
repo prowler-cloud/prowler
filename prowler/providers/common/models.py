@@ -1,9 +1,11 @@
 from dataclasses import dataclass
+from datetime import datetime
 from os import makedirs
 from os.path import isdir
 
 from pydantic.v1 import BaseModel
 
+from prowler.config.config import set_output_timestamp
 from prowler.providers.common.provider import Provider
 
 
@@ -28,6 +30,8 @@ class ProviderOutputOptions:
     unix_timestamp: bool
 
     def __init__(self, arguments, bulk_checks_metadata):
+        # Refresh timestamps so every run uses the generation time, not process start
+        set_output_timestamp(datetime.now())
         self.status = getattr(arguments, "status", None)
         self.output_modes = getattr(arguments, "output_formats", None)
         self.output_directory = getattr(arguments, "output_directory", None)

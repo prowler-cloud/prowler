@@ -3,6 +3,7 @@ import pathlib
 from datetime import datetime, timezone
 from enum import Enum
 from os import getcwd
+from typing import Tuple
 
 import requests
 import yaml
@@ -10,8 +11,35 @@ from packaging import version
 
 from prowler.lib.logger import logger
 
-timestamp = datetime.today()
-timestamp_utc = datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
+
+class _MutableTimestamp:
+    """Lightweight proxy to keep timestamp references in sync across modules."""
+
+    def __init__(self, value: datetime) -> None:
+        self.value = value
+
+    def set(self, value: datetime) -> None:
+        self.value = value
+
+    def __getattr__(self, name):
+        return getattr(self.value, name)
+
+    def __str__(self) -> str:  # pragma: no cover - trivial forwarder
+        return str(self.value)
+
+    def __repr__(self) -> str:  # pragma: no cover - trivial forwarder
+        return repr(self.value)
+
+    def __eq__(self, other) -> bool:
+        if isinstance(other, _MutableTimestamp):
+            return self.value == other.value
+        return self.value == other
+
+
+timestamp = _MutableTimestamp(datetime.today())
+timestamp_utc = _MutableTimestamp(
+    datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
+)
 prowler_version = "5.14.0"
 html_logo_url = "https://github.com/prowler-cloud/prowler/"
 square_logo_img = "https://prowler.com/wp-content/uploads/logo-html.png"
@@ -82,6 +110,51 @@ default_redteam_config_file_path = (
 )
 encoding_format_utf_8 = "utf-8"
 available_output_formats = ["csv", "json-asff", "json-ocsf", "html"]
+
+
+def set_output_timestamp(
+    new_timestamp: datetime,
+) -> Tuple[datetime, datetime, str, str]:
+    """
+    Override the global output timestamps so generated artifacts reflect a specific scan.
+    Returns the previous values so callers can restore them afterwards.
+    """
+    global timestamp, timestamp_utc, output_file_timestamp, timestamp_iso
+
+    previous_values = (
+        timestamp.value,
+        timestamp_utc.value,
+        output_file_timestamp,
+        timestamp_iso,
+    )
+
+    timestamp.set(new_timestamp)
+    timestamp_utc.set(
+        new_timestamp.astimezone(timezone.utc)
+        if new_timestamp.tzinfo
+        else new_timestamp.replace(tzinfo=timezone.utc)
+    )
+    output_file_timestamp = timestamp.strftime("%Y%m%d%H%M%S")
+    timestamp_iso = timestamp.isoformat(sep=" ", timespec="seconds")
+
+    return previous_values
+
+
+def reset_output_timestamp(
+    previous_values: Tuple[datetime, datetime, str, str]
+) -> None:
+    """Restore the global output timestamp values to their previous state."""
+    global timestamp, timestamp_utc, output_file_timestamp, timestamp_iso
+
+    (
+        previous_timestamp,
+        previous_timestamp_utc,
+        output_file_timestamp,
+        timestamp_iso,
+    ) = previous_values
+
+    timestamp.set(previous_timestamp)
+    timestamp_utc.set(previous_timestamp_utc)
 
 
 def get_default_mute_file_path(provider: str):
