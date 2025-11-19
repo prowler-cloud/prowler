@@ -330,7 +330,10 @@ const AttackPathGraphComponent = forwardRef<
       .attr("font-weight", "bold")
       .attr("text-anchor", "middle")
       .text((d: D3Node): string => {
-        const type = d.labels && d.labels.length > 0 ? d.labels[0] : "Unknown";
+        const type =
+          d.labels && d.labels.length > 0
+            ? formatNodeLabel(d.labels[0])
+            : "Unknown";
         return type.length > 16 ? type.substring(0, 16) + "." : type;
       });
 

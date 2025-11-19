@@ -122,6 +122,8 @@ export interface GraphNode {
   id: string;
   labels: string[]; // e.g., ["S3Bucket"], ["EC2Instance"], ["ProwlerFinding"]
   properties: GraphNodeProperties;
+  findings?: string[]; // IDs of finding nodes connected via HAS_FINDING edges
+  resources?: string[]; // IDs of resource nodes connected via HAS_FINDING edges
 }
 
 export interface GraphEdge {

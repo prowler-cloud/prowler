@@ -8,22 +8,15 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet/sheet";
-import type { GraphEdge, GraphNode } from "@/types/attack-paths";
+import type { GraphNode } from "@/types/attack-paths";
 
+import { NodeFindings } from "./node-findings";
 import { NodeOverview } from "./node-overview";
-import { NodeRelationships } from "./node-relationships";
-import { NodeRemediation } from "./node-remediation";
+import { NodeResources } from "./node-resources";
 
 interface NodeDetailPanelProps {
   node: GraphNode | null;
-  incomingEdges?: GraphEdge[];
-  outgoingEdges?: GraphEdge[];
-  relatedFindings?: Array<{
-    id: string;
-    title: string;
-    severity: "critical" | "high" | "medium" | "low" | "info";
-    status: "PASS" | "FAIL" | "MANUAL";
-  }>;
+  allNodes?: GraphNode[];
   onClose?: () => void;
 }
 
@@ -34,9 +27,7 @@ interface NodeDetailPanelProps {
  */
 export const NodeDetailPanel = ({
   node,
-  incomingEdges = [],
-  outgoingEdges = [],
-  relatedFindings = [],
+  allNodes = [],
   onClose,
 }: NodeDetailPanelProps) => {
   const isOpen = node !== null;
@@ -54,49 +45,53 @@ export const NodeDetailPanel = ({
         {node && (
           <div className="flex flex-col gap-6 pt-6">
             {/* Node Overview Section */}
-            <Card>
+            <Card className="border-border-neutral-secondary">
               <CardContent className="flex flex-col gap-3 p-4">
                 <h3 className="dark:text-prowler-theme-pale/90 text-sm font-semibold">
                   Node Overview
                 </h3>
-                <div className="text-xs text-gray-600 dark:text-gray-400">
+                <div className="text-text-neutral-secondary dark:text-text-neutral-secondary text-xs">
                   Type: {node.labels.join(", ")}
                 </div>
                 <NodeOverview node={node} />
               </CardContent>
             </Card>
 
-            {/* Relationships Section */}
-            <Card>
-              <CardContent className="flex flex-col gap-3 p-4">
-                <h3 className="dark:text-prowler-theme-pale/90 text-sm font-semibold">
-                  Relationships
-                </h3>
-                <div className="text-xs text-gray-600 dark:text-gray-400">
-                  {incomingEdges.length} incoming, {outgoingEdges.length}{" "}
-                  outgoing
-                </div>
-                <NodeRelationships
-                  incomingEdges={incomingEdges}
-                  outgoingEdges={outgoingEdges}
-                />
-              </CardContent>
-            </Card>
+            {/* Related Findings Section - Only show for non-Finding nodes */}
+            {node &&
+              !node.labels.some((label) =>
+                label.toLowerCase().includes("finding"),
+              ) && (
+                <Card className="border-border-neutral-secondary">
+                  <CardContent className="flex flex-col gap-3 p-4">
+                    <h3 className="dark:text-prowler-theme-pale/90 text-sm font-semibold">
+                      Related Findings
+                    </h3>
+                    <div className="text-text-neutral-secondary dark:text-text-neutral-secondary text-xs">
+                      Findings connected to this node
+                    </div>
+                    <NodeFindings node={node} allNodes={allNodes} />
+                  </CardContent>
+                </Card>
+              )}
 
-            {/* Related Findings Section */}
-            {relatedFindings && relatedFindings.length > 0 && (
-              <Card>
-                <CardContent className="flex flex-col gap-3 p-4">
-                  <h3 className="dark:text-prowler-theme-pale/90 text-sm font-semibold">
-                    Related Findings
-                  </h3>
-                  <div className="text-xs text-gray-600 dark:text-gray-400">
-                    {relatedFindings.length} finding(s)
-                  </div>
-                  <NodeRemediation findings={relatedFindings} />
-                </CardContent>
-              </Card>
-            )}
+            {/* Affected Resources Section - Only show for Finding nodes */}
+            {node &&
+              node.labels.some((label) =>
+                label.toLowerCase().includes("finding"),
+              ) && (
+                <Card className="border-border-neutral-secondary">
+                  <CardContent className="flex flex-col gap-3 p-4">
+                    <h3 className="dark:text-prowler-theme-pale/90 text-sm font-semibold">
+                      Affected Resources
+                    </h3>
+                    <div className="text-text-neutral-secondary dark:text-text-neutral-secondary text-xs">
+                      Resources affected by this finding
+                    </div>
+                    <NodeResources node={node} allNodes={allNodes} />
+                  </CardContent>
+                </Card>
+              )}
           </div>
         )}
       </SheetContent>

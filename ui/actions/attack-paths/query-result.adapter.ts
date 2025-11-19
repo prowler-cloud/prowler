@@ -14,7 +14,10 @@ import {
  * @returns Normalized primitive value
  */
 function normalizePropertyValue(
-  value: GraphNodePropertyValue | GraphNodePropertyValue[] | Record<string, unknown>,
+  value:
+    | GraphNodePropertyValue
+    | GraphNodePropertyValue[]
+    | Record<string, unknown>,
 ): string | number | boolean | null | undefined {
   if (value === null || value === undefined) {
     return value;
@@ -44,7 +47,10 @@ function normalizePropertyValue(
  * @returns Normalized properties object
  */
 function normalizeProperties(
-  properties: Record<string, GraphNodePropertyValue | GraphNodePropertyValue[] | Record<string, unknown>>,
+  properties: Record<
+    string,
+    GraphNodePropertyValue | GraphNodePropertyValue[] | Record<string, unknown>
+  >,
 ): GraphNodeProperties {
   const normalized: GraphNodeProperties = {};
 
@@ -64,9 +70,11 @@ function normalizeProperties(
  * - Mapping relationship labels to edge types for graph styling
  * - Normalizing array properties to strings (e.g., anonymous_actions: ["s3:GetObject"] -> "s3:GetObject")
  * - Preserving node and relationship data structure
+ * - Adding findings array to each node based on HAS_FINDING edges
+ * - Adding resources array to finding nodes based on HAS_FINDING edges (reverse relationship)
  *
  * @param graphData - Raw graph data with nodes and relationships from API
- * @returns Graph data with edges array formatted for D3 visualization
+ * @returns Graph data with edges array formatted for D3 visualization and findings/resources on nodes
  */
 export function adaptQueryResultToGraphData(
   graphData: AttackPathGraphData,
@@ -80,11 +88,16 @@ export function adaptQueryResultToGraphData(
         GraphNodePropertyValue | GraphNodePropertyValue[]
       >,
     ),
+    findings: [] as string[], // Will be populated below
+    resources: [] as string[], // Will be populated below for finding nodes
   }));
 
   // Transform relationships into D3-compatible edges if relationships exist
-  const edges: GraphEdge[] =
-    (graphData.relationships as GraphRelationship[] | undefined)?.map(
+  // Also handle case where edges are already provided (e.g., from mock data)
+  let edges: GraphEdge[] = [];
+
+  if (graphData.relationships) {
+    edges = (graphData.relationships as GraphRelationship[]).map(
       (relationship) => ({
         id: relationship.id,
         source: relationship.source,
@@ -99,7 +112,49 @@ export function adaptQueryResultToGraphData(
             )
           : undefined,
       }),
-    ) ?? [];
+    );
+  } else if (graphData.edges) {
+    // If edges are already provided, just normalize their properties
+    edges = (graphData.edges as GraphEdge[]).map((edge) => ({
+      ...edge,
+      properties: edge.properties
+        ? normalizeProperties(
+            edge.properties as Record<
+              string,
+              GraphNodePropertyValue | GraphNodePropertyValue[]
+            >,
+          )
+        : undefined,
+    }));
+  }
+
+  // Populate findings and resources based on HAS_FINDING edges
+  edges.forEach((edge) => {
+    if (edge.type === "HAS_FINDING") {
+      const sourceId =
+        typeof edge.source === "string"
+          ? edge.source
+          : (edge.source as { id?: string })?.id;
+      const targetId =
+        typeof edge.target === "string"
+          ? edge.target
+          : (edge.target as { id?: string })?.id;
+
+      if (sourceId && targetId) {
+        // Add finding to source node (resource -> finding)
+        const sourceNode = normalizedNodes.find((n) => n.id === sourceId);
+        if (sourceNode) {
+          sourceNode.findings.push(targetId);
+        }
+
+        // Add resource to target node (finding <- resource)
+        const targetNode = normalizedNodes.find((n) => n.id === targetId);
+        if (targetNode) {
+          targetNode.resources.push(sourceId);
+        }
+      }
+    }
+  });
 
   return {
     nodes: normalizedNodes,

@@ -208,36 +208,6 @@ export default function AttackPathAnalysisPage() {
     graphState.selectNode(null);
   };
 
-  // Helper to safely extract ID from edge node
-  const getEdgeNodeId = (node: unknown): string | null => {
-    if (typeof node === "string") return node;
-    if (node && typeof node === "object" && "id" in node) {
-      const nodeObj = node as Record<string, unknown>;
-      const id = nodeObj.id;
-      if (typeof id === "string") return id;
-    }
-    return null;
-  };
-
-  // Calculate incoming and outgoing edges for selected node
-  const nodeEdges = (() => {
-    if (!graphState.selectedNode || !graphState.data?.edges) {
-      return { incoming: [], outgoing: [] };
-    }
-
-    const selectedNodeId = graphState.selectedNode.id;
-    const incomingEdges = graphState.data.edges.filter((edge) => {
-      const targetId = getEdgeNodeId(edge.target);
-      return targetId === selectedNodeId;
-    });
-    const outgoingEdges = graphState.data.edges.filter((edge) => {
-      const sourceId = getEdgeNodeId(edge.source);
-      return sourceId === selectedNodeId;
-    });
-
-    return { incoming: incomingEdges, outgoing: outgoingEdges };
-  })();
-
   const handleGraphExport = (svgElement: SVGSVGElement | null) => {
     try {
       if (svgElement) {
@@ -485,8 +455,7 @@ export default function AttackPathAnalysisPage() {
         graphState.data.nodes.length > 0 && (
           <NodeDetailPanel
             node={graphState.selectedNode}
-            incomingEdges={nodeEdges.incoming}
-            outgoingEdges={nodeEdges.outgoing}
+            allNodes={graphState.data?.nodes}
             onClose={handleCloseDetails}
           />
         )}
