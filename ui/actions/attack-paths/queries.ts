@@ -30,7 +30,7 @@ export const getAvailableQueries = async (
 
   try {
     const response = await fetch(
-      `${apiBaseUrl}/attack-paths-scans/${scanId}/queries`,
+      `${apiBaseUrl}/attack-paths-scans/${validatedScanId.data}/queries`,
       {
         headers,
         method: "GET",
@@ -39,10 +39,7 @@ export const getAvailableQueries = async (
 
     return handleApiResponse(response);
   } catch (error) {
-    console.error(
-      `Error fetching available queries for scan ${scanId}:`,
-      error,
-    );
+    console.error("Error fetching available queries for scan:", error);
     return undefined;
   }
 };
@@ -76,7 +73,7 @@ export const executeQuery = async (
 
   try {
     const response = await fetch(
-      `${apiBaseUrl}/attack-paths-scans/${scanId}/queries/run`,
+      `${apiBaseUrl}/attack-paths-scans/${validatedScanId.data}/queries/run`,
       {
         headers,
         method: "POST",
@@ -86,7 +83,7 @@ export const executeQuery = async (
 
     return handleApiResponse(response);
   } catch (error) {
-    console.error(`Error executing query ${queryId} on scan ${scanId}:`, error);
+    console.error("Error executing query on scan:", error);
     return undefined;
   }
 };

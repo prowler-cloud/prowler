@@ -46,17 +46,17 @@ export const getAttackPathScanDetail = async (
   const headers = await getAuthHeaders({ contentType: false });
 
   try {
-    const response = await fetch(`${apiBaseUrl}/attack-paths-scans/${scanId}`, {
-      headers,
-      method: "GET",
-    });
+    const response = await fetch(
+      `${apiBaseUrl}/attack-paths-scans/${validatedScanId.data}`,
+      {
+        headers,
+        method: "GET",
+      },
+    );
 
     return handleApiResponse(response);
   } catch (error) {
-    console.error(
-      `Error fetching attack path scan detail for ${scanId}:`,
-      error,
-    );
+    console.error("Error fetching attack path scan detail:", error);
     return undefined;
   }
 };
