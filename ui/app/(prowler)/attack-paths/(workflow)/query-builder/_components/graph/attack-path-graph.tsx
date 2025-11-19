@@ -270,8 +270,14 @@ const AttackPathGraphComponent = forwardRef<
       .attr("font-weight", "bold")
       .attr("pointer-events", "none")
       .text((d: D3Node): string => {
-        const label = String(d.properties?.name || d.id.substring(0, 6));
-        return label.length > 10 ? label.substring(0, 10) + "..." : label;
+        // Show the first node label (type)
+        if (d.labels && d.labels.length > 0) {
+          const labelText = d.labels[0];
+          return labelText.length > 12
+            ? labelText.substring(0, 12) + "..."
+            : labelText;
+        }
+        return d.id.substring(0, 6);
       });
 
     // Add zoom behavior
