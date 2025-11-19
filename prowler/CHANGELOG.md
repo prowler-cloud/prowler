@@ -11,6 +11,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `cloudstorage_bucket_versioning_enabled` check for GCP provider [(#9014)](https://github.com/prowler-cloud/prowler/pull/9014)
 - `cloudstorage_bucket_soft_delete_enabled` check for GCP provider [(#9028)](https://github.com/prowler-cloud/prowler/pull/9028)
 - `cloudstorage_bucket_logging_enabled` check for GCP provider [(#9091)](https://github.com/prowler-cloud/prowler/pull/9091)
+- `cloudstorage_audit_logs_enabled` check for GCP provider [(#9220)](https://github.com/prowler-cloud/prowler/pull/9220)
 - `cloudstorage_bucket_sufficient_retention_period` check for GCP provider [(#9149)](https://github.com/prowler-cloud/prowler/pull/9149)
 - C5 compliance framework for Azure provider [(#9081)](https://github.com/prowler-cloud/prowler/pull/9081)
 - C5 compliance framework for the GCP provider [(#9097)](https://github.com/prowler-cloud/prowler/pull/9097)
@@ -57,6 +58,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Raise ASFF output error for non-AWS providers [(#9225)](https://github.com/prowler-cloud/prowler/pull/9225)
 - Update AWS ECR service metadata to new format [(#8872)](https://github.com/prowler-cloud/prowler/pull/8872)
 - Update AWS ECS service metadata to new format [(#8888)](https://github.com/prowler-cloud/prowler/pull/8888)
+- Update AWS DocumentDB service metadata to new format [(#8862)](https://github.com/prowler-cloud/prowler/pull/8862)
 
 ---
 
@@ -70,6 +72,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Rename `get_oci_assessment_summary` to `get_oraclecloud_assessment_summary` in HTML output [(#9200)](https://github.com/prowler-cloud/prowler/pull/9200)
 - Fix Validation and other errors in Azure provider [(#8915)](https://github.com/prowler-cloud/prowler/pull/8915)
 - Update documentation URLs from docs.prowler.cloud to docs.prowler.com [(#9240)](https://github.com/prowler-cloud/prowler/pull/9240)
+- Fix file name parsing for checks on Windows [(#9268)](https://github.com/prowler-cloud/prowler/pull/9268)
 
 ---
 

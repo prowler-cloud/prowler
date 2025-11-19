@@ -114,7 +114,6 @@ export const CreateApiKeyModal = ({
               placeholder="My API Key"
               variant="bordered"
               isRequired
-              isInvalid={!!form.formState.errors.name}
             />
           </div>
 
@@ -128,7 +127,6 @@ export const CreateApiKeyModal = ({
               placeholder="365"
               variant="bordered"
               isRequired
-              isInvalid={!!form.formState.errors.expiresInDays}
             />
           </div>
 
