@@ -30,7 +30,7 @@ export default async function SelectScanPage() {
         <AWSConnectionWarning />
       ) : !hasScans ? (
         <Card className="bg-bg-info-secondary dark:bg-bg-info-secondary/20">
-          <CardContent className="gap-2 pt-6">
+          <CardContent className="gap-4 pt-6">
             <p className="text-text-info dark:text-text-info font-medium">
               No Attack Path Scans Available
             </p>

@@ -267,7 +267,7 @@ const AttackPathGraphComponent = forwardRef<
       )
       .force("charge", d3.forceManyBody().strength(-400))
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collision", d3.forceCollide<D3Node>().radius(50));
+      .force("collision", d3.forceCollide<D3Node>().radius(65));
 
     // Create links
     const link = container
@@ -307,7 +307,7 @@ const AttackPathGraphComponent = forwardRef<
     // Add circles for nodes
     nodeGroup
       .append("circle")
-      .attr("r", 30)
+      .attr("r", 45)
       .attr("fill", (d: D3Node) => getNodeColor(d.labels))
       .attr("opacity", 0.8)
       .on("click", (event: PointerEvent, d: D3Node) => {
@@ -333,7 +333,7 @@ const AttackPathGraphComponent = forwardRef<
       .attr("text-anchor", "middle")
       .text((d: D3Node): string => getNodeTypeIcon(d.labels));
 
-    // Second line: Node type (formatted)
+    // Second line: Node type
     textGroups
       .append("tspan")
       .attr("x", 0)
@@ -343,16 +343,11 @@ const AttackPathGraphComponent = forwardRef<
       .attr("font-weight", "bold")
       .attr("text-anchor", "middle")
       .text((d: D3Node): string => {
-        if (d.labels && d.labels.length > 0) {
-          const formatted = formatNodeLabel(d.labels[0]);
-          return formatted.length > 14
-            ? formatted.substring(0, 14) + "."
-            : formatted;
-        }
-        return "";
+        const type = d.labels && d.labels.length > 0 ? d.labels[0] : "Unknown";
+        return type.length > 16 ? type.substring(0, 16) + "." : type;
       });
 
-    // Third line: ID (shortened)
+    // Third line: Severity (if available) or ID
     textGroups
       .append("tspan")
       .attr("x", 0)
@@ -361,7 +356,8 @@ const AttackPathGraphComponent = forwardRef<
       .attr("fill", "white")
       .attr("text-anchor", "middle")
       .text((d: D3Node): string => {
-        return d.id.substring(0, 8);
+        const severity = d.properties?.severity;
+        return severity ? String(severity) : d.id.substring(0, 8);
       });
 
     // Add zoom behavior

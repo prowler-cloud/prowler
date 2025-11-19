@@ -1,7 +1,8 @@
 "use client";
 
-import { Chip } from "@heroui/chip";
-import { Link as HeroUILink } from "@heroui/link";
+import Link from "next/link";
+
+import { Badge } from "@/components/shadcn/badge/badge";
 
 interface Finding {
   id: string;
@@ -18,25 +19,25 @@ interface NodeRemediationProps {
  * Node remediation section showing related Prowler findings
  */
 export const NodeRemediation = ({ findings }: NodeRemediationProps) => {
-  const getSeverityColor = (severity: string) => {
+  const getSeverityVariant = (severity: string) => {
     switch (severity) {
       case "critical":
-        return "danger";
+        return "destructive";
       case "high":
-        return "warning";
+        return "default";
       case "medium":
         return "secondary";
       case "low":
-        return "default";
+        return "outline";
       default:
         return "default";
     }
   };
 
-  const getStatusColor = (status: string) => {
-    if (status === "PASS") return "success";
-    if (status === "FAIL") return "danger";
-    return "default";
+  const getStatusVariant = (status: string) => {
+    if (status === "PASS") return "default";
+    if (status === "FAIL") return "destructive";
+    return "secondary";
   };
 
   return (
@@ -56,32 +57,24 @@ export const NodeRemediation = ({ findings }: NodeRemediationProps) => {
               </p>
             </div>
             <div className="flex flex-col gap-1">
-              <Chip
-                size="sm"
-                variant="flat"
-                color={getSeverityColor(finding.severity)}
-                className="capitalize"
-              >
+              <Badge variant={getSeverityVariant(finding.severity)}>
                 {finding.severity}
-              </Chip>
-              <Chip
-                size="sm"
-                variant="flat"
-                color={getStatusColor(finding.status)}
-              >
+              </Badge>
+              <Badge variant={getStatusVariant(finding.status)}>
                 {finding.status}
-              </Chip>
+              </Badge>
             </div>
           </div>
           <div className="mt-2">
-            <HeroUILink
+            <Link
               href={`/findings?id=${finding.id}`}
-              size="sm"
               target="_blank"
               rel="noopener noreferrer"
+              aria-label={`View full finding for ${finding.title}`}
+              className="text-text-info dark:text-text-info text-sm transition-all hover:opacity-80 dark:hover:opacity-80"
             >
               View Full Finding →
-            </HeroUILink>
+            </Link>
           </div>
         </div>
       ))}

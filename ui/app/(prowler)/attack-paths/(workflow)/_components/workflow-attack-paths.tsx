@@ -1,6 +1,5 @@
 "use client";
 
-import { Progress } from "@heroui/progress";
 import { usePathname } from "next/navigation";
 
 import { VerticalSteps } from "./vertical-steps";
@@ -15,7 +14,7 @@ export const WorkflowAttackPaths = () => {
   // Determine current step based on pathname
   const isQueryBuilderStep = pathname.includes("query-builder");
 
-  const currentStep = isQueryBuilderStep ? 1 : 0; // 0-indexed for Progress
+  const currentStep = isQueryBuilderStep ? 1 : 0; // 0-indexed
 
   const steps = [
     {
@@ -28,15 +27,17 @@ export const WorkflowAttackPaths = () => {
     },
   ];
 
+  const progressPercentage = (currentStep / (steps.length - 1)) * 100;
+
   return (
     <section className="flex flex-col gap-6">
       <div>
-        <Progress
-          value={currentStep}
-          maxValue={steps.length - 1}
-          color="success"
-          className="mb-4"
-        />
+        <div className="bg-bg-neutral-tertiary mb-4 h-2 w-full overflow-hidden rounded-full">
+          <div
+            className="bg-success-primary h-full transition-all duration-300"
+            style={{ width: `${progressPercentage}%` }}
+          />
+        </div>
         <h3 className="dark:text-prowler-theme-pale/90 text-sm font-semibold">
           Step {currentStep + 1} of {steps.length}
         </h3>

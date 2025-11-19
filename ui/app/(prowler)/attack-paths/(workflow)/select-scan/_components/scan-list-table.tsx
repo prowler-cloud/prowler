@@ -1,19 +1,18 @@
 "use client";
 
-import { Spacer } from "@heroui/spacer";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableColumn,
-  TableHeader,
-  TableRow,
-} from "@heroui/table";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/shadcn/button/button";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import { EntityInfoShort } from "@/components/ui/entities/entity-info-short";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import type { ProviderType } from "@/types";
 import type { AttackPathScan } from "@/types/attack-paths";
 import { SCAN_STATES } from "@/types/attack-paths";
@@ -23,6 +22,8 @@ import { ScanStatusBadge } from "./scan-status-badge";
 interface ScanListTableProps {
   scans: AttackPathScan[];
 }
+
+const TABLE_COLUMN_COUNT = 6;
 
 /**
  * Table displaying AWS account attack path scans
@@ -50,80 +51,94 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <Table aria-label="Attack paths scans table" shadow="sm">
-        <TableHeader>
-          <TableColumn>Provider / Account</TableColumn>
-          <TableColumn>Last Scan Date</TableColumn>
-          <TableColumn>Status</TableColumn>
-          <TableColumn>Progress</TableColumn>
-          <TableColumn>Duration</TableColumn>
-          <TableColumn align="end">Action</TableColumn>
-        </TableHeader>
-        <TableBody emptyContent="No attack path scans available.">
-          {scans.map((scan) => {
-            const isDisabled = isSelectDisabled(scan);
-            const duration = scan.attributes.duration
-              ? `${Math.floor(scan.attributes.duration / 60)}m ${scan.attributes.duration % 60}s`
-              : "-";
-
-            return (
-              <TableRow key={scan.id}>
-                <TableCell className="font-medium">
-                  <EntityInfoShort
-                    cloudProvider={
-                      scan.attributes.provider_type as ProviderType
-                    }
-                    entityAlias={scan.attributes.provider_alias}
-                    entityId={scan.attributes.provider_uid}
-                  />
-                </TableCell>
-                <TableCell>
-                  {scan.attributes.completed_at ? (
-                    <DateWithTime
-                      inline
-                      dateTime={scan.attributes.completed_at}
-                    />
-                  ) : (
-                    "-"
-                  )}
-                </TableCell>
-                <TableCell>
-                  <ScanStatusBadge
-                    status={scan.attributes.state}
-                    progress={scan.attributes.progress}
-                  />
-                </TableCell>
-                <TableCell>
-                  <span className="text-sm">{scan.attributes.progress}%</span>
-                </TableCell>
-                <TableCell>
-                  <span className="text-sm">{duration}</span>
-                </TableCell>
-                <TableCell>
-                  <div className="flex justify-end">
-                    <Button
-                      type="button"
-                      aria-label="Select scan"
-                      disabled={isDisabled}
-                      variant={isDisabled ? "secondary" : "default"}
-                      onClick={() => handleSelectScan(scan.id)}
-                      className="w-full max-w-24"
-                    >
-                      {getSelectButtonLabel(scan)}
-                    </Button>
-                  </div>
+    <>
+      <div className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto border p-4">
+        <Table aria-label="Attack path scans table listing provider accounts, scan dates, status, progress, and duration">
+          <TableHeader>
+            <TableRow>
+              <TableHead>Provider / Account</TableHead>
+              <TableHead>Last Scan Date</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Progress</TableHead>
+              <TableHead>Duration</TableHead>
+              <TableHead className="text-right">Action</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {scans.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={TABLE_COLUMN_COUNT}
+                  className="h-24 text-center"
+                >
+                  No attack path scans available.
                 </TableCell>
               </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
-      <Spacer y={4} />
+            ) : (
+              scans.map((scan) => {
+                const isDisabled = isSelectDisabled(scan);
+                const duration = scan.attributes.duration
+                  ? `${Math.floor(scan.attributes.duration / 60)}m ${scan.attributes.duration % 60}s`
+                  : "-";
+
+                return (
+                  <TableRow key={scan.id}>
+                    <TableCell className="font-medium">
+                      <EntityInfoShort
+                        cloudProvider={
+                          scan.attributes.provider_type as ProviderType
+                        }
+                        entityAlias={scan.attributes.provider_alias}
+                        entityId={scan.attributes.provider_uid}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      {scan.attributes.completed_at ? (
+                        <DateWithTime
+                          inline
+                          dateTime={scan.attributes.completed_at}
+                        />
+                      ) : (
+                        "-"
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <ScanStatusBadge
+                        status={scan.attributes.state}
+                        progress={scan.attributes.progress}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm">
+                        {scan.attributes.progress}%
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm">{duration}</span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        type="button"
+                        aria-label="Select scan"
+                        disabled={isDisabled}
+                        variant={isDisabled ? "secondary" : "default"}
+                        onClick={() => handleSelectScan(scan.id)}
+                        className="w-full max-w-24"
+                      >
+                        {getSelectButtonLabel(scan)}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
+      </div>
       <p className="text-xs text-gray-500 dark:text-gray-400">
         Only attack path scans with &quot;Completed&quot; status can be
         selected. Scans in progress will update automatically.
       </p>
-    </div>
+    </>
   );
 };

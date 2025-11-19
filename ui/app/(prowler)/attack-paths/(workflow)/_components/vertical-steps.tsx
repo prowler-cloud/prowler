@@ -1,20 +1,35 @@
 "use client";
 
-import type { ButtonProps } from "@heroui/button";
-import { cn } from "@heroui/theme";
 import { useControlledState } from "@react-stately/utils";
 import { domAnimation, LazyMotion, m } from "framer-motion";
-import type { ComponentProps } from "react";
-import React from "react";
+import type {
+  ComponentProps,
+  CSSProperties,
+  HTMLAttributes,
+  ReactNode,
+} from "react";
+import { forwardRef } from "react";
+
+import { cn } from "@/lib/utils";
 
 export type VerticalStepProps = {
   className?: string;
-  description?: React.ReactNode;
-  title?: React.ReactNode;
+  description?: ReactNode;
+  title?: ReactNode;
 };
 
-export interface VerticalStepsProps
-  extends React.HTMLAttributes<HTMLButtonElement> {
+const STEP_COLORS = {
+  primary: "primary",
+  secondary: "secondary",
+  success: "success",
+  warning: "warning",
+  danger: "danger",
+  default: "default",
+} as const;
+
+type StepColor = (typeof STEP_COLORS)[keyof typeof STEP_COLORS];
+
+export interface VerticalStepsProps extends HTMLAttributes<HTMLButtonElement> {
   /**
    * An array of steps.
    *
@@ -26,7 +41,7 @@ export interface VerticalStepsProps
    *
    * @default "primary"
    */
-  color?: ButtonProps["color"];
+  color?: StepColor;
   /**
    * The current step index.
    */
@@ -83,10 +98,7 @@ function CheckIcon(props: ComponentProps<"svg">) {
   );
 }
 
-export const VerticalSteps = React.forwardRef<
-  HTMLButtonElement,
-  VerticalStepsProps
->(
+export const VerticalSteps = forwardRef<HTMLButtonElement, VerticalStepsProps>(
   (
     {
       color = "primary",
@@ -107,60 +119,56 @@ export const VerticalSteps = React.forwardRef<
       onStepChange,
     );
 
-    const colors = React.useMemo(() => {
-      let userColor;
-      let fgColor;
+    let userColor;
+    let fgColor;
 
-      const colorsVars = [
-        "[--active-fg-color:var(--step-fg-color)]",
-        "[--active-border-color:var(--step-color)]",
-        "[--active-color:var(--step-color)]",
-        "[--complete-background-color:var(--step-color)]",
-        "[--complete-border-color:var(--step-color)]",
-        "[--inactive-border-color:hsl(var(--heroui-default-300))]",
-        "[--inactive-color:hsl(var(--heroui-default-300))]",
-      ];
+    const colorsVars = [
+      "[--active-fg-color:var(--step-fg-color)]",
+      "[--active-border-color:var(--step-color)]",
+      "[--active-color:var(--step-color)]",
+      "[--complete-background-color:var(--step-color)]",
+      "[--complete-border-color:var(--step-color)]",
+      "[--inactive-border-color:hsl(var(--heroui-default-300))]",
+      "[--inactive-color:hsl(var(--heroui-default-300))]",
+    ];
 
-      switch (color) {
-        case "primary":
-          userColor = "[--step-color:hsl(var(--heroui-primary))]";
-          fgColor = "[--step-fg-color:hsl(var(--heroui-primary-foreground))]";
-          break;
-        case "secondary":
-          userColor = "[--step-color:hsl(var(--heroui-secondary))]";
-          fgColor = "[--step-fg-color:hsl(var(--heroui-secondary-foreground))]";
-          break;
-        case "success":
-          userColor = "[--step-color:hsl(var(--heroui-success))]";
-          fgColor = "[--step-fg-color:hsl(var(--heroui-success-foreground))]";
-          break;
-        case "warning":
-          userColor = "[--step-color:hsl(var(--heroui-warning))]";
-          fgColor = "[--step-fg-color:hsl(var(--heroui-warning-foreground))]";
-          break;
-        case "danger":
-          userColor = "[--step-color:hsl(var(--heroui-error))]";
-          fgColor = "[--step-fg-color:hsl(var(--heroui-error-foreground))]";
-          break;
-        case "default":
-          userColor = "[--step-color:hsl(var(--heroui-default))]";
-          fgColor = "[--step-fg-color:hsl(var(--heroui-default-foreground))]";
-          break;
-        default:
-          userColor = "[--step-color:hsl(var(--heroui-primary))]";
-          fgColor = "[--step-fg-color:hsl(var(--heroui-primary-foreground))]";
-          break;
-      }
+    switch (color) {
+      case "primary":
+        userColor = "[--step-color:hsl(var(--heroui-primary))]";
+        fgColor = "[--step-fg-color:hsl(var(--heroui-primary-foreground))]";
+        break;
+      case "secondary":
+        userColor = "[--step-color:hsl(var(--heroui-secondary))]";
+        fgColor = "[--step-fg-color:hsl(var(--heroui-secondary-foreground))]";
+        break;
+      case "success":
+        userColor = "[--step-color:hsl(var(--heroui-success))]";
+        fgColor = "[--step-fg-color:hsl(var(--heroui-success-foreground))]";
+        break;
+      case "warning":
+        userColor = "[--step-color:hsl(var(--heroui-warning))]";
+        fgColor = "[--step-fg-color:hsl(var(--heroui-warning-foreground))]";
+        break;
+      case "danger":
+        userColor = "[--step-color:hsl(var(--heroui-error))]";
+        fgColor = "[--step-fg-color:hsl(var(--heroui-error-foreground))]";
+        break;
+      case "default":
+        userColor = "[--step-color:hsl(var(--heroui-default))]";
+        fgColor = "[--step-fg-color:hsl(var(--heroui-default-foreground))]";
+        break;
+      default:
+        userColor = "[--step-color:hsl(var(--heroui-primary))]";
+        fgColor = "[--step-fg-color:hsl(var(--heroui-primary-foreground))]";
+        break;
+    }
 
-      if (!className?.includes("--step-fg-color")) colorsVars.unshift(fgColor);
-      if (!className?.includes("--step-color")) colorsVars.unshift(userColor);
-      if (!className?.includes("--inactive-bar-color"))
-        colorsVars.push(
-          "[--inactive-bar-color:hsl(var(--heroui-default-300))]",
-        );
+    if (!className?.includes("--step-fg-color")) colorsVars.unshift(fgColor);
+    if (!className?.includes("--step-color")) colorsVars.unshift(userColor);
+    if (!className?.includes("--inactive-bar-color"))
+      colorsVars.push("[--inactive-bar-color:hsl(var(--heroui-default-300))]");
 
-      return colorsVars;
-    }, [color, className]);
+    const colors = colorsVars;
 
     return (
       <nav aria-label="Progress" className="max-w-fit">
@@ -265,7 +273,7 @@ export const VerticalSteps = React.forwardRef<
                     style={
                       {
                         "--idx": stepIdx,
-                      } as React.CSSProperties
+                      } as CSSProperties
                     }
                   >
                     <div

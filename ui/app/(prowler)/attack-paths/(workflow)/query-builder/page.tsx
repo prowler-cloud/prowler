@@ -434,7 +434,7 @@ export default function QueryBuilderPage() {
               </div>
             </>
           ) : (
-            <div className="bg-bg-neutral-tertiary flex flex-1 items-center justify-center rounded text-center">
+            <div className="flex flex-1 items-center justify-center text-center">
               <p className="text-text-neutral-secondary dark:text-text-neutral-secondary text-sm">
                 Select a query and click &quot;Execute Query&quot; to visualize
                 the attack path graph

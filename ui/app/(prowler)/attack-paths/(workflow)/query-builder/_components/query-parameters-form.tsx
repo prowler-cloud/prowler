@@ -1,7 +1,5 @@
 "use client";
 
-import { Checkbox } from "@heroui/checkbox";
-import { Input } from "@heroui/input";
 import { Controller, useFormContext } from "react-hook-form";
 
 import type { AttackPathQuery } from "@/types/attack-paths";
@@ -49,10 +47,13 @@ export const QueryParametersForm = ({
               return (
                 <div className="flex flex-col gap-2">
                   <label className="flex cursor-pointer items-center gap-3">
-                    <Checkbox
-                      {...field}
+                    <input
+                      type="checkbox"
+                      id={param.name}
                       checked={field.value === true || field.value === "true"}
-                      size="lg"
+                      onChange={(e) => field.onChange(e.target.checked)}
+                      aria-label={param.label}
+                      className="border-border-neutral-secondary bg-bg-neutral-primary text-text-primary focus:ring-primary dark:border-border-neutral-secondary dark:bg-bg-neutral-primary dark:text-text-primary h-4 w-4 rounded border focus:ring-2"
                     />
                     <div className="flex flex-col gap-1">
                       <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -69,24 +70,49 @@ export const QueryParametersForm = ({
               );
             }
 
+            const errorMessage = (() => {
+              const error = errors[param.name];
+              if (error && typeof error.message === "string") {
+                return error.message;
+              }
+              return undefined;
+            })();
+
+            const descriptionId = `${param.name}-description`;
             return (
-              <Input
-                {...field}
-                label={param.label}
-                placeholder={
-                  param.placeholder || `Enter ${param.label.toLowerCase()}`
-                }
-                description={param.description}
-                type={param.data_type === "number" ? "number" : "text"}
-                isRequired={param.required}
-                isInvalid={!!errors[param.name]}
-                errorMessage={
-                  typeof errors[param.name]?.message === "string"
-                    ? (errors[param.name]?.message as string)
-                    : undefined
-                }
-                size="lg"
-              />
+              <div className="flex flex-col gap-2">
+                <label
+                  htmlFor={param.name}
+                  className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  {param.label}
+                  {param.required && <span className="text-red-500"> *</span>}
+                </label>
+                <input
+                  {...field}
+                  id={param.name}
+                  type={param.data_type === "number" ? "number" : "text"}
+                  placeholder={
+                    param.placeholder || `Enter ${param.label.toLowerCase()}`
+                  }
+                  value={field.value ?? ""}
+                  aria-describedby={
+                    param.description ? descriptionId : undefined
+                  }
+                  className="border-border-neutral-secondary bg-bg-neutral-primary text-text-neutral-primary placeholder-text-neutral-secondary focus:border-border-primary focus:ring-primary dark:border-border-neutral-secondary dark:bg-bg-neutral-primary dark:text-text-neutral-primary dark:placeholder-text-neutral-secondary dark:focus:border-border-primary rounded-md border px-3 py-2 text-sm focus:ring-1 focus:outline-none"
+                />
+                {param.description && (
+                  <span
+                    id={descriptionId}
+                    className="text-xs text-gray-600 dark:text-gray-400"
+                  >
+                    {param.description}
+                  </span>
+                )}
+                {errorMessage && (
+                  <span className="text-xs text-red-500">{errorMessage}</span>
+                )}
+              </div>
             );
           }}
         />
