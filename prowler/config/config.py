@@ -140,23 +140,6 @@ def set_output_timestamp(
     return previous_values
 
 
-def reset_output_timestamp(
-    previous_values: Tuple[datetime, datetime, str, str]
-) -> None:
-    """Restore the global output timestamp values to their previous state."""
-    global timestamp, timestamp_utc, output_file_timestamp, timestamp_iso
-
-    (
-        previous_timestamp,
-        previous_timestamp_utc,
-        output_file_timestamp,
-        timestamp_iso,
-    ) = previous_values
-
-    timestamp.set(previous_timestamp)
-    timestamp_utc.set(previous_timestamp_utc)
-
-
 def get_default_mute_file_path(provider: str):
     """
     get_default_mute_file_path returns the default mute file path for the provider
