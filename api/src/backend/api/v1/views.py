@@ -204,6 +204,7 @@ from api.v1.serializers import (
     OverviewFindingSerializer,
     OverviewProviderCountSerializer,
     OverviewProviderSerializer,
+    OverviewRegionSerializer,
     OverviewServiceSerializer,
     OverviewSeveritySerializer,
     ProcessorCreateSerializer,
@@ -2013,7 +2014,7 @@ class ScanViewSet(BaseRLSViewSet):
                     "scan_id": str(scan.id),
                     "provider_id": str(scan.provider_id),
                     # Disabled for now
-                    # checks_to_execute=scan.scanner_args.get("checks_to_execute"),
+                    "checks_to_execute": ["accessanalyzer_enabled"],
                 },
             )
 
@@ -3940,6 +3941,15 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         ),
         filters=True,
     ),
+    regions=extend_schema(
+        summary="Get findings data by region",
+        description=(
+            "Retrieve an aggregated summary of findings grouped by region. The response includes the total, passed, "
+            "failed, and muted findings for each region based on the latest completed scans per provider. "
+            "Standard overview filters (inserted_at, provider filters, region filters, etc.) are supported."
+        ),
+        filters=True,
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 class OverviewViewSet(BaseRLSViewSet):
@@ -3970,6 +3980,8 @@ class OverviewViewSet(BaseRLSViewSet):
             return OverviewSeveritySerializer
         elif self.action == "services":
             return OverviewServiceSerializer
+        elif self.action == "regions":
+            return OverviewRegionSerializer
         elif self.action == "threatscore":
             return ThreatScoreSnapshotSerializer
         return super().get_serializer_class()
@@ -3977,12 +3989,10 @@ class OverviewViewSet(BaseRLSViewSet):
     def get_filterset_class(self):
         if self.action == "providers":
             return None
-        elif self.action == "findings":
+        elif self.action in ["findings", "services", "regions"]:
             return ScanSummaryFilter
         elif self.action == "findings_severity":
             return ScanSummarySeverityFilter
-        elif self.action == "services":
-            return ScanSummaryFilter
         return None
 
     @extend_schema(exclude=True)
@@ -3992,6 +4002,35 @@ class OverviewViewSet(BaseRLSViewSet):
     @extend_schema(exclude=True)
     def retrieve(self, request, *args, **kwargs):
         raise MethodNotAllowed(method="GET")
+
+    def _get_latest_scans_queryset(self):
+        """
+        Get filtered queryset for the latest completed scans per provider.
+
+        Returns:
+            Filtered ScanSummary queryset with latest scan IDs applied.
+        """
+        tenant_id = self.request.tenant_id
+        queryset = self.get_queryset()
+        filtered_queryset = self.filter_queryset(queryset)
+        provider_filter = (
+            {"provider__in": self.allowed_providers}
+            if hasattr(self, "allowed_providers")
+            else {}
+        )
+
+        latest_scan_ids = (
+            Scan.all_objects.filter(
+                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
+            )
+            .order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values_list("id", flat=True)
+        )
+
+        return filtered_queryset.filter(
+            tenant_id=tenant_id, scan_id__in=latest_scan_ids
+        )
 
     @action(detail=False, methods=["get"], url_name="providers")
     def providers(self, request):
@@ -4085,26 +4124,7 @@ class OverviewViewSet(BaseRLSViewSet):
 
     @action(detail=False, methods=["get"], url_name="findings")
     def findings(self, request):
-        tenant_id = self.request.tenant_id
-        queryset = self.get_queryset()
-        filtered_queryset = self.filter_queryset(queryset)
-        provider_filter = (
-            {"provider__in": self.allowed_providers}
-            if hasattr(self, "allowed_providers")
-            else {}
-        )
-
-        latest_scan_ids = (
-            Scan.all_objects.filter(
-                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
-            )
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
-        filtered_queryset = filtered_queryset.filter(
-            tenant_id=tenant_id, scan_id__in=latest_scan_ids
-        )
+        filtered_queryset = self._get_latest_scans_queryset()
 
         aggregated_totals = filtered_queryset.aggregate(
             _pass=Sum("_pass") or 0,
@@ -4131,31 +4151,7 @@ class OverviewViewSet(BaseRLSViewSet):
 
     @action(detail=False, methods=["get"], url_name="findings_severity")
     def findings_severity(self, request):
-        tenant_id = self.request.tenant_id
-
-        # Load only required fields
-        queryset = self.get_queryset().only(
-            "tenant_id", "scan_id", "severity", "fail", "_pass", "total"
-        )
-
-        filtered_queryset = self.filter_queryset(queryset)
-        provider_filter = (
-            {"provider__in": self.allowed_providers}
-            if hasattr(self, "allowed_providers")
-            else {}
-        )
-
-        latest_scan_ids = (
-            Scan.all_objects.filter(
-                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
-            )
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
-        filtered_queryset = filtered_queryset.filter(
-            tenant_id=tenant_id, scan_id__in=latest_scan_ids
-        )
+        filtered_queryset = self._get_latest_scans_queryset()
 
         # The filter will have added a status_count annotation if any status filter was used
         if "status_count" in filtered_queryset.query.annotations:
@@ -4179,26 +4175,7 @@ class OverviewViewSet(BaseRLSViewSet):
 
     @action(detail=False, methods=["get"], url_name="services")
     def services(self, request):
-        tenant_id = self.request.tenant_id
-        queryset = self.get_queryset()
-        filtered_queryset = self.filter_queryset(queryset)
-        provider_filter = (
-            {"provider__in": self.allowed_providers}
-            if hasattr(self, "allowed_providers")
-            else {}
-        )
-
-        latest_scan_ids = (
-            Scan.all_objects.filter(
-                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
-            )
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
-        filtered_queryset = filtered_queryset.filter(
-            tenant_id=tenant_id, scan_id__in=latest_scan_ids
-        )
+        filtered_queryset = self._get_latest_scans_queryset()
 
         services_data = (
             filtered_queryset.values("service")
@@ -4213,13 +4190,30 @@ class OverviewViewSet(BaseRLSViewSet):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @action(detail=False, methods=["get"], url_name="regions")
+    def regions(self, request):
+        filtered_queryset = self._get_latest_scans_queryset()
+
+        regions_data = (
+            filtered_queryset.values("region")
+            .annotate(_pass=Sum("_pass"))
+            .annotate(fail=Sum("fail"))
+            .annotate(muted=Sum("muted"))
+            .annotate(total=Sum("total"))
+            .order_by("region")
+        )
+
+        serializer = self.get_serializer(regions_data, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     @extend_schema(
         summary="Get ThreatScore snapshots",
         description=(
             "Retrieve ThreatScore metrics. By default, returns the latest snapshot for each provider. "
             "Use snapshot_id to retrieve a specific historical snapshot."
         ),
-        tags=["Overviews"],
+        tags=["Overview"],
         parameters=[
             OpenApiParameter(
                 name="snapshot_id",

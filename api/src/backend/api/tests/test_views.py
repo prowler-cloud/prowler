@@ -6784,6 +6784,32 @@ class TestOverviewViewSet:
         # Should return services from latest scans
         assert len(response.json()["data"]) == 2
 
+    def test_overview_regions_list(self, authenticated_client, scan_summaries_fixture):
+        response = authenticated_client.get(
+            reverse("overview-regions"), {"filter[inserted_at]": TODAY}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        # Only two different regions in the fixture (eu-west-1, us-east-1)
+        assert len(response.json()["data"]) == 2
+
+        data = response.json()["data"]
+        regions = {item["id"]: item["attributes"] for item in data}
+
+        assert "eu-west-1" in regions
+        assert "us-east-1" in regions
+
+        # eu-west-1 has 3 findings (1 pass, 1 fail, 1 muted)
+        assert regions["eu-west-1"]["total"] == 3
+        assert regions["eu-west-1"]["pass"] == 1
+        assert regions["eu-west-1"]["fail"] == 1
+        assert regions["eu-west-1"]["muted"] == 1
+
+        # us-east-1 has 1 finding (1 pass)
+        assert regions["us-east-1"]["total"] == 1
+        assert regions["us-east-1"]["pass"] == 1
+        assert regions["us-east-1"]["fail"] == 0
+        assert regions["us-east-1"]["muted"] == 0
+
     def test_overview_services_list(self, authenticated_client, scan_summaries_fixture):
         response = authenticated_client.get(
             reverse("overview-services"), {"filter[inserted_at]": TODAY}
