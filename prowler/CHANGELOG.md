@@ -13,6 +13,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `cloudstorage_bucket_logging_enabled` check for GCP provider [(#9091)](https://github.com/prowler-cloud/prowler/pull/9091)
 - `cloudstorage_audit_logs_enabled` check for GCP provider [(#9220)](https://github.com/prowler-cloud/prowler/pull/9220)
 - `cloudstorage_bucket_sufficient_retention_period` check for GCP provider [(#9149)](https://github.com/prowler-cloud/prowler/pull/9149)
+- `compute_instance_automatic_restart_enabled` check for GCP provider [(#9271)](https://github.com/prowler-cloud/prowler/pull/9271)
 - C5 compliance framework for Azure provider [(#9081)](https://github.com/prowler-cloud/prowler/pull/9081)
 - C5 compliance framework for the GCP provider [(#9097)](https://github.com/prowler-cloud/prowler/pull/9097)
 - `organization_repository_creation_limited` check for GitHub provider [(#8844)](https://github.com/prowler-cloud/prowler/pull/8844)
