@@ -121,9 +121,18 @@ export interface GraphEdge {
   properties?: GraphNodeProperties;
 }
 
+export interface GraphRelationship {
+  id: string;
+  label: string;
+  source: string;
+  target: string;
+  properties?: GraphNodeProperties;
+}
+
 export interface AttackPathGraphData {
   nodes: GraphNode[];
   edges?: GraphEdge[];
+  relationships?: GraphRelationship[];
 }
 
 export interface QueryResultData {
