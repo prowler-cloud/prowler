@@ -50,6 +50,56 @@ interface D3Link extends d3.SimulationLinkDatum<D3Node> {
 }
 
 /**
+ * Helper function to format camelCase labels to space-separated text
+ * e.g., "ProwlerFinding" -> "Prowler Finding", "AWSAccount" -> "Aws Account"
+ */
+function formatNodeLabel(label: string): string {
+  return label
+    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
+    .replace(/([a-z\d])([A-Z])/g, "$1 $2")
+    .trim()
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}
+
+/**
+ * Node type to icon unicode mapping
+ */
+const NODE_TYPE_ICONS = {
+  prowlerfinding: "⚠",
+  awsaccount: "☁",
+  ec2instance: "🖥",
+  s3bucket: "💾",
+  iamrole: "🔑",
+  default: "●",
+} as const;
+
+/**
+ * Get icon for node based on label type
+ * Maps node types to unicode emoji icons
+ */
+function getNodeTypeIcon(labels: string[]): string {
+  if (!labels || labels.length === 0) return NODE_TYPE_ICONS.default;
+
+  const label = labels[0].toLowerCase();
+
+  // Try exact matches first
+  if (label in NODE_TYPE_ICONS) {
+    return NODE_TYPE_ICONS[label as keyof typeof NODE_TYPE_ICONS];
+  }
+
+  // Try partial matches
+  for (const [key, icon] of Object.entries(NODE_TYPE_ICONS)) {
+    if (key !== "default" && label.includes(key)) {
+      return icon;
+    }
+  }
+
+  return NODE_TYPE_ICONS.default;
+}
+
+/**
  * D3 Force-directed graph visualization for attack paths
  * Renders interactive graph with nodes and edges
  */
@@ -213,11 +263,11 @@ const AttackPathGraphComponent = forwardRef<
         d3
           .forceLink<D3Node, D3Link>(edges)
           .id((d) => d.id)
-          .distance(100),
+          .distance(150),
       )
-      .force("charge", d3.forceManyBody().strength(-300))
+      .force("charge", d3.forceManyBody().strength(-400))
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collision", d3.forceCollide<D3Node>().radius(30));
+      .force("collision", d3.forceCollide<D3Node>().radius(50));
 
     // Create links
     const link = container
@@ -245,10 +295,19 @@ const AttackPathGraphComponent = forwardRef<
           .on("end", dragEnded),
       );
 
+    // Add tooltip (title element for native SVG tooltips)
+    nodeGroup.append("title").text((d: D3Node): string => {
+      // Show the first node label (full text for tooltip)
+      if (d.labels && d.labels.length > 0) {
+        return formatNodeLabel(d.labels[0]);
+      }
+      return d.id;
+    });
+
     // Add circles for nodes
     nodeGroup
       .append("circle")
-      .attr("r", 20)
+      .attr("r", 30)
       .attr("fill", (d: D3Node) => getNodeColor(d.labels))
       .attr("opacity", 0.8)
       .on("click", (event: PointerEvent, d: D3Node) => {
@@ -260,24 +319,49 @@ const AttackPathGraphComponent = forwardRef<
         draggedRef.current = false;
       });
 
-    // Add labels to nodes
-    nodeGroup
-      .append("text")
+    // Add label text group containing icon, type, and ID - centered in node
+    const textGroups = nodeGroup.append("text").attr("pointer-events", "none");
+
+    // First line: Node type icon
+    textGroups
+      .append("tspan")
+      .attr("x", 0)
+      .attr("dy", "-0.4em")
+      .attr("font-size", "16px")
+      .attr("fill", "white")
+      .attr("opacity", 0.9)
       .attr("text-anchor", "middle")
-      .attr("dy", ".3em")
-      .attr("font-size", "11px")
+      .text((d: D3Node): string => getNodeTypeIcon(d.labels));
+
+    // Second line: Node type (formatted)
+    textGroups
+      .append("tspan")
+      .attr("x", 0)
+      .attr("dy", "1.3em")
+      .attr("font-size", "10px")
       .attr("fill", "white")
       .attr("font-weight", "bold")
-      .attr("pointer-events", "none")
+      .attr("text-anchor", "middle")
       .text((d: D3Node): string => {
-        // Show the first node label (type)
         if (d.labels && d.labels.length > 0) {
-          const labelText = d.labels[0];
-          return labelText.length > 12
-            ? labelText.substring(0, 12) + "..."
-            : labelText;
+          const formatted = formatNodeLabel(d.labels[0]);
+          return formatted.length > 14
+            ? formatted.substring(0, 14) + "."
+            : formatted;
         }
-        return d.id.substring(0, 6);
+        return "";
+      });
+
+    // Third line: ID (shortened)
+    textGroups
+      .append("tspan")
+      .attr("x", 0)
+      .attr("dy", "1.2em")
+      .attr("font-size", "9px")
+      .attr("fill", "white")
+      .attr("text-anchor", "middle")
+      .text((d: D3Node): string => {
+        return d.id.substring(0, 8);
       });
 
     // Add zoom behavior

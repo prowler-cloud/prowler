@@ -15,34 +15,37 @@ interface LegendItem {
   label: string;
   color: string;
   description: string;
+  icon: string;
 }
 
-// Map node labels to human-readable names and descriptions
-const nodeTypeDescriptions: Record<
-  string,
-  { name: string; description: string }
-> = {
+// Map node labels to human-readable names, descriptions, and icons
+const nodeTypeDescriptions = {
   ProwlerFinding: {
     name: "Prowler Finding",
     description: "Security findings from Prowler scans",
+    icon: "⚠",
   },
   AWSAccount: {
     name: "AWS Account",
     description: "AWS account root node",
+    icon: "☁",
   },
   EC2Instance: {
     name: "EC2 Instance",
     description: "Elastic Compute Cloud instance",
+    icon: "🖥",
   },
   S3Bucket: {
     name: "S3 Bucket",
     description: "Simple Storage Service bucket",
+    icon: "💾",
   },
   IAMRole: {
     name: "IAM Role",
     description: "Identity and Access Management role",
+    icon: "🔑",
   },
-};
+} as const;
 
 /**
  * Extract unique node types from graph data
@@ -77,12 +80,14 @@ function generateLegendItems(nodeTypes: string[]): LegendItem[] {
     if (seenTypes.has(nodeType)) return;
     seenTypes.add(nodeType);
 
-    const description = nodeTypeDescriptions[nodeType];
+    const description =
+      nodeTypeDescriptions[nodeType as keyof typeof nodeTypeDescriptions];
     if (description) {
       items.push({
         label: description.name,
         color: getNodeColor([nodeType]),
         description: description.description,
+        icon: description.icon,
       });
     } else {
       // For unknown node types, use the type as label and default color
@@ -90,6 +95,7 @@ function generateLegendItems(nodeTypes: string[]): LegendItem[] {
         label: nodeType,
         color: GRAPH_NODE_COLORS.default,
         description: `${nodeType} node`,
+        icon: "●",
       });
     }
   });
@@ -126,11 +132,16 @@ export const GraphLegend = ({ data }: GraphLegendProps) => {
                     role="img"
                     aria-label={`${item.label}: ${item.description}`}
                   >
-                    <div
-                      className="h-4 w-4 rounded-full"
-                      style={{ backgroundColor: item.color, opacity: 0.8 }}
-                      aria-hidden="true"
-                    />
+                    <div className="relative flex-shrink-0">
+                      <div
+                        className="h-5 w-5 rounded-full opacity-80"
+                        style={{ backgroundColor: item.color }}
+                        aria-hidden="true"
+                      />
+                      <div className="absolute top-0 left-0 flex h-5 w-5 items-center justify-center text-xs">
+                        {item.icon}
+                      </div>
+                    </div>
                     <span className="text-text-neutral-secondary dark:text-text-neutral-secondary text-xs">
                       {item.label}
                     </span>

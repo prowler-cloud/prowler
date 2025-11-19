@@ -13,6 +13,8 @@ import { useRouter } from "next/navigation";
 
 import { CustomButton } from "@/components/ui/custom";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
+import { EntityInfoShort } from "@/components/ui/entities/entity-info-short";
+import type { ProviderType } from "@/types";
 import type { AttackPathScan } from "@/types/attack-paths";
 import { SCAN_STATES } from "@/types/attack-paths";
 
@@ -68,17 +70,13 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
             return (
               <TableRow key={scan.id}>
                 <TableCell className="font-medium">
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-2">
-                      <span className="bg-bg-neutral-tertiary dark:bg-bg-neutral-tertiary rounded px-2 py-1 text-xs font-semibold">
-                        {scan.attributes.provider_type.toUpperCase()}
-                      </span>
-                      <span>{scan.attributes.provider_alias}</span>
-                    </div>
-                    <span className="text-text-neutral-secondary dark:text-text-neutral-secondary text-xs">
-                      UID: {scan.attributes.provider_uid}
-                    </span>
-                  </div>
+                  <EntityInfoShort
+                    cloudProvider={
+                      scan.attributes.provider_type as ProviderType
+                    }
+                    entityAlias={scan.attributes.provider_alias}
+                    entityId={scan.attributes.provider_uid}
+                  />
                 </TableCell>
                 <TableCell>
                   {scan.attributes.completed_at ? (
