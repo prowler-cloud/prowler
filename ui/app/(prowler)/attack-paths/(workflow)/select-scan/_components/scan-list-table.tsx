@@ -49,7 +49,7 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
 
   return (
     <div className="flex flex-col gap-4">
-      <Table aria-label="Attack path scans table" shadow="sm">
+      <Table aria-label="Attack paths scans table" shadow="sm">
         <TableHeader>
           <TableColumn>Provider / Account</TableColumn>
           <TableColumn>Last Scan Date</TableColumn>
@@ -69,9 +69,14 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
               <TableRow key={scan.id}>
                 <TableCell className="font-medium">
                   <div className="flex flex-col gap-1">
-                    <span>{scan.attributes.provider_alias}</span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      ID: {scan.id.substring(0, 8)}...
+                    <div className="flex items-center gap-2">
+                      <span className="bg-bg-neutral-tertiary dark:bg-bg-neutral-tertiary rounded px-2 py-1 text-xs font-semibold">
+                        {scan.attributes.provider_type.toUpperCase()}
+                      </span>
+                      <span>{scan.attributes.provider_alias}</span>
+                    </div>
+                    <span className="text-text-neutral-secondary dark:text-text-neutral-secondary text-xs">
+                      UID: {scan.attributes.provider_uid}
                     </span>
                   </div>
                 </TableCell>

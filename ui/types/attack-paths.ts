@@ -28,11 +28,22 @@ export interface ScanRelationships {
   task: RelationshipWrapper;
 }
 
+// Provider type constants
+export const PROVIDER_TYPES = {
+  AWS: "aws",
+  AZURE: "azure",
+  GCP: "gcp",
+} as const;
+
+export type ProviderType = (typeof PROVIDER_TYPES)[keyof typeof PROVIDER_TYPES];
+
 // Attack Path Scan Response
 export interface AttackPathScanAttributes {
   state: ScanState;
   progress: number;
   provider_alias: string;
+  provider_type: ProviderType;
+  provider_uid: string;
   inserted_at: string;
   started_at: string;
   completed_at: string | null;
