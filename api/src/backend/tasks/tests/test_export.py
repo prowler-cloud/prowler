@@ -147,10 +147,11 @@ class TestOutputs:
         )
         mock_logger.assert_called()
 
+    @patch("tasks.jobs.export.set_output_timestamp")
     @patch("tasks.jobs.export.rls_transaction")
     @patch("tasks.jobs.export.Scan")
     def test_generate_output_directory_creates_paths(
-        self, mock_scan, mock_rls_transaction, tmpdir
+        self, mock_scan, mock_rls_transaction, mock_set_timestamp, tmpdir
     ):
         # Mock the scan object with a started_at timestamp
         mock_scan_instance = MagicMock()
@@ -175,15 +176,17 @@ class TestOutputs:
         assert os.path.isdir(os.path.dirname(path))
         assert os.path.isdir(os.path.dirname(compliance))
         assert os.path.isdir(os.path.dirname(threatscore))
+        mock_set_timestamp.assert_called_once_with(mock_scan_instance.started_at)
 
         assert path.endswith(f"{provider}-{expected_timestamp}")
         assert compliance.endswith(f"{provider}-{expected_timestamp}")
         assert threatscore.endswith(f"{provider}-{expected_timestamp}")
 
+    @patch("tasks.jobs.export.set_output_timestamp")
     @patch("tasks.jobs.export.rls_transaction")
     @patch("tasks.jobs.export.Scan")
     def test_generate_output_directory_invalid_character(
-        self, mock_scan, mock_rls_transaction, tmpdir
+        self, mock_scan, mock_rls_transaction, mock_set_timestamp, tmpdir
     ):
         # Mock the scan object with a started_at timestamp
         mock_scan_instance = MagicMock()
@@ -208,6 +211,7 @@ class TestOutputs:
         assert os.path.isdir(os.path.dirname(path))
         assert os.path.isdir(os.path.dirname(compliance))
         assert os.path.isdir(os.path.dirname(threatscore))
+        mock_set_timestamp.assert_called_once_with(mock_scan_instance.started_at)
 
         assert path.endswith(f"aws-test-check-{expected_timestamp}")
         assert compliance.endswith(f"aws-test-check-{expected_timestamp}")

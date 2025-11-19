@@ -15,6 +15,7 @@ from prowler.config.config import (
     html_file_suffix,
     json_asff_file_suffix,
     json_ocsf_file_suffix,
+    set_output_timestamp,
 )
 from prowler.lib.outputs.asff.asff import ASFF
 from prowler.lib.outputs.compliance.aws_well_architected.aws_well_architected import (
@@ -270,6 +271,9 @@ def _generate_output_directory(
 
     with rls_transaction(tenant_id):
         started_at = Scan.objects.get(id=scan_id).started_at
+
+    # Sync all report timestamps (findings + compliance) with the scan timestamp
+    set_output_timestamp(started_at)
 
     timestamp = started_at.strftime("%Y%m%d%H%M%S")
     path = (
