@@ -72,6 +72,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Rename `get_oci_assessment_summary` to `get_oraclecloud_assessment_summary` in HTML output [(#9200)](https://github.com/prowler-cloud/prowler/pull/9200)
 - Fix Validation and other errors in Azure provider [(#8915)](https://github.com/prowler-cloud/prowler/pull/8915)
 - Update documentation URLs from docs.prowler.cloud to docs.prowler.com [(#9240)](https://github.com/prowler-cloud/prowler/pull/9240)
+- Fix file name parsing for checks on Windows [(#9268)](https://github.com/prowler-cloud/prowler/pull/9268)
 
 ---
 

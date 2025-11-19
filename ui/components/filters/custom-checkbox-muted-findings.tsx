@@ -25,7 +25,7 @@ export const CustomCheckboxMutedFindings = () => {
   };
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full text-nowrap">
       <Checkbox
         classNames={{
           label: "text-small",
