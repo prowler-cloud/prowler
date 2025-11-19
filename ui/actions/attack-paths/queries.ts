@@ -1,5 +1,7 @@
 "use server";
 
+import { z } from "zod";
+
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 import {
@@ -8,12 +10,22 @@ import {
   ExecuteQueryRequest,
 } from "@/types/attack-paths";
 
+// Validation schema for UUID
+const UUIDSchema = z.string().uuid();
+
 /**
  * Fetch available queries for a specific attack path scan
  */
 export const getAvailableQueries = async (
   scanId: string,
 ): Promise<AttackPathQueriesResponse | undefined> => {
+  // Validate scanId is a valid UUID format to prevent request forgery
+  const validatedScanId = UUIDSchema.safeParse(scanId);
+  if (!validatedScanId.success) {
+    console.error("Invalid scan ID format");
+    return undefined;
+  }
+
   const headers = await getAuthHeaders({ contentType: false });
 
   try {
@@ -43,6 +55,13 @@ export const executeQuery = async (
   queryId: string,
   parameters?: Record<string, string | number | boolean>,
 ): Promise<AttackPathQueryResult | undefined> => {
+  // Validate scanId is a valid UUID format to prevent request forgery
+  const validatedScanId = UUIDSchema.safeParse(scanId);
+  if (!validatedScanId.success) {
+    console.error("Invalid scan ID format");
+    return undefined;
+  }
+
   const headers = await getAuthHeaders({ contentType: true });
 
   const requestBody: ExecuteQueryRequest = {

@@ -1,8 +1,13 @@
 "use server";
 
+import { z } from "zod";
+
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 import { AttackPathScan, AttackPathScansResponse } from "@/types/attack-paths";
+
+// Validation schema for UUID
+const UUIDSchema = z.string().uuid();
 
 /**
  * Fetch list of attack path scans (latest scan for each provider)
@@ -31,6 +36,13 @@ export const getAttackPathScans = async (): Promise<
 export const getAttackPathScanDetail = async (
   scanId: string,
 ): Promise<{ data: AttackPathScan } | undefined> => {
+  // Validate scanId is a valid UUID format to prevent request forgery
+  const validatedScanId = UUIDSchema.safeParse(scanId);
+  if (!validatedScanId.success) {
+    console.error("Invalid scan ID format");
+    return undefined;
+  }
+
   const headers = await getAuthHeaders({ contentType: false });
 
   try {
