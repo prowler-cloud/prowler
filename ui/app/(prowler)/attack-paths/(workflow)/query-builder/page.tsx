@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { FormProvider } from "react-hook-form";
 
 import { executeQuery, getAvailableQueries } from "@/actions/attack-paths";
+import { adaptQueryResultToGraphData } from "@/actions/attack-paths/query-result.adapter";
 import { Button, Card, CardContent } from "@/components/shadcn";
 import {
   Dialog,
@@ -147,7 +148,8 @@ export default function QueryBuilderPage() {
       );
 
       if (result?.data?.attributes) {
-        graphState.updateGraphData(result.data.attributes);
+        const graphData = adaptQueryResultToGraphData(result.data.attributes);
+        graphState.updateGraphData(graphData);
         toast({
           title: "Success",
           description: "Query executed successfully",
