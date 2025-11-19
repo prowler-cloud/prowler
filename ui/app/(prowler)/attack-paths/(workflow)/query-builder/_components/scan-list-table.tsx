@@ -47,7 +47,7 @@ const baseLinkClass =
   "relative block rounded border-0 bg-transparent px-3 py-1.5 text-button-primary outline-none transition-all duration-300 hover:bg-bg-neutral-tertiary hover:text-text-neutral-primary focus:shadow-none dark:hover:bg-bg-neutral-secondary dark:hover:text-text-neutral-primary";
 
 const disabledLinkClass =
-  "text-text-neutral-secondary dark:text-text-neutral-secondary hover:bg-transparent hover:text-text-neutral-secondary dark:hover:text-text-neutral-secondary cursor-default pointer-events-none";
+  "text-border-neutral-secondary dark:text-border-neutral-secondary hover:bg-transparent hover:text-border-neutral-secondary dark:hover:text-border-neutral-secondary cursor-default pointer-events-none";
 
 /**
  * Table displaying AWS account attack path scans
