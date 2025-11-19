@@ -9,8 +9,3 @@ export {
   GRAPH_NODE_COLORS,
   GRAPH_SELECTION_COLOR,
 } from "./graph-colors";
-export {
-  mockGraphQueryResult,
-  mockQueriesResponse,
-  mockScansResponse,
-} from "./mock-data";
