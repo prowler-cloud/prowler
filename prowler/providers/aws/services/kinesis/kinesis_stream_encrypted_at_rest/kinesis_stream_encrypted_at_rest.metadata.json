@@ -17,9 +17,8 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/securityhub/latest/userguide/kinesis-controls.html#kinesis-1",
-    "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_22/#terraform",
-    "https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingKMSEncryption.html",
-    "https://docs.aws.amazon.com/streams/latest/dev/getting-started-with-sse.html"
+    "https://docs.aws.amazon.com/streams/latest/dev/getting-started-with-sse.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Kinesis/server-side-encryption.html"
   ],
   "Remediation": {
     "Code": {

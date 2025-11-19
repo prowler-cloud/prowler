@@ -17,7 +17,6 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/streams/latest/dev/kinesis-extended-retention.html",
-    "https://docs.aws.amazon.com/config/latest/developerguide/kinesis-stream-backup-retention-check.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/kinesis-controls.html#kinesis-3"
   ],
   "Remediation": {
@@ -28,7 +27,7 @@
       "Terraform": "```hcl\n# Kinesis stream with adequate retention period\nresource \"aws_kinesis_stream\" \"<example_resource_name>\" {\n  name             = \"<example_resource_name>\"\n  shard_count      = 1\n  retention_period = 168  # critical: sets retention to >= 168 hours to pass the check\n}\n```"
     },
     "Recommendation": {
-      "Text": "Set the **retention period** to exceed worst-case consumer lag, replay needs, and compliance windows; use at least `168` hours by default and raise as required. Enforce **change control** and least privilege on retention changes, monitor consumer lag, and maintain **secondary durability** (e.g., archival) for critical streams.",
+      "Text": "Set the **retention period** to exceed worst-case consumer lag, replay needs, and compliance windows; use at least `168` hours by default (or customize as necessary) and raise as required. Enforce **change control** and least privilege on retention changes, monitor consumer lag, and maintain **secondary durability** (e.g., archival) for critical streams.",
       "Url": "https://hub.prowler.com/check/kinesis_stream_data_retention_period"
     }
   },
