@@ -1521,6 +1521,7 @@ class TestSecurityHub:
         }
 
         assert result == expected_result
+
     # Tests for _check_region_security_hub static method
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_check_region_security_hub_success(self):

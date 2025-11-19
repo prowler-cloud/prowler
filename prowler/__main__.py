@@ -1058,8 +1058,10 @@ def prowler():
                     output_options.send_sh_only_fails,
                 )
 
-                #Send the findings to Security Hub
-                findings_sent_to_security_hub = security_hub.batch_send_to_security_hub()
+                # Send the findings to Security Hub
+                findings_sent_to_security_hub = (
+                    security_hub.batch_send_to_security_hub()
+                )
                 if findings_sent_to_security_hub == 0:
                     print(
                         f"{Style.BRIGHT}{orange_color}\nNo findings sent to AWS Security Hub.{Style.RESET_ALL}"
