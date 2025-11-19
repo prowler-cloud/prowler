@@ -11,8 +11,9 @@ import { AuthFooterLink } from "@/components/auth/oss/auth-footer-link";
 import { AuthLayout } from "@/components/auth/oss/auth-layout";
 import { PasswordRequirementsMessage } from "@/components/auth/oss/password-validator";
 import { SocialButtons } from "@/components/auth/oss/social-buttons";
+import { Button } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
-import { CustomButton, CustomInput } from "@/components/ui/custom";
+import { CustomInput } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import {
   Form,
@@ -133,7 +134,6 @@ export const SignUpForm = ({
             type="text"
             label="Name"
             placeholder="Enter your name"
-            isInvalid={!!form.formState.errors.name}
           />
           <CustomInput
             control={form.control}
@@ -142,7 +142,6 @@ export const SignUpForm = ({
             label="Company name"
             placeholder="Enter your company name"
             isRequired={false}
-            isInvalid={!!form.formState.errors.company}
           />
           <CustomInput
             control={form.control}
@@ -150,15 +149,9 @@ export const SignUpForm = ({
             type="email"
             label="Email"
             placeholder="Enter your email"
-            isInvalid={!!form.formState.errors.email}
             showFormMessage
           />
-          <CustomInput
-            control={form.control}
-            name="password"
-            password
-            isInvalid={!!form.formState.errors.password}
-          />
+          <CustomInput control={form.control} name="password" password />
           <PasswordRequirementsMessage
             password={form.watch("password") || ""}
           />
@@ -176,7 +169,6 @@ export const SignUpForm = ({
               placeholder={invitationToken}
               defaultValue={invitationToken}
               isRequired={false}
-              isInvalid={!!form.formState.errors.invitationToken}
               isDisabled={invitationToken !== null && true}
             />
           )}
@@ -194,6 +186,7 @@ export const SignUpForm = ({
                       size="sm"
                       checked={field.value}
                       onChange={(e) => field.onChange(e.target.checked)}
+                      color="default"
                     >
                       I agree with the&nbsp;
                       <CustomLink
@@ -205,26 +198,21 @@ export const SignUpForm = ({
                       &nbsp;of Prowler
                     </Checkbox>
                   </FormControl>
-                  <FormMessage className="text-system-error dark:text-system-error" />
+                  <FormMessage className="text-text-error" />
                 </>
               )}
             />
           )}
 
-          <CustomButton
+          <Button
             type="submit"
-            ariaLabel="Sign up"
-            ariaDisabled={isLoading}
+            aria-label="Sign up"
+            aria-disabled={isLoading}
             className="w-full"
-            variant="solid"
-            color="action"
-            size="md"
-            radius="md"
-            isLoading={isLoading}
-            isDisabled={isLoading}
+            disabled={isLoading}
           >
-            {isLoading ? <span>Loading</span> : <span>Sign up</span>}
-          </CustomButton>
+            {isLoading ? "Loading..." : "Sign up"}
+          </Button>
         </form>
       </Form>
 
