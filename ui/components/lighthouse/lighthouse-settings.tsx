@@ -141,7 +141,6 @@ export const LighthouseSettings = () => {
               minRows={4}
               maxRows={8}
               description={`${form.watch("businessContext")?.length || 0}/1000 characters`}
-              isInvalid={!!form.formState.errors.businessContext}
             />
 
             <div className="flex w-full justify-end">

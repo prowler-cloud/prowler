@@ -156,16 +156,10 @@ export const SignInForm = ({
             type="email"
             label="Email"
             placeholder="Enter your email"
-            isInvalid={!!form.formState.errors.email}
             showFormMessage
           />
           {!isSamlMode && (
-            <CustomInput
-              control={form.control}
-              name="password"
-              password
-              isInvalid={!!form.formState.errors.password}
-            />
+            <CustomInput control={form.control} name="password" password />
           )}
 
           <Button

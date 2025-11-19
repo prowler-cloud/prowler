@@ -105,7 +105,6 @@ export const SendInvitationForm = ({
           placeholder="Enter the email address"
           variant="flat"
           isRequired
-          isInvalid={!!form.formState.errors.email}
         />
 
         <Controller

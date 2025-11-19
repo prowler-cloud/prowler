@@ -139,7 +139,6 @@ export const EditForm = ({
               placeholder={userName}
               variant="bordered"
               isRequired={false}
-              isInvalid={!!form.formState.errors.name}
             />
           </div>
           <div className="w-1/2">
@@ -152,7 +151,6 @@ export const EditForm = ({
               placeholder={userCompanyName}
               variant="bordered"
               isRequired={false}
-              isInvalid={!!form.formState.errors.company_name}
             />
           </div>
         </div>
@@ -167,7 +165,6 @@ export const EditForm = ({
             placeholder={userEmail}
             variant="bordered"
             isRequired={false}
-            isInvalid={!!form.formState.errors.email}
           />
         </div>
 

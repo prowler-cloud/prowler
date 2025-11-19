@@ -21,7 +21,6 @@ interface CustomInputProps<T extends FieldValues> {
   defaultValue?: string;
   isReadOnly?: boolean;
   isRequired?: boolean;
-  isInvalid?: boolean;
   isDisabled?: boolean;
   showFormMessage?: boolean;
 }
@@ -40,7 +39,6 @@ export const CustomInput = <T extends FieldValues>({
   defaultValue,
   isReadOnly = false,
   isRequired = true,
-  isInvalid,
   isDisabled = false,
   showFormMessage = true,
 }: CustomInputProps<T>) => {
@@ -111,7 +109,6 @@ export const CustomInput = <T extends FieldValues>({
               type={inputType}
               variant={variant}
               size={size}
-              isInvalid={isInvalid}
               defaultValue={defaultValue}
               endContent={endContent}
               isDisabled={isDisabled}

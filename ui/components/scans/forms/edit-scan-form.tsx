@@ -81,7 +81,6 @@ export const EditScanForm = ({
             placeholder={scanName || "Enter scan name"}
             variant="bordered"
             isRequired={false}
-            isInvalid={!!form.formState.errors.scanName}
           />
         </div>
         <input type="hidden" name="scanId" value={scanId} />

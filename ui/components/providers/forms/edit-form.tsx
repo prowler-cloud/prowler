@@ -81,9 +81,6 @@ export const EditForm = ({
             placeholder={providerAlias}
             variant="bordered"
             isRequired={false}
-            isInvalid={
-              !!form.formState.errors[ProviderCredentialFields.PROVIDER_ALIAS]
-            }
           />
         </div>
         <input type="hidden" name="providerId" value={providerId} />

@@ -178,7 +178,6 @@ export const EditRoleForm = ({
           placeholder="Enter role name"
           variant="bordered"
           isRequired
-          isInvalid={!!form.formState.errors.name}
         />
 
         <div className="flex flex-col gap-4">

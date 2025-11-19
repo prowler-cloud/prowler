@@ -134,7 +134,6 @@ export const SignUpForm = ({
             type="text"
             label="Name"
             placeholder="Enter your name"
-            isInvalid={!!form.formState.errors.name}
           />
           <CustomInput
             control={form.control}
@@ -143,7 +142,6 @@ export const SignUpForm = ({
             label="Company name"
             placeholder="Enter your company name"
             isRequired={false}
-            isInvalid={!!form.formState.errors.company}
           />
           <CustomInput
             control={form.control}
@@ -151,15 +149,9 @@ export const SignUpForm = ({
             type="email"
             label="Email"
             placeholder="Enter your email"
-            isInvalid={!!form.formState.errors.email}
             showFormMessage
           />
-          <CustomInput
-            control={form.control}
-            name="password"
-            password
-            isInvalid={!!form.formState.errors.password}
-          />
+          <CustomInput control={form.control} name="password" password />
           <PasswordRequirementsMessage
             password={form.watch("password") || ""}
           />
@@ -177,7 +169,6 @@ export const SignUpForm = ({
               placeholder={invitationToken}
               defaultValue={invitationToken}
               isRequired={false}
-              isInvalid={!!form.formState.errors.invitationToken}
               isDisabled={invitationToken !== null && true}
             />
           )}

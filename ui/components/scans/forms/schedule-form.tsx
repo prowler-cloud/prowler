@@ -73,7 +73,6 @@ export const ScheduleForm = ({
           labelPlacement="inside"
           variant="bordered"
           isRequired={false}
-          isInvalid={!!form.formState.errors.scheduleDate}
         />
 
         <FormButtons

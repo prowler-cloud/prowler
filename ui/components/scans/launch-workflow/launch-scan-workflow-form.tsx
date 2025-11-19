@@ -122,7 +122,6 @@ export const LaunchScanWorkflow = ({
                     size="sm"
                     variant="bordered"
                     isRequired={false}
-                    isInvalid={!!form.formState.errors.scanName}
                   />
                 </motion.div>
                 <motion.div

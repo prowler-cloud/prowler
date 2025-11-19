@@ -157,7 +157,6 @@ export const EditGroupForm = ({
             placeholder="Enter the provider group name"
             variant="flat"
             isRequired
-            isInvalid={!!form.formState.errors.name}
           />
         </div>
 

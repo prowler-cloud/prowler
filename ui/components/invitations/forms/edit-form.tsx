@@ -124,7 +124,6 @@ export const EditForm = ({
             placeholder={invitationEmail}
             variant="flat"
             isRequired={false}
-            isInvalid={!!form.formState.errors.invitationEmail}
           />
         </div>
         <div>
