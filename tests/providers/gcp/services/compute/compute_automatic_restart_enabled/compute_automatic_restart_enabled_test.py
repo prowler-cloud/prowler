@@ -213,3 +213,111 @@ class TestComputeInstanceAutomaticRestartEnabled:
             assert non_compliant_result.resource_name == "non-compliant-instance"
             assert non_compliant_result.location == "us-west1"
             assert non_compliant_result.project_id == GCP_PROJECT_ID
+
+    def test_preemptible_instance_passes(self):
+        compute_client = mock.MagicMock()
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_instance_automatic_restart_enabled.compute_instance_automatic_restart_enabled.compute_client",
+                new=compute_client,
+            ),
+        ):
+            from prowler.providers.gcp.services.compute.compute_instance_automatic_restart_enabled.compute_instance_automatic_restart_enabled import (
+                compute_instance_automatic_restart_enabled,
+            )
+            from prowler.providers.gcp.services.compute.compute_service import Instance
+
+            compute_client.project_ids = [GCP_PROJECT_ID]
+            compute_client.instances = [
+                Instance(
+                    name="preemptible-instance",
+                    id="3333333333",
+                    zone="us-central1-a",
+                    region="us-central1",
+                    public_ip=False,
+                    metadata={},
+                    shielded_enabled_vtpm=False,
+                    shielded_enabled_integrity_monitoring=False,
+                    confidential_computing=False,
+                    service_accounts=[],
+                    ip_forward=False,
+                    disks_encryption=[],
+                    automatic_restart=False,
+                    preemptible=True,
+                    provisioning_model="STANDARD",
+                    project_id=GCP_PROJECT_ID,
+                )
+            ]
+
+            check = compute_instance_automatic_restart_enabled()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"VM Instance {compute_client.instances[0].name} is a Preemptible or Spot instance, which cannot have Automatic Restart enabled by design."
+            )
+            assert result[0].resource_id == compute_client.instances[0].id
+            assert result[0].resource_name == compute_client.instances[0].name
+            assert result[0].location == "us-central1"
+            assert result[0].project_id == GCP_PROJECT_ID
+
+    def test_spot_instance_passes(self):
+        compute_client = mock.MagicMock()
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_instance_automatic_restart_enabled.compute_instance_automatic_restart_enabled.compute_client",
+                new=compute_client,
+            ),
+        ):
+            from prowler.providers.gcp.services.compute.compute_instance_automatic_restart_enabled.compute_instance_automatic_restart_enabled import (
+                compute_instance_automatic_restart_enabled,
+            )
+            from prowler.providers.gcp.services.compute.compute_service import Instance
+
+            compute_client.project_ids = [GCP_PROJECT_ID]
+            compute_client.instances = [
+                Instance(
+                    name="spot-instance",
+                    id="4444444444",
+                    zone="us-west1-b",
+                    region="us-west1",
+                    public_ip=False,
+                    metadata={},
+                    shielded_enabled_vtpm=False,
+                    shielded_enabled_integrity_monitoring=False,
+                    confidential_computing=False,
+                    service_accounts=[],
+                    ip_forward=False,
+                    disks_encryption=[],
+                    automatic_restart=False,
+                    preemptible=False,
+                    provisioning_model="SPOT",
+                    project_id=GCP_PROJECT_ID,
+                )
+            ]
+
+            check = compute_instance_automatic_restart_enabled()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"VM Instance {compute_client.instances[0].name} is a Preemptible or Spot instance, which cannot have Automatic Restart enabled by design."
+            )
+            assert result[0].resource_id == compute_client.instances[0].id
+            assert result[0].resource_name == compute_client.instances[0].name
+            assert result[0].location == "us-west1"
+            assert result[0].project_id == GCP_PROJECT_ID
