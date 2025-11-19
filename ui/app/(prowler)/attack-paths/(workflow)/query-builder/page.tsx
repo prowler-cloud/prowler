@@ -20,7 +20,11 @@ import {
   DialogTrigger,
   useToast,
 } from "@/components/ui";
-import type { AttackPathQuery, AttackPathScan, GraphNode } from "@/types/attack-paths";
+import type {
+  AttackPathQuery,
+  AttackPathScan,
+  GraphNode,
+} from "@/types/attack-paths";
 
 import {
   AttackPathGraph,
@@ -264,7 +268,8 @@ export default function AttackPathAnalysisPage() {
           Attack Path Analysis
         </h2>
         <p className="text-text-neutral-secondary dark:text-text-neutral-secondary mt-2 text-sm">
-          Select a scan, build a query, and visualize attack paths in your infrastructure.
+          Select a scan, build a query, and visualize attack paths in your
+          infrastructure.
         </p>
       </div>
 
@@ -377,9 +382,7 @@ export default function AttackPathAnalysisPage() {
                       </DialogHeader>
                       <div className="px-4 pt-4 pb-4 sm:px-6 sm:pt-6">
                         <GraphControls
-                          onZoomIn={() =>
-                            fullscreenGraphRef.current?.zoomIn()
-                          }
+                          onZoomIn={() => fullscreenGraphRef.current?.zoomIn()}
                           onZoomOut={() =>
                             fullscreenGraphRef.current?.zoomOut()
                           }

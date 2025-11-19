@@ -20,10 +20,7 @@ export const ScanStatusBadge = ({
 }: ScanStatusBadgeProps) => {
   if (status === "executing") {
     return (
-      <Badge
-        variant="outline"
-        className="gap-2 border-border-tag bg-bg-warning text-text-neutral-primary dark:border-border-tag dark:bg-bg-warning dark:text-text-neutral-primary"
-      >
+      <Badge className="border-bg-warning-primary bg-bg-warning-primary gap-2 text-white opacity-80">
         <Loader2 size={14} className="animate-spin" />
         <span>In Progress ({progress}%)</span>
       </Badge>
@@ -32,17 +29,14 @@ export const ScanStatusBadge = ({
 
   if (status === "completed") {
     return (
-      <Badge
-        variant="outline"
-        className="gap-2 border-border-tag bg-bg-pass-secondary text-text-neutral-primary dark:border-border-tag dark:bg-bg-pass-secondary dark:text-text-neutral-primary"
-      >
+      <Badge className="border-bg-pass-primary bg-bg-pass-secondary text-bg-pass-primary gap-2">
         <span>Completed</span>
       </Badge>
     );
   }
 
   return (
-    <Badge variant="destructive" className="gap-2">
+    <Badge className="border-bg-fail-primary bg-bg-fail-secondary text-bg-fail-primary gap-2">
       <span>Failed</span>
     </Badge>
   );

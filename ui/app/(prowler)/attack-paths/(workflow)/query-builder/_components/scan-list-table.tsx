@@ -10,17 +10,16 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/shadcn/button/button";
-import { DateWithTime } from "@/components/ui/entities/date-with-time";
-import { EntityInfoShort } from "@/components/ui/entities/entity-info-short";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select/Select";
+} from "@/components/shadcn/select/select";
+import { DateWithTime } from "@/components/ui/entities/date-with-time";
+import { EntityInfoShort } from "@/components/ui/entities/entity-info-short";
 import {
   Table,
   TableBody,
@@ -29,6 +28,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 import type { ProviderType } from "@/types";
 import type { AttackPathScan } from "@/types/attack-paths";
 import { SCAN_STATES } from "@/types/attack-paths";
@@ -249,7 +249,10 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
                 <div className="flex items-center gap-2">
                   <Link
                     aria-label="Go to first page"
-                    className={cn(baseLinkClass, isFirstPage && disabledLinkClass)}
+                    className={cn(
+                      baseLinkClass,
+                      isFirstPage && disabledLinkClass,
+                    )}
                     href={
                       isFirstPage
                         ? pathname + "?" + searchParams.toString()
@@ -265,7 +268,10 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
                   </Link>
                   <Link
                     aria-label="Go to previous page"
-                    className={cn(baseLinkClass, isFirstPage && disabledLinkClass)}
+                    className={cn(
+                      baseLinkClass,
+                      isFirstPage && disabledLinkClass,
+                    )}
                     href={
                       isFirstPage
                         ? pathname + "?" + searchParams.toString()
@@ -278,7 +284,10 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
                   </Link>
                   <Link
                     aria-label="Go to next page"
-                    className={cn(baseLinkClass, isLastPage && disabledLinkClass)}
+                    className={cn(
+                      baseLinkClass,
+                      isLastPage && disabledLinkClass,
+                    )}
                     href={
                       isLastPage
                         ? pathname + "?" + searchParams.toString()
@@ -291,7 +300,10 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
                   </Link>
                   <Link
                     aria-label="Go to last page"
-                    className={cn(baseLinkClass, isLastPage && disabledLinkClass)}
+                    className={cn(
+                      baseLinkClass,
+                      isLastPage && disabledLinkClass,
+                    )}
                     href={
                       isLastPage
                         ? pathname + "?" + searchParams.toString()
@@ -311,7 +323,7 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
           </div>
         )}
       </div>
-      <p className="mt-6 text-xs text-text-neutral-secondary dark:text-text-neutral-secondary">
+      <p className="text-text-neutral-secondary dark:text-text-neutral-secondary mt-6 text-xs">
         Only attack path scans with &quot;Completed&quot; status can be
         selected. Scans in progress will update automatically.
       </p>
