@@ -2816,7 +2816,7 @@ def generate_compliance_reports(
         provider_type = provider_obj.provider
 
     # Check provider compatibility
-    if generate_threatscore and provider_type not in ["aws", "azure", "gcp", "m365"]:
+    if generate_threatscore and provider_type not in ["aws", "azure", "gcp", "m365", "kubernetes"]:
         logger.info(
             f"Provider {provider_id} ({provider_type}) is not supported for ThreatScore report"
         )
