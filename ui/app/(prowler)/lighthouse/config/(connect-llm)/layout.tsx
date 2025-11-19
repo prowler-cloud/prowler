@@ -13,8 +13,9 @@ import {
 } from "@/actions/lighthouse/lighthouse";
 import { DeleteLLMProviderForm } from "@/components/lighthouse/forms/delete-llm-provider-form";
 import { WorkflowConnectLLM } from "@/components/lighthouse/workflow";
+import { Button } from "@/components/shadcn";
 import { NavigationHeader } from "@/components/ui";
-import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
+import { CustomAlertModal } from "@/components/ui/custom";
 import type { LighthouseProvider } from "@/types/lighthouse";
 
 interface ConnectLLMLayoutProps {
@@ -89,33 +90,28 @@ export default function ConnectLLMLayout({ children }: ConnectLLMLayoutProps) {
             <>
               <div className="flex flex-wrap gap-2">
                 {!isDefaultProvider && (
-                  <CustomButton
-                    ariaLabel="Set as Default Provider"
-                    variant="bordered"
+                  <Button
+                    aria-label="Set as Default Provider"
+                    variant="outline"
                     size="sm"
-                    startContent={
-                      <Icon icon="heroicons:star" className="h-4 w-4" />
-                    }
-                    onPress={handleSetDefault}
+                    onClick={handleSetDefault}
                     className="w-full sm:w-auto"
                   >
+                    <Icon icon="heroicons:star" className="h-4 w-4" />
                     Set as Default
-                  </CustomButton>
+                  </Button>
                 )}
 
-                <CustomButton
-                  ariaLabel="Delete Provider"
-                  variant="bordered"
-                  color="danger"
+                <Button
+                  aria-label="Delete Provider"
+                  variant="destructive"
                   size="sm"
-                  startContent={
-                    <Icon icon="heroicons:trash" className="h-4 w-4" />
-                  }
-                  onPress={() => setIsDeleteOpen(true)}
+                  onClick={() => setIsDeleteOpen(true)}
                   className="w-full sm:w-auto"
                 >
+                  <Icon icon="heroicons:trash" className="h-4 w-4" />
                   Delete Provider
-                </CustomButton>
+                </Button>
               </div>
               <Spacer y={4} />
             </>

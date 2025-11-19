@@ -3675,7 +3675,13 @@ def generate_compliance_reports(
         provider_type = provider_obj.provider
 
     # Check provider compatibility
-    if generate_threatscore and provider_type not in ["aws", "azure", "gcp", "m365"]:
+    if generate_threatscore and provider_type not in [
+        "aws",
+        "azure",
+        "gcp",
+        "m365",
+        "kubernetes",
+    ]:
         logger.info(
             f"Provider {provider_id} ({provider_type}) is not supported for ThreatScore report"
         )
@@ -3729,7 +3735,7 @@ def generate_compliance_reports(
             scan_id,
             compliance_framework="ens",
         )
-        nis2_path = _generate_output_directory(
+        nis2_path = _generate_compliance_output_directory(
             DJANGO_TMP_OUTPUT_DIRECTORY,
             provider_uid,
             tenant_id,
