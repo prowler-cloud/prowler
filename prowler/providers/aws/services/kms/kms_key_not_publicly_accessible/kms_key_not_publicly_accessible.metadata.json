@@ -1,33 +1,44 @@
 {
   "Provider": "aws",
   "CheckID": "kms_key_not_publicly_accessible",
-  "CheckTitle": "Check exposed KMS keys",
+  "CheckTitle": "Cloud KMS key does not grant access to allUsers or allAuthenticatedUsers",
   "CheckType": [
-    "Data Protection"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "TTPs/Initial Access/Unauthorized Access",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "kms",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:kms:region:account-id:certificate/resource-id",
-  "Severity": "medium",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
   "ResourceType": "AwsKmsKey",
-  "Description": "Check exposed KMS keys",
-  "Risk": "Exposed KMS Keys or wide policy permissions my leave data unprotected.",
-  "RelatedUrl": "https://docs.aws.amazon.com/kms/latest/developerguide/determining-access.html",
+  "Description": "**KMS keys** are assessed for **excessive access** in key policies or grants, including `*` principals and broadly scoped permissions to multiple identities.",
+  "Risk": "Broad access to a **KMS key** enables unauthorized `kms:Decrypt` and data-key generation, breaking **confidentiality**. With admin rights, attackers can change policies or schedule deletion, undermining control **integrity** and threatening **availability** of data dependent on the key.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://github.com/cloudmatos/matos/tree/master/remediations/aws/kms/exposed-key",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/gcp/CloudKMS/publicly-accessible-kms-cryptokeys.html",
+    "https://support.icompaas.com/support/solutions/articles/62000232904-1-9-ensure-cloud-kms-cryptokeys-are-not-accessible-to-anonymous-or-public-users-automated-",
+    "https://www.opstergo.com/blog/google-cloud-platform-security-recommendations",
+    "https://docs.datadoghq.com/security/default_rules/def-000-6vi/",
+    "https://docs.aws.amazon.com/kms/latest/developerguide/determining-access.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://github.com/cloudmatos/matos/tree/master/remediations/aws/kms/exposed-key",
-      "Terraform": ""
+      "CLI": "aws kms put-key-policy --key-id <example_resource_id> --policy-name default --policy '{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"arn:aws:iam::<account_id>:root\"},\"Action\":\"kms:*\",\"Resource\":\"*\"}]}'",
+      "NativeIaC": "```yaml\n# CloudFormation: restrict KMS key policy to account root (removes any public access)\nResources:\n  <example_resource_name>:\n    Type: AWS::KMS::Key\n    Properties:\n      KeyPolicy:\n        Version: '2012-10-17'\n        Statement:\n          - Effect: Allow\n            Principal:\n              AWS: arn:aws:iam::<account_id>:root  # Critical: only account root can access; prevents public \"*\" principals\n            Action: kms:*\n            Resource: '*'\n```",
+      "Other": "1. Open AWS Console > Key Management Service (KMS)\n2. Select the affected key and go to the Key policy tab\n3. Click Edit and remove any statement with Principal set to \"*\" (or AWS: \"*\")\n4. Ensure a statement exists that allows only arn:aws:iam::<account_id>:root\n5. Save changes",
+      "Terraform": "```hcl\n# Restrict KMS key policy to the account root to avoid any public (\"*\") principals\ndata \"aws_caller_identity\" \"current\" {}\n\nresource \"aws_kms_key\" \"<example_resource_name>\" {\n  policy = jsonencode({\n    Version   = \"2012-10-17\"\n    Statement = [\n      {\n        Effect    = \"Allow\"\n        Principal = { AWS = \"arn:aws:iam::${data.aws_caller_identity.current.account_id}:root\" } # Critical: limit to account root to remove public access\n        Action    = \"kms:*\"\n        Resource  = \"*\"\n      }\n    ]\n  })\n}\n```"
     },
     "Recommendation": {
-      "Text": "To determine the full extent of who or what currently has access to a customer master key (CMK) in AWS KMS, you must examine the CMK key policy, all grants that apply to the CMK and potentially all AWS Identity and Access Management (IAM) policies. You might do this to determine the scope of potential usage of a CMK.",
-      "Url": "https://docs.aws.amazon.com/kms/latest/developerguide/determining-access.html"
+      "Text": "Apply **least privilege** to KMS keys:\n- Restrict principals to specific roles and accounts\n- Prefer narrow, time-bound grants\n- Separate key administration from usage\n- Use conditions to limit context\n- Review regularly and remove wildcard or cross-account exposure",
+      "Url": "https://hub.prowler.com/check/kms_key_not_publicly_accessible"
     }
   },
   "Categories": [
     "internet-exposed",
-    "encryption"
+    "identity-access"
   ],
   "DependsOn": [],
   "RelatedTo": [],
