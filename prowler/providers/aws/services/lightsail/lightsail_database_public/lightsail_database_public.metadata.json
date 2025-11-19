@@ -1,28 +1,37 @@
 {
   "Provider": "aws",
   "CheckID": "lightsail_database_public",
-  "CheckTitle": "Check if the database has the public mode.",
+  "CheckTitle": "Lightsail database public access disabled",
   "CheckType": [
-    "Infrastructure Security"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Data Exposure",
+    "TTPs/Initial Access"
   ],
   "ServiceName": "lightsail",
-  "SubServiceName": "database",
-  "ResourceIdTemplate": "arn:partition:lightsail:region:account:RelationalDatabase/database-id",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Other",
-  "Description": "The database is in public mode, which means it is exposed to the internet.",
-  "Risk": "This can lead to unauthorized access to the database.",
-  "RelatedUrl": "https://docs.aws.amazon.com/lightsail/latest/userguide/amazon-lightsail-databases.html",
+  "Description": "**Lightsail managed database** is evaluated for **public accessibility**. When `public mode` is enabled, the database accepts connections from the Internet using its endpoint and port; otherwise, access is limited to authorized Lightsail resources.",
+  "Risk": "**Publicly reachable databases** expose confidential data and credentials to the Internet, enabling:\n- **Brute-force** and credential stuffing\n- **Data exfiltration** via unauthorized queries\n- **Service disruption** from scanning or DoS\n\nCompromise enables **lateral movement** and tampering, impacting confidentiality, integrity, and availability.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://stackoverflow.com/questions/68317705/is-there-a-way-to-configure-aws-lightsail-database-public-mode-by-api",
+    "https://docs.aws.amazon.com/lightsail/latest/userguide/amazon-lightsail-databases.html",
+    "https://docs.aws.amazon.com/lightsail/latest/userguide/amazon-lightsail-configuring-database-public-mode.html",
+    "https://spinupwp.com/doc/external-database-amazon-lightsail/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "aws lightsail update-relational-database --relational-database-name <example_resource_name> --no-publicly-accessible",
+      "NativeIaC": "```yaml\n# CloudFormation: disable public access on an existing Lightsail database\nResources:\n  <example_resource_name>:\n    Type: AWS::Lightsail::Database\n    Properties:\n      RelationalDatabaseName: <example_resource_name>\n      PubliclyAccessible: false  # Critical: turns off public mode so the database is not publicly accessible\n```",
+      "Other": "1. In the AWS Console, go to Lightsail > Databases\n2. Select <example_resource_name>\n3. Open the Networking tab\n4. In Public mode, toggle Off\n5. Wait until status returns to Available",
+      "Terraform": "```hcl\n# Disable public access for a Lightsail database\nresource \"aws_lightsail_database\" \"<example_resource_name>\" {\n  name                 = \"<example_resource_name>\"\n  availability_zone    = \"<availability_zone>\"\n  blueprint_id         = \"<blueprint_id>\"\n  bundle_id            = \"<bundle_id>\"\n  master_database_name = \"<master_database_name>\"\n  master_username      = \"<master_username>\"\n  master_password      = \"<master_password>\"\n\n  publicly_accessible = false  # Critical: ensures the database is not publicly accessible\n}\n```"
     },
     "Recommendation": {
-      "Text": "Change the database to private mode.",
-      "Url": ""
+      "Text": "Disable **public mode** and keep the database reachable only from trusted, private networks.\n\n- Enforce **least privilege** and network segmentation\n- Use bastion hosts, tunnels, or private endpoints for admin access\n- If exposure is unavoidable, restrict by IP, rotate credentials, and monitor connections for **defense in depth**",
+      "Url": "https://hub.prowler.com/check/lightsail_database_public"
     }
   },
   "Categories": [
