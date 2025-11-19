@@ -46,7 +46,7 @@ export const ComplianceDownloadButton = ({
         className={isDownloading ? "animate-download-icon" : ""}
         size={16}
       />
-      {label || defaultLabel}
+      <span className="hidden md:block">{label || defaultLabel}</span>
     </Button>
   );
 };
