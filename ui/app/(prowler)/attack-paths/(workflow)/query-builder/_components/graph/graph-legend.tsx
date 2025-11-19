@@ -7,8 +7,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip/tooltip";
+import type { AttackPathGraphData } from "@/types/attack-paths";
 
-import { GRAPH_NODE_COLORS } from "../../_lib/graph-colors";
+import { getNodeColor, GRAPH_NODE_COLORS } from "../../_lib/graph-colors";
 
 interface LegendItem {
   label: string;
@@ -16,44 +17,102 @@ interface LegendItem {
   description: string;
 }
 
-const legendItems: LegendItem[] = [
-  {
-    label: "Prowler Finding",
-    color: GRAPH_NODE_COLORS.prowlerFinding,
+// Map node labels to human-readable names and descriptions
+const nodeTypeDescriptions: Record<
+  string,
+  { name: string; description: string }
+> = {
+  ProwlerFinding: {
+    name: "Prowler Finding",
     description: "Security findings from Prowler scans",
   },
-  {
-    label: "AWS Account",
-    color: GRAPH_NODE_COLORS.awsAccount,
+  AWSAccount: {
+    name: "AWS Account",
     description: "AWS account root node",
   },
-  {
-    label: "EC2 Instance",
-    color: GRAPH_NODE_COLORS.ec2Instance,
+  EC2Instance: {
+    name: "EC2 Instance",
     description: "Elastic Compute Cloud instance",
   },
-  {
-    label: "S3 Bucket",
-    color: GRAPH_NODE_COLORS.s3Bucket,
+  S3Bucket: {
+    name: "S3 Bucket",
     description: "Simple Storage Service bucket",
   },
-  {
-    label: "IAM Role",
-    color: GRAPH_NODE_COLORS.iamRole,
+  IAMRole: {
+    name: "IAM Role",
     description: "Identity and Access Management role",
   },
-  {
-    label: "Other Resource",
-    color: GRAPH_NODE_COLORS.default,
-    description: "Other AWS resource types",
-  },
-];
+};
+
+/**
+ * Extract unique node types from graph data
+ * @param nodes - Array of graph nodes
+ * @returns Array of unique node type labels found in the graph
+ */
+function extractNodeTypes(
+  nodes: AttackPathGraphData["nodes"] | undefined,
+): string[] {
+  if (!nodes) return [];
+
+  const nodeTypes = new Set<string>();
+  nodes.forEach((node) => {
+    node.labels.forEach((label) => {
+      nodeTypes.add(label);
+    });
+  });
+
+  return Array.from(nodeTypes).sort();
+}
+
+/**
+ * Generate legend items from graph data
+ * @param nodeTypes - Array of node type labels
+ * @returns Array of legend items to display
+ */
+function generateLegendItems(nodeTypes: string[]): LegendItem[] {
+  const items: LegendItem[] = [];
+  const seenTypes = new Set<string>();
+
+  nodeTypes.forEach((nodeType) => {
+    if (seenTypes.has(nodeType)) return;
+    seenTypes.add(nodeType);
+
+    const description = nodeTypeDescriptions[nodeType];
+    if (description) {
+      items.push({
+        label: description.name,
+        color: getNodeColor([nodeType]),
+        description: description.description,
+      });
+    } else {
+      // For unknown node types, use the type as label and default color
+      items.push({
+        label: nodeType,
+        color: GRAPH_NODE_COLORS.default,
+        description: `${nodeType} node`,
+      });
+    }
+  });
+
+  return items;
+}
+
+interface GraphLegendProps {
+  data?: AttackPathGraphData;
+}
 
 /**
  * Legend for attack path graph node types
- * Shows available node types and their meanings
+ * Dynamically generates legend items from the actual node types in the graph
  */
-export const GraphLegend = () => {
+export const GraphLegend = ({ data }: GraphLegendProps) => {
+  const nodeTypes = extractNodeTypes(data?.nodes);
+  const legendItems = generateLegendItems(nodeTypes);
+
+  if (legendItems.length === 0) {
+    return null;
+  }
+
   return (
     <Card className="w-fit border-0">
       <CardContent className="gap-3 p-4">

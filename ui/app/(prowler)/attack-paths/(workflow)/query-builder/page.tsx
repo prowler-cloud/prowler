@@ -403,7 +403,7 @@ export default function QueryBuilderPage() {
 
               {/* Legend below */}
               <div className="hidden justify-center lg:flex">
-                <GraphLegend />
+                <GraphLegend data={graphState.data} />
               </div>
             </>
           ) : (
