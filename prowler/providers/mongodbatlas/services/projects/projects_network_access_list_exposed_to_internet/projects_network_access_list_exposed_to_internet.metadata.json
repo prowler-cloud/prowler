@@ -1,0 +1,35 @@
+{
+  "Provider": "mongodbatlas",
+  "CheckID": "projects_network_access_list_exposed_to_internet",
+  "CheckTitle": "MongoDB Atlas project network access list has entries and excludes 0.0.0.0/0, ::/0, 0.0.0.0, and ::",
+  "CheckType": [],
+  "ServiceName": "projects",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "MongoDBAtlasProject",
+  "Description": "**MongoDB Atlas project network access list** configuration is evaluated for entries that allow access from anywhere (`0.0.0.0/0`, `::/0`, `0.0.0.0`, `::`) or for missing access lists, instead of restricting connections to specific IPs or CIDRs.",
+  "Risk": "Internet-wide access enables scanning, brute force, and credential stuffing against database endpoints. A successful compromise can cause data exfiltration (**confidentiality**), unauthorized writes or drops (**integrity**), and service disruption or lockout (**availability**).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.atlas.mongodb.com/security/ip-access-list/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. In MongoDB Atlas, open your project and go to Security > Database & Network Access > IP Access List\n2. Delete any entries equal to 0.0.0.0/0, ::/0, 0.0.0.0, or ::\n3. If the list becomes empty, click Add IP Address and add a specific IP/CIDR or an AWS Security Group (for a peered VPC)\n4. Click Save",
+      "Terraform": "```hcl\nresource \"mongodbatlas_project_ip_access_list\" \"<example_resource_name>\" {\n  project_id = \"<example_resource_id>\"\n  cidr_block = \"<ALLOWED_CIDR>\" # Critical: add a restricted CIDR (not 0.0.0.0/0 or ::/0) to ensure the list isn't empty and not open to the world\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Apply **least privilege**: permit only required IPs/CIDRs or approved security groups; avoid `0.0.0.0/0` and `::/0`. Prefer **private connectivity** (VPC peering or private endpoints) over public access. Use temporary entries for short-lived admin needs and review lists regularly.",
+      "Url": "https://hub.prowler.com/check/projects_network_access_list_exposed_to_internet"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

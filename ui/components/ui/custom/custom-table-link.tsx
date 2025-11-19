@@ -1,6 +1,8 @@
 "use client";
 
-import { CustomButton } from "@/components/ui/custom";
+import Link from "next/link";
+
+import { Button } from "@/components/shadcn";
 
 interface TableLinkProps {
   href: string;
@@ -9,18 +11,18 @@ interface TableLinkProps {
 }
 
 export const TableLink = ({ href, label, isDisabled }: TableLinkProps) => {
+  if (isDisabled) {
+    return (
+      <Button variant="link" size="sm" disabled className="text-xs">
+        {label}
+      </Button>
+    );
+  }
+
   return (
-    // TODO: Replace CustomButton with CustomLink once the CustomLink component is merged.
-    <CustomButton
-      asLink={href}
-      ariaLabel={label}
-      variant="ghost"
-      className="text-xs font-medium text-default-500 hover:text-primary disabled:opacity-30"
-      size="sm"
-      isDisabled={isDisabled}
-    >
-      {label}
-    </CustomButton>
+    <Button asChild variant="link" size="sm" className="text-xs">
+      <Link href={href}>{label}</Link>
+    </Button>
   );
 };
 

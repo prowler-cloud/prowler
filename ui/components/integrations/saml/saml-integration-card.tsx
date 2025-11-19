@@ -1,14 +1,15 @@
 "use client";
 
-import { Card, CardBody, CardHeader } from "@nextui-org/react";
 import { CheckIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 
 import { deleteSamlConfig } from "@/actions/integrations";
+import { Button } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
-import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
+import { CustomAlertModal } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 
+import { Card, CardContent, CardHeader } from "../../shadcn";
 import { SamlConfigForm } from "./saml-config-form";
 
 export const SamlIntegrationCard = ({ samlConfig }: { samlConfig?: any }) => {
@@ -60,12 +61,12 @@ export const SamlIntegrationCard = ({ samlConfig }: { samlConfig?: any }) => {
         />
       </CustomAlertModal>
 
-      <Card className="dark:bg-prowler-blue-400">
-        <CardHeader className="gap-2">
+      <Card variant="base" padding="lg">
+        <CardHeader>
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <h4 className="text-lg font-bold">SAML SSO Integration</h4>
-              {id && <CheckIcon className="text-prowler-green" size={20} />}
+              {id && <CheckIcon className="text-button-primary" size={20} />}
             </div>
             <p className="text-xs text-gray-500">
               {id ? (
@@ -81,39 +82,32 @@ export const SamlIntegrationCard = ({ samlConfig }: { samlConfig?: any }) => {
             </p>
           </div>
         </CardHeader>
-        <CardBody>
+        <CardContent>
           <div className="flex items-center justify-between">
             <div className="text-sm">
               <span className="font-medium">Status: </span>
-              <span className={id ? "text-prowler-green" : "text-gray-500"}>
+              <span className={id ? "text-button-primary" : "text-gray-500"}>
                 {id ? "Enabled" : "Disabled"}
               </span>
             </div>
             <div className="flex gap-2">
-              <CustomButton
-                size="sm"
-                ariaLabel="Configure SAML SSO"
-                color="action"
-                onPress={() => setIsSamlModalOpen(true)}
-              >
+              <Button size="sm" onClick={() => setIsSamlModalOpen(true)}>
                 {id ? "Update" : "Enable"}
-              </CustomButton>
+              </Button>
               {id && (
-                <CustomButton
+                <Button
                   size="sm"
-                  ariaLabel="Remove SAML SSO"
-                  color="danger"
-                  variant="bordered"
-                  isLoading={isDeleting}
-                  startContent={!isDeleting ? <Trash2Icon size={16} /> : null}
-                  onPress={handleRemoveSaml}
+                  variant="destructive"
+                  disabled={isDeleting}
+                  onClick={handleRemoveSaml}
                 >
-                  Remove
-                </CustomButton>
+                  {!isDeleting && <Trash2Icon size={16} />}
+                  {isDeleting ? "Removing..." : "Remove"}
+                </Button>
               )}
             </div>
           </div>
-        </CardBody>
+        </CardContent>
       </Card>
     </>
   );

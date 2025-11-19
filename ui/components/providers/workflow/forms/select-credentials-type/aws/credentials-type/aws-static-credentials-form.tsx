@@ -12,10 +12,10 @@ export const AWSStaticCredentialsForm = ({
   return (
     <>
       <div className="flex flex-col">
-        <div className="text-md font-bold leading-9 text-default-foreground">
+        <div className="text-md text-default-foreground leading-9 font-bold">
           Connect via Credentials
         </div>
-        <div className="text-sm text-default-500">
+        <div className="text-default-500 text-sm">
           Please provide the information for your AWS credentials.
         </div>
       </div>
@@ -28,11 +28,6 @@ export const AWSStaticCredentialsForm = ({
         placeholder="Enter the AWS Access Key ID"
         variant="bordered"
         isRequired
-        isInvalid={
-          !!control._formState.errors[
-            ProviderCredentialFields.AWS_ACCESS_KEY_ID
-          ]
-        }
       />
       <CustomInput
         control={control}
@@ -43,11 +38,6 @@ export const AWSStaticCredentialsForm = ({
         placeholder="Enter the AWS Secret Access Key"
         variant="bordered"
         isRequired
-        isInvalid={
-          !!control._formState.errors[
-            ProviderCredentialFields.AWS_SECRET_ACCESS_KEY
-          ]
-        }
       />
       <CustomInput
         control={control}
@@ -58,11 +48,6 @@ export const AWSStaticCredentialsForm = ({
         placeholder="Enter the AWS Session Token"
         variant="bordered"
         isRequired={false}
-        isInvalid={
-          !!control._formState.errors[
-            ProviderCredentialFields.AWS_SESSION_TOKEN
-          ]
-        }
       />
     </>
   );

@@ -1,10 +1,10 @@
 "use client";
 
-import { Chip } from "@nextui-org/react";
+import { Chip } from "@heroui/chip";
 import { Ban, Check } from "lucide-react";
 import { useState } from "react";
 
-import { CustomButton } from "@/components/ui/custom/custom-button";
+import { Button, Card } from "@/components/shadcn";
 import { getRolePermissions } from "@/lib/permissions";
 import { RoleData, RoleDetail } from "@/types/users";
 
@@ -22,7 +22,7 @@ export const PermissionIcon = ({ enabled }: { enabled: boolean }) => (
 );
 
 const PermissionItem = ({ enabled, label }: PermissionItemProps) => (
-  <div className="flex items-center space-x-2 whitespace-nowrap">
+  <div className="flex items-center gap-2 whitespace-nowrap">
     <PermissionIcon enabled={enabled} />
     <span className="text-xs">{label}</span>
   </div>
@@ -53,32 +53,30 @@ export const RoleItem = ({
   const permissions = getRolePermissions(attributes);
 
   return (
-    <div className="rounded-lg bg-gray-50 p-2 dark:bg-gray-800">
+    <Card variant="inner">
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-2">
           <Chip size="sm" variant="flat" color="primary">
             {roleName}
           </Chip>
-          <span className="text-xs capitalize text-gray-500">
+          <span className="text-xs text-gray-500 capitalize">
             {permissionState}
           </span>
         </div>
 
-        <CustomButton
-          ariaLabel={isExpanded ? "Hide Details" : "Show Details"}
-          onPress={() => setIsExpanded(!isExpanded)}
-          className="text-blue-500"
-          color="transparent"
+        <Button
+          variant="ghost"
           size="sm"
+          onClick={() => setIsExpanded(!isExpanded)}
         >
           {isExpanded ? "Hide details" : "Show details"}
-        </CustomButton>
+        </Button>
       </div>
 
       {isExpanded && (
         <div
           id={detailsId}
-          className="animate-fadeIn mt-3 border-t pt-3"
+          className="animate-fadeIn border-border-neutral-primary border-t pt-4"
           role="region"
           aria-label={`Details for role ${roleName}`}
         >
@@ -89,6 +87,6 @@ export const RoleItem = ({
           </div>
         </div>
       )}
-    </div>
+    </Card>
   );
 };

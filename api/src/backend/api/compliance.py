@@ -144,18 +144,23 @@ def generate_scan_compliance(
     Returns:
         None: This function modifies the compliance_overview in place.
     """
+
     for compliance_id in PROWLER_CHECKS[provider_type][check_id]:
         for requirement in compliance_overview[compliance_id]["requirements"].values():
             if check_id in requirement["checks"]:
                 requirement["checks"][check_id] = status
                 requirement["checks_status"][status.lower()] += 1
 
-            if requirement["status"] != "FAIL" and any(
-                value == "FAIL" for value in requirement["checks"].values()
-            ):
-                requirement["status"] = "FAIL"
-                compliance_overview[compliance_id]["requirements_status"]["passed"] -= 1
-                compliance_overview[compliance_id]["requirements_status"]["failed"] += 1
+                if requirement["status"] != "FAIL" and any(
+                    value == "FAIL" for value in requirement["checks"].values()
+                ):
+                    requirement["status"] = "FAIL"
+                    compliance_overview[compliance_id]["requirements_status"][
+                        "passed"
+                    ] -= 1
+                    compliance_overview[compliance_id]["requirements_status"][
+                        "failed"
+                    ] += 1
 
 
 def generate_compliance_overview_template(prowler_compliance: dict):
@@ -225,6 +230,7 @@ def generate_compliance_overview_template(prowler_compliance: dict):
             # Build compliance dictionary
             compliance_dict = {
                 "framework": compliance_data.Framework,
+                "name": compliance_data.Name,
                 "version": compliance_data.Version,
                 "provider": provider_type,
                 "description": compliance_data.Description,

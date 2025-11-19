@@ -1,17 +1,92 @@
-name: Prowler - PR Labeler
+name: 'Tools: PR Labeler'
 
 on:
-    pull_request_target:
-      branches:
-        - "master"
-        - "v3"
-        - "v4.*"
+  pull_request_target:
+    branches:
+      - 'master'
+      - 'v5.*'
+    types:
+      - 'opened'
+      - 'reopened'
+      - 'synchronize'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   labeler:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
       pull-requests: write
-    runs-on: ubuntu-latest
+
     steps:
-    - uses: actions/labeler@8558fd74291d67161a8a78ce36a881fa63b766a9 # v5.0.0
+      - name: Apply labels to PR
+        uses: actions/labeler@634933edcd8ababfe52f92936142cc22ac488b1b # v6.0.1
+        with:
+          sync-labels: true
+
+  label-community:
+    name: Add 'community' label if the PR is from a community contributor
+    needs: labeler
+    if: github.repository == 'prowler-cloud/prowler' && github.event.action == 'opened'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: Check if author is org member
+        id: check_membership
+        env:
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          # Hardcoded list of prowler-cloud organization members
+          # This list includes members who have set their organization membership as private
+          ORG_MEMBERS=(
+            "AdriiiPRodri"
+            "Alan-TheGentleman"
+            "alejandrobailo"
+            "amitsharm"
+            "andoniaf"
+            "cesararroba"
+            "Chan9390"
+            "danibarranqueroo"
+            "HugoPBrito"
+            "jfagoagas"
+            "josemazo"
+            "lydiavilchez"
+            "mmuller88"
+            "MrCloudSec"
+            "pedrooot"
+            "prowler-bot"
+            "puchy22"
+            "rakan-pro"
+            "RosaRivasProwler"
+            "StylusFrost"
+            "toniblyx"
+            "vicferpoy"
+          )
+
+          echo "Checking if $AUTHOR is a member of prowler-cloud organization"
+
+          # Check if author is in the org members list
+          if printf '%s\n' "${ORG_MEMBERS[@]}" | grep -q "^${AUTHOR}$"; then
+            echo "is_member=true" >> $GITHUB_OUTPUT
+            echo "$AUTHOR is an organization member"
+          else
+            echo "is_member=false" >> $GITHUB_OUTPUT
+            echo "$AUTHOR is not an organization member"
+          fi
+
+      - name: Add community label
+        if: steps.check_membership.outputs.is_member == 'false'
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Adding 'community' label to PR #$PR_NUMBER"
+          gh api /repos/${{ github.repository }}/issues/${{ github.event.number }}/labels \
+            -X POST \
+            -f labels[]='community'

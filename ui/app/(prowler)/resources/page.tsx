@@ -1,4 +1,4 @@
-import { Spacer } from "@nextui-org/react";
+import { Spacer } from "@heroui/spacer";
 import { Suspense } from "react";
 
 import {
@@ -24,14 +24,16 @@ import { ResourceProps, SearchParamsProps } from "@/types";
 export default async function Resources({
   searchParams,
 }: {
-  searchParams: SearchParamsProps;
+  searchParams: Promise<SearchParamsProps>;
 }) {
-  const { searchParamsKey, encodedSort } = extractSortAndKey(searchParams);
-  const { filters, query } = extractFiltersAndQuery(searchParams);
+  const resolvedSearchParams = await searchParams;
+  const { searchParamsKey, encodedSort } =
+    extractSortAndKey(resolvedSearchParams);
+  const { filters, query } = extractFiltersAndQuery(resolvedSearchParams);
   const outputFilters = replaceFieldKey(filters, "inserted_at", "updated_at");
 
   // Check if the searchParams contain any date or scan filter
-  const hasDateOrScan = hasDateOrScanFilter(searchParams);
+  const hasDateOrScan = hasDateOrScanFilter(resolvedSearchParams);
 
   const metadataInfoData = await (
     hasDateOrScan ? getMetadataInfo : getLatestMetadataInfo
@@ -47,7 +49,7 @@ export default async function Resources({
   const uniqueResourceTypes = metadataInfoData?.data?.attributes?.types || [];
 
   return (
-    <ContentLayout title="Resources" icon="carbon:data-view">
+    <ContentLayout title="Resources" icon="lucide:warehouse">
       <FilterControls search date />
       <DataTableFilterCustom
         filters={[
@@ -67,11 +69,10 @@ export default async function Resources({
             values: uniqueServices,
           },
         ]}
-        defaultOpen={true}
       />
       <Spacer y={8} />
       <Suspense key={searchParamsKey} fallback={<SkeletonTableResources />}>
-        <SSRDataTable searchParams={searchParams} />
+        <SSRDataTable searchParams={resolvedSearchParams} />
       </Suspense>
     </ContentLayout>
   );
@@ -140,12 +141,13 @@ const SSRDataTable = async ({
   return (
     <>
       {resourcesData?.errors && (
-        <div className="mb-4 flex rounded-lg border border-red-500 bg-red-100 p-2 text-small text-red-700">
+        <div className="text-small mb-4 flex rounded-lg border border-red-500 bg-red-100 p-2 text-red-700">
           <p className="mr-2 font-semibold">Error:</p>
           <p>{resourcesData.errors[0].detail}</p>
         </div>
       )}
       <DataTable
+        key={`resources-${Date.now()}`}
         columns={ColumnResources}
         data={expandedResources || []}
         metadata={resourcesData?.meta}

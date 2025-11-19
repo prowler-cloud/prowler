@@ -1,8 +1,13 @@
 "use client";
 
-import { Textarea } from "@nextui-org/react";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
-import { useFormState } from "react-dom";
+import { Textarea } from "@heroui/input";
+import {
+  Dispatch,
+  SetStateAction,
+  useActionState,
+  useEffect,
+  useState,
+} from "react";
 
 import {
   createMutedFindingsConfig,
@@ -11,8 +16,8 @@ import {
   updateMutedFindingsConfig,
 } from "@/actions/processors";
 import { DeleteIcon } from "@/components/icons";
+import { Button } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
-import { CustomButton } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { FormButtons } from "@/components/ui/form";
 import { fontMono } from "@/config/fonts";
@@ -45,7 +50,7 @@ export const MutedFindingsConfigForm = ({
   }>({ isValid: true });
   const [hasUserStartedTyping, setHasUserStartedTyping] = useState(false);
 
-  const [state, formAction, isPending] = useFormState<
+  const [state, formAction, isPending] = useActionState<
     MutedFindingsConfigActionState,
     FormData
   >(config ? updateMutedFindingsConfig : createMutedFindingsConfig, null);
@@ -128,51 +133,56 @@ export const MutedFindingsConfigForm = ({
 
   if (showDeleteConfirmation) {
     return (
-      <div className="flex flex-col space-y-4">
-        <h3 className="text-lg font-semibold text-default-700">
+      <div className="flex flex-col gap-4">
+        <h3 className="text-default-700 text-lg font-semibold">
           Delete Mutelist Configuration
         </h3>
-        <p className="text-sm text-default-600">
+        <p className="text-default-600 text-sm">
           Are you sure you want to delete this configuration? This action cannot
           be undone.
         </p>
-        <div className="flex w-full justify-center space-x-6">
-          <CustomButton
+        <div className="flex w-full justify-center gap-6">
+          <Button
             type="button"
-            ariaLabel="Cancel"
+            aria-label="Cancel"
             className="w-full bg-transparent"
-            variant="faded"
+            variant="outline"
             size="lg"
-            onPress={() => setShowDeleteConfirmation(false)}
-            isDisabled={isDeleting}
+            onClick={() => setShowDeleteConfirmation(false)}
+            disabled={isDeleting}
           >
             Cancel
-          </CustomButton>
-          <CustomButton
+          </Button>
+          <Button
             type="button"
-            ariaLabel="Delete"
+            aria-label="Delete"
             className="w-full"
-            variant="solid"
-            color="danger"
+            variant="destructive"
             size="lg"
-            isLoading={isDeleting}
-            startContent={!isDeleting && <DeleteIcon size={24} />}
-            onPress={handleDelete}
+            disabled={isDeleting}
+            onClick={handleDelete}
           >
-            {isDeleting ? "Deleting" : "Delete"}
-          </CustomButton>
+            {isDeleting ? (
+              "Deleting"
+            ) : (
+              <>
+                <DeleteIcon size={24} />
+                Delete
+              </>
+            )}
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <form action={formAction} className="flex flex-col space-y-4">
+    <form action={formAction} className="flex flex-col gap-4">
       {config && <input type="hidden" name="id" value={config.id} />}
 
-      <div className="space-y-4">
+      <div className="flex flex-col gap-4">
         <div>
-          <ul className="mb-4 list-disc pl-5 text-sm text-default-600">
+          <ul className="text-default-600 mb-4 list-disc pl-5 text-sm">
             <li>
               <strong>
                 This Mutelist configuration will take effect on the next scan.
@@ -196,10 +206,10 @@ export const MutedFindingsConfigForm = ({
           </ul>
         </div>
 
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           <label
             htmlFor="configuration"
-            className="text-sm font-medium text-default-700"
+            className="text-default-700 text-sm font-medium"
           >
             Mutelist Configuration
           </label>
@@ -228,7 +238,7 @@ export const MutedFindingsConfigForm = ({
               }}
             />
             {yamlValidation.isValid && configText && hasUserStartedTyping && (
-              <div className="my-1 flex items-center px-1 text-tiny text-success">
+              <div className="text-tiny text-success my-1 flex items-center px-1">
                 <span>Valid YAML format</span>
               </div>
             )}
@@ -236,7 +246,7 @@ export const MutedFindingsConfigForm = ({
         </div>
       </div>
 
-      <div className="flex flex-col space-y-4">
+      <div className="flex flex-col gap-4">
         <FormButtons
           setIsOpen={setIsOpen}
           onCancel={onCancel}
@@ -245,19 +255,18 @@ export const MutedFindingsConfigForm = ({
         />
 
         {config && (
-          <CustomButton
+          <Button
             type="button"
-            ariaLabel="Delete Configuration"
+            aria-label="Delete Configuration"
             className="w-full"
-            variant="bordered"
-            color="danger"
-            size="md"
-            startContent={<DeleteIcon size={20} />}
-            onPress={() => setShowDeleteConfirmation(true)}
-            isDisabled={isPending}
+            variant="outline"
+            size="default"
+            onClick={() => setShowDeleteConfirmation(true)}
+            disabled={isPending}
           >
+            <DeleteIcon size={20} />
             Delete Configuration
-          </CustomButton>
+          </Button>
         )}
       </div>
     </form>

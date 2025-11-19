@@ -1,11 +1,11 @@
 "use client";
 
-import { Card, CardBody, Divider } from "@nextui-org/react";
+import { Divider } from "@heroui/divider";
 
+import { ProwlerShort } from "@/components/icons";
+import { Card, CardContent } from "@/components/shadcn";
 import { DateWithTime, InfoField, SnippetChip } from "@/components/ui/entities";
 import { UserDataWithRoles } from "@/types/users";
-
-import { ProwlerShort } from "../../icons";
 
 const TenantIdCopy = ({ id }: { id: string }) => {
   return (
@@ -25,8 +25,8 @@ export const UserBasicInfoCard = ({
   const { name, email, company_name, date_joined } = user.attributes;
 
   return (
-    <Card className="dark:bg-prowler-blue-400">
-      <CardBody>
+    <Card variant="base" padding="none" className="p-4">
+      <CardContent>
         <div className="flex items-center gap-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-full border-3 border-black p-1 dark:border-white">
             <ProwlerShort />
@@ -58,7 +58,7 @@ export const UserBasicInfoCard = ({
             </InfoField>
           </div>
         </div>
-      </CardBody>
+      </CardContent>
     </Card>
   );
 };

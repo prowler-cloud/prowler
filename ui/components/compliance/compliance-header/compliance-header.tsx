@@ -1,10 +1,12 @@
 "use client";
 
-import { Spacer } from "@nextui-org/react";
+import { Spacer } from "@heroui/spacer";
+import Image from "next/image";
 
-import { FilterControls } from "@/components/filters";
 import { DataTableFilterCustom } from "@/components/ui/table/data-table-filter-custom";
+import { ScanEntity } from "@/types/scans";
 
+import { ComplianceScanInfo } from "./compliance-scan-info";
 import { DataCompliance } from "./data-compliance";
 import { SelectScanComplianceDataProps } from "./scan-selector";
 
@@ -15,6 +17,10 @@ interface ComplianceHeaderProps {
   showRegionFilter?: boolean;
   framework?: string; // Framework name to show specific filters
   showProviders?: boolean;
+  hideFilters?: boolean;
+  logoPath?: string;
+  complianceTitle?: string;
+  selectedScan?: ScanEntity | null;
 }
 
 export const ComplianceHeader = ({
@@ -24,6 +30,10 @@ export const ComplianceHeader = ({
   showRegionFilter = true,
   framework,
   showProviders = true,
+  hideFilters = false,
+  logoPath,
+  complianceTitle,
+  selectedScan,
 }: ComplianceHeaderProps) => {
   const frameworkFilters = [];
 
@@ -54,18 +64,39 @@ export const ComplianceHeader = ({
 
   const allFilters = [...frameworkFilters, ...regionFilters];
 
+  const hasContent =
+    showProviders ||
+    showSearch ||
+    (!hideFilters && allFilters.length > 0) ||
+    selectedScan;
+
   return (
     <>
-      {(showProviders || showSearch) && (
-        <>
-          <div className="flex items-start justify-start gap-4">
+      {hasContent && (
+        <div className="flex w-full items-start justify-between gap-6">
+          <div className="flex flex-1 flex-col justify-end gap-4">
+            {selectedScan && <ComplianceScanInfo scan={selectedScan} />}
+
             {showProviders && <DataCompliance scans={scans} />}
-            {showSearch && <FilterControls search />}
+            {!hideFilters && allFilters.length > 0 && (
+              <DataTableFilterCustom filters={allFilters} />
+            )}
           </div>
-        </>
+          {logoPath && complianceTitle && (
+            <div className="hidden shrink-0 sm:block">
+              <div className="relative h-24 w-24">
+                <Image
+                  src={logoPath}
+                  alt={`${complianceTitle} logo`}
+                  fill
+                  className="rounded-lg border border-gray-300 bg-white object-contain p-0"
+                />
+              </div>
+            </div>
+          )}
+        </div>
       )}
-      {allFilters.length > 0 && <DataTableFilterCustom filters={allFilters} />}
-      <Spacer y={8} />
+      {hasContent && <Spacer y={8} />}
     </>
   );
 };

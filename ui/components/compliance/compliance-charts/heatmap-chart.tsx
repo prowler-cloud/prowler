@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@nextui-org/react";
+import { cn } from "@heroui/theme";
 import { useTheme } from "next-themes";
 import { useState } from "react";
 
@@ -29,12 +29,6 @@ const capitalizeFirstLetter = (text: string): string => {
   );
 };
 
-const title = (
-  <h3 className="mb-2 whitespace-nowrap text-xs font-semibold uppercase tracking-wide">
-    Sections Failure Rate
-  </h3>
-);
-
 export const HeatmapChart = ({ categories = [] }: HeatmapChartProps) => {
   const { theme } = useTheme();
   const [hoveredItem, setHoveredItem] = useState<CategoryData | null>(null);
@@ -49,10 +43,9 @@ export const HeatmapChart = ({ categories = [] }: HeatmapChartProps) => {
   // Check if there are no items with data
   if (!categories.length || heatmapData.length === 0) {
     return (
-      <div className="flex w-[400px] flex-col items-center justify-between lg:w-[400px]">
-        {title}
-        <div className="flex h-[320px] w-full items-center justify-center">
-          <p className="text-sm text-gray-500">No category data available</p>
+      <div className="flex w-full flex-col items-center justify-center">
+        <div className="flex h-[250px] w-full items-center justify-center">
+          <p className="text-sm text-slate-400">No category data available</p>
         </div>
       </div>
     );
@@ -72,9 +65,7 @@ export const HeatmapChart = ({ categories = [] }: HeatmapChartProps) => {
   };
 
   return (
-    <div className="flex h-[320px] w-[400px] flex-col items-center justify-between lg:w-[400px]">
-      {title}
-
+    <div className="flex h-full w-full flex-col items-center justify-center">
       <div className="h-full w-full p-2">
         <div
           className={cn(
@@ -135,13 +126,30 @@ export const HeatmapChart = ({ categories = [] }: HeatmapChartProps) => {
               color: theme === "dark" ? "white" : "black",
             }}
           >
-            <div className="mb-1 font-semibold">
+            <div
+              className="mb-1 font-semibold"
+              style={{ color: theme === "dark" ? "white" : "black" }}
+            >
               {capitalizeFirstLetter(hoveredItem.name)}
             </div>
-            <div>Failure Rate: {hoveredItem.failurePercentage}%</div>
             <div>
-              Failed: {hoveredItem.failedRequirements}/
-              {hoveredItem.totalRequirements}
+              <span
+                style={{
+                  color: getHeatmapColor(hoveredItem.failurePercentage),
+                }}
+              >
+                Failure Rate: {hoveredItem.failurePercentage}%
+              </span>
+            </div>
+            <div>
+              <span
+                style={{
+                  color: getHeatmapColor(hoveredItem.failurePercentage),
+                }}
+              >
+                Failed: {hoveredItem.failedRequirements}/
+                {hoveredItem.totalRequirements}
+              </span>
             </div>
           </div>
         )}

@@ -1,12 +1,13 @@
 "use client";
 
+import { Button, ButtonGroup } from "@heroui/button";
+import { DatePicker } from "@heroui/date-picker";
 import {
   getLocalTimeZone,
   startOfMonth,
   startOfWeek,
   today,
 } from "@internationalized/date";
-import { Button, ButtonGroup, DatePicker } from "@nextui-org/react";
 import { useLocale } from "@react-aria/i18n";
 import { useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useRef } from "react";
@@ -60,16 +61,33 @@ export const CustomDatePicker = () => {
   return (
     <div className="flex w-full flex-col md:gap-2">
       <DatePicker
+        style={{
+          borderRadius: "0.5rem",
+        }}
         aria-label="Select a Date"
-        label="Date"
-        labelPlacement="inside"
+        classNames={{
+          base: "w-full [&]:!rounded-lg [&>*]:!rounded-lg",
+          selectorButton: "text-bg-button-secondary shrink-0",
+          input:
+            "text-bg-button-secondary placeholder:text-bg-button-secondary text-sm",
+          innerWrapper: "[&]:!rounded-lg",
+          inputWrapper:
+            "!border-border-input-primary !bg-bg-input-primary dark:!bg-input/30 dark:hover:!bg-input/50 hover:!bg-bg-neutral-secondary !border [&]:!rounded-lg !shadow-xs !transition-[color,box-shadow] focus-within:!border-border-input-primary-press focus-within:!ring-1 focus-within:!ring-border-input-primary-press focus-within:!ring-offset-1 !h-10 !px-4 !py-3 !outline-none",
+          segment: "text-bg-button-secondary",
+        }}
+        popoverProps={{
+          classNames: {
+            content:
+              "border-border-input-primary bg-bg-input-primary border rounded-lg",
+          },
+        }}
         CalendarTopContent={
           <ButtonGroup
             fullWidth
-            className="bg-content1 px-3 pb-2 pt-3 dark:bg-prowler-blue-400 [&>button]:border-default-200/60 [&>button]:text-default-500"
+            className="bg-bg-neutral-secondary [&>button]:border-border-neutral-secondary [&>button]:text-bg-button-secondary px-3 pt-3 pb-2"
             radius="full"
             size="sm"
-            variant="bordered"
+            variant="flat"
           >
             <Button onPress={() => handleDateChange(now)}>Today</Button>
             <Button onPress={() => handleDateChange(nextWeek)}>
@@ -92,8 +110,6 @@ export const CustomDatePicker = () => {
         }}
         value={value}
         onChange={handleDateChange}
-        size="sm"
-        variant="flat"
       />
     </div>
   );

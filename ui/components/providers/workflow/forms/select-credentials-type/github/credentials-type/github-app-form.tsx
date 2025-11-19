@@ -9,10 +9,10 @@ export const GitHubAppForm = ({ control }: { control: Control<any> }) => {
   return (
     <>
       <div className="flex flex-col">
-        <div className="text-md font-bold leading-9 text-default-foreground">
+        <div className="text-md text-default-foreground leading-9 font-bold">
           Connect via GitHub App
         </div>
-        <div className="text-sm text-default-500">
+        <div className="text-default-500 text-sm">
           Please provide your GitHub App ID and private key.
         </div>
       </div>
@@ -25,9 +25,6 @@ export const GitHubAppForm = ({ control }: { control: Control<any> }) => {
         placeholder="Enter your GitHub App ID"
         variant="bordered"
         isRequired
-        isInvalid={
-          !!control._formState.errors[ProviderCredentialFields.GITHUB_APP_ID]
-        }
       />
       <CustomTextarea
         control={control}
@@ -38,9 +35,6 @@ export const GitHubAppForm = ({ control }: { control: Control<any> }) => {
         variant="bordered"
         isRequired
         minRows={4}
-        isInvalid={
-          !!control._formState.errors[ProviderCredentialFields.GITHUB_APP_KEY]
-        }
       />
     </>
   );

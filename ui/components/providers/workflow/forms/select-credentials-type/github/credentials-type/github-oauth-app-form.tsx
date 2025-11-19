@@ -9,10 +9,10 @@ export const GitHubOAuthAppForm = ({ control }: { control: Control<any> }) => {
   return (
     <>
       <div className="flex flex-col">
-        <div className="text-md font-bold leading-9 text-default-foreground">
+        <div className="text-md text-default-foreground leading-9 font-bold">
           Connect via OAuth App
         </div>
-        <div className="text-sm text-default-500">
+        <div className="text-default-500 text-sm">
           Please provide your GitHub OAuth App token.
         </div>
       </div>
@@ -25,9 +25,6 @@ export const GitHubOAuthAppForm = ({ control }: { control: Control<any> }) => {
         placeholder="Enter your GitHub OAuth App token"
         variant="bordered"
         isRequired
-        isInvalid={
-          !!control._formState.errors[ProviderCredentialFields.OAUTH_APP_TOKEN]
-        }
       />
     </>
   );

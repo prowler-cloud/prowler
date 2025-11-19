@@ -1,7 +1,6 @@
 "use client";
 
-import type { ButtonProps } from "@nextui-org/react";
-import { cn } from "@nextui-org/react";
+import { cn } from "@heroui/theme";
 import { useControlledState } from "@react-stately/utils";
 import { domAnimation, LazyMotion, m } from "framer-motion";
 import type { ComponentProps } from "react";
@@ -26,7 +25,13 @@ export interface VerticalStepsProps
    *
    * @default "primary"
    */
-  color?: ButtonProps["color"];
+  color?:
+    | "primary"
+    | "secondary"
+    | "success"
+    | "warning"
+    | "danger"
+    | "default";
   /**
    * The current step index.
    */
@@ -117,38 +122,38 @@ export const VerticalSteps = React.forwardRef<
         "[--active-color:var(--step-color)]",
         "[--complete-background-color:var(--step-color)]",
         "[--complete-border-color:var(--step-color)]",
-        "[--inactive-border-color:hsl(var(--nextui-default-300))]",
-        "[--inactive-color:hsl(var(--nextui-default-300))]",
+        "[--inactive-border-color:hsl(var(--heroui-default-300))]",
+        "[--inactive-color:hsl(var(--heroui-default-300))]",
       ];
 
       switch (color) {
         case "primary":
-          userColor = "[--step-color:hsl(var(--nextui-primary))]";
-          fgColor = "[--step-fg-color:hsl(var(--nextui-primary-foreground))]";
+          userColor = "[--step-color:var(--bg-button-primary)]";
+          fgColor = "[--step-fg-color:hsl(var(--heroui-primary-foreground))]";
           break;
         case "secondary":
-          userColor = "[--step-color:hsl(var(--nextui-secondary))]";
-          fgColor = "[--step-fg-color:hsl(var(--nextui-secondary-foreground))]";
+          userColor = "[--step-color:hsl(var(--heroui-secondary))]";
+          fgColor = "[--step-fg-color:hsl(var(--heroui-secondary-foreground))]";
           break;
         case "success":
-          userColor = "[--step-color:hsl(var(--nextui-success))]";
-          fgColor = "[--step-fg-color:hsl(var(--nextui-success-foreground))]";
+          userColor = "[--step-color:hsl(var(--heroui-success))]";
+          fgColor = "[--step-fg-color:hsl(var(--heroui-success-foreground))]";
           break;
         case "warning":
-          userColor = "[--step-color:hsl(var(--nextui-warning))]";
-          fgColor = "[--step-fg-color:hsl(var(--nextui-warning-foreground))]";
+          userColor = "[--step-color:hsl(var(--heroui-warning))]";
+          fgColor = "[--step-fg-color:hsl(var(--heroui-warning-foreground))]";
           break;
         case "danger":
-          userColor = "[--step-color:hsl(var(--nextui-error))]";
-          fgColor = "[--step-fg-color:hsl(var(--nextui-error-foreground))]";
+          userColor = "[--step-color:hsl(var(--heroui-error))]";
+          fgColor = "[--step-fg-color:hsl(var(--heroui-error-foreground))]";
           break;
         case "default":
-          userColor = "[--step-color:hsl(var(--nextui-default))]";
-          fgColor = "[--step-fg-color:hsl(var(--nextui-default-foreground))]";
+          userColor = "[--step-color:hsl(var(--heroui-default))]";
+          fgColor = "[--step-fg-color:hsl(var(--heroui-default-foreground))]";
           break;
         default:
-          userColor = "[--step-color:hsl(var(--nextui-primary))]";
-          fgColor = "[--step-fg-color:hsl(var(--nextui-primary-foreground))]";
+          userColor = "[--step-color:hsl(var(--heroui-primary))]";
+          fgColor = "[--step-fg-color:hsl(var(--heroui-primary-foreground))]";
           break;
       }
 
@@ -156,7 +161,7 @@ export const VerticalSteps = React.forwardRef<
       if (!className?.includes("--step-color")) colorsVars.unshift(userColor);
       if (!className?.includes("--inactive-bar-color"))
         colorsVars.push(
-          "[--inactive-bar-color:hsl(var(--nextui-default-300))]",
+          "[--inactive-bar-color:hsl(var(--heroui-default-300))]",
         );
 
       return colorsVars;
@@ -181,7 +186,7 @@ export const VerticalSteps = React.forwardRef<
                     ref={ref}
                     aria-current={status === "active" ? "step" : undefined}
                     className={cn(
-                      "group flex w-full cursor-pointer items-center justify-center gap-4 rounded-large px-3 py-2.5",
+                      "group rounded-large flex w-full cursor-pointer items-center justify-center gap-4 px-3 py-2.5",
                       stepClassName,
                     )}
                     onClick={() => setCurrentStep(stepIdx)}
@@ -193,7 +198,7 @@ export const VerticalSteps = React.forwardRef<
                           <m.div
                             animate={status}
                             className={cn(
-                              "relative flex h-[34px] w-[34px] items-center justify-center rounded-full border-medium text-large font-semibold text-default-foreground",
+                              "border-medium text-large text-default-foreground relative flex h-[34px] w-[34px] items-center justify-center rounded-full font-semibold",
                               {
                                 "shadow-lg": status === "complete",
                               },
@@ -221,7 +226,7 @@ export const VerticalSteps = React.forwardRef<
                           >
                             <div className="flex items-center justify-center">
                               {status === "complete" ? (
-                                <CheckIcon className="h-6 w-6 text-[var(--active-fg-color)]" />
+                                <CheckIcon className="h-6 w-6 text-(--active-fg-color)" />
                               ) : (
                                 <span>{stepIdx + 1}</span>
                               )}
@@ -234,7 +239,7 @@ export const VerticalSteps = React.forwardRef<
                       <div>
                         <div
                           className={cn(
-                            "text-medium font-medium text-default-foreground transition-[color,opacity] duration-300 group-active:opacity-70",
+                            "text-medium text-default-foreground font-medium transition-[color,opacity] duration-300 group-active:opacity-70",
                             {
                               "text-default-500": status === "inactive",
                             },
@@ -244,7 +249,7 @@ export const VerticalSteps = React.forwardRef<
                         </div>
                         <div
                           className={cn(
-                            "text-tiny text-default-600 transition-[color,opacity] duration-300 group-active:opacity-70 lg:text-small",
+                            "text-tiny text-default-600 lg:text-small transition-[color,opacity] duration-300 group-active:opacity-70",
                             {
                               "text-default-500": status === "inactive",
                             },
@@ -260,7 +265,7 @@ export const VerticalSteps = React.forwardRef<
                   <div
                     aria-hidden="true"
                     className={cn(
-                      "pointer-events-none absolute left-3 top-[calc(64px_*_var(--idx)_+_1)] flex h-1/2 -translate-y-1/3 items-center px-4",
+                      "pointer-events-none absolute top-[calc(64px*var(--idx)+1)] left-3 flex h-1/2 -translate-y-1/3 items-center px-4",
                     )}
                     style={{
                       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -270,8 +275,8 @@ export const VerticalSteps = React.forwardRef<
                   >
                     <div
                       className={cn(
-                        "relative h-full w-0.5 bg-[var(--inactive-bar-color)] transition-colors duration-300",
-                        "after:absolute after:block after:h-0 after:w-full after:bg-[var(--active-border-color)] after:transition-[height] after:duration-300 after:content-['']",
+                        "relative h-full w-0.5 bg-(--inactive-bar-color) transition-colors duration-300",
+                        "after:absolute after:block after:h-0 after:w-full after:bg-(--active-border-color) after:transition-[height] after:duration-300 after:content-['']",
                         {
                           "after:h-full": stepIdx < currentStep,
                         },

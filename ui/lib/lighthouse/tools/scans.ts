@@ -1,11 +1,18 @@
 import { tool } from "@langchain/core/tools";
+import { z } from "zod";
 
 import { getScan, getScans } from "@/actions/scans";
 import { getScanSchema, getScansSchema } from "@/types/lighthouse";
 
 export const getScansTool = tool(
-  async ({ page, query, sort, filters }) => {
-    const scans = await getScans({ page, query, sort, filters });
+  async (input) => {
+    const typedInput = input as z.infer<typeof getScansSchema>;
+    const scans = await getScans({
+      page: typedInput.page,
+      query: typedInput.query,
+      sort: typedInput.sort,
+      filters: typedInput.filters,
+    });
 
     return scans;
   },
@@ -18,8 +25,9 @@ export const getScansTool = tool(
 );
 
 export const getScanTool = tool(
-  async ({ id }) => {
-    return await getScan(id);
+  async (input) => {
+    const typedInput = input as z.infer<typeof getScanSchema>;
+    return await getScan(typedInput.id);
   },
   {
     name: "getScan",

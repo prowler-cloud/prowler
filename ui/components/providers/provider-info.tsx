@@ -1,4 +1,4 @@
-import { Tooltip } from "@nextui-org/react";
+import { Tooltip } from "@heroui/tooltip";
 import React from "react";
 
 import { ProviderType } from "@/types";
@@ -23,7 +23,7 @@ export const ProviderInfo: React.FC<ProviderInfoProps> = ({
       case true:
         return (
           <Tooltip content="Provider connected" className="text-xs">
-            <div className="flex items-center justify-center rounded-medium border-2 border-system-success bg-system-success-lighter p-1">
+            <div className="rounded-medium border-system-success bg-system-success-lighter flex items-center justify-center border-2 p-1">
               <ConnectionTrue className="text-system-success" size={24} />
             </div>
           </Tooltip>
@@ -31,15 +31,15 @@ export const ProviderInfo: React.FC<ProviderInfoProps> = ({
       case false:
         return (
           <Tooltip content="Provider connection failed" className="text-xs">
-            <div className="flex items-center justify-center rounded-medium border-2 border-danger bg-system-error-lighter p-1">
-              <ConnectionFalse className="text-danger" size={24} />
+            <div className="rounded-medium border-danger bg-system-error-lighter flex items-center justify-center border-2 p-1">
+              <ConnectionFalse className="text-text-error" size={24} />
             </div>
           </Tooltip>
         );
       case null:
         return (
           <Tooltip content="Provider not connected" className="text-xs">
-            <div className="bg-info-lighter border-info-lighter flex items-center justify-center rounded-medium border p-1">
+            <div className="bg-info-lighter border-info-lighter rounded-medium flex items-center justify-center border p-1">
               <ConnectionPending className="text-info" size={24} />
             </div>
           </Tooltip>
@@ -51,7 +51,7 @@ export const ProviderInfo: React.FC<ProviderInfoProps> = ({
 
   return (
     <div className="flex items-center text-sm">
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center gap-4">
         {getProviderLogo(provider)}
         {getIcon()}
         <span className="font-medium">{providerAlias || providerUID}</span>

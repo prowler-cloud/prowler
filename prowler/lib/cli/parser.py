@@ -15,6 +15,7 @@ from prowler.lib.check.models import Severity
 from prowler.lib.outputs.common import Status
 from prowler.providers.common.arguments import (
     init_providers_parser,
+    validate_asff_usage,
     validate_provider_arguments,
 )
 
@@ -26,18 +27,21 @@ class ProwlerArgumentParser:
         self.parser = argparse.ArgumentParser(
             prog="prowler",
             formatter_class=RawTextHelpFormatter,
-            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,nhn,dashboard,iac} ...",
+            usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,nhn,mongodbatlas,oraclecloud,dashboard,iac} ...",
             epilog="""
 Available Cloud Providers:
-  {aws,azure,gcp,kubernetes,m365,github,iac,nhn}
+  {aws,azure,gcp,kubernetes,m365,github,iac,llm,nhn,mongodbatlas,oraclecloud}
     aws                 AWS Provider
     azure               Azure Provider
     gcp                 GCP Provider
     kubernetes          Kubernetes Provider
     m365                Microsoft 365 Provider
     github              GitHub Provider
-    iac                 IaC Provider (Preview)
+    oraclecloud         Oracle Cloud Infrastructure Provider
+    iac                 IaC Provider (Beta)
+    llm                 LLM Provider (Beta)
     nhn                 NHN Provider (Unofficial)
+    mongodbatlas        MongoDB Atlas Provider (Beta)
 
 Available components:
     dashboard           Local dashboard
@@ -110,6 +114,9 @@ Detailed documentation at https://docs.prowler.com
             # Microsoft 365
             elif sys.argv[1] == "microsoft365":
                 sys.argv[1] = "m365"
+            # Oracle Cloud Infrastructure
+            elif sys.argv[1] == "oci":
+                sys.argv[1] = "oraclecloud"
 
         # Parse arguments
         args = self.parser.parse_args()
@@ -128,6 +135,12 @@ Detailed documentation at https://docs.prowler.com
         valid, message = validate_provider_arguments(args)
         if not valid:
             self.parser.error(f"{args.provider}: {message}")
+
+        asff_is_valid, asff_error = validate_asff_usage(
+            args.provider, getattr(args, "output_formats", None)
+        )
+        if not asff_is_valid:
+            self.parser.error(asff_error)
 
         return args
 
@@ -235,6 +248,11 @@ Detailed documentation at https://docs.prowler.com
             help="Checks to exclude",
         )
         exclude_checks_parser.add_argument(
+            "--excluded-checks-file",
+            nargs="?",
+            help="JSON file containing the checks to be excluded. See config/checklist_example.json",
+        )
+        exclude_checks_parser.add_argument(
             "--excluded-service",
             "--excluded-services",
             nargs="+",
@@ -293,7 +311,7 @@ Detailed documentation at https://docs.prowler.com
             "--checks-folder",
             "-x",
             nargs="?",
-            help="Specify external directory with custom checks (each check must have a folder with the required files, see more in https://docs.prowler.cloud/en/latest/tutorials/misc/#custom-checks).",
+            help="Specify external directory with custom checks (each check must have a folder with the required files, see more in https://docs.prowler.com/user-guide/cli/tutorials/misc#custom-checks-in-prowler).",
         )
 
     def __init_list_checks_parser__(self):
@@ -346,7 +364,7 @@ Detailed documentation at https://docs.prowler.com
             "--mutelist-file",
             "-w",
             nargs="?",
-            help="Path for mutelist YAML file. See example prowler/config/<provider>_mutelist.yaml for reference and format. For AWS provider, it also accepts AWS DynamoDB Table, Lambda ARNs or S3 URIs, see more in https://docs.prowler.cloud/en/latest/tutorials/mutelist/",
+            help="Path for mutelist YAML file. See example prowler/config/<provider>_mutelist.yaml for reference and format. For AWS provider, it also accepts AWS DynamoDB Table, Lambda ARNs or S3 URIs, see more in https://docs.prowler.com/user-guide/cli/tutorials/mutelist",
         )
 
     def __init_config_parser__(self):
@@ -373,7 +391,7 @@ Detailed documentation at https://docs.prowler.com
             "--custom-checks-metadata-file",
             nargs="?",
             default=None,
-            help="Path for the custom checks metadata YAML file. See example prowler/config/custom_checks_metadata_example.yaml for reference and format. See more in https://docs.prowler.cloud/en/latest/tutorials/custom-checks-metadata/",
+            help="Path for the custom checks metadata YAML file. See example prowler/config/custom_checks_metadata_example.yaml for reference and format. See more in https://docs.prowler.com/user-guide/cli/tutorials/custom-checks-metadata/",
         )
 
     def __init_third_party_integrations_parser__(self):
@@ -391,5 +409,5 @@ Detailed documentation at https://docs.prowler.com
         third_party_subparser.add_argument(
             "--slack",
             action="store_true",
-            help="Send a summary of the execution with a Slack APP in your channel. Environment variables SLACK_API_TOKEN and SLACK_CHANNEL_NAME are required (see more in https://docs.prowler.cloud/en/latest/tutorials/integrations/#slack).",
+            help="Send a summary of the execution with a Slack APP in your channel. Environment variables SLACK_API_TOKEN and SLACK_CHANNEL_NAME are required (see more in https://docs.prowler.com/user-guide/cli/tutorials/integrations#configuration-of-the-integration-with-slack/).",
         )

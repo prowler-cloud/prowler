@@ -11,10 +11,10 @@ export const AzureCredentialsForm = ({
   return (
     <>
       <div className="flex flex-col">
-        <div className="text-md font-bold leading-9 text-default-foreground">
+        <div className="text-md text-default-foreground leading-9 font-bold">
           Connect via Credentials
         </div>
-        <div className="text-sm text-default-500">
+        <div className="text-default-500 text-sm">
           Please provide the information for your Azure credentials.
         </div>
       </div>
@@ -27,7 +27,6 @@ export const AzureCredentialsForm = ({
         placeholder="Enter the Client ID"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.client_id}
       />
       <CustomInput
         control={control}
@@ -38,7 +37,6 @@ export const AzureCredentialsForm = ({
         placeholder="Enter the Client Secret"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.client_secret}
       />
       <CustomInput
         control={control}
@@ -49,7 +47,6 @@ export const AzureCredentialsForm = ({
         placeholder="Enter the Tenant ID"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.tenant_id}
       />
     </>
   );

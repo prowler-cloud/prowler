@@ -1,5 +1,6 @@
 {
   "Framework": "SOC2",
+  "Name": "System and Organization Controls 2 (SOC2)",
   "Version": "",
   "Provider": "AWS",
   "Description": "System and Organization Controls (SOC), defined by the American Institute of Certified Public Accountants (AICPA), is the name of a set of reports that's produced during an audit. It's intended for use by service organizations (organizations that provide information systems as a service to other organizations) to issue validated reports of internal controls over those information systems to the users of those services. The reports focus on controls grouped into five categories known as Trust Service Principles.",
@@ -253,8 +254,8 @@
         "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
         "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports",
-        "ec2_securitygroup_allow_ingress_from_internet_to_port_mongodb_27017_27018",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_ftp_port_20_21",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mongodb_27017_27018",
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_ftp_20_21",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888",

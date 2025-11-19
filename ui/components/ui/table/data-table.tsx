@@ -40,6 +40,7 @@ export function DataTable<TData, TValue>({
 }: DataTableProviderProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+
   const table = useReactTable({
     data,
     columns,
@@ -59,7 +60,7 @@ export function DataTable<TData, TValue>({
 
   return (
     <>
-      <div className="relative z-0 flex w-full flex-col justify-between gap-4 overflow-auto rounded-large p-4 shadow-small dark:bg-prowler-blue-400">
+      <div className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col justify-between gap-4 overflow-auto border p-4">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -110,7 +111,7 @@ export function DataTable<TData, TValue>({
         </Table>
       </div>
       {metadata && (
-        <div className="flex w-full items-center space-x-2 py-4">
+        <div className="flex w-full items-center gap-2 py-4">
           <DataTablePagination
             metadata={metadata}
             disableScroll={disableScroll}

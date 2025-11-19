@@ -1,25 +1,18 @@
 "use server";
 
 import { AuthError } from "next-auth";
-import { z } from "zod";
 
 import { signIn, signOut } from "@/auth.config";
 import { apiBaseUrl } from "@/lib";
-import { authFormSchema } from "@/types";
-
-const formSchemaSignIn = authFormSchema("sign-in");
-const formSchemaSignUp = authFormSchema("sign-up");
-
-const defaultValues: z.infer<typeof formSchemaSignIn> = {
-  email: "",
-  password: "",
-};
+import { addAuthEvent } from "@/lib/sentry-breadcrumbs";
+import type { SignInFormData, SignUpFormData } from "@/types";
 
 export async function authenticate(
   prevState: unknown,
-  formData: z.infer<typeof formSchemaSignIn>,
+  formData: SignInFormData,
 ) {
   try {
+    addAuthEvent("login", { email: formData.email });
     await signIn("credentials", {
       ...formData,
       redirect: false,
@@ -29,13 +22,13 @@ export async function authenticate(
     };
   } catch (error) {
     if (error instanceof AuthError) {
+      addAuthEvent("error", { type: error.type });
       switch (error.type) {
         case "CredentialsSignin":
           return {
             message: "Credentials error",
             errors: {
-              ...defaultValues,
-              credentials: "Incorrect email or password",
+              credentials: "Invalid email or password",
             },
           };
         case "CallbackRouteError":
@@ -46,7 +39,6 @@ export async function authenticate(
           return {
             message: "Unknown error",
             errors: {
-              ...defaultValues,
               unknown: "Unknown error",
             },
           };
@@ -55,9 +47,7 @@ export async function authenticate(
   }
 }
 
-export const createNewUser = async (
-  formData: z.infer<typeof formSchemaSignUp>,
-) => {
+export const createNewUser = async (formData: SignUpFormData) => {
   const url = new URL(`${apiBaseUrl}/users`);
 
   if (formData.invitationToken) {
@@ -104,7 +94,7 @@ export const createNewUser = async (
   }
 };
 
-export const getToken = async (formData: z.infer<typeof formSchemaSignIn>) => {
+export const getToken = async (formData: SignInFormData) => {
   const url = new URL(`${apiBaseUrl}/tokens`);
 
   const bodyData = {

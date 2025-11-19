@@ -1,34 +1,44 @@
-import { Spacer } from "@nextui-org/react";
+import { Spacer } from "@heroui/spacer";
+import Link from "next/link";
 import { Suspense } from "react";
 
-import { getRoles } from "@/actions/roles";
+import { getRoles } from "@/actions/roles/roles";
 import { getUsers } from "@/actions/users/users";
 import { FilterControls } from "@/components/filters";
 import { filterUsers } from "@/components/filters/data-filters";
+import { AddIcon } from "@/components/icons";
+import { Button } from "@/components/shadcn";
 import { ContentLayout } from "@/components/ui";
 import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
-import { AddUserButton } from "@/components/users";
 import { ColumnsUser, SkeletonTableUser } from "@/components/users/table";
 import { Role, SearchParamsProps, UserProps } from "@/types";
 
 export default async function Users({
   searchParams,
 }: {
-  searchParams: SearchParamsProps;
+  searchParams: Promise<SearchParamsProps>;
 }) {
-  const searchParamsKey = JSON.stringify(searchParams || {});
+  const resolvedSearchParams = await searchParams;
+  const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
 
   return (
-    <ContentLayout title="Users" icon="ci:users">
+    <ContentLayout title="Users" icon="lucide:user">
       <FilterControls search />
-      <Spacer y={8} />
-      <AddUserButton />
-      <Spacer y={4} />
-      <DataTableFilterCustom filters={filterUsers || []} />
+
+      <div className="flex flex-row items-center justify-between">
+        <DataTableFilterCustom filters={filterUsers || []} />
+
+        <Button asChild>
+          <Link href="/invitations/new">
+            Invite User
+            <AddIcon size={20} />
+          </Link>
+        </Button>
+      </div>
       <Spacer y={8} />
 
       <Suspense key={searchParamsKey} fallback={<SkeletonTableUser />}>
-        <SSRDataTable searchParams={searchParams} />
+        <SSRDataTable searchParams={resolvedSearchParams} />
       </Suspense>
     </ContentLayout>
   );
@@ -93,6 +103,7 @@ const SSRDataTable = async ({
 
   return (
     <DataTable
+      key={`scans-${Date.now()}`}
       columns={ColumnsUser}
       data={expandedUsers || []}
       metadata={usersData?.meta}

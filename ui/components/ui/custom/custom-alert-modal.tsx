@@ -1,4 +1,4 @@
-import { Modal, ModalBody, ModalContent, ModalHeader } from "@nextui-org/react";
+import { Modal, ModalBody, ModalContent, ModalHeader } from "@heroui/modal";
 import React, { ReactNode } from "react";
 
 interface CustomAlertModalProps {
@@ -24,7 +24,7 @@ export const CustomAlertModal: React.FC<CustomAlertModalProps> = ({
       onOpenChange={onOpenChange}
       size={size}
       classNames={{
-        base: "dark:bg-prowler-blue-800",
+        base: "border border-border-neutral-secondary bg-bg-neutral-secondary",
         closeButton: "rounded-md",
       }}
       backdrop="blur"

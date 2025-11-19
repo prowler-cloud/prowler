@@ -1,24 +1,21 @@
 "use client";
 
+import { Divider } from "@heroui/divider";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Divider } from "@nextui-org/react";
 import { SaveIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { updateProviderGroup } from "@/actions/manage-groups/manage-groups";
+import { Button } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
-import {
-  CustomButton,
-  CustomDropdownSelection,
-  CustomInput,
-} from "@/components/ui/custom";
+import { CustomDropdownSelection, CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { ApiError } from "@/types";
 
 const editGroupSchema = z.object({
-  name: z.string().nonempty("Provider group name is required"),
+  name: z.string().min(1, "Provider group name is required"),
   providers: z.array(z.object({ id: z.string(), name: z.string() })).optional(),
   roles: z.array(z.object({ id: z.string(), name: z.string() })).optional(),
 });
@@ -105,7 +102,8 @@ export const EditGroupForm = ({
       if (data?.errors && data.errors.length > 0) {
         data.errors.forEach((error: ApiError) => {
           const errorMessage = error.detail;
-          switch (error.source.pointer) {
+          const pointer = error.source?.pointer;
+          switch (pointer) {
             case "/data/attributes/name":
               form.setError("name", {
                 type: "server",
@@ -146,7 +144,7 @@ export const EditGroupForm = ({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmitClient)}
-        className="flex flex-col space-y-4"
+        className="flex flex-col gap-4"
       >
         {/* Field for the name */}
         <div className="flex flex-col gap-2">
@@ -157,9 +155,8 @@ export const EditGroupForm = ({
             label="Provider group name"
             labelPlacement="inside"
             placeholder="Enter the provider group name"
-            variant="bordered"
+            variant="flat"
             isRequired
-            isInvalid={!!form.formState.errors.name}
           />
         </div>
 
@@ -240,32 +237,21 @@ export const EditGroupForm = ({
           </p>
         )}
 
-        <div className="flex w-full justify-end sm:space-x-6">
-          <CustomButton
+        <div className="flex w-full justify-end gap-4">
+          <Button
             type="button"
-            ariaLabel="Cancel"
-            className="w-fit bg-transparent"
-            variant="faded"
-            size="md"
-            onPress={() => {
+            variant="ghost"
+            onClick={() => {
               router.push("/manage-groups");
             }}
-            isDisabled={isLoading}
+            disabled={isLoading}
           >
-            <span>Cancel</span>
-          </CustomButton>
-          <CustomButton
-            type="submit"
-            ariaLabel="Update Group"
-            className="w-1/2"
-            variant="solid"
-            color="action"
-            size="md"
-            isLoading={isLoading}
-            startContent={!isLoading && <SaveIcon size={24} />}
-          >
-            {isLoading ? <>Loading</> : <span>Update Group</span>}
-          </CustomButton>
+            Cancel
+          </Button>
+          <Button type="submit" className="w-1/2" disabled={isLoading}>
+            {!isLoading && <SaveIcon size={24} />}
+            {isLoading ? "Loading" : "Update Group"}
+          </Button>
         </div>
       </form>
     </Form>

@@ -1,22 +1,22 @@
 "use client";
 
 import {
-  Button,
   Dropdown,
   DropdownItem,
   DropdownMenu,
   DropdownSection,
   DropdownTrigger,
-} from "@nextui-org/react";
+} from "@heroui/dropdown";
 import {
   DeleteDocumentBulkIcon,
   EditDocumentBulkIcon,
-} from "@nextui-org/shared-icons";
+} from "@heroui/shared-icons";
 import { Row } from "@tanstack/react-table";
 import clsx from "clsx";
 import { useState } from "react";
 
 import { VerticalDotsIcon } from "@/components/icons";
+import { Button } from "@/components/shadcn";
 import { CustomAlertModal } from "@/components/ui/custom";
 
 import { DeleteForm, EditForm } from "../forms";
@@ -25,8 +25,7 @@ interface DataTableRowActionsProps<UserProps> {
   row: Row<UserProps>;
   roles?: { id: string; name: string }[];
 }
-const iconClasses =
-  "text-2xl text-default-500 pointer-events-none flex-shrink-0";
+const iconClasses = "text-2xl text-default-500 pointer-events-none shrink-0";
 
 export function DataTableRowActions<UserProps>({
   row,
@@ -68,12 +67,12 @@ export function DataTableRowActions<UserProps>({
 
       <div className="relative flex items-center justify-end gap-2">
         <Dropdown
-          className="shadow-xl dark:bg-prowler-blue-800"
+          className="border-border-neutral-secondary bg-bg-neutral-secondary border shadow-xl"
           placement="bottom"
         >
           <DropdownTrigger>
-            <Button isIconOnly radius="full" size="sm" variant="light">
-              <VerticalDotsIcon className="text-default-400" />
+            <Button variant="ghost" size="icon-sm" className="rounded-full">
+              <VerticalDotsIcon className="text-slate-400" />
             </Button>
           </DropdownTrigger>
           <DropdownMenu
@@ -96,13 +95,13 @@ export function DataTableRowActions<UserProps>({
             <DropdownSection title="Danger zone">
               <DropdownItem
                 key="delete"
-                className="text-danger"
+                className="text-text-error"
                 color="danger"
                 description="Delete the user permanently"
                 textValue="Delete User"
                 startContent={
                   <DeleteDocumentBulkIcon
-                    className={clsx(iconClasses, "!text-danger")}
+                    className={clsx(iconClasses, "!text-text-error")}
                   />
                 }
                 onPress={() => setIsDeleteOpen(true)}

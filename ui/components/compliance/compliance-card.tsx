@@ -1,10 +1,11 @@
 "use client";
 
-import { Card, CardBody, Progress } from "@nextui-org/react";
+import { Progress } from "@heroui/progress";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { useState } from "react";
+import { useState } from "react";
 
+import { Card, CardContent } from "@/components/shadcn/card/card";
 import { DownloadIconButton, toast } from "@/components/ui";
 import { downloadComplianceCsv } from "@/lib/helper";
 import { ScanEntity } from "@/types/scans";
@@ -47,23 +48,6 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
     (passingRequirements / totalRequirements) * 100,
   );
 
-  // Calculates the percentage change in passing requirements compared to the previous scan.
-  //
-  // const prevRatingPercentage = Math.floor(
-  //   (prevPassingRequirements / prevTotalRequirements) * 100,
-  // );
-
-  // const getScanChange = () => {
-  //   const scanDifference = ratingPercentage - prevRatingPercentage;
-  //   if (scanDifference < 0 && scanDifference <= -1) {
-  //     return `${scanDifference}% from last scan`;
-  //   }
-  //   if (scanDifference > 0 && scanDifference >= 1) {
-  //     return `+${scanDifference}% from last scan`;
-  //   }
-  //   return "No changes from last scan";
-  // };
-
   const getRatingColor = (ratingPercentage: number) => {
     if (ratingPercentage <= 10) {
       return "danger";
@@ -94,6 +78,11 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
       );
     }
 
+    const regionFilter = searchParams.get("filter[region__in]");
+    if (regionFilter) {
+      params.set("filter[region__in]", regionFilter);
+    }
+
     router.push(`${path}?${params.toString()}`);
   };
   const handleDownload = async () => {
@@ -107,21 +96,22 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
 
   return (
     <Card
-      fullWidth
-      isHoverable
-      shadow="sm"
-      isPressable
-      onPress={navigateToDetail}
+      variant="base"
+      padding="md"
+      className="cursor-pointer transition-shadow hover:shadow-md"
+      onClick={navigateToDetail}
     >
-      <CardBody className="flex flex-row items-center justify-between space-x-4 dark:bg-prowler-blue-800">
-        <div className="flex w-full items-center space-x-4">
-          <Image
-            src={getComplianceIcon(title)}
-            alt={`${title} logo`}
-            className="h-10 w-10 min-w-10 rounded-md border-1 border-gray-300 bg-white object-contain p-1"
-          />
+      <CardContent className="p-0">
+        <div className="flex w-full items-center gap-4">
+          {getComplianceIcon(title) && (
+            <Image
+              src={getComplianceIcon(title)}
+              alt={`${title} logo`}
+              className="h-10 w-10 min-w-10 rounded-md border border-gray-300 bg-white object-contain p-1"
+            />
+          )}
           <div className="flex w-full flex-col">
-            <h4 className="mb-1 text-small font-bold leading-5">
+            <h4 className="text-small mb-1 leading-5 font-bold">
               {formatTitle(title)}
               {version ? ` - ${version}` : ""}
             </h4>
@@ -146,18 +136,28 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
                 Passing Requirements
               </small>
 
-              <DownloadIconButton
-                paramId={complianceId}
-                onDownload={handleDownload}
-                textTooltip="Download compliance CSV report"
-                isDisabled={hasRegionFilter}
-                isDownloading={isDownloading}
-              />
-              {/* <small>{getScanChange()}</small> */}
+              <div
+                onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.stopPropagation();
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+              >
+                <DownloadIconButton
+                  paramId={complianceId}
+                  onDownload={handleDownload}
+                  textTooltip="Download compliance CSV report"
+                  isDisabled={hasRegionFilter}
+                  isDownloading={isDownloading}
+                />
+              </div>
             </div>
           </div>
         </div>
-      </CardBody>
+      </CardContent>
     </Card>
   );
 };

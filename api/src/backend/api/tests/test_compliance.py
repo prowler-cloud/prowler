@@ -239,6 +239,7 @@ class TestCompliance:
             Framework="Framework 1",
             Version="1.0",
             Description="Description of compliance1",
+            Name="Compliance 1",
         )
         prowler_compliance = {"aws": {"compliance1": compliance1}}
 
@@ -248,6 +249,7 @@ class TestCompliance:
             "aws": {
                 "compliance1": {
                     "framework": "Framework 1",
+                    "name": "Compliance 1",
                     "version": "1.0",
                     "provider": "aws",
                     "description": "Description of compliance1",

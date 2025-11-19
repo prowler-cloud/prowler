@@ -1,6 +1,6 @@
 "use client";
 
-import { RadioGroup } from "@nextui-org/react";
+import { RadioGroup } from "@heroui/radio";
 import React from "react";
 import { Control, Controller } from "react-hook-form";
 
@@ -39,13 +39,13 @@ export const RadioGroupAWSViaCredentialsTypeForm = ({
             }}
           >
             <div className="flex flex-col gap-4">
-              <span className="text-sm text-default-500">Using IAM Role</span>
+              <span className="text-default-500 text-sm">Using IAM Role</span>
               <CustomRadio description="Connect assuming IAM Role" value="role">
                 <div className="flex items-center">
                   <span className="ml-2">Connect assuming IAM Role</span>
                 </div>
               </CustomRadio>
-              <span className="text-sm text-default-500">
+              <span className="text-default-500 text-sm">
                 Using Credentials
               </span>
               <CustomRadio
@@ -59,7 +59,7 @@ export const RadioGroupAWSViaCredentialsTypeForm = ({
             </div>
           </RadioGroup>
           {errorMessage && (
-            <FormMessage className="text-system-error dark:text-system-error">
+            <FormMessage className="text-text-error">
               {errorMessage}
             </FormMessage>
           )}

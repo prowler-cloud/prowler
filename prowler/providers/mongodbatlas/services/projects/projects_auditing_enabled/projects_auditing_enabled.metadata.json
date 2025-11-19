@@ -1,0 +1,41 @@
+{
+  "Provider": "mongodbatlas",
+  "CheckID": "projects_auditing_enabled",
+  "CheckTitle": "MongoDB Atlas project has database auditing enabled",
+  "CheckType": [],
+  "ServiceName": "projects",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "MongoDBAtlasProject",
+  "Description": "**MongoDB Atlas projects** with **database auditing** capture database operations and administrative events. The evaluation looks for an active audit configuration and, *when present*, notes any configured `audit_filter` that scopes which events are recorded.",
+  "Risk": "Without auditing, critical actions lack traceability, reducing **detectability** and impeding **forensics**. Attackers can mask unauthorized reads/writes and privilege changes, threatening data **confidentiality** and **integrity**, and weakening non-repudiation and incident response.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.mongodb.com/docs/manual/tutorial/configure-auditing/",
+    "https://www.mongodb.com/docs/atlas/architecture/current/auditing/",
+    "https://www.mongodb.com/docs/atlas/architecture/current/auditing-logging/?msockid=0878cc3dfa4e66a707beda0efb5a67b5",
+    "https://www.mongodb.com/docs/atlas/operator/current/ak8so-configure-audit-logs/",
+    "https://www.mongodb.com/docs/manual/core/auditing/",
+    "https://www.mongodb.com/docs/atlas/database-auditing/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "atlas auditing update --projectId <example_resource_id> --enabled",
+      "NativeIaC": "",
+      "Other": "1. Sign in to MongoDB Atlas and open the target project\n2. In the left sidebar, click Security > Database & Network Access, then click Advanced\n3. Toggle Database Auditing to On\n4. Click Save",
+      "Terraform": "```hcl\nresource \"mongodbatlas_auditing\" \"example\" {\n  project_id = \"<example_resource_id>\"\n  enabled    = true  # Critical: turns on project-level database auditing to pass the check\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable **auditing** and apply least-privilege filters to capture high-risk events:\n- authentication and session activity\n- DDL/config changes\n- user/role modifications and privilege grants\n\nCentralize logs in a SIEM, enforce retention/immutability with separation of duties, restrict access, and tune `auditAuthorizationSuccess` to balance coverage vs performance.",
+      "Url": "https://hub.prowler.com/check/projects_auditing_enabled"
+    }
+  },
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

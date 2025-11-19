@@ -1,22 +1,22 @@
 "use client";
 
 import {
-  Button,
   Dropdown,
   DropdownItem,
   DropdownMenu,
   DropdownSection,
   DropdownTrigger,
-} from "@nextui-org/react";
+} from "@heroui/dropdown";
 import {
   // DeleteDocumentBulkIcon,
   EditDocumentBulkIcon,
-} from "@nextui-org/shared-icons";
+} from "@heroui/shared-icons";
 import { Row } from "@tanstack/react-table";
 import { DownloadIcon } from "lucide-react";
 import { useState } from "react";
 
 import { VerticalDotsIcon } from "@/components/icons";
+import { Button } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
 import { CustomAlertModal } from "@/components/ui/custom";
 import { downloadScanZip } from "@/lib/helper";
@@ -26,8 +26,7 @@ import { EditScanForm } from "../../forms";
 interface DataTableRowActionsProps<ScanProps> {
   row: Row<ScanProps>;
 }
-const iconClasses =
-  "text-2xl text-default-500 pointer-events-none flex-shrink-0";
+const iconClasses = "text-2xl text-default-500 pointer-events-none shrink-0";
 
 export function DataTableRowActions<ScanProps>({
   row,
@@ -54,12 +53,12 @@ export function DataTableRowActions<ScanProps>({
 
       <div className="relative flex items-center justify-end gap-2">
         <Dropdown
-          className="shadow-xl dark:bg-prowler-blue-800"
+          className="border-border-neutral-secondary bg-bg-neutral-secondary border shadow-xl"
           placement="bottom"
         >
           <DropdownTrigger>
-            <Button isIconOnly radius="full" size="sm" variant="light">
-              <VerticalDotsIcon className="text-default-400" />
+            <Button variant="ghost" size="icon-sm" className="rounded-full">
+              <VerticalDotsIcon className="text-slate-400" />
             </Button>
           </DropdownTrigger>
           <DropdownMenu

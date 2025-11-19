@@ -202,6 +202,7 @@ class Provider(ABC):
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
+                        skip_api_check=arguments.skip_api_check,
                     )
                 elif "kubernetes" in provider_class_name.lower():
                     provider_class(
@@ -219,7 +220,6 @@ class Provider(ABC):
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         sp_env_auth=arguments.sp_env_auth,
-                        env_auth=arguments.env_auth,
                         az_cli_auth=arguments.az_cli_auth,
                         browser_auth=arguments.browser_auth,
                         certificate_auth=arguments.certificate_auth,
@@ -259,6 +259,32 @@ class Provider(ABC):
                         github_username=arguments.github_username,
                         personal_access_token=arguments.personal_access_token,
                         oauth_app_token=arguments.oauth_app_token,
+                    )
+                elif "llm" in provider_class_name.lower():
+                    provider_class(
+                        max_concurrency=arguments.max_concurrency,
+                        config_path=arguments.config_file,
+                        fixer_config=fixer_config,
+                    )
+                elif "mongodbatlas" in provider_class_name.lower():
+                    provider_class(
+                        atlas_public_key=arguments.atlas_public_key,
+                        atlas_private_key=arguments.atlas_private_key,
+                        atlas_project_id=arguments.atlas_project_id,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
+                elif "oraclecloud" in provider_class_name.lower():
+                    provider_class(
+                        oci_config_file=arguments.oci_config_file,
+                        profile=arguments.profile,
+                        region=arguments.region,
+                        compartment_ids=arguments.compartment_id,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                        use_instance_principal=arguments.use_instance_principal,
                     )
 
         except TypeError as error:

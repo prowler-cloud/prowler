@@ -1,14 +1,14 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { Dispatch, SetStateAction } from "react";
 import { useFormStatus } from "react-dom";
 
 import { SaveIcon } from "@/components/icons";
-
-import { CustomButton } from "../custom";
+import { Button } from "@/components/shadcn";
 
 interface FormCancelButtonProps {
-  setIsOpen: Dispatch<SetStateAction<boolean>>;
+  setIsOpen?: Dispatch<SetStateAction<boolean>>;
   onCancel?: () => void;
   children?: React.ReactNode;
   leftIcon?: React.ReactNode;
@@ -19,10 +19,11 @@ interface FormSubmitButtonProps {
   loadingText?: string;
   isDisabled?: boolean;
   rightIcon?: React.ReactNode;
+  color?: SubmitColorsType;
 }
 
 interface FormButtonsProps {
-  setIsOpen: Dispatch<SetStateAction<boolean>>;
+  setIsOpen?: Dispatch<SetStateAction<boolean>>;
   onCancel?: () => void;
   submitText?: string;
   cancelText?: string;
@@ -30,7 +31,15 @@ interface FormButtonsProps {
   isDisabled?: boolean;
   rightIcon?: React.ReactNode;
   leftIcon?: React.ReactNode;
+  submitColor?: SubmitColorsType;
 }
+
+export const SubmitColors = {
+  action: "action",
+  danger: "danger",
+} as const;
+
+export type SubmitColorsType = (typeof SubmitColors)[keyof typeof SubmitColors];
 
 const FormCancelButton = ({
   setIsOpen,
@@ -41,23 +50,16 @@ const FormCancelButton = ({
   const handleCancel = () => {
     if (onCancel) {
       onCancel();
-    } else {
+    } else if (setIsOpen) {
       setIsOpen(false);
     }
   };
 
   return (
-    <CustomButton
-      type="button"
-      ariaLabel="Cancel"
-      className="w-full bg-transparent"
-      variant="faded"
-      size="lg"
-      onPress={handleCancel}
-      startContent={leftIcon}
-    >
-      <span>{children}</span>
-    </CustomButton>
+    <Button type="button" variant="ghost" size="lg" onClick={handleCancel}>
+      {leftIcon}
+      {children}
+    </Button>
   );
 };
 
@@ -65,29 +67,28 @@ const FormSubmitButton = ({
   children = "Save",
   loadingText = "Loading",
   isDisabled = false,
+  color = "action",
   rightIcon,
 }: FormSubmitButtonProps) => {
   const { pending } = useFormStatus();
+  const submitVariant = color === "danger" ? "destructive" : "default";
 
   return (
-    <CustomButton
+    <Button
       type="submit"
-      ariaLabel="Save"
-      className="w-full"
-      variant="solid"
-      color="action"
+      variant={submitVariant}
       size="lg"
-      isLoading={pending}
-      isDisabled={isDisabled}
-      startContent={!pending && rightIcon}
+      disabled={isDisabled || pending}
     >
-      {pending ? <>{loadingText}</> : <span>{children}</span>}
-    </CustomButton>
+      {pending ? <Loader2 className="animate-spin" /> : rightIcon}
+      {pending ? loadingText : children}
+    </Button>
   );
 };
 
 export const FormButtons = ({
   setIsOpen,
+  submitColor,
   onCancel,
   submitText = "Save",
   cancelText = "Cancel",
@@ -97,7 +98,7 @@ export const FormButtons = ({
   leftIcon,
 }: FormButtonsProps) => {
   return (
-    <div className="flex w-full justify-center space-x-6">
+    <div className="flex w-full justify-end gap-4">
       <FormCancelButton
         setIsOpen={setIsOpen}
         onCancel={onCancel}
@@ -110,6 +111,7 @@ export const FormButtons = ({
         loadingText={loadingText}
         isDisabled={isDisabled}
         rightIcon={rightIcon}
+        color={submitColor}
       >
         {submitText}
       </FormSubmitButton>

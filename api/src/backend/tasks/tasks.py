@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from shutil import rmtree
@@ -7,7 +8,10 @@ from celery.utils.log import get_task_logger
 from config.celery import RLSTask
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE, DJANGO_TMP_OUTPUT_DIRECTORY
 from django_celery_beat.models import PeriodicTask
-from tasks.jobs.backfill import backfill_resource_scan_summaries
+from tasks.jobs.backfill import (
+    backfill_compliance_summaries,
+    backfill_resource_scan_summaries,
+)
 from tasks.jobs.connection import (
     check_integration_connection,
     check_lighthouse_connection,
@@ -22,9 +26,16 @@ from tasks.jobs.export import (
     _upload_to_s3,
 )
 from tasks.jobs.integrations import (
+    send_findings_to_jira,
     upload_s3_integration,
     upload_security_hub_integration,
 )
+from tasks.jobs.lighthouse_providers import (
+    check_lighthouse_provider_connection,
+    refresh_lighthouse_provider_models,
+)
+from tasks.jobs.muting import mute_historical_findings
+from tasks.jobs.report import generate_threatscore_report_job
 from tasks.jobs.scan import (
     aggregate_findings,
     create_compliance_requirements,
@@ -33,6 +44,7 @@ from tasks.jobs.scan import (
 from tasks.utils import batched, get_next_execution_datetime
 
 from api.compliance import get_compliance_frameworks
+from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import rls_transaction
 from api.decorators import set_tenant
 from api.models import Finding, Integration, Provider, Scan, ScanSummary, StateChoices
@@ -62,10 +74,15 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
         generate_outputs_task.si(
             scan_id=scan_id, provider_id=provider_id, tenant_id=tenant_id
         ),
-        check_integrations_task.si(
-            tenant_id=tenant_id,
-            provider_id=provider_id,
-            scan_id=scan_id,
+        group(
+            generate_threatscore_report_task.si(
+                tenant_id=tenant_id, scan_id=scan_id, provider_id=provider_id
+            ),
+            check_integrations_task.si(
+                tenant_id=tenant_id,
+                provider_id=provider_id,
+                scan_id=scan_id,
+            ),
         ),
     ).apply_async()
 
@@ -302,7 +319,7 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
 
     frameworks_bulk = Compliance.get_bulk(provider_type)
     frameworks_avail = get_compliance_frameworks(provider_type)
-    out_dir, comp_dir = _generate_output_directory(
+    out_dir, comp_dir, _ = _generate_output_directory(
         DJANGO_TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id
     )
 
@@ -342,70 +359,90 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
         .order_by("uid")
         .iterator()
     )
-    for batch, is_last in batched(qs, DJANGO_FINDINGS_BATCH_SIZE):
-        fos = [FindingOutput.transform_api_finding(f, prowler_provider) for f in batch]
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        for batch, is_last in batched(qs, DJANGO_FINDINGS_BATCH_SIZE):
+            fos = [
+                FindingOutput.transform_api_finding(f, prowler_provider) for f in batch
+            ]
 
-        # Outputs
-        for mode, cfg in OUTPUT_FORMATS_MAPPING.items():
-            # Skip ASFF generation if not needed
-            if mode == "json-asff" and not generate_asff:
-                continue
+            # Outputs
+            for mode, cfg in OUTPUT_FORMATS_MAPPING.items():
+                # Skip ASFF generation if not needed
+                if mode == "json-asff" and not generate_asff:
+                    continue
 
-            cls = cfg["class"]
-            suffix = cfg["suffix"]
-            extra = cfg.get("kwargs", {}).copy()
-            if mode == "html":
-                extra.update(provider=prowler_provider, stats=scan_summary)
+                cls = cfg["class"]
+                suffix = cfg["suffix"]
+                extra = cfg.get("kwargs", {}).copy()
+                if mode == "html":
+                    extra.update(provider=prowler_provider, stats=scan_summary)
 
-            writer, initialization = get_writer(
-                output_writers,
-                cls,
-                lambda cls=cls, fos=fos, suffix=suffix: cls(
-                    findings=fos,
-                    file_path=out_dir,
-                    file_extension=suffix,
-                    from_cli=False,
-                ),
-                is_last,
-            )
-            if not initialization:
-                writer.transform(fos)
-            writer.batch_write_data_to_file(**extra)
-            writer._data.clear()
+                writer, initialization = get_writer(
+                    output_writers,
+                    cls,
+                    lambda cls=cls, fos=fos, suffix=suffix: cls(
+                        findings=fos,
+                        file_path=out_dir,
+                        file_extension=suffix,
+                        from_cli=False,
+                    ),
+                    is_last,
+                )
+                if not initialization:
+                    writer.transform(fos)
+                writer.batch_write_data_to_file(**extra)
+                writer._data.clear()
 
-        # Compliance CSVs
-        for name in frameworks_avail:
-            compliance_obj = frameworks_bulk[name]
+            # Compliance CSVs
+            for name in frameworks_avail:
+                compliance_obj = frameworks_bulk[name]
 
-            klass = GenericCompliance
-            for condition, cls in COMPLIANCE_CLASS_MAP.get(provider_type, []):
-                if condition(name):
-                    klass = cls
-                    break
+                klass = GenericCompliance
+                for condition, cls in COMPLIANCE_CLASS_MAP.get(provider_type, []):
+                    if condition(name):
+                        klass = cls
+                        break
 
-            filename = f"{comp_dir}_{name}.csv"
+                filename = f"{comp_dir}_{name}.csv"
 
-            writer, initialization = get_writer(
-                compliance_writers,
-                name,
-                lambda klass=klass, fos=fos: klass(
-                    findings=fos,
-                    compliance=compliance_obj,
-                    file_path=filename,
-                    from_cli=False,
-                ),
-                is_last,
-            )
-            if not initialization:
-                writer.transform(fos, compliance_obj, name)
-            writer.batch_write_data_to_file()
-            writer._data.clear()
+                writer, initialization = get_writer(
+                    compliance_writers,
+                    name,
+                    lambda klass=klass, fos=fos: klass(
+                        findings=fos,
+                        compliance=compliance_obj,
+                        file_path=filename,
+                        from_cli=False,
+                    ),
+                    is_last,
+                )
+                if not initialization:
+                    writer.transform(fos, compliance_obj, name)
+                writer.batch_write_data_to_file()
+                writer._data.clear()
 
     compressed = _compress_output_files(out_dir)
-    upload_uri = _upload_to_s3(tenant_id, compressed, scan_id)
+
+    upload_uri = _upload_to_s3(
+        tenant_id,
+        scan_id,
+        compressed,
+        os.path.basename(compressed),
+    )
+
+    compliance_dir_path = Path(comp_dir).parent
+    if compliance_dir_path.exists():
+        for artifact_path in sorted(compliance_dir_path.iterdir()):
+            if artifact_path.is_file():
+                _upload_to_s3(
+                    tenant_id,
+                    scan_id,
+                    str(artifact_path),
+                    f"compliance/{artifact_path.name}",
+                )
 
     # S3 integrations (need output_directory)
-    with rls_transaction(tenant_id):
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
         s3_integrations = Integration.objects.filter(
             integrationproviderrelationship__provider_id=provider_id,
             integration_type=Integration.IntegrationChoices.AMAZON_S3,
@@ -460,7 +497,22 @@ def backfill_scan_resource_summaries_task(tenant_id: str, scan_id: str):
     return backfill_resource_scan_summaries(tenant_id=tenant_id, scan_id=scan_id)
 
 
-@shared_task(base=RLSTask, name="scan-compliance-overviews", queue="overview")
+@shared_task(name="backfill-compliance-summaries", queue="backfill")
+def backfill_compliance_summaries_task(tenant_id: str, scan_id: str):
+    """
+    Tries to backfill compliance overview summaries for a completed scan.
+
+    This task aggregates compliance requirement data across regions
+    to create pre-computed summary records for fast compliance overview queries.
+
+    Args:
+        tenant_id (str): The tenant identifier.
+        scan_id (str): The scan identifier.
+    """
+    return backfill_compliance_summaries(tenant_id=tenant_id, scan_id=scan_id)
+
+
+@shared_task(base=RLSTask, name="scan-compliance-overviews", queue="compliance")
 def create_compliance_requirements_task(tenant_id: str, scan_id: str):
     """
     Creates detailed compliance requirement records for a scan.
@@ -493,6 +545,24 @@ def check_lighthouse_connection_task(lighthouse_config_id: str, tenant_id: str =
             - 'available_models' (list): List of available models if connection is successful.
     """
     return check_lighthouse_connection(lighthouse_config_id=lighthouse_config_id)
+
+
+@shared_task(base=RLSTask, name="lighthouse-provider-connection-check")
+@set_tenant
+def check_lighthouse_provider_connection_task(
+    provider_config_id: str, tenant_id: str | None = None
+) -> dict:
+    """Task wrapper to validate provider credentials and set is_active."""
+    return check_lighthouse_provider_connection(provider_config_id=provider_config_id)
+
+
+@shared_task(base=RLSTask, name="lighthouse-provider-models-refresh")
+@set_tenant
+def refresh_lighthouse_provider_models_task(
+    provider_config_id: str, tenant_id: str | None = None
+) -> dict:
+    """Task wrapper to refresh provider models catalog for the given configuration."""
+    return refresh_lighthouse_provider_models(provider_config_id=provider_config_id)
 
 
 @shared_task(name="integration-check")
@@ -595,3 +665,60 @@ def security_hub_integration_task(
         scan_id (str): The scan identifier
     """
     return upload_security_hub_integration(tenant_id, provider_id, scan_id)
+
+
+@shared_task(
+    base=RLSTask,
+    name="integration-jira",
+    queue="integrations",
+)
+def jira_integration_task(
+    tenant_id: str,
+    integration_id: str,
+    project_key: str,
+    issue_type: str,
+    finding_ids: list[str],
+):
+    return send_findings_to_jira(
+        tenant_id, integration_id, project_key, issue_type, finding_ids
+    )
+
+
+@shared_task(
+    base=RLSTask,
+    name="scan-threatscore-report",
+    queue="scan-reports",
+)
+def generate_threatscore_report_task(tenant_id: str, scan_id: str, provider_id: str):
+    """
+    Task to generate a threatscore report for a given scan.
+    Args:
+        tenant_id (str): The tenant identifier.
+        scan_id (str): The scan identifier.
+        provider_id (str): The provider identifier.
+    """
+    return generate_threatscore_report_job(
+        tenant_id=tenant_id, scan_id=scan_id, provider_id=provider_id
+    )
+
+
+@shared_task(name="findings-mute-historical")
+def mute_historical_findings_task(tenant_id: str, mute_rule_id: str):
+    """
+    Background task to mute all historical findings matching a mute rule.
+
+    This task processes findings in batches to avoid memory issues with large datasets.
+    It updates the Finding.muted, Finding.muted_at, and Finding.muted_reason fields
+    for all findings whose UID is in the mute rule's finding_uids list.
+
+    Args:
+        tenant_id (str): The tenant ID for RLS context.
+        mute_rule_id (str): The primary key of the MuteRule to apply.
+
+    Returns:
+        dict: A dictionary containing:
+            - 'findings_muted' (int): Total number of findings muted.
+            - 'rule_id' (str): The mute rule ID.
+            - 'status' (str): Final status ('completed').
+    """
+    return mute_historical_findings(tenant_id, mute_rule_id)

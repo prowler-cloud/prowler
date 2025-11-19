@@ -1,7 +1,10 @@
 import { Page, expect } from "@playwright/test";
+import { SignInPage, SignInCredentials } from "./sign-in/sign-in-page";
 
 export const ERROR_MESSAGES = {
   INVALID_CREDENTIALS: "Invalid email or password",
+  INVALID_EMAIL: "Please enter a valid email address.",
+  PASSWORD_REQUIRED: "Password is required.",
 } as const;
 
 export const URLS = {
@@ -69,7 +72,8 @@ export async function verifyLoginError(
   page: Page,
   errorMessage = "Invalid email or password",
 ) {
-  await expect(page.getByText(errorMessage)).toBeVisible();
+  // There may be multiple field-level errors with the same text; assert at least one is visible
+  await expect(page.getByText(errorMessage).first()).toBeVisible();
   await expect(page).toHaveURL("/sign-in");
 }
 
@@ -93,11 +97,13 @@ export async function verifyNormalModeActive(page: Page) {
 }
 
 export async function logout(page: Page) {
-  await page.getByRole("button", { name: "Sign out" }).click();
+  const navbar = page.locator("header");
+  await navbar.waitFor({ state: "visible" });
+  await navbar.getByRole("button", { name: "Sign out" }).click();
 }
 
 export async function verifyLogoutSuccess(page: Page) {
-  await expect(page).toHaveURL("/sign-in");
+  await expect(page).toHaveURL(/\/sign-in/);
   await expect(page.getByText("Sign in", { exact: true })).toBeVisible();
 }
 
@@ -133,4 +139,55 @@ export async function waitForPageLoad(page: Page) {
 
 export async function verifyDashboardRoute(page: Page) {
   await expect(page).toHaveURL("/");
+}
+
+export async function authenticateAndSaveState(
+  page: Page,
+  email: string,
+  password: string,
+  storagePath: string,
+) {
+  if (!email || !password) {
+    throw new Error(
+      "Email and password are required for authentication and save state",
+    );
+  }
+
+  // Create SignInPage instance
+  const signInPage = new SignInPage(page);
+  const credentials: SignInCredentials = { email, password };
+
+  // Perform authentication steps using Page Object Model
+  await signInPage.goto();
+  await signInPage.login(credentials);
+  await signInPage.verifySuccessfulLogin();
+
+  // Save authentication state
+  await page.context().storageState({ path: storagePath });
+}
+
+/**
+ * Generate a random base36 suffix of specified length
+ * Used for creating unique test data to avoid conflicts
+ */
+export function makeSuffix(len: number): string {
+  let s = "";
+  while (s.length < len) {
+    s += Math.random().toString(36).slice(2);
+  }
+  return s.slice(0, len);
+}
+
+export async function getSession(page: Page) {
+  const response = await page.request.get("/api/auth/session");
+  return response.json();
+}
+
+export async function verifySessionValid(page: Page) {
+  const session = await getSession(page);
+  expect(session).toBeTruthy();
+  expect(session.user).toBeTruthy();
+  expect(session.accessToken).toBeTruthy();
+  expect(session.refreshToken).toBeTruthy();
+  return session;
 }

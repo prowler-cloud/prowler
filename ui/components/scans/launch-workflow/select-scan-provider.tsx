@@ -1,8 +1,14 @@
 "use client";
 
-import { Select, SelectItem } from "@nextui-org/react";
 import { Control, FieldPath, FieldValues } from "react-hook-form";
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/shadcn";
 import { EntityInfoShort } from "@/components/ui/entities";
 import { FormControl, FormField, FormMessage } from "@/components/ui/form";
 
@@ -33,77 +39,62 @@ export const SelectScanProvider = <
     <FormField
       control={control}
       name={name}
-      render={({ field }) => (
-        <>
-          <FormControl>
-            <Select
-              aria-label="Select a cloud provider"
-              placeholder="Choose a cloud provider"
-              labelPlacement="outside"
-              classNames={{
-                selectorIcon: "right-2",
-                label:
-                  "tracking-tight font-light !text-default-700 text-xs !z-0",
-                value: "text-default-500 text-small",
-              }}
-              label="Select a cloud provider to launch a scan"
-              size="lg"
-              selectedKeys={field.value ? new Set([field.value]) : new Set()}
-              onSelectionChange={(keys) => {
-                const selectedValue = Array.from(keys)[0]?.toString();
-                field.onChange(selectedValue);
-              }}
-              renderValue={() => {
-                const selectedItem = providers.find(
-                  (item) => item.providerId === field.value,
-                );
-                return selectedItem ? (
-                  <div className="flex items-center gap-2">
-                    <EntityInfoShort
-                      cloudProvider={
-                        selectedItem.providerType as
-                          | "aws"
-                          | "azure"
-                          | "gcp"
-                          | "kubernetes"
-                      }
-                      entityAlias={selectedItem.alias}
-                      entityId={selectedItem.uid}
-                      hideCopyButton
-                    />
-                  </div>
-                ) : (
-                  "Choose a cloud provider"
-                );
-              }}
-            >
-              {providers.map((item) => (
-                <SelectItem
-                  key={item.providerId}
-                  textValue={`${item.providerType} - ${item.alias || ""} ${item.uid}`}
-                  aria-label={`${item.providerType} provider ${item.alias}`}
-                >
-                  <div className="flex items-center gap-2">
-                    <EntityInfoShort
-                      cloudProvider={
-                        item.providerType as
-                          | "aws"
-                          | "azure"
-                          | "gcp"
-                          | "kubernetes"
-                      }
-                      entityAlias={item.alias}
-                      entityId={item.uid}
-                      hideCopyButton
-                    />
-                  </div>
-                </SelectItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormMessage className="text-system-error dark:text-system-error" />
-        </>
-      )}
+      render={({ field }) => {
+        const selectedItem = providers.find(
+          (item) => item.providerId === field.value,
+        );
+
+        return (
+          <div className="flex flex-col gap-2">
+            <span className="text-text-neutral-primary text-sm font-medium">
+              Select a cloud provider to launch a scan
+            </span>
+            <FormControl>
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a cloud provider">
+                    {selectedItem ? (
+                      <EntityInfoShort
+                        cloudProvider={
+                          selectedItem.providerType as
+                            | "aws"
+                            | "azure"
+                            | "gcp"
+                            | "kubernetes"
+                        }
+                        entityAlias={selectedItem.alias}
+                        entityId={selectedItem.uid}
+                        hideCopyButton
+                      />
+                    ) : (
+                      "Choose a cloud provider"
+                    )}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {providers.map((item) => (
+                    <SelectItem key={item.providerId} value={item.providerId}>
+                      <EntityInfoShort
+                        cloudProvider={
+                          item.providerType as
+                            | "aws"
+                            | "azure"
+                            | "gcp"
+                            | "kubernetes"
+                        }
+                        entityAlias={item.alias}
+                        entityId={item.uid}
+                        hideCopyButton
+                      />
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormControl>
+            <FormMessage className="text-sm text-red-600 dark:text-red-400" />
+          </div>
+        );
+      }}
     />
   );
 };

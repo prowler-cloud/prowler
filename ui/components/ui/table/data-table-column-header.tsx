@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@nextui-org/react";
 import { Column } from "@tanstack/react-table";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { HTMLAttributes } from "react";
@@ -10,6 +9,7 @@ import {
   ArrowUpIcon,
   ChevronsLeftRightIcon,
 } from "@/components/icons";
+import { Button } from "@/components/shadcn";
 
 interface DataTableColumnHeaderProps<TData, TValue>
   extends HTMLAttributes<HTMLDivElement> {
@@ -80,10 +80,12 @@ export const DataTableColumnHeader = <TData, TValue>({
 
   return (
     <Button
-      className="flex h-10 w-full items-center justify-between whitespace-nowrap bg-transparent px-0 text-left align-middle text-tiny font-semibold text-foreground-500 outline-none dark:text-slate-400"
-      onPress={getToggleSortingHandler}
+      variant="ghost"
+      size="sm"
+      className="flex h-10 w-full items-center justify-between px-0 text-left align-middle text-sm font-semibold whitespace-nowrap text-slate-500 dark:text-slate-400"
+      onClick={getToggleSortingHandler}
     >
-      <span className="block whitespace-nowrap break-normal">{title}</span>
+      <span className="block break-normal whitespace-nowrap">{title}</span>
       {renderSortIcon()}
     </Button>
   );

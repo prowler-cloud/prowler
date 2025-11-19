@@ -1,17 +1,35 @@
 "use client";
 
-import { Snippet } from "@nextui-org/react";
+import { Snippet } from "@heroui/snippet";
+import { Tooltip } from "@heroui/tooltip";
+import { ExternalLink, Link } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/shadcn";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
-import { CustomSection } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { EntityInfoShort, InfoField } from "@/components/ui/entities";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import { SeverityBadge } from "@/components/ui/table/severity-badge";
+import { buildGitFileUrl, extractLineRangeFromUid } from "@/lib/iac-utils";
 import { FindingProps, ProviderType } from "@/types";
 
 import { Muted } from "../muted";
 import { DeltaIndicator } from "./delta-indicator";
+
+const MarkdownContainer = ({ children }: { children: string }) => {
+  return (
+    <div className="prose prose-sm dark:prose-invert max-w-none break-words whitespace-normal">
+      <ReactMarkdown>{children}</ReactMarkdown>
+    </div>
+  );
+};
 
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";
@@ -42,14 +60,37 @@ export const FindingDetail = ({
   const resource = finding.relationships.resource.attributes;
   const scan = finding.relationships.scan.attributes;
   const providerDetails = finding.relationships.provider.attributes;
+  const currentUrl = new URL(window.location.href);
+  const params = new URLSearchParams(currentUrl.search);
+  params.set("id", findingDetails.id);
+  const url = `${window.location.origin}${currentUrl.pathname}?${params.toString()}`;
+
+  // Build Git URL for IaC findings
+  const gitUrl =
+    providerDetails.provider === "iac"
+      ? buildGitFileUrl(
+          providerDetails.uid,
+          resource.name,
+          extractLineRangeFromUid(attributes.uid) || "",
+        )
+      : null;
 
   return (
     <div className="flex flex-col gap-6 rounded-lg">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="line-clamp-2 text-lg font-medium leading-tight text-gray-800 dark:text-prowler-theme-pale/90">
+          <h2 className="dark:text-prowler-theme-pale/90 line-clamp-2 flex items-center gap-2 text-lg leading-tight font-medium text-gray-800">
             {renderValue(attributes.check_metadata.checktitle)}
+            <Tooltip content="Copy finding link to clipboard" size="sm">
+              <button
+                onClick={() => navigator.clipboard.writeText(url)}
+                className="text-bg-data-info inline-flex cursor-pointer transition-opacity hover:opacity-80"
+                aria-label="Copy finding link to clipboard"
+              >
+                <Link size={16} />
+              </button>
+            </Tooltip>
           </h2>
         </div>
         <div className="flex items-center gap-x-4">
@@ -57,230 +98,283 @@ export const FindingDetail = ({
             isMuted={attributes.muted}
             mutedReason={attributes.muted_reason || ""}
           />
+        </div>
+      </div>
 
+      {/* Check Metadata */}
+      <Card variant="base" padding="lg">
+        <CardHeader className="flex items-center justify-between">
+          <CardTitle>Finding Details</CardTitle>
           <div
             className={`rounded-lg px-3 py-1 text-sm font-semibold ${
               attributes.status === "PASS"
                 ? "bg-green-100 text-green-600"
                 : attributes.status === "MANUAL"
                   ? "bg-gray-100 text-gray-600"
-                  : "bg-red-100 text-system-severity-critical"
+                  : "text-system-severity-critical bg-red-100"
             }`}
           >
             {renderValue(attributes.status)}
           </div>
-        </div>
-      </div>
-
-      {/* Check Metadata */}
-      <CustomSection title="Finding Details">
-        <div className="flex flex-wrap gap-4">
-          <EntityInfoShort
-            cloudProvider={providerDetails.provider as ProviderType}
-            entityAlias={providerDetails.alias}
-            entityId={providerDetails.uid}
-            showConnectionStatus={providerDetails.connection.connected}
-          />
-          <InfoField label="Service">
-            {attributes.check_metadata.servicename}
-          </InfoField>
-          <InfoField label="Region">{resource.region}</InfoField>
-          <InfoField label="First Seen">
-            <DateWithTime inline dateTime={attributes.first_seen_at || "-"} />
-          </InfoField>
-          {attributes.delta && (
-            <InfoField
-              label="Delta"
-              tooltipContent="Indicates whether the finding is new (NEW), has changed status (CHANGED), or remains unchanged (NONE) compared to previous scans."
-              className="capitalize"
-            >
-              <div className="flex items-center gap-2">
-                <DeltaIndicator delta={attributes.delta} />
-                {attributes.delta}
-              </div>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <div className="flex flex-wrap gap-4">
+            <EntityInfoShort
+              cloudProvider={providerDetails.provider as ProviderType}
+              entityAlias={providerDetails.alias}
+              entityId={providerDetails.uid}
+              showConnectionStatus={providerDetails.connection.connected}
+            />
+            <InfoField label="Service">
+              {attributes.check_metadata.servicename}
             </InfoField>
-          )}
-          <InfoField label="Severity" variant="simple">
-            <SeverityBadge severity={attributes.severity || "-"} />
-          </InfoField>
-        </div>
-        <InfoField label="Finding ID" variant="simple">
-          <CodeSnippet value={findingDetails.id} />
-        </InfoField>
-        <InfoField label="Check ID" variant="simple">
-          <CodeSnippet value={attributes.check_id} />
-        </InfoField>
-        <InfoField label="Finding UID" variant="simple">
-          <CodeSnippet value={attributes.uid} />
-        </InfoField>
-
-        {attributes.status === "FAIL" && (
-          <InfoField label="Risk" variant="simple">
-            <Snippet
-              className="max-w-full py-2"
-              color="danger"
-              hideCopyButton
-              hideSymbol
-            >
-              <p className="whitespace-pre-line">
-                {attributes.check_metadata.risk}
-              </p>
-            </Snippet>
-          </InfoField>
-        )}
-
-        <InfoField label="Description">
-          {renderValue(attributes.check_metadata.description)}
-        </InfoField>
-
-        <InfoField label="Status Extended">
-          {renderValue(attributes.status_extended)}
-        </InfoField>
-
-        {attributes.check_metadata.remediation && (
-          <div className="flex flex-col gap-4">
-            <h4 className="text-sm font-bold text-gray-700 dark:text-prowler-theme-pale/90">
-              Remediation Details
-            </h4>
-
-            {/* Recommendation section */}
-            {attributes.check_metadata.remediation.recommendation.text && (
-              <InfoField label="Recommendation">
-                <div className="flex flex-col gap-2">
-                  <p>
-                    {attributes.check_metadata.remediation.recommendation.text}
-                  </p>
-                  {attributes.check_metadata.remediation.recommendation.url && (
-                    <CustomLink
-                      href={
-                        attributes.check_metadata.remediation.recommendation.url
-                      }
-                      size="sm"
-                    >
-                      Learn more
-                    </CustomLink>
-                  )}
+            <InfoField label="Region">{resource.region}</InfoField>
+            <InfoField label="First Seen">
+              <DateWithTime inline dateTime={attributes.first_seen_at || "-"} />
+            </InfoField>
+            {attributes.delta && (
+              <InfoField
+                label="Delta"
+                tooltipContent="Indicates whether the finding is new (NEW), has changed status (CHANGED), or remains unchanged (NONE) compared to previous scans."
+                className="capitalize"
+              >
+                <div className="flex items-center gap-2">
+                  <DeltaIndicator delta={attributes.delta} />
+                  {attributes.delta}
                 </div>
               </InfoField>
             )}
-
-            {/* CLI Command section */}
-            {attributes.check_metadata.remediation.code.cli && (
-              <InfoField label="CLI Command" variant="simple">
-                <Snippet className="bg-gray-50 py-1 dark:bg-slate-800">
-                  <span className="whitespace-pre-line text-xs">
-                    {attributes.check_metadata.remediation.code.cli}
-                  </span>
-                </Snippet>
-              </InfoField>
-            )}
-
-            {/* Additional Resources section */}
-            {attributes.check_metadata.remediation.code.other && (
-              <InfoField label="Additional Resources">
-                <CustomLink
-                  href={attributes.check_metadata.remediation.code.other}
-                  size="sm"
-                >
-                  View documentation
-                </CustomLink>
-              </InfoField>
-            )}
+            <InfoField label="Severity" variant="simple">
+              <SeverityBadge severity={attributes.severity || "-"} />
+            </InfoField>
           </div>
-        )}
-
-        <InfoField label="Categories">
-          {attributes.check_metadata.categories?.join(", ") || "-"}
-        </InfoField>
-      </CustomSection>
-
-      {/* Resource Details */}
-      <CustomSection title="Resource Details">
-        <InfoField label="Resource ID" variant="simple">
-          <Snippet className="bg-gray-50 py-1 dark:bg-slate-800" hideSymbol>
-            <span className="whitespace-pre-line text-xs">
-              {renderValue(resource.uid)}
-            </span>
-          </Snippet>
-        </InfoField>
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <InfoField label="Resource Name">
-            {renderValue(resource.name)}
+          <InfoField label="Finding ID" variant="simple">
+            <CodeSnippet value={findingDetails.id} />
           </InfoField>
-          <InfoField label="Resource Type">
-            {renderValue(resource.type)}
+          <InfoField label="Check ID" variant="simple">
+            <CodeSnippet value={attributes.check_id} />
           </InfoField>
-        </div>
+          <InfoField label="Finding UID" variant="simple">
+            <CodeSnippet value={attributes.uid} />
+          </InfoField>
+          <InfoField label="Resource ID" variant="simple">
+            <CodeSnippet value={resource.uid} />
+          </InfoField>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <InfoField label="Service">{renderValue(resource.service)}</InfoField>
-          <InfoField label="Region">{renderValue(resource.region)}</InfoField>
-        </div>
-
-        {resource.tags && Object.entries(resource.tags).length > 0 && (
-          <div className="flex flex-col gap-4">
-            <h4 className="text-sm font-bold text-gray-500 dark:text-gray-400">
-              Tags
-            </h4>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {Object.entries(resource.tags).map(([key, value]) => (
-                <InfoField key={key} label={key}>
-                  {renderValue(value)}
-                </InfoField>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <InfoField label="Created At">
-            <DateWithTime inline dateTime={resource.inserted_at || "-"} />
-          </InfoField>
-          <InfoField label="Last Updated">
-            <DateWithTime inline dateTime={resource.updated_at || "-"} />
-          </InfoField>
-        </div>
-      </CustomSection>
-
-      {/* Add new Scan Details section */}
-      <CustomSection title="Scan Details">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <InfoField label="Scan Name">{scan.name || "N/A"}</InfoField>
-          <InfoField label="Resources Scanned">
-            {scan.unique_resource_count}
-          </InfoField>
-          <InfoField label="Progress">{scan.progress}%</InfoField>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <InfoField label="Trigger">{scan.trigger}</InfoField>
-          <InfoField label="State">{scan.state}</InfoField>
-          <InfoField label="Duration">
-            {formatDuration(scan.duration)}
-          </InfoField>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <InfoField label="Started At">
-            <DateWithTime inline dateTime={scan.started_at || "-"} />
-          </InfoField>
-          <InfoField label="Completed At">
-            <DateWithTime inline dateTime={scan.completed_at || "-"} />
-          </InfoField>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <InfoField label="Launched At">
-            <DateWithTime inline dateTime={scan.inserted_at || "-"} />
-          </InfoField>
-          {scan.scheduled_at && (
-            <InfoField label="Scheduled At">
-              <DateWithTime inline dateTime={scan.scheduled_at} />
+          {attributes.status === "FAIL" && (
+            <InfoField label="Risk" variant="simple">
+              <Snippet
+                className="max-w-full py-2"
+                color="danger"
+                hideCopyButton
+                hideSymbol
+              >
+                <MarkdownContainer>
+                  {attributes.check_metadata.risk}
+                </MarkdownContainer>
+              </Snippet>
             </InfoField>
           )}
-        </div>
-      </CustomSection>
+
+          <InfoField label="Description">
+            <MarkdownContainer>
+              {attributes.check_metadata.description}
+            </MarkdownContainer>
+          </InfoField>
+
+          <InfoField label="Status Extended">
+            {renderValue(attributes.status_extended)}
+          </InfoField>
+
+          {attributes.check_metadata.remediation && (
+            <div className="flex flex-col gap-4">
+              <h4 className="dark:text-prowler-theme-pale/90 text-sm font-bold text-gray-700">
+                Remediation Details
+              </h4>
+
+              {/* Recommendation section */}
+              {attributes.check_metadata.remediation.recommendation.text && (
+                <InfoField label="Recommendation">
+                  <div className="flex flex-col gap-2">
+                    <MarkdownContainer>
+                      {
+                        attributes.check_metadata.remediation.recommendation
+                          .text
+                      }
+                    </MarkdownContainer>
+
+                    {attributes.check_metadata.remediation.recommendation
+                      .url && (
+                      <CustomLink
+                        href={
+                          attributes.check_metadata.remediation.recommendation
+                            .url
+                        }
+                        size="sm"
+                      >
+                        Learn more
+                      </CustomLink>
+                    )}
+                  </div>
+                </InfoField>
+              )}
+
+              {/* CLI Command section */}
+              {attributes.check_metadata.remediation.code.cli && (
+                <InfoField label="CLI Command" variant="simple">
+                  <Snippet className="bg-gray-50 py-1 dark:bg-slate-800">
+                    <span className="text-xs whitespace-pre-line">
+                      {attributes.check_metadata.remediation.code.cli}
+                    </span>
+                  </Snippet>
+                </InfoField>
+              )}
+
+              {/* Remediation Steps section */}
+              {attributes.check_metadata.remediation.code.other && (
+                <InfoField label="Remediation Steps">
+                  <MarkdownContainer>
+                    {attributes.check_metadata.remediation.code.other}
+                  </MarkdownContainer>
+                </InfoField>
+              )}
+
+              {/* Additional URLs section */}
+              {attributes.check_metadata.additionalurls &&
+                attributes.check_metadata.additionalurls.length > 0 && (
+                  <InfoField label="References">
+                    <ul className="list-inside list-disc space-y-1">
+                      {attributes.check_metadata.additionalurls.map(
+                        (link, idx) => (
+                          <li key={idx}>
+                            <CustomLink
+                              href={link}
+                              size="sm"
+                              className="break-all whitespace-normal!"
+                            >
+                              {link}
+                            </CustomLink>
+                          </li>
+                        ),
+                      )}
+                    </ul>
+                  </InfoField>
+                )}
+            </div>
+          )}
+
+          <InfoField label="Categories">
+            {attributes.check_metadata.categories?.join(", ") || "-"}
+          </InfoField>
+        </CardContent>
+      </Card>
+
+      {/* Resource Details */}
+      <Card variant="base" padding="lg">
+        <CardHeader>
+          <CardTitle>Resource Details</CardTitle>
+          {providerDetails.provider === "iac" && gitUrl && (
+            <CardAction>
+              <Tooltip content="Go to Resource in the Repository" size="sm">
+                <a
+                  href={gitUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-bg-data-info inline-flex cursor-pointer"
+                  aria-label="Open resource in repository"
+                >
+                  <ExternalLink size={16} className="inline" />
+                </a>
+              </Tooltip>
+            </CardAction>
+          )}
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <InfoField label="Resource Name">
+              {renderValue(resource.name)}
+            </InfoField>
+            <InfoField label="Resource Type">
+              {renderValue(resource.type)}
+            </InfoField>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <InfoField label="Service">
+              {renderValue(resource.service)}
+            </InfoField>
+            <InfoField label="Region">{renderValue(resource.region)}</InfoField>
+          </div>
+
+          {resource.tags && Object.entries(resource.tags).length > 0 && (
+            <div className="flex flex-col gap-4">
+              <h4 className="text-sm font-bold text-gray-500 dark:text-gray-400">
+                Tags
+              </h4>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {Object.entries(resource.tags).map(([key, value]) => (
+                  <InfoField key={key} label={key}>
+                    {renderValue(value)}
+                  </InfoField>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <InfoField label="Created At">
+              <DateWithTime inline dateTime={resource.inserted_at || "-"} />
+            </InfoField>
+            <InfoField label="Last Updated">
+              <DateWithTime inline dateTime={resource.updated_at || "-"} />
+            </InfoField>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Add new Scan Details section */}
+      <Card variant="base" padding="lg">
+        <CardHeader>
+          <CardTitle>Scan Details</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <InfoField label="Scan Name">{scan.name || "N/A"}</InfoField>
+            <InfoField label="Resources Scanned">
+              {scan.unique_resource_count}
+            </InfoField>
+            <InfoField label="Progress">{scan.progress}%</InfoField>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <InfoField label="Trigger">{scan.trigger}</InfoField>
+            <InfoField label="State">{scan.state}</InfoField>
+            <InfoField label="Duration">
+              {formatDuration(scan.duration)}
+            </InfoField>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <InfoField label="Started At">
+              <DateWithTime inline dateTime={scan.started_at || "-"} />
+            </InfoField>
+            <InfoField label="Completed At">
+              <DateWithTime inline dateTime={scan.completed_at || "-"} />
+            </InfoField>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <InfoField label="Launched At">
+              <DateWithTime inline dateTime={scan.inserted_at || "-"} />
+            </InfoField>
+            {scan.scheduled_at && (
+              <InfoField label="Scheduled At">
+                <DateWithTime inline dateTime={scan.scheduled_at} />
+              </InfoField>
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

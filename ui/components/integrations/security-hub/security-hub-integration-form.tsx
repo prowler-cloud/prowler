@@ -1,7 +1,9 @@
 "use client";
 
+import { Checkbox } from "@heroui/checkbox";
+import { Divider } from "@heroui/divider";
+import { Radio, RadioGroup } from "@heroui/radio";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Checkbox, Divider, Radio, RadioGroup } from "@nextui-org/react";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useEffect, useMemo, useState } from "react";
@@ -79,10 +81,13 @@ export const SecurityHubIntegrationForm = ({
       integration_type: "aws_security_hub" as const,
       provider_id: integration?.relationships?.providers?.data?.[0]?.id || "",
       send_only_fails:
-        integration?.attributes.configuration.send_only_fails ?? true,
+        (integration?.attributes.configuration.send_only_fails as
+          | boolean
+          | undefined) ?? true,
       archive_previous_findings:
-        integration?.attributes.configuration.archive_previous_findings ??
-        false,
+        (integration?.attributes.configuration.archive_previous_findings as
+          | boolean
+          | undefined) ?? false,
       use_custom_credentials: false,
       enabled: integration?.attributes.enabled ?? true,
       credentials_type: "access-secret-key" as const,
@@ -250,7 +255,7 @@ export const SecurityHubIntegrationForm = ({
     if (isEditingCredentials) {
       // When editing credentials, show the credential type selector first
       return (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
           <RadioGroup
             size="sm"
             aria-label="Credential type"
@@ -285,6 +290,7 @@ export const SecurityHubIntegrationForm = ({
                   "aws_security_hub",
                 )}
                 type="integrations"
+                integrationType="aws_security_hub"
               />
             </>
           )}
@@ -308,6 +314,7 @@ export const SecurityHubIntegrationForm = ({
           externalId={externalId}
           templateLinks={templateLinks}
           type="integrations"
+          integrationType="aws_security_hub"
         />
       );
     }
@@ -317,7 +324,7 @@ export const SecurityHubIntegrationForm = ({
         <>
           {!isEditingConfig && (
             <>
-              <div className="space-y-4">
+              <div className="flex flex-col gap-4">
                 <EnhancedProviderSelector
                   control={form.control}
                   name="provider_id"
@@ -342,11 +349,14 @@ export const SecurityHubIntegrationForm = ({
               render={({ field }) => (
                 <FormControl>
                   <Checkbox
-                    isSelected={field.value}
+                    isSelected={Boolean(field.value)}
                     onValueChange={field.onChange}
                     size="sm"
+                    color="default"
                   >
-                    <span className="text-sm">Send only Failed Findings</span>
+                    <span className="text-sm">
+                      Send only findings with status FAIL
+                    </span>
                   </Checkbox>
                 </FormControl>
               )}
@@ -358,9 +368,10 @@ export const SecurityHubIntegrationForm = ({
               render={({ field }) => (
                 <FormControl>
                   <Checkbox
-                    isSelected={field.value}
+                    isSelected={Boolean(field.value)}
                     onValueChange={field.onChange}
                     size="sm"
+                    color="default"
                   >
                     <span className="text-sm">Archive previous findings</span>
                   </Checkbox>
@@ -378,8 +389,12 @@ export const SecurityHubIntegrationForm = ({
                       isSelected={field.value}
                       onValueChange={field.onChange}
                       size="sm"
+                      color="default"
                     >
-                      <span className="text-sm">Use custom credentials</span>
+                      <span className="text-sm">
+                        Use custom credentials (By default, AWS account ones
+                        will be used)
+                      </span>
                     </Checkbox>
                   </FormControl>
                 )}
@@ -466,15 +481,15 @@ export const SecurityHubIntegrationForm = ({
               ? handleNext
               : form.handleSubmit(onSubmit)
         }
-        className="flex flex-col space-y-6"
+        className="flex flex-col gap-6"
       >
-        <div className="flex flex-col space-y-4">
+        <div className="flex flex-col gap-4">
           <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
-            <p className="flex items-center gap-2 text-sm text-default-500">
+            <p className="text-default-500 flex items-center gap-2 text-sm">
               Need help configuring your AWS Security Hub integration?
             </p>
             <CustomLink
-              href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/security-hub/"
+              href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-security-hub-integration/"
               target="_blank"
               size="sm"
             >

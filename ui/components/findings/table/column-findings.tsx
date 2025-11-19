@@ -5,6 +5,7 @@ import { Database } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 import { DataTableRowDetails } from "@/components/findings/table";
+import { DataTableRowActions } from "@/components/findings/table/data-table-row-actions";
 import { InfoIcon } from "@/components/icons";
 import {
   DateWithTime,
@@ -70,7 +71,9 @@ const FindingDetailsCell = ({ row }: { row: any }) => {
   return (
     <div className="flex max-w-10 justify-center">
       <TriggerSheet
-        triggerComponent={<InfoIcon className="text-primary" size={16} />}
+        triggerComponent={
+          <InfoIcon className="text-button-primary" size={16} />
+        }
         title="Finding Details"
         description="View the finding details"
         defaultOpen={isOpen}
@@ -108,18 +111,18 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
       const { delta } = row.original.attributes;
 
       return (
-        <div className="relative flex max-w-[410px] flex-row items-center gap-2 3xl:max-w-[660px]">
+        <div className="3xl:max-w-[660px] relative flex max-w-[410px] flex-row items-center gap-2">
           <div className="flex flex-row items-center gap-4">
             {delta === "new" || delta === "changed" ? (
               <DeltaIndicator delta={delta} />
             ) : (
               <div className="w-2" />
             )}
-            <p className="mr-7 whitespace-normal break-words text-sm">
+            <p className="mr-7 text-sm break-words whitespace-normal">
               {checktitle}
             </p>
           </div>
-          <span className="absolute -right-2 top-1/2 -translate-y-1/2">
+          <span className="absolute top-1/2 -right-2 -translate-y-1/2">
             <Muted isMuted={muted} mutedReason={muted_reason || ""} />
           </span>
         </div>
@@ -243,6 +246,13 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
           />
         </>
       );
+    },
+  },
+  {
+    id: "actions",
+    header: "Actions",
+    cell: ({ row }) => {
+      return <DataTableRowActions row={row} />;
     },
   },
 ];

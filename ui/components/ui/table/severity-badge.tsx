@@ -1,4 +1,4 @@
-import { Chip } from "@nextui-org/react";
+import { Chip } from "@heroui/chip";
 import clsx from "clsx";
 import React from "react";
 
@@ -36,7 +36,7 @@ export const SeverityBadge = ({ severity }: { severity: Severity }) => {
 
   return (
     <Chip
-      className={clsx("gap-1 border-none capitalize text-default-600", {
+      className={clsx("text-default-600 gap-1 border-none capitalize", {
         "bg-system-severity-critical text-white dark:text-white":
           severity === "critical",
       })}
@@ -45,7 +45,9 @@ export const SeverityBadge = ({ severity }: { severity: Severity }) => {
       color={color}
       endContent={getSeverityIcon(severity)}
     >
-      <span className="text-xs font-light tracking-wide">{severity}</span>
+      <span className="text-text-neutral-primary text-xs font-light tracking-wide">
+        {severity}
+      </span>
     </Chip>
   );
 };

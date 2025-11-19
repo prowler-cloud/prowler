@@ -276,7 +276,7 @@ class VPC(AWSService):
                                         service=endpoint["ServiceName"],
                                         owner_id=endpoint["Owner"],
                                         region=regional_client.region,
-                                        tags=endpoint.get("Tags"),
+                                        tags=endpoint.get("Tags", []),
                                     )
                                 )
                     except Exception as error:

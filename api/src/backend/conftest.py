@@ -23,6 +23,7 @@ from api.models import (
     Invitation,
     LighthouseConfiguration,
     Membership,
+    MuteRule,
     Processor,
     Provider,
     ProviderGroup,
@@ -38,6 +39,7 @@ from api.models import (
     StateChoices,
     StatusChoices,
     Task,
+    TenantAPIKey,
     User,
     UserRoleRelationship,
 )
@@ -189,6 +191,108 @@ def create_test_user_rbac_limited(django_db_setup, django_db_blocker):
             tenant_id=tenant.id,
         )
     return user
+
+
+@pytest.fixture(scope="function")
+def create_test_user_rbac_manage_account(django_db_setup, django_db_blocker):
+    """User with only manage_account permission (no manage_users)."""
+    with django_db_blocker.unblock():
+        user = User.objects.create_user(
+            name="testing_manage_account",
+            email="rbac_manage_account@rbac.com",
+            password=TEST_PASSWORD,
+        )
+        tenant = Tenant.objects.create(
+            name="Tenant Test Manage Account",
+        )
+        Membership.objects.create(
+            user=user,
+            tenant=tenant,
+            role=Membership.RoleChoices.OWNER,
+        )
+        role = Role.objects.create(
+            name="manage_account",
+            tenant_id=tenant.id,
+            manage_users=False,
+            manage_account=True,
+            manage_billing=False,
+            manage_providers=False,
+            manage_integrations=False,
+            manage_scans=False,
+            unlimited_visibility=False,
+        )
+        UserRoleRelationship.objects.create(
+            user=user,
+            role=role,
+            tenant_id=tenant.id,
+        )
+    return user
+
+
+@pytest.fixture
+def authenticated_client_rbac_manage_account(
+    create_test_user_rbac_manage_account, tenants_fixture, client
+):
+    client.user = create_test_user_rbac_manage_account
+    serializer = TokenSerializer(
+        data={
+            "type": "tokens",
+            "email": "rbac_manage_account@rbac.com",
+            "password": TEST_PASSWORD,
+        }
+    )
+    serializer.is_valid()
+    access_token = serializer.validated_data["access"]
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {access_token}"
+    return client
+
+
+@pytest.fixture(scope="function")
+def create_test_user_rbac_manage_users_only(django_db_setup, django_db_blocker):
+    """User with only manage_users permission (no manage_account)."""
+    with django_db_blocker.unblock():
+        user = User.objects.create_user(
+            name="testing_manage_users_only",
+            email="rbac_manage_users_only@rbac.com",
+            password=TEST_PASSWORD,
+        )
+        tenant = Tenant.objects.create(name="Tenant Test Manage Users Only")
+        Membership.objects.create(
+            user=user,
+            tenant=tenant,
+            role=Membership.RoleChoices.OWNER,
+        )
+        role = Role.objects.create(
+            name="manage_users_only",
+            tenant_id=tenant.id,
+            manage_users=True,
+            manage_account=False,
+            manage_billing=False,
+            manage_providers=False,
+            manage_integrations=False,
+            manage_scans=False,
+            unlimited_visibility=False,
+        )
+        UserRoleRelationship.objects.create(user=user, role=role, tenant_id=tenant.id)
+    return user
+
+
+@pytest.fixture
+def authenticated_client_rbac_manage_users_only(
+    create_test_user_rbac_manage_users_only, client
+):
+    client.user = create_test_user_rbac_manage_users_only
+    serializer = TokenSerializer(
+        data={
+            "type": "tokens",
+            "email": "rbac_manage_users_only@rbac.com",
+            "password": TEST_PASSWORD,
+        }
+    )
+    serializer.is_valid()
+    access_token = serializer.validated_data["access"]
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {access_token}"
+    return client
 
 
 @pytest.fixture
@@ -396,8 +500,29 @@ def providers_fixture(tenants_fixture):
         alias="m365_testing",
         tenant_id=tenant.id,
     )
+    provider7 = Provider.objects.create(
+        provider="oraclecloud",
+        uid="ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
+        alias="oci_testing",
+        tenant_id=tenant.id,
+    )
+    provider8 = Provider.objects.create(
+        provider="mongodbatlas",
+        uid="64b1d3c0e4b03b1234567890",
+        alias="mongodbatlas_testing",
+        tenant_id=tenant.id,
+    )
 
-    return provider1, provider2, provider3, provider4, provider5, provider6
+    return (
+        provider1,
+        provider2,
+        provider3,
+        provider4,
+        provider5,
+        provider6,
+        provider7,
+        provider8,
+    )
 
 
 @pytest.fixture
@@ -1264,6 +1389,84 @@ def saml_sociallogin(users_fixture):
     sociallogin.user = user
 
     return sociallogin
+
+
+@pytest.fixture
+def api_keys_fixture(tenants_fixture, create_test_user):
+    """Create test API keys for testing."""
+    tenant = tenants_fixture[0]
+    user = create_test_user
+
+    # Create and assign role to user for API key authentication
+    role = Role.objects.create(
+        tenant_id=tenant.id,
+        name="Test API Key Role",
+        unlimited_visibility=True,
+        manage_account=True,
+    )
+    UserRoleRelationship.objects.create(
+        user=user,
+        role=role,
+        tenant_id=tenant.id,
+    )
+
+    # Create API keys with different states
+    api_key1, raw_key1 = TenantAPIKey.objects.create_api_key(
+        name="Test API Key 1",
+        tenant_id=tenant.id,
+        entity=user,
+    )
+
+    api_key2, raw_key2 = TenantAPIKey.objects.create_api_key(
+        name="Test API Key 2",
+        tenant_id=tenant.id,
+        entity=user,
+        expiry_date=datetime.now(timezone.utc) + timedelta(days=60),
+    )
+
+    # Revoked API key
+    api_key3, raw_key3 = TenantAPIKey.objects.create_api_key(
+        name="Revoked API Key",
+        tenant_id=tenant.id,
+        entity=user,
+    )
+    api_key3.revoked = True
+    api_key3.save()
+
+    # Store raw keys on instances for testing
+    api_key1._raw_key = raw_key1
+    api_key2._raw_key = raw_key2
+    api_key3._raw_key = raw_key3
+
+    return [api_key1, api_key2, api_key3]
+
+
+@pytest.fixture
+def mute_rules_fixture(tenants_fixture, create_test_user, findings_fixture):
+    """Create test mute rules for testing."""
+    tenant = tenants_fixture[0]
+    user = create_test_user
+
+    # Create two mute rules: one enabled, one disabled
+    mute_rule1 = MuteRule.objects.create(
+        tenant_id=tenant.id,
+        name="Test Rule 1",
+        reason="Security exception for testing",
+        enabled=True,
+        created_by=user,
+        finding_uids=[findings_fixture[0].uid],
+    )
+
+    mute_rule2 = MuteRule.objects.create(
+        tenant_id=tenant.id,
+        name="Test Rule 2",
+        reason="Compliance exception approved",
+        enabled=False,
+        created_by=user,
+        finding_uids=[findings_fixture[1].uid],
+    )
+
+    return mute_rule1, mute_rule2
 
 
 def get_authorization_header(access_token: str) -> dict:

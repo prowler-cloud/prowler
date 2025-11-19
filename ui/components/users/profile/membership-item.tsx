@@ -1,9 +1,10 @@
 "use client";
 
-import { Chip } from "@nextui-org/react";
+import { Chip } from "@heroui/chip";
 import { useState } from "react";
 
-import { CustomAlertModal, CustomButton } from "@/components/ui/custom";
+import { Button, Card } from "@/components/shadcn";
+import { CustomAlertModal } from "@/components/ui/custom";
 import { DateWithTime, InfoField } from "@/components/ui/entities";
 import { MembershipDetailData } from "@/types/users";
 
@@ -35,16 +36,15 @@ export const MembershipItem = ({
           setIsOpen={setIsEditOpen}
         />
       </CustomAlertModal>
-
-      <div className="min-w-[320px] rounded-lg bg-gray-50 p-2 dark:bg-gray-800">
+      <Card variant="inner" className="min-w-[320px] p-2">
         <div className="flex w-full items-center gap-4">
           <Chip size="sm" variant="flat" color="secondary">
             {membership.attributes.role}
           </Chip>
 
-          <div className="flex flex-col gap-1 md:flex-row md:gap-x-4">
+          <div className="flex flex-row flex-wrap gap-1 gap-x-4">
             <InfoField label="Name" inline variant="transparent">
-              <span className="whitespace-nowrap font-semibold">
+              <span className="font-semibold whitespace-nowrap">
                 {tenantName}
               </span>
             </InfoField>
@@ -58,20 +58,18 @@ export const MembershipItem = ({
           </div>
 
           {isOwner && (
-            <CustomButton
+            <Button
               type="button"
-              ariaLabel="Change name"
-              className="ml-auto text-blue-500"
-              variant="flat"
-              color="transparent"
+              variant="ghost"
               size="sm"
-              onPress={() => setIsEditOpen(true)}
+              onClick={() => setIsEditOpen(true)}
+              className="ml-auto"
             >
-              Change name
-            </CustomButton>
+              Edit
+            </Button>
           )}
         </div>
-      </div>
+      </Card>
     </>
   );
 };

@@ -1,23 +1,9 @@
-import { Spacer } from "@nextui-org/react";
+import { Spacer } from "@heroui/spacer";
 import { Suspense } from "react";
 
 import { getLatestFindings } from "@/actions/findings/findings";
-import {
-  getFindingsBySeverity,
-  getFindingsByStatus,
-  getProvidersOverview,
-} from "@/actions/overview/overview";
-import { FilterControls } from "@/components/filters";
-import { LighthouseBanner } from "@/components/lighthouse";
-import {
-  FindingsBySeverityChart,
-  FindingsByStatusChart,
-  LinkToFindings,
-  ProvidersOverview,
-  SkeletonFindingsBySeverityChart,
-  SkeletonFindingsByStatusChart,
-  SkeletonProvidersOverview,
-} from "@/components/overview";
+import { getProviders } from "@/actions/providers";
+import { LinkToFindings } from "@/components/overview";
 import { ColumnNewFindingsToDate } from "@/components/overview/new-findings-table/table/column-new-findings-to-date";
 import { SkeletonTableNewFindings } from "@/components/overview/new-findings-table/table/skeleton-table-new-findings";
 import { ContentLayout } from "@/components/ui";
@@ -25,105 +11,71 @@ import { DataTable } from "@/components/ui/table";
 import { createDict } from "@/lib/helper";
 import { FindingProps, SearchParamsProps } from "@/types";
 
-export default function Home({
+import { LighthouseBanner } from "../../components/lighthouse/banner";
+import { AccountsSelector } from "./new-overview/components/accounts-selector";
+import { CheckFindingsSSR } from "./new-overview/components/check-findings";
+import { ProviderTypeSelector } from "./new-overview/components/provider-type-selector";
+import {
+  RiskSeverityChartSkeleton,
+  RiskSeverityChartSSR,
+} from "./new-overview/components/risk-severity-chart";
+import { StatusChartSkeleton } from "./new-overview/components/status-chart";
+import {
+  ThreatScoreSkeleton,
+  ThreatScoreSSR,
+} from "./new-overview/components/threat-score";
+
+const FILTER_PREFIX = "filter[";
+
+// Extract only query params that start with "filter[" for API calls
+function pickFilterParams(
+  params: SearchParamsProps | undefined | null,
+): Record<string, string | string[] | undefined> {
+  if (!params) return {};
+  return Object.fromEntries(
+    Object.entries(params).filter(([key]) => key.startsWith(FILTER_PREFIX)),
+  );
+}
+
+export default async function Home({
   searchParams,
 }: {
-  searchParams: SearchParamsProps;
+  searchParams: Promise<SearchParamsProps>;
 }) {
-  const searchParamsKey = JSON.stringify(searchParams || {});
+  const resolvedSearchParams = await searchParams;
+  const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
+  const providersData = await getProviders({ page: 1, pageSize: 200 });
+
   return (
-    <ContentLayout title="Overview" icon="solar:pie-chart-2-outline">
-      <FilterControls providers mutedFindings showClearButton={false} />
+    <ContentLayout title="Overview" icon="lucide:square-chart-gantt">
+      <div className="xxl:grid-cols-4 mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        <ProviderTypeSelector providers={providersData?.data ?? []} />
+        <AccountsSelector providers={providersData?.data ?? []} />
+      </div>
 
-      <div className="grid grid-cols-12 gap-12 lg:gap-6">
-        <div className="col-span-12 lg:col-span-4">
-          <Suspense fallback={<SkeletonProvidersOverview />}>
-            <SSRProvidersOverview />
-          </Suspense>
-        </div>
+      <div className="flex flex-col gap-6 md:flex-row md:flex-wrap md:items-stretch">
+        <Suspense fallback={<ThreatScoreSkeleton />}>
+          <ThreatScoreSSR searchParams={resolvedSearchParams} />
+        </Suspense>
 
-        <div className="col-span-12 lg:col-span-4">
-          <Suspense fallback={<SkeletonFindingsBySeverityChart />}>
-            <SSRFindingsBySeverity searchParams={searchParams} />
-          </Suspense>
-        </div>
+        <Suspense fallback={<StatusChartSkeleton />}>
+          <CheckFindingsSSR searchParams={resolvedSearchParams} />
+        </Suspense>
 
-        <div className="col-span-12 lg:col-span-4">
-          <Suspense fallback={<SkeletonFindingsByStatusChart />}>
-            <SSRFindingsByStatus searchParams={searchParams} />
-          </Suspense>
-        </div>
+        <Suspense fallback={<RiskSeverityChartSkeleton />}>
+          <RiskSeverityChartSSR searchParams={resolvedSearchParams} />
+        </Suspense>
+      </div>
 
-        <div className="col-span-12">
-          <Spacer y={16} />
-          <Suspense
-            key={searchParamsKey}
-            fallback={<SkeletonTableNewFindings />}
-          >
-            <SSRDataNewFindingsTable searchParams={searchParams} />
-          </Suspense>
-        </div>
+      <div className="mt-6">
+        <Spacer y={16} />
+        <Suspense key={searchParamsKey} fallback={<SkeletonTableNewFindings />}>
+          <SSRDataNewFindingsTable searchParams={resolvedSearchParams} />
+        </Suspense>
       </div>
     </ContentLayout>
   );
 }
-
-const SSRProvidersOverview = async () => {
-  const providersOverview = await getProvidersOverview({});
-
-  return (
-    <>
-      <h3 className="mb-4 text-sm font-bold uppercase">Providers Overview</h3>
-      <ProvidersOverview providersOverview={providersOverview} />
-    </>
-  );
-};
-
-const SSRFindingsByStatus = async ({
-  searchParams,
-}: {
-  searchParams: SearchParamsProps | undefined | null;
-}) => {
-  const filters = searchParams
-    ? Object.fromEntries(
-        Object.entries(searchParams).filter(([key]) =>
-          key.startsWith("filter["),
-        ),
-      )
-    : {};
-
-  const findingsByStatus = await getFindingsByStatus({ filters });
-
-  return (
-    <>
-      <h3 className="mb-4 text-sm font-bold uppercase">Findings by Status</h3>
-      <FindingsByStatusChart findingsByStatus={findingsByStatus} />
-    </>
-  );
-};
-
-const SSRFindingsBySeverity = async ({
-  searchParams,
-}: {
-  searchParams: SearchParamsProps | undefined | null;
-}) => {
-  const filters = searchParams
-    ? Object.fromEntries(
-        Object.entries(searchParams).filter(([key]) =>
-          key.startsWith("filter["),
-        ),
-      )
-    : {};
-
-  const findingsBySeverity = await getFindingsBySeverity({ filters });
-
-  return (
-    <>
-      <h3 className="mb-4 text-sm font-bold uppercase">Findings by Severity</h3>
-      <FindingsBySeverityChart findingsBySeverity={findingsBySeverity} />
-    </>
-  );
-};
 
 const SSRDataNewFindingsTable = async ({
   searchParams,
@@ -138,13 +90,7 @@ const SSRDataNewFindingsTable = async ({
     "filter[delta]": "new",
   };
 
-  const filters = searchParams
-    ? Object.fromEntries(
-        Object.entries(searchParams).filter(([key]) =>
-          key.startsWith("filter["),
-        ),
-      )
-    : {};
+  const filters = pickFilterParams(searchParams);
 
   const combinedFilters = { ...defaultFilters, ...filters };
 
@@ -183,6 +129,7 @@ const SSRDataNewFindingsTable = async ({
 
   return (
     <>
+      <LighthouseBanner />
       <div className="relative flex w-full">
         <div className="flex w-full items-center gap-2">
           <h3 className="text-sm font-bold uppercase">
@@ -198,9 +145,8 @@ const SSRDataNewFindingsTable = async ({
       </div>
       <Spacer y={4} />
 
-      <LighthouseBanner />
-
       <DataTable
+        key={`dashboard-${Date.now()}`}
         columns={ColumnNewFindingsToDate}
         data={expandedResponse?.data || []}
         // metadata={findingsData?.meta}

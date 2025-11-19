@@ -1,15 +1,9 @@
 import os
-import platform
 
 from prowler.lib.logger import logger
 from prowler.lib.powershell.powershell import PowerShellSession
-from prowler.providers.m365.exceptions.exceptions import (
-    M365CertificateCreationError,
-    M365GraphConnectionError,
-    M365UserCredentialsError,
-    M365UserNotBelongingToTenantError,
-)
-from prowler.providers.m365.lib.jwt.jwt_decoder import decode_jwt, decode_msal_token
+from prowler.providers.m365.exceptions.exceptions import M365CertificateCreationError
+from prowler.providers.m365.lib.jwt.jwt_decoder import decode_msal_token
 from prowler.providers.m365.models import M365Credentials, M365IdentityInfo
 
 
@@ -76,10 +70,9 @@ class M365PowerShell(PowerShellSession):
         """
         Initialize PowerShell credential object for Microsoft 365 authentication.
 
-        Supports three authentication methods:
-        1. User authentication (username/password) - Will be deprecated in September 2025
-        2. Application authentication (client_id/client_secret)
-        3. Certificate authentication (certificate_content in base64/application_id)
+        Supports two authentication methods:
+        1. Application authentication (client_id/client_secret)
+        2. Certificate authentication (certificate_content in base64/client_id)
 
         Args:
             credentials (M365Credentials): The credentials object containing
@@ -115,22 +108,6 @@ class M365PowerShell(PowerShellSession):
             self.execute(f'$tenantID = "{sanitized_tenant_id}"')
             self.execute(f'$tenantDomain = "{credentials.tenant_domains[0]}"')
 
-        # User Auth (Will be deprecated in September 2025)
-        elif credentials.user and credentials.passwd:
-            credentials.encrypted_passwd = self.encrypt_password(credentials.passwd)
-
-            # Sanitize user and password
-            sanitized_user = self.sanitize(credentials.user)
-            sanitized_encrypted_passwd = self.sanitize(credentials.encrypted_passwd)
-
-            # Securely convert encrypted password to SecureString
-            self.execute(f'$user = "{sanitized_user}"')
-            self.execute(
-                f'$secureString = "{sanitized_encrypted_passwd}" | ConvertTo-SecureString'
-            )
-            self.execute(
-                "$credential = New-Object System.Management.Automation.PSCredential ($user, $secureString)"
-            )
         else:
             # Application Auth
             self.execute(f'$clientID = "{credentials.client_id}"')
@@ -143,142 +120,20 @@ class M365PowerShell(PowerShellSession):
                 '$graphToken = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$tenantID/oauth2/v2.0/token" -Method POST -Body $graphtokenBody | Select-Object -ExpandProperty Access_Token'
             )
 
-    def encrypt_password(self, password: str) -> str:
+    def execute_connect(self, command: str) -> str:
         """
-        Encrypts a password using Windows CryptProtectData on Windows systems
-        or UTF-16LE encoding on other systems.
+        Execute a PowerShell connect command ensuring empty responses surface as timeouts.
 
         Args:
-        password (str): The password to encrypt
+            command (str): PowerShell connect command to run.
+            timeout (Optional[int]): Timeout in seconds for the command execution.
 
         Returns:
-        str: The encrypted password in hexadecimal format
-
-        Raises:
-        ValueError: If password is None or empty
+            str: Command output or 'Timeout' if the command produced no output.
         """
-        try:
-            if platform.system() == "Windows":
-                import win32crypt
-
-                encrypted_blob = win32crypt.CryptProtectData(
-                    password.encode("utf-16le"), None, None, None, None, 0
-                )
-
-                encrypted_bytes = encrypted_blob
-                if isinstance(encrypted_blob, tuple):
-                    encrypted_bytes = encrypted_blob[1]
-                elif hasattr(encrypted_blob, "data"):
-                    encrypted_bytes = encrypted_blob.data
-
-                return encrypted_bytes.hex()
-
-            else:
-                return password.encode("utf-16le").hex()
-        except Exception as error:
-            raise Exception(
-                f"[{os.path.basename(__file__)}] Error encrypting password: {str(error)}"
-            )
-
-    def test_credentials(self, credentials: M365Credentials) -> bool:
-        """
-        Test Microsoft 365 credentials by attempting to authenticate against Entra ID.
-
-        Supports testing three authentication methods:
-        1. User authentication (username/password)
-        2. Application authentication (client_id/client_secret)
-        3. Certificate authentication (certificate_content in base64/application_id)
-
-        Args:
-            credentials (M365Credentials): The credentials object containing
-                authentication information to test.
-
-        Returns:
-            bool: True if credentials are valid and authentication succeeds, False otherwise.
-        """
-        # Test Certificate Auth
-        if credentials.certificate_content and credentials.client_id:
-            try:
-                self.test_teams_certificate_connection() or self.test_exchange_certificate_connection()
-                return True
-            except Exception as e:
-                logger.error(f"Exchange Online Certificate connection failed: {e}")
-
-        # Test User Auth
-        elif credentials.user and credentials.passwd:
-            self.execute(
-                f'$securePassword = "{credentials.encrypted_passwd}" | ConvertTo-SecureString'  # encrypted password already sanitized
-            )
-            self.execute(
-                f'$credential = New-Object System.Management.Automation.PSCredential("{self.sanitize(credentials.user)}", $securePassword)'
-            )
-
-            user_domain = credentials.user.split("@")[1]
-            if not any(
-                user_domain.endswith(domain)
-                for domain in self.tenant_identity.tenant_domains
-            ):
-                raise M365UserNotBelongingToTenantError(
-                    file=os.path.basename(__file__),
-                    message=f"The user domain {user_domain} does not match any of the tenant domains: {', '.join(self.tenant_identity.tenant_domains)}",
-                )
-
-            # Validate credentials
-            # Test Exchange Online connection
-            result = self.execute("Connect-ExchangeOnline -Credential $credential")
-            if "https://aka.ms/exov3-module" not in result:
-                if "AADSTS" in result:  # Entra Security Token Service Error
-                    raise M365UserCredentialsError(
-                        file=os.path.basename(__file__),
-                        message=result,
-                    )
-                # Test Microsoft Teams connection
-                result = self.execute("Connect-MicrosoftTeams -Credential $credential")
-                if self.tenant_identity.user not in result:
-                    if "AADSTS" in result:  # Entra Security Token Service Error
-                        raise M365UserCredentialsError(
-                            file=os.path.basename(__file__),
-                            message=result,
-                        )
-                    else:  # Unknown error, could be a permission issue or modules not installed
-                        raise M365UserCredentialsError(
-                            file=os.path.basename(__file__),
-                            message=f"Error connecting to PowerShell modules: {result if result else 'Unknown error'}",
-                        )
-
-            return True
-
-        else:
-            # Test Microsoft Graph connection
-            try:
-                logger.info("Testing Microsoft Graph connection...")
-                self.test_graph_connection()
-                logger.info("Microsoft Graph connection successful")
-                return True
-            except Exception as e:
-                logger.error(f"Microsoft Graph connection failed: {e}")
-                raise M365GraphConnectionError(
-                    file=os.path.basename(__file__),
-                    original_exception=e,
-                    message="Check your Microsoft Application credentials and ensure the app has proper permissions",
-                )
-
-    def test_graph_connection(self) -> bool:
-        """Test Microsoft Graph API connection and raise exception if it fails."""
-        try:
-            if self.execute("Write-Output $graphToken") == "":
-                raise M365GraphConnectionError(
-                    file=os.path.basename(__file__),
-                    message="Microsoft Graph token is empty or invalid.",
-                )
-            return True
-        except Exception as e:
-            logger.error(f"Microsoft Graph connection failed: {e}")
-            raise M365GraphConnectionError(
-                file=os.path.basename(__file__),
-                original_exception=e,
-                message=f"Failed to connect to Microsoft Graph API: {str(e)}",
-            )
+        connect_timeout = 15
+        result = self.execute(command, timeout=connect_timeout)
+        return result or "'execute_connect' command timeout reached"
 
     def test_teams_connection(self) -> bool:
         """Test Microsoft Teams API connection and raise exception if it fails."""
@@ -286,18 +141,13 @@ class M365PowerShell(PowerShellSession):
             self.execute(
                 '$teamstokenBody = @{ Grant_Type = "client_credentials"; Scope = "48ac35b8-9aa8-4d74-927d-1f4a14a0b239/.default"; Client_Id = $clientID; Client_Secret = $clientSecret }'
             )
-            self.execute(
+            result = self.execute(
                 '$teamsToken = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$tenantID/oauth2/v2.0/token" -Method POST -Body $teamstokenBody | Select-Object -ExpandProperty Access_Token'
             )
-            permissions = decode_jwt(self.execute("Write-Output $teamsToken")).get(
-                "roles", []
-            )
-            if "application_access" not in permissions:
-                logger.error(
-                    "Microsoft Teams connection failed: Please check your permissions and try again."
-                )
+            if result != "":
+                logger.error(f"Microsoft Teams connection failed: {result}")
                 return False
-            self.execute(
+            self.execute_connect(
                 'Connect-MicrosoftTeams -AccessTokens @("$graphToken","$teamsToken")'
             )
             return True
@@ -309,26 +159,11 @@ class M365PowerShell(PowerShellSession):
 
     def test_teams_certificate_connection(self) -> bool:
         """Test Microsoft Teams API connection using certificate and raise exception if it fails."""
-        result = self.execute(
+        result = self.execute_connect(
             "Connect-MicrosoftTeams -Certificate $certificate -ApplicationId $clientID -TenantId $tenantID"
         )
         if self.tenant_identity.identity_id not in result:
             logger.error(f"Microsoft Teams Certificate connection failed: {result}")
-            return False
-        return True
-
-    def test_teams_user_connection(self) -> bool:
-        """Test Microsoft Teams API connection using user authentication and raise exception if it fails."""
-        result = self.execute("Connect-MicrosoftTeams -Credential $credential")
-        if self.tenant_identity.user not in result:
-            logger.error(f"Microsoft Teams User Auth connection failed: {result}.")
-            return False
-
-        connection = self.execute("Get-CsTeamsClientConfiguration")
-        if not connection:
-            logger.error(
-                "Microsoft Teams User Auth connection failed: Please check your permissions and try again."
-            )
             return False
         return True
 
@@ -348,7 +183,7 @@ class M365PowerShell(PowerShellSession):
                     "Exchange Online connection failed: Please check your permissions and try again."
                 )
                 return False
-            self.execute(
+            self.execute_connect(
                 'Connect-ExchangeOnline -AccessToken $exchangeToken.AccessToken -Organization "$tenantID"'
             )
             return True
@@ -360,26 +195,11 @@ class M365PowerShell(PowerShellSession):
 
     def test_exchange_certificate_connection(self) -> bool:
         """Test Exchange Online API connection using certificate and raise exception if it fails."""
-        result = self.execute(
+        result = self.execute_connect(
             "Connect-ExchangeOnline -Certificate $certificate -AppId $clientID -Organization $tenantDomain"
         )
         if "https://aka.ms/exov3-module" not in result:
             logger.error(f"Exchange Online Certificate connection failed: {result}")
-            return False
-        return True
-
-    def test_exchange_user_connection(self) -> bool:
-        """Test Exchange Online API connection using user authentication and raise exception if it fails."""
-        result = self.execute("Connect-ExchangeOnline -Credential $credential")
-        if "https://aka.ms/exov3-module" not in result:
-            logger.error(f"Exchange Online User Auth connection failed: {result}.")
-            return False
-
-        connection = self.execute("Get-OrganizationConfig")
-        if not connection:
-            logger.error(
-                "Exchange Online User Auth connection failed: Please check your permissions and try again."
-            )
             return False
         return True
 
@@ -388,10 +208,9 @@ class M365PowerShell(PowerShellSession):
         Connect to Microsoft Teams Module PowerShell Module.
 
         Establishes a connection to Microsoft Teams using the initialized credentials.
-        Supports three authentication methods:
-        1. User authentication (username/password)
-        2. Application authentication (client_id/client_secret)
-        3. Certificate authentication (certificate_content in base64/application_id)
+        Supports two authentication methods:
+        1. Application authentication (client_id/client_secret)
+        2. Certificate authentication (certificate_content in base64/client_id)
 
         Returns:
             dict: Connection status information in JSON format.
@@ -402,12 +221,8 @@ class M365PowerShell(PowerShellSession):
         # Certificate Auth
         if self.execute("Write-Output $certificate") != "":
             return self.test_teams_certificate_connection()
-        # User Auth
-        if self.execute("Write-Output $credential") != "":
-            return self.test_teams_user_connection()
         # Application Auth
-        else:
-            return self.test_teams_connection()
+        return self.test_teams_connection()
 
     def get_teams_settings(self) -> dict:
         """
@@ -427,7 +242,8 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute(
-            "Get-CsTeamsClientConfiguration | ConvertTo-Json", json_parse=True
+            "Get-CsTeamsClientConfiguration | ConvertTo-Json -Depth 10",
+            json_parse=True,
         )
 
     def get_global_meeting_policy(self) -> dict:
@@ -446,7 +262,7 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute(
-            "Get-CsTeamsMeetingPolicy -Identity Global | ConvertTo-Json",
+            "Get-CsTeamsMeetingPolicy -Identity Global | ConvertTo-Json -Depth 10",
             json_parse=True,
         )
 
@@ -466,7 +282,7 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute(
-            "Get-CsTeamsMessagingPolicy -Identity Global | ConvertTo-Json",
+            "Get-CsTeamsMessagingPolicy -Identity Global | ConvertTo-Json -Depth 10",
             json_parse=True,
         )
 
@@ -486,7 +302,8 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute(
-            "Get-CsTenantFederationConfiguration | ConvertTo-Json", json_parse=True
+            "Get-CsTenantFederationConfiguration | ConvertTo-Json -Depth 10",
+            json_parse=True,
         )
 
     def connect_exchange_online(self) -> dict:
@@ -494,10 +311,9 @@ class M365PowerShell(PowerShellSession):
         Connect to Exchange Online PowerShell Module.
 
         Establishes a connection to Exchange Online using the initialized credentials.
-        Supports three authentication methods:
-        1. User authentication (username/password)
-        2. Application authentication (client_id/client_secret)
-        3. Certificate authentication (certificate_content in base64/application_id)
+        Supports two authentication methods:
+        1. Application authentication (client_id/client_secret)
+        2. Certificate authentication (certificate_content in base64/client_id)
 
         Returns:
             dict: Connection status information in JSON format.
@@ -508,12 +324,8 @@ class M365PowerShell(PowerShellSession):
         # Certificate Auth
         if self.execute("Write-Output $certificate") != "":
             return self.test_exchange_certificate_connection()
-        # User Auth
-        if self.execute("Write-Output $credential") != "":
-            return self.test_exchange_user_connection()
         # Application Auth
-        else:
-            return self.test_exchange_connection()
+        return self.test_exchange_connection()
 
     def get_audit_log_config(self) -> dict:
         """
@@ -531,7 +343,7 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute(
-            "Get-AdminAuditLogConfig | Select-Object UnifiedAuditLogIngestionEnabled | ConvertTo-Json",
+            "Get-AdminAuditLogConfig | Select-Object UnifiedAuditLogIngestionEnabled | ConvertTo-Json -Depth 10",
             json_parse=True,
         )
 
@@ -551,7 +363,9 @@ class M365PowerShell(PowerShellSession):
                 "Identity": "Default"
             }
         """
-        return self.execute("Get-MalwareFilterPolicy | ConvertTo-Json", json_parse=True)
+        return self.execute(
+            "Get-MalwareFilterPolicy | ConvertTo-Json -Depth 10", json_parse=True
+        )
 
     def get_malware_filter_rule(self) -> dict:
         """
@@ -569,7 +383,9 @@ class M365PowerShell(PowerShellSession):
                 "State": "Enabled"
             }
         """
-        return self.execute("Get-MalwareFilterRule | ConvertTo-Json", json_parse=True)
+        return self.execute(
+            "Get-MalwareFilterRule | ConvertTo-Json -Depth 10", json_parse=True
+        )
 
     def get_outbound_spam_filter_policy(self) -> dict:
         """
@@ -590,7 +406,8 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute(
-            "Get-HostedOutboundSpamFilterPolicy | ConvertTo-Json", json_parse=True
+            "Get-HostedOutboundSpamFilterPolicy | ConvertTo-Json -Depth 10",
+            json_parse=True,
         )
 
     def get_outbound_spam_filter_rule(self) -> dict:
@@ -609,7 +426,8 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute(
-            "Get-HostedOutboundSpamFilterRule | ConvertTo-Json", json_parse=True
+            "Get-HostedOutboundSpamFilterRule | ConvertTo-Json -Depth 10",
+            json_parse=True,
         )
 
     def get_antiphishing_policy(self) -> dict:
@@ -635,7 +453,9 @@ class M365PowerShell(PowerShellSession):
                 "IsDefault": false
             }
         """
-        return self.execute("Get-AntiPhishPolicy | ConvertTo-Json", json_parse=True)
+        return self.execute(
+            "Get-AntiPhishPolicy | ConvertTo-Json -Depth 10", json_parse=True
+        )
 
     def get_antiphishing_rules(self) -> dict:
         """
@@ -653,7 +473,9 @@ class M365PowerShell(PowerShellSession):
                 "State": Enabled,
             }
         """
-        return self.execute("Get-AntiPhishRule | ConvertTo-Json", json_parse=True)
+        return self.execute(
+            "Get-AntiPhishRule | ConvertTo-Json -Depth 10", json_parse=True
+        )
 
     def get_organization_config(self) -> dict:
         """
@@ -672,7 +494,9 @@ class M365PowerShell(PowerShellSession):
                 "AuditDisabled": false
             }
         """
-        return self.execute("Get-OrganizationConfig | ConvertTo-Json", json_parse=True)
+        return self.execute(
+            "Get-OrganizationConfig | ConvertTo-Json -Depth 10", json_parse=True
+        )
 
     def get_mailbox_audit_config(self) -> dict:
         """
@@ -692,7 +516,8 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute(
-            "Get-MailboxAuditBypassAssociation | ConvertTo-Json", json_parse=True
+            "Get-MailboxAuditBypassAssociation | ConvertTo-Json -Depth 10",
+            json_parse=True,
         )
 
     def get_mailbox_policy(self) -> dict:
@@ -711,7 +536,9 @@ class M365PowerShell(PowerShellSession):
                 "AdditionalStorageProvidersAvailable": True
             }
         """
-        return self.execute("Get-OwaMailboxPolicy | ConvertTo-Json", json_parse=True)
+        return self.execute(
+            "Get-OwaMailboxPolicy | ConvertTo-Json -Depth 10", json_parse=True
+        )
 
     def get_external_mail_config(self) -> dict:
         """
@@ -729,7 +556,9 @@ class M365PowerShell(PowerShellSession):
                 "ExternalMailTagEnabled": true
             }
         """
-        return self.execute("Get-ExternalInOutlook | ConvertTo-Json", json_parse=True)
+        return self.execute(
+            "Get-ExternalInOutlook | ConvertTo-Json -Depth 10", json_parse=True
+        )
 
     def get_transport_rules(self) -> dict:
         """
@@ -748,7 +577,9 @@ class M365PowerShell(PowerShellSession):
                 "SenderDomainIs": ["example.com"]
             }
         """
-        return self.execute("Get-TransportRule | ConvertTo-Json", json_parse=True)
+        return self.execute(
+            "Get-TransportRule | ConvertTo-Json -Depth 10", json_parse=True
+        )
 
     def get_connection_filter_policy(self) -> dict:
         """
@@ -767,7 +598,7 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute(
-            "Get-HostedConnectionFilterPolicy -Identity Default | ConvertTo-Json",
+            "Get-HostedConnectionFilterPolicy -Identity Default | ConvertTo-Json -Depth 10",
             json_parse=True,
         )
 
@@ -787,7 +618,9 @@ class M365PowerShell(PowerShellSession):
                 "Enabled": true
             }
         """
-        return self.execute("Get-DkimSigningConfig | ConvertTo-Json", json_parse=True)
+        return self.execute(
+            "Get-DkimSigningConfig | ConvertTo-Json -Depth 10", json_parse=True
+        )
 
     def get_inbound_spam_filter_policy(self) -> dict:
         """
@@ -806,7 +639,8 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute(
-            "Get-HostedContentFilterPolicy | ConvertTo-Json", json_parse=True
+            "Get-HostedContentFilterPolicy | ConvertTo-Json -Depth 10",
+            json_parse=True,
         )
 
     def get_inbound_spam_filter_rule(self) -> dict:
@@ -826,7 +660,8 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute(
-            "Get-HostedContentFilterRule | ConvertTo-Json", json_parse=True
+            "Get-HostedContentFilterRule | ConvertTo-Json -Depth 10",
+            json_parse=True,
         )
 
     def get_report_submission_policy(self) -> dict:
@@ -857,7 +692,8 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute(
-            "Get-ReportSubmissionPolicy | ConvertTo-Json", json_parse=True
+            "Get-ReportSubmissionPolicy | ConvertTo-Json -Depth 10",
+            json_parse=True,
         )
 
     def get_role_assignment_policies(self) -> dict:
@@ -878,7 +714,8 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute(
-            "Get-RoleAssignmentPolicy | ConvertTo-Json", json_parse=True
+            "Get-RoleAssignmentPolicy | ConvertTo-Json -Depth 10",
+            json_parse=True,
         )
 
     def get_mailbox_audit_properties(self) -> dict:
@@ -943,7 +780,7 @@ class M365PowerShell(PowerShellSession):
             }
         """
         return self.execute(
-            "Get-EXOMailbox -PropertySets Audit -ResultSize Unlimited | ConvertTo-Json",
+            "Get-EXOMailbox -PropertySets Audit -ResultSize Unlimited | ConvertTo-Json -Depth 10",
             json_parse=True,
         )
 
@@ -962,7 +799,9 @@ class M365PowerShell(PowerShellSession):
                 "SmtpClientAuthenticationDisabled": True,
             }
         """
-        return self.execute("Get-TransportConfig | ConvertTo-Json", json_parse=True)
+        return self.execute(
+            "Get-TransportConfig | ConvertTo-Json -Depth 10", json_parse=True
+        )
 
     def get_sharing_policy(self) -> dict:
         """
@@ -980,7 +819,9 @@ class M365PowerShell(PowerShellSession):
                 "Enabled": true
             }
         """
-        return self.execute("Get-SharingPolicy | ConvertTo-Json", json_parse=True)
+        return self.execute(
+            "Get-SharingPolicy | ConvertTo-Json -Depth 10", json_parse=True
+        )
 
     def get_user_account_status(self) -> dict:
         """
@@ -992,7 +833,7 @@ class M365PowerShell(PowerShellSession):
             dict: User account status settings in JSON format.
         """
         return self.execute(
-            "$dict=@{}; Get-User -ResultSize Unlimited | ForEach-Object { $dict[$_.Id] = @{ AccountDisabled = $_.AccountDisabled } }; $dict | ConvertTo-Json",
+            "$dict=@{}; Get-User -ResultSize Unlimited | ForEach-Object { $dict[$_.Id] = @{ AccountDisabled = $_.AccountDisabled } }; $dict | ConvertTo-Json -Depth 10",
             json_parse=True,
         )
 
@@ -1009,7 +850,11 @@ def initialize_m365_powershell_modules():
         bool: True if all modules were successfully initialized, False otherwise
     """
 
-    REQUIRED_MODULES = ["ExchangeOnlineManagement", "MicrosoftTeams", "MSAL.PS"]
+    REQUIRED_MODULES = [
+        "ExchangeOnlineManagement",
+        "MicrosoftTeams",
+        "MSAL.PS",
+    ]
 
     pwsh = PowerShellSession()
     try:
@@ -1021,7 +866,7 @@ def initialize_m365_powershell_modules():
                 # Install module if not installed
                 if not result:
                     install_result = pwsh.execute(
-                        f'Install-Module "{module}" -Force -AllowClobber -Scope CurrentUser',
+                        f"Install-Module {module} -Force -AllowClobber -Scope CurrentUser",
                         timeout=60,
                     )
                     if install_result:

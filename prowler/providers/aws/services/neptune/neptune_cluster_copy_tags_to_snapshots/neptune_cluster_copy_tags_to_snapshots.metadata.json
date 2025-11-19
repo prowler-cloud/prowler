@@ -1,33 +1,37 @@
 {
   "Provider": "aws",
   "CheckID": "neptune_cluster_copy_tags_to_snapshots",
-  "CheckTitle": "Check if Neptune DB clusters are configured to copy tags to snapshots.",
+  "CheckTitle": "Neptune DB cluster is configured to copy tags to snapshots.",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"
   ],
   "ServiceName": "neptune",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:rds:region:account-id:cluster:db-cluster-identifier",
+  "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsRdsDbCluster",
-  "Description": "This check ensures that Neptune DB clusters are configured to copy all tags to snapshots when the snapshots are created.",
-  "Risk": "If tags are not copied to snapshots, the snapshots may lack necessary metadata for identification, governance, and access control, leading to potential mismanagement and security risks.",
-  "RelatedUrl": "https://docs.aws.amazon.com/neptune/latest/userguide/tagging.html#tagging-overview",
+  "Description": "Neptune DB cluster is configured to copy all tags to snapshots when snapshots are created.",
+  "Risk": "**Missing snapshot tags** weakens governance across confidentiality, integrity, and availability.\n\n- **Access control**: Tag-based IAM conditions may not apply to snapshots, enabling unauthorized restore or copy\n- **Operational**: Recovery, retention, and cost tracking can fail due to unidentifiable or orphaned snapshots",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/neptune/latest/userguide/tagging.html#tagging-overview",
+    "https://www.cloudanix.com/docs/aws/audit/rdsmonitoring/rules/neptune_cluster_copy_tags_to_snapshot_enabled",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-8",
+    "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/bc-aws-2-60"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws neptune modify-db-cluster --db-cluster-identifier <db-cluster-identifier> --copy-tags-to-snapshot --apply-immediately",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/neptune-controls.html#neptune-8",
-      "Terraform": ""
+      "CLI": "aws neptune modify-db-cluster --db-cluster-identifier <DB_CLUSTER_ID> --copy-tags-to-snapshot --apply-immediately",
+      "NativeIaC": "```yaml\nResources:\n  NeptuneCluster:\n    Type: AWS::RDS::DBCluster\n    Properties:\n      DBClusterIdentifier: <DB_CLUSTER_ID>\n      EngineVersion: neptune\n      CopyTagsToSnapshot: true  # Inherit tags for snapshot governance and access control\n```",
+      "Terraform": "```hcl\nresource \"aws_neptune_cluster\" \"example_resource\" {\n  cluster_identifier     = \"<DB_CLUSTER_ID>\"\n  copy_tags_to_snapshot  = true  # Inherit tags for snapshot governance and access control\n}\n```",
+      "Other": "1. Sign in to the AWS Management Console and open Amazon Neptune\n2. Click Clusters and select the cluster\n3. Click Modify\n4. In Backup, enable \"Copy tags to snapshots\"\n5. Check \"Apply immediately\"\n6. Click Modify Cluster"
     },
     "Recommendation": {
-      "Text": "Configure your Neptune DB clusters to copy tags to snapshots when the snapshots are created.",
-      "Url": "https://docs.aws.amazon.com/neptune/latest/userguide/tagging.html#tagging-overview"
+      "Text": "Preserve metadata by enabling tag inheritance for snapshots and enforcing a consistent tagging strategy.\n\n- Adopt a standardized tag taxonomy\n- Use tag-based access controls and apply least privilege\n- Automate tagging and policy checks in provisioning to prevent untagged snapshots",
+      "Url": "https://hub.prowler.com/check/neptune_cluster_copy_tags_to_snapshots"
     }
   },
-  "Categories": [
-    "trustboundaries"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

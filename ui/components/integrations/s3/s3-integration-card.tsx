@@ -1,16 +1,18 @@
 "use client";
 
-import { Card, CardBody, CardHeader } from "@nextui-org/react";
 import { SettingsIcon } from "lucide-react";
+import Link from "next/link";
 
 import { AmazonS3Icon } from "@/components/icons/services/IconServices";
-import { CustomButton } from "@/components/ui/custom";
+import { Button } from "@/components/shadcn";
 import { CustomLink } from "@/components/ui/custom/custom-link";
+
+import { Card, CardContent, CardHeader } from "../../shadcn";
 
 export const S3IntegrationCard = () => {
   return (
-    <Card className="dark:bg-gray-800">
-      <CardHeader className="gap-2">
+    <Card variant="base" padding="lg">
+      <CardHeader>
         <div className="flex w-full flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <AmazonS3Icon size={40} />
@@ -19,7 +21,7 @@ export const S3IntegrationCard = () => {
                 Amazon S3
               </h4>
               <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
-                <p className="text-nowrap text-xs text-gray-500 dark:text-gray-300">
+                <p className="text-xs text-nowrap text-gray-500 dark:text-gray-300">
                   Export security findings to Amazon S3 buckets.
                 </p>
                 <CustomLink
@@ -33,26 +35,21 @@ export const S3IntegrationCard = () => {
             </div>
           </div>
           <div className="flex items-center gap-2 self-end sm:self-center">
-            <CustomButton
-              size="sm"
-              variant="bordered"
-              startContent={<SettingsIcon size={14} />}
-              asLink="/integrations/amazon-s3"
-              ariaLabel="Manage S3 integrations"
-            >
-              Manage
-            </CustomButton>
+            <Button asChild size="sm">
+              <Link href="/integrations/amazon-s3">
+                <SettingsIcon size={14} />
+                Manage
+              </Link>
+            </Button>
           </div>
         </div>
       </CardHeader>
-      <CardBody>
-        <div className="flex flex-col gap-4">
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            Configure and manage your Amazon S3 integrations to automatically
-            export security findings to your S3 buckets.
-          </p>
-        </div>
-      </CardBody>
+      <CardContent>
+        <p className="text-sm text-gray-600 dark:text-gray-300">
+          Configure and manage your Amazon S3 integrations to automatically
+          export security findings to your S3 buckets.
+        </p>
+      </CardContent>
     </Card>
   );
 };
