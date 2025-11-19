@@ -10,7 +10,7 @@ export interface AWSProviderData {
   accessKeyId?: string;
   secretAccessKey?: string;
 }
-  
+
 // AZURE provider data
 export interface AZUREProviderData {
   subscriptionId: string;
@@ -32,11 +32,12 @@ export interface KubernetesProviderData {
 // AWS credential options
 export const AWS_CREDENTIAL_OPTIONS = {
   AWS_ROLE_ARN: "role",
-  AWS_CREDENTIALS: "credentials"
+  AWS_CREDENTIALS: "credentials",
 } as const;
 
 // AWS credential type
-type AWSCredentialType = (typeof AWS_CREDENTIAL_OPTIONS)[keyof typeof AWS_CREDENTIAL_OPTIONS];
+type AWSCredentialType =
+  (typeof AWS_CREDENTIAL_OPTIONS)[keyof typeof AWS_CREDENTIAL_OPTIONS];
 
 // AWS provider credential
 export interface AWSProviderCredential {
@@ -49,36 +50,38 @@ export interface AWSProviderCredential {
 
 // AZURE credential options
 export const AZURE_CREDENTIAL_OPTIONS = {
-  AZURE_CREDENTIALS: "credentials"
+  AZURE_CREDENTIALS: "credentials",
 } as const;
 
 // AZURE credential type
-type AZURECredentialType = (typeof AZURE_CREDENTIAL_OPTIONS)[keyof typeof AZURE_CREDENTIAL_OPTIONS];
+type AZURECredentialType =
+  (typeof AZURE_CREDENTIAL_OPTIONS)[keyof typeof AZURE_CREDENTIAL_OPTIONS];
 
 // AZURE provider credential
 export interface AZUREProviderCredential {
   type: AZURECredentialType;
-  clientId:string;
-  clientSecret:string;
-  tenantId:string;
+  clientId: string;
+  clientSecret: string;
+  tenantId: string;
 }
 
 // M365 credential options
 export const M365_CREDENTIAL_OPTIONS = {
   M365_CREDENTIALS: "credentials",
-  M365_CERTIFICATE_CREDENTIALS: "certificate"
+  M365_CERTIFICATE_CREDENTIALS: "certificate",
 } as const;
 
 // M365 credential type
-type M365CredentialType = (typeof M365_CREDENTIAL_OPTIONS)[keyof typeof M365_CREDENTIAL_OPTIONS]; 
+type M365CredentialType =
+  (typeof M365_CREDENTIAL_OPTIONS)[keyof typeof M365_CREDENTIAL_OPTIONS];
 
 // M365 provider credential
 export interface M365ProviderCredential {
   type: M365CredentialType;
-  clientId:string;
-  clientSecret?:string;
-  tenantId:string;
-  certificateContent?:string;
+  clientId: string;
+  clientSecret?: string;
+  tenantId: string;
+  certificateContent?: string;
 }
 
 // Kubernetes credential options
@@ -97,7 +100,6 @@ export interface KubernetesProviderCredential {
 
 // Providers page
 export class ProvidersPage extends BasePage {
-
   // Button to add a new cloud provider
   readonly addProviderButton: Locator;
   readonly providersTable: Locator;
@@ -157,8 +159,9 @@ export class ProvidersPage extends BasePage {
   constructor(page: Page) {
     super(page);
 
-    // Button to add a new cloud provider
-    this.addProviderButton = page.getByRole("button", { name: "Add Cloud Provider", exact: true });
+    this.addProviderButton = page.getByRole("link", {
+      name: "Add Cloud Provider",
+    });
 
     // Table displaying existing providers
     this.providersTable = page.getByRole("table");
@@ -183,17 +186,23 @@ export class ProvidersPage extends BasePage {
 
     // AWS provider form inputs
     this.accountIdInput = page.getByRole("textbox", { name: "Account ID" });
-    
+
     // AZURE provider form inputs
-    this.azureSubscriptionIdInput = page.getByRole("textbox", { name: "Subscription ID" });
+    this.azureSubscriptionIdInput = page.getByRole("textbox", {
+      name: "Subscription ID",
+    });
     this.azureClientIdInput = page.getByRole("textbox", { name: "Client ID" });
-    this.azureClientSecretInput = page.getByRole("textbox", { name: "Client Secret" });
+    this.azureClientSecretInput = page.getByRole("textbox", {
+      name: "Client Secret",
+    });
     this.azureTenantIdInput = page.getByRole("textbox", { name: "Tenant ID" });
-    
+
     // M365 provider form inputs
     this.m365domainIdInput = page.getByRole("textbox", { name: "Domain ID" });
     this.m365ClientIdInput = page.getByRole("textbox", { name: "Client ID" });
-    this.m365ClientSecretInput = page.getByRole("textbox", { name: "Client Secret" });
+    this.m365ClientSecretInput = page.getByRole("textbox", {
+      name: "Client Secret",
+    });
     this.m365TenantIdInput = page.getByRole("textbox", { name: "Tenant ID" });
     this.m365CertificateContentInput = page.getByRole("textbox", { name: "Certificate Content" });
 
@@ -202,7 +211,9 @@ export class ProvidersPage extends BasePage {
     this.kubernetesKubeconfigContentInput = page.getByRole("textbox", { name: "Kubeconfig Content" });
     
     // Alias input
-    this.aliasInput = page.getByRole("textbox", { name: "Provider alias (optional)" });
+    this.aliasInput = page.getByRole("textbox", {
+      name: "Provider alias (optional)",
+    });
 
     // Navigation buttons in the form (next and back)
     this.nextButton = page
@@ -240,8 +251,12 @@ export class ProvidersPage extends BasePage {
     this.externalIdInput = page.getByRole("textbox", { name: "External ID" });
 
     // Inputs for static credentials
-    this.accessKeyIdInput = page.getByRole("textbox", { name: "Access Key ID" });
-    this.secretAccessKeyInput = page.getByRole("textbox", { name: "Secret Access Key" });
+    this.accessKeyIdInput = page.getByRole("textbox", {
+      name: "Access Key ID",
+    });
+    this.secretAccessKeyInput = page.getByRole("textbox", {
+      name: "Secret Access Key",
+    });
 
     // Delete button in confirmation modal
     this.deleteProviderConfirmationButton = page.getByRole("button", {
@@ -264,19 +279,17 @@ export class ProvidersPage extends BasePage {
   }
 
   async selectAWSProvider(): Promise<void> {
-
     // Prefer label-based click for radios, force if overlay intercepts
     await this.awsProviderRadio.click({ force: true });
     await this.waitForPageLoad();
   }
 
   async selectAZUREProvider(): Promise<void> {
-    
     // Prefer label-based click for radios, force if overlay intercepts
     await this.azureProviderRadio.click({ force: true });
     await this.waitForPageLoad();
   }
-  
+
   async selectM365Provider(): Promise<void> {
     // Select the M365 provider
 
@@ -338,7 +351,7 @@ export class ProvidersPage extends BasePage {
     // This function determines which button to click depending on the current URL and page content.
 
     // Get the current page URL
-    const url = this.page.url(); 
+    const url = this.page.url();
 
     // If on the "connect-account" step, click the "Next" button
     if (/\/providers\/connect-account/.test(url)) {
@@ -375,9 +388,9 @@ export class ProvidersPage extends BasePage {
       await this.waitForPageLoad();
 
       // Wait for either success (redirect to scans) or error message to appear
-      // The error container has multiple p.text-danger elements, we want the first one with the technical error
-      const errorMessage = this.page.locator("p.text-danger").first();
-      
+      // The error container has multiple p.text-text-error elements, we want the first one with the technical error
+      const errorMessage = this.page.locator("p.text-text-error").first();
+
       try {
         // Wait up to 15 seconds for either the error message or redirect
         await Promise.race([
@@ -389,7 +402,9 @@ export class ProvidersPage extends BasePage {
 
         // If we're still on test-connection page, check for error
         if (/\/providers\/test-connection/.test(this.page.url())) {
-          const isErrorVisible = await errorMessage.isVisible().catch(() => false);
+          const isErrorVisible = await errorMessage
+            .isVisible()
+            .catch(() => false);
           if (isErrorVisible) {
             const errorText = await errorMessage.textContent();
             throw new Error(
@@ -466,7 +481,7 @@ export class ProvidersPage extends BasePage {
     if (type === M365_CREDENTIAL_OPTIONS.M365_CREDENTIALS) {
       await this.m365StaticCredentialsRadio.click({ force: true });
     } else if (type === M365_CREDENTIAL_OPTIONS.M365_CERTIFICATE_CREDENTIALS) {
-      await this.m365CertificateCredentialsRadio.click({ force: true }); 
+      await this.m365CertificateCredentialsRadio.click({ force: true });
     } else {
       throw new Error(`Invalid M365 credential type: ${type}`);
     }
@@ -476,7 +491,7 @@ export class ProvidersPage extends BasePage {
 
   async fillRoleCredentials(credentials: AWSProviderCredential): Promise<void> {
     // Fill the role credentials form
-    
+
     if (credentials.accessKeyId) {
       await this.accessKeyIdInput.fill(credentials.accessKeyId);
     }
@@ -494,7 +509,9 @@ export class ProvidersPage extends BasePage {
     }
   }
 
-  async fillStaticCredentials(credentials: AWSProviderCredential): Promise<void> {
+  async fillStaticCredentials(
+    credentials: AWSProviderCredential,
+  ): Promise<void> {
     // Fill the static credentials form
 
     if (credentials.accessKeyId) {
@@ -505,7 +522,9 @@ export class ProvidersPage extends BasePage {
     }
   }
 
-  async fillAZURECredentials(credentials: AZUREProviderCredential): Promise<void> {
+  async fillAZURECredentials(
+    credentials: AZUREProviderCredential,
+  ): Promise<void> {
     // Fill the azure credentials form
 
     if (credentials.clientId) {
@@ -519,7 +538,9 @@ export class ProvidersPage extends BasePage {
     }
   }
 
-  async fillM365Credentials(credentials: M365ProviderCredential): Promise<void> {
+  async fillM365Credentials(
+    credentials: M365ProviderCredential,
+  ): Promise<void> {
     // Fill the m365 credentials form
 
     if (credentials.clientId) {
@@ -533,14 +554,18 @@ export class ProvidersPage extends BasePage {
     }
   }
 
-  async fillM365CertificateCredentials(credentials: M365ProviderCredential): Promise<void> {
+  async fillM365CertificateCredentials(
+    credentials: M365ProviderCredential,
+  ): Promise<void> {
     // Fill the m365 certificate credentials form
 
     if (credentials.clientId) {
       await this.m365ClientIdInput.fill(credentials.clientId);
     }
     if (credentials.certificateContent) {
-      await this.m365CertificateContentInput.fill(credentials.certificateContent);
+      await this.m365CertificateContentInput.fill(
+        credentials.certificateContent,
+      );
     }
     if (credentials.tenantId) {
       await this.m365TenantIdInput.fill(credentials.tenantId);
@@ -561,7 +586,7 @@ export class ProvidersPage extends BasePage {
 
     await expect(this.page).toHaveTitle(/Prowler/);
     await expect(this.addProviderButton).toBeVisible();
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState("networkidle");
   }
 
   async verifyConnectAccountPageLoaded(): Promise<void> {
@@ -653,15 +678,15 @@ export class ProvidersPage extends BasePage {
     // Find and use the search input to filter the table
     const searchInput = this.page.getByPlaceholder(/search|filter/i);
     await expect(searchInput).toBeVisible({ timeout: 5000 });
-    
+
     // Clear and search for the specific provider
     await searchInput.clear();
     await searchInput.fill(providerUID);
     await searchInput.press("Enter");
-    
+
     // Wait for the table to finish loading/filtering
     await this.waitForPageLoad();
-    
+
     // Additional wait for React table to re-render with the server-filtered data
     // The filtering happens on the server, but the table component needs time
     // to process the response and update the DOM after network idle
@@ -669,7 +694,7 @@ export class ProvidersPage extends BasePage {
 
     // Get all rows from the table
     const allRows = this.providersTable.locator("tbody tr");
-    
+
     // Helper function to check if a row is the "No results" row
     const isNoResultsRow = async (row: Locator): Promise<boolean> => {
       const text = await row.textContent();
@@ -680,24 +705,24 @@ export class ProvidersPage extends BasePage {
     // Helper function to find the row with the specific UID
     const findProviderRow = async (): Promise<Locator | null> => {
       const count = await allRows.count();
-      
+
       for (let i = 0; i < count; i++) {
         const row = allRows.nth(i);
-        
+
         // Skip "No results" rows
         if (await isNoResultsRow(row)) {
           continue;
         }
-        
+
         // Check if this row contains the UID in the UID column (column 3)
         const uidCell = row.locator("td").nth(3);
         const uidText = await uidCell.textContent();
-        
+
         if (uidText?.includes(providerUID)) {
           return row;
         }
       }
-      
+
       return null;
     };
 
@@ -705,7 +730,7 @@ export class ProvidersPage extends BasePage {
     await expect(async () => {
       const targetRow = await findProviderRow();
       const count = await allRows.count();
-      
+
       // Count only real data rows (not "No results")
       let dataRowCount = 0;
       for (let i = 0; i < count; i++) {
@@ -713,14 +738,14 @@ export class ProvidersPage extends BasePage {
           dataRowCount++;
         }
       }
-      
+
       // Should have 0 or 1 data row
       expect(dataRowCount).toBeLessThanOrEqual(1);
     }).toPass({ timeout: 20000 });
 
     // Find the provider row
     const targetRow = await findProviderRow();
-    
+
     if (!targetRow) {
       // Provider not found, nothing to delete
       // Navigate back to providers page to ensure clean state
@@ -749,7 +774,9 @@ export class ProvidersPage extends BasePage {
     await expect(modal).toBeVisible({ timeout: 10000 });
 
     // Find and click the delete confirmation button
-    await expect(this.deleteProviderConfirmationButton).toBeVisible({ timeout: 5000 });
+    await expect(this.deleteProviderConfirmationButton).toBeVisible({
+      timeout: 5000,
+    });
     await this.deleteProviderConfirmationButton.click();
 
     // Wait for modal to close (this indicates deletion was initiated)
@@ -761,5 +788,29 @@ export class ProvidersPage extends BasePage {
     // Navigate back to providers page to ensure clean state
     await this.goto();
     await expect(this.providersTable).toBeVisible({ timeout: 10000 });
+  }
+
+  async selectAuthenticationMethod(method: AWSCredentialType): Promise<void> {
+    // Select the authentication method
+
+    // Search botton that contains text AWS SDK Default or Prowler Cloud will assume or Access & Secret Key
+    const button = this.page.locator("button").filter({
+      hasText: /AWS SDK Default|Prowler Cloud will assume|Access & Secret Key/i,
+    });
+    await button.click();
+
+    if (method === AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN) {
+      const modal = this.page
+        .locator('[role="dialog"], .modal, [data-testid*="modal"]')
+        .first();
+      await expect(modal).toBeVisible({ timeout: 10000 });
+
+      // Select the role credentials
+      this.page
+        .getByRole("option", { name: "Access & Secret Key" })
+        .click({ force: true });
+    } else {
+      throw new Error(`Invalid authentication method: ${method}`);
+    }
   }
 }

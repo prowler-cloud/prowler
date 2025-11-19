@@ -1,7 +1,7 @@
-import { Button } from "@heroui/button";
 import { Tooltip } from "@heroui/tooltip";
 import { Icon } from "@iconify/react";
 
+import { Button } from "@/components/shadcn";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 
 export const SocialButtons = ({
@@ -32,14 +32,22 @@ export const SocialButtons = ({
     >
       <span>
         <Button
-          startContent={<Icon icon="flat-color-icons:google" width={24} />}
-          variant="bordered"
+          variant="outline"
           className="w-full"
-          as="a"
-          href={googleAuthUrl}
-          isDisabled={!isGoogleOAuthEnabled}
+          asChild={isGoogleOAuthEnabled}
+          disabled={!isGoogleOAuthEnabled}
         >
-          Continue with Google
+          <a href={googleAuthUrl} className="flex items-center gap-2">
+            <Icon
+              icon={
+                isGoogleOAuthEnabled
+                  ? "flat-color-icons:google"
+                  : "simple-icons:google"
+              }
+              width={24}
+            />
+            Continue with Google
+          </a>
         </Button>
       </span>
     </Tooltip>
@@ -59,16 +67,15 @@ export const SocialButtons = ({
     >
       <span>
         <Button
-          startContent={
-            <Icon className="text-default-500" icon="fe:github" width={24} />
-          }
-          variant="bordered"
+          variant="outline"
           className="w-full"
-          as="a"
-          href={githubAuthUrl}
-          isDisabled={!isGithubOAuthEnabled}
+          asChild={isGithubOAuthEnabled}
+          disabled={!isGithubOAuthEnabled}
         >
-          Continue with Github
+          <a href={githubAuthUrl} className="flex items-center gap-2">
+            <Icon icon="simple-icons:github" width={24} />
+            Continue with Github
+          </a>
         </Button>
       </span>
     </Tooltip>

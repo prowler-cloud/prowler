@@ -33,11 +33,19 @@
   },
   {
     "section": "dependencies",
+    "name": "@langchain/aws",
+    "from": "0.1.15",
+    "to": "0.1.15",
+    "strategy": "installed",
+    "generatedAt": "2025-11-03T07:43:34.628Z"
+  },
+  {
+    "section": "dependencies",
     "name": "@langchain/core",
     "from": "0.3.77",
-    "to": "0.3.77",
+    "to": "0.3.78",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2025-11-03T07:43:34.628Z"
   },
   {
     "section": "dependencies",
@@ -59,9 +67,9 @@
     "section": "dependencies",
     "name": "@langchain/openai",
     "from": "0.5.18",
-    "to": "0.5.18",
+    "to": "0.6.16",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2025-11-03T07:43:34.628Z"
   },
   {
     "section": "dependencies",
@@ -158,6 +166,14 @@
     "to": "3.8.12",
     "strategy": "installed",
     "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@sentry/nextjs",
+    "from": "10.11.0",
+    "to": "10.11.0",
+    "strategy": "installed",
+    "generatedAt": "2025-10-22T15:52:15.849Z"
   },
   {
     "section": "dependencies",
@@ -390,6 +406,14 @@
     "to": "0.33.5",
     "strategy": "installed",
     "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "streamdown",
+    "from": "1.3.0",
+    "to": "1.3.0",
+    "strategy": "installed",
+    "generatedAt": "2025-11-03T07:43:34.628Z"
   },
   {
     "section": "dependencies",
@@ -709,7 +733,7 @@
     "from": "3.4.1",
     "to": "3.4.1",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2025-10-22T15:52:15.849Z"
   },
   {
     "section": "devDependencies",

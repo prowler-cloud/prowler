@@ -282,7 +282,7 @@ export const SendToJiraModal = ({
                       ))}
                     </Select>
                   </FormControl>
-                  <FormMessage className="text-system-error text-xs" />
+                  <FormMessage className="text-text-error text-xs" />
                 </>
               )}
             />
@@ -366,105 +366,38 @@ export const SendToJiraModal = ({
                       ))}
                     </Select>
                   </FormControl>
-                  <FormMessage className="text-system-error text-xs" />
+                  <FormMessage className="text-text-error text-xs" />
                 </>
               )}
             />
           )}
 
-          {/* Issue Type Selection - Enhanced Style */}
-          {/* {selectedProject && issueTypes.length > 0 && (
-            <FormField
-              control={form.control}
-              name="issueType"
-              render={({ field }) => (
-                <>
-                  <FormControl>
-                    <Select
-                      label="Issue Type"
-                      placeholder="Select an issue type"
-                      selectedKeys={
-                        field.value ? new Set([field.value]) : new Set()
-                      }
-                      onSelectionChange={(keys: Selection) => {
-                        const value = getSelectedValue(keys);
-                        field.onChange(value);
-                      }}
-                      variant="bordered"
-                      labelPlacement="inside"
-                      isInvalid={!!form.formState.errors.issueType}
-                      classNames={{
-                        trigger: "min-h-12",
-                        popoverContent: "dark:bg-gray-800",
-                        listboxWrapper: "max-h-[300px] dark:bg-gray-800",
-                        label:
-                          "tracking-tight font-light !text-default-500 text-xs z-0!",
-                        value: "text-default-500 text-small dark:text-gray-300",
-                      }}
-                      listboxProps={{
-                        topContent:
-                          filteredIssueTypes.length > 5 ? (
-                            <div className="sticky top-0 z-10 bg-content1 py-2 dark:bg-gray-800">
-                              <Input
-                                isClearable
-                                placeholder="Search issue types..."
-                                size="sm"
-                                variant="bordered"
-                                startContent={<Search size={16} />}
-                                value={searchIssueTypeValue}
-                                onValueChange={setSearchIssueTypeValue}
-                                onClear={() => setSearchIssueTypeValue("")}
-                                classNames={{
-                                  inputWrapper:
-                                    "border-default-200 bg-transparent hover:bg-default-100/50",
-                                  input: "text-small",
-                                }}
-                              />
-                            </div>
-                          ) : null,
-                      }}
-                    >
-                      {filteredIssueTypes.map((type) => (
-                        <SelectItem key={type} textValue={type}>
-                          <div className="flex items-center py-1">
-                            <span className="text-small">{type}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  <FormMessage className="text-xs text-system-error" />
-                </>
-              )}
-            />
-          )} */}
-
           {/* No integrations or none connected message */}
           {!isFetchingIntegrations &&
-            (integrations.length === 0 || !hasConnectedIntegration) && (
-              <CustomBanner
-                title="Jira integration is not available"
-                message="Please add or connect an integration first"
-                buttonLabel="Configure"
-                buttonLink="/integrations/jira"
-              />
-            )}
-
-          <FormButtons
-            setIsOpen={setOpenForFormButtons}
-            onCancel={() => onOpenChange(false)}
-            submitText="Send to Jira"
-            cancelText="Cancel"
-            loadingText="Sending..."
-            isDisabled={
-              !form.formState.isValid ||
-              form.formState.isSubmitting ||
-              isFetchingIntegrations ||
-              integrations.length === 0 ||
-              !hasConnectedIntegration
-            }
-            rightIcon={<Send size={20} />}
-          />
+          (integrations.length === 0 || !hasConnectedIntegration) ? (
+            <CustomBanner
+              title="Jira integration is not available"
+              message="Please add or connect an integration first"
+              buttonLabel="Configure"
+              buttonLink="/integrations/jira"
+            />
+          ) : (
+            <FormButtons
+              setIsOpen={setOpenForFormButtons}
+              onCancel={() => onOpenChange(false)}
+              submitText="Send to Jira"
+              cancelText="Cancel"
+              loadingText="Sending..."
+              isDisabled={
+                !form.formState.isValid ||
+                form.formState.isSubmitting ||
+                isFetchingIntegrations ||
+                integrations.length === 0 ||
+                !hasConnectedIntegration
+              }
+              rightIcon={<Send size={20} />}
+            />
+          )}
         </form>
       </Form>
     </CustomAlertModal>

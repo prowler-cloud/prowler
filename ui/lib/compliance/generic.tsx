@@ -167,6 +167,7 @@ const createRequirementAccordionItem = (
   ),
   content: (
     <ClientAccordionContent
+      key={`content-${itemKey}`}
       requirement={requirement}
       scanId={scanId}
       framework={frameworkName}

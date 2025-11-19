@@ -1,8 +1,14 @@
+import * as Sentry from "@sentry/nextjs";
 import { revalidatePath } from "next/cache";
+
+import { SentryErrorSource, SentryErrorType } from "@/sentry";
 
 import { getErrorMessage, parseStringify } from "./helper";
 
-// Helper function to handle API responses consistently
+/**
+ * Helper function to handle API responses consistently
+ * Includes Sentry error tracking for debugging
+ */
 export const handleApiResponse = async (
   response: Response,
   pathToRevalidate?: string,
@@ -29,12 +35,67 @@ export const handleApiResponse = async (
       response.statusText ||
       "Oops! Something went wrong.";
 
-    //5XX errors
+    // Capture error context for Sentry
+    const errorContext = {
+      status: response.status,
+      statusText: response.statusText,
+      url: response.url,
+      errorDetail,
+      pathToRevalidate,
+    };
+
+    // 5XX errors - Server errors (high priority)
     if (response.status >= 500) {
-      throw new Error(
+      const serverError = new Error(
         errorDetail ||
           `Server error (${response.status}): The server encountered an error. Please try again later.`,
       );
+
+      Sentry.captureException(serverError, {
+        tags: {
+          api_error: true,
+          status_code: response.status.toString(),
+          error_type: SentryErrorType.SERVER_ERROR,
+          error_source: SentryErrorSource.HANDLE_API_RESPONSE,
+        },
+        level: "error",
+        contexts: {
+          api_response: errorContext,
+        },
+        fingerprint: [
+          "api-server-error",
+          response.status.toString(),
+          response.url,
+        ],
+      });
+
+      throw serverError;
+    }
+
+    // Client errors (4xx) - Only capture unexpected ones
+    if (![401, 403, 404].includes(response.status)) {
+      const clientError = new Error(
+        errorDetail ||
+          `Request failed (${response.status}): ${response.statusText}`,
+      );
+
+      Sentry.captureException(clientError, {
+        tags: {
+          api_error: true,
+          status_code: response.status.toString(),
+          error_type: SentryErrorType.CLIENT_ERROR,
+          error_source: SentryErrorSource.HANDLE_API_RESPONSE,
+        },
+        level: "warning",
+        contexts: {
+          api_response: errorContext,
+        },
+        fingerprint: [
+          "api-client-error",
+          response.status.toString(),
+          response.url,
+        ],
+      });
     }
 
     return errorsArray
@@ -76,9 +137,60 @@ export const handleApiResponse = async (
   return parse ? parseStringify(data) : data;
 };
 
-// Helper function to handle API errors consistently
+/**
+ * Helper function to handle API errors consistently
+ * Includes Sentry error tracking
+ */
 export const handleApiError = (error: unknown): { error: string } => {
   console.error(error);
+
+  // Check if this error was already captured by handleApiResponse
+  const isAlreadyCaptured =
+    error instanceof Error &&
+    (error.message.includes("Server error") ||
+      error.message.includes("Request failed"));
+
+  // Only capture if not already captured by handleApiResponse
+  if (!isAlreadyCaptured) {
+    if (error instanceof Error) {
+      // Don't capture expected errors
+      if (
+        !error.message.includes("401") &&
+        !error.message.includes("403") &&
+        !error.message.includes("404")
+      ) {
+        Sentry.captureException(error, {
+          tags: {
+            error_source: SentryErrorSource.HANDLE_API_ERROR,
+            error_type: SentryErrorType.UNEXPECTED_ERROR,
+          },
+          level: "error",
+          contexts: {
+            error_details: {
+              message: error.message,
+              stack: error.stack,
+            },
+          },
+        });
+      }
+    } else {
+      // Capture non-Error objects
+      Sentry.captureMessage(
+        `Non-Error object in handleApiError: ${String(error)}`,
+        {
+          level: "warning",
+          tags: {
+            error_source: SentryErrorSource.HANDLE_API_ERROR,
+            error_type: SentryErrorType.NON_ERROR_OBJECT,
+          },
+          extra: {
+            error: error,
+          },
+        },
+      );
+    }
+  }
+
   return {
     error: getErrorMessage(error),
   };
