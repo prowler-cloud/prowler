@@ -70,10 +70,10 @@ function getMapColors(): MapColorsConfig {
     landStroke:
       getVar("--border-neutral-tertiary") || DEFAULT_MAP_COLORS.landStroke,
     pointDefault:
-      getVar("--text-error-primary") || DEFAULT_MAP_COLORS.pointDefault,
+      getVar("--text-text-error") || DEFAULT_MAP_COLORS.pointDefault,
     pointSelected:
       getVar("--bg-button-primary") || DEFAULT_MAP_COLORS.pointSelected,
-    pointHover: getVar("--text-error-primary") || DEFAULT_MAP_COLORS.pointHover,
+    pointHover: getVar("--text-text-error") || DEFAULT_MAP_COLORS.pointHover,
   };
 
   return colors;
