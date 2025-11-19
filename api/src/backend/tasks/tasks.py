@@ -8,7 +8,10 @@ from celery.utils.log import get_task_logger
 from config.celery import RLSTask
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE, DJANGO_TMP_OUTPUT_DIRECTORY
 from django_celery_beat.models import PeriodicTask
-from tasks.jobs.backfill import backfill_resource_scan_summaries
+from tasks.jobs.backfill import (
+    backfill_compliance_summaries,
+    backfill_resource_scan_summaries,
+)
 from tasks.jobs.connection import (
     check_integration_connection,
     check_lighthouse_connection,
@@ -31,6 +34,7 @@ from tasks.jobs.lighthouse_providers import (
     check_lighthouse_provider_connection,
     refresh_lighthouse_provider_models,
 )
+from tasks.jobs.muting import mute_historical_findings
 from tasks.jobs.report import generate_threatscore_report_job
 from tasks.jobs.scan import (
     aggregate_findings,
@@ -493,6 +497,21 @@ def backfill_scan_resource_summaries_task(tenant_id: str, scan_id: str):
     return backfill_resource_scan_summaries(tenant_id=tenant_id, scan_id=scan_id)
 
 
+@shared_task(name="backfill-compliance-summaries", queue="backfill")
+def backfill_compliance_summaries_task(tenant_id: str, scan_id: str):
+    """
+    Tries to backfill compliance overview summaries for a completed scan.
+
+    This task aggregates compliance requirement data across regions
+    to create pre-computed summary records for fast compliance overview queries.
+
+    Args:
+        tenant_id (str): The tenant identifier.
+        scan_id (str): The scan identifier.
+    """
+    return backfill_compliance_summaries(tenant_id=tenant_id, scan_id=scan_id)
+
+
 @shared_task(base=RLSTask, name="scan-compliance-overviews", queue="compliance")
 def create_compliance_requirements_task(tenant_id: str, scan_id: str):
     """
@@ -681,3 +700,25 @@ def generate_threatscore_report_task(tenant_id: str, scan_id: str, provider_id: 
     return generate_threatscore_report_job(
         tenant_id=tenant_id, scan_id=scan_id, provider_id=provider_id
     )
+
+
+@shared_task(name="findings-mute-historical")
+def mute_historical_findings_task(tenant_id: str, mute_rule_id: str):
+    """
+    Background task to mute all historical findings matching a mute rule.
+
+    This task processes findings in batches to avoid memory issues with large datasets.
+    It updates the Finding.muted, Finding.muted_at, and Finding.muted_reason fields
+    for all findings whose UID is in the mute rule's finding_uids list.
+
+    Args:
+        tenant_id (str): The tenant ID for RLS context.
+        mute_rule_id (str): The primary key of the MuteRule to apply.
+
+    Returns:
+        dict: A dictionary containing:
+            - 'findings_muted' (int): Total number of findings muted.
+            - 'rule_id' (str): The mute rule ID.
+            - 'status' (str): Final status ('completed').
+    """
+    return mute_historical_findings(tenant_id, mute_rule_id)

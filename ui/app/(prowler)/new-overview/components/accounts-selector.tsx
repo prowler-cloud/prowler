@@ -8,16 +8,18 @@ import {
   AzureProviderBadge,
   GCPProviderBadge,
   GitHubProviderBadge,
+  IacProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
+  OracleCloudProviderBadge,
 } from "@/components/icons/providers-badge";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/shadcn";
+  MultiSelect,
+  MultiSelectContent,
+  MultiSelectItem,
+  MultiSelectTrigger,
+  MultiSelectValue,
+} from "@/components/shadcn/select/multiselect";
 import type { ProviderProps, ProviderType } from "@/types/providers";
 
 const PROVIDER_ICON: Record<ProviderType, ReactNode> = {
@@ -27,6 +29,8 @@ const PROVIDER_ICON: Record<ProviderType, ReactNode> = {
   kubernetes: <KS8ProviderBadge width={18} height={18} />,
   m365: <M365ProviderBadge width={18} height={18} />,
   github: <GitHubProviderBadge width={18} height={18} />,
+  iac: <IacProviderBadge width={18} height={18} />,
+  oraclecloud: <OracleCloudProviderBadge width={18} height={18} />,
 };
 
 interface AccountsSelectorProps {
@@ -87,7 +91,7 @@ export function AccountsSelector({ providers }: AccountsSelectorProps) {
   };
 
   const selectedLabel = () => {
-    if (selectedIds.length === 0) return null; // placeholder visible
+    if (selectedIds.length === 0) return null;
     if (selectedIds.length === 1) {
       const p = providers.find((pr) => pr.id === selectedIds[0]);
       const name = p ? p.attributes.alias || p.attributes.uid : selectedIds[0];
@@ -113,18 +117,14 @@ export function AccountsSelector({ providers }: AccountsSelectorProps) {
         Filter by cloud provider account. {filterDescription}. Select one or
         more accounts to view findings.
       </label>
-      <Select
-        multiple
-        selectedValues={selectedIds}
-        onMultiValueChange={handleMultiValueChange}
-        ariaLabel="Cloud provider accounts filter"
-      >
-        <SelectTrigger id="accounts-selector" aria-labelledby="accounts-label">
-          <SelectValue placeholder="All accounts">
-            {selectedLabel()}
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent align="start">
+      <MultiSelect values={selectedIds} onValuesChange={handleMultiValueChange}>
+        <MultiSelectTrigger
+          id="accounts-selector"
+          aria-labelledby="accounts-label"
+        >
+          {selectedLabel() || <MultiSelectValue placeholder="All accounts" />}
+        </MultiSelectTrigger>
+        <MultiSelectContent search={false}>
           {visibleProviders.length > 0 ? (
             visibleProviders.map((p) => {
               const id = p.id;
@@ -132,14 +132,15 @@ export function AccountsSelector({ providers }: AccountsSelectorProps) {
               const providerType = p.attributes.provider as ProviderType;
               const icon = PROVIDER_ICON[providerType];
               return (
-                <SelectItem
+                <MultiSelectItem
                   key={id}
                   value={id}
+                  badgeLabel={displayName}
                   aria-label={`${displayName} account (${providerType.toUpperCase()})`}
                 >
                   <span aria-hidden="true">{icon}</span>
                   <span className="truncate">{displayName}</span>
-                </SelectItem>
+                </MultiSelectItem>
               );
             })
           ) : (
@@ -149,8 +150,8 @@ export function AccountsSelector({ providers }: AccountsSelectorProps) {
                 : "No connected accounts available"}
             </div>
           )}
-        </SelectContent>
-      </Select>
+        </MultiSelectContent>
+      </MultiSelect>
     </div>
   );
 }

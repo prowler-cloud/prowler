@@ -97,7 +97,9 @@ export async function verifyNormalModeActive(page: Page) {
 }
 
 export async function logout(page: Page) {
-  await page.getByRole("button", { name: "Sign out" }).click();
+  const navbar = page.locator("header");
+  await navbar.waitFor({ state: "visible" });
+  await navbar.getByRole("button", { name: "Sign out" }).click();
 }
 
 export async function verifyLogoutSuccess(page: Page) {

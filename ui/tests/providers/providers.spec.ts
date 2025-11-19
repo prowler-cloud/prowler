@@ -1,5 +1,4 @@
 import { test } from "@playwright/test";
-import { ScansPage } from "../scans/scans-page";
 import {
   ProvidersPage,
   AWSProviderData,
@@ -19,6 +18,7 @@ import {
   GCP_CREDENTIAL_OPTIONS,
 } from "./providers-page";
 import fs from "fs";
+import { ScansPage } from "../scans/scans-page";
 
 test.describe("Add Provider", () => {
   test.describe.serial("Add AWS Provider", () => {
@@ -170,6 +170,11 @@ test.describe("Add Provider", () => {
           AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN,
         );
         await providersPage.verifyCredentialsPageLoaded();
+
+        // Select Authentication Method
+        await providersPage.selectAuthenticationMethod(
+          AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN,
+        );
 
         // Fill role credentials
         await providersPage.fillRoleCredentials(roleCredentials);

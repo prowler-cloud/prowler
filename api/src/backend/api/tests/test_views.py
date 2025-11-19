@@ -4,6 +4,7 @@ import json
 import os
 import tempfile
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import ANY, MagicMock, Mock, patch
@@ -23,6 +24,7 @@ from conftest import (
     today_after_n_days,
 )
 from django.conf import settings
+from django.db.models import Count
 from django.http import JsonResponse
 from django.test import RequestFactory
 from django.urls import reverse
@@ -33,6 +35,9 @@ from rest_framework.response import Response
 from api.compliance import get_compliance_frameworks
 from api.db_router import MainRouter
 from api.models import (
+    ComplianceOverviewSummary,
+    ComplianceRequirementOverview,
+    Finding,
     Integration,
     Invitation,
     LighthouseProviderConfiguration,
@@ -44,6 +49,7 @@ from api.models import (
     ProviderGroup,
     ProviderGroupMembership,
     ProviderSecret,
+    Resource,
     Role,
     RoleProviderGroupRelationship,
     SAMLConfiguration,
@@ -51,14 +57,18 @@ from api.models import (
     Scan,
     ScanSummary,
     StateChoices,
+    StatusChoices,
     Task,
     TenantAPIKey,
+    ThreatScoreSnapshot,
     User,
     UserRoleRelationship,
 )
 from api.rls import Tenant
 from api.v1.serializers import TokenSerializer
 from api.v1.views import ComplianceOverviewViewSet, TenantFinishACSView
+from prowler.lib.check.models import Severity
+from prowler.lib.outputs.finding import Status
 
 
 class TestViewSet:
@@ -946,6 +956,74 @@ class TestProviderViewSet:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == len(providers_fixture)
 
+    def test_providers_filter_provider_type(
+        self, authenticated_client, providers_fixture
+    ):
+        response = authenticated_client.get(
+            reverse("provider-list"), {"filter[provider_type]": "aws"}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 2
+        assert all(item["attributes"]["provider"] == "aws" for item in data)
+
+    def test_providers_filter_provider_type_in(
+        self, authenticated_client, providers_fixture
+    ):
+        response = authenticated_client.get(
+            reverse("provider-list"), {"filter[provider_type__in]": "aws,gcp"}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 3
+        assert {"aws", "gcp"} >= {item["attributes"]["provider"] for item in data}
+
+    def test_providers_filter_provider_type_invalid(
+        self, authenticated_client, providers_fixture
+    ):
+        response = authenticated_client.get(
+            reverse("provider-list"), {"filter[provider_type]": "invalid"}
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_providers_disable_pagination(
+        self, authenticated_client, providers_fixture, tenants_fixture
+    ):
+        tenant, *_ = tenants_fixture
+        existing_count = Provider.objects.filter(tenant_id=tenant.id).count()
+        target_total = settings.REST_FRAMEWORK["PAGE_SIZE"] + 1
+        additional_needed = max(0, target_total - existing_count)
+
+        base_uid = 200000000000
+        for index in range(additional_needed):
+            Provider.objects.create(
+                tenant_id=tenant.id,
+                provider=Provider.ProviderChoices.AWS,
+                uid=f"{base_uid + index:012d}",
+                alias=f"aws_extra_{index}",
+            )
+
+        total_providers = Provider.objects.filter(tenant_id=tenant.id).count()
+
+        paginated_response = authenticated_client.get(reverse("provider-list"))
+        assert paginated_response.status_code == status.HTTP_200_OK
+        paginated_data = paginated_response.json()["data"]
+        assert len(paginated_data) == min(
+            settings.REST_FRAMEWORK["PAGE_SIZE"], total_providers
+        )
+        paginated_meta = paginated_response.json().get("meta", {})
+        assert "pagination" in paginated_meta
+        assert paginated_meta["pagination"]["count"] == total_providers
+
+        unpaginated_response = authenticated_client.get(
+            reverse("provider-list"), {"page[disable]": "true"}
+        )
+        assert unpaginated_response.status_code == status.HTTP_200_OK
+        unpaginated_data = unpaginated_response.json()["data"]
+        assert len(unpaginated_data) == total_providers
+        unpaginated_meta = unpaginated_response.json().get("meta", {})
+        assert "pagination" not in unpaginated_meta
+
     @pytest.mark.parametrize(
         "include_values, expected_resources",
         [
@@ -1070,6 +1148,21 @@ class TestProviderViewSet:
                     "uid": "a12345678901234567890123456789012345678",
                     "alias": "Long Username",
                 },
+                {
+                    "provider": "iac",
+                    "uid": "https://github.com/user/repo.git",
+                    "alias": "Git Repo",
+                },
+                {
+                    "provider": "iac",
+                    "uid": "https://gitlab.com/user/project",
+                    "alias": "GitLab Repo",
+                },
+                {
+                    "provider": "mongodbatlas",
+                    "uid": "64b1d3c0e4b03b1234567890",
+                    "alias": "Atlas Organization",
+                },
             ]
         ),
     )
@@ -1082,6 +1175,161 @@ class TestProviderViewSet:
         assert Provider.objects.get().provider == provider_json_payload["provider"]
         assert Provider.objects.get().uid == provider_json_payload["uid"]
         assert Provider.objects.get().alias == provider_json_payload["alias"]
+
+    @pytest.mark.parametrize(
+        "provider_json_payload",
+        (
+            [
+                {"provider": "aws", "uid": "111111111111", "alias": "test"},
+                {"provider": "gcp", "uid": "a12322-test54321", "alias": "test"},
+                {
+                    "provider": "kubernetes",
+                    "uid": "kubernetes-test-123456789",
+                    "alias": "test",
+                },
+                {
+                    "provider": "kubernetes",
+                    "uid": "arn:aws:eks:us-east-1:111122223333:cluster/test-cluster-long-name-123456789",
+                    "alias": "EKS",
+                },
+                {
+                    "provider": "kubernetes",
+                    "uid": "gke_aaaa-dev_europe-test1_dev-aaaa-test-cluster-long-name-123456789",
+                    "alias": "GKE",
+                },
+                {
+                    "provider": "kubernetes",
+                    "uid": "gke_project/cluster-name",
+                    "alias": "GKE",
+                },
+                {
+                    "provider": "kubernetes",
+                    "uid": "admin@k8s-demo",
+                    "alias": "test",
+                },
+                {
+                    "provider": "azure",
+                    "uid": "8851db6b-42e5-4533-aa9e-30a32d67e875",
+                    "alias": "test",
+                },
+                {
+                    "provider": "m365",
+                    "uid": "TestingPro.onmicrosoft.com",
+                    "alias": "test",
+                },
+                {
+                    "provider": "m365",
+                    "uid": "subdomain.domain.es",
+                    "alias": "test",
+                },
+                {
+                    "provider": "m365",
+                    "uid": "microsoft.net",
+                    "alias": "test",
+                },
+                {
+                    "provider": "m365",
+                    "uid": "subdomain1.subdomain2.subdomain3.subdomain4.domain.net",
+                    "alias": "test",
+                },
+                {
+                    "provider": "github",
+                    "uid": "test-user",
+                    "alias": "test",
+                },
+                {
+                    "provider": "github",
+                    "uid": "test-organization",
+                    "alias": "GitHub Org",
+                },
+                {
+                    "provider": "github",
+                    "uid": "prowler-cloud",
+                    "alias": "Prowler",
+                },
+                {
+                    "provider": "github",
+                    "uid": "microsoft",
+                    "alias": "Microsoft",
+                },
+                {
+                    "provider": "github",
+                    "uid": "a12345678901234567890123456789012345678",
+                    "alias": "Long Username",
+                },
+            ]
+        ),
+    )
+    @patch("api.v1.views.Task.objects.get")
+    @patch("api.v1.views.delete_provider_task.delay")
+    def test_providers_soft_delete(
+        self,
+        mock_delete_task,
+        mock_task_get,
+        authenticated_client,
+        provider_json_payload,
+        tasks_fixture,
+    ):
+        # Mock the Celery task response
+        prowler_task = tasks_fixture[0]
+        task_mock = Mock()
+        task_mock.id = prowler_task.id
+        mock_delete_task.return_value = task_mock
+        mock_task_get.return_value = prowler_task
+
+        # 1.Create a provider
+        response = authenticated_client.post(
+            reverse("provider-list"), data=provider_json_payload, format="json"
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert Provider.objects.count() == 1
+        provider_id = response.json()["data"]["id"]
+
+        # 2. Soft delete the provider using the actual API endpoint
+        response = authenticated_client.delete(
+            reverse("provider-detail", kwargs={"pk": provider_id})
+        )
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        assert Provider.objects.count() == 0
+        assert Provider.all_objects.count() == 1
+
+        mock_delete_task.assert_called_once_with(
+            provider_id=str(provider_id), tenant_id=ANY
+        )
+
+        # 3. Create a provider with the same UID should succeed (since the old one is soft deleted)
+        response = authenticated_client.post(
+            reverse("provider-list"), data=provider_json_payload, format="json"
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert Provider.objects.count() == 1
+        assert Provider.all_objects.count() == 2
+        provider_id = response.json()["data"]["id"]
+
+        # 4. Creating another provider with the same UID should fail (duplicate)
+        response = authenticated_client.post(
+            reverse("provider-list"), data=provider_json_payload, format="json"
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+        mock_delete_task.reset_mock()
+        mock_delete_task.return_value = task_mock
+
+        # 5. Delete the second provider
+        response = authenticated_client.delete(
+            reverse("provider-detail", kwargs={"pk": provider_id})
+        )
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        assert Provider.objects.count() == 0
+        assert Provider.all_objects.count() == 2
+
+        # 6. Creating a provider with the same UID should succeed again
+        response = authenticated_client.post(
+            reverse("provider-list"), data=provider_json_payload, format="json"
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert Provider.objects.count() == 1
+        assert Provider.all_objects.count() == 3
 
     @pytest.mark.parametrize(
         "provider_json_payload, error_code, error_pointer",
@@ -1217,6 +1465,51 @@ class TestProviderViewSet:
                         "alias": "test",
                     },
                     "github-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "iac",
+                        "uid": "not-a-url",
+                        "alias": "test",
+                    },
+                    "iac-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "iac",
+                        "uid": "ftp://invalid-protocol.com/repo",
+                        "alias": "test",
+                    },
+                    "iac-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "iac",
+                        "uid": "http://",
+                        "alias": "test",
+                    },
+                    "iac-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "mongodbatlas",
+                        "uid": "64b1d3c0e4b03b123456789g",
+                        "alias": "test",
+                    },
+                    "mongodbatlas-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "mongodbatlas",
+                        "uid": "1234",
+                        "alias": "test",
+                    },
+                    "mongodbatlas-uid",
                     "uid",
                 ),
             ]
@@ -1389,13 +1682,25 @@ class TestProviderViewSet:
                 ("provider", "aws", 2),
                 ("provider.in", "azure,gcp", 2),
                 ("uid", "123456789012", 1),
-                ("uid.icontains", "1", 5),
+                (
+                    "uid.icontains",
+                    "1",
+                    7,
+                ),
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
-                ("inserted_at", TODAY, 6),
-                ("inserted_at.gte", "2024-01-01", 6),
+                ("inserted_at", TODAY, 8),
+                (
+                    "inserted_at.gte",
+                    "2024-01-01",
+                    8,
+                ),
                 ("inserted_at.lte", "2024-01-01", 0),
-                ("updated_at.gte", "2024-01-01", 6),
+                (
+                    "updated_at.gte",
+                    "2024-01-01",
+                    8,
+                ),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
         ),
@@ -1896,6 +2201,52 @@ class TestProviderSecretViewSet:
                     "certificate_content": "VGVzdCBjZXJ0aWZpY2F0ZSBjb250ZW50",
                     "user": "test@domain.com",
                     "password": "supersecret",
+                },
+            ),
+            # OCI with API key credentials (with key_content)
+            (
+                Provider.ProviderChoices.ORACLECLOUD.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
+                    "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
+                    "key_content": "-----BEGIN RSA PRIVATE KEY-----\ntest-key-content\n-----END RSA PRIVATE KEY-----",
+                    "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
+                    "region": "us-ashburn-1",
+                },
+            ),
+            # OCI with API key credentials (with key_file)
+            (
+                Provider.ProviderChoices.ORACLECLOUD.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
+                    "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
+                    "key_file": "/path/to/oci_api_key.pem",
+                    "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
+                    "region": "us-ashburn-1",
+                },
+            ),
+            # OCI with API key credentials (with passphrase)
+            (
+                Provider.ProviderChoices.ORACLECLOUD.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
+                    "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
+                    "key_content": "-----BEGIN RSA PRIVATE KEY-----\ntest-encrypted-key\n-----END RSA PRIVATE KEY-----",
+                    "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
+                    "region": "us-ashburn-1",
+                    "pass_phrase": "my-secure-passphrase",
+                },
+            ),
+            # MongoDB Atlas credentials
+            (
+                Provider.ProviderChoices.MONGODBATLAS.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "atlas_public_key": "public-key",
+                    "atlas_private_key": "private-key",
                 },
             ),
         ],
@@ -3194,6 +3545,9 @@ class TestResourceViewSet:
         )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == len(resources_fixture)
+        assert "metadata" in response.json()["data"][0]["attributes"]
+        assert "details" in response.json()["data"][0]["attributes"]
+        assert "partition" in response.json()["data"][0]["attributes"]
 
     @pytest.mark.parametrize(
         "include_values, expected_resources",
@@ -5466,16 +5820,44 @@ class TestProviderGroupMembershipViewSet:
 
 @pytest.mark.django_db
 class TestComplianceOverviewViewSet:
-    def test_compliance_overview_list_none(self, authenticated_client):
+    @pytest.fixture(autouse=True)
+    def mock_backfill_task(self):
+        with patch("api.v1.views.backfill_compliance_summaries_task.delay") as mock:
+            yield mock
+
+    def test_compliance_overview_list_none(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        mock_backfill_task,
+    ):
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        scan = Scan.objects.create(
+            name="empty-compliance-scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
         response = authenticated_client.get(
             reverse("complianceoverview-list"),
-            {"filter[scan_id]": "8d20ac7d-4cbc-435e-85f4-359be37af821"},
+            {"filter[scan_id]": str(scan.id)},
         )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 0
+        mock_backfill_task.assert_called_once()
+        _, kwargs = mock_backfill_task.call_args
+        assert kwargs["scan_id"] == str(scan.id)
+        assert str(kwargs["tenant_id"]) == str(tenant.id)
 
     def test_compliance_overview_list(
-        self, authenticated_client, compliance_requirements_overviews_fixture
+        self,
+        authenticated_client,
+        compliance_requirements_overviews_fixture,
+        mock_backfill_task,
     ):
         # List compliance overviews with existing data
         requirement_overview1 = compliance_requirements_overviews_fixture[0]
@@ -5505,6 +5887,112 @@ class TestComplianceOverviewViewSet:
             assert "requirements_failed" in attributes
             assert "requirements_manual" in attributes
             assert "total_requirements" in attributes
+        mock_backfill_task.assert_called_once()
+        _, kwargs = mock_backfill_task.call_args
+        assert kwargs["scan_id"] == scan_id
+
+    def test_compliance_overview_list_uses_preaggregated_summaries(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        mock_backfill_task,
+    ):
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        scan = Scan.objects.create(
+            name="preaggregated-scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        ComplianceRequirementOverview.objects.create(
+            tenant=tenant,
+            scan=scan,
+            compliance_id="cis_1.4_aws",
+            framework="CIS-1.4-AWS",
+            version="1.4",
+            description="CIS AWS Foundations Benchmark v1.4.0",
+            region="eu-west-1",
+            requirement_id="framework-metadata",
+            requirement_status=StatusChoices.PASS,
+            passed_checks=1,
+            failed_checks=0,
+            total_checks=1,
+        )
+
+        ComplianceOverviewSummary.objects.create(
+            tenant=tenant,
+            scan=scan,
+            compliance_id="cis_1.4_aws",
+            requirements_passed=5,
+            requirements_failed=1,
+            requirements_manual=2,
+            total_requirements=8,
+        )
+
+        response = authenticated_client.get(
+            reverse("complianceoverview-list"),
+            {"filter[scan_id]": str(scan.id)},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        overview = data[0]
+        assert overview["id"] == "cis_1.4_aws"
+        assert overview["attributes"]["requirements_passed"] == 5
+        assert overview["attributes"]["requirements_failed"] == 1
+        assert overview["attributes"]["requirements_manual"] == 2
+        assert overview["attributes"]["total_requirements"] == 8
+        assert "framework" in overview["attributes"]
+        assert "version" in overview["attributes"]
+        mock_backfill_task.assert_not_called()
+
+    def test_compliance_overview_region_filter_skips_backfill(
+        self,
+        authenticated_client,
+        compliance_requirements_overviews_fixture,
+        mock_backfill_task,
+    ):
+        requirement_overview = compliance_requirements_overviews_fixture[0]
+        scan_id = str(requirement_overview.scan.id)
+
+        response = authenticated_client.get(
+            reverse("complianceoverview-list"),
+            {
+                "filter[scan_id]": scan_id,
+                "filter[region]": requirement_overview.region,
+            },
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) >= 1
+        mock_backfill_task.assert_not_called()
+
+    def test_compliance_overview_list_without_scan_id(
+        self, authenticated_client, compliance_requirements_overviews_fixture
+    ):
+        # Ensure the endpoint works without passing a scan filter
+        response = authenticated_client.get(reverse("complianceoverview-list"))
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 3
+
+        # Validate payload structure
+        first_item = data[0]
+        assert "id" in first_item
+        assert "attributes" in first_item
+        attributes = first_item["attributes"]
+        assert "framework" in attributes
+        assert "version" in attributes
+        assert "requirements_passed" in attributes
+        assert "requirements_failed" in attributes
+        assert "requirements_manual" in attributes
+        assert "total_requirements" in attributes
 
     def test_compliance_overview_metadata(
         self, authenticated_client, compliance_requirements_overviews_fixture
@@ -5658,6 +6146,11 @@ class TestComplianceOverviewViewSet:
         requirement_overview1 = compliance_requirements_overviews_fixture[0]
         scan_id = str(requirement_overview1.scan.id)
 
+        # Remove existing compliance data so the view falls back to task checks
+        scan = requirement_overview1.scan
+        ComplianceOverviewSummary.objects.filter(scan=scan).delete()
+        ComplianceRequirementOverview.objects.filter(scan=scan).delete()
+
         # Mock a running task
         with patch.object(
             ComplianceOverviewViewSet, "get_task_response_if_running"
@@ -5685,6 +6178,11 @@ class TestComplianceOverviewViewSet:
         requirement_overview1 = compliance_requirements_overviews_fixture[0]
         scan_id = str(requirement_overview1.scan.id)
 
+        # Remove existing compliance data so the view falls back to task checks
+        scan = requirement_overview1.scan
+        ComplianceOverviewSummary.objects.filter(scan=scan).delete()
+        ComplianceRequirementOverview.objects.filter(scan=scan).delete()
+
         # Mock a failed task
         with patch.object(
             ComplianceOverviewViewSet, "get_task_response_if_running"
@@ -5708,6 +6206,8 @@ class TestComplianceOverviewViewSet:
             ("framework", "framework", 1),
             ("version", "version", 1),
             ("region", "region", 1),
+            ("region__in", "region", 1),
+            ("region.in", "region", 1),
         ],
     )
     def test_compliance_overview_filters(
@@ -5784,14 +6284,505 @@ class TestOverviewViewSet:
         assert response.json()["data"][0]["attributes"]["findings"]["pass"] == 2
         assert response.json()["data"][0]["attributes"]["findings"]["fail"] == 1
         assert response.json()["data"][0]["attributes"]["findings"]["muted"] == 1
-        # Since we rely on completed scans, there are only 2 resources now
-        assert response.json()["data"][0]["attributes"]["resources"]["total"] == 2
+        # Aggregated resources include all AWS providers present in the tenant
+        assert response.json()["data"][0]["attributes"]["resources"]["total"] == 3
+
+    def test_overview_providers_aggregates_same_provider_type(
+        self,
+        authenticated_client,
+        scan_summaries_fixture,
+        resources_fixture,
+        providers_fixture,
+        tenants_fixture,
+    ):
+        tenant = tenants_fixture[0]
+        _provider1, provider2, *_ = providers_fixture
+
+        scan = Scan.objects.create(
+            name="overview scan aws account 2",
+            provider=provider2,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan,
+            check_id="check-aws-two",
+            service="service-extra",
+            severity="medium",
+            region="region-extra",
+            _pass=3,
+            fail=2,
+            muted=1,
+            total=6,
+        )
+
+        Resource.objects.create(
+            tenant_id=tenant.id,
+            provider=provider2,
+            uid="arn:aws:ec2:us-west-2:123456789013:instance/i-aggregation",
+            name="Aggregated Instance",
+            region="us-west-2",
+            service="ec2",
+            type="prowler-test",
+        )
+
+        response = authenticated_client.get(reverse("overview-providers"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        attributes = data[0]["attributes"]
+
+        assert attributes["findings"]["total"] == 10
+        assert attributes["findings"]["pass"] == 5
+        assert attributes["findings"]["fail"] == 3
+        assert attributes["findings"]["muted"] == 2
+        assert attributes["resources"]["total"] == 4
+
+    def test_overview_providers_count(
+        self,
+        authenticated_client,
+        scan_summaries_fixture,
+        resources_fixture,
+        providers_fixture,
+        tenants_fixture,
+    ):
+        tenant = tenants_fixture[0]
+
+        default_response = authenticated_client.get(reverse("overview-providers"))
+        assert default_response.status_code == status.HTTP_200_OK
+        default_data = default_response.json()["data"]
+        assert len(default_data) == 1
+        assert all("count" not in item["attributes"] for item in default_data)
+        grouped_response = authenticated_client.get(reverse("overview-providers-count"))
+        assert grouped_response.status_code == status.HTTP_200_OK
+        grouped_data = grouped_response.json()["data"]
+        assert len(grouped_data) >= 1
+
+        aggregated = {
+            entry["id"]: entry["attributes"]["count"] for entry in grouped_data
+        }
+        db_counts = (
+            Provider.objects.filter(tenant_id=tenant.id, is_deleted=False)
+            .values("provider")
+            .annotate(count=Count("id"))
+        )
+        expected = {row["provider"]: row["count"] for row in db_counts}
+
+        assert aggregated == expected
+        for entry in grouped_data:
+            assert "findings" not in entry["attributes"]
+
+    def _create_scan(self, tenant, provider, name, started_at=None):
+        scan_started = started_at or datetime.now(timezone.utc) - timedelta(hours=1)
+        return Scan.objects.create(
+            tenant=tenant,
+            provider=provider,
+            name=name,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            started_at=scan_started,
+            completed_at=scan_started + timedelta(minutes=30),
+        )
+
+    def _create_threatscore_snapshot(
+        self,
+        tenant,
+        scan,
+        provider,
+        *,
+        compliance_id,
+        overall_score,
+        score_delta,
+        section_scores,
+        critical_requirements,
+        total_requirements,
+        passed_requirements,
+        failed_requirements,
+        manual_requirements,
+        total_findings,
+        passed_findings,
+        failed_findings,
+    ):
+        return ThreatScoreSnapshot.objects.create(
+            tenant=tenant,
+            scan=scan,
+            provider=provider,
+            compliance_id=compliance_id,
+            overall_score=Decimal(overall_score),
+            score_delta=Decimal(score_delta) if score_delta is not None else None,
+            section_scores=section_scores,
+            critical_requirements=critical_requirements,
+            total_requirements=total_requirements,
+            passed_requirements=passed_requirements,
+            failed_requirements=failed_requirements,
+            manual_requirements=manual_requirements,
+            total_findings=total_findings,
+            passed_findings=passed_findings,
+            failed_findings=failed_findings,
+        )
+
+    def test_overview_threatscore_returns_weighted_aggregate_snapshot(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        tenant = tenants_fixture[0]
+        provider1, provider2, *_ = providers_fixture
+
+        scan1 = self._create_scan(tenant, provider1, "agg-scan-one")
+        scan2 = self._create_scan(tenant, provider2, "agg-scan-two")
+
+        snapshot1 = self._create_threatscore_snapshot(
+            tenant,
+            scan1,
+            provider1,
+            compliance_id="prowler_threatscore_aws",
+            overall_score="80.00",
+            score_delta="5.00",
+            section_scores={"1. IAM": "70.00", "2. Attack Surface": "60.00"},
+            critical_requirements=[
+                {
+                    "requirement_id": "req_shared",
+                    "title": "Shared requirement (preferred)",
+                    "section": "1. IAM",
+                    "subsection": "Sub IAM",
+                    "risk_level": 5,
+                    "weight": 150,
+                    "passed_findings": 14,
+                    "total_findings": 20,
+                    "description": "Higher risk duplicate",
+                },
+                {
+                    "requirement_id": "req_unique_one",
+                    "title": "Unique provider one",
+                    "section": "2. Attack Surface",
+                    "subsection": "Sub Attack",
+                    "risk_level": 4,
+                    "weight": 90,
+                    "passed_findings": 20,
+                    "total_findings": 30,
+                    "description": "Lower risk",
+                },
+            ],
+            total_requirements=120,
+            passed_requirements=90,
+            failed_requirements=30,
+            manual_requirements=0,
+            total_findings=100,
+            passed_findings=70,
+            failed_findings=30,
+        )
+
+        snapshot2 = self._create_threatscore_snapshot(
+            tenant,
+            scan2,
+            provider2,
+            compliance_id="prowler_threatscore_aws",
+            overall_score="20.00",
+            score_delta="-2.00",
+            section_scores={
+                "1. IAM": "10.00",
+                "2. Attack Surface": "40.00",
+                "3. Logging": "30.00",
+            },
+            critical_requirements=[
+                {
+                    "requirement_id": "req_shared",
+                    "title": "Shared requirement (secondary)",
+                    "section": "1. IAM",
+                    "subsection": "Sub IAM",
+                    "risk_level": 4,
+                    "weight": 120,
+                    "passed_findings": 8,
+                    "total_findings": 12,
+                    "description": "Lower risk duplicate",
+                },
+                {
+                    "requirement_id": "req_unique_two",
+                    "title": "Unique provider two",
+                    "section": "3. Logging",
+                    "subsection": "Sub Logging",
+                    "risk_level": 5,
+                    "weight": 110,
+                    "passed_findings": 6,
+                    "total_findings": 10,
+                    "description": "Another critical requirement",
+                },
+            ],
+            total_requirements=80,
+            passed_requirements=30,
+            failed_requirements=50,
+            manual_requirements=0,
+            total_findings=50,
+            passed_findings=15,
+            failed_findings=35,
+        )
+
+        older_inserted = datetime(2025, 1, 1, 12, 0, tzinfo=timezone.utc)
+        newer_inserted = datetime(2025, 1, 2, 12, 0, tzinfo=timezone.utc)
+        ThreatScoreSnapshot.objects.filter(id=snapshot1.id).update(
+            inserted_at=older_inserted
+        )
+        ThreatScoreSnapshot.objects.filter(id=snapshot2.id).update(
+            inserted_at=newer_inserted
+        )
+        snapshot2.refresh_from_db()
+
+        response = authenticated_client.get(reverse("overview-threatscore"))
+
+        assert response.status_code == status.HTTP_200_OK
+        body = response.json()
+        assert len(body["data"]) == 1
+        aggregated = body["data"][0]
+
+        assert aggregated["id"] == "n/a"
+        assert aggregated["relationships"]["scan"]["data"] is None
+        assert aggregated["relationships"]["provider"]["data"] is None
+
+        attrs = aggregated["attributes"]
+        assert Decimal(attrs["overall_score"]) == Decimal("60.00")
+        assert Decimal(attrs["score_delta"]) == Decimal("2.67")
+        assert attrs["inserted_at"] == snapshot2.inserted_at.isoformat().replace(
+            "+00:00", "Z"
+        )
+        assert attrs["total_findings"] == 150
+        assert attrs["passed_findings"] == 85
+        assert attrs["failed_findings"] == 65
+        assert attrs["total_requirements"] == 200
+        assert attrs["passed_requirements"] == 120
+        assert attrs["failed_requirements"] == 80
+        assert attrs["manual_requirements"] == 0
+
+        assert attrs["section_scores"] == {
+            "1. IAM": "50.00",
+            "2. Attack Surface": "53.33",
+            "3. Logging": "30.00",
+        }
+
+        expected_critical = [
+            {
+                "requirement_id": "req_shared",
+                "title": "Shared requirement (preferred)",
+                "section": "1. IAM",
+                "subsection": "Sub IAM",
+                "risk_level": 5,
+                "weight": 150,
+                "passed_findings": 14,
+                "total_findings": 20,
+                "description": "Higher risk duplicate",
+            },
+            {
+                "requirement_id": "req_unique_two",
+                "title": "Unique provider two",
+                "section": "3. Logging",
+                "subsection": "Sub Logging",
+                "risk_level": 5,
+                "weight": 110,
+                "passed_findings": 6,
+                "total_findings": 10,
+                "description": "Another critical requirement",
+            },
+            {
+                "requirement_id": "req_unique_one",
+                "title": "Unique provider one",
+                "section": "2. Attack Surface",
+                "subsection": "Sub Attack",
+                "risk_level": 4,
+                "weight": 90,
+                "passed_findings": 20,
+                "total_findings": 30,
+                "description": "Lower risk",
+            },
+        ]
+        assert attrs["critical_requirements"] == expected_critical
+
+    def test_overview_threatscore_weight_fallback_to_requirements(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        tenant = tenants_fixture[0]
+        provider1, provider2, *_ = providers_fixture
+
+        scan1 = self._create_scan(tenant, provider1, "fallback-scan-1")
+        scan2 = self._create_scan(tenant, provider2, "fallback-scan-2")
+
+        self._create_threatscore_snapshot(
+            tenant,
+            scan1,
+            provider1,
+            compliance_id="prowler_threatscore_aws",
+            overall_score="90.00",
+            score_delta="4.00",
+            section_scores={"1. IAM": "90.00"},
+            critical_requirements=[],
+            total_requirements=10,
+            passed_requirements=8,
+            failed_requirements=0,
+            manual_requirements=2,
+            total_findings=0,
+            passed_findings=0,
+            failed_findings=0,
+        )
+        self._create_threatscore_snapshot(
+            tenant,
+            scan2,
+            provider2,
+            compliance_id="prowler_threatscore_aws",
+            overall_score="50.00",
+            score_delta="1.00",
+            section_scores={"1. IAM": "40.00"},
+            critical_requirements=[],
+            total_requirements=12,
+            passed_requirements=5,
+            failed_requirements=7,
+            manual_requirements=0,
+            total_findings=10,
+            passed_findings=4,
+            failed_findings=6,
+        )
+
+        response = authenticated_client.get(reverse("overview-threatscore"))
+        assert response.status_code == status.HTTP_200_OK
+        aggregate = response.json()["data"][0]["attributes"]
+
+        assert Decimal(aggregate["overall_score"]) == Decimal("67.78")
+        assert Decimal(aggregate["score_delta"]) == Decimal("2.33")
+        assert aggregate["total_findings"] == 10
+        assert aggregate["total_requirements"] == 22
+        assert aggregate["manual_requirements"] == 2
+        assert aggregate["section_scores"] == {"1. IAM": "62.22"}
+
+    def test_overview_threatscore_filter_by_scan_id_returns_snapshot(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        tenant = tenants_fixture[0]
+        provider1, *_ = providers_fixture
+        scan = self._create_scan(tenant, provider1, "filter-scan")
+
+        snapshot = self._create_threatscore_snapshot(
+            tenant,
+            scan,
+            provider1,
+            compliance_id="prowler_threatscore_aws",
+            overall_score="75.00",
+            score_delta="3.00",
+            section_scores={"1. IAM": "70.00"},
+            critical_requirements=[],
+            total_requirements=50,
+            passed_requirements=30,
+            failed_requirements=20,
+            manual_requirements=0,
+            total_findings=25,
+            passed_findings=15,
+            failed_findings=10,
+        )
+
+        response = authenticated_client.get(
+            reverse("overview-threatscore"), {"filter[scan_id]": str(scan.id)}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        body = response.json()
+        assert len(body["data"]) == 1
+        assert body["data"][0]["id"] == str(snapshot.id)
+        assert body["data"][0]["attributes"]["overall_score"] == "75.00"
+
+    def test_overview_threatscore_snapshot_id_returns_specific_snapshot(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        tenant = tenants_fixture[0]
+        provider1, *_ = providers_fixture
+        scan = self._create_scan(tenant, provider1, "snapshot-id-scan")
+
+        snapshot = self._create_threatscore_snapshot(
+            tenant,
+            scan,
+            provider1,
+            compliance_id="prowler_threatscore_aws",
+            overall_score="88.50",
+            score_delta=None,
+            section_scores={"1. IAM": "80.00"},
+            critical_requirements=[],
+            total_requirements=60,
+            passed_requirements=45,
+            failed_requirements=15,
+            manual_requirements=0,
+            total_findings=30,
+            passed_findings=25,
+            failed_findings=5,
+        )
+
+        response = authenticated_client.get(
+            reverse("overview-threatscore"), {"snapshot_id": str(snapshot.id)}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["data"]["id"] == str(snapshot.id)
+        assert data["data"]["attributes"]["score_delta"] is None
+
+    def test_overview_threatscore_provider_filter_returns_unaggregated_snapshot(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        tenant = tenants_fixture[0]
+        provider1, provider2, *_ = providers_fixture
+
+        scan1 = self._create_scan(tenant, provider1, "provider-filter-scan-1")
+        scan2 = self._create_scan(tenant, provider2, "provider-filter-scan-2")
+
+        snapshot1 = self._create_threatscore_snapshot(
+            tenant,
+            scan1,
+            provider1,
+            compliance_id="prowler_threatscore_aws",
+            overall_score="55.55",
+            score_delta="1.10",
+            section_scores={"1. IAM": "50.00"},
+            critical_requirements=[],
+            total_requirements=40,
+            passed_requirements=25,
+            failed_requirements=15,
+            manual_requirements=0,
+            total_findings=12,
+            passed_findings=7,
+            failed_findings=5,
+        )
+        self._create_threatscore_snapshot(
+            tenant,
+            scan2,
+            provider2,
+            compliance_id="prowler_threatscore_aws",
+            overall_score="44.44",
+            score_delta="0.80",
+            section_scores={"1. IAM": "40.00"},
+            critical_requirements=[],
+            total_requirements=30,
+            passed_requirements=18,
+            failed_requirements=12,
+            manual_requirements=0,
+            total_findings=10,
+            passed_findings=6,
+            failed_findings=4,
+        )
+
+        response = authenticated_client.get(
+            reverse("overview-threatscore"),
+            {"filter[provider_id__in]": str(provider1.id)},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["id"] == str(snapshot1.id)
+        assert data[0]["attributes"]["overall_score"] == "55.55"
 
     def test_overview_services_list_no_required_filters(
         self, authenticated_client, scan_summaries_fixture
     ):
         response = authenticated_client.get(reverse("overview-services"))
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_200_OK
+        # Should return services from latest scans
+        assert len(response.json()["data"]) == 2
 
     def test_overview_services_list(self, authenticated_client, scan_summaries_fixture):
         response = authenticated_client.get(
@@ -8716,7 +9707,7 @@ class TestLighthouseTenantConfigViewSet:
         """Test creating a tenant config successfully via PATCH (upsert)"""
         payload = {
             "data": {
-                "type": "lighthouse-config",
+                "type": "lighthouse-configurations",
                 "attributes": {
                     "business_context": "Test business context for security analysis",
                     "default_provider": "",
@@ -8725,7 +9716,7 @@ class TestLighthouseTenantConfigViewSet:
             }
         }
         response = authenticated_client.patch(
-            reverse("lighthouse-config"),
+            reverse("lighthouse-configurations"),
             data=payload,
             content_type=API_JSON_CONTENT_TYPE,
         )
@@ -8742,7 +9733,7 @@ class TestLighthouseTenantConfigViewSet:
         """Test that PATCH creates config if not exists and updates if exists (upsert)"""
         payload = {
             "data": {
-                "type": "lighthouse-config",
+                "type": "lighthouse-configurations",
                 "attributes": {
                     "business_context": "First config",
                 },
@@ -8751,7 +9742,7 @@ class TestLighthouseTenantConfigViewSet:
 
         # First PATCH creates the config
         response = authenticated_client.patch(
-            reverse("lighthouse-config"),
+            reverse("lighthouse-configurations"),
             data=payload,
             content_type=API_JSON_CONTENT_TYPE,
         )
@@ -8762,7 +9753,7 @@ class TestLighthouseTenantConfigViewSet:
         # Second PATCH updates the same config (not creating a duplicate)
         payload["data"]["attributes"]["business_context"] = "Updated config"
         response = authenticated_client.patch(
-            reverse("lighthouse-config"),
+            reverse("lighthouse-configurations"),
             data=payload,
             content_type=API_JSON_CONTENT_TYPE,
         )
@@ -8818,7 +9809,7 @@ class TestLighthouseTenantConfigViewSet:
         )
 
         # Retrieve and verify the configuration
-        response = authenticated_client.get(reverse("lighthouse-config"))
+        response = authenticated_client.get(reverse("lighthouse-configurations"))
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
         assert data["id"] == str(config.id)
@@ -8828,7 +9819,7 @@ class TestLighthouseTenantConfigViewSet:
 
     def test_lighthouse_tenant_config_retrieve_not_found(self, authenticated_client):
         """Test GET when config doesn't exist returns 404"""
-        response = authenticated_client.get(reverse("lighthouse-config"))
+        response = authenticated_client.get(reverse("lighthouse-configurations"))
         assert response.status_code == status.HTTP_404_NOT_FOUND
         assert "not found" in response.json()["errors"][0]["detail"].lower()
 
@@ -8849,14 +9840,14 @@ class TestLighthouseTenantConfigViewSet:
         # Update it
         payload = {
             "data": {
-                "type": "lighthouse-config",
+                "type": "lighthouse-configurations",
                 "attributes": {
                     "business_context": "Updated context for cloud security",
                 },
             }
         }
         response = authenticated_client.patch(
-            reverse("lighthouse-config"),
+            reverse("lighthouse-configurations"),
             data=payload,
             content_type=API_JSON_CONTENT_TYPE,
         )
@@ -8881,14 +9872,14 @@ class TestLighthouseTenantConfigViewSet:
         # Try to set invalid provider
         payload = {
             "data": {
-                "type": "lighthouse-config",
+                "type": "lighthouse-configurations",
                 "attributes": {
                     "default_provider": "nonexistent-provider",
                 },
             }
         }
         response = authenticated_client.patch(
-            reverse("lighthouse-config"),
+            reverse("lighthouse-configurations"),
             data=payload,
             content_type=API_JSON_CONTENT_TYPE,
         )
@@ -8909,7 +9900,7 @@ class TestLighthouseTenantConfigViewSet:
 
         # Send invalid JSON
         response = authenticated_client.patch(
-            reverse("lighthouse-config"),
+            reverse("lighthouse-configurations"),
             data="invalid json",
             content_type=API_JSON_CONTENT_TYPE,
         )
@@ -9186,3 +10177,934 @@ class TestLighthouseProviderConfigViewSet:
 
         # Unrelated entries should remain untouched
         assert cfg.default_models.get("other") == "model-x"
+
+
+@pytest.mark.django_db
+class TestMuteRuleViewSet:
+    """Tests for MuteRule endpoints."""
+
+    def test_mute_rules_list(self, authenticated_client, mute_rules_fixture):
+        """Test listing all mute rules for the tenant."""
+        response = authenticated_client.get(reverse("mute-rule-list"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == len(mute_rules_fixture)
+
+    def test_mute_rules_list_empty(self, authenticated_client, tenants_fixture):
+        """Test listing mute rules when none exist returns empty list."""
+        response = authenticated_client.get(reverse("mute-rule-list"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 0
+        assert isinstance(data, list)
+
+    def test_mute_rules_list_default_ordering(
+        self, authenticated_client, mute_rules_fixture
+    ):
+        """Test that mute rules are ordered by -inserted_at by default."""
+        response = authenticated_client.get(reverse("mute-rule-list"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+
+        if len(data) >= 2:
+            first_date = data[0]["attributes"]["inserted_at"]
+            second_date = data[1]["attributes"]["inserted_at"]
+            assert first_date >= second_date
+
+    def test_mute_rules_retrieve(self, authenticated_client, mute_rules_fixture):
+        """Test retrieving a single mute rule by ID."""
+        mute_rule = mute_rules_fixture[0]
+        response = authenticated_client.get(
+            reverse("mute-rule-detail", kwargs={"pk": mute_rule.id})
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data["id"] == str(mute_rule.id)
+        assert data["attributes"]["name"] == mute_rule.name
+        assert data["attributes"]["reason"] == mute_rule.reason
+        assert data["attributes"]["enabled"] == mute_rule.enabled
+        assert "finding_uids" in data["attributes"]
+        assert "inserted_at" in data["attributes"]
+        assert "updated_at" in data["attributes"]
+
+    def test_mute_rules_retrieve_invalid(self, authenticated_client):
+        """Test retrieving non-existent mute rule returns 404."""
+        response = authenticated_client.get(
+            reverse(
+                "mute-rule-detail",
+                kwargs={"pk": "f498b103-c760-4785-9a3e-e23fafbb7b02"},
+            )
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @pytest.mark.parametrize(
+        "filter_name, filter_value, expected_count",
+        (
+            [
+                ("name", "Test Rule 1", 1),
+                ("name.icontains", "rule", 2),
+                ("reason.icontains", "security", 1),
+                ("enabled", True, 1),
+                ("enabled", False, 1),
+            ]
+        ),
+    )
+    def test_mute_rule_filters(
+        self,
+        authenticated_client,
+        mute_rules_fixture,
+        filter_name,
+        filter_value,
+        expected_count,
+    ):
+        """Test filtering mute rules by various fields."""
+        filters = {f"filter[{filter_name}]": filter_value}
+        response = authenticated_client.get(reverse("mute-rule-list"), filters)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == expected_count
+
+    def test_mute_rule_filter_by_created_by(
+        self, authenticated_client, mute_rules_fixture, create_test_user
+    ):
+        """Test filtering mute rules by creator."""
+        response = authenticated_client.get(
+            reverse("mute-rule-list"),
+            {"filter[created_by]": create_test_user.id},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 2
+
+    def test_mute_rule_search(self, authenticated_client, mute_rules_fixture):
+        """Test searching mute rules by name and reason."""
+        response = authenticated_client.get(
+            reverse("mute-rule-list"), {"filter[search]": "Rule 1"}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+
+    @pytest.mark.parametrize(
+        "sort_field, first_index",
+        (
+            [
+                ("name", 0),
+                ("-name", 1),
+                ("inserted_at", 0),
+                ("-inserted_at", 1),
+            ]
+        ),
+    )
+    def test_mute_rule_ordering(
+        self, authenticated_client, mute_rules_fixture, sort_field, first_index
+    ):
+        """Test ordering mute rules by various fields."""
+        response = authenticated_client.get(
+            reverse("mute-rule-list"), {"sort": sort_field}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 2
+        assert data[0]["id"] == str(mute_rules_fixture[first_index].id)
+
+    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    def test_mute_rules_create_valid(
+        self,
+        mock_task,
+        authenticated_client,
+        findings_fixture,
+        create_test_user,
+    ):
+        """Test creating a valid mute rule."""
+        finding_ids = [str(findings_fixture[0].id)]
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": "New Mute Rule",
+                    "reason": "Security exception approved",
+                    "finding_ids": finding_ids,
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+
+        # Verify response contains the created mute rule
+        response_data = response.json()["data"]
+        assert response_data["type"] == "mute-rules"
+        assert response_data["attributes"]["name"] == "New Mute Rule"
+        assert response_data["attributes"]["reason"] == "Security exception approved"
+
+        # Verify the finding was immediately muted
+        from api.models import Finding
+
+        finding = Finding.objects.get(id=findings_fixture[0].id)
+        assert finding.muted is True
+        assert finding.muted_at is not None
+        assert finding.muted_reason == "Security exception approved"
+
+        # Verify background task was called
+        mock_task.assert_called_once()
+
+    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    def test_mute_rules_create_converts_finding_ids_to_uids(
+        self,
+        mock_task,
+        authenticated_client,
+        findings_fixture,
+    ):
+        """Test that finding_ids are converted to finding UIDs."""
+        finding_ids = [str(findings_fixture[0].id), str(findings_fixture[1].id)]
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": "UID Conversion Test",
+                    "reason": "Testing UID conversion",
+                    "finding_ids": finding_ids,
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+
+        # Verify finding_uids contains the UIDs, not IDs
+        from api.models import MuteRule
+
+        mute_rule = MuteRule.objects.get(name="UID Conversion Test")
+        expected_uids = [
+            findings_fixture[0].uid,
+            findings_fixture[1].uid,
+        ]
+        assert set(mute_rule.finding_uids) == set(expected_uids)
+
+    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    def test_mute_rules_deduplicates_uids(
+        self,
+        mock_task,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        scans_fixture,
+    ):
+        """Test that multiple findings with same UID result in only one UID in the rule."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+
+        shared_uid = "prowler-aws-dedupe-test-001"
+
+        finding1 = Finding.objects.create(
+            tenant=tenant,
+            uid=shared_uid,
+            scan=scan,
+            status=Status.FAIL,
+            status_extended="test",
+            severity=Severity.high,
+            impact=Severity.high,
+            check_id="test_check",
+            check_metadata={"CheckId": "test_check"},
+            raw_result={},
+        )
+
+        finding2 = Finding.objects.create(
+            tenant=tenant,
+            uid=shared_uid,
+            scan=scan,
+            status=Status.FAIL,
+            status_extended="test",
+            severity=Severity.high,
+            impact=Severity.high,
+            check_id="test_check",
+            check_metadata={"CheckId": "test_check"},
+            raw_result={},
+        )
+
+        finding_ids = [str(finding1.id), str(finding2.id)]
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": "Dedupe Test Rule",
+                    "reason": "Testing UID deduplication",
+                    "finding_ids": finding_ids,
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+
+        from api.models import MuteRule
+
+        mute_rule = MuteRule.objects.get(name="Dedupe Test Rule")
+        assert len(mute_rule.finding_uids) == 1
+        assert mute_rule.finding_uids[0] == shared_uid
+
+        finding1.refresh_from_db()
+        finding2.refresh_from_db()
+        assert finding1.muted is True
+        assert finding2.muted is True
+
+    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    def test_mute_rules_create_overlap_detection_active(
+        self,
+        mock_task,
+        authenticated_client,
+        mute_rules_fixture,
+        findings_fixture,
+    ):
+        """Test that creating a rule with overlapping UIDs in active rule fails."""
+        # mute_rules_fixture[0] is active and has findings_fixture[0] UID
+        finding_ids = [str(findings_fixture[0].id)]
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": "Overlapping Rule",
+                    "reason": "This should fail",
+                    "finding_ids": finding_ids,
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_409_CONFLICT
+        assert "errors" in response.json()
+        error_detail = response.json()["errors"][0]["detail"]
+        assert (
+            "already muted" in error_detail.lower() or "overlap" in error_detail.lower()
+        )
+
+    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    def test_mute_rules_create_no_overlap_with_inactive(
+        self,
+        mock_task,
+        authenticated_client,
+        mute_rules_fixture,
+        findings_fixture,
+    ):
+        """Test that disabled rules don't prevent new rules with same UIDs."""
+        # mute_rules_fixture[1] is disabled
+        # Disable the enabled rule first
+        mute_rules_fixture[0].enabled = False
+        mute_rules_fixture[0].save()
+
+        finding_ids = [str(findings_fixture[0].id)]
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": "Non-overlapping Rule",
+                    "reason": "Inactive rules don't block",
+                    "finding_ids": finding_ids,
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+
+    def test_mute_rules_create_invalid_empty_finding_ids(self, authenticated_client):
+        """Test creating mute rule with empty finding_ids fails."""
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": "Valid",
+                    "reason": "Valid",
+                    "finding_ids": [],
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "errors" in response.json()
+        assert (
+            response.json()["errors"][0]["source"]["pointer"]
+            == "/data/attributes/finding_ids"
+        )
+
+    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    def test_mute_rules_create_invalid_finding_ids(
+        self, mock_task, authenticated_client
+    ):
+        """Test creating mute rule with non-existent finding IDs fails."""
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": "Invalid Findings",
+                    "reason": "This should fail",
+                    "finding_ids": ["f498b103-c760-4785-9a3e-e23fafbb7b02"],
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "errors" in response.json()
+
+    def test_mute_rules_create_duplicate_name(
+        self, authenticated_client, mute_rules_fixture
+    ):
+        """Test creating a mute rule with duplicate name fails."""
+        existing_name = mute_rules_fixture[0].name
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "attributes": {
+                    "name": existing_name,
+                    "reason": "Duplicate name test",
+                    "finding_ids": ["f498b103-c760-4785-9a3e-e23fafbb7b02"],
+                },
+            }
+        }
+        response = authenticated_client.post(
+            reverse("mute-rule-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "errors" in response.json()
+
+    def test_mute_rules_update_name(self, authenticated_client, mute_rules_fixture):
+        """Test updating mute rule name."""
+        mute_rule = mute_rules_fixture[0]
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "id": str(mute_rule.id),
+                "attributes": {
+                    "name": "Updated Name",
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("mute-rule-detail", kwargs={"pk": mute_rule.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()["data"]
+        assert response_data["attributes"]["name"] == "Updated Name"
+
+        # Verify database was updated
+        mute_rule.refresh_from_db()
+        assert mute_rule.name == "Updated Name"
+
+    def test_mute_rules_update_reason(self, authenticated_client, mute_rules_fixture):
+        """Test updating mute rule reason."""
+        mute_rule = mute_rules_fixture[0]
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "id": str(mute_rule.id),
+                "attributes": {
+                    "reason": "Updated reason for muting",
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("mute-rule-detail", kwargs={"pk": mute_rule.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()["data"]
+        assert response_data["attributes"]["reason"] == "Updated reason for muting"
+
+        mute_rule.refresh_from_db()
+        assert mute_rule.reason == "Updated reason for muting"
+
+    def test_mute_rules_update_enabled(self, authenticated_client, mute_rules_fixture):
+        """Test disabling a mute rule."""
+        mute_rule = mute_rules_fixture[0]
+        assert mute_rule.enabled is True
+
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "id": str(mute_rule.id),
+                "attributes": {
+                    "enabled": False,
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("mute-rule-detail", kwargs={"pk": mute_rule.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        response_data = response.json()["data"]
+        assert response_data["attributes"]["enabled"] is False
+
+        mute_rule.refresh_from_db()
+        assert mute_rule.enabled is False
+
+    def test_mute_rules_update_duplicate_name(
+        self, authenticated_client, mute_rules_fixture
+    ):
+        """Test updating mute rule with duplicate name fails."""
+        first_rule = mute_rules_fixture[0]
+        second_rule = mute_rules_fixture[1]
+
+        data = {
+            "data": {
+                "type": "mute-rules",
+                "id": str(second_rule.id),
+                "attributes": {
+                    "name": first_rule.name,
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("mute-rule-detail", kwargs={"pk": second_rule.id}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "errors" in response.json()
+
+    def test_mute_rules_delete(self, authenticated_client, mute_rules_fixture):
+        """Test deleting a mute rule."""
+        mute_rule = mute_rules_fixture[0]
+        response = authenticated_client.delete(
+            reverse("mute-rule-detail", kwargs={"pk": mute_rule.id})
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+        # Verify rule was deleted
+        from api.models import MuteRule
+
+        assert not MuteRule.objects.filter(id=mute_rule.id).exists()
+
+    def test_mute_rules_tenant_isolation(
+        self, authenticated_client, mute_rules_fixture, tenants_fixture
+    ):
+        """Test that users can only access mute rules from their tenant."""
+        # Create a second tenant with a mute rule
+        from api.models import MuteRule, Tenant
+
+        other_tenant = Tenant.objects.create(name="Other Tenant")
+        other_rule = MuteRule.objects.create(
+            tenant=other_tenant,
+            name="Other Tenant Rule",
+            reason="Should not be visible",
+            finding_uids=["test-uid"],
+        )
+
+        # Try to access other tenant's rule
+        response = authenticated_client.get(
+            reverse("mute-rule-detail", kwargs={"pk": other_rule.id})
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+        # List should only show current tenant's rules
+        response = authenticated_client.get(reverse("mute-rule-list"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == len(mute_rules_fixture)
+        for rule_data in data:
+            assert rule_data["id"] != str(other_rule.id)
+
+    @pytest.mark.parametrize(
+        "credentials",
+        [
+            {},  # empty credentials
+            {
+                "access_key_id": "AKIAIOSFODNN7EXAMPLE"
+            },  # missing secret_access_key and region
+            {
+                "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+            },  # missing access_key_id and region
+            {
+                "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+                "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+            },  # missing region
+            {  # invalid access_key_id format (not starting with AKIA)
+                "access_key_id": "ABCD0123456789ABCDEF",
+                "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+                "region": "us-east-1",
+            },
+            {  # invalid access_key_id format (wrong length)
+                "access_key_id": "AKIAIOSFODNN7EXAMPL",
+                "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+                "region": "us-east-1",
+            },
+            {  # invalid secret_access_key format (wrong length)
+                "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+                "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEK",
+                "region": "us-east-1",
+            },
+            {  # invalid region format
+                "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+                "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+                "region": "invalid-region",
+            },
+            {  # invalid region format (uppercase)
+                "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+                "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+                "region": "US-EAST-1",
+            },
+        ],
+    )
+    def test_bedrock_invalid_credentials(self, authenticated_client, credentials):
+        """Bedrock provider with invalid credentials should error"""
+        payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "bedrock",
+                    "credentials": credentials,
+                },
+            }
+        }
+        resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_bedrock_valid_credentials_success(self, authenticated_client):
+        """Bedrock provider with valid AWS credentials should succeed and mask credentials"""
+        valid_credentials = {
+            "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+            "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+            "region": "us-east-1",
+        }
+        payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "bedrock",
+                    "credentials": valid_credentials,
+                },
+            }
+        }
+        resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp.status_code == status.HTTP_201_CREATED
+        data = resp.json()["data"]
+
+        # Verify credentials are returned masked
+        masked_creds = data["attributes"].get("credentials")
+        assert masked_creds is not None
+        assert "access_key_id" in masked_creds
+        assert "secret_access_key" in masked_creds
+        assert "region" in masked_creds
+        # Verify all characters are masked with asterisks
+        assert all(c == "*" for c in masked_creds["access_key_id"])
+        assert all(c == "*" for c in masked_creds["secret_access_key"])
+
+    def test_bedrock_provider_duplicate_per_tenant(self, authenticated_client):
+        """Creating a second Bedrock provider for same tenant should fail"""
+        valid_credentials = {
+            "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+            "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+            "region": "us-west-2",
+        }
+        payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "bedrock",
+                    "credentials": valid_credentials,
+                },
+            }
+        }
+        # First creation succeeds
+        resp1 = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp1.status_code == status.HTTP_201_CREATED
+
+        # Second creation should fail with validation error
+        resp2 = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp2.status_code == status.HTTP_400_BAD_REQUEST
+        assert "already exists" in str(resp2.json()).lower()
+
+    def test_bedrock_patch_credentials_and_fields_filter(self, authenticated_client):
+        """PATCH credentials and verify fields filter returns decrypted values"""
+        valid_credentials = {
+            "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+            "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+            "region": "eu-west-1",
+        }
+        create_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "bedrock",
+                    "credentials": valid_credentials,
+                },
+            }
+        }
+        create_resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=create_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert create_resp.status_code == status.HTTP_201_CREATED
+        provider_id = create_resp.json()["data"]["id"]
+
+        # Update credentials with new valid ones
+        new_credentials = {
+            "access_key_id": "AKIAZZZZZZZZZZZZZZZZ",
+            "secret_access_key": "aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789+/==",
+            "region": "ap-south-1",
+        }
+        patch_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "id": provider_id,
+                "attributes": {
+                    "credentials": new_credentials,
+                    "is_active": False,
+                },
+            }
+        }
+        patch_resp = authenticated_client.patch(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id}),
+            data=patch_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert patch_resp.status_code == status.HTTP_200_OK
+        updated = patch_resp.json()["data"]["attributes"]
+        assert updated["is_active"] is False
+
+        # Default GET should return masked credentials
+        get_resp = authenticated_client.get(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id})
+        )
+        assert get_resp.status_code == status.HTTP_200_OK
+        masked = get_resp.json()["data"]["attributes"]["credentials"]
+        assert all(c == "*" for c in masked["access_key_id"])
+        assert all(c == "*" for c in masked["secret_access_key"])
+
+        # Fields filter should return decrypted credentials
+        get_full = authenticated_client.get(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id})
+            + "?fields[lighthouse-providers]=credentials"
+        )
+        assert get_full.status_code == status.HTTP_200_OK
+        creds = get_full.json()["data"]["attributes"]["credentials"]
+        assert creds["access_key_id"] == new_credentials["access_key_id"]
+        assert creds["secret_access_key"] == new_credentials["secret_access_key"]
+        assert creds["region"] == new_credentials["region"]
+
+    def test_bedrock_partial_credential_update(self, authenticated_client):
+        """Test partial update of Bedrock credentials (e.g., only region)"""
+        # Create provider with full credentials
+        initial_credentials = {
+            "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+            "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+            "region": "us-east-1",
+        }
+        create_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "bedrock",
+                    "credentials": initial_credentials,
+                },
+            }
+        }
+        create_resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=create_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert create_resp.status_code == status.HTTP_201_CREATED
+        provider_id = create_resp.json()["data"]["id"]
+
+        # Update only the region field
+        partial_update = {
+            "region": "eu-west-1",
+        }
+        patch_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "id": provider_id,
+                "attributes": {
+                    "credentials": partial_update,
+                },
+            }
+        }
+        patch_resp = authenticated_client.patch(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id}),
+            data=patch_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert patch_resp.status_code == status.HTTP_200_OK
+
+        # Verify credentials with fields filter - region should be updated, keys preserved
+        get_full = authenticated_client.get(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id})
+            + "?fields[lighthouse-providers]=credentials"
+        )
+        assert get_full.status_code == status.HTTP_200_OK
+        creds = get_full.json()["data"]["attributes"]["credentials"]
+
+        # Original keys should be preserved
+        assert creds["access_key_id"] == initial_credentials["access_key_id"]
+        assert creds["secret_access_key"] == initial_credentials["secret_access_key"]
+        # Region should be updated
+        assert creds["region"] == "eu-west-1"
+
+    @pytest.mark.parametrize(
+        "attributes",
+        [
+            pytest.param(
+                {
+                    "provider_type": "openai_compatible",
+                    "credentials": {"api_key": "compat-key"},
+                },
+                id="missing",
+            ),
+            pytest.param(
+                {
+                    "provider_type": "openai_compatible",
+                    "credentials": {"api_key": "compat-key"},
+                    "base_url": "",
+                },
+                id="empty",
+            ),
+        ],
+    )
+    def test_openai_compatible_missing_base_url(self, authenticated_client, attributes):
+        payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": attributes,
+            }
+        }
+
+        resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        error_detail = str(resp.json()).lower()
+        assert "base_url" in error_detail
+
+    def test_openai_compatible_invalid_credentials(self, authenticated_client):
+        payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "openai_compatible",
+                    "base_url": "https://compat.example/v1",
+                    "credentials": {"api_key": ""},
+                },
+            }
+        }
+
+        resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        errors = resp.json().get("errors", [])
+        assert any(
+            error.get("source", {}).get("pointer")
+            == "/data/attributes/credentials/api_key"
+            for error in errors
+        )
+        assert any(
+            "may not be blank" in error.get("detail", "").lower() for error in errors
+        )
+
+    def test_openai_compatible_patch_credentials_and_fields(self, authenticated_client):
+        create_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "openai_compatible",
+                    "base_url": "https://compat.example/v1",
+                    "credentials": {"api_key": "compat-key-123"},
+                },
+            }
+        }
+
+        create_resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=create_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert create_resp.status_code == status.HTTP_201_CREATED
+        provider_id = create_resp.json()["data"]["id"]
+
+        updated_base_url = "https://compat.example/v2"
+        updated_api_key = "compat-key-456"
+        patch_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "id": provider_id,
+                "attributes": {
+                    "base_url": updated_base_url,
+                    "credentials": {"api_key": updated_api_key},
+                },
+            }
+        }
+
+        patch_resp = authenticated_client.patch(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id}),
+            data=patch_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert patch_resp.status_code == status.HTTP_200_OK
+        updated_attrs = patch_resp.json()["data"]["attributes"]
+        assert updated_attrs["base_url"] == updated_base_url
+        assert updated_attrs["credentials"]["api_key"] == "*" * len(updated_api_key)
+
+        get_resp = authenticated_client.get(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id})
+        )
+        assert get_resp.status_code == status.HTTP_200_OK
+        masked = get_resp.json()["data"]["attributes"]["credentials"]["api_key"]
+        assert masked == "*" * len(updated_api_key)
+
+        get_full = authenticated_client.get(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id})
+            + "?fields[lighthouse-providers]=credentials"
+        )
+        assert get_full.status_code == status.HTTP_200_OK
+        creds = get_full.json()["data"]["attributes"]["credentials"]
+        assert creds["api_key"] == updated_api_key

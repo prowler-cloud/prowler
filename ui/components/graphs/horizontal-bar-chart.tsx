@@ -3,7 +3,7 @@
 import { Bell } from "lucide-react";
 import { useState } from "react";
 
-import { CHART_COLORS, SEVERITY_ORDER } from "./shared/constants";
+import { SEVERITY_ORDER } from "./shared/constants";
 import { getSeverityColorByName } from "./shared/utils";
 import { BarDataPoint } from "./types";
 
@@ -11,9 +11,14 @@ interface HorizontalBarChartProps {
   data: BarDataPoint[];
   height?: number;
   title?: string;
+  labelWidth?: string;
 }
 
-export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
+export function HorizontalBarChart({
+  data,
+  title,
+  labelWidth = "w-20",
+}: HorizontalBarChartProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   const total = data.reduce((sum, d) => sum + (Number(d.value) || 0), 0);
@@ -24,6 +29,7 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
     { name: "High", value: 1, percentage: 100 },
     { name: "Medium", value: 1, percentage: 100 },
     { name: "Low", value: 1, percentage: 100 },
+    { name: "Informational", value: 1, percentage: 100 },
   ];
 
   const sortedData = (isEmpty ? emptyData : [...data]).sort((a, b) => {
@@ -36,10 +42,7 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
     <div className="w-full space-y-6">
       {title && (
         <div>
-          <h3
-            className="text-lg font-semibold"
-            style={{ color: "var(--chart-text-primary)" }}
-          >
+          <h3 className="text-text-neutral-primary text-lg font-semibold">
             {title}
           </h3>
         </div>
@@ -50,38 +53,38 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
           const isHovered = !isEmpty && hoveredIndex === index;
           const isFaded = !isEmpty && hoveredIndex !== null && !isHovered;
           const barColor = isEmpty
-            ? CHART_COLORS.gridLine
+            ? "var(--bg-neutral-tertiary)"
             : item.color ||
               getSeverityColorByName(item.name) ||
-              CHART_COLORS.defaultColor;
+              "var(--bg-neutral-tertiary)";
 
           return (
             <div
-              key={index}
-              className="flex items-center gap-6"
+              key={item.name}
+              className="flex items-center gap-10"
               onMouseEnter={() => !isEmpty && setHoveredIndex(index)}
               onMouseLeave={() => !isEmpty && setHoveredIndex(null)}
             >
               {/* Label */}
-              <div className="w-20 shrink-0">
+              <div className={`w-20 md:${labelWidth} shrink-0`}>
                 <span
-                  className="text-sm font-medium"
+                  className="text-text-neutral-secondary block truncate text-sm font-medium"
                   style={{
-                    color: "var(--chart-text-primary)",
                     opacity: isFaded ? 0.5 : 1,
                     transition: "opacity 0.2s",
                   }}
+                  title={item.name}
                 >
-                  {item.name}
+                  {item.name === "Informational" ? "Info" : item.name}
                 </span>
               </div>
 
               {/* Bar - flexible */}
               <div className="relative flex-1">
-                <div className="absolute inset-0 h-[22px] w-full rounded-xl bg-[#FAFAFA] dark:bg-black" />
+                <div className="bg-bg-neutral-tertiary absolute inset-0 h-[22px] w-full rounded-sm" />
                 {(item.value > 0 || isEmpty) && (
                   <div
-                    className="relative h-[22px] rounded-[4px] border border-black/10 transition-all duration-300"
+                    className="relative h-[22px] rounded-sm border border-black/10 transition-all duration-300"
                     style={{
                       width: isEmpty
                         ? `${item.percentage}%`
@@ -93,7 +96,7 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
                 )}
 
                 {isHovered && (
-                  <div className="absolute top-10 left-0 z-10 rounded-xl border border-slate-200 bg-white px-3 py-1.5 shadow-lg dark:border-[#202020] dark:bg-[#121110]">
+                  <div className="border-border-neutral-tertiary bg-bg-neutral-tertiary absolute top-10 left-0 z-10 rounded-xl border px-3 py-1.5 shadow-lg">
                     <div className="flex flex-col gap-0.5">
                       {/* Title with color chip */}
                       <div className="flex items-center gap-1">
@@ -101,8 +104,10 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
                           className="size-3 shrink-0 rounded"
                           style={{ backgroundColor: barColor }}
                         />
-                        <p className="text-sm leading-5 font-medium text-slate-900 dark:text-[#f4f4f5]">
-                          {item.value.toLocaleString()} {item.name} Risk
+                        <p className="text-text-neutral-primary text-xs leading-5 font-medium">
+                          {item.value.toLocaleString()}{" "}
+                          {item.name === "Informational" ? "Info" : item.name}{" "}
+                          Risk
                         </p>
                       </div>
 
@@ -111,9 +116,9 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
                         <div className="flex items-center gap-1">
                           <Bell
                             size={12}
-                            className="shrink-0 text-slate-600 dark:text-[#d4d4d8]"
+                            className="text-text-neutral-secondary shrink-0"
                           />
-                          <p className="text-sm leading-5 font-medium text-slate-600 dark:text-[#d4d4d8]">
+                          <p className="text-text-neutral-secondary text-xs leading-5 font-medium">
                             {item.newFindings} New Findings
                           </p>
                         </div>
@@ -122,7 +127,7 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
                       {/* Change percentage row */}
                       {item.change !== undefined && (
                         <div className="flex items-start">
-                          <p className="text-sm leading-5 font-medium text-slate-600 dark:text-[#d4d4d8]">
+                          <p className="text-text-neutral-secondary text-xs leading-5 font-medium">
                             {item.change > 0 ? "+" : ""}
                             {item.change}% Since last scan
                           </p>
@@ -135,23 +140,17 @@ export function HorizontalBarChart({ data, title }: HorizontalBarChartProps) {
 
               {/* Percentage and Count */}
               <div
-                className="flex w-[90px] shrink-0 items-center gap-2 text-sm"
+                className="text-text-neutral-secondary ml-6 flex min-w-[90px] shrink-0 items-center gap-2 text-sm"
                 style={{
-                  color: "var(--chart-text-primary)",
                   opacity: isFaded ? 0.5 : 1,
                   transition: "opacity 0.2s",
                 }}
               >
-                <span className="w-[26px] text-right font-medium">
+                <span className="min-w-[26px] text-right font-medium">
                   {isEmpty ? "0" : item.percentage}%
                 </span>
-                <span
-                  className="font-medium"
-                  style={{ color: "var(--chart-text-secondary)" }}
-                >
-                  •
-                </span>
-                <span className="font-bold">
+                <span className="shrink-0 font-medium">•</span>
+                <span className="font-bold whitespace-nowrap">
                   {isEmpty ? "0" : item.value.toLocaleString()}
                 </span>
               </div>

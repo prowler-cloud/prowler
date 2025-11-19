@@ -1,9 +1,9 @@
 from typing import Optional
-from venv import logger
 
 from botocore.client import ClientError
 from pydantic.v1 import BaseModel
 
+from prowler.lib.logger import logger
 from prowler.providers.aws.lib.service.service import AWSService
 
 

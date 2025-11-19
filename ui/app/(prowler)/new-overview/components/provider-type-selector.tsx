@@ -4,12 +4,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { lazy, Suspense } from "react";
 
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/shadcn";
+  MultiSelect,
+  MultiSelectContent,
+  MultiSelectItem,
+  MultiSelectTrigger,
+  MultiSelectValue,
+} from "@/components/shadcn/select/multiselect";
 import { type ProviderProps, ProviderType } from "@/types/providers";
 
 const AWSProviderBadge = lazy(() =>
@@ -40,6 +40,16 @@ const M365ProviderBadge = lazy(() =>
 const GitHubProviderBadge = lazy(() =>
   import("@/components/icons/providers-badge").then((m) => ({
     default: m.GitHubProviderBadge,
+  })),
+);
+const IacProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.IacProviderBadge,
+  })),
+);
+const OracleCloudProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.OracleCloudProviderBadge,
   })),
 );
 
@@ -76,6 +86,14 @@ const PROVIDER_DATA: Record<
   github: {
     label: "GitHub",
     icon: GitHubProviderBadge,
+  },
+  iac: {
+    label: "Infrastructure as Code",
+    icon: IacProviderBadge,
+  },
+  oraclecloud: {
+    label: "Oracle Cloud Infrastructure",
+    icon: OracleCloudProviderBadge,
   },
 };
 
@@ -129,7 +147,7 @@ export const ProviderTypeSelector = ({
   };
 
   const selectedLabel = () => {
-    if (selectedTypes.length === 0) return null; // placeholder visible
+    if (selectedTypes.length === 0) return null;
     if (selectedTypes.length === 1) {
       const providerType = selectedTypes[0] as ProviderType;
       return (
@@ -156,39 +174,36 @@ export const ProviderTypeSelector = ({
         Filter by cloud provider type. Select one or more providers to view
         findings.
       </label>
-      <Select
-        multiple
-        selectedValues={selectedTypes}
-        onMultiValueChange={handleMultiValueChange}
-        ariaLabel="Cloud provider type filter"
+      <MultiSelect
+        values={selectedTypes}
+        onValuesChange={handleMultiValueChange}
       >
-        <SelectTrigger
+        <MultiSelectTrigger
           id="provider-type-selector"
           aria-labelledby="provider-type-label"
         >
-          <SelectValue placeholder="All providers">
-            {selectedLabel()}
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent>
+          {selectedLabel() || <MultiSelectValue placeholder="All providers" />}
+        </MultiSelectTrigger>
+        <MultiSelectContent search={false}>
           {availableTypes.length > 0 ? (
             availableTypes.map((providerType) => (
-              <SelectItem
+              <MultiSelectItem
                 key={providerType}
                 value={providerType}
+                badgeLabel={PROVIDER_DATA[providerType].label}
                 aria-label={`${PROVIDER_DATA[providerType].label} provider`}
               >
                 <span aria-hidden="true">{renderIcon(providerType)}</span>
                 <span>{PROVIDER_DATA[providerType].label}</span>
-              </SelectItem>
+              </MultiSelectItem>
             ))
           ) : (
             <div className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
               No connected providers available
             </div>
           )}
-        </SelectContent>
-      </Select>
+        </MultiSelectContent>
+      </MultiSelect>
     </div>
   );
 };

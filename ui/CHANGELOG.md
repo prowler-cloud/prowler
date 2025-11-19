@@ -2,7 +2,25 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.13.1] (Unreleased)
+## [1.14.0] (Unreleased)
+
+### 🚀 Added
+
+- RSS feeds support [(#9109)](https://github.com/prowler-cloud/prowler/pull/9109)
+- Multi LLM support to Lighthouse AI [(#8925)](https://github.com/prowler-cloud/prowler/pull/8925)
+- Customer Support menu item [(#9143)](https://github.com/prowler-cloud/prowler/pull/9143)
+- IaC (Infrastructure as Code) provider support for scanning remote repositories [(#8751)](https://github.com/prowler-cloud/prowler/pull/8751)
+- External resource link to IaC findings for direct navigation to source code in Git repositories [(#9151)](https://github.com/prowler-cloud/prowler/pull/9151)
+- New Overview page and new app styles [(#9234)](https://github.com/prowler-cloud/prowler/pull/9234)
+
+### 🔄 Changed
+
+- Resource ID moved up in the findings detail page [(#9141)](https://github.com/prowler-cloud/prowler/pull/9141)
+- C5 compliance logo [(#9224)](https://github.com/prowler-cloud/prowler/pull/9224)
+
+---
+
+## [1.13.1]
 
 ### 🔄 Changed
 
@@ -72,6 +90,8 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Field-level email validation message [(#8698)](https://github.com/prowler-cloud/prowler/pull/8698)
 - POST method on auth form [(#8699)](https://github.com/prowler-cloud/prowler/pull/8699)
+
+---
 
 ## [1.12.0] (Prowler v5.12.0)
 

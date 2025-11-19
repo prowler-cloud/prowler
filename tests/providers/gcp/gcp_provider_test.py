@@ -90,6 +90,7 @@ class TestGCPProvider:
             assert gcp_provider.audit_config == {
                 "shodan_api_key": None,
                 "max_unused_account_days": 180,
+                "storage_min_retention_days": 90,
             }
 
     @freeze_time(datetime.today())

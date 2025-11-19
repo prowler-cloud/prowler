@@ -5,6 +5,8 @@ export const PROVIDER_TYPES = [
   "kubernetes",
   "m365",
   "github",
+  "iac",
+  "oraclecloud",
 ] as const;
 
 export type ProviderType = (typeof PROVIDER_TYPES)[number];

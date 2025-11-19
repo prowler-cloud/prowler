@@ -1,31 +1,44 @@
 {
   "Provider": "aws",
   "CheckID": "cloudwatch_log_metric_filter_unauthorized_api_calls",
-  "CheckTitle": "Ensure a log metric filter and alarm exist for unauthorized API calls.",
+  "CheckTitle": "CloudWatch Logs metric filter and alarm exist for unauthorized API calls",
   "CheckType": [
-    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis",
+    "TTPs/Initial Access/Unauthorized Access"
   ],
   "ServiceName": "cloudwatch",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:cloudwatch:region:account-id:certificate/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCloudWatchAlarm",
-  "Description": "Ensure a log metric filter and alarm exist for unauthorized API calls.",
-  "Risk": "Monitoring unauthorized API calls will help reveal application errors and may reduce time to detect malicious activity.",
-  "RelatedUrl": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
+  "Description": "**CloudWatch Logs** for CloudTrail include a metric filter that matches unauthorized API errors (`$.errorCode=\"*UnauthorizedOperation\"` or `$.errorCode=\"AccessDenied*\"`) and a linked alarm that triggers when events match the filter.",
+  "Risk": "Without alerting on **unauthorized API calls**, permission probing and failed access by compromised identities can go unnoticed. Attackers can enumerate services, pivot, and attempt privilege escalation, threatening data **confidentiality** and **integrity**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html",
+    "https://asecure.cloud/a/unauthorized_api_calls/",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/CloudWatchLogs/authorization-failures-alarm.html",
+    "https://www.tenable.com/policies/[type]/AC_AWS_0559",
+    "https://www.intelligentdiscovery.io/controls/cloudwatch/cloudwatch-unauthorized-api-calls",
+    "https://support.icompaas.com/support/solutions/articles/62000083561-ensure-a-log-metric-filter-and-alarm-exist-for-unauthorized-api-calls"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_1",
-      "Terraform": "https://docs.prowler.com/checks/aws/monitoring-policies/monitoring_1#fix---buildtime"
+      "NativeIaC": "```yaml\n# CloudFormation: Create metric filter and alarm for unauthorized API calls\nResources:\n  MetricFilterUnauthorized:\n    Type: AWS::Logs::MetricFilter\n    Properties:\n      LogGroupName: <example_resource_name>\n      FilterPattern: '{($.errorCode = \"*UnauthorizedOperation\") || ($.errorCode = \"AccessDenied*\")}'  # Critical: detects unauthorized/denied API calls\n      MetricTransformations:\n        - MetricName: unauthorized_api_calls_metric\n          MetricNamespace: CISBenchmark\n          MetricValue: \"1\"\n\n  AlarmUnauthorized:\n    Type: AWS::CloudWatch::Alarm\n    Properties:\n      ComparisonOperator: GreaterThanOrEqualToThreshold\n      EvaluationPeriods: 1\n      MetricName: unauthorized_api_calls_metric  # Critical: alarm on the metric from the filter\n      Namespace: CISBenchmark\n      Period: 300\n      Statistic: Sum\n      Threshold: 1\n```",
+      "Other": "1. In the AWS Console, open CloudWatch > Logs > Log groups and select the CloudTrail log group\n2. Go to Metric filters > Create metric filter\n3. Set Filter pattern to: {($.errorCode = \"*UnauthorizedOperation\") || ($.errorCode = \"AccessDenied*\")}\n4. Name the metric unauthorized_api_calls_metric, set Namespace to CISBenchmark, Value to 1, then create\n5. Select the new metric filter and click Create alarm\n6. Set Statistic: Sum, Period: 5 minutes, Threshold type: Static, Threshold: 1, Evaluation periods: 1\n7. Create the alarm",
+      "Terraform": "```hcl\n# Terraform: Metric filter and alarm for unauthorized API calls\nresource \"aws_cloudwatch_log_metric_filter\" \"unauthorized\" {\n  name           = \"unauthorized_api_calls_metric\"\n  log_group_name = \"<example_resource_name>\"\n  pattern        = \"{($.errorCode = \\\"*UnauthorizedOperation\\\") || ($.errorCode = \\\"AccessDenied*\\\")}\"  # Critical: detects unauthorized/denied API calls\n\n  metric_transformation {\n    name      = \"unauthorized_api_calls_metric\"\n    namespace = \"CISBenchmark\"\n    value     = \"1\"\n  }\n}\n\nresource \"aws_cloudwatch_metric_alarm\" \"unauthorized\" {\n  comparison_operator = \"GreaterThanOrEqualToThreshold\"\n  evaluation_periods  = 1\n  metric_name         = \"unauthorized_api_calls_metric\"   # Critical: alarm on the metric from the filter\n  namespace           = \"CISBenchmark\"\n  period              = 300\n  statistic           = \"Sum\"\n  threshold           = 1\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended that a metric filter and alarm be established for unauthorized requests.",
-      "Url": "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudwatch-alarms-for-cloudtrail.html"
+      "Text": "Enable real-time **alerting** by adding a CloudWatch Logs metric filter for unauthorized errors (`*UnauthorizedOperation`, `AccessDenied*`) and associating it with an alarm that notifies responders.\n- Enforce **least privilege** to reduce noise\n- Integrate with IR tooling for **defense in depth**",
+      "Url": "https://hub.prowler.com/check/cloudwatch_log_metric_filter_unauthorized_api_calls"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "threat-detection",
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": "Logging and Monitoring"

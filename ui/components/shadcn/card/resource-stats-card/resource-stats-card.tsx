@@ -3,17 +3,12 @@ import { LucideIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-import { CardVariant } from "../card";
-import { ResourceStatsCardContainer } from "./resource-stats-card-container";
+import { Card, CardVariant } from "../card";
 import type { StatItem } from "./resource-stats-card-content";
 import { ResourceStatsCardContent } from "./resource-stats-card-content";
 import { ResourceStatsCardHeader } from "./resource-stats-card-header";
 
 export type { StatItem };
-
-// Todo: when the design system is ready, we must use the colors from the design system (semantic colors)
-// Variant styles using CVA for type safety and consistency
-// Colors are exact HEX values from Figma design system
 const cardVariants = cva("", {
   variants: {
     variant: {
@@ -109,7 +104,7 @@ export const ResourceStatsCard = ({
         {header && <ResourceStatsCardHeader {...header} size={resolvedSize} />}
         {emptyState ? (
           <div className="flex h-[51px] w-full flex-col items-center justify-center">
-            <p className="text-center text-sm leading-5 font-medium text-slate-600 dark:text-zinc-300">
+            <p className="text-text-neutral-secondary text-center text-sm leading-5 font-medium">
               {emptyState.message}
             </p>
           </div>
@@ -131,15 +126,16 @@ export const ResourceStatsCard = ({
 
   // Otherwise, render with container
   return (
-    <ResourceStatsCardContainer
+    <Card
       ref={ref}
+      variant="inner"
       className={cn(cardVariants({ variant, size }), "flex-col", className)}
       {...props}
     >
       {header && <ResourceStatsCardHeader {...header} size={resolvedSize} />}
       {emptyState ? (
         <div className="flex h-[51px] w-full flex-col items-center justify-center">
-          <p className="text-center text-sm leading-5 font-medium text-slate-600 dark:text-zinc-300">
+          <p className="text-text-neutral-secondary text-center text-sm leading-5 font-medium">
             {emptyState.message}
           </p>
         </div>
@@ -155,7 +151,7 @@ export const ResourceStatsCard = ({
           />
         )
       )}
-    </ResourceStatsCardContainer>
+    </Card>
   );
 };
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -9,8 +9,9 @@ import * as z from "zod";
 
 import { addProvider } from "@/actions/providers/providers";
 import { ProviderTitleDocs } from "@/components/providers/workflow/provider-title-docs";
+import { Button } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
-import { CustomButton, CustomInput } from "@/components/ui/custom";
+import { CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { addProviderFormSchema, ApiError, ProviderType } from "@/types";
 
@@ -50,6 +51,16 @@ const getProviderFieldDetails = (providerType?: ProviderType) => {
       return {
         label: "Username",
         placeholder: "e.g. your-github-username",
+      };
+    case "iac":
+      return {
+        label: "Repository URL",
+        placeholder: "e.g. https://github.com/user/repo",
+      };
+    case "oraclecloud":
+      return {
+        label: "Tenancy OCID",
+        placeholder: "e.g. ocid1.tenancy.oc1..aaaaaaa...",
       };
     default:
       return {
@@ -190,7 +201,6 @@ export const ConnectAccountForm = () => {
               placeholder={providerFieldDetails.placeholder}
               variant="bordered"
               isRequired
-              isInvalid={!!form.formState.errors.providerUid}
             />
             <CustomInput
               control={form.control}
@@ -201,42 +211,39 @@ export const ConnectAccountForm = () => {
               placeholder="Enter the provider alias"
               variant="bordered"
               isRequired={false}
-              isInvalid={!!form.formState.errors.providerAlias}
             />
           </>
         )}
         {/* Navigation buttons */}
-        <div className="flex w-full justify-end sm:gap-6">
+        <div className="flex w-full justify-end gap-4">
           {/* Show "Back" button only in Step 2 */}
           {prevStep === 2 && (
-            <CustomButton
+            <Button
               type="button"
-              ariaLabel="Back"
-              className="w-1/2 bg-transparent"
-              variant="faded"
+              variant="ghost"
               size="lg"
-              radius="lg"
-              onPress={handleBackStep}
-              startContent={!isLoading && <ChevronLeftIcon size={24} />}
-              isDisabled={isLoading}
+              onClick={handleBackStep}
+              disabled={isLoading}
             >
-              <span>Back</span>
-            </CustomButton>
+              {!isLoading && <ChevronLeftIcon size={24} />}
+              Back
+            </Button>
           )}
           {/* Show "Next" button in Step 2 */}
           {prevStep === 2 && (
-            <CustomButton
+            <Button
               type="submit"
-              ariaLabel="Next"
-              className="w-1/2"
-              variant="solid"
-              color="action"
+              variant="default"
               size="lg"
-              isLoading={isLoading}
-              endContent={!isLoading && <ChevronRightIcon size={24} />}
+              disabled={isLoading}
             >
-              {isLoading ? <>Loading</> : <span>Next</span>}
-            </CustomButton>
+              {isLoading ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                <ChevronRightIcon size={24} />
+              )}
+              {isLoading ? "Loading" : "Next"}
+            </Button>
           )}
         </div>
       </form>

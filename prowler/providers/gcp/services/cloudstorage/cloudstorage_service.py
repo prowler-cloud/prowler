@@ -39,6 +39,38 @@ class CloudStorage(GCPService):
                             if isinstance(rules, list):
                                 lifecycle_rules = rules
 
+                        versioning_enabled = bucket.get("versioning", {}).get(
+                            "enabled", False
+                        )
+
+                        soft_delete_enabled = False
+                        soft_delete_policy = bucket.get("softDeletePolicy")
+                        if isinstance(soft_delete_policy, dict):
+                            retention = soft_delete_policy.get(
+                                "retentionDurationSeconds"
+                            )
+                            if retention and int(retention) > 0:
+                                soft_delete_enabled = True
+
+                        logging_info = bucket.get("logging", {})
+                        logging_bucket = logging_info.get("logBucket")
+                        logging_prefix = logging_info.get("logObjectPrefix")
+
+                        retention_policy_raw = bucket.get("retentionPolicy")
+                        retention_policy = None
+                        if isinstance(retention_policy_raw, dict):
+                            rp_seconds = retention_policy_raw.get("retentionPeriod")
+                            if rp_seconds:
+                                retention_policy = RetentionPolicy(
+                                    retention_period=int(rp_seconds),
+                                    is_locked=bool(
+                                        retention_policy_raw.get("isLocked", False)
+                                    ),
+                                    effective_time=retention_policy_raw.get(
+                                        "effectiveTime"
+                                    ),
+                                )
+
                         self.buckets.append(
                             Bucket(
                                 name=bucket["name"],
@@ -48,9 +80,13 @@ class CloudStorage(GCPService):
                                     "uniformBucketLevelAccess"
                                 ]["enabled"],
                                 public=public,
-                                retention_policy=bucket.get("retentionPolicy"),
+                                retention_policy=retention_policy,
                                 project_id=project_id,
                                 lifecycle_rules=lifecycle_rules,
+                                versioning_enabled=versioning_enabled,
+                                soft_delete_enabled=soft_delete_enabled,
+                                logging_bucket=logging_bucket,
+                                logging_prefix=logging_prefix,
                             )
                         )
 
@@ -63,6 +99,12 @@ class CloudStorage(GCPService):
                 )
 
 
+class RetentionPolicy(BaseModel):
+    retention_period: int
+    is_locked: bool
+    effective_time: Optional[str] = None
+
+
 class Bucket(BaseModel):
     name: str
     id: str
@@ -70,5 +112,9 @@ class Bucket(BaseModel):
     uniform_bucket_level_access: bool
     public: bool
     project_id: str
-    retention_policy: Optional[dict] = None
+    retention_policy: Optional[RetentionPolicy] = None
     lifecycle_rules: Optional[list[dict]] = None
+    versioning_enabled: Optional[bool] = False
+    soft_delete_enabled: Optional[bool] = False
+    logging_bucket: Optional[str] = None
+    logging_prefix: Optional[str] = None
