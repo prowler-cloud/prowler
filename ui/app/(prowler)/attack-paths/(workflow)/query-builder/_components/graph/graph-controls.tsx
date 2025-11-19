@@ -8,7 +8,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip/tooltip";
+} from "@/components/shadcn/tooltip";
 
 interface GraphControlsProps {
   onZoomIn: () => void;

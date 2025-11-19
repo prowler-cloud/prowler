@@ -1,8 +1,7 @@
-import { Card, CardBody } from "@heroui/card";
-import { Spacer } from "@heroui/spacer";
 import { Suspense } from "react";
 
 import { getAttackPathScans } from "@/actions/attack-paths";
+import { Card, CardContent } from "@/components/shadcn";
 
 import { AWSConnectionWarning, ScanListTable } from "./_components";
 
@@ -27,23 +26,21 @@ export default async function SelectScanPage() {
         </p>
       </div>
 
-      <Spacer y={4} />
-
       {hasError ? (
         <AWSConnectionWarning />
       ) : !hasScans ? (
-        <Card className="bg-blue-50 dark:bg-blue-950/20">
-          <CardBody className="gap-2">
-            <p className="font-medium text-blue-900 dark:text-blue-100">
+        <Card className="bg-bg-info-secondary dark:bg-bg-info-secondary/20">
+          <CardContent className="gap-2 pt-6">
+            <p className="text-text-info dark:text-text-info font-medium">
               No Attack Path Scans Available
             </p>
-            <p className="text-sm text-blue-800 dark:text-blue-200">
+            <p className="text-text-info dark:text-text-info/80 text-sm">
               AWS is connected, but no attack path scans have been generated
               yet. Attack path scans are created automatically after each
               Prowler scan completes. Please run a Prowler scan on your AWS
               provider first.
             </p>
-          </CardBody>
+          </CardContent>
         </Card>
       ) : (
         <Suspense fallback={<div>Loading scans...</div>}>

@@ -1,6 +1,5 @@
 "use client";
 
-import { Spacer } from "@heroui/spacer";
 import { ArrowLeft, Maximize2, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -258,12 +257,10 @@ export default function QueryBuilderPage() {
         </p>
       </div>
 
-      <Spacer y={2} />
-
       {/* Two Column Layout - Form and Graph */}
       <div className="grid auto-rows-fr grid-cols-1 gap-8 xl:grid-cols-2">
         {/* Query Builder Section - Left Column */}
-        <div className="dark:bg-prowler-blue-400 bg-bg-neutral-secondary flex flex-col gap-4 rounded-lg p-6">
+        <div className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto border p-4">
           {queriesLoading ? (
             <p className="text-sm">Loading queries...</p>
           ) : queriesError ? (
@@ -304,7 +301,7 @@ export default function QueryBuilderPage() {
         </div>
 
         {/* Graph Visualization Section - Right Column */}
-        <div className="flex min-h-full flex-col gap-4">
+        <div className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto border p-4">
           {graphState.loading ? (
             <GraphLoading />
           ) : graphState.data &&
@@ -437,26 +434,26 @@ export default function QueryBuilderPage() {
               </div>
             </>
           ) : (
-            <div className="dark:bg-prowler-blue-400 bg-bg-neutral-secondary flex flex-1 items-center justify-center rounded-lg p-8 text-center">
+            <div className="bg-bg-neutral-tertiary flex flex-1 items-center justify-center rounded text-center">
               <p className="text-text-neutral-secondary dark:text-text-neutral-secondary text-sm">
                 Select a query and click &quot;Execute Query&quot; to visualize
                 the attack path graph
               </p>
             </div>
           )}
-
-          {/* Node Detail Panel - Right Slide Sheet */}
-          {graphState.data &&
-            graphState.data.nodes &&
-            graphState.data.nodes.length > 0 && (
-              <NodeDetailPanel
-                node={graphState.selectedNode}
-                incomingEdges={nodeEdges.incoming}
-                outgoingEdges={nodeEdges.outgoing}
-                onClose={handleCloseDetails}
-              />
-            )}
         </div>
+
+        {/* Node Detail Panel - Right Slide Sheet */}
+        {graphState.data &&
+          graphState.data.nodes &&
+          graphState.data.nodes.length > 0 && (
+            <NodeDetailPanel
+              node={graphState.selectedNode}
+              incomingEdges={nodeEdges.incoming}
+              outgoingEdges={nodeEdges.outgoing}
+              onClose={handleCloseDetails}
+            />
+          )}
       </div>
     </div>
   );

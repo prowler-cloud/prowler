@@ -1,5 +1,3 @@
-import { Spacer } from "@heroui/spacer";
-
 import { Navbar } from "@/components/ui/nav-bar/navbar";
 
 import { WorkflowAttackPaths } from "./_components";
@@ -21,8 +19,6 @@ export default function AttackPathsWorkflowLayout({
         <div className="mb-8">
           <WorkflowAttackPaths />
         </div>
-
-        <Spacer y={2} />
 
         {/* Step Content - Full Width Below */}
         <div>{children}</div>

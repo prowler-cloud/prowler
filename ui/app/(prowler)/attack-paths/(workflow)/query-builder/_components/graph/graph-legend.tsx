@@ -6,7 +6,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip/tooltip";
+} from "@/components/shadcn/tooltip";
 import type { AttackPathGraphData } from "@/types/attack-paths";
 
 import { getNodeColor, GRAPH_NODE_COLORS } from "../../_lib/graph-colors";
