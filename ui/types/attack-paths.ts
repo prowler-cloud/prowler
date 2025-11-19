@@ -4,13 +4,13 @@
  */
 
 // Scan state constants
-const SCAN_STATES = {
+export const SCAN_STATES = {
   EXECUTING: "executing",
   COMPLETED: "completed",
   FAILED: "failed",
 } as const;
 
-type ScanState = (typeof SCAN_STATES)[keyof typeof SCAN_STATES];
+export type ScanState = (typeof SCAN_STATES)[keyof typeof SCAN_STATES];
 
 // Attack Path Scan - Relationship Data
 export interface RelationshipData {

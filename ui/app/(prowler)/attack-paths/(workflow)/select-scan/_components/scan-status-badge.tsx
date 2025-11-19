@@ -3,17 +3,10 @@
 import { Loader2 } from "lucide-react";
 
 import { Badge } from "@/components/shadcn";
-
-const SCAN_STATUSES = {
-  EXECUTING: "executing",
-  COMPLETED: "completed",
-  FAILED: "failed",
-} as const;
-
-type ScanStatus = (typeof SCAN_STATUSES)[keyof typeof SCAN_STATUSES];
+import type { ScanState } from "@/types/attack-paths";
 
 interface ScanStatusBadgeProps {
-  status: ScanStatus;
+  status: ScanState;
   progress?: number;
 }
 

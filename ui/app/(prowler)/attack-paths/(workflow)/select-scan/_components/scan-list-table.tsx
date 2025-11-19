@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { CustomButton } from "@/components/ui/custom";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import type { AttackPathScan } from "@/types/attack-paths";
+import { SCAN_STATES } from "@/types/attack-paths";
 
 import { ScanStatusBadge } from "./scan-status-badge";
 
@@ -33,14 +34,14 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
   };
 
   const isSelectDisabled = (scan: AttackPathScan) => {
-    return scan.attributes.state !== "completed";
+    return scan.attributes.state !== SCAN_STATES.COMPLETED;
   };
 
   const getSelectButtonLabel = (scan: AttackPathScan) => {
-    if (scan.attributes.state === "executing") {
+    if (scan.attributes.state === SCAN_STATES.EXECUTING) {
       return "Waiting...";
     }
-    if (scan.attributes.state === "failed") {
+    if (scan.attributes.state === SCAN_STATES.FAILED) {
       return "Failed";
     }
     return "Select";
@@ -68,7 +69,7 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
               <TableRow key={scan.id}>
                 <TableCell className="font-medium">
                   <div className="flex flex-col gap-1">
-                    <span>{scan.relationships.provider.data.id}</span>
+                    <span>{scan.attributes.provider_alias}</span>
                     <span className="text-xs text-gray-500 dark:text-gray-400">
                       ID: {scan.id.substring(0, 8)}...
                     </span>

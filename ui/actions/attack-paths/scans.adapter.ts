@@ -32,9 +32,15 @@ export function adaptAttackPathScansResponse(
   // Enrich scan data with computed properties
   const enrichedData = response.data.map((scan) => ({
     ...scan,
-    // Can add computed properties here, e.g.:
-    // isRecent: isRecentScan(scan.attributes.completed_at),
-    // durationLabel: formatDuration(scan.attributes.duration),
+    attributes: {
+      ...scan.attributes,
+      // Format duration for display
+      durationLabel: scan.attributes.duration
+        ? formatDuration(scan.attributes.duration)
+        : null,
+      // Check if scan is recent (completed within last 24 hours)
+      isRecent: isRecentScan(scan.attributes.completed_at),
+    },
   }));
 
   // Transform links to MetaDataProps format if pagination exists

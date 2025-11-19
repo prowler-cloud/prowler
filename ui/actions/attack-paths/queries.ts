@@ -6,9 +6,12 @@ import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 import {
   AttackPathQueriesResponse,
+  AttackPathQuery,
   AttackPathQueryResult,
   ExecuteQueryRequest,
 } from "@/types/attack-paths";
+
+import { adaptAttackPathQueriesResponse } from "./queries.adapter";
 
 // Validation schema for UUID - RFC 9562/4122 compliant
 const UUIDSchema = z.uuid();
@@ -18,7 +21,7 @@ const UUIDSchema = z.uuid();
  */
 export const getAvailableQueries = async (
   scanId: string,
-): Promise<AttackPathQueriesResponse | undefined> => {
+): Promise<{ data: AttackPathQuery[] } | undefined> => {
   // Validate scanId is a valid UUID format to prevent request forgery
   const validatedScanId = UUIDSchema.safeParse(scanId);
   if (!validatedScanId.success) {
@@ -37,7 +40,12 @@ export const getAvailableQueries = async (
       },
     );
 
-    return handleApiResponse(response);
+    const apiResponse = await handleApiResponse(response);
+    const adaptedData = adaptAttackPathQueriesResponse(
+      apiResponse as AttackPathQueriesResponse,
+    );
+
+    return { data: adaptedData.data };
   } catch (error) {
     console.error("Error fetching available queries for scan:", error);
     return undefined;
