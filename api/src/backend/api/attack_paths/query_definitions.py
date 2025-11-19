@@ -44,8 +44,8 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
     "aws": [
         AttackPathsQueryDefinition(
             id="aws-rds-instances",
-            name="What RDS instances are installed",
-            description="List every AWS account and the RDS instances it owns.",
+            name="Identify provisioned RDS instances",
+            description="List the selected AWS account alongside the RDS instances it owns.",
             provider="aws",
             cypher="""
                 MATCH path = (aws:AWSAccount {id: $provider_uid})--(rds:RDSInstance)
@@ -60,8 +60,8 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
         ),
         AttackPathsQueryDefinition(
             id="aws-rds-unencrypted-storage",
-            name="Which RDS instances lack storage encryption",
-            description="Find RDS instances where storage encryption is disabled.",
+            name="Identify RDS instances without storage encryption",
+            description="Find RDS instances with storage encryption disabled within the selected account.",
             provider="aws",
             cypher="""
                 MATCH path = (aws:AWSAccount {id: $provider_uid})--(rds:RDSInstance)
@@ -77,8 +77,8 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
         ),
         AttackPathsQueryDefinition(
             id="aws-s3-anonymous-access-buckets",
-            name="Which S3 buckets allow anonymous access",
-            description="Identify S3 buckets with anonymous access enabled.",
+            name="Identify S3 buckets with anonymous access",
+            description="Find S3 buckets that allow anonymous access within the selected account.",
             provider="aws",
             cypher="""
                 MATCH path = (aws:AWSAccount {id: $provider_uid})--(s3:S3Bucket)
@@ -94,8 +94,8 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
         ),
         AttackPathsQueryDefinition(
             id="aws-iam-statements-allow-all-actions",
-            name="Which IAM statements permit wildcard actions",
-            description="Highlight IAM policy statements that allow all actions via '*'.",
+            name="Identify IAM statements that allow all actions",
+            description="Find IAM policy statements that allow all actions via '*' within the selected account.",
             provider="aws",
             cypher="""
                 MATCH path = (aws:AWSAccount {id: $provider_uid})--(principal:AWSPrincipal)--(pol:AWSPolicy)--(stmt:AWSPolicyStatement)
@@ -112,8 +112,8 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
         ),
         AttackPathsQueryDefinition(
             id="aws-iam-statements-allow-delete-policy",
-            name="Which IAM statements allow iam:DeletePolicy",
-            description="Surface IAM policy statements permitting the iam:DeletePolicy action.",
+            name="Identify IAM statements that allow iam:DeletePolicy",
+            description="Find IAM policy statements that allow the iam:DeletePolicy action within the selected account.",
             provider="aws",
             cypher="""
                 MATCH path = (aws:AWSAccount {id: $provider_uid})--(principal:AWSPrincipal)--(pol:AWSPolicy)--(stmt:AWSPolicyStatement)
@@ -130,8 +130,8 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
         ),
         AttackPathsQueryDefinition(
             id="aws-iam-statements-allow-create-actions",
-            name="Which IAM statements allow create actions",
-            description="Locate IAM policy statements that allow actions containing 'create'.",
+            name="Identify IAM statements that allow create actions",
+            description="Find IAM policy statements that allow actions containing 'create' within the selected account.",
             provider="aws",
             cypher="""
                 MATCH path = (aws:AWSAccount {id: $provider_uid})--(principal:AWSPrincipal)--(pol:AWSPolicy)--(stmt:AWSPolicyStatement)
@@ -148,8 +148,8 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
         ),
         AttackPathsQueryDefinition(
             id="aws-ec2-instances-internet-exposed",
-            name="Which EC2 instances are internet exposed",
-            description="Identify EC2 instances flagged as exposed to the internet.",
+            name="Identify internet-exposed EC2 instances",
+            description="Find EC2 instances flagged as exposed to the internet within the selected account.",
             provider="aws",
             cypher="""
                 MATCH path = (aws:AWSAccount {id: $provider_uid})--(instance:EC2Instance {exposed_internet: true})
@@ -165,33 +165,34 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
         ),
         AttackPathsQueryDefinition(
             id="aws-security-groups-open-internet-facing",
-            name="Which internet-facing resources use open security groups",
-            description="Detect internet-facing resources associated with security groups that allow inbound access from 0.0.0.0/0.",
+            name="Identify internet-facing resources with open security groups",
+            description="Find internet-facing resources associated with security groups that allow inbound access from '0.0.0.0/0'.",
             provider="aws",
             cypher="""
-                MATCH (aws:AWSAccount {id: $provider_uid})--(open)
-                MATCH (open)-[:MEMBER_OF_EC2_SECURITY_GROUP]-(sg:EC2SecurityGroup)
-                MATCH (sg)-[:MEMBER_OF_EC2_SECURITY_GROUP]-(ipi:IpPermissionInbound)
-                MATCH (ipi)--(ir:IpRange)
+                MATCH (aws:AWSAccount {id: $provider_uid})-[r0]-(open)
+                MATCH (open)-[r1:MEMBER_OF_EC2_SECURITY_GROUP]-(sg:EC2SecurityGroup)
+                MATCH (sg)-[r2:MEMBER_OF_EC2_SECURITY_GROUP]-(ipi:IpPermissionInbound)
+                MATCH (ipi)-[r3]-(ir:IpRange)
                 WHERE ir.range = "0.0.0.0/0"
                 OPTIONAL MATCH (dns:AWSDNSRecord)-[:DNS_POINTS_TO]->(lb)
                 WHERE open.scheme = "internet-facing"
 
-                WITH aws, open, sg, ipi, ir, dns,
-                    [node IN [aws, open, sg, ipi, ir, dns] WHERE node IS NOT NULL] AS path
+                WITH aws, open, sg, ipi, ir, dns, r0, r1, r2, r3,
+                    [node IN [aws, open, sg, ipi, ir, dns] WHERE node IS NOT NULL] AS nodes_path,
+                    [relationship IN [r0, r1, r2, r3] WHERE relationship IS NOT NULL] AS relationships_path
 
-                UNWIND path as n
+                UNWIND nodes_path as n
                 OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
                 WHERE pf.status = 'FAIL'
 
-                RETURN path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+                RETURN nodes_path, relationships_path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
             """,
             parameters=[],
         ),
         AttackPathsQueryDefinition(
             id="aws-classic-elb-internet-exposed",
-            name="Which Classic Load Balancers are internet exposed",
-            description="Reveal Classic Load Balancers that are exposed to the internet along with their listeners.",
+            name="Identify internet-exposed Classic Load Balancers",
+            description="Find Classic Load Balancers exposed to the internet along with their listeners.",
             provider="aws",
             cypher="""
                 MATCH path = (aws:AWSAccount {id: $provider_uid})--(elb:LoadBalancer)—-(listener:ELBListener)
@@ -207,8 +208,8 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
         ),
         AttackPathsQueryDefinition(
             id="aws-elbv2-internet-exposed",
-            name="Which load balancers v2 are internet exposed",
-            description="List Application or Network Load Balancers marked as internet exposed.",
+            name="Identify internet-exposed ELBv2 load balancers",
+            description="Find ELBv2 load balancers exposed to the internet along with their listeners.",
             provider="aws",
             cypher="""
                 MATCH path = (aws:AWSAccount {id: $provider_uid})--(elbv2:LoadBalancerV2)—-(listener:ELBV2Listener)
@@ -224,36 +225,37 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
         ),
         AttackPathsQueryDefinition(
             id="aws-public-ip-resource-lookup",
-            name="Which resources map to a public IP address",
-            description="Given a public IP, find the related AWS account, resource, and adjacent node.",
+            name="Identify resources by public IP address",
+            description="Given a public IP address, find the related AWS resource and its adjacent node within the selected account.",
             provider="aws",
             cypher="""
                 CALL () {
-                MATCH path = (aws:AWSAccount {id: $provider_uid})--(x:EC2PrivateIp)--(y)
-                WHERE x.public_ip = $ip
-                RETURN aws, x, y
+                    MATCH path = (aws:AWSAccount {id: $provider_uid})-[r]-(x:EC2PrivateIp)-[q]-(y)
+                    WHERE x.public_ip = $ip
+                    RETURN aws, x, r, q, y
 
-                UNION MATCH path = (aws:AWSAccount {id: $provider_uid})--(x:EC2Instance)--(y)
-                WHERE x.publicipaddress = $ip
-                RETURN aws, x, y
+                    UNION MATCH path = (aws:AWSAccount {id: $provider_uid})-[r]-(x:EC2Instance)-[q]-(y)
+                    WHERE x.publicipaddress = $ip
+                    RETURN aws, x, r, q, y
 
-                UNION MATCH path = (aws:AWSAccount {id: $provider_uid})--(x:NetworkInterface)--(y)
-                WHERE x.public_ip = $ip
-                RETURN aws, x, y
+                    UNION MATCH path = (aws:AWSAccount {id: $provider_uid})-[r]-(x:NetworkInterface)-[q]-(y)
+                    WHERE x.public_ip = $ip
+                    RETURN aws, x, r, q, y
 
-                UNION MATCH path = (aws:AWSAccount {id: $provider_uid})--(x:ElasticIPAddress)--(y)
-                WHERE x.public_ip = $ip
-                RETURN aws, x, y
-            }
+                    UNION MATCH path = (aws:AWSAccount {id: $provider_uid})-[r]-(x:ElasticIPAddress)-[q]-(y)
+                    WHERE x.public_ip = $ip
+                    RETURN aws, x, r, q, y
+                }
 
-            WITH aws, x, y,
-                [node IN [aws, x, y] WHERE node IS NOT NULL] AS path
+                WITH aws, x, r, q, y,
+                    [node IN [aws, x, y] WHERE node IS NOT NULL] AS nodes_path,
+                    [relationship IN [r, q] WHERE relationship IS NOT NULL] AS relationships_path
 
-            UNWIND path as n
-            OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
-            WHERE pf.status = 'FAIL'
+                UNWIND nodes_path as n
+                OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
+                WHERE pf.status = 'FAIL'
 
-            RETURN path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+                RETURN nodes_path, relationships_path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
             """,
             parameters=[
                 AttackPathsQueryParameterDefinition(
