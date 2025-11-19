@@ -272,8 +272,13 @@ def _generate_output_directory(
     with rls_transaction(tenant_id):
         started_at = Scan.objects.get(id=scan_id).started_at
 
-    # Sync all report timestamps (findings + compliance) with the scan timestamp
-    set_output_timestamp(started_at)
+    # Align report timestamps with the scan start time but keep them naive/local
+    local_started_at = (
+        started_at.astimezone().replace(tzinfo=None)
+        if getattr(started_at, "tzinfo", None)
+        else started_at
+    )
+    set_output_timestamp(local_started_at)
 
     timestamp = started_at.strftime("%Y%m%d%H%M%S")
     path = (
