@@ -61,20 +61,30 @@ export const CustomDatePicker = () => {
   return (
     <div className="flex w-full flex-col md:gap-2">
       <DatePicker
+        style={{
+          borderRadius: "0.5rem",
+        }}
         aria-label="Select a Date"
         classNames={{
+          base: "w-full [&]:!rounded-lg [&>*]:!rounded-lg",
+          selectorButton: "text-bg-button-secondary shrink-0",
+          input:
+            "text-bg-button-secondary placeholder:text-bg-button-secondary text-sm",
+          innerWrapper: "[&]:!rounded-lg",
           inputWrapper:
-            "border-border-input-primary border bg-bg-input-primary hover:bg-bg-neutral-secondary min-h-10",
+            "!border-border-input-primary !bg-bg-input-primary dark:!bg-input/30 dark:hover:!bg-input/50 hover:!bg-bg-neutral-secondary !border [&]:!rounded-lg !shadow-xs !transition-[color,box-shadow] focus-within:!border-border-input-primary-press focus-within:!ring-1 focus-within:!ring-border-input-primary-press focus-within:!ring-offset-1 !h-10 !px-4 !py-3 !outline-none",
+          segment: "text-bg-button-secondary",
         }}
         popoverProps={{
           classNames: {
-            content: "border border-border-neutral-secondary",
+            content:
+              "border-border-input-primary bg-bg-input-primary border rounded-lg",
           },
         }}
         CalendarTopContent={
           <ButtonGroup
             fullWidth
-            className="bg-bg-neutral-secondary [&>button]:border-border-neutral-secondary [&>button]:text-text-neutral-secondary px-3 pt-3 pb-2"
+            className="bg-bg-neutral-secondary [&>button]:border-border-neutral-secondary [&>button]:text-bg-button-secondary px-3 pt-3 pb-2"
             radius="full"
             size="sm"
             variant="flat"
@@ -100,8 +110,6 @@ export const CustomDatePicker = () => {
         }}
         value={value}
         onChange={handleDateChange}
-        size="sm"
-        variant="flat"
       />
     </div>
   );

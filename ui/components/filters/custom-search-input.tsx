@@ -54,18 +54,22 @@ export const CustomSearchInput: React.FC = () => {
 
   return (
     <Input
-      variant="flat"
+      style={{
+        borderRadius: "0.5rem",
+      }}
       classNames={{
-        input: "text-text-neutral-secondary",
+        base: "w-full [&]:!rounded-lg [&>*]:!rounded-lg",
+        input:
+          "text-bg-button-secondary placeholder:text-bg-button-secondary text-sm",
         inputWrapper:
-          "border-border-input-primary border bg-bg-input-primary hover:bg-bg-neutral-secondary min-h-10",
-        clearButton: "text-text-neutral-secondary",
+          "!border-border-input-primary !bg-bg-input-primary dark:!bg-input/30 dark:hover:!bg-input/50 hover:!bg-bg-neutral-secondary !border [&]:!rounded-lg !shadow-xs !transition-[color,box-shadow] focus-within:!border-border-input-primary-press focus-within:!ring-1 focus-within:!ring-border-input-primary-press focus-within:!ring-offset-1 !h-10 !px-4 !py-3 !outline-none",
+        clearButton: "text-bg-button-secondary",
       }}
       aria-label="Search"
       placeholder="Search..."
       value={searchQuery}
       startContent={
-        <SearchIcon className="text-text-neutral-secondary" width={16} />
+        <SearchIcon className="text-bg-button-secondary shrink-0" width={16} />
       }
       onChange={(e) => {
         const value = e.target.value;
@@ -74,13 +78,14 @@ export const CustomSearchInput: React.FC = () => {
       }}
       endContent={
         searchQuery && (
-          <button onClick={clearIconSearch} className="focus:outline-none">
-            <XCircle className="text-text-neutral-secondary h-4 w-4" />
+          <button
+            onClick={clearIconSearch}
+            className="text-bg-button-secondary shrink-0 focus:outline-none"
+          >
+            <XCircle className="text-bg-button-secondary h-4 w-4" />
           </button>
         )
       }
-      radius="sm"
-      size="sm"
     />
   );
 };
