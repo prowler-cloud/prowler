@@ -3,6 +3,7 @@ export {
   exportGraphAsPNG,
   exportGraphAsSVG,
 } from "./export";
+export { formatNodeLabel, formatNodeLabels } from "./format";
 export {
   getNodeColor,
   GRAPH_EDGE_COLOR,

@@ -16,10 +16,11 @@ import type {
 } from "@/types/attack-paths";
 
 import {
+  formatNodeLabel,
   getNodeColor,
   GRAPH_EDGE_COLOR,
   GRAPH_SELECTION_COLOR,
-} from "../../_lib/graph-colors";
+} from "../../_lib";
 
 export interface AttackPathGraphRef {
   zoomIn: () => void;
@@ -47,20 +48,6 @@ interface D3Node extends d3.SimulationNodeDatum {
 interface D3Link extends d3.SimulationLinkDatum<D3Node> {
   id: string;
   type: string;
-}
-
-/**
- * Helper function to format camelCase labels to space-separated text
- * e.g., "ProwlerFinding" -> "Prowler Finding", "AWSAccount" -> "Aws Account"
- */
-function formatNodeLabel(label: string): string {
-  return label
-    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
-    .replace(/([a-z\d])([A-Z])/g, "$1 $2")
-    .trim()
-    .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(" ");
 }
 
 /**

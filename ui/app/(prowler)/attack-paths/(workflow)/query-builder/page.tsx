@@ -40,7 +40,7 @@ import {
 import type { AttackPathGraphRef } from "./_components/graph/attack-path-graph";
 import { useGraphState } from "./_hooks/use-graph-state";
 import { useQueryBuilder } from "./_hooks/use-query-builder";
-import { exportGraphAsSVG } from "./_lib/export";
+import { exportGraphAsSVG, formatNodeLabel } from "./_lib";
 
 /**
  * Attack Path Analysis
@@ -437,9 +437,9 @@ export default function AttackPathAnalysisPage() {
                                       Type
                                     </h4>
                                     <p className="text-text-neutral-secondary dark:text-text-neutral-secondary text-xs">
-                                      {graphState.selectedNode?.labels.join(
-                                        ", ",
-                                      )}
+                                      {graphState.selectedNode?.labels
+                                        .map(formatNodeLabel)
+                                        .join(", ")}
                                     </p>
                                   </div>
                                 </div>

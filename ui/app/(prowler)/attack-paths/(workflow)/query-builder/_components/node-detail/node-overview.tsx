@@ -5,6 +5,8 @@ import { InfoField } from "@/components/ui/entities";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import type { GraphNode, GraphNodePropertyValue } from "@/types/attack-paths";
 
+import { formatNodeLabels } from "../../_lib";
+
 interface NodeOverviewProps {
   node: GraphNode;
 }
@@ -26,7 +28,7 @@ export const NodeOverview = ({ node }: NodeOverviewProps) => {
         <InfoField label="Node ID" variant="simple">
           <CodeSnippet value={node.id} />
         </InfoField>
-        <InfoField label="Type">{node.labels.join(", ")}</InfoField>
+        <InfoField label="Type">{formatNodeLabels(node.labels)}</InfoField>
       </div>
 
       {/* Display all properties */}
