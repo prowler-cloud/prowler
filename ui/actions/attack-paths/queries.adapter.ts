@@ -53,39 +53,3 @@ export function adaptAttackPathQueriesResponse(
 
   return { data: enrichedData, metadata };
 }
-
-/**
- * Extract query parameter information
- * Helper function for computing query parameter details
- *
- * @param queryId - Query ID to get details for
- * @param queries - List of available queries
- * @returns Query parameter count and requirements info
- */
-export function getQueryParameterInfo(
-  queryId: string,
-  queries: AttackPathQuery[],
-): {
-  totalParameters: number;
-  requiredParameters: number;
-  hasParameters: boolean;
-} {
-  const query = queries.find((q) => q.id === queryId);
-
-  if (!query) {
-    return {
-      totalParameters: 0,
-      requiredParameters: 0,
-      hasParameters: false,
-    };
-  }
-
-  const parameters = query.attributes.parameters;
-  const requiredParameters = parameters.filter((p) => p.required).length;
-
-  return {
-    totalParameters: parameters.length,
-    requiredParameters,
-    hasParameters: parameters.length > 0,
-  };
-}

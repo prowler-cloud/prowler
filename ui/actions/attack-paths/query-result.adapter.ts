@@ -1,4 +1,8 @@
-import { AttackPathGraphData, GraphEdge } from "@/types/attack-paths";
+import {
+  AttackPathGraphData,
+  GraphEdge,
+  GraphRelationship,
+} from "@/types/attack-paths";
 
 /**
  * Adapts graph query result data for D3 visualization
@@ -16,15 +20,16 @@ export function adaptQueryResultToGraphData(
   graphData: AttackPathGraphData,
 ): AttackPathGraphData {
   // Transform relationships into D3-compatible edges if relationships exist
-  const edges: GraphEdge[] = (graphData.relationships || []).map(
-    (relationship) => ({
-      id: relationship.id,
-      source: relationship.source,
-      target: relationship.target,
-      type: relationship.label, // D3 uses 'type' for styling edge appearance
-      properties: relationship.properties,
-    }),
-  );
+  const edges: GraphEdge[] =
+    (graphData.relationships as GraphRelationship[] | undefined)?.map(
+      (relationship) => ({
+        id: relationship.id,
+        source: relationship.source,
+        target: relationship.target,
+        type: relationship.label, // D3 uses 'type' for styling edge appearance
+        properties: relationship.properties,
+      }),
+    ) ?? [];
 
   return {
     nodes: graphData.nodes,

@@ -62,33 +62,6 @@ export function adaptAttackPathScansResponse(
 }
 
 /**
- * Extract scan status information
- * Helper function for computing scan status with enriched information
- *
- * @param scan - Attack path scan object
- * @returns Computed status information
- */
-export function getScanStatusInfo(scan: AttackPathScan): {
-  status: string;
-  isCompleted: boolean;
-  isExecuting: boolean;
-  isFailed: boolean;
-  duration?: string;
-  completionPercentage: number;
-} {
-  const { state, progress, duration } = scan.attributes;
-
-  return {
-    status: state,
-    isCompleted: state === "completed",
-    isExecuting: state === "executing",
-    isFailed: state === "failed",
-    duration: duration ? formatDuration(duration) : undefined,
-    completionPercentage: progress,
-  };
-}
-
-/**
  * Format duration in seconds to human-readable format
  *
  * @param seconds - Duration in seconds
@@ -106,7 +79,7 @@ function formatDuration(seconds: number): string {
  * @param completedAt - Completion timestamp
  * @returns true if scan completed within last 24 hours
  */
-export function isRecentScan(completedAt: string | null): boolean {
+function isRecentScan(completedAt: string | null): boolean {
   if (!completedAt) return false;
 
   const completionTime = new Date(completedAt).getTime();
