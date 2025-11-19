@@ -10,7 +10,7 @@ import {
   ExecuteQueryRequest,
 } from "@/types/attack-paths";
 
-// Validation schema for UUID
+// Validation schema for UUID - RFC 9562/4122 compliant
 const UUIDSchema = z.string().uuid();
 
 /**

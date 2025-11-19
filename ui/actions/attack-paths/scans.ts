@@ -6,7 +6,7 @@ import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 import { AttackPathScan, AttackPathScansResponse } from "@/types/attack-paths";
 
-// Validation schema for UUID
+// Validation schema for UUID - RFC 9562/4122 compliant
 const UUIDSchema = z.string().uuid();
 
 /**
