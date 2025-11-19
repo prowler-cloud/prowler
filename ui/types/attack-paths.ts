@@ -12,10 +12,27 @@ const SCAN_STATES = {
 
 type ScanState = (typeof SCAN_STATES)[keyof typeof SCAN_STATES];
 
+// Attack Path Scan - Relationship Data
+export interface RelationshipData {
+  type: string;
+  id: string;
+}
+
+export interface RelationshipWrapper {
+  data: RelationshipData;
+}
+
+export interface ScanRelationships {
+  provider: RelationshipWrapper;
+  scan: RelationshipWrapper;
+  task: RelationshipWrapper;
+}
+
 // Attack Path Scan Response
 export interface AttackPathScanAttributes {
   state: ScanState;
   progress: number;
+  provider_alias: string;
   inserted_at: string;
   started_at: string;
   completed_at: string | null;
@@ -26,36 +43,19 @@ export interface AttackPathScan {
   type: "attack-paths-scans";
   id: string;
   attributes: AttackPathScanAttributes;
-  relationships: {
-    provider: {
-      data: {
-        type: "providers";
-        id: string;
-      };
-    };
-    scan: {
-      data: {
-        type: "scans";
-        id: string;
-      };
-    };
-    task: {
-      data: {
-        type: "tasks";
-        id: string;
-      };
-    };
-  };
+  relationships: ScanRelationships;
+}
+
+export interface PaginationLinks {
+  first: string;
+  last: string;
+  next: string | null;
+  prev: string | null;
 }
 
 export interface AttackPathScansResponse {
   data: AttackPathScan[];
-  links: {
-    first: string;
-    last: string;
-    next: string | null;
-    prev: string | null;
-  };
+  links: PaginationLinks;
 }
 
 // Data type constants
@@ -126,22 +126,46 @@ export interface AttackPathGraphData {
   edges?: GraphEdge[];
 }
 
+export interface QueryResultData {
+  type: "attack-paths-query-run-request";
+  id: null;
+  attributes: AttackPathGraphData;
+}
+
 export interface AttackPathQueryResult {
-  data: {
-    type: "attack-paths-query-run-request";
-    id: null;
-    attributes: AttackPathGraphData;
-  };
+  data: QueryResultData;
+}
+
+// Finding severity and status constants
+const FINDING_SEVERITIES = {
+  CRITICAL: "critical",
+  HIGH: "high",
+  MEDIUM: "medium",
+  LOW: "low",
+  INFO: "info",
+} as const;
+
+type FindingSeverity =
+  (typeof FINDING_SEVERITIES)[keyof typeof FINDING_SEVERITIES];
+
+const FINDING_STATUSES = {
+  PASS: "PASS",
+  FAIL: "FAIL",
+  MANUAL: "MANUAL",
+} as const;
+
+type FindingStatus = (typeof FINDING_STATUSES)[keyof typeof FINDING_STATUSES];
+
+export interface RelatedFinding {
+  id: string;
+  title: string;
+  severity: FindingSeverity;
+  status: FindingStatus;
 }
 
 // Node Detail Types
 export interface NodeDetailData extends GraphNode {
-  relatedFindings?: Array<{
-    id: string;
-    title: string;
-    severity: "critical" | "high" | "medium" | "low" | "info";
-    status: "PASS" | "FAIL" | "MANUAL";
-  }>;
+  relatedFindings?: RelatedFinding[];
   incomingEdges?: GraphEdge[];
   outgoingEdges?: GraphEdge[];
 }
@@ -175,12 +199,16 @@ export interface ProviderWithScanStatus {
 }
 
 // API Request/Response Helpers
+export interface QueryRequestAttributes {
+  id: string;
+  parameters?: Record<string, string | number | boolean>;
+}
+
+export interface ExecuteQueryRequestData {
+  type: "attack-paths-query-run-request";
+  attributes: QueryRequestAttributes;
+}
+
 export interface ExecuteQueryRequest {
-  data: {
-    type: "attack-paths-query-run-request";
-    attributes: {
-      id: string;
-      parameters?: Record<string, string | number | boolean>;
-    };
-  };
+  data: ExecuteQueryRequestData;
 }
