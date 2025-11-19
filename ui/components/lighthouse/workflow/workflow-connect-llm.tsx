@@ -64,20 +64,21 @@ export const WorkflowConnectLLM = () => {
         classNames={{
           base: "px-0.5 mb-5",
           label: "text-small",
-          value: "text-small text-default-400",
+          value: "text-small text-button-primary",
+          indicator: "bg-button-primary",
         }}
         label="Steps"
-        maxValue={steps.length - 1}
+        maxValue={steps.length}
         minValue={0}
         showValueLabel={true}
         size="md"
-        value={currentStep}
+        value={currentStep + 1}
         valueLabel={`${currentStep + 1} of ${steps.length}`}
       />
       <VerticalSteps
         hideProgressBars
         currentStep={currentStep}
-        stepClassName="border border-default-200 dark:border-default-50 aria-[current]:bg-default-100 dark:aria-[current]:bg-prowler-blue-800 cursor-default"
+        stepClassName="border border-border-neutral-primary aria-[current]:bg-bg-neutral-primary cursor-default"
         steps={steps}
       />
       <Spacer y={4} />
