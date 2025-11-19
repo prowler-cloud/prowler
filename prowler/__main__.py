@@ -455,9 +455,9 @@ def prowler():
                     findings=finding_outputs,
                     file_path=f"{filename}{json_asff_file_suffix}",
                 )
-                generated_outputs["regular"].append(asff_output)
-                # Write ASFF Finding Object to file
-                asff_output.batch_write_data_to_file()
+                if not args.security_hub:
+                    generated_outputs["regular"].append(asff_output)
+                    asff_output.batch_write_data_to_file()
 
             if mode == "json-ocsf":
                 json_output = OCSF(
@@ -1035,16 +1035,41 @@ def prowler():
                 send_only_fails=output_options.send_sh_only_fails,
                 aws_security_hub_available_regions=security_hub_regions,
             )
-            # Send the findings to Security Hub
-            findings_sent_to_security_hub = security_hub.batch_send_to_security_hub()
-            if findings_sent_to_security_hub == 0:
+            if not security_hub._enabled_regions:
                 print(
-                    f"{Style.BRIGHT}{orange_color}\nNo findings sent to AWS Security Hub.{Style.RESET_ALL}"
+                    f"{Style.BRIGHT}{Fore.RED}\nNo regions with Security Hub enabled with Prowler integration found. More info: https://docs.prowler.cloud/en/latest/tutorials/aws/securityhub/{Style.RESET_ALL}\n"
                 )
+                sys.exit(1)
             else:
-                print(
-                    f"{Style.BRIGHT}{Fore.GREEN}\n{findings_sent_to_security_hub} findings sent to AWS Security Hub!{Style.RESET_ALL}"
+                # Get existing findings timestamps to preserve FirstObservedAt, CreatedAt, and UpdatedAt for findings that already exist
+                existing_findings_timestamps = (
+                    security_hub.get_existing_findings_timestamps()
                 )
+
+                # Create ASFF output with existing timestamps to preserve FirstObservedAt, CreatedAt, and UpdatedAt
+                asff_output_with_timestamps = ASFF(
+                    findings=finding_outputs,
+                    existing_findings_timestamps=existing_findings_timestamps,
+                )
+
+                # Update Security Hub findings to use the ones with preserved timestamps
+                security_hub._findings_per_region = security_hub.filter(
+                    asff_output_with_timestamps.data,
+                    output_options.send_sh_only_fails,
+                )
+
+                # Send the findings to Security Hub
+                findings_sent_to_security_hub = (
+                    security_hub.batch_send_to_security_hub()
+                )
+                if findings_sent_to_security_hub == 0:
+                    print(
+                        f"{Style.BRIGHT}{orange_color}\nNo findings sent to AWS Security Hub.{Style.RESET_ALL}"
+                    )
+                else:
+                    print(
+                        f"{Style.BRIGHT}{Fore.GREEN}\n{findings_sent_to_security_hub} findings sent to AWS Security Hub!{Style.RESET_ALL}"
+                    )
 
             # Resolve previous fails of Security Hub
             if not args.skip_sh_update:
@@ -1062,6 +1087,12 @@ def prowler():
                     print(
                         f"{Style.BRIGHT}{Fore.GREEN}\n{findings_archived_in_security_hub} findings archived in AWS Security Hub!{Style.RESET_ALL}"
                     )
+
+                asff_output_with_timestamps.file_path = (
+                    f"{filename}{json_asff_file_suffix}"
+                )
+                generated_outputs["regular"].append(asff_output_with_timestamps)
+                asff_output_with_timestamps.batch_write_data_to_file()
 
     # Display summary table
     if not args.only_logs:

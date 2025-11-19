@@ -364,6 +364,70 @@ class SecurityHub:
             )
         return success_count
 
+    def get_existing_findings_timestamps(self) -> dict:
+        """
+        Retrieves existing findings from Security Hub that are relevant to the current scan
+        and returns their timestamps. This function only checks for findings that match
+        the current scan's check IDs to improve performance, then filters locally by finding IDs.
+
+        Returns:
+            dict: A dictionary mapping finding IDs to their timestamps from Security Hub.
+        """
+        existing_findings_timestamps = {}
+        logger.info(
+            "Retrieving existing findings timestamps from Security Hub for current scan."
+        )
+
+        # Get unique check IDs and finding IDs from current scan findings
+        current_finding_ids = set()
+        for findings in self._findings_per_region.values():
+            for finding in findings:
+                current_finding_ids.add(finding.Id)
+
+        if not current_finding_ids:
+            logger.info("No current scan findings to check timestamps for.")
+            return existing_findings_timestamps
+
+        logger.info(
+            f"Checking timestamps for {len(current_finding_ids)} findings from current scan."
+        )
+
+        for region in self._findings_per_region.keys():
+            try:
+                # Get findings of that region, filtered by current scan's finding IDs
+                findings_filter = {
+                    "ProductName": [{"Value": "Prowler", "Comparison": "EQUALS"}],
+                    "RecordState": [{"Value": "ACTIVE", "Comparison": "EQUALS"}],
+                    "AwsAccountId": [
+                        {"Value": self._aws_account_id, "Comparison": "EQUALS"}
+                    ],
+                    "Region": [{"Value": region, "Comparison": "EQUALS"}],
+                    "Id": [
+                        {"Value": finding_id, "Comparison": "EQUALS"}
+                        for finding_id in current_finding_ids
+                    ],
+                }
+                get_findings_paginator = self._enabled_regions[region].get_paginator(
+                    "get_findings"
+                )
+
+                # Use the same batching pattern as _send_findings_in_batches
+                self._retrieve_findings_in_batches(
+                    get_findings_paginator,
+                    findings_filter,
+                    existing_findings_timestamps,
+                )
+
+            except Exception as error:
+                logger.error(
+                    f"Error retrieving existing findings timestamps from region {region}: {error.__class__.__name__} -- [{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+        logger.info(
+            f"Retrieved timestamps for {len(existing_findings_timestamps)} existing findings from Security Hub relevant to current scan."
+        )
+        return existing_findings_timestamps
+
     def archive_previous_findings(self) -> int:
         """
         Checks previous findings in Security Hub to archive them.
@@ -417,6 +481,34 @@ class SecurityHub:
                     f"{error.__class__.__name__} -- [{error.__traceback__.tb_lineno}]:{error} in region {region}"
                 )
         return success_count
+
+    def _retrieve_findings_in_batches(
+        self, paginator, findings_filter: dict, existing_findings_timestamps: dict
+    ) -> None:
+        """
+        Retrieves findings from AWS Security Hub in batches using the same pattern as _send_findings_in_batches.
+
+        Args:
+            paginator: The paginator object for get_findings.
+            findings_filter (dict): The filter to apply when retrieving findings.
+            existing_findings_timestamps (dict): Dictionary to store the retrieved findings timestamps.
+        """
+        try:
+            for page in paginator.paginate(
+                Filters=findings_filter,
+                PaginationConfig={"PageSize": SECURITY_HUB_MAX_BATCH},
+            ):
+                for finding in page["Findings"]:
+                    finding_id = finding["Id"]
+                    existing_findings_timestamps[finding_id] = {
+                        "FirstObservedAt": finding.get("FirstObservedAt"),
+                        "CreatedAt": finding.get("CreatedAt"),
+                        "UpdatedAt": finding.get("UpdatedAt"),
+                    }
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__} -- [{error.__traceback__.tb_lineno}]: {error}"
+            )
 
     def _send_findings_in_batches(
         self, findings: list[AWSSecurityFindingFormat], region: str
