@@ -41,7 +41,7 @@ export const ThreatScoreBadge = ({
   const getTextColor = () => {
     if (score >= 80) return "text-success";
     if (score >= 40) return "text-warning";
-    return "text-danger";
+    return "text-text-error";
   };
 
   const handleCardClick = () => {

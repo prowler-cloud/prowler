@@ -69,13 +69,13 @@ export function DataTableRowActions({
             <DropdownSection title="Danger zone">
               <DropdownItem
                 key="revoke"
-                className="text-danger"
+                className="text-text-error"
                 color="danger"
                 description="Revoke this API key permanently"
                 textValue="Revoke"
                 startContent={
                   <DeleteDocumentBulkIcon
-                    className={clsx(iconClasses, "!text-danger")}
+                    className={clsx(iconClasses, "!text-text-error")}
                   />
                 }
                 onPress={() => onRevoke(apiKey)}

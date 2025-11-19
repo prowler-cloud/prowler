@@ -3,11 +3,7 @@
 import { Snippet } from "@heroui/snippet";
 
 import { Button } from "@/components/shadcn";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert/Alert";
+import { Alert, AlertDescription } from "@/components/ui/alert/Alert";
 import { CustomAlertModal } from "@/components/ui/custom/custom-alert-modal";
 
 interface ApiKeySuccessModalProps {
@@ -26,11 +22,9 @@ export const ApiKeySuccessModal = ({
       isOpen={isOpen}
       onOpenChange={(open) => !open && onClose()}
       title="API Key Created Successfully"
-      size="2xl"
     >
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-6">
         <Alert variant="destructive">
-          <AlertTitle>⚠️ Warning</AlertTitle>
           <AlertDescription>
             This is the only time you will see this API key. Please copy it now
             and store it securely. Once you close this dialog, the key cannot be
@@ -39,11 +33,13 @@ export const ApiKeySuccessModal = ({
         </Alert>
 
         <div className="flex flex-col gap-2">
-          <p className="text-sm font-medium">Your API Key</p>
+          <p className="text-text-neutral-primary text-sm font-medium">
+            Your API Key
+          </p>
           <Snippet
             hideSymbol
             classNames={{
-              pre: "font-mono text-sm break-all whitespace-pre-wrap",
+              pre: "font-mono text-sm break-all whitespace-pre-wrap p-2 text-text-neutral-primary",
             }}
             tooltipProps={{
               content: "Copy API key",
@@ -55,9 +51,11 @@ export const ApiKeySuccessModal = ({
         </div>
       </div>
 
-      <Button aria-label="Close and confirm API key saved" onClick={onClose}>
-        Acknowledged
-      </Button>
+      <div className="mt-4 flex justify-end">
+        <Button aria-label="Close and confirm API key saved" onClick={onClose}>
+          Acknowledged
+        </Button>
+      </div>
     </CustomAlertModal>
   );
 };

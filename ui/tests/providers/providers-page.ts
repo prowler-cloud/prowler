@@ -342,8 +342,8 @@ export class ProvidersPage extends BasePage {
       await this.waitForPageLoad();
 
       // Wait for either success (redirect to scans) or error message to appear
-      // The error container has multiple p.text-danger elements, we want the first one with the technical error
-      const errorMessage = this.page.locator("p.text-danger").first();
+      // The error container has multiple p.text-text-error elements, we want the first one with the technical error
+      const errorMessage = this.page.locator("p.text-text-error").first();
 
       try {
         // Wait up to 15 seconds for either the error message or redirect
@@ -730,12 +730,9 @@ export class ProvidersPage extends BasePage {
     // Select the authentication method
 
     // Search botton that contains text AWS SDK Default or Prowler Cloud will assume or Access & Secret Key
-    const button = this.page
-      .locator("button")
-      .filter({
-        hasText:
-          /AWS SDK Default|Prowler Cloud will assume|Access & Secret Key/i,
-      });
+    const button = this.page.locator("button").filter({
+      hasText: /AWS SDK Default|Prowler Cloud will assume|Access & Secret Key/i,
+    });
     await button.click();
 
     if (method === AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN) {

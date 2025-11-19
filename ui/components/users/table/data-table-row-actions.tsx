@@ -95,13 +95,13 @@ export function DataTableRowActions<UserProps>({
             <DropdownSection title="Danger zone">
               <DropdownItem
                 key="delete"
-                className="text-danger"
+                className="text-text-error"
                 color="danger"
                 description="Delete the user permanently"
                 textValue="Delete User"
                 startContent={
                   <DeleteDocumentBulkIcon
-                    className={clsx(iconClasses, "!text-danger")}
+                    className={clsx(iconClasses, "!text-text-error")}
                   />
                 }
                 onPress={() => setIsDeleteOpen(true)}

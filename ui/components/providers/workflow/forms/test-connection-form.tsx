@@ -239,7 +239,7 @@ export const TestConnectionForm = ({
         </div>
 
         {apiErrorMessage && (
-          <div className="text-danger mt-4 rounded-md bg-red-100 p-3">
+          <div className="text-text-error mt-4 rounded-md bg-red-100 p-3">
             <p>{`Provider ID ${apiErrorMessage?.toLowerCase()}. Please check and try again.`}</p>
           </div>
         )}
@@ -250,16 +250,16 @@ export const TestConnectionForm = ({
               <div className="flex items-center">
                 <Icon
                   icon="heroicons:exclamation-circle"
-                  className="text-danger h-5 w-5"
+                  className="text-text-error h-5 w-5"
                 />
               </div>
               <div className="flex items-center">
-                <p className="text-small text-danger">
+                <p className="text-small text-text-error">
                   {connectionStatus.error || "Unknown error"}
                 </p>
               </div>
             </div>
-            <p className="text-small text-danger">
+            <p className="text-small text-text-error">
               It seems there was an issue with your credentials. Please review
               your credentials and try again.
             </p>
