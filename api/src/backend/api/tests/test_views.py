@@ -3545,6 +3545,9 @@ class TestResourceViewSet:
         )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == len(resources_fixture)
+        assert "metadata" in response.json()["data"][0]["attributes"]
+        assert "details" in response.json()["data"][0]["attributes"]
+        assert "partition" in response.json()["data"][0]["attributes"]
 
     @pytest.mark.parametrize(
         "include_values, expected_resources",
@@ -5969,6 +5972,28 @@ class TestComplianceOverviewViewSet:
         assert len(response.json()["data"]) >= 1
         mock_backfill_task.assert_not_called()
 
+    def test_compliance_overview_list_without_scan_id(
+        self, authenticated_client, compliance_requirements_overviews_fixture
+    ):
+        # Ensure the endpoint works without passing a scan filter
+        response = authenticated_client.get(reverse("complianceoverview-list"))
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 3
+
+        # Validate payload structure
+        first_item = data[0]
+        assert "id" in first_item
+        assert "attributes" in first_item
+        attributes = first_item["attributes"]
+        assert "framework" in attributes
+        assert "version" in attributes
+        assert "requirements_passed" in attributes
+        assert "requirements_failed" in attributes
+        assert "requirements_manual" in attributes
+        assert "total_requirements" in attributes
+
     def test_compliance_overview_metadata(
         self, authenticated_client, compliance_requirements_overviews_fixture
     ):
@@ -6755,7 +6780,9 @@ class TestOverviewViewSet:
         self, authenticated_client, scan_summaries_fixture
     ):
         response = authenticated_client.get(reverse("overview-services"))
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_200_OK
+        # Should return services from latest scans
+        assert len(response.json()["data"]) == 2
 
     def test_overview_services_list(self, authenticated_client, scan_summaries_fixture):
         response = authenticated_client.get(

@@ -14,6 +14,7 @@ interface EntityInfoProps {
   hideCopyButton?: boolean;
   snippetWidth?: string;
   showConnectionStatus?: boolean;
+  maxWidth?: string;
 }
 
 export const EntityInfoShort: React.FC<EntityInfoProps> = ({
@@ -22,6 +23,7 @@ export const EntityInfoShort: React.FC<EntityInfoProps> = ({
   entityId,
   hideCopyButton = false,
   showConnectionStatus = false,
+  maxWidth = "max-w-[120px]",
 }) => {
   return (
     <div className="flex items-center justify-start">
@@ -41,7 +43,7 @@ export const EntityInfoShort: React.FC<EntityInfoProps> = ({
             </Tooltip>
           )}
         </div>
-        <div className="flex max-w-[120px] flex-col">
+        <div className={`flex ${maxWidth} flex-col gap-1`}>
           {entityAlias && (
             <Tooltip content={entityAlias} placement="top" size="sm">
               <span className="text-default-500 truncate text-xs text-ellipsis">
@@ -52,7 +54,7 @@ export const EntityInfoShort: React.FC<EntityInfoProps> = ({
           <SnippetChip
             value={entityId ?? ""}
             hideCopyButton={hideCopyButton}
-            icon={<IdIcon size={16} />}
+            icon={<IdIcon className="size-4" />}
           />
         </div>
       </div>

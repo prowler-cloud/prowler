@@ -1,15 +1,17 @@
 import { Spacer } from "@heroui/spacer";
+import Link from "next/link";
 import React, { Suspense } from "react";
 
 import { getInvitations } from "@/actions/invitations/invitation";
 import { getRoles } from "@/actions/roles";
 import { FilterControls } from "@/components/filters";
 import { filterInvitations } from "@/components/filters/data-filters";
-import { SendInvitationButton } from "@/components/invitations";
+import { AddIcon } from "@/components/icons";
 import {
   ColumnsInvitation,
   SkeletonTableInvitation,
 } from "@/components/invitations/table";
+import { Button } from "@/components/shadcn";
 import { ContentLayout } from "@/components/ui";
 import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
 import { InvitationProps, Role, SearchParamsProps } from "@/types";
@@ -25,10 +27,17 @@ export default async function Invitations({
   return (
     <ContentLayout title="Invitations" icon="lucide:mail">
       <FilterControls search />
-      <Spacer y={8} />
-      <SendInvitationButton />
-      <Spacer y={4} />
-      <DataTableFilterCustom filters={filterInvitations || []} />
+
+      <div className="flex flex-row items-center justify-between">
+        <DataTableFilterCustom filters={filterInvitations || []} />
+
+        <Button asChild>
+          <Link href="/invitations/new">
+            Send Invitation
+            <AddIcon size={20} />
+          </Link>
+        </Button>
+      </div>
       <Spacer y={8} />
 
       <Suspense key={searchParamsKey} fallback={<SkeletonTableInvitation />}>
