@@ -119,7 +119,6 @@ from api.filters import (
     ScanFilter,
     ScanSummaryFilter,
     ScanSummarySeverityFilter,
-    ServiceOverviewFilter,
     TaskFilter,
     TenantApiKeyFilter,
     TenantFilter,
@@ -3866,8 +3865,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         summary="Get findings data by service",
         description=(
             "Retrieve an aggregated summary of findings grouped by service. The response includes the total count "
-            "of findings for each service, as long as there are at least one finding for that service. At least "
-            "one of the `inserted_at` filters must be provided."
+            "of findings for each service, as long as there are at least one finding for that service."
         ),
         filters=True,
     ),
@@ -3913,7 +3911,7 @@ class OverviewViewSet(BaseRLSViewSet):
         elif self.action == "findings_severity":
             return ScanSummarySeverityFilter
         elif self.action == "services":
-            return ServiceOverviewFilter
+            return ScanSummaryFilter
         return None
 
     @extend_schema(exclude=True)

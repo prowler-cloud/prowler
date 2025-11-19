@@ -860,26 +860,6 @@ class ScanSummarySeverityFilter(ScanSummaryFilter):
         }
 
 
-class ServiceOverviewFilter(ScanSummaryFilter):
-    def is_valid(self):
-        # Check if at least one of the inserted_at filters is present
-        inserted_at_filters = [
-            self.data.get("inserted_at"),
-            self.data.get("inserted_at__gte"),
-            self.data.get("inserted_at__lte"),
-        ]
-        if not any(inserted_at_filters):
-            raise ValidationError(
-                {
-                    "inserted_at": [
-                        "At least one of filter[inserted_at], filter[inserted_at__gte], or "
-                        "filter[inserted_at__lte] is required."
-                    ]
-                }
-            )
-        return super().is_valid()
-
-
 class IntegrationFilter(FilterSet):
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
     integration_type = ChoiceFilter(choices=Integration.IntegrationChoices.choices)
