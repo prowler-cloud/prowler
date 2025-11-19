@@ -1,11 +1,15 @@
 "use client";
 
-import { ArrowLeft, Maximize2, X } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { Maximize2, X } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { FormProvider } from "react-hook-form";
 
-import { executeQuery, getAvailableQueries } from "@/actions/attack-paths";
+import {
+  executeQuery,
+  getAttackPathScans,
+  getAvailableQueries,
+} from "@/actions/attack-paths";
 import { adaptQueryResultToGraphData } from "@/actions/attack-paths/query-result.adapter";
 import { Button, Card, CardContent } from "@/components/shadcn";
 import {
@@ -16,7 +20,7 @@ import {
   DialogTrigger,
   useToast,
 } from "@/components/ui";
-import type { AttackPathQuery, GraphNode } from "@/types/attack-paths";
+import type { AttackPathQuery, AttackPathScan, GraphNode } from "@/types/attack-paths";
 
 import {
   AttackPathGraph,
@@ -27,6 +31,7 @@ import {
   NodeDetailPanel,
   QueryParametersForm,
   QuerySelector,
+  ScanListTable,
 } from "./_components";
 import type { AttackPathGraphRef } from "./_components/graph/attack-path-graph";
 import { useGraphState } from "./_hooks/use-graph-state";
@@ -34,16 +39,17 @@ import { useQueryBuilder } from "./_hooks/use-query-builder";
 import { exportGraphAsSVG } from "./_lib/export";
 
 /**
- * Step 2: Query Builder & Graph Visualization
- * Allows users to build a query and visualize the attack path graph
+ * Attack Path Analysis
+ * Allows users to select a scan, build a query, and visualize the attack path graph
  */
-export default function QueryBuilderPage() {
-  const router = useRouter();
+export default function AttackPathAnalysisPage() {
   const searchParams = useSearchParams();
   const scanId = searchParams.get("scanId");
   const graphState = useGraphState();
   const { toast } = useToast();
 
+  const [scansLoading, setScansLoading] = useState(true);
+  const [scans, setScans] = useState<AttackPathScan[]>([]);
   const [queriesLoading, setQueriesLoading] = useState(true);
   const [queriesError, setQueriesError] = useState<string | null>(null);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
@@ -63,6 +69,28 @@ export default function QueryBuilderPage() {
       graphState.resetGraph();
     }
   }, [graphState]);
+
+  // Load available scans on mount
+  useEffect(() => {
+    const loadScans = async () => {
+      setScansLoading(true);
+      try {
+        const scansData = await getAttackPathScans();
+        if (scansData?.data) {
+          setScans(scansData.data);
+        } else {
+          setScans([]);
+        }
+      } catch (error) {
+        console.error("Failed to load scans:", error);
+        setScans([]);
+      } finally {
+        setScansLoading(false);
+      }
+    };
+
+    loadScans();
+  }, []);
 
   // Load available queries on mount
   useEffect(() => {
@@ -228,40 +256,44 @@ export default function QueryBuilderPage() {
     }
   };
 
-  if (!scanId) {
-    return (
-      <div className="flex flex-col gap-6">
-        <p className="text-text-danger dark:text-text-danger text-sm">
-          Error: No scan selected. Please go back and select a scan.
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
       <div>
-        <button
-          onClick={() => router.back()}
-          className="text-text-neutral-secondary hover:text-text-neutral-primary dark:text-text-neutral-secondary dark:hover:text-text-neutral-primary mb-4 flex items-center gap-2 text-sm transition-colors"
-        >
-          <ArrowLeft size={16} />
-          Back
-        </button>
         <h2 className="dark:text-prowler-theme-pale/90 text-xl font-semibold">
-          Build Query & Visualize
+          Attack Path Analysis
         </h2>
         <p className="text-text-neutral-secondary dark:text-text-neutral-secondary mt-2 text-sm">
-          Create a query to analyze the attack paths in your infrastructure.
+          Select a scan, build a query, and visualize attack paths in your infrastructure.
         </p>
       </div>
 
-      {/* Two Column Layout - Form and Graph */}
-      <div className="grid auto-rows-fr grid-cols-1 gap-8 xl:grid-cols-2">
-        {/* Query Builder Section - Left Column */}
+      {/* Top Section - Scans Table and Query Builder (2 columns) */}
+      <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">
+        {/* Scans Table Section - Left Column */}
+        <div>
+          {scansLoading ? (
+            <div className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto border p-4">
+              <p className="text-sm">Loading scans...</p>
+            </div>
+          ) : scans.length === 0 ? (
+            <div className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto border p-4">
+              <p className="text-sm">No scans available</p>
+            </div>
+          ) : (
+            <Suspense fallback={<div>Loading scans...</div>}>
+              <ScanListTable scans={scans} />
+            </Suspense>
+          )}
+        </div>
+
+        {/* Query Builder Section - Right Column */}
         <div className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto border p-4">
-          {queriesLoading ? (
+          {!scanId ? (
+            <p className="text-text-info dark:text-text-info text-sm">
+              Select a scan from the table on the left to begin.
+            </p>
+          ) : queriesLoading ? (
             <p className="text-sm">Loading queries...</p>
           ) : queriesError ? (
             <p className="text-text-danger dark:text-text-danger text-sm">
@@ -299,162 +331,162 @@ export default function QueryBuilderPage() {
             </>
           )}
         </div>
+      </div>
 
-        {/* Graph Visualization Section - Right Column */}
-        <div className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto border p-4">
-          {graphState.loading ? (
-            <GraphLoading />
-          ) : graphState.data &&
-            graphState.data.nodes &&
-            graphState.data.nodes.length > 0 ? (
-            <>
-              {/* Controls on top */}
-              <div className="flex items-stretch justify-end gap-2">
-                <GraphControls
-                  onZoomIn={() => graphRef.current?.zoomIn()}
-                  onZoomOut={() => graphRef.current?.zoomOut()}
-                  onFitToScreen={() => graphRef.current?.resetZoom()}
-                  onExport={() =>
-                    handleGraphExport(graphRef.current?.getSVGElement() || null)
-                  }
-                />
+      {/* Bottom Section - Graph Visualization (Full Width) */}
+      <div className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto border p-4">
+        {graphState.loading ? (
+          <GraphLoading />
+        ) : graphState.data &&
+          graphState.data.nodes &&
+          graphState.data.nodes.length > 0 ? (
+          <>
+            {/* Controls on top */}
+            <div className="flex items-stretch justify-end gap-2">
+              <GraphControls
+                onZoomIn={() => graphRef.current?.zoomIn()}
+                onZoomOut={() => graphRef.current?.zoomOut()}
+                onFitToScreen={() => graphRef.current?.resetZoom()}
+                onExport={() =>
+                  handleGraphExport(graphRef.current?.getSVGElement() || null)
+                }
+              />
 
-                {/* Fullscreen button */}
-                <div className="mb-4 flex items-center">
-                  <div className="border-border-neutral-primary bg-bg-neutral-tertiary dark:border-border-neutral-primary dark:bg-bg-neutral-tertiary flex gap-1 rounded-lg border p-1">
-                    <Dialog
-                      open={isFullscreenOpen}
-                      onOpenChange={setIsFullscreenOpen}
-                    >
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          aria-label="Fullscreen"
-                        >
-                          <Maximize2 size={18} />
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="flex h-full max-h-screen w-full max-w-full flex-col gap-0 p-0">
-                        <DialogHeader className="px-4 pt-4 sm:px-6 sm:pt-6">
-                          <DialogTitle className="text-lg">
-                            Graph Fullscreen View
-                          </DialogTitle>
-                        </DialogHeader>
-                        <div className="px-4 pt-4 pb-4 sm:px-6 sm:pt-6">
-                          <GraphControls
-                            onZoomIn={() =>
-                              fullscreenGraphRef.current?.zoomIn()
-                            }
-                            onZoomOut={() =>
-                              fullscreenGraphRef.current?.zoomOut()
-                            }
-                            onFitToScreen={() =>
-                              fullscreenGraphRef.current?.resetZoom()
-                            }
-                            onExport={() =>
-                              handleGraphExport(
-                                fullscreenGraphRef.current?.getSVGElement() ||
-                                  null,
-                              )
-                            }
+              {/* Fullscreen button */}
+              <div className="mb-4 flex items-center">
+                <div className="border-border-neutral-primary bg-bg-neutral-tertiary dark:border-border-neutral-primary dark:bg-bg-neutral-tertiary flex gap-1 rounded-lg border p-1">
+                  <Dialog
+                    open={isFullscreenOpen}
+                    onOpenChange={setIsFullscreenOpen}
+                  >
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        aria-label="Fullscreen"
+                      >
+                        <Maximize2 size={18} />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="flex h-full max-h-screen w-full max-w-full flex-col gap-0 p-0">
+                      <DialogHeader className="px-4 pt-4 sm:px-6 sm:pt-6">
+                        <DialogTitle className="text-lg">
+                          Graph Fullscreen View
+                        </DialogTitle>
+                      </DialogHeader>
+                      <div className="px-4 pt-4 pb-4 sm:px-6 sm:pt-6">
+                        <GraphControls
+                          onZoomIn={() =>
+                            fullscreenGraphRef.current?.zoomIn()
+                          }
+                          onZoomOut={() =>
+                            fullscreenGraphRef.current?.zoomOut()
+                          }
+                          onFitToScreen={() =>
+                            fullscreenGraphRef.current?.resetZoom()
+                          }
+                          onExport={() =>
+                            handleGraphExport(
+                              fullscreenGraphRef.current?.getSVGElement() ||
+                                null,
+                            )
+                          }
+                        />
+                      </div>
+                      <div className="flex flex-1 gap-4 overflow-hidden px-4 pb-4 sm:px-6 sm:pb-6">
+                        <div className="flex flex-1 items-center justify-center">
+                          <AttackPathGraph
+                            ref={fullscreenGraphRef}
+                            data={graphState.data}
+                            onNodeClick={handleNodeClick}
+                            selectedNodeId={graphState.selectedNodeId}
                           />
                         </div>
-                        <div className="flex flex-1 gap-4 overflow-hidden px-4 pb-4 sm:px-6 sm:pb-6">
-                          <div className="flex flex-1 items-center justify-center">
-                            <AttackPathGraph
-                              ref={fullscreenGraphRef}
-                              data={graphState.data}
-                              onNodeClick={handleNodeClick}
-                              selectedNodeId={graphState.selectedNodeId}
-                            />
-                          </div>
-                          {/* Node Detail Panel - Side by side */}
-                          {graphState.selectedNode && (
-                            <section aria-labelledby="node-details-heading">
-                              <Card className="w-96 overflow-y-auto">
-                                <CardContent className="p-4">
-                                  <div className="mb-4 flex items-center justify-between">
-                                    <h3
-                                      id="node-details-heading"
-                                      className="text-sm font-semibold"
-                                    >
-                                      Node Details
-                                    </h3>
-                                    <Button
-                                      onClick={handleCloseDetails}
-                                      variant="ghost"
-                                      size="sm"
-                                      className="h-6 w-6 p-0"
-                                      aria-label="Close node details"
-                                    >
-                                      <X size={16} />
-                                    </Button>
+                        {/* Node Detail Panel - Side by side */}
+                        {graphState.selectedNode && (
+                          <section aria-labelledby="node-details-heading">
+                            <Card className="w-96 overflow-y-auto">
+                              <CardContent className="p-4">
+                                <div className="mb-4 flex items-center justify-between">
+                                  <h3
+                                    id="node-details-heading"
+                                    className="text-sm font-semibold"
+                                  >
+                                    Node Details
+                                  </h3>
+                                  <Button
+                                    onClick={handleCloseDetails}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 w-6 p-0"
+                                    aria-label="Close node details"
+                                  >
+                                    <X size={16} />
+                                  </Button>
+                                </div>
+                                <p className="text-text-neutral-secondary dark:text-text-neutral-secondary mb-4 text-xs">
+                                  {`${graphState.selectedNode?.properties?.name || graphState.selectedNode?.id.substring(0, 20)}`}
+                                </p>
+                                <div className="flex flex-col gap-4">
+                                  <div>
+                                    <h4 className="mb-2 text-xs font-semibold">
+                                      Type
+                                    </h4>
+                                    <p className="text-text-neutral-secondary dark:text-text-neutral-secondary text-xs">
+                                      {graphState.selectedNode?.labels.join(
+                                        ", ",
+                                      )}
+                                    </p>
                                   </div>
-                                  <p className="text-text-neutral-secondary dark:text-text-neutral-secondary mb-4 text-xs">
-                                    {`${graphState.selectedNode?.properties?.name || graphState.selectedNode?.id.substring(0, 20)}`}
-                                  </p>
-                                  <div className="flex flex-col gap-4">
-                                    <div>
-                                      <h4 className="mb-2 text-xs font-semibold">
-                                        Type
-                                      </h4>
-                                      <p className="text-text-neutral-secondary dark:text-text-neutral-secondary text-xs">
-                                        {graphState.selectedNode?.labels.join(
-                                          ", ",
-                                        )}
-                                      </p>
-                                    </div>
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            </section>
-                          )}
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </section>
+                        )}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </div>
-
-              {/* Graph in the middle */}
-              <div className="h-96">
-                <AttackPathGraph
-                  ref={graphRef}
-                  data={graphState.data}
-                  onNodeClick={handleNodeClick}
-                  selectedNodeId={graphState.selectedNodeId}
-                />
-              </div>
-
-              {/* Legend below */}
-              <div className="hidden justify-center lg:flex">
-                <GraphLegend data={graphState.data} />
-              </div>
-            </>
-          ) : (
-            <div className="flex flex-1 items-center justify-center text-center">
-              <p className="text-text-neutral-secondary dark:text-text-neutral-secondary text-sm">
-                Select a query and click &quot;Execute Query&quot; to visualize
-                the attack path graph
-              </p>
             </div>
-          )}
-        </div>
 
-        {/* Node Detail Panel - Right Slide Sheet */}
-        {graphState.data &&
-          graphState.data.nodes &&
-          graphState.data.nodes.length > 0 && (
-            <NodeDetailPanel
-              node={graphState.selectedNode}
-              incomingEdges={nodeEdges.incoming}
-              outgoingEdges={nodeEdges.outgoing}
-              onClose={handleCloseDetails}
-            />
-          )}
+            {/* Graph in the middle */}
+            <div className="h-screen">
+              <AttackPathGraph
+                ref={graphRef}
+                data={graphState.data}
+                onNodeClick={handleNodeClick}
+                selectedNodeId={graphState.selectedNodeId}
+              />
+            </div>
+
+            {/* Legend below */}
+            <div className="hidden justify-center lg:flex">
+              <GraphLegend data={graphState.data} />
+            </div>
+          </>
+        ) : (
+          <div className="flex flex-1 items-center justify-center text-center">
+            <p className="text-text-neutral-secondary dark:text-text-neutral-secondary text-sm">
+              Select a query and click &quot;Execute Query&quot; to visualize
+              the attack path graph
+            </p>
+          </div>
+        )}
       </div>
+
+      {/* Node Detail Panel - Right Slide Sheet */}
+      {graphState.data &&
+        graphState.data.nodes &&
+        graphState.data.nodes.length > 0 && (
+          <NodeDetailPanel
+            node={graphState.selectedNode}
+            incomingEdges={nodeEdges.incoming}
+            outgoingEdges={nodeEdges.outgoing}
+            onClose={handleCloseDetails}
+          />
+        )}
     </div>
   );
 }

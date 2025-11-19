@@ -20,24 +20,24 @@ export const ScanStatusBadge = ({
 }: ScanStatusBadgeProps) => {
   if (status === "executing") {
     return (
-      <span className="inline-flex items-center gap-2 rounded-full border border-amber-400 bg-amber-400/20 px-2 py-0.5 text-xs font-medium text-amber-700 dark:border-amber-600 dark:bg-amber-950/40 dark:text-amber-400">
+      <Badge variant="outline" className="border-amber-600 bg-amber-50 text-amber-900 dark:border-amber-400 dark:bg-amber-950 dark:text-amber-200 gap-2">
         <Loader2 size={14} className="animate-spin" />
         <span>In Progress ({progress}%)</span>
-      </span>
+      </Badge>
     );
   }
 
   if (status === "completed") {
     return (
-      <span className="inline-flex items-center gap-2 rounded-full border border-green-400 bg-green-400/20 px-2 py-0.5 text-xs font-medium text-green-700 dark:border-green-600 dark:bg-green-950/40 dark:text-green-400">
+      <Badge variant="outline" className="border-green-600 bg-green-50 text-green-900 dark:border-green-400 dark:bg-green-950 dark:text-green-200 gap-2">
         <span>Completed</span>
-      </span>
+      </Badge>
     );
   }
 
   return (
     <Badge variant="destructive" className="gap-2">
-      <span className="text-xs font-medium">Failed</span>
+      <span>Failed</span>
     </Badge>
   );
 };

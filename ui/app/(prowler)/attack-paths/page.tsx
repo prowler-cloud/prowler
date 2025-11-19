@@ -2,8 +2,8 @@ import { redirect } from "next/navigation";
 
 /**
  * Landing page for Attack Paths feature
- * Redirects to the wizard workflow
+ * Redirects to the integrated attack path analysis view
  */
 export default function AttackPathsPage() {
-  redirect("/attack-paths/select-scan");
+  redirect("/attack-paths/query-builder");
 }

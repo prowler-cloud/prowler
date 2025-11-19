@@ -372,6 +372,9 @@ const AttackPathGraphComponent = forwardRef<
 
     svg.call(zoom);
 
+    // Disable scroll/wheel zoom, keep only programmatic zoom from controls
+    svg.on("wheel.zoom", null);
+
     // Reset auto-center flag for new data
     hasAutocenteredRef.current = false;
 
