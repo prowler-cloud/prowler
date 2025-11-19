@@ -4195,12 +4195,13 @@ class OverviewViewSet(BaseRLSViewSet):
         filtered_queryset = self._get_latest_scans_queryset()
 
         regions_data = (
-            filtered_queryset.values("region")
+            filtered_queryset.annotate(provider_type=F("scan__provider__provider"))
+            .values("provider_type", "region")
             .annotate(_pass=Sum("_pass"))
             .annotate(fail=Sum("fail"))
             .annotate(muted=Sum("muted"))
             .annotate(total=Sum("total"))
-            .order_by("region")
+            .order_by("provider_type", "region")
         )
 
         serializer = self.get_serializer(regions_data, many=True)

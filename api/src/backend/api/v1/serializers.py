@@ -2230,7 +2230,9 @@ class OverviewServiceSerializer(serializers.Serializer):
 
 
 class OverviewRegionSerializer(serializers.Serializer):
-    id = serializers.CharField(source="region")
+    id = serializers.SerializerMethodField()
+    provider_type = serializers.CharField()
+    region = serializers.CharField()
     total = serializers.IntegerField()
     _pass = serializers.IntegerField()
     fail = serializers.IntegerField()
@@ -2242,6 +2244,10 @@ class OverviewRegionSerializer(serializers.Serializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["pass"] = self.fields.pop("_pass")
+
+    def get_id(self, obj):
+        """Generate unique ID from provider_type and region."""
+        return f"{obj['provider_type']}:{obj['region']}"
 
     def get_root_meta(self, _resource, _many):
         return {"version": "v1"}
