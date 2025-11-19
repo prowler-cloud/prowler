@@ -37,9 +37,7 @@ class _MutableTimestamp:
 
 
 timestamp = _MutableTimestamp(datetime.today())
-timestamp_utc = _MutableTimestamp(
-    datetime.now(timezone.utc).replace(tzinfo=timezone.utc)
-)
+timestamp_utc = _MutableTimestamp(datetime.now(timezone.utc))
 prowler_version = "5.14.0"
 html_logo_url = "https://github.com/prowler-cloud/prowler/"
 square_logo_img = "https://prowler.com/wp-content/uploads/logo-html.png"
