@@ -22,11 +22,7 @@
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/securityhub/latest/userguide/documentdb-controls.html#documentdb-1",
     "https://docs.aws.amazon.com/documentdb/latest/developerguide/elastic-encryption.html",
-    "https://docs.aws.amazon.com/documentdb/latest/developerguide/encryption-at-rest.html",
-    "https://docs.datadoghq.com/security/default_rules/aws-docdb-cluster-documentdb-clusters-should-be-encrypted-at-rest/",
-    "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_28#fix-buildtime",
-    "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_28/",
-    "https://docs.bridgecrew.io/docs/bc_aws_general_28"
+    "https://docs.aws.amazon.com/documentdb/latest/developerguide/encryption-at-rest.html"
   ],
   "Remediation": {
     "Code": {

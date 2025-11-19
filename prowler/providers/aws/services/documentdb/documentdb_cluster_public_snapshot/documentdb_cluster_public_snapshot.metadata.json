@@ -18,10 +18,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/documentdb/latest/developerguide/backup_restore-share_cluster_snapshots.html#backup_restore-share_snapshots",
-    "https://endgame.readthedocs.io/en/latest/risks/rds-snapshots/",
-    "https://linx.software/docs/5/reference/plugins/amazonrds/content/snapshots/describedbclustersnapshotattributes/",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/documentdb-controls.html#documentdb-3",
-    "https://any-api.com/amazonaws_com/docdb/docs/_Action_ModifyDBClusterSnapshotAttribute/ModifyDBClusterSnapshotAttribute",
     "https://docs.aws.amazon.com/config/latest/developerguide/docdb-cluster-snapshot-public-prohibited.html"
   ],
   "Remediation": {

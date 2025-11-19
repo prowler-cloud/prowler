@@ -15,14 +15,9 @@
   "Risk": "Missing **audit** and/or **profiler** exports reduces observability of authentication, authorization, and data definition activity.\nAttacks like brute-force logins, privilege abuse, or destructive schema changes can go unnoticed, degrading **confidentiality** and **integrity** and delaying incident response.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/enable-profiler.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/documentdb-controls.html#documentdb-4",
-    "https://dataintegration.info/introducing-dml-auditing-for-amazon-documentdb-with-mongodb-compatibility",
-    "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-logging-policies/logging-19",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/DocumentDB/enable-profiler.html",
-    "https://docs.aws.amazon.com/cli/latest/reference/docdb/create-db-cluster.html",
-    "https://docs.prowler.com/checks/aws/logging-policies/logging_19/",
-    "https://github.com/carlosbustillordguez/terraform-aws-documentdb"
+    "https://docs.aws.amazon.com/cli/latest/reference/docdb/create-db-cluster.html"
   ],
   "Remediation": {
     "Code": {

@@ -15,10 +15,7 @@
   "Risk": "Without **deletion protection**, clusters can be deleted by mistake or misuse, causing sudden outage and loss of recovery points, impacting **availability** and **data integrity**.\n\nCompromised accounts or faulty automation can remove databases or skip final snapshots, hindering restoration.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://hub.powerpipe.io/mods/turbot/aws_compliance/controls/control.foundational_security_docdb_5",
-    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/DocumentDB/deletion-protection.html#",
     "https://support.icompaas.com/support/solutions/articles/62000233689-ensure-documentdb-clusters-has-deletion-protection-enabled",
-    "https://docs.datadoghq.com/security/default_rules/def-000-maz/",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/DocumentDB/deletion-protection.html",
     "https://docs.aws.amazon.com/documentdb/latest/developerguide/db-cluster-delete.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/documentdb-controls.html#documentdb-5"

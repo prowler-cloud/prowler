@@ -14,13 +14,8 @@
   "Risk": "Without Multi-AZ, the cluster depends on a single AZ/instance. An AZ or node failure-or maintenance-can stop reads and writes, causing downtime, timeouts, and SLA breaches. Availability degrades, RTO rises, and applications may experience failed or retried transactions until replacement capacity is created.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://npblue.com/cloud/aws/amazon-documentdb/",
-    "https://n2ws.com/blog/aws-cloud/amazon-documentdb",
-    "https://medium.com/@christopheradamson253/getting-started-with-amazon-documentdb-f9181a43aad5",
-    "https://medium.com/@mihirpopat/scaling-mongodb-workloads-with-aws-documentdb-your-guide-to-a-fully-managed-nosql-solution-ef884c358f01",
-    "https://d1.awsstatic.com/events/reinvent/2021/Amazon_DocumentDB_deep_dive_DAT301.pdf",
-    "https://risingwave.com/blog/evaluating-mongodb-couchbase-and-amazon-documentdb-for-your-needs/",
-    "https://docs.aws.amazon.com/documentdb/latest/developerguide/failover.html"
+    "https://docs.aws.amazon.com/documentdb/latest/developerguide/failover.html",
+    "https://support.icompaas.com/support/solutions/articles/62000233690-ensure-documentdb-cluster-have-multi-az-enabled"
   ],
   "Remediation": {
     "Code": {
