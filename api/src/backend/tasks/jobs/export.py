@@ -58,6 +58,9 @@ from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_azur
 from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_gcp import (
     ProwlerThreatScoreGCP,
 )
+from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_kubernetes import (
+    ProwlerThreatScoreKubernetes,
+)
 from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_m365 import (
     ProwlerThreatScoreM365,
 )
@@ -104,6 +107,10 @@ COMPLIANCE_CLASS_MAP = {
     "kubernetes": [
         (lambda name: name.startswith("cis_"), KubernetesCIS),
         (lambda name: name.startswith("iso27001_"), KubernetesISO27001),
+        (
+            lambda name: name == "prowler_threatscore_kubernetes",
+            ProwlerThreatScoreKubernetes,
+        ),
     ],
     "m365": [
         (lambda name: name.startswith("cis_"), M365CIS),
