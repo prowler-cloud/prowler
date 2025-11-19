@@ -241,36 +241,33 @@ def _upload_to_s3(
         logger.error(f"S3 upload failed: {str(e)}")
 
 
-def _generate_output_directory(
-    output_directory, prowler_provider: object, tenant_id: str, scan_id: str
-) -> tuple[str, str, str]:
+def _build_output_path(
+    output_directory: str,
+    prowler_provider: str,
+    tenant_id: str,
+    scan_id: str,
+    subdirectory: str = None,
+) -> str:
     """
-    Generate a file system path for the output directory of a prowler scan.
-
-    This function constructs the output directory path by combining a base
-    temporary output directory, the tenant ID, the scan ID, and details about
-    the prowler provider along with a timestamp. The resulting path is used to
-    store the output files of a prowler scan.
-
-    Note:
-        This function depends on one external variable:
-          - `output_file_timestamp`: A timestamp (as a string) used to uniquely identify the output.
+    Build a file system path for the output directory of a prowler scan.
 
     Args:
         output_directory (str): The base output directory.
-        prowler_provider (object): An identifier or descriptor for the prowler provider.
-                                   Typically, this is a string indicating the provider (e.g., "aws").
+        prowler_provider (str): An identifier or descriptor for the prowler provider.
+                               Typically, this is a string indicating the provider (e.g., "aws").
         tenant_id (str): The unique identifier for the tenant.
         scan_id (str): The unique identifier for the scan.
+        subdirectory (str, optional): Optional subdirectory to include in the path
+                                     (e.g., "compliance", "threatscore", "ens").
 
     Returns:
-        str: The constructed file system path for the prowler scan output directory.
+        str: The constructed path with directory created.
 
     Example:
-        >>> _generate_output_directory("/tmp", "aws", "tenant-1234", "scan-5678")
-        '/tmp/tenant-1234/aws/scan-5678/prowler-output-2023-02-15T12:34:56',
-        '/tmp/tenant-1234/aws/scan-5678/compliance/prowler-output-2023-02-15T12:34:56'
-        '/tmp/tenant-1234/aws/scan-5678/threatscore/prowler-output-2023-02-15T12:34:56'
+        >>> _build_output_path("/tmp", "aws", "tenant-1234", "scan-5678")
+        '/tmp/tenant-1234/scan-5678/prowler-output-aws-20230215123456'
+        >>> _build_output_path("/tmp", "aws", "tenant-1234", "scan-5678", "threatscore")
+        '/tmp/tenant-1234/scan-5678/threatscore/prowler-output-aws-20230215123456'
     """
     # Sanitize the prowler provider name to ensure it is a valid directory name
     prowler_provider_sanitized = re.sub(r"[^\w\-]", "-", prowler_provider)
@@ -279,22 +276,102 @@ def _generate_output_directory(
         started_at = Scan.objects.get(id=scan_id).started_at
 
     timestamp = started_at.strftime("%Y%m%d%H%M%S")
-    path = (
-        f"{output_directory}/{tenant_id}/{scan_id}/prowler-output-"
-        f"{prowler_provider_sanitized}-{timestamp}"
-    )
+
+    if subdirectory:
+        path = (
+            f"{output_directory}/{tenant_id}/{scan_id}/{subdirectory}/prowler-output-"
+            f"{prowler_provider_sanitized}-{timestamp}"
+        )
+    else:
+        path = (
+            f"{output_directory}/{tenant_id}/{scan_id}/prowler-output-"
+            f"{prowler_provider_sanitized}-{timestamp}"
+        )
+
+    # Create directory for the path if it doesn't exist
     os.makedirs("/".join(path.split("/")[:-1]), exist_ok=True)
 
-    compliance_path = (
-        f"{output_directory}/{tenant_id}/{scan_id}/compliance/prowler-output-"
-        f"{prowler_provider_sanitized}-{timestamp}"
-    )
-    os.makedirs("/".join(compliance_path.split("/")[:-1]), exist_ok=True)
+    return path
 
-    threatscore_path = (
-        f"{output_directory}/{tenant_id}/{scan_id}/threatscore/prowler-output-"
-        f"{prowler_provider_sanitized}-{timestamp}"
-    )
-    os.makedirs("/".join(threatscore_path.split("/")[:-1]), exist_ok=True)
 
-    return path, compliance_path, threatscore_path
+def _generate_compliance_output_directory(
+    output_directory: str,
+    prowler_provider: str,
+    tenant_id: str,
+    scan_id: str,
+    compliance_framework: str,
+) -> str:
+    """
+    Generate a file system path for a compliance framework output directory.
+
+    This function constructs the output directory path specifically for a compliance
+    framework (e.g., "threatscore", "ens") by combining a base temporary output directory,
+    the tenant ID, the scan ID, the compliance framework name, and details about the
+    prowler provider along with a timestamp.
+
+    Args:
+        output_directory (str): The base output directory.
+        prowler_provider (str): An identifier or descriptor for the prowler provider.
+                               Typically, this is a string indicating the provider (e.g., "aws").
+        tenant_id (str): The unique identifier for the tenant.
+        scan_id (str): The unique identifier for the scan.
+        compliance_framework (str): The compliance framework name (e.g., "threatscore", "ens").
+
+    Returns:
+        str: The path for the compliance framework output directory.
+
+    Example:
+        >>> _generate_compliance_output_directory("/tmp", "aws", "tenant-1234", "scan-5678", "threatscore")
+        '/tmp/tenant-1234/scan-5678/threatscore/prowler-output-aws-20230215123456'
+        >>> _generate_compliance_output_directory("/tmp", "aws", "tenant-1234", "scan-5678", "ens")
+        '/tmp/tenant-1234/scan-5678/ens/prowler-output-aws-20230215123456'
+    """
+    return _build_output_path(
+        output_directory,
+        prowler_provider,
+        tenant_id,
+        scan_id,
+        subdirectory=compliance_framework,
+    )
+
+
+def _generate_output_directory(
+    output_directory: str,
+    prowler_provider: str,
+    tenant_id: str,
+    scan_id: str,
+) -> tuple[str, str]:
+    """
+    Generate file system paths for the standard and compliance output directories of a prowler scan.
+
+    This function constructs both the standard output directory path and the compliance
+    output directory path by combining a base temporary output directory, the tenant ID,
+    the scan ID, and details about the prowler provider along with a timestamp.
+
+    Args:
+        output_directory (str): The base output directory.
+        prowler_provider (str): An identifier or descriptor for the prowler provider.
+                               Typically, this is a string indicating the provider (e.g., "aws").
+        tenant_id (str): The unique identifier for the tenant.
+        scan_id (str): The unique identifier for the scan.
+
+    Returns:
+        tuple[str, str]: A tuple containing (standard_path, compliance_path).
+
+    Example:
+        >>> _generate_output_directory("/tmp", "aws", "tenant-1234", "scan-5678")
+        ('/tmp/tenant-1234/scan-5678/prowler-output-aws-20230215123456',
+         '/tmp/tenant-1234/scan-5678/compliance/prowler-output-aws-20230215123456')
+    """
+    standard_path = _build_output_path(
+        output_directory, prowler_provider, tenant_id, scan_id
+    )
+    compliance_path = _build_output_path(
+        output_directory,
+        prowler_provider,
+        tenant_id,
+        scan_id,
+        subdirectory="compliance",
+    )
+
+    return standard_path, compliance_path

@@ -5,25 +5,35 @@ import { useState } from "react";
 
 import { Button } from "@/components/shadcn/button/button";
 import { toast } from "@/components/ui";
-import { downloadThreatScorePdf } from "@/lib/helper";
+import {
+  COMPLIANCE_REPORT_BUTTON_LABELS,
+  type ComplianceReportType,
+} from "@/lib/compliance/compliance-report-types";
+import { downloadComplianceReportPdf } from "@/lib/helper";
 
-interface ThreatScoreDownloadButtonProps {
+interface ComplianceDownloadButtonProps {
   scanId: string;
+  reportType: ComplianceReportType;
+  label?: string;
 }
 
-export const ThreatScoreDownloadButton = ({
+export const ComplianceDownloadButton = ({
   scanId,
-}: ThreatScoreDownloadButtonProps) => {
+  reportType,
+  label,
+}: ComplianceDownloadButtonProps) => {
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
 
   const handleDownload = async () => {
     setIsDownloading(true);
     try {
-      await downloadThreatScorePdf(scanId, toast);
+      await downloadComplianceReportPdf(scanId, reportType, toast);
     } finally {
       setIsDownloading(false);
     }
   };
+
+  const defaultLabel = COMPLIANCE_REPORT_BUTTON_LABELS[reportType];
 
   return (
     <Button
@@ -36,7 +46,7 @@ export const ThreatScoreDownloadButton = ({
         className={isDownloading ? "animate-download-icon" : ""}
         size={16}
       />
-      PDF ThreatScore Report
+      <span className="hidden md:block">{label || defaultLabel}</span>
     </Button>
   );
 };

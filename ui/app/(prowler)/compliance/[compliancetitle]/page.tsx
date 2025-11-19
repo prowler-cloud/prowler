@@ -8,6 +8,7 @@ import {
 } from "@/actions/compliances";
 import {
   ClientAccordionWrapper,
+  ComplianceDownloadButton,
   ComplianceHeader,
   RequirementsStatusCard,
   RequirementsStatusCardSkeleton,
@@ -20,14 +21,13 @@ import {
 import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
 import { ContentLayout } from "@/components/ui";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
+import { getReportTypeForFramework } from "@/lib/compliance/compliance-report-types";
 import {
   AttributesData,
   Framework,
   RequirementsTotals,
 } from "@/types/compliance";
 import { ScanEntity } from "@/types/scans";
-
-import { ThreatScoreDownloadButton } from "./threatscore-download-button";
 
 interface ComplianceDetailSearchParams {
   complianceId: string;
@@ -92,23 +92,33 @@ export default async function ComplianceDetail({
 
   return (
     <ContentLayout title={finalPageTitle}>
-      <ComplianceHeader
-        scans={[]}
-        uniqueRegions={uniqueRegions}
-        showSearch={false}
-        framework={compliancetitle}
-        showProviders={false}
-        logoPath={logoPath}
-        complianceTitle={compliancetitle}
-        selectedScan={selectedScan}
-      />
-      {attributesData?.data?.[0]?.attributes?.framework ===
-        "ProwlerThreatScore" &&
-        selectedScanId && (
-          <div className="flex w-full justify-end">
-            <ThreatScoreDownloadButton scanId={selectedScanId} />
-          </div>
-        )}
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1">
+          <ComplianceHeader
+            scans={[]}
+            uniqueRegions={uniqueRegions}
+            showSearch={false}
+            framework={compliancetitle}
+            showProviders={false}
+            logoPath={logoPath}
+            complianceTitle={compliancetitle}
+            selectedScan={selectedScan}
+          />
+        </div>
+        {(() => {
+          const framework = attributesData?.data?.[0]?.attributes?.framework;
+          const reportType = getReportTypeForFramework(framework);
+
+          return selectedScanId && reportType ? (
+            <div className="flex-shrink-0 pt-1">
+              <ComplianceDownloadButton
+                scanId={selectedScanId}
+                reportType={reportType}
+              />
+            </div>
+          ) : null;
+        })()}
+      </div>
 
       <Suspense
         key={searchParamsKey}

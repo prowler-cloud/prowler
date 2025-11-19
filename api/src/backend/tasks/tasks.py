@@ -35,7 +35,7 @@ from tasks.jobs.lighthouse_providers import (
     refresh_lighthouse_provider_models,
 )
 from tasks.jobs.muting import mute_historical_findings
-from tasks.jobs.report import generate_threatscore_report_job
+from tasks.jobs.report import generate_compliance_reports_job
 from tasks.jobs.scan import (
     aggregate_findings,
     create_compliance_requirements,
@@ -75,7 +75,8 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
             scan_id=scan_id, provider_id=provider_id, tenant_id=tenant_id
         ),
         group(
-            generate_threatscore_report_task.si(
+            # Use optimized task that generates both reports with shared queries
+            generate_compliance_reports_task.si(
                 tenant_id=tenant_id, scan_id=scan_id, provider_id=provider_id
             ),
             check_integrations_task.si(
@@ -319,7 +320,7 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
 
     frameworks_bulk = Compliance.get_bulk(provider_type)
     frameworks_avail = get_compliance_frameworks(provider_type)
-    out_dir, comp_dir, _ = _generate_output_directory(
+    out_dir, comp_dir = _generate_output_directory(
         DJANGO_TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id
     )
 
@@ -686,19 +687,33 @@ def jira_integration_task(
 
 @shared_task(
     base=RLSTask,
-    name="scan-threatscore-report",
+    name="scan-compliance-reports",
     queue="scan-reports",
 )
-def generate_threatscore_report_task(tenant_id: str, scan_id: str, provider_id: str):
+def generate_compliance_reports_task(tenant_id: str, scan_id: str, provider_id: str):
     """
-    Task to generate a threatscore report for a given scan.
+    Optimized task to generate both ThreatScore and ENS reports with shared queries.
+
+    This task is more efficient than running generate_threatscore_report_task and
+    generate_ens_report_task separately because it reuses database queries:
+    - Provider object fetched once (instead of twice)
+    - Requirement statistics aggregated once (instead of twice)
+    - Can reduce database load by up to 50%
+
     Args:
         tenant_id (str): The tenant identifier.
         scan_id (str): The scan identifier.
         provider_id (str): The provider identifier.
+
+    Returns:
+        dict: Results for both reports containing upload status and paths.
     """
-    return generate_threatscore_report_job(
-        tenant_id=tenant_id, scan_id=scan_id, provider_id=provider_id
+    return generate_compliance_reports_job(
+        tenant_id=tenant_id,
+        scan_id=scan_id,
+        provider_id=provider_id,
+        generate_threatscore=True,
+        generate_ens=True,
     )
 
 
