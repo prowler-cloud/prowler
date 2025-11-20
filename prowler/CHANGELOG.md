@@ -62,6 +62,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS Kinesis service metadata to new format [(#9262)](https://github.com/prowler-cloud/prowler/pull/9262)
 - Update AWS DocumentDB service metadata to new format [(#8862)](https://github.com/prowler-cloud/prowler/pull/8862)
 
+### Fixed
+- Point HTML logo to the one present in the Github repository [(#9282)](https://github.com/prowler-cloud/prowler/pull/9282)
+
 ---
 
 ## [v5.13.2] (Prowler UNRELEASED)
