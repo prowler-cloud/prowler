@@ -11,7 +11,7 @@ export interface StatItem {
 }
 
 const variantColors = {
-  default: "var(--bg-neutral-tertiary)",
+  default: "var(--text-neutral-tertiary)",
   fail: "var(--bg-fail-primary)",
   pass: "var(--bg-pass-primary)",
   warning: "var(--bg-warning-primary)",

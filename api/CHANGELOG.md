@@ -14,12 +14,16 @@ All notable changes to the **Prowler API** are documented in this file.
 - Support muting findings based on simple rules with custom reason [(#9051)](https://github.com/prowler-cloud/prowler/pull/9051)
 - Support C5 compliance framework for the GCP provider [(#9097)](https://github.com/prowler-cloud/prowler/pull/9097)
 - Support for Amazon Bedrock and OpenAI compatible providers in Lighthouse AI [(#8957)](https://github.com/prowler-cloud/prowler/pull/8957)
+- Support PDF reporting for ENS compliance framework [(#9158)](https://github.com/prowler-cloud/prowler/pull/9158)
 - Tenant-wide ThreatScore overview aggregation and snapshot persistence with backfill support [(#9148)](https://github.com/prowler-cloud/prowler/pull/9148)
 - Added `metadata`, `details`, and `partition` attributes to `/resources` endpoint & `details`, and `partition` to `/findings` endpoint [(#9098)](https://github.com/prowler-cloud/prowler/pull/9098)
 - Support for MongoDB Atlas provider [(#9167)](https://github.com/prowler-cloud/prowler/pull/9167)
+- Support Prowler ThreatScore for the K8S provider [(#9235)](https://github.com/prowler-cloud/prowler/pull/9235)
+- Enhanced compliance overview endpoint with provider filtering and latest scan aggregation [(#9244)](https://github.com/prowler-cloud/prowler/pull/9244)
 
 ### Changed
 - Optimized database write queries for scan related tasks [(#9190)](https://github.com/prowler-cloud/prowler/pull/9190)
+- Date filters are now optional for `GET /api/v1/overviews/services` endpoint; returns latest scan data by default [(#9248)](https://github.com/prowler-cloud/prowler/pull/9248)
 
 ### Fixed
 - Scans no longer fail when findings have UIDs exceeding 300 characters; such findings are now skipped with detailed logging [(#9246)](https://github.com/prowler-cloud/prowler/pull/9246)

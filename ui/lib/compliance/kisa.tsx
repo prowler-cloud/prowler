@@ -129,6 +129,7 @@ export const toAccordionItems = (
                 ),
                 content: (
                   <ClientAccordionContent
+                    key={`content-${itemKey}`}
                     requirement={requirement}
                     scanId={scanId || ""}
                     framework={framework.name}

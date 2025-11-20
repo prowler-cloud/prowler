@@ -2357,9 +2357,6 @@ class ThreatScoreSnapshot(RowLevelSecurityProtectedModel):
     Snapshots are created automatically after each ThreatScore report generation.
     """
 
-    objects = models.Manager()
-    all_objects = models.Manager()
-
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
 
