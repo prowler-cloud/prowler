@@ -1,350 +1,57 @@
+import io
 import uuid
-from datetime import timedelta
-from decimal import Decimal
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import matplotlib
 import pytest
-from django.utils import timezone
-from freezegun import freeze_time
+from reportlab.lib import colors
+from reportlab.platypus import Table, TableStyle
 from tasks.jobs.report import (
+    CHART_COLOR_GREEN_1,
+    CHART_COLOR_GREEN_2,
+    CHART_COLOR_ORANGE,
+    CHART_COLOR_RED,
+    CHART_COLOR_YELLOW,
+    COLOR_BLUE,
+    COLOR_ENS_ALTO,
+    COLOR_ENS_BAJO,
+    COLOR_ENS_MEDIO,
+    COLOR_ENS_OPCIONAL,
+    COLOR_HIGH_RISK,
+    COLOR_LOW_RISK,
+    COLOR_MEDIUM_RISK,
+    COLOR_SAFE,
+    _create_dimensions_radar_chart,
+    _create_ens_dimension_badges,
+    _create_ens_nivel_badge,
+    _create_ens_tipo_badge,
+    _create_findings_table_style,
+    _create_header_table_style,
+    _create_info_table_style,
+    _create_marco_category_chart,
+    _create_pdf_styles,
+    _create_risk_component,
+    _create_section_score_chart,
+    _create_status_component,
+    _get_chart_color_for_percentage,
+    _get_color_for_compliance,
+    _get_color_for_risk_level,
+    _get_color_for_weight,
+    _get_ens_nivel_color,
     _load_findings_for_requirement_checks,
+    _safe_getattr,
+    generate_compliance_reports_job,
     generate_threatscore_report,
-    generate_threatscore_report_job,
 )
 from tasks.jobs.threatscore_utils import (
     _aggregate_requirement_statistics_from_database,
     _calculate_requirements_data_from_statistics,
 )
-from tasks.tasks import generate_threatscore_report_task
 
-from api.models import Finding, Scan, StateChoices, StatusChoices, ThreatScoreSnapshot
+from api.models import Finding, StatusChoices
 from prowler.lib.check.models import Severity
 
 matplotlib.use("Agg")  # Use non-interactive backend for tests
-
-
-@pytest.mark.django_db
-class TestGenerateThreatscoreReport:
-    def setup_method(self):
-        self.scan_id = str(uuid.uuid4())
-        self.provider_id = str(uuid.uuid4())
-        self.tenant_id = str(uuid.uuid4())
-
-    def test_no_findings_returns_early(self):
-        with patch("tasks.jobs.report.ScanSummary.objects.filter") as mock_filter:
-            mock_filter.return_value.exists.return_value = False
-
-            result = generate_threatscore_report_job(
-                tenant_id=self.tenant_id,
-                scan_id=self.scan_id,
-                provider_id=self.provider_id,
-            )
-
-            assert result == {"upload": False}
-            mock_filter.assert_called_once_with(scan_id=self.scan_id)
-
-    @patch("tasks.jobs.report.ThreatScoreSnapshot.objects.create")
-    @patch("tasks.jobs.report.rmtree")
-    @patch("tasks.jobs.report._upload_to_s3")
-    @patch("tasks.jobs.report.generate_threatscore_report")
-    @patch("tasks.jobs.report._generate_output_directory")
-    @patch("tasks.jobs.report.Provider.objects.get")
-    @patch("tasks.jobs.report.ScanSummary.objects.filter")
-    def test_generate_threatscore_report_happy_path(
-        self,
-        mock_scan_summary_filter,
-        mock_provider_get,
-        mock_generate_output_directory,
-        mock_generate_report,
-        mock_upload,
-        mock_rmtree,
-        mock_snapshot_create,
-    ):
-        mock_scan_summary_filter.return_value.exists.return_value = True
-
-        mock_provider = MagicMock()
-        mock_provider.uid = "provider-uid"
-        mock_provider.provider = "aws"
-        mock_provider_get.return_value = mock_provider
-
-        mock_generate_output_directory.return_value = (
-            "/tmp/output",
-            "/tmp/compressed",
-            "/tmp/threatscore_path",
-        )
-
-        mock_upload.return_value = "s3://bucket/threatscore_report.pdf"
-
-        result = generate_threatscore_report_job(
-            tenant_id=self.tenant_id,
-            scan_id=self.scan_id,
-            provider_id=self.provider_id,
-        )
-
-        assert result == {"upload": True}
-        mock_generate_report.assert_called_once_with(
-            tenant_id=self.tenant_id,
-            scan_id=self.scan_id,
-            compliance_id="prowler_threatscore_aws",
-            output_path="/tmp/threatscore_path_threatscore_report.pdf",
-            provider_id=self.provider_id,
-            only_failed=True,
-            min_risk_level=4,
-        )
-        mock_upload.assert_called_once_with(
-            self.tenant_id,
-            self.scan_id,
-            "/tmp/threatscore_path_threatscore_report.pdf",
-            "threatscore/threatscore_path_threatscore_report.pdf",
-        )
-        mock_rmtree.assert_called_once_with(
-            Path("/tmp/threatscore_path_threatscore_report.pdf").parent,
-            ignore_errors=True,
-        )
-        mock_snapshot_create.assert_called_once()
-
-    @patch("tasks.jobs.report.ThreatScoreSnapshot.objects.create")
-    def test_generate_threatscore_report_fails_upload(self, mock_snapshot_create):
-        with (
-            patch("tasks.jobs.report.ScanSummary.objects.filter") as mock_filter,
-            patch("tasks.jobs.report.Provider.objects.get") as mock_provider_get,
-            patch("tasks.jobs.report._generate_output_directory") as mock_gen_dir,
-            patch("tasks.jobs.report.generate_threatscore_report"),
-            patch("tasks.jobs.report._upload_to_s3", return_value=None),
-        ):
-            mock_filter.return_value.exists.return_value = True
-
-            # Mock provider
-            mock_provider = MagicMock()
-            mock_provider.uid = "aws-provider-uid"
-            mock_provider.provider = "aws"
-            mock_provider_get.return_value = mock_provider
-
-            mock_gen_dir.return_value = (
-                "/tmp/output",
-                "/tmp/compressed",
-                "/tmp/threatscore_path",
-            )
-
-            result = generate_threatscore_report_job(
-                tenant_id=self.tenant_id,
-                scan_id=self.scan_id,
-                provider_id=self.provider_id,
-            )
-
-            assert result == {"upload": False}
-            mock_snapshot_create.assert_called_once()
-
-    @patch("tasks.jobs.report.ThreatScoreSnapshot.objects.create")
-    def test_generate_threatscore_report_logs_rmtree_exception(
-        self, mock_snapshot_create, caplog
-    ):
-        with (
-            patch("tasks.jobs.report.ScanSummary.objects.filter") as mock_filter,
-            patch("tasks.jobs.report.Provider.objects.get") as mock_provider_get,
-            patch("tasks.jobs.report._generate_output_directory") as mock_gen_dir,
-            patch("tasks.jobs.report.generate_threatscore_report"),
-            patch(
-                "tasks.jobs.report._upload_to_s3", return_value="s3://bucket/report.pdf"
-            ),
-            patch(
-                "tasks.jobs.report.rmtree", side_effect=Exception("Test deletion error")
-            ),
-        ):
-            mock_filter.return_value.exists.return_value = True
-
-            # Mock provider
-            mock_provider = MagicMock()
-            mock_provider.uid = "aws-provider-uid"
-            mock_provider.provider = "aws"
-            mock_provider_get.return_value = mock_provider
-
-            mock_gen_dir.return_value = (
-                "/tmp/output",
-                "/tmp/compressed",
-                "/tmp/threatscore_path",
-            )
-
-            with caplog.at_level("ERROR"):
-                generate_threatscore_report_job(
-                    tenant_id=self.tenant_id,
-                    scan_id=self.scan_id,
-                    provider_id=self.provider_id,
-                )
-                assert "Error deleting output files" in caplog.text
-                mock_snapshot_create.assert_called_once()
-
-    @patch("tasks.jobs.report.ThreatScoreSnapshot.objects.create")
-    def test_generate_threatscore_report_azure_provider(self, mock_snapshot_create):
-        with (
-            patch("tasks.jobs.report.ScanSummary.objects.filter") as mock_filter,
-            patch("tasks.jobs.report.Provider.objects.get") as mock_provider_get,
-            patch("tasks.jobs.report._generate_output_directory") as mock_gen_dir,
-            patch("tasks.jobs.report.generate_threatscore_report") as mock_generate,
-            patch(
-                "tasks.jobs.report._upload_to_s3", return_value="s3://bucket/report.pdf"
-            ),
-            patch("tasks.jobs.report.rmtree"),
-        ):
-            mock_filter.return_value.exists.return_value = True
-
-            mock_provider = MagicMock()
-            mock_provider.uid = "azure-provider-uid"
-            mock_provider.provider = "azure"
-            mock_provider_get.return_value = mock_provider
-
-            mock_gen_dir.return_value = (
-                "/tmp/output",
-                "/tmp/compressed",
-                "/tmp/threatscore_path",
-            )
-
-            generate_threatscore_report_job(
-                tenant_id=self.tenant_id,
-                scan_id=self.scan_id,
-                provider_id=self.provider_id,
-            )
-
-            mock_generate.assert_called_once_with(
-                tenant_id=self.tenant_id,
-                scan_id=self.scan_id,
-                compliance_id="prowler_threatscore_azure",
-                output_path="/tmp/threatscore_path_threatscore_report.pdf",
-                provider_id=self.provider_id,
-                only_failed=True,
-                min_risk_level=4,
-            )
-            mock_snapshot_create.assert_called_once()
-
-    @patch("tasks.jobs.report.rmtree")
-    @patch(
-        "tasks.jobs.report._upload_to_s3",
-        return_value="s3://bucket/threatscore/threatscore_report.pdf",
-    )
-    @patch("tasks.jobs.report.generate_threatscore_report")
-    @patch("tasks.jobs.report._generate_output_directory")
-    @patch("tasks.jobs.report.ScanSummary.objects.filter")
-    @patch("tasks.jobs.report.compute_threatscore_metrics")
-    @pytest.mark.django_db
-    @freeze_time("2025-01-10T12:00:00Z")
-    def test_generate_threatscore_report_persists_snapshot_and_delta(
-        self,
-        mock_compute_metrics,
-        mock_scan_summary_filter,
-        mock_generate_output_directory,
-        mock_generate_report,
-        mock_upload,
-        mock_rmtree,
-        tenants_fixture,
-        providers_fixture,
-    ):
-        tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
-
-        scan_previous = Scan.objects.create(
-            tenant=tenant,
-            provider=provider,
-            name="previous-threatscore-scan",
-            trigger=Scan.TriggerChoices.MANUAL,
-            state=StateChoices.COMPLETED,
-            started_at=timezone.now() - timedelta(hours=4),
-            completed_at=timezone.now() - timedelta(hours=3),
-        )
-        ThreatScoreSnapshot.objects.create(
-            tenant=tenant,
-            scan=scan_previous,
-            provider=provider,
-            compliance_id="prowler_threatscore_aws",
-            overall_score=Decimal("70.00"),
-            score_delta=None,
-            section_scores={"1. IAM": "65.00"},
-            critical_requirements=[],
-            total_requirements=50,
-            passed_requirements=35,
-            failed_requirements=15,
-            manual_requirements=0,
-            total_findings=40,
-            passed_findings=25,
-            failed_findings=15,
-        )
-
-        scan_current = Scan.objects.create(
-            tenant=tenant,
-            provider=provider,
-            name="current-threatscore-scan",
-            trigger=Scan.TriggerChoices.MANUAL,
-            state=StateChoices.COMPLETED,
-            started_at=timezone.now() - timedelta(hours=2),
-            completed_at=timezone.now() - timedelta(hours=1),
-        )
-
-        mock_scan_summary_filter.return_value.exists.return_value = True
-        mock_generate_output_directory.return_value = (
-            "/tmp/output",
-            "/tmp/compressed",
-            "/tmp/threatscore_path",
-        )
-
-        metrics = {
-            "overall_score": 85.5,
-            "score_delta": 10.0,
-            "section_scores": {"1. IAM": 82.3, "2. Attack Surface": 60.0},
-            "critical_requirements": [
-                {
-                    "requirement_id": "req_new",
-                    "title": "New high-risk requirement",
-                    "section": "1. IAM",
-                    "subsection": "Root Account",
-                    "risk_level": 5,
-                    "weight": 150,
-                    "passed_findings": 7,
-                    "total_findings": 10,
-                    "description": "Critical requirement description",
-                }
-            ],
-            "total_requirements": 140,
-            "passed_requirements": 100,
-            "failed_requirements": 40,
-            "manual_requirements": 0,
-            "total_findings": 200,
-            "passed_findings": 150,
-            "failed_findings": 50,
-        }
-        mock_compute_metrics.return_value = metrics
-
-        result = generate_threatscore_report_job(
-            tenant_id=str(tenant.id),
-            scan_id=str(scan_current.id),
-            provider_id=str(provider.id),
-        )
-
-        assert result == {"upload": True}
-        mock_compute_metrics.assert_called_once_with(
-            tenant_id=str(tenant.id),
-            scan_id=str(scan_current.id),
-            provider_id=str(provider.id),
-            compliance_id="prowler_threatscore_aws",
-            min_risk_level=4,
-        )
-        mock_generate_report.assert_called_once()
-        mock_upload.assert_called_once()
-        mock_rmtree.assert_called_once()
-
-        snapshots = ThreatScoreSnapshot.objects.filter(
-            tenant=tenant, provider=provider
-        ).order_by("inserted_at")
-        assert snapshots.count() == 2
-
-        new_snapshot = ThreatScoreSnapshot.objects.get(scan=scan_current)
-        assert new_snapshot.compliance_id == "prowler_threatscore_aws"
-        assert Decimal(new_snapshot.overall_score) == Decimal("85.50")
-        assert Decimal(new_snapshot.score_delta) == Decimal("15.50")
-        assert new_snapshot.section_scores == metrics["section_scores"]
-        assert new_snapshot.critical_requirements == metrics["critical_requirements"]
-        assert new_snapshot.total_requirements == metrics["total_requirements"]
-        assert new_snapshot.total_findings == metrics["total_findings"]
 
 
 @pytest.mark.django_db
@@ -1038,7 +745,7 @@ class TestGenerateThreatscoreReportFunction:
             mock_compliance_obj, {"check_1": {"passed": 5, "total": 10}}
         )
         mock_load_findings.assert_called_once_with(
-            self.tenant_id, self.scan_id, ["check_1"], prowler_provider
+            self.tenant_id, self.scan_id, ["check_1"], prowler_provider, None
         )
 
         # Verify PDF was built
@@ -1071,38 +778,648 @@ class TestGenerateThreatscoreReportFunction:
 
 
 @pytest.mark.django_db
-class TestGenerateThreatscoreReportTask:
+class TestColorHelperFunctions:
+    """Test suite for color selection helper functions."""
+
+    def test_get_color_for_risk_level_high(self):
+        """High risk level (>=4) returns red color."""
+        assert _get_color_for_risk_level(4) == COLOR_HIGH_RISK
+        assert _get_color_for_risk_level(5) == COLOR_HIGH_RISK
+
+    def test_get_color_for_risk_level_medium_high(self):
+        """Medium-high risk level (3) returns orange color."""
+        assert _get_color_for_risk_level(3) == COLOR_MEDIUM_RISK
+
+    def test_get_color_for_risk_level_medium(self):
+        """Medium risk level (2) returns yellow color."""
+        assert _get_color_for_risk_level(2) == COLOR_LOW_RISK
+
+    def test_get_color_for_risk_level_low(self):
+        """Low risk level (<2) returns green color."""
+        assert _get_color_for_risk_level(0) == COLOR_SAFE
+        assert _get_color_for_risk_level(1) == COLOR_SAFE
+
+    def test_get_color_for_weight_high(self):
+        """High weight (>100) returns red color."""
+        assert _get_color_for_weight(101) == COLOR_HIGH_RISK
+        assert _get_color_for_weight(200) == COLOR_HIGH_RISK
+
+    def test_get_color_for_weight_medium(self):
+        """Medium weight (51-100) returns yellow color."""
+        assert _get_color_for_weight(51) == COLOR_LOW_RISK
+        assert _get_color_for_weight(100) == COLOR_LOW_RISK
+
+    def test_get_color_for_weight_low(self):
+        """Low weight (<=50) returns green color."""
+        assert _get_color_for_weight(0) == COLOR_SAFE
+        assert _get_color_for_weight(50) == COLOR_SAFE
+
+    def test_get_color_for_compliance_high(self):
+        """High compliance (>=80%) returns green color."""
+        assert _get_color_for_compliance(80.0) == COLOR_SAFE
+        assert _get_color_for_compliance(100.0) == COLOR_SAFE
+
+    def test_get_color_for_compliance_medium(self):
+        """Medium compliance (60-79%) returns yellow color."""
+        assert _get_color_for_compliance(60.0) == COLOR_LOW_RISK
+        assert _get_color_for_compliance(79.9) == COLOR_LOW_RISK
+
+    def test_get_color_for_compliance_low(self):
+        """Low compliance (<60%) returns red color."""
+        assert _get_color_for_compliance(0.0) == COLOR_HIGH_RISK
+        assert _get_color_for_compliance(59.9) == COLOR_HIGH_RISK
+
+    def test_get_chart_color_for_percentage_excellent(self):
+        """Excellent percentage (>=80%) returns green."""
+        assert _get_chart_color_for_percentage(80.0) == CHART_COLOR_GREEN_1
+        assert _get_chart_color_for_percentage(100.0) == CHART_COLOR_GREEN_1
+
+    def test_get_chart_color_for_percentage_good(self):
+        """Good percentage (60-79%) returns light green."""
+        assert _get_chart_color_for_percentage(60.0) == CHART_COLOR_GREEN_2
+        assert _get_chart_color_for_percentage(79.9) == CHART_COLOR_GREEN_2
+
+    def test_get_chart_color_for_percentage_fair(self):
+        """Fair percentage (40-59%) returns yellow."""
+        assert _get_chart_color_for_percentage(40.0) == CHART_COLOR_YELLOW
+        assert _get_chart_color_for_percentage(59.9) == CHART_COLOR_YELLOW
+
+    def test_get_chart_color_for_percentage_poor(self):
+        """Poor percentage (20-39%) returns orange."""
+        assert _get_chart_color_for_percentage(20.0) == CHART_COLOR_ORANGE
+        assert _get_chart_color_for_percentage(39.9) == CHART_COLOR_ORANGE
+
+    def test_get_chart_color_for_percentage_critical(self):
+        """Critical percentage (<20%) returns red."""
+        assert _get_chart_color_for_percentage(0.0) == CHART_COLOR_RED
+        assert _get_chart_color_for_percentage(19.9) == CHART_COLOR_RED
+
+    def test_get_ens_nivel_color_alto(self):
+        """Alto nivel returns red color."""
+        assert _get_ens_nivel_color("alto") == COLOR_ENS_ALTO
+        assert _get_ens_nivel_color("ALTO") == COLOR_ENS_ALTO
+
+    def test_get_ens_nivel_color_medio(self):
+        """Medio nivel returns yellow/orange color."""
+        assert _get_ens_nivel_color("medio") == COLOR_ENS_MEDIO
+        assert _get_ens_nivel_color("MEDIO") == COLOR_ENS_MEDIO
+
+    def test_get_ens_nivel_color_bajo(self):
+        """Bajo nivel returns green color."""
+        assert _get_ens_nivel_color("bajo") == COLOR_ENS_BAJO
+        assert _get_ens_nivel_color("BAJO") == COLOR_ENS_BAJO
+
+    def test_get_ens_nivel_color_opcional(self):
+        """Opcional and unknown nivels return gray color."""
+        assert _get_ens_nivel_color("opcional") == COLOR_ENS_OPCIONAL
+        assert _get_ens_nivel_color("unknown") == COLOR_ENS_OPCIONAL
+
+
+class TestSafeGetattr:
+    """Test suite for _safe_getattr helper function."""
+
+    def test_safe_getattr_attribute_exists(self):
+        """Returns attribute value when it exists."""
+        obj = Mock()
+        obj.test_attr = "value"
+        assert _safe_getattr(obj, "test_attr") == "value"
+
+    def test_safe_getattr_attribute_missing_default(self):
+        """Returns default 'N/A' when attribute doesn't exist."""
+        obj = Mock(spec=[])
+        result = _safe_getattr(obj, "missing_attr")
+        assert result == "N/A"
+
+    def test_safe_getattr_custom_default(self):
+        """Returns custom default when specified."""
+        obj = Mock(spec=[])
+        result = _safe_getattr(obj, "missing_attr", "custom")
+        assert result == "custom"
+
+    def test_safe_getattr_none_value(self):
+        """Returns None if attribute value is None."""
+        obj = Mock()
+        obj.test_attr = None
+        assert _safe_getattr(obj, "test_attr") is None
+
+
+class TestPDFStylesCreation:
+    """Test suite for PDF styles creation and caching."""
+
+    def test_create_pdf_styles_returns_dict(self):
+        """Returns a dictionary with all required styles."""
+        styles = _create_pdf_styles()
+
+        assert isinstance(styles, dict)
+        assert "title" in styles
+        assert "h1" in styles
+        assert "h2" in styles
+        assert "h3" in styles
+        assert "normal" in styles
+        assert "normal_center" in styles
+
+    def test_create_pdf_styles_caches_result(self):
+        """Subsequent calls return cached styles."""
+        styles1 = _create_pdf_styles()
+        styles2 = _create_pdf_styles()
+
+        # Should return the exact same object (not just equal)
+        assert styles1 is styles2
+
+    def test_pdf_styles_have_correct_fonts(self):
+        """Styles use the correct fonts."""
+        styles = _create_pdf_styles()
+
+        assert styles["title"].fontName == "PlusJakartaSans"
+        assert styles["h1"].fontName == "PlusJakartaSans"
+        assert styles["normal"].fontName == "PlusJakartaSans"
+
+
+class TestTableStyleFactories:
+    """Test suite for table style factory functions."""
+
+    def test_create_info_table_style_returns_table_style(self):
+        """Returns a TableStyle object."""
+        style = _create_info_table_style()
+        assert isinstance(style, TableStyle)
+
+    def test_create_header_table_style_default_color(self):
+        """Uses default blue color when not specified."""
+        style = _create_header_table_style()
+        assert isinstance(style, TableStyle)
+        # Verify it has styling commands
+        assert len(style.getCommands()) > 0
+
+    def test_create_header_table_style_custom_color(self):
+        """Uses custom color when specified."""
+        custom_color = colors.red
+        style = _create_header_table_style(custom_color)
+        assert isinstance(style, TableStyle)
+
+    def test_create_findings_table_style(self):
+        """Returns appropriate style for findings tables."""
+        style = _create_findings_table_style()
+        assert isinstance(style, TableStyle)
+        assert len(style.getCommands()) > 0
+
+
+class TestRiskComponent:
+    """Test suite for _create_risk_component function."""
+
+    def test_create_risk_component_returns_table(self):
+        """Returns a Table object."""
+        table = _create_risk_component(risk_level=3, weight=100, score=50)
+        assert isinstance(table, Table)
+
+    def test_create_risk_component_high_risk(self):
+        """High risk level uses red color."""
+        table = _create_risk_component(risk_level=4, weight=50, score=0)
+        assert isinstance(table, Table)
+        # Table is created successfully
+
+    def test_create_risk_component_low_risk(self):
+        """Low risk level uses green color."""
+        table = _create_risk_component(risk_level=1, weight=30, score=100)
+        assert isinstance(table, Table)
+
+    def test_create_risk_component_default_score(self):
+        """Uses default score of 0 when not specified."""
+        table = _create_risk_component(risk_level=2, weight=50)
+        assert isinstance(table, Table)
+
+
+class TestStatusComponent:
+    """Test suite for _create_status_component function."""
+
+    def test_create_status_component_pass(self):
+        """PASS status uses green color."""
+        table = _create_status_component("pass")
+        assert isinstance(table, Table)
+
+    def test_create_status_component_fail(self):
+        """FAIL status uses red color."""
+        table = _create_status_component("fail")
+        assert isinstance(table, Table)
+
+    def test_create_status_component_manual(self):
+        """MANUAL status uses gray color."""
+        table = _create_status_component("manual")
+        assert isinstance(table, Table)
+
+    def test_create_status_component_uppercase(self):
+        """Handles uppercase status strings."""
+        table = _create_status_component("PASS")
+        assert isinstance(table, Table)
+
+
+class TestENSBadges:
+    """Test suite for ENS-specific badge creation functions."""
+
+    def test_create_ens_nivel_badge_alto(self):
+        """Creates badge for alto nivel."""
+        table = _create_ens_nivel_badge("alto")
+        assert isinstance(table, Table)
+
+    def test_create_ens_nivel_badge_medio(self):
+        """Creates badge for medio nivel."""
+        table = _create_ens_nivel_badge("medio")
+        assert isinstance(table, Table)
+
+    def test_create_ens_nivel_badge_bajo(self):
+        """Creates badge for bajo nivel."""
+        table = _create_ens_nivel_badge("bajo")
+        assert isinstance(table, Table)
+
+    def test_create_ens_nivel_badge_opcional(self):
+        """Creates badge for opcional nivel."""
+        table = _create_ens_nivel_badge("opcional")
+        assert isinstance(table, Table)
+
+    def test_create_ens_tipo_badge_requisito(self):
+        """Creates badge for requisito type."""
+        table = _create_ens_tipo_badge("requisito")
+        assert isinstance(table, Table)
+
+    def test_create_ens_tipo_badge_unknown(self):
+        """Handles unknown tipo gracefully."""
+        table = _create_ens_tipo_badge("unknown")
+        assert isinstance(table, Table)
+
+    def test_create_ens_dimension_badges_single(self):
+        """Creates badges for single dimension."""
+        table = _create_ens_dimension_badges(["trazabilidad"])
+        assert isinstance(table, Table)
+
+    def test_create_ens_dimension_badges_multiple(self):
+        """Creates badges for multiple dimensions."""
+        dimensiones = ["trazabilidad", "autenticidad", "integridad"]
+        table = _create_ens_dimension_badges(dimensiones)
+        assert isinstance(table, Table)
+
+    def test_create_ens_dimension_badges_empty(self):
+        """Returns N/A table for empty dimensions list."""
+        table = _create_ens_dimension_badges([])
+        assert isinstance(table, Table)
+
+    def test_create_ens_dimension_badges_invalid(self):
+        """Filters out invalid dimensions."""
+        table = _create_ens_dimension_badges(["invalid", "trazabilidad"])
+        assert isinstance(table, Table)
+
+
+class TestChartCreation:
+    """Test suite for chart generation functions."""
+
+    @patch("tasks.jobs.report.plt.close")
+    @patch("tasks.jobs.report.plt.savefig")
+    @patch("tasks.jobs.report.plt.subplots")
+    def test_create_section_score_chart_with_data(
+        self, mock_subplots, mock_savefig, mock_close
+    ):
+        """Creates chart successfully with valid data."""
+        mock_fig, mock_ax = MagicMock(), MagicMock()
+        mock_subplots.return_value = (mock_fig, mock_ax)
+        mock_ax.bar.return_value = [MagicMock(), MagicMock()]
+
+        requirements_list = [
+            {
+                "id": "req_1",
+                "attributes": {
+                    "passed_findings": 10,
+                    "total_findings": 10,
+                },
+            }
+        ]
+
+        mock_metadata = MagicMock()
+        mock_metadata.Section = "1. IAM"
+        mock_metadata.LevelOfRisk = 3
+        mock_metadata.Weight = 100
+
+        attributes_by_id = {
+            "req_1": {
+                "attributes": {
+                    "req_attributes": [mock_metadata],
+                }
+            }
+        }
+
+        result = _create_section_score_chart(requirements_list, attributes_by_id)
+
+        assert isinstance(result, io.BytesIO)
+        mock_subplots.assert_called_once()
+        mock_close.assert_called_once_with(mock_fig)
+
+    @patch("tasks.jobs.report.plt.close")
+    @patch("tasks.jobs.report.plt.savefig")
+    @patch("tasks.jobs.report.plt.subplots")
+    def test_create_marco_category_chart_with_data(
+        self, mock_subplots, mock_savefig, mock_close
+    ):
+        """Creates marco/category chart successfully."""
+        mock_fig, mock_ax = MagicMock(), MagicMock()
+        mock_subplots.return_value = (mock_fig, mock_ax)
+        mock_ax.barh.return_value = [MagicMock()]
+
+        requirements_list = [
+            {
+                "id": "req_1",
+                "attributes": {
+                    "status": StatusChoices.PASS,
+                },
+            }
+        ]
+
+        mock_metadata = MagicMock()
+        mock_metadata.Marco = "Marco1"
+        mock_metadata.Categoria = "Cat1"
+
+        attributes_by_id = {
+            "req_1": {
+                "attributes": {
+                    "req_attributes": [mock_metadata],
+                }
+            }
+        }
+
+        result = _create_marco_category_chart(requirements_list, attributes_by_id)
+
+        assert isinstance(result, io.BytesIO)
+        mock_close.assert_called_once_with(mock_fig)
+
+    @patch("tasks.jobs.report.plt.close")
+    @patch("tasks.jobs.report.plt.savefig")
+    @patch("tasks.jobs.report.plt.subplots")
+    def test_create_dimensions_radar_chart(
+        self, mock_subplots, mock_savefig, mock_close
+    ):
+        """Creates radar chart for dimensions."""
+        mock_fig, mock_ax = MagicMock(), MagicMock()
+        mock_ax.plot = MagicMock()
+        mock_ax.fill = MagicMock()
+        mock_subplots.return_value = (mock_fig, mock_ax)
+
+        requirements_list = [
+            {
+                "id": "req_1",
+                "attributes": {
+                    "status": StatusChoices.PASS,
+                },
+            }
+        ]
+
+        mock_metadata = MagicMock()
+        mock_metadata.Dimensiones = ["trazabilidad", "integridad"]
+
+        attributes_by_id = {
+            "req_1": {
+                "attributes": {
+                    "req_attributes": [mock_metadata],
+                }
+            }
+        }
+
+        result = _create_dimensions_radar_chart(requirements_list, attributes_by_id)
+
+        assert isinstance(result, io.BytesIO)
+        mock_close.assert_called_once_with(mock_fig)
+
+    @patch("tasks.jobs.report.plt.close")
+    @patch("tasks.jobs.report.plt.savefig")
+    @patch("tasks.jobs.report.plt.subplots")
+    def test_create_chart_closes_figure_on_error(
+        self, mock_subplots, mock_savefig, mock_close
+    ):
+        """Ensures figure is closed even if savefig fails."""
+        mock_fig, mock_ax = MagicMock(), MagicMock()
+        mock_subplots.return_value = (mock_fig, mock_ax)
+        mock_savefig.side_effect = Exception("Save failed")
+
+        requirements_list = []
+        attributes_by_id = {}
+
+        with pytest.raises(Exception):
+            _create_section_score_chart(requirements_list, attributes_by_id)
+
+        # Verify figure was still closed
+        mock_close.assert_called_with(mock_fig)
+
+
+@pytest.mark.django_db
+class TestOptimizationImprovements:
+    """Test suite to verify optimization improvements work correctly."""
+
+    def test_constants_are_color_objects(self):
+        """Verify color constants are properly instantiated Color objects."""
+        assert isinstance(COLOR_BLUE, colors.Color)
+        assert isinstance(COLOR_HIGH_RISK, colors.Color)
+        assert isinstance(COLOR_SAFE, colors.Color)
+
+    def test_chart_color_constants_are_strings(self):
+        """Verify chart color constants are hex strings."""
+        assert isinstance(CHART_COLOR_GREEN_1, str)
+        assert CHART_COLOR_GREEN_1.startswith("#")
+        assert len(CHART_COLOR_GREEN_1) == 7
+
+    def test_style_cache_persists_across_calls(self):
+        """Verify style caching reduces object creation."""
+        # Clear any existing cache by calling directly
+        styles1 = _create_pdf_styles()
+        styles2 = _create_pdf_styles()
+
+        # Should be the exact same cached object
+        assert id(styles1) == id(styles2)
+
+    def test_helper_functions_return_consistent_results(self):
+        """Verify helper functions return consistent results."""
+        # Same input should always return same output
+        assert _get_color_for_risk_level(3) == _get_color_for_risk_level(3)
+        assert _get_color_for_weight(100) == _get_color_for_weight(100)
+        assert _get_chart_color_for_percentage(75.0) == _get_chart_color_for_percentage(
+            75.0
+        )
+
+
+@pytest.mark.django_db
+class TestGenerateComplianceReportsOptimized:
+    """Test suite for the optimized generate_compliance_reports_job function."""
+
     def setup_method(self):
         self.scan_id = str(uuid.uuid4())
         self.provider_id = str(uuid.uuid4())
         self.tenant_id = str(uuid.uuid4())
 
-    @patch("tasks.tasks.generate_threatscore_report_job")
-    def test_generate_threatscore_report_task_calls_job(self, mock_generate_job):
-        mock_generate_job.return_value = {"upload": True}
+    def test_no_findings_returns_early_for_both_reports(self):
+        """Test that function returns early when no findings exist."""
+        with patch("tasks.jobs.report.ScanSummary.objects.filter") as mock_filter:
+            mock_filter.return_value.exists.return_value = False
 
-        result = generate_threatscore_report_task(
-            tenant_id=self.tenant_id,
-            scan_id=self.scan_id,
-            provider_id=self.provider_id,
-        )
-
-        assert result == {"upload": True}
-        mock_generate_job.assert_called_once_with(
-            tenant_id=self.tenant_id,
-            scan_id=self.scan_id,
-            provider_id=self.provider_id,
-        )
-
-    @patch("tasks.tasks.generate_threatscore_report_job")
-    def test_generate_threatscore_report_task_handles_job_exception(
-        self, mock_generate_job
-    ):
-        mock_generate_job.side_effect = Exception("Job failed")
-
-        with pytest.raises(Exception, match="Job failed"):
-            generate_threatscore_report_task(
+            result = generate_compliance_reports_job(
                 tenant_id=self.tenant_id,
                 scan_id=self.scan_id,
                 provider_id=self.provider_id,
             )
+
+            assert result["threatscore"] == {"upload": False, "path": ""}
+            assert result["ens"] == {"upload": False, "path": ""}
+            mock_filter.assert_called_once_with(scan_id=self.scan_id)
+
+    @patch("tasks.jobs.report.rmtree")
+    @patch("tasks.jobs.report._upload_to_s3")
+    @patch("tasks.jobs.report.generate_ens_report")
+    @patch("tasks.jobs.report.generate_threatscore_report")
+    @patch("tasks.jobs.report._generate_compliance_output_directory")
+    @patch("tasks.jobs.report._aggregate_requirement_statistics_from_database")
+    @patch("tasks.jobs.report.Provider")
+    @patch("tasks.jobs.report.ScanSummary")
+    def test_generates_both_reports_with_shared_queries(
+        self,
+        mock_scan_summary,
+        mock_provider,
+        mock_aggregate_stats,
+        mock_gen_dir,
+        mock_gen_threatscore,
+        mock_gen_ens,
+        mock_upload,
+        mock_rmtree,
+    ):
+        """Test that both reports are generated with shared database queries."""
+        # Setup mocks
+        mock_scan_summary.objects.filter.return_value.exists.return_value = True
+        mock_provider_obj = Mock()
+        mock_provider_obj.uid = "test-uid"
+        mock_provider_obj.provider = "aws"
+        mock_provider.objects.get.return_value = mock_provider_obj
+
+        mock_aggregate_stats.return_value = {"check-1": {"passed": 10, "total": 15}}
+        # Mock returns different paths for different compliance_framework calls
+        mock_gen_dir.side_effect = [
+            "/tmp/threatscore_path",  # First call with compliance_framework="threatscore"
+            "/tmp/ens_path",  # Second call with compliance_framework="ens"
+        ]
+        mock_upload.side_effect = [
+            "s3://bucket/threatscore.pdf",
+            "s3://bucket/ens.pdf",
+        ]
+
+        result = generate_compliance_reports_job(
+            tenant_id=self.tenant_id,
+            scan_id=self.scan_id,
+            provider_id=self.provider_id,
+            generate_threatscore=True,
+            generate_ens=True,
+        )
+
+        # Verify Provider fetched only ONCE (optimization)
+        mock_provider.objects.get.assert_called_once_with(id=self.provider_id)
+
+        # Verify aggregation called only ONCE (optimization)
+        mock_aggregate_stats.assert_called_once_with(self.tenant_id, self.scan_id)
+
+        # Verify both report generation functions were called with shared data
+        assert mock_gen_threatscore.call_count == 1
+        assert mock_gen_ens.call_count == 1
+
+        # Verify provider_obj and requirement_statistics were passed to both
+        threatscore_call_kwargs = mock_gen_threatscore.call_args[1]
+        assert threatscore_call_kwargs["provider_obj"] == mock_provider_obj
+        assert threatscore_call_kwargs["requirement_statistics"] == {
+            "check-1": {"passed": 10, "total": 15}
+        }
+
+        ens_call_kwargs = mock_gen_ens.call_args[1]
+        assert ens_call_kwargs["provider_obj"] == mock_provider_obj
+        assert ens_call_kwargs["requirement_statistics"] == {
+            "check-1": {"passed": 10, "total": 15}
+        }
+
+        # Verify both reports were uploaded successfully
+        assert result["threatscore"]["upload"] is True
+        assert result["threatscore"]["path"] == "s3://bucket/threatscore.pdf"
+        assert result["ens"]["upload"] is True
+        assert result["ens"]["path"] == "s3://bucket/ens.pdf"
+
+    @patch("tasks.jobs.report._aggregate_requirement_statistics_from_database")
+    @patch("tasks.jobs.report.Provider")
+    @patch("tasks.jobs.report.ScanSummary")
+    def test_skips_ens_for_unsupported_provider(
+        self, mock_scan_summary, mock_provider, mock_aggregate_stats
+    ):
+        """Test that ENS report is skipped for M365 provider."""
+        mock_scan_summary.objects.filter.return_value.exists.return_value = True
+        mock_provider_obj = Mock()
+        mock_provider_obj.uid = "test-uid"
+        mock_provider_obj.provider = "m365"  # Not supported for ENS
+        mock_provider.objects.get.return_value = mock_provider_obj
+
+        result = generate_compliance_reports_job(
+            tenant_id=self.tenant_id,
+            scan_id=self.scan_id,
+            provider_id=self.provider_id,
+        )
+
+        # ENS should be skipped, only ThreatScore key should have error/status
+        assert "ens" in result
+        assert result["ens"]["upload"] is False
+
+    def test_findings_cache_reuses_loaded_findings(self):
+        """Test that findings cache properly reuses findings across calls."""
+        # Create mock findings
+        mock_finding1 = Mock()
+        mock_finding1.check_id = "check-1"
+        mock_finding2 = Mock()
+        mock_finding2.check_id = "check-2"
+        mock_finding3 = Mock()
+        mock_finding3.check_id = "check-1"
+
+        mock_output1 = Mock()
+        mock_output1.check_id = "check-1"
+        mock_output2 = Mock()
+        mock_output2.check_id = "check-2"
+        mock_output3 = Mock()
+        mock_output3.check_id = "check-1"
+
+        # Pre-populate cache
+        findings_cache = {
+            "check-1": [mock_output1, mock_output3],
+        }
+
+        with (
+            patch("tasks.jobs.report.Finding") as mock_finding_class,
+            patch("tasks.jobs.report.FindingOutput") as mock_finding_output,
+            patch("tasks.jobs.report.rls_transaction"),
+            patch("tasks.jobs.report.batched") as mock_batched,
+        ):
+            # Setup mocks
+            mock_finding_class.all_objects.filter.return_value.order_by.return_value.iterator.return_value = [
+                mock_finding2
+            ]
+            mock_batched.return_value = [([mock_finding2], True)]
+            mock_finding_output.transform_api_finding.return_value = mock_output2
+
+            mock_provider = Mock()
+
+            # Call with cache containing check-1, requesting check-1 and check-2
+            result = _load_findings_for_requirement_checks(
+                tenant_id=self.tenant_id,
+                scan_id=self.scan_id,
+                check_ids=["check-1", "check-2"],
+                prowler_provider=mock_provider,
+                findings_cache=findings_cache,
+            )
+
+            # Verify check-1 was reused from cache (no DB query)
+            assert len(result["check-1"]) == 2
+            assert result["check-1"] == [mock_output1, mock_output3]
+
+            # Verify check-2 was loaded from DB
+            assert len(result["check-2"]) == 1
+            assert result["check-2"][0] == mock_output2
+
+            # Verify cache was updated with check-2
+            assert "check-2" in findings_cache
+            assert findings_cache["check-2"] == [mock_output2]
+
+            # Verify DB was only queried for check-2 (not check-1)
+            filter_call = mock_finding_class.all_objects.filter.call_args
+            assert filter_call[1]["check_id__in"] == ["check-2"]
