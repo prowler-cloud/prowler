@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { Button } from "@/components/shadcn";
 import { Accordion, AccordionItemProps } from "@/components/ui";
 
 export const ClientAccordionWrapper = ({
@@ -59,12 +60,14 @@ export const ClientAccordionWrapper = ({
     <div>
       {!hideExpandButton && (
         <div className="text-text-neutral-tertiary hover:text-text-neutral-primary mt-[-16px] flex justify-end text-xs font-medium transition-colors">
-          <button
+          <Button
             onClick={handleToggleExpand}
             aria-label={isExpanded ? "Collapse all" : "Expand all"}
+            variant="ghost"
+            size="sm"
           >
             {isExpanded ? "Collapse all" : "Expand all"}
-          </button>
+          </Button>
         </div>
       )}
       <Accordion
