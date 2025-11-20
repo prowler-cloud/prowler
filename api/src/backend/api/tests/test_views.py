@@ -6789,26 +6789,26 @@ class TestOverviewViewSet:
             reverse("overview-regions"), {"filter[inserted_at]": TODAY}
         )
         assert response.status_code == status.HTTP_200_OK
-        # Only two different regions in the fixture (eu-west-1, us-east-1)
+        # Only two different regions in the fixture (region1, region2)
         assert len(response.json()["data"]) == 2
 
         data = response.json()["data"]
         regions = {item["id"]: item["attributes"] for item in data}
 
-        assert "eu-west-1" in regions
-        assert "us-east-1" in regions
+        assert "aws:region1" in regions
+        assert "aws:region2" in regions
 
-        # eu-west-1 has 3 findings (1 pass, 1 fail, 1 muted)
-        assert regions["eu-west-1"]["total"] == 3
-        assert regions["eu-west-1"]["pass"] == 1
-        assert regions["eu-west-1"]["fail"] == 1
-        assert regions["eu-west-1"]["muted"] == 1
+        # region1 has 2 findings (2 pass, 0 fail, 0 muted)
+        assert regions["aws:region1"]["total"] == 2
+        assert regions["aws:region1"]["pass"] == 2
+        assert regions["aws:region1"]["fail"] == 0
+        assert regions["aws:region1"]["muted"] == 0
 
-        # us-east-1 has 1 finding (1 pass)
-        assert regions["us-east-1"]["total"] == 1
-        assert regions["us-east-1"]["pass"] == 1
-        assert regions["us-east-1"]["fail"] == 0
-        assert regions["us-east-1"]["muted"] == 0
+        # region2 has 2 findings (0 pass, 1 fail, 1 muted)
+        assert regions["aws:region2"]["total"] == 2
+        assert regions["aws:region2"]["pass"] == 0
+        assert regions["aws:region2"]["fail"] == 1
+        assert regions["aws:region2"]["muted"] == 1
 
     def test_overview_services_list(self, authenticated_client, scan_summaries_fixture):
         response = authenticated_client.get(
