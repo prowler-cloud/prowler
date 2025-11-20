@@ -115,7 +115,7 @@ export const ThreatScoreBadge = ({
 
           <div className="flex flex-col items-end gap-1">
             <span className={`text-2xl font-bold ${getTextColor()}`}>
-              {score.toFixed(1)}%
+              {score}%
             </span>
             <Progress
               aria-label="ThreatScore progress"

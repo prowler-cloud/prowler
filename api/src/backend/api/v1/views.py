@@ -4220,7 +4220,8 @@ class OverviewViewSet(BaseRLSViewSet):
         if "status_count" in filtered_queryset.query.annotations:
             sum_expression = Sum("status_count")
         else:
-            sum_expression = Sum("total")
+            # Exclude muted findings by default
+            sum_expression = Sum(F("_pass") + F("fail"))
 
         severity_counts = (
             filtered_queryset.values("severity")
