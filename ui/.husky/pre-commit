@@ -151,3 +151,19 @@ else
   echo ""
   exit 1
 fi
+
+# Run build
+echo -e "${BLUE}🔨 Running build...${NC}"
+echo ""
+
+if npm run build; then
+  echo ""
+  echo -e "${GREEN}✅ Build passed${NC}"
+  echo ""
+else
+  echo ""
+  echo -e "${RED}❌ Build failed${NC}"
+  echo -e "${RED}Fix build errors before committing${NC}"
+  echo ""
+  exit 1
+fi
