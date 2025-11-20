@@ -542,15 +542,18 @@ export const Chat = ({
               <Combobox
                 value={`${selectedModel.providerType}:${selectedModel.modelId}`}
                 onValueChange={(value) => {
-                  const [providerType, modelId] = value.split(":");
+                  const separatorIndex = value.indexOf(":");
+                  if (separatorIndex === -1) return;
+
+                  const providerType = value.slice(
+                    0,
+                    separatorIndex,
+                  ) as LighthouseProvider;
+                  const modelId = value.slice(separatorIndex + 1);
                   const provider = providers.find((p) => p.id === providerType);
                   const model = provider?.models.find((m) => m.id === modelId);
                   if (provider && model) {
-                    handleModelSelect(
-                      providerType as LighthouseProvider,
-                      modelId,
-                      model.name,
-                    );
+                    handleModelSelect(providerType, modelId, model.name);
                   }
                 }}
                 groups={providers.map((provider) => ({
