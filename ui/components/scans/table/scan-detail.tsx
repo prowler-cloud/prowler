@@ -2,11 +2,7 @@
 
 import { Snippet } from "@heroui/snippet";
 
-import {
-  DateWithTime,
-  EntityInfoShort,
-  InfoField,
-} from "@/components/ui/entities";
+import { DateWithTime, EntityInfo, InfoField } from "@/components/ui/entities";
 import { StatusBadge } from "@/components/ui/table/status-badge";
 import { ProviderProps, ProviderType, ScanProps, TaskDetails } from "@/types";
 
@@ -68,7 +64,7 @@ export const ScanDetail = ({
             loadingProgress={scan.progress}
           />
         </div>
-        <EntityInfoShort
+        <EntityInfo
           cloudProvider={providerDetails?.provider as ProviderType}
           entityAlias={providerDetails?.alias}
           entityId={providerDetails?.uid}

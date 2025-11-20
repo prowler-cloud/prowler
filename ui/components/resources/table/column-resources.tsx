@@ -5,7 +5,7 @@ import { Database } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 import { InfoIcon } from "@/components/icons";
-import { EntityInfoShort, SnippetChip } from "@/components/ui/entities";
+import { EntityInfo, SnippetChip } from "@/components/ui/entities";
 import { TriggerSheet } from "@/components/ui/sheet";
 import { DataTableColumnHeader } from "@/components/ui/table";
 import { ProviderType, ResourceProps } from "@/types";
@@ -171,7 +171,7 @@ export const ColumnResources: ColumnDef<ResourceProps>[] = [
       const uid = getProviderData(row, "uid");
       return (
         <>
-          <EntityInfoShort
+          <EntityInfo
             cloudProvider={provider as ProviderType}
             entityAlias={alias && typeof alias === "string" ? alias : undefined}
             entityId={uid && typeof uid === "string" ? uid : undefined}

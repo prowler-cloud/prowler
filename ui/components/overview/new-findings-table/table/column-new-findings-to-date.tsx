@@ -10,7 +10,7 @@ import { DeltaIndicator } from "@/components/findings/table/delta-indicator";
 import { InfoIcon } from "@/components/icons";
 import {
   DateWithTime,
-  EntityInfoShort,
+  EntityInfo,
   SnippetChip,
 } from "@/components/ui/entities";
 import { TriggerSheet } from "@/components/ui/sheet";
@@ -214,7 +214,7 @@ export const ColumnNewFindingsToDate: ColumnDef<FindingProps>[] = [
 
       return (
         <>
-          <EntityInfoShort
+          <EntityInfo
             cloudProvider={provider as ProviderType}
             entityAlias={alias as string}
             entityId={uid as string}

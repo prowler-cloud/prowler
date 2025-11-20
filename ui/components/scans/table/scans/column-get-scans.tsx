@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { InfoIcon } from "@/components/icons";
 import { TableLink } from "@/components/ui/custom";
-import { DateWithTime, EntityInfoShort } from "@/components/ui/entities";
+import { DateWithTime, EntityInfo } from "@/components/ui/entities";
 import { TriggerSheet } from "@/components/ui/sheet";
 import { DataTableColumnHeader, StatusBadge } from "@/components/ui/table";
 import { ProviderType, ScanProps } from "@/types";
@@ -87,7 +87,7 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
       const { provider, uid, alias } = providerInfo;
 
       return (
-        <EntityInfoShort
+        <EntityInfo
           cloudProvider={provider as ProviderType}
           entityAlias={alias}
           entityId={uid}

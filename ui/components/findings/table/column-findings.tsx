@@ -9,7 +9,7 @@ import { DataTableRowActions } from "@/components/findings/table/data-table-row-
 import { InfoIcon } from "@/components/icons";
 import {
   DateWithTime,
-  EntityInfoShort,
+  EntityInfo,
   SnippetChip,
 } from "@/components/ui/entities";
 import { TriggerSheet } from "@/components/ui/sheet";
@@ -253,7 +253,7 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
 
       return (
         <>
-          <EntityInfoShort
+          <EntityInfo
             cloudProvider={provider as ProviderType}
             entityAlias={alias as string}
             entityId={uid as string}
