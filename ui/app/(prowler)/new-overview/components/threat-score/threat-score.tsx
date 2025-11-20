@@ -1,8 +1,6 @@
 "use client";
 
 import { MessageCircleWarning, ThumbsUp } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import type { KeyboardEvent } from "react";
 
 import type {
   CriticalRequirement,
@@ -16,7 +14,6 @@ import {
   CardTitle,
   Skeleton,
 } from "@/components/shadcn";
-import { cn } from "@/lib/utils";
 
 const THREAT_COLORS = {
   DANGER: "var(--bg-fail-primary)",
@@ -55,7 +52,6 @@ interface ThreatScoreProps {
   criticalRequirements?: CriticalRequirement[];
   onViewRemediationPlan?: () => void;
   className?: string;
-  hasProviderFilters?: boolean;
 }
 
 function getThreatLevel(score: number): ThreatLevelKey {
@@ -108,10 +104,7 @@ export function ThreatScore({
   scoreDelta,
   sectionScores,
   criticalRequirements,
-  hasProviderFilters = false,
 }: ThreatScoreProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const hasData = score !== null && score !== undefined;
   const displayScore = hasData ? score : 0;
 
@@ -124,42 +117,10 @@ export function ThreatScore({
   // Extract top gaps from critical requirements
   const gaps = extractTopGaps(criticalRequirements, 2);
 
-  const handleCardClick = () => {
-    if (!hasProviderFilters) return;
-
-    const params = new URLSearchParams(searchParams.toString());
-
-    // Remove provider_id__in since compliance page uses provider_uid__in
-    params.delete("filter[provider_id__in]");
-
-    // Navigate to compliance page with threatscore framework
-    router.push(`/compliance/prowler-threatscore?${params.toString()}`);
-  };
-
-  const isClickable = hasProviderFilters;
-
   return (
     <Card
       variant="base"
-      className={cn(
-        "flex min-h-[372px] min-w-[328px] flex-col justify-between md:max-w-[312px]",
-        isClickable && "cursor-pointer",
-      )}
-      role={isClickable ? "button" : undefined}
-      tabIndex={isClickable ? 0 : undefined}
-      aria-label={
-        isClickable
-          ? "Navigate to Prowler ThreatScore compliance page with current provider filters"
-          : undefined
-      }
-      onClick={handleCardClick}
-      onKeyDown={(e: KeyboardEvent<HTMLDivElement>) => {
-        if (isClickable && (e.key === "Enter" || e.key === " ")) {
-          e.preventDefault();
-          e.stopPropagation();
-          handleCardClick();
-        }
-      }}
+      className="flex min-h-[372px] min-w-[328px] flex-col justify-between md:max-w-[312px]"
     >
       <CardHeader>
         <CardTitle>Prowler Threat Score</CardTitle>
