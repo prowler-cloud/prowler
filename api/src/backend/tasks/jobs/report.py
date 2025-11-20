@@ -882,8 +882,10 @@ def _create_marco_category_chart(
 
     buffer = io.BytesIO()
     try:
-        plt.savefig(buffer, format="png", dpi=300, bbox_inches="tight")
-        buffer.seek(0)
+        # Render canvas and save explicitly from the figure to avoid state bleed
+        fig.canvas.draw()
+        fig.savefig(buffer, format="png", dpi=300, bbox_inches="tight")
+        buffer.seek(0, io.SEEK_END)
     finally:
         plt.close(fig)
 
@@ -920,7 +922,10 @@ def _create_dimensions_radar_chart(
             continue
 
         m = metadata[0]
-        dimensiones = _safe_getattr(m, "Dimensiones", [])
+        dimensiones_attr = getattr(m, "Dimensiones", None)
+        dimensiones = dimensiones_attr or []
+        if isinstance(dimensiones, str):
+            dimensiones = [dimensiones]
 
         for dimension in dimensiones:
             dimension_lower = dimension.lower()
@@ -960,8 +965,9 @@ def _create_dimensions_radar_chart(
 
     buffer = io.BytesIO()
     try:
-        plt.savefig(buffer, format="png", dpi=300, bbox_inches="tight")
-        buffer.seek(0)
+        fig.canvas.draw()
+        fig.savefig(buffer, format="png", dpi=300, bbox_inches="tight")
+        buffer.seek(0, io.SEEK_END)
     finally:
         plt.close(fig)
 
@@ -1023,7 +1029,7 @@ def _load_findings_for_requirement_checks(
     scan_id: str,
     check_ids: list[str],
     prowler_provider,
-    findings_cache: dict[str, list[FindingOutput]] = None,
+    findings_cache: dict[str, list[FindingOutput]] | None = None,
 ) -> dict[str, list[FindingOutput]]:
     """
     Load findings for specific check IDs on-demand with optional caching.
@@ -1207,8 +1213,8 @@ def generate_threatscore_report(
     only_failed: bool = True,
     min_risk_level: int = 4,
     provider_obj=None,
-    requirement_statistics: dict[str, dict[str, int]] = None,
-    findings_cache: dict[str, list[FindingOutput]] = None,
+    requirement_statistics: dict[str, dict[str, int]] | None = None,
+    findings_cache: dict[str, list[FindingOutput]] | None = None,
 ) -> None:
     """
     Generate a PDF compliance report based on Prowler ThreatScore framework.
@@ -1817,9 +1823,8 @@ def generate_threatscore_report(
         # Build the PDF
         doc.build(elements, onFirstPage=_add_pdf_footer, onLaterPages=_add_pdf_footer)
     except Exception as e:
-        logger.info(
-            f"Error building the document, line {e.__traceback__.tb_lineno} -- {e}"
-        )
+        tb_lineno = e.__traceback__.tb_lineno if e.__traceback__ else "unknown"
+        logger.info(f"Error building the document, line {tb_lineno} -- {e}")
         raise e
 
 
@@ -1924,8 +1929,9 @@ def _create_nis2_section_chart(
 
     buffer = io.BytesIO()
     try:
-        plt.savefig(buffer, format="png", dpi=300, bbox_inches="tight")
-        buffer.seek(0)
+        fig.canvas.draw()
+        fig.savefig(buffer, format="png", dpi=300, bbox_inches="tight")
+        buffer.seek(0, io.SEEK_END)
     finally:
         plt.close(fig)
 
@@ -2113,8 +2119,8 @@ def generate_ens_report(
     provider_id: str,
     include_manual: bool = True,
     provider_obj=None,
-    requirement_statistics: dict[str, dict[str, int]] = None,
-    findings_cache: dict[str, list[FindingOutput]] = None,
+    requirement_statistics: dict[str, dict[str, int]] | None = None,
+    findings_cache: dict[str, list[FindingOutput]] | None = None,
 ) -> None:
     """
     Generate a PDF compliance report for ENS RD2022 framework.
@@ -3040,9 +3046,8 @@ def generate_ens_report(
         logger.info("Building PDF...")
         doc.build(elements, onFirstPage=_add_pdf_footer, onLaterPages=_add_pdf_footer)
     except Exception as e:
-        logger.error(
-            f"Error building ENS report, line {e.__traceback__.tb_lineno} -- {e}"
-        )
+        tb_lineno = e.__traceback__.tb_lineno if e.__traceback__ else "unknown"
+        logger.error(f"Error building ENS report, line {tb_lineno} -- {e}")
         raise e
 
 
@@ -3055,8 +3060,8 @@ def generate_nis2_report(
     only_failed: bool = True,
     include_manual: bool = False,
     provider_obj=None,
-    requirement_statistics: dict[str, dict[str, int]] = None,
-    findings_cache: dict[str, list[FindingOutput]] = None,
+    requirement_statistics: dict[str, dict[str, int]] | None = None,
+    findings_cache: dict[str, list[FindingOutput]] | None = None,
 ) -> None:
     """
     Generate a PDF compliance report for NIS2 Directive (EU) 2022/2555.
@@ -3299,6 +3304,7 @@ def generate_nis2_report(
         section_chart_buffer = _create_nis2_section_chart(
             requirements_list, attributes_by_requirement_id
         )
+        section_chart_buffer.seek(0)
         section_chart = Image(section_chart_buffer, width=6.5 * inch, height=5 * inch)
         elements.append(section_chart)
         elements.append(PageBreak())
@@ -3589,9 +3595,8 @@ def generate_nis2_report(
         logger.info(f"NIS2 report successfully generated at {output_path}")
 
     except Exception as e:
-        logger.error(
-            f"Error building NIS2 report, line {e.__traceback__.tb_lineno} -- {e}"
-        )
+        tb_lineno = e.__traceback__.tb_lineno if e.__traceback__ else "unknown"
+        logger.error(f"Error building NIS2 report, line {tb_lineno} -- {e}")
         raise e
 
 

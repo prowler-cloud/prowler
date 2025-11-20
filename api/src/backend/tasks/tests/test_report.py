@@ -1271,13 +1271,14 @@ class TestGenerateComplianceReportsOptimized:
 
     @patch("tasks.jobs.report.rmtree")
     @patch("tasks.jobs.report._upload_to_s3")
+    @patch("tasks.jobs.report.generate_nis2_report")
     @patch("tasks.jobs.report.generate_ens_report")
     @patch("tasks.jobs.report.generate_threatscore_report")
     @patch("tasks.jobs.report._generate_compliance_output_directory")
     @patch("tasks.jobs.report._aggregate_requirement_statistics_from_database")
     @patch("tasks.jobs.report.Provider")
     @patch("tasks.jobs.report.ScanSummary")
-    def test_generates_both_reports_with_shared_queries(
+    def test_generates_reports_with_shared_queries(
         self,
         mock_scan_summary,
         mock_provider,
@@ -1285,10 +1286,11 @@ class TestGenerateComplianceReportsOptimized:
         mock_gen_dir,
         mock_gen_threatscore,
         mock_gen_ens,
+        mock_gen_nis2,
         mock_upload,
         mock_rmtree,
     ):
-        """Test that both reports are generated with shared database queries."""
+        """Test that requested reports are generated with shared database queries."""
         # Setup mocks
         mock_scan_summary.objects.filter.return_value.exists.return_value = True
         mock_provider_obj = Mock()
@@ -1299,12 +1301,14 @@ class TestGenerateComplianceReportsOptimized:
         mock_aggregate_stats.return_value = {"check-1": {"passed": 10, "total": 15}}
         # Mock returns different paths for different compliance_framework calls
         mock_gen_dir.side_effect = [
-            "/tmp/threatscore_path",  # First call with compliance_framework="threatscore"
-            "/tmp/ens_path",  # Second call with compliance_framework="ens"
+            "/tmp/reports/threatscore/output",  # First call with compliance_framework="threatscore"
+            "/tmp/reports/ens/output",  # Second call with compliance_framework="ens"
+            "/tmp/reports/nis2/output",  # Third call with compliance_framework="nis2"
         ]
         mock_upload.side_effect = [
             "s3://bucket/threatscore.pdf",
             "s3://bucket/ens.pdf",
+            "s3://bucket/nis2.pdf",
         ]
 
         result = generate_compliance_reports_job(
@@ -1324,6 +1328,7 @@ class TestGenerateComplianceReportsOptimized:
         # Verify both report generation functions were called with shared data
         assert mock_gen_threatscore.call_count == 1
         assert mock_gen_ens.call_count == 1
+        assert mock_gen_nis2.call_count == 1
 
         # Verify provider_obj and requirement_statistics were passed to both
         threatscore_call_kwargs = mock_gen_threatscore.call_args[1]
@@ -1338,11 +1343,24 @@ class TestGenerateComplianceReportsOptimized:
             "check-1": {"passed": 10, "total": 15}
         }
 
+        nis2_call_kwargs = mock_gen_nis2.call_args[1]
+        assert nis2_call_kwargs["provider_obj"] == mock_provider_obj
+        assert nis2_call_kwargs["requirement_statistics"] == {
+            "check-1": {"passed": 10, "total": 15}
+        }
+
         # Verify both reports were uploaded successfully
         assert result["threatscore"]["upload"] is True
         assert result["threatscore"]["path"] == "s3://bucket/threatscore.pdf"
         assert result["ens"]["upload"] is True
         assert result["ens"]["path"] == "s3://bucket/ens.pdf"
+        assert result["nis2"]["upload"] is True
+        assert result["nis2"]["path"] == "s3://bucket/nis2.pdf"
+
+        # Cleanup should remove the temporary parent directory when everything uploads
+        mock_rmtree.assert_called_once()
+        cleanup_path_arg = mock_rmtree.call_args[0][0]
+        assert str(cleanup_path_arg) == "/tmp/reports"
 
     @patch("tasks.jobs.report._aggregate_requirement_statistics_from_database")
     @patch("tasks.jobs.report.Provider")
@@ -1703,8 +1721,7 @@ class TestNIS2RequirementsIndex:
 class TestGenerateNIS2Report:
     """Test suite for generate_nis2_report function."""
 
-    @patch("tasks.jobs.report._upload_to_s3")
-    @patch("tasks.jobs.report._generate_output_directory")
+    @patch("tasks.jobs.report.initialize_prowler_provider")
     @patch("tasks.jobs.report.Provider.objects.get")
     @patch("tasks.jobs.report.ScanSummary.objects.filter")
     @patch("tasks.jobs.report.Compliance.get_bulk")
@@ -1715,8 +1732,7 @@ class TestGenerateNIS2Report:
         mock_compliance,
         mock_scan_summary,
         mock_provider_get,
-        mock_output_dir,
-        mock_upload,
+        mock_init_provider,
         tenants_fixture,
         scans_fixture,
     ):
@@ -1742,9 +1758,11 @@ class TestGenerateNIS2Report:
 
         mock_compliance.return_value = {"nis2_aws": mock_compliance_obj}
 
-        mock_output_dir.return_value = "/tmp/test"
+        mock_init_provider.return_value = MagicMock()
         mock_doc_instance = Mock()
         mock_doc.return_value = mock_doc_instance
+
+        expected_output_path = "/tmp/test_nis2.pdf"
 
         # Call function
         with patch("tasks.jobs.report.rls_transaction"):
@@ -1763,13 +1781,24 @@ class TestGenerateNIS2Report:
                         tenant_id=str(tenant.id),
                         scan_id=str(scan.id),
                         compliance_id="nis2_aws",
-                        output_path="/tmp/test_nis2.pdf",
+                        output_path=expected_output_path,
                         provider_id="provider-123",
                         only_failed=True,
                     )
 
+        # Verify SimpleDocTemplate was initialized with correct output path
+        mock_doc.assert_called_once()
+        call_args = mock_doc.call_args
+        assert call_args[0][0] == expected_output_path, (
+            f"Expected SimpleDocTemplate to be called with {expected_output_path}, "
+            f"but got {call_args[0][0]}"
+        )
+
         # Verify PDF was built
         mock_doc_instance.build.assert_called_once()
+
+        # Verify initialize_prowler_provider was called with the provider
+        mock_init_provider.assert_called_once_with(mock_provider)
 
     def test_nis2_colors_are_defined(self):
         """Verify NIS2 specific colors are defined."""
