@@ -48,23 +48,21 @@ if [ "$CODE_REVIEW_ENABLED" = "true" ]; then
     echo -e "${YELLOW}🔍 Running Claude Code standards validation...${NC}"
     echo ""
     echo -e "${BLUE}📋 Files to validate:${NC}"
-    echo "$STAGED_FILES" | sed 's/^/  - /'
+    echo "$STAGED_FILES" | while IFS= read -r file; do echo "  - $file"; done
     echo ""
 
     echo -e "${BLUE}📤 Sending to Claude Code for validation...${NC}"
     echo ""
 
-    # Build prompt with git diff of changes AND full context
+    # Build prompt with full file contents
     VALIDATION_PROMPT=$(
       cat <<'PROMPT_EOF'
-You are a code reviewer for the Prowler UI project. Analyze the code changes (git diff with full context) below and validate they comply with AGENTS.md standards.
-
-**CRITICAL: You MUST check BOTH the changed lines AND the surrounding context for violations.**
+You are a code reviewer for the Prowler UI project. Analyze the full file contents of changed files below and validate they comply with AGENTS.md standards.
 
 **RULES TO CHECK:**
 1. React Imports: NO `import * as React` or `import React, {` → Use `import { useState }`
 2. TypeScript: NO union types like `type X = "a" | "b"` → Use const-based: `const X = {...} as const`
-3. Tailwind: NO `var()` or hex colors in className → Use Tailwind utilities and semantic color classes (e.g., `bg-bg-neutral-tertiary`, `border-border-neutral-primary`)
+3. Tailwind: NO `var()` or hex colors in className → Use Tailwind utilities and semantic color classes. EXCEPTION: Chart component props (like Recharts) CAN use constants with var() for color/fill props (not className).
 4. cn(): Use for merging multiple classes or for conditionals (handles Tailwind conflicts with twMerge) → `cn(BUTTON_STYLES.base, BUTTON_STYLES.active, isLoading && "opacity-50")`
 5. React 19: NO `useMemo`/`useCallback` without reason
 6. Zod v4: Use `.min(1)` not `.nonempty()`, `z.email()` not `z.string().email()`. All inputs must be validated with Zod.
@@ -76,24 +74,28 @@ You are a code reviewer for the Prowler UI project. Analyze the code changes (gi
 12. Use the components inside components/shadcn if possible
 13. Check Accessibility best practices (like alt tags in images, semantic HTML, Aria labels, etc.)
 
-=== GIT DIFF WITH CONTEXT ===
+=== FILES TO REVIEW ===
 PROMPT_EOF
     )
 
-    # Add git diff to prompt with more context (U5 = 5 lines before/after)
-    VALIDATION_PROMPT="$VALIDATION_PROMPT
-$(git diff --cached -U5)"
+    # Add full file contents for each staged file
+    for file in $STAGED_FILES; do
+      VALIDATION_PROMPT="$VALIDATION_PROMPT
+
+=== FILE: $file ===
+$(cat "$file" 2>/dev/null || echo "Error reading file")"
+    done
 
     VALIDATION_PROMPT="$VALIDATION_PROMPT
 
-=== END DIFF ===
+=== END FILES ===
 
 **IMPORTANT: Your response MUST start with exactly one of these lines:**
 STATUS: PASSED
 STATUS: FAILED
 
 **If FAILED:** List each violation with File, Line Number, Rule Number, and Issue.
-**If PASSED:** Confirm all visible code (including context) complies with AGENTS.md standards.
+**If PASSED:** Confirm all files comply with AGENTS.md standards.
 
 **Start your response now with STATUS:**"
 

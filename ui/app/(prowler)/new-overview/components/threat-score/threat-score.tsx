@@ -1,6 +1,8 @@
 "use client";
 
 import { MessageCircleWarning, ThumbsUp } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import type { KeyboardEvent } from "react";
 
 import type {
   CriticalRequirement,
@@ -14,26 +16,31 @@ import {
   CardTitle,
   Skeleton,
 } from "@/components/shadcn";
+import { cn } from "@/lib/utils";
+
+const THREAT_COLORS = {
+  DANGER: "var(--bg-fail-primary)",
+  WARNING: "var(--bg-warning-primary)",
+  SUCCESS: "var(--bg-pass-primary)",
+  NEUTRAL: "var(--bg-neutral-tertiary)",
+} as const;
 
 const THREAT_LEVEL_CONFIG = {
   DANGER: {
     label: "Critical Risk",
-    color: "var(--bg-fail-primary)",
-    chartColor: "var(--bg-fail-primary)",
+    color: THREAT_COLORS.DANGER,
     minScore: 0,
     maxScore: 30,
   },
   WARNING: {
     label: "Moderate Risk",
-    color: "var(--bg-warning-primary)",
-    chartColor: "var(--bg-warning-primary)",
+    color: THREAT_COLORS.WARNING,
     minScore: 31,
     maxScore: 60,
   },
   SUCCESS: {
     label: "Secure",
-    color: "var(--bg-pass-primary)",
-    chartColor: "var(--bg-pass-primary)",
+    color: THREAT_COLORS.SUCCESS,
     minScore: 61,
     maxScore: 100,
   },
@@ -48,6 +55,7 @@ interface ThreatScoreProps {
   criticalRequirements?: CriticalRequirement[];
   onViewRemediationPlan?: () => void;
   className?: string;
+  hasProviderFilters?: boolean;
 }
 
 function getThreatLevel(score: number): ThreatLevelKey {
@@ -71,7 +79,7 @@ function convertSectionScoresToTooltipData(
 
     // Determine color based on the same ranges as THREAT_LEVEL_CONFIG
     const threatLevel = getThreatLevel(roundedValue);
-    const color = THREAT_LEVEL_CONFIG[threatLevel].chartColor;
+    const color = THREAT_LEVEL_CONFIG[threatLevel].color;
 
     return { name, value: roundedValue, color };
   });
@@ -100,7 +108,10 @@ export function ThreatScore({
   scoreDelta,
   sectionScores,
   criticalRequirements,
+  hasProviderFilters = false,
 }: ThreatScoreProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const hasData = score !== null && score !== undefined;
   const displayScore = hasData ? score : 0;
 
@@ -113,10 +124,42 @@ export function ThreatScore({
   // Extract top gaps from critical requirements
   const gaps = extractTopGaps(criticalRequirements, 2);
 
+  const handleCardClick = () => {
+    if (!hasProviderFilters) return;
+
+    const params = new URLSearchParams(searchParams.toString());
+
+    // Remove provider_id__in since compliance page uses provider_uid__in
+    params.delete("filter[provider_id__in]");
+
+    // Navigate to compliance page with threatscore framework
+    router.push(`/compliance/prowler-threatscore?${params.toString()}`);
+  };
+
+  const isClickable = hasProviderFilters;
+
   return (
     <Card
       variant="base"
-      className="flex min-h-[372px] min-w-[328px] flex-col justify-between md:max-w-[312px]"
+      className={cn(
+        "flex min-h-[372px] min-w-[328px] flex-col justify-between md:max-w-[312px]",
+        isClickable && "cursor-pointer",
+      )}
+      role={isClickable ? "button" : undefined}
+      tabIndex={isClickable ? 0 : undefined}
+      aria-label={
+        isClickable
+          ? "Navigate to Prowler ThreatScore compliance page with current provider filters"
+          : undefined
+      }
+      onClick={handleCardClick}
+      onKeyDown={(e: KeyboardEvent<HTMLDivElement>) => {
+        if (isClickable && (e.key === "Enter" || e.key === " ")) {
+          e.preventDefault();
+          e.stopPropagation();
+          handleCardClick();
+        }
+      }}
     >
       <CardHeader>
         <CardTitle>Prowler Threat Score</CardTitle>
@@ -129,8 +172,8 @@ export function ThreatScore({
             <RadialChart
               percentage={displayScore}
               label="Score"
-              color={config.chartColor}
-              backgroundColor="var(--bg-neutral-tertiary)"
+              color={config.color}
+              backgroundColor={THREAT_COLORS.NEUTRAL}
               height={206}
               innerRadius={90}
               outerRadius={115}
