@@ -1,9 +1,9 @@
 "use client";
 
+import { Button } from "@heroui/button";
 import { DownloadIcon } from "lucide-react";
 import { useState } from "react";
 
-import { Button } from "@/components/shadcn/button/button";
 import { toast } from "@/components/ui";
 import {
   COMPLIANCE_REPORT_BUTTON_LABELS,
@@ -37,16 +37,19 @@ export const ComplianceDownloadButton = ({
 
   return (
     <Button
-      variant="default"
+      color="success"
+      variant="solid"
+      startContent={
+        <DownloadIcon
+          className={isDownloading ? "animate-download-icon" : ""}
+          size={16}
+        />
+      }
+      onPress={handleDownload}
+      isLoading={isDownloading}
       size="sm"
-      onClick={handleDownload}
-      disabled={isDownloading}
     >
-      <DownloadIcon
-        className={isDownloading ? "animate-download-icon" : ""}
-        size={16}
-      />
-      <span className="hidden md:block">{label || defaultLabel}</span>
+      {label || defaultLabel}
     </Button>
   );
 };

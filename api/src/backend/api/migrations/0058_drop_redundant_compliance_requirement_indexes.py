@@ -22,4 +22,8 @@ class Migration(migrations.Migration):
             model_name="compliancerequirementoverview",
             name="cro_scan_comp_req_idx",
         ),
+        RemoveIndexConcurrently(
+            model_name="compliancerequirementoverview",
+            name="cro_scan_comp_req_reg_idx",
+        ),
     ]

@@ -21,10 +21,10 @@ export const ThreatScoreSSR = async ({
   const snapshot = threatScoreData.data[0];
   const attributes = snapshot.attributes;
 
-  // Parse score from decimal string to number with 2 decimals
-  const score = parseFloat(Number(attributes.overall_score).toFixed(2));
+  // Parse score from decimal string to number
+  const score = parseFloat(attributes.overall_score);
   const scoreDelta = attributes.score_delta
-    ? parseFloat(Number(attributes.score_delta).toFixed(2))
+    ? parseFloat(attributes.score_delta)
     : null;
 
   return (

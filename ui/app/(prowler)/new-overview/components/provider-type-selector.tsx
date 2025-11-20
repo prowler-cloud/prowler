@@ -132,7 +132,7 @@ export const ProviderTypeSelector = ({
   const availableTypes = Array.from(
     new Set(
       providers
-        .filter((p) => p.attributes.connection?.connected)
+        // .filter((p) => p.attributes.connection?.connected)
         .map((p) => p.attributes.provider),
     ),
   ) as ProviderType[];

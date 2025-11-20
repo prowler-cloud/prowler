@@ -58,21 +58,17 @@ export const PasswordRequirementsMessage = ({
   return (
     <div className={className}>
       <div
-        className={`rounded-xl border p-3 ${
-          allRequirementsMet
-            ? "border-system-success bg-system-success/10"
-            : "border-red-200 bg-red-50"
-        }`}
+        className={`bg-bg-neutral-primary rounded-xl border p-3 ${allRequirementsMet ? "border-bg-pass" : "border-bg-fail"}`}
         role="region"
         aria-label="Password requirements status"
       >
         {allRequirementsMet ? (
           <div className="flex items-center gap-2">
             <CheckCircle
-              className="text-system-success h-4 w-4 shrink-0"
+              className="text-text-success h-4 w-4 shrink-0"
               aria-hidden="true"
             />
-            <p className="text-system-success text-xs leading-tight font-medium">
+            <p className="text-text-neutral-primary text-xs leading-tight font-medium">
               Password meets all requirements
             </p>
           </div>
@@ -80,10 +76,10 @@ export const PasswordRequirementsMessage = ({
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <AlertCircle
-                className="h-4 w-4 shrink-0 text-red-600"
+                className="text-text-error h-4 w-4 shrink-0"
                 aria-hidden="true"
               />
-              <p className="text-xs leading-tight font-medium text-red-700">
+              <p className="text-text-neutral-primary text-xs leading-tight font-medium">
                 Password must include:
               </p>
             </div>
@@ -99,12 +95,12 @@ export const PasswordRequirementsMessage = ({
                   <div className="flex items-center gap-2">
                     <div
                       className={`h-2 w-2 shrink-0 rounded-full ${
-                        req.isMet ? "bg-system-success" : "bg-red-400"
+                        req.isMet ? "bg-text-success" : "bg-text-error"
                       }`}
                       aria-hidden="true"
                     />
                     <span
-                      className={`${req.isMet ? "text-system-success" : "text-red-700"}`}
+                      className="text-text-success-primary"
                       aria-label={`${req.label} ${req.isMet ? "satisfied" : "required"}`}
                     >
                       {req.label}

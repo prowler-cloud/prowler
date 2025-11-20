@@ -10,11 +10,15 @@ import { DeltaIndicator } from "@/components/findings/table/delta-indicator";
 import { InfoIcon } from "@/components/icons";
 import {
   DateWithTime,
-  EntityInfoShort,
+  EntityInfo,
   SnippetChip,
 } from "@/components/ui/entities";
 import { TriggerSheet } from "@/components/ui/sheet";
-import { SeverityBadge, StatusFindingBadge } from "@/components/ui/table";
+import {
+  DataTableColumnHeader,
+  SeverityBadge,
+  StatusFindingBadge,
+} from "@/components/ui/table";
 import { FindingProps, ProviderType } from "@/types";
 
 const getFindingsData = (row: { original: FindingProps }) => {
@@ -72,12 +76,17 @@ const FindingDetailsCell = ({ row }: { row: any }) => {
 export const ColumnNewFindingsToDate: ColumnDef<FindingProps>[] = [
   {
     id: "moreInfo",
-    header: "Details",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Details" />
+    ),
     cell: ({ row }) => <FindingDetailsCell row={row} />,
+    enableSorting: false,
   },
   {
     accessorKey: "check",
-    header: "Finding",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Finding" />
+    ),
     cell: ({ row }) => {
       const { checktitle } = getFindingsMetadata(row);
       const {
@@ -102,10 +111,13 @@ export const ColumnNewFindingsToDate: ColumnDef<FindingProps>[] = [
         </div>
       );
     },
+    enableSorting: false,
   },
   {
     accessorKey: "resourceName",
-    header: "Resource name",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Resource name" />
+    ),
     cell: ({ row }) => {
       const resourceName = getResourceData(row, "name");
 
@@ -117,20 +129,26 @@ export const ColumnNewFindingsToDate: ColumnDef<FindingProps>[] = [
         />
       );
     },
+    enableSorting: false,
   },
   {
     accessorKey: "severity",
-    header: "Severity",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Severity" />
+    ),
     cell: ({ row }) => {
       const {
         attributes: { severity },
       } = getFindingsData(row);
       return <SeverityBadge severity={severity} />;
     },
+    enableSorting: false,
   },
   {
     accessorKey: "status",
-    header: "Status",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Status" />
+    ),
     cell: ({ row }) => {
       const {
         attributes: { status },
@@ -138,10 +156,13 @@ export const ColumnNewFindingsToDate: ColumnDef<FindingProps>[] = [
 
       return <StatusFindingBadge size="sm" status={status} />;
     },
+    enableSorting: false,
   },
   {
     accessorKey: "updated_at",
-    header: "Last seen",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Last seen" />
+    ),
     cell: ({ row }) => {
       const {
         attributes: { updated_at },
@@ -152,10 +173,13 @@ export const ColumnNewFindingsToDate: ColumnDef<FindingProps>[] = [
         </div>
       );
     },
+    enableSorting: false,
   },
   {
     accessorKey: "region",
-    header: "Region",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Region" />
+    ),
     cell: ({ row }) => {
       const region = getResourceData(row, "region");
 
@@ -165,18 +189,24 @@ export const ColumnNewFindingsToDate: ColumnDef<FindingProps>[] = [
         </div>
       );
     },
+    enableSorting: false,
   },
   {
     accessorKey: "service",
-    header: "Service",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Service" />
+    ),
     cell: ({ row }) => {
       const { servicename } = getFindingsMetadata(row);
       return <p className="text-small max-w-96 truncate">{servicename}</p>;
     },
+    enableSorting: false,
   },
   {
     accessorKey: "cloudProvider",
-    header: "Cloud Provider",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Cloud Provider" />
+    ),
     cell: ({ row }) => {
       const provider = getProviderData(row, "provider");
       const alias = getProviderData(row, "alias");
@@ -184,7 +214,7 @@ export const ColumnNewFindingsToDate: ColumnDef<FindingProps>[] = [
 
       return (
         <>
-          <EntityInfoShort
+          <EntityInfo
             cloudProvider={provider as ProviderType}
             entityAlias={alias as string}
             entityId={uid as string}
@@ -192,5 +222,6 @@ export const ColumnNewFindingsToDate: ColumnDef<FindingProps>[] = [
         </>
       );
     },
+    enableSorting: false,
   },
 ];
