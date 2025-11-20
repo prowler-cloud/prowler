@@ -1,4 +1,5 @@
 import { getFindingsByStatus } from "@/actions/overview/overview";
+import { getProviders } from "@/actions/providers";
 import { SearchParamsProps } from "@/types";
 
 import { pickFilterParams } from "../../lib/filter-params";
@@ -11,7 +12,10 @@ export const CheckFindingsSSR = async ({
 }) => {
   const filters = pickFilterParams(searchParams);
 
-  const findingsByStatus = await getFindingsByStatus({ filters });
+  const [findingsByStatus, providersData] = await Promise.all([
+    getFindingsByStatus({ filters }),
+    getProviders({ page: 1, pageSize: 200 }),
+  ]);
 
   if (!findingsByStatus) {
     return (
@@ -21,29 +25,28 @@ export const CheckFindingsSSR = async ({
     );
   }
 
+  const attributes = findingsByStatus?.data?.attributes || {};
+
   const {
+    total = 0,
     fail = 0,
     pass = 0,
-    muted_new = 0,
-    muted_changed = 0,
     fail_new = 0,
     pass_new = 0,
-  } = findingsByStatus?.data?.attributes || {};
-
-  const mutedTotal = muted_new + muted_changed;
+  } = attributes;
 
   return (
     <StatusChart
+      totalFindings={total}
       failFindingsData={{
         total: fail,
         new: fail_new,
-        muted: mutedTotal,
       }}
       passFindingsData={{
         total: pass,
         new: pass_new,
-        muted: mutedTotal,
       }}
+      providers={providersData?.data}
     />
   );
 };

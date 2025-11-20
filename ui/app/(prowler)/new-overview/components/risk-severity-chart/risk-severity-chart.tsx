@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter, useSearchParams } from "next/navigation";
+
 import { HorizontalBarChart } from "@/components/graphs/horizontal-bar-chart";
 import { BarDataPoint } from "@/components/graphs/types";
 import {
@@ -17,6 +19,13 @@ interface RiskSeverityChartProps {
   medium: number;
   low: number;
   informational: number;
+  providers?: Array<{
+    id: string;
+    attributes: {
+      uid: string;
+      provider: string;
+    };
+  }>;
 }
 
 export const RiskSeverityChart = ({
@@ -25,7 +34,52 @@ export const RiskSeverityChart = ({
   medium,
   low,
   informational,
+  providers = [],
 }: RiskSeverityChartProps) => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const handleBarClick = (dataPoint: BarDataPoint) => {
+    // Build the URL with current filters plus severity and muted
+    const params = new URLSearchParams(searchParams.toString());
+
+    // Convert filter[provider_id__in] to filter[provider_uid__in] for findings page
+    const providerIds = params.get("filter[provider_id__in]");
+    if (providerIds) {
+      params.delete("filter[provider_id__in]");
+      const ids = providerIds.split(",");
+      const uids = ids
+        .map((id) => {
+          const provider = providers.find((p) => p.id === id);
+          return provider?.attributes.uid;
+        })
+        .filter(Boolean);
+
+      if (uids.length > 0) {
+        params.set("filter[provider_uid__in]", uids.join(","));
+      }
+    }
+
+    // Map severity name to lowercase for the filter
+    const severityMap: Record<string, string> = {
+      Critical: "critical",
+      High: "high",
+      Medium: "medium",
+      Low: "low",
+      Info: "informational",
+    };
+
+    const severity = severityMap[dataPoint.name];
+    if (severity) {
+      params.set("filter[severity__in]", severity);
+    }
+
+    // Add exclude muted findings filter
+    params.set("filter[muted]", "false");
+
+    // Navigate to findings page
+    router.push(`/findings?${params.toString()}`);
+  };
   // Calculate total findings
   const totalFindings = critical + high + medium + low + informational;
 
@@ -68,7 +122,7 @@ export const RiskSeverityChart = ({
       </CardHeader>
 
       <CardContent className="flex flex-1 items-center justify-start px-6">
-        <HorizontalBarChart data={chartData} />
+        <HorizontalBarChart data={chartData} onBarClick={handleBarClick} />
       </CardContent>
     </Card>
   );

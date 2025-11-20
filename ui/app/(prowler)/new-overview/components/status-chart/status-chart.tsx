@@ -1,6 +1,7 @@
 "use client";
 
-import { Bell, BellOff, ShieldCheck, TriangleAlert } from "lucide-react";
+import { Bell, ShieldCheck, TriangleAlert } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { DonutChart } from "@/components/graphs/donut-chart";
 import { DonutDataPoint } from "@/components/graphs/types";
@@ -16,24 +17,67 @@ import {
 import { calculatePercentage } from "@/lib/utils";
 
 interface StatusChartProps {
+  totalFindings: number;
   failFindingsData: {
     total: number;
     new: number;
-    muted: number;
   };
   passFindingsData: {
     total: number;
     new: number;
-    muted: number;
   };
+  providers?: Array<{
+    id: string;
+    attributes: {
+      uid: string;
+      provider: string;
+    };
+  }>;
 }
 
 export const StatusChart = ({
+  totalFindings,
   failFindingsData,
   passFindingsData,
+  providers = [],
 }: StatusChartProps) => {
-  // Calculate total findings
-  const totalFindings = failFindingsData.total + passFindingsData.total;
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const handleSegmentClick = (dataPoint: DonutDataPoint) => {
+    // Build the URL with current filters plus status and muted
+    const params = new URLSearchParams(searchParams.toString());
+
+    // Convert filter[provider_id__in] to filter[provider_uid__in] for findings page
+    const providerIds = params.get("filter[provider_id__in]");
+    if (providerIds) {
+      params.delete("filter[provider_id__in]");
+      const ids = providerIds.split(",");
+      const uids = ids
+        .map((id) => {
+          const provider = providers.find((p) => p.id === id);
+          return provider?.attributes.uid;
+        })
+        .filter(Boolean);
+
+      if (uids.length > 0) {
+        params.set("filter[provider_uid__in]", uids.join(","));
+      }
+    }
+
+    // Add status filter based on which segment was clicked
+    if (dataPoint.name === "Fail Findings") {
+      params.set("filter[status__in]", "FAIL");
+    } else if (dataPoint.name === "Pass Findings") {
+      params.set("filter[status__in]", "PASS");
+    }
+
+    // Add exclude muted findings filter
+    params.set("filter[muted]", "false");
+
+    // Navigate to findings page
+    router.push(`/findings?${params.toString()}`);
+  };
 
   // Calculate percentages
   const failPercentage = calculatePercentage(
@@ -93,6 +137,7 @@ export const StatusChart = ({
               value: totalFindings.toLocaleString(),
               label: "Total Findings",
             }}
+            onSegmentClick={handleSegmentClick}
           />
         </div>
 
@@ -109,10 +154,7 @@ export const StatusChart = ({
               variant: CardVariant.fail,
             }}
             label="Fail Findings"
-            stats={[
-              { icon: Bell, label: `${failFindingsData.new} New` },
-              { icon: BellOff, label: `${failFindingsData.muted} Muted` },
-            ]}
+            stats={[{ icon: Bell, label: `${failFindingsData.new} New` }]}
             emptyState={
               failFindingsData.total === 0
                 ? { message: "No failed findings to display" }
@@ -133,10 +175,7 @@ export const StatusChart = ({
               variant: CardVariant.pass,
             }}
             label="Pass Findings"
-            stats={[
-              { icon: Bell, label: `${passFindingsData.new} New` },
-              { icon: BellOff, label: `${passFindingsData.muted} Muted` },
-            ]}
+            stats={[{ icon: Bell, label: `${passFindingsData.new} New` }]}
             emptyState={
               passFindingsData.total === 0
                 ? { message: "No passed findings to display" }
