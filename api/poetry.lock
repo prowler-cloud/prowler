@@ -4651,7 +4651,7 @@ tzlocal = "5.3.1"
 type = "git"
 url = "https://github.com/prowler-cloud/prowler.git"
 reference = "master"
-resolved_reference = "30312bbc03897a3fefb25b6e7847be6577ba90c6"
+resolved_reference = "ced122ac0d9c078933b996d04a9f9aff9bb6cc75"
 
 [[package]]
 name = "psutil"
