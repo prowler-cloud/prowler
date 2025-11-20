@@ -118,9 +118,7 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
           <div className="flex flex-row items-center gap-4">
             {delta === "new" || delta === "changed" ? (
               <DeltaIndicator delta={delta} />
-            ) : (
-              <div className="w-2" />
-            )}
+            ) : null}
             <p className="mr-7 text-sm break-words whitespace-normal">
               {checktitle}
             </p>

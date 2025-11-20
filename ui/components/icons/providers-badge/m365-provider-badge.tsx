@@ -1,14 +1,15 @@
-import * as React from "react";
+import type { FC } from "react";
+import { useId } from "react";
 
-import { IconSvgProps } from "@/types";
+import type { IconSvgProps } from "@/types";
 
-export const M365ProviderBadge: React.FC<IconSvgProps> = ({
+export const M365ProviderBadge: FC<IconSvgProps> = ({
   size,
   width,
   height,
   ...props
 }) => {
-  const uniqueId = React.useId();
+  const uniqueId = useId();
   const gradientId0 = `m365-gradient-0-${uniqueId}`;
   const gradientId1 = `m365-gradient-1-${uniqueId}`;
   const gradientId2 = `m365-gradient-2-${uniqueId}`;
@@ -49,6 +50,24 @@ export const M365ProviderBadge: React.FC<IconSvgProps> = ({
                 d="M27.4946 68.0776H53.7446C61.2446 68.0776 65.7446 58.4071 68.7446 48.7365C72.2988 37.2794 76.9496 21.9565 63.4946 21.9565H52.0633C48.7288 21.9565 45.797 24.1499 44.8594 27.3499C42.8871 34.0812 39.44 45.7927 36.7314 54.7113C35.3529 59.2506 34.2046 63.149 32.4422 65.5768C31.4542 66.9378 29.8075 68.0776 27.4946 68.0776Z"
                 fill={`url(#${gradientId4})`}
               />
+              <rect
+                x="24.125"
+                y="51.2031"
+                width="48.375"
+                height="21.375"
+                rx="3.63727"
+                fill="#131313"
+              />
+              <text
+                x="27.5"
+                y="67"
+                fill="#ffffff"
+                fontFamily="Inter, Arial, sans-serif"
+                fontSize="16"
+                fontWeight="700"
+              >
+                365
+              </text>
             </g>
           </g>
           <defs>
