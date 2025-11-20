@@ -13,19 +13,23 @@ import {
 } from "@/components/shadcn";
 import { calculatePercentage } from "@/lib/utils";
 
+interface ProviderAttributes {
+  uid: string;
+  provider: string;
+}
+
+interface Provider {
+  id: string;
+  attributes: ProviderAttributes;
+}
+
 interface RiskSeverityChartProps {
   critical: number;
   high: number;
   medium: number;
   low: number;
   informational: number;
-  providers?: Array<{
-    id: string;
-    attributes: {
-      uid: string;
-      provider: string;
-    };
-  }>;
+  providers?: Provider[];
 }
 
 export const RiskSeverityChart = ({

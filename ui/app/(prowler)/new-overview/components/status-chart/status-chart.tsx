@@ -16,22 +16,25 @@ import {
 } from "@/components/shadcn";
 import { calculatePercentage } from "@/lib/utils";
 
+interface FindingsData {
+  total: number;
+  new: number;
+}
+
+interface ProviderAttributes {
+  uid: string;
+  provider: string;
+}
+
+interface Provider {
+  id: string;
+  attributes: ProviderAttributes;
+}
+
 interface StatusChartProps {
-  failFindingsData: {
-    total: number;
-    new: number;
-  };
-  passFindingsData: {
-    total: number;
-    new: number;
-  };
-  providers?: Array<{
-    id: string;
-    attributes: {
-      uid: string;
-      provider: string;
-    };
-  }>;
+  failFindingsData: FindingsData;
+  passFindingsData: FindingsData;
+  providers?: Provider[];
 }
 
 export const StatusChart = ({
