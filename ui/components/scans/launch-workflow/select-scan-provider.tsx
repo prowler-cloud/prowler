@@ -64,6 +64,7 @@ export const SelectScanProvider = <
                         }
                         entityAlias={selectedItem.alias}
                         entityId={selectedItem.uid}
+                        showCopyAction={false}
                       />
                     ) : (
                       "Choose a cloud provider"
@@ -83,6 +84,7 @@ export const SelectScanProvider = <
                         }
                         entityAlias={item.alias}
                         entityId={item.uid}
+                        showCopyAction={false}
                       />
                     </SelectItem>
                   ))}

@@ -1,7 +1,10 @@
-import { Tooltip } from "@heroui/tooltip";
-import React from "react";
+"use client";
 
-import { ProviderType } from "@/types";
+import { Tooltip } from "@heroui/tooltip";
+import { useEffect, useState } from "react";
+
+import { CopyIcon, DoneIcon } from "@/components/icons";
+import type { ProviderType } from "@/types";
 
 import { getProviderLogo } from "./get-provider-logo";
 
@@ -12,15 +15,39 @@ interface EntityInfoProps {
   snippetWidth?: string;
   showConnectionStatus?: boolean;
   maxWidth?: string;
+  showCopyAction?: boolean;
 }
 
-export const EntityInfo: React.FC<EntityInfoProps> = ({
+export const EntityInfo = ({
   cloudProvider,
   entityAlias,
   entityId,
   showConnectionStatus = false,
   maxWidth = "w-[120px]",
-}) => {
+  showCopyAction = true,
+}: EntityInfoProps) => {
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!copied) return undefined;
+
+    const timer = setTimeout(() => setCopied(false), 1400);
+    return () => clearTimeout(timer);
+  }, [copied]);
+
+  const handleCopyEntityId = async () => {
+    if (!entityId) return;
+
+    try {
+      await navigator.clipboard.writeText(entityId);
+      setCopied(true);
+    } catch (_error) {
+      setCopied(false);
+    }
+  };
+
+  const canCopy = Boolean(entityId && showCopyAction);
+
   return (
     <div className="flex items-center gap-2">
       <div className="relative shrink-0">
@@ -53,11 +80,29 @@ export const EntityInfo: React.FC<EntityInfoProps> = ({
           </Tooltip>
         )}
         {entityId && (
-          <Tooltip content={entityId} placement="top-start" size="sm">
-            <p className="text-text-neutral-secondary truncate text-left text-xs">
-              ID: {entityId}
-            </p>
-          </Tooltip>
+          <div className="flex min-w-0 items-center gap-1">
+            <Tooltip content={entityId} placement="top-start" size="sm">
+              <p className="text-text-neutral-secondary min-w-0 truncate text-left text-xs">
+                {entityId}
+              </p>
+            </Tooltip>
+            {canCopy && (
+              <Tooltip
+                content={copied ? "Copied" : "Copy to clipboard"}
+                placement="top"
+                size="sm"
+              >
+                <button
+                  type="button"
+                  onClick={handleCopyEntityId}
+                  aria-label="Copiar ID de la entidad"
+                  className="hover:bg-bg-neutral-tertiary focus-visible:ring-bg-data-info text-text-neutral-secondary hover:text-text-neutral-primary rounded-md p-1 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                >
+                  {copied ? <DoneIcon size={14} /> : <CopyIcon size={14} />}
+                </button>
+              </Tooltip>
+            )}
+          </div>
         )}
       </div>
     </div>

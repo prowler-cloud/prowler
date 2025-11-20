@@ -26,6 +26,7 @@ export const ComplianceScanInfo = ({ scan }: ComplianceScanInfoProps) => {
           cloudProvider={scan.providerInfo.provider}
           entityAlias={scan.providerInfo.alias}
           entityId={scan.providerInfo.uid}
+          showCopyAction={false}
         />
       </div>
       <Divider orientation="vertical" className="h-8" />

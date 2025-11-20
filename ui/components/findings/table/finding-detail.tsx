@@ -222,7 +222,7 @@ export const FindingDetail = ({
               {/* CLI Command section */}
               {attributes.check_metadata.remediation.code.cli && (
                 <InfoField label="CLI Command" variant="simple">
-                  <Snippet className="bg-gray-50 py-1 dark:bg-slate-800">
+                  <Snippet>
                     <span className="text-xs whitespace-pre-line">
                       {attributes.check_metadata.remediation.code.cli}
                     </span>

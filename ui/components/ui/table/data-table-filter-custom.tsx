@@ -82,6 +82,7 @@ export const DataTableFilterCustom = ({
         cloudProvider={providerEntity.provider}
         entityAlias={providerEntity.alias ?? undefined}
         entityId={providerEntity.uid}
+        showCopyAction={false}
       />
     );
   };
