@@ -65,6 +65,7 @@ export const ClientAccordionWrapper = ({
             aria-label={isExpanded ? "Collapse all" : "Expand all"}
             variant="ghost"
             size="sm"
+            className="mb-1"
           >
             {isExpanded ? "Collapse all" : "Expand all"}
           </Button>
