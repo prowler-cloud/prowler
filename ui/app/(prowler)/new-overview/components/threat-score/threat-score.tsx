@@ -15,25 +15,31 @@ import {
   Skeleton,
 } from "@/components/shadcn";
 
+// CSS variables are required here as they're passed to RadialChart component
+// which uses Recharts library that needs actual color values, not Tailwind classes
+const THREAT_COLORS = {
+  DANGER: "var(--bg-fail-primary)",
+  WARNING: "var(--bg-warning-primary)",
+  SUCCESS: "var(--bg-pass-primary)",
+  NEUTRAL: "var(--bg-neutral-tertiary)",
+} as const;
+
 const THREAT_LEVEL_CONFIG = {
   DANGER: {
     label: "Critical Risk",
-    color: "var(--bg-fail-primary)",
-    chartColor: "var(--bg-fail-primary)",
+    color: THREAT_COLORS.DANGER,
     minScore: 0,
     maxScore: 30,
   },
   WARNING: {
     label: "Moderate Risk",
-    color: "var(--bg-warning-primary)",
-    chartColor: "var(--bg-warning-primary)",
+    color: THREAT_COLORS.WARNING,
     minScore: 31,
     maxScore: 60,
   },
   SUCCESS: {
     label: "Secure",
-    color: "var(--bg-pass-primary)",
-    chartColor: "var(--bg-pass-primary)",
+    color: THREAT_COLORS.SUCCESS,
     minScore: 61,
     maxScore: 100,
   },
@@ -68,7 +74,7 @@ function convertSectionScoresToTooltipData(
   return Object.entries(sectionScores).map(([name, value]) => {
     // Determine color based on the same ranges as THREAT_LEVEL_CONFIG
     const threatLevel = getThreatLevel(value);
-    const color = THREAT_LEVEL_CONFIG[threatLevel].chartColor;
+    const color = THREAT_LEVEL_CONFIG[threatLevel].color;
 
     return { name, value, color };
   });
@@ -126,8 +132,8 @@ export function ThreatScore({
             <RadialChart
               percentage={displayScore}
               label="Score"
-              color={config.chartColor}
-              backgroundColor="var(--bg-neutral-tertiary)"
+              color={config.color}
+              backgroundColor={THREAT_COLORS.NEUTRAL}
               height={206}
               innerRadius={90}
               outerRadius={115}
@@ -162,8 +168,7 @@ export function ThreatScore({
                   <div className="flex items-start gap-1.5">
                     <ThumbsUp
                       size={16}
-                      className="mt-0.5 shrink-0"
-                      style={{ minWidth: "16px", minHeight: "16px" }}
+                      className="mt-0.5 min-h-4 min-w-4 shrink-0"
                     />
                     <p>
                       Threat score has{" "}
@@ -178,8 +183,7 @@ export function ThreatScore({
                 <div className="flex items-start gap-1.5">
                   <MessageCircleWarning
                     size={16}
-                    className="mt-0.5 shrink-0"
-                    style={{ minWidth: "16px", minHeight: "16px" }}
+                    className="mt-0.5 min-h-4 min-w-4 shrink-0"
                   />
                   <p>
                     Major gaps include {gaps.slice(0, 2).join(", ")}
