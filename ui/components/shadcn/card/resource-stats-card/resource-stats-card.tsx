@@ -103,7 +103,7 @@ export const ResourceStatsCard = ({
       >
         {header && <ResourceStatsCardHeader {...header} size={resolvedSize} />}
         {emptyState ? (
-          <div className="flex h-[51px] w-full flex-col items-center justify-center">
+          <div className="flex h-[51px] w-full flex-col items-start justify-center md:items-center">
             <p className="text-text-neutral-secondary text-center text-sm leading-5 font-medium">
               {emptyState.message}
             </p>

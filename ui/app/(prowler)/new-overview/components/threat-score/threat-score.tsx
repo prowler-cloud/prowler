@@ -66,14 +66,11 @@ function convertSectionScoresToTooltipData(
   if (!sectionScores) return [];
 
   return Object.entries(sectionScores).map(([name, value]) => {
-    // Round to nearest integer
-    const roundedValue = Math.round(value);
-
     // Determine color based on the same ranges as THREAT_LEVEL_CONFIG
-    const threatLevel = getThreatLevel(roundedValue);
+    const threatLevel = getThreatLevel(value);
     const color = THREAT_LEVEL_CONFIG[threatLevel].chartColor;
 
-    return { name, value: roundedValue, color };
+    return { name, value, color };
   });
 }
 
@@ -162,8 +159,12 @@ export function ThreatScore({
               {scoreDelta !== undefined &&
                 scoreDelta !== null &&
                 scoreDelta !== 0 && (
-                  <div className="flex items-center gap-1">
-                    <ThumbsUp size={14} className="flex-shrink-0" />
+                  <div className="flex items-start gap-1.5">
+                    <ThumbsUp
+                      size={16}
+                      className="mt-0.5 shrink-0"
+                      style={{ minWidth: "16px", minHeight: "16px" }}
+                    />
                     <p>
                       Threat score has{" "}
                       {scoreDelta > 0 ? "improved" : "decreased"} by{" "}
@@ -174,10 +175,11 @@ export function ThreatScore({
 
               {/* Gaps Message */}
               {gaps.length > 0 && (
-                <div className="flex items-start gap-1">
+                <div className="flex items-start gap-1.5">
                   <MessageCircleWarning
-                    size={14}
-                    className="mt-1 flex-shrink-0"
+                    size={16}
+                    className="mt-0.5 shrink-0"
+                    style={{ minWidth: "16px", minHeight: "16px" }}
                   />
                   <p>
                     Major gaps include {gaps.slice(0, 2).join(", ")}

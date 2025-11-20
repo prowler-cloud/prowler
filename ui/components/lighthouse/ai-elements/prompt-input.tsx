@@ -8,7 +8,7 @@ import {
   PaperclipIcon,
   PlusIcon,
   SendIcon,
-  SquareIcon,
+  StopCircleIcon,
   XIcon,
 } from "lucide-react";
 import { nanoid } from "nanoid";
@@ -935,7 +935,7 @@ export const PromptInputSubmit = ({
   if (status === "submitted") {
     Icon = <Loader2Icon className="size-4 animate-spin" />;
   } else if (status === "streaming") {
-    Icon = <SquareIcon className="size-4" />;
+    Icon = <StopCircleIcon className="size-5" />;
   } else if (status === "error") {
     Icon = <XIcon className="size-4" />;
   }
