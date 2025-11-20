@@ -1,35 +1,84 @@
-import traceback
-
 from datetime import datetime, timezone
 from typing import Any
 
 from cartography.config import Config as CartographyConfig
 
 from api.db_utils import rls_transaction
-from api.models import AttackPathsScan as ProwlerAPIAttackPathsScan, StateChoices
+from api.models import (
+    AttackPathsScan as ProwlerAPIAttackPathsScan,
+    Provider as ProwlerAPIProvider,
+    StateChoices,
+)
+
+# TODO: Get this list from a central place, like `tasks.jobs.attack_paths.scan.CARTOGRAPHY_INGESTION_FUNCTIONS`
+#       but without creating circular imports
+AVAILABLE_PROVIDERS = [
+    "aws",
+]
+
+
+def is_provider_available(provider_type: str) -> bool:
+    return provider_type in AVAILABLE_PROVIDERS
 
 
 def create_attack_paths_scan(
     tenant_id: str,
     scan_id: str,
-    task_id: str,
     provider_id: int,
-    cartography_config: CartographyConfig,
-) -> ProwlerAPIAttackPathsScan:
+) -> ProwlerAPIAttackPathsScan | None:
+    with rls_transaction(tenant_id):
+        prowler_api_provider = ProwlerAPIProvider.objects.get(id=provider_id)
+
+    if not is_provider_available(prowler_api_provider.provider):
+        return None
+
     with rls_transaction(tenant_id):
         attack_paths_scan = ProwlerAPIAttackPathsScan.objects.create(
             tenant_id=tenant_id,
-            task_id=task_id,
             provider_id=provider_id,
             scan_id=scan_id,
-            state=StateChoices.EXECUTING,
+            state=StateChoices.SCHEDULED,
             started_at=datetime.now(tz=timezone.utc),
-            update_tag=cartography_config.update_tag,
-            graph_database=cartography_config.neo4j_database,
         )
         attack_paths_scan.save()
 
     return attack_paths_scan
+
+
+def retrieve_attack_paths_scan(
+    tenant_id: str,
+    scan_id: str,
+) -> ProwlerAPIAttackPathsScan:
+    with rls_transaction(tenant_id):
+        attack_paths_scan = ProwlerAPIAttackPathsScan.objects.get(
+            tenant_id=tenant_id,
+            scan_id=scan_id,
+        )
+
+    return attack_paths_scan
+
+
+def starting_attack_paths_scan(
+    attack_paths_scan: ProwlerAPIAttackPathsScan,
+    task_id: str,
+    cartography_config: CartographyConfig,
+) -> None:
+    with rls_transaction(attack_paths_scan.tenant_id):
+        attack_paths_scan.task_id = task_id
+        attack_paths_scan.state = StateChoices.EXECUTING
+        attack_paths_scan.started_at = datetime.now(tz=timezone.utc)
+        attack_paths_scan.update_tag = cartography_config.update_tag
+        attack_paths_scan.graph_database = cartography_config.neo4j_database
+
+        attack_paths_scan.save(
+            update_fields=[
+                "task_id",
+                "state",
+                "started_at",
+                "update_tag",
+                "graph_database",
+            ]
+        )
 
 
 def finish_attack_paths_scan(

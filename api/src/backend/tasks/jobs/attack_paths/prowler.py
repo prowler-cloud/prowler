@@ -51,6 +51,7 @@ INSERT_STATEMENT_TEMPLATE = """
             finding.status_extended = finding_data.status_extended,
             finding.severity = finding_data.severity,
             finding.check_id = finding_data.check_id,
+            finding.check_title = finding_data.check_title,
             finding.muted = finding_data.muted,
             finding.muted_reason = finding_data.muted_reason,
             finding.provider_uid = $provider_uid,
@@ -140,6 +141,7 @@ def get_provider_last_scan_findings(
             "finding__status_extended",
             "finding__severity",
             "finding__check_id",
+            "finding__check_metadata__checktitle",
             "finding__muted",
             "finding__muted_reason",
         )
@@ -160,6 +162,9 @@ def get_provider_last_scan_findings(
                     "status_extended": resource_finding["finding__status_extended"],
                     "severity": resource_finding["finding__severity"],
                     "check_id": str(resource_finding["finding__check_id"]),
+                    "check_title": resource_finding[
+                        "finding__check_metadata__checktitle"
+                    ],
                     "muted": resource_finding["finding__muted"],
                     "muted_reason": resource_finding["finding__muted_reason"],
                 }

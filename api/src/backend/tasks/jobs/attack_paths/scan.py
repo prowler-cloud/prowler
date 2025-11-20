@@ -2,7 +2,7 @@ import logging
 import time
 import asyncio
 
-from typing import Any
+from typing import Any, Callable
 
 from cartography.config import Config as CartographyConfig
 from cartography.intel import analysis as cartography_analysis
@@ -31,6 +31,10 @@ CARTOGRAPHY_INGESTION_FUNCTIONS = {
 }
 
 
+def get_cartography_ingestion_function(provider_type: str) -> Callable:
+    return CARTOGRAPHY_INGESTION_FUNCTIONS.get(provider_type)
+
+
 def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
     """
     Code based on Cartography version 0.117.0, specifically on `cartography.cli.main`, `cartography.cli.CLI.main`,
@@ -49,7 +53,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         prowler_sdk_provider = initialize_prowler_provider(prowler_api_provider)
 
     # If the provider is still not supported, just return the current `ingestion_exceptions`, that is empty
-    if prowler_api_provider.provider not in CARTOGRAPHY_INGESTION_FUNCTIONS:
+    if not get_cartography_ingestion_function(prowler_api_provider.provider):
         return ingestion_exceptions
 
     # Attributes `neo4j_user` and `neo4j_password` are not really needed in this config object
@@ -61,9 +65,17 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         update_tag=int(time.time()),
     )
 
-    attack_paths_scan = db_utils.create_attack_paths_scan(
-        tenant_id, scan_id, task_id, prowler_api_provider.id, cartography_config
-    )
+    # Getting the Attack Paths Scan object and starting it
+    attack_paths_scan = db_utils.retrieve_attack_paths_scan(tenant_id, scan_id)
+    if not attack_paths_scan:
+        logger.warning(
+            f"No Attack Paths Scan found for scan {scan_id} and tenant {tenant_id}, let's create it then"
+        )
+        attack_paths_scan = db_utils.create_attack_paths_scan(
+            tenant_id, scan_id, prowler_api_provider.id
+        )
+
+    db_utils.starting_attack_paths_scan(attack_paths_scan, task_id, cartography_config)
 
     try:
         logger.info(
@@ -86,7 +98,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
 
             # The real scan, where iterates over cloud services
             ingestion_exceptions = _call_within_event_loop(
-                CARTOGRAPHY_INGESTION_FUNCTIONS[prowler_api_provider.provider],
+                get_cartography_ingestion_function(prowler_api_provider.provider),
                 neo4j_session,
                 cartography_config,
                 prowler_api_provider,
