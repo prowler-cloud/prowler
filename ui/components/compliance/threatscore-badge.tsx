@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "@heroui/button";
 import { Card, CardBody } from "@heroui/card";
 import { Progress } from "@heroui/progress";
 import { DownloadIcon, FileTextIcon } from "lucide-react";
@@ -8,8 +7,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { ThreatScoreLogo } from "@/components/compliance/threatscore-logo";
+import { Button } from "@/components/shadcn/button/button";
 import { toast } from "@/components/ui";
-import { downloadComplianceCsv, downloadThreatScorePdf } from "@/lib/helper";
+import { COMPLIANCE_REPORT_TYPES } from "@/lib/compliance/compliance-report-types";
+import {
+  downloadComplianceCsv,
+  downloadComplianceReportPdf,
+} from "@/lib/helper";
 import type { ScanEntity } from "@/types/scans";
 
 interface ThreatScoreBadgeProps {
@@ -41,7 +45,7 @@ export const ThreatScoreBadge = ({
   const getTextColor = () => {
     if (score >= 80) return "text-success";
     if (score >= 40) return "text-warning";
-    return "text-danger";
+    return "text-text-error";
   };
 
   const handleCardClick = () => {
@@ -77,7 +81,11 @@ export const ThreatScoreBadge = ({
   const handleDownloadPdf = async () => {
     setIsDownloadingPdf(true);
     try {
-      await downloadThreatScorePdf(scanId, toast);
+      await downloadComplianceReportPdf(
+        scanId,
+        COMPLIANCE_REPORT_TYPES.THREATSCORE,
+        toast,
+      );
     } finally {
       setIsDownloadingPdf(false);
     }
@@ -121,24 +129,25 @@ export const ThreatScoreBadge = ({
         <div className="flex gap-2">
           <Button
             size="sm"
-            variant="ghost"
-            className="text-default-500 hover:text-primary flex-1"
-            startContent={<DownloadIcon size={14} className="text-primary" />}
-            onPress={handleDownloadPdf}
-            isLoading={isDownloadingPdf}
-            isDisabled={isDownloadingCsv}
+            variant="outline"
+            className="flex-1"
+            onClick={handleDownloadPdf}
+            disabled={isDownloadingPdf || isDownloadingCsv}
           >
+            <DownloadIcon
+              size={14}
+              className={isDownloadingPdf ? "animate-download-icon" : ""}
+            />
             PDF
           </Button>
           <Button
             size="sm"
-            variant="ghost"
-            className="text-default-500 hover:text-primary flex-1"
-            startContent={<FileTextIcon size={14} className="text-primary" />}
-            onPress={handleDownloadCsv}
-            isLoading={isDownloadingCsv}
-            isDisabled={isDownloadingPdf}
+            variant="outline"
+            className="flex-1"
+            onClick={handleDownloadCsv}
+            disabled={isDownloadingCsv || isDownloadingPdf}
           >
+            <FileTextIcon size={14} />
             CSV
           </Button>
         </div>

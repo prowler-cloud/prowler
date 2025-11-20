@@ -3,6 +3,7 @@
 import { Checkbox } from "@heroui/checkbox";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Icon } from "@iconify/react";
+import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -15,8 +16,8 @@ import {
 import { scanOnDemand, scheduleDaily } from "@/actions/scans";
 import { getTask } from "@/actions/task/tasks";
 import { CheckIcon, RocketIcon } from "@/components/icons";
+import { Button } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
-import { CustomButton } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { Form } from "@/components/ui/form";
 import { checkTaskStatus } from "@/lib/helper";
@@ -238,7 +239,7 @@ export const TestConnectionForm = ({
         </div>
 
         {apiErrorMessage && (
-          <div className="text-danger mt-4 rounded-md bg-red-100 p-3">
+          <div className="text-text-error mt-4 rounded-md bg-red-100 p-3">
             <p>{`Provider ID ${apiErrorMessage?.toLowerCase()}. Please check and try again.`}</p>
           </div>
         )}
@@ -249,16 +250,16 @@ export const TestConnectionForm = ({
               <div className="flex items-center">
                 <Icon
                   icon="heroicons:exclamation-circle"
-                  className="text-danger h-5 w-5"
+                  className="text-text-error h-5 w-5"
                 />
               </div>
               <div className="flex items-center">
-                <p className="text-small text-danger">
+                <p className="text-small text-text-error">
                   {connectionStatus.error || "Unknown error"}
                 </p>
               </div>
             </div>
-            <p className="text-small text-danger">
+            <p className="text-small text-text-error">
               It seems there was an issue with your credentials. Please review
               your credentials and try again.
             </p>
@@ -277,9 +278,10 @@ export const TestConnectionForm = ({
             {...form.register("runOnce")}
             isSelected={!!form.watch("runOnce")}
             classNames={{
-              label: "text-small text-default-500",
+              label: "text-small",
               wrapper: "checkbox-update",
             }}
+            color="default"
           >
             Run a single scan (no recurring schedule).
           </Checkbox>
@@ -307,45 +309,44 @@ export const TestConnectionForm = ({
               <span>Back to providers</span>
             </CustomLink>
           ) : connectionStatus?.error ? (
-            <CustomButton
-              onPress={isUpdated ? () => router.back() : onResetCredentials}
+            <Button
+              onClick={isUpdated ? () => router.back() : onResetCredentials}
               type="button"
-              ariaLabel={"Save"}
-              className="w-1/2"
-              variant="solid"
-              color="warning"
-              size="md"
-              isLoading={isResettingCredentials}
-              startContent={!isResettingCredentials && <CheckIcon size={24} />}
-              isDisabled={isResettingCredentials}
+              variant="secondary"
+              size="lg"
+              disabled={isResettingCredentials}
             >
               {isResettingCredentials ? (
-                <>Loading</>
+                <Loader2 className="animate-spin" />
               ) : (
-                <span>
-                  {isUpdated ? "Update credentials" : "Reset credentials"}
-                </span>
+                <CheckIcon size={24} />
               )}
-            </CustomButton>
+              {isResettingCredentials
+                ? "Loading"
+                : isUpdated
+                  ? "Update credentials"
+                  : "Reset credentials"}
+            </Button>
           ) : (
-            <CustomButton
+            <Button
               type={
                 isUpdated && connectionStatus?.connected ? "button" : "submit"
               }
-              ariaLabel={"Save"}
-              className="w-1/3"
-              variant="solid"
-              color="action"
-              size="md"
-              isLoading={isLoading}
-              endContent={!isLoading && !isUpdated && <RocketIcon size={24} />}
+              variant="default"
+              size="lg"
+              disabled={isLoading}
             >
               {isLoading ? (
-                <>Loading</>
+                <Loader2 className="animate-spin" />
               ) : (
-                <span>{isUpdated ? "Check connection" : "Launch scan"}</span>
+                !isUpdated && <RocketIcon size={24} />
               )}
-            </CustomButton>
+              {isLoading
+                ? "Loading"
+                : isUpdated
+                  ? "Check connection"
+                  : "Launch scan"}
+            </Button>
           )}
         </div>
       </form>

@@ -1,12 +1,12 @@
 "use client";
 
-import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import { Select, SelectItem } from "@heroui/select";
 import { CheckSquare, Search, Square } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Control } from "react-hook-form";
 
+import { Button } from "@/components/shadcn";
 import { FormControl, FormField, FormMessage } from "@/components/ui/form";
 import { ProviderProps, ProviderType } from "@/types/providers";
 
@@ -123,22 +123,20 @@ export const EnhancedProviderSelector = ({
               <div className="flex flex-col gap-2">
                 {isMultiple && filteredProviders.length > 1 && (
                   <div className="flex items-center justify-between">
-                    <span className="text-default-700 text-sm font-medium">
+                    <span className="text-text-neutral-primary text-sm font-medium">
                       {label}
                     </span>
                     <Button
                       size="sm"
-                      variant="light"
-                      onPress={handleSelectAll}
-                      startContent={
-                        isAllSelected ? (
-                          <CheckSquare size={16} />
-                        ) : (
-                          <Square size={16} />
-                        )
-                      }
+                      variant="ghost"
+                      onClick={handleSelectAll}
                       className="h-7 text-xs"
                     >
+                      {isAllSelected ? (
+                        <CheckSquare size={16} />
+                      ) : (
+                        <Square size={16} />
+                      )}
                       {isAllSelected ? "Deselect All" : "Select All"}
                     </Button>
                   </div>
@@ -158,12 +156,12 @@ export const EnhancedProviderSelector = ({
                   isInvalid={isInvalid}
                   classNames={{
                     trigger: "min-h-12",
-                    popoverContent: "dark:bg-gray-800",
-                    listboxWrapper: "max-h-[300px] dark:bg-gray-800",
+                    popoverContent: "bg-bg-neutral-secondary",
+                    listboxWrapper: "max-h-[300px] bg-bg-neutral-secondary",
                     listbox: "gap-0",
                     label:
-                      "tracking-tight font-light !text-default-500 text-xs z-0!",
-                    value: "text-default-500 text-small dark:text-gray-300",
+                      "tracking-tight font-light !text-text-neutral-secondary text-xs z-0!",
+                    value: "text-text-neutral-secondary text-small",
                   }}
                   renderValue={(items) => {
                     if (!isMultiple && value) {
@@ -214,7 +212,7 @@ export const EnhancedProviderSelector = ({
                   }}
                   listboxProps={{
                     topContent: enableSearch ? (
-                      <div className="bg-content1 sticky top-0 z-10 py-2 dark:bg-gray-800">
+                      <div className="sticky top-0 z-10 py-2">
                         <Input
                           isClearable
                           placeholder="Search providers..."
@@ -226,7 +224,7 @@ export const EnhancedProviderSelector = ({
                           onClear={() => setSearchValue("")}
                           classNames={{
                             inputWrapper:
-                              "border-default-200 bg-transparent hover:bg-default-100/50 dark:bg-transparent dark:hover:bg-default-100/20",
+                              "border-border-input-primary bg-bg-input-primary hover:bg-bg-neutral-secondary",
                             input: "text-small",
                             clearButton: "text-default-400",
                           }}
@@ -256,10 +254,10 @@ export const EnhancedProviderSelector = ({
                               <div className="text-small truncate font-medium">
                                 {displayName}
                               </div>
-                              <div className="text-tiny text-default-500 truncate">
+                              <div className="text-tiny text-text-neutral-secondary truncate">
                                 {typeLabel}
                                 {isDisabled && (
-                                  <span className="text-danger ml-2">
+                                  <span className="text-text-error ml-2">
                                     (Already used)
                                   </span>
                                 )}
@@ -270,8 +268,8 @@ export const EnhancedProviderSelector = ({
                             <div
                               className={`h-2 w-2 rounded-full ${
                                 provider.attributes.connection.connected
-                                  ? "bg-success"
-                                  : "bg-danger"
+                                  ? "bg-bg-pass"
+                                  : "bg-bg-fail"
                               }`}
                               title={
                                 provider.attributes.connection.connected
@@ -288,7 +286,7 @@ export const EnhancedProviderSelector = ({
               </div>
             </FormControl>
             {showFormMessage && (
-              <FormMessage className="text-system-error dark:text-system-error max-w-full text-xs" />
+              <FormMessage className="text-text-error max-w-full text-xs" />
             )}
           </>
         );
