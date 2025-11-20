@@ -66,7 +66,7 @@ export const M365ProviderBadge: FC<IconSvgProps> = ({
                 fontSize="16"
                 fontWeight="700"
               >
-                365
+                M365
               </text>
             </g>
           </g>
