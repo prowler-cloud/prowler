@@ -53,6 +53,9 @@ export const StatusChart = ({
     const providerIds = params.get("filter[provider_id__in]");
     if (providerIds) {
       params.delete("filter[provider_id__in]");
+      // Remove provider_type__in since provider_id__in is more specific
+      params.delete("filter[provider_type__in]");
+
       const ids = providerIds.split(",");
       const uids = ids
         .map((id) => {
