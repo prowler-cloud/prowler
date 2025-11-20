@@ -12,3 +12,4 @@ export * from "./separator/separator";
 export * from "./skeleton/skeleton";
 export * from "./tabs/generic-tabs";
 export * from "./tabs/tabs";
+export * from "./tooltip";

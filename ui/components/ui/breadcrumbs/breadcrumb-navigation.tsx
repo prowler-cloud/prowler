@@ -54,6 +54,7 @@ export function BreadcrumbNavigation({
       "/manage-groups": "lucide:users-2",
       "/services": "lucide:server",
       "/workloads": "lucide:layers",
+      "/attack-paths": "lucide:git-branch",
     };
 
     const pathSegments = pathname
@@ -156,6 +157,7 @@ export function BreadcrumbNavigation({
               >
                 {breadcrumb.icon && typeof breadcrumb.icon === "string" ? (
                   <Icon
+                    aria-hidden="true"
                     className="text-text-neutral-primary"
                     height={24}
                     icon={breadcrumb.icon}
@@ -177,6 +179,7 @@ export function BreadcrumbNavigation({
               >
                 {breadcrumb.icon && typeof breadcrumb.icon === "string" ? (
                   <Icon
+                    aria-hidden="true"
                     className="text-text-neutral-primary"
                     height={24}
                     icon={breadcrumb.icon}
@@ -195,6 +198,7 @@ export function BreadcrumbNavigation({
               <div className="flex items-center gap-2">
                 {breadcrumb.icon && typeof breadcrumb.icon === "string" ? (
                   <Icon
+                    aria-hidden="true"
                     className="text-default-500"
                     height={24}
                     icon={breadcrumb.icon}
