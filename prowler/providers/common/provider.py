@@ -237,6 +237,14 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
+                elif "stackit" in provider_class_name.lower():
+                    provider_class(
+                        api_token=arguments.stackit_api_token,
+                        project_id=arguments.stackit_project_id,
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
                 elif "github" in provider_class_name.lower():
                     provider_class(
                         personal_access_token=arguments.personal_access_token,

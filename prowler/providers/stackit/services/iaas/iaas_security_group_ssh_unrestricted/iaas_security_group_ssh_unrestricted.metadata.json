@@ -1,0 +1,33 @@
+{
+  "Provider": "stackit",
+  "CheckID": "iaas_security_group_ssh_unrestricted",
+  "CheckTitle": "Ensure IaaS security groups do not allow unrestricted SSH access",
+  "CheckType": [],
+  "ServiceName": "iaas",
+  "SubServiceName": "security-group",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "SecurityGroup",
+  "Description": "Security groups should not allow unrestricted SSH access (port 22) from the public internet (0.0.0.0/0 or ::/0). Unrestricted SSH access increases the attack surface and can lead to unauthorized access, brute force attacks, and potential system compromise.",
+  "Risk": "Allowing unrestricted SSH access from the internet exposes servers to potential unauthorized access attempts, brute force attacks, and security breaches. Attackers can scan for and exploit weak credentials or vulnerabilities.",
+  "RelatedUrl": "https://docs.stackit.cloud/stackit/en/security-groups-10977456.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.stackit.cloud/stackit/en/how-to-create-security-groups-10977460.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict SSH access to specific IP addresses or ranges that require administrative access. Use bastion hosts or VPN connections for secure remote access instead of exposing SSH directly to the internet.",
+      "Url": "https://docs.stackit.cloud/stackit/en/security-groups-10977456.html"
+    }
+  },
+  "Categories": [
+    "internet-exposed",
+    "network-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check focuses on ingress rules that allow SSH (port 22) from 0.0.0.0/0 or ::/0. Consider implementing additional controls such as multi-factor authentication and regular security audits."
+}

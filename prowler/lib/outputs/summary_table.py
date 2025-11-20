@@ -57,6 +57,13 @@ def display_summary_table(
         elif provider.type == "nhn":
             entity_type = "Tenant Domain"
             audited_entities = provider.identity.tenant_domain
+        elif provider.type == "stackit":
+            if provider.identity.project_name:
+                entity_type = "Project"
+                audited_entities = provider.identity.project_name
+            else:
+                entity_type = "Project ID"
+                audited_entities = provider.identity.project_id
         elif provider.type == "iac":
             if provider.scan_repository_url:
                 entity_type = "Repository"

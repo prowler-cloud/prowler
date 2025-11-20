@@ -1,0 +1,33 @@
+{
+  "Provider": "stackit",
+  "CheckID": "iaas_security_group_rdp_unrestricted",
+  "CheckTitle": "Ensure IaaS security groups do not allow unrestricted RDP access",
+  "CheckType": [],
+  "ServiceName": "iaas",
+  "SubServiceName": "security-group",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "SecurityGroup",
+  "Description": "Security groups should not allow unrestricted RDP access (port 3389) from the public internet (0.0.0.0/0 or ::/0). Unrestricted RDP access increases the attack surface and can lead to unauthorized access, brute force attacks, and potential system compromise.",
+  "Risk": "Allowing unrestricted RDP access from the internet exposes Windows servers to potential unauthorized access attempts, brute force attacks, ransomware, and security breaches. Attackers can exploit weak credentials or vulnerabilities.",
+  "RelatedUrl": "https://docs.stackit.cloud/stackit/en/security-groups-10977456.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.stackit.cloud/stackit/en/how-to-create-security-groups-10977460.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict RDP access to specific IP addresses or ranges that require administrative access. Use bastion hosts, VPN connections, or Azure Bastion for secure remote access instead of exposing RDP directly to the internet.",
+      "Url": "https://docs.stackit.cloud/stackit/en/security-groups-10977456.html"
+    }
+  },
+  "Categories": [
+    "internet-exposed",
+    "network-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check focuses on ingress rules that allow RDP (port 3389) from 0.0.0.0/0 or ::/0. Consider implementing network-level authentication and regular security audits."
+}

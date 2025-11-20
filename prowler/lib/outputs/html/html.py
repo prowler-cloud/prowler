@@ -1023,6 +1023,55 @@ class HTML(Output):
             return ""
 
     @staticmethod
+    def get_stackit_assessment_summary(provider: Provider) -> str:
+        """
+        get_stackit_assessment_summary gets the HTML assessment summary for the StackIT provider
+
+        Args:
+            provider (Provider): the StackIT provider object
+
+        Returns:
+            str: HTML assessment summary for the StackIT provider
+        """
+        try:
+            project_display = (
+                provider.identity.project_name
+                if provider.identity.project_name
+                else provider.identity.project_id
+            )
+
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            StackIT Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>StackIT Project:</b> {project_display}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            StackIT Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Authentication Type:</b> API Token
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
     def get_assessment_summary(provider: Provider) -> str:
         """
         get_assessment_summary gets the HTML assessment summary for the provider

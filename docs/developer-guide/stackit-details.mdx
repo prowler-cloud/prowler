@@ -1,0 +1,723 @@
+---
+title: 'StackIT Provider'
+---
+
+This page details the [StackIT Cloud](https://www.stackit.de/) provider implementation in Prowler.
+
+By default, Prowler will audit a single StackIT project per scan. To configure it, you'll need to provide both an API token and project ID.
+
+## StackIT Provider Classes Architecture
+
+The StackIT provider implementation follows the general [Provider structure](/developer-guide/provider). This section focuses on the StackIT-specific implementation, highlighting how the generic provider concepts are realized for StackIT in Prowler. For a full overview of the provider pattern, base classes, and extension guidelines, see [Provider documentation](/developer-guide/provider).
+
+### `StackITProvider` (Main Class)
+
+- **Location:** [`prowler/providers/stackit/stackit_provider.py`](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/stackit/stackit_provider.py)
+- **Base Class:** Inherits from `Provider` (see [base class details](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/common/provider.py)).
+- **Purpose:** Central orchestrator for StackIT-specific logic, API authentication, credential validation, and configuration.
+- **Key StackIT Responsibilities:**
+    - Initializes and manages StackIT API authentication using service account tokens.
+    - Validates API token and project ID (UUID format validation).
+    - Loads and manages configuration, mutelist, and fixer settings.
+    - Provides properties and methods for downstream StackIT service classes to access credentials, identity, and configuration data.
+    - Implements thread-safe credential handling (no environment variable pollution).
+
+### Data Models
+
+- **Location:** [`prowler/providers/stackit/models.py`](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/stackit/models.py)
+- **Purpose:** Define structured data for StackIT identity, region configuration, and resource models.
+- **Key StackIT Models:**
+    - `StackITIdentityInfo`: Holds StackIT identity metadata, including project ID and project name (fetched automatically from Resource Manager API).
+    - `StackITRegionConfig`: Stores the region configuration (currently supports `eu01`).
+    - Resource models for IaaS services: `SecurityGroup`, `SecurityGroupRule`, `Server`, `NetworkInterface`.
+
+### `StackITService` (Service Base Class)
+
+- **Location:** [`prowler/providers/stackit/lib/service/service.py`](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/stackit/lib/service/service.py)
+- **Purpose:** Abstract base class that all StackIT service-specific classes inherit from. This implements the generic service pattern (described in [service page](/developer-guide/services#service-base-class)) specifically for StackIT.
+- **Key StackIT Responsibilities:**
+    - Receives a `StackITProvider` instance to access credentials, identity, and configuration.
+    - Manages SDK configuration for API authentication.
+    - Exposes common audit context (`project_id`, `region`, `audit_config`) to subclasses.
+
+### Exception Handling
+
+- **Location:** [`prowler/providers/stackit/exceptions/exceptions.py`](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/stackit/exceptions/exceptions.py)
+- **Purpose:** Custom exception classes for StackIT-specific error handling, such as credential validation, API connection, and configuration errors.
+- **Key Exception Classes:**
+    - `StackITException`: Base exception for all StackIT provider errors.
+    - `StackITCredentialsError`: Raised when credentials are invalid or missing.
+    - `StackITProjectIDError`: Raised when project ID is invalid or not in UUID format.
+    - `StackITAPIError`: Raised when StackIT API calls fail.
+
+## Authentication
+
+### Service Account Creation and Key Generation
+
+StackIT uses service account keys for API authentication. Service account keys are RSA key-pair based and provide secure, short-lived access tokens.
+
+### Creating a Service Account Key
+
+#### Method 1: Via StackIT Portal
+
+1. **Navigate to Service Accounts**
+   - Go to the [StackIT Portal](https://portal.stackit.cloud/)
+   - Select your project
+   - Click on **Service Accounts** in the left sidebar
+
+2. **Create or Select Service Account**
+   - If you don't have a service account, click **Create Service Account**
+   - Provide a name and description
+   - Assign necessary permissions:
+     - For IaaS security checks: `iaas.viewer` or `project.owner`
+     - For comprehensive audits: `project.owner`
+
+3. **Generate Service Account Key**
+   - Select your service account
+   - Navigate to **Service Account Keys**
+   - Click **Create key**
+   - Choose one of the following options:
+     - **STACKIT-generated key pair** (Recommended): Let STACKIT automatically generate an RSA key-pair
+     - **User-provided key pair**: Upload your own RSA 2048 public key
+
+4. **Download and Save the Key**
+   - Download the generated service account key file (JSON format)
+   - **Important**: Save the key securely - it contains your private key and will only be available once
+   - Store the key file in a secure location (e.g., `~/.stackit/sa_key.json`)
+
+#### Method 2: Via StackIT CLI
+
+```bash
+# Install STACKIT CLI (if not already installed)
+# Follow instructions at: https://github.com/stackitcloud/stackit-cli
+
+# Create service account key (STACKIT-generated)
+stackit service-account key create --email my-service-account@example.com
+
+# Or create with your own RSA 2048 public key
+# First, generate your RSA key pair:
+openssl genrsa -out private-key.pem 2048
+openssl rsa -in private-key.pem -pubout -out public-key.pem
+
+# Then create the key with your public key:
+stackit service-account key create \
+  --email my-service-account@example.com \
+  --public-key "$(cat public-key.pem)"
+```
+
+### Finding Your Project ID
+
+Your StackIT project ID is a UUID that can be found:
+
+1. In the StackIT Portal URL when viewing your project: `https://portal.stackit.cloud/projects/{PROJECT_ID}/...`
+2. In the project settings page
+3. Using the StackIT CLI: `stackit project list`
+
+### Generating Access Tokens from Service Account Keys
+
+Prowler requires an access token for authentication, which can be generated from your service account key file using the StackIT CLI.
+
+**Important**: Prowler does not directly use the service account key file (`.json`). You must first generate an access token from the key file.
+
+#### Step 1: Install StackIT CLI
+
+```bash
+# Follow installation instructions at:
+# https://github.com/stackitcloud/stackit-cli
+```
+
+#### Step 2: Generate Access Token
+
+```bash
+# Generate an access token from your service account key
+stackit auth activate-service-account \
+  --service-account-key-path ~/Downloads/sa-key-ae9ede46-2c81-4663-ad04-3dd992d6c565.json \
+  --only-print-access-token
+```
+
+This will output a temporary access token that you can use with Prowler.
+
+#### Step 3: Use the Access Token with Prowler
+
+##### Option 1: Environment Variables
+
+```bash
+export STACKIT_SERVICE_ACCOUNT_TOKEN="<access-token-from-step-2>"
+export STACKIT_PROJECT_ID="12345678-1234-1234-1234-123456789abc"
+
+prowler stackit
+```
+
+##### Option 2: Command-Line Arguments
+
+```bash
+prowler stackit \
+  --stackit-api-token "<access-token-from-step-2>" \
+  --stackit-project-id "12345678-1234-1234-1234-123456789abc"
+```
+
+**Note**: Access tokens are short-lived. If your scan fails with authentication errors, regenerate a new access token using the CLI command above.
+
+### Credential Lookup Order
+
+Prowler searches for credentials in the following order:
+
+1. **Command-line arguments**:
+   - `--stackit-api-token`
+   - `--stackit-project-id`
+2. **Environment variables**:
+   - `STACKIT_SERVICE_ACCOUNT_TOKEN`
+   - `STACKIT_PROJECT_ID`
+
+**Note**: Command-line arguments take precedence over environment variables.
+
+## Configuration
+
+### Command-Line Arguments
+
+StackIT-specific command-line arguments:
+
+| Argument | Description | Required | Default |
+|----------|-------------|----------|---------|
+| `--stackit-api-token` | StackIT service account API token | Yes* | `$STACKIT_SERVICE_ACCOUNT_TOKEN` |
+| `--stackit-project-id` | StackIT project ID (UUID format) | Yes* | `$STACKIT_PROJECT_ID` |
+
+\* Required unless provided via environment variables.
+
+### Input Validation
+
+The StackIT provider performs comprehensive input validation:
+
+- **API Token**:
+  - Must not be empty
+  - Must not be whitespace-only
+  - Complete token redaction in logs (`***REDACTED***`)
+
+- **Project ID**:
+  - Must not be empty
+  - Must be a valid UUID format (e.g., `12345678-1234-1234-1234-123456789abc`)
+  - Validated using Python's UUID constructor
+
+Invalid credentials will result in clear error messages before any API calls are made.
+
+## Available Services
+
+### IaaS (Infrastructure as a Service)
+
+- **Service Class:** `IaaSService`
+- **Location:** [`prowler/providers/stackit/services/iaas/iaas_service.py`](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/stackit/services/iaas/iaas_service.py)
+- **SDK:** Uses the [stackit-iaas](https://pypi.org/project/stackit-iaas/) Python SDK
+- **Purpose:** Manages IaaS resources including security groups, servers, and network interfaces.
+
+**Supported Resources:**
+- Security Groups and Rules
+- Servers (Virtual Machines)
+- Network Interfaces (NICs)
+
+**Key Features:**
+- Automatic discovery of all security groups in the project
+- Security rule parsing with support for unrestricted access detection
+- Public IP exposure tracking via NIC analysis
+- Only reports findings for security groups attached to public-facing resources
+
+## Available Checks
+
+The StackIT provider currently implements 4 security checks focused on network security:
+
+### 1. iaas_security_group_ssh_unrestricted
+
+- **Severity:** High
+- **Description:** Detects security groups that allow unrestricted SSH access (port 22) from the internet.
+- **Risk:** Unrestricted SSH access increases the attack surface and risk of brute-force attacks.
+- **Detection Logic:**
+  - Checks for ingress rules allowing TCP port 22
+  - Flags rules with `ip_range=None` or `ip_range="0.0.0.0/0"` or `ip_range="::/0"`
+  - Only reports on security groups attached to NICs with public IPs
+
+### 2. iaas_security_group_rdp_unrestricted
+
+- **Severity:** High
+- **Description:** Detects security groups that allow unrestricted RDP access (port 3389) from the internet.
+- **Risk:** Unrestricted RDP access enables potential unauthorized remote desktop access.
+- **Detection Logic:**
+  - Checks for ingress rules allowing TCP port 3389
+  - Flags unrestricted IP ranges (None, 0.0.0.0/0, ::/0)
+  - Only reports on publicly exposed security groups
+
+### 3. iaas_security_group_database_unrestricted
+
+- **Severity:** High
+- **Description:** Detects security groups that allow unrestricted access to common database ports.
+- **Monitored Ports:**
+  - MySQL: 3306
+  - PostgreSQL: 5432
+  - MongoDB: 27017
+  - Redis: 6379
+  - SQL Server: 1433
+  - CouchDB: 5984
+- **Risk:** Unrestricted database access can lead to data breaches and unauthorized data access.
+
+### 4. iaas_security_group_all_traffic_unrestricted
+
+- **Severity:** Critical
+- **Description:** Detects security groups that allow all traffic from the internet.
+- **Detection Logic:**
+  - Checks for rules with `port_range=None` (all ports)
+  - Checks for rules with port range covering 0-65535 or 1-65535
+  - Flags unrestricted IP ranges
+  - Critical security misconfiguration requiring immediate remediation
+
+### Important Implementation Notes
+
+**Self-Referencing Security Group Rules:**
+
+Security group rules with `remoteSecurityGroupId` set are automatically filtered out from unrestricted access checks. These rules only allow traffic from instances within the same security group (self-referencing), not from the internet, and are therefore not flagged as security risks.
+
+**Rule Display Names:**
+
+All findings include user-friendly rule descriptions when available. If a security group rule has a description field set (the name shown in the StackIT UI), it will be displayed in the finding message along with the rule ID:
+- With description: `'Allow SSH from office' (sgr-abc123)`
+- Without description: `'sgr-abc123'`
+
+**Network Interface (NIC) Filtering:**
+
+All checks focus on security groups attached to NICs with public IP addresses. The implementation:
+
+1. **Discovers all public IPs** in the project
+2. **Identifies which NICs** have those public IPs assigned
+3. **Flags security groups** attached to those public NICs as "in use"
+4. **Reports only on "in use" security groups** (internet-exposed resources)
+
+**Unattached NICs:**
+
+NICs with public IPs are checked **even if not currently attached to a server**. This is intentional because:
+- Unattached NICs with unrestricted security groups are "misconfigurations waiting to happen"
+- If the NIC is attached to a server later, it's immediately exposed
+- Defense-in-depth approach: flag potential issues before they become active threats
+
+**Unrestricted IP Ranges:**
+
+The StackIT API represents "unrestricted" in two ways:
+- **`ip_range=null`**: No IP restriction specified (implicit unrestricted)
+- **`ip_range="0.0.0.0/0"` or `"::/0"`**: Explicitly configured to allow all IPs
+
+Both are flagged as unrestricted. A `null` value is **more permissive** than an explicit range and applies to all protocols/ports if other fields are also `null`.
+
+## Requirements
+
+### Python Version
+
+- **Minimum:** Python 3.10+
+- **Reason:** The StackIT SDK requires Python 3.10 or higher
+
+### Dependencies
+
+The StackIT provider requires the following Python packages (automatically installed with Prowler):
+
+- **stackit-core** (v0.2.0+): Core SDK for StackIT API authentication and configuration
+- **stackit-iaas** (v0.9.0+): IaaS service SDK for managing compute resources
+- **stackit-resourcemanager** (v0.6.0+): Resource Manager SDK for fetching project metadata (e.g., project names)
+
+These dependencies are defined in `pyproject.toml` and installed automatically with:
+
+```bash
+poetry install
+```
+
+**Note:** The `stackit-resourcemanager` package enables automatic retrieval of project names for display in reports. If this package is not available, Prowler will still function normally but project names will be empty in the output.
+
+## Region Support
+
+### Current Support
+
+- **Region:** `eu01` (Germany South)
+- **Default:** All scans currently use the eu01 region
+
+### Future Enhancements
+
+The StackIT provider is planned to support:
+- **eu02** region
+- Auto-discovery across all available regions
+- Region-specific reporting
+
+## Command Examples
+
+### Basic Scan
+
+Scan a StackIT project with all available checks:
+
+```bash
+prowler stackit \
+  --stackit-api-token "your-token" \
+  --stackit-project-id "12345678-1234-1234-1234-123456789abc"
+```
+
+### Using Environment Variables
+
+```bash
+export STACKIT_SERVICE_ACCOUNT_TOKEN="your-token"
+export STACKIT_PROJECT_ID="12345678-1234-1234-1234-123456789abc"
+
+prowler stackit
+```
+
+### Scan Specific Checks
+
+Run only SSH unrestricted check:
+
+```bash
+prowler stackit \
+  --stackit-api-token "your-token" \
+  --stackit-project-id "your-project-id" \
+  --checks iaas_security_group_ssh_unrestricted
+```
+
+### Scan All Security Group Checks
+
+```bash
+prowler stackit \
+  --stackit-api-token "your-token" \
+  --stackit-project-id "your-project-id" \
+  --services iaas
+```
+
+### Output Formats
+
+Generate JSON output:
+
+```bash
+prowler stackit \
+  --stackit-api-token "your-token" \
+  --stackit-project-id "your-project-id" \
+  --output-formats json
+```
+
+Generate HTML report:
+
+```bash
+prowler stackit \
+  --stackit-api-token "your-token" \
+  --stackit-project-id "your-project-id" \
+  --output-formats html
+```
+
+## Known Limitations
+
+### Current Limitations
+
+1. **Single Project Scope**: Only one project can be scanned at a time
+2. **Region Support**: Currently limited to eu01 region only
+3. **Service Coverage**: Only IaaS service is implemented (objectstorage service is work in progress)
+4. **Check Coverage**: Limited to security group network security checks (4 checks total)
+5. **No Compliance Frameworks**: Compliance framework mappings are not yet implemented
+
+### Planned Enhancements
+
+- Multi-project scanning capability
+- Support for eu02 region
+- Additional IaaS checks (volume encryption, server public IP exposure, backup status)
+- ObjectStorage service implementation and checks
+- Compliance framework mappings (CIS, custom StackIT best practices)
+- StackIT CLI remediation examples in metadata
+
+## Troubleshooting
+
+### Authentication Errors
+
+**Error:** `StackIT API token is invalid or has expired`
+
+**Solutions:**
+1. Generate a new access token using: `stackit auth activate-service-account --service-account-key-path <path> --only-print-access-token`
+2. Verify the service account key file is valid and not expired
+3. Check that the service account has the necessary permissions (`iaas.viewer` or `project.owner`)
+4. Ensure the token is properly set in environment variable or command-line argument
+5. Note: Access tokens are short-lived and need to be regenerated periodically
+
+**Error:** `StackIT credentials not found or are invalid`
+
+**Solutions:**
+1. Ensure both API token and project ID are provided
+2. Check that credentials are set via environment variables or command-line arguments
+3. Verify there are no extra spaces or newlines in the credentials
+
+**Error:** `Invalid StackIT project ID format`
+
+**Solutions:**
+1. Verify the project ID is a valid UUID format: `12345678-1234-1234-1234-123456789abc`
+2. Copy the project ID directly from the StackIT Portal
+3. Ensure there are no extra spaces or quotes around the UUID
+
+### API Connection Errors
+
+**Error:** `Failed to connect to StackIT API`
+
+**Solutions:**
+1. Check your internet connection
+2. Verify the StackIT API endpoint is accessible from your network
+3. Check if there are any firewall rules blocking HTTPS connections
+4. Review the full error message for specific API error codes
+
+**Error:** `HTTP 403 Forbidden`
+
+**Solutions:**
+1. Verify the service account has the correct permissions
+2. Ensure the project ID is correct and you have access to it
+3. Check that the service account is enabled (not disabled or expired)
+4. Verify the API token hasn't been revoked
+
+**Error:** `HTTP 404 Not Found`
+
+**Solutions:**
+1. Verify the project ID exists and is correct
+2. Check that the IaaS service is enabled in your project
+3. Ensure you're using the correct region (eu01)
+
+### Empty Results
+
+**Issue:** No security groups or findings reported
+
+**Solutions:**
+1. Verify that security groups exist in your project
+2. Check that the IaaS service is properly configured
+3. Ensure the service account has `iaas.viewer` permission
+4. Check Prowler logs for any API errors (use `--log-level DEBUG`)
+
+### Debug Mode
+
+Enable debug logging for detailed troubleshooting:
+
+```bash
+prowler stackit \
+  --stackit-api-token "your-token" \
+  --stackit-project-id "your-project-id" \
+  --log-level DEBUG
+```
+
+This will show:
+- API authentication details (with redacted tokens)
+- Resource discovery progress
+- Security rule parsing details
+- Any API errors or warnings
+
+## Specific Patterns in StackIT Services
+
+The generic service pattern is described in [service page](/developer-guide/services#service-structure-and-initialisation). You can find all the currently implemented services in the following locations:
+
+- Directly in the code, in location [`prowler/providers/stackit/services/`](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers/stackit/services)
+- In the [Prowler Hub](https://hub.prowler.com/) for a more human-readable view.
+
+The best reference to understand how to implement a new service is following the [service implementation documentation](/developer-guide/services#adding-a-new-service) and taking other StackIT services as reference.
+
+### StackIT Service Common Patterns
+
+- Services communicate with StackIT using the StackIT Python SDK, you can find the documentation [here](https://github.com/stackitcloud/stackit-sdk-python).
+- Every StackIT service class inherits from `StackITService`, ensuring access to credentials, identity, and configuration.
+- The constructor (`__init__`) receives a `StackITProvider` instance and initializes the SDK client with thread-safe token handling.
+- Resource containers **must** be initialized in the constructor, typically as lists or dictionaries.
+- **Thread Safety**: Never manipulate `os.environ` for credentials - use direct token passing via `Configuration(service_account_token=api_token)`.
+- All StackIT resources are represented as Pydantic `BaseModel` classes, providing type safety and structured access to resource attributes.
+- StackIT SDK calls are wrapped in try/except blocks, with specific handling for API errors, always logging errors.
+- **Centralized Error Handling**: Use `provider.handle_api_error(exception)` for consistent authentication error detection across all services.
+- **SDK Warning Suppression**: StackIT SDK prints deprecation warnings to stderr - use the `suppress_stderr()` context manager during SDK initialization and API calls.
+- **Unrestricted Access Detection**: In StackIT API, `None` values mean "allow all" (more permissive than explicit 0.0.0.0/0).
+  - `protocol=None` → All protocols allowed
+  - `ip_range=None` → All source IPs allowed (unrestricted!)
+  - `port_range=None` → All ports allowed
+  - `remote_security_group_id` set → Only allows traffic from the same security group (not unrestricted!)
+
+### IaaS Service Specific Patterns
+
+**Security Group Discovery:**
+```python
+# List all security groups
+security_groups = client.list_project_security_groups(project_id=self._project_id)
+
+# List network interfaces to determine public exposure
+nics = client.list_project_nics(project_id=self._project_id)
+
+# Only flag security groups attached to NICs with public IPs
+```
+
+**Centralized Authentication Error Handling:**
+```python
+def _handle_api_call(self, api_function, *args, **kwargs):
+    """Wrapper for API calls with centralized error handling."""
+    try:
+        with suppress_stderr():  # Suppress SDK warnings
+            return api_function(*args, **kwargs)
+    except Exception as e:
+        # Use centralized error handler from provider
+        self.provider.handle_api_error(e)  # Detects 401 and raises StackITInvalidTokenError
+```
+
+**Unrestricted Access Detection:**
+```python
+def is_unrestricted(rule):
+    """Check if a rule allows unrestricted access."""
+    # Filter out self-referencing rules
+    if rule.remote_security_group_id is not None:
+        return False
+    # Check for unrestricted IP ranges
+    return rule.ip_range is None or rule.ip_range in ["0.0.0.0/0", "::/0"]
+
+def is_tcp(rule):
+    """Check if a rule applies to TCP protocol."""
+    # None means all protocols (including TCP)
+    return rule.protocol is None or rule.protocol.lower() in ["tcp", "all"]
+
+def includes_port(rule, port):
+    """Check if a rule includes a specific port."""
+    # None means all ports
+    if rule.port_range is None:
+        return True
+    return rule.port_range.min <= port <= rule.port_range.max
+```
+
+## Specific Patterns in StackIT Checks
+
+The StackIT checks pattern is described in [checks page](/developer-guide/checks). You can find all the currently implemented checks:
+
+- Directly in the code, within each service folder, each check has its own folder named after the name of the check. (e.g. [`prowler/providers/stackit/services/iaas/iaas_security_group_ssh_unrestricted/`](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers/stackit/services/iaas/iaas_security_group_ssh_unrestricted))
+- In the [Prowler Hub](https://hub.prowler.com/) for a more human-readable view.
+
+The best reference to understand how to implement a new check is following the [check creation documentation](/developer-guide/checks#creating-a-check) and taking other similar StackIT checks as reference.
+
+### Check Report Class
+
+The `Check_Report_StackIT` class models a single finding for a StackIT resource in a check report. It is defined in [`prowler/lib/check/models.py`](https://github.com/prowler-cloud/prowler/blob/master/prowler/lib/check/models.py) and inherits from the generic `Check_Report` base class.
+
+#### Purpose
+
+`Check_Report_StackIT` extends the base report structure with StackIT-specific fields, enabling detailed tracking of the resource, project, and region associated with each finding.
+
+#### Constructor and Attribute Population
+
+When you instantiate `Check_Report_StackIT`, you must provide the check metadata and a resource object. The class will attempt to automatically populate its StackIT-specific attributes from the resource, using the following logic (in order of precedence):
+
+- **`resource_id`**:
+    - Uses `resource.id` if present.
+    - Otherwise, uses `resource.name` if present.
+    - Defaults to an empty string if none are available.
+
+- **`resource_name`**:
+    - Uses `resource.name` if present.
+    - Defaults to an empty string if not available.
+
+- **`project_id`**:
+    - Uses `resource.project_id` if present.
+    - Defaults to an empty string if not available (should be set in check logic).
+
+- **`region`**:
+    - Uses `resource.region` if present.
+    - Defaults to an empty string if not available.
+
+If the resource object does not contain the required attributes, you must set them manually in the check logic.
+
+Other attributes are inherited from the `Check_Report` class, from which you **always** have to set the `status` and `status_extended` attributes in the check logic.
+
+#### Example Usage
+
+```python
+from prowler.lib.check.models import Check_Report_StackIT
+
+report = Check_Report_StackIT(
+    metadata=self.metadata(),
+    resource=security_group
+)
+report.status = "FAIL"
+report.status_extended = f"Security group {security_group.name} allows unrestricted SSH access from the internet."
+report.resource_id = security_group.id
+report.resource_name = security_group.name
+report.project_id = self.iaas_client.project_id
+report.region = security_group.region
+```
+
+### Common Check Pattern
+
+```python
+from prowler.lib.check.check import Check
+from prowler.lib.check.models import Check_Report_StackIT
+from prowler.providers.stackit.services.iaas.iaas_client import iaas_client
+
+class iaas_security_group_ssh_unrestricted(Check):
+    """Check if IaaS security groups allow unrestricted SSH access."""
+
+    def execute(self):
+        findings = []
+
+        for security_group in iaas_client.security_groups:
+            # Skip security groups not in use (not attached to public NICs)
+            if not security_group.in_use:
+                continue
+
+            report = Check_Report_StackIT(
+                metadata=self.metadata(),
+                resource=security_group
+            )
+            report.status = "PASS"
+            report.status_extended = f"Security group {security_group.name} does not allow unrestricted SSH access."
+
+            # Check each rule
+            for rule in security_group.rules:
+                if (rule.is_ingress() and
+                    rule.is_tcp() and
+                    rule.includes_port(22) and
+                    rule.is_unrestricted()):
+                    report.status = "FAIL"
+                    report.status_extended = f"Security group {security_group.name} allows unrestricted SSH access from the internet."
+                    break
+
+            findings.append(report)
+
+        return findings
+```
+
+## Resources
+
+### Official StackIT Documentation
+
+- **StackIT Portal**: [https://portal.stackit.cloud/](https://portal.stackit.cloud/)
+- **StackIT Documentation**: [https://docs.stackit.cloud/](https://docs.stackit.cloud/)
+- **StackIT API Documentation**: [https://docs.api.eu01.stackit.cloud/](https://docs.api.eu01.stackit.cloud/)
+
+### Python SDK
+
+- **StackIT Python SDK (GitHub)**: [https://github.com/stackitcloud/stackit-sdk-python](https://github.com/stackitcloud/stackit-sdk-python)
+- **stackit-core (PyPI)**: [https://pypi.org/project/stackit-core/](https://pypi.org/project/stackit-core/)
+- **stackit-iaas (PyPI)**: [https://pypi.org/project/stackit-iaas/](https://pypi.org/project/stackit-iaas/)
+- **IaaS Models**: [https://github.com/stackitcloud/stackit-sdk-python/tree/main/services/iaas/src/stackit/iaas/models](https://github.com/stackitcloud/stackit-sdk-python/tree/main/services/iaas/src/stackit/iaas/models)
+
+### Prowler Resources
+
+- **Provider Implementation**: [`prowler/providers/stackit/`](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers/stackit/)
+- **IaaS Service**: [`prowler/providers/stackit/services/iaas/`](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers/stackit/services/iaas/)
+- **Prowler Hub**: [https://hub.prowler.com/](https://hub.prowler.com/)
+- **GitHub Issues**: [https://github.com/prowler-cloud/prowler/issues](https://github.com/prowler-cloud/prowler/issues)
+
+## Contributing
+
+If you'd like to contribute to the StackIT provider:
+
+1. **Add New Checks**: Follow the [check creation guide](/developer-guide/checks#creating-a-check) and use existing StackIT checks as templates
+2. **Enhance Services**: Implement additional IaaS resource discovery or add new services (e.g., ObjectStorage)
+3. **Improve Documentation**: Add metadata enhancements, CLI remediation examples, or Terraform code samples
+4. **Report Issues**: Submit bug reports or feature requests on [GitHub](https://github.com/prowler-cloud/prowler/issues)
+
+### Quick Start for Contributors
+
+1. **Install dependencies**: `poetry install` (includes stackit-core and stackit-iaas)
+2. **Set credentials**: Export `STACKIT_SERVICE_ACCOUNT_TOKEN` and `STACKIT_PROJECT_ID`
+3. **Run checks**: `prowler stackit`
+4. **View code**: Start in `prowler/providers/stackit/`
+5. **Add checks**: Create new check directories under `services/iaas/`
+6. **Run tests**: `poetry run pytest tests/providers/stackit/ -v`
+
+### Code Quality Standards
+
+The StackIT provider maintains high code quality standards:
+
+- **Type Hints**: 90-95% coverage (best in class among all Prowler providers)
+- **Testing**: Comprehensive unit tests with 100% pass rate
+- **Security**: Thread-safe credential handling, complete token redaction
+- **Documentation**: Excellent docstrings and inline comments
+- **Patterns**: Follows Prowler best practices and provider patterns
