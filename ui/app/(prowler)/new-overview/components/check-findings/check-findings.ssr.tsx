@@ -27,17 +27,10 @@ export const CheckFindingsSSR = async ({
 
   const attributes = findingsByStatus?.data?.attributes || {};
 
-  const {
-    total = 0,
-    fail = 0,
-    pass = 0,
-    fail_new = 0,
-    pass_new = 0,
-  } = attributes;
+  const { fail = 0, pass = 0, fail_new = 0, pass_new = 0 } = attributes;
 
   return (
     <StatusChart
-      totalFindings={total}
       failFindingsData={{
         total: fail,
         new: fail_new,

@@ -17,7 +17,6 @@ import {
 import { calculatePercentage } from "@/lib/utils";
 
 interface StatusChartProps {
-  totalFindings: number;
   failFindingsData: {
     total: number;
     new: number;
@@ -36,13 +35,15 @@ interface StatusChartProps {
 }
 
 export const StatusChart = ({
-  totalFindings,
   failFindingsData,
   passFindingsData,
   providers = [],
 }: StatusChartProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  // Calculate total from displayed findings (fail + pass)
+  const totalFindings = failFindingsData.total + passFindingsData.total;
 
   const handleSegmentClick = (dataPoint: DonutDataPoint) => {
     // Build the URL with current filters plus status and muted
