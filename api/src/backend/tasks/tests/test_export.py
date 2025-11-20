@@ -9,6 +9,7 @@ import pytest
 from botocore.exceptions import ClientError
 from tasks.jobs.export import (
     _compress_output_files,
+    _generate_compliance_output_directory,
     _generate_output_directory,
     _upload_to_s3,
     get_s3_client,
@@ -169,18 +170,34 @@ class TestOutputs:
         provider = "aws"
         expected_timestamp = "20230615103045"
 
-        path, compliance, threatscore = _generate_output_directory(
+        # Test _generate_output_directory (returns standard and compliance paths)
+        path, compliance = _generate_output_directory(
             base_dir, provider, tenant_id, scan_id
         )
 
         assert os.path.isdir(os.path.dirname(path))
         assert os.path.isdir(os.path.dirname(compliance))
-        assert os.path.isdir(os.path.dirname(threatscore))
-        mock_set_timestamp.assert_called_once_with(mock_scan_instance.started_at)
-
         assert path.endswith(f"{provider}-{expected_timestamp}")
         assert compliance.endswith(f"{provider}-{expected_timestamp}")
+        assert "/compliance/" in compliance
+
+        # Test _generate_compliance_output_directory with "threatscore"
+        threatscore = _generate_compliance_output_directory(
+            base_dir, provider, tenant_id, scan_id, compliance_framework="threatscore"
+        )
+
+        assert os.path.isdir(os.path.dirname(threatscore))
         assert threatscore.endswith(f"{provider}-{expected_timestamp}")
+        assert "/threatscore/" in threatscore
+
+        # Test _generate_compliance_output_directory with "ens"
+        ens = _generate_compliance_output_directory(
+            base_dir, provider, tenant_id, scan_id, compliance_framework="ens"
+        )
+
+        assert os.path.isdir(os.path.dirname(ens))
+        assert ens.endswith(f"{provider}-{expected_timestamp}")
+        assert "/ens/" in ens
 
     @patch("tasks.jobs.export.set_output_timestamp")
     @patch("tasks.jobs.export.rls_transaction")
@@ -204,15 +221,25 @@ class TestOutputs:
         provider = "aws/test@check"
         expected_timestamp = "20230615103045"
 
-        path, compliance, threatscore = _generate_output_directory(
+        # Test provider name sanitization with _generate_output_directory
+        path, compliance = _generate_output_directory(
             base_dir, provider, tenant_id, scan_id
         )
 
         assert os.path.isdir(os.path.dirname(path))
         assert os.path.isdir(os.path.dirname(compliance))
-        assert os.path.isdir(os.path.dirname(threatscore))
-        mock_set_timestamp.assert_called_once_with(mock_scan_instance.started_at)
-
         assert path.endswith(f"aws-test-check-{expected_timestamp}")
         assert compliance.endswith(f"aws-test-check-{expected_timestamp}")
+
+        # Test provider name sanitization with _generate_compliance_output_directory
+        threatscore = _generate_compliance_output_directory(
+            base_dir, provider, tenant_id, scan_id, compliance_framework="threatscore"
+        )
+        ens = _generate_compliance_output_directory(
+            base_dir, provider, tenant_id, scan_id, compliance_framework="ens"
+        )
+
+        assert os.path.isdir(os.path.dirname(threatscore))
+        assert os.path.isdir(os.path.dirname(ens))
         assert threatscore.endswith(f"aws-test-check-{expected_timestamp}")
+        assert ens.endswith(f"aws-test-check-{expected_timestamp}")

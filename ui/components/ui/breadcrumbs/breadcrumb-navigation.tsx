@@ -7,6 +7,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { ReactNode } from "react";
 
 import { LighthouseIcon } from "@/components/icons/Icons";
+import { cn } from "@/lib/utils";
 
 export interface CustomBreadcrumbItem {
   name: string;
@@ -142,7 +143,7 @@ export function BreadcrumbNavigation({
   }
 
   return (
-    <div className={className}>
+    <div className={cn(className, "w-fit md:w-full")}>
       <Breadcrumbs separator="/">
         {breadcrumbItems.map((breadcrumb, index) => (
           <BreadcrumbItem key={breadcrumb.path || index}>
