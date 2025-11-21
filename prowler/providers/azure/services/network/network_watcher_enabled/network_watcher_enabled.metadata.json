@@ -8,6 +8,10 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Network",
+  "Amnify_MuteScope": [
+      "subscription",
+      "tenant"
+  ],
   "Description": "Enable Network Watcher for Azure subscriptions.",
   "Risk": "Network diagnostic and visualization tools available with Network Watcher help users understand, diagnose, and gain insights to the network in Azure.",
   "RelatedUrl": "https://docs.microsoft.com/en-us/azure/network-watcher/network-watcher-monitoring-overview",

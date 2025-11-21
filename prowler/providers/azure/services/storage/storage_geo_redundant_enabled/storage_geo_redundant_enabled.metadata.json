@@ -8,6 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AzureStorageAccount",
+  "Amnify_MuteScope": [
+      "resource",
+      "subscription",
+      "tenant"
+  ],
   "Description": "Geo-redundant storage (GRS) must be enabled on critical Azure Storage Accounts to ensure data durability and availability in the event of a regional outage. GRS replicates data within the primary region and asynchronously to a secondary region, offering enhanced resilience and supporting disaster recovery strategies.",
   "Risk": "Without GRS, critical data may be lost or become unavailable during a regional outage, compromising data durability and disaster recovery efforts.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/azure/storage/common/storage-redundancy",

@@ -8,6 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AzureDefenderRecommendation",
+  "Amnify_MuteScope": [
+      "resource",
+      "subscription",
+      "tenant"
+  ],
   "Description": "Ensure that the latest OS patches for all virtual machines are applied.",
   "Risk": "The Azure Security Center retrieves a list of available security and critical updates from Windows Update or Windows Server Update Services (WSUS), depending on which service is configured on a Windows VM. The security center also checks for the latest updates in Linux systems. If a VM is missing a system update, the security center will recommend system updates be applied.",
   "RelatedUrl": "https://docs.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-posture-vulnerability-management#pv-7-rapidly-and-automatically-remediate-software-vulnerabilities",

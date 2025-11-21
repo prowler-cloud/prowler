@@ -8,6 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AzureStorageAccount",
+  "Amnify_MuteScope": [
+      "resource",
+      "subscription",
+      "tenant"
+  ],
   "Description": "Ensure the 'Minimum TLS version' for storage accounts is set to 'Version 1.2'",
   "Risk": "TLS versions 1.0 and 1.1 are known to be susceptible to certain Common Vulnerabilities and Exposures (CVE) weaknesses and attacks such as POODLE and BEAST",
   "RelatedUrl": "",

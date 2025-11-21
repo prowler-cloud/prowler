@@ -8,6 +8,10 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AzureDefenderPlan",
+  "Amnify_MuteScope": [
+      "subscription",
+      "tenant"
+  ],
   "Description": "Ensure That Microsoft Defender for KeyVault Is Set To 'On' ",
   "Risk": "By default, Microsoft Defender for Cloud is disabled for Azure key vaults. Defender for Cloud detects unusual and potentially harmful attempts to access or exploit your Azure Key Vault data. This layer of protection allows you to address threats without being a security expert, and without the need to use and manage third-party security monitoring tools or services.",
   "RelatedUrl": "",

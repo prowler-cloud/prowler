@@ -8,6 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "PostgreSQL",
+  "Amnify_MuteScope": [
+      "resource",
+      "subscription",
+      "tenant"
+  ],
   "Description": "Enable SSL connection on PostgreSQL Servers.",
   "Risk": "SSL connectivity helps to provide a new layer of security by connecting database server to client applications using Secure Sockets Layer (SSL). Enforcing SSL connections between database server and client applications helps protect against 'man in the middle' attacks by encrypting the data stream between the server and application.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/azure/postgresql/single-server/concepts-ssl-connection-security",

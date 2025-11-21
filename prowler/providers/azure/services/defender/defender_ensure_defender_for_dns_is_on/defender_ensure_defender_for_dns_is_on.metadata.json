@@ -8,6 +8,10 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AzureDefenderPlan",
+  "Amnify_MuteScope": [
+      "subscription",
+      "tenant"
+  ],
   "Description": "Ensure That Microsoft Defender for DNS Is Set To 'On' ",
   "Risk": "DNS lookups within a subscription are scanned and compared to a dynamic list of websites that might be potential security threats. These threats could be a result of a security breach within your services, thus scanning for them could prevent a potential security threat from being introduced.",
   "RelatedUrl": "",

@@ -8,6 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Microsoft.Web/sites",
+  "Amnify_MuteScope": [
+      "resource",
+      "subscription",
+      "tenant"
+  ],
   "Description": "Azure Functions provide a way to secure HTTP function endpoints during development and production. Using access keys adds an extra layer of protection, ensuring that only authorized users or systems can access the functions. This is particularly important when dealing with public apps or sensitive data.",
   "Risk": "Unprotected function endpoints may be vulnerable to unauthorized access, leading to potential data breaches or malicious activity.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-bindings-http-webhook-trigger?tabs=python-v2%2Cisolated-process%2Cnodejs-v4%2Cfunctionsv2&pivots=programming-language-csharp#authorization-keys",

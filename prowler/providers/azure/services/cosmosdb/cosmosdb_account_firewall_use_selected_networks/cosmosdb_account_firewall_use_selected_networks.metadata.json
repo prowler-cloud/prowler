@@ -8,6 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "CosmosDB",
+  "Amnify_MuteScope": [
+      "resource",
+      "subscription",
+      "tenant"
+  ],
   "Description": "Limiting your Cosmos DB to only communicate on whitelisted networks lowers its attack footprint.",
   "Risk": "Selecting certain networks for your Cosmos DB to communicate restricts the number of networks including the internet that can interact with what is stored within the database.",
   "RelatedUrl": "https://docs.microsoft.com/en-us/azure/cosmos-db/how-to-configure-private-endpoints",

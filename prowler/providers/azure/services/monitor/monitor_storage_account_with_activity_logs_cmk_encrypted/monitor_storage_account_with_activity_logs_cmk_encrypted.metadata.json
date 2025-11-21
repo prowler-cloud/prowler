@@ -8,6 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Monitor",
+  "Amnify_MuteScope": [
+      "resource",
+      "subscription",
+      "tenant"
+  ],
   "Description": "Storage accounts with the activity log exports can be configured to use CustomerManaged Keys (CMK).",
   "Risk": "Configuring the storage account with the activity log export container to use CMKs provides additional confidentiality controls on log data, as a given user must have read permission on the corresponding storage account and must be granted decrypt permission by the CMK.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-data-protection#dp-5-encrypt-sensitive-data-at-rest",

@@ -8,6 +8,10 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Monitor",
+  "Amnify_MuteScope": [
+      "subscription",
+      "tenant"
+  ],
   "Description": "Create an activity log alert for the Delete Policy Assignment event.",
   "Risk": "Monitoring for delete policy assignment events gives insight into changes done in 'azure policy - assignments' and can reduce the time it takes to detect unsolicited changes.",
   "RelatedUrl": "https://docs.microsoft.com/en-in/rest/api/monitor/activitylogalerts/createorupdate",

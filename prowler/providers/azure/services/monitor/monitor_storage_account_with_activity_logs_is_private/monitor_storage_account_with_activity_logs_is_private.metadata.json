@@ -8,6 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Monitor",
+  "Amnify_MuteScope": [
+      "resource",
+      "subscription",
+      "tenant"
+  ],
   "Description": "The storage account container containing the activity log export should not be publicly accessible.",
   "Risk": "Allowing public access to activity log content may aid an adversary in identifying weaknesses in the affected account's use or configuration.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/azure/azure-monitor/essentials/diagnostic-settings",

@@ -8,6 +8,11 @@
   "ResourceIdTemplate": "/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.KeyVault/vaults/{vault_name}",
   "Severity": "high",
   "ResourceType": "KeyVault",
+  "Amnify_MuteScope": [
+      "resource",
+      "subscription",
+      "tenant"
+  ],
   "Description": "Checks if Key Vaults with private endpoints have public network access disabled.",
   "Risk": "Allowing public network access to Key Vault when using private endpoint can expose sensitive data to unauthorized access.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/azure/key-vault/general/network-security",

@@ -8,6 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AzureStorageAccount",
+  "Amnify_MuteScope": [
+      "resource",
+      "subscription",
+      "tenant"
+  ],
   "Description": "Ensure that the 'Public access level' configuration setting is set to 'Private (no anonymous access)' for all blob containers in your storage account in order to block anonymous access to these Microsoft Azure resources.",
   "Risk": "A user that accesses blob containers anonymously can use constructors that do not require credentials such as shared access signatures.",
   "RelatedUrl": "",

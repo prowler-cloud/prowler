@@ -78,6 +78,9 @@ class CSV(Output):
                 finding_dict["DEPENDS_ON"] = unroll_list(finding.metadata.DependsOn)
                 finding_dict["RELATED_TO"] = unroll_list(finding.metadata.RelatedTo)
                 finding_dict["NOTES"] = finding.metadata.Notes
+                finding_dict["AMNIFY_MUTE_SCOPE"] = unroll_list(
+                    finding.metadata.Amnify_MuteScope
+                )
                 finding_dict["PROWLER_VERSION"] = finding.prowler_version
                 finding_dict["ADDITIONAL_URLS"] = unroll_list(
                     finding.metadata.AdditionalURLs

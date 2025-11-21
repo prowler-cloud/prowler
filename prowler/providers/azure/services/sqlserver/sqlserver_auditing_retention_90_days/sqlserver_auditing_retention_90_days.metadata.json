@@ -8,6 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "SQLServer",
+  "Amnify_MuteScope": [
+      "resource",
+      "subscription",
+      "tenant"
+  ],
   "Description": "SQL Server Audit Retention should be configured to be greater than 90 days.",
   "Risk": "Audit Logs can be used to check for anomalies and give insight into suspected breaches or misuse of information and access.",
   "RelatedUrl": "https://docs.microsoft.com/en-us/azure/sql-database/sql-database-auditing",

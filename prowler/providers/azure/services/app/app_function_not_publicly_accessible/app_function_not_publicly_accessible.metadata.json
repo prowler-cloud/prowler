@@ -8,6 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Microsoft.Web/sites",
+  "Amnify_MuteScope": [
+      "resource",
+      "subscription",
+      "tenant"
+  ],
   "Description": "Azure Functions should not be exposed to the public internet. Restricting access helps protect applications from potential threats and reduces the attack surface.",
   "Risk": "Exposing Azure Functions to the public internet increases the risk of unauthorized access, data breaches, and other security threats.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/azure/azure-functions/functions-networking-options",

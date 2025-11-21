@@ -8,6 +8,10 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AzureEmailNotifications",
+  "Amnify_MuteScope": [
+      "subscription",
+      "tenant"
+  ],
   "Description": "Microsoft Defender for Cloud sends email notifications when alerts of a certain severity level or higher are triggered. By setting the minimum severity to 'High', 'Medium', or even 'Low', you ensure that alerts with equal or greater severity (e.g., High or Critical) are still delivered. Selecting a lower threshold like 'Low' results in more comprehensive alert coverage.",
   "Risk": "If this setting is too restrictive (e.g., set to 'Critical' only), important security alerts with 'High' or 'Medium' severity might be missed. Ensuring that 'High' or a lower threshold is configured helps security teams stay informed about significant threats and respond in a timely manner.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/azure/defender-for-cloud/email-notifications-alerts#manage-notifications-on-email",

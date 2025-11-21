@@ -124,6 +124,8 @@ class CheckMetadata(BaseModel):
     # We set the compliance to None to
     # store the compliance later if supplied
     Compliance: Optional[list[Any]] = Field(default_factory=list)
+    # Amnify-specific field for muting scopes
+    Amnify_MuteScope: Optional[list[str]] = Field(default_factory=list)
 
     @validator("Categories", each_item=True, pre=True, always=True)
     def valid_category(value):
@@ -202,6 +204,19 @@ class CheckMetadata(BaseModel):
             raise ValueError("AdditionalURLs cannot contain duplicate items")
 
         return additional_urls
+
+    @validator("Amnify_MuteScope", each_item=True, pre=True, always=True)
+    def valid_amnify_mute_scope(value):
+        """Validate that Amnify_MuteScope values are only 'resource', 'subscription', or 'tenant'."""
+        if not isinstance(value, str):
+            raise ValueError("Amnify_MuteScope must be a list of strings")
+        value_lower = value.lower()
+        allowed_values = {"resource", "subscription", "tenant"}
+        if value_lower not in allowed_values:
+            raise ValueError(
+                f"Invalid Amnify_MuteScope value: {value}. Must be one of: {', '.join(allowed_values)}"
+            )
+        return value_lower
 
     @staticmethod
     def get_bulk(provider: str) -> dict[str, "CheckMetadata"]:

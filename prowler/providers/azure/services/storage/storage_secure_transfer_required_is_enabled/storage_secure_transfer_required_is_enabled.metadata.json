@@ -8,6 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AzureStorageAccount",
+  "Amnify_MuteScope": [
+      "resource",
+      "subscription",
+      "tenant"
+  ],
   "Description": "Ensure that all data transferred between clients and your Azure Storage account is encrypted using the HTTPS protocol.",
   "Risk": "Requests to the storage account sent outside of a secure connection can be eavesdropped",
   "RelatedUrl": "",

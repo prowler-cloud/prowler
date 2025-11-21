@@ -8,6 +8,10 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AzureDefenderPlan",
+  "Amnify_MuteScope": [
+      "subscription",
+      "tenant"
+  ],
   "Description": "Ensure That Microsoft Defender for Storage Is Set To 'On' ",
   "Risk": "Ensure that Microsoft Defender for Cloud is enabled for your Microsoft Azure storage accounts. Defender for storage accounts is an Azure-native layer of security intelligence that detects unusual and potentially harmful attempts to access or exploit your Azure cloud storage accounts.",
   "RelatedUrl": "",

@@ -8,6 +8,11 @@
   "ResourceIdTemplate": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachineScaleSets/{vmScaleSetName}",
   "Severity": "low",
   "ResourceType": "Microsoft.Compute/virtualMachineScaleSets",
+  "Amnify_MuteScope": [
+      "resource",
+      "subscription",
+      "tenant"
+  ],
   "Description": "Identify and remove empty virtual machine scale sets from your Azure cloud account.",
   "Risk": "Empty virtual machine scale sets may incur unnecessary costs and complicate cloud resource management, impacting cost optimization and compliance.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/azure/virtual-machine-scale-sets/overview",

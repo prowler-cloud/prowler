@@ -8,6 +8,11 @@
   "ResourceIdTemplate": "/subscriptions/{subscription_id}/resourceGroups/{resource_group}/providers/Microsoft.Storage/storageAccounts/{storageAccountName}/fileServices/default",
   "Severity": "medium",
   "ResourceType": "AzureStorageAccount",
+  "Amnify_MuteScope": [
+      "resource",
+      "subscription",
+      "tenant"
+  ],
   "Description": "Ensure that SMB file shares are configured to use only the latest SMB protocol version.",
   "Risk": "Allowing older SMB protocol versions may expose file shares to known vulnerabilities and security risks.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/azure/storage/files/files-smb-protocol#smb-security-settings",

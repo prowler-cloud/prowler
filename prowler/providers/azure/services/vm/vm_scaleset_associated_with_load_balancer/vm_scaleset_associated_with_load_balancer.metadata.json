@@ -8,6 +8,11 @@
   "ResourceIdTemplate": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachineScaleSets/{vmScaleSetName}",
   "Severity": "medium",
   "ResourceType": "Microsoft.Compute/virtualMachineScaleSets",
+  "Amnify_MuteScope": [
+      "resource",
+      "subscription",
+      "tenant"
+  ],
   "Description": "Ensure that your Azure virtual machine scale sets are using load balancers for traffic distribution.",
   "Risk": "Without load balancer integration, Azure virtual machine scale sets may experience reduced availability and potential service disruptions during traffic spikes or instance failures, leading to degraded user experience and potential business impact.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/azure/virtual-network/network-overview",

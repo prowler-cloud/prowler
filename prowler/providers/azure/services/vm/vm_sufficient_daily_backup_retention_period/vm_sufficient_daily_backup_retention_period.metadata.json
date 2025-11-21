@@ -8,6 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Microsoft.Compute/virtualMachines",
+  "Amnify_MuteScope": [
+      "resource",
+      "subscription",
+      "tenant"
+  ],
   "Description": "Ensure there is a sufficient daily backup retention period configured for Azure virtual machines.",
   "Risk": "Having an optimal daily backup retention period for your Azure virtual machines will enforce your backup strategy to follow the best practices as specified in the compliance regulations promoted by your organization. Retaining VM backups for a longer period of time will allow you to handle more efficiently your data restoration process in the event of a failure.",
   "RelatedUrl": "https://docs.microsoft.com/en-us/azure/backup/backup-azure-vms-introduction",

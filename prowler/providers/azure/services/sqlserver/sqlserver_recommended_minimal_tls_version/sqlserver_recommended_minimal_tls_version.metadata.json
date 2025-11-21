@@ -8,6 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "SQLServer",
+  "Amnify_MuteScope": [
+      "resource",
+      "subscription",
+      "tenant"
+  ],
   "Description": "Ensure that SQL Server instances are configured with the recommended minimal TLS version to maintain secure connections.",
   "Risk": "Using outdated or weak TLS versions can expose SQL Server instances to vulnerabilities, increasing the risk of data breaches and unauthorized access.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/azure/azure-sql/database/connectivity-settings?view=azuresql&tabs=azure-portal#configure-minimum-tls-version",

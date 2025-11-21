@@ -8,6 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "CosmosDB",
+  "Amnify_MuteScope": [
+      "resource",
+      "subscription",
+      "tenant"
+  ],
   "Description": "Cosmos DB can use tokens or AAD for client authentication which in turn will use Azure RBAC for authorization. Using AAD is significantly more secure because AAD handles the credentials and allows for MFA and centralized management, and the Azure RBAC better integrated with the rest of Azure.",
   "Risk": "AAD client authentication is considerably more secure than token-based authentication because the tokens must be persistent at the client. AAD does not require this.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/azure/cosmos-db/role-based-access-control",

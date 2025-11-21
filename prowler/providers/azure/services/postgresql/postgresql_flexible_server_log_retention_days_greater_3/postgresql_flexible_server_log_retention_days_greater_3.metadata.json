@@ -8,6 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "PostgreSQL",
+  "Amnify_MuteScope": [
+      "resource",
+      "subscription",
+      "tenant"
+  ],
   "Description": "Ensure log_retention_days on PostgreSQL Servers is set to an appropriate value.",
   "Risk": "Configuring log_retention_days determines the duration in days that Azure Database for PostgreSQL retains log files. Query and error logs can be used to identify, troubleshoot, and repair configuration errors and sub-optimal performance.",
   "RelatedUrl": "https://docs.microsoft.com/en-us/azure/postgresql/howto-configure-server-parameters-using-portal",

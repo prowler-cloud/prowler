@@ -8,6 +8,10 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "DefenderIoT",
+  "Amnify_MuteScope": [
+      "subscription",
+      "tenant"
+  ],
   "Description": "Microsoft Defender for IoT acts as a central security hub for IoT devices within your organization.",
   "Risk": "IoT devices are very rarely patched and can be potential attack vectors for enterprise networks. Updating their network configuration to use a central security hub allows for detection of these breaches.",
   "RelatedUrl": "https://azure.microsoft.com/en-us/services/iot-defender/#overview",

@@ -8,6 +8,9 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "#microsoft.graph.ipNamedLocation",
+  "Amnify_MuteScope": [
+      "tenant"
+  ],
   "Description": "Microsoft Entra ID Conditional Access allows an organization to configure Named locations and configure whether those locations are trusted or untrusted. These settings provide organizations the means to specify Geographical locations for use in conditional access policies, or define actual IP addresses and IP ranges and whether or not those IP addresses and/or ranges are trusted by the organization.",
   "Risk": "Defining trusted source IP addresses or ranges helps organizations create and enforce Conditional Access policies around those trusted or untrusted IP addresses and ranges. Users authenticating from trusted IP addresses and/or ranges may have less access restrictions or access requirements when compared to users that try to authenticate to Microsoft Entra ID from untrusted locations or untrusted source IP addresses/ranges.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/location-condition",

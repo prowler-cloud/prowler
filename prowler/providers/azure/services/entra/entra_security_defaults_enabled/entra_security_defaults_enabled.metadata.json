@@ -8,6 +8,9 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "#microsoft.graph.identitySecurityDefaultsEnforcementPolicy",
+  "Amnify_MuteScope": [
+      "tenant"
+  ],
   "Description": "Security defaults in Microsoft Entra ID make it easier to be secure and help protect your organization. Security defaults contain preconfigured security settings for common attacks. Security defaults is available to everyone. The goal is to ensure that all organizations have a basic level of security enabled at no extra cost. You may turn on security defaults in the Azure portal.",
   "Risk": "Security defaults provide secure default settings that we manage on behalf of organizations to keep customers safe until they are ready to manage their own identity security settings. For example, doing the following: - Requiring all users and admins to register for MFA. - Challenging users with MFA - when necessary, based on factors such as location, device, role, and task. - Disabling authentication from legacy authentication clients, which can’t do MFA.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/entra/fundamentals/security-defaults",

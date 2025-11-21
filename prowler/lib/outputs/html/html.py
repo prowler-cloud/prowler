@@ -87,6 +87,7 @@ class HTML(Output):
                             <td><p class="show-read-more">{HTML.process_markdown(finding.metadata.Risk)}</p></td>
                             <td><p class="show-read-more">{HTML.process_markdown(finding.metadata.Remediation.Recommendation.Text)}</p> <a class="read-more" href="{finding.metadata.Remediation.Recommendation.Url}"><i class="fas fa-external-link-alt"></i></a></td>
                             <td><p class="show-read-more">{parse_html_string(unroll_dict(finding.compliance, separator=": "))}</p></td>
+                            <td>{", ".join(finding.metadata.Amnify_MuteScope) if finding.metadata.Amnify_MuteScope else ""}</td>
                         </tr>
                         """
                 )
@@ -250,6 +251,7 @@ class HTML(Output):
                     <th scope="col">Risk</th>
                     <th scope="col">Recommendation</th>
                     <th scope="col">Compliance</th>
+                    <th scope="col">Mute Scope</th>
                 </tr>
             </thead>
             <tbody>"""

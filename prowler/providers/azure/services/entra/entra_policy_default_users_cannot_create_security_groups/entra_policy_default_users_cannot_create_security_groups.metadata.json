@@ -8,6 +8,9 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "#microsoft.graph.authorizationPolicy",
+  "Amnify_MuteScope": [
+      "tenant"
+  ],
   "Description": "Restrict security group creation to administrators only.",
   "Risk": "When creating security groups is enabled, all users in the directory are allowed to create new security groups and add members to those groups. Unless a business requires this day-to-day delegation, security group creation should be restricted to administrators only.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/users/groups-self-service-management",

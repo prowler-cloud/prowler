@@ -8,6 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AzureRole",
+  "Amnify_MuteScope": [
+      "resource",
+      "subscription",
+      "tenant"
+  ],
   "Description": "Ensure that 'Enable Infrastructure Encryption' for Each Storage Account in Azure Storage is Set to 'enabled' ",
   "Risk": "Double encryption of Azure Storage data protects against a scenario where one of the encryption algorithms or keys may be compromised",
   "RelatedUrl": "",

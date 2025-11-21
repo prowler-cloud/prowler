@@ -8,6 +8,9 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "#microsoft.graph.authorizationPolicy",
+  "Amnify_MuteScope": [
+      "tenant"
+  ],
   "Description": "Restrict invitations to users with specific administrative roles only.",
   "Risk": "Restricting invitations to users with specific administrator roles ensures that only authorized accounts have access to cloud resources. This helps to maintain 'Need to Know' permissions and prevents inadvertent access to data. By default the setting Guest invite restrictions is set to Anyone in the organization can invite guest users including guests and non-admins. This would allow anyone within the organization to invite guests and non-admins to the tenant, posing a security risk.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/entra/external-id/external-collaboration-settings-configure",

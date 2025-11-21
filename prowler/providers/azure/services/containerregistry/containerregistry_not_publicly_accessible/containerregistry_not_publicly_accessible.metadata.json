@@ -8,6 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "ContainerRegistry",
+  "Amnify_MuteScope": [
+      "resource",
+      "subscription",
+      "tenant"
+  ],
   "Description": "Ensure that public network access to the Azure Container Registry is restricted.",
   "Risk": "Public accessibility exposes the Container Registry to potential attacks, unauthorized usage, and data breaches. Restricting access minimizes the surface area for attacks and ensures that only authorized networks can access the registry.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/azure/container-registry/container-registry-access-selected-networks",

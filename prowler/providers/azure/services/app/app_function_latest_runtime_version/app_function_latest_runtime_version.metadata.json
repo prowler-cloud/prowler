@@ -8,6 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Microsoft.Web/sites",
+  "Amnify_MuteScope": [
+      "resource",
+      "subscription",
+      "tenant"
+  ],
   "Description": "Keeping Azure Functions up to date with the latest supported runtime version is crucial for security and performance. Updates often include security patches and enhancements, helping to protect against known vulnerabilities and potential exploits. Additionally, newer runtime versions may offer improved functionality and optimized resource utilization.",
   "Risk": "Using outdated runtime versions may introduce security risks and performance degradation. Outdated runtimes may have unpatched vulnerabilities, making them susceptible to attacks.",
   "RelatedUrl": "https://docs.microsoft.com/en-us/azure/azure-functions/functions-versions",

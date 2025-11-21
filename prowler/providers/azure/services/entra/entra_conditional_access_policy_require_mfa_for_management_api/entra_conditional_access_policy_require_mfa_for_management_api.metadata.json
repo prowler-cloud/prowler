@@ -8,6 +8,9 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "#microsoft.graph.conditionalAccess",
+  "Amnify_MuteScope": [
+      "tenant"
+  ],
   "Description": "This recommendation ensures that users accessing the Windows Azure Service Management API (i.e. Azure Powershell, Azure CLI, Azure Resource Manager API, etc.) are required to use multifactor authentication (MFA) credentials when accessing resources through the Windows Azure Service Management API.",
   "Risk": "Administrative access to the Windows Azure Service Management API should be secured with a higher level of scrutiny to authenticating mechanisms. Enabling multifactor authentication is recommended to reduce the potential for abuse of Administrative actions, and to prevent intruders or compromised admin credentials from changing administrative settings.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-policy-azure-management",

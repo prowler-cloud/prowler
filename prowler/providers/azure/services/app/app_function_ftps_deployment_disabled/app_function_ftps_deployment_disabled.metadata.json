@@ -8,6 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Microsoft.Web/sites",
+  "Amnify_MuteScope": [
+      "resource",
+      "subscription",
+      "tenant"
+  ],
   "Description": "Azure FTP deployment endpoints are unencrypted and public, making them vulnerable to attacks. Disabling FTP and FTPS deployments enhances security by preventing unauthorized access to login credentials and sensitive codebases.",
   "Risk": "If left enabled, attackers can intercept network traffic and gain full control of the app or service, leading to potential data breaches and unauthorized modifications.",
   "RelatedUrl": "https://docs.microsoft.com/en-us/azure/app-service/deploy-ftp",

@@ -8,6 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "SQLServer",
+  "Amnify_MuteScope": [
+      "resource",
+      "subscription",
+      "tenant"
+  ],
   "Description": "Ensure that there are no firewall rules allowing traffic from 0.0.0.0-255.255.255.255",
   "Risk": "Azure SQL servers provide a firewall that, by default, blocks all Internet connections. When the rule (0.0.0.0-255.255.255.255) is used, the server can be accessed by any source from the Internet, incrementing significantly the attack surface of the SQL Server. It is recommended to use more granular firewall rules.",
   "RelatedUrl": "https://docs.microsoft.com/en-us/azure/sql-database/sql-database-vnet-service-endpoint-rule-overview",

@@ -8,6 +8,10 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Monitor",
+  "Amnify_MuteScope": [
+      "subscription",
+      "tenant"
+  ],
   "Description": "Create an activity log alert for the Create Policy Assignment event.",
   "Risk": "Monitoring for create policy assignment events gives insight into changes done in 'Azure policy - assignments' and can reduce the time it takes to detect unsolicited changes.",
   "RelatedUrl": "https://azure.microsoft.com/en-us/updates/classic-alerting-monitoring-retirement",

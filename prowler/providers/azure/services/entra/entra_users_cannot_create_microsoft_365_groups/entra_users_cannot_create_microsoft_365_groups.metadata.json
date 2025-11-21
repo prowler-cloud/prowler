@@ -8,6 +8,9 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Microsoft.Users/Settings",
+  "Amnify_MuteScope": [
+      "tenant"
+  ],
   "Description": "Restrict Microsoft 365 group creation to administrators only.",
   "Risk": "Restricting Microsoft 365 group creation to administrators only ensures that creation of Microsoft 365 groups is controlled by the administrator. Appropriate groups should be created and managed by the administrator and group creation rights should not be delegated to any other user.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/microsoft-365/community/all-about-groups#microsoft-365-groups",

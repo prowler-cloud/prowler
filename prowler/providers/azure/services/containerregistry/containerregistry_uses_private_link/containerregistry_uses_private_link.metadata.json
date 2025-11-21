@@ -8,6 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "ContainerRegistry",
+  "Amnify_MuteScope": [
+      "resource",
+      "subscription",
+      "tenant"
+  ],
   "Description": "Ensure that a private link is used for accessing the Azure Container Registry to enhance security and restrict access to the registry over the public internet.",
   "Risk": "Without using a private link, the Azure Container Registry may be exposed to the public internet, increasing the risk of unauthorized access and potential data breaches.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/azure/private-link/private-link-overview",

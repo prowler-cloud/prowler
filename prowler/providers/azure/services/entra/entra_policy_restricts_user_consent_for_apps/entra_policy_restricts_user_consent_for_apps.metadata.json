@@ -8,6 +8,9 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "#microsoft.graph.authorizationPolicy",
+  "Amnify_MuteScope": [
+      "tenant"
+  ],
   "Description": "Require administrators to provide consent for applications before use.",
   "Risk": "If Microsoft Entra ID is running as an identity provider for third-party applications, permissions and consent should be limited to administrators or pre-approved. Malicious applications may attempt to exfiltrate data or abuse privileged user accounts.",
   "RelatedUrl": "https://learn.microsoft.com/en-gb/entra/identity/enterprise-apps/configure-user-consent?pivots=portal",

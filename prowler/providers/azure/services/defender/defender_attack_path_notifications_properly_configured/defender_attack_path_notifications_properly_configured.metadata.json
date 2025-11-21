@@ -8,6 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AzureEmailNotifications",
+  "Amnify_MuteScope": [
+      "resource",
+      "subscription",
+      "tenant"
+  ],
   "Description": "Ensure that Microsoft Defender for Cloud is configured to send email notifications for attack paths identified in the Azure subscription with an appropriate minimal risk level.",
   "Risk": "If attack path notifications are not enabled, security teams may not be promptly informed about exploitable attack sequences, increasing the risk of delayed mitigation and potential breaches.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/azure/defender-for-cloud/configure-email-notifications",

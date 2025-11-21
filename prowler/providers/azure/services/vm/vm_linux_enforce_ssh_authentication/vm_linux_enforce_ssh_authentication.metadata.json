@@ -8,6 +8,11 @@
   "ResourceIdTemplate": "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Compute/virtualMachines/{vmName}",
   "Severity": "high",
   "ResourceType": "Microsoft.Compute/virtualMachines",
+  "Amnify_MuteScope": [
+      "resource",
+      "subscription",
+      "tenant"
+  ],
   "Description": "Ensure that Azure Linux-based virtual machines are configured to use SSH keys by disabling password authentication.",
   "Risk": "Allowing password-based SSH authentication increases the risk of brute-force attacks and unauthorized access. Enforcing SSH key authentication ensures only users with the private key can access the VM.",
   "RelatedUrl": "https://docs.microsoft.com/en-us/azure/virtual-machines/linux/create-ssh-keys-detailed",

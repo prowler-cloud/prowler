@@ -8,6 +8,11 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AzureStorageAccount",
+  "Amnify_MuteScope": [
+      "resource",
+      "subscription",
+      "tenant"
+  ],
   "Description": "Ensure that blob versioning is enabled on Azure Blob Storage accounts to automatically retain previous versions of objects.",
   "Risk": "Without blob versioning, accidental or malicious changes to blobs cannot be easily recovered, leading to potential data loss.",
   "RelatedUrl": "https://learn.microsoft.com/en-us/azure/storage/blobs/versioning-enable",
