@@ -27,8 +27,12 @@ export const ComplianceWatchlistSSR = async ({
           .slice(0, 8)
           .map((compliance) => {
             const { attributes, id } = compliance;
-            const { framework, version, requirements_passed, total_requirements } =
-              attributes;
+            const {
+              framework,
+              version,
+              requirements_passed,
+              total_requirements,
+            } = attributes;
 
             const iconSrc = getComplianceIcon(framework);
 
