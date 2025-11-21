@@ -9,7 +9,11 @@ import { useState } from "react";
 import { ThreatScoreLogo } from "@/components/compliance/threatscore-logo";
 import { Button } from "@/components/shadcn/button/button";
 import { toast } from "@/components/ui";
-import { downloadComplianceCsv, downloadThreatScorePdf } from "@/lib/helper";
+import { COMPLIANCE_REPORT_TYPES } from "@/lib/compliance/compliance-report-types";
+import {
+  downloadComplianceCsv,
+  downloadComplianceReportPdf,
+} from "@/lib/helper";
 import type { ScanEntity } from "@/types/scans";
 
 interface ThreatScoreBadgeProps {
@@ -77,7 +81,11 @@ export const ThreatScoreBadge = ({
   const handleDownloadPdf = async () => {
     setIsDownloadingPdf(true);
     try {
-      await downloadThreatScorePdf(scanId, toast);
+      await downloadComplianceReportPdf(
+        scanId,
+        COMPLIANCE_REPORT_TYPES.THREATSCORE,
+        toast,
+      );
     } finally {
       setIsDownloadingPdf(false);
     }
@@ -107,7 +115,7 @@ export const ThreatScoreBadge = ({
 
           <div className="flex flex-col items-end gap-1">
             <span className={`text-2xl font-bold ${getTextColor()}`}>
-              {score.toFixed(1)}%
+              {score}%
             </span>
             <Progress
               aria-label="ThreatScore progress"

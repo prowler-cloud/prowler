@@ -104,6 +104,9 @@ export const Chat = ({
   // Provider and model management
   const [providers, setProviders] = useState<Provider[]>(initialProviders);
   const loadedProvidersRef = useRef<Set<LighthouseProvider>>(new Set());
+  const [loadingProviders, setLoadingProviders] = useState<
+    Set<LighthouseProvider>
+  >(new Set());
 
   // Initialize selectedModel with defaults from props
   const [selectedModel, setSelectedModel] = useState<SelectedModel>(() => {
@@ -142,6 +145,7 @@ export const Chat = ({
 
     // Mark as loaded
     loadedProvidersRef.current.add(providerType);
+    setLoadingProviders((prev) => new Set(prev).add(providerType));
 
     try {
       const response = await getLighthouseModelIds(providerType);
@@ -167,66 +171,79 @@ export const Chat = ({
       console.error(`Error loading models for ${providerType}:`, error);
       // Remove from loaded on error so it can be retried
       loadedProvidersRef.current.delete(providerType);
+    } finally {
+      setLoadingProviders((prev) => {
+        const next = new Set(prev);
+        next.delete(providerType);
+        return next;
+      });
     }
   };
 
-  const { messages, sendMessage, status, error, setMessages, regenerate } =
-    useChat({
-      transport: new DefaultChatTransport({
-        api: "/api/lighthouse/analyst",
-        credentials: "same-origin",
-        body: () => ({
-          model: selectedModelRef.current.modelId,
-          provider: selectedModelRef.current.providerType,
-        }),
+  const {
+    messages,
+    sendMessage,
+    status,
+    error,
+    setMessages,
+    regenerate,
+    stop,
+  } = useChat({
+    transport: new DefaultChatTransport({
+      api: "/api/lighthouse/analyst",
+      credentials: "same-origin",
+      body: () => ({
+        model: selectedModelRef.current.modelId,
+        provider: selectedModelRef.current.providerType,
       }),
-      experimental_throttle: 100,
-      onFinish: ({ message }) => {
-        // There is no specific way to output the error message from langgraph supervisor
-        // Hence, all error messages are sent as normal messages with the prefix [LIGHTHOUSE_ANALYST_ERROR]:
-        // Detect error messages sent from backend using specific prefix and display the error
-        const firstTextPart = message.parts.find((p) => p.type === "text");
-        if (
-          firstTextPart &&
-          "text" in firstTextPart &&
-          firstTextPart.text.startsWith("[LIGHTHOUSE_ANALYST_ERROR]:")
-        ) {
-          const errorText = firstTextPart.text
-            .replace("[LIGHTHOUSE_ANALYST_ERROR]:", "")
-            .trim();
-          setErrorMessage(errorText);
-          // Remove error message from chat history
-          setMessages((prev) =>
-            prev.filter((m) => {
-              const textPart = m.parts.find((p) => p.type === "text");
-              return !(
-                textPart &&
-                "text" in textPart &&
-                textPart.text.startsWith("[LIGHTHOUSE_ANALYST_ERROR]:")
-              );
-            }),
-          );
-          restoreLastUserMessage();
-        }
-      },
-      onError: (error) => {
-        console.error("Chat error:", error);
-
-        if (
-          error?.message?.includes("<html>") &&
-          error?.message?.includes("<title>403 Forbidden</title>")
-        ) {
-          restoreLastUserMessage();
-          setErrorMessage("403 Forbidden");
-          return;
-        }
-
-        restoreLastUserMessage();
-        setErrorMessage(
-          error?.message || "An error occurred. Please retry your message.",
+    }),
+    experimental_throttle: 100,
+    onFinish: ({ message }) => {
+      // There is no specific way to output the error message from langgraph supervisor
+      // Hence, all error messages are sent as normal messages with the prefix [LIGHTHOUSE_ANALYST_ERROR]:
+      // Detect error messages sent from backend using specific prefix and display the error
+      const firstTextPart = message.parts.find((p) => p.type === "text");
+      if (
+        firstTextPart &&
+        "text" in firstTextPart &&
+        firstTextPart.text.startsWith("[LIGHTHOUSE_ANALYST_ERROR]:")
+      ) {
+        const errorText = firstTextPart.text
+          .replace("[LIGHTHOUSE_ANALYST_ERROR]:", "")
+          .trim();
+        setErrorMessage(errorText);
+        // Remove error message from chat history
+        setMessages((prev) =>
+          prev.filter((m) => {
+            const textPart = m.parts.find((p) => p.type === "text");
+            return !(
+              textPart &&
+              "text" in textPart &&
+              textPart.text.startsWith("[LIGHTHOUSE_ANALYST_ERROR]:")
+            );
+          }),
         );
-      },
-    });
+        restoreLastUserMessage();
+      }
+    },
+    onError: (error) => {
+      console.error("Chat error:", error);
+
+      if (
+        error?.message?.includes("<html>") &&
+        error?.message?.includes("<title>403 Forbidden</title>")
+      ) {
+        restoreLastUserMessage();
+        setErrorMessage("403 Forbidden");
+        return;
+      }
+
+      restoreLastUserMessage();
+      setErrorMessage(
+        error?.message || "An error occurred. Please retry your message.",
+      );
+    },
+  });
 
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -261,6 +278,12 @@ export const Chat = ({
 
     if (restoredText) {
       setUiState((prev) => ({ ...prev, inputValue: restoredText }));
+    }
+  };
+
+  const stopGeneration = () => {
+    if (status === "streaming" || status === "submitted") {
+      stop();
     }
   };
 
@@ -542,15 +565,18 @@ export const Chat = ({
               <Combobox
                 value={`${selectedModel.providerType}:${selectedModel.modelId}`}
                 onValueChange={(value) => {
-                  const [providerType, modelId] = value.split(":");
+                  const separatorIndex = value.indexOf(":");
+                  if (separatorIndex === -1) return;
+
+                  const providerType = value.slice(
+                    0,
+                    separatorIndex,
+                  ) as LighthouseProvider;
+                  const modelId = value.slice(separatorIndex + 1);
                   const provider = providers.find((p) => p.id === providerType);
                   const model = provider?.models.find((m) => m.id === modelId);
                   if (provider && model) {
-                    handleModelSelect(
-                      providerType as LighthouseProvider,
-                      modelId,
-                      model.name,
-                    );
+                    handleModelSelect(providerType, modelId, model.name);
                   }
                 }}
                 groups={providers.map((provider) => ({
@@ -560,6 +586,8 @@ export const Chat = ({
                     label: model.name,
                   })),
                 }))}
+                loading={loadingProviders.size > 0}
+                loadingMessage="Loading models..."
                 placeholder={selectedModel.modelName || "Select model..."}
                 searchPlaceholder="Search models..."
                 emptyMessage="No model found."
@@ -570,10 +598,21 @@ export const Chat = ({
             {/* Submit Button */}
             <PromptInputSubmit
               status={status}
+              type={
+                status === "streaming" || status === "submitted"
+                  ? "button"
+                  : "submit"
+              }
+              onClick={(event) => {
+                if (status === "streaming" || status === "submitted") {
+                  event.preventDefault();
+                  stopGeneration();
+                }
+              }}
               disabled={
-                status === "streaming" ||
-                status === "submitted" ||
-                !uiState.inputValue?.trim()
+                !uiState.inputValue?.trim() &&
+                status !== "streaming" &&
+                status !== "submitted"
               }
             />
           </PromptInputToolbar>

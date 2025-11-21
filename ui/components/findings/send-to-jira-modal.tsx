@@ -5,14 +5,7 @@ import { Select, SelectItem } from "@heroui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Selection } from "@react-types/shared";
 import { Search, Send } from "lucide-react";
-import {
-  type Dispatch,
-  type SetStateAction,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -49,6 +42,15 @@ const sendToJiraSchema = z.object({
 
 type SendToJiraFormData = z.infer<typeof sendToJiraSchema>;
 
+const selectorClassNames = {
+  trigger: "min-h-12",
+  popoverContent: "bg-bg-neutral-secondary",
+  listboxWrapper: "max-h-[300px] bg-bg-neutral-secondary",
+  listbox: "gap-0",
+  label: "tracking-tight font-light !text-text-neutral-secondary text-xs z-0!",
+  value: "text-text-neutral-secondary text-small",
+};
+
 // The commented code is related to issue types, which are not required for the first implementation, but will be used in the future
 export const SendToJiraModal = ({
   isOpen,
@@ -75,9 +77,8 @@ export const SendToJiraModal = ({
   const selectedIntegration = form.watch("integration");
   // const selectedProject = form.watch("project");
 
-  const hasConnectedIntegration = useMemo(
-    () => integrations.some((i) => i.attributes.connected === true),
-    [integrations],
+  const hasConnectedIntegration = integrations.some(
+    (i) => i.attributes.connected === true,
   );
 
   const getSelectedValue = (keys: Selection): string => {
@@ -91,37 +92,39 @@ export const SendToJiraModal = ({
     onOpenChange(next);
   };
 
-  const fetchJiraIntegrations = useCallback(async () => {
-    setIsFetchingIntegrations(true);
-
-    try {
-      const result = await getJiraIntegrations();
-      if (!result.success) {
-        throw new Error(result.error || "Unable to fetch Jira integrations");
-      }
-      setIntegrations(result.data);
-      // Auto-select if only one integration
-      if (result.data.length === 1) {
-        form.setValue("integration", result.data[0].id);
-      }
-    } catch (error) {
-      const message =
-        error instanceof Error && error.message
-          ? error.message
-          : "Failed to load Jira integrations";
-      toast({
-        variant: "destructive",
-        title: "Failed to load integrations",
-        description: message,
-      });
-    } finally {
-      setIsFetchingIntegrations(false);
-    }
-  }, [form, toast]);
-
   // Fetch Jira integrations when modal opens
   useEffect(() => {
     if (isOpen) {
+      const fetchJiraIntegrations = async () => {
+        setIsFetchingIntegrations(true);
+
+        try {
+          const result = await getJiraIntegrations();
+          if (!result.success) {
+            throw new Error(
+              result.error || "Unable to fetch Jira integrations",
+            );
+          }
+          setIntegrations(result.data);
+          // Auto-select if only one integration
+          if (result.data.length === 1) {
+            form.setValue("integration", result.data[0].id);
+          }
+        } catch (error) {
+          const message =
+            error instanceof Error && error.message
+              ? error.message
+              : "Failed to load Jira integrations";
+          toast({
+            variant: "destructive",
+            title: "Failed to load integrations",
+            description: message,
+          });
+        } finally {
+          setIsFetchingIntegrations(false);
+        }
+      };
+
       fetchJiraIntegrations();
     } else {
       // Reset form when modal closes
@@ -129,7 +132,7 @@ export const SendToJiraModal = ({
       setSearchProjectValue("");
       // setSearchIssueTypeValue("");
     }
-  }, [isOpen, form, fetchJiraIntegrations]);
+  }, [isOpen, form, toast]);
 
   const handleSubmit = async (data: SendToJiraFormData) => {
     // Close modal immediately; continue processing in background
@@ -179,19 +182,18 @@ export const SendToJiraModal = ({
     (i) => i.id === selectedIntegration,
   );
 
-  const projects: Record<string, string> = useMemo(
-    () =>
-      selectedIntegrationData?.attributes.configuration.projects ??
-      ({} as Record<string, string>),
-    [selectedIntegrationData],
-  );
+  const projects: Record<string, string> =
+    selectedIntegrationData?.attributes.configuration.projects ??
+    ({} as Record<string, string>);
+
+  const projectEntries = Object.entries(projects);
+  const shouldShowProjectSearch = projectEntries.length > 5;
   // const issueTypes: string[] =
   //   selectedIntegrationData?.attributes.configuration.issue_types ||
   //   ([] as string[]);
 
   // Filter projects based on search
-  const filteredProjects = useMemo(() => {
-    const projectEntries = Object.entries(projects);
+  const filteredProjects = (() => {
     if (!searchProjectValue) return projectEntries;
 
     const lowerSearch = searchProjectValue.toLowerCase();
@@ -200,7 +202,7 @@ export const SendToJiraModal = ({
         key.toLowerCase().includes(lowerSearch) ||
         name.toLowerCase().includes(lowerSearch),
     );
-  }, [projects, searchProjectValue]);
+  })();
 
   // Filter issue types based on search
   // const filteredIssueTypes = useMemo(() => {
@@ -257,13 +259,7 @@ export const SendToJiraModal = ({
                       isDisabled={isFetchingIntegrations}
                       isInvalid={!!form.formState.errors.integration}
                       startContent={<JiraIcon size={16} />}
-                      classNames={{
-                        trigger: "min-h-12",
-                        popoverContent: "dark:bg-gray-800",
-                        label:
-                          "tracking-tight font-light !text-default-500 text-xs z-0!",
-                        value: "text-default-500 text-small dark:text-gray-300",
-                      }}
+                      classNames={selectorClassNames}
                     >
                       {integrations.map((integration) => (
                         <SelectItem
@@ -312,35 +308,28 @@ export const SendToJiraModal = ({
                       variant="bordered"
                       labelPlacement="inside"
                       isInvalid={!!form.formState.errors.project}
-                      classNames={{
-                        trigger: "min-h-12",
-                        popoverContent: "dark:bg-gray-800",
-                        listboxWrapper: "max-h-[300px] dark:bg-gray-800",
-                        label:
-                          "tracking-tight font-light !text-default-500 text-xs z-0!",
-                        value: "text-default-500 text-small dark:text-gray-300",
-                      }}
+                      classNames={selectorClassNames}
                       listboxProps={{
-                        topContent:
-                          filteredProjects.length > 5 ? (
-                            <div className="bg-content1 sticky top-0 z-10 py-2 dark:bg-gray-800">
-                              <Input
-                                isClearable
-                                placeholder="Search projects..."
-                                size="sm"
-                                variant="bordered"
-                                startContent={<Search size={16} />}
-                                value={searchProjectValue}
-                                onValueChange={setSearchProjectValue}
-                                onClear={() => setSearchProjectValue("")}
-                                classNames={{
-                                  inputWrapper:
-                                    "border-default-200 bg-transparent hover:bg-default-100/50",
-                                  input: "text-small",
-                                }}
-                              />
-                            </div>
-                          ) : null,
+                        topContent: shouldShowProjectSearch ? (
+                          <div className="sticky top-0 z-10 py-2">
+                            <Input
+                              isClearable
+                              placeholder="Search projects..."
+                              size="sm"
+                              variant="bordered"
+                              startContent={<Search size={16} />}
+                              value={searchProjectValue}
+                              onValueChange={setSearchProjectValue}
+                              onClear={() => setSearchProjectValue("")}
+                              classNames={{
+                                inputWrapper:
+                                  "border-border-input-primary bg-bg-input-primary hover:bg-bg-neutral-secondary",
+                                input: "text-small",
+                                clearButton: "text-default-400",
+                              }}
+                            />
+                          </div>
+                        ) : null,
                       }}
                     >
                       {filteredProjects.map(([key, name]) => (

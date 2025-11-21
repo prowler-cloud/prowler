@@ -13,7 +13,7 @@ import {
   MultiSelectTrigger,
   MultiSelectValue,
 } from "@/components/shadcn/select/multiselect";
-import { EntityInfoShort } from "@/components/ui/entities/entity-info-short";
+import { EntityInfo } from "@/components/ui/entities/entity-info";
 import { useUrlFilters } from "@/hooks/use-url-filters";
 import { isConnectionStatus, isScanEntity } from "@/lib/helper-filters";
 import {
@@ -78,11 +78,11 @@ export const DataTableFilterCustom = ({
     // Provider entity
     const providerEntity = entity as ProviderEntity;
     return (
-      <EntityInfoShort
+      <EntityInfo
         cloudProvider={providerEntity.provider}
         entityAlias={providerEntity.alias ?? undefined}
         entityId={providerEntity.uid}
-        hideCopyButton
+        showCopyAction={false}
       />
     );
   };

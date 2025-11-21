@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/shadcn";
-import { EntityInfoShort } from "@/components/ui/entities";
+import { EntityInfo } from "@/components/ui/entities";
 import { FormControl, FormField, FormMessage } from "@/components/ui/form";
 
 interface SelectScanProviderProps<
@@ -54,7 +54,7 @@ export const SelectScanProvider = <
                 <SelectTrigger>
                   <SelectValue placeholder="Choose a cloud provider">
                     {selectedItem ? (
-                      <EntityInfoShort
+                      <EntityInfo
                         cloudProvider={
                           selectedItem.providerType as
                             | "aws"
@@ -64,7 +64,7 @@ export const SelectScanProvider = <
                         }
                         entityAlias={selectedItem.alias}
                         entityId={selectedItem.uid}
-                        hideCopyButton
+                        showCopyAction={false}
                       />
                     ) : (
                       "Choose a cloud provider"
@@ -74,7 +74,7 @@ export const SelectScanProvider = <
                 <SelectContent>
                   {providers.map((item) => (
                     <SelectItem key={item.providerId} value={item.providerId}>
-                      <EntityInfoShort
+                      <EntityInfo
                         cloudProvider={
                           item.providerType as
                             | "aws"
@@ -84,7 +84,7 @@ export const SelectScanProvider = <
                         }
                         entityAlias={item.alias}
                         entityId={item.uid}
-                        hideCopyButton
+                        showCopyAction={false}
                       />
                     </SelectItem>
                   ))}
