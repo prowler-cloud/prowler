@@ -6798,17 +6798,17 @@ class TestOverviewViewSet:
         assert "aws:region1" in regions
         assert "aws:region2" in regions
 
-        # region1 has 2 findings (2 pass, 0 fail, 0 muted)
-        assert regions["aws:region1"]["total"] == 2
+        # region1 has 5 findings (2 pass, 0 fail, 3 muted)
+        assert regions["aws:region1"]["total"] == 5
         assert regions["aws:region1"]["pass"] == 2
         assert regions["aws:region1"]["fail"] == 0
-        assert regions["aws:region1"]["muted"] == 0
+        assert regions["aws:region1"]["muted"] == 3
 
-        # region2 has 2 findings (0 pass, 1 fail, 1 muted)
-        assert regions["aws:region2"]["total"] == 2
+        # region2 has 4 findings (0 pass, 1 fail, 3 muted)
+        assert regions["aws:region2"]["total"] == 4
         assert regions["aws:region2"]["pass"] == 0
         assert regions["aws:region2"]["fail"] == 1
-        assert regions["aws:region2"]["muted"] == 1
+        assert regions["aws:region2"]["muted"] == 3
 
     def test_overview_services_list(self, authenticated_client, scan_summaries_fixture):
         response = authenticated_client.get(
