@@ -75,14 +75,18 @@ export const DataTableColumnHeader = <TData, TValue>({
   };
 
   if (!column.getCanSort()) {
-    return <div>{title}</div>;
+    return (
+      <div className="text-text-neutral-primary flex items-center justify-between px-0 text-left align-middle text-sm font-semibold whitespace-nowrap outline-none">
+        <span className="block break-normal whitespace-nowrap">{title}</span>
+      </div>
+    );
   }
 
   return (
     <Button
       variant="ghost"
       size="sm"
-      className="flex h-10 w-full items-center justify-between px-0 text-left align-middle text-sm font-semibold whitespace-nowrap text-slate-500 dark:text-slate-400"
+      className="text-text-neutral-primary hover:text-text-neutral-tertiary -ml-3 flex items-center justify-between px-0 text-left align-middle text-sm font-semibold whitespace-nowrap outline-none hover:bg-transparent"
       onClick={getToggleSortingHandler}
     >
       <span className="block break-normal whitespace-nowrap">{title}</span>

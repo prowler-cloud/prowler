@@ -46,7 +46,7 @@ env:
 jobs:
   container-build-push:
     if: github.repository == 'prowler-cloud/prowler'
-    runs-on: ${{ matrix.runner }} 
+    runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
         include:
@@ -167,7 +167,7 @@ jobs:
         with:
           slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
           payload-file-path: "./.github/scripts/slack-messages/container-release-started.json"
- 
+
       - name: Notify container push completed
         if: github.event_name == 'release' && always()
         uses: ./.github/actions/slack-notification
@@ -196,6 +196,15 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Login to Public ECR
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: public.ecr.aws
+          username: ${{ secrets.PUBLIC_ECR_AWS_ACCESS_KEY_ID }}
+          password: ${{ secrets.PUBLIC_ECR_AWS_SECRET_ACCESS_KEY }}
+        env:
+          AWS_REGION: ${{ env.AWS_REGION }}
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
 
@@ -216,7 +225,7 @@ jobs:
             -t ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ needs.container-build-push.outputs.prowler_version }} \
             -t ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ needs.container-build-push.outputs.stable_tag }} \
             -t ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ needs.container-build-push.outputs.prowler_version }} \
-            -t ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ needs.container-build-push.outputs.stable_tag }} \ 
+            -t ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ needs.container-build-push.outputs.stable_tag }} \
             -t ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.container-build-push.outputs.prowler_version }} \
             -t ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.container-build-push.outputs.stable_tag }} \
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.container-build-push.outputs.latest_tag }}-amd64 \
