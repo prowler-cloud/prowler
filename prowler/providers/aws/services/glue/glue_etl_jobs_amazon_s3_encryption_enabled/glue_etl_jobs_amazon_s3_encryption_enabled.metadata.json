@@ -18,13 +18,12 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/glue/latest/dg/console-security-configurations.html",
-    "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_41#terraform",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Glue/s3-encryption-enabled.html"
   ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "```yaml\n# CloudFormation: Attach a Security Configuration with S3 encryption to a Glue job\nResources:\n  GlueSecurityConfiguration:\n    Type: AWS::Glue::SecurityConfiguration\n    Properties:\n      Name: <example_resource_name>\n      EncryptionConfiguration:\n        S3Encryption:\n          - S3EncryptionMode: SSE-S3  # CRITICAL: Enables S3 encryption for Glue outputs\n\n  GlueJob:\n    Type: AWS::Glue::Job\n    Properties:\n      Name: <example_resource_name>\n      Role: <example_role_arn>\n      Command:\n        Name: glueetl\n        ScriptLocation: s3://<example_resource_name>/script.py\n      SecurityConfiguration: !Ref GlueSecurityConfiguration  # CRITICAL: Applies encrypted security configuration to the job\n```",
+      "NativeIaC": "```yaml\n# CloudFormation: Attach a Security Configuration with S3 encryption to a Glue job\nResources:\n  GlueSecurityConfiguration:\n    Type: AWS::Glue::SecurityConfiguration\n    Properties:\n      Name: <example_resource_name>\n      EncryptionConfiguration:\n        S3Encryptions:\n          - S3EncryptionMode: SSE-S3  # CRITICAL: Enables S3 encryption for Glue outputs\n\n  GlueJob:\n    Type: AWS::Glue::Job\n    Properties:\n      Name: <example_resource_name>\n      Role: <example_role_arn>\n      Command:\n        Name: glueetl\n        ScriptLocation: s3://<example_resource_name>/script.py\n      SecurityConfiguration: !Ref GlueSecurityConfiguration  # CRITICAL: Applies encrypted security configuration to the job\n```",
       "Other": "1. In the AWS Console, go to AWS Glue > Security configurations > Create security configuration\n2. Enable S3 encryption and choose SSE-S3 (or SSE-KMS with your key)\n3. Save the configuration\n4. Go to AWS Glue > Jobs > select your job > Edit\n5. Under Job details, set Security configuration to the encrypted configuration you created\n6. Save the job",
       "Terraform": "```hcl\n# Terraform: Attach a Security Configuration with S3 encryption to a Glue job\nresource \"aws_glue_security_configuration\" \"sec\" {\n  name = \"<example_resource_name>\"\n\n  s3_encryption {\n    s3_encryption_mode = \"SSE-S3\"  # CRITICAL: Enables S3 encryption for Glue outputs\n  }\n}\n\nresource \"aws_glue_job\" \"job\" {\n  name     = \"<example_resource_name>\"\n  role_arn = \"<example_role_arn>\"\n\n  command {\n    script_location = \"s3://<example_resource_name>/script.py\"\n  }\n\n  security_configuration = aws_glue_security_configuration.sec.name  # CRITICAL: Applies encrypted security configuration to the job\n}\n```"
     },

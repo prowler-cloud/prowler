@@ -18,10 +18,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/glue/latest/dg/console-security-configurations.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Glue/cloud-watch-logs-encryption-enabled.html",
-    "https://cloud-kb.sentinelone.com/aws-glue-cloudwatch-logs-not-encrypted",
-    "https://github.com/vitalibo/terraform-aws-glue-job",
-    "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_41#terraform"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Glue/cloud-watch-logs-encryption-enabled.html"
   ],
   "Remediation": {
     "Code": {

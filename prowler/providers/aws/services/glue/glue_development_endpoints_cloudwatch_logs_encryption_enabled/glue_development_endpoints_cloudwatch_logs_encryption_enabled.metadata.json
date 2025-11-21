@@ -16,13 +16,8 @@
   "Risk": "Unencrypted Glue logs erode **confidentiality**: credentials, connection strings, and data samples may be readable to unintended principals, enabling **lateral movement**.\nLack of KMS-backed encryption weakens **auditability** and **separation of duties**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.pulumi.com/registry/packages/aws/api-docs/glue/securityconfiguration/",
     "https://docs.aws.amazon.com/glue/latest/dg/console-security-configurations.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Glue/cloud-watch-logs-encryption-enabled.html",
-    "http://man.hubwiz.com/docset/Terraform.docset/Contents/Resources/Documents/docs/providers/aws/r/glue_security_configuration.html",
-    "https://shisho.dev/dojo/providers/aws/AWS_Glue/aws-glue-security-configuration/",
-    "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_41#terraform",
-    "https://github.com/hashicorp/terraform-provider-aws/issues/39821"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Glue/cloud-watch-logs-encryption-enabled.html"
   ],
   "Remediation": {
     "Code": {

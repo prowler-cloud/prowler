@@ -16,7 +16,8 @@
   "Risk": "Absent TLS enforcement, JDBC traffic-including credentials, queries, and results-can be **intercepted or modified** in transit.\n\nThis enables:\n- Confidentiality loss via sniffing/MITM\n- Integrity tampering of queries/results\n- Credential theft leading to broader database access",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.aws.amazon.com/glue/latest/dg/encryption-in-transit.html"
+    "https://docs.aws.amazon.com/glue/latest/dg/encryption-in-transit.html",
+    "https://support.icompaas.com/support/solutions/articles/62000233690-ensure-glue-connections-have-ssl-enabled"
   ],
   "Remediation": {
     "Code": {

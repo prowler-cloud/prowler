@@ -15,14 +15,8 @@
   "Risk": "Unencrypted **job bookmarks** in S3 expose execution state and data pointers, reducing **confidentiality**. Altered bookmarks can trigger reruns, skips, or reprocessing, harming **integrity**. Missing security configs may also leave logs and temporary objects unencrypted.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.pulumi.com/registry/packages/aws/api-docs/glue/securityconfiguration/",
     "https://docs.aws.amazon.com/glue/latest/dg/console-security-configurations.html",
-    "https://docs.datadoghq.com/security/code_security/iac_security/iac_rules/terraform/aws/glue_security_configuration_encryption_disabled/",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Glue/job-bookmark-encryption-enabled.html",
-    "https://medium.com/@DataTechBridge/securing-your-aws-glue-unlocking-5-best-practices-for-enhanced-data-protection-fe78c8ab78dd",
-    "https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_glue/CfnSecurityConfiguration.html",
-    "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_41#terraform",
-    "https://github.com/hashicorp/cdktf-aws-cdk/blob/main/docs/glueSecurityConfiguration.md"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Glue/job-bookmark-encryption-enabled.html"
   ],
   "Remediation": {
     "Code": {

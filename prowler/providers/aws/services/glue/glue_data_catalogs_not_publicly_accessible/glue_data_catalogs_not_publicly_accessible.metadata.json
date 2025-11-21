@@ -18,9 +18,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/glue/latest/dg/security_iam_service-with-iam.html?icmpid=docs_console_unmapped#security_iam_service-with-iam-resource-based-policies",
-    "https://docs.aws.amazon.com/glue/latest/dg/cross-account-access.html",
-    "http://man.hubwiz.com/docset/Boto3.docset/Contents/Resources/Documents/reference/services/glue.html",
-    "https://levelup.gitconnected.com/replicate-data-from-dynamodb-to-apache-iceberg-tables-using-glue-zero-etl-integration-9397523bfea2"
+    "https://docs.aws.amazon.com/glue/latest/dg/cross-account-access.html"
   ],
   "Remediation": {
     "Code": {

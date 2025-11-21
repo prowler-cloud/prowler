@@ -16,10 +16,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/glue/latest/dg/console-security-configurations.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Glue/job-bookmark-encryption-enabled.html",
-    "https://coder.social/gmirsky/terraform-aws-glue",
-    "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_41#terraform",
-    "https://github.com/hashicorp/cdktf-aws-cdk/blob/main/docs/glueSecurityConfiguration.md"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Glue/job-bookmark-encryption-enabled.html"
   ],
   "Remediation": {
     "Code": {

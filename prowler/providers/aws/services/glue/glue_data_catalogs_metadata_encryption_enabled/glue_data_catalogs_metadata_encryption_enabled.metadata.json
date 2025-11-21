@@ -15,14 +15,10 @@
   "Risk": "Unencrypted catalog metadata exposes schemas, partitions, and data locations, reducing **confidentiality**.\n\nAdversaries or over-privileged users can conduct **reconnaissance** and plan lateral movement; tampering with definitions can corrupt queries and results, impacting **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Glue/data-catalog-encryption-at-rest.html",
-    "https://developers.rapticore.com/docs/aws-glue-data-catalog-objects-and-connection-passwords-are-unencrypted",
     "https://docs.aws.amazon.com/glue/latest/dg/encrypt-glue-data-catalog.html",
-    "https://learnthecontent.com/exam/aws/tutorial-aws-certified-data-engineer-associate-dea-c01/s/data-encryption-options-available-in-aws-analytics-services-for-example-amazon-redshift-amazon-emr-aws-glue",
     "https://docs.amazonaws.cn/en_us/athena/latest/ug/encryption.html",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Glue/data-catalog-encryption-at-rest-with-cmk.html",
-    "https://support.icompaas.com/support/solutions/articles/62000233381-ensure-glue-data-catalogs-are-not-publicly-accessible-",
-    "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_37#terraform"
+    "https://support.icompaas.com/support/solutions/articles/62000233381-ensure-glue-data-catalogs-are-not-publicly-accessible-"
   ],
   "Remediation": {
     "Code": {
