@@ -1,6 +1,5 @@
 "use client";
 
-import { useCallback } from "react";
 import { create } from "zustand";
 
 import type {
@@ -47,58 +46,47 @@ const useGraphStore = create<GraphStore>((set) => ({
 export const useGraphState = () => {
   const store = useGraphStore();
 
-  const updateGraphData = useCallback(
-    (data: AttackPathGraphData) => {
-      store.setGraphData(data);
-    },
-    [store.setGraphData],
-  );
+  // Zustand store methods are stable, no need to memoize
+  const updateGraphData = (data: AttackPathGraphData) => {
+    store.setGraphData(data);
+  };
 
-  const selectNode = useCallback(
-    (nodeId: string | null) => {
-      store.setSelectedNodeId(nodeId);
-    },
-    [store.setSelectedNodeId],
-  );
+  const selectNode = (nodeId: string | null) => {
+    store.setSelectedNodeId(nodeId);
+  };
 
-  const getSelectedNode = useCallback((): GraphNode | null => {
+  const getSelectedNode = (): GraphNode | null => {
     if (!store.data?.nodes || !store.selectedNodeId) return null;
     return (
       store.data.nodes.find((node) => node.id === store.selectedNodeId) || null
     );
-  }, [store.data?.nodes, store.selectedNodeId]);
+  };
 
-  const startLoading = useCallback(() => {
+  const startLoading = () => {
     store.setLoading(true);
-  }, [store.setLoading]);
+  };
 
-  const stopLoading = useCallback(() => {
+  const stopLoading = () => {
     store.setLoading(false);
-  }, [store.setLoading]);
+  };
 
-  const setError = useCallback(
-    (error: string | null) => {
-      store.setError(error);
-    },
-    [store.setError],
-  );
+  const setError = (error: string | null) => {
+    store.setError(error);
+  };
 
-  const updateZoomAndPan = useCallback(
-    (zoomLevel: number, panX: number, panY: number) => {
-      store.setZoom(zoomLevel);
-      store.setPan(panX, panY);
-    },
-    [store.setZoom, store.setPan],
-  );
+  const updateZoomAndPan = (zoomLevel: number, panX: number, panY: number) => {
+    store.setZoom(zoomLevel);
+    store.setPan(panX, panY);
+  };
 
-  const resetGraph = useCallback(() => {
+  const resetGraph = () => {
     store.reset();
-  }, [store.reset]);
+  };
 
-  const clearGraph = useCallback(() => {
+  const clearGraph = () => {
     store.setGraphData({ nodes: [], edges: [] });
     store.setSelectedNodeId(null);
-  }, [store.setGraphData, store.setSelectedNodeId]);
+  };
 
   return {
     data: store.data,

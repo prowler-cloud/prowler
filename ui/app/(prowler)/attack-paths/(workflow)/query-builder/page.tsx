@@ -2,7 +2,7 @@
 
 import { Maximize2, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { FormProvider } from "react-hook-form";
 
 import {
@@ -32,7 +32,7 @@ import {
   GraphControls,
   GraphLegend,
   GraphLoading,
-  NodeDetailPanel,
+  NodeDetailContent,
   QueryParametersForm,
   QuerySelector,
   ScanListTable,
@@ -60,6 +60,7 @@ export default function AttackPathAnalysisPage() {
   const graphRef = useRef<AttackPathGraphRef>(null);
   const fullscreenGraphRef = useRef<AttackPathGraphRef>(null);
   const hasResetRef = useRef(false);
+  const nodeDetailsRef = useRef<HTMLDivElement>(null);
 
   const [queries, setQueries] = useState<AttackPathQuery[]>([]);
 
@@ -200,16 +201,28 @@ export default function AttackPathAnalysisPage() {
     }
   };
 
-  const handleNodeClick = useCallback(
-    (node: GraphNode) => {
-      graphState.selectNode(node.id);
-    },
-    [graphState.selectNode],
-  );
+  const handleNodeClick = (node: GraphNode) => {
+    graphState.selectNode(node.id);
 
-  const handleCloseDetails = useCallback(() => {
+    // Only scroll to details if it's a finding node
+    const isFinding = node.labels.some((label) =>
+      label.toLowerCase().includes("finding"),
+    );
+
+    if (isFinding) {
+      // Scroll to node details section after a short delay
+      setTimeout(() => {
+        nodeDetailsRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+        });
+      }, 100);
+    }
+  };
+
+  const handleCloseDetails = () => {
     graphState.selectNode(null);
-  }, [graphState.selectNode]);
+  };
 
   const handleGraphExport = (svgElement: SVGSVGElement | null) => {
     try {
@@ -319,8 +332,20 @@ export default function AttackPathAnalysisPage() {
           graphState.data.nodes &&
           graphState.data.nodes.length > 0 ? (
           <>
-            {/* Controls on top */}
-            <div className="flex items-stretch justify-end gap-2">
+            {/* Info message and controls */}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div
+                className="bg-button-primary hover:bg-button-primary-hover inline-flex cursor-default items-center gap-2 rounded-md px-3 py-2 text-xs font-medium text-black shadow-sm transition-colors sm:px-4 sm:text-sm"
+                role="status"
+                aria-label="Graph interaction instructions"
+              >
+                <span className="flex-shrink-0" aria-hidden="true">
+                  💡
+                </span>
+                <span className="flex-1">
+                  Click on any resource node to view its related findings
+                </span>
+              </div>
               <GraphControls
                 onZoomIn={() => graphRef.current?.zoomIn()}
                 onZoomOut={() => graphRef.current?.zoomOut()}
@@ -452,16 +477,55 @@ export default function AttackPathAnalysisPage() {
         )}
       </div>
 
-      {/* Node Detail Panel - Right Slide Sheet */}
-      {graphState.data &&
-        graphState.data.nodes &&
-        graphState.data.nodes.length > 0 && (
-          <NodeDetailPanel
+      {/* Node Detail Panel - Below Graph */}
+      {graphState.selectedNode && graphState.data && (
+        <div
+          ref={nodeDetailsRef}
+          className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto border p-4"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold">Node Details</h3>
+              <p className="text-text-neutral-secondary dark:text-text-neutral-secondary mt-1 text-sm">
+                {String(
+                  graphState.selectedNode.properties?.name ||
+                    graphState.selectedNode.id.substring(0, 20),
+                )}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {graphState.selectedNode.labels.some((label) =>
+                label.toLowerCase().includes("finding"),
+              ) && (
+                <Button asChild variant="default" size="sm">
+                  <a
+                    href={`/findings?id=${graphState.selectedNode.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`View finding ${graphState.selectedNode.id}`}
+                  >
+                    View Finding →
+                  </a>
+                </Button>
+              )}
+              <Button
+                onClick={handleCloseDetails}
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                aria-label="Close node details"
+              >
+                <X size={16} />
+              </Button>
+            </div>
+          </div>
+
+          <NodeDetailContent
             node={graphState.selectedNode}
-            allNodes={graphState.data?.nodes}
-            onClose={handleCloseDetails}
+            allNodes={graphState.data.nodes}
           />
-        )}
+        </div>
+      )}
     </div>
   );
 }

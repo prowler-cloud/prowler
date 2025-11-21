@@ -19,6 +19,7 @@ interface LegendItem {
 }
 
 // Map node labels to human-readable names, descriptions, and icons
+// IMPORTANT: Icons must match NODE_TYPE_ICONS in attack-path-graph.tsx
 const nodeTypeDescriptions = {
   ProwlerFinding: {
     name: "Prowler Finding",
@@ -44,6 +45,16 @@ const nodeTypeDescriptions = {
     name: "IAM Role",
     description: "Identity and Access Management role",
     icon: "🔑",
+  },
+  LambdaFunction: {
+    name: "Lambda Function",
+    description: "AWS Lambda serverless function",
+    icon: "λ",
+  },
+  SecurityGroup: {
+    name: "Security Group",
+    description: "AWS security group for network access control",
+    icon: "🛡",
   },
 } as const;
 

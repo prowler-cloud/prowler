@@ -1,19 +1,18 @@
 "use client";
 
-import * as d3 from "d3";
+import type { D3ZoomEvent, ZoomBehavior } from "d3";
+import { select, zoom, zoomIdentity } from "d3";
+import dagre from "dagre";
 import {
   forwardRef,
+  type Ref,
   useEffect,
   useImperativeHandle,
   useRef,
   useState,
 } from "react";
 
-import type {
-  AttackPathGraphData,
-  GraphNode,
-  GraphNodePropertyValue,
-} from "@/types/attack-paths";
+import type { AttackPathGraphData, GraphNode } from "@/types/attack-paths";
 
 import {
   formatNodeLabel,
@@ -34,21 +33,13 @@ interface AttackPathGraphProps {
   data: AttackPathGraphData;
   onNodeClick?: (node: GraphNode) => void;
   selectedNodeId?: string | null;
-  ref?: React.Ref<AttackPathGraphRef>;
+  ref?: Ref<AttackPathGraphRef>;
 }
 
-interface D3Node extends d3.SimulationNodeDatum {
-  id: string;
-  labels: string[];
-  properties: Record<string, GraphNodePropertyValue>;
-  x?: number;
-  y?: number;
-}
-
-interface D3Link extends d3.SimulationLinkDatum<D3Node> {
-  id: string;
-  type: string;
-}
+/**
+ * Node data type used throughout the graph visualization
+ */
+type NodeData = { id: string; x: number; y: number; data: GraphNode };
 
 /**
  * Node type to icon unicode mapping
@@ -59,12 +50,13 @@ const NODE_TYPE_ICONS = {
   ec2instance: "🖥",
   s3bucket: "💾",
   iamrole: "🔑",
+  lambdafunction: "λ",
+  securitygroup: "🛡",
   default: "●",
 } as const;
 
 /**
  * Get icon for node based on label type
- * Maps node types to unicode emoji icons
  */
 function getNodeTypeIcon(labels: string[]): string {
   if (!labels || labels.length === 0) return NODE_TYPE_ICONS.default;
@@ -87,8 +79,8 @@ function getNodeTypeIcon(labels: string[]): string {
 }
 
 /**
- * D3 Force-directed graph visualization for attack paths
- * Renders interactive graph with nodes and edges
+ * D3 + Dagre hierarchical graph visualization for attack paths
+ * Renders static hierarchical graph with left-to-right flow
  */
 const AttackPathGraphComponent = forwardRef<
   AttackPathGraphRef,
@@ -96,24 +88,47 @@ const AttackPathGraphComponent = forwardRef<
 >(({ data, onNodeClick, selectedNodeId }, ref) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
-  const zoomBehaviorRef = useRef<d3.ZoomBehavior<
-    SVGSVGElement,
-    unknown
+  const zoomBehaviorRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | null>(
+    null,
+  );
+  const containerRef = useRef<ReturnType<
+    typeof select<SVGGElement, unknown>
   > | null>(null);
-  const containerRef = useRef<d3.Selection<
-    SVGGElement,
-    unknown,
-    HTMLElement,
-    unknown
+  const svgSelectionRef = useRef<ReturnType<
+    typeof select<SVGSVGElement, unknown>
   > | null>(null);
-  const svgSelectionRef = useRef<d3.Selection<
-    SVGSVGElement,
-    unknown,
-    HTMLElement,
-    unknown
-  > | null>(null);
-  /** Track whether graph has been auto-centered to avoid repeated centering as simulation settles */
-  const hasAutocenteredRef = useRef(false);
+  const hiddenNodeIdsRef = useRef<Set<string>>(new Set());
+  const onNodeClickRef = useRef(onNodeClick);
+  const nodeCirclesRef = useRef<{
+    attr(
+      name: string,
+      value: string | number | ((d: NodeData) => string | number),
+    ): {
+      attr(
+        name: string,
+        value: string | number | ((d: NodeData) => string | number),
+      ): void;
+    };
+  } | null>(null);
+
+  // Update ref when onNodeClick changes
+  useEffect(() => {
+    onNodeClickRef.current = onNodeClick;
+  }, [onNodeClick]);
+
+  // Update selected node styling without re-rendering
+  useEffect(() => {
+    if (nodeCirclesRef.current) {
+      nodeCirclesRef.current
+        .attr("stroke", (d: NodeData) =>
+          d.id === selectedNodeId ? GRAPH_SELECTION_COLOR : "none",
+        )
+        .attr("stroke-width", (d: NodeData) =>
+          d.id === selectedNodeId ? 3 : 0,
+        );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedNodeId]);
 
   useImperativeHandle(ref, () => ({
     zoomIn: () => {
@@ -156,7 +171,7 @@ const AttackPathGraphComponent = forwardRef<
           .duration(300)
           .call(
             zoomBehaviorRef.current.transform,
-            d3.zoomIdentity.translate(tx, ty).scale(scale),
+            zoomIdentity.translate(tx, ty).scale(scale),
           );
       }
     },
@@ -172,76 +187,23 @@ const AttackPathGraphComponent = forwardRef<
     const height = svgRef.current.clientHeight || 500;
 
     // Clear previous content
-    d3.select(svgRef.current).selectAll("*").remove();
+    select(svgRef.current).selectAll("*").remove();
 
     // Create SVG
-    const svg = d3
-      .select(svgRef.current)
+    const svg = select(svgRef.current)
       .attr("width", width)
       .attr("height", height)
       .attr("viewBox", [0, 0, width, height]);
 
     // Create container for zoom/pan
-    const container = svg.append("g") as unknown as d3.Selection<
-      SVGGElement,
-      unknown,
-      HTMLElement,
-      unknown
+    const container = svg.append("g") as unknown as ReturnType<
+      typeof select<SVGGElement, unknown>
     >;
     containerRef.current = container;
-    svgSelectionRef.current = svg as unknown as d3.Selection<
-      SVGSVGElement,
-      unknown,
-      HTMLElement,
-      unknown
+    svgSelectionRef.current = svg as unknown as ReturnType<
+      typeof select<SVGSVGElement, unknown>
     >;
 
-    // Prepare data: convert nodes and create edges
-    const nodes: D3Node[] = data.nodes.map((node) => ({
-      ...node,
-      id: node.id,
-      labels: node.labels,
-      properties: node.properties,
-      x: undefined,
-      y: undefined,
-    }));
-
-    // Create edges from data or generate from relationships if available
-    let edges: D3Link[] = [];
-    if (data.edges && Array.isArray(data.edges)) {
-      edges = data.edges
-        .map((edge, idx) => {
-          const sourceId =
-            typeof edge.source === "string"
-              ? edge.source
-              : typeof edge.source === "object" && edge.source !== null
-                ? (edge.source as GraphNode).id
-                : (edge.properties?.source as string);
-
-          const targetId =
-            typeof edge.target === "string"
-              ? edge.target
-              : typeof edge.target === "object" && edge.target !== null
-                ? (edge.target as GraphNode).id
-                : (edge.properties?.target as string);
-
-          // Skip edges with invalid source or target
-          if (!sourceId || !targetId) {
-            return null;
-          }
-
-          return {
-            id: edge.id || `edge-${idx}`,
-            source: sourceId,
-            target: targetId,
-            type: edge.type || "relates_to",
-          };
-        })
-        .filter((edge) => edge !== null) as D3Link[];
-    }
-
-    // Calculate hierarchical layout (left to right flow - Mermaid LR style)
-    // Build adjacency map to determine node levels
     // Container relationships (reverse direction for layout purposes)
     const containerRelations = new Set([
       "RUNS_IN",
@@ -250,339 +212,348 @@ const AttackPathGraphComponent = forwardRef<
       "PART_OF",
     ]);
 
-    const adjacencyMap = new Map<string, string[]>();
-    const reverseAdjacencyMap = new Map<string, string[]>();
-    edges.forEach((edge) => {
-      const source = edge.source;
-      const target = edge.target;
-      let sourceId =
-        typeof source === "string"
-          ? source
-          : typeof source === "object" && source !== null
-            ? (source as D3Node).id
-            : "";
-      let targetId =
-        typeof target === "string"
-          ? target
-          : typeof target === "object" && target !== null
-            ? (target as D3Node).id
-            : "";
+    // Create dagre graph
+    const g = new dagre.graphlib.Graph();
+    g.setGraph({
+      rankdir: "LR", // Left to right
+      nodesep: 80, // Vertical spacing between nodes
+      ranksep: 200, // Horizontal spacing between ranks
+      marginx: 50,
+      marginy: 50,
+    });
+    g.setDefaultEdgeLabel(() => ({}));
 
-      // Reverse container relationships for proper hierarchy
-      if (containerRelations.has(edge.type)) {
-        [sourceId, targetId] = [targetId, sourceId];
+    // Initially hide finding nodes
+    const initialHiddenNodes = new Set<string>();
+    data.nodes.forEach((node) => {
+      const isFinding = node.labels.some((label) =>
+        label.toLowerCase().includes("finding"),
+      );
+      if (isFinding) {
+        initialHiddenNodes.add(node.id);
       }
+    });
+    hiddenNodeIdsRef.current = initialHiddenNodes;
 
-      if (!adjacencyMap.has(sourceId)) {
-        adjacencyMap.set(sourceId, []);
-      }
-      adjacencyMap.get(sourceId)?.push(targetId);
+    // Create a map to store original node data
+    const nodeDataMap = new Map(data.nodes.map((node) => [node.id, node]));
 
-      if (!reverseAdjacencyMap.has(targetId)) {
-        reverseAdjacencyMap.set(targetId, []);
-      }
-      reverseAdjacencyMap.get(targetId)?.push(sourceId);
+    // Add nodes to dagre graph
+    data.nodes.forEach((node) => {
+      g.setNode(node.id, {
+        label: node.id,
+        width: 90,
+        height: 90,
+      });
     });
 
-    // Calculate node levels using longest path from root
-    const incomingCount = new Map<string, number>();
-    nodes.forEach((node) => incomingCount.set(node.id, 0));
-
-    // Count incoming edges (respecting reversed container relationships)
-    edges.forEach((edge) => {
-      const source = edge.source;
-      const target = edge.target;
-      let targetId =
-        typeof target === "string"
-          ? target
-          : typeof target === "object" && target !== null
-            ? (target as D3Node).id
-            : "";
-
-      // If it's a container relationship, reverse the direction for counting
-      if (containerRelations.has(edge.type)) {
-        targetId =
+    // Add edges to dagre graph
+    if (data.edges && Array.isArray(data.edges)) {
+      data.edges.forEach((edge) => {
+        const source = edge.source;
+        const target = edge.target;
+        let sourceId =
           typeof source === "string"
             ? source
             : typeof source === "object" && source !== null
-              ? (source as D3Node).id
+              ? (source as GraphNode).id
               : "";
-      }
+        let targetId =
+          typeof target === "string"
+            ? target
+            : typeof target === "object" && target !== null
+              ? (target as GraphNode).id
+              : "";
 
-      if (targetId) {
-        incomingCount.set(targetId, (incomingCount.get(targetId) || 0) + 1);
-      }
-    });
+        // Reverse container relationships for proper hierarchy
+        if (containerRelations.has(edge.type)) {
+          [sourceId, targetId] = [targetId, sourceId];
+        }
 
-    // Find root nodes (nodes with no incoming edges)
-    const rootNodes: string[] = [];
-    nodes.forEach((node) => {
-      if (incomingCount.get(node.id) === 0) {
-        rootNodes.push(node.id);
-      }
-    });
-
-    // Calculate longest path from any root using DFS
-    const levels = new Map<string, number>();
-    const visited = new Set<string>();
-
-    function calculateLongestPath(nodeId: string, currentDepth: number) {
-      visited.add(nodeId);
-      const existingLevel = levels.get(nodeId) || -1;
-
-      // Always use the maximum depth (longest path)
-      if (currentDepth > existingLevel) {
-        levels.set(nodeId, currentDepth);
-      }
-
-      const neighbors = adjacencyMap.get(nodeId) || [];
-      neighbors.forEach((neighborId) => {
-        calculateLongestPath(neighborId, currentDepth + 1);
+        if (sourceId && targetId) {
+          g.setEdge(sourceId, targetId, {
+            originalSource:
+              typeof edge.source === "string"
+                ? edge.source
+                : (edge.source as GraphNode).id,
+            originalTarget:
+              typeof edge.target === "string"
+                ? edge.target
+                : (edge.target as GraphNode).id,
+          });
+        }
       });
     }
 
-    // Start DFS from all root nodes
-    rootNodes.forEach((rootId) => {
-      calculateLongestPath(rootId, 0);
+    // Run dagre layout
+    dagre.layout(g);
+
+    // Draw edges
+    const edgesData: Array<{
+      source: { x: number; y: number };
+      target: { x: number; y: number };
+      id: string;
+      sourceId: string;
+      targetId: string;
+    }> = [];
+    g.edges().forEach((e) => {
+      const sourceNode = g.node(e.v);
+      const targetNode = g.node(e.w);
+
+      edgesData.push({
+        source: { x: sourceNode.x, y: sourceNode.y },
+        target: { x: targetNode.x, y: targetNode.y },
+        id: `${e.v}-${e.w}`,
+        sourceId: e.v,
+        targetId: e.w,
+      });
     });
 
-    // Handle disconnected nodes or cycles
-    nodes.forEach((node) => {
-      if (!levels.has(node.id)) {
-        // Place disconnected nodes at level 0
-        levels.set(node.id, 0);
-      }
-    });
+    const linkGroup = container.append("g").attr("class", "links");
 
-    // Group nodes by level and sort initially by node type to group similar nodes
-    const nodesByLevel = new Map<number, D3Node[]>();
-    nodes.forEach((node) => {
-      const level = levels.get(node.id) || 0;
-      if (!nodesByLevel.has(level)) {
-        nodesByLevel.set(level, []);
-      }
-      nodesByLevel.get(level)?.push(node);
-    });
-
-    // Initial sorting: group nodes by type within each level for better starting point
-    nodesByLevel.forEach((nodesInLevel, level) => {
-      if (nodesInLevel.length > 1) {
-        nodesInLevel.sort((a, b) => {
-          // Get primary label
-          const aLabel = a.labels[0]?.toLowerCase() || "";
-          const bLabel = b.labels[0]?.toLowerCase() || "";
-
-          // Sort findings to the end, resources at the beginning
-          const aIsFinding = aLabel.includes("finding");
-          const bIsFinding = bLabel.includes("finding");
-
-          if (aIsFinding && !bIsFinding) return 1;
-          if (!aIsFinding && bIsFinding) return -1;
-
-          // Otherwise sort alphabetically by label
-          return aLabel.localeCompare(bLabel);
-        });
-        nodesByLevel.set(level, nodesInLevel);
-      }
-    });
-
-    // Sort nodes within each level to minimize edge crossings using barycenter method
-    const maxLevel = Math.max(...Array.from(levels.values()));
-
-    // Sort nodes within each level to minimize edge crossings
-    // Use median heuristic which often works better than barycenter for complex graphs
-    for (let iteration = 0; iteration < 4; iteration++) {
-      // Forward pass (left to right) - position based on parents
-      for (let level = 1; level <= maxLevel; level++) {
-        const nodesInLevel = nodesByLevel.get(level) || [];
-
-        if (nodesInLevel.length > 1) {
-          const nodePositions = nodesInLevel.map((node, nodeIdx) => {
-            const parents = reverseAdjacencyMap.get(node.id) || [];
-            const parentPositions: number[] = [];
-
-            // Get all parent positions
-            parents.forEach((parentId) => {
-              for (let prevLevel = 0; prevLevel < level; prevLevel++) {
-                const levelNodes = nodesByLevel.get(prevLevel) || [];
-                const pos = levelNodes.findIndex((n) => n.id === parentId);
-                if (pos >= 0) {
-                  parentPositions.push(pos);
-                  break;
-                }
-              }
-            });
-
-            // Use median position if we have parents, otherwise keep current position
-            let medianPos = nodeIdx;
-            if (parentPositions.length > 0) {
-              parentPositions.sort((a, b) => a - b);
-              const mid = Math.floor(parentPositions.length / 2);
-              medianPos =
-                parentPositions.length % 2 === 0
-                  ? (parentPositions[mid - 1] + parentPositions[mid]) / 2
-                  : parentPositions[mid];
-            }
-
-            return { node, medianPos, originalIdx: nodeIdx };
-          });
-
-          // Sort by median position, keeping stable sort for ties
-          nodePositions.sort(
-            (a, b) =>
-              a.medianPos - b.medianPos || a.originalIdx - b.originalIdx,
-          );
-          nodesByLevel.set(
-            level,
-            nodePositions.map((item) => item.node),
-          );
-        }
-      }
-
-      // Backward pass (right to left) - position based on children
-      for (let level = maxLevel - 1; level >= 0; level--) {
-        const nodesInLevel = nodesByLevel.get(level) || [];
-
-        if (nodesInLevel.length > 1) {
-          const nodePositions = nodesInLevel.map((node, nodeIdx) => {
-            const children = adjacencyMap.get(node.id) || [];
-            const childPositions: number[] = [];
-
-            // Get all child positions
-            children.forEach((childId) => {
-              for (
-                let nextLevel = level + 1;
-                nextLevel <= maxLevel;
-                nextLevel++
-              ) {
-                const levelNodes = nodesByLevel.get(nextLevel) || [];
-                const pos = levelNodes.findIndex((n) => n.id === childId);
-                if (pos >= 0) {
-                  childPositions.push(pos);
-                  break;
-                }
-              }
-            });
-
-            // Use median position if we have children, otherwise keep current position
-            let medianPos = nodeIdx;
-            if (childPositions.length > 0) {
-              childPositions.sort((a, b) => a - b);
-              const mid = Math.floor(childPositions.length / 2);
-              medianPos =
-                childPositions.length % 2 === 0
-                  ? (childPositions[mid - 1] + childPositions[mid]) / 2
-                  : childPositions[mid];
-            }
-
-            return { node, medianPos, originalIdx: nodeIdx };
-          });
-
-          // Sort by median position, keeping stable sort for ties
-          nodePositions.sort(
-            (a, b) =>
-              a.medianPos - b.medianPos || a.originalIdx - b.originalIdx,
-          );
-          nodesByLevel.set(
-            level,
-            nodePositions.map((item) => item.node),
-          );
-        }
-      }
-    }
-
-    // Calculate spacing - leave margin on left for root nodes
-    const leftMargin = 150;
-    const rightMargin = 150;
-    const availableWidth = width - leftMargin - rightMargin;
-    const levelSpacing =
-      maxLevel > 0 ? availableWidth / maxLevel : availableWidth;
-
-    // Create force simulation with hierarchical left-to-right layout (Mermaid LR style)
-    const simulation = d3
-      .forceSimulation(nodes)
-      .force(
-        "link",
-        d3
-          .forceLink<D3Node, D3Link>(edges)
-          .id((d) => d.id)
-          .distance(levelSpacing * 0.7)
-          .strength(0.2),
-      )
-      .force("charge", d3.forceManyBody().strength(-600))
-      .force("collision", d3.forceCollide<D3Node>().radius(85))
-      // Very strong horizontal force to maintain strict columns
-      .force(
-        "x",
-        d3
-          .forceX<D3Node>()
-          .x((d) => {
-            const level = levels.get(d.id) || 0;
-            return leftMargin + levelSpacing * level;
-          })
-          .strength(0.8),
-      )
-      // Strong vertical force to distribute nodes within their level
-      .force(
-        "y",
-        d3
-          .forceY<D3Node>()
-          .y((d) => {
-            const level = levels.get(d.id) || 0;
-            const nodesInLevel = nodesByLevel.get(level) || [];
-            const indexInLevel = nodesInLevel.findIndex((n) => n.id === d.id);
-            const verticalSpacing = height / (nodesInLevel.length + 1);
-            return verticalSpacing * (indexInLevel + 1);
-          })
-          .strength(0.7),
-      )
-      .velocityDecay(0.4)
-      .alphaDecay(0.015)
-      .alphaMin(0.001);
-
-    // Create links
-    const link = container
+    const linkElements = linkGroup
       .selectAll("line")
-      .data(edges)
+      .data(edgesData)
       .enter()
       .append("line")
+      .attr("x1", (d) => d.source.x)
+      .attr("y1", (d) => d.source.y)
+      .attr("x2", (d) => d.target.x)
+      .attr("y2", (d) => d.target.y)
       .attr("stroke", GRAPH_EDGE_COLOR)
       .attr("stroke-opacity", 0.6)
-      .attr("stroke-width", 2);
+      .attr("stroke-width", 2)
+      .attr("marker-end", "url(#arrowhead)")
+      .style("display", (d) => {
+        // Hide edges connected to hidden nodes
+        return hiddenNodeIdsRef.current.has(d.sourceId) ||
+          hiddenNodeIdsRef.current.has(d.targetId)
+          ? "none"
+          : null;
+      });
 
-    // Create node groups
-    const nodeGroup = container
+    // Add arrow marker definition
+    svg
+      .append("defs")
+      .append("marker")
+      .attr("id", "arrowhead")
+      .attr("viewBox", "0 0 10 10")
+      .attr("refX", 9)
+      .attr("refY", 5)
+      .attr("markerWidth", 6)
+      .attr("markerHeight", 6)
+      .attr("orient", "auto")
+      .append("path")
+      .attr("d", "M 0 0 L 10 5 L 0 10 z")
+      .attr("fill", GRAPH_EDGE_COLOR);
+
+    // Draw nodes
+    const nodesData = g.nodes().map((v) => {
+      const node = g.node(v);
+      return {
+        id: v,
+        x: node.x,
+        y: node.y,
+        data: nodeDataMap.get(v)!,
+      };
+    });
+
+    const nodeGroup = container.append("g").attr("class", "nodes");
+
+    const nodeElements = nodeGroup
       .selectAll("g.node")
-      .data(nodes)
+      .data(nodesData)
       .enter()
       .append("g")
       .attr("class", "node")
-      .attr("cursor", "pointer");
-
-    // Add tooltip (title element for native SVG tooltips)
-    nodeGroup.append("title").text((d: D3Node): string => {
-      // Show the first node label (full text for tooltip)
-      if (d.labels && d.labels.length > 0) {
-        return formatNodeLabel(d.labels[0]);
-      }
-      return d.id;
-    });
-
-    // Add circles for nodes
-    nodeGroup
-      .append("circle")
-      .attr("r", 45)
-      .attr("fill", (d: D3Node) => getNodeColor(d.labels))
-      .attr("opacity", 0.8)
-      .on("click", (event: PointerEvent, d: D3Node) => {
+      .attr("transform", (d) => `translate(${d.x},${d.y})`)
+      .attr("cursor", "pointer")
+      .style("display", (d) =>
+        hiddenNodeIdsRef.current.has(d.id) ? "none" : null,
+      )
+      .on("click", function (event: PointerEvent, d) {
         event.stopPropagation();
-        onNodeClick?.(d);
+
+        // Toggle visibility of connected finding nodes
+        const node = d.data;
+        const isFinding = node.labels.some((label) =>
+          label.toLowerCase().includes("finding"),
+        );
+
+        if (!isFinding) {
+          // Find connected findings for THIS node
+          const connectedFindings = new Set<string>();
+          data.edges?.forEach((edge) => {
+            const sourceId =
+              typeof edge.source === "string"
+                ? edge.source
+                : (edge.source as GraphNode).id;
+            const targetId =
+              typeof edge.target === "string"
+                ? edge.target
+                : (edge.target as GraphNode).id;
+
+            if (sourceId === node.id || targetId === node.id) {
+              const otherId = sourceId === node.id ? targetId : sourceId;
+              const otherNode = data.nodes.find((n) => n.id === otherId);
+              if (
+                otherNode?.labels.some((label) =>
+                  label.toLowerCase().includes("finding"),
+                )
+              ) {
+                connectedFindings.add(otherId);
+              }
+            }
+          });
+
+          // Clear hidden nodes and hide ALL findings
+          hiddenNodeIdsRef.current.clear();
+          data.nodes.forEach((n) => {
+            const isNodeFinding = n.labels.some((label) =>
+              label.toLowerCase().includes("finding"),
+            );
+            if (isNodeFinding) {
+              hiddenNodeIdsRef.current.add(n.id);
+            }
+          });
+
+          // Show ONLY the findings connected to the clicked node
+          connectedFindings.forEach((findingId) => {
+            hiddenNodeIdsRef.current.delete(findingId);
+          });
+
+          // Update node visibility
+          nodeElements.style(
+            "display",
+            function (nodeData: {
+              id: string;
+              x: number;
+              y: number;
+              data: GraphNode;
+            }) {
+              return hiddenNodeIdsRef.current.has(nodeData.id) ? "none" : null;
+            },
+          );
+
+          // Update edge visibility
+          linkElements.style(
+            "display",
+            function (edgeData: {
+              source: { x: number; y: number };
+              target: { x: number; y: number };
+              id: string;
+              sourceId: string;
+              targetId: string;
+            }) {
+              return hiddenNodeIdsRef.current.has(edgeData.sourceId) ||
+                hiddenNodeIdsRef.current.has(edgeData.targetId)
+                ? "none"
+                : null;
+            },
+          );
+
+          // Auto-adjust view to show the selected node and its findings
+          setTimeout(() => {
+            if (
+              svgSelectionRef.current &&
+              zoomBehaviorRef.current &&
+              containerRef.current
+            ) {
+              // Calculate bounding box of visible nodes (clicked node + its findings)
+              const visibleNodeIds = new Set([
+                node.id,
+                ...Array.from(connectedFindings),
+              ]);
+              const visibleNodesData = nodesData.filter((n) =>
+                visibleNodeIds.has(n.id),
+              );
+
+              if (visibleNodesData.length > 0) {
+                // Find min/max coordinates of visible nodes
+                let minX = Infinity,
+                  maxX = -Infinity,
+                  minY = Infinity,
+                  maxY = -Infinity;
+                visibleNodesData.forEach((n) => {
+                  minX = Math.min(minX, n.x);
+                  maxX = Math.max(maxX, n.x);
+                  minY = Math.min(minY, n.y);
+                  maxY = Math.max(maxY, n.y);
+                });
+
+                // Add padding (node radius + extra space)
+                const padding = 100;
+                minX -= padding;
+                maxX += padding;
+                minY -= padding;
+                maxY += padding;
+
+                const fullWidth = svgRef.current?.clientWidth || 800;
+                const fullHeight = svgRef.current?.clientHeight || 500;
+
+                const width = maxX - minX;
+                const height = maxY - minY;
+                const midX = minX + width / 2;
+                const midY = minY + height / 2;
+
+                // Calculate scale to fit all visible nodes
+                const scale =
+                  0.9 / Math.max(width / fullWidth, height / fullHeight);
+                const tx = fullWidth / 2 - scale * midX;
+                const ty = fullHeight / 2 - scale * midY;
+
+                svgSelectionRef.current
+                  .transition()
+                  .duration(500)
+                  .call(
+                    zoomBehaviorRef.current.transform,
+                    zoomIdentity.translate(tx, ty).scale(scale),
+                  );
+              }
+            }
+          }, 50);
+        }
+
+        onNodeClickRef.current?.(d.data);
       });
 
-    // Add label text group containing icon, type, and ID - centered in node
-    const textGroups = nodeGroup.append("text").attr("pointer-events", "none");
+    // Add tooltip
+    nodeElements.append("title").text((d: (typeof nodesData)[0]): string => {
+      const isFinding = d.data.labels.some((label) =>
+        label.toLowerCase().includes("finding"),
+      );
+      const label =
+        d.data.labels && d.data.labels.length > 0
+          ? formatNodeLabel(d.data.labels[0])
+          : d.id;
 
-    // First line: Node type icon
+      if (isFinding) {
+        return `${label}\nClick to view finding details`;
+      } else {
+        return `${label}\nClick to view related findings`;
+      }
+    });
+
+    // Add circles
+    const nodeCircles = nodeElements
+      .append("circle")
+      .attr("r", 45)
+      .attr("fill", (d) => getNodeColor(d.data.labels))
+      .attr("opacity", 0.8)
+      .attr("stroke", (d) =>
+        d.id === selectedNodeId ? GRAPH_SELECTION_COLOR : "none",
+      )
+      .attr("stroke-width", (d) => (d.id === selectedNodeId ? 3 : 0));
+
+    // Store reference for updating selection later
+    nodeCirclesRef.current = nodeCircles;
+
+    // Add label text
+    const textGroups = nodeElements
+      .append("text")
+      .attr("pointer-events", "none");
+
+    // Icon
     textGroups
       .append("tspan")
       .attr("x", 0)
@@ -591,9 +562,9 @@ const AttackPathGraphComponent = forwardRef<
       .attr("fill", "white")
       .attr("opacity", 0.9)
       .attr("text-anchor", "middle")
-      .text((d: D3Node): string => getNodeTypeIcon(d.labels));
+      .text((d) => getNodeTypeIcon(d.data.labels));
 
-    // Second line: Node type
+    // Type
     textGroups
       .append("tspan")
       .attr("x", 0)
@@ -602,15 +573,15 @@ const AttackPathGraphComponent = forwardRef<
       .attr("fill", "white")
       .attr("font-weight", "bold")
       .attr("text-anchor", "middle")
-      .text((d: D3Node): string => {
+      .text((d) => {
         const type =
-          d.labels && d.labels.length > 0
-            ? formatNodeLabel(d.labels[0])
+          d.data.labels && d.data.labels.length > 0
+            ? formatNodeLabel(d.data.labels[0])
             : "Unknown";
         return type.length > 16 ? type.substring(0, 16) + "." : type;
       });
 
-    // Third line: Severity (if available) or ID
+    // ID or severity
     textGroups
       .append("tspan")
       .attr("x", 0)
@@ -618,38 +589,35 @@ const AttackPathGraphComponent = forwardRef<
       .attr("font-size", "9px")
       .attr("fill", "white")
       .attr("text-anchor", "middle")
-      .text((d: D3Node): string => {
-        const severity = d.properties?.severity;
+      .text((d) => {
+        const severity = d.data.properties?.severity;
         return severity ? String(severity) : d.id.substring(0, 8);
       });
 
-    // Add zoom behavior
-    const zoom = d3
-      .zoom<SVGSVGElement, unknown>()
-      .on("zoom", (event: d3.D3ZoomEvent<SVGSVGElement, unknown>) => {
+    // Add zoom behavior (but disable all mouse interactions)
+    const zoomBehavior = zoom<SVGSVGElement, unknown>().on(
+      "zoom",
+      (event: D3ZoomEvent<SVGSVGElement, unknown>) => {
         const transform = event.transform;
         container.attr("transform", transform.toString());
         setZoomLevel(transform.k);
-      });
-    zoomBehaviorRef.current = zoom;
+      },
+    );
+    zoomBehaviorRef.current = zoomBehavior;
 
-    svg.call(zoom);
+    svg.call(zoomBehavior);
 
-    // Disable scroll/wheel zoom, keep only programmatic zoom from controls
+    // Disable ALL mouse zoom/pan interactions (only allow programmatic zoom via buttons)
     svg.on("wheel.zoom", null);
+    svg.on("dblclick.zoom", null);
 
-    // Reset auto-center flag for new data
-    hasAutocenteredRef.current = false;
-
-    // Function to center the graph
-    const centerGraph = () => {
+    // Auto-fit to screen
+    setTimeout(() => {
       if (
         svgSelectionRef.current &&
         zoomBehaviorRef.current &&
-        containerRef.current &&
-        !hasAutocenteredRef.current
+        containerRef.current
       ) {
-        hasAutocenteredRef.current = true;
         const bounds = containerRef.current.node()?.getBBox();
         if (!bounds) return;
 
@@ -665,73 +633,11 @@ const AttackPathGraphComponent = forwardRef<
 
         svgSelectionRef.current.call(
           zoomBehaviorRef.current.transform,
-          d3.zoomIdentity.translate(tx, ty).scale(scale),
+          zoomIdentity.translate(tx, ty).scale(scale),
         );
       }
-    };
-
-    // Helper to safely get node coordinates from link source/target
-    const getSourceX = (d: D3Link): number => {
-      const source = d.source as D3Node;
-      return source.x || 0;
-    };
-    const getSourceY = (d: D3Link): number => {
-      const source = d.source as D3Node;
-      return source.y || 0;
-    };
-    const getTargetX = (d: D3Link): number => {
-      const target = d.target as D3Node;
-      return target.x || 0;
-    };
-    const getTargetY = (d: D3Link): number => {
-      const target = d.target as D3Node;
-      return target.y || 0;
-    };
-
-    // Update positions on simulation tick
-    simulation.on("tick", (): void => {
-      link
-        .attr("x1", getSourceX)
-        .attr("y1", getSourceY)
-        .attr("x2", getTargetX)
-        .attr("y2", getTargetY);
-
-      nodeGroup.attr(
-        "transform",
-        (d: D3Node) => `translate(${d.x || 0},${d.y || 0})`,
-      );
-
-      // Center graph once when simulation starts settling
-      if (simulation.alpha() < 0.5 && !hasAutocenteredRef.current) {
-        centerGraph();
-      }
-    });
-
-    return () => {
-      simulation.stop();
-    };
-  }, [data, onNodeClick]);
-
-  // Separate effect to update selection highlight without rebuilding graph
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    const updateSelection = (d: D3Node) => {
-      return d.id === selectedNodeId ? GRAPH_SELECTION_COLOR : "none";
-    };
-
-    const updateWidth = (d: D3Node) => {
-      return d.id === selectedNodeId ? 3 : 0;
-    };
-
-    const nodeGroup = containerRef.current.selectAll<SVGCircleElement, D3Node>(
-      "g.node",
-    );
-    nodeGroup
-      .selectAll<SVGCircleElement, D3Node>("circle")
-      .attr("stroke", updateSelection)
-      .attr("stroke-width", updateWidth);
-  }, [selectedNodeId]);
+    }, 100);
+  }, [data]);
 
   return (
     <svg
