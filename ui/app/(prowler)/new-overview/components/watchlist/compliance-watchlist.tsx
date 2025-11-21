@@ -1,82 +1,29 @@
-"use client";
+import Image, { type StaticImageData } from "next/image";
 
-import Image from "next/image";
+import { WatchlistCard, type WatchlistItem } from "./watchlist-card";
 
-import AWSLogo from "@/components/icons/compliance/aws.svg";
-import CISLogo from "@/components/icons/compliance/cis.svg";
-import FedRAMPLogo from "@/components/icons/compliance/fedramp.svg";
-import ISOLogo from "@/components/icons/compliance/iso-27001.svg";
-import NISTLogo from "@/components/icons/compliance/nist.svg";
-import PCILogo from "@/components/icons/compliance/pci-dss.svg";
-import SOC2Logo from "@/components/icons/compliance/soc2.svg";
-
-import { WatchlistCard, WatchlistItem } from "./watchlist-card";
-
-const ComplianceIcon = ({ src }: { src: string }) => (
+const ComplianceIcon = ({
+  src,
+  label,
+}: {
+  src?: string | StaticImageData;
+  label: string;
+}) => (
   <div className="relative size-3">
-    <Image
-      src={src}
-      alt="Compliance framework"
-      fill
-      className="object-contain"
-    />
+    {src ? (
+      <Image
+        src={src}
+        alt={`${label} framework`}
+        fill
+        className="object-contain"
+      />
+    ) : (
+      <div className="bg-bg-data-muted size-full rounded-sm" aria-hidden />
+    )}
   </div>
 );
 
-const MOCK_COMPLIANCE_ITEMS: WatchlistItem[] = [
-  {
-    key: "nist-cif",
-    icon: <ComplianceIcon src={NISTLogo} />,
-    label: "NIST CIF - 1.1",
-    value: "10%",
-  },
-  {
-    key: "iso-27001",
-    icon: <ComplianceIcon src={ISOLogo} />,
-    label: "ISO 27001 - 2022",
-    value: "51%",
-  },
-  {
-    key: "pci-4.0",
-    icon: <ComplianceIcon src={PCILogo} />,
-    label: "PCI - 4.0",
-    value: "12%",
-  },
-  {
-    key: "cis-5.0",
-    icon: <ComplianceIcon src={CISLogo} />,
-    label: "CIS - 5.0",
-    value: "78%",
-  },
-  {
-    key: "soc-2",
-    icon: <ComplianceIcon src={SOC2Logo} />,
-    label: "SOC 2",
-    value: "82%",
-  },
-  {
-    key: "aws-well-architected-framework",
-    icon: <ComplianceIcon src={AWSLogo} />,
-    label: "AWS Well-Architected Framework",
-    value: "90%",
-  },
-  {
-    key: "fedramp",
-    icon: <ComplianceIcon src={FedRAMPLogo} />,
-    label: "FedRAMP",
-    value: "82%",
-  },
-  {
-    key: "nist-cif-2.0",
-    icon: <ComplianceIcon src={NISTLogo} />,
-    label: "NIST CIF - 2.0",
-    value: "10%",
-  },
-];
-
-export const ComplianceWatchlist = () => {
-  const items = MOCK_COMPLIANCE_ITEMS;
-
+export const ComplianceWatchlist = ({ items }: { items: WatchlistItem[] }) => {
   return (
     <WatchlistCard
       title="Compliance Watchlist"
@@ -90,4 +37,35 @@ export const ComplianceWatchlist = () => {
       }}
     />
   );
+};
+
+export const buildComplianceWatchlistItem = ({
+  id,
+  framework,
+  version,
+  requirements_passed,
+  total_requirements,
+  icon,
+}: {
+  id: string;
+  framework: string;
+  version: string;
+  requirements_passed: number;
+  total_requirements: number;
+  icon?: string | StaticImageData;
+}): WatchlistItem => {
+  const totalRequirements = Number(total_requirements) || 0;
+  const passedRequirements = Number(requirements_passed) || 0;
+
+  const score =
+    totalRequirements > 0
+      ? Math.round((passedRequirements / totalRequirements) * 100)
+      : 0;
+
+  return {
+    key: id,
+    icon: <ComplianceIcon src={icon} label={framework} />,
+    label: version ? `${framework} - ${version}` : framework,
+    value: `${score}%`,
+  };
 };
