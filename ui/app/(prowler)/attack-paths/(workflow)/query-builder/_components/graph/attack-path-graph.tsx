@@ -127,7 +127,6 @@ const AttackPathGraphComponent = forwardRef<
           d.id === selectedNodeId ? 3 : 0,
         );
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedNodeId]);
 
   useImperativeHandle(ref, () => ({
@@ -637,7 +636,7 @@ const AttackPathGraphComponent = forwardRef<
         );
       }
     }, 100);
-  }, [data]);
+  }, [data, selectedNodeId]);
 
   return (
     <svg
