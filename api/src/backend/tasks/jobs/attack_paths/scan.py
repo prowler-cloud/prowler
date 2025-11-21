@@ -26,12 +26,12 @@ logging.getLogger("neo4j").propagate = False
 
 logger = get_task_logger(__name__)
 
-CARTOGRAPHY_INGESTION_FUNCTIONS = {
+CARTOGRAPHY_INGESTION_FUNCTIONS: dict[str, Callable] = {
     "aws": aws.start_aws_ingestion,
 }
 
 
-def get_cartography_ingestion_function(provider_type: str) -> Callable:
+def get_cartography_ingestion_function(provider_type: str) -> Callable | None:
     return CARTOGRAPHY_INGESTION_FUNCTIONS.get(provider_type)
 
 

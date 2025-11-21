@@ -246,6 +246,7 @@ from api.v1.serializers import (
     UserUpdateSerializer,
 )
 from tasks.beat import schedule_provider_scan
+from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
 from tasks.jobs.export import get_s3_client
 from tasks.tasks import (
     backfill_compliance_summaries_task,
@@ -2096,6 +2097,12 @@ class ScanViewSet(BaseRLSViewSet):
                     # checks_to_execute=scan.scanner_args.get("checks_to_execute"),
                 },
             )
+
+        attack_paths_db_utils.create_attack_paths_scan(
+            tenant_id=self.request.tenant_id,
+            scan_id=str(scan.id),
+            provider_id=str(scan.provider_id),
+        )
 
         prowler_task = Task.objects.get(id=task.id)
         scan.task_id = task.id

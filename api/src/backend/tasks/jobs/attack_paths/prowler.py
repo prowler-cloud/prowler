@@ -9,18 +9,11 @@ from api.db_utils import rls_transaction
 from api.models import Provider, ResourceFindingMapping, Scan
 from config.env import env
 from prowler.config import config as ProwlerConfig
+from tasks.jobs.attack_paths.providers import get_node_uid_field, get_root_node_label
 
 logger = get_task_logger(__name__)
 
 BATCH_SIZE = env.int("NEO4J_INSERT_BATCH_SIZE", 500)
-
-ROOT_NODE_LABELS = {
-    "aws": "AWSAccount",
-}
-
-NODE_UID_FIELDS = {
-    "aws": "arn",
-}
 
 INDEX_STATEMENTS = [
     "CREATE INDEX prowler_finding_id IF NOT EXISTS FOR (n:ProwlerFinding) ON (n.id);",
@@ -85,14 +78,6 @@ CLEANUP_STATEMENT = """
 
     RETURN COUNT(finding) AS deleted_findings_count
 """
-
-
-def get_root_node_label(provider_type: str) -> str:
-    return ROOT_NODE_LABELS.get(provider_type, "UnknownProviderAccount")
-
-
-def get_node_uid_field(provider_type: str) -> str:
-    return NODE_UID_FIELDS.get(provider_type, "UnknownProviderUID")
 
 
 def create_indexes(neo4j_session: neo4j.Session) -> None:

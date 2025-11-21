@@ -9,16 +9,7 @@ from api.models import (
     Provider as ProwlerAPIProvider,
     StateChoices,
 )
-
-# TODO: Get this list from a central place, like `tasks.jobs.attack_paths.scan.CARTOGRAPHY_INGESTION_FUNCTIONS`
-#       but without creating circular imports
-AVAILABLE_PROVIDERS = [
-    "aws",
-]
-
-
-def is_provider_available(provider_type: str) -> bool:
-    return provider_type in AVAILABLE_PROVIDERS
+from tasks.jobs.attack_paths.providers import is_provider_available
 
 
 def create_attack_paths_scan(

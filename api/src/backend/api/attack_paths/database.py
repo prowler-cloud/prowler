@@ -9,7 +9,7 @@ import neo4j
 from django.conf import settings
 import neo4j.exceptions
 
-from tasks.jobs.attack_paths import get_root_node_label
+from tasks.jobs.attack_paths.providers import get_root_node_label
 
 # Without this Celery goes crazy with Neo4j logging
 logging.getLogger("neo4j").setLevel(logging.ERROR)
