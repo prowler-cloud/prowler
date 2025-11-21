@@ -32,4 +32,5 @@ export enum FilterType {
   SEVERITY = "severity__in",
   STATUS = "status__in",
   DELTA = "delta__in",
+  CATEGORY = "categories__in",
 }

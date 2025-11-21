@@ -381,10 +381,19 @@ def get_findings_metadata_no_aggregations(tenant_id: str, filtered_queryset):
     regions = sorted({region for region in aggregation["regions"] or [] if region})
     resource_types = sorted(set(aggregation["resource_types"] or []))
 
+    # Extract unique categories from check_metadata
+    categories = set()
+    for finding in filtered_queryset.only("check_metadata"):
+        check_categories = finding.check_metadata.get("categories", [])
+        if check_categories:
+            categories.update(check_categories)
+    categories = sorted(list(categories))
+
     result = {
         "services": services,
         "regions": regions,
         "resource_types": resource_types,
+        "categories": categories,
     }
 
     serializer = FindingMetadataSerializer(data=result)

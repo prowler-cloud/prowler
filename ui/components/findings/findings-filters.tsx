@@ -14,6 +14,7 @@ interface FindingsFiltersProps {
   uniqueRegions: string[];
   uniqueServices: string[];
   uniqueResourceTypes: string[];
+  uniqueCategories: string[];
 }
 
 export const FindingsFilters = ({
@@ -24,6 +25,7 @@ export const FindingsFilters = ({
   uniqueRegions,
   uniqueServices,
   uniqueResourceTypes,
+  uniqueCategories,
 }: FindingsFiltersProps) => {
   const { availableProviderUIDs, availableScans } = useRelatedFilters({
     providerUIDs,
@@ -65,6 +67,12 @@ export const FindingsFilters = ({
             labelCheckboxGroup: "Resource Type",
             values: uniqueResourceTypes,
             index: 8,
+          },
+          {
+            key: FilterType.CATEGORY,
+            labelCheckboxGroup: "Category",
+            values: uniqueCategories,
+            index: 9,
           },
           {
             key: FilterType.SCAN,
