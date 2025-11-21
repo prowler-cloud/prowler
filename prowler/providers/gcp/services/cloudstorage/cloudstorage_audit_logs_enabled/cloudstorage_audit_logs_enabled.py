@@ -4,6 +4,7 @@ from prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_cl
 )
 
 
+# Rosa testing to do a PR in Prowler
 class cloudstorage_audit_logs_enabled(Check):
     """
     Ensure GCP Cloud Storage data access audit logs are enabled.
