@@ -24,21 +24,15 @@ export abstract class BasePage {
   // Common navigation methods
   async goto(url: string): Promise<void> {
     await this.page.goto(url);
-    await this.waitForPageLoad();
   }
 
-  async waitForPageLoad(): Promise<void> {
-    await this.page.waitForLoadState("networkidle");
-  }
 
   async refresh(): Promise<void> {
     await this.page.reload();
-    await this.waitForPageLoad();
   }
 
   async goBack(): Promise<void> {
     await this.page.goBack();
-    await this.waitForPageLoad();
   }
 
   // Common verification methods

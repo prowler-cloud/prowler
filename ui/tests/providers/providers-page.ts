@@ -275,33 +275,28 @@ export class ProvidersPage extends BasePage {
     // Click the add provider button
 
     await this.addProviderButton.click();
-    await this.waitForPageLoad();
   }
 
   async selectAWSProvider(): Promise<void> {
     // Prefer label-based click for radios, force if overlay intercepts
     await this.awsProviderRadio.click({ force: true });
-    await this.waitForPageLoad();
   }
 
   async selectAZUREProvider(): Promise<void> {
     // Prefer label-based click for radios, force if overlay intercepts
     await this.azureProviderRadio.click({ force: true });
-    await this.waitForPageLoad();
   }
 
   async selectM365Provider(): Promise<void> {
     // Select the M365 provider
 
     await this.m365ProviderRadio.click({ force: true });
-    await this.waitForPageLoad();
   }
 
   async selectKubernetesProvider(): Promise<void> {
     // Select the Kubernetes provider
 
     await this.kubernetesProviderRadio.click({ force: true });
-    await this.waitForPageLoad();
   }
 
 
@@ -356,7 +351,6 @@ export class ProvidersPage extends BasePage {
     // If on the "connect-account" step, click the "Next" button
     if (/\/providers\/connect-account/.test(url)) {
       await this.nextButton.click();
-      await this.waitForPageLoad();
       return;
     }
 
@@ -367,13 +361,11 @@ export class ProvidersPage extends BasePage {
 
       if (await saveBtn.count()) {
         await saveBtn.click();
-        await this.waitForPageLoad();
         return;
       }
       // If "Save" is not present, try clicking the "Next" button
       if (await this.nextButton.count()) {
         await this.nextButton.click();
-        await this.waitForPageLoad();
         return;
       }
     }
@@ -385,7 +377,6 @@ export class ProvidersPage extends BasePage {
         .filter({ hasText: "Launch scan" });
 
       await buttonByText.click();
-      await this.waitForPageLoad();
 
       // Wait for either success (redirect to scans) or error message to appear
       // The error container has multiple p.text-text-error elements, we want the first one with the technical error
@@ -446,7 +437,6 @@ export class ProvidersPage extends BasePage {
 
       if (await btn.count()) {
         await btn.click();
-        await this.waitForPageLoad();
         return;
       }
     }
@@ -469,8 +459,6 @@ export class ProvidersPage extends BasePage {
     } else {
       throw new Error(`Invalid AWS credential type: ${type}`);
     }
-    // Wait for the page to load
-    await this.waitForPageLoad();
   }
 
   async selectM365CredentialsType(type: M365CredentialType): Promise<void> {
@@ -485,8 +473,6 @@ export class ProvidersPage extends BasePage {
     } else {
       throw new Error(`Invalid M365 credential type: ${type}`);
     }
-    // Wait for the page to load
-    await this.waitForPageLoad();
   }
 
   async fillRoleCredentials(credentials: AWSProviderCredential): Promise<void> {
@@ -586,7 +572,6 @@ export class ProvidersPage extends BasePage {
 
     await expect(this.page).toHaveTitle(/Prowler/);
     await expect(this.addProviderButton).toBeVisible();
-    await this.page.waitForLoadState("networkidle");
   }
 
   async verifyConnectAccountPageLoaded(): Promise<void> {
@@ -646,7 +631,6 @@ export class ProvidersPage extends BasePage {
   async verifyLoadProviderPageAfterNewProvider(): Promise<void> {
     // Verify the provider page is loaded
 
-    await this.waitForPageLoad();
     await expect(this.page).toHaveTitle(/Prowler/);
     await expect(this.providersTable).toBeVisible();
   }
@@ -683,9 +667,6 @@ export class ProvidersPage extends BasePage {
     await searchInput.clear();
     await searchInput.fill(providerUID);
     await searchInput.press("Enter");
-
-    // Wait for the table to finish loading/filtering
-    await this.waitForPageLoad();
 
     // Additional wait for React table to re-render with the server-filtered data
     // The filtering happens on the server, but the table component needs time
@@ -781,9 +762,6 @@ export class ProvidersPage extends BasePage {
 
     // Wait for modal to close (this indicates deletion was initiated)
     await expect(modal).not.toBeVisible({ timeout: 10000 });
-
-    // Wait for page to reload
-    await this.waitForPageLoad();
 
     // Navigate back to providers page to ensure clean state
     await this.goto();

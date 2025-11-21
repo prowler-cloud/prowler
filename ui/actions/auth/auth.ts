@@ -188,5 +188,5 @@ export const getUserByMe = async (accessToken: string) => {
 };
 
 export async function logOut() {
-  await signOut();
+  await signOut({ redirectTo: "/sign-in" });
 }
