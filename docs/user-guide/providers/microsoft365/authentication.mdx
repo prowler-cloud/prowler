@@ -2,25 +2,38 @@
 title: "Microsoft 365 Authentication in Prowler"
 ---
 
-Prowler for Microsoft 365 supports multiple authentication types. Authentication methods vary between Prowler App and Prowler CLI:
+Prowler for Microsoft 365 supports multiple authentication types across Prowler Cloud and Prowler CLI.
 
-**Prowler App:**
+## Navigation
+- [Common Setup](#common-setup)
+- [Prowler Cloud Authentication](#prowler-cloud-authentication)
+- [Prowler CLI Authentication](#prowler-cli-authentication)
+- [Supported PowerShell Versions](#supported-powershell-versions)
+- [Required PowerShell Modules](#required-powershell-modules)
 
-- [**Application Certificate Authentication**](#certificate-based-authentication) (**Recommended**)
-- [**Application Client Secret Authentication**](#client-secret-authentication)
+## Common Setup
+
+### Authentication Methods Overview
+
+Prowler Cloud uses app-only authentication. Prowler CLI supports the same app-only options and two delegated flows.
+
+**Prowler Cloud:**
+
+- [**Application Certificate Authentication**](#application-certificate-authentication-recommended) (**Recommended**)
+- [**Application Client Secret Authentication**](#application-client-secret-authentication)
 
 **Prowler CLI:**
 
-- [**Application Certificate Authentication**](#certificate-based-authentication) (**Recommended**)
-- [**Application Client Secret Authentication**](#client-secret-authentication)
+- [**Application Certificate Authentication**](#application-certificate-authentication-recommended) (**Recommended**)
+- [**Application Client Secret Authentication**](#application-client-secret-authentication)
 - [**Azure CLI Authentication**](#azure-cli-authentication)
 - [**Interactive Browser Authentication**](#interactive-browser-authentication)
 
-## Required Permissions
+### Required Permissions
 
 To run the full Prowler provider, including PowerShell checks, two types of permission scopes must be set in **Microsoft Entra ID**.
 
-### Application Permissions for App-Only Authentication
+#### Application Permissions for App-Only Authentication
 
 When using service principal authentication, add these **Application Permissions**:
 
@@ -44,6 +57,7 @@ When using service principal authentication, add these **Application Permissions
 These permissions enable application-based authentication methods (client secret and certificate). Using certificate-based authentication is the recommended way to run the full M365 provider, including PowerShell checks.
 
 </Note>
+
 ### Browser Authentication Permissions
 
 When using browser authentication, permissions are delegated to the user, so the user must have the appropriate permissions rather than the application.
@@ -52,37 +66,38 @@ When using browser authentication, permissions are delegated to the user, so the
 Browser and Azure CLI authentication methods limit scanning capabilities to checks that operate through Microsoft Graph API. Checks requiring PowerShell modules will not execute, as they need application-level permissions that cannot be delegated through browser authentication.
 
 </Warning>
+
 ### Step-by-Step Permission Assignment
 
 #### Create Application Registration
 
-1. Access **Microsoft Entra ID**
+1. Access **Microsoft Entra ID**.
 
    ![Overview of Microsoft Entra ID](/images/providers/microsoft-entra-id.png)
 
-2. Navigate to "Applications" > "App registrations"
+2. Navigate to "Applications" > "App registrations".
 
    ![App Registration nav](/images/providers/app-registration-menu.png)
 
-3. Click "+ New registration", complete the form, and click "Register"
+3. Click "+ New registration", complete the form, and click "Register".
 
    ![New Registration](/images/providers/new-registration.png)
 
-4. Go to "Certificates & secrets" > "Client secrets" > "+ New client secret"
+4. Go to "Certificates & secrets" > "Client secrets" > "+ New client secret".
 
    ![Certificate & Secrets nav](/images/providers/certificates-and-secrets.png)
 
-5. Fill in the required fields and click "Add", then copy the generated value (this will be `AZURE_CLIENT_SECRET`)
+5. Fill in the required fields and click "Add", then copy the generated value (this will be `AZURE_CLIENT_SECRET`).
 
    ![New Client Secret](/images/providers/new-client-secret.png)
 
 #### Grant Microsoft Graph API Permissions
 
-1. Go to App Registration > Select your Prowler App > click on "API permissions"
+1. Open **API permissions** for the Prowler application registration.
 
    ![API Permission Page](/images/providers/api-permissions-page.png)
 
-2. Click "+ Add a permission" > "Microsoft Graph" > "Application permissions"
+2. Click "+ Add a permission" > "Microsoft Graph" > "Application permissions".
 
    ![Add API Permission](/images/providers/add-app-api-permission.png)
 
@@ -97,38 +112,39 @@ Browser and Azure CLI authentication methods limit scanning capabilities to chec
 
    ![Application Permissions](/images/providers/app-permissions.png)
 
-4. Click "Add permissions", then click "Grant admin consent for `<your-tenant-name>`"
+4. Click "Add permissions", then click "Grant admin consent for `<your-tenant-name>`".
 
+<a id="grant-powershell-module-permissions-for-app-only-authentication"></a>
 #### Grant PowerShell Module Permissions
 1. **Add Exchange API:**
 
-   - Search and select "Office 365 Exchange Online" API in **APIs my organization uses**
+   - Search and select "Office 365 Exchange Online" API in **APIs my organization uses**.
 
    ![Office 365 Exchange Online API](/images/providers/search-exchange-api.png)
 
-   - Select "Exchange.ManageAsApp" permission and click "Add permissions"
+   - Select "Exchange.ManageAsApp" permission and click "Add permissions".
 
    ![Exchange.ManageAsApp Permission](/images/providers/exchange-permission.png)
 
-   - Assign `Global Reader` role to the app: Go to `Roles and administrators` > click `here` for directory level assignment
+   - Assign `Global Reader` role to the app: Go to `Roles and administrators` > click `here` for directory level assignment.
 
    ![Roles and administrators](/images/providers/here.png)
 
-   - Search for `Global Reader` and assign it to your application
+   - Search for `Global Reader` and assign it to the application.
 
    ![Global Reader Role](/images/providers/global-reader-role.png)
 
 2. **Add Teams API:**
 
-   - Search and select "Skype and Teams Tenant Admin API" in **APIs my organization uses**
+   - Search and select "Skype and Teams Tenant Admin API" in **APIs my organization uses**.
 
    ![Skype and Teams Tenant Admin API](/images/providers/search-skype-teams-tenant-admin-api.png)
 
-   - Select "application_access" permission and click "Add permissions"
+   - Select "application_access" permission and click "Add permissions".
 
    ![application_access Permission](/images/providers/teams-permission.png)
 
-3. Click "Grant admin consent for `<your-tenant-name>`" to grant admin consent
+3. Click "Grant admin consent for `<your-tenant-name>`" to grant admin consent.
 
    ![Grant Admin Consent](/images/providers/grant-external-api-permissions.png)
 
@@ -136,11 +152,13 @@ Final permissions should look like this:
 
 ![Final Permissions](/images/providers/final-permissions.png)
 
+Use the same application registration for both Prowler Cloud and Prowler CLI while switching authentication methods as needed.
+
 <a id="client-secret-authentication"></a>
 <a id="certificate-based-authentication"></a>
 ## Application Certificate Authentication (Recommended)
 
-_Available for both Prowler App and Prowler CLI_
+_Available for both Prowler Cloud and Prowler CLI_
 
 **Authentication flag for CLI:** `--certificate-auth`
 
@@ -173,11 +191,11 @@ Guard `prowlerm365.key` and `prowlerm365.pfx`. Only upload the `.cer` file to th
 
 </Warning>
 
-If your organization uses a certificate authority, you can replace step 2 with a CSR workflow and import the signed certificate instead.
+If an internal certificate authority is preferred, replace step 2 with a CSR workflow and import the signed certificate instead.
 
 ### Upload the Certificate to Microsoft Entra ID
 
-1. Open **Microsoft Entra ID** > **App registrations** > your application.
+1. Open **Microsoft Entra ID** > **App registrations** > the Prowler application.
 2. Go to **Certificates & secrets** > **Certificates**.
 3. Select **Upload certificate** and choose `prowlerm365.cer`.
 4. Confirm the certificate appears with the expected expiration date.
@@ -189,45 +207,37 @@ base64 -i prowlerm365.pfx -o prowlerm365.pfx.b64
 cat prowlerm365.pfx.b64 | tr -d '\n'
 ```
 
-Copy the resulting single-line Base64 string (or the contents of `prowlerm365.pfx.b64`)—you will use it in the next step.
+Copy the resulting single-line Base64 string (or the contents of `prowlerm365.pfx.b64`) for the next step.
 
 ### Provide the Certificate to Prowler
 
-You can supply the private certificate to Prowler in two ways:
+- **Prowler Cloud:** Paste the Base64-encoded PFX in the `certificate_content` field when configuring the Microsoft 365 provider in Prowler Cloud.
+- **Prowler CLI:** Export credential variables or pass the local file path when running Prowler.
 
-- **Environment variables (recommended for headless execution)**
+```console
+export AZURE_CLIENT_ID="00000000-0000-0000-0000-000000000000"
+export AZURE_TENANT_ID="11111111-1111-1111-1111-111111111111"
+export M365_CERTIFICATE_CONTENT="$(base64 < prowlerm365.pfx | tr -d '\n')"
+```
 
-  ```console
-  export AZURE_CLIENT_ID="00000000-0000-0000-0000-000000000000"
-  export AZURE_TENANT_ID="11111111-1111-1111-1111-111111111111"
-  export M365_CERTIFICATE_CONTENT="$(base64 < prowlerm365.pfx | tr -d '\n')"
-  ```
+Store the PFX securely and reference it when running the CLI:
 
-  The `M365_CERTIFICATE_CONTENT` variable must contain a single-line Base64 string. Remove any line breaks or spaces before exporting.
+```console
+python3 prowler-cli.py m365 --certificate-auth --certificate-path /secure/path/prowlerm365.pfx
+```
 
-- **Local file path**
-
-  Store the PFX securely and reference it when you run the CLI:
-
-  ```console
-  python3 prowler-cli.py m365 --certificate-auth --certificate-path /secure/path/prowlerm365.pfx
-  ```
-
-  The CLI still needs `AZURE_CLIENT_ID` and `AZURE_TENANT_ID` in the environment when you use `--certificate-path`.
-
-For the **Prowler App**, paste the Base64-encoded PFX in the `certificate_content` field when you configure the provider secrets. The platform persists the encrypted certificate and supplies it during scans.
+The CLI still needs `AZURE_CLIENT_ID` and `AZURE_TENANT_ID` in the environment when `--certificate-path` is used.
 
 <Note>
 Do not mix certificate authentication with a client secret. Provide either a certificate **or** a secret to the application registration and Prowler configuration.
 
 </Note>
 
-<a id="client-secret-authentication"></a>
 <a id="service-principal-authentication"></a>
 <a id="service-principal-authentication-recommended"></a>
 ## Application Client Secret Authentication
 
-_Available for both Prowler App and Prowler CLI_
+_Available for both Prowler Cloud and Prowler CLI_
 
 **Authentication flag for CLI:** `--sp-env-auth`
 
@@ -239,30 +249,52 @@ export AZURE_CLIENT_SECRET="XXXXXXXXX"
 export AZURE_TENANT_ID="XXXXXXXXX"
 ```
 
-If these variables are not set or exported, execution using `--sp-env-auth` will fail.
-
-Refer to the [Step-by-Step Permission Assignment](#step-by-step-permission-assignment) section below for setup instructions.
-
-If the external API permissions described in the mentioned section above are not added only checks that work through MS Graph will be executed. This means that the full provider will not be executed.
-
-This workflow is helpful for initial validation or temporary access. Plan to transition to certificate-based authentication to remove long-lived secrets and keep full provider coverage in unattended environments.
+If these variables are not set or exported, execution using `--sp-env-auth` will fail. This workflow is helpful for initial validation or temporary access. Plan to transition to certificate-based authentication to remove long-lived secrets and keep full provider coverage in unattended environments.
 
 <Note>
 To scan every M365 check, ensure the required permissions are added to the application registration. Refer to the [PowerShell Module Permissions](#grant-powershell-module-permissions-for-app-only-authentication) section for more information.
 
 </Note>
 
-### Run Prowler with Certificate Authentication
+If the external API permissions described above are not added, only checks that work through Microsoft Graph will be executed. This means that the full provider will not be executed.
 
-After the variables or path are in place, run the Microsoft 365 provider as usual:
+## Prowler Cloud Authentication
+
+Use the shared permissions and credentials above, then complete the Microsoft 365 provider form in Prowler Cloud. The platform persists the encrypted credentials and supplies them during scans.
+
+### Application Certificate Authentication (Recommended)
+
+1. Select **Application Certificate Authentication**.
+2. Enter the **tenant ID** and **application (client) ID**.
+3. Paste the Base64-encoded certificate content.
+
+This method keeps all Microsoft 365 checks available, including PowerShell-based checks.
+
+### Application Client Secret Authentication
+
+1. Select **Application Client Secret Authentication**.
+2. Enter the **tenant ID** and **application (client) ID**.
+3. Enter the **client secret**.
+
+## Prowler CLI Authentication
+
+### Run With Certificate Authentication
+
+After credentials are exported, launch the Microsoft 365 provider with certificate authentication:
 
 ```console
 python3 prowler-cli.py m365 --certificate-auth --init-modules --log-level ERROR
 ```
 
-The command above initializes PowerShell modules if needed. You can combine other standard flags (for example, `--region M365USGovernment` or custom outputs) with `--certificate-auth`.
+Prowler prints the certificate thumbprint during execution so the correct credential can be verified.
 
-Prowler prints the certificate thumbprint during execution so you can confirm the correct credential is in use.
+### Run With Client Secret Authentication
+
+After exporting the secret-based variables, run:
+
+```console
+python3 prowler-cli.py m365 --sp-env-auth --init-modules --log-level ERROR
+```
 
 <a id="azure-cli-authentication"></a>
 ## Azure CLI Authentication
@@ -279,7 +311,7 @@ az login --tenant <TENANT_ID>
 az account set --tenant <TENANT_ID>
 ```
 
-If you prefer to reuse the same service principal that powers certificate-based authentication, authenticate it through Azure CLI instead of exporting environment variables. Azure CLI expects the certificate in PEM format; convert the PFX produced earlier and sign in:
+If reusing the same service principal that powers certificate-based authentication, authenticate it through Azure CLI instead of exporting environment variables. Azure CLI expects the certificate in PEM format; convert the PFX produced earlier and sign in:
 
 ```console
 openssl pkcs12 -in prowlerm365.pfx -out prowlerm365.pem -nodes
