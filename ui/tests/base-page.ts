@@ -26,7 +26,6 @@ export abstract class BasePage {
     await this.page.goto(url);
   }
 
-
   async refresh(): Promise<void> {
     await this.page.reload();
   }

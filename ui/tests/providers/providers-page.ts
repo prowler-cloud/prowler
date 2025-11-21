@@ -613,7 +613,6 @@ export class ProvidersPage extends BasePage {
     await expect(this.kubernetesContextInput).toBeVisible();
   }
 
-
   async verifyLaunchScanPageLoaded(): Promise<void> {
     // Verify the launch scan page is loaded
 

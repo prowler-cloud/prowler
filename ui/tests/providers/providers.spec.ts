@@ -460,7 +460,6 @@ test.describe("Add Provider", () => {
       );
     }
 
-
     // Setup before each test
     test.beforeEach(async ({ page }) => {
       providersPage = new ProvidersPage(page);
