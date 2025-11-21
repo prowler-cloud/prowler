@@ -114,8 +114,6 @@ const AttackPathGraphComponent = forwardRef<
   > | null>(null);
   /** Track whether graph has been auto-centered to avoid repeated centering as simulation settles */
   const hasAutocenteredRef = useRef(false);
-  /** Track drag state to distinguish node clicks from drag interactions */
-  const draggedRef = useRef(false);
 
   useImperativeHandle(ref, () => ({
     zoomIn: () => {
@@ -242,7 +240,265 @@ const AttackPathGraphComponent = forwardRef<
         .filter((edge) => edge !== null) as D3Link[];
     }
 
-    // Create force simulation
+    // Calculate hierarchical layout (left to right flow - Mermaid LR style)
+    // Build adjacency map to determine node levels
+    // Container relationships (reverse direction for layout purposes)
+    const containerRelations = new Set([
+      "RUNS_IN",
+      "BELONGS_TO",
+      "LOCATED_IN",
+      "PART_OF",
+    ]);
+
+    const adjacencyMap = new Map<string, string[]>();
+    const reverseAdjacencyMap = new Map<string, string[]>();
+    edges.forEach((edge) => {
+      const source = edge.source;
+      const target = edge.target;
+      let sourceId =
+        typeof source === "string"
+          ? source
+          : typeof source === "object" && source !== null
+            ? (source as D3Node).id
+            : "";
+      let targetId =
+        typeof target === "string"
+          ? target
+          : typeof target === "object" && target !== null
+            ? (target as D3Node).id
+            : "";
+
+      // Reverse container relationships for proper hierarchy
+      if (containerRelations.has(edge.type)) {
+        [sourceId, targetId] = [targetId, sourceId];
+      }
+
+      if (!adjacencyMap.has(sourceId)) {
+        adjacencyMap.set(sourceId, []);
+      }
+      adjacencyMap.get(sourceId)?.push(targetId);
+
+      if (!reverseAdjacencyMap.has(targetId)) {
+        reverseAdjacencyMap.set(targetId, []);
+      }
+      reverseAdjacencyMap.get(targetId)?.push(sourceId);
+    });
+
+    // Calculate node levels using longest path from root
+    const incomingCount = new Map<string, number>();
+    nodes.forEach((node) => incomingCount.set(node.id, 0));
+
+    // Count incoming edges (respecting reversed container relationships)
+    edges.forEach((edge) => {
+      const source = edge.source;
+      const target = edge.target;
+      let targetId =
+        typeof target === "string"
+          ? target
+          : typeof target === "object" && target !== null
+            ? (target as D3Node).id
+            : "";
+
+      // If it's a container relationship, reverse the direction for counting
+      if (containerRelations.has(edge.type)) {
+        targetId =
+          typeof source === "string"
+            ? source
+            : typeof source === "object" && source !== null
+              ? (source as D3Node).id
+              : "";
+      }
+
+      if (targetId) {
+        incomingCount.set(targetId, (incomingCount.get(targetId) || 0) + 1);
+      }
+    });
+
+    // Find root nodes (nodes with no incoming edges)
+    const rootNodes: string[] = [];
+    nodes.forEach((node) => {
+      if (incomingCount.get(node.id) === 0) {
+        rootNodes.push(node.id);
+      }
+    });
+
+    // Calculate longest path from any root using DFS
+    const levels = new Map<string, number>();
+    const visited = new Set<string>();
+
+    function calculateLongestPath(nodeId: string, currentDepth: number) {
+      visited.add(nodeId);
+      const existingLevel = levels.get(nodeId) || -1;
+
+      // Always use the maximum depth (longest path)
+      if (currentDepth > existingLevel) {
+        levels.set(nodeId, currentDepth);
+      }
+
+      const neighbors = adjacencyMap.get(nodeId) || [];
+      neighbors.forEach((neighborId) => {
+        calculateLongestPath(neighborId, currentDepth + 1);
+      });
+    }
+
+    // Start DFS from all root nodes
+    rootNodes.forEach((rootId) => {
+      calculateLongestPath(rootId, 0);
+    });
+
+    // Handle disconnected nodes or cycles
+    nodes.forEach((node) => {
+      if (!levels.has(node.id)) {
+        // Place disconnected nodes at level 0
+        levels.set(node.id, 0);
+      }
+    });
+
+    // Group nodes by level and sort initially by node type to group similar nodes
+    const nodesByLevel = new Map<number, D3Node[]>();
+    nodes.forEach((node) => {
+      const level = levels.get(node.id) || 0;
+      if (!nodesByLevel.has(level)) {
+        nodesByLevel.set(level, []);
+      }
+      nodesByLevel.get(level)?.push(node);
+    });
+
+    // Initial sorting: group nodes by type within each level for better starting point
+    nodesByLevel.forEach((nodesInLevel, level) => {
+      if (nodesInLevel.length > 1) {
+        nodesInLevel.sort((a, b) => {
+          // Get primary label
+          const aLabel = a.labels[0]?.toLowerCase() || "";
+          const bLabel = b.labels[0]?.toLowerCase() || "";
+
+          // Sort findings to the end, resources at the beginning
+          const aIsFinding = aLabel.includes("finding");
+          const bIsFinding = bLabel.includes("finding");
+
+          if (aIsFinding && !bIsFinding) return 1;
+          if (!aIsFinding && bIsFinding) return -1;
+
+          // Otherwise sort alphabetically by label
+          return aLabel.localeCompare(bLabel);
+        });
+        nodesByLevel.set(level, nodesInLevel);
+      }
+    });
+
+    // Sort nodes within each level to minimize edge crossings using barycenter method
+    const maxLevel = Math.max(...Array.from(levels.values()));
+
+    // Sort nodes within each level to minimize edge crossings
+    // Use median heuristic which often works better than barycenter for complex graphs
+    for (let iteration = 0; iteration < 4; iteration++) {
+      // Forward pass (left to right) - position based on parents
+      for (let level = 1; level <= maxLevel; level++) {
+        const nodesInLevel = nodesByLevel.get(level) || [];
+
+        if (nodesInLevel.length > 1) {
+          const nodePositions = nodesInLevel.map((node, nodeIdx) => {
+            const parents = reverseAdjacencyMap.get(node.id) || [];
+            const parentPositions: number[] = [];
+
+            // Get all parent positions
+            parents.forEach((parentId) => {
+              for (let prevLevel = 0; prevLevel < level; prevLevel++) {
+                const levelNodes = nodesByLevel.get(prevLevel) || [];
+                const pos = levelNodes.findIndex((n) => n.id === parentId);
+                if (pos >= 0) {
+                  parentPositions.push(pos);
+                  break;
+                }
+              }
+            });
+
+            // Use median position if we have parents, otherwise keep current position
+            let medianPos = nodeIdx;
+            if (parentPositions.length > 0) {
+              parentPositions.sort((a, b) => a - b);
+              const mid = Math.floor(parentPositions.length / 2);
+              medianPos =
+                parentPositions.length % 2 === 0
+                  ? (parentPositions[mid - 1] + parentPositions[mid]) / 2
+                  : parentPositions[mid];
+            }
+
+            return { node, medianPos, originalIdx: nodeIdx };
+          });
+
+          // Sort by median position, keeping stable sort for ties
+          nodePositions.sort(
+            (a, b) =>
+              a.medianPos - b.medianPos || a.originalIdx - b.originalIdx,
+          );
+          nodesByLevel.set(
+            level,
+            nodePositions.map((item) => item.node),
+          );
+        }
+      }
+
+      // Backward pass (right to left) - position based on children
+      for (let level = maxLevel - 1; level >= 0; level--) {
+        const nodesInLevel = nodesByLevel.get(level) || [];
+
+        if (nodesInLevel.length > 1) {
+          const nodePositions = nodesInLevel.map((node, nodeIdx) => {
+            const children = adjacencyMap.get(node.id) || [];
+            const childPositions: number[] = [];
+
+            // Get all child positions
+            children.forEach((childId) => {
+              for (
+                let nextLevel = level + 1;
+                nextLevel <= maxLevel;
+                nextLevel++
+              ) {
+                const levelNodes = nodesByLevel.get(nextLevel) || [];
+                const pos = levelNodes.findIndex((n) => n.id === childId);
+                if (pos >= 0) {
+                  childPositions.push(pos);
+                  break;
+                }
+              }
+            });
+
+            // Use median position if we have children, otherwise keep current position
+            let medianPos = nodeIdx;
+            if (childPositions.length > 0) {
+              childPositions.sort((a, b) => a - b);
+              const mid = Math.floor(childPositions.length / 2);
+              medianPos =
+                childPositions.length % 2 === 0
+                  ? (childPositions[mid - 1] + childPositions[mid]) / 2
+                  : childPositions[mid];
+            }
+
+            return { node, medianPos, originalIdx: nodeIdx };
+          });
+
+          // Sort by median position, keeping stable sort for ties
+          nodePositions.sort(
+            (a, b) =>
+              a.medianPos - b.medianPos || a.originalIdx - b.originalIdx,
+          );
+          nodesByLevel.set(
+            level,
+            nodePositions.map((item) => item.node),
+          );
+        }
+      }
+    }
+
+    // Calculate spacing - leave margin on left for root nodes
+    const leftMargin = 150;
+    const rightMargin = 150;
+    const availableWidth = width - leftMargin - rightMargin;
+    const levelSpacing =
+      maxLevel > 0 ? availableWidth / maxLevel : availableWidth;
+
+    // Create force simulation with hierarchical left-to-right layout (Mermaid LR style)
     const simulation = d3
       .forceSimulation(nodes)
       .force(
@@ -250,11 +506,39 @@ const AttackPathGraphComponent = forwardRef<
         d3
           .forceLink<D3Node, D3Link>(edges)
           .id((d) => d.id)
-          .distance(150),
+          .distance(levelSpacing * 0.7)
+          .strength(0.2),
       )
-      .force("charge", d3.forceManyBody().strength(-400))
-      .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collision", d3.forceCollide<D3Node>().radius(65));
+      .force("charge", d3.forceManyBody().strength(-600))
+      .force("collision", d3.forceCollide<D3Node>().radius(85))
+      // Very strong horizontal force to maintain strict columns
+      .force(
+        "x",
+        d3
+          .forceX<D3Node>()
+          .x((d) => {
+            const level = levels.get(d.id) || 0;
+            return leftMargin + levelSpacing * level;
+          })
+          .strength(0.8),
+      )
+      // Strong vertical force to distribute nodes within their level
+      .force(
+        "y",
+        d3
+          .forceY<D3Node>()
+          .y((d) => {
+            const level = levels.get(d.id) || 0;
+            const nodesInLevel = nodesByLevel.get(level) || [];
+            const indexInLevel = nodesInLevel.findIndex((n) => n.id === d.id);
+            const verticalSpacing = height / (nodesInLevel.length + 1);
+            return verticalSpacing * (indexInLevel + 1);
+          })
+          .strength(0.7),
+      )
+      .velocityDecay(0.4)
+      .alphaDecay(0.015)
+      .alphaMin(0.001);
 
     // Create links
     const link = container
@@ -273,14 +557,7 @@ const AttackPathGraphComponent = forwardRef<
       .enter()
       .append("g")
       .attr("class", "node")
-      .attr("cursor", "pointer")
-      .call(
-        d3
-          .drag<SVGGElement, D3Node>()
-          .on("start", dragStarted)
-          .on("drag", dragged)
-          .on("end", dragEnded),
-      );
+      .attr("cursor", "pointer");
 
     // Add tooltip (title element for native SVG tooltips)
     nodeGroup.append("title").text((d: D3Node): string => {
@@ -299,11 +576,7 @@ const AttackPathGraphComponent = forwardRef<
       .attr("opacity", 0.8)
       .on("click", (event: PointerEvent, d: D3Node) => {
         event.stopPropagation();
-        // Only trigger click if no drag occurred
-        if (!draggedRef.current) {
-          onNodeClick?.(d);
-        }
-        draggedRef.current = false;
+        onNodeClick?.(d);
       });
 
     // Add label text group containing icon, type, and ID - centered in node
@@ -433,25 +706,6 @@ const AttackPathGraphComponent = forwardRef<
         centerGraph();
       }
     });
-
-    // Drag functions
-    function dragStarted(event: d3.D3DragEvent<SVGGElement, D3Node, D3Node>) {
-      if (!event.active) simulation.alphaTarget(0.3).restart();
-      event.subject.fx = event.subject.x;
-      event.subject.fy = event.subject.y;
-    }
-
-    function dragged(event: d3.D3DragEvent<SVGGElement, D3Node, D3Node>) {
-      draggedRef.current = true;
-      event.subject.fx = event.x;
-      event.subject.fy = event.y;
-    }
-
-    function dragEnded(event: d3.D3DragEvent<SVGGElement, D3Node, D3Node>) {
-      if (!event.active) simulation.alphaTarget(0);
-      event.subject.fx = null;
-      event.subject.fy = null;
-    }
 
     return () => {
       simulation.stop();

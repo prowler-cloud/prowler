@@ -4,9 +4,9 @@ import { z } from "zod";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiResponse } from "@/lib/server-actions-helper";
-import { AttackPathScan, AttackPathScansResponse } from "@/types/attack-paths";
+import { AttackPathScan } from "@/types/attack-paths";
 
-import { adaptAttackPathScansResponse } from "./scans.adapter";
+import { MOCK_ATTACK_PATH_SCANS } from "./mock-data";
 
 // Validation schema for UUID - RFC 9562/4122 compliant
 const UUIDSchema = z.uuid();
@@ -17,24 +17,8 @@ const UUIDSchema = z.uuid();
 export const getAttackPathScans = async (): Promise<
   { data: AttackPathScan[] } | undefined
 > => {
-  const headers = await getAuthHeaders({ contentType: false });
-
-  try {
-    const response = await fetch(`${apiBaseUrl}/attack-paths-scans`, {
-      headers,
-      method: "GET",
-    });
-
-    const apiResponse = await handleApiResponse(response);
-    const adaptedData = adaptAttackPathScansResponse(
-      apiResponse as AttackPathScansResponse,
-    );
-
-    return { data: adaptedData.data };
-  } catch (error) {
-    console.error("Error fetching attack path scans:", error);
-    return undefined;
-  }
+  // Return mock data directly for testing
+  return { data: MOCK_ATTACK_PATH_SCANS };
 };
 
 /**

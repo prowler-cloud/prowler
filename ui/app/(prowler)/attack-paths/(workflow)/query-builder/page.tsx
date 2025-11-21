@@ -2,7 +2,7 @@
 
 import { Maximize2, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { FormProvider } from "react-hook-form";
 
 import {
@@ -200,13 +200,16 @@ export default function AttackPathAnalysisPage() {
     }
   };
 
-  const handleNodeClick = (node: GraphNode) => {
-    graphState.selectNode(node.id);
-  };
+  const handleNodeClick = useCallback(
+    (node: GraphNode) => {
+      graphState.selectNode(node.id);
+    },
+    [graphState.selectNode],
+  );
 
-  const handleCloseDetails = () => {
+  const handleCloseDetails = useCallback(() => {
     graphState.selectNode(null);
-  };
+  }, [graphState.selectNode]);
 
   const handleGraphExport = (svgElement: SVGSVGElement | null) => {
     try {
