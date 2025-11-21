@@ -46,6 +46,7 @@ export const buildComplianceWatchlistItem = ({
   requirements_passed,
   total_requirements,
   icon,
+  score,
 }: {
   id: string;
   framework: string;
@@ -53,11 +54,12 @@ export const buildComplianceWatchlistItem = ({
   requirements_passed: number;
   total_requirements: number;
   icon?: string | StaticImageData;
+  score?: number;
 }): WatchlistItem => {
   const totalRequirements = Number(total_requirements) || 0;
   const passedRequirements = Number(requirements_passed) || 0;
 
-  const score =
+  const computedScore =
     totalRequirements > 0
       ? Math.round((passedRequirements / totalRequirements) * 100)
       : 0;
@@ -66,6 +68,6 @@ export const buildComplianceWatchlistItem = ({
     key: id,
     icon: <ComplianceIcon src={icon} label={framework} />,
     label: version ? `${framework} - ${version}` : framework,
-    value: `${score}%`,
+    value: `${typeof score === "number" ? score : computedScore}%`,
   };
 };

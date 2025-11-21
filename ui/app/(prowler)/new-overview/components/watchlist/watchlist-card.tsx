@@ -75,8 +75,7 @@ export const WatchlistCard = ({
       className="flex min-h-[405px] min-w-[328px] flex-1 flex-col justify-between md:max-w-[312px]"
     >
       <CardTitle>{title}</CardTitle>
-
-      <CardContent className="flex flex-col gap-2">
+      <CardContent className="flex flex-col">
         {isEmpty ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-12 py-6">
             {/* Icon and message */}
@@ -104,7 +103,9 @@ export const WatchlistCard = ({
           </div>
         ) : (
           <>
-            {items.map((item) => {
+            {items.map((item, index) => {
+              const isLast = index === items.length - 1;
+
               // Parse numeric value if it's a percentage string (e.g., "10%")
               const numericValue =
                 typeof item.value === "string"
@@ -119,7 +120,10 @@ export const WatchlistCard = ({
               return (
                 <div
                   key={item.key}
-                  className="flex h-[54px] items-center justify-between gap-2 px-3 py-[11px]"
+                  className={cn(
+                    "flex h-[54px] items-center justify-between gap-2 px-3 py-[11px]",
+                    !isLast && "border-border-neutral-tertiary border-b",
+                  )}
                 >
                   <div className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-md bg-white">
                     {item.icon}
