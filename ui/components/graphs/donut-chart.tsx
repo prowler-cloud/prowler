@@ -18,6 +18,7 @@ interface DonutChartProps {
     value: string | number;
     label: string;
   };
+  onSegmentClick?: (dataPoint: DonutDataPoint, index: number) => void;
 }
 
 const CustomTooltip = ({ active, payload }: any) => {
@@ -72,6 +73,7 @@ export function DonutChart({
   outerRadius = 86,
   showLegend = true,
   centerLabel,
+  onSegmentClick,
 }: DonutChartProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
@@ -137,14 +139,23 @@ export function DonutChart({
             {(isEmpty ? emptyData : chartData).map((entry, index) => {
               const opacity =
                 hoveredIndex === null ? 1 : hoveredIndex === index ? 1 : 0.5;
+              const isClickable = !isEmpty && onSegmentClick;
               return (
                 <Cell
                   key={`cell-${index}`}
                   fill={entry.fill}
                   opacity={opacity}
-                  style={{ transition: "opacity 0.2s" }}
+                  style={{
+                    transition: "opacity 0.2s",
+                    cursor: isClickable ? "pointer" : "default",
+                  }}
                   onMouseEnter={() => setHoveredIndex(index)}
                   onMouseLeave={() => setHoveredIndex(null)}
+                  onClick={() => {
+                    if (isClickable) {
+                      onSegmentClick(data[index], index);
+                    }
+                  }}
                 />
               );
             })}
