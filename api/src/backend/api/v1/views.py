@@ -2702,13 +2702,29 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
             .order_by("resource_type")
         )
 
-        # Extract unique categories from check_metadata
+        # Extract unique categories from check_metadata using indexed fields
+        from collections import defaultdict
+        from prowler.lib.check.models import CheckMetadata
+
+        # Step 1: group distinct check_ids by provider
+        check_ids_by_provider = defaultdict(set)
+        for finding in filtered_queryset.values(
+            "scan__provider__provider", "check_id"
+        ).distinct():
+            check_ids_by_provider[finding["scan__provider__provider"]].add(
+                finding["check_id"]
+            )
+
+        # Step 2: load metadata once per provider and collect categories
         categories = set()
-        for finding in filtered_queryset.only("check_metadata"):
-            check_categories = finding.check_metadata.get("categories", [])
-            if check_categories:
-                categories.update(check_categories)
-        categories = sorted(list(categories))
+        for provider, check_ids in check_ids_by_provider.items():
+            bulk_metadata = CheckMetadata.get_bulk(provider)
+            for check_id in check_ids:
+                check_metadata = CheckMetadata.get(bulk_metadata, check_id)
+                if check_metadata and check_metadata.Categories:
+                    categories.update(check_metadata.Categories)
+
+        categories = sorted(categories)
 
         result = {
             "services": services,
@@ -2819,17 +2835,32 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
             .order_by("resource_type")
         )
 
-        # Extract unique categories from check_metadata
-        categories = set()
+        # Extract unique categories from check_metadata using indexed fields
+        from collections import defaultdict
+        from prowler.lib.check.models import CheckMetadata
+
+        # Step 1: group distinct check_ids by provider
+        check_ids_by_provider = defaultdict(set)
         for finding in (
             self.filter_queryset(self.get_queryset())
             .filter(tenant_id=tenant_id, scan_id__in=latest_scans_ids)
-            .only("check_metadata")
+            .values("scan__provider__provider", "check_id")
+            .distinct()
         ):
-            check_categories = finding.check_metadata.get("categories", [])
-            if check_categories:
-                categories.update(check_categories)
-        categories = sorted(list(categories))
+            check_ids_by_provider[finding["scan__provider__provider"]].add(
+                finding["check_id"]
+            )
+
+        # Step 2: load metadata once per provider and collect categories
+        categories = set()
+        for provider, check_ids in check_ids_by_provider.items():
+            bulk_metadata = CheckMetadata.get_bulk(provider)
+            for check_id in check_ids:
+                check_metadata = CheckMetadata.get(bulk_metadata, check_id)
+                if check_metadata and check_metadata.Categories:
+                    categories.update(check_metadata.Categories)
+
+        categories = sorted(categories)
 
         result = {
             "services": services,
