@@ -1,8 +1,11 @@
 import logging
+from types import SimpleNamespace
+
 from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
+
 from allauth.socialaccount.models import SocialLogin
 from django.conf import settings
 from django.db import connection as django_connection
@@ -11,10 +14,14 @@ from django.urls import reverse
 from django_celery_results.models import TaskResult
 from rest_framework import status
 from rest_framework.test import APIClient
-from tasks.jobs.backfill import backfill_resource_scan_summaries
 
+from api.attack_paths import (
+    AttackPathsQueryDefinition,
+    AttackPathsQueryParameterDefinition,
+)
 from api.db_utils import rls_transaction
 from api.models import (
+    AttackPathsScan,
     ComplianceOverview,
     ComplianceRequirementOverview,
     Finding,
@@ -47,6 +54,7 @@ from api.rls import Tenant
 from api.v1.serializers import TokenSerializer
 from prowler.lib.check.models import Severity
 from prowler.lib.outputs.finding import Status
+from tasks.jobs.backfill import backfill_resource_scan_summaries
 
 TODAY = str(datetime.today().date())
 API_JSON_CONTENT_TYPE = "application/vnd.api+json"
@@ -159,22 +167,20 @@ def create_test_user_rbac_no_roles(django_db_setup, django_db_blocker, tenants_f
 
 
 @pytest.fixture(scope="function")
-def create_test_user_rbac_limited(django_db_setup, django_db_blocker):
+def create_test_user_rbac_limited(django_db_setup, django_db_blocker, tenants_fixture):
     with django_db_blocker.unblock():
         user = User.objects.create_user(
             name="testing_limited",
             email="rbac_limited@rbac.com",
             password=TEST_PASSWORD,
         )
-        tenant = Tenant.objects.create(
-            name="Tenant Test",
-        )
+        tenant = tenants_fixture[0]
         Membership.objects.create(
             user=user,
             tenant=tenant,
             role=Membership.RoleChoices.OWNER,
         )
-        Role.objects.create(
+        role = Role.objects.create(
             name="limited",
             tenant_id=tenant.id,
             manage_users=False,
@@ -187,7 +193,7 @@ def create_test_user_rbac_limited(django_db_setup, django_db_blocker):
         )
         UserRoleRelationship.objects.create(
             user=user,
-            role=Role.objects.get(name="limited"),
+            role=role,
             tenant_id=tenant.id,
         )
     return user
@@ -1467,6 +1473,120 @@ def mute_rules_fixture(tenants_fixture, create_test_user, findings_fixture):
     )
 
     return mute_rule1, mute_rule2
+
+
+@pytest.fixture
+def create_attack_paths_scan():
+    """Factory fixture to create Attack Paths scans for tests."""
+
+    def _create(
+        provider,
+        *,
+        scan=None,
+        state=StateChoices.COMPLETED,
+        progress=0,
+        graph_database="tenant-db",
+        **extra_fields,
+    ):
+        scan_instance = scan or Scan.objects.create(
+            name=extra_fields.pop("scan_name", "Attack Paths Supporting Scan"),
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=extra_fields.pop("scan_state", StateChoices.COMPLETED),
+            tenant_id=provider.tenant_id,
+        )
+
+        payload = {
+            "tenant_id": provider.tenant_id,
+            "provider": provider,
+            "scan": scan_instance,
+            "state": state,
+            "progress": progress,
+            "graph_database": graph_database,
+        }
+        payload.update(extra_fields)
+
+        return AttackPathsScan.objects.create(**payload)
+
+    return _create
+
+
+@pytest.fixture
+def attack_paths_query_definition_factory():
+    """Factory fixture for building Attack Paths query definitions."""
+
+    def _create(**overrides):
+        cast_type = overrides.pop("cast_type", str)
+        parameters = overrides.pop(
+            "parameters",
+            [
+                AttackPathsQueryParameterDefinition(
+                    name="limit",
+                    label="Limit",
+                    cast=cast_type,
+                )
+            ],
+        )
+        definition_payload = {
+            "id": "aws-test",
+            "name": "Attack Paths Test Query",
+            "description": "Synthetic Attack Paths definition for tests.",
+            "provider": "aws",
+            "cypher": "RETURN 1",
+            "parameters": parameters,
+        }
+        definition_payload.update(overrides)
+        return AttackPathsQueryDefinition(**definition_payload)
+
+    return _create
+
+
+@pytest.fixture
+def attack_paths_graph_stub_classes():
+    """Provide lightweight graph element stubs for Attack Paths serialization tests."""
+
+    class AttackPathsNativeValue:
+        def __init__(self, value):
+            self._value = value
+
+        def to_native(self):
+            return self._value
+
+    class AttackPathsNode:
+        def __init__(self, element_id, labels, properties):
+            self.element_id = element_id
+            self.labels = labels
+            self._properties = properties
+
+    class AttackPathsRelationship:
+        def __init__(self, element_id, rel_type, start_node, end_node, properties):
+            self.element_id = element_id
+            self.type = rel_type
+            self.start_node = start_node
+            self.end_node = end_node
+            self._properties = properties
+
+    return SimpleNamespace(
+        NativeValue=AttackPathsNativeValue,
+        Node=AttackPathsNode,
+        Relationship=AttackPathsRelationship,
+    )
+
+
+@pytest.fixture
+def graph_db_mocks():
+    with (
+        patch(
+            "tasks.jobs.deletion.graph_database.drop_provider_subgraph"
+        ) as mock_drop_provider,
+        patch(
+            "tasks.jobs.deletion.graph_database.drop_tenant_database"
+        ) as mock_drop_tenant,
+    ):
+        yield {
+            "drop_provider_subgraph": mock_drop_provider,
+            "drop_tenant_database": mock_drop_tenant,
+        }
 
 
 def get_authorization_header(access_token: str) -> dict:
