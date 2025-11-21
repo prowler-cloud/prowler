@@ -95,7 +95,6 @@ export const getFindingsBySeverity = async ({
   if (page) url.searchParams.append("page[number]", page.toString());
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
-
   // Handle multiple filters, but exclude unsupported filters
   // The overviews/findings_severity endpoint does not support status or muted filters
   Object.entries(filters).forEach(([key, value]) => {

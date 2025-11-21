@@ -16,8 +16,8 @@ import {
   updateMutedFindingsConfig,
 } from "@/actions/processors";
 import { DeleteIcon } from "@/components/icons";
+import { Button } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
-import { CustomButton } from "@/components/ui/custom";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { FormButtons } from "@/components/ui/form";
 import { fontMono } from "@/config/fonts";
@@ -142,30 +142,35 @@ export const MutedFindingsConfigForm = ({
           be undone.
         </p>
         <div className="flex w-full justify-center gap-6">
-          <CustomButton
+          <Button
             type="button"
-            ariaLabel="Cancel"
+            aria-label="Cancel"
             className="w-full bg-transparent"
-            variant="faded"
+            variant="outline"
             size="lg"
-            onPress={() => setShowDeleteConfirmation(false)}
-            isDisabled={isDeleting}
+            onClick={() => setShowDeleteConfirmation(false)}
+            disabled={isDeleting}
           >
             Cancel
-          </CustomButton>
-          <CustomButton
+          </Button>
+          <Button
             type="button"
-            ariaLabel="Delete"
+            aria-label="Delete"
             className="w-full"
-            variant="solid"
-            color="danger"
+            variant="destructive"
             size="lg"
-            isLoading={isDeleting}
-            startContent={!isDeleting && <DeleteIcon size={24} />}
-            onPress={handleDelete}
+            disabled={isDeleting}
+            onClick={handleDelete}
           >
-            {isDeleting ? "Deleting" : "Delete"}
-          </CustomButton>
+            {isDeleting ? (
+              "Deleting"
+            ) : (
+              <>
+                <DeleteIcon size={24} />
+                Delete
+              </>
+            )}
+          </Button>
         </div>
       </div>
     );
@@ -250,19 +255,18 @@ export const MutedFindingsConfigForm = ({
         />
 
         {config && (
-          <CustomButton
+          <Button
             type="button"
-            ariaLabel="Delete Configuration"
+            aria-label="Delete Configuration"
             className="w-full"
-            variant="bordered"
-            color="danger"
-            size="md"
-            startContent={<DeleteIcon size={20} />}
-            onPress={() => setShowDeleteConfirmation(true)}
-            isDisabled={isPending}
+            variant="outline"
+            size="default"
+            onClick={() => setShowDeleteConfirmation(true)}
+            disabled={isPending}
           >
+            <DeleteIcon size={20} />
             Delete Configuration
-          </CustomButton>
+          </Button>
         )}
       </div>
     </form>

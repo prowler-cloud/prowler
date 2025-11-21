@@ -1167,11 +1167,17 @@ class ResourceSerializer(RLSSerializer):
             "findings",
             "failed_findings_count",
             "url",
+            "metadata",
+            "details",
+            "partition",
         ]
         extra_kwargs = {
             "id": {"read_only": True},
             "inserted_at": {"read_only": True},
             "updated_at": {"read_only": True},
+            "metadata": {"read_only": True},
+            "details": {"read_only": True},
+            "partition": {"read_only": True},
         }
 
     included_serializers = {
@@ -1228,11 +1234,15 @@ class ResourceIncludeSerializer(RLSSerializer):
             "service",
             "type_",
             "tags",
+            "details",
+            "partition",
         ]
         extra_kwargs = {
             "id": {"read_only": True},
             "inserted_at": {"read_only": True},
             "updated_at": {"read_only": True},
+            "details": {"read_only": True},
+            "partition": {"read_only": True},
         }
 
     @extend_schema_field(
@@ -2214,6 +2224,30 @@ class OverviewServiceSerializer(serializers.Serializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["pass"] = self.fields.pop("_pass")
+
+    def get_root_meta(self, _resource, _many):
+        return {"version": "v1"}
+
+
+class OverviewRegionSerializer(serializers.Serializer):
+    id = serializers.SerializerMethodField()
+    provider_type = serializers.CharField()
+    region = serializers.CharField()
+    total = serializers.IntegerField()
+    _pass = serializers.IntegerField()
+    fail = serializers.IntegerField()
+    muted = serializers.IntegerField()
+
+    class JSONAPIMeta:
+        resource_name = "regions-overview"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["pass"] = self.fields.pop("_pass")
+
+    def get_id(self, obj):
+        """Generate unique ID from provider_type and region."""
+        return f"{obj['provider_type']}:{obj['region']}"
 
     def get_root_meta(self, _resource, _many):
         return {"version": "v1"}

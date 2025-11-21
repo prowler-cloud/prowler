@@ -1,32 +1,37 @@
 {
   "Provider": "aws",
   "CheckID": "elbv2_logging_enabled",
-  "CheckTitle": "Check if Elastic Load Balancers have logging enabled.",
+  "CheckTitle": "ELBv2 Application Load Balancer has access logs to S3 configured",
   "CheckType": [
-    "Logging and Monitoring"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
   ],
   "ServiceName": "elbv2",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsElbv2LoadBalancer",
-  "Description": "Check if Elastic Load Balancers have logging enabled.",
-  "Risk": "If logs are not enabled monitoring of service use and threat analysis is not possible.",
+  "Description": "**ELBv2 Application Load Balancers** are evaluated for **access logging** enabled to Amazon S3, capturing request details such as timestamps, client IPs, paths, and response codes.",
+  "Risk": "Absent **ALB access logs** reduces **visibility** and hampers **incident detection** and **forensics**. Malicious requests, credential stuffing, or data exfiltration via the load balancer can go unnoticed, undermining **confidentiality** and **integrity**, and delaying recovery from **availability** incidents.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/access-log.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws elbv2 modify-load-balancer-attributes --load-balancer-arn <lb_arn> --attributes Key=access_logs.s3.enabled,Value=true Key=access_logs.s3.bucket,Value=<bucket_name> Key=access_logs.s3.prefix,Value=<prefix>",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/logging-policies/bc_aws_logging_22#cloudformation",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/access-log.html",
-      "Terraform": "https://docs.prowler.com/checks/aws/logging-policies/bc_aws_logging_22#terraform"
+      "CLI": "aws elbv2 modify-load-balancer-attributes --load-balancer-arn <lb_arn> --attributes Key=access_logs.s3.enabled,Value=true Key=access_logs.s3.bucket,Value=<bucket_name>",
+      "NativeIaC": "```yaml\n# CloudFormation: enable ALB access logs to S3\nResources:\n  <example_resource_name>:\n    Type: AWS::ElasticLoadBalancingV2::LoadBalancer\n    Properties:\n      Subnets:\n        - <subnet_id_1>\n        - <subnet_id_2>\n      SecurityGroups:\n        - <example_security_group_id>\n      LoadBalancerAttributes:\n        - Key: access_logs.s3.enabled  # critical: enable ALB access logging\n          Value: \"true\"\n        - Key: access_logs.s3.bucket   # critical: destination S3 bucket for logs\n          Value: \"<example_resource_name>\"\n```",
+      "Other": "1. In AWS Console, go to EC2 > Load Balancers and select your Application Load Balancer\n2. Open the Attributes (or Edit attributes) section and find Access logs\n3. Check Enable access logs and choose the S3 bucket for delivery\n4. Save changes",
+      "Terraform": "```hcl\n# Terraform: enable ALB access logs to S3\nresource \"aws_lb\" \"<example_resource_name>\" {\n  name            = \"<example_resource_name>\"\n  security_groups = [\"<example_security_group_id>\"]\n  subnets         = [\"<subnet_id_1>\", \"<subnet_id_2>\"]\n\n  access_logs {\n    bucket  = \"<example_resource_name>\"  # critical: destination S3 bucket for logs\n    enabled = true                        # critical: enable ALB access logging\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable ELB logging, create a log lifecycle and define use cases.",
-      "Url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-access-logs.html"
+      "Text": "Enable **ALB access logging** to a dedicated, encrypted S3 bucket. Apply **least privilege** to the bucket for delivery and readers, set lifecycle policies for retention, and consider `Object Lock` to deter tampering. Centralize logs in a **SIEM** and alert on anomalies as part of **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/elbv2_logging_enabled"
     }
   },
   "Categories": [
-    "forensics-ready",
     "logging"
   ],
   "DependsOn": [],
