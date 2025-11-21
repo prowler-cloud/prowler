@@ -23,6 +23,5 @@ export class ScansPage extends BasePage {
   async verifyPageLoaded(): Promise<void> {
     await expect(this.page).toHaveTitle(/Prowler/);
     await expect(this.scanTable).toBeVisible();
-    await this.waitForPageLoad();
   }
 }
