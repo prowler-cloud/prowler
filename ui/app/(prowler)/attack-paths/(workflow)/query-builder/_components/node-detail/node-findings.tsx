@@ -35,9 +35,11 @@ export const NodeFindings = ({ node, allNodes = [] }: NodeFindingsProps) => {
   }
 
   const normalizeSeverity = (
-    severity?: string | number | boolean | null,
+    severity?: string | number | boolean | string[] | number[] | null,
   ): Severity => {
-    const sev = String(severity || "").toLowerCase();
+    const sev = String(
+      Array.isArray(severity) ? severity[0] : severity || "",
+    ).toLowerCase();
     if (sev in SEVERITY_LEVELS) {
       return sev as Severity;
     }
@@ -45,9 +47,11 @@ export const NodeFindings = ({ node, allNodes = [] }: NodeFindingsProps) => {
   };
 
   const getStatusVariant = (
-    status?: string | number | boolean | null,
+    status?: string | number | boolean | string[] | number[] | null,
   ): "default" | "destructive" | "secondary" => {
-    const st = String(status || "").toUpperCase();
+    const st = String(
+      Array.isArray(status) ? status[0] : status || "",
+    ).toUpperCase();
     if (st === "PASS") return "default";
     if (st === "FAIL") return "destructive";
     return "secondary";

@@ -61,6 +61,7 @@ export default function AttackPathAnalysisPage() {
   const fullscreenGraphRef = useRef<AttackPathGraphRef>(null);
   const hasResetRef = useRef(false);
   const nodeDetailsRef = useRef<HTMLDivElement>(null);
+  const graphContainerRef = useRef<HTMLDivElement>(null);
 
   const [queries, setQueries] = useState<AttackPathQuery[]>([]);
 
@@ -187,13 +188,23 @@ export default function AttackPathAnalysisPage() {
           description: "Query executed successfully",
           variant: "default",
         });
+
+        // Scroll to graph after successful query execution
+        setTimeout(() => {
+          graphContainerRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }, 100);
       } else {
+        graphState.resetGraph();
         graphState.setError("No data returned from query");
         showErrorToast("Error", "Query returned no data");
       }
     } catch (error) {
       const errorMsg =
         error instanceof Error ? error.message : "Failed to execute query";
+      graphState.resetGraph();
       graphState.setError(errorMsg);
       showErrorToast("Error", errorMsg);
     } finally {
@@ -427,7 +438,18 @@ export default function AttackPathAnalysisPage() {
                                   </Button>
                                 </div>
                                 <p className="text-text-neutral-secondary dark:text-text-neutral-secondary mb-4 text-xs">
-                                  {`${graphState.selectedNode?.properties?.name || graphState.selectedNode?.id.substring(0, 20)}`}
+                                  {graphState.selectedNode?.labels.some(
+                                    (label) =>
+                                      label.toLowerCase().includes("finding"),
+                                  )
+                                    ? graphState.selectedNode?.properties
+                                        ?.check_title ||
+                                      graphState.selectedNode?.properties?.id ||
+                                      "Unknown Finding"
+                                    : graphState.selectedNode?.properties
+                                        ?.name ||
+                                      graphState.selectedNode?.properties?.id ||
+                                      "Unknown Resource"}
                                 </p>
                                 <div className="flex flex-col gap-4">
                                   <div>
@@ -453,7 +475,7 @@ export default function AttackPathAnalysisPage() {
             </div>
 
             {/* Graph in the middle */}
-            <div className="h-screen">
+            <div ref={graphContainerRef} className="h-[calc(100vh-16rem)]">
               <AttackPathGraph
                 ref={graphRef}
                 data={graphState.data}
@@ -488,8 +510,15 @@ export default function AttackPathAnalysisPage() {
               <h3 className="text-lg font-semibold">Node Details</h3>
               <p className="text-text-neutral-secondary dark:text-text-neutral-secondary mt-1 text-sm">
                 {String(
-                  graphState.selectedNode.properties?.name ||
-                    graphState.selectedNode.id.substring(0, 20),
+                  graphState.selectedNode.labels.some((label) =>
+                    label.toLowerCase().includes("finding"),
+                  )
+                    ? graphState.selectedNode.properties?.check_title ||
+                        graphState.selectedNode.properties?.id ||
+                        "Unknown Finding"
+                    : graphState.selectedNode.properties?.name ||
+                        graphState.selectedNode.properties?.id ||
+                        "Unknown Resource",
                 )}
               </p>
             </div>

@@ -310,15 +310,38 @@ const AttackPathGraphComponent = forwardRef<
 
     const linkGroup = container.append("g").attr("class", "links");
 
+    const nodeRadius = 45;
     const linkElements = linkGroup
       .selectAll("line")
       .data(edgesData)
       .enter()
       .append("line")
-      .attr("x1", (d) => d.source.x)
-      .attr("y1", (d) => d.source.y)
-      .attr("x2", (d) => d.target.x)
-      .attr("y2", (d) => d.target.y)
+      .attr("x1", (d) => {
+        // Calculate edge start point at node boundary
+        const dx = d.target.x - d.source.x;
+        const dy = d.target.y - d.source.y;
+        const angle = Math.atan2(dy, dx);
+        return d.source.x + Math.cos(angle) * nodeRadius;
+      })
+      .attr("y1", (d) => {
+        const dx = d.target.x - d.source.x;
+        const dy = d.target.y - d.source.y;
+        const angle = Math.atan2(dy, dx);
+        return d.source.y + Math.sin(angle) * nodeRadius;
+      })
+      .attr("x2", (d) => {
+        // Calculate edge end point at node boundary
+        const dx = d.target.x - d.source.x;
+        const dy = d.target.y - d.source.y;
+        const angle = Math.atan2(dy, dx);
+        return d.target.x - Math.cos(angle) * nodeRadius;
+      })
+      .attr("y2", (d) => {
+        const dx = d.target.x - d.source.x;
+        const dy = d.target.y - d.source.y;
+        const angle = Math.atan2(dy, dx);
+        return d.target.y - Math.sin(angle) * nodeRadius;
+      })
       .attr("stroke", GRAPH_EDGE_COLOR)
       .attr("stroke-opacity", 0.6)
       .attr("stroke-width", 2)
@@ -337,7 +360,7 @@ const AttackPathGraphComponent = forwardRef<
       .append("marker")
       .attr("id", "arrowhead")
       .attr("viewBox", "0 0 10 10")
-      .attr("refX", 9)
+      .attr("refX", 10)
       .attr("refY", 5)
       .attr("markerWidth", 6)
       .attr("markerHeight", 6)
@@ -456,7 +479,8 @@ const AttackPathGraphComponent = forwardRef<
             if (
               svgSelectionRef.current &&
               zoomBehaviorRef.current &&
-              containerRef.current
+              containerRef.current &&
+              svgRef.current
             ) {
               // Calculate bounding box of visible nodes (clicked node + its findings)
               const visibleNodeIds = new Set([
@@ -487,8 +511,10 @@ const AttackPathGraphComponent = forwardRef<
                 minY -= padding;
                 maxY += padding;
 
-                const fullWidth = svgRef.current?.clientWidth || 800;
-                const fullHeight = svgRef.current?.clientHeight || 500;
+                // Get actual SVG dimensions from the DOM
+                const svgRect = svgRef.current.getBoundingClientRect();
+                const fullWidth = svgRect.width;
+                const fullHeight = svgRect.height;
 
                 const width = maxX - minX;
                 const height = maxY - minY;
@@ -573,11 +599,28 @@ const AttackPathGraphComponent = forwardRef<
       .attr("font-weight", "bold")
       .attr("text-anchor", "middle")
       .text((d) => {
-        const type =
-          d.data.labels && d.data.labels.length > 0
-            ? formatNodeLabel(d.data.labels[0])
-            : "Unknown";
-        return type.length > 16 ? type.substring(0, 16) + "." : type;
+        const isFinding = d.data.labels.some((label) =>
+          label.toLowerCase().includes("finding"),
+        );
+
+        let title: string;
+        if (isFinding) {
+          title = String(
+            d.data.properties?.check_title ||
+              d.data.properties?.id ||
+              "Finding",
+          );
+        } else {
+          title = String(
+            d.data.properties?.name ||
+              d.data.properties?.id ||
+              (d.data.labels && d.data.labels.length > 0
+                ? formatNodeLabel(d.data.labels[0])
+                : "Unknown"),
+          );
+        }
+
+        return title.length > 16 ? title.substring(0, 16) + "..." : title;
       });
 
     // ID or severity
@@ -589,8 +632,19 @@ const AttackPathGraphComponent = forwardRef<
       .attr("fill", "white")
       .attr("text-anchor", "middle")
       .text((d) => {
-        const severity = d.data.properties?.severity;
-        return severity ? String(severity) : d.id.substring(0, 8);
+        const isFinding = d.data.labels.some((label) =>
+          label.toLowerCase().includes("finding"),
+        );
+
+        if (isFinding && d.data.properties?.severity) {
+          return String(d.data.properties.severity);
+        }
+
+        const type =
+          d.data.labels && d.data.labels.length > 0
+            ? formatNodeLabel(d.data.labels[0])
+            : "Unknown";
+        return type.length > 12 ? type.substring(0, 12) + "." : type;
       });
 
     // Add zoom behavior (but disable all mouse interactions)
@@ -636,7 +690,7 @@ const AttackPathGraphComponent = forwardRef<
         );
       }
     }, 100);
-  }, [data, selectedNodeId]);
+  }, [data]);
 
   return (
     <svg

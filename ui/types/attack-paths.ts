@@ -5,6 +5,7 @@
 
 // Scan state constants
 export const SCAN_STATES = {
+  SCHEDULED: "scheduled",
   EXECUTING: "executing",
   COMPLETED: "completed",
   FAILED: "failed",
@@ -106,13 +107,15 @@ export interface AttackPathQueriesResponse {
 }
 
 // Graph Data Types
-// Property values from graph nodes can be any primitive type
+// Property values from graph nodes can be any primitive type or arrays
 export type GraphNodePropertyValue =
   | string
   | number
   | boolean
   | null
-  | undefined;
+  | undefined
+  | string[]
+  | number[];
 
 export interface GraphNodeProperties {
   [key: string]: GraphNodePropertyValue;
@@ -148,10 +151,15 @@ export interface AttackPathGraphData {
   relationships?: GraphRelationship[];
 }
 
+export interface QueryResultAttributes {
+  nodes: GraphNode[];
+  relationships?: GraphRelationship[];
+}
+
 export interface QueryResultData {
   type: "attack-paths-query-run-request";
-  id: null;
-  attributes: AttackPathGraphData;
+  id: string | null;
+  attributes: QueryResultAttributes;
 }
 
 export interface AttackPathQueryResult {

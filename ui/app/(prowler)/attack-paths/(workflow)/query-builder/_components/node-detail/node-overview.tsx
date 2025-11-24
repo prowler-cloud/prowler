@@ -19,16 +19,30 @@ export const NodeOverview = ({ node }: NodeOverviewProps) => {
     if (value === null || value === undefined || value === "") {
       return "-";
     }
+    if (Array.isArray(value)) {
+      return value.join(", ");
+    }
     return String(value);
   };
+
+  const isFinding = node.labels.some((label) =>
+    label.toLowerCase().includes("finding"),
+  );
 
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <InfoField label="Node ID" variant="simple">
-          <CodeSnippet value={node.id} />
-        </InfoField>
         <InfoField label="Type">{formatNodeLabels(node.labels)}</InfoField>
+        {isFinding && node.properties.check_title && (
+          <InfoField label="Check Title">
+            {String(node.properties.check_title)}
+          </InfoField>
+        )}
+        {isFinding && node.properties.id && (
+          <InfoField label="Finding ID" variant="simple">
+            <CodeSnippet value={String(node.properties.id)} />
+          </InfoField>
+        )}
       </div>
 
       {/* Display all properties */}
@@ -40,6 +54,11 @@ export const NodeOverview = ({ node }: NodeOverviewProps) => {
           {Object.entries(node.properties).map(([key, value]) => {
             // Skip internal properties
             if (key.startsWith("_")) {
+              return null;
+            }
+
+            // Skip check_title and id for findings as they're shown prominently above
+            if (isFinding && (key === "check_title" || key === "id")) {
               return null;
             }
 

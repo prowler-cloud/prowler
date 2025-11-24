@@ -58,6 +58,7 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
   const searchParams = useSearchParams();
   const router = useRouter();
 
+  const selectedScanId = searchParams.get("scanId");
   const currentPage = parseInt(searchParams.get("scanPage") ?? "1");
   const pageSize = parseInt(
     searchParams.get("scanPageSize") ?? String(DEFAULT_PAGE_SIZE),
@@ -76,10 +77,19 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
   };
 
   const isSelectDisabled = (scan: AttackPathScan) => {
-    return scan.attributes.state !== SCAN_STATES.COMPLETED;
+    return (
+      scan.attributes.state !== SCAN_STATES.COMPLETED ||
+      selectedScanId === scan.id
+    );
   };
 
   const getSelectButtonLabel = (scan: AttackPathScan) => {
+    if (selectedScanId === scan.id) {
+      return "Selected";
+    }
+    if (scan.attributes.state === SCAN_STATES.SCHEDULED) {
+      return "Scheduled";
+    }
     if (scan.attributes.state === SCAN_STATES.EXECUTING) {
       return "Waiting...";
     }
@@ -137,12 +147,20 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
             ) : (
               paginatedScans.map((scan) => {
                 const isDisabled = isSelectDisabled(scan);
+                const isSelected = selectedScanId === scan.id;
                 const duration = scan.attributes.duration
                   ? `${Math.floor(scan.attributes.duration / 60)}m ${scan.attributes.duration % 60}s`
                   : "-";
 
                 return (
-                  <TableRow key={scan.id}>
+                  <TableRow
+                    key={scan.id}
+                    className={
+                      isSelected
+                        ? "bg-button-primary/10 dark:bg-button-primary/10"
+                        : ""
+                    }
+                  >
                     <TableCell className="font-medium">
                       <EntityInfoShort
                         cloudProvider={
