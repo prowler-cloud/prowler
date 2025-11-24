@@ -5,7 +5,7 @@ import { Icon } from "@iconify/react";
 import { useState } from "react";
 import { Control, FieldPath, FieldValues } from "react-hook-form";
 
-import { FormControl, FormField, FormMessage } from "@/components/ui/form";
+import { FormControl, FormField } from "@/components/ui/form";
 
 interface CustomInputProps<T extends FieldValues> {
   control: Control<T>;
@@ -22,7 +22,6 @@ interface CustomInputProps<T extends FieldValues> {
   isReadOnly?: boolean;
   isRequired?: boolean;
   isDisabled?: boolean;
-  showFormMessage?: boolean;
 }
 
 export const CustomInput = <T extends FieldValues>({
@@ -40,7 +39,6 @@ export const CustomInput = <T extends FieldValues>({
   isReadOnly = false,
   isRequired = true,
   isDisabled = false,
-  showFormMessage = true,
 }: CustomInputProps<T>) => {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
@@ -119,9 +117,6 @@ export const CustomInput = <T extends FieldValues>({
               value={field.value ?? ""}
             />
           </FormControl>
-          {showFormMessage && (
-            <FormMessage className="text-text-error max-w-full text-xs" />
-          )}
         </>
       )}
     />
