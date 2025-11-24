@@ -39,4 +39,3 @@ class repository_immutable_releases_enabled(Check):
             findings.append(report)
 
         return findings
-

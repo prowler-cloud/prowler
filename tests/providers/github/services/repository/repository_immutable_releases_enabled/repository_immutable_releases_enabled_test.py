@@ -139,4 +139,3 @@ class Test_repository_immutable_releases_enabled:
             check = repository_immutable_releases_enabled()
             result = check.execute()
             assert len(result) == 0
-
