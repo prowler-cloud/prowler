@@ -39,14 +39,18 @@ def create_attack_paths_scan(
 def retrieve_attack_paths_scan(
     tenant_id: str,
     scan_id: str,
-) -> ProwlerAPIAttackPathsScan:
-    with rls_transaction(tenant_id):
-        attack_paths_scan = ProwlerAPIAttackPathsScan.objects.get(
-            tenant_id=tenant_id,
-            scan_id=scan_id,
-        )
+) -> ProwlerAPIAttackPathsScan | None:
+    try:
+        with rls_transaction(tenant_id):
+            attack_paths_scan = ProwlerAPIAttackPathsScan.objects.get(
+                tenant_id=tenant_id,
+                scan_id=scan_id,
+            )
 
-    return attack_paths_scan
+        return attack_paths_scan
+
+    except ProwlerAPIAttackPathsScan.DoesNotExist:
+        return None
 
 
 def starting_attack_paths_scan(

@@ -3,10 +3,9 @@ import neo4j
 from cartography.client.core.tx import run_write_query
 from cartography.config import Config as CartographyConfig
 from celery.utils.log import get_task_logger
-from django.db.models import Subquery
 
 from api.db_utils import rls_transaction
-from api.models import Provider, ResourceFindingMapping, Scan
+from api.models import Provider, ResourceFindingMapping
 from config.env import env
 from prowler.config import config as ProwlerConfig
 from tasks.jobs.attack_paths.providers import get_node_uid_field, get_root_node_label
@@ -94,25 +93,21 @@ def create_indexes(neo4j_session: neo4j.Session) -> None:
 def analysis(
     neo4j_session: neo4j.Session,
     prowler_api_provider: Provider,
+    scan_id: str,
     config: CartographyConfig,
 ) -> None:
-    findings_data = get_provider_last_scan_findings(prowler_api_provider)
+    findings_data = get_provider_last_scan_findings(prowler_api_provider, scan_id)
     load_findings(neo4j_session, findings_data, prowler_api_provider, config)
     cleanup_findings(neo4j_session, prowler_api_provider, config)
 
 
 def get_provider_last_scan_findings(
     prowler_api_provider: Provider,
+    scan_id: str,
 ) -> list[dict[str, str]]:
     with rls_transaction(prowler_api_provider.tenant_id):
-        latest_scan_id_subquery = (
-            Scan.objects.filter(provider_id=prowler_api_provider.id)
-            .order_by("-updated_at")
-            .values("id")[:1]
-        )
-
         resource_finding_qs = ResourceFindingMapping.objects.filter(
-            finding__scan_id=Subquery(latest_scan_id_subquery),
+            finding__scan_id=scan_id,
         ).values(
             "resource__uid",
             "finding__id",

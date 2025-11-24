@@ -115,7 +115,12 @@ class TestAttackPathsRun:
         mock_cartography_indexes.assert_called_once_with(mock_session, config)
         mock_prowler_indexes.assert_called_once_with(mock_session)
         mock_cartography_analysis.assert_called_once_with(mock_session, config)
-        mock_prowler_analysis.assert_called_once_with(mock_session, provider, config)
+        mock_prowler_analysis.assert_called_once_with(
+            mock_session,
+            provider,
+            str(scan.id),
+            config,
+        )
         assert mock_get_ingestion.call_args_list == [
             call(provider.provider),
             call(provider.provider),
@@ -394,7 +399,10 @@ class TestAttackPathsProwlerHelpers:
             "tasks.jobs.attack_paths.prowler.rls_transaction",
             new=lambda *args, **kwargs: nullcontext(),
         ):
-            findings_data = prowler_module.get_provider_last_scan_findings(provider)
+            findings_data = prowler_module.get_provider_last_scan_findings(
+                provider,
+                str(latest_scan.id),
+            )
 
         assert len(findings_data) == 1
         finding_dict = findings_data[0]

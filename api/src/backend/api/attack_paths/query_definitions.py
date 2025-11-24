@@ -195,7 +195,7 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
             description="Find Classic Load Balancers exposed to the internet along with their listeners.",
             provider="aws",
             cypher="""
-                MATCH path = (aws:AWSAccount {id: $provider_uid})--(elb:LoadBalancer)—-(listener:ELBListener)
+                MATCH path = (aws:AWSAccount {id: $provider_uid})--(elb:LoadBalancer)--(listener:ELBListener)
                 WHERE elb.exposed_internet = true
 
                 UNWIND nodes(path) as n
@@ -212,7 +212,7 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
             description="Find ELBv2 load balancers exposed to the internet along with their listeners.",
             provider="aws",
             cypher="""
-                MATCH path = (aws:AWSAccount {id: $provider_uid})--(elbv2:LoadBalancerV2)—-(listener:ELBV2Listener)
+                MATCH path = (aws:AWSAccount {id: $provider_uid})--(elbv2:LoadBalancerV2)--(listener:ELBV2Listener)
                 WHERE elbv2.exposed_internet = true
 
                 UNWIND nodes(path) as n

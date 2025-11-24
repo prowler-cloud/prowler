@@ -111,7 +111,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             db_utils.update_attack_paths_scan_progress(attack_paths_scan, 95)
 
             # Adding Prowler nodes and relationships
-            prowler.analysis(neo4j_session, prowler_api_provider, cartography_config)
+            prowler.analysis(neo4j_session, prowler_api_provider, scan_id, cartography_config)
 
         logger.info(
             f"Completed Cartography ({attack_paths_scan.id}) for "
