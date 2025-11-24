@@ -3,7 +3,7 @@
 import { Checkbox } from "@heroui/checkbox";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 
 import { createNewUser } from "@/actions/auth";
 import { AuthDivider } from "@/components/auth/oss/auth-divider";
@@ -60,6 +60,12 @@ export const SignUpForm = ({
       confirmPassword: "",
       ...(invitationToken && { invitationToken }),
     },
+  });
+
+  const passwordValue = useWatch({
+    control: form.control,
+    name: "password",
+    defaultValue: "",
   });
 
   const isLoading = form.formState.isSubmitting;
@@ -152,9 +158,7 @@ export const SignUpForm = ({
             showFormMessage
           />
           <CustomInput control={form.control} name="password" password />
-          <PasswordRequirementsMessage
-            password={form.watch("password") || ""}
-          />
+          <PasswordRequirementsMessage password={passwordValue || ""} />
           <CustomInput
             control={form.control}
             name="confirmPassword"

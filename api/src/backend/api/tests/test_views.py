@@ -6706,10 +6706,10 @@ class TestOverviewViewSet:
         response = authenticated_client.get(reverse("overview-providers"))
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 1
-        assert response.json()["data"][0]["attributes"]["findings"]["total"] == 4
+        assert response.json()["data"][0]["attributes"]["findings"]["total"] == 9
         assert response.json()["data"][0]["attributes"]["findings"]["pass"] == 2
         assert response.json()["data"][0]["attributes"]["findings"]["fail"] == 1
-        assert response.json()["data"][0]["attributes"]["findings"]["muted"] == 1
+        assert response.json()["data"][0]["attributes"]["findings"]["muted"] == 6
         # Aggregated resources include all AWS providers present in the tenant
         assert response.json()["data"][0]["attributes"]["resources"]["total"] == 3
 
@@ -6761,10 +6761,10 @@ class TestOverviewViewSet:
         assert len(data) == 1
         attributes = data[0]["attributes"]
 
-        assert attributes["findings"]["total"] == 10
+        assert attributes["findings"]["total"] == 15
         assert attributes["findings"]["pass"] == 5
         assert attributes["findings"]["fail"] == 3
-        assert attributes["findings"]["muted"] == 2
+        assert attributes["findings"]["muted"] == 7
         assert attributes["resources"]["total"] == 4
 
     def test_overview_providers_count(
@@ -7210,6 +7210,32 @@ class TestOverviewViewSet:
         # Should return services from latest scans
         assert len(response.json()["data"]) == 2
 
+    def test_overview_regions_list(self, authenticated_client, scan_summaries_fixture):
+        response = authenticated_client.get(
+            reverse("overview-regions"), {"filter[inserted_at]": TODAY}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        # Only two different regions in the fixture (region1, region2)
+        assert len(response.json()["data"]) == 2
+
+        data = response.json()["data"]
+        regions = {item["id"]: item["attributes"] for item in data}
+
+        assert "aws:region1" in regions
+        assert "aws:region2" in regions
+
+        # region1 has 5 findings (2 pass, 0 fail, 3 muted)
+        assert regions["aws:region1"]["total"] == 5
+        assert regions["aws:region1"]["pass"] == 2
+        assert regions["aws:region1"]["fail"] == 0
+        assert regions["aws:region1"]["muted"] == 3
+
+        # region2 has 4 findings (0 pass, 1 fail, 3 muted)
+        assert regions["aws:region2"]["total"] == 4
+        assert regions["aws:region2"]["pass"] == 0
+        assert regions["aws:region2"]["fail"] == 1
+        assert regions["aws:region2"]["muted"] == 3
+
     def test_overview_services_list(self, authenticated_client, scan_summaries_fixture):
         response = authenticated_client.get(
             reverse("overview-services"), {"filter[inserted_at]": TODAY}
@@ -7217,15 +7243,14 @@ class TestOverviewViewSet:
         assert response.status_code == status.HTTP_200_OK
         # Only two different services
         assert len(response.json()["data"]) == 2
-        # Fixed data from the fixture, TODO improve this at some point with something more dynamic
+        # Fixed data from the fixture
         service1_data = response.json()["data"][0]
         service2_data = response.json()["data"][1]
         assert service1_data["id"] == "service1"
         assert service2_data["id"] == "service2"
 
-        # TODO fix numbers when muted_findings filter is fixed
-        assert service1_data["attributes"]["total"] == 3
-        assert service2_data["attributes"]["total"] == 1
+        assert service1_data["attributes"]["total"] == 7
+        assert service2_data["attributes"]["total"] == 2
 
         assert service1_data["attributes"]["pass"] == 1
         assert service2_data["attributes"]["pass"] == 1
@@ -7233,8 +7258,8 @@ class TestOverviewViewSet:
         assert service1_data["attributes"]["fail"] == 1
         assert service2_data["attributes"]["fail"] == 0
 
-        assert service1_data["attributes"]["muted"] == 1
-        assert service2_data["attributes"]["muted"] == 0
+        assert service1_data["attributes"]["muted"] == 5
+        assert service2_data["attributes"]["muted"] == 1
 
     def test_overview_findings_provider_id_in_filter(
         self, authenticated_client, tenants_fixture, providers_fixture
@@ -7344,6 +7369,7 @@ class TestOverviewViewSet:
             tenant=tenant,
         )
 
+        # Muted findings should be excluded from severity counts
         ScanSummary.objects.create(
             tenant=tenant,
             scan=scan1,
@@ -7353,8 +7379,8 @@ class TestOverviewViewSet:
             region="region-a",
             _pass=4,
             fail=4,
-            muted=0,
-            total=8,
+            muted=3,
+            total=11,
         )
         ScanSummary.objects.create(
             tenant=tenant,
@@ -7365,8 +7391,8 @@ class TestOverviewViewSet:
             region="region-b",
             _pass=2,
             fail=2,
-            muted=0,
-            total=4,
+            muted=2,
+            total=6,
         )
         ScanSummary.objects.create(
             tenant=tenant,
@@ -7377,8 +7403,8 @@ class TestOverviewViewSet:
             region="region-c",
             _pass=1,
             fail=2,
-            muted=0,
-            total=3,
+            muted=5,
+            total=8,
         )
 
         single_response = authenticated_client.get(
@@ -7387,6 +7413,7 @@ class TestOverviewViewSet:
         )
         assert single_response.status_code == status.HTTP_200_OK
         single_attributes = single_response.json()["data"]["attributes"]
+        # Should only count pass + fail, excluding muted (3 muted in high, 2 in medium)
         assert single_attributes["high"] == 8
         assert single_attributes["medium"] == 4
         assert single_attributes["critical"] == 0
@@ -7397,6 +7424,7 @@ class TestOverviewViewSet:
         )
         assert combined_response.status_code == status.HTTP_200_OK
         combined_attributes = combined_response.json()["data"]["attributes"]
+        # Should only count pass + fail, excluding muted (5 muted in critical)
         assert combined_attributes["high"] == 8
         assert combined_attributes["medium"] == 4
         assert combined_attributes["critical"] == 3

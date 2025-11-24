@@ -148,10 +148,11 @@ class TestOutputs:
         )
         mock_logger.assert_called()
 
+    @patch("tasks.jobs.export.set_output_timestamp")
     @patch("tasks.jobs.export.rls_transaction")
     @patch("tasks.jobs.export.Scan")
     def test_generate_output_directory_creates_paths(
-        self, mock_scan, mock_rls_transaction, tmpdir
+        self, mock_scan, mock_rls_transaction, mock_set_timestamp, tmpdir
     ):
         # Mock the scan object with a started_at timestamp
         mock_scan_instance = MagicMock()
@@ -198,10 +199,11 @@ class TestOutputs:
         assert ens.endswith(f"{provider}-{expected_timestamp}")
         assert "/ens/" in ens
 
+    @patch("tasks.jobs.export.set_output_timestamp")
     @patch("tasks.jobs.export.rls_transaction")
     @patch("tasks.jobs.export.Scan")
     def test_generate_output_directory_invalid_character(
-        self, mock_scan, mock_rls_transaction, tmpdir
+        self, mock_scan, mock_rls_transaction, mock_set_timestamp, tmpdir
     ):
         # Mock the scan object with a started_at timestamp
         mock_scan_instance = MagicMock()

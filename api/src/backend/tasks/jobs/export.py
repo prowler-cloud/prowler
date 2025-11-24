@@ -15,6 +15,7 @@ from prowler.config.config import (
     html_file_suffix,
     json_asff_file_suffix,
     json_ocsf_file_suffix,
+    set_output_timestamp,
 )
 from prowler.lib.outputs.asff.asff import ASFF
 from prowler.lib.outputs.compliance.aws_well_architected.aws_well_architected import (
@@ -275,6 +276,8 @@ def _build_output_path(
     with rls_transaction(tenant_id):
         started_at = Scan.objects.get(id=scan_id).started_at
 
+    set_output_timestamp(started_at)
+
     timestamp = started_at.strftime("%Y%m%d%H%M%S")
 
     if subdirectory:
@@ -325,6 +328,8 @@ def _generate_compliance_output_directory(
         '/tmp/tenant-1234/scan-5678/threatscore/prowler-output-aws-20230215123456'
         >>> _generate_compliance_output_directory("/tmp", "aws", "tenant-1234", "scan-5678", "ens")
         '/tmp/tenant-1234/scan-5678/ens/prowler-output-aws-20230215123456'
+        >>> _generate_compliance_output_directory("/tmp", "aws", "tenant-1234", "scan-5678", "nis2")
+        '/tmp/tenant-1234/scan-5678/nis2/prowler-output-aws-20230215123456'
     """
     return _build_output_path(
         output_directory,

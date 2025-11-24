@@ -838,7 +838,8 @@ class ScanSummarySeverityFilter(ScanSummaryFilter):
         elif value == OverviewStatusChoices.PASS:
             return queryset.annotate(status_count=F("_pass"))
         else:
-            return queryset.annotate(status_count=F("total"))
+            # Exclude muted findings by default
+            return queryset.annotate(status_count=F("_pass") + F("fail"))
 
     def filter_status_in(self, queryset, name, value):
         # Validate the status values
@@ -847,7 +848,7 @@ class ScanSummarySeverityFilter(ScanSummaryFilter):
             if status_val not in valid_statuses:
                 raise ValidationError(f"Invalid status value: {status_val}")
 
-        # If all statuses or no valid statuses, use total
+        # If all statuses or no valid statuses, exclude muted findings (pass + fail)
         if (
             set(value)
             >= {
@@ -856,7 +857,7 @@ class ScanSummarySeverityFilter(ScanSummaryFilter):
             }
             or not value
         ):
-            return queryset.annotate(status_count=F("total"))
+            return queryset.annotate(status_count=F("_pass") + F("fail"))
 
         # Build the sum expression based on status values
         sum_expression = None
@@ -874,7 +875,7 @@ class ScanSummarySeverityFilter(ScanSummaryFilter):
                 sum_expression = sum_expression + field_expr
 
         if sum_expression is None:
-            return queryset.annotate(status_count=F("total"))
+            return queryset.annotate(status_count=F("_pass") + F("fail"))
 
         return queryset.annotate(status_count=sum_expression)
 

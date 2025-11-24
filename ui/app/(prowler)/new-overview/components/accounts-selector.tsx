@@ -48,7 +48,7 @@ export function AccountsSelector({ providers }: AccountsSelectorProps) {
     : [];
   const selectedIds = current ? current.split(",").filter(Boolean) : [];
   const visibleProviders = providers
-    .filter((p) => p.attributes.connection?.connected)
+    // .filter((p) => p.attributes.connection?.connected)
     .filter((p) =>
       selectedTypesList.length > 0
         ? selectedTypesList.includes(p.attributes.provider)

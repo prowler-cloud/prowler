@@ -2333,6 +2333,30 @@ class OverviewServiceSerializer(serializers.Serializer):
         return {"version": "v1"}
 
 
+class OverviewRegionSerializer(serializers.Serializer):
+    id = serializers.SerializerMethodField()
+    provider_type = serializers.CharField()
+    region = serializers.CharField()
+    total = serializers.IntegerField()
+    _pass = serializers.IntegerField()
+    fail = serializers.IntegerField()
+    muted = serializers.IntegerField()
+
+    class JSONAPIMeta:
+        resource_name = "regions-overview"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["pass"] = self.fields.pop("_pass")
+
+    def get_id(self, obj):
+        """Generate unique ID from provider_type and region."""
+        return f"{obj['provider_type']}:{obj['region']}"
+
+    def get_root_meta(self, _resource, _many):
+        return {"version": "v1"}
+
+
 # Schedules
 
 
