@@ -50,28 +50,31 @@ Configure authentication for Microsoft 365 by following the [Microsoft 365 Authe
 
 ### Step 3: Select Authentication Method and Provide Credentials
 
-Prowler App now separates Microsoft 365 authentication into two app-only options. After adding the Domain ID, choose the method that matches your setup:
+Prowler App now separates Microsoft 365 authentication into two app-only options. After adding the Domain ID (primary tenant domain), choose the method that matches your setup:
 
 <img src="/images/providers/m365-auth-selection-form.png" alt="M365 authentication method selection" width="700" />
 
 #### Application Certificate Authentication (Recommended)
 
-1. Copy the Application (client) ID and Tenant ID from the app registration overview page.
-2. Paste both values into the Prowler App form.
-3. Upload the PFX bundle or paste the Base64-encoded certificate (`M365_CERTIFICATE_CONTENT`), then click **Test Connection**.
+1. Enter your **tenant ID**: This is the unique identifier for your Microsoft Entra ID directory.
+2. Enter your **application (client) ID**: This is the unique identifier assigned to your app registration in Microsoft Entra ID.
+3. Upload your **certificate file content**: This is the Base64 encoded certificate content used to authenticate your application.
 
 <img src="/images/providers/certificate-form.png" alt="M365 certificate authentication form" width="700" />
 
 Use this method whenever possible to avoid managing client secrets and to unlock every Microsoft 365 check, including those that require PowerShell modules.
 
+For detailed instructions on how to setup Application Certificate Authentication, see the [Authentication](/user-guide/providers/microsoft365/authentication#application-certificate-authentication-recommended) page.
+
 #### Application Client Secret Authentication
 
-1. From the app registration, copy the Application (client) ID and Tenant ID.
-2. Paste both values plus the client secret into the Prowler App form.
-3. Click **Test Connection** to validate the credentials.
+1. Enter your **tenant ID**: This is the unique identifier for your Microsoft Entra ID directory.
+2. Enter your **application (client) ID**: This is the unique identifier assigned to your app registration in Microsoft Entra ID.
+3. Enter your **client secret**: This is the secret key used to authenticate your application.
 
 <img src="/images/providers/secret-form.png" alt="M365 client secret authentication form" width="700" />
 
+For detailed instructions on how to setup Application Client Secret Authentication, see the [Authentication](/user-guide/providers/microsoft365/authentication#application-client-secret-authentication) page.
 
 ### Step 4: Launch the Scan
 

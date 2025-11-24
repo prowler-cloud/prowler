@@ -95,7 +95,6 @@ export const getFindingsBySeverity = async ({
   if (page) url.searchParams.append("page[number]", page.toString());
   if (query) url.searchParams.append("filter[search]", query);
   if (sort) url.searchParams.append("sort", sort);
-
   // Handle multiple filters, but exclude unsupported filters
   // The overviews/findings_severity endpoint does not support status or muted filters
   Object.entries(filters).forEach(([key, value]) => {
@@ -120,14 +119,14 @@ export const getThreatScore = async ({
   filters = {},
 }: {
   filters?: Record<string, string | string[] | undefined>;
-}) => {
+} = {}) => {
   const headers = await getAuthHeaders({ contentType: false });
 
   const url = new URL(`${apiBaseUrl}/overviews/threatscore`);
 
   // Handle multiple filters
   Object.entries(filters).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") {
+    if (key !== "filter[search]") {
       url.searchParams.append(key, String(value));
     }
   });
@@ -139,7 +138,7 @@ export const getThreatScore = async ({
 
     return handleApiResponse(response);
   } catch (error) {
-    console.error("Error fetching threat score overview:", error);
+    console.error("Error fetching threat score:", error);
     return undefined;
   }
 };

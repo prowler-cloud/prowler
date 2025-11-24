@@ -7,12 +7,20 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🚀 Added
 
 - RSS feeds support [(#9109)](https://github.com/prowler-cloud/prowler/pull/9109)
+- Multi LLM support to Lighthouse AI [(#8925)](https://github.com/prowler-cloud/prowler/pull/8925)
 - Customer Support menu item [(#9143)](https://github.com/prowler-cloud/prowler/pull/9143)
+- PDF reporting for ENS compliance framework [(#9158)](https://github.com/prowler-cloud/prowler/pull/9158)
 - IaC (Infrastructure as Code) provider support for scanning remote repositories [(#8751)](https://github.com/prowler-cloud/prowler/pull/8751)
+- PDF reporting for NIS2 compliance framework [(#9170)](https://github.com/prowler-cloud/prowler/pull/9170)
+- External resource link to IaC findings for direct navigation to source code in Git repositories [(#9151)](https://github.com/prowler-cloud/prowler/pull/9151)
+- New Overview page and new app styles [(#9234)](https://github.com/prowler-cloud/prowler/pull/9234)
 
 ### 🔄 Changed
 
 - Resource ID moved up in the findings detail page [(#9141)](https://github.com/prowler-cloud/prowler/pull/9141)
+- C5 compliance logo [(#9224)](https://github.com/prowler-cloud/prowler/pull/9224)
+- Overview charts now support click navigation to Findings page with filters and keyboard accessibility [(#9281)](https://github.com/prowler-cloud/prowler/pull/9281)
+- Threat score now displays 2 decimal places with note that it doesn't include muted findings [(#9281)](https://github.com/prowler-cloud/prowler/pull/9281)
 
 ---
 

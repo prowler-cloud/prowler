@@ -47,6 +47,7 @@ from api.models import (
     StatusChoices,
     Task,
     TenantAPIKey,
+    ThreatScoreSnapshot,
     User,
     UserRoleRelationship,
 )
@@ -1166,11 +1167,17 @@ class ResourceSerializer(RLSSerializer):
             "findings",
             "failed_findings_count",
             "url",
+            "metadata",
+            "details",
+            "partition",
         ]
         extra_kwargs = {
             "id": {"read_only": True},
             "inserted_at": {"read_only": True},
             "updated_at": {"read_only": True},
+            "metadata": {"read_only": True},
+            "details": {"read_only": True},
+            "partition": {"read_only": True},
         }
 
     included_serializers = {
@@ -1227,11 +1234,15 @@ class ResourceIncludeSerializer(RLSSerializer):
             "service",
             "type_",
             "tags",
+            "details",
+            "partition",
         ]
         extra_kwargs = {
             "id": {"read_only": True},
             "inserted_at": {"read_only": True},
             "updated_at": {"read_only": True},
+            "details": {"read_only": True},
+            "partition": {"read_only": True},
         }
 
     @extend_schema_field(
@@ -1368,8 +1379,10 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 serializer = KubernetesProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.M365.value:
                 serializer = M365ProviderSecret(data=secret)
-            elif provider_type == Provider.ProviderChoices.OCI.value:
+            elif provider_type == Provider.ProviderChoices.ORACLECLOUD.value:
                 serializer = OracleCloudProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.MONGODBATLAS.value:
+                serializer = MongoDBAtlasProviderSecret(data=secret)
             else:
                 raise serializers.ValidationError(
                     {"provider": f"Provider type not supported {provider_type}"}
@@ -1461,6 +1474,14 @@ class GCPProviderSecret(serializers.Serializer):
 
 class GCPServiceAccountProviderSecret(serializers.Serializer):
     service_account_key = serializers.JSONField()
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
+class MongoDBAtlasProviderSecret(serializers.Serializer):
+    atlas_public_key = serializers.CharField()
+    atlas_private_key = serializers.CharField()
 
     class Meta:
         resource_name = "provider-secrets"
@@ -2203,6 +2224,30 @@ class OverviewServiceSerializer(serializers.Serializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["pass"] = self.fields.pop("_pass")
+
+    def get_root_meta(self, _resource, _many):
+        return {"version": "v1"}
+
+
+class OverviewRegionSerializer(serializers.Serializer):
+    id = serializers.SerializerMethodField()
+    provider_type = serializers.CharField()
+    region = serializers.CharField()
+    total = serializers.IntegerField()
+    _pass = serializers.IntegerField()
+    fail = serializers.IntegerField()
+    muted = serializers.IntegerField()
+
+    class JSONAPIMeta:
+        resource_name = "regions-overview"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["pass"] = self.fields.pop("_pass")
+
+    def get_id(self, obj):
+        """Generate unique ID from provider_type and region."""
+        return f"{obj['provider_type']}:{obj['region']}"
 
     def get_root_meta(self, _resource, _many):
         return {"version": "v1"}
@@ -3616,3 +3661,64 @@ class MuteRuleUpdateSerializer(BaseWriteSerializer):
         ):
             raise ValidationError("A mute rule with this name already exists.")
         return value
+
+
+# ThreatScore Snapshots
+
+
+class ThreatScoreSnapshotSerializer(RLSSerializer):
+    """
+    Serializer for ThreatScore snapshots.
+    Read-only serializer for retrieving historical ThreatScore metrics.
+    """
+
+    id = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ThreatScoreSnapshot
+        fields = [
+            "id",
+            "inserted_at",
+            "scan",
+            "provider",
+            "compliance_id",
+            "overall_score",
+            "score_delta",
+            "section_scores",
+            "critical_requirements",
+            "total_requirements",
+            "passed_requirements",
+            "failed_requirements",
+            "manual_requirements",
+            "total_findings",
+            "passed_findings",
+            "failed_findings",
+        ]
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "inserted_at": {"read_only": True},
+            "scan": {"read_only": True},
+            "provider": {"read_only": True},
+            "compliance_id": {"read_only": True},
+            "overall_score": {"read_only": True},
+            "score_delta": {"read_only": True},
+            "section_scores": {"read_only": True},
+            "critical_requirements": {"read_only": True},
+            "total_requirements": {"read_only": True},
+            "passed_requirements": {"read_only": True},
+            "failed_requirements": {"read_only": True},
+            "manual_requirements": {"read_only": True},
+            "total_findings": {"read_only": True},
+            "passed_findings": {"read_only": True},
+            "failed_findings": {"read_only": True},
+        }
+
+    included_serializers = {
+        "scan": "api.v1.serializers.ScanIncludeSerializer",
+        "provider": "api.v1.serializers.ProviderIncludeSerializer",
+    }
+
+    def get_id(self, obj):
+        if getattr(obj, "_aggregated", False):
+            return "n/a"
+        return str(obj.id)

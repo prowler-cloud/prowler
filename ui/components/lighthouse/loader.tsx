@@ -41,7 +41,7 @@ const Loader = ({
     >
       <SpinnerIcon
         size={loaderSizes[size]}
-        className="text-prowler-green animate-spin"
+        className="text-muted-foreground animate-spin"
       />
       {text && <span className="text-muted-foreground text-sm">{text}</span>}
       <span className="sr-only">{text || "Loading..."}</span>

@@ -32,9 +32,7 @@
       "Url": "https://hub.prowler.com/check/awslambda_function_using_supported_runtimes"
     }
   },
-  "Categories": [
-    "container-security"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
