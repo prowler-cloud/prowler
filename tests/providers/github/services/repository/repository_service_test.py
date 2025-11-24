@@ -89,9 +89,7 @@ class Test_Repository_Service:
         )
         assert repository_service.repositories[1].archived is False
         assert repository_service.repositories[1].pushed_at is not None
-        assert repository_service.repositories[
-            1
-        ].immutable_releases_enabled is True
+        assert repository_service.repositories[1].immutable_releases_enabled is True
 
 
 class Test_Repository_FileExists:
