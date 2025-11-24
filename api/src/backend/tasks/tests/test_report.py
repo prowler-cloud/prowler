@@ -281,7 +281,7 @@ class TestLoadFindingsForChecks:
         mock_provider = MagicMock()
 
         with patch(
-            "tasks.jobs.report.FindingOutput.transform_api_finding"
+            "tasks.jobs.threatscore_utils.FindingOutput.transform_api_finding"
         ) as mock_transform:
             mock_finding_output = MagicMock()
             mock_finding_output.check_id = "check_requested"
@@ -335,7 +335,7 @@ class TestLoadFindingsForChecks:
         mock_provider = MagicMock()
 
         with patch(
-            "tasks.jobs.report.FindingOutput.transform_api_finding"
+            "tasks.jobs.threatscore_utils.FindingOutput.transform_api_finding"
         ) as mock_transform:
             mock_finding_output = MagicMock()
             mock_finding_output.check_id = "check_group"
@@ -369,7 +369,7 @@ class TestLoadFindingsForChecks:
         mock_provider = MagicMock()
 
         with patch(
-            "tasks.jobs.report.FindingOutput.transform_api_finding"
+            "tasks.jobs.threatscore_utils.FindingOutput.transform_api_finding"
         ) as mock_transform:
             mock_finding_output = MagicMock()
             mock_finding_output.check_id = "check_transform"
@@ -406,7 +406,7 @@ class TestLoadFindingsForChecks:
         mock_provider = MagicMock()
 
         with patch(
-            "tasks.jobs.report.FindingOutput.transform_api_finding"
+            "tasks.jobs.threatscore_utils.FindingOutput.transform_api_finding"
         ) as mock_transform:
             mock_finding_output = MagicMock()
             mock_finding_output.check_id = "check_batch"
@@ -760,7 +760,7 @@ class TestGenerateThreatscoreReportFunction:
     @patch("tasks.jobs.report.initialize_prowler_provider")
     @patch("tasks.jobs.report.Provider.objects.get")
     @patch("tasks.jobs.report.Compliance.get_bulk")
-    @patch("tasks.jobs.report.Finding.all_objects.filter")
+    @patch("tasks.jobs.threatscore_utils.Finding.all_objects.filter")
     def test_generate_threatscore_report_exception_handling(
         self,
         mock_finding_filter,
@@ -1408,10 +1408,10 @@ class TestGenerateComplianceReportsOptimized:
         }
 
         with (
-            patch("tasks.jobs.report.Finding") as mock_finding_class,
-            patch("tasks.jobs.report.FindingOutput") as mock_finding_output,
-            patch("tasks.jobs.report.rls_transaction"),
-            patch("tasks.jobs.report.batched") as mock_batched,
+            patch("tasks.jobs.threatscore_utils.Finding") as mock_finding_class,
+            patch("tasks.jobs.threatscore_utils.FindingOutput") as mock_finding_output,
+            patch("tasks.jobs.threatscore_utils.rls_transaction"),
+            patch("tasks.jobs.threatscore_utils.batched") as mock_batched,
         ):
             # Setup mocks
             mock_finding_class.all_objects.filter.return_value.order_by.return_value.iterator.return_value = [
