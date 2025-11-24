@@ -2,7 +2,7 @@
 
 import { Input } from "@heroui/input";
 import { Icon } from "@iconify/react";
-import React, { useState } from "react";
+import { useState } from "react";
 import { Control, FieldPath, FieldValues } from "react-hook-form";
 
 import { FormControl, FormField, FormMessage } from "@/components/ui/form";
@@ -92,7 +92,7 @@ export const CustomInput = <T extends FieldValues>({
     <FormField
       control={control}
       name={name}
-      render={({ field }) => (
+      render={({ field, fieldState }) => (
         <>
           <FormControl>
             <Input
@@ -113,6 +113,8 @@ export const CustomInput = <T extends FieldValues>({
               endContent={endContent}
               isDisabled={isDisabled}
               isReadOnly={isReadOnly}
+              isInvalid={!!fieldState.error}
+              errorMessage={fieldState.error?.message}
               {...field}
               value={field.value ?? ""}
             />
