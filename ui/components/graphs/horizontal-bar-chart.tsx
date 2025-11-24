@@ -11,14 +11,12 @@ interface HorizontalBarChartProps {
   data: BarDataPoint[];
   height?: number;
   title?: string;
-  labelWidth?: string;
   onBarClick?: (dataPoint: BarDataPoint, index: number) => void;
 }
 
 export function HorizontalBarChart({
   data,
   title,
-  labelWidth = "w-20",
   onBarClick,
 }: HorizontalBarChartProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
