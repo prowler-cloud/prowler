@@ -315,7 +315,7 @@ class Finding(BaseModel):
                 output_data["resource_uid"] = getattr(check_output, "resource_name", "")
                 # For IaC, resource_line_range only exists on CheckReportIAC, not on Finding objects
                 output_data["region"] = getattr(
-                    check_output, "resource_line_range", "file"
+                    check_output, "region", "global"
                 )
                 output_data["resource_line_range"] = getattr(
                     check_output, "resource_line_range", ""

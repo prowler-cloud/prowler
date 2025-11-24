@@ -148,19 +148,29 @@ class TestIacProvider:
     @mock.patch.dict(os.environ, {}, clear=True)
     def test_provider_run_remote_scan(self):
         scan_repository_url = "https://github.com/user/repo"
-        provider = IacProvider(scan_repository_url=scan_repository_url)
         with tempfile.TemporaryDirectory() as temp_dir:
             with (
                 mock.patch(
                     "prowler.providers.iac.iac_provider.IacProvider._clone_repository",
-                    return_value=temp_dir,
+                    return_value=(temp_dir, "main"),
                 ) as mock_clone,
                 mock.patch(
                     "prowler.providers.iac.iac_provider.IacProvider.run_scan"
                 ) as mock_run_scan,
             ):
+                # Repository cloning now happens during __init__
+                provider = IacProvider(scan_repository_url=scan_repository_url)
+
+                # Verify clone was called during initialization
+                mock_clone.assert_called_once_with(scan_repository_url, None, None, None)
+
+                # Verify region was updated with branch name
+                assert provider.region == "main"
+
+                # Run the scan
                 provider.run()
-                mock_clone.assert_called_with(scan_repository_url, None, None, None)
+
+                # Verify scan was called with the cloned directory
                 mock_run_scan.assert_called_with(
                     temp_dir, ["vuln", "misconfig", "secret"], []
                 )
@@ -183,17 +193,22 @@ class TestIacProvider:
     @mock.patch.dict(os.environ, {}, clear=True)
     def test_print_credentials_remote(self):
         repo_url = "https://github.com/user/repo"
-        provider = IacProvider(scan_repository_url=repo_url)
-        with mock.patch("builtins.print") as mock_print:
-            provider.print_credentials()
-            assert any(
-                f"Repository: \x1b[33m{repo_url}\x1b[0m" in call.args[0]
-                for call in mock_print.call_args_list
-            )
-            assert any(
-                "Scanning remote IaC repository:" in call.args[0]
-                for call in mock_print.call_args_list
-            )
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with mock.patch(
+                "prowler.providers.iac.iac_provider.IacProvider._clone_repository",
+                return_value=(temp_dir, "main"),
+            ):
+                provider = IacProvider(scan_repository_url=repo_url)
+                with mock.patch("builtins.print") as mock_print:
+                    provider.print_credentials()
+                    assert any(
+                        f"Repository: \x1b[33m{repo_url}\x1b[0m" in call.args[0]
+                        for call in mock_print.call_args_list
+                    )
+                    assert any(
+                        "Scanning remote IaC repository:" in call.args[0]
+                        for call in mock_print.call_args_list
+                    )
 
     @patch("subprocess.run")
     def test_iac_provider_process_check_medium_severity(self, mock_subprocess):
