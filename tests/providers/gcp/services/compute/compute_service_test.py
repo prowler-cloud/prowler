@@ -57,7 +57,7 @@ class TestComputeService:
             ]
             assert compute_client.instances[0].ip_forward
             assert compute_client.instances[0].disks_encryption == [("disk1", True)]
-            assert compute_client.instances[0].automatic_restart
+            assert not compute_client.instances[0].automatic_restart
             assert not compute_client.instances[0].preemptible
             assert compute_client.instances[0].provisioning_model == "STANDARD"
 
@@ -81,7 +81,7 @@ class TestComputeService:
             ]
             assert not compute_client.instances[1].ip_forward
             assert compute_client.instances[1].disks_encryption == [("disk2", False)]
-            assert compute_client.instances[1].automatic_restart
+            assert not compute_client.instances[1].automatic_restart
             assert not compute_client.instances[1].preemptible
             assert compute_client.instances[1].provisioning_model == "STANDARD"
 
