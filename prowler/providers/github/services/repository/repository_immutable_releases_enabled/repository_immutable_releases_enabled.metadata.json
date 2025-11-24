@@ -1,7 +1,7 @@
 {
   "Provider": "github",
   "CheckID": "repository_immutable_releases_enabled",
-  "CheckTitle": "Ensure repository immutable releases are enabled",
+  "CheckTitle": "Repository enforces immutable releases",
   "CheckType": [],
   "ServiceName": "repository",
   "SubServiceName": "",
@@ -20,10 +20,12 @@
     },
     "Recommendation": {
       "Text": "Enable immutable releases in the repository settings so release artifacts cannot be altered once published.",
-      "Url": "https://github.blog/changelog/2025-10-28-immutable-releases-are-now-generally-available/#release-attestations-and-verification"
+      "Url": "https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/immutable-releases"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "software-supply-chain"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
