@@ -162,7 +162,9 @@ class TestIacProvider:
                 provider = IacProvider(scan_repository_url=scan_repository_url)
 
                 # Verify clone was called during initialization
-                mock_clone.assert_called_once_with(scan_repository_url, None, None, None)
+                mock_clone.assert_called_once_with(
+                    scan_repository_url, None, None, None
+                )
 
                 # Verify region was updated with branch name
                 assert provider.region == "main"
@@ -679,25 +681,79 @@ class TestIacProvider:
     def test_clone_repository_no_auth(self, _mock_mkdtemp, mock_clone):
         provider = IacProvider()
         url = "https://github.com/user/repo.git"
-        provider._clone_repository(url)
+        with mock.patch.object(provider, "_detect_branch_name", return_value="main"):
+            temp_dir, branch_name = provider._clone_repository(url)
         mock_clone.assert_called_with(url, "/tmp/fake-dir", depth=1)
+        assert temp_dir == "/tmp/fake-dir"
+        assert branch_name == "main"
 
     @mock.patch("prowler.providers.iac.iac_provider.porcelain.clone")
     @mock.patch("tempfile.mkdtemp", return_value="/tmp/fake-dir")
     def test_clone_repository_with_pat(self, _mock_mkdtemp, mock_clone):
         provider = IacProvider()
         url = "https://github.com/user/repo.git"
-        provider._clone_repository(
-            url, github_username="user", personal_access_token="token123"
-        )
+        with mock.patch.object(provider, "_detect_branch_name", return_value="develop"):
+            temp_dir, branch_name = provider._clone_repository(
+                url, github_username="user", personal_access_token="token123"
+            )
         expected_url = "https://user:token123@github.com/user/repo.git"
         mock_clone.assert_called_with(expected_url, "/tmp/fake-dir", depth=1)
+        assert temp_dir == "/tmp/fake-dir"
+        assert branch_name == "develop"
 
     @mock.patch("prowler.providers.iac.iac_provider.porcelain.clone")
     @mock.patch("tempfile.mkdtemp", return_value="/tmp/fake-dir")
     def test_clone_repository_with_oauth(self, _mock_mkdtemp, mock_clone):
         provider = IacProvider()
         url = "https://github.com/user/repo.git"
-        provider._clone_repository(url, oauth_app_token="oauth456")
+        with mock.patch.object(provider, "_detect_branch_name", return_value="master"):
+            temp_dir, branch_name = provider._clone_repository(
+                url, oauth_app_token="oauth456"
+            )
         expected_url = "https://oauth2:oauth456@github.com/user/repo.git"
         mock_clone.assert_called_with(expected_url, "/tmp/fake-dir", depth=1)
+        assert temp_dir == "/tmp/fake-dir"
+        assert branch_name == "master"
+
+    def test_detect_branch_name_main(self):
+        """Test detecting 'main' branch from .git/HEAD"""
+        provider = IacProvider()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Create a mock .git/HEAD file with main branch
+            git_dir = os.path.join(temp_dir, ".git")
+            os.makedirs(git_dir)
+            head_file = os.path.join(git_dir, "HEAD")
+            with open(head_file, "w") as f:
+                f.write("ref: refs/heads/main\n")
+
+            branch_name = provider._detect_branch_name(temp_dir)
+            assert branch_name == "main"
+
+    def test_detect_branch_name_custom_branch(self):
+        """Test detecting custom branch like 'develop' from .git/HEAD"""
+        provider = IacProvider()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Create a mock .git/HEAD file with develop branch
+            git_dir = os.path.join(temp_dir, ".git")
+            os.makedirs(git_dir)
+            head_file = os.path.join(git_dir, "HEAD")
+            with open(head_file, "w") as f:
+                f.write("ref: refs/heads/develop\n")
+
+            branch_name = provider._detect_branch_name(temp_dir)
+            assert branch_name == "develop"
+
+    def test_detect_branch_name_fallback(self):
+        """Test fallback to 'main' when .git/HEAD doesn't exist"""
+        provider = IacProvider()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Don't create .git/HEAD file
+            branch_name = provider._detect_branch_name(temp_dir)
+            assert branch_name == "main"
+
+    def test_detect_branch_name_error_handling(self):
+        """Test error handling returns 'main' as fallback"""
+        provider = IacProvider()
+        # Pass a non-existent directory
+        branch_name = provider._detect_branch_name("/non/existent/path")
+        assert branch_name == "main"

@@ -239,9 +239,6 @@ class IacProvider(Provider):
                 report.muted = True
             # Set the region from the provider
             report.region = self.region
-            logger.debug(
-                f"Set report.region to '{report.region}' (from provider.region='{self.region}') for finding {finding_id}"
-            )
             return report
         except Exception as error:
             logger.critical(
@@ -366,7 +363,9 @@ class IacProvider(Provider):
             # Collect all batches from the generator
             # scan_path now points to either the local directory or the cloned repo
             reports = []
-            for batch in self.run_scan(self.scan_path, self.scanners, self.exclude_path):
+            for batch in self.run_scan(
+                self.scan_path, self.scanners, self.exclude_path
+            ):
                 reports.extend(batch)
         finally:
             # Clean up temporary directory if this was a repository scan
