@@ -1,0 +1,37 @@
+[
+  {
+    "model": "api.attackpathsscan",
+    "pk": "a7f0f6de-6f8e-4b3a-8cbe-3f6dd9012345",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "provider": "b85601a8-4b45-4194-8135-03fb980ef428",
+      "scan": "01920573-aa9c-73c9-bcda-f2e35c9b19d2",
+      "state": "completed",
+      "progress": 100,
+      "update_tag": 1693586667,
+      "graph_database": "db-tenant-12646005-9067-4d2a-a098-8bb378604362",
+      "task": null,
+      "inserted_at": "2024-10-18T12:10:00Z",
+      "started_at": "2024-10-18T12:10:01Z",
+      "completed_at": "2024-10-18T12:14:30Z",
+      "duration": 269,
+      "ingestion_exceptions": {}
+    }
+  },
+  {
+    "model": "api.attackpathsscan",
+    "pk": "4a2fb2af-8a60-4d7d-9cae-4ca65e098765",
+    "fields": {
+      "tenant": "12646005-9067-4d2a-a098-8bb378604362",
+      "provider": "b85601a8-4b45-4194-8135-03fb980ef428",
+      "scan": "01929f3b-ed2e-7623-ad63-7c37cd37828f",
+      "state": "executing",
+      "progress": 48,
+      "update_tag": 1697625000,
+      "graph_database": "db-tenant-12646005-9067-4d2a-a098-8bb378604362",
+      "task": null,
+      "inserted_at": "2025-01-12T09:00:00Z",
+      "started_at": "2025-01-12T09:00:10Z"
+    }
+  }
+]
