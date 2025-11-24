@@ -46,8 +46,10 @@ def _aggregate_requirement_statistics_from_database(
             )
             .values("check_id")
             .annotate(
-                total_findings=Count("id"),
-                filter=Q(status__in=[StatusChoices.PASS, StatusChoices.FAIL]),
+                total_findings=Count(
+                    "id",
+                    filter=Q(status__in=[StatusChoices.PASS, StatusChoices.FAIL]),
+                ),
                 passed_findings=Count("id", filter=Q(status=StatusChoices.PASS)),
             )
         )
