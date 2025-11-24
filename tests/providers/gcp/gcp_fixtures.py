@@ -1105,6 +1105,7 @@ def mock_api_access_policies_calls(client: MagicMock):
         return return_value
 
     client.accessPolicies().list = mock_list_access_policies
+    client.accessPolicies().list_next.return_value = None
 
     # Mock service perimeters list based on parent access policy
     def mock_list_service_perimeters(parent):

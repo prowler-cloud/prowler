@@ -23,10 +23,15 @@ class AccessContextManager(GCPService):
                     request = self.client.accessPolicies().list(
                         parent=f"organizations/{org.id}"
                     )
-                    response = request.execute(
-                        num_retries=config.DEFAULT_RETRY_ATTEMPTS
-                    )
-                    access_policies = response.get("accessPolicies", [])
+                    while request is not None:
+                        response = request.execute(
+                            num_retries=config.DEFAULT_RETRY_ATTEMPTS
+                        )
+                        access_policies.extend(response.get("accessPolicies", []))
+
+                        request = self.client.accessPolicies().list_next(
+                            previous_request=request, previous_response=response
+                        )
                 except Exception as error:
                     logger.error(
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
