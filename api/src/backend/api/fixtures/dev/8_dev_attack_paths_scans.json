@@ -11,9 +11,10 @@
       "update_tag": 1693586667,
       "graph_database": "db-tenant-12646005-9067-4d2a-a098-8bb378604362",
       "task": null,
-      "inserted_at": "2024-10-18T12:10:00Z",
-      "started_at": "2024-10-18T12:10:01Z",
-      "completed_at": "2024-10-18T12:14:30Z",
+      "inserted_at": "2024-09-01T17:24:37Z",
+      "updated_at": "2024-09-01T17:44:37Z",
+      "started_at": "2024-09-01T17:34:37Z",
+      "completed_at": "2024-09-01T17:44:37Z",
       "duration": 269,
       "ingestion_exceptions": {}
     }
@@ -23,15 +24,16 @@
     "pk": "4a2fb2af-8a60-4d7d-9cae-4ca65e098765",
     "fields": {
       "tenant": "12646005-9067-4d2a-a098-8bb378604362",
-      "provider": "b85601a8-4b45-4194-8135-03fb980ef428",
+      "provider": "15fce1fa-ecaa-433f-a9dc-62553f3a2555",
       "scan": "01929f3b-ed2e-7623-ad63-7c37cd37828f",
       "state": "executing",
       "progress": 48,
       "update_tag": 1697625000,
       "graph_database": "db-tenant-12646005-9067-4d2a-a098-8bb378604362",
       "task": null,
-      "inserted_at": "2025-01-12T09:00:00Z",
-      "started_at": "2025-01-12T09:00:10Z"
+      "inserted_at": "2024-10-18T10:55:57Z",
+      "updated_at": "2024-10-18T10:56:15Z",
+      "started_at": "2024-10-18T10:56:05Z"
     }
   }
 ]
