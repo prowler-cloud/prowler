@@ -238,8 +238,8 @@ class TestAggregateRequirementStatistics:
             str(tenant.id), str(scan.id)
         )
 
-        # Only PASS status is counted as passed
-        assert result == {"check_mixed": {"passed": 1, "total": 3}}
+        # Only PASS status is counted as passed, MANUAL findings are excluded from total
+        assert result == {"check_mixed": {"passed": 1, "total": 2}}
 
 
 @pytest.mark.django_db
