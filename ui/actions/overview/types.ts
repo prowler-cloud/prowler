@@ -94,6 +94,30 @@ export interface ThreatScoreResponse {
   data: ThreatScoreSnapshot[];
 }
 
+// Findings Severity Overview Types
+// Corresponds to the /overviews/findings_severity endpoint
+
+export interface FindingsSeverityAttributes {
+  critical: number;
+  high: number;
+  medium: number;
+  low: number;
+  informational: number;
+}
+
+export interface FindingsSeverityOverview {
+  type: "findings-severity-overview";
+  id: string;
+  attributes: FindingsSeverityAttributes;
+}
+
+export interface FindingsSeverityOverviewResponse {
+  data: FindingsSeverityOverview;
+  meta: {
+    version: string;
+  };
+}
+
 // Filters for ThreatScore endpoint
 export interface ThreatScoreFilters {
   snapshot_id?: string;

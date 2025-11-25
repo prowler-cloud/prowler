@@ -1,5 +1,6 @@
 import {
   adaptProvidersOverviewToSankey,
+  getFindingsBySeverity,
   getProvidersOverview,
 } from "@/actions/overview";
 import { SankeyChart } from "@/components/graphs/sankey-chart";
@@ -14,8 +15,16 @@ export async function RiskPipelineViewSSR({
 }) {
   const filters = pickFilterParams(searchParams);
 
-  const response = await getProvidersOverview({ filters });
-  const sankeyData = adaptProvidersOverviewToSankey(response);
+  // Fetch both endpoints in parallel
+  const [providersResponse, severityResponse] = await Promise.all([
+    getProvidersOverview({ filters }),
+    getFindingsBySeverity({ filters }),
+  ]);
+
+  const sankeyData = adaptProvidersOverviewToSankey(
+    providersResponse,
+    severityResponse,
+  );
 
   if (sankeyData.nodes.length === 0) {
     return (

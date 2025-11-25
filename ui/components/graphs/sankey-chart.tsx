@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Rectangle, ResponsiveContainer, Sankey, Tooltip } from "recharts";
 
@@ -72,6 +73,15 @@ interface NodeTooltipState {
 
 const TOOLTIP_OFFSET_PX = 10;
 const MIN_LINK_WIDTH = 4;
+
+// Map severity node names to their filter values for the findings page
+const SEVERITY_FILTER_MAP: Record<string, string> = {
+  Critical: "critical",
+  High: "high",
+  Medium: "medium",
+  Low: "low",
+  Informational: "informational",
+};
 
 // Map color names to CSS variable names defined in globals.css
 const COLOR_MAP: Record<string, string> = {
@@ -164,6 +174,7 @@ interface CustomNodeProps {
   onNodeHover?: (data: Omit<NodeTooltipState, "show">) => void;
   onNodeMove?: (position: { x: number; y: number }) => void;
   onNodeLeave?: () => void;
+  onNodeClick?: (nodeName: string) => void;
 }
 
 interface CustomLinkProps {
@@ -218,12 +229,14 @@ const CustomNode = ({
   onNodeHover,
   onNodeMove,
   onNodeLeave,
+  onNodeClick,
 }: CustomNodeProps) => {
   const isOut = x + width + 6 > containerWidth;
   const nodeName = payload.name;
   const color = colors[nodeName] || "var(--color-text-neutral-tertiary)";
   const isHidden = nodeName === "";
   const hasTooltip = !isHidden && payload.newFindings;
+  const isClickable = SEVERITY_FILTER_MAP[nodeName] !== undefined;
 
   const handleMouseEnter = (e: React.MouseEvent) => {
     if (!hasTooltip) return;
@@ -261,6 +274,12 @@ const CustomNode = ({
     onNodeLeave?.();
   };
 
+  const handleClick = () => {
+    if (isClickable) {
+      onNodeClick?.(nodeName);
+    }
+  };
+
   const IconComponent = PROVIDER_ICONS[nodeName];
   const hasIcon = IconComponent !== undefined;
   const iconSize = 24;
@@ -274,10 +293,11 @@ const CustomNode = ({
 
   return (
     <g
-      style={{ cursor: hasTooltip ? "pointer" : "default" }}
+      style={{ cursor: isClickable || hasTooltip ? "pointer" : "default" }}
       onMouseEnter={handleMouseEnter}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
+      onClick={handleClick}
     >
       <Rectangle
         x={x}
@@ -432,6 +452,7 @@ const CustomLink = ({
 };
 
 export function SankeyChart({ data, height = 400 }: SankeyChartProps) {
+  const router = useRouter();
   const [hoveredLink, setHoveredLink] = useState<number | null>(null);
   const [colors, setColors] = useState<Record<string, string>>({});
   const [linkTooltip, setLinkTooltip] = useState<LinkTooltipState>({
@@ -495,11 +516,18 @@ export function SankeyChart({ data, height = 400 }: SankeyChartProps) {
     setNodeTooltip((prev) => ({ ...prev, show: false }));
   };
 
+  const handleNodeClick = (nodeName: string) => {
+    const severityFilter = SEVERITY_FILTER_MAP[nodeName];
+    if (severityFilter) {
+      router.push(`/findings?filter[severity]=${severityFilter}`);
+    }
+  };
+
   // Create callback references that wrap custom props and Recharts-injected props
   const wrappedCustomNode = (
     props: Omit<
       CustomNodeProps,
-      "colors" | "onNodeHover" | "onNodeMove" | "onNodeLeave"
+      "colors" | "onNodeHover" | "onNodeMove" | "onNodeLeave" | "onNodeClick"
     >,
   ) => (
     <CustomNode
@@ -508,6 +536,7 @@ export function SankeyChart({ data, height = 400 }: SankeyChartProps) {
       onNodeHover={handleNodeHover}
       onNodeMove={handleNodeMove}
       onNodeLeave={handleNodeLeave}
+      onNodeClick={handleNodeClick}
     />
   );
 
