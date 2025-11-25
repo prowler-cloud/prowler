@@ -26,6 +26,7 @@ import {
 } from "./_new-overview/components/threat-score";
 import {
   ComplianceWatchlistSSR,
+  ServiceWatchlistSSR,
   WatchlistCardSkeleton,
 } from "./_new-overview/components/watchlist";
 
@@ -60,6 +61,10 @@ export default async function Home({
       <div className="flex flex-col gap-6 md:flex-row md:flex-wrap md:items-stretch">
         <Suspense fallback={<WatchlistCardSkeleton />}>
           <ComplianceWatchlistSSR searchParams={resolvedSearchParams} />
+        </Suspense>
+
+        <Suspense fallback={<WatchlistCardSkeleton />}>
+          <ServiceWatchlistSSR searchParams={resolvedSearchParams} />
         </Suspense>
 
         <Suspense fallback={<ThreatScoreSkeleton />}>
