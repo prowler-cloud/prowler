@@ -113,7 +113,7 @@ TENANT_PROVIDER_DATABASE_NAME_TEMPLATE = (
 )
 
 
-def get_shourtuuid_id(id: str | UUID) -> str:
+def get_shortuuid_model_id(id: str | UUID) -> str:
     if isinstance(id, UUID):
         return shortuuid.encode(id)
 
@@ -123,13 +123,13 @@ def get_shourtuuid_id(id: str | UUID) -> str:
 def get_tenant_provider_database_name(
     tenant_id: str, provider: str, provider_id: str
 ) -> str:
-    prepared_tenant_id = get_shourtuuid_id(tenant_id)
-    prepared_provider_id = get_shourtuuid_id(provider_id)
+    short_tenant_id = get_shortuuid_model_id(tenant_id)
+    short_provider_id = get_shortuuid_model_id(provider_id)
 
     return TENANT_PROVIDER_DATABASE_NAME_TEMPLATE.format(
-        tenant_id=prepared_tenant_id,
+        tenant_id=short_tenant_id,
         provider=provider,
-        provider_id=prepared_provider_id,
+        provider_id=short_provider_id,
     )
 
 
@@ -141,8 +141,8 @@ def drop_tenant_provider_database(
 
 
 def get_tenant_databases(tenant_id: str) -> list[str]:
-    prepared_tenant_id = get_shourtuuid_id(tenant_id)
-    prefix = TENANT_DATABASE_NAME_PREFIX_TEMPLATE.format(tenant_id=prepared_tenant_id)
+    short_tenant_id = get_shortuuid_model_id(tenant_id)
+    prefix = TENANT_DATABASE_NAME_PREFIX_TEMPLATE.format(tenant_id=short_tenant_id)
 
     query = f"""
         SHOW DATABASES

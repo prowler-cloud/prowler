@@ -3544,7 +3544,7 @@ class TestAttackPathsScanViewSet:
             }
         }
 
-    def test_attack_paths_scans_list_returns_latest_entries(
+    def test_attack_paths_scans_list_returns_latest_entry_per_provider(
         self,
         authenticated_client,
         providers_fixture,
@@ -3577,24 +3577,17 @@ class TestAttackPathsScanViewSet:
 
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
-        provider_entries = [
+        ids = {item["id"] for item in data}
+        assert ids == {str(latest_scan.id), str(other_provider_scan.id)}
+        assert str(older_scan.id) not in ids
+
+        provider_entry = next(
             item
             for item in data
             if item["relationships"]["provider"]["data"]["id"] == str(provider.id)
-        ]
+        )
 
-        assert len(provider_entries) == 2
-        assert provider_entries[0]["id"] == str(latest_scan.id)
-        assert provider_entries[1]["id"] == str(older_scan.id)
-
-        other_ids = {
-            item["id"]
-            for item in data
-            if item["relationships"]["provider"]["data"]["id"] == str(other_provider.id)
-        }
-        assert other_ids == {str(other_provider_scan.id)}
-
-        first_attributes = provider_entries[0]["attributes"]
+        first_attributes = provider_entry["attributes"]
         assert first_attributes["provider_alias"] == provider.alias
         assert first_attributes["provider_type"] == provider.provider
         assert first_attributes["provider_uid"] == provider.uid

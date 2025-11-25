@@ -43,8 +43,9 @@ from django.db.models import (
     Sum,
     Value,
     When,
+    Window,
 )
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Coalesce, RowNumber
 from django.http import HttpResponse, QueryDict
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -2325,6 +2326,25 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
             queryset = base_queryset.filter(provider__in=get_providers(user_roles))
 
         return queryset.select_related("provider", "scan", "task")
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        latest_per_provider = queryset.annotate(
+            latest_scan_rank=Window(
+                expression=RowNumber(),
+                partition_by=[F("provider_id")],
+                order_by=[F("inserted_at").desc()],
+            )
+        ).filter(latest_scan_rank=1)
+
+        page = self.paginate_queryset(latest_per_provider)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(latest_per_provider, many=True)
+        return Response(serializer.data)
 
     @extend_schema(exclude=True)
     def create(self, request, *args, **kwargs):

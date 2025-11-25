@@ -88,7 +88,7 @@ def delete_tenant(pk: str):
         summary = delete_provider(pk, provider.id)
         deletion_summary.update(summary)
 
-    try:  # If there is any remaining Neo4j database
+    try:  # If there is any remaining Neo4j database for the tenant
         graph_database.drop_tenant_databases(tenant_id=pk)
     except graph_database.GraphDatabaseQueryException as gdb_error:
         logger.error(f"Error deleting Tenant graph database: {gdb_error}")
