@@ -14,7 +14,7 @@ import {
 } from "@/components/shadcn";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { CustomLink } from "@/components/ui/custom/custom-link";
-import { EntityInfoShort, InfoField } from "@/components/ui/entities";
+import { EntityInfo, InfoField } from "@/components/ui/entities";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import { SeverityBadge } from "@/components/ui/table/severity-badge";
 import { buildGitFileUrl, extractLineRangeFromUid } from "@/lib/iac-utils";
@@ -72,6 +72,7 @@ export const FindingDetail = ({
           providerDetails.uid,
           resource.name,
           extractLineRangeFromUid(attributes.uid) || "",
+          resource.region,
         )
       : null;
 
@@ -119,7 +120,7 @@ export const FindingDetail = ({
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="flex flex-wrap gap-4">
-            <EntityInfoShort
+            <EntityInfo
               cloudProvider={providerDetails.provider as ProviderType}
               entityAlias={providerDetails.alias}
               entityId={providerDetails.uid}
@@ -222,7 +223,7 @@ export const FindingDetail = ({
               {/* CLI Command section */}
               {attributes.check_metadata.remediation.code.cli && (
                 <InfoField label="CLI Command" variant="simple">
-                  <Snippet className="bg-gray-50 py-1 dark:bg-slate-800">
+                  <Snippet>
                     <span className="text-xs whitespace-pre-line">
                       {attributes.check_metadata.remediation.code.cli}
                     </span>

@@ -1,7 +1,7 @@
 "use client";
 
 import { cva, type VariantProps } from "class-variance-authority";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/shadcn/button/button";
@@ -72,6 +72,8 @@ export interface ComboboxProps
   contentClassName?: string;
   disabled?: boolean;
   showSelectedFirst?: boolean;
+  loading?: boolean;
+  loadingMessage?: string;
 }
 
 export function Combobox({
@@ -88,6 +90,8 @@ export function Combobox({
   variant = "default",
   disabled = false,
   showSelectedFirst = true,
+  loading = false,
+  loadingMessage = "Loading...",
 }: ComboboxProps) {
   const [open, setOpen] = useState(false);
 
@@ -127,8 +131,16 @@ export function Combobox({
         align="start"
       >
         <Command>
-          <CommandInput placeholder={searchPlaceholder} className="h-9" />
+          {!loading && (
+            <CommandInput placeholder={searchPlaceholder} className="h-9" />
+          )}
           <CommandList className="minimal-scrollbar max-h-[400px]">
+            {loading && (
+              <div className="text-text-neutral-tertiary flex items-center gap-2 px-3 py-2 text-sm">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>{loadingMessage}</span>
+              </div>
+            )}
             <CommandEmpty>{emptyMessage}</CommandEmpty>
 
             {/* Show selected option first if enabled */}
