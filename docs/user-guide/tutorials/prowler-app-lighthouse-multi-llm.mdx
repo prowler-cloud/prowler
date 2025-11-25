@@ -12,11 +12,11 @@ Prowler Lighthouse AI supports multiple Large Language Model (LLM) providers, of
 
 Lighthouse AI supports the following LLM providers:
 
-- **OpenAI**: For GPT models (GPT-4o, GPT-4, etc.)
-- **Amazon Bedrock**: AWS service providing access to Claude, Llama, Titan, and other models
-- **OpenAI Compatible**: Custom endpoints like OpenRouter, Ollama, or any OpenAI-compatible service
+- **OpenAI**: Provides access to GPT models (GPT-4o, GPT-4, etc.)
+- **Amazon Bedrock**: Offers AWS-hosted access to Claude, Llama, Titan, and other models
+- **OpenAI Compatible**: Supports custom endpoints like OpenRouter, Ollama, or any OpenAI-compatible service
 
-## Understanding Default Providers
+## How Default Providers Work
 
 All three providers can be configured for a tenant, but only one can be set as the default provider. The first configured provider automatically becomes the default.
 
@@ -31,6 +31,8 @@ Navigate to **Configuration** → **Lighthouse AI** to see all three provider op
 <img src="/images/prowler-app/lighthouse-configuration.png" alt="Prowler Lighthouse Configuration" />
 
 ### Connecting a Provider
+
+To connect a provider:
 
 1. Click **Connect** under the desired provider
 2. Enter the required credentials
@@ -59,7 +61,7 @@ To generate an OpenAI API key, visit https://platform.openai.com/api-keys
 
 The AWS user must have the `AmazonBedrockLimitedAccess` managed policy attached:
 
-```
+```text
 arn:aws:iam::aws:policy/AmazonBedrockLimitedAccess
 ```
 
