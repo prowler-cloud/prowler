@@ -32,44 +32,45 @@ app_mcp_server = FastMCP("prowler-app")
 
 @app_mcp_server.tool()
 async def search_security_findings(
-    severity: list[str] | None = Field(
-        None,
-        description="Filter by severity levels. Multiple values allowed: critical, high, medium, low, informational",
+    severity: list[str] = Field(
+        [],
+        description="Filter by severity levels. Multiple values allowed: critical, high, medium, low, informational. If empty, all severities are returned.",
     ),
-    status: list[str] | None = Field(
-        None,
+    status: list[str] = Field(
+        ["FAIL"],
         description="Filter by finding status. Multiple values allowed: FAIL (security issue found), PASS (no issue found), MANUAL (requires manual verification)",
     ),
-    provider_type: list[str] | None = Field(
-        None,
-        description="Filter by cloud provider type. Multiple values allowed: aws, azure, gcp, kubernetes, m365, github",
+    provider_type: list[str] = Field(
+        [],
+        description="Filter by cloud provider type.",
     ),
     provider_alias: str | None = Field(
         None,
         description="Filter by specific provider alias/name (partial match supported)",
     ),
-    region: list[str] | None = Field(
-        None,
-        description="Filter by cloud regions. Multiple values allowed (e.g., us-east-1, eu-west-1)",
+    region: list[str] = Field(
+        [],
+        description="Filter by cloud regions. Multiple values allowed (e.g., us-east-1, eu-west-1). If empty, all regions are returned.",
     ),
-    service: list[str] | None = Field(
-        None,
-        description="Filter by cloud service. Multiple values allowed (e.g., s3, ec2, iam, keyvault)",
+    service: list[str] = Field(
+        [],
+        description="Filter by cloud service. Multiple values allowed (e.g., s3, ec2, iam, keyvault). If empty, all services are returned.",
     ),
-    resource_type: list[str] | None = Field(
-        None, description="Filter by resource type. Multiple values allowed"
+    resource_type: list[str] = Field(
+        [],
+        description="Filter by resource type. Multiple values allowed. If empty, all resource types are returned.",
     ),
-    check_id: list[str] | None = Field(
-        None,
-        description="Filter by specific security check IDs. Multiple values allowed",
+    check_id: list[str] = Field(
+        [],
+        description="Filter by specific security check IDs. Multiple values allowed. If empty, all check IDs are returned.",
     ),
     muted: bool | None = Field(
         None,
         description="Filter by muted status. True for muted findings only, False for active findings only. If not specified, returns both",
     ),
-    delta: list[str] | None = Field(
-        None,
-        description="Show only new or changed findings. Multiple values allowed: new (not seen in previous scans), changed (modified since last scan)",
+    delta: list[str] = Field(
+        [],
+        description="Show only new or changed findings. Multiple values allowed: new (not seen in previous scans), changed (modified since last scan). If empty, all findings are returned.",
     ),
     date_from: str | None = Field(
         None,
@@ -119,12 +120,6 @@ async def search_security_findings(
 @app_mcp_server.tool()
 async def get_finding_details(
     finding_id: str = Field(description="UUID of the finding to retrieve"),
-    include_resources: bool = Field(
-        False, description="Include full resource details in response"
-    ),
-    include_scan_info: bool = Field(
-        False, description="Include scan metadata in response"
-    ),
 ) -> dict[str, Any]:
     """Retrieve comprehensive details about a specific security finding by its ID.
 
@@ -133,24 +128,26 @@ async def get_finding_details(
     """
     return await findings.get_finding_details(
         finding_id=finding_id,
-        include_resources=include_resources,
-        include_scan_info=include_scan_info,
     )
 
 
 @app_mcp_server.tool()
 async def get_findings_overview(
-    provider_type: list[str] | None = Field(
-        None,
-        description="Filter statistics by provider. Multiple values allowed: aws, azure, gcp, kubernetes, m365, github",
+    provider_type: list[str] = Field(
+        [],
+        description="Filter statistics by cloud provider. Multiple values allowed. If empty, all providers are returned.",
     ),
 ) -> dict[str, Any]:
-    """Retrieve high-level statistics and aggregated metrics about findings across your environment.
+    """Retrieve aggregate statistics about security findings across your environment.
 
-    Provides summary statistics like total findings, findings by severity, findings by status, and trends over time.
+    Provides a high-level summary of findings including total counts, status breakdowns,
+    and trending information (new vs changed findings).
 
     Returns:
-        dict containing the API response with aggregated statistics in a human-readable summary format
+        Aggregate statistics with counts for:
+        - total, fail, passed, muted findings
+        - new and changed findings
+        - breakdown by status (fail_new, fail_changed, pass_new, etc.)
     """
     return await findings.get_findings_overview(provider_type=provider_type)
 
