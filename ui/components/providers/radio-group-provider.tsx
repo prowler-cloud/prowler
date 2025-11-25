@@ -105,7 +105,7 @@ export const RadioGroupProvider: React.FC<RadioGroupProviderProps> = ({
             </div>
           </RadioGroup>
           {errorMessage && (
-            <FormMessage className="text-system-error dark:text-system-error">
+            <FormMessage className="text-text-error">
               {errorMessage}
             </FormMessage>
           )}

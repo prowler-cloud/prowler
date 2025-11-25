@@ -1,32 +1,41 @@
 {
   "Provider": "aws",
   "CheckID": "ecs_service_fargate_latest_platform_version",
-  "CheckTitle": "ECS Fargate services should run on the latest Fargate platform version",
+  "CheckTitle": "ECS Fargate service uses the latest Fargate platform version",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"
   ],
   "ServiceName": "ecs",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:ecs:{region}:{account-id}:service/{service-name}",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEcsService",
-  "Description": "This control checks if Amazon ECS Fargate services are running the latest Fargate platform version. The control fails if the platform version is not the latest.",
-  "Risk": "Not running the latest Fargate platform version may expose your services to security vulnerabilities and bugs that are resolved in newer versions.",
-  "RelatedUrl": "https://docs.aws.amazon.com/config/latest/developerguide/ecs-fargate-latest-platform-version.html",
+  "Description": "**ECS Fargate services** use the **latest Fargate platform version** via `platformVersion`=`LATEST` or an explicit value matching the current release for their `platformFamily` (Linux/Windows).",
+  "Risk": "Running on an outdated platform leaves known CVEs in the kernel/runtime unpatched, risking:\n- **Confidentiality**: data exposure via container escape\n- **Integrity**: privilege escalation and tampering\n- **Availability**: crashes/DoS and instability under load",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://servian.dev/setting-up-fargate-for-ecs-exec-8f5cc8d7d80e",
+    "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/platform-fargate.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ECS/platform-version.html",
+    "https://docs.aws.amazon.com/config/latest/developerguide/ecs-fargate-latest-platform-version.html",
+    "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/ecs-controls.html#ecs-10"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aws ecs update-service --cluster <cluster-name> --service <service-name> --platform-version LATEST",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/ecs-controls.html#ecs-10",
-      "Terraform": ""
+      "NativeIaC": "```yaml\n# CloudFormation: set ECS Fargate service to latest platform version\nResources:\n  <example_resource_name>:\n    Type: AWS::ECS::Service\n    Properties:\n      Cluster: <example_resource_id>\n      TaskDefinition: <example_resource_name>\n      LaunchType: FARGATE\n      PlatformVersion: LATEST  # Critical: use the latest Fargate platform version\n      NetworkConfiguration:\n        AwsvpcConfiguration:\n          Subnets:\n            - <example_resource_id>\n```",
+      "Other": "1. In the AWS Console, go to Amazon ECS\n2. Open your cluster and select the service\n3. Click Update\n4. Set Platform version to LATEST\n5. Click Update service (or Deploy) to apply",
+      "Terraform": "```hcl\n# ECS Fargate service using the latest platform version\nresource \"aws_ecs_service\" \"<example_resource_name>\" {\n  name            = \"<example_resource_name>\"\n  cluster         = \"<example_resource_id>\"\n  task_definition = \"<example_resource_name>\"\n  launch_type     = \"FARGATE\"\n  platform_version = \"LATEST\" # Critical: ensures the latest Fargate platform version\n\n  network_configuration {\n    subnets = [\"<example_resource_id>\"]\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Update your ECS Fargate services to the latest platform version to ensure they are running in a secure and optimized environment.",
-      "Url": "https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html"
+      "Text": "- Prefer `platformVersion` `LATEST` to receive patches.\n- If pinning, monitor releases and redeploy quickly to the current version.\n- Automate updates with staged rollouts in CI/CD.\n- Apply **defense in depth** and **least privilege** to limit runtime exploit impact.",
+      "Url": "https://hub.prowler.com/check/ecs_service_fargate_latest_platform_version"
     }
   },
   "Categories": [
-    "vulnerabilities"
+    "vulnerabilities",
+    "container-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

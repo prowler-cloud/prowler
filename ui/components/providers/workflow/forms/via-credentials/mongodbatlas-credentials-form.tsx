@@ -29,7 +29,6 @@ export const MongoDBAtlasCredentialsForm = ({
         placeholder="e.g. abcdefgh"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.atlas_public_key}
       />
       <CustomInput
         control={control}
@@ -40,7 +39,6 @@ export const MongoDBAtlasCredentialsForm = ({
         placeholder="Enter the private key"
         variant="bordered"
         isRequired
-        isInvalid={!!control._formState.errors.atlas_private_key}
       />
       <div className="text-default-400 text-xs">
         Keys never leave your browser unencrypted and are stored as secrets in

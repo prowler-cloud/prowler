@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardBody } from "@heroui/card";
+import Link from "next/link";
 
 import { AddIcon } from "@/components/icons/Icons";
 import {
@@ -14,7 +15,7 @@ import {
   MongoDBAtlasProviderBadge,
   OracleCloudProviderBadge,
 } from "@/components/icons/providers-badge";
-import { CustomButton } from "@/components/ui/custom/custom-button";
+import { Button } from "@/components/shadcn/button/button";
 import { ProviderOverviewProps } from "@/types";
 import { PROVIDER_TYPES, ProviderType } from "@/types/providers";
 
@@ -200,16 +201,12 @@ export const ProvidersOverview = ({
           </div>
         </div>
         <div className="mt-4 flex w-full items-center justify-end">
-          <CustomButton
-            asLink="/providers"
-            ariaLabel="Go to Providers page"
-            variant="solid"
-            color="action"
-            size="sm"
-            endContent={<AddIcon size={20} />}
-          >
-            Add Provider
-          </CustomButton>
+          <Button asChild className="gap-2" size="sm">
+            <Link href="/providers" aria-label="Go to Providers page">
+              Add Provider
+              <AddIcon size={20} />
+            </Link>
+          </Button>
         </div>
       </CardBody>
     </Card>
