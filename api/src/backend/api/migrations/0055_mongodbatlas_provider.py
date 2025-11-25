@@ -29,4 +29,8 @@ class Migration(migrations.Migration):
                 default="aws",
             ),
         ),
+        migrations.RunSQL(
+            "ALTER TYPE provider ADD VALUE IF NOT EXISTS 'mongodbatlas';",
+            reverse_sql=migrations.RunSQL.noop,
+        ),
     ]
