@@ -18,12 +18,12 @@ export const WorkflowAttackPaths = () => {
 
   const steps = [
     {
-      title: "Select Attack Path Scan",
-      description: "Choose an AWS account and its latest attack path scan",
+      title: "Select Attack Paths Scan",
+      description: "Choose an AWS account and its latest Attack Paths scan",
     },
     {
       title: "Build Query & Visualize",
-      description: "Create a query and view the attack path graph",
+      description: "Create a query and view the Attack Paths graph",
     },
   ];
 

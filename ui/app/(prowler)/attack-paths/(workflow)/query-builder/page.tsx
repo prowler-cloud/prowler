@@ -43,8 +43,8 @@ import { useQueryBuilder } from "./_hooks/use-query-builder";
 import { exportGraphAsSVG, formatNodeLabel } from "./_lib";
 
 /**
- * Attack Path Analysis
- * Allows users to select a scan, build a query, and visualize the attack path graph
+ * Attack Paths Analysis
+ * Allows users to select a scan, build a query, and visualize the Attack Paths graph
  */
 export default function AttackPathAnalysisPage() {
   const searchParams = useSearchParams();
@@ -262,10 +262,10 @@ export default function AttackPathAnalysisPage() {
       {/* Header */}
       <div>
         <h2 className="dark:text-prowler-theme-pale/90 text-xl font-semibold">
-          Attack Path Analysis
+          Attack Paths Analysis
         </h2>
         <p className="text-text-neutral-secondary dark:text-text-neutral-secondary mt-2 text-sm">
-          Select a scan, build a query, and visualize attack paths in your
+          Select a scan, build a query, and visualize Attack Paths in your
           infrastructure.
         </p>
       </div>
@@ -493,7 +493,7 @@ export default function AttackPathAnalysisPage() {
           <div className="flex flex-1 items-center justify-center text-center">
             <p className="text-text-neutral-secondary dark:text-text-neutral-secondary text-sm">
               Select a query and click &quot;Execute Query&quot; to visualize
-              the attack path graph
+              the Attack Paths graph
             </p>
           </div>
         )}

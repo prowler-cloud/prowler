@@ -11,7 +11,7 @@ export default function AttackPathsWorkflowLayout({
 }) {
   return (
     <>
-      <Navbar title="Attack Path Analysis" icon="" />
+      <Navbar title="Attack Paths Analysis" icon="" />
       <div className="px-6 py-4 sm:px-8 xl:px-10">
         {/* Content */}
         <div>{children}</div>

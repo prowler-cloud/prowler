@@ -16,7 +16,7 @@ export const GraphLoading = () => {
           <Skeleton className="h-3 w-3 rounded-full" />
         </div>
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          Loading attack path graph...
+          Loading Attack Paths graph...
         </p>
       </div>
     </div>

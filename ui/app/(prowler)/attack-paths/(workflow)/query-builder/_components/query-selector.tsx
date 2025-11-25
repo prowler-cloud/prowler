@@ -17,7 +17,7 @@ interface QuerySelectorProps {
 
 /**
  * Query selector dropdown component
- * Allows users to select from available attack path queries
+ * Allows users to select from available Attack Paths queries
  */
 export const QuerySelector = ({
   queries,

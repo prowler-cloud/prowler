@@ -50,7 +50,7 @@ const disabledLinkClass =
   "text-border-neutral-secondary dark:text-border-neutral-secondary hover:bg-transparent hover:text-border-neutral-secondary dark:hover:text-border-neutral-secondary cursor-default pointer-events-none";
 
 /**
- * Table displaying AWS account attack path scans
+ * Table displaying AWS account Attack Paths scans
  * Shows scan metadata and allows selection of completed scans
  */
 export const ScanListTable = ({ scans }: ScanListTableProps) => {
@@ -123,7 +123,7 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
   return (
     <>
       <div className="minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto border p-4">
-        <Table aria-label="Attack path scans table listing provider accounts, scan dates, status, progress, and duration">
+        <Table aria-label="Attack Paths scans table listing provider accounts, scan dates, status, progress, and duration">
           <TableHeader>
             <TableRow>
               <TableHead>Provider / Account</TableHead>
@@ -141,7 +141,7 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
                   colSpan={TABLE_COLUMN_COUNT}
                   className="h-24 text-center"
                 >
-                  No attack path scans available.
+                  No Attack Paths scans available.
                 </TableCell>
               </TableRow>
             ) : (
@@ -342,7 +342,7 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
         )}
       </div>
       <p className="text-text-neutral-secondary dark:text-text-neutral-secondary mt-6 text-xs">
-        Only attack path scans with &quot;Completed&quot; status can be
+        Only Attack Paths scans with &quot;Completed&quot; status can be
         selected. Scans in progress will update automatically.
       </p>
     </>
