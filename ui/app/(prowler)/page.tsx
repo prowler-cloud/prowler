@@ -12,18 +12,18 @@ import { createDict } from "@/lib/helper";
 import { FindingProps, SearchParamsProps } from "@/types";
 
 import { LighthouseBanner } from "../../components/lighthouse/banner";
-import { AccountsSelector } from "./new-overview/components/accounts-selector";
-import { CheckFindingsSSR } from "./new-overview/components/check-findings";
-import { ProviderTypeSelector } from "./new-overview/components/provider-type-selector";
+import { AccountsSelector } from "./_new-overview/components/accounts-selector";
+import { CheckFindingsSSR } from "./_new-overview/components/check-findings";
+import { ProviderTypeSelector } from "./_new-overview/components/provider-type-selector";
 import {
   RiskSeverityChartSkeleton,
   RiskSeverityChartSSR,
-} from "./new-overview/components/risk-severity-chart";
-import { StatusChartSkeleton } from "./new-overview/components/status-chart";
+} from "./_new-overview/components/risk-severity-chart";
+import { StatusChartSkeleton } from "./_new-overview/components/status-chart";
 import {
   ThreatScoreSkeleton,
   ThreatScoreSSR,
-} from "./new-overview/components/threat-score";
+} from "./_new-overview/components/threat-score";
 
 const FILTER_PREFIX = "filter[";
 
