@@ -110,6 +110,7 @@
                 ]
               },
               "user-guide/tutorials/prowler-app-lighthouse",
+              "user-guide/tutorials/prowler-app-lighthouse-multi-llm",
               "user-guide/tutorials/prowler-cloud-public-ips",
               {
                 "group": "Tutorials",
