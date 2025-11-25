@@ -121,6 +121,56 @@ class SimplifiedFinding(BaseModel):
         )
 
 
+class DetailedFinding(SimplifiedFinding):
+    """Detailed security finding with comprehensive information for deep analysis.
+
+    Extends SimplifiedFinding with temporal metadata and relationships to scans and resources.
+    Use this when you need complete context about a specific finding.
+    """
+
+    inserted_at: str | None = None
+    updated_at: str | None = None
+    first_seen_at: str | None = None
+    scan_id: str | None = None
+    resource_ids: list[str] | None = None
+
+    @classmethod
+    def from_api_response(cls, data: dict) -> "DetailedFinding":
+        """Transform JSON:API finding response to detailed format."""
+        attributes = data.get("attributes", {})
+        check_metadata = attributes.get("check_metadata", {})
+        relationships = data.get("relationships", {})
+
+        # Parse scan relationship
+        scan_id = None
+        scan_data = relationships.get("scan", {}).get("data")
+        if scan_data:
+            scan_id = scan_data.get("id")
+
+        # Parse resources relationship
+        resource_ids = None
+        resources_data = relationships.get("resources", {}).get("data", [])
+        if resources_data:
+            resource_ids = [r.get("id") for r in resources_data]
+
+        return cls(
+            id=data.get("id"),
+            uid=attributes.get("uid"),
+            status=attributes.get("status"),
+            severity=attributes.get("severity"),
+            check_metadata=CheckMetadata.from_api_response(check_metadata),
+            status_extended=attributes.get("status_extended") or None,
+            delta=attributes.get("delta"),
+            muted=attributes.get("muted") if attributes.get("muted") else None,
+            muted_reason=attributes.get("muted_reason"),
+            inserted_at=attributes.get("inserted_at") or None,
+            updated_at=attributes.get("updated_at") or None,
+            first_seen_at=attributes.get("first_seen_at") or None,
+            scan_id=scan_id,
+            resource_ids=resource_ids,
+        )
+
+
 class FindingsListResponse(BaseModel):
     """Simplified response for findings list queries."""
 

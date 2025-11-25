@@ -3,9 +3,9 @@
 from typing import Literal
 
 from prowler_mcp_server.prowler_app.models.findings import (
+    DetailedFinding,
     FindingsListResponse,
     FindingsOverview,
-    SimplifiedFinding,
 )
 from prowler_mcp_server.prowler_app.utils.api_client import ProwlerAPIClient
 
@@ -27,39 +27,16 @@ async def search_security_findings(
     page_size: int = 100,
     page_number: int = 1,
 ) -> dict[str, any]:
-    """Search and filter security findings across all cloud providers with rich filtering capabilities.
+    """Search findings with filters, returns simplified findings without temporal metadata.
 
-    By default retrieves the latest findings from the most recent scans. When any date parameter
-    is provided, queries historical findings within a 2-day window.
-
-    Args:
-        severity: Filter by severity levels
-        status: Filter by finding status
-        provider_type: Filter by cloud provider
-        provider_alias: Filter by specific provider alias/name
-        region: Filter by cloud regions
-        service: Filter by cloud service (e.g., s3, ec2, iam)
-        resource_type: Filter by resource type
-        check_id: Filter by specific security check IDs
-        muted: Show only muted findings (True) or only active findings (False). If not specified, shows both
-        delta: Show only new or changed findings
-        date_from: Start date for range query (ISO 8601 date format YYYY-MM-DD). Maps to filter[inserted_at__gte].
-                   Can be used alone or with date_to.
-                   IMPORTANT: When using date_from and/or date_to, the date range cannot exceed 2 days (API limitation).
-                   If only one boundary is provided, the implementation will set the other to maintain the 2-day window.
-        date_to: End date for range query (ISO 8601 date format YYYY-MM-DD). Maps to filter[inserted_at__lte].
-                 Can be used alone or with date_from.
-        search: Free-text search across finding details
-        page_size: Number of results per page. Default: 100, Max: 1000
-        page_number: Page number to retrieve (1-indexed). Default: 1
+    Uses /latest endpoint by default, switches to /findings with date range when dates provided.
+    Returns simplified findings (excludes inserted_at, scan_id, resource_ids).
 
     Returns:
-        Paginated list of findings with metadata. Each finding includes severity, status, check details,
-        and relationships to scans/resources.
+        FindingsListResponse as dict with paginated simplified findings
 
     Raises:
         ValueError: If date range exceeds 2 days
-        Exception: If API request fails
     """
     client = ProwlerAPIClient()
 
@@ -122,57 +99,48 @@ async def search_security_findings(
     return simplified_response.model_dump()
 
 
-# TODO: Is it needed to return more information in this tool than in the search_security_findings tool?
 async def get_finding_details(
     finding_id: str,
 ) -> dict[str, any]:
-    """Retrieve comprehensive details about a specific security finding by its ID.
+    """Get detailed finding information including temporal metadata and relationships.
+
+    Fetches a single finding with additional fields: inserted_at, updated_at, first_seen_at,
+    scan_id, and resource_ids.
 
     Args:
-        finding_id: UUID of the finding to retrieve (from search_security_findings results)
+        finding_id: UUID of the finding
 
     Returns:
-        Simplified finding with all essential security metadata and remediation information
+        DetailedFinding model as dict
 
     Raises:
-        Exception: If API request fails or finding not found
+        Exception: If API request fails
     """
     client = ProwlerAPIClient()
 
     params = {
-        # Return only LLM-relevant fields
-        "fields[findings]": "uid,status,severity,check_id,check_metadata,status_extended,delta,muted,muted_reason"
+        # Return comprehensive fields including temporal metadata
+        "fields[findings]": "uid,status,severity,check_id,check_metadata,status_extended,delta,muted,muted_reason,inserted_at,updated_at,first_seen_at",
+        # Include relationships to scan and resources
+        "include": "scan,resources",
     }
 
-    # Get API response and transform to simplified format
+    # Get API response and transform to detailed format
     api_response = await client.get(f"/api/v1/findings/{finding_id}", params=params)
-    simplified_finding = SimplifiedFinding.from_api_response(
-        api_response.get("data", {})
-    )
+    detailed_finding = DetailedFinding.from_api_response(api_response.get("data", {}))
 
-    return simplified_finding.model_dump()
+    return detailed_finding.model_dump()
 
 
 async def get_findings_overview(
     provider_type: list[str] = [],
 ) -> dict[str, any]:
-    """Retrieve aggregate statistics about security findings formatted as a human-readable markdown report.
+    """Get aggregate finding statistics and format as markdown report.
 
-    Provides a high-level summary of findings including total counts, status breakdowns,
-    and trending information (new vs changed findings).
-
-    Args:
-        provider_type: Filter statistics by cloud provider (e.g., ["aws", "azure"]).
-                      Default: [] (all providers)
+    Fetches overview from /api/v1/overviews/findings and builds markdown report.
 
     Returns:
-        Dictionary with 'report' key containing markdown-formatted summary:
-        - Summary statistics (total, failed, passed, muted with percentages)
-        - Delta analysis (new and changed findings breakdown)
-        - Trending information
-
-    Raises:
-        Exception: If API request fails
+        Dict with 'report' key containing markdown-formatted statistics
     """
     client = ProwlerAPIClient()
 

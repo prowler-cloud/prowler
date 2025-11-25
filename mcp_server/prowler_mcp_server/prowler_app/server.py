@@ -92,11 +92,27 @@ async def search_security_findings(
 ) -> dict[str, Any]:
     """Search and filter security findings across all cloud providers with rich filtering capabilities.
 
-    By default retrieves the latest findings from the most recent scans. When any date parameter
-    is provided, queries historical findings within a 2-day window.
+    This is the primary tool for browsing and filtering security findings. Returns lightweight findings
+    optimized for searching across large result sets. For detailed information about a specific finding,
+    use get_finding_details.
+
+    Default behavior:
+    - Returns latest findings from most recent scans (no date parameters needed)
+    - Filters to FAIL status only (security issues found)
+    - Returns 100 results per page
+
+    Date filtering:
+    - Without dates: queries latest findings (most efficient)
+    - With dates: queries historical findings (2-day maximum range)
+
+    Each finding includes:
+    - Core identification: id, uid, check_id
+    - Security context: status, severity, check_metadata (title, description, remediation)
+    - State tracking: delta (new/changed), muted status
+    - Extended details: status_extended for additional context
 
     Returns:
-        dict containing the API response with data (list of findings), meta (pagination info), and optional included resources
+        Paginated list of simplified findings with total count and pagination metadata
     """
     return await findings.search_security_findings(
         severity=severity,
@@ -123,8 +139,21 @@ async def get_finding_details(
 ) -> dict[str, Any]:
     """Retrieve comprehensive details about a specific security finding by its ID.
 
+    This tool provides MORE detailed information than search_security_findings. Use this when you need
+    to deeply analyze a specific finding or understand its complete context and history.
+
+    Additional information compared to search_security_findings:
+    - Temporal metadata: when the finding was first seen, inserted, and last updated
+    - Scan relationship: ID of the scan that generated this finding
+    - Resource relationships: IDs of all cloud resources associated with this finding
+
+    Workflow:
+    1. Use search_security_findings to browse and filter across many findings
+    2. Use get_finding_details to drill down into specific findings of interest
+
     Returns:
-        dict containing the API response with single finding data and optional included resources/scan info
+        dict containing detailed finding with comprehensive security metadata, temporal information,
+        and relationships to scans and resources
     """
     return await findings.get_finding_details(
         finding_id=finding_id,
@@ -138,16 +167,26 @@ async def get_findings_overview(
         description="Filter statistics by cloud provider. Multiple values allowed. If empty, all providers are returned.",
     ),
 ) -> dict[str, Any]:
-    """Retrieve aggregate statistics about security findings across your environment.
+    """Get high-level statistics about security findings formatted as a human-readable markdown report.
 
-    Provides a high-level summary of findings including total counts, status breakdowns,
-    and trending information (new vs changed findings).
+    Use this tool to get a quick overview of your security posture without retrieving individual findings.
+    Perfect for understanding trends, identifying areas of concern, and tracking improvements over time.
+
+    The report includes:
+    - Summary statistics: total findings, fail/pass/muted counts with percentages
+    - Delta analysis: breakdown of new vs changed findings
+    - Trending information: how findings are evolving over time
+
+    Output format: Markdown-formatted report ready to present to users or include in documentation.
+
+    Use cases:
+    - Quick security posture assessment
+    - Tracking remediation progress over time
+    - Identifying which providers have most issues
+    - Understanding finding trends (improving or degrading)
 
     Returns:
-        Aggregate statistics with counts for:
-        - total, fail, passed, muted findings
-        - new and changed findings
-        - breakdown by status (fail_new, fail_changed, pass_new, etc.)
+        Dictionary with 'report' key containing markdown-formatted summary statistics
     """
     return await findings.get_findings_overview(provider_type=provider_type)
 
