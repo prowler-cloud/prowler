@@ -24,6 +24,10 @@ import {
   ThreatScoreSkeleton,
   ThreatScoreSSR,
 } from "./_new-overview/components/threat-score";
+import {
+  ComplianceWatchlistSSR,
+  WatchlistCardSkeleton,
+} from "./_new-overview/components/watchlist";
 
 const FILTER_PREFIX = "filter[";
 
@@ -54,6 +58,10 @@ export default async function Home({
       </div>
 
       <div className="flex flex-col gap-6 md:flex-row md:flex-wrap md:items-stretch">
+        <Suspense fallback={<WatchlistCardSkeleton />}>
+          <ComplianceWatchlistSSR searchParams={resolvedSearchParams} />
+        </Suspense>
+
         <Suspense fallback={<ThreatScoreSkeleton />}>
           <ThreatScoreSSR searchParams={resolvedSearchParams} />
         </Suspense>
@@ -108,7 +116,7 @@ const SSRDataNewFindingsTable = async ({
 
   // Expand each finding with its corresponding resource, scan, and provider
   const expandedFindings = findingsData?.data
-    ? findingsData.data.map((finding: FindingProps) => {
+    ? (findingsData.data as FindingProps[]).map((finding) => {
         const scan = scanDict[finding.relationships?.scan?.data?.id];
         const resource =
           resourceDict[finding.relationships?.resources?.data?.[0]?.id];
@@ -148,7 +156,7 @@ const SSRDataNewFindingsTable = async ({
       <DataTable
         key={`dashboard-${Date.now()}`}
         columns={ColumnNewFindingsToDate}
-        data={expandedResponse?.data || []}
+        data={(expandedResponse?.data || []) as FindingProps[]}
         // metadata={findingsData?.meta}
       />
     </>

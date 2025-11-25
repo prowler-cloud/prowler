@@ -15,7 +15,6 @@ import {
   Skeleton,
 } from "@/components/shadcn";
 import { calculatePercentage } from "@/lib/utils";
-
 interface FindingsData {
   total: number;
   new: number;
