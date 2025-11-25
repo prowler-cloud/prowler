@@ -2,6 +2,13 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.16.0] (Prowler v5.15.0)
+
+### Added
+- New endpoint to retrieve an overview of the attack surfaces [(#9309)](https://github.com/prowler-cloud/prowler/pull/9309)
+
+---
+
 ## [1.15.0] (Prowler v5.14.0)
 
 ### Added
