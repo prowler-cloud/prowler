@@ -53,6 +53,7 @@ export interface WatchlistCardProps
   items: WatchlistItem[];
   ctaLabel: string;
   ctaHref: string;
+  headerAction?: React.ReactNode;
   emptyState?: {
     message?: string;
     description?: string;
@@ -65,6 +66,7 @@ export const WatchlistCard = ({
   items,
   ctaLabel,
   ctaHref,
+  headerAction,
   emptyState,
 }: WatchlistCardProps) => {
   const isEmpty = items.length === 0;
@@ -74,7 +76,10 @@ export const WatchlistCard = ({
       variant="base"
       className="flex min-h-[405px] min-w-[328px] flex-1 flex-col justify-between md:max-w-[312px]"
     >
-      <CardTitle>{title}</CardTitle>
+      <div className="flex items-center justify-between">
+        <CardTitle>{title}</CardTitle>
+        {headerAction}
+      </div>
       <CardContent className="flex flex-col">
         {isEmpty ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-12 py-6">

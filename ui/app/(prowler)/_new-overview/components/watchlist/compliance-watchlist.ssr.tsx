@@ -1,15 +1,11 @@
 import {
   adaptComplianceOverviewsResponse,
   getCompliancesOverview,
-  sortCompliancesForWatchlist,
 } from "@/actions/compliances";
 import { SearchParamsProps } from "@/types";
 
 import { pickFilterParams } from "../../lib/filter-params";
-import {
-  buildComplianceWatchlistItem,
-  ComplianceWatchlist,
-} from "./compliance-watchlist";
+import { ComplianceWatchlist } from "./compliance-watchlist";
 
 export const ComplianceWatchlistSSR = async ({
   searchParams,
@@ -20,17 +16,18 @@ export const ComplianceWatchlistSSR = async ({
 
   const response = await getCompliancesOverview({ filters });
   const { data } = adaptComplianceOverviewsResponse(response);
-  const sorted = sortCompliancesForWatchlist(data, 9);
 
-  const items = sorted.map((compliance) =>
-    buildComplianceWatchlistItem({
+  // Filter out ProwlerThreatScore and limit to 9 items
+  const items = data
+    .filter((item) => item.framework !== "ProwlerThreatScore")
+    .slice(0, 9)
+    .map((compliance) => ({
       id: compliance.id,
       framework: compliance.framework,
       label: compliance.label,
       icon: compliance.icon,
       score: compliance.score,
-    }),
-  );
+    }));
 
   return <ComplianceWatchlist items={items} />;
 };
