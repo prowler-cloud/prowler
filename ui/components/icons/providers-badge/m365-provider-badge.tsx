@@ -31,7 +31,7 @@ export const M365ProviderBadge: FC<IconSvgProps> = ({
     >
       <g>
         <rect width="256" height="256" rx="60" fill="#f4f2ed" />
-        <g transform="scale(3.5) translate(2 2)">
+        <g transform="scale(3.1) translate(2 2)">
           <g clipPath={`url(#${clipId0})`}>
             <g clipPath={`url(#${clipId1})`}>
               <path

@@ -11,14 +11,12 @@ interface HorizontalBarChartProps {
   data: BarDataPoint[];
   height?: number;
   title?: string;
-  labelWidth?: string;
   onBarClick?: (dataPoint: BarDataPoint, index: number) => void;
 }
 
 export function HorizontalBarChart({
   data,
   title,
-  labelWidth = "w-20",
   onBarClick,
 }: HorizontalBarChartProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -64,7 +62,7 @@ export function HorizontalBarChart({
           return (
             <div
               key={item.name}
-              className="flex items-center gap-10"
+              className="flex items-center gap-6"
               style={{ cursor: isClickable ? "pointer" : "default" }}
               role={isClickable ? "button" : undefined}
               tabIndex={isClickable ? 0 : undefined}
@@ -89,7 +87,7 @@ export function HorizontalBarChart({
               }}
             >
               {/* Label */}
-              <div className={`w-20 md:${labelWidth} shrink-0`}>
+              <div className="w-20 shrink-0">
                 <span
                   className="text-text-neutral-secondary block truncate text-sm font-medium"
                   style={{
