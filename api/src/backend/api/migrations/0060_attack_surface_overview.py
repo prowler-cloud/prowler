@@ -9,7 +9,6 @@ import api.rls
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("api", "0059_compliance_overview_summary"),
     ]
