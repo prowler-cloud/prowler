@@ -1,16 +1,12 @@
 """Cloud Provider Management tools for Prowler App MCP Server."""
 
-from typing import Literal
-
 from prowler_mcp_server.lib.logger import logger
 from prowler_mcp_server.prowler_app.utils.api_client import ProwlerAPIClient
 
 
 async def search_cloud_providers(
     provider_id: list[str] | None = None,
-    provider_type: (
-        list[Literal["aws", "azure", "gcp", "kubernetes", "m365", "github"]] | None
-    ) = None,
+    provider_type: list[str] | None = None,
     alias: str | None = None,
     connected: bool | None = None,
     include_secret_info: bool = False,

@@ -1,14 +1,10 @@
 """Resource Inventory tools for Prowler App MCP Server."""
 
-from typing import Literal
-
 from prowler_mcp_server.prowler_app.utils.api_client import ProwlerAPIClient
 
 
 async def search_resources(
-    provider_type: (
-        list[Literal["aws", "azure", "gcp", "kubernetes", "m365", "github"]] | None
-    ) = None,
+    provider_type: list[str] | None = None,
     provider_alias: str | None = None,
     service: list[str] | None = None,
     region: list[str] | None = None,
@@ -149,9 +145,7 @@ async def get_resource_details(
 
 
 async def get_resource_metadata(
-    provider_type: (
-        list[Literal["aws", "azure", "gcp", "kubernetes", "m365", "github"]] | None
-    ) = None,
+    provider_type: list[str] | None = None,
     provider_alias: str | None = None,
     date_from: str | None = None,
     date_to: str | None = None,
