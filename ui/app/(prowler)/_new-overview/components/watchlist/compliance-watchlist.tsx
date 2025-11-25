@@ -1,11 +1,9 @@
 "use client";
 
-import { ArrowDownNarrowWide, ArrowUpNarrowWide } from "lucide-react";
 import Image, { type StaticImageData } from "next/image";
 import { useState } from "react";
 
-import { Button } from "@/components/shadcn/button/button";
-
+import { SortToggleButton } from "./sort-toggle-button";
 import { WatchlistCard } from "./watchlist-card";
 
 export interface ComplianceData {
@@ -39,8 +37,6 @@ export const ComplianceWatchlist = ({ items }: { items: ComplianceData[] }) => {
       value: `${item.score}%`,
     }));
 
-  const SortIcon = isAsc ? ArrowUpNarrowWide : ArrowDownNarrowWide;
-
   return (
     <WatchlistCard
       title="Compliance Watchlist"
@@ -48,14 +44,12 @@ export const ComplianceWatchlist = ({ items }: { items: ComplianceData[] }) => {
       ctaLabel="Compliance Dashboard"
       ctaHref="/compliance"
       headerAction={
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setIsAsc(!isAsc)}
-          aria-label={isAsc ? "Sort by highest score" : "Sort by lowest score"}
-        >
-          <SortIcon className="size-4" />
-        </Button>
+        <SortToggleButton
+          isAscending={isAsc}
+          onToggle={() => setIsAsc(!isAsc)}
+          ascendingLabel="Sort by highest score"
+          descendingLabel="Sort by lowest score"
+        />
       }
       emptyState={{
         message: "This space is looking empty.",

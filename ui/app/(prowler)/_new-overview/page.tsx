@@ -18,7 +18,7 @@ import { StatusChartSkeleton } from "./components/status-chart";
 import { ThreatScoreSkeleton, ThreatScoreSSR } from "./components/threat-score";
 import {
   ComplianceWatchlistSSR,
-  ServiceWatchlist,
+  ServiceWatchlistSSR,
   WatchlistCardSkeleton,
 } from "./components/watchlist";
 
@@ -64,7 +64,9 @@ export default async function NewOverviewPage({
         </Suspense>
       </div>
       <div className="mt-6 flex gap-6">
-        <ServiceWatchlist />
+        <Suspense fallback={<WatchlistCardSkeleton />}>
+          <ServiceWatchlistSSR searchParams={resolvedSearchParams} />
+        </Suspense>
         <GraphsTabsWrapper searchParams={resolvedSearchParams} />
       </div>
     </ContentLayout>

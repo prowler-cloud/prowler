@@ -17,10 +17,10 @@ export const ComplianceWatchlistSSR = async ({
   const response = await getCompliancesOverview({ filters });
   const { data } = adaptComplianceOverviewsResponse(response);
 
-  // Filter out ProwlerThreatScore and limit to 9 items
+  // Filter out ProwlerThreatScore and limit to 5 items
   const items = data
     .filter((item) => item.framework !== "ProwlerThreatScore")
-    .slice(0, 9)
+    .slice(0, 5)
     .map((compliance) => ({
       id: compliance.id,
       framework: compliance.framework,

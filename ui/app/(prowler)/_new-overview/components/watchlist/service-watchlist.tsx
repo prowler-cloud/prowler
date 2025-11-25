@@ -1,61 +1,43 @@
 "use client";
 
-import { getAWSIcon } from "@/components/icons/services/IconServices";
+import { useState } from "react";
 
-import { WatchlistCard, WatchlistItem } from "./watchlist-card";
+import { ServiceOverview } from "@/actions/overview";
 
-const MOCK_SERVICE_ITEMS: WatchlistItem[] = [
-  {
-    key: "amazon-s3-1",
-    icon: getAWSIcon("Amazon S3"),
-    label: "Amazon S3",
-    value: "5",
-  },
-  {
-    key: "amazon-ec2",
-    icon: getAWSIcon("Amazon EC2"),
-    label: "Amazon EC2",
-    value: "8",
-  },
-  {
-    key: "amazon-rds",
-    icon: getAWSIcon("Amazon RDS"),
-    label: "Amazon RDS",
-    value: "12",
-  },
-  {
-    key: "aws-iam",
-    icon: getAWSIcon("AWS IAM"),
-    label: "AWS IAM",
-    value: "15",
-  },
-  {
-    key: "aws-lambda",
-    icon: getAWSIcon("AWS Lambda"),
-    label: "AWS Lambda",
-    value: "22",
-  },
-  {
-    key: "amazon-vpc",
-    icon: getAWSIcon("Amazon VPC"),
-    label: "Amazon VPC",
-    value: "28",
-  },
-  {
-    key: "amazon-cloudwatch",
-    icon: getAWSIcon("AWS CloudWatch"),
-    label: "AWS CloudWatch",
-    value: "78",
-  },
-];
+import { SortToggleButton } from "./sort-toggle-button";
+import { WatchlistCard } from "./watchlist-card";
 
-export const ServiceWatchlist = () => {
+export const ServiceWatchlist = ({ items }: { items: ServiceOverview[] }) => {
+  const [isAsc, setIsAsc] = useState(true);
+
+  const sortedItems = [...items]
+    .sort((a, b) =>
+      isAsc
+        ? a.attributes.fail - b.attributes.fail
+        : b.attributes.fail - a.attributes.fail,
+    )
+    .slice(0, 5)
+    .map((item) => ({
+      key: item.id,
+      icon: <div className="bg-bg-data-muted size-3 rounded-sm" />,
+      label: item.id,
+      value: item.attributes.fail,
+    }));
+
   return (
     <WatchlistCard
       title="Service Watchlist"
-      items={MOCK_SERVICE_ITEMS}
+      items={sortedItems}
       ctaLabel="Services Dashboard"
       ctaHref="/services"
+      headerAction={
+        <SortToggleButton
+          isAscending={isAsc}
+          onToggle={() => setIsAsc(!isAsc)}
+          ascendingLabel="Sort by highest failures"
+          descendingLabel="Sort by lowest failures"
+        />
+      }
       emptyState={{
         message: "This space is looking empty.",
         description: "to add services to your watchlist.",
