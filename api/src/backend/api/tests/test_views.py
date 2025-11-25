@@ -7003,6 +7003,144 @@ class TestOverviewViewSet:
         assert combined_attributes["medium"] == 4
         assert combined_attributes["critical"] == 3
 
+    def test_overview_findings_severity_timeseries(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        now = datetime.now(timezone.utc)
+
+        # Scan A (Now)
+        scan_a = Scan.objects.create(
+            name="scan-a",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+        scan_summary_a = ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan_a,
+            check_id="check-a",
+            service="service-a",
+            severity="high",
+            region="region-a",
+            _pass=0,
+            fail=2,
+            muted=1,
+            total=3,
+        )
+        scan_summary_a.inserted_at = now
+        scan_summary_a.save()
+
+        # Scan B (3 hours ago)
+        scan_b = Scan.objects.create(
+            name="scan-b",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+        scan_summary_b = ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan_b,
+            check_id="check-b",
+            service="service-b",
+            severity="medium",
+            region="region-b",
+            _pass=0,
+            fail=1,
+            muted=0,
+            total=1,
+        )
+        scan_summary_b.inserted_at = now - timedelta(hours=3)
+        scan_summary_b.save()
+        scan_b.inserted_at = now - timedelta(hours=3)
+        scan_b.save()
+
+        # Scan C (10 days ago)
+        scan_c = Scan.objects.create(
+            name="scan-c",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+        scan_summary_c = ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan_c,
+            check_id="check-c",
+            service="service-c",
+            severity="critical",
+            region="region-c",
+            _pass=0,
+            fail=1,
+            muted=0,
+            total=1,
+        )
+        scan_summary_c.inserted_at = now - timedelta(days=10)
+        scan_summary_c.save()
+        scan_c.inserted_at = now - timedelta(days=10)
+        scan_c.save()
+
+        # 1. Default Behavior (5D) - Granularity: day
+        response = authenticated_client.get(
+            reverse("overview-findings_severity_timeseries")
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        meta = data["meta"]
+        results = data["data"]
+
+        assert meta["time_range"] == "5D"
+        assert meta["granularity"] == "day"
+
+        total_high = sum(item["attributes"]["high"] for item in results)
+        total_medium = sum(item["attributes"]["medium"] for item in results)
+        total_critical = sum(item["attributes"]["critical"] for item in results)
+        total_muted = sum(item["attributes"]["muted"] for item in results)
+
+        assert total_high == 2  # From Scan A
+        assert total_medium == 1  # From Scan B
+        assert total_critical == 0  # Scan C excluded
+        assert total_muted == 1  # From Scan A
+
+        # 2. Range 1D - Granularity: hour
+        response = authenticated_client.get(
+            reverse("overview-findings_severity_timeseries"), {"filter[range]": "1D"}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        meta = data["meta"]
+        results = data["data"]
+
+        assert meta["time_range"] == "1D"
+        assert meta["granularity"] == "hour"
+
+        total_high = sum(item["attributes"]["high"] for item in results)
+        total_medium = sum(item["attributes"]["medium"] for item in results)
+        total_critical = sum(item["attributes"]["critical"] for item in results)
+
+        assert total_high == 2
+        assert total_medium == 1
+        assert total_critical == 0
+
+        assert len(results) >= 1
+
+        response = authenticated_client.get(
+            reverse("overview-findings_severity_timeseries"), {"filter[range]": "1M"}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        meta = data["meta"]
+        results = data["data"]
+
+        assert meta["time_range"] == "1M"
+        assert meta["granularity"] == "day"
+
+        total_critical = sum(item["attributes"]["critical"] for item in results)
+        assert total_critical == 1
+
 
 @pytest.mark.django_db
 class TestScheduleViewSet:

@@ -1,11 +1,7 @@
 openapi: 3.0.3
 info:
-  title: Prowler API
-  version: 1.15.0
-  description: |-
-    Prowler API specification.
-
-    This file is auto-generated.
+  title: API Reference - Prowler
+  version: 0.0.0
 paths:
   /api/v1/api-keys:
     get:
@@ -4986,6 +4982,207 @@ paths:
               schema:
                 $ref: '#/components/schemas/OverviewSeverityResponse'
           description: ''
+  /api/v1/overviews/findings_severity_timeseries:
+    get:
+      operationId: overviews_findings_severity_timeseries_retrieve
+      description: Retrieve an aggregated summary of findings grouped by severity
+        levels over time. The response includes the total count of findings for each
+        severity, as long as there are at least one finding for that severity.
+      summary: Get findings data by severity over time
+      parameters:
+      - in: query
+        name: fields[severity-time-series]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - date
+            - critical
+            - high
+            - medium
+            - low
+            - informational
+            - muted
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__date]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          x-spec-enum-id: eca8c51e6bd28935
+          enum:
+          - aws
+          - azure
+          - gcp
+          - github
+          - iac
+          - kubernetes
+          - m365
+          - mongodbatlas
+          - oraclecloud
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            x-spec-enum-id: eca8c51e6bd28935
+            enum:
+            - aws
+            - azure
+            - gcp
+            - github
+            - iac
+            - kubernetes
+            - m365
+            - mongodbatlas
+            - oraclecloud
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+        explode: false
+        style: form
+      - in: query
+        name: filter[range]
+        schema:
+          type: string
+          enum:
+          - 1D
+          - 1M
+          - 1W
+          - 5D
+          - All
+        description: |-
+          Time range for the series (e.g., `1D`). Defaults to `5D`.
+
+          * `1D` - Last 24 Hours
+          * `5D` - Last 5 Days
+          * `1W` - Last 7 Days
+          * `1M` - Last 30 Days
+          * `All` - All Time
+      - in: query
+        name: filter[region]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[timezone]
+        schema:
+          type: string
+        description: Timezone for aggregation following the IANA timezone database
+          format (e.g., `America/New_York`, `Europe/London`) defaults to `UTC`.
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - date
+            - -date
+            - critical
+            - -critical
+            - high
+            - -high
+            - medium
+            - -medium
+            - low
+            - -low
+            - informational
+            - -informational
+            - muted
+            - -muted
+        explode: false
+      tags:
+      - Overview
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OverviewSeverityTimeSeriesResponse'
+          description: ''
   /api/v1/overviews/providers:
     get:
       operationId: overviews_providers_retrieve
@@ -5068,6 +5265,8 @@ paths:
             type: string
             enum:
             - id
+            - provider_type
+            - region
             - total
             - fail
             - muted
@@ -5200,6 +5399,10 @@ paths:
             enum:
             - id
             - -id
+            - provider_type
+            - -provider_type
+            - region
+            - -region
             - total
             - -total
             - fail
@@ -8984,116 +9187,12 @@ paths:
           description: CSV file containing the compliance report
         '404':
           description: Compliance report not found
-  /api/v1/scans/{id}/report:
-    get:
-      operationId: scans_report_retrieve
-      description: Returns a ZIP file containing the requested report
-      summary: Download ZIP report
-      parameters:
-      - in: query
-        name: fields[scan-reports]
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - id
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
-        explode: false
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this scan.
-        required: true
-      tags:
-      - Scan
-      security:
-      - JWT or API Key: []
-      responses:
-        '200':
-          description: Report obtained successfully
-        '202':
-          description: The task is in progress
-        '403':
-          description: There is a problem with credentials
-        '404':
-          description: The scan has no reports, or the report generation task has
-            not started yet
-  /api/v1/scans/{id}/threatscore:
-    get:
-      operationId: scans_threatscore_retrieve
-      description: Download a specific threatscore report (e.g., 'prowler_threatscore_aws')
-        as a PDF file.
-      summary: Retrieve threatscore report
-      parameters:
-      - in: query
-        name: fields[scans]
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - name
-            - trigger
-            - state
-            - unique_resource_count
-            - progress
-            - duration
-            - provider
-            - task
-            - inserted_at
-            - started_at
-            - completed_at
-            - scheduled_at
-            - next_scan_at
-            - processor
-            - url
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
-        explode: false
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this scan.
-        required: true
-      - in: query
-        name: include
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - provider
-        description: include query parameter to allow the client to customize which
-          related resources should be returned.
-        explode: false
-      tags:
-      - Scan
-      security:
-      - JWT or API Key: []
-      responses:
-        '200':
-          description: PDF file containing the threatscore report
-        '202':
-          description: The task is in progress
-        '401':
-          description: API key missing or user not Authenticated
-        '403':
-          description: There is a problem with credentials
-        '404':
-          description: The scan has no threatscore reports, or the threatscore report
-            generation task has not started yet
   /api/v1/scans/{id}/ens:
     get:
       operationId: scans_ens_retrieve
-      description: Download a specific ENS compliance report (e.g., 'prowler_ens_aws')
+      description: Download ENS RD2022 compliance report (e.g., 'ens_rd2022_aws')
         as a PDF file.
-      summary: Retrieve ENS compliance report
+      summary: Retrieve ENS RD2022 compliance report
       parameters:
       - in: query
         name: fields[scans]
@@ -9220,6 +9319,110 @@ paths:
         '404':
           description: The scan has no NIS2 reports, or the NIS2 report generation
             task has not started yet
+  /api/v1/scans/{id}/report:
+    get:
+      operationId: scans_report_retrieve
+      description: Returns a ZIP file containing the requested report
+      summary: Download ZIP report
+      parameters:
+      - in: query
+        name: fields[scan-reports]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scan.
+        required: true
+      tags:
+      - Scan
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          description: Report obtained successfully
+        '202':
+          description: The task is in progress
+        '403':
+          description: There is a problem with credentials
+        '404':
+          description: The scan has no reports, or the report generation task has
+            not started yet
+  /api/v1/scans/{id}/threatscore:
+    get:
+      operationId: scans_threatscore_retrieve
+      description: Download a specific threatscore report (e.g., 'prowler_threatscore_aws')
+        as a PDF file.
+      summary: Retrieve threatscore report
+      parameters:
+      - in: query
+        name: fields[scans]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - trigger
+            - state
+            - unique_resource_count
+            - progress
+            - duration
+            - provider
+            - task
+            - inserted_at
+            - started_at
+            - completed_at
+            - scheduled_at
+            - next_scan_at
+            - processor
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scan.
+        required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      tags:
+      - Scan
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          description: PDF file containing the threatscore report
+        '202':
+          description: The task is in progress
+        '401':
+          description: API key missing or user not Authenticated
+        '403':
+          description: There is a problem with credentials
+        '404':
+          description: The scan has no threatscore reports, or the threatscore report
+            generation task has not started yet
   /api/v1/schedules/daily:
     post:
       operationId: schedules_daily_create
@@ -13558,6 +13761,11 @@ components:
           properties:
             id:
               type: string
+              readOnly: true
+            provider_type:
+              type: string
+            region:
+              type: string
             total:
               type: integer
             fail:
@@ -13567,7 +13775,8 @@ components:
             pass:
               type: integer
           required:
-          - id
+          - provider_type
+          - region
           - total
           - fail
           - muted
@@ -13662,6 +13871,57 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/OverviewSeverity'
+      required:
+      - data
+    OverviewSeverityTimeSeries:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - severity-time-series
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            date:
+              type: string
+              format: date-time
+            critical:
+              type: integer
+            high:
+              type: integer
+            medium:
+              type: integer
+            low:
+              type: integer
+            informational:
+              type: integer
+            muted:
+              type: integer
+          required:
+          - id
+          - date
+          - critical
+          - high
+          - medium
+          - low
+          - informational
+          - muted
+    OverviewSeverityTimeSeriesResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/OverviewSeverityTimeSeries'
       required:
       - data
     PaginatedComplianceOverviewAttributesList:
@@ -19725,62 +19985,3 @@ components:
       bearerFormat: JWT
       description: Supports both JWT Bearer tokens and API Key authentication. Use
         `Bearer <token>` for JWT or `Api-Key <key>` for API keys.
-tags:
-- name: User
-  description: Endpoints for managing user accounts.
-- name: Token
-  description: Endpoints for token management, including obtaining a new token and
-    refreshing an existing token for authentication purposes.
-- name: Tenant
-  description: Endpoints for managing tenants, along with their memberships.
-- name: Invitation
-  description: Endpoints for tenant invitations management, allowing retrieval and
-    filtering of invitations, creating new invitations, accepting and revoking them.
-- name: Role
-  description: Endpoints for managing RBAC roles within tenants, allowing creation,
-    retrieval, updating, and deletion of role configurations and permissions.
-- name: Provider
-  description: Endpoints for managing providers (AWS, GCP, Azure, etc...).
-- name: Provider Group
-  description: Endpoints for managing provider groups.
-- name: Task
-  description: Endpoints for task management, allowing retrieval of task status and
-    revoking tasks that have not started.
-- name: Scan
-  description: Endpoints for triggering manual scans and viewing scan results.
-- name: Schedule
-  description: Endpoints for managing scan schedules, allowing configuration of automated
-    scans with different scheduling options.
-- name: Resource
-  description: Endpoints for managing resources discovered by scans, allowing retrieval
-    and filtering of resource information.
-- name: Finding
-  description: Endpoints for managing findings, allowing retrieval and filtering of
-    findings that result from scans.
-- name: Processor
-  description: Endpoints for managing post-processors used to process Prowler findings,
-    including registration, configuration, and deletion of post-processing actions.
-- name: Compliance Overview
-  description: Endpoints for checking the compliance overview, allowing filtering
-    by scan, provider or compliance framework ID.
-- name: Overview
-  description: Endpoints for retrieving aggregated summaries of resources from the
-    system.
-- name: Integration
-  description: Endpoints for managing third-party integrations, including registration,
-    configuration, retrieval, and deletion of integrations such as S3, JIRA, or other
-    services.
-- name: Lighthouse AI
-  description: Endpoints for managing Lighthouse AI configurations, including creation,
-    retrieval, updating, and deletion of configurations such as OpenAI keys, models,
-    and business context.
-- name: SAML
-  description: Endpoints for Single Sign-On authentication management via SAML for
-    seamless user authentication.
-- name: API Keys
-  description: Endpoints for API keys management. These can be used as an alternative
-    to JWT authorization.
-- name: Mute Rules
-  description: Endpoints for simple mute rules management. These can be used as an
-    alternative to the Mutelist Processor if you need to mute specific findings across
-    your tenant with a specific reason.

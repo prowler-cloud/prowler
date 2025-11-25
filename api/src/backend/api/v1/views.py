@@ -8,6 +8,7 @@ from copy import deepcopy
 from datetime import datetime, timedelta, timezone
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from urllib.parse import urljoin
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import sentry_sdk
 from allauth.socialaccount.models import SocialAccount, SocialApp
@@ -119,6 +120,7 @@ from api.filters import (
     ScanFilter,
     ScanSummaryFilter,
     ScanSummarySeverityFilter,
+    ScanSummaryTimeSeriesFilter,
     TaskFilter,
     TenantApiKeyFilter,
     TenantFilter,
@@ -207,6 +209,7 @@ from api.v1.serializers import (
     OverviewRegionSerializer,
     OverviewServiceSerializer,
     OverviewSeveritySerializer,
+    OverviewSeverityTimeSeriesSerializer,
     ProcessorCreateSerializer,
     ProcessorSerializer,
     ProcessorUpdateSerializer,
@@ -4057,6 +4060,14 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         ),
         filters=True,
     ),
+    findings_severity_timeseries=extend_schema(
+        summary="Get findings data by severity over time",
+        description=(
+            "Retrieve an aggregated summary of findings grouped by severity levels over time. The response includes the total count "
+            "of findings for each severity, as long as there are at least one finding for that severity."
+        ),
+        filters=True,
+    ),
     services=extend_schema(
         summary="Get findings data by service",
         description=(
@@ -4102,6 +4113,8 @@ class OverviewViewSet(BaseRLSViewSet):
             return OverviewFindingSerializer
         elif self.action == "findings_severity":
             return OverviewSeveritySerializer
+        elif self.action == "findings_severity_timeseries":
+            return OverviewSeverityTimeSeriesSerializer
         elif self.action == "services":
             return OverviewServiceSerializer
         elif self.action == "regions":
@@ -4115,6 +4128,8 @@ class OverviewViewSet(BaseRLSViewSet):
             return None
         elif self.action in ["findings", "services", "regions"]:
             return ScanSummaryFilter
+        elif self.action == "findings_severity_timeseries":
+            return ScanSummaryTimeSeriesFilter
         elif self.action == "findings_severity":
             return ScanSummarySeverityFilter
         return None
@@ -4296,6 +4311,59 @@ class OverviewViewSet(BaseRLSViewSet):
         )
 
         serializer = self.get_serializer(severity_data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_name="findings_severity_timeseries")
+    def findings_severity_timeseries(self, request):
+        queryset = self.get_queryset()
+        filter_class = self.get_filterset_class()
+
+        range_val = request.query_params.get(
+            "filter[range]", filter_class.TimeRangeChoices.FIVE_DAYS
+        )
+        if range_val not in filter_class.TimeRangeChoices.values:
+            range_val = filter_class.TimeRangeChoices.FIVE_DAYS
+
+        tz_val = request.query_params.get("filter[timezone]", "UTC")
+        try:
+            ZoneInfo(tz_val)
+        except (ZoneInfoNotFoundError, ValueError):
+            tz_val = "UTC"
+
+        filter_data = {"range": range_val, "timezone": tz_val}
+
+        filterset = filter_class(filter_data, queryset=queryset, request=request)
+        queryset = filterset.qs
+
+        config = filterset.get_config(range_val)
+        trunc_func = config["trunc"]
+        granularity = config["granularity"]
+        tz_obj = filterset.resolved_timezone
+
+        annotation_kwargs = {
+            "muted": Coalesce(Sum("muted"), 0),
+            **{
+                sev_code.lower(): Coalesce(Sum("fail", filter=Q(severity=sev_code)), 0)
+                for sev_code, _ in SeverityChoices  # Assumes SeverityChoices is available
+            },
+        }
+
+        aggregated_data = (
+            queryset.annotate(date=trunc_func("inserted_at", tzinfo=tz_obj))
+            .values("date")
+            .annotate(**annotation_kwargs)
+            .order_by("date")
+        )
+
+        serializer = self.get_serializer(
+            aggregated_data,
+            many=True,
+            context={
+                "timezone": str(tz_obj),
+                "time_range": range_val,
+                "granularity": granularity,
+            },
+        )
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], url_name="services")

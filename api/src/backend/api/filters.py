@@ -1,8 +1,10 @@
 from datetime import date, datetime, timedelta, timezone
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from dateutil.parser import parse
 from django.conf import settings
-from django.db.models import F, Q
+from django.db.models import F, Q, TextChoices
+from django.db.models.functions import TruncDay, TruncHour, TruncWeek
 from django_filters.rest_framework import (
     BaseInFilter,
     BooleanFilter,
@@ -800,6 +802,89 @@ class ScanSummaryFilter(FilterSet):
             "inserted_at": ["date", "gte", "lte"],
             "region": ["exact", "icontains", "in"],
         }
+
+
+class ScanSummaryTimeSeriesFilter(ScanSummaryFilter):
+    """
+    Filter for findings_severity_timeseries endpoint.
+    Handles range-based filtering on inserted_at.
+    """
+
+    class TimeRangeChoices(TextChoices):
+        ONE_DAY = "1D", "Last 24 Hours"
+        FIVE_DAYS = "5D", "Last 5 Days"
+        ONE_WEEK = "1W", "Last 7 Days"
+        ONE_MONTH = "1M", "Last 30 Days"
+        ALL = "All", "All Time"
+
+    TIME_RANGE_CONFIG = {
+        TimeRangeChoices.ONE_DAY: {
+            "delta": timedelta(days=1),
+            "trunc": TruncHour,
+            "granularity": "hour",
+        },
+        TimeRangeChoices.FIVE_DAYS: {
+            "delta": timedelta(days=5),
+            "trunc": TruncDay,
+            "granularity": "day",
+        },
+        TimeRangeChoices.ONE_WEEK: {
+            "delta": timedelta(weeks=1),
+            "trunc": TruncDay,
+            "granularity": "day",
+        },
+        TimeRangeChoices.ONE_MONTH: {
+            "delta": timedelta(days=30),
+            "trunc": TruncDay,
+            "granularity": "day",
+        },
+        TimeRangeChoices.ALL: {
+            "delta": None,
+            "trunc": TruncWeek,
+            "granularity": "week",
+        },
+    }
+
+    range = ChoiceFilter(
+        choices=TimeRangeChoices.choices,
+        method="filter_range",
+        help_text="Time range for the series (e.g., `1D`). Defaults to `5D`.",
+    )
+    timezone = CharFilter(
+        method="filter_noop",
+        help_text="Timezone for aggregation following the IANA timezone database format (e.g., `America/New_York`, `Europe/London`) defaults to `UTC`.",
+    )
+
+    @property
+    def resolved_timezone(self):
+        """Resolves the timezone from filter data, defaulting to UTC."""
+        tz_name = self.data.get("timezone", "UTC")
+        try:
+            return ZoneInfo(tz_name)
+        except (ZoneInfoNotFoundError, ValueError):
+            return timezone.utc
+
+    def get_config(self, value):
+        """Helper to get config with default fallback."""
+        return (
+            self.TIME_RANGE_CONFIG.get(value)
+            or self.TIME_RANGE_CONFIG[self.TimeRangeChoices.FIVE_DAYS]
+        )
+
+    def filter_range(self, queryset, name, value):
+        """Filters the queryset by the selected time range."""
+        config = self.get_config(value)
+        delta = config["delta"]
+
+        if delta is not None:
+            start_date = datetime.now(self.resolved_timezone) - delta
+            return queryset.filter(inserted_at__gte=start_date)
+
+        return queryset
+
+    def filter_noop(self, queryset, name, value):
+        """No-op filter to allow for timezone filtering."""
+        return queryset
 
 
 class ScanSummarySeverityFilter(ScanSummaryFilter):
