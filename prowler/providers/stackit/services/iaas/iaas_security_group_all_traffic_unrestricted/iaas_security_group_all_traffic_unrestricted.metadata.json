@@ -1,0 +1,33 @@
+{
+  "Provider": "stackit",
+  "CheckID": "iaas_security_group_all_traffic_unrestricted",
+  "CheckTitle": "Ensure IaaS security groups do not allow unrestricted access to all traffic",
+  "CheckType": [],
+  "ServiceName": "iaas",
+  "SubServiceName": "security-group",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "SecurityGroup",
+  "Description": "Security groups should not allow unrestricted access to all ports and protocols from the public internet (0.0.0.0/0 or ::/0). Allowing all traffic creates a security risk by exposing all services running on the instances to potential attacks.",
+  "Risk": "Allowing unrestricted access to all traffic from the internet exposes all services and applications to potential attacks, unauthorized access, and security breaches. This effectively bypasses the security group's purpose as a firewall.",
+  "RelatedUrl": "https://docs.stackit.cloud/stackit/en/security-groups-10977456.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "https://docs.stackit.cloud/stackit/en/how-to-create-security-groups-10977460.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Follow the principle of least privilege by only allowing specific ports and protocols that are required. Create granular rules for each service and restrict access to trusted IP addresses or ranges.",
+      "Url": "https://docs.stackit.cloud/stackit/en/security-groups-10977456.html"
+    }
+  },
+  "Categories": [
+    "internet-exposed",
+    "network-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check identifies security groups that allow all traffic (all ports and/or all protocols) from the public internet. Security groups should implement specific rules for each required service rather than allowing all traffic."
+}
