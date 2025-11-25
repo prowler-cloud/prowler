@@ -123,7 +123,7 @@ class APIGateway(AWSService):
                             waf = stage["webAclArn"]
                         if "methodSettings" in stage:
                             for settings in stage["methodSettings"].values():
-                                if settings.get("loggingLevel") and settings.get("loggingLevel")!= "OFF":
+                                if settings.get("loggingLevel") and settings.get("loggingLevel", "")!= "OFF":
                                     logging = True
                                 if settings.get("cachingEnabled"):
                                     cache_enabled = True
