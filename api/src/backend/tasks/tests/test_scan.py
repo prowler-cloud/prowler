@@ -9,14 +9,17 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from tasks.jobs.scan import (
+    _ATTACK_SURFACE_MAPPING_CACHE,
     _aggregate_findings_by_region,
     _copy_compliance_requirement_rows,
     _create_compliance_summaries,
     _create_finding_delta,
+    _get_attack_surface_mapping_from_provider,
     _normalized_compliance_key,
     _persist_compliance_requirement_rows,
     _process_finding_micro_batch,
     _store_resources,
+    aggregate_attack_surface,
     aggregate_findings,
     create_compliance_requirements,
     perform_prowler_scan,
@@ -3471,3 +3474,282 @@ class TestAggregateFindingsByRegion:
 
         assert check_status_by_region == {}
         assert findings_count_by_compliance == {}
+
+
+@pytest.mark.django_db
+class TestAggregateAttackSurface:
+    """Test aggregate_attack_surface function and related caching."""
+
+    def setup_method(self):
+        """Clear cache before each test."""
+        _ATTACK_SURFACE_MAPPING_CACHE.clear()
+
+    def teardown_method(self):
+        """Clear cache after each test."""
+        _ATTACK_SURFACE_MAPPING_CACHE.clear()
+
+    @patch("tasks.jobs.scan.CheckMetadata.list")
+    def test_get_attack_surface_mapping_caches_result(self, mock_check_metadata_list):
+        """Test that _get_attack_surface_mapping_from_provider caches results."""
+        mock_check_metadata_list.return_value = {"check_internet_exposed_1"}
+
+        # First call should hit CheckMetadata.list
+        result1 = _get_attack_surface_mapping_from_provider("aws")
+        assert mock_check_metadata_list.call_count == 2  # internet-exposed, secrets
+
+        # Second call should use cache
+        result2 = _get_attack_surface_mapping_from_provider("aws")
+        assert mock_check_metadata_list.call_count == 2  # No additional calls
+
+        assert result1 is result2
+        assert "aws" in _ATTACK_SURFACE_MAPPING_CACHE
+
+    @patch("tasks.jobs.scan.CheckMetadata.list")
+    def test_get_attack_surface_mapping_different_providers(
+        self, mock_check_metadata_list
+    ):
+        """Test caching works independently for different providers."""
+        mock_check_metadata_list.return_value = {"check_1"}
+
+        _get_attack_surface_mapping_from_provider("aws")
+        aws_call_count = mock_check_metadata_list.call_count
+
+        _get_attack_surface_mapping_from_provider("gcp")
+        gcp_call_count = mock_check_metadata_list.call_count
+
+        # Both providers should have made calls
+        assert gcp_call_count > aws_call_count
+        assert "aws" in _ATTACK_SURFACE_MAPPING_CACHE
+        assert "gcp" in _ATTACK_SURFACE_MAPPING_CACHE
+
+    @patch("tasks.jobs.scan.CheckMetadata.list")
+    def test_get_attack_surface_mapping_returns_hardcoded_checks(
+        self, mock_check_metadata_list
+    ):
+        """Test that hardcoded check IDs are returned for privilege-escalation and ec2-imdsv1."""
+        mock_check_metadata_list.return_value = set()
+
+        result = _get_attack_surface_mapping_from_provider("aws")
+
+        # Hardcoded checks should be present
+        assert (
+            "iam_policy_allows_privilege_escalation" in result["privilege-escalation"]
+        )
+        assert (
+            "iam_inline_policy_allows_privilege_escalation"
+            in result["privilege-escalation"]
+        )
+        assert "ec2_instance_imdsv2_enabled" in result["ec2-imdsv1"]
+
+    @patch("tasks.jobs.scan.AttackSurfaceOverview.objects.bulk_create")
+    @patch("tasks.jobs.scan.Finding.all_objects.filter")
+    @patch("tasks.jobs.scan._get_attack_surface_mapping_from_provider")
+    @patch("tasks.jobs.scan.rls_transaction")
+    def test_aggregate_attack_surface_creates_overview_records(
+        self,
+        mock_rls_transaction,
+        mock_get_mapping,
+        mock_findings_filter,
+        mock_bulk_create,
+        tenants_fixture,
+        scans_fixture,
+    ):
+        """Test that aggregate_attack_surface creates AttackSurfaceOverview records."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        scan.provider.provider = "aws"
+        scan.provider.save()
+
+        mock_get_mapping.return_value = {
+            "internet-exposed": {"check_internet_1", "check_internet_2"},
+            "secrets": {"check_secrets_1"},
+            "privilege-escalation": {"check_privesc_1"},
+            "ec2-imdsv1": {"check_imdsv1_1"},
+        }
+
+        # Mock findings aggregation
+        mock_queryset = MagicMock()
+        mock_queryset.values.return_value = mock_queryset
+        mock_queryset.annotate.return_value = [
+            {"check_id": "check_internet_1", "total": 10, "failed": 3, "muted": 1},
+            {"check_id": "check_secrets_1", "total": 5, "failed": 2, "muted": 0},
+        ]
+
+        ctx = MagicMock()
+        ctx.__enter__.return_value = None
+        ctx.__exit__.return_value = False
+        mock_rls_transaction.return_value = ctx
+        mock_findings_filter.return_value = mock_queryset
+
+        aggregate_attack_surface(str(tenant.id), str(scan.id))
+
+        mock_bulk_create.assert_called_once()
+        args, kwargs = mock_bulk_create.call_args
+        objects = args[0]
+
+        # Should create records for internet-exposed and secrets (the ones with findings)
+        assert len(objects) == 2
+        assert kwargs["batch_size"] == 500
+
+    @patch("tasks.jobs.scan.AttackSurfaceOverview.objects.bulk_create")
+    @patch("tasks.jobs.scan.Finding.all_objects.filter")
+    @patch("tasks.jobs.scan._get_attack_surface_mapping_from_provider")
+    @patch("tasks.jobs.scan.rls_transaction")
+    def test_aggregate_attack_surface_skips_unsupported_provider(
+        self,
+        mock_rls_transaction,
+        mock_get_mapping,
+        mock_findings_filter,
+        mock_bulk_create,
+        tenants_fixture,
+        scans_fixture,
+    ):
+        """Test that ec2-imdsv1 is skipped for non-AWS providers."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        scan.provider.provider = "gcp"
+        scan.provider.uid = "gcp-test-project-id"
+        scan.provider.save()
+
+        mock_get_mapping.return_value = {
+            "internet-exposed": {"check_internet_1"},
+            "secrets": {"check_secrets_1"},
+            "privilege-escalation": set(),  # Not supported for GCP
+            "ec2-imdsv1": {"check_imdsv1_1"},  # Should be skipped for GCP
+        }
+
+        mock_queryset = MagicMock()
+        mock_queryset.values.return_value = mock_queryset
+        mock_queryset.annotate.return_value = [
+            {"check_id": "check_internet_1", "total": 5, "failed": 1, "muted": 0},
+        ]
+
+        ctx = MagicMock()
+        ctx.__enter__.return_value = None
+        ctx.__exit__.return_value = False
+        mock_rls_transaction.return_value = ctx
+        mock_findings_filter.return_value = mock_queryset
+
+        aggregate_attack_surface(str(tenant.id), str(scan.id))
+
+        # ec2-imdsv1 check_ids should not be in the filter
+        filter_call = mock_findings_filter.call_args
+        check_ids_in_filter = filter_call[1]["check_id__in"]
+        assert "check_imdsv1_1" not in check_ids_in_filter
+
+    @patch("tasks.jobs.scan.AttackSurfaceOverview.objects.bulk_create")
+    @patch("tasks.jobs.scan.Finding.all_objects.filter")
+    @patch("tasks.jobs.scan._get_attack_surface_mapping_from_provider")
+    @patch("tasks.jobs.scan.rls_transaction")
+    def test_aggregate_attack_surface_no_findings(
+        self,
+        mock_rls_transaction,
+        mock_get_mapping,
+        mock_findings_filter,
+        mock_bulk_create,
+        tenants_fixture,
+        scans_fixture,
+    ):
+        """Test that no records are created when there are no findings."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+
+        mock_get_mapping.return_value = {
+            "internet-exposed": {"check_1"},
+            "secrets": {"check_2"},
+            "privilege-escalation": set(),
+            "ec2-imdsv1": set(),
+        }
+
+        mock_queryset = MagicMock()
+        mock_queryset.values.return_value = mock_queryset
+        mock_queryset.annotate.return_value = []  # No findings
+
+        ctx = MagicMock()
+        ctx.__enter__.return_value = None
+        ctx.__exit__.return_value = False
+        mock_rls_transaction.return_value = ctx
+        mock_findings_filter.return_value = mock_queryset
+
+        aggregate_attack_surface(str(tenant.id), str(scan.id))
+
+        mock_bulk_create.assert_not_called()
+
+    @patch("tasks.jobs.scan.AttackSurfaceOverview.objects.bulk_create")
+    @patch("tasks.jobs.scan.Finding.all_objects.filter")
+    @patch("tasks.jobs.scan._get_attack_surface_mapping_from_provider")
+    @patch("tasks.jobs.scan.rls_transaction")
+    def test_aggregate_attack_surface_aggregates_counts_correctly(
+        self,
+        mock_rls_transaction,
+        mock_get_mapping,
+        mock_findings_filter,
+        mock_bulk_create,
+        tenants_fixture,
+        scans_fixture,
+    ):
+        """Test that counts from multiple check_ids are aggregated per attack surface type."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        scan.provider.provider = "aws"
+        scan.provider.save()
+
+        mock_get_mapping.return_value = {
+            "internet-exposed": {"check_internet_1", "check_internet_2"},
+            "secrets": set(),
+            "privilege-escalation": set(),
+            "ec2-imdsv1": set(),
+        }
+
+        mock_queryset = MagicMock()
+        mock_queryset.values.return_value = mock_queryset
+        mock_queryset.annotate.return_value = [
+            {"check_id": "check_internet_1", "total": 10, "failed": 3, "muted": 1},
+            {"check_id": "check_internet_2", "total": 5, "failed": 2, "muted": 0},
+        ]
+
+        ctx = MagicMock()
+        ctx.__enter__.return_value = None
+        ctx.__exit__.return_value = False
+        mock_rls_transaction.return_value = ctx
+        mock_findings_filter.return_value = mock_queryset
+
+        aggregate_attack_surface(str(tenant.id), str(scan.id))
+
+        args, kwargs = mock_bulk_create.call_args
+        objects = args[0]
+
+        assert len(objects) == 1
+        overview = objects[0]
+        assert overview.attack_surface_type == "internet-exposed"
+        assert overview.total_findings == 15  # 10 + 5
+        assert overview.failed_findings == 5  # 3 + 2
+        assert overview.muted_failed_findings == 1  # 1 + 0
+
+    @patch("tasks.jobs.scan.Scan.all_objects.select_related")
+    @patch("tasks.jobs.scan.rls_transaction")
+    def test_aggregate_attack_surface_uses_select_related(
+        self, mock_rls_transaction, mock_select_related, tenants_fixture, scans_fixture
+    ):
+        """Test that select_related is used to avoid N+1 query."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+
+        mock_scan = MagicMock()
+        mock_scan.provider.provider = "aws"
+
+        mock_select_related.return_value.get.return_value = mock_scan
+
+        ctx = MagicMock()
+        ctx.__enter__.return_value = None
+        ctx.__exit__.return_value = False
+        mock_rls_transaction.return_value = ctx
+
+        with patch(
+            "tasks.jobs.scan._get_attack_surface_mapping_from_provider"
+        ) as mock_map:
+            mock_map.return_value = {}
+
+            aggregate_attack_surface(str(tenant.id), str(scan.id))
+
+        mock_select_related.assert_called_once_with("provider")
