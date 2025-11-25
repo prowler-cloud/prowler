@@ -24,6 +24,10 @@ import {
   ThreatScoreSkeleton,
   ThreatScoreSSR,
 } from "./new-overview/components/threat-score";
+import {
+  ComplianceWatchlistSSR,
+  WatchlistCardSkeleton,
+} from "./new-overview/components/watchlist";
 
 const FILTER_PREFIX = "filter[";
 
@@ -54,6 +58,10 @@ export default async function Home({
       </div>
 
       <div className="flex flex-col gap-6 md:flex-row md:flex-wrap md:items-stretch">
+        <Suspense fallback={<WatchlistCardSkeleton />}>
+          <ComplianceWatchlistSSR searchParams={resolvedSearchParams} />
+        </Suspense>
+
         <Suspense fallback={<ThreatScoreSkeleton />}>
           <ThreatScoreSSR searchParams={resolvedSearchParams} />
         </Suspense>
