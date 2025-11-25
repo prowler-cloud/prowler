@@ -14,6 +14,10 @@ import { FindingProps, SearchParamsProps } from "@/types";
 import { LighthouseBanner } from "../../components/lighthouse/banner";
 import { AccountsSelector } from "./_new-overview/components/accounts-selector";
 import { CheckFindingsSSR } from "./_new-overview/components/check-findings";
+import {
+  RiskPipelineViewSkeleton,
+  RiskPipelineViewSSR,
+} from "./_new-overview/components/graphs-tabs/risk-pipeline-view";
 import { ProviderTypeSelector } from "./_new-overview/components/provider-type-selector";
 import {
   RiskSeverityChartSkeleton,
@@ -59,14 +63,6 @@ export default async function Home({
       </div>
 
       <div className="flex flex-col gap-6 md:flex-row md:flex-wrap md:items-stretch">
-        <Suspense fallback={<WatchlistCardSkeleton />}>
-          <ComplianceWatchlistSSR searchParams={resolvedSearchParams} />
-        </Suspense>
-
-        <Suspense fallback={<WatchlistCardSkeleton />}>
-          <ServiceWatchlistSSR searchParams={resolvedSearchParams} />
-        </Suspense>
-
         <Suspense fallback={<ThreatScoreSkeleton />}>
           <ThreatScoreSSR searchParams={resolvedSearchParams} />
         </Suspense>
@@ -77,6 +73,22 @@ export default async function Home({
 
         <Suspense fallback={<RiskSeverityChartSkeleton />}>
           <RiskSeverityChartSSR searchParams={resolvedSearchParams} />
+        </Suspense>
+      </div>
+
+      <div className="mt-6 flex flex-col gap-6 md:flex-row md:items-stretch">
+        <div className="flex flex-col gap-6">
+          <Suspense fallback={<WatchlistCardSkeleton />}>
+            <ComplianceWatchlistSSR searchParams={resolvedSearchParams} />
+          </Suspense>
+
+          <Suspense fallback={<WatchlistCardSkeleton />}>
+            <ServiceWatchlistSSR searchParams={resolvedSearchParams} />
+          </Suspense>
+        </div>
+
+        <Suspense fallback={<RiskPipelineViewSkeleton />}>
+          <RiskPipelineViewSSR searchParams={resolvedSearchParams} />
         </Suspense>
       </div>
 
