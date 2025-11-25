@@ -230,19 +230,19 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
             provider="aws",
             cypher="""
                 CALL () {
-                    MATCH path = (aws:AWSAccount {id: $provider_uid})-[r]-(x:EC2PrivateIp)-[q]-(y)
+                    MATCH (aws:AWSAccount {id: $provider_uid})-[r]-(x:EC2PrivateIp)-[q]-(y)
                     WHERE x.public_ip = $ip
                     RETURN aws, x, r, q, y
 
-                    UNION MATCH path = (aws:AWSAccount {id: $provider_uid})-[r]-(x:EC2Instance)-[q]-(y)
+                    UNION MATCH (aws:AWSAccount {id: $provider_uid})-[r]-(x:EC2Instance)-[q]-(y)
                     WHERE x.publicipaddress = $ip
                     RETURN aws, x, r, q, y
 
-                    UNION MATCH path = (aws:AWSAccount {id: $provider_uid})-[r]-(x:NetworkInterface)-[q]-(y)
+                    UNION MATCH (aws:AWSAccount {id: $provider_uid})-[r]-(x:NetworkInterface)-[q]-(y)
                     WHERE x.public_ip = $ip
                     RETURN aws, x, r, q, y
 
-                    UNION MATCH path = (aws:AWSAccount {id: $provider_uid})-[r]-(x:ElasticIPAddress)-[q]-(y)
+                    UNION MATCH (aws:AWSAccount {id: $provider_uid})-[r]-(x:ElasticIPAddress)-[q]-(y)
                     WHERE x.public_ip = $ip
                     RETURN aws, x, r, q, y
                 }
@@ -263,6 +263,46 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                     label="IP address",
                     description="Public IP address, e.g. 192.0.2.0.",
                     placeholder="192.0.2.0",
+                ),
+            ],
+        ),
+        AttackPathsQueryDefinition(
+            id="aws-internet-exposed-ec2-sensitive-s3-access",
+            name="Identify internet-exposed EC2 instances with sensitive S3 access",
+            description="Detect EC2 instances with SSH exposed to the internet that can assume higher-privileged roles to read tagged sensitive S3 buckets despite bucket-level public access blocks.",
+            provider="aws",
+            cypher="""
+                MATCH path_s3 = (aws:AWSAccount {id: $provider_uid})--(s3:S3Bucket)--(t:AWSTag)
+                WHERE toLower(t.key) = toLower($tag_key) AND toLower(t.value) = toLower($tag_value)
+
+                MATCH path_ec2 = (aws)--(ec2:EC2Instance)--(sg:EC2SecurityGroup)--(ipi:IpPermissionInbound)
+                WHERE ec2.exposed_internet = true
+                    AND ipi.toport = 22
+
+                MATCH path_role = (r:AWSRole)--(pol:AWSPolicy)--(stmt:AWSPolicyStatement)
+                WHERE ANY(x IN stmt.resource WHERE x CONTAINS s3.name)
+                    AND ANY(x IN stmt.action WHERE toLower(x) =~ 's3:(listbucket|getobject).*')
+
+                MATCH path_assume_role = (ec2)-[p:STS_ASSUMEROLE_ALLOW*1..9]-(r:AWSRole)
+
+                UNWIND nodes(path_s3) + nodes(path_ec2) + nodes(path_role) + nodes(path_assume_role) as n
+                OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
+                WHERE pf.status = 'FAIL'
+
+                RETURN path_s3, path_ec2, path_role, path_assume_role, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+            """,
+            parameters=[
+                AttackPathsQueryParameterDefinition(
+                    name="tag_key",
+                    label="Tag key",
+                    description="Tag key to filter the S3 bucket, e.g. DataClassification.",
+                    placeholder="DataClassification",
+                ),
+                AttackPathsQueryParameterDefinition(
+                    name="tag_value",
+                    label="Tag value",
+                    description="Tag value to filter the S3 bucket, e.g. Sensitive.",
+                    placeholder="Sensitive",
                 ),
             ],
         ),

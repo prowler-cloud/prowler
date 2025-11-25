@@ -36,7 +36,8 @@ dependencies = [
   "drf-simple-apikey (==2.2.1)",
   "matplotlib (>=3.10.6,<4.0.0)",
   "reportlab (>=4.4.4,<5.0.0)",
-  "neo4j (<6.0.0)"
+  "neo4j (<6.0.0)",
+  "shortuuid (>=1.0.13,<2.0.0)"
 ]
 description = "Prowler's API (Django/DRF)"
 license = "Apache-2.0"

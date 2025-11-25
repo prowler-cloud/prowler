@@ -1577,15 +1577,15 @@ def attack_paths_graph_stub_classes():
 def graph_db_mocks():
     with (
         patch(
-            "tasks.jobs.deletion.graph_database.drop_provider_subgraph"
-        ) as mock_drop_provider,
+            "tasks.jobs.deletion.graph_database.drop_tenant_provider_database"
+        ) as mock_drop_tenant_provider_database,
         patch(
-            "tasks.jobs.deletion.graph_database.drop_tenant_database"
-        ) as mock_drop_tenant,
+            "tasks.jobs.deletion.graph_database.drop_tenant_databases"
+        ) as mock_drop_tenant_databases,
     ):
         yield {
-            "drop_provider_subgraph": mock_drop_provider,
-            "drop_tenant_database": mock_drop_tenant,
+            "drop_tenant_provider_database": mock_drop_tenant_provider_database,
+            "drop_tenant_databases": mock_drop_tenant_databases,
         }
 
 

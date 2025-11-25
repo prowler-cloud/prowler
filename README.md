@@ -88,7 +88,6 @@ Attack Paths automatically extends every completed AWS scan with a Neo4j graph t
   | `NEO4J_HOST` | Hostname used by the API containers. | `neo4j` |
   | `NEO4J_PORT` | Bolt port exposed by Neo4j. | `7687` |
   | `NEO4J_USER` / `NEO4J_PASSWORD` | Credentials with rights to create per-tenant databases. | `neo4j` / `neo4j_password` |
-  | `NEO4J_DATABASE_PREFIX` | Prefix applied to tenant databases (`db-tenant-<tenant_id>`). | `db-tenant-` |
 
 Every AWS provider scan will enqueue an Attack Paths ingestion job automatically. Other cloud providers will be added in future iterations.
 

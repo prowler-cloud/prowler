@@ -59,8 +59,10 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
     # Attributes `neo4j_user` and `neo4j_password` are not really needed in this config object
     cartography_config = CartographyConfig(
         neo4j_uri=graph_database.get_uri(),
-        neo4j_database=graph_database.get_tenant_database_name(
-            str(prowler_api_provider.tenant_id)
+        neo4j_database=graph_database.get_tenant_provider_database_name(
+            str(prowler_api_provider.tenant_id),
+            prowler_api_provider.provider,
+            str(prowler_api_provider.id),
         ),
         update_tag=int(time.time()),
     )
@@ -111,7 +113,9 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             db_utils.update_attack_paths_scan_progress(attack_paths_scan, 95)
 
             # Adding Prowler nodes and relationships
-            prowler.analysis(neo4j_session, prowler_api_provider, scan_id, cartography_config)
+            prowler.analysis(
+                neo4j_session, prowler_api_provider, scan_id, cartography_config
+            )
 
         logger.info(
             f"Completed Cartography ({attack_paths_scan.id}) for "

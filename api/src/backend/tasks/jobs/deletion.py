@@ -53,8 +53,8 @@ def delete_provider(tenant_id: str, pk: str):
 
     # Delete the Attack Paths' Neo4j data related to the provider
     try:
-        graph_database.drop_provider_subgraph(
-            instance.tenant_id, instance.provider, instance.uid
+        graph_database.drop_tenant_provider_database(
+            str(instance.tenant_id), instance.provider, str(instance.id)
         )
     except graph_database.GraphDatabaseQueryException as gdb_error:
         logger.error(f"Error deleting Provider subgraph: {gdb_error}")
@@ -88,8 +88,8 @@ def delete_tenant(pk: str):
         summary = delete_provider(pk, provider.id)
         deletion_summary.update(summary)
 
-    try:
-        graph_database.drop_tenant_database(tenant_id=pk)
+    try:  # If there is any remaining Neo4j database
+        graph_database.drop_tenant_databases(tenant_id=pk)
     except graph_database.GraphDatabaseQueryException as gdb_error:
         logger.error(f"Error deleting Tenant graph database: {gdb_error}")
         raise

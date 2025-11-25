@@ -42,7 +42,6 @@ DATABASES = {
         "PORT": env.str("NEO4J_PORT"),
         "USER": env.str("NEO4J_USER"),
         "PASSWORD": env.str("NEO4J_PASSWORD"),
-        "DATABASE_PREFIX": env.str("NEO4J_DATABASE_PREFIX", "db-tenant-"),
     },
 }
 
