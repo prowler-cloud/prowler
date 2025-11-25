@@ -68,27 +68,6 @@ export interface ProviderConnectionStatus {
   value: string;
 }
 
-export interface ProviderOverviewProps {
-  data: {
-    type: "provider-overviews";
-    id: ProviderType;
-    attributes: {
-      findings: {
-        pass: number;
-        fail: number;
-        manual: number;
-        total: number;
-      };
-      resources: {
-        total: number;
-      };
-    };
-  }[];
-  meta: {
-    version: string;
-  };
-}
-
 export interface ProvidersApiResponse {
   links: {
     first: string;
