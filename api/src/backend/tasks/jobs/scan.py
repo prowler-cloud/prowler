@@ -84,8 +84,15 @@ ATTACK_SURFACE_PROVIDER_COMPATIBILITY = {
     "ec2-imdsv1": ["aws"],
 }
 
+_ATTACK_SURFACE_MAPPING_CACHE: dict[str, dict] = {}
+
 
 def _get_attack_surface_mapping_from_provider(provider_type: str) -> dict:
+    global _ATTACK_SURFACE_MAPPING_CACHE
+
+    if provider_type in _ATTACK_SURFACE_MAPPING_CACHE:
+        return _ATTACK_SURFACE_MAPPING_CACHE[provider_type]
+
     attack_surface_check_mappings = {
         "internet-exposed": None,
         "secrets": None,
@@ -103,6 +110,8 @@ def _get_attack_surface_mapping_from_provider(provider_type: str) -> dict:
                 provider=provider_type, category=category_name
             )
             attack_surface_check_mappings[category_name] = sdk_check_ids
+
+    _ATTACK_SURFACE_MAPPING_CACHE[provider_type] = attack_surface_check_mappings
     return attack_surface_check_mappings
 
 
@@ -1236,7 +1245,7 @@ def aggregate_attack_surface(tenant_id: str, scan_id: str):
         scan_id: Scan UUID whose findings should be aggregated.
     """
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-        scan_instance = Scan.all_objects.get(pk=scan_id)
+        scan_instance = Scan.all_objects.select_related("provider").get(pk=scan_id)
         provider_type = scan_instance.provider.provider
 
     provider_attack_surface_mapping = _get_attack_surface_mapping_from_provider(

@@ -4116,10 +4116,9 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         ],
     ),
     attack_surface=extend_schema(
-        summary="Attack surface overview",
+        summary="Get Attack surface overview",
         description=(
-            "Retrieve aggregated attack surface metrics from latest completed scans per provider. "
-            "Always returns all 4 attack surface types with zero counts if no data exists."
+            "Retrieve aggregated attack surface metrics from latest completed scans per provider."
         ),
         parameters=[
             OpenApiParameter(
