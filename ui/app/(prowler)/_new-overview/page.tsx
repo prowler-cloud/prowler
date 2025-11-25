@@ -19,8 +19,8 @@ import { ThreatScoreSkeleton, ThreatScoreSSR } from "./components/threat-score";
 import {
   ComplianceWatchlistSSR,
   ServiceWatchlist,
+  WatchlistCardSkeleton,
 } from "./components/watchlist";
-import { WatchlistCardSkeleton } from "./components/watchlist/watchlist-card";
 
 export default async function NewOverviewPage({
   searchParams,
