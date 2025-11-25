@@ -43,7 +43,7 @@ jobs:
 
   container-build-push:
     needs: setup
-    runs-on: ${{ matrix.runner }} 
+    runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
         include:
@@ -70,7 +70,22 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
 
+      - name: Notify container push started
+        if: github.event_name == 'release'
+        uses: ./.github/actions/slack-notification
+        env:
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_PLATFORM_DEPLOYMENTS }}
+          COMPONENT: MCP
+          RELEASE_TAG: ${{ env.RELEASE_TAG }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        with:
+          slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload-file-path: "./.github/scripts/slack-messages/container-release-started.json"
+
       - name: Build and push MCP container for ${{ matrix.arch }}
+        id: container-push
         if: github.event_name == 'push' || github.event_name == 'release'
         uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
@@ -89,20 +104,6 @@ jobs:
             ${{ github.event_name == 'release' && format('org.opencontainers.image.version={0}', env.RELEASE_TAG) || '' }}
           cache-from: type=gha,scope=${{ matrix.arch }}
           cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
-
-      - name: Notify container push started
-        if: github.event_name == 'release'
-        uses: ./.github/actions/slack-notification
-        env:
-          SLACK_CHANNEL_ID: ${{ secrets.SLACK_PLATFORM_DEPLOYMENTS }}
-          COMPONENT: MCP
-          RELEASE_TAG: ${{ env.RELEASE_TAG }}
-          GITHUB_SERVER_URL: ${{ github.server_url }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_RUN_ID: ${{ github.run_id }}
-        with:
-          slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
-          payload-file-path: "./.github/scripts/slack-messages/container-release-started.json"
 
       - name: Notify container push completed
         if: github.event_name == 'release' && always()
@@ -152,7 +153,7 @@ jobs:
             -t ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.STABLE_TAG }} \
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.short-sha }}-amd64 \
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.setup.outputs.short-sha }}-arm64
-            
+
       - name: Install regctl
         if: always()
         uses: regclient/actions/regctl-installer@main

@@ -141,19 +141,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
 
-      - name: Build and push SDK container for ${{ matrix.arch }}
-        if: github.event_name == 'push' || github.event_name == 'release'
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
-        with:
-          context: .
-          file: ${{ env.DOCKERFILE_PATH }}
-          push: true
-          platforms: ${{ matrix.platform }}
-          tags: |
-            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.LATEST_TAG }}-${{ matrix.arch }}
-          cache-from: type=gha,scope=${{ matrix.arch }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
-
       - name: Notify container push started
         if: github.event_name == 'release'
         uses: ./.github/actions/slack-notification
@@ -167,6 +154,20 @@ jobs:
         with:
           slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
           payload-file-path: "./.github/scripts/slack-messages/container-release-started.json"
+
+      - name: Build and push SDK container for ${{ matrix.arch }}
+        id: container-push
+        if: github.event_name == 'push' || github.event_name == 'release'
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        with:
+          context: .
+          file: ${{ env.DOCKERFILE_PATH }}
+          push: true
+          platforms: ${{ matrix.platform }}
+          tags: |
+            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.LATEST_TAG }}-${{ matrix.arch }}
+          cache-from: type=gha,scope=${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
 
       - name: Notify container push completed
         if: github.event_name == 'release' && always()
