@@ -12,7 +12,7 @@ Prowler Lighthouse AI is a Cloud Security Analyst chatbot that helps you underst
 
 ## How It Works
 
-Prowler Lighthouse AI integrates Large Language Models (LLMs) with your Prowler security findings data.
+Prowler Lighthouse AI integrates Large Language Models (LLMs) with Prowler security findings data.
 
 Here's what's happening behind the scenes:
 
@@ -217,7 +217,7 @@ Context windows are limited. While demo data fits inside the context window, que
 
 **3. Is my security data shared with LLM providers?**
 
-Minimal data is shared to generate useful responses. Agents can access security findings and remediation details when needed. Provider secrets are protected by design and cannot be read. The LLM provider credentials configured with Lighthouse AI are only accessible to our NextJS server and are never sent to the LLM providers. Resource metadata (names, tags, account/project IDs, etc) may be shared with your configured LLM provider based on your query requirements.
+Minimal data is shared to generate useful responses. Agents can access security findings and remediation details when needed. Provider secrets are protected by design and cannot be read. The LLM provider credentials configured with Lighthouse AI are only accessible to our NextJS server and are never sent to the LLM providers. Resource metadata (names, tags, account/project IDs, etc) may be shared with the configured LLM provider based on query requirements.
 
 **4. Can the Lighthouse AI change my cloud environment?**
 
