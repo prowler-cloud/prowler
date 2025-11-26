@@ -2,6 +2,13 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [v5.15.0] (Prowler UNRELEASED)
+
+### Added
+- `cloudstorage_uses_vpc_service_controls` check for GCP provider [(#9256)](https://github.com/prowler-cloud/prowler/pull/9256)
+
+---
+
 ## [v5.14.1] (Prowler UNRELEASED)
 
 ### Fixed
@@ -20,7 +27,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `cloudstorage_bucket_logging_enabled` check for GCP provider [(#9091)](https://github.com/prowler-cloud/prowler/pull/9091)
 - `cloudstorage_audit_logs_enabled` check for GCP provider [(#9220)](https://github.com/prowler-cloud/prowler/pull/9220)
 - `cloudstorage_bucket_sufficient_retention_period` check for GCP provider [(#9149)](https://github.com/prowler-cloud/prowler/pull/9149)
-- `cloudstorage_uses_vpc_service_controls` check for GCP provider [(#9256)](https://github.com/prowler-cloud/prowler/pull/9256)
 - C5 compliance framework for Azure provider [(#9081)](https://github.com/prowler-cloud/prowler/pull/9081)
 - C5 compliance framework for the GCP provider [(#9097)](https://github.com/prowler-cloud/prowler/pull/9097)
 - `organization_repository_creation_limited` check for GitHub provider [(#8844)](https://github.com/prowler-cloud/prowler/pull/8844)

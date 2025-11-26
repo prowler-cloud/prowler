@@ -1,7 +1,7 @@
 {
   "Provider": "gcp",
   "CheckID": "cloudstorage_uses_vpc_service_controls",
-  "CheckTitle": "Ensure That VPC Service Controls Are Used for Cloud Storage",
+  "CheckTitle": "Cloud Storage services are protected by VPC Service Controls",
   "CheckType": [],
   "ServiceName": "cloudstorage",
   "SubServiceName": "",
