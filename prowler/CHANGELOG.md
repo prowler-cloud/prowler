@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [v5.14.1] (Prowler v5.14.1)
+## [v5.14.1] (Prowler UNRELEASED)
 
 ### Fixed
 - Typo in PDF reporting [(#9322)](https://github.com/prowler-cloud/prowler/pull/9322)
