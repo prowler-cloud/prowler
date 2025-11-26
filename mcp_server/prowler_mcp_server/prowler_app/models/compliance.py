@@ -43,11 +43,11 @@ class ComplianceFramework(MinimalSerializerMixin, BaseModel):
 
         return cls(
             id=data.get("id"),
-            compliance_id=attributes.get("compliance_id") or None,
-            framework=attributes.get("framework") or None,
-            version=attributes.get("version") or None,
-            provider=attributes.get("provider") or None,
-            region=attributes.get("region") or None,
+            compliance_id=attributes.get("compliance_id"),
+            framework=attributes.get("framework"),
+            version=attributes.get("version"),
+            provider=attributes.get("provider"),
+            region=attributes.get("region"),
             total_requirements=attributes.get("total_requirements", 0),
             requirements_passed=attributes.get("requirements_passed", 0),
             requirements_failed=attributes.get("requirements_failed", 0),

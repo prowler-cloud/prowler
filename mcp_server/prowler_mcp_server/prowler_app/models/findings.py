@@ -37,10 +37,10 @@ class CheckMetadata(MinimalSerializerMixin, BaseModel):
         recommendation = remediation_data.get("recommendation", {})
 
         remediation = CheckRemediation(
-            cli=code.get("cli") or None,
-            terraform=code.get("terraform") or None,
-            recommendation_text=recommendation.get("text") or None,
-            recommendation_url=recommendation.get("url") or None,
+            cli=code.get("cli"),
+            terraform=code.get("terraform"),
+            recommendation_text=recommendation.get("text"),
+            recommendation_url=recommendation.get("url"),
         )
 
         return cls(
@@ -48,12 +48,12 @@ class CheckMetadata(MinimalSerializerMixin, BaseModel):
             title=data.get("checktitle"),
             description=data.get("description"),
             provider=data.get("provider"),
-            risk=data.get("risk") or None,
+            risk=data.get("risk"),
             service=data.get("servicename"),
             resource_type=data.get("resourcetype"),
             remediation=remediation,
-            related_url=data.get("relatedurl") or None,
-            categories=data.get("categories") or None,
+            related_url=data.get("relatedurl"),
+            categories=data.get("categories"),
         )
 
 
@@ -82,7 +82,7 @@ class SimplifiedFinding(MinimalSerializerMixin, BaseModel):
             status=attributes.get("status"),
             severity=attributes.get("severity"),
             check_metadata=CheckMetadata.from_api_response(check_metadata),
-            status_extended=attributes.get("status_extended") or None,
+            status_extended=attributes.get("status_extended"),
             delta=attributes.get("delta"),
             muted=attributes.get("muted") if attributes.get("muted") else None,
             muted_reason=attributes.get("muted_reason"),
@@ -127,13 +127,13 @@ class DetailedFinding(SimplifiedFinding):
             status=attributes.get("status"),
             severity=attributes.get("severity"),
             check_metadata=CheckMetadata.from_api_response(check_metadata),
-            status_extended=attributes.get("status_extended") or None,
+            status_extended=attributes.get("status_extended"),
             delta=attributes.get("delta"),
             muted=attributes.get("muted") if attributes.get("muted") else None,
             muted_reason=attributes.get("muted_reason"),
-            inserted_at=attributes.get("inserted_at") or None,
-            updated_at=attributes.get("updated_at") or None,
-            first_seen_at=attributes.get("first_seen_at") or None,
+            inserted_at=attributes.get("inserted_at"),
+            updated_at=attributes.get("updated_at"),
+            first_seen_at=attributes.get("first_seen_at"),
             scan_id=scan_id,
             resource_ids=resource_ids,
         )
