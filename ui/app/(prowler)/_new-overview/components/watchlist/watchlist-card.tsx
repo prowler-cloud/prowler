@@ -74,7 +74,7 @@ export const WatchlistCard = ({
   return (
     <Card
       variant="base"
-      className="flex min-h-[405px] min-w-[328px] flex-1 flex-col justify-between md:max-w-[312px]"
+      className="flex min-h-[405px] min-w-[312px] flex-col justify-between"
     >
       <div className="flex items-center justify-between">
         <CardTitle>{title}</CardTitle>
@@ -165,10 +165,7 @@ export const WatchlistCard = ({
 
 export function WatchlistCardSkeleton() {
   return (
-    <Card
-      variant="base"
-      className="flex min-h-[500px] min-w-[328px] flex-col md:max-w-[312px]"
-    >
+    <Card variant="base" className="flex min-h-[500px] min-w-[312px] flex-col">
       <CardTitle>
         <Skeleton className="h-7 w-[168px] rounded-xl" />
       </CardTitle>

@@ -53,12 +53,11 @@ export default async function Home({
         </Suspense>
       </div>
 
-      <div className="mt-6 flex flex-col gap-6 md:flex-row md:items-stretch">
-        <div className="flex flex-col gap-6">
+      <div className="mt-6 flex flex-col gap-6">
+        <div className="flex flex-col gap-6 md:flex-row">
           <Suspense fallback={<WatchlistCardSkeleton />}>
             <ComplianceWatchlistSSR searchParams={resolvedSearchParams} />
           </Suspense>
-
           <Suspense fallback={<WatchlistCardSkeleton />}>
             <ServiceWatchlistSSR searchParams={resolvedSearchParams} />
           </Suspense>
