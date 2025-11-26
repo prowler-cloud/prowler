@@ -198,85 +198,66 @@ async def get_findings_overview(
 
 @app_mcp_server.tool()
 async def search_compliance_frameworks(
-    scan_id: str = Field(
-        description="UUID of the scan to get compliance frameworks for"
+    scan_id: str | None = Field(
+        None,
+        description="UUID of the scan to get compliance frameworks for. If omitted, returns compliance data from the latest completed scan of each provider",
     ),
     framework: str | None = Field(
         None,
         description="Filter by specific compliance framework ID (e.g., cis_1.5_aws, pci_dss_v4.0_aws)",
     ),
-    region: list[str] | None = Field(
-        None, description="Filter by cloud regions. Multiple values allowed"
+    region: list[str] = Field(
+        [],
+        description="Filter by cloud regions. Multiple values allowed. If empty, all regions are returned.",
     ),
-    include_metadata: bool = Field(
-        False, description="Include detailed framework metadata in response"
+    page_size: int = Field(
+        100, description="Number of results to return per page. Default: 100"
+    ),
+    page_number: int = Field(
+        1, description="Page number to retrieve (1-indexed). Default: 1"
     ),
 ) -> dict[str, Any]:
-    """Search and retrieve compliance frameworks with their status for a specific scan.
+    """Search and retrieve compliance frameworks with their status.
 
-    Shows which compliance frameworks apply to the scan and their overall pass/fail status.
+    Returns high-level compliance framework information showing which standards (CIS, PCI-DSS, HIPAA,
+    NIST, ISO 27001, etc.) apply to your environment and their overall compliance status.
+
+    Behavior:
+    - With scan_id: Returns compliance data for that specific scan
+    - Without scan_id: Returns aggregated compliance data from the latest completed scan of each provider
+
+    Use this tool to:
+    - Get a compliance overview for a specific scan or latest scans across all providers
+    - See which frameworks are applicable to your cloud environment
+    - Understand overall compliance posture with pass/fail percentages
+    - Filter frameworks by region or specific framework name
+
+    Each framework includes:
+    - Framework identification: compliance_id, framework name, version
+    - Cloud context: provider type, region
+    - Compliance metrics: total requirements, passed/failed/manual counts, pass percentage
 
     Returns:
-        dict containing the API response with list of compliance frameworks and their status
+        Paginated list of compliance frameworks with:
+        - frameworks: List of framework objects with compliance statistics
+        - total_count: Total number of frameworks matching filters
+        - page_number: Current page number
+        - page_size: Number of results per page
+        - has_next: Whether more pages are available
+        - has_prev: Whether previous pages exist
     """
     return await compliance.search_compliance_frameworks(
         scan_id=scan_id,
         framework=framework,
         region=region,
-        include_metadata=include_metadata,
+        page_size=page_size,
+        page_number=page_number,
     )
 
 
-@app_mcp_server.tool()
-async def get_compliance_framework_details(
-    scan_id: str = Field(description="UUID of the scan"),
-    compliance_id: str = Field(
-        description="ID of the compliance framework (e.g., cis_1.5_aws, pci_dss_v4.0_aws)"
-    ),
-    region: list[str] | None = Field(
-        None, description="Filter by cloud regions. Multiple values allowed"
-    ),
-    status: list[str] | None = Field(
-        None,
-        description="Filter by requirement status. Multiple values allowed: PASS, FAIL, MANUAL",
-    ),
-) -> dict[str, Any]:
-    """Get detailed requirement-level information for a specific compliance framework.
-
-    Shows individual requirements/controls within the framework and their pass/fail status.
-
-    Returns:
-        dict containing the API response with detailed compliance requirements and their status
-    """
-    return await compliance.get_compliance_framework_details(
-        scan_id=scan_id,
-        compliance_id=compliance_id,
-        region=region,
-        status=status,
-    )
-
-
-@app_mcp_server.tool()
-async def get_compliance_requirement_details(
-    compliance_id: str = Field(
-        description="ID of the compliance framework (e.g., cis_1.5_aws)"
-    ),
-    requirement_id: str | None = Field(
-        None,
-        description="Specific requirement ID within the framework to retrieve details for",
-    ),
-) -> dict[str, Any]:
-    """Drill down into a specific compliance requirement to see detailed attributes.
-
-    Provides information about what the requirement checks, its severity, and related security checks.
-
-    Returns:
-        dict containing the API response with detailed requirement attributes
-    """
-    return await compliance.get_compliance_requirement_details(
-        compliance_id=compliance_id,
-        requirement_id=requirement_id,
-    )
+# TODO: Create a tool with custom logic to given a compliance framework and a
+# scan id/provider uid, return the compliance general statistics (total requirements, passed,
+#  failed, manual) and the requirements that were not met.
 
 
 # ============================================================================
