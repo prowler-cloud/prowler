@@ -7,11 +7,11 @@ export const GRAPH_TABS = [
     id: "risk-pipeline",
     label: "Risk Pipeline",
   },
+  {
+    id: "threat-map",
+    label: "Threat Map",
+  },
   // TODO: Uncomment when ready to enable other tabs
-  // {
-  //   id: "threat-map",
-  //   label: "Threat Map",
-  // },
   // {
   //   id: "risk-radar",
   //   label: "Risk Radar",
