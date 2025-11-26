@@ -4,12 +4,12 @@ title: "Installation"
 
 ### Installation
 
-Prowler App supports multiple installation methods based on your environment.
+Prowler App offers flexible installation methods tailored to various environments.
 
 Refer to the [Prowler App Tutorial](/user-guide/tutorials/prowler-app) for detailed usage instructions.
 
 <Warning>
-  Prowler configuration is based in `.env` files. Every version of Prowler can have differences on that file, so, please, use the file that corresponds with that version or repository branch or tag.
+  Prowler configuration is based on `.env` files. Every version of Prowler can have differences on that file, so, please, use the file that corresponds with that version or repository branch or tag.
 </Warning>
 
 <Tabs>
@@ -26,8 +26,6 @@ Refer to the [Prowler App Tutorial](/user-guide/tutorials/prowler-app) for detai
     curl -sLO "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/${VERSION}/.env"
     docker compose up -d
     ```
-
-    > Containers are built for `linux/amd64`. If your workstation's architecture is different, please set `DOCKER_DEFAULT_PLATFORM=linux/amd64` in your environment or use the `--platform linux/amd64` flag in the docker command.
   </Tab>
   <Tab title="GitHub">
     _Requirements_:
@@ -106,11 +104,13 @@ Refer to the [Prowler App Tutorial](/user-guide/tutorials/prowler-app) for detai
   </Tab>
 </Tabs>
 
-### Update Prowler App
+### Updating Prowler App
 
 Upgrade Prowler App installation using one of two options:
 
-#### Option 1: Update Environment File
+#### Option 1: Updating the Environment File
+
+To update the environment file:
 
 Edit the `.env` file and change version values:
 
@@ -119,7 +119,7 @@ PROWLER_UI_VERSION="5.9.0"
 PROWLER_API_VERSION="5.9.0"
 ```
 
-#### Option 2: Use Docker Compose Pull
+#### Option 2: Using Docker Compose Pull
 
 ```bash
 docker compose pull --policy always
@@ -133,7 +133,7 @@ The `--policy always` flag ensures that Docker pulls the latest images even if t
   Everything is preserved, nothing will be deleted after the update.
 </Note>
 
-### Troubleshooting
+### Troubleshooting Installation Issues
 
 If containers don't start, check logs for errors:
 
@@ -145,16 +145,16 @@ docker compose logs
 docker images | grep prowler
 ```
 
-If you encounter issues, you can rollback to the previous version by changing the `.env` file back to your previous version and running:
+If issues are encountered, rollback to the previous version by changing the `.env` file back to the previous version and running:
 
 ```bash
 docker compose pull
 docker compose up -d
 ```
 
-### Container versions
+### Container Versions
 
-The available versions of Prowler CLI are the following:
+The available versions of Prowler App are the following:
 
 - `latest`: in sync with `master` branch (please note that it is not a stable version)
 - `v4-latest`: in sync with `v4` branch (please note that it is not a stable version)

@@ -1,3 +1,35 @@
+// Providers Overview Types
+// Corresponds to the /overviews/providers endpoint
+
+export interface ProviderOverviewFindings {
+  pass: number;
+  fail: number;
+  muted: number;
+  total: number;
+}
+
+export interface ProviderOverviewResources {
+  total: number;
+}
+
+export interface ProviderOverviewAttributes {
+  findings: ProviderOverviewFindings;
+  resources: ProviderOverviewResources;
+}
+
+export interface ProviderOverview {
+  type: "providers-overview";
+  id: string;
+  attributes: ProviderOverviewAttributes;
+}
+
+export interface ProvidersOverviewResponse {
+  data: ProviderOverview[];
+  meta: {
+    version: string;
+  };
+}
+
 // Services Overview Types
 // Corresponds to the /overviews/services endpoint
 
@@ -60,6 +92,30 @@ export interface ThreatScoreSnapshot {
 
 export interface ThreatScoreResponse {
   data: ThreatScoreSnapshot[];
+}
+
+// Findings Severity Overview Types
+// Corresponds to the /overviews/findings_severity endpoint
+
+export interface FindingsSeverityAttributes {
+  critical: number;
+  high: number;
+  medium: number;
+  low: number;
+  informational: number;
+}
+
+export interface FindingsSeverityOverview {
+  type: "findings-severity-overview";
+  id: string;
+  attributes: FindingsSeverityAttributes;
+}
+
+export interface FindingsSeverityOverviewResponse {
+  data: FindingsSeverityOverview;
+  meta: {
+    version: string;
+  };
 }
 
 // Filters for ThreatScore endpoint
