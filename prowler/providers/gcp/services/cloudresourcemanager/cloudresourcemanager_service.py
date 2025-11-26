@@ -51,7 +51,6 @@ class CloudResourceManager(GCPService):
                         id=project_id,
                         number=project_number,
                         audit_logging=audit_logging,
-                        audit_logging=audit_logging,
                         audit_configs=audit_configs,
                     )
                 )
