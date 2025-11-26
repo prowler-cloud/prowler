@@ -86,7 +86,15 @@ def mock_api_projects_calls(client: MagicMock):
     client.projects().locations().keys().list_next.return_value = None
     # Mocking policy
     client.projects().getIamPolicy().execute.return_value = {
-        "auditConfigs": [MagicMock()],
+        "auditConfigs": [
+            {
+                "service": "allServices",
+                "auditLogConfigs": [
+                    {"logType": "ADMIN_READ"},
+                    {"logType": "DATA_WRITE"},
+                ],
+            }
+        ],
         "bindings": [
             {
                 "role": "roles/resourcemanager.organizationAdmin",
@@ -248,7 +256,15 @@ def mock_api_projects_calls(client: MagicMock):
             == "projects/123/locations/eu-west1/keyRings/keyring1/cryptoKeys/key1"
         ):
             return_value.execute.return_value = {
-                "auditConfigs": [MagicMock()],
+                "auditConfigs": [
+                    {
+                        "service": "allServices",
+                        "auditLogConfigs": [
+                            {"logType": "ADMIN_READ"},
+                            {"logType": "DATA_WRITE"},
+                        ],
+                    }
+                ],
                 "bindings": [
                     {
                         "role": "roles/resourcemanager.organizationAdmin",
@@ -276,7 +292,15 @@ def mock_api_projects_calls(client: MagicMock):
             == "projects/123/locations/eu-west1/keyRings/keyring2/cryptoKeys/key2"
         ):
             return_value.execute.return_value = {
-                "auditConfigs": [MagicMock()],
+                "auditConfigs": [
+                    {
+                        "service": "allServices",
+                        "auditLogConfigs": [
+                            {"logType": "ADMIN_READ"},
+                            {"logType": "DATA_WRITE"},
+                        ],
+                    }
+                ],
                 "bindings": [
                     {
                         "role": "roles/resourcemanager.organizationAdmin",

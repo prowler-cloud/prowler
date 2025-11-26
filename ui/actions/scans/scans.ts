@@ -3,8 +3,52 @@
 import { redirect } from "next/navigation";
 
 import { apiBaseUrl, getAuthHeaders, getErrorMessage } from "@/lib";
+import {
+  COMPLIANCE_REPORT_DISPLAY_NAMES,
+  type ComplianceReportType,
+} from "@/lib/compliance/compliance-report-types";
 import { addScanOperation } from "@/lib/sentry-breadcrumbs";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
+import { ScansApiResponse } from "@/types";
+
+const filterMongoScans = (result: ScansApiResponse | undefined) => {
+  if (!result?.data) return result;
+
+  const included = result.included || [];
+
+  // Get IDs of providers containing "mongo"
+  const mongoProviderIds = new Set(
+    included
+      .filter(
+        (item) =>
+          item.type === "providers" &&
+          item.attributes?.provider?.toLowerCase().includes("mongo"),
+      )
+      .map((item) => item.id),
+  );
+
+  // If no mongo providers found, return as-is
+  if (mongoProviderIds.size === 0) return result;
+
+  // Filter out scans associated with mongo providers
+  result.data = result.data.filter((scan) => {
+    const providerId = scan.relationships?.provider?.data?.id;
+    return !providerId || !mongoProviderIds.has(providerId);
+  });
+
+  // Filter out mongo-related included items
+  if (result.included) {
+    result.included = included.filter(
+      (item) =>
+        !(
+          item.type === "providers" &&
+          item.attributes?.provider?.toLowerCase().includes("mongo")
+        ),
+    );
+  }
+
+  return result;
+};
 
 export const getScans = async ({
   page = 1,
@@ -40,7 +84,10 @@ export const getScans = async ({
   try {
     const response = await fetch(url.toString(), { headers });
 
-    return handleApiResponse(response);
+    const result = await handleApiResponse(response);
+
+    // Filter out mongo-related scans when provider is included
+    return filterMongoScans(result);
   } catch (error) {
     console.error("Error fetching scans:", error);
     return undefined;
@@ -280,10 +327,19 @@ export const getComplianceCsv = async (
   }
 };
 
-export const getThreatScorePdf = async (scanId: string) => {
+/**
+ * Generic function to get a compliance PDF report (ThreatScore, ENS, etc.)
+ * @param scanId - The scan ID
+ * @param reportType - Type of report (from COMPLIANCE_REPORT_TYPES)
+ * @returns Promise with the PDF data or error
+ */
+export const getCompliancePdfReport = async (
+  scanId: string,
+  reportType: ComplianceReportType,
+) => {
   const headers = await getAuthHeaders({ contentType: false });
 
-  const url = new URL(`${apiBaseUrl}/scans/${scanId}/threatscore`);
+  const url = new URL(`${apiBaseUrl}/scans/${scanId}/${reportType}`);
 
   try {
     const response = await fetch(url.toString(), { headers });
@@ -301,9 +357,10 @@ export const getThreatScorePdf = async (scanId: string) => {
 
     if (!response.ok) {
       const errorData = await response.json();
+      const reportName = COMPLIANCE_REPORT_DISPLAY_NAMES[reportType];
       throw new Error(
         errorData?.errors?.detail ||
-          "Unable to retrieve ThreatScore PDF report. Contact support if the issue continues.",
+          `Unable to retrieve ${reportName} PDF report. Contact support if the issue continues.`,
       );
     }
 
@@ -313,7 +370,7 @@ export const getThreatScorePdf = async (scanId: string) => {
     return {
       success: true,
       data: base64,
-      filename: `scan-${scanId}-threatscore.pdf`,
+      filename: `scan-${scanId}-${reportType}.pdf`,
     };
   } catch (error) {
     return {

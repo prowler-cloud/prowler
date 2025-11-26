@@ -117,7 +117,6 @@ export const EditApiKeyNameModal = ({
               placeholder="My API Key"
               variant="bordered"
               isRequired
-              isInvalid={!!form.formState.errors.name}
             />
           </div>
 

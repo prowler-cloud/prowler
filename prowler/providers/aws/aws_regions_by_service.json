@@ -1454,6 +1454,23 @@
         ]
       }
     },
+    "bedrock-agentcore": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "eu-central-1",
+          "eu-west-1",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "bedrock-data-automation": {
       "regions": {
         "aws": [
@@ -6973,21 +6990,6 @@
         "aws-us-gov": []
       }
     },
-    "lookoutvision": {
-      "regions": {
-        "aws": [
-          "ap-northeast-1",
-          "ap-northeast-2",
-          "eu-central-1",
-          "eu-west-1",
-          "us-east-1",
-          "us-east-2",
-          "us-west-2"
-        ],
-        "aws-cn": [],
-        "aws-us-gov": []
-      }
-    },
     "lumberyard": {
       "regions": {
         "aws": [
@@ -7899,6 +7901,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ap-southeast-5",
+          "ap-southeast-6",
           "ap-southeast-7",
           "ca-central-1",
           "ca-west-1",

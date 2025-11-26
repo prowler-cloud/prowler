@@ -8,12 +8,20 @@ export const REQUIREMENT_STATUS = {
 export type RequirementStatus =
   (typeof REQUIREMENT_STATUS)[keyof typeof REQUIREMENT_STATUS];
 
+export const COMPLIANCE_OVERVIEW_TYPE = {
+  OVERVIEW: "compliance-overviews",
+  REQUIREMENTS_STATUS: "compliance-requirements-status",
+} as const;
+
+export type ComplianceOverviewType =
+  (typeof COMPLIANCE_OVERVIEW_TYPE)[keyof typeof COMPLIANCE_OVERVIEW_TYPE];
+
 export interface CompliancesOverview {
   data: ComplianceOverviewData[];
 }
 
 export interface ComplianceOverviewData {
-  type: "compliance-requirements-status";
+  type: ComplianceOverviewType;
   id: string;
   attributes: {
     framework: string;

@@ -6,7 +6,7 @@ import { FeedsLoadingFallback, NavbarClient } from "./navbar-client";
 
 interface NavbarProps {
   title: string;
-  icon: string | ReactNode;
+  icon?: string | ReactNode;
 }
 
 export function Navbar({ title, icon }: NavbarProps) {

@@ -383,9 +383,13 @@ def _process_finding_micro_batch(
     mappings_to_create = []
     dirty_resources = {}
     resource_denormalized_data = []  # (finding_instance, resource_instance) pairs
+    skipped_findings_count = 0  # Track findings skipped due to UID length
 
     # Prefetch last statuses for all findings in this batch
-    finding_uids = [f.uid for f in findings_batch if f is not None]
+    # TEMPORARY WORKAROUND: Filter out UIDs > 300 chars to avoid query errors
+    finding_uids = [
+        f.uid for f in findings_batch if f is not None and len(f.uid) <= 300
+    ]
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
         last_statuses = {
             item["uid"]: (item["status"], item["first_seen_at"])
@@ -485,6 +489,20 @@ def _process_finding_micro_batch(
 
         # Prepare finding data
         finding_uid = finding.uid
+
+        # TEMPORARY WORKAROUND: Skip findings with UID > 300 chars
+        # TODO: Remove this after implementing text field migration for finding.uid
+        if len(finding_uid) > 300:
+            skipped_findings_count += 1
+            logger.warning(
+                f"Skipping finding with UID exceeding 300 characters. "
+                f"Length: {len(finding_uid)}, "
+                f"Check: {finding.check_id}, "
+                f"Resource: {finding.resource_name}, "
+                f"UID: {finding_uid}"
+            )
+            continue
+
         last_status, last_first_seen_at = last_status_cache.get(
             finding_uid, (None, None)
         )
@@ -604,6 +622,13 @@ def _process_finding_micro_batch(
             objects=list(dirty_resources.values()),
             fields=["metadata", "details", "partition", "region", "service", "type"],
             batch_size=1000,
+        )
+
+    # Log skipped findings summary
+    if skipped_findings_count > 0:
+        logger.warning(
+            f"Scan {scan_instance.id}: Skipped {skipped_findings_count} finding(s) "
+            f"due to UID length exceeding 300 characters in this micro-batch."
         )
 
 
