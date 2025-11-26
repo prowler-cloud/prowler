@@ -2,6 +2,20 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [v5.15.0] (Prowler UNRELEASED)
+
+### Added
+- `cloudstorage_uses_vpc_service_controls` check for GCP provider [(#9256)](https://github.com/prowler-cloud/prowler/pull/9256)
+
+---
+
+## [v5.14.1] (Prowler UNRELEASED)
+
+### Fixed
+- `sharepoint_external_sharing_managed` check to handle external sharing disabled at organization level [(#9298)](https://github.com/prowler-cloud/prowler/pull/9298)
+
+---
+
 ## [v5.14.0] (Prowler v5.14.0)
 
 ### Added
