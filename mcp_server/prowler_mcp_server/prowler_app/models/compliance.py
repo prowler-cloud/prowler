@@ -1,9 +1,12 @@
 """Pydantic models for simplified compliance responses."""
 
-from pydantic import BaseModel, model_serializer
+from typing import Any
+
+from prowler_mcp_server.prowler_app.models.base import MinimalSerializerMixin
+from pydantic import BaseModel, SerializerFunctionWrapHandler, model_serializer
 
 
-class ComplianceFramework(BaseModel):
+class ComplianceFramework(MinimalSerializerMixin, BaseModel):
     """Simplified compliance framework overview."""
 
     id: str
@@ -25,14 +28,13 @@ class ComplianceFramework(BaseModel):
         return round((self.requirements_passed / self.total_requirements) * 100, 2)
 
     @model_serializer(mode="wrap")
-    def _serialize(self, serializer, info):
+    def _serialize(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
         """Exclude None and empty string fields, and add calculated pass_percentage."""
-        data = serializer(self)
-        # Filter out None and empty strings
-        filtered = {k: v for k, v in data.items() if v is not None and v != ""}
+        # Use parent's exclusion logic
+        data = super()._serialize(handler)
         # Add calculated pass_percentage
-        filtered["pass_percentage"] = self.pass_percentage
-        return filtered
+        data["pass_percentage"] = self.pass_percentage
+        return data
 
     @classmethod
     def from_api_response(cls, data: dict) -> "ComplianceFramework":

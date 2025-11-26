@@ -2,10 +2,11 @@
 
 from typing import Literal
 
-from pydantic import BaseModel, model_serializer
+from prowler_mcp_server.prowler_app.models.base import MinimalSerializerMixin
+from pydantic import BaseModel
 
 
-class CheckRemediation(BaseModel):
+class CheckRemediation(MinimalSerializerMixin, BaseModel):
     """Remediation information for a security check."""
 
     cli: str | None = None
@@ -13,14 +14,8 @@ class CheckRemediation(BaseModel):
     recommendation_text: str | None = None
     recommendation_url: str | None = None
 
-    @model_serializer(mode="wrap")
-    def _serialize(self, serializer, info):
-        """Exclude None and empty string fields."""
-        data = serializer(self)
-        return {k: v for k, v in data.items() if v is not None and v != ""}
 
-
-class CheckMetadata(BaseModel):
+class CheckMetadata(MinimalSerializerMixin, BaseModel):
     """Essential metadata for a security check."""
 
     check_id: str
@@ -33,18 +28,6 @@ class CheckMetadata(BaseModel):
     remediation: CheckRemediation | None = None
     related_url: str | None = None
     categories: list[str] | None = None
-
-    @model_serializer(mode="wrap")
-    def _serialize(self, serializer, info):
-        """Exclude None, empty strings, empty lists, and empty dicts."""
-        data = serializer(self)
-        result = {}
-        for k, v in data.items():
-            # Skip None, empty strings, empty lists, and empty dicts
-            if v is None or v == "" or v == [] or (isinstance(v, dict) and not v):
-                continue
-            result[k] = v
-        return result
 
     @classmethod
     def from_api_response(cls, data: dict) -> "CheckMetadata":
@@ -74,7 +57,7 @@ class CheckMetadata(BaseModel):
         )
 
 
-class SimplifiedFinding(BaseModel):
+class SimplifiedFinding(MinimalSerializerMixin, BaseModel):
     """Simplified security finding with only LLM-relevant information."""
 
     id: str
@@ -86,21 +69,6 @@ class SimplifiedFinding(BaseModel):
     delta: Literal["new", "changed"] | None = None
     muted: bool | None = None
     muted_reason: str | None = None
-
-    @model_serializer(mode="wrap")
-    def _serialize(self, serializer, info):
-        """Exclude None, empty strings, and False booleans."""
-        data = serializer(self)
-        result = {}
-        for k, v in data.items():
-            # Skip None and empty strings
-            if v is None or v == "":
-                continue
-            # Skip muted if False (default state, not useful info)
-            if k == "muted" and v is False:
-                continue
-            result[k] = v
-        return result
 
     @classmethod
     def from_api_response(cls, data: dict) -> "SimplifiedFinding":
