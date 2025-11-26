@@ -352,7 +352,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.16.0"
+        spectacular_settings.VERSION = "1.15.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -4076,50 +4076,10 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         ),
         filters=True,
     ),
-    threatscore=extend_schema(
-        summary="Get ThreatScore snapshots",
-        description=(
-            "Retrieve ThreatScore metrics. By default, returns the latest snapshot for each provider. "
-            "Use snapshot_id to retrieve a specific historical snapshot."
-        ),
-        parameters=[
-            OpenApiParameter(
-                name="snapshot_id",
-                type=OpenApiTypes.UUID,
-                location=OpenApiParameter.QUERY,
-                description="Retrieve a specific snapshot by ID. If not provided, returns latest snapshots.",
-            ),
-            OpenApiParameter(
-                name="provider_id",
-                type=OpenApiTypes.UUID,
-                location=OpenApiParameter.QUERY,
-                description="Filter by specific provider ID",
-            ),
-            OpenApiParameter(
-                name="provider_id__in",
-                type=OpenApiTypes.STR,
-                location=OpenApiParameter.QUERY,
-                description="Filter by multiple provider IDs (comma-separated UUIDs)",
-            ),
-            OpenApiParameter(
-                name="provider_type",
-                type=OpenApiTypes.STR,
-                location=OpenApiParameter.QUERY,
-                description="Filter by provider type (aws, azure, gcp, etc.)",
-            ),
-            OpenApiParameter(
-                name="provider_type__in",
-                type=OpenApiTypes.STR,
-                location=OpenApiParameter.QUERY,
-                description="Filter by multiple provider types (comma-separated)",
-            ),
-        ],
-    ),
     attack_surface=extend_schema(
-        summary="Get Attack surface overview",
-        description=(
-            "Retrieve aggregated attack surface metrics from latest completed scans per provider."
-        ),
+        summary="Retrieve attack surface overview",
+        description="Returns aggregated attack surface metrics from latest completed scans per provider.",
+        tags=["Overview"],
         parameters=[
             OpenApiParameter(
                 name="filter[provider_id]",
@@ -4128,7 +4088,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                 description="Filter by specific provider ID",
             ),
             OpenApiParameter(
-                name="filter[provider_id__in]",
+                name="filter[provider_id.in]",
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
                 description="Filter by multiple provider IDs (comma-separated UUIDs)",
@@ -4140,13 +4100,13 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                 description="Filter by provider type (aws, azure, gcp, etc.)",
             ),
             OpenApiParameter(
-                name="filter[provider_type__in]",
+                name="filter[provider_type.in]",
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
                 description="Filter by multiple provider types (comma-separated)",
             ),
         ],
-    ),
+    )
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 class OverviewViewSet(BaseRLSViewSet):
@@ -4194,71 +4154,17 @@ class OverviewViewSet(BaseRLSViewSet):
             return ScanSummarySeverityFilter
         return None
 
-    def _get_rbac_provider_filter(self):
-        """Get RBAC provider filter dict. Ensures get_queryset() is called."""
-        if not hasattr(self, "allowed_providers"):
-            self.get_queryset()
-        return (
-            {"provider__in": self.allowed_providers}
-            if hasattr(self, "allowed_providers")
-            else {}
-        )
+    @extend_schema(exclude=True)
+    def list(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="GET")
 
-    def _get_latest_scan_ids(self, additional_filters=None):
-        """Get latest completed scan IDs per provider with RBAC + optional filters."""
-        scan_filter = {
-            "tenant_id": self.request.tenant_id,
-            "state": StateChoices.COMPLETED,
-            **self._get_rbac_provider_filter(),
-        }
-        if additional_filters:
-            scan_filter.update(additional_filters)
+    @extend_schema(exclude=True)
+    def retrieve(self, request, *args, **kwargs):
+        raise MethodNotAllowed(method="GET")
 
-        return (
-            Scan.all_objects.filter(**scan_filter)
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
-
-    def _parse_provider_filters(self, request):
-        """Parse provider filters from JSON:API query params."""
-        normalized_params = QueryDict(mutable=True)
-        allowed_filter_keys = {
-            "provider_id",
-            "provider_id__in",
-            "provider_type",
-            "provider_type__in",
-        }
-        for param_key, values in request.query_params.lists():
-            if not (param_key.startswith("filter[") and param_key.endswith("]")):
-                continue
-            normalized_key = param_key[7:-1]
-            if normalized_key in allowed_filter_keys:
-                normalized_params.setlist(normalized_key, values)
-
-        scan_filter = {}
-        if provider_id := normalized_params.get("provider_id"):
-            scan_filter["provider_id"] = provider_id
-        if provider_ids := normalized_params.get("provider_id__in"):
-            scan_filter["provider_id__in"] = [
-                pid.strip() for pid in provider_ids.split(",") if pid.strip()
-            ]
-        if provider_type := normalized_params.get("provider_type"):
-            scan_filter["provider__provider"] = provider_type
-        if provider_types := normalized_params.get("provider_type__in"):
-            scan_filter["provider__provider__in"] = [
-                pt.strip() for pt in provider_types.split(",") if pt.strip()
-            ]
-
-        return scan_filter
-
-    def _get_latest_scans_queryset(self, additional_filters=None):
+    def _get_latest_scans_queryset(self):
         """
         Get filtered queryset for the latest completed scans per provider.
-
-        Args:
-            additional_filters: Optional dict of extra Scan filters
 
         Returns:
             Filtered ScanSummary queryset with latest scan IDs applied.
@@ -4266,11 +4172,320 @@ class OverviewViewSet(BaseRLSViewSet):
         tenant_id = self.request.tenant_id
         queryset = self.get_queryset()
         filtered_queryset = self.filter_queryset(queryset)
-        latest_scan_ids = self._get_latest_scan_ids(additional_filters)
+        provider_filter = (
+            {"provider__in": self.allowed_providers}
+            if hasattr(self, "allowed_providers")
+            else {}
+        )
+
+        latest_scan_ids = (
+            Scan.all_objects.filter(
+                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
+            )
+            .order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values_list("id", flat=True)
+        )
 
         return filtered_queryset.filter(
             tenant_id=tenant_id, scan_id__in=latest_scan_ids
         )
+
+    @action(detail=False, methods=["get"], url_name="providers")
+    def providers(self, request):
+        tenant_id = self.request.tenant_id
+        queryset = self.get_queryset()
+        provider_filter = (
+            {"provider__in": self.allowed_providers}
+            if hasattr(self, "allowed_providers")
+            else {}
+        )
+
+        latest_scan_ids = (
+            Scan.all_objects.filter(
+                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
+            )
+            .order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values_list("id", flat=True)
+        )
+
+        findings_aggregated = (
+            queryset.filter(scan_id__in=latest_scan_ids)
+            .values(provider=F("scan__provider__provider"))
+            .annotate(
+                findings_passed=Coalesce(Sum("_pass"), 0),
+                findings_failed=Coalesce(Sum("fail"), 0),
+                findings_muted=Coalesce(Sum("muted"), 0),
+                total_findings=Coalesce(Sum("total"), 0),
+            )
+        )
+
+        resources_queryset = Resource.all_objects.filter(tenant_id=tenant_id)
+        if hasattr(self, "allowed_providers"):
+            resources_queryset = resources_queryset.filter(
+                provider__in=self.allowed_providers
+            )
+        resources_aggregated = resources_queryset.values(
+            provider_type=F("provider__provider")
+        ).annotate(total_resources=Count("id"))
+        resource_map = {
+            row["provider_type"]: row["total_resources"] for row in resources_aggregated
+        }
+
+        overview = []
+        for row in findings_aggregated:
+            overview.append(
+                {
+                    "provider": row["provider"],
+                    "total_resources": resource_map.get(row["provider"], 0),
+                    "total_findings": row["total_findings"],
+                    "findings_passed": row["findings_passed"],
+                    "findings_failed": row["findings_failed"],
+                    "findings_muted": row["findings_muted"],
+                }
+            )
+
+        return Response(
+            self.get_serializer(overview, many=True).data,
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="providers/count",
+        url_name="providers-count",
+    )
+    def providers_count(self, request):
+        tenant_id = self.request.tenant_id
+        providers_qs = Provider.objects.filter(tenant_id=tenant_id)
+
+        if hasattr(self, "allowed_providers"):
+            allowed_ids = list(self.allowed_providers.values_list("id", flat=True))
+            if not allowed_ids:
+                overview = []
+                return Response(
+                    self.get_serializer(overview, many=True).data,
+                    status=status.HTTP_200_OK,
+                )
+            providers_qs = providers_qs.filter(id__in=allowed_ids)
+
+        overview = (
+            providers_qs.values("provider")
+            .annotate(count=Count("id"))
+            .order_by("provider")
+        )
+        return Response(
+            self.get_serializer(overview, many=True).data,
+            status=status.HTTP_200_OK,
+        )
+
+    @action(detail=False, methods=["get"], url_name="findings")
+    def findings(self, request):
+        filtered_queryset = self._get_latest_scans_queryset()
+
+        aggregated_totals = filtered_queryset.aggregate(
+            _pass=Sum("_pass") or 0,
+            fail=Sum("fail") or 0,
+            muted=Sum("muted") or 0,
+            total=Sum("total") or 0,
+            new=Sum("new") or 0,
+            changed=Sum("changed") or 0,
+            unchanged=Sum("unchanged") or 0,
+            fail_new=Sum("fail_new") or 0,
+            fail_changed=Sum("fail_changed") or 0,
+            pass_new=Sum("pass_new") or 0,
+            pass_changed=Sum("pass_changed") or 0,
+            muted_new=Sum("muted_new") or 0,
+            muted_changed=Sum("muted_changed") or 0,
+        )
+
+        for key in aggregated_totals:
+            if aggregated_totals[key] is None:
+                aggregated_totals[key] = 0
+
+        serializer = self.get_serializer(aggregated_totals)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_name="findings_severity")
+    def findings_severity(self, request):
+        filtered_queryset = self._get_latest_scans_queryset()
+
+        # The filter will have added a status_count annotation if any status filter was used
+        if "status_count" in filtered_queryset.query.annotations:
+            sum_expression = Sum("status_count")
+        else:
+            # Exclude muted findings by default
+            sum_expression = Sum(F("_pass") + F("fail"))
+
+        severity_counts = (
+            filtered_queryset.values("severity")
+            .annotate(count=sum_expression)
+            .order_by("severity")
+        )
+
+        severity_data = {sev[0]: 0 for sev in SeverityChoices}
+        severity_data.update(
+            {item["severity"]: item["count"] for item in severity_counts}
+        )
+
+        serializer = self.get_serializer(severity_data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_name="services")
+    def services(self, request):
+        filtered_queryset = self._get_latest_scans_queryset()
+
+        services_data = (
+            filtered_queryset.values("service")
+            .annotate(_pass=Sum("_pass"))
+            .annotate(fail=Sum("fail"))
+            .annotate(muted=Sum("muted"))
+            .annotate(total=Sum("total"))
+            .order_by("service")
+        )
+
+        serializer = self.get_serializer(services_data, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_name="regions")
+    def regions(self, request):
+        filtered_queryset = self._get_latest_scans_queryset()
+
+        regions_data = (
+            filtered_queryset.annotate(provider_type=F("scan__provider__provider"))
+            .values("provider_type", "region")
+            .annotate(_pass=Sum("_pass"))
+            .annotate(fail=Sum("fail"))
+            .annotate(muted=Sum("muted"))
+            .annotate(total=Sum("total"))
+            .order_by("provider_type", "region")
+        )
+
+        serializer = self.get_serializer(regions_data, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        summary="Get ThreatScore snapshots",
+        description=(
+            "Retrieve ThreatScore metrics. By default, returns the latest snapshot for each provider. "
+            "Use snapshot_id to retrieve a specific historical snapshot."
+        ),
+        tags=["Overview"],
+        parameters=[
+            OpenApiParameter(
+                name="snapshot_id",
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.QUERY,
+                description="Retrieve a specific snapshot by ID. If not provided, returns latest snapshots.",
+            ),
+            OpenApiParameter(
+                name="provider_id",
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.QUERY,
+                description="Filter by specific provider ID",
+            ),
+            OpenApiParameter(
+                name="provider_id__in",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="Filter by multiple provider IDs (comma-separated UUIDs)",
+            ),
+            OpenApiParameter(
+                name="provider_type",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="Filter by provider type (aws, azure, gcp, etc.)",
+            ),
+            OpenApiParameter(
+                name="provider_type__in",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="Filter by multiple provider types (comma-separated)",
+            ),
+        ],
+    )
+    @action(detail=False, methods=["get"], url_name="threatscore")
+    def threatscore(self, request):
+        """
+        Get ThreatScore snapshots.
+
+        Default behavior: Returns the latest snapshot for each provider.
+        With snapshot_id: Returns the specific snapshot requested.
+        """
+        tenant_id = self.request.tenant_id
+        snapshot_id = request.query_params.get("snapshot_id")
+
+        # Base queryset with RLS
+        base_queryset = ThreatScoreSnapshot.objects.filter(tenant_id=tenant_id)
+
+        # Apply RBAC filtering
+        if hasattr(self, "allowed_providers"):
+            base_queryset = base_queryset.filter(provider__in=self.allowed_providers)
+
+        # Case 1: Specific snapshot requested
+        if snapshot_id:
+            try:
+                snapshot = base_queryset.get(id=snapshot_id)
+                serializer = ThreatScoreSnapshotSerializer(
+                    snapshot, context={"request": request}
+                )
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            except ThreatScoreSnapshot.DoesNotExist:
+                raise NotFound(detail="ThreatScore snapshot not found")
+
+        # Case 2: Latest snapshot per provider (default)
+        # Apply filters manually: this @action is outside the standard list endpoint flow,
+        # so DRF's filter backends don't execute and we must flatten JSON:API params ourselves.
+        normalized_params = QueryDict(mutable=True)
+        for param_key, values in request.query_params.lists():
+            normalized_key = param_key
+            if param_key.startswith("filter[") and param_key.endswith("]"):
+                normalized_key = param_key[7:-1]
+            if normalized_key == "snapshot_id":
+                continue
+            normalized_params.setlist(normalized_key, values)
+
+        filterset = ThreatScoreSnapshotFilter(normalized_params, queryset=base_queryset)
+        filtered_queryset = filterset.qs
+
+        # Get distinct provider IDs from filtered queryset
+        # Pick the latest snapshot per provider using Postgres DISTINCT ON pattern.
+        # This avoids issuing one query per provider (N+1) when the filtered dataset is large.
+        latest_snapshot_ids = list(
+            filtered_queryset.order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values_list("id", flat=True)
+        )
+        latest_snapshot_map = {
+            snapshot.id: snapshot
+            for snapshot in filtered_queryset.filter(id__in=latest_snapshot_ids)
+        }
+        latest_snapshots = [
+            latest_snapshot_map[snapshot_id]
+            for snapshot_id in latest_snapshot_ids
+            if snapshot_id in latest_snapshot_map
+        ]
+
+        if len(latest_snapshots) <= 1:
+            serializer = ThreatScoreSnapshotSerializer(
+                latest_snapshots, many=True, context={"request": request}
+            )
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        snapshot_ids = [
+            snapshot.id for snapshot in latest_snapshots if snapshot and snapshot.id
+        ]
+        aggregated_snapshot = self._build_threatscore_overview_snapshot(
+            snapshot_ids, tenant_id
+        )
+        serializer = ThreatScoreSnapshotSerializer(
+            [aggregated_snapshot], many=True, context={"request": request}
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def _build_threatscore_overview_snapshot(self, snapshot_ids, tenant_id):
         """
@@ -4479,257 +4694,6 @@ class OverviewViewSet(BaseRLSViewSet):
 
         return aggregated_snapshot
 
-    @extend_schema(exclude=True)
-    def list(self, request, *args, **kwargs):
-        raise MethodNotAllowed(method="GET")
-
-    @extend_schema(exclude=True)
-    def retrieve(self, request, *args, **kwargs):
-        raise MethodNotAllowed(method="GET")
-
-    @action(detail=False, methods=["get"], url_name="providers")
-    def providers(self, request):
-        tenant_id = self.request.tenant_id
-        queryset = self.get_queryset()
-        latest_scan_ids = self._get_latest_scan_ids()
-
-        findings_aggregated = (
-            queryset.filter(scan_id__in=latest_scan_ids)
-            .values(provider=F("scan__provider__provider"))
-            .annotate(
-                findings_passed=Coalesce(Sum("_pass"), 0),
-                findings_failed=Coalesce(Sum("fail"), 0),
-                findings_muted=Coalesce(Sum("muted"), 0),
-                total_findings=Coalesce(Sum("total"), 0),
-            )
-        )
-
-        resources_queryset = Resource.all_objects.filter(tenant_id=tenant_id)
-        if hasattr(self, "allowed_providers"):
-            resources_queryset = resources_queryset.filter(
-                provider__in=self.allowed_providers
-            )
-        resources_aggregated = resources_queryset.values(
-            provider_type=F("provider__provider")
-        ).annotate(total_resources=Count("id"))
-        resource_map = {
-            row["provider_type"]: row["total_resources"] for row in resources_aggregated
-        }
-
-        overview = []
-        for row in findings_aggregated:
-            overview.append(
-                {
-                    "provider": row["provider"],
-                    "total_resources": resource_map.get(row["provider"], 0),
-                    "total_findings": row["total_findings"],
-                    "findings_passed": row["findings_passed"],
-                    "findings_failed": row["findings_failed"],
-                    "findings_muted": row["findings_muted"],
-                }
-            )
-
-        return Response(
-            self.get_serializer(overview, many=True).data,
-            status=status.HTTP_200_OK,
-        )
-
-    @action(
-        detail=False,
-        methods=["get"],
-        url_path="providers/count",
-        url_name="providers-count",
-    )
-    def providers_count(self, request):
-        tenant_id = self.request.tenant_id
-        providers_qs = Provider.objects.filter(tenant_id=tenant_id)
-
-        if hasattr(self, "allowed_providers"):
-            allowed_ids = list(self.allowed_providers.values_list("id", flat=True))
-            if not allowed_ids:
-                overview = []
-                return Response(
-                    self.get_serializer(overview, many=True).data,
-                    status=status.HTTP_200_OK,
-                )
-            providers_qs = providers_qs.filter(id__in=allowed_ids)
-
-        overview = (
-            providers_qs.values("provider")
-            .annotate(count=Count("id"))
-            .order_by("provider")
-        )
-        return Response(
-            self.get_serializer(overview, many=True).data,
-            status=status.HTTP_200_OK,
-        )
-
-    @action(detail=False, methods=["get"], url_name="findings")
-    def findings(self, request):
-        filtered_queryset = self._get_latest_scans_queryset()
-
-        aggregated_totals = filtered_queryset.aggregate(
-            _pass=Sum("_pass") or 0,
-            fail=Sum("fail") or 0,
-            muted=Sum("muted") or 0,
-            total=Sum("total") or 0,
-            new=Sum("new") or 0,
-            changed=Sum("changed") or 0,
-            unchanged=Sum("unchanged") or 0,
-            fail_new=Sum("fail_new") or 0,
-            fail_changed=Sum("fail_changed") or 0,
-            pass_new=Sum("pass_new") or 0,
-            pass_changed=Sum("pass_changed") or 0,
-            muted_new=Sum("muted_new") or 0,
-            muted_changed=Sum("muted_changed") or 0,
-        )
-
-        for key in aggregated_totals:
-            if aggregated_totals[key] is None:
-                aggregated_totals[key] = 0
-
-        serializer = self.get_serializer(aggregated_totals)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    @action(detail=False, methods=["get"], url_name="findings_severity")
-    def findings_severity(self, request):
-        filtered_queryset = self._get_latest_scans_queryset()
-
-        # The filter will have added a status_count annotation if any status filter was used
-        if "status_count" in filtered_queryset.query.annotations:
-            sum_expression = Sum("status_count")
-        else:
-            # Exclude muted findings by default
-            sum_expression = Sum(F("_pass") + F("fail"))
-
-        severity_counts = (
-            filtered_queryset.values("severity")
-            .annotate(count=sum_expression)
-            .order_by("severity")
-        )
-
-        severity_data = {sev[0]: 0 for sev in SeverityChoices}
-        severity_data.update(
-            {item["severity"]: item["count"] for item in severity_counts}
-        )
-
-        serializer = self.get_serializer(severity_data)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    @action(detail=False, methods=["get"], url_name="services")
-    def services(self, request):
-        filtered_queryset = self._get_latest_scans_queryset()
-
-        services_data = (
-            filtered_queryset.values("service")
-            .annotate(_pass=Sum("_pass"))
-            .annotate(fail=Sum("fail"))
-            .annotate(muted=Sum("muted"))
-            .annotate(total=Sum("total"))
-            .order_by("service")
-        )
-
-        serializer = self.get_serializer(services_data, many=True)
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    @action(detail=False, methods=["get"], url_name="regions")
-    def regions(self, request):
-        filtered_queryset = self._get_latest_scans_queryset()
-
-        regions_data = (
-            filtered_queryset.annotate(provider_type=F("scan__provider__provider"))
-            .values("provider_type", "region")
-            .annotate(_pass=Sum("_pass"))
-            .annotate(fail=Sum("fail"))
-            .annotate(muted=Sum("muted"))
-            .annotate(total=Sum("total"))
-            .order_by("provider_type", "region")
-        )
-
-        serializer = self.get_serializer(regions_data, many=True)
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    @action(detail=False, methods=["get"], url_name="threatscore")
-    def threatscore(self, request):
-        """
-        Get ThreatScore snapshots.
-
-        Default behavior: Returns the latest snapshot for each provider.
-        With snapshot_id: Returns the specific snapshot requested.
-        """
-        tenant_id = self.request.tenant_id
-        snapshot_id = request.query_params.get("snapshot_id")
-
-        # Base queryset with RLS
-        base_queryset = ThreatScoreSnapshot.objects.filter(tenant_id=tenant_id)
-
-        # Apply RBAC filtering
-        if hasattr(self, "allowed_providers"):
-            base_queryset = base_queryset.filter(provider__in=self.allowed_providers)
-
-        # Case 1: Specific snapshot requested
-        if snapshot_id:
-            try:
-                snapshot = base_queryset.get(id=snapshot_id)
-                serializer = ThreatScoreSnapshotSerializer(
-                    snapshot, context={"request": request}
-                )
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            except ThreatScoreSnapshot.DoesNotExist:
-                raise NotFound(detail="ThreatScore snapshot not found")
-
-        # Case 2: Latest snapshot per provider (default)
-        # Apply filters manually: this @action is outside the standard list endpoint flow,
-        # so DRF's filter backends don't execute and we must flatten JSON:API params ourselves.
-        normalized_params = QueryDict(mutable=True)
-        for param_key, values in request.query_params.lists():
-            normalized_key = param_key
-            if param_key.startswith("filter[") and param_key.endswith("]"):
-                normalized_key = param_key[7:-1]
-            if normalized_key == "snapshot_id":
-                continue
-            normalized_params.setlist(normalized_key, values)
-
-        filterset = ThreatScoreSnapshotFilter(normalized_params, queryset=base_queryset)
-        filtered_queryset = filterset.qs
-
-        # Get distinct provider IDs from filtered queryset
-        # Pick the latest snapshot per provider using Postgres DISTINCT ON pattern.
-        # This avoids issuing one query per provider (N+1) when the filtered dataset is large.
-        latest_snapshot_ids = list(
-            filtered_queryset.order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
-        latest_snapshot_map = {
-            snapshot.id: snapshot
-            for snapshot in filtered_queryset.filter(id__in=latest_snapshot_ids)
-        }
-        latest_snapshots = [
-            latest_snapshot_map[snapshot_id]
-            for snapshot_id in latest_snapshot_ids
-            if snapshot_id in latest_snapshot_map
-        ]
-
-        if len(latest_snapshots) <= 1:
-            serializer = ThreatScoreSnapshotSerializer(
-                latest_snapshots, many=True, context={"request": request}
-            )
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-        snapshot_ids = [
-            snapshot.id for snapshot in latest_snapshots if snapshot and snapshot.id
-        ]
-        aggregated_snapshot = self._build_threatscore_overview_snapshot(
-            snapshot_ids, tenant_id
-        )
-        serializer = ThreatScoreSnapshotSerializer(
-            [aggregated_snapshot], many=True, context={"request": request}
-        )
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
     @action(
         detail=False,
         methods=["get"],
@@ -4737,48 +4701,86 @@ class OverviewViewSet(BaseRLSViewSet):
         url_path="attack-surfaces",
     )
     def attack_surface(self, request):
-        tenant_id = self.request.tenant_id
+        tenant_id = request.tenant_id
+        self.get_queryset()  # Triggers RBAC setup (sets self.allowed_providers)
 
-        # Parse provider filters and get latest scans
-        provider_filters = self._parse_provider_filters(request)
-        latest_scan_ids = self._get_latest_scan_ids(additional_filters=provider_filters)
-
-        # Query attack surface overviews for latest scans
-        queryset = AttackSurfaceOverview.objects.filter(
-            tenant_id=tenant_id,
-            scan_id__in=latest_scan_ids,
+        # RBAC provider filter
+        provider_filter = (
+            {"provider__in": self.allowed_providers}
+            if hasattr(self, "allowed_providers")
+            else {}
         )
 
-        # Aggregate by attack surface type
-        aggregation = queryset.values("attack_surface_type").annotate(
-            total_findings=Sum("total_findings"),
-            failed_findings=Sum("failed_findings"),
-            muted_failed_findings=Sum("muted_failed_findings"),
+        # Parse filter params (filter[provider_id] -> provider_id)
+        normalized_params = QueryDict(mutable=True)
+        for key, values in request.query_params.lists():
+            normalized_key = (
+                key[7:-1] if key.startswith("filter[") and key.endswith("]") else key
+            )
+            normalized_params.setlist(normalized_key, values)
+
+        # Build provider filter from user params
+        user_provider_filter = {}
+        if normalized_params.get("provider_id"):
+            user_provider_filter["provider_id"] = normalized_params.get("provider_id")
+        if normalized_params.getlist("provider_id__in"):
+            user_provider_filter["provider_id__in"] = normalized_params.getlist(
+                "provider_id__in"
+            )
+        if normalized_params.get("provider_type"):
+            user_provider_filter["provider__provider"] = normalized_params.get(
+                "provider_type"
+            )
+        if normalized_params.getlist("provider_type__in"):
+            user_provider_filter["provider__provider__in"] = normalized_params.getlist(
+                "provider_type__in"
+            )
+
+        # Merge RBAC filter with user filter for scans
+        scan_filter = {**provider_filter, **user_provider_filter}
+
+        # Get latest completed scan per provider
+        latest_scan_ids = (
+            Scan.all_objects.filter(
+                tenant_id=tenant_id, state=StateChoices.COMPLETED, **scan_filter
+            )
+            .order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values_list("id", flat=True)
         )
 
-        # Convert to dict for easy lookup
-        results_by_type = {item["attack_surface_type"]: item for item in aggregation}
+        # Aggregate attack surface data
+        aggregation = (
+            AttackSurfaceOverview.objects.filter(
+                tenant_id=tenant_id, scan_id__in=latest_scan_ids
+            )
+            .values("attack_surface_type")
+            .annotate(
+                total_findings=Coalesce(Sum("total_findings"), 0),
+                failed_findings=Coalesce(Sum("failed_findings"), 0),
+                muted_failed_findings=Coalesce(Sum("muted_failed_findings"), 0),
+            )
+        )
 
-        # Always return all attack surface types (fill with zeros if missing)
-        all_types = AttackSurfaceOverview.AttackSurfaceTypeChoices.values
-        complete_results = []
+        results = {
+            attack_surface_type: {"total_findings": 0, "failed_findings": 0, "muted_failed_findings": 0}
+            for attack_surface_type in AttackSurfaceOverview.AttackSurfaceTypeChoices.values
+        }
+        for item in aggregation:
+            results[item["attack_surface_type"]] = {
+                "total_findings": item["total_findings"],
+                "failed_findings": item["failed_findings"],
+                "muted_failed_findings": item["muted_failed_findings"],
+            }
 
-        for attack_surface_type in all_types:
-            if attack_surface_type in results_by_type:
-                complete_results.append(results_by_type[attack_surface_type])
-            else:
-                # No data for this type - return zeros
-                complete_results.append(
-                    {
-                        "attack_surface_type": attack_surface_type,
-                        "total_findings": 0,
-                        "failed_findings": 0,
-                        "muted_failed_findings": 0,
-                    }
-                )
+        response_data = [
+            {"attack_surface_type": key, **value} for key, value in results.items()
+        ]
 
-        serializer = self.get_serializer(complete_results, many=True)
-        return Response(data=serializer.data, status=status.HTTP_200_OK)
+        return Response(
+            self.get_serializer(response_data, many=True).data,
+            status=status.HTTP_200_OK,
+        )
 
 
 @extend_schema(tags=["Schedule"])
