@@ -99,7 +99,7 @@ class actiontrail_oss_bucket_not_publicly_accessible(Check):
                 report.status = "FAIL"
                 issues = []
                 if acl_public:
-                    issues.append(f"Bucket ACL is set to '{bucket.acl}'")
+                    issues.append(f"Bucket ACL is set to {bucket.acl}")
                 if policy_public:
                     issues.append("Bucket policy allows public access (Principal: '*')")
                 report.status_extended = (
@@ -111,7 +111,7 @@ class actiontrail_oss_bucket_not_publicly_accessible(Check):
                 report.status = "PASS"
                 report.status_extended = (
                     f"OSS bucket {trail.oss_bucket_name} used by ActionTrail trail {trail.name} "
-                    f"is not publicly accessible. ACL is '{bucket.acl}' and bucket policy does not allow public access."
+                    f"is not publicly accessible. ACL is {bucket.acl} and bucket policy does not allow public access."
                 )
 
             findings.append(report)

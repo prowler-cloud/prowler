@@ -68,13 +68,10 @@ class ActionTrail(AlibabaCloudService):
                                     "%Y-%m-%dT%H:%M:%S%z",
                                 )
                             except (ValueError, AttributeError):
-                                try:
-                                    creation_date = datetime.strptime(
-                                        creation_date_str.replace("Z", "+00:00"),
-                                        "%Y-%m-%dT%H:%M:%S.%f%z",
-                                    )
-                                except (ValueError, AttributeError):
-                                    pass
+                                creation_date = datetime.strptime(
+                                    creation_date_str.replace("Z", "+00:00"),
+                                    "%Y-%m-%dT%H:%M:%S.%f%z",
+                                )
 
                         self.trails[arn] = Trail(
                             arn=arn,
