@@ -97,3 +97,100 @@ class TestAccessContextManagerService:
                 accesscontextmanager_client.service_perimeters[1].policy_name
                 == "accessPolicies/123456"
             )
+
+    def test_get_service_perimeters_access_policies_error(self):
+        """Test error handling when listing access policies fails."""
+        mock_crm_client = MagicMock()
+        mock_crm_client.organizations = [
+            MagicMock(id="123456789", name="Organization 1"),
+        ]
+
+        mock_client = MagicMock()
+
+        def mock_list_access_policies_error(parent):
+            return_value = MagicMock()
+            return_value.execute.side_effect = Exception("Access denied")
+            return return_value
+
+        mock_client.accessPolicies().list = mock_list_access_policies_error
+
+        with (
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
+                new=mock_is_api_active,
+            ),
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
+                return_value=mock_client,
+            ),
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            patch(
+                "prowler.providers.gcp.services.accesscontextmanager.accesscontextmanager_service.cloudresourcemanager_client",
+                new=mock_crm_client,
+            ),
+        ):
+            from prowler.providers.gcp.services.accesscontextmanager.accesscontextmanager_service import (
+                AccessContextManager,
+            )
+
+            accesscontextmanager_client = AccessContextManager(
+                set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID])
+            )
+            assert len(accesscontextmanager_client.service_perimeters) == 0
+
+    def test_get_service_perimeters_list_perimeters_error(self):
+        """Test error handling when listing service perimeters fails."""
+        mock_crm_client = MagicMock()
+        mock_crm_client.organizations = [
+            MagicMock(id="123456789", name="Organization 1"),
+        ]
+
+        mock_client = MagicMock()
+
+        def mock_list_access_policies(parent):
+            return_value = MagicMock()
+            return_value.execute.return_value = {
+                "accessPolicies": [{"name": "accessPolicies/123456"}]
+            }
+            return return_value
+
+        def mock_list_perimeters_error(parent):
+            return_value = MagicMock()
+            return_value.execute.side_effect = Exception("Permission denied")
+            return return_value
+
+        mock_client.accessPolicies().list = mock_list_access_policies
+        mock_client.accessPolicies().list_next.return_value = None
+        mock_client.accessPolicies().servicePerimeters().list = (
+            mock_list_perimeters_error
+        )
+
+        with (
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
+                new=mock_is_api_active,
+            ),
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
+                return_value=mock_client,
+            ),
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            patch(
+                "prowler.providers.gcp.services.accesscontextmanager.accesscontextmanager_service.cloudresourcemanager_client",
+                new=mock_crm_client,
+            ),
+        ):
+            from prowler.providers.gcp.services.accesscontextmanager.accesscontextmanager_service import (
+                AccessContextManager,
+            )
+
+            accesscontextmanager_client = AccessContextManager(
+                set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID])
+            )
+            assert len(accesscontextmanager_client.service_perimeters) == 0
