@@ -278,7 +278,9 @@ This method keeps all Microsoft 365 checks available, including PowerShell-based
 
 ## Prowler CLI Authentication
 
-### Run With Certificate Authentication
+### Certificate Authentication
+
+**Authentication flag for CLI:** `--certificate-auth`
 
 After credentials are exported, launch the Microsoft 365 provider with certificate authentication:
 
@@ -288,7 +290,9 @@ python3 prowler-cli.py m365 --certificate-auth --init-modules --log-level ERROR
 
 Prowler prints the certificate thumbprint during execution so the correct credential can be verified.
 
-### Run With Client Secret Authentication
+### Client Secret Authentication
+
+**Authentication flag for CLI:** `--sp-env-auth`
 
 After exporting the secret-based variables, run:
 
@@ -297,9 +301,7 @@ python3 prowler-cli.py m365 --sp-env-auth --init-modules --log-level ERROR
 ```
 
 <a id="azure-cli-authentication"></a>
-## Azure CLI Authentication
-
-_Available only for Prowler CLI_
+### Azure CLI Authentication
 
 **Authentication flag for CLI:** `--az-cli-auth`
 
@@ -329,11 +331,9 @@ python3 prowler-cli.py m365 --az-cli-auth
 
 The Azure CLI identity must hold the same Microsoft Graph and external API permissions required for the full provider. Signing in with a user account limits the scan to delegated Microsoft Graph endpoints and skips PowerShell-based checks. Use a service principal with the necessary application permissions to keep complete coverage.
 
-## Interactive Browser Authentication
+### Interactive Browser Authentication
 
-_Available only for Prowler CLI_
-
-**Authentication flag:** `--browser-auth`
+**Authentication flag for CLI:** `--browser-auth`
 
 Authenticate against Azure using the default browser to start the scan. The `--tenant-id` flag is also required.
 

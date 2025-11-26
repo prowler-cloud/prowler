@@ -9,13 +9,7 @@ Government cloud accounts or tenants (Microsoft 365 Government) are currently un
 
 </Note>
 
-## Onboarding Map
-
-- [Common Setup](#common-setup)
-- [Prowler Cloud Onboarding](#prowler-cloud-onboarding)
-- [Prowler CLI Onboarding](#prowler-cli-onboarding)
-
-## Common Setup
+## Prerequisites
 
 Set up authentication for Microsoft 365 with the [Microsoft 365 Authentication](/user-guide/providers/microsoft365/authentication) guide before starting either path:
 
@@ -24,7 +18,16 @@ Set up authentication for Microsoft 365 with the [Microsoft 365 Authentication](
 - Generate an application certificate (recommended) or client secret
 - Prepare PowerShell module permissions to enable every check
 
-## Prowler Cloud Onboarding
+<CardGroup cols={2}>
+  <Card title="Prowler Cloud" icon="cloud" href="#prowler-cloud">
+    Onboard Microsoft 365 using Prowler Cloud
+  </Card>
+  <Card title="Prowler CLI" icon="terminal" href="#prowler-cli">
+    Onboard Microsoft 365 using Prowler CLI
+  </Card>
+</CardGroup>
+
+## Prowler Cloud
 
 ### Step 1: Locate the Domain ID
 
@@ -93,7 +96,7 @@ For the complete setup workflow, follow the [Authentication guide](/user-guide/p
 
 ---
 
-## Prowler CLI Onboarding
+## Prowler CLI
 
 ### Step 1: Confirm PowerShell Coverage
 
