@@ -5,8 +5,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ## [v5.14.1] (Prowler v5.14.1)
 
 ### Fixed
-- Fix typo in PDF reporting [(#9322)](https://github.com/prowler-cloud/prowler/pull/9322)
-- Fix `sharepoint_external_sharing_managed` check to handle external sharing disabled at organization level [(#9298)](https://github.com/prowler-cloud/prowler/pull/9298)
+- Typo in PDF reporting [(#9322)](https://github.com/prowler-cloud/prowler/pull/9322)
+- `sharepoint_external_sharing_managed` check to handle external sharing disabled at organization level [(#9298)](https://github.com/prowler-cloud/prowler/pull/9298)
 
 ---
 
