@@ -5,35 +5,22 @@ import {
   RegionsOverviewResponse,
 } from "./types";
 
-/**
- * Sankey chart node structure
- */
 export interface SankeyNode {
   name: string;
 }
 
-/**
- * Sankey chart link structure
- */
 export interface SankeyLink {
   source: number;
   target: number;
   value: number;
 }
 
-/**
- * Sankey chart data structure
- */
 export interface SankeyData {
   nodes: SankeyNode[];
   links: SankeyLink[];
 }
 
-/**
- * Provider display name mapping
- * Maps provider IDs to user-friendly display names
- * These names must match the COLOR_MAP keys in sankey-chart.tsx
- */
+// Must match COLOR_MAP keys in sankey-chart.tsx
 const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
   aws: "AWS",
   azure: "Azure",
@@ -45,9 +32,10 @@ const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
   oraclecloud: "Oracle Cloud Infrastructure",
 };
 
-/**
- * Aggregated provider data after grouping by provider type
- */
+function getProviderDisplayName(providerId: string): string {
+  return PROVIDER_DISPLAY_NAMES[providerId.toLowerCase()] || providerId;
+}
+
 interface AggregatedProvider {
   id: string;
   displayName: string;
@@ -55,19 +43,9 @@ interface AggregatedProvider {
   fail: number;
 }
 
-/**
- * Provider types to exclude from the Sankey chart
- */
 const EXCLUDED_PROVIDERS = new Set(["mongo", "mongodb", "mongodbatlas"]);
 
-/**
- * Aggregates multiple provider entries by provider type (id)
- * Since the API can return multiple entries for the same provider type,
- * we need to sum up their findings
- *
- * @param providers - Raw provider overview data from API
- * @returns Aggregated providers with summed findings
- */
+// API can return multiple entries for the same provider type, so we sum their findings
 function aggregateProvidersByType(
   providers: ProviderOverview[],
 ): AggregatedProvider[] {
@@ -76,10 +54,7 @@ function aggregateProvidersByType(
   for (const provider of providers) {
     const { id, attributes } = provider;
 
-    // Skip excluded providers
-    if (EXCLUDED_PROVIDERS.has(id)) {
-      continue;
-    }
+    if (EXCLUDED_PROVIDERS.has(id)) continue;
 
     const existing = aggregated.get(id);
 
@@ -89,7 +64,7 @@ function aggregateProvidersByType(
     } else {
       aggregated.set(id, {
         id,
-        displayName: PROVIDER_DISPLAY_NAMES[id] || id,
+        displayName: getProviderDisplayName(id),
         pass: attributes.findings.pass,
         fail: attributes.findings.fail,
       });
@@ -99,9 +74,6 @@ function aggregateProvidersByType(
   return Array.from(aggregated.values());
 }
 
-/**
- * Severity display names in order
- */
 const SEVERITY_ORDER = [
   "Critical",
   "High",
@@ -111,18 +83,8 @@ const SEVERITY_ORDER = [
 ] as const;
 
 /**
- * Adapts providers overview and findings severity API responses to Sankey chart format
- *
- * Creates a 2-level flow visualization:
- * - Level 1: Cloud providers (AWS, Azure, GCP, etc.)
- * - Level 2: Severity breakdown (Critical, High, Medium, Low, Informational)
- *
- * The severity distribution is calculated proportionally based on each provider's
- * fail count relative to the total fails across all providers.
- *
- * @param providersResponse - Raw API response from /overviews/providers
- * @param severityResponse - Raw API response from /overviews/findings_severity
- * @returns Sankey chart data with nodes and links
+ * Adapts providers overview and findings severity API responses to Sankey chart format.
+ * Severity distribution is calculated proportionally based on each provider's fail count.
  */
 export function adaptProvidersOverviewToSankey(
   providersResponse: ProvidersOverviewResponse | undefined,
@@ -132,34 +94,23 @@ export function adaptProvidersOverviewToSankey(
     return { nodes: [], links: [] };
   }
 
-  // Aggregate providers by type
   const aggregatedProviders = aggregateProvidersByType(providersResponse.data);
-
-  // Filter out providers with no findings (only need fail > 0 for severity view)
   const providersWithFailures = aggregatedProviders.filter((p) => p.fail > 0);
 
   if (providersWithFailures.length === 0) {
     return { nodes: [], links: [] };
   }
 
-  // Build nodes array: providers first, then severities
   const providerNodes: SankeyNode[] = providersWithFailures.map((p) => ({
     name: p.displayName,
   }));
-
   const severityNodes: SankeyNode[] = SEVERITY_ORDER.map((severity) => ({
     name: severity,
   }));
-
   const nodes = [...providerNodes, ...severityNodes];
-
-  // Calculate severity start index (after provider nodes)
   const severityStartIndex = providerNodes.length;
-
-  // Build links from each provider to severities
   const links: SankeyLink[] = [];
 
-  // If we have severity data, distribute proportionally
   if (severityResponse?.data?.attributes) {
     const { critical, high, medium, low, informational } =
       severityResponse.data.attributes;
@@ -168,18 +119,15 @@ export function adaptProvidersOverviewToSankey(
     const totalSeverity = severityValues.reduce((sum, v) => sum + v, 0);
 
     if (totalSeverity > 0) {
-      // Calculate total fails across all providers
       const totalFails = providersWithFailures.reduce(
         (sum, p) => sum + p.fail,
         0,
       );
 
       providersWithFailures.forEach((provider, sourceIndex) => {
-        // Calculate this provider's proportion of total fails
         const providerRatio = provider.fail / totalFails;
 
         severityValues.forEach((severityValue, severityIndex) => {
-          // Distribute severity proportionally to this provider
           const value = Math.round(severityValue * providerRatio);
 
           if (value > 0) {
@@ -193,7 +141,7 @@ export function adaptProvidersOverviewToSankey(
       });
     }
   } else {
-    // Fallback: if no severity data, just show fail counts to a generic "Fail" node
+    // Fallback when no severity data available
     const failNode: SankeyNode = { name: "Fail" };
     nodes.push(failNode);
     const failIndex = nodes.length - 1;
@@ -210,9 +158,6 @@ export function adaptProvidersOverviewToSankey(
   return { nodes, links };
 }
 
-/**
- * Threat map location point structure (matching ThreatMap component)
- */
 export interface ThreatMapLocation {
   id: string;
   name: string;
@@ -229,17 +174,11 @@ export interface ThreatMapLocation {
   change?: number;
 }
 
-/**
- * Threat map data structure (matching ThreatMap component)
- */
 export interface ThreatMapData {
   locations: ThreatMapLocation[];
   regions: string[];
 }
 
-/**
- * AWS region to coordinates mapping
- */
 const AWS_REGION_COORDINATES: Record<string, { lat: number; lng: number }> = {
   "us-east-1": { lat: 37.5, lng: -77.5 }, // N. Virginia
   "us-east-2": { lat: 40.0, lng: -83.0 }, // Ohio
@@ -272,9 +211,6 @@ const AWS_REGION_COORDINATES: Record<string, { lat: number; lng: number }> = {
   "sa-east-1": { lat: -23.5, lng: -46.6 }, // São Paulo
 };
 
-/**
- * Azure region to coordinates mapping
- */
 const AZURE_REGION_COORDINATES: Record<string, { lat: number; lng: number }> = {
   eastus: { lat: 37.5, lng: -79.0 },
   eastus2: { lat: 36.7, lng: -78.9 },
@@ -324,9 +260,6 @@ const AZURE_REGION_COORDINATES: Record<string, { lat: number; lng: number }> = {
   qatarcentral: { lat: 25.3, lng: 51.5 },
 };
 
-/**
- * GCP region to coordinates mapping
- */
 const GCP_REGION_COORDINATES: Record<string, { lat: number; lng: number }> = {
   "us-central1": { lat: 41.3, lng: -95.9 }, // Iowa
   "us-east1": { lat: 33.2, lng: -80.0 }, // South Carolina
@@ -370,104 +303,79 @@ const GCP_REGION_COORDINATES: Record<string, { lat: number; lng: number }> = {
   "africa-south1": { lat: -26.2, lng: 28.0 }, // Johannesburg
 };
 
-/**
- * Gets coordinates for a region based on provider type
- * Returns [lng, lat] format for D3/GeoJSON compatibility
- */
+const PROVIDER_COORDINATES: Record<
+  string,
+  Record<string, { lat: number; lng: number }>
+> = {
+  aws: AWS_REGION_COORDINATES,
+  azure: AZURE_REGION_COORDINATES,
+  gcp: GCP_REGION_COORDINATES,
+};
+
+// Returns [lng, lat] format for D3/GeoJSON compatibility
 function getRegionCoordinates(
   providerType: string,
   region: string,
 ): [number, number] | null {
-  const normalizedRegion = region.toLowerCase();
-  let coords: { lat: number; lng: number } | undefined;
-
-  switch (providerType.toLowerCase()) {
-    case "aws":
-      coords = AWS_REGION_COORDINATES[normalizedRegion];
-      break;
-    case "azure":
-      coords = AZURE_REGION_COORDINATES[normalizedRegion];
-      break;
-    case "gcp":
-      coords = GCP_REGION_COORDINATES[normalizedRegion];
-      break;
-  }
-
-  // Return [lng, lat] format for D3/GeoJSON
+  const coords =
+    PROVIDER_COORDINATES[providerType.toLowerCase()]?.[region.toLowerCase()];
   return coords ? [coords.lng, coords.lat] : null;
 }
 
-/**
- * Maps provider type to display region name
- */
-const PROVIDER_REGION_NAMES: Record<string, string> = {
-  aws: "AWS",
-  azure: "Azure",
-  gcp: "Google Cloud",
-  kubernetes: "Kubernetes",
-};
-
-/**
- * Determines risk level based on fail rate
- */
 function getRiskLevel(failRate: number): "low-high" | "high" | "critical" {
   if (failRate >= 0.5) return "critical";
   if (failRate >= 0.25) return "high";
   return "low-high";
 }
 
-/**
- * Builds severity data for the horizontal bar chart
- */
 function buildSeverityData(fail: number, pass: number, muted: number) {
   const total = fail + pass + muted;
-  const pct = (value: number) => (total > 0 ? Math.round((value / total) * 100) : 0);
+  const pct = (value: number) =>
+    total > 0 ? Math.round((value / total) * 100) : 0;
 
   return [
-    { name: "Fail", value: fail, percentage: pct(fail), color: "var(--color-bg-fail)" },
-    { name: "Pass", value: pass, percentage: pct(pass), color: "var(--color-bg-pass)" },
-    { name: "Muted", value: muted, percentage: pct(muted), color: "var(--color-bg-data-muted)" },
+    {
+      name: "Fail",
+      value: fail,
+      percentage: pct(fail),
+      color: "var(--color-bg-fail)",
+    },
+    {
+      name: "Pass",
+      value: pass,
+      percentage: pct(pass),
+      color: "var(--color-bg-pass)",
+    },
+    {
+      name: "Muted",
+      value: muted,
+      percentage: pct(muted),
+      color: "var(--color-bg-data-muted)",
+    },
   ];
 }
 
-/**
- * Formats a raw region code into a human-readable name
- * Examples:
- *   "europe-west10" → "Europe West 10"
- *   "us-east-1" → "US East 1"
- *   "asia-northeast3" → "Asia Northeast 3"
- */
+// Formats "europe-west10" → "Europe West 10"
 function formatRegionCode(region: string): string {
   return region
     .split(/[-_]/)
     .map((part) => {
-      // Check if the part ends with numbers (e.g., "west10" → "West 10")
       const match = part.match(/^([a-zA-Z]+)(\d+)$/);
       if (match) {
         const [, text, number] = match;
         return `${text.charAt(0).toUpperCase()}${text.slice(1).toLowerCase()} ${number}`;
       }
-      // Regular word capitalization
       return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
     })
     .join(" ");
 }
 
-/**
- * Formats region name for display
- */
 function formatRegionName(providerType: string, region: string): string {
-  const providerPrefix =
-    PROVIDER_REGION_NAMES[providerType.toLowerCase()] || providerType;
-  const formattedRegion = formatRegionCode(region);
-  return `${providerPrefix} - ${formattedRegion}`;
+  return `${getProviderDisplayName(providerType)} - ${formatRegionCode(region)}`;
 }
 
 /**
- * Adapts regions overview API response to threat map format
- *
- * @param regionsResponse - Raw API response from /overviews/regions
- * @returns Threat map data with locations and region filters
+ * Adapts regions overview API response to threat map format.
  */
 export function adaptRegionsOverviewToThreatMap(
   regionsResponse: RegionsOverviewResponse | undefined,
@@ -489,12 +397,9 @@ export function adaptRegionsOverviewToThreatMap(
       attributes.region,
     );
 
-    // Skip regions without coordinates
     if (!coordinates) continue;
 
-    const providerRegion =
-      PROVIDER_REGION_NAMES[attributes.provider_type.toLowerCase()] ||
-      attributes.provider_type;
+    const providerRegion = getProviderDisplayName(attributes.provider_type);
     regionSet.add(providerRegion);
 
     const failRate =
@@ -507,7 +412,11 @@ export function adaptRegionsOverviewToThreatMap(
       coordinates,
       totalFindings: attributes.fail,
       riskLevel: getRiskLevel(failRate),
-      severityData: buildSeverityData(attributes.fail, attributes.pass, attributes.muted),
+      severityData: buildSeverityData(
+        attributes.fail,
+        attributes.pass,
+        attributes.muted,
+      ),
     });
   }
 
