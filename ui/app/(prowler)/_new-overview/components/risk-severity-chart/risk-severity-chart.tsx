@@ -12,6 +12,7 @@ import {
   Skeleton,
 } from "@/components/shadcn";
 import { calculatePercentage } from "@/lib/utils";
+import { SEVERITY_FILTER_MAP } from "@/types/severities";
 
 interface ProviderAttributes {
   uid: string;
@@ -67,16 +68,7 @@ export const RiskSeverityChart = ({
       }
     }
 
-    // Map severity name to lowercase for the filter
-    const severityMap: Record<string, string> = {
-      Critical: "critical",
-      High: "high",
-      Medium: "medium",
-      Low: "low",
-      Info: "informational",
-    };
-
-    const severity = severityMap[dataPoint.name];
+    const severity = SEVERITY_FILTER_MAP[dataPoint.name];
     if (severity) {
       params.set("filter[severity__in]", severity);
     }
