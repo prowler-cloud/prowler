@@ -512,23 +512,20 @@ export function ThreatMap({
                         position={tooltipPosition}
                       />
                     )}
-                  </div>
-                  <div
-                    className="mt-3 flex items-center gap-2"
-                    role="status"
-                    aria-label={`${filteredLocations.length} threat locations on map`}
-                  >
                     <div
-                      aria-hidden="true"
-                      className="h-3 w-3 rounded-full"
-                      style={{ backgroundColor: "var(--bg-data-critical)" }}
-                    />
-                    <span
-                      className="text-sm"
-                      style={{ color: "var(--text-neutral-tertiary)" }}
+                      className="border-border-neutral-primary bg-bg-neutral-secondary absolute bottom-4 left-4 flex items-center gap-2 rounded-full border px-3 py-1.5"
+                      role="status"
+                      aria-label={`${filteredLocations.length} threat locations on map`}
                     >
-                      {filteredLocations.length} Locations
-                    </span>
+                      <div
+                        aria-hidden="true"
+                        className="h-3 w-3 rounded"
+                        style={{ backgroundColor: "var(--bg-data-critical)" }}
+                      />
+                      <span className="text-text-neutral-primary text-sm font-medium">
+                        {filteredLocations.length} Locations
+                      </span>
+                    </div>
                   </div>
                 </>
               )}
