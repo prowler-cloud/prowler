@@ -241,7 +241,7 @@ class HTML(Output):
                     <th scope="col">Status</th>
                     <th scope="col">Severity</th>
                     <th scope="col">Service Name</th>
-                    <th scope="col">{"Line Range" if provider.type == "iac" else "Region"}</th>
+                    <th scope="col">Region</th>
                     <th style="width:20%" scope="col">Check ID</th>
                     <th style="width:20%" scope="col">Check Title</th>
                     <th scope="col">Resource ID</th>

@@ -11,13 +11,13 @@ interface HorizontalBarChartProps {
   data: BarDataPoint[];
   height?: number;
   title?: string;
-  labelWidth?: string;
+  onBarClick?: (dataPoint: BarDataPoint, index: number) => void;
 }
 
 export function HorizontalBarChart({
   data,
   title,
-  labelWidth = "w-20",
+  onBarClick,
 }: HorizontalBarChartProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
@@ -58,15 +58,36 @@ export function HorizontalBarChart({
               getSeverityColorByName(item.name) ||
               "var(--bg-neutral-tertiary)";
 
+          const isClickable = !isEmpty && onBarClick;
           return (
             <div
               key={item.name}
-              className="flex items-center gap-10"
+              className="flex items-center gap-6"
+              style={{ cursor: isClickable ? "pointer" : "default" }}
+              role={isClickable ? "button" : undefined}
+              tabIndex={isClickable ? 0 : undefined}
               onMouseEnter={() => !isEmpty && setHoveredIndex(index)}
               onMouseLeave={() => !isEmpty && setHoveredIndex(null)}
+              onClick={() => {
+                if (isClickable) {
+                  const originalIndex = data.findIndex(
+                    (d) => d.name === item.name,
+                  );
+                  onBarClick(data[originalIndex], originalIndex);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (isClickable && (e.key === "Enter" || e.key === " ")) {
+                  e.preventDefault();
+                  const originalIndex = data.findIndex(
+                    (d) => d.name === item.name,
+                  );
+                  onBarClick(data[originalIndex], originalIndex);
+                }
+              }}
             >
               {/* Label */}
-              <div className={`w-20 md:${labelWidth} shrink-0`}>
+              <div className="w-20 shrink-0">
                 <span
                   className="text-text-neutral-secondary block truncate text-sm font-medium"
                   style={{
