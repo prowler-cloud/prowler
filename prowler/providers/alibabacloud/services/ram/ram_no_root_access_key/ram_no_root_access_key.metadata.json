@@ -1,0 +1,36 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "ram_no_root_access_key",
+  "CheckTitle": "Ensure no root account access key exists",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS Alibaba Cloud Foundations Benchmark"
+  ],
+  "ServiceName": "ram",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:ram::account-id:root",
+  "Severity": "critical",
+  "ResourceType": "AlibabaCloudRAMAccessKey",
+  "Description": "Ensure no root account access key exists. Access keys provide programmatic access to a given Alibaba Cloud account. It is recommended that all access keys associated with the root account be removed.",
+  "Risk": "The root account is the most privileged user in an Alibaba Cloud account. Access Keys provide programmatic access to a given Alibaba Cloud account. Removing access keys associated with the root account limits vectors by which the account can be compromised. Removing the root access keys encourages the creation and use of role based accounts that are least privileged.",
+  "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/102600.htm",
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun ram DeleteAccessKey --UserAccessKeyId <access_key_ID>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Logon to RAM console by using your Alibaba Cloud account (root account). Move the pointer over the account icon in the upper-right corner and click AccessKey. Click Continue to manage AccessKey. On the Security Management page, find the target access keys and click Delete to delete the target access keys permanently.",
+      "Url": "https://www.alibabacloud.com/help/doc-detail/102600.htm"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark v2.0.0 - Section 1.2"
+}

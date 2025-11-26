@@ -1,0 +1,36 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "rds_instance_tde_enabled",
+  "CheckTitle": "Ensure that 'TDE' is set to 'Enabled' on for applicable database instance",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS Alibaba Cloud Foundations Benchmark"
+  ],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:rds:region:account-id:dbinstance/{dbinstance-id}",
+  "Severity": "high",
+  "ResourceType": "AlibabaCloudRDSDBInstance",
+  "Description": "Enable Transparent Data Encryption on every RDS instance. RDS Database transparent data encryption helps protect against the threat of malicious activity by performing real-time encryption and decryption of the database, associated backups, and log files at rest without requiring changes to the application.",
+  "Risk": "Data at rest that is not encrypted is vulnerable to unauthorized access if the underlying storage media or backups are compromised.",
+  "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/33510.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun rds ModifyDBInstanceTDE --DBInstanceId <instance_id> --TDEStatus Enabled",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Logon to RDS Console. Go to Data Security -> TDE tab. Find TDE Status and click the switch next to Disabled. Choose automatically generated key or custom key, click Confirm.",
+      "Url": "https://www.alibabacloud.com/help/doc-detail/33510.html"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark Section 6.5."
+}

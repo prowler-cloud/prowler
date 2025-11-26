@@ -1,0 +1,36 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "cs_kubernetes_private_cluster_enabled",
+  "CheckTitle": "Ensure Kubernetes Cluster is created with Private cluster enabled",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS Alibaba Cloud Foundations Benchmark"
+  ],
+  "ServiceName": "cs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:cs:region:account-id:cluster/{cluster-id}",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloudKubernetesCluster",
+  "Description": "A private cluster is a cluster that makes your master inaccessible from the public internet. In a private cluster, nodes do not have public IP addresses, so your workloads run in an environment that is isolated from the internet. Nodes and masters communicate with each other privately using VPC peering.",
+  "Risk": "Exposing the API server endpoint to the public internet increases the attack surface of your cluster. Attackers can attempt to probe for vulnerabilities, perform brute force attacks, or exploit misconfigurations if the API server is publicly accessible. Using a private cluster significantly reduces network security risks.",
+  "RelatedUrl": "https://help.aliyun.com/document_detail/100380.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "Public access settings cannot be easily changed for existing clusters. Ensure Public Access is disabled during creation.",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Logon to ACK console. Select the target cluster name and go into the cluster detail page. Check if there is no meta of API Server Public Network Endpoint under Cluster Information. When creating a new cluster, make sure Public Access is not enabled.",
+      "Url": "https://help.aliyun.com/document_detail/100380.html"
+    }
+  },
+  "Categories": [
+    "cluster-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark Section 7.9. By default, public access is not enabled when creating new cluster."
+}

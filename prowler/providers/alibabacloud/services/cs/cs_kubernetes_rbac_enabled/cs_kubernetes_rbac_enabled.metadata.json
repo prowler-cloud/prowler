@@ -1,0 +1,36 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "cs_kubernetes_rbac_enabled",
+  "CheckTitle": "Ensure role-based access control (RBAC) authorization is Enabled on Kubernetes Engine Clusters",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS Alibaba Cloud Foundations Benchmark"
+  ],
+  "ServiceName": "cs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:cs:region:account-id:cluster/{cluster-id}",
+  "Severity": "high",
+  "ResourceType": "AlibabaCloudKubernetesCluster",
+  "Description": "In Kubernetes, authorizers interact by granting a permission if any authorizer grants the permission. The legacy authorizer in Kubernetes Engine grants broad, statically defined permissions. To ensure that RBAC limits permissions correctly, you must disable the legacy authorizer. RBAC has significant security advantages, can help you ensure that users only have access to specific cluster resources within their own namespace and is now stable in Kubernetes.",
+  "Risk": "In Kubernetes, RBAC is used to grant permissions to resources at the cluster and namespace level. RBAC allows you to define roles with rules containing a set of permissions, and the subaccounts who bind the roles could only have the permissions to access the specific resources in the cluster or namespaces defined in RBAC policies. Without RBAC, legacy authorization mechanisms like ABAC grant overly broad permissions.",
+  "RelatedUrl": "https://help.aliyun.com/document_detail/87656.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "RBAC is enabled by default on new ACK clusters. Verify cluster authorization configuration.",
+      "NativeIaC": "",
+      "Other": "https://help.aliyun.com/document_detail/119596.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Logon to ACK console. Navigate to Clusters -> Authorizations page. Select the target RAM sub-account and configure the RBAC roles on specific clusters or namespaces. Ensure RBAC is enabled and legacy ABAC authorization is disabled.",
+      "Url": "https://help.aliyun.com/document_detail/87656.html"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark Section 7.3. By default, RBAC authorization is enabled on ACK clusters, and the legacy authorizations as ABAC is disabled. RAM sub-users have no permissions to access any resources in ACK clusters by default."
+}

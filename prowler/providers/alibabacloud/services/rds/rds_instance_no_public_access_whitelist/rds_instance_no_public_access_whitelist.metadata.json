@@ -1,0 +1,36 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "rds_instance_no_public_access_whitelist",
+  "CheckTitle": "Ensure that RDS Instances are not open to the world",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS Alibaba Cloud Foundations Benchmark"
+  ],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:rds:region:account-id:dbinstance/{dbinstance-id}",
+  "Severity": "critical",
+  "ResourceType": "AlibabaCloudRDSDBInstance",
+  "Description": "Database Server should accept connections only from trusted Network(s)/IP(s) and restrict access from the world. To minimize attack surface on a Database server Instance, only trusted/known and required IP(s) should be white-listed to connect to it. Authorized network should not have IPs/networks configured to 0.0.0.0 or /0 which will allow access to the instance from anywhere in the world.",
+  "Risk": "Allowing public access (0.0.0.0/0) to the database significantly increases the risk of brute-force attacks, unauthorized access, and data exfiltration.",
+  "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/26198.htm",
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun rds ModifySecurityIps --DBInstanceId <instance_id> --SecurityIps <ip_list>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Logon to RDS Console. Go to Data Security -> Whitelist Settings tab. Remove any 0.0.0.0 or /0 entries, and only add the IP addresses that need to access the instance.",
+      "Url": "https://www.alibabacloud.com/help/doc-detail/26198.htm"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark Section 6.2."
+}

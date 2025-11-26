@@ -1,0 +1,36 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "ecs_securitygroup_restrict_rdp_internet",
+  "CheckTitle": "Ensure that RDP access is restricted from the internet",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS Alibaba Cloud Foundations Benchmark"
+  ],
+  "ServiceName": "ecs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:ecs:region:account-id:security-group/{security-group-id}",
+  "Severity": "high",
+  "ResourceType": "AlibabaCloudECSSecurityGroup",
+  "Description": "Security groups provide stateful filtering of ingress/egress network traffic to Alibaba Cloud resources. It is recommended that no security group allows unrestricted ingress access to port 3389 (RDP).",
+  "Risk": "Removing unfettered connectivity to remote console services, such as RDP, reduces a server's exposure to risk.",
+  "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/25387.htm",
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun ecs RevokeSecurityGroup --SecurityGroupId <security_group_id> --IpProtocol tcp --PortRange 3389/3389 --SourceCidrIp 0.0.0.0/0",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Logon to ECS Console. In the left-side navigation pane, choose Network & Security > Security Groups. Find the Security Group you want to modify. Modify Source IP range to specific IP instead of 0.0.0.0/0. Save.",
+      "Url": "https://www.alibabacloud.com/help/doc-detail/25387.htm"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark v2.0.0 - Section 4.4"
+}

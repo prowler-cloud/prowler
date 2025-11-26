@@ -1,0 +1,36 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "securitycenter_all_assets_agent_installed",
+  "CheckTitle": "Ensure that all assets are installed with security agent",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS Alibaba Cloud Foundations Benchmark"
+  ],
+  "ServiceName": "securitycenter",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:sas:region:account-id:machine/{machine-id}",
+  "Severity": "high",
+  "ResourceType": "AlibabaCloudSecurityCenterMachine",
+  "Description": "The endpoint protection of Security requires an agent to be installed on the endpoint to work. Such an agent-based approach allows the security center to provide a set of more comprehensive endpoint intrusion detection and protection capabilities, such as includes remote logon detection, webshell detection and removal, anomaly detection (detection of abnormal process behaviors and abnormal network connections), and detection of changes in key files and suspicious accounts in systems and applications.",
+  "Risk": "Assets without Security Center agent installed are not protected by endpoint intrusion detection and protection capabilities, leaving them vulnerable to security threats.",
+  "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/111650.htm",
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun sas InstallUninstallAegis --InstanceIds <instance_id_1>,<instance_id_2>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Logon to Security Center Console. Select Settings. Click Agent. On Client to be installed tab, select all items on the list. Click On-click installation to install the agent all asset.",
+      "Url": "https://www.alibabacloud.com/help/doc-detail/111650.htm"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark v2.0.0 - Section 8.2"
+}

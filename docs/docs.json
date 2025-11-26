@@ -157,6 +157,13 @@
             "group": "Providers",
             "pages": [
               {
+                "group": "Alibaba Cloud",
+                "pages": [
+                  "user-guide/providers/alibabacloud/getting-started-alibabacloud",
+                  "user-guide/providers/alibabacloud/authentication"
+                ]
+              },
+              {
                 "group": "AWS",
                 "pages": [
                   "user-guide/providers/aws/getting-started-aws",

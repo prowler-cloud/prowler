@@ -1,0 +1,36 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "securitycenter_advanced_or_enterprise_edition",
+  "CheckTitle": "Ensure that Security Center is Advanced or Enterprise Edition",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS Alibaba Cloud Foundations Benchmark"
+  ],
+  "ServiceName": "securitycenter",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:sas::account-id:security-center",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloudSecurityCenter",
+  "Description": "The Advanced or Enterprise Edition enables threat detection for network and endpoints, providing malware detection, webshell detection and anomaly detection in Security Center.",
+  "Risk": "Using Basic or Free Edition of Security Center may not provide comprehensive protection against cloud threats. Advanced or Enterprise Edition allows for full protection to defend cloud threats.",
+  "RelatedUrl": "https://www.alibabacloud.com/help/product/28498.htm",
+  "Remediation": {
+    "Code": {
+      "CLI": "Logon to Security Center Console > Select Overview > Click Upgrade > Select Advanced or Enterprise Edition > Finish order placement",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Logon to Security Center Console. Select Overview. Click Upgrade. Select Advanced or Enterprise Edition. Finish order placement.",
+      "Url": "https://www.alibabacloud.com/help/product/28498.htm"
+    }
+  },
+  "Categories": [
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark v2.0.0 - Section 8.1"
+}

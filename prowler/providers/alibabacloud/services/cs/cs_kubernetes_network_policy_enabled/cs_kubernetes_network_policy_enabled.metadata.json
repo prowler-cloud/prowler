@@ -1,0 +1,36 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "cs_kubernetes_network_policy_enabled",
+  "CheckTitle": "Ensure Network policy is enabled on Kubernetes Engine Clusters",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS Alibaba Cloud Foundations Benchmark"
+  ],
+  "ServiceName": "cs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:cs:region:account-id:cluster/{cluster-id}",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloudKubernetesCluster",
+  "Description": "A network policy is a specification of how groups of pods are allowed to communicate with each other and other network endpoints. NetworkPolicy resources use labels to select pods and define rules which specify what traffic is allowed to the selected pods. By default, pods are non-isolated; they accept traffic from any source. Pods become isolated by having a NetworkPolicy that selects them.",
+  "Risk": "Without Network Policies, all pods in a Kubernetes cluster can communicate with each other freely. This open communication model allows an attacker who compromises a single pod to potentially move laterally within the cluster and access sensitive services or data.",
+  "RelatedUrl": "https://help.aliyun.com/document_detail/97621.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "Network Policy support (Terway) must be selected during cluster creation.",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Only the Terway network plugin support the Network Policy feature. When creating a new cluster, select Terway in Network Plugin option. Existing clusters using Flannel cannot be migrated to Terway.",
+      "Url": "https://help.aliyun.com/document_detail/86949.html"
+    }
+  },
+  "Categories": [
+    "cluster-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark Section 7.7. Only the Terway network plugin supports the Network Policy feature."
+}

@@ -1,0 +1,36 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "oss_bucket_logging_enabled",
+  "CheckTitle": "Ensure that logging is enabled for OSS buckets",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS Alibaba Cloud Foundations Benchmark"
+  ],
+  "ServiceName": "oss",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:oss::account-id:bucket-name",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloudOSSBucket",
+  "Description": "OSS Bucket Access Logging generates a log that contains access records for each request made to your OSS bucket. An access log record contains details about the request, such as the request type, the resources specified in the request worked, and the time and date the request was processed. It is recommended that bucket access logging be enabled on the OSS bucket.",
+  "Risk": "By enabling OSS bucket logging on target OSS buckets, it is possible to capture all events which may affect objects within an target buckets. Configuring logs to be placed in a separate bucket allows access to log information which can be useful in security and incident response workflows.",
+  "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/31900.htm",
+  "Remediation": {
+    "Code": {
+      "CLI": "ossutil logging --method put oss://<bucket-name> --target-bucket <target-bucket> --target-prefix <prefix>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Logon to OSS console. In the bucket-list pane, click on a target OSS bucket. Under Log, click configure. Configure bucket logging. Click the Enabled checkbox. Select Target Bucket from list. Enter a Target Prefix. Click Save.",
+      "Url": "https://www.alibabacloud.com/help/doc-detail/31900.htm"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark v2.0.0 - Section 5.3"
+}

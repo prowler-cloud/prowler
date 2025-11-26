@@ -1023,6 +1023,60 @@ class HTML(Output):
             return ""
 
     @staticmethod
+    def get_alibabacloud_assessment_summary(provider: Provider) -> str:
+        """
+        get_alibabacloud_assessment_summary gets the HTML assessment summary for the Alibaba Cloud provider
+
+        Args:
+            provider (Provider): the Alibaba Cloud provider object
+
+        Returns:
+            str: HTML assessment summary for the Alibaba Cloud provider
+        """
+        try:
+            account_id = getattr(provider.identity, "account_id", "unknown")
+            account_name = getattr(provider.identity, "account_name", "unknown")
+            identity_arn = getattr(provider.identity, "identity_arn", "unknown")
+            user_name = getattr(provider.identity, "user_name", "unknown")
+
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Alibaba Cloud Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Account ID:</b> {account_id}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Account Name:</b> {account_name if account_name != "unknown" else "N/A"}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Alibaba Cloud Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>User Name:</b> {user_name}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Identity ARN:</b> {identity_arn}
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
     def get_assessment_summary(provider: Provider) -> str:
         """
         get_assessment_summary gets the HTML assessment summary for the provider

@@ -1,0 +1,36 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "ram_user_console_access_unused",
+  "CheckTitle": "Ensure users not logged on for 90 days or longer are disabled for console logon",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS Alibaba Cloud Foundations Benchmark"
+  ],
+  "ServiceName": "ram",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:ram::account-id:user/{user-name}",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloudRAMUser",
+  "Description": "Alibaba Cloud RAM users can logon to Alibaba Cloud console by using their user name and password. If a user has not logged on for 90 days or longer, it is recommended to disable the console access of the user.",
+  "Risk": "Disabling users from having unnecessary logon privileges will reduce the opportunity that an abandoned user or a user with compromised password to be used.",
+  "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/116820.htm",
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun ram DeleteLoginProfile --UserName <ram_user>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Logon to RAM console. Choose Identities > Users. In the User Logon Name/Display Name column, click the username of the target RAM user. In the Console Logon Management section, click Modify Logon Settings. In the Console Password Logon section, select Disabled. Click OK.",
+      "Url": "https://www.alibabacloud.com/help/doc-detail/116820.htm"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark v2.0.0 - Section 1.5"
+}

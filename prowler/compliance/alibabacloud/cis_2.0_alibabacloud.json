@@ -1,0 +1,428 @@
+{
+  "Framework": "CIS",
+  "Name": "CIS Alibaba Cloud Foundations Benchmark v2.0.0",
+  "Version": "2.0",
+  "Provider": "alibabacloud",
+  "Description": "The CIS Alibaba Cloud Foundations Benchmark provides prescriptive guidance for configuring security options for a subset of Alibaba Cloud services with an emphasis on foundational, testable, and architecture agnostic settings.",
+  "Requirements": [
+    {
+      "Id": "1",
+      "Name": "Identity and Access Management",
+      "Description": "This section contains recommendations for configuring identity and access management related options.",
+      "Attributes": [
+        {
+          "Section": "1. Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "This section contains recommendations for configuring identity and access management related options.",
+          "RationaleStatement": "The principle of least privilege should be used for access control to resources.",
+          "ImpactStatement": "Implementing least privilege requires proper planning and ongoing maintenance.",
+          "RemediationProcedure": "Follow the remediation instructions for each specific control.",
+          "AuditProcedure": "Review RAM users, policies, and access controls.",
+          "AdditionalInformation": "Identity and Access Management is critical for security.",
+          "References": "https://www.alibabacloud.com/help/product/28625.htm"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "1.2",
+      "Description": "Ensure no root account access key exists",
+      "Attributes": [
+        {
+          "Section": "1. Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Access keys provide programmatic access to a given Alibaba Cloud account. It is recommended that all access keys associated with the root account be removed.",
+          "RationaleStatement": "The root account is the most privileged user in an Alibaba Cloud account. Removing access keys associated with the root account limits vectors by which the account can be compromised.",
+          "ImpactStatement": "Programs that already use root account access keys may stop working if you disable or delete the access keys.",
+          "RemediationProcedure": "Delete or disable all access keys for the root account.",
+          "AuditProcedure": "Using the management console, verify that no access key exists for the root account.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/102600.htm"
+        }
+      ],
+      "Checks": [
+        "ram_no_root_access_key"
+      ]
+    },
+    {
+      "Id": "1.4",
+      "Description": "Ensure that multi-factor authentication is enabled for all RAM users that have a console password",
+      "Attributes": [
+        {
+          "Section": "1. Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Multi-Factor Authentication (MFA) adds an extra layer of protection on top of a username and password.",
+          "RationaleStatement": "MFA requires users to verify their identities by entering two authentication factors. The additional security makes it harder for an attacker to gain access to protected resources or data.",
+          "ImpactStatement": "None",
+          "RemediationProcedure": "Enable MFA for all RAM users with console access.",
+          "AuditProcedure": "Verify that all RAM users with console access have MFA enabled.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/119555.htm"
+        }
+      ],
+      "Checks": [
+        "ram_user_mfa_enabled_console_access"
+      ]
+    },
+    {
+      "Id": "1.6",
+      "Description": "Ensure access keys are rotated every 90 days or less",
+      "Attributes": [
+        {
+          "Section": "1. Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "It is recommended that all access keys be regularly rotated.",
+          "RationaleStatement": "Access keys might be compromised. Rotating access keys will reduce the window of opportunity that a compromised access key can be used.",
+          "ImpactStatement": "Programs that use access keys may stop working if you rotate the access keys without replacing them in your program prior to the rotation.",
+          "RemediationProcedure": "Create new access keys and update applications, then delete old keys.",
+          "AuditProcedure": "Verify that all access keys are rotated within 90 days.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/116401.htm"
+        }
+      ],
+      "Checks": [
+        "ram_rotate_access_key_90_days"
+      ]
+    },
+    {
+      "Id": "1.7",
+      "Description": "Ensure RAM password policy requires at least one uppercase letter",
+      "Attributes": [
+        {
+          "Section": "1. Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "RAM password policies can be used to ensure password complexity.",
+          "RationaleStatement": "Enhancing complexity of a password policy increases account resiliency against brute force logon attempts.",
+          "ImpactStatement": "None",
+          "RemediationProcedure": "Set the password policy to require at least one uppercase letter.",
+          "AuditProcedure": "Verify that the password policy requires at least one uppercase letter.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/116413.htm"
+        }
+      ],
+      "Checks": [
+        "ram_password_policy_uppercase"
+      ]
+    },
+    {
+      "Id": "1.16",
+      "Description": "Ensure RAM policies are attached only to groups or roles",
+      "Attributes": [
+        {
+          "Section": "1. Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "It is recommended that RAM policies be applied directly to groups and roles but not users.",
+          "RationaleStatement": "Assigning privileges at the group or role level reduces the complexity of access management.",
+          "ImpactStatement": "Users may need to be added to appropriate groups to retain their current permissions.",
+          "RemediationProcedure": "Create user groups and assign policies to those groups instead of individual users.",
+          "AuditProcedure": "Verify that no policies are directly attached to RAM users.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/116820.htm"
+        }
+      ],
+      "Checks": [
+        "ram_policy_attached_only_to_group_or_roles"
+      ]
+    },
+    {
+      "Id": "2.10",
+      "Description": "Ensure log monitoring and alerts are set up for RAM Role changes",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "It is recommended that a query and alarm should be established for RAM Role creation, deletion and updating activities.",
+          "RationaleStatement": "Monitoring role creation, deletion and updating activities will help in identifying any potential malicious actions at early stage.",
+          "ImpactStatement": "None",
+          "RemediationProcedure": "Enable Action Trail and configure alerts for RAM Role changes.",
+          "AuditProcedure": "Verify that alerts are configured for RAM Role changes.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/91784.htm"
+        }
+      ],
+      "Checks": [
+        "sls_ram_role_changes_alert_enabled"
+      ]
+    },
+    {
+      "Id": "2.11",
+      "Description": "Ensure log monitoring and alerts are set up for Cloud Firewall changes",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "It is recommended that a metric filter and alarm be established for Cloud Firewall rule changes.",
+          "RationaleStatement": "Monitoring for Create or Update firewall rule events gives insight network access changes and may reduce the time it takes to detect suspicious activity.",
+          "ImpactStatement": "None",
+          "RemediationProcedure": "Enable Action Trail and configure alerts for Cloud Firewall changes.",
+          "AuditProcedure": "Verify that alerts are configured for Cloud Firewall changes.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
+        }
+      ],
+      "Checks": [
+        "sls_cloud_firewall_changes_alert_enabled"
+      ]
+    },
+    {
+      "Id": "2.12",
+      "Description": "Ensure log monitoring and alerts are set up for VPC network route changes",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "It is recommended that a metric filter and alarm be established for VPC network route changes.",
+          "RationaleStatement": "Monitoring changes to route tables will help ensure that all VPC traffic flows through an expected path.",
+          "ImpactStatement": "None",
+          "RemediationProcedure": "Enable Action Trail and configure alerts for VPC network route changes.",
+          "AuditProcedure": "Verify that alerts are configured for VPC network route changes.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
+        }
+      ],
+      "Checks": [
+        "sls_vpc_network_route_changes_alert_enabled"
+      ]
+    },
+    {
+      "Id": "2.13",
+      "Description": "Ensure log monitoring and alerts are set up for VPC changes",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "It is recommended that a log search/analysis query and alarm be established for VPC changes.",
+          "RationaleStatement": "Monitoring changes to VPC will help ensure VPC traffic flow is not getting impacted.",
+          "ImpactStatement": "None",
+          "RemediationProcedure": "Enable Action Trail and configure alerts for VPC changes.",
+          "AuditProcedure": "Verify that alerts are configured for VPC changes.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
+        }
+      ],
+      "Checks": [
+        "sls_vpc_changes_alert_enabled"
+      ]
+    },
+    {
+      "Id": "2.14",
+      "Description": "Ensure log monitoring and alerts are set up for OSS permission changes",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "It is recommended that a metric filter and alarm be established for OSS Bucket RAM changes.",
+          "RationaleStatement": "Monitoring changes to OSS permissions may reduce time to detect and correct permissions on sensitive OSS bucket and objects inside the bucket.",
+          "ImpactStatement": "None",
+          "RemediationProcedure": "Enable OSS logging and configure alerts for OSS permission changes.",
+          "AuditProcedure": "Verify that alerts are configured for OSS permission changes.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
+        }
+      ],
+      "Checks": [
+        "sls_oss_permission_changes_alert_enabled"
+      ]
+    },
+    {
+      "Id": "2.15",
+      "Description": "Ensure log monitoring and alerts are set up for RDS instance configuration changes",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "It is recommended that a metric filter and alarm be established for RDS Instance configuration changes.",
+          "RationaleStatement": "Monitoring changes to RDS Instance configuration changes may reduce time to detect and correct misconfigurations done on database server.",
+          "ImpactStatement": "None",
+          "RemediationProcedure": "Enable Action Trail and configure alerts for RDS instance configuration changes.",
+          "AuditProcedure": "Verify that alerts are configured for RDS instance configuration changes.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
+        }
+      ],
+      "Checks": [
+        "sls_rds_instance_configuration_changes_alert_enabled"
+      ]
+    },
+    {
+      "Id": "2.16",
+      "Description": "Ensure a log monitoring and alerts are set up for unauthorized API calls",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "It is recommended that a query and alarm be established for unauthorized API calls.",
+          "RationaleStatement": "Monitoring unauthorized API calls will help reveal application errors and may reduce time to detect malicious activity.",
+          "ImpactStatement": "None",
+          "RemediationProcedure": "Enable Action Trail and configure alerts for unauthorized API calls.",
+          "AuditProcedure": "Verify that alerts are configured for unauthorized API calls.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
+        }
+      ],
+      "Checks": [
+        "sls_unauthorized_api_calls_alert_enabled"
+      ]
+    },
+    {
+      "Id": "2.17",
+      "Description": "Ensure a log monitoring and alerts are set up for Management Console sign-in without MFA",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "It is recommended that a query and alarm be established for console logins that are not protected by multi-factor authentication (MFA).",
+          "RationaleStatement": "Monitoring for single-factor console logins will increase visibility into accounts that are not protected by MFA.",
+          "ImpactStatement": "None",
+          "RemediationProcedure": "Enable Action Trail and configure alerts for Management Console sign-in without MFA.",
+          "AuditProcedure": "Verify that alerts are configured for Management Console sign-in without MFA.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
+        }
+      ],
+      "Checks": [
+        "sls_management_console_signin_without_mfa_alert_enabled"
+      ]
+    },
+    {
+      "Id": "2.18",
+      "Description": "Ensure a log monitoring and alerts are set up for usage of \"root\" account",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "It is recommended that a query and alarm be established for console logins that are not protected by root login attempts.",
+          "RationaleStatement": "Monitoring for root account logins will provide visibility into the use of a fully privileged account and an opportunity to reduce the use of it.",
+          "ImpactStatement": "None",
+          "RemediationProcedure": "Enable Action Trail and configure alerts for root account usage.",
+          "AuditProcedure": "Verify that alerts are configured for root account usage.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
+        }
+      ],
+      "Checks": [
+        "sls_root_account_usage_alert_enabled"
+      ]
+    },
+    {
+      "Id": "2.19",
+      "Description": "Ensure a log monitoring and alerts are set up for Management Console authentication failures",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "It is recommended that a query and alarm be established for failed console authentication attempts.",
+          "RationaleStatement": "Monitoring failed console logins may decrease lead time to detect an attempt to brute force a credential, which may provide an indicator, such as source IP, that can be used in other event correlation.",
+          "ImpactStatement": "None",
+          "RemediationProcedure": "Enable Action Trail and configure alerts for Management Console authentication failures.",
+          "AuditProcedure": "Verify that alerts are configured for Management Console authentication failures.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
+        }
+      ],
+      "Checks": [
+        "sls_management_console_authentication_failures_alert_enabled"
+      ]
+    },
+    {
+      "Id": "2.20",
+      "Description": "Ensure a log monitoring and alerts are set up for disabling or deletion of customer created CMKs",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "It is recommended that a query and alarm be established for customer created KMSs which have changed state to disabled or deletion.",
+          "RationaleStatement": "Data encrypted with disabled or deleted keys will no longer be accessible.",
+          "ImpactStatement": "None",
+          "RemediationProcedure": "Enable Action Trail and configure alerts for disabling or deletion of customer created CMKs.",
+          "AuditProcedure": "Verify that alerts are configured for disabling or deletion of customer created CMKs.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
+        }
+      ],
+      "Checks": [
+        "sls_customer_created_cmk_changes_alert_enabled"
+      ]
+    },
+    {
+      "Id": "2.21",
+      "Description": "Ensure a log monitoring and alerts are set up for OSS bucket policy changes",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "It is recommended that a query and alarm be established for changes to OSS bucket policies.",
+          "RationaleStatement": "Monitoring changes to OSS bucket policies may reduce time to detect and correct permissive policies on sensitive OSS buckets.",
+          "ImpactStatement": "None",
+          "RemediationProcedure": "Enable Action Trail and configure alerts for OSS bucket policy changes.",
+          "AuditProcedure": "Verify that alerts are configured for OSS bucket policy changes.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
+        }
+      ],
+      "Checks": [
+        "sls_oss_bucket_policy_changes_alert_enabled"
+      ]
+    },
+    {
+      "Id": "2.22",
+      "Description": "Ensure a log monitoring and alerts are set up for security group changes",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "It is recommended that a query and alarm be established changes to Security Groups.",
+          "RationaleStatement": "Monitoring changes to security group will help ensure that resources and services are not unintentionally exposed.",
+          "ImpactStatement": "None",
+          "RemediationProcedure": "Enable Action Trail and configure alerts for security group changes.",
+          "AuditProcedure": "Verify that alerts are configured for security group changes.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
+        }
+      ],
+      "Checks": [
+        "sls_security_group_changes_alert_enabled"
+      ]
+    },
+    {
+      "Id": "2.23",
+      "Description": "Ensure that Logstore data retention period is set 365 days or greater",
+      "Attributes": [
+        {
+          "Section": "2. Logging and Monitoring",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Manual",
+          "Description": "Ensure Activity Log Retention is set for 365 days or greater.",
+          "RationaleStatement": "It is recommended to retain your activity log for 365 days or more in order to have time to respond to any incidents.",
+          "ImpactStatement": "None",
+          "RemediationProcedure": "Modify the Data Retention Period to 365 or greater.",
+          "AuditProcedure": "Verify that the Data Retention Period is set to 365 or greater.",
+          "AdditionalInformation": "",
+          "References": "https://www.alibabacloud.com/help/doc-detail/48990.htm"
+        }
+      ],
+      "Checks": [
+        "sls_logstore_retention_period"
+      ]
+    }
+  ]
+}

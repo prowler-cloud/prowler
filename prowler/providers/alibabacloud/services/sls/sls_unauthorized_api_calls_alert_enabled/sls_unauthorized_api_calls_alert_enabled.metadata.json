@@ -1,0 +1,35 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "sls_unauthorized_api_calls_alert_enabled",
+  "CheckTitle": "Ensure a log monitoring and alerts are set up for unauthorized API calls",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards"
+  ],
+  "ServiceName": "sls",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:log:region:account-id:project/project-name/alert/alert-name",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloudSLSAlert",
+  "Description": "Real-time monitoring of API calls can be achieved by directing ActionTrail Logs to LogService and establishing corresponding query and alarms. It is recommended that a query and alarm be established for unauthorized API calls.",
+  "Risk": "Monitoring unauthorized API calls will help reveal application errors and may reduce time to detect malicious activity.",
+  "RelatedUrl": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Logon to SLS Console. Ensure the Action Trail are Enabled. Select Alerts. Ensure alert rule has been enabled for unauthorized API calls.",
+      "Url": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark"
+}

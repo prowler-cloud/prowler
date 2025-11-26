@@ -1,0 +1,36 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "cs_kubernetes_cluster_check_recent",
+  "CheckTitle": "Ensure Cluster Check triggered within configured period for Kubernetes Clusters",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS Alibaba Cloud Foundations Benchmark"
+  ],
+  "ServiceName": "cs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:cs:region:account-id:cluster/{cluster-id}",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloudKubernetesCluster",
+  "Description": "Kubernetes Engine's cluster check feature helps you verify the system nodes and components healthy status. When you trigger the checking, the process would check on the health state of each node in your cluster and also the cluster configuration as kubelet, docker daemon, kernel and network iptables configuration. If there are consecutive health check failures, the diagnose would report to admin for further repair.",
+  "Risk": "Kubernetes Engine uses the node's health status to determine if a node needs to be repaired. A node reporting a Ready status is considered healthy. A cluster health check includes: The cloud resource healthy status including VPC/VSwitch, SLB and every ECS node status in cluster; The kubelet, docker daemon, kernel, iptables configurations on every node in cluster. Without regular cluster checks, potential issues may go undetected and could lead to cluster instability or security vulnerabilities.",
+  "RelatedUrl": "https://help.aliyun.com/document_detail/114882.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun cs GET /clusters/[cluster_id]/checks to verify cluster checks are being run regularly. Trigger a check if needed.",
+      "NativeIaC": "",
+      "Other": "https://help.aliyun.com/document_detail/114882.html",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Logon to ACK console. Select the target cluster and open the More pop-menu for advance options on cluster. Select Global Check and click the Start button to trigger the checking. Verify the checking time and details in Global Check. It is recommended to trigger cluster checks at least once within the configured period (default: weekly).",
+      "Url": "https://help.aliyun.com/document_detail/114882.html"
+    }
+  },
+  "Categories": [
+    "cluster-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark Section 7.4. By default, the cluster checking process is not auto triggered - the cluster administrator must start it manually in ACK console. This check verifies that cluster health checks have been performed within the configured threshold (default: 7 days). You can customize this value in your Prowler config file using 'max_cluster_check_days'."
+}

@@ -641,6 +641,10 @@ def execute(
                 is_finding_muted_args["organization_id"] = (
                     global_provider.identity.organization_id
                 )
+            elif global_provider.type == "alibabacloud":
+                is_finding_muted_args["account_id"] = (
+                    global_provider.identity.account_id
+                )
             for finding in check_findings:
                 if global_provider.type == "azure":
                     is_finding_muted_args["subscription_id"] = (

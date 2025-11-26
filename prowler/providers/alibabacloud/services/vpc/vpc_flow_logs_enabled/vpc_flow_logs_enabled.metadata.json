@@ -1,0 +1,36 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "vpc_flow_logs_enabled",
+  "CheckTitle": "Ensure VPC flow logging is enabled in all VPCs",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS Alibaba Cloud Foundations Benchmark"
+  ],
+  "ServiceName": "vpc",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:vpc:region:account-id:vpc/{vpc-id}",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloudVPC",
+  "Description": "You can use the flow log function to monitor the IP traffic information for an ENI, a VSwitch or a VPC. If you create a flow log for a VSwitch or a VPC, all the Elastic Network Interfaces, including the newly created Elastic Network Interfaces, are monitored. Such flow log data is stored in Log Service, where you can view and analyze IP traffic information. It is recommended that VPC Flow Logs be enabled for packet \"Rejects\" for VPCs.",
+  "Risk": "VPC Flow Logs provide visibility into network traffic that traverses the VPC and can be used to detect anomalous traffic or insight during security workflows.",
+  "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/90628.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun vpc CreateFlowLog --ResourceId <vpc_id> --ResourceType VPC --FlowLogName <flow_log_name> --LogStoreName <log_store_name> --ProjectName <project_name>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Logon to VPC console. In the left-side navigation pane, click FlowLog. Follow the instruction to create FlowLog for each of your VPCs.",
+      "Url": "https://www.alibabacloud.com/help/doc-detail/90628.html"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark v2.0.0 - Section 3.3"
+}

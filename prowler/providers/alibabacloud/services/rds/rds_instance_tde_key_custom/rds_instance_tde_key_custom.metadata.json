@@ -1,0 +1,36 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "rds_instance_tde_key_custom",
+  "CheckTitle": "Ensure RDS instance TDE protector is encrypted with BYOK (Use your own key)",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS Alibaba Cloud Foundations Benchmark"
+  ],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:rds:region:account-id:dbinstance/{dbinstance-id}",
+  "Severity": "medium",
+  "ResourceType": "AlibabaCloudRDSDBInstance",
+  "Description": "TDE with BYOK support provides increased transparency and control, increased security with an HSM-backed KMS service, and promotion of separation of duties. Based on business needs or criticality of data, it is recommended that the TDE protector is encrypted by a key that is managed by the data owner (BYOK).",
+  "Risk": "Using service-managed keys means the cloud provider manages the encryption keys. BYOK (Bring Your Own Key) gives you full control over the key lifecycle and permissions, ensuring that even the cloud provider cannot access your data without your explicit permission.",
+  "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/96121.html",
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun rds ModifyDBInstanceTDE --DBInstanceId <instance_id> --TDEStatus Enabled --EncryptionKey <kms_key_id>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Logon to RDS Console. Go to Data Security -> TDE tab. Click the switch next to Disabled. In the displayed dialog box, choose custom key, click Confirm.",
+      "Url": "https://www.alibabacloud.com/help/doc-detail/96121.html"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark Section 6.6."
+}

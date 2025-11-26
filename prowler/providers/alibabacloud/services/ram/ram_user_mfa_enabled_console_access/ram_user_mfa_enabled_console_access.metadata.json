@@ -1,0 +1,36 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "ram_user_mfa_enabled_console_access",
+  "CheckTitle": "Ensure that multi-factor authentication is enabled for all RAM users that have a console password",
+  "CheckType": [
+    "Software and Configuration Checks",
+    "Industry and Regulatory Standards",
+    "CIS Alibaba Cloud Foundations Benchmark"
+  ],
+  "ServiceName": "ram",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "acs:ram::account-id:user/{user-name}",
+  "Severity": "high",
+  "ResourceType": "AlibabaCloudRAMUser",
+  "Description": "Multi-Factor Authentication (MFA) adds an extra layer of protection on top of a username and password. With MFA enabled, when a user logs on to Alibaba Cloud, they will be prompted for their user name and password followed by an authentication code from their virtual MFA device. It is recommended that MFA be enabled for all users that have a console password.",
+  "Risk": "MFA requires users to verify their identities by entering two authentication factors. When MFA is enabled, an attacker faces at least two different authentication mechanisms. The additional security makes it harder for an attacker to gain access to protected resources or data.",
+  "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/119555.htm",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "In the RAM console, for each user with console access, enable MFA by going to the user's details and enabling the MFA device in the Console Logon Management section. Select 'Required' for Enable MFA when modifying logon settings.",
+      "Url": "https://www.alibabacloud.com/help/doc-detail/119555.htm"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark v2.0.0 - Section 1.4"
+}
