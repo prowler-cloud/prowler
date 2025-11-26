@@ -43,7 +43,7 @@ class TestAlibabaCloudMutelist:
         finding.region = "cn-hangzhou"
         finding.resource_tags = [{"Key": "Environment", "Value": "Prod"}]
 
-        assert mutelist.is_finding_muted(finding, "1234567890")
+        assert mutelist.is_finding_muted(finding, account_id="1234567890")
 
     def test_is_finding_not_muted_with_different_resource(self):
         mutelist = AlibabaCloudMutelist(
@@ -58,4 +58,4 @@ class TestAlibabaCloudMutelist:
         finding.region = "cn-hangzhou"
         finding.resource_tags = [{"Key": "Environment", "Value": "Prod"}]
 
-        assert mutelist.is_finding_muted(finding, "1234567890") is False
+        assert mutelist.is_finding_muted(finding, account_id="1234567890") is False
