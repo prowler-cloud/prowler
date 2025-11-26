@@ -782,7 +782,7 @@ def _add_pdf_footer(canvas_obj: canvas.Canvas, doc: SimpleDocTemplate) -> None:
     """
     canvas_obj.saveState()
     width, height = doc.pagesize
-    page_num_text = f"Página {doc.page}"
+    page_num_text = f"Page {doc.page}"
     canvas_obj.setFont("PlusJakartaSans", 9)
     canvas_obj.setFillColorRGB(0.4, 0.4, 0.4)
     canvas_obj.drawString(30, 20, page_num_text)
