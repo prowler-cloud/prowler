@@ -1,41 +1,56 @@
-"""Integration tools for Prowler App MCP Server - stub implementation."""
+"""Integration tools for Prowler App MCP Server.
 
-from prowler_mcp_server.prowler_app.utils.api_client import ProwlerAPIClient
+This module provides tools for managing external integrations
+such as Slack, Jira, AWS Security Hub, and S3 exports.
+"""
+
+from typing import Any
+
+from prowler_mcp_server.prowler_app.tools.base import BaseTool
+from pydantic import Field
 
 
-async def list_integrations() -> dict[str, any]:
-    """View all external integrations (Slack, Jira, AWS Security Hub, S3 exports, etc.).
+class IntegrationsTools(BaseTool):
+    """Tools for integration management operations.
 
-    Shows connection status, last activity, and which providers each integration monitors.
-
-    Returns:
-        List of configured integrations with connection status
-
-    Raises:
-        Exception: If API request fails
+    Provides tools for:
+    - Viewing configured integrations
+    - Deleting integrations
     """
-    client = ProwlerAPIClient()
-    return await client.get("/api/v1/integrations")
 
+    async def list_integrations(self) -> dict[str, Any]:
+        """View all external integrations (Slack, Jira, AWS Security Hub, S3 exports, etc.).
 
-async def delete_integration(integration_id: str) -> dict[str, any]:
-    """Disconnect and remove an integration.
+        Shows connection status, last activity, and which providers each integration monitors.
 
-    Stops automatic syncing but preserves historical sync records.
+        Returns:
+            List of configured integrations with connection status
 
-    Args:
-        integration_id: UUID of the integration to remove
+        Raises:
+            Exception: If API request fails
+        """
+        return await self.api_client.get("/api/v1/integrations")
 
-    Returns:
-        Confirmation of deletion
+    async def delete_integration(
+        self,
+        integration_id: str = Field(description="UUID of the integration to remove"),
+    ) -> dict[str, Any]:
+        """Disconnect and remove an integration.
 
-    Raises:
-        Exception: If API request fails
-    """
-    client = ProwlerAPIClient()
-    await client.delete(f"/api/v1/integrations/{integration_id}")
+        Stops automatic syncing but preserves historical sync records.
 
-    return {
-        "status": "deleted",
-        "message": f"Integration {integration_id} removed successfully",
-    }
+        Args:
+            integration_id: UUID of the integration to remove
+
+        Returns:
+            Confirmation of deletion
+
+        Raises:
+            Exception: If API request fails
+        """
+        await self.api_client.delete(f"/api/v1/integrations/{integration_id}")
+
+        return {
+            "status": "deleted",
+            "message": f"Integration {integration_id} removed successfully",
+        }

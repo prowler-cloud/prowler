@@ -3,14 +3,11 @@
 from prowler_mcp_server.prowler_app.models.compliance import (
     ComplianceFramework,
     ComplianceFrameworksListResponse,
-    ComplianceRequirement,
-    ComplianceRequirementAttribute,
-    ComplianceRequirementAttributesListResponse,
-    ComplianceRequirementsListResponse,
 )
 from prowler_mcp_server.prowler_app.models.findings import (
     CheckMetadata,
     CheckRemediation,
+    DetailedFinding,
     FindingsListResponse,
     FindingsOverview,
     SimplifiedFinding,
@@ -20,13 +17,10 @@ __all__ = [
     # Compliance models
     "ComplianceFramework",
     "ComplianceFrameworksListResponse",
-    "ComplianceRequirement",
-    "ComplianceRequirementAttribute",
-    "ComplianceRequirementAttributesListResponse",
-    "ComplianceRequirementsListResponse",
     # Findings models
     "CheckMetadata",
     "CheckRemediation",
+    "DetailedFinding",
     "FindingsListResponse",
     "FindingsOverview",
     "SimplifiedFinding",
