@@ -1,3 +1,5 @@
+import { getProviderDisplayName } from "@/types/providers";
+
 import { RegionsOverviewResponse } from "./types";
 
 export interface ThreatMapLocation {
@@ -19,22 +21,6 @@ export interface ThreatMapLocation {
 export interface ThreatMapData {
   locations: ThreatMapLocation[];
   regions: string[];
-}
-
-// Must match COLOR_MAP keys in sankey-chart.tsx
-const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
-  aws: "AWS",
-  azure: "Azure",
-  gcp: "Google Cloud",
-  kubernetes: "Kubernetes",
-  github: "GitHub",
-  m365: "Microsoft 365",
-  iac: "Infrastructure as Code",
-  oraclecloud: "Oracle Cloud Infrastructure",
-};
-
-function getProviderDisplayName(providerId: string): string {
-  return PROVIDER_DISPLAY_NAMES[providerId.toLowerCase()] || providerId;
 }
 
 const AWS_REGION_COORDINATES: Record<string, { lat: number; lng: number }> = {
@@ -186,6 +172,7 @@ function getRiskLevel(failRate: number): "low-high" | "high" | "critical" {
   return "low-high";
 }
 
+// CSS variables are used for Recharts inline styles, not className
 function buildSeverityData(fail: number, pass: number, muted: number) {
   const total = fail + pass + muted;
   const pct = (value: number) =>

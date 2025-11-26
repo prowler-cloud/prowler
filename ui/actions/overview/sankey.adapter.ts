@@ -1,3 +1,5 @@
+import { getProviderDisplayName } from "@/types/providers";
+
 import {
   FindingsSeverityOverviewResponse,
   ProviderOverview,
@@ -17,22 +19,6 @@ export interface SankeyLink {
 export interface SankeyData {
   nodes: SankeyNode[];
   links: SankeyLink[];
-}
-
-// Must match COLOR_MAP keys in sankey-chart.tsx
-const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
-  aws: "AWS",
-  azure: "Azure",
-  gcp: "Google Cloud",
-  kubernetes: "Kubernetes",
-  github: "GitHub",
-  m365: "Microsoft 365",
-  iac: "Infrastructure as Code",
-  oraclecloud: "Oracle Cloud Infrastructure",
-};
-
-function getProviderDisplayName(providerId: string): string {
-  return PROVIDER_DISPLAY_NAMES[providerId.toLowerCase()] || providerId;
 }
 
 interface AggregatedProvider {
