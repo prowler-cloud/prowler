@@ -163,10 +163,10 @@ class AlibabacloudProvider(Provider):
         else:
             if not mutelist_path:
                 mutelist_path = get_default_mute_file_path(self.type)
-        self._mutelist = AlibabaCloudMutelist(
-            mutelist_path=mutelist_path,
-            account_id=self._identity.account_id,
-        )
+            self._mutelist = AlibabaCloudMutelist(
+                mutelist_path=mutelist_path,
+                account_id=self._identity.account_id,
+            )
 
         # Set up audit resources (for filtering)
         # Note: resource_tags not yet supported in AlibabaCloud provider CLI args

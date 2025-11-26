@@ -101,6 +101,7 @@ class RAM(AlibabaCloudService):
                     ),
                     max_login_attempts=getattr(policy, "max_login_attemps", 0),
                 )
+            return None
 
         except Exception as error:
             logger.error(

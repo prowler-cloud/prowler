@@ -15,16 +15,25 @@ class AlibabaCloudMutelist(Mutelist):
         mutelist: The parsed mutelist data
     """
 
-    def __init__(self, mutelist_path: str, account_id: str):
+    def __init__(
+        self,
+        mutelist_path: str = None,
+        mutelist_content: dict = None,
+        account_id: str = "",
+    ):
         """
         Initialize the AlibabaCloudMutelist.
 
         Args:
             mutelist_path: Path to the mutelist file
+            mutelist_content: Dictionary containing mutelist content
             account_id: The Alibaba Cloud account ID
         """
         self.account_id = account_id
-        super().__init__(mutelist_path)
+        super().__init__(
+            mutelist_path=mutelist_path or "",
+            mutelist_content=mutelist_content or {},
+        )
 
     def is_finding_muted(
         self,
