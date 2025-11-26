@@ -4,31 +4,11 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Rectangle, ResponsiveContainer, Sankey, Tooltip } from "recharts";
 
-import {
-  AWSProviderBadge,
-  AzureProviderBadge,
-  GCPProviderBadge,
-  GitHubProviderBadge,
-  IacProviderBadge,
-  KS8ProviderBadge,
-  M365ProviderBadge,
-  OracleCloudProviderBadge,
-} from "@/components/icons/providers-badge";
-import { IconSvgProps } from "@/types";
+import { PROVIDER_ICONS } from "@/components/icons/providers-badge";
+import { initializeChartColors } from "@/lib/charts/colors";
+import { SEVERITY_FILTER_MAP } from "@/types/severities";
 
 import { ChartTooltip } from "./shared/chart-tooltip";
-
-// Map node names to their corresponding provider icon components
-const PROVIDER_ICONS: Record<string, React.FC<IconSvgProps>> = {
-  AWS: AWSProviderBadge,
-  Azure: AzureProviderBadge,
-  "Google Cloud": GCPProviderBadge,
-  Kubernetes: KS8ProviderBadge,
-  "Microsoft 365": M365ProviderBadge,
-  GitHub: GitHubProviderBadge,
-  "Infrastructure as Code": IacProviderBadge,
-  "Oracle Cloud Infrastructure": OracleCloudProviderBadge,
-};
 
 interface SankeyNode {
   name: string;
@@ -73,77 +53,6 @@ interface NodeTooltipState {
 
 const TOOLTIP_OFFSET_PX = 10;
 const MIN_LINK_WIDTH = 4;
-
-// Map severity node names to their filter values for the findings page
-const SEVERITY_FILTER_MAP: Record<string, string> = {
-  Critical: "critical",
-  High: "high",
-  Medium: "medium",
-  Low: "low",
-  Informational: "informational",
-};
-
-// Map color names to CSS variable names defined in globals.css
-const COLOR_MAP: Record<string, string> = {
-  // Status colors
-  Success: "--color-bg-pass",
-  Pass: "--color-bg-pass",
-  Fail: "--color-bg-fail",
-  // Provider colors
-  AWS: "--color-bg-data-aws",
-  Azure: "--color-bg-data-azure",
-  "Google Cloud": "--color-bg-data-gcp",
-  Kubernetes: "--color-bg-data-kubernetes",
-  "Microsoft 365": "--color-bg-data-m365",
-  GitHub: "--color-bg-data-github",
-  "Infrastructure as Code": "--color-bg-data-muted",
-  "Oracle Cloud Infrastructure": "--color-bg-data-muted",
-  // Severity colors
-  Critical: "--color-bg-data-critical",
-  High: "--color-bg-data-high",
-  Medium: "--color-bg-data-medium",
-  Low: "--color-bg-data-low",
-  Info: "--color-bg-data-info",
-  Informational: "--color-bg-data-info",
-};
-
-/**
- * Compute color value from CSS variable name at runtime.
- * SVG fill attributes cannot directly resolve CSS variables,
- * so we extract computed values from globals.css CSS variables.
- * Falls back to black (#000000) if variable not found or access fails.
- *
- * @param colorName - Key in COLOR_MAP (e.g., "AWS", "Fail")
- * @returns Computed CSS variable value or fallback color
- */
-const getColorVariable = (colorName: string): string => {
-  const varName = COLOR_MAP[colorName];
-  if (!varName) return "#000000";
-
-  try {
-    if (typeof document === "undefined") {
-      // SSR context - return fallback
-      return "#000000";
-    }
-    return (
-      getComputedStyle(document.documentElement)
-        .getPropertyValue(varName)
-        .trim() || "#000000"
-    );
-  } catch (error: unknown) {
-    // CSS variables not loaded or access failed - return fallback
-    return "#000000";
-  }
-};
-
-// Initialize all color variables from CSS
-const initializeColors = (): Record<string, string> => {
-  const colors: Record<string, string> = {};
-  for (const [colorName] of Object.entries(COLOR_MAP)) {
-    colors[colorName] = getColorVariable(colorName);
-  }
-  return colors;
-};
 
 interface TooltipPayload {
   payload: {
@@ -476,7 +385,7 @@ export function SankeyChart({ data, height = 400 }: SankeyChartProps) {
 
   // Initialize colors from CSS variables on mount
   useEffect(() => {
-    setColors(initializeColors());
+    setColors(initializeChartColors());
   }, []);
 
   const handleLinkHover = (
