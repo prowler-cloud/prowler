@@ -37,7 +37,9 @@ class TestCloudStorageUsesVPCServiceControls:
                 cloudstorage_uses_vpc_service_controls,
             )
 
-            project1 = Project(id=GCP_PROJECT_ID, audit_logging=True)
+            project1 = Project(
+                id=GCP_PROJECT_ID, number="123456789012", audit_logging=True
+            )
 
             cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
             cloudresourcemanager_client.cloud_resource_manager_projects = [project1]
@@ -57,7 +59,7 @@ class TestCloudStorageUsesVPCServiceControls:
                     name="accessPolicies/123456/servicePerimeters/test_perimeter",
                     title="Test Perimeter",
                     perimeter_type="PERIMETER_TYPE_REGULAR",
-                    resources=[f"projects/{GCP_PROJECT_ID}"],
+                    resources=["projects/123456789012"],
                     restricted_services=[
                         "storage.googleapis.com",
                         "bigquery.googleapis.com",
@@ -105,7 +107,9 @@ class TestCloudStorageUsesVPCServiceControls:
                 cloudstorage_uses_vpc_service_controls,
             )
 
-            project1 = Project(id=GCP_PROJECT_ID, audit_logging=True)
+            project1 = Project(
+                id=GCP_PROJECT_ID, number="123456789012", audit_logging=True
+            )
 
             cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
             cloudresourcemanager_client.cloud_resource_manager_projects = [project1]
@@ -165,7 +169,9 @@ class TestCloudStorageUsesVPCServiceControls:
                 cloudstorage_uses_vpc_service_controls,
             )
 
-            project1 = Project(id=GCP_PROJECT_ID, audit_logging=True)
+            project1 = Project(
+                id=GCP_PROJECT_ID, number="123456789012", audit_logging=True
+            )
 
             cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
             cloudresourcemanager_client.cloud_resource_manager_projects = [project1]
@@ -186,7 +192,7 @@ class TestCloudStorageUsesVPCServiceControls:
                     name="accessPolicies/123456/servicePerimeters/test_perimeter",
                     title="Test Perimeter",
                     perimeter_type="PERIMETER_TYPE_REGULAR",
-                    resources=[f"projects/{GCP_PROJECT_ID}"],
+                    resources=["projects/123456789012"],
                     restricted_services=[
                         "bigquery.googleapis.com",
                         "compute.googleapis.com",
@@ -237,7 +243,9 @@ class TestCloudStorageUsesVPCServiceControls:
                 cloudstorage_uses_vpc_service_controls,
             )
 
-            project1 = Project(id=GCP_PROJECT_ID, audit_logging=True)
+            project1 = Project(
+                id=GCP_PROJECT_ID, number="123456789012", audit_logging=True
+            )
 
             cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
             cloudresourcemanager_client.cloud_resource_manager_projects = [project1]
@@ -258,7 +266,7 @@ class TestCloudStorageUsesVPCServiceControls:
                     name="accessPolicies/123456/servicePerimeters/test_perimeter",
                     title="Test Perimeter",
                     perimeter_type="PERIMETER_TYPE_REGULAR",
-                    resources=["projects/different-project"],
+                    resources=["projects/999999999999"],
                     restricted_services=["storage.googleapis.com"],
                     policy_name="accessPolicies/123456",
                 )

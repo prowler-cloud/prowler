@@ -41,7 +41,8 @@ class cloudstorage_uses_vpc_service_controls(Check):
             )
             report.status = "FAIL"
             report.status_extended = f"Project {project.id} does not have VPC Service Controls enabled for Cloud Storage."
-            project_resource_id = f"projects/{project.id}"
+            # GCP stores resources by project number, not project ID
+            project_resource_id = f"projects/{project.number}"
 
             if project_resource_id in protected_projects:
                 report.status = "PASS"

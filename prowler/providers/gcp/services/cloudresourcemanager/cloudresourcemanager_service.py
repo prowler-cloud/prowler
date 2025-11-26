@@ -19,6 +19,14 @@ class CloudResourceManager(GCPService):
     def _get_iam_policy(self):
         for project_id in self.project_ids:
             try:
+                # Get project details to obtain project number
+                project_details = (
+                    self.client.projects()
+                    .get(projectId=project_id)
+                    .execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
+                )
+                project_number = project_details.get("projectNumber", "")
+
                 policy = (
                     self.client.projects()
                     .getIamPolicy(resource=project_id)
@@ -28,7 +36,11 @@ class CloudResourceManager(GCPService):
                 if policy.get("auditConfigs"):
                     audit_logging = True
                 self.cloud_resource_manager_projects.append(
-                    Project(id=project_id, audit_logging=audit_logging)
+                    Project(
+                        id=project_id,
+                        number=project_number,
+                        audit_logging=audit_logging,
+                    )
                 )
                 for binding in policy["bindings"]:
                     self.bindings.append(
@@ -71,6 +83,7 @@ class Binding(BaseModel):
 
 class Project(BaseModel):
     id: str
+    number: str = ""
     audit_logging: bool
 
 

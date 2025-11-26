@@ -110,8 +110,9 @@ def mock_api_projects_calls(client: MagicMock):
         "etag": "BwWWja0YfJA=",
         "version": 3,
     }
-    # Used by compute client
+    # Used by compute client and cloudresourcemanager
     client.projects().get().execute.return_value = {
+        "projectNumber": "123456789012",
         "commonInstanceMetadata": {
             "items": [
                 {
@@ -127,7 +128,7 @@ def mock_api_projects_calls(client: MagicMock):
                     "value": "TRUE",
                 },
             ]
-        }
+        },
     }
     client.projects().list_next.return_value = None
     # Used by dataproc client
