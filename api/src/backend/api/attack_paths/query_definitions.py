@@ -152,14 +152,20 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
             description="Find EC2 instances flagged as exposed to the internet within the selected account.",
             provider="aws",
             cypher="""
-                MATCH path = (aws:AWSAccount {id: $provider_uid})--(instance:EC2Instance {exposed_internet: true})
+                CALL apoc.create.vNode(['Internet'], {id: 'Internet', name: 'Internet'})
+                YIELD node AS internet
+
+                MATCH path = (aws:AWSAccount {id: $provider_uid})--(ec2:EC2Instance)
+                WHERE ec2.exposed_internet = true
+
+                CALL apoc.create.vRelationship(ec2, 'IS_ACCESIBLE_FROM', {}, internet)
+                YIELD rel AS is_accessible_from
 
                 UNWIND nodes(path) as n
                 OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
                 WHERE pf.status = 'FAIL'
 
-                WITH path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
-                RETURN path, dpf
+                RETURN path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr, internet, is_accessible_from
             """,
             parameters=[],
         ),
@@ -169,23 +175,25 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
             description="Find internet-facing resources associated with security groups that allow inbound access from '0.0.0.0/0'.",
             provider="aws",
             cypher="""
-                MATCH (aws:AWSAccount {id: $provider_uid})-[r0]-(open)
-                MATCH (open)-[r1:MEMBER_OF_EC2_SECURITY_GROUP]-(sg:EC2SecurityGroup)
-                MATCH (sg)-[r2:MEMBER_OF_EC2_SECURITY_GROUP]-(ipi:IpPermissionInbound)
-                MATCH (ipi)-[r3]-(ir:IpRange)
+                CALL apoc.create.vNode(['Internet'], {id: 'Internet', name: 'Internet'})
+                YIELD node AS internet
+
+                MATCH path_open = (aws:AWSAccount {id: $provider_uid})-[r0]-(open)
+                MATCH path_sg = (open)-[r1:MEMBER_OF_EC2_SECURITY_GROUP]-(sg:EC2SecurityGroup)
+                MATCH path_ip = (sg)-[r2:MEMBER_OF_EC2_SECURITY_GROUP]-(ipi:IpPermissionInbound)
+                MATCH path_ipi = (ipi)-[r3]-(ir:IpRange)
                 WHERE ir.range = "0.0.0.0/0"
-                OPTIONAL MATCH (dns:AWSDNSRecord)-[:DNS_POINTS_TO]->(lb)
-                WHERE open.scheme = "internet-facing"
+                OPTIONAL MATCH path_dns = (dns:AWSDNSRecord)-[:DNS_POINTS_TO]->(lb)
+                WHERE open.scheme = 'internet-facing'
 
-                WITH aws, open, sg, ipi, ir, dns, r0, r1, r2, r3,
-                    [node IN [aws, open, sg, ipi, ir, dns] WHERE node IS NOT NULL] AS nodes_path,
-                    [relationship IN [r0, r1, r2, r3] WHERE relationship IS NOT NULL] AS relationships_path
+                CALL apoc.create.vRelationship(open, 'IS_ACCESIBLE_FROM', {}, internet)
+                YIELD rel AS is_accessible_from
 
-                UNWIND nodes_path as n
+                UNWIND nodes(path_open) + nodes(path_sg) + nodes(path_ip) + nodes(path_ipi) + nodes(path_dns) as n
                 OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
                 WHERE pf.status = 'FAIL'
 
-                RETURN nodes_path, relationships_path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+                RETURN path_open, path_sg, path_ip, path_ipi, path_dns, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr, internet, is_accessible_from
             """,
             parameters=[],
         ),
@@ -195,14 +203,20 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
             description="Find Classic Load Balancers exposed to the internet along with their listeners.",
             provider="aws",
             cypher="""
+                CALL apoc.create.vNode(['Internet'], {id: 'Internet', name: 'Internet'})
+                YIELD node AS internet
+
                 MATCH path = (aws:AWSAccount {id: $provider_uid})--(elb:LoadBalancer)--(listener:ELBListener)
                 WHERE elb.exposed_internet = true
+
+                CALL apoc.create.vRelationship(elb, 'IS_ACCESIBLE_FROM', {}, internet)
+                YIELD rel AS is_accessible_from
 
                 UNWIND nodes(path) as n
                 OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
                 WHERE pf.status = 'FAIL'
 
-                RETURN path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+                RETURN path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr, internet, is_accessible_from
             """,
             parameters=[],
         ),
@@ -212,14 +226,20 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
             description="Find ELBv2 load balancers exposed to the internet along with their listeners.",
             provider="aws",
             cypher="""
+                CALL apoc.create.vNode(['Internet'], {id: 'Internet', name: 'Internet'})
+                YIELD node AS internet
+
                 MATCH path = (aws:AWSAccount {id: $provider_uid})--(elbv2:LoadBalancerV2)--(listener:ELBV2Listener)
                 WHERE elbv2.exposed_internet = true
+
+                CALL apoc.create.vRelationship(elbv2, 'IS_ACCESIBLE_FROM', {}, internet)
+                YIELD rel AS is_accessible_from
 
                 UNWIND nodes(path) as n
                 OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
                 WHERE pf.status = 'FAIL'
 
-                RETURN path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+                RETURN path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr, internet, is_accessible_from
             """,
             parameters=[],
         ),
@@ -230,32 +250,28 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
             provider="aws",
             cypher="""
                 CALL () {
-                    MATCH (aws:AWSAccount {id: $provider_uid})-[r]-(x:EC2PrivateIp)-[q]-(y)
+                    MATCH path = (aws:AWSAccount {id: $provider_uid})-[r]-(x:EC2PrivateIp)-[q]-(y)
                     WHERE x.public_ip = $ip
-                    RETURN aws, x, r, q, y
+                    RETURN path
 
-                    UNION MATCH (aws:AWSAccount {id: $provider_uid})-[r]-(x:EC2Instance)-[q]-(y)
+                    UNION MATCH path = (aws:AWSAccount {id: $provider_uid})-[r]-(x:EC2Instance)-[q]-(y)
                     WHERE x.publicipaddress = $ip
-                    RETURN aws, x, r, q, y
+                    RETURN path
 
-                    UNION MATCH (aws:AWSAccount {id: $provider_uid})-[r]-(x:NetworkInterface)-[q]-(y)
+                    UNION MATCH path = (aws:AWSAccount {id: $provider_uid})-[r]-(x:NetworkInterface)-[q]-(y)
                     WHERE x.public_ip = $ip
-                    RETURN aws, x, r, q, y
+                    RETURN path
 
-                    UNION MATCH (aws:AWSAccount {id: $provider_uid})-[r]-(x:ElasticIPAddress)-[q]-(y)
+                    UNION MATCH path = (aws:AWSAccount {id: $provider_uid})-[r]-(x:ElasticIPAddress)-[q]-(y)
                     WHERE x.public_ip = $ip
-                    RETURN aws, x, r, q, y
+                    RETURN path
                 }
 
-                WITH aws, x, r, q, y,
-                    [node IN [aws, x, y] WHERE node IS NOT NULL] AS nodes_path,
-                    [relationship IN [r, q] WHERE relationship IS NOT NULL] AS relationships_path
-
-                UNWIND nodes_path as n
+                UNWIND nodes(path) as n
                 OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
                 WHERE pf.status = 'FAIL'
 
-                RETURN nodes_path, relationships_path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+                RETURN path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
             """,
             parameters=[
                 AttackPathsQueryParameterDefinition(
@@ -272,6 +288,9 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
             description="Detect EC2 instances with SSH exposed to the internet that can assume higher-privileged roles to read tagged sensitive S3 buckets despite bucket-level public access blocks.",
             provider="aws",
             cypher="""
+                CALL apoc.create.vNode(['Internet'], {id: 'Internet', name: 'Internet'})
+                YIELD node AS internet
+
                 MATCH path_s3 = (aws:AWSAccount {id: $provider_uid})--(s3:S3Bucket)--(t:AWSTag)
                 WHERE toLower(t.key) = toLower($tag_key) AND toLower(t.value) = toLower($tag_value)
 
@@ -285,11 +304,14 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
 
                 MATCH path_assume_role = (ec2)-[p:STS_ASSUMEROLE_ALLOW*1..9]-(r:AWSRole)
 
+                CALL apoc.create.vRelationship(ec2, 'IS_ACCESIBLE_FROM', {}, internet)
+                YIELD rel AS is_accessible_from
+
                 UNWIND nodes(path_s3) + nodes(path_ec2) + nodes(path_role) + nodes(path_assume_role) as n
                 OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
                 WHERE pf.status = 'FAIL'
 
-                RETURN path_s3, path_ec2, path_role, path_assume_role, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+                RETURN path_s3, path_ec2, path_role, path_assume_role, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr, internet, is_accessible_from
             """,
             parameters=[
                 AttackPathsQueryParameterDefinition(

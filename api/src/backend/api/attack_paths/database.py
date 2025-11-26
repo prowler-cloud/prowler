@@ -152,11 +152,12 @@ def get_tenant_provider_scan_database_name(
     )
 
 
+# TODO: Fix the necesity of `toLower` with databases with names as `db-{lower_case_attack_paths_scan_id}`
 def get_databases_by_prefix(prefix: str) -> list[str]:
     query = f"""
         SHOW DATABASES
         YIELD name
-        WHERE name STARTS WITH '{prefix}'
+        WHERE name STARTS WITH toLower('{prefix}')
         RETURN name
     """
 

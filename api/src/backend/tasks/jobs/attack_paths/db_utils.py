@@ -124,6 +124,7 @@ def get_old_attack_paths_scans(
     with rls_transaction(tenant_id):
         completed_scans = (
             ProwlerAPIAttackPathsScan.objects.filter(
+                tenant_id=tenant_id,
                 provider_id=provider_id,
                 state=StateChoices.COMPLETED,
                 is_graph_database_deleted=False,
@@ -132,7 +133,7 @@ def get_old_attack_paths_scans(
             .all()
         )
 
-    return list(completed_scans)
+        return list(completed_scans)
 
 
 def update_old_attack_paths_scan(
