@@ -18,8 +18,8 @@ class TestDeleteProvider:
         assert result
         with pytest.raises(ObjectDoesNotExist):
             Provider.objects.get(pk=instance.id)
-        graph_db_mocks["drop_tenant_provider_database"].assert_called_once_with(
-            tenant_id, instance.provider, str(instance.id)
+        graph_db_mocks["drop_tenant_provider_databases"].assert_called_once_with(
+            instance.tenant_id, instance.id
         )
         graph_db_mocks["drop_tenant_databases"].assert_not_called()
 
@@ -29,7 +29,7 @@ class TestDeleteProvider:
 
         with pytest.raises(ObjectDoesNotExist):
             delete_provider(tenant_id, non_existent_pk)
-        graph_db_mocks["drop_tenant_provider_database"].assert_not_called()
+        graph_db_mocks["drop_tenant_provider_databases"].assert_not_called()
         graph_db_mocks["drop_tenant_databases"].assert_not_called()
 
 
@@ -56,13 +56,12 @@ class TestDeleteTenant:
         assert not Provider.objects.filter(tenant_id=tenant.id).exists()
 
         expected_calls = [
-            call(str(provider.tenant_id), provider.provider, str(provider.id))
-            for provider in providers
+            call(provider.tenant_id, provider.id) for provider in providers
         ]
-        graph_db_mocks["drop_tenant_provider_database"].assert_has_calls(
+        graph_db_mocks["drop_tenant_provider_databases"].assert_has_calls(
             expected_calls, any_order=True
         )
-        assert graph_db_mocks["drop_tenant_provider_database"].call_count == len(
+        assert graph_db_mocks["drop_tenant_provider_databases"].call_count == len(
             expected_calls
         )
         graph_db_mocks["drop_tenant_databases"].assert_called_once_with(
@@ -85,7 +84,7 @@ class TestDeleteTenant:
 
         assert deletion_summary == {}  # No providers, so empty summary
         assert not Tenant.objects.filter(id=tenant.id).exists()
-        graph_db_mocks["drop_tenant_provider_database"].assert_not_called()
+        graph_db_mocks["drop_tenant_provider_databases"].assert_not_called()
         graph_db_mocks["drop_tenant_databases"].assert_called_once_with(
             tenant_id=tenant.id
         )

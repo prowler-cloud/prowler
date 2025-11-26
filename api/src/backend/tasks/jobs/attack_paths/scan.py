@@ -8,13 +8,12 @@ from cartography.config import Config as CartographyConfig
 from cartography.intel import analysis as cartography_analysis
 from cartography.intel import create_indexes as cartography_create_indexes
 from celery.utils.log import get_task_logger
+from django import db
 
 from api.attack_paths import database as graph_database
 from api.db_utils import rls_transaction
-from django.db.models import Subquery
 from api.models import (
     Provider as ProwlerAPIProvider,
-    Scan as ProwlerAPIScan,
     StateChoices,
 )
 from api.utils import initialize_prowler_provider
@@ -44,28 +43,20 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
 
     # Prowler necessary objects
     with rls_transaction(tenant_id):
+        """
         provider_id_subquery = ProwlerAPIScan.objects.filter(pk=scan_id).values(
             "provider_id"
         )[:1]
         prowler_api_provider = ProwlerAPIProvider.objects.get(
             id=Subquery(provider_id_subquery)
         )
+        """  # TODO: Delete this comment and its content if the next line works fine
+        prowler_api_provider = ProwlerAPIProvider.objects.get(scan__pk=scan_id)
         prowler_sdk_provider = initialize_prowler_provider(prowler_api_provider)
 
     # If the provider is still not supported, just return the current `ingestion_exceptions`, that is empty
     if not get_cartography_ingestion_function(prowler_api_provider.provider):
         return ingestion_exceptions
-
-    # Attributes `neo4j_user` and `neo4j_password` are not really needed in this config object
-    cartography_config = CartographyConfig(
-        neo4j_uri=graph_database.get_uri(),
-        neo4j_database=graph_database.get_tenant_provider_database_name(
-            str(prowler_api_provider.tenant_id),
-            prowler_api_provider.provider,
-            str(prowler_api_provider.id),
-        ),
-        update_tag=int(time.time()),
-    )
 
     # Getting the Attack Paths Scan object and starting it
     attack_paths_scan = db_utils.retrieve_attack_paths_scan(tenant_id, scan_id)
@@ -77,13 +68,25 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             tenant_id, scan_id, prowler_api_provider.id
         )
 
+    # While creating the Cartography configuration, attributes `neo4j_user` and `neo4j_password` are not really needed in this config object
+    cartography_config = CartographyConfig(
+        neo4j_uri=graph_database.get_uri(),
+        neo4j_database=graph_database.get_tenant_provider_scan_database_name(
+            prowler_api_provider.tenant_id,
+            prowler_api_provider.id,
+            attack_paths_scan.id,
+        ),
+        update_tag=int(time.time()),
+    )
+
+    # Starting the Attack Paths scan
     db_utils.starting_attack_paths_scan(attack_paths_scan, task_id, cartography_config)
 
     try:
         logger.info(
             f"Creating Neo4j database {cartography_config.neo4j_database} for tenant {prowler_api_provider.tenant_id}"
         )
-        graph_database.drop_database(cartography_config.neo4j_database)
+
         graph_database.create_database(cartography_config.neo4j_database)
         db_utils.update_attack_paths_scan_progress(attack_paths_scan, 1)
 
@@ -122,6 +125,17 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             f"Completed Cartography ({attack_paths_scan.id}) for "
             f"{prowler_api_provider.provider.upper()} provider {prowler_api_provider.id}"
         )
+
+        # Handling databases changes
+        old_attack_paths_scans = db_utils.get_old_attack_paths_scans(
+            prowler_api_provider.tenant_id,
+            prowler_api_provider.id,
+            attack_paths_scan.id,
+        )
+        for old_attack_paths_scan in old_attack_paths_scans:
+            graph_database.drop_database(old_attack_paths_scan.graph_database)
+            db_utils.update_old_attack_paths_scan(old_attack_paths_scan)
+
         db_utils.finish_attack_paths_scan(
             attack_paths_scan, StateChoices.COMPLETED, ingestion_exceptions
         )
@@ -132,6 +146,8 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         logger.error(exception_message)
         ingestion_exceptions["global_cartography_error"] = exception_message
 
+        # Handling databases changes
+        graph_database.drop_database(cartography_config.neo4j_database)
         db_utils.finish_attack_paths_scan(
             attack_paths_scan, StateChoices.FAILED, ingestion_exceptions
         )

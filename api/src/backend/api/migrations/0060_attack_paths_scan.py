@@ -61,7 +61,11 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "graph_database",
-                    models.CharField(blank=True, max_length=128, null=True),
+                    models.CharField(blank=True, max_length=63, null=True),
+                ),
+                (
+                    "is_graph_database_deleted",
+                    models.BooleanField(default=False),
                 ),
                 (
                     "ingestion_exceptions",
@@ -110,12 +114,25 @@ class Migration(migrations.Migration):
                 "abstract": False,
                 "indexes": [
                     models.Index(
-                        fields=["tenant_id", "provider_id", "state", "inserted_at"],
-                        name="c_scans_prov_state_ins_idx",
+                        fields=["tenant_id", "provider_id", "-inserted_at"],
+                        name="c_scans_prov_ins_desc_idx",
                     ),
                     models.Index(
-                        fields=["tenant_id", "scan_id", "inserted_at"],
-                        name="c_scans_scan_ins_idx",
+                        fields=["tenant_id", "state", "-inserted_at"],
+                        name="c_scans_state_ins_desc_idx",
+                    ),
+                    models.Index(
+                        fields=["tenant_id", "scan_id"],
+                        name="c_scans_scan_lookup_idx",
+                    ),
+                    models.Index(
+                        fields=["tenant_id", "provider_id", "-completed_at"],
+                        name="c_scans_completed_graph_idx",
+                        include=["graph_database", "id"],
+                        condition=models.Q(
+                            ("state", "completed"),
+                            ("is_graph_database_deleted", False),
+                        ),
                     ),
                 ],
             },

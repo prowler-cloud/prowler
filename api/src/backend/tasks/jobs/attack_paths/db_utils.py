@@ -109,3 +109,35 @@ def update_attack_paths_scan_progress(
     with rls_transaction(attack_paths_scan.tenant_id):
         attack_paths_scan.progress = progress
         attack_paths_scan.save(update_fields=["progress"])
+
+
+def get_old_attack_paths_scans(
+    tenant_id: str,
+    provider_id: str,
+    attack_paths_scan_id: str,
+) -> list[ProwlerAPIAttackPathsScan]:
+    """
+    An `old_attack_paths_scan` is any `completed` Attack Paths scan for the same provider,
+    with its graph database not deleted, excluding the current Attack Paths scan.
+    """
+
+    with rls_transaction(tenant_id):
+        completed_scans = (
+            ProwlerAPIAttackPathsScan.objects.filter(
+                provider_id=provider_id,
+                state=StateChoices.COMPLETED,
+                is_graph_database_deleted=False,
+            )
+            .exclude(id=attack_paths_scan_id)
+            .all()
+        )
+
+    return list(completed_scans)
+
+
+def update_old_attack_paths_scan(
+    old_attack_paths_scan: ProwlerAPIAttackPathsScan,
+) -> None:
+    with rls_transaction(old_attack_paths_scan.tenant_id):
+        old_attack_paths_scan.is_graph_database_deleted = True
+        old_attack_paths_scan.save(update_fields=["is_graph_database_deleted"])

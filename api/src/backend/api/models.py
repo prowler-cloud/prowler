@@ -662,7 +662,8 @@ class AttackPathsScan(RowLevelSecurityProtectedModel):
     update_tag = models.BigIntegerField(
         null=True, blank=True, help_text="Cartography update tag (epoch)"
     )
-    graph_database = models.CharField(max_length=128, null=True, blank=True)
+    graph_database = models.CharField(max_length=63, null=True, blank=True)
+    is_graph_database_deleted = models.BooleanField(default=False)
     ingestion_exceptions = models.JSONField(default=dict, null=True, blank=True)
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
@@ -678,12 +679,25 @@ class AttackPathsScan(RowLevelSecurityProtectedModel):
 
         indexes = [
             models.Index(
-                fields=["tenant_id", "provider_id", "state", "inserted_at"],
-                name="c_scans_prov_state_ins_idx",
+                fields=["tenant_id", "provider_id", "-inserted_at"],
+                name="c_scans_prov_ins_desc_idx",
             ),
             models.Index(
-                fields=["tenant_id", "scan_id", "inserted_at"],
-                name="c_scans_scan_ins_idx",
+                fields=["tenant_id", "state", "-inserted_at"],
+                name="c_scans_state_ins_desc_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "scan_id"],
+                name="c_scans_scan_lookup_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "provider_id", "-completed_at"],
+                condition=Q(
+                    state=StateChoices.COMPLETED,
+                    is_graph_database_deleted=False,
+                ),
+                include=["graph_database", "id"],
+                name="c_scans_completed_graph_idx",
             ),
         ]
 
