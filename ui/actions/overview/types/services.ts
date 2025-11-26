@@ -1,6 +1,8 @@
 // Services Overview Types
 // Corresponds to the /overviews/services endpoint
 
+import { OverviewResponseMeta } from "./common";
+
 export interface ServiceOverviewAttributes {
   total: number;
   fail: number;
@@ -16,7 +18,5 @@ export interface ServiceOverview {
 
 export interface ServicesOverviewResponse {
   data: ServiceOverview[];
-  meta: {
-    version: string;
-  };
+  meta: OverviewResponseMeta;
 }

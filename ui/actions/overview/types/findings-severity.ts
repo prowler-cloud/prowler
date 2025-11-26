@@ -1,6 +1,8 @@
 // Findings Severity Overview Types
 // Corresponds to the /overviews/findings_severity endpoint
 
+import { OverviewResponseMeta } from "./common";
+
 export interface FindingsSeverityAttributes {
   critical: number;
   high: number;
@@ -17,7 +19,5 @@ export interface FindingsSeverityOverview {
 
 export interface FindingsSeverityOverviewResponse {
   data: FindingsSeverityOverview;
-  meta: {
-    version: string;
-  };
+  meta: OverviewResponseMeta;
 }

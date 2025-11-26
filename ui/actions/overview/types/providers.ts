@@ -1,6 +1,8 @@
 // Providers Overview Types
 // Corresponds to the /overviews/providers endpoint
 
+import { OverviewResponseMeta } from "./common";
+
 export interface ProviderOverviewFindings {
   pass: number;
   fail: number;
@@ -25,7 +27,5 @@ export interface ProviderOverview {
 
 export interface ProvidersOverviewResponse {
   data: ProviderOverview[];
-  meta: {
-    version: string;
-  };
+  meta: OverviewResponseMeta;
 }
