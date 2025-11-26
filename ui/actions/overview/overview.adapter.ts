@@ -220,7 +220,12 @@ export interface ThreatMapLocation {
   coordinates: [number, number];
   totalFindings: number;
   riskLevel: "low-high" | "high" | "critical";
-  severityData: Array<{ name: string; value: number }>;
+  severityData: Array<{
+    name: string;
+    value: number;
+    percentage?: number;
+    color?: string;
+  }>;
   change?: number;
 }
 
@@ -412,6 +417,20 @@ function getRiskLevel(failRate: number): "low-high" | "high" | "critical" {
 }
 
 /**
+ * Builds severity data for the horizontal bar chart
+ */
+function buildSeverityData(fail: number, pass: number, muted: number) {
+  const total = fail + pass + muted;
+  const pct = (value: number) => (total > 0 ? Math.round((value / total) * 100) : 0);
+
+  return [
+    { name: "Fail", value: fail, percentage: pct(fail), color: "var(--color-bg-fail)" },
+    { name: "Pass", value: pass, percentage: pct(pass), color: "var(--color-bg-pass)" },
+    { name: "Muted", value: muted, percentage: pct(muted), color: "var(--color-bg-data-muted)" },
+  ];
+}
+
+/**
  * Formats a raw region code into a human-readable name
  * Examples:
  *   "europe-west10" → "Europe West 10"
@@ -488,11 +507,7 @@ export function adaptRegionsOverviewToThreatMap(
       coordinates,
       totalFindings: attributes.fail,
       riskLevel: getRiskLevel(failRate),
-      severityData: [
-        { name: "Fail", value: attributes.fail },
-        { name: "Pass", value: attributes.pass },
-        { name: "Muted", value: attributes.muted },
-      ],
+      severityData: buildSeverityData(attributes.fail, attributes.pass, attributes.muted),
     });
   }
 
