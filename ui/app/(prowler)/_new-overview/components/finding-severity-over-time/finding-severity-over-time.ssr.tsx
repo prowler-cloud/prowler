@@ -34,7 +34,7 @@ export const FindingSeverityOverTimeSSR = async ({
   }
 
   return (
-    <Card variant="base" className="flex h-full flex-col">
+    <Card variant="base" className="flex h-full flex-1 flex-col">
       <CardHeader className="flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <CardTitle>Finding Severity Over Time</CardTitle>

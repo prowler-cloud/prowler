@@ -12,18 +12,23 @@ import { createDict } from "@/lib/helper";
 import { FindingProps, SearchParamsProps } from "@/types";
 
 import { LighthouseBanner } from "../../components/lighthouse/banner";
-import { AccountsSelector } from "./new-overview/components/accounts-selector";
-import { CheckFindingsSSR } from "./new-overview/components/check-findings";
-import { ProviderTypeSelector } from "./new-overview/components/provider-type-selector";
+import { AccountsSelector } from "./_new-overview/components/accounts-selector";
+import { CheckFindingsSSR } from "./_new-overview/components/check-findings";
+import { ProviderTypeSelector } from "./_new-overview/components/provider-type-selector";
 import {
   RiskSeverityChartSkeleton,
   RiskSeverityChartSSR,
-} from "./new-overview/components/risk-severity-chart";
-import { StatusChartSkeleton } from "./new-overview/components/status-chart";
+} from "./_new-overview/components/risk-severity-chart";
+import { StatusChartSkeleton } from "./_new-overview/components/status-chart";
 import {
   ThreatScoreSkeleton,
   ThreatScoreSSR,
-} from "./new-overview/components/threat-score";
+} from "./_new-overview/components/threat-score";
+import {
+  ComplianceWatchlistSSR,
+  ServiceWatchlistSSR,
+  WatchlistCardSkeleton,
+} from "./_new-overview/components/watchlist";
 
 const FILTER_PREFIX = "filter[";
 
@@ -54,6 +59,14 @@ export default async function Home({
       </div>
 
       <div className="flex flex-col gap-6 md:flex-row md:flex-wrap md:items-stretch">
+        <Suspense fallback={<WatchlistCardSkeleton />}>
+          <ComplianceWatchlistSSR searchParams={resolvedSearchParams} />
+        </Suspense>
+
+        <Suspense fallback={<WatchlistCardSkeleton />}>
+          <ServiceWatchlistSSR searchParams={resolvedSearchParams} />
+        </Suspense>
+
         <Suspense fallback={<ThreatScoreSkeleton />}>
           <ThreatScoreSSR searchParams={resolvedSearchParams} />
         </Suspense>
@@ -108,7 +121,7 @@ const SSRDataNewFindingsTable = async ({
 
   // Expand each finding with its corresponding resource, scan, and provider
   const expandedFindings = findingsData?.data
-    ? findingsData.data.map((finding: FindingProps) => {
+    ? (findingsData.data as FindingProps[]).map((finding) => {
         const scan = scanDict[finding.relationships?.scan?.data?.id];
         const resource =
           resourceDict[finding.relationships?.resources?.data?.[0]?.id];
@@ -148,7 +161,7 @@ const SSRDataNewFindingsTable = async ({
       <DataTable
         key={`dashboard-${Date.now()}`}
         columns={ColumnNewFindingsToDate}
-        data={expandedResponse?.data || []}
+        data={(expandedResponse?.data || []) as FindingProps[]}
         // metadata={findingsData?.meta}
       />
     </>

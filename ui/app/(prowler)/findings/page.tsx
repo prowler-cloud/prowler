@@ -1,5 +1,5 @@
 import { Spacer } from "@heroui/spacer";
-import React, { Suspense } from "react";
+import { Suspense } from "react";
 
 import {
   getFindings,
@@ -78,7 +78,7 @@ export default async function Findings({
     completedScans?.map((scan: ScanProps) => scan.id) || [];
 
   const scanDetails = createScanDetailsMapping(
-    completedScans,
+    completedScans || [],
     providersData,
   ) as { [uid: string]: ScanEntity }[];
 
