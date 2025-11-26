@@ -1,5 +1,3 @@
-/** biome-ignore-all lint/performance/noImgElement: "AI Elements is framework agnostic" */
-
 "use client";
 
 import type { ChatStatus, FileUIPart } from "ai";
@@ -10,7 +8,7 @@ import {
   PaperclipIcon,
   PlusIcon,
   SendIcon,
-  SquareIcon,
+  StopCircleIcon,
   XIcon,
 } from "lucide-react";
 import { nanoid } from "nanoid";
@@ -37,9 +35,9 @@ import {
   useState,
 } from "react";
 
+import { Button } from "@/components/shadcn/button/button";
 import { cn } from "@/lib/utils";
 
-import { Button } from "./button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -937,7 +935,7 @@ export const PromptInputSubmit = ({
   if (status === "submitted") {
     Icon = <Loader2Icon className="size-4 animate-spin" />;
   } else if (status === "streaming") {
-    Icon = <SquareIcon className="size-4" />;
+    Icon = <StopCircleIcon className="size-5" />;
   } else if (status === "error") {
     Icon = <XIcon className="size-4" />;
   }

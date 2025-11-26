@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [v5.14.0] (Prowler UNRELEASED)
+## [v5.14.0] (Prowler v5.14.0)
 
 ### Added
 - GitHub provider check `organization_default_repository_permission_strict` [(#8785)](https://github.com/prowler-cloud/prowler/pull/8785)
@@ -11,18 +11,23 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `cloudstorage_bucket_versioning_enabled` check for GCP provider [(#9014)](https://github.com/prowler-cloud/prowler/pull/9014)
 - `cloudstorage_bucket_soft_delete_enabled` check for GCP provider [(#9028)](https://github.com/prowler-cloud/prowler/pull/9028)
 - `cloudstorage_bucket_logging_enabled` check for GCP provider [(#9091)](https://github.com/prowler-cloud/prowler/pull/9091)
+- `cloudstorage_audit_logs_enabled` check for GCP provider [(#9220)](https://github.com/prowler-cloud/prowler/pull/9220)
 - `cloudstorage_bucket_sufficient_retention_period` check for GCP provider [(#9149)](https://github.com/prowler-cloud/prowler/pull/9149)
 - C5 compliance framework for Azure provider [(#9081)](https://github.com/prowler-cloud/prowler/pull/9081)
 - C5 compliance framework for the GCP provider [(#9097)](https://github.com/prowler-cloud/prowler/pull/9097)
 - `organization_repository_creation_limited` check for GitHub provider [(#8844)](https://github.com/prowler-cloud/prowler/pull/8844)
 - HIPAA compliance framework for the GCP provider [(#8955)](https://github.com/prowler-cloud/prowler/pull/8955)
+- Support PDF reporting for ENS compliance framework [(#9158)](https://github.com/prowler-cloud/prowler/pull/9158)
+- PDF reporting for NIS2 compliance framework [(#9170)](https://github.com/prowler-cloud/prowler/pull/9170)
 - Add organization ID parameter for MongoDB Atlas provider [(#9167)](https://github.com/prowler-cloud/prowler/pull/9167)
 - Add multiple compliance improvements [(#9145)](https://github.com/prowler-cloud/prowler/pull/9145)
 - Added validation for invalid checks, services, and categories in `load_checks_to_execute` function [(#8971)](https://github.com/prowler-cloud/prowler/pull/8971)
 - NIST CSF 2.0 compliance framework for the AWS provider [(#9185)](https://github.com/prowler-cloud/prowler/pull/9185)
 - Add FedRAMP 20x KSI Low for AWS, Azure and GCP [(#9198)](https://github.com/prowler-cloud/prowler/pull/9198)
 - Add verification for provider ID in MongoDB Atlas provider [(#9211)](https://github.com/prowler-cloud/prowler/pull/9211)
+- Add Prowler ThreatScore for the K8S provider [(#9235)](https://github.com/prowler-cloud/prowler/pull/9235)
 - Add `postgresql_flexible_server_entra_id_authentication_enabled` check for Azure provider [(#8764)](https://github.com/prowler-cloud/prowler/pull/8764)
+- Add branch name to IaC provider region [(#9296)](https://github.com/prowler-cloud/prowler/pull/9295)
 
 ### Changed
 - Update AWS Direct Connect service metadata to new format [(#8855)](https://github.com/prowler-cloud/prowler/pull/8855)
@@ -56,10 +61,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Raise ASFF output error for non-AWS providers [(#9225)](https://github.com/prowler-cloud/prowler/pull/9225)
 - Update AWS ECR service metadata to new format [(#8872)](https://github.com/prowler-cloud/prowler/pull/8872)
 - Update AWS ECS service metadata to new format [(#8888)](https://github.com/prowler-cloud/prowler/pull/8888)
-
----
-
-## [v5.13.2] (Prowler UNRELEASED)
+- Update AWS Kinesis service metadata to new format [(#9262)](https://github.com/prowler-cloud/prowler/pull/9262)
+- Update AWS DocumentDB service metadata to new format [(#8862)](https://github.com/prowler-cloud/prowler/pull/8862)
 
 ### Fixed
 - Check `check_name` has no `resource_name` error for GCP provider [(#9169)](https://github.com/prowler-cloud/prowler/pull/9169)
@@ -70,7 +73,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Fix Validation and other errors in Azure provider [(#8915)](https://github.com/prowler-cloud/prowler/pull/8915)
 - Update documentation URLs from docs.prowler.cloud to docs.prowler.com [(#9240)](https://github.com/prowler-cloud/prowler/pull/9240)
 - Fix false negative in AWS `apigateway_restapi_logging_enabled` check by refining stage logging evaluation to ensure logging level is not set to "OFF" [(#9304)](https://github.com/prowler-cloud/prowler/pull/9304)
-
+- Refresh output report timestamps for each scan [(#9272)](https://github.com/prowler-cloud/prowler/pull/9272)
+- Fix file name parsing for checks on Windows [(#9268)](https://github.com/prowler-cloud/prowler/pull/9268)
+- Remove typo for Prowler ThreatScore - M365 [(#9274)](https://github.com/prowler-cloud/prowler/pull/9274)
+- Point HTML logo to the one present in the Github repository [(#9282)](https://github.com/prowler-cloud/prowler/pull/9282)
 
 ---
 
@@ -398,7 +404,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
-## [v5.7.5] (Prowler 5.7.5)
+## [v5.7.5] (Prowler v5.7.5)
 
 ### Fixed
 - Use unified timestamp for all requirements [(#8059)](https://github.com/prowler-cloud/prowler/pull/8059)

@@ -8,12 +8,9 @@ import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { updateProviderGroup } from "@/actions/manage-groups/manage-groups";
+import { Button } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
-import {
-  CustomButton,
-  CustomDropdownSelection,
-  CustomInput,
-} from "@/components/ui/custom";
+import { CustomDropdownSelection, CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 import { ApiError } from "@/types";
 
@@ -160,7 +157,6 @@ export const EditGroupForm = ({
             placeholder="Enter the provider group name"
             variant="flat"
             isRequired
-            isInvalid={!!form.formState.errors.name}
           />
         </div>
 
@@ -241,32 +237,21 @@ export const EditGroupForm = ({
           </p>
         )}
 
-        <div className="flex w-full justify-end sm:gap-6">
-          <CustomButton
+        <div className="flex w-full justify-end gap-4">
+          <Button
             type="button"
-            ariaLabel="Cancel"
-            className="w-fit bg-transparent"
-            variant="faded"
-            size="md"
-            onPress={() => {
+            variant="ghost"
+            onClick={() => {
               router.push("/manage-groups");
             }}
-            isDisabled={isLoading}
+            disabled={isLoading}
           >
-            <span>Cancel</span>
-          </CustomButton>
-          <CustomButton
-            type="submit"
-            ariaLabel="Update Group"
-            className="w-1/2"
-            variant="solid"
-            color="action"
-            size="md"
-            isLoading={isLoading}
-            startContent={!isLoading && <SaveIcon size={24} />}
-          >
-            {isLoading ? <>Loading</> : <span>Update Group</span>}
-          </CustomButton>
+            Cancel
+          </Button>
+          <Button type="submit" className="w-1/2" disabled={isLoading}>
+            {!isLoading && <SaveIcon size={24} />}
+            {isLoading ? "Loading" : "Update Group"}
+          </Button>
         </div>
       </form>
     </Form>

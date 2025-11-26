@@ -8,6 +8,8 @@ import { LighthouseIcon } from "@/components/icons/Icons";
 import { Chat } from "@/components/lighthouse";
 import { ContentLayout } from "@/components/ui";
 
+export const dynamic = "force-dynamic";
+
 export default async function AIChatbot() {
   const hasConfig = await isLighthouseConfigured();
 

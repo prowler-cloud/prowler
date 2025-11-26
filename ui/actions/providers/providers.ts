@@ -39,7 +39,26 @@ export const getProviders = async ({
       headers,
     });
 
-    return handleApiResponse(response);
+    const result = (await handleApiResponse(response)) as
+      | ProvidersApiResponse
+      | undefined;
+
+    if (result?.data) {
+      // Filter out providers with provider type containing "mongo"
+      result.data = result.data.filter(
+        (provider) =>
+          !provider.attributes?.provider?.toLowerCase().includes("mongo"),
+      );
+
+      // Also filter out mongo-related included items if present
+      if (result.included) {
+        result.included = result.included.filter(
+          (item) => !item.type.toLowerCase().includes("mongo"),
+        );
+      }
+    }
+
+    return result;
   } catch (error) {
     console.error("Error fetching providers:", error);
     return undefined;
