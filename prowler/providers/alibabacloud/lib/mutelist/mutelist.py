@@ -38,14 +38,12 @@ class AlibabaCloudMutelist(Mutelist):
     def is_finding_muted(
         self,
         finding: Check_Report_AlibabaCloud,
-        account_id: str,
     ) -> bool:
         """
         Check if a finding is muted based on the mutelist.
 
         Args:
             finding: The finding object to check (should have check_metadata, region, resource_id, resource_tags).
-            account_id: The Alibaba Cloud account ID.
 
         Returns:
             bool: True if the finding is muted, False otherwise.
@@ -62,7 +60,7 @@ class AlibabaCloudMutelist(Mutelist):
                 resource_tags = unroll_tags(finding.resource_tags)
 
             return self.is_muted(
-                account_id,
+                self.account_id,
                 check_id,
                 region,
                 resource_id,
