@@ -542,9 +542,13 @@ export function ThreatMap({
             <div className="flex w-full flex-col">
               <div className="mb-4">
                 <div
-                  className="mb-1 flex items-center gap-2"
+                  className="mb-1 flex items-center"
                   aria-label={`Selected location: ${selectedLocation.name}`}
                 >
+                  <MapPin
+                    size={21}
+                    style={{ color: "var(--color-text-text-error)" }}
+                  />
                   <div
                     aria-hidden="true"
                     className="bg-pass-primary h-2 w-2 rounded-full"
