@@ -9,7 +9,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
-## [v5.14.0] (Prowler 5.14.0)
+## [v5.14.0] (Prowler v5.14.0)
 
 ### Added
 - GitHub provider check `organization_default_repository_permission_strict` [(#8785)](https://github.com/prowler-cloud/prowler/pull/8785)
