@@ -35,8 +35,6 @@ from rest_framework.response import Response
 from api.compliance import get_compliance_frameworks
 from api.db_router import MainRouter
 from api.models import (
-    ComplianceOverviewSummary,
-    ComplianceRequirementOverview,
     Finding,
     Integration,
     Invitation,
@@ -57,7 +55,6 @@ from api.models import (
     Scan,
     ScanSummary,
     StateChoices,
-    StatusChoices,
     Task,
     TenantAPIKey,
     ThreatScoreSnapshot,
@@ -5315,9 +5312,11 @@ class TestUserRoleRelationshipViewSet:
     def test_create_relationship_already_exists(
         self, authenticated_client, roles_fixture, create_test_user
     ):
+        # Only add Role One (which has manage_account=True) to ensure
+        # the second request has permission to add roles
         data = {
             "data": [
-                {"type": "roles", "id": str(role.id)} for role in roles_fixture[:2]
+                {"type": "roles", "id": str(roles_fixture[0].id)},
             ]
         }
         authenticated_client.post(
@@ -5820,44 +5819,16 @@ class TestProviderGroupMembershipViewSet:
 
 @pytest.mark.django_db
 class TestComplianceOverviewViewSet:
-    @pytest.fixture(autouse=True)
-    def mock_backfill_task(self):
-        with patch("api.v1.views.backfill_compliance_summaries_task.delay") as mock:
-            yield mock
-
-    def test_compliance_overview_list_none(
-        self,
-        authenticated_client,
-        tenants_fixture,
-        providers_fixture,
-        mock_backfill_task,
-    ):
-        tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
-        scan = Scan.objects.create(
-            name="empty-compliance-scan",
-            provider=provider,
-            trigger=Scan.TriggerChoices.MANUAL,
-            state=StateChoices.COMPLETED,
-            tenant=tenant,
-        )
-
+    def test_compliance_overview_list_none(self, authenticated_client):
         response = authenticated_client.get(
             reverse("complianceoverview-list"),
-            {"filter[scan_id]": str(scan.id)},
+            {"filter[scan_id]": "8d20ac7d-4cbc-435e-85f4-359be37af821"},
         )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 0
-        mock_backfill_task.assert_called_once()
-        _, kwargs = mock_backfill_task.call_args
-        assert kwargs["scan_id"] == str(scan.id)
-        assert str(kwargs["tenant_id"]) == str(tenant.id)
 
     def test_compliance_overview_list(
-        self,
-        authenticated_client,
-        compliance_requirements_overviews_fixture,
-        mock_backfill_task,
+        self, authenticated_client, compliance_requirements_overviews_fixture
     ):
         # List compliance overviews with existing data
         requirement_overview1 = compliance_requirements_overviews_fixture[0]
@@ -6124,11 +6095,6 @@ class TestComplianceOverviewViewSet:
         requirement_overview1 = compliance_requirements_overviews_fixture[0]
         scan_id = str(requirement_overview1.scan.id)
 
-        # Remove existing compliance data so the view falls back to task checks
-        scan = requirement_overview1.scan
-        ComplianceOverviewSummary.objects.filter(scan=scan).delete()
-        ComplianceRequirementOverview.objects.filter(scan=scan).delete()
-
         # Mock a running task
         with patch.object(
             ComplianceOverviewViewSet, "get_task_response_if_running"
@@ -6156,11 +6122,6 @@ class TestComplianceOverviewViewSet:
         requirement_overview1 = compliance_requirements_overviews_fixture[0]
         scan_id = str(requirement_overview1.scan.id)
 
-        # Remove existing compliance data so the view falls back to task checks
-        scan = requirement_overview1.scan
-        ComplianceOverviewSummary.objects.filter(scan=scan).delete()
-        ComplianceRequirementOverview.objects.filter(scan=scan).delete()
-
         # Mock a failed task
         with patch.object(
             ComplianceOverviewViewSet, "get_task_response_if_running"
@@ -6184,8 +6145,6 @@ class TestComplianceOverviewViewSet:
             ("framework", "framework", 1),
             ("version", "version", 1),
             ("region", "region", 1),
-            ("region__in", "region", 1),
-            ("region.in", "region", 1),
         ],
     )
     def test_compliance_overview_filters(

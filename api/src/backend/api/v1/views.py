@@ -75,7 +75,6 @@ from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from tasks.beat import schedule_provider_scan
 from tasks.jobs.export import get_s3_client
 from tasks.tasks import (
-    backfill_compliance_summaries_task,
     backfill_scan_resource_summaries_task,
     check_integration_connection_task,
     check_lighthouse_connection_task,
@@ -126,7 +125,6 @@ from api.filters import (
     UserFilter,
 )
 from api.models import (
-    ComplianceOverviewSummary,
     ComplianceRequirementOverview,
     Finding,
     Integration,
@@ -3359,50 +3357,15 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
 @extend_schema_view(
     list=extend_schema(
         tags=["Compliance Overview"],
-        summary="List compliance overviews",
-        description=(
-            "Retrieve an overview of all compliance frameworks. "
-            "If scan_id is provided, returns compliance data for that specific scan. "
-            "If scan_id is omitted, returns compliance data aggregated from the latest completed scan of each provider."
-        ),
+        summary="List compliance overviews for a scan",
+        description="Retrieve an overview of all the compliance in a given scan.",
         parameters=[
             OpenApiParameter(
                 name="filter[scan_id]",
                 required=True,
                 type=OpenApiTypes.UUID,
                 location=OpenApiParameter.QUERY,
-                description=(
-                    "Optional scan ID. If provided, returns compliance for that scan. "
-                    "If omitted, returns compliance for the latest completed scan per provider."
-                ),
-            ),
-            OpenApiParameter(
-                name="filter[provider_id]",
-                required=False,
-                type=OpenApiTypes.UUID,
-                location=OpenApiParameter.QUERY,
-                description="Filter by specific provider ID.",
-            ),
-            OpenApiParameter(
-                name="filter[provider_id__in]",
-                required=False,
-                type={"type": "array", "items": {"type": "string", "format": "uuid"}},
-                location=OpenApiParameter.QUERY,
-                description="Filter by multiple provider IDs (comma-separated).",
-            ),
-            OpenApiParameter(
-                name="filter[provider_type]",
-                required=False,
-                type=OpenApiTypes.STR,
-                location=OpenApiParameter.QUERY,
-                description="Filter by provider type (e.g., aws, azure, gcp).",
-            ),
-            OpenApiParameter(
-                name="filter[provider_type__in]",
-                required=False,
-                type={"type": "array", "items": {"type": "string"}},
-                location=OpenApiParameter.QUERY,
-                description="Filter by multiple provider types (comma-separated).",
+                description="Related scan ID.",
             ),
         ],
         responses={
@@ -3683,46 +3646,6 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                 {"detail": "Task failed to generate compliance overview data."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-
-    def _list_with_region_filter(self, scan_id, region_filter):
-        """
-        Fall back to detailed ComplianceRequirementOverview query when region filter is applied.
-        This uses the original aggregation logic across filtered regions.
-        """
-        regions = region_filter.split(",") if "," in region_filter else [region_filter]
-        queryset = self.filter_queryset(self.get_queryset()).filter(
-            scan_id=scan_id,
-            region__in=regions,
-        )
-
-        data = self._aggregate_compliance_overview(queryset)
-        if data:
-            return Response(data)
-
-        task_response = self._task_response_if_running(scan_id)
-        if task_response:
-            return task_response
-
-        return Response(data)
-
-    def _list_without_region_aggregation(self, scan_id):
-        """
-        Fall back aggregation when compliance summaries don't exist yet.
-        Aggregates ComplianceRequirementOverview data across ALL regions.
-        """
-        queryset = self.filter_queryset(self.get_queryset()).filter(scan_id=scan_id)
-        compliance_template = self._get_compliance_template(scan_id=scan_id)
-        data = self._aggregate_compliance_overview(
-            queryset, template_metadata=compliance_template
-        )
-        if data:
-            return Response(data)
-
-        task_response = self._task_response_if_running(scan_id)
-        if task_response:
-            return task_response
-
-        return Response(data)
 
     def list(self, request, *args, **kwargs):
         scan_id = request.query_params.get("filter[scan_id]")
