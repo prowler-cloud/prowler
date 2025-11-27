@@ -761,14 +761,6 @@ class RoleFilter(FilterSet):
 class ComplianceOverviewFilter(FilterSet):
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
     scan_id = UUIDFilter(field_name="scan_id")
-    provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
-    provider_id__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
-    provider_type = ChoiceFilter(
-        field_name="scan__provider__provider", choices=Provider.ProviderChoices.choices
-    )
-    provider_type__in = ChoiceInFilter(
-        field_name="scan__provider__provider", choices=Provider.ProviderChoices.choices
-    )
     region = CharFilter(field_name="region")
 
     class Meta:

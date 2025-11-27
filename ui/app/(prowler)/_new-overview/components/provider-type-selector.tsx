@@ -52,6 +52,11 @@ const OracleCloudProviderBadge = lazy(() =>
     default: m.OracleCloudProviderBadge,
   })),
 );
+const MongoDBAtlasProviderBadge = lazy(() =>
+  import("@/components/icons/providers-badge").then((m) => ({
+    default: m.MongoDBAtlasProviderBadge,
+  })),
+);
 
 type IconProps = { width: number; height: number };
 
@@ -94,6 +99,10 @@ const PROVIDER_DATA: Record<
   oraclecloud: {
     label: "Oracle Cloud Infrastructure",
     icon: OracleCloudProviderBadge,
+  },
+  mongodbatlas: {
+    label: "MongoDB Atlas",
+    icon: MongoDBAtlasProviderBadge,
   },
 };
 
