@@ -680,24 +680,30 @@ class AttackPathsScan(RowLevelSecurityProtectedModel):
         indexes = [
             models.Index(
                 fields=["tenant_id", "provider_id", "-inserted_at"],
-                name="c_scans_prov_ins_desc_idx",
+                name="aps_prov_ins_desc_idx",
             ),
             models.Index(
                 fields=["tenant_id", "state", "-inserted_at"],
-                name="c_scans_state_ins_desc_idx",
+                name="aps_state_ins_desc_idx",
             ),
             models.Index(
                 fields=["tenant_id", "scan_id"],
-                name="c_scans_scan_lookup_idx",
+                name="aps_scan_lookup_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "provider_id"],
+                name="aps_active_graph_idx",
+                include=["graph_database", "id"],
+                condition=Q(is_graph_database_deleted=False),
             ),
             models.Index(
                 fields=["tenant_id", "provider_id", "-completed_at"],
+                name="aps_completed_graph_idx",
+                include=["graph_database", "id"],
                 condition=Q(
                     state=StateChoices.COMPLETED,
                     is_graph_database_deleted=False,
                 ),
-                include=["graph_database", "id"],
-                name="c_scans_completed_graph_idx",
             ),
         ]
 
