@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
 
@@ -12,6 +11,7 @@ from alibabacloud_sas20181203.client import Client as SasClient
 from alibabacloud_sls20201230.client import Client as SlsClient
 from alibabacloud_tea_openapi import models as open_api_models
 from alibabacloud_vpc20160428.client import Client as VpcClient
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.alibabacloud.config import (
@@ -22,8 +22,7 @@ from prowler.providers.alibabacloud.config import (
 from prowler.providers.common.models import ProviderOutputOptions
 
 
-@dataclass
-class AlibabaCloudCallerIdentity:
+class AlibabaCloudCallerIdentity(BaseModel):
     """
     AlibabaCloudCallerIdentity stores the caller identity information from STS GetCallerIdentity.
 
@@ -40,8 +39,7 @@ class AlibabaCloudCallerIdentity:
     identity_type: str = ""
 
 
-@dataclass
-class AlibabaCloudIdentityInfo:
+class AlibabaCloudIdentityInfo(BaseModel):
     """
     AlibabaCloudIdentityInfo stores the Alibaba Cloud account identity information.
 
@@ -64,12 +62,11 @@ class AlibabaCloudIdentityInfo:
     identity_arn: str
     profile: str
     profile_region: str
-    audited_regions: set
+    audited_regions: set[str]
     is_root: bool = False
 
 
-@dataclass
-class AlibabaCloudCredentials:
+class AlibabaCloudCredentials(BaseModel):
     """
     AlibabaCloudCredentials stores the Alibaba Cloud credentials.
 
@@ -86,8 +83,7 @@ class AlibabaCloudCredentials:
     expiration: Optional[datetime] = None
 
 
-@dataclass
-class AlibabaCloudAssumeRoleInfo:
+class AlibabaCloudAssumeRoleInfo(BaseModel):
     """
     AlibabaCloudAssumeRoleInfo stores the information for assuming a RAM role.
 
@@ -106,8 +102,7 @@ class AlibabaCloudAssumeRoleInfo:
     region: str = "cn-hangzhou"
 
 
-@dataclass
-class AlibabaCloudRegion:
+class AlibabaCloudRegion(BaseModel):
     """
     AlibabaCloudRegion stores information about an Alibaba Cloud region.
 

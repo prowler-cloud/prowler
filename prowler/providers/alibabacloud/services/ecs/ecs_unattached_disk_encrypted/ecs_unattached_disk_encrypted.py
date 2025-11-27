@@ -1,17 +1,17 @@
-from prowler.lib.check.models import Check, Check_Report_AlibabaCloud
+from prowler.lib.check.models import Check, CheckReportAlibabaCloud
 from prowler.providers.alibabacloud.services.ecs.ecs_client import ecs_client
 
 
 class ecs_unattached_disk_encrypted(Check):
     """Check if unattached disks are encrypted."""
 
-    def execute(self) -> list[Check_Report_AlibabaCloud]:
+    def execute(self) -> list[CheckReportAlibabaCloud]:
         findings = []
 
         for disk in ecs_client.disks:
             # Only check unattached disks
             if not disk.is_attached:
-                report = Check_Report_AlibabaCloud(
+                report = CheckReportAlibabaCloud(
                     metadata=self.metadata(), resource=disk
                 )
                 report.region = disk.region

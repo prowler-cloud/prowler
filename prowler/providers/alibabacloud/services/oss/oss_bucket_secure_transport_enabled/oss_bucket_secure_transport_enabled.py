@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report_AlibabaCloud
+from prowler.lib.check.models import Check, CheckReportAlibabaCloud
 from prowler.providers.alibabacloud.services.oss.oss_client import oss_client
 
 
@@ -58,13 +58,11 @@ def _is_secure_transport_enforced(policy_document: dict) -> bool:
 class oss_bucket_secure_transport_enabled(Check):
     """Check if 'Secure transfer required' is set to 'Enabled' for OSS buckets."""
 
-    def execute(self) -> list[Check_Report_AlibabaCloud]:
+    def execute(self) -> list[CheckReportAlibabaCloud]:
         findings = []
 
         for bucket in oss_client.buckets.values():
-            report = Check_Report_AlibabaCloud(
-                metadata=self.metadata(), resource=bucket
-            )
+            report = CheckReportAlibabaCloud(metadata=self.metadata(), resource=bucket)
             report.region = bucket.region
             report.resource_id = bucket.name
             report.resource_arn = bucket.arn

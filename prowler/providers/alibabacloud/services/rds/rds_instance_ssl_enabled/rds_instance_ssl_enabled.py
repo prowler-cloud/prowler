@@ -1,15 +1,15 @@
-from prowler.lib.check.models import Check, Check_Report_AlibabaCloud
+from prowler.lib.check.models import Check, CheckReportAlibabaCloud
 from prowler.providers.alibabacloud.services.rds.rds_client import rds_client
 
 
 class rds_instance_ssl_enabled(Check):
     """Check if RDS instance requires all incoming connections to use SSL."""
 
-    def execute(self) -> list[Check_Report_AlibabaCloud]:
+    def execute(self) -> list[CheckReportAlibabaCloud]:
         findings = []
 
         for instance in rds_client.instances:
-            report = Check_Report_AlibabaCloud(
+            report = CheckReportAlibabaCloud(
                 metadata=self.metadata(), resource=instance
             )
             report.region = instance.region

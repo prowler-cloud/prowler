@@ -1,11 +1,11 @@
-from prowler.lib.check.models import Check, Check_Report_AlibabaCloud
+from prowler.lib.check.models import Check, CheckReportAlibabaCloud
 from prowler.providers.alibabacloud.services.rds.rds_client import rds_client
 
 
 class rds_instance_sql_audit_retention(Check):
     """Check if 'Auditing' Retention is greater than the configured period."""
 
-    def execute(self) -> list[Check_Report_AlibabaCloud]:
+    def execute(self) -> list[CheckReportAlibabaCloud]:
         findings = []
 
         # Get configurable max days from audit config (default: 180 days - 6 months)
@@ -14,7 +14,7 @@ class rds_instance_sql_audit_retention(Check):
         )
 
         for instance in rds_client.instances:
-            report = Check_Report_AlibabaCloud(
+            report = CheckReportAlibabaCloud(
                 metadata=self.metadata(), resource=instance
             )
             report.region = instance.region

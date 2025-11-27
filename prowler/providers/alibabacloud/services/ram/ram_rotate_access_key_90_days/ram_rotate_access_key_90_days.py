@@ -1,13 +1,13 @@
 from datetime import datetime, timedelta, timezone
 
-from prowler.lib.check.models import Check, Check_Report_AlibabaCloud
+from prowler.lib.check.models import Check, CheckReportAlibabaCloud
 from prowler.providers.alibabacloud.services.ram.ram_client import ram_client
 
 
 class ram_rotate_access_key_90_days(Check):
     """Check if access keys are rotated every 90 days or less."""
 
-    def execute(self) -> list[Check_Report_AlibabaCloud]:
+    def execute(self) -> list[CheckReportAlibabaCloud]:
         findings = []
         # Use UTC timezone-aware datetime for consistent comparison
         now = datetime.now(timezone.utc)
@@ -18,7 +18,7 @@ class ram_rotate_access_key_90_days(Check):
                 for access_key in user.access_keys:
                     # Only check active access keys
                     if access_key.status == "Active":
-                        report = Check_Report_AlibabaCloud(
+                        report = CheckReportAlibabaCloud(
                             metadata=self.metadata(), resource=user
                         )
                         report.region = ram_client.region

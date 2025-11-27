@@ -1,15 +1,15 @@
-from prowler.lib.check.models import Check, Check_Report_AlibabaCloud
+from prowler.lib.check.models import Check, CheckReportAlibabaCloud
 from prowler.providers.alibabacloud.services.rds.rds_client import rds_client
 
 
 class rds_instance_sql_audit_enabled(Check):
     """Check if 'Auditing' is set to 'On' for applicable database instances."""
 
-    def execute(self) -> list[Check_Report_AlibabaCloud]:
+    def execute(self) -> list[CheckReportAlibabaCloud]:
         findings = []
 
         for instance in rds_client.instances:
-            report = Check_Report_AlibabaCloud(
+            report = CheckReportAlibabaCloud(
                 metadata=self.metadata(), resource=instance
             )
             report.region = instance.region

@@ -1,9 +1,9 @@
-from prowler.lib.check.models import Check, Check_Report_AlibabaCloud
+from prowler.lib.check.models import Check, CheckReportAlibabaCloud
 from prowler.providers.alibabacloud.services.sls.sls_client import sls_client
 
 
 class sls_management_console_authentication_failures_alert_enabled(Check):
-    def execute(self) -> list[Check_Report_AlibabaCloud]:
+    def execute(self) -> list[CheckReportAlibabaCloud]:
         findings = []
         found = False
 
@@ -16,7 +16,7 @@ class sls_management_console_authentication_failures_alert_enabled(Check):
                 query = query_obj.get("query", "")
                 if "ConsoleSignin" in query and "event.errorCode" in query:
                     found = True
-                    report = Check_Report_AlibabaCloud(
+                    report = CheckReportAlibabaCloud(
                         metadata=self.metadata(), resource=alert
                     )
                     report.status = "PASS"
@@ -31,7 +31,7 @@ class sls_management_console_authentication_failures_alert_enabled(Check):
                 break
 
         if not found:
-            report = Check_Report_AlibabaCloud(
+            report = CheckReportAlibabaCloud(
                 metadata=self.metadata(), resource=sls_client.provider.identity
             )
             report.status = "FAIL"

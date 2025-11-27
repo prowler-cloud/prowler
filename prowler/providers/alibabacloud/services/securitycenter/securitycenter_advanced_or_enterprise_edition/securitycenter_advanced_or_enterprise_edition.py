@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report_AlibabaCloud
+from prowler.lib.check.models import Check, CheckReportAlibabaCloud
 from prowler.providers.alibabacloud.services.securitycenter.securitycenter_client import (
     securitycenter_client,
 )
@@ -7,10 +7,10 @@ from prowler.providers.alibabacloud.services.securitycenter.securitycenter_clien
 class securitycenter_advanced_or_enterprise_edition(Check):
     """Check if Security Center is Advanced or Enterprise Edition."""
 
-    def execute(self) -> list[Check_Report_AlibabaCloud]:
+    def execute(self) -> list[CheckReportAlibabaCloud]:
         findings = []
 
-        report = Check_Report_AlibabaCloud(metadata=self.metadata(), resource={})
+        report = CheckReportAlibabaCloud(metadata=self.metadata(), resource={})
         report.region = securitycenter_client.region
         report.resource_id = securitycenter_client.audited_account
         report.resource_arn = (

@@ -650,7 +650,7 @@ class Check_Report_OCI(Check_Report):
 
 
 @dataclass
-class Check_Report_AlibabaCloud(Check_Report):
+class CheckReportAlibabaCloud(Check_Report):
     """Contains the Alibaba Cloud Check's finding information."""
 
     resource_id: str

@@ -1,17 +1,17 @@
-from prowler.lib.check.models import Check, Check_Report_AlibabaCloud
+from prowler.lib.check.models import Check, CheckReportAlibabaCloud
 from prowler.providers.alibabacloud.services.ram.ram_client import ram_client
 
 
 class ram_user_mfa_enabled_console_access(Check):
     """Check if all RAM users with console access have MFA enabled."""
 
-    def execute(self) -> list[Check_Report_AlibabaCloud]:
+    def execute(self) -> list[CheckReportAlibabaCloud]:
         findings = []
 
         for user in ram_client.users:
             # Only check users with console access
             if user.has_console_access:
-                report = Check_Report_AlibabaCloud(
+                report = CheckReportAlibabaCloud(
                     metadata=self.metadata(), resource=user
                 )
                 report.region = ram_client.region

@@ -1,13 +1,13 @@
 from datetime import datetime, timedelta, timezone
 
-from prowler.lib.check.models import Check, Check_Report_AlibabaCloud
+from prowler.lib.check.models import Check, CheckReportAlibabaCloud
 from prowler.providers.alibabacloud.services.cs.cs_client import cs_client
 
 
 class cs_kubernetes_cluster_check_recent(Check):
     """Check if Cluster Check is triggered within the configured number of days."""
 
-    def execute(self) -> list[Check_Report_AlibabaCloud]:
+    def execute(self) -> list[CheckReportAlibabaCloud]:
         findings = []
 
         # Get configurable max days from audit config (default: 7 days)
@@ -19,9 +19,7 @@ class cs_kubernetes_cluster_check_recent(Check):
         )
 
         for cluster in cs_client.clusters:
-            report = Check_Report_AlibabaCloud(
-                metadata=self.metadata(), resource=cluster
-            )
+            report = CheckReportAlibabaCloud(metadata=self.metadata(), resource=cluster)
             report.region = cluster.region
             report.resource_id = cluster.id
             report.resource_arn = f"acs:cs:{cluster.region}:{cs_client.audited_account}:cluster/{cluster.id}"

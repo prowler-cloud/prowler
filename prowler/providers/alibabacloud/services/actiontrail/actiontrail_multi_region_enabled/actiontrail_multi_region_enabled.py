@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report_AlibabaCloud
+from prowler.lib.check.models import Check, CheckReportAlibabaCloud
 from prowler.providers.alibabacloud.services.actiontrail.actiontrail_client import (
     actiontrail_client,
 )
@@ -7,7 +7,7 @@ from prowler.providers.alibabacloud.services.actiontrail.actiontrail_client impo
 class actiontrail_multi_region_enabled(Check):
     """Check if ActionTrail is configured to export copies of all log entries."""
 
-    def execute(self) -> list[Check_Report_AlibabaCloud]:
+    def execute(self) -> list[CheckReportAlibabaCloud]:
         findings = []
 
         # Check if there's at least one multi-region trail that is enabled
@@ -17,7 +17,7 @@ class actiontrail_multi_region_enabled(Check):
                 multi_region_trails.append(trail)
 
         # Create a single report for the overall check
-        report = Check_Report_AlibabaCloud(metadata=self.metadata(), resource={})
+        report = CheckReportAlibabaCloud(metadata=self.metadata(), resource={})
         report.region = actiontrail_client.region
         report.resource_id = actiontrail_client.audited_account
         report.resource_arn = (

@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report_AlibabaCloud
+from prowler.lib.check.models import Check, CheckReportAlibabaCloud
 from prowler.providers.alibabacloud.services.ecs.ecs_client import ecs_client
 
 
@@ -30,12 +30,12 @@ def _is_public_cidr(cidr: str) -> bool:
 class ecs_securitygroup_restrict_ssh_internet(Check):
     """Check if security groups restrict SSH (port 22) access from the internet."""
 
-    def execute(self) -> list[Check_Report_AlibabaCloud]:
+    def execute(self) -> list[CheckReportAlibabaCloud]:
         findings = []
         check_port = 22  # SSH port
 
         for sg_arn, security_group in ecs_client.security_groups.items():
-            report = Check_Report_AlibabaCloud(
+            report = CheckReportAlibabaCloud(
                 metadata=self.metadata(), resource=security_group
             )
             report.region = security_group.region

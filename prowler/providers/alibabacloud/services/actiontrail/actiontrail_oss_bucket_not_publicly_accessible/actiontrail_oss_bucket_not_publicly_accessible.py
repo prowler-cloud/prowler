@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report_AlibabaCloud
+from prowler.lib.check.models import Check, CheckReportAlibabaCloud
 from prowler.providers.alibabacloud.services.actiontrail.actiontrail_client import (
     actiontrail_client,
 )
@@ -50,7 +50,7 @@ def _is_policy_public(policy_document: dict) -> bool:
 class actiontrail_oss_bucket_not_publicly_accessible(Check):
     """Check if the OSS bucket used to store ActionTrail logs is not publicly accessible."""
 
-    def execute(self) -> list[Check_Report_AlibabaCloud]:
+    def execute(self) -> list[CheckReportAlibabaCloud]:
         findings = []
 
         # Get all ActionTrail trails
@@ -67,7 +67,7 @@ class actiontrail_oss_bucket_not_publicly_accessible(Check):
                     break
 
             # Create report for this trail's OSS bucket
-            report = Check_Report_AlibabaCloud(metadata=self.metadata(), resource=trail)
+            report = CheckReportAlibabaCloud(metadata=self.metadata(), resource=trail)
             report.region = trail.home_region
             report.resource_id = trail.oss_bucket_name
             report.resource_arn = (

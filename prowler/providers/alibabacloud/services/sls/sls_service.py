@@ -1,13 +1,11 @@
-from dataclasses import dataclass
-
 from alibabacloud_sls20201230 import models as sls_models
+from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.alibabacloud.lib.service.service import AlibabaCloudService
 
 
-@dataclass
-class Alert:
+class Alert(BaseModel):
     name: str
     display_name: str
     state: str
@@ -18,8 +16,7 @@ class Alert:
     arn: str = ""
 
 
-@dataclass
-class LogStore:
+class LogStore(BaseModel):
     name: str
     project: str
     retention_forever: bool

@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report_AlibabaCloud
+from prowler.lib.check.models import Check, CheckReportAlibabaCloud
 from prowler.providers.alibabacloud.services.ecs.ecs_client import ecs_client
 from prowler.providers.alibabacloud.services.securitycenter.securitycenter_client import (
     securitycenter_client,
@@ -8,7 +8,7 @@ from prowler.providers.alibabacloud.services.securitycenter.securitycenter_clien
 class ecs_instance_latest_os_patches_applied(Check):
     """Check if the latest OS patches for all Virtual Machines are applied."""
 
-    def execute(self) -> list[Check_Report_AlibabaCloud]:
+    def execute(self) -> list[CheckReportAlibabaCloud]:
         findings = []
 
         # Check each ECS instance for vulnerabilities
@@ -17,7 +17,7 @@ class ecs_instance_latest_os_patches_applied(Check):
             if instance.status.lower() not in ["running", "starting"]:
                 continue
 
-            report = Check_Report_AlibabaCloud(
+            report = CheckReportAlibabaCloud(
                 metadata=self.metadata(), resource=instance
             )
             report.region = instance.region

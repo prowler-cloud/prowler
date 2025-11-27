@@ -1,15 +1,15 @@
-from prowler.lib.check.models import Check, Check_Report_AlibabaCloud
+from prowler.lib.check.models import Check, CheckReportAlibabaCloud
 from prowler.providers.alibabacloud.services.ram.ram_client import ram_client
 
 
 class ram_password_policy_max_login_attempts(Check):
     """Check if RAM password policy temporarily blocks logon after 5 incorrect logon attempts within an hour."""
 
-    def execute(self) -> list[Check_Report_AlibabaCloud]:
+    def execute(self) -> list[CheckReportAlibabaCloud]:
         findings = []
 
         if ram_client.password_policy:
-            report = Check_Report_AlibabaCloud(
+            report = CheckReportAlibabaCloud(
                 metadata=self.metadata(), resource=ram_client.password_policy
             )
             report.region = ram_client.region

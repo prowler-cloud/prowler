@@ -1,9 +1,9 @@
-from prowler.lib.check.models import Check, Check_Report_AlibabaCloud
+from prowler.lib.check.models import Check, CheckReportAlibabaCloud
 from prowler.providers.alibabacloud.services.sls.sls_client import sls_client
 
 
 class sls_logstore_retention_period(Check):
-    def execute(self) -> list[Check_Report_AlibabaCloud]:
+    def execute(self) -> list[CheckReportAlibabaCloud]:
         findings = []
 
         # Get configurable max days from audit config (default: 365 days)
@@ -12,7 +12,7 @@ class sls_logstore_retention_period(Check):
         )
 
         for log_store in sls_client.log_stores:
-            report = Check_Report_AlibabaCloud(
+            report = CheckReportAlibabaCloud(
                 metadata=self.metadata(), resource=log_store
             )
             report.resource_id = log_store.name

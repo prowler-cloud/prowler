@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report_AlibabaCloud
+from prowler.lib.check.models import Check, CheckReportAlibabaCloud
 from prowler.providers.alibabacloud.services.securitycenter.securitycenter_client import (
     securitycenter_client,
 )
@@ -7,14 +7,14 @@ from prowler.providers.alibabacloud.services.securitycenter.securitycenter_clien
 class securitycenter_all_assets_agent_installed(Check):
     """Check if all assets are installed with security agent."""
 
-    def execute(self) -> list[Check_Report_AlibabaCloud]:
+    def execute(self) -> list[CheckReportAlibabaCloud]:
         findings = []
 
         uninstalled_machines = securitycenter_client.uninstalled_machines
 
         if not uninstalled_machines:
             # All assets have the agent installed
-            report = Check_Report_AlibabaCloud(metadata=self.metadata(), resource={})
+            report = CheckReportAlibabaCloud(metadata=self.metadata(), resource={})
             report.region = securitycenter_client.region
             report.resource_id = securitycenter_client.audited_account
             report.resource_arn = (
@@ -26,7 +26,7 @@ class securitycenter_all_assets_agent_installed(Check):
         else:
             # Report each uninstalled machine
             for machine in uninstalled_machines:
-                report = Check_Report_AlibabaCloud(
+                report = CheckReportAlibabaCloud(
                     metadata=self.metadata(), resource=machine
                 )
                 report.region = machine.region

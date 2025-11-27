@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report_AlibabaCloud
+from prowler.lib.check.models import Check, CheckReportAlibabaCloud
 from prowler.providers.alibabacloud.services.securitycenter.securitycenter_client import (
     securitycenter_client,
 )
@@ -7,7 +7,7 @@ from prowler.providers.alibabacloud.services.securitycenter.securitycenter_clien
 class securitycenter_notification_enabled_high_risk(Check):
     """Check if notification is enabled on all high risk items."""
 
-    def execute(self) -> list[Check_Report_AlibabaCloud]:
+    def execute(self) -> list[CheckReportAlibabaCloud]:
         findings = []
 
         # High-risk categories based on CIS benchmark:
@@ -33,7 +33,7 @@ class securitycenter_notification_enabled_high_risk(Check):
         for project in high_risk_projects:
             config = notice_configs.get(project)
 
-            report = Check_Report_AlibabaCloud(
+            report = CheckReportAlibabaCloud(
                 metadata=self.metadata(), resource=config if config else {}
             )
             report.region = securitycenter_client.region

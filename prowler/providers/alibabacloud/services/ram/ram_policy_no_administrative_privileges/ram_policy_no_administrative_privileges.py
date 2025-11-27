@@ -1,4 +1,4 @@
-from prowler.lib.check.models import Check, Check_Report_AlibabaCloud
+from prowler.lib.check.models import Check, CheckReportAlibabaCloud
 from prowler.providers.alibabacloud.services.ram.ram_client import ram_client
 
 
@@ -45,13 +45,13 @@ def check_admin_access(policy_document: dict) -> bool:
 class ram_policy_no_administrative_privileges(Check):
     """Check if RAM policies that allow full '*:*' administrative privileges are not created."""
 
-    def execute(self) -> list[Check_Report_AlibabaCloud]:
+    def execute(self) -> list[CheckReportAlibabaCloud]:
         findings = []
 
         for policy in ram_client.policies.values():
             # Check only for custom policies that are attached
             if policy.policy_type == "Custom" and policy.attachment_count > 0:
-                report = Check_Report_AlibabaCloud(
+                report = CheckReportAlibabaCloud(
                     metadata=self.metadata(), resource=policy
                 )
                 report.region = ram_client.region
