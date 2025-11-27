@@ -29,7 +29,6 @@ export interface SankeyData {
 
 export interface SankeyFilters {
   providerTypes?: string[];
-  hasActiveFilter?: boolean;
 }
 
 interface AggregatedProvider {
@@ -97,8 +96,7 @@ export function adaptProvidersOverviewToSankey(
 
   // Filter providers based on selection:
   // - If providerTypes filter is set: show only those provider types
-  // - If hasActiveFilter is true (e.g., account filter): only show providers with actual data
-  // - If no filters: show all providers from the API response
+  // - Otherwise: show all providers from the API response
   const hasProviderTypeFilter =
     filters?.providerTypes && filters.providerTypes.length > 0;
 
@@ -108,14 +106,9 @@ export function adaptProvidersOverviewToSankey(
     providersToShow = aggregatedProviders.filter((p) =>
       filters.providerTypes!.includes(p.id.toLowerCase()),
     );
-  } else if (filters?.hasActiveFilter) {
-    // Account filter is active - only show providers that have actual findings data
-    // (not just pass=0, fail=0 which means no scans for that provider type)
-    providersToShow = aggregatedProviders.filter(
-      (p) => p.pass > 0 || p.fail > 0,
-    );
   } else {
-    // No filters - show all providers but only those with data
+    // No provider type filter - show all providers from the API response
+    // Providers with no findings (pass=0, fail=0) will appear in the legend
     providersToShow = aggregatedProviders;
   }
 

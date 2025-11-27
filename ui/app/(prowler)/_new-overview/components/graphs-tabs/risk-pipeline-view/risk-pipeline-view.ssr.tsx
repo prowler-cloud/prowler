@@ -20,7 +20,6 @@ export async function RiskPipelineViewSSR({
   // Check if any provider/account filter is active
   const providerTypeFilter = filters["filter[provider_type__in]"];
   const providerIdFilter = filters["filter[provider_id__in]"];
-  const hasActiveFilter = !!(providerTypeFilter || providerIdFilter);
 
   // Fetch data in parallel
   const [providersResponse, severityResponse, providersListResponse] =
@@ -61,7 +60,6 @@ export async function RiskPipelineViewSSR({
 
   // Build sankey filters
   const sankeyFilters: SankeyFilters = {
-    hasActiveFilter,
     providerTypes: providerTypesToShow,
   };
 
