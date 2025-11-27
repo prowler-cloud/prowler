@@ -5,7 +5,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ## [1.16.0] (Unreleased)
 
 ### Changed
-- Restore the compliance overview endpoint's mandatory filters [(#9330)](https://github.com/prowler-cloud/prowler/pull/9330)
+- Restore the compliance overview endpoint's mandatory filters [(#9338)](https://github.com/prowler-cloud/prowler/pull/9338)
 
 ---
 

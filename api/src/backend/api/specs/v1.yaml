@@ -365,8 +365,7 @@ paths:
         schema:
           type: string
           format: uuid
-        description: Optional scan ID. If provided, returns compliance for that scan.
-          If omitted, returns compliance for the latest completed scan per provider.
+        description: Related scan ID.
         required: true
       - name: filter[search]
         required: false
