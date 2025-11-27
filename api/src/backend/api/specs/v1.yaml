@@ -298,6 +298,8 @@ paths:
             - progress
             - provider
             - provider_alias
+            - provider_type
+            - provider_uid
             - scan
             - task
             - inserted_at
@@ -559,6 +561,8 @@ paths:
             - progress
             - provider
             - provider_alias
+            - provider_type
+            - provider_uid
             - scan
             - task
             - inserted_at
@@ -617,6 +621,8 @@ paths:
             - progress
             - provider
             - provider_alias
+            - provider_type
+            - provider_uid
             - scan
             - task
             - inserted_at
@@ -5491,6 +5497,8 @@ paths:
             type: string
             enum:
             - id
+            - provider_type
+            - region
             - total
             - fail
             - muted
@@ -5623,6 +5631,10 @@ paths:
             enum:
             - id
             - -id
+            - provider_type
+            - -provider_type
+            - region
+            - -region
             - total
             - -total
             - fail
@@ -9407,116 +9419,12 @@ paths:
           description: CSV file containing the compliance report
         '404':
           description: Compliance report not found
-  /api/v1/scans/{id}/report:
-    get:
-      operationId: scans_report_retrieve
-      description: Returns a ZIP file containing the requested report
-      summary: Download ZIP report
-      parameters:
-      - in: query
-        name: fields[scan-reports]
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - id
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
-        explode: false
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this scan.
-        required: true
-      tags:
-      - Scan
-      security:
-      - JWT or API Key: []
-      responses:
-        '200':
-          description: Report obtained successfully
-        '202':
-          description: The task is in progress
-        '403':
-          description: There is a problem with credentials
-        '404':
-          description: The scan has no reports, or the report generation task has
-            not started yet
-  /api/v1/scans/{id}/threatscore:
-    get:
-      operationId: scans_threatscore_retrieve
-      description: Download a specific threatscore report (e.g., 'prowler_threatscore_aws')
-        as a PDF file.
-      summary: Retrieve threatscore report
-      parameters:
-      - in: query
-        name: fields[scans]
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - name
-            - trigger
-            - state
-            - unique_resource_count
-            - progress
-            - duration
-            - provider
-            - task
-            - inserted_at
-            - started_at
-            - completed_at
-            - scheduled_at
-            - next_scan_at
-            - processor
-            - url
-        description: endpoint return only specific fields in the response on a per-type
-          basis by including a fields[TYPE] query parameter.
-        explode: false
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this scan.
-        required: true
-      - in: query
-        name: include
-        schema:
-          type: array
-          items:
-            type: string
-            enum:
-            - provider
-        description: include query parameter to allow the client to customize which
-          related resources should be returned.
-        explode: false
-      tags:
-      - Scan
-      security:
-      - JWT or API Key: []
-      responses:
-        '200':
-          description: PDF file containing the threatscore report
-        '202':
-          description: The task is in progress
-        '401':
-          description: API key missing or user not Authenticated
-        '403':
-          description: There is a problem with credentials
-        '404':
-          description: The scan has no threatscore reports, or the threatscore report
-            generation task has not started yet
   /api/v1/scans/{id}/ens:
     get:
       operationId: scans_ens_retrieve
-      description: Download a specific ENS compliance report (e.g., 'prowler_ens_aws')
+      description: Download ENS RD2022 compliance report (e.g., 'ens_rd2022_aws')
         as a PDF file.
-      summary: Retrieve ENS compliance report
+      summary: Retrieve ENS RD2022 compliance report
       parameters:
       - in: query
         name: fields[scans]
@@ -9643,6 +9551,110 @@ paths:
         '404':
           description: The scan has no NIS2 reports, or the NIS2 report generation
             task has not started yet
+  /api/v1/scans/{id}/report:
+    get:
+      operationId: scans_report_retrieve
+      description: Returns a ZIP file containing the requested report
+      summary: Download ZIP report
+      parameters:
+      - in: query
+        name: fields[scan-reports]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scan.
+        required: true
+      tags:
+      - Scan
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          description: Report obtained successfully
+        '202':
+          description: The task is in progress
+        '403':
+          description: There is a problem with credentials
+        '404':
+          description: The scan has no reports, or the report generation task has
+            not started yet
+  /api/v1/scans/{id}/threatscore:
+    get:
+      operationId: scans_threatscore_retrieve
+      description: Download a specific threatscore report (e.g., 'prowler_threatscore_aws')
+        as a PDF file.
+      summary: Retrieve threatscore report
+      parameters:
+      - in: query
+        name: fields[scans]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - trigger
+            - state
+            - unique_resource_count
+            - progress
+            - duration
+            - provider
+            - task
+            - inserted_at
+            - started_at
+            - completed_at
+            - scheduled_at
+            - next_scan_at
+            - processor
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scan.
+        required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      tags:
+      - Scan
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          description: PDF file containing the threatscore report
+        '202':
+          description: The task is in progress
+        '401':
+          description: API key missing or user not Authenticated
+        '403':
+          description: There is a problem with credentials
+        '404':
+          description: The scan has no threatscore reports, or the threatscore report
+            generation task has not started yet
   /api/v1/schedules/daily:
     post:
       operationId: schedules_daily_create
@@ -11366,6 +11378,12 @@ components:
               maximum: 2147483647
               minimum: -2147483648
             provider_alias:
+              type: string
+              readOnly: true
+            provider_type:
+              type: string
+              readOnly: true
+            provider_uid:
               type: string
               readOnly: true
             inserted_at:
@@ -14318,6 +14336,11 @@ components:
           properties:
             id:
               type: string
+              readOnly: true
+            provider_type:
+              type: string
+            region:
+              type: string
             total:
               type: integer
             fail:
@@ -14327,7 +14350,8 @@ components:
             pass:
               type: integer
           required:
-          - id
+          - provider_type
+          - region
           - total
           - fail
           - muted
