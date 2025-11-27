@@ -1,14 +1,17 @@
 "use client";
 
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { ServiceOverview } from "@/actions/overview";
 
 import { SortToggleButton } from "./sort-toggle-button";
-import { WatchlistCard } from "./watchlist-card";
+import { WatchlistCard, WatchlistItem } from "./watchlist-card";
 
 export const ServiceWatchlist = ({ items }: { items: ServiceOverview[] }) => {
-  const [isAsc, setIsAsc] = useState(true);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [isAsc, setIsAsc] = useState(false);
 
   const sortedItems = [...items]
     .sort((a, b) =>
@@ -24,12 +27,25 @@ export const ServiceWatchlist = ({ items }: { items: ServiceOverview[] }) => {
       value: item.attributes.fail,
     }));
 
+  const handleItemClick = (item: WatchlistItem) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    // Convert filter[provider_id__in] to filter[provider__in] for findings page
+    const providerIds = params.get("filter[provider_id__in]");
+    if (providerIds) {
+      params.delete("filter[provider_id__in]");
+      params.delete("filter[provider_type__in]");
+      params.set("filter[provider__in]", providerIds);
+    }
+
+    params.set("filter[service__in]", item.key);
+    router.push(`/findings?${params.toString()}`);
+  };
+
   return (
     <WatchlistCard
       title="Service Watchlist"
       items={sortedItems}
-      ctaLabel="Services Dashboard"
-      ctaHref="/services"
       headerAction={
         <SortToggleButton
           isAscending={isAsc}
@@ -40,9 +56,8 @@ export const ServiceWatchlist = ({ items }: { items: ServiceOverview[] }) => {
       }
       emptyState={{
         message: "This space is looking empty.",
-        description: "to add services to your watchlist.",
-        linkText: "Services Dashboard",
       }}
+      onItemClick={handleItemClick}
     />
   );
 };

@@ -19,6 +19,16 @@ export const extractProviderUIDs = (
   );
 };
 
+export const extractProviderIds = (
+  providersData: ProvidersApiResponse,
+): string[] => {
+  if (!providersData?.data) return [];
+
+  return providersData.data
+    .map((provider: ProviderProps) => provider.id)
+    .filter(Boolean);
+};
+
 export const createProviderDetailsMapping = (
   providerUIDs: string[],
   providersData: ProvidersApiResponse,
@@ -34,6 +44,25 @@ export const createProviderDetailsMapping = (
       [uid]: {
         provider: provider?.attributes?.provider || "aws",
         uid: uid,
+        alias: provider?.attributes?.alias ?? null,
+      },
+    };
+  });
+};
+
+export const createProviderDetailsMappingById = (
+  providerIds: string[],
+  providersData: ProvidersApiResponse,
+): Array<{ [id: string]: ProviderEntity }> => {
+  if (!providersData?.data) return [];
+
+  return providerIds.map((id) => {
+    const provider = providersData.data.find((p: ProviderProps) => p.id === id);
+
+    return {
+      [id]: {
+        provider: provider?.attributes?.provider || "aws",
+        uid: provider?.attributes?.uid || "",
         alias: provider?.attributes?.alias ?? null,
       },
     };

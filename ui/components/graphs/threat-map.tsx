@@ -8,6 +8,7 @@ import type {
   Geometry,
 } from "geojson";
 import { AlertTriangle, ChevronDown, Info, MapPin } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { feature } from "topojson-client";
 import type {
@@ -91,6 +92,8 @@ interface LocationPoint {
   id: string;
   name: string;
   region: string;
+  regionCode: string;
+  providerType: string;
   coordinates: [number, number];
   totalFindings: number;
   riskLevel: RiskLevel;
@@ -226,10 +229,17 @@ function LoadingState({ height }: { height: number }) {
   );
 }
 
+const STATUS_FILTER_MAP: Record<string, string> = {
+  Fail: "FAIL",
+  Pass: "PASS",
+};
+
 export function ThreatMap({
   data,
   height = MAP_CONFIG.defaultHeight,
 }: ThreatMapProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectedLocation, setSelectedLocation] =
@@ -559,7 +569,34 @@ export function ThreatMap({
                   Findings
                 </p>
               </div>
-              <HorizontalBarChart data={selectedLocation.severityData} />
+              <HorizontalBarChart
+                data={selectedLocation.severityData}
+                onBarClick={(dataPoint) => {
+                  const status = STATUS_FILTER_MAP[dataPoint.name];
+                  if (status && selectedLocation.providerType) {
+                    const params = new URLSearchParams(searchParams.toString());
+
+                    // Convert filter[provider_id__in] to filter[provider__in] for findings page
+                    const providerIds = params.get("filter[provider_id__in]");
+                    if (providerIds) {
+                      params.delete("filter[provider_id__in]");
+                      params.delete("filter[provider_type__in]");
+                      params.set("filter[provider__in]", providerIds);
+                    }
+
+                    params.set(
+                      "filter[provider_type__in]",
+                      selectedLocation.providerType,
+                    );
+                    params.set(
+                      "filter[region__in]",
+                      selectedLocation.regionCode,
+                    );
+                    params.set("filter[status__in]", status);
+                    router.push(`/findings?${params.toString()}`);
+                  }
+                }}
+              />
             </div>
           ) : (
             <EmptyState />

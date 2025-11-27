@@ -8,6 +8,33 @@ import { ChartConfig, ChartContainer } from "@/components/ui/chart/Chart";
 import { ChartLegend } from "./shared/chart-legend";
 import { DonutDataPoint } from "./types";
 
+interface TooltipPayloadEntry {
+  name: string;
+  color?: string;
+  payload?: {
+    percentage?: number;
+    change?: number;
+    color?: string;
+  };
+}
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: TooltipPayloadEntry[];
+}
+
+interface LegendPayloadEntry {
+  value: string;
+  color: string;
+  payload: {
+    percentage?: number;
+  };
+}
+
+interface CustomLegendProps {
+  payload: LegendPayloadEntry[];
+}
+
 interface DonutChartProps {
   data: DonutDataPoint[];
   height?: number;
@@ -21,7 +48,7 @@ interface DonutChartProps {
   onSegmentClick?: (dataPoint: DonutDataPoint, index: number) => void;
 }
 
-const CustomTooltip = ({ active, payload }: any) => {
+const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
   if (!active || !payload || !payload.length) return null;
 
   const entry = payload[0];
@@ -58,9 +85,9 @@ const CustomTooltip = ({ active, payload }: any) => {
   );
 };
 
-const CustomLegend = ({ payload }: any) => {
-  const items = payload.map((entry: any) => ({
-    label: `${entry.value} (${entry.payload.percentage}%)`,
+const CustomLegend = ({ payload }: CustomLegendProps) => {
+  const items = payload.map((entry: LegendPayloadEntry) => ({
+    label: `${entry.value} (${entry.payload.percentage ?? 0}%)`,
     color: entry.color,
   }));
 
@@ -145,9 +172,9 @@ export function DonutChart({
                   key={`cell-${index}`}
                   fill={entry.fill}
                   opacity={opacity}
+                  className={isClickable ? "cursor-pointer" : ""}
                   style={{
                     transition: "opacity 0.2s",
-                    cursor: isClickable ? "pointer" : "default",
                   }}
                   onMouseEnter={() => setHoveredIndex(index)}
                   onMouseLeave={() => setHoveredIndex(null)}
