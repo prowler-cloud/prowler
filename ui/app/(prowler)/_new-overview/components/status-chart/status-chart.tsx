@@ -14,6 +14,7 @@ import {
   ResourceStatsCard,
   Skeleton,
 } from "@/components/shadcn";
+import { mapProviderFiltersForFindings } from "@/lib/provider-helpers";
 import { calculatePercentage } from "@/lib/utils";
 interface FindingsData {
   total: number;
@@ -39,14 +40,7 @@ export const StatusChart = ({
     // Build the URL with current filters plus status and muted
     const params = new URLSearchParams(searchParams.toString());
 
-    // Convert filter[provider_id__in] to filter[provider__in] for findings page
-    const providerIds = params.get("filter[provider_id__in]");
-    if (providerIds) {
-      params.delete("filter[provider_id__in]");
-      // Remove provider_type__in since provider__in is more specific
-      params.delete("filter[provider_type__in]");
-      params.set("filter[provider__in]", providerIds);
-    }
+    mapProviderFiltersForFindings(params);
 
     // Add status filter based on which segment was clicked
     if (dataPoint.name === "Fail Findings") {

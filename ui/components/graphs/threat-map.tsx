@@ -18,6 +18,7 @@ import type {
 } from "topojson-specification";
 
 import { Card } from "@/components/shadcn/card/card";
+import { mapProviderFiltersForFindings } from "@/lib/provider-helpers";
 
 import { HorizontalBarChart } from "./horizontal-bar-chart";
 import { BarDataPoint } from "./types";
@@ -576,13 +577,7 @@ export function ThreatMap({
                   if (status && selectedLocation.providerType) {
                     const params = new URLSearchParams(searchParams.toString());
 
-                    // Convert filter[provider_id__in] to filter[provider__in] for findings page
-                    const providerIds = params.get("filter[provider_id__in]");
-                    if (providerIds) {
-                      params.delete("filter[provider_id__in]");
-                      params.delete("filter[provider_type__in]");
-                      params.set("filter[provider__in]", providerIds);
-                    }
+                    mapProviderFiltersForFindings(params);
 
                     params.set(
                       "filter[provider_type__in]",

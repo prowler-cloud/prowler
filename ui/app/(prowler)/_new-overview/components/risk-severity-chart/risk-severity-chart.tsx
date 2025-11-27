@@ -11,6 +11,7 @@ import {
   CardTitle,
   Skeleton,
 } from "@/components/shadcn";
+import { mapProviderFiltersForFindings } from "@/lib/provider-helpers";
 import { calculatePercentage } from "@/lib/utils";
 import { SEVERITY_FILTER_MAP } from "@/types/severities";
 
@@ -36,14 +37,7 @@ export const RiskSeverityChart = ({
     // Build the URL with current filters plus severity and muted
     const params = new URLSearchParams(searchParams.toString());
 
-    // Convert filter[provider_id__in] to filter[provider__in] for findings page
-    const providerIds = params.get("filter[provider_id__in]");
-    if (providerIds) {
-      params.delete("filter[provider_id__in]");
-      // Remove provider_type__in since provider__in is more specific
-      params.delete("filter[provider_type__in]");
-      params.set("filter[provider__in]", providerIds);
-    }
+    mapProviderFiltersForFindings(params);
 
     const severity = SEVERITY_FILTER_MAP[dataPoint.name];
     if (severity) {

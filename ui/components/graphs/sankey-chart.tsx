@@ -6,6 +6,7 @@ import { Rectangle, ResponsiveContainer, Sankey, Tooltip } from "recharts";
 
 import { PROVIDER_ICONS } from "@/components/icons/providers-badge";
 import { initializeChartColors } from "@/lib/charts/colors";
+import { mapProviderFiltersForFindings } from "@/lib/provider-helpers";
 import { PROVIDER_DISPLAY_NAMES } from "@/types/providers";
 import { SEVERITY_FILTER_MAP } from "@/types/severities";
 
@@ -452,13 +453,7 @@ export function SankeyChart({ data, height = 400 }: SankeyChartProps) {
     if (severityFilter) {
       const params = new URLSearchParams(searchParams.toString());
 
-      // Convert filter[provider_id__in] to filter[provider__in] for findings page
-      const providerIds = params.get("filter[provider_id__in]");
-      if (providerIds) {
-        params.delete("filter[provider_id__in]");
-        params.delete("filter[provider_type__in]");
-        params.set("filter[provider__in]", providerIds);
-      }
+      mapProviderFiltersForFindings(params);
 
       params.set("filter[severity__in]", severityFilter);
       router.push(`/findings?${params.toString()}`);
@@ -472,13 +467,7 @@ export function SankeyChart({ data, height = 400 }: SankeyChartProps) {
     if (providerType && severityFilter) {
       const params = new URLSearchParams(searchParams.toString());
 
-      // Convert filter[provider_id__in] to filter[provider__in] for findings page
-      const providerIds = params.get("filter[provider_id__in]");
-      if (providerIds) {
-        params.delete("filter[provider_id__in]");
-        params.delete("filter[provider_type__in]");
-        params.set("filter[provider__in]", providerIds);
-      }
+      mapProviderFiltersForFindings(params);
 
       params.set("filter[provider_type__in]", providerType);
       params.set("filter[severity__in]", severityFilter);

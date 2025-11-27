@@ -5,6 +5,22 @@ import {
   ProviderType,
 } from "@/types/providers";
 
+/**
+ * Maps overview provider filters to findings page provider filters.
+ * Converts provider_id__in to provider__in and removes provider_type__in
+ * since provider__in is more specific.
+ */
+export const mapProviderFiltersForFindings = (
+  params: URLSearchParams,
+): void => {
+  const providerIds = params.get("filter[provider_id__in]");
+  if (providerIds) {
+    params.delete("filter[provider_id__in]");
+    params.delete("filter[provider_type__in]");
+    params.set("filter[provider__in]", providerIds);
+  }
+};
+
 export const extractProviderUIDs = (
   providersData: ProvidersApiResponse,
 ): string[] => {
