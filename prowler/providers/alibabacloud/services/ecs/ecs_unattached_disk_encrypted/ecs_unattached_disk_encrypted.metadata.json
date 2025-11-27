@@ -1,7 +1,7 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "ecs_unattached_disk_encrypted",
-  "CheckTitle": "Ensure that 'Unattached disks' are encrypted",
+  "CheckTitle": "'Unattached disks' are encrypted",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards",
@@ -15,6 +15,10 @@
   "Description": "Cloud disk encryption protects your data at rest. The cloud disk data encryption feature automatically encrypts data when data is transferred from ECS instances to disks, and decrypts data when the data is read from disks.",
   "Risk": "Unencrypted unattached disks pose a security risk as they may contain sensitive data that could be accessed if the disk is compromised or accessed by unauthorized parties.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/59643.htm",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/59643.htm",
+    "https://hub.prowler.com/check/ecs_unattached_disk_encrypted"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aliyun ecs CreateDisk --DiskName <disk_name> --Size <size> --Encrypted true --KmsKeyId <kms_key_id>",
@@ -24,7 +28,7 @@
     },
     "Recommendation": {
       "Text": "Logon to ECS Console. In the left-side navigation pane, choose Storage & Snapshots > Disk. In the upper-right corner of the Disks page, click Create Disk. In the Disk section, check the Disk Encryption box and then select a key from the drop-down list. Note: After a data disk is created, you can only encrypt the data disk by manually copying data on the unencrypted disk to a new encrypted disk.",
-      "Url": "https://www.alibabacloud.com/help/doc-detail/59643.htm"
+      "Url": "https://hub.prowler.com/check/ecs_unattached_disk_encrypted"
     }
   },
   "Categories": [
@@ -32,5 +36,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark v2.0.0 - Section 4.1"
+  "Notes": ""
 }

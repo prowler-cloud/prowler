@@ -1,7 +1,7 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "rds_instance_ssl_enabled",
-  "CheckTitle": "Ensure that RDS instance requires all incoming connections to use SSL",
+  "CheckTitle": "RDS instance requires all incoming connections to use SSL",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards",
@@ -15,6 +15,10 @@
   "Description": "It is recommended to enforce all incoming connections to SQL database instance to use SSL. SQL database connections if successfully trapped (MITM); can reveal sensitive data like credentials, database queries, query outputs etc. For security, it is recommended to always use SSL encryption when connecting to your instance.",
   "Risk": "If SSL is not enabled, data in transit (including credentials and query results) can be intercepted by attackers performing Man-in-the-Middle (MITM) attacks.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/32474.htm",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/32474.htm",
+    "https://hub.prowler.com/check/rds_instance_ssl_enabled"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aliyun rds ModifyDBInstanceSSL --DBInstanceId <instance_id> --SSLEnabled 1",
@@ -24,7 +28,7 @@
     },
     "Recommendation": {
       "Text": "Logon to RDS Console. Select the region and target instance. In the left-side navigation pane, click Data Security. Click the SSL Encryption tab. Click the switch next to Disabled in the SSL Encryption parameter.",
-      "Url": "https://www.alibabacloud.com/help/doc-detail/32474.htm"
+      "Url": "https://hub.prowler.com/check/rds_instance_ssl_enabled"
     }
   },
   "Categories": [
@@ -32,5 +36,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark Section 6.1."
+  "Notes": ""
 }

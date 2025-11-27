@@ -1,7 +1,7 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "cs_kubernetes_cloudmonitor_enabled",
-  "CheckTitle": "Ensure CloudMonitor is set to Enabled on Kubernetes Engine Clusters",
+  "CheckTitle": "CloudMonitor is set to Enabled on Kubernetes Engine Clusters",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards",
@@ -15,6 +15,10 @@
   "Description": "The monitoring service in Kubernetes Engine clusters depends on the Alibaba Cloud CloudMonitor agent to access additional system resources and application services in virtual machine instances. The monitor can access metrics about CPU utilization, some disk traffic metrics, network traffic, and disk IO information, which help to monitor signals and build operations in your Kubernetes Engine clusters.",
   "Risk": "By enabling CloudMonitor installation you will have system metrics and custom metrics. System metrics are measurements of the cluster's infrastructure, such as CPU or memory usage. For system metrics, a monitor controller would be created and periodically connects to each node and collects metrics about its Pods and containers, then sends the metrics to CloudMonitor server. Metrics for usage of system resources are collected from the CPU, Memory, Evictable memory, Non-evictable memory, and Disk sources.",
   "RelatedUrl": "https://help.aliyun.com/document_detail/125508.html",
+  "AdditionalURLs": [
+    "https://help.aliyun.com/document_detail/125508.html",
+    "https://hub.prowler.com/check/cs_kubernetes_cloudmonitor_enabled"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aliyun cs GET /clusters/[cluster_id]/nodepools to verify nodepools.kubernetes_config.cms_enabled is set to true for all node pools.",
@@ -24,7 +28,7 @@
     },
     "Recommendation": {
       "Text": "Logon to ACK console. Select the target cluster and click its name into cluster detail page. Select the Nodes on the left column and click the Monitor link on the Actions column of the selected node. Check if OS Metrics data existing in the CloudMonitor page of the selected ECS node. To enable: Click the Create Kubernetes Cluster button and set CloudMonitor Agent to Enabled under creation options.",
-      "Url": "https://help.aliyun.com/document_detail/125508.html"
+      "Url": "https://hub.prowler.com/check/cs_kubernetes_cloudmonitor_enabled"
     }
   },
   "Categories": [
@@ -32,5 +36,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark Section 7.2. By default, CloudMonitor Agent installation is disabled when you create a new cluster using console."
+  "Notes": ""
 }

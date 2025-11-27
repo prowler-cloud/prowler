@@ -1,7 +1,7 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "ecs_instance_endpoint_protection_installed",
-  "CheckTitle": "Ensure that the endpoint protection for all Virtual Machines is installed",
+  "CheckTitle": "The endpoint protection for all Virtual Machines is installed",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards",
@@ -15,6 +15,10 @@
   "Description": "Installing endpoint protection systems (like Security Center for Alibaba Cloud) provides for real-time protection capability that helps identify and remove viruses, spyware, and other malicious software, with configurable alerts when known malicious software attempts to install itself or run on ECS.",
   "Risk": "ECS instances without endpoint protection are vulnerable to malware, viruses, and other security threats. Endpoint protection provides real-time monitoring and protection capabilities.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/28460.htm",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/28460.htm",
+    "https://hub.prowler.com/check/ecs_instance_endpoint_protection_installed"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "Logon to Security Center Console > Select Settings > Click Agent > Select virtual machines without Security Center agent > Click Install",
@@ -24,7 +28,7 @@
     },
     "Recommendation": {
       "Text": "Logon to Security Center Console. Select Settings. Click Agent. On the Agent tab, select the virtual machines without Security Center agent installed. Click Install.",
-      "Url": "https://www.alibabacloud.com/help/doc-detail/28460.htm"
+      "Url": "https://hub.prowler.com/check/ecs_instance_endpoint_protection_installed"
     }
   },
   "Categories": [
@@ -32,5 +36,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark v2.0.0 - Section 4.6"
+  "Notes": ""
 }

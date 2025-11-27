@@ -1,7 +1,7 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "ecs_instance_latest_os_patches_applied",
-  "CheckTitle": "Ensure that the latest OS Patches for all Virtual Machines are applied",
+  "CheckTitle": "The latest OS Patches for all Virtual Machines are applied",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards",
@@ -15,6 +15,10 @@
   "Description": "Windows and Linux virtual machines should be kept updated to address specific bugs or flaws, improve OS or application's general stability, and fix security vulnerabilities. The Alibaba Cloud Security Center checks for the latest updates in Linux and Windows systems.",
   "Risk": "Unpatched systems are vulnerable to known security exploits and may be compromised by attackers. Keeping systems updated with the latest patches is critical for maintaining security.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/28460.htm",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/28460.htm",
+    "https://hub.prowler.com/check/ecs_instance_latest_os_patches_applied"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "Logon to Security Center Console > Select Vulnerabilities > Apply all patches for vulnerabilities",
@@ -24,7 +28,7 @@
     },
     "Recommendation": {
       "Text": "Logon to Security Center Console. Select Vulnerabilities. Ensure all vulnerabilities are fixed. Apply all patches for vulnerabilities.",
-      "Url": "https://www.alibabacloud.com/help/doc-detail/28460.htm"
+      "Url": "https://hub.prowler.com/check/ecs_instance_latest_os_patches_applied"
     }
   },
   "Categories": [
@@ -32,5 +36,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark v2.0.0 - Section 4.5"
+  "Notes": ""
 }

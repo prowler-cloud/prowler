@@ -1,7 +1,7 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "sls_security_group_changes_alert_enabled",
-  "CheckTitle": "Ensure a log monitoring and alerts are set up for security group changes",
+  "CheckTitle": "A log monitoring and alerts are set up for security group changes",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards"
@@ -14,6 +14,10 @@
   "Description": "Real-time monitoring of API calls can be achieved by directing ActionTrail Logs to Log Service and establishing corresponding query and alarms. Security Groups are a stateful packet filter that controls ingress and egress traffic within a VPC. It is recommended that a query and alarm be established changes to Security Groups.",
   "Risk": "Monitoring changes to security group will help ensure that resources and services are not unintentionally exposed.",
   "RelatedUrl": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+    "https://hub.prowler.com/check/sls_security_group_changes_alert_enabled"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -23,7 +27,7 @@
     },
     "Recommendation": {
       "Text": "Logon to SLS Console. Ensure the Action Trail are Enabled. Select Alerts. Ensure alert rule has been enabled for security group changes.",
-      "Url": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
+      "Url": "https://hub.prowler.com/check/sls_security_group_changes_alert_enabled"
     }
   },
   "Categories": [
@@ -31,5 +35,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark"
+  "Notes": ""
 }

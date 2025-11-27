@@ -1,7 +1,7 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "cs_kubernetes_log_service_enabled",
-  "CheckTitle": "Ensure Log Service is set to 'Enabled' on Kubernetes Engine Clusters",
+  "CheckTitle": "Log Service is set to 'Enabled' on Kubernetes Engine Clusters",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards",
@@ -15,6 +15,10 @@
   "Description": "Log Service is a complete real-time data logging service on Alibaba Cloud to support collection, shipping, search, storage and analysis for logs. It includes a user interface to call the Log Viewer and an API to management logs pragmatically. Log Service could automatically collect, process, and store your container and audit logs in a dedicated, persistent datastore. Container logs are collected from your containers. Audit logs are collected from the kube-apiserver or the deployed ingress. Events are logs about activity in the cluster, such as the deleting of Pods or Secrets.",
   "Risk": "By enabling you will have container and system logs, Kubernetes Engine deploys a per-node logging agent that reads container logs, adds helpful metadata, and then stores them. The logging agent would help to collecting the following sources: kube-apiserver audit logs, ingress visiting logs, and Standard output and standard error logs from containerized processes.",
   "RelatedUrl": "https://help.aliyun.com/document_detail/91406.html",
+  "AdditionalURLs": [
+    "https://help.aliyun.com/document_detail/91406.html",
+    "https://hub.prowler.com/check/cs_kubernetes_log_service_enabled"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aliyun cs GET /clusters/[cluster_id] to verify AuditProjectName is set. When creating a new cluster, set Enable Log Service to Enabled.",
@@ -24,7 +28,7 @@
     },
     "Recommendation": {
       "Text": "Logon to ACK console. Select the target cluster and click its name into cluster detail page. Select Cluster Auditing on the left column and check if audit page shown. To enable: When creating a new cluster, set Enable Log Service to Enabled.",
-      "Url": "https://help.aliyun.com/document_detail/91406.html"
+      "Url": "https://hub.prowler.com/check/cs_kubernetes_log_service_enabled"
     }
   },
   "Categories": [
@@ -33,5 +37,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark Section 7.1. By default, logging service is disabled when you create a new cluster using console."
+  "Notes": ""
 }

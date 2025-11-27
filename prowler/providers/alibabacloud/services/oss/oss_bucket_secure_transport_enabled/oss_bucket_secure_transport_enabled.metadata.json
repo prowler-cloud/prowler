@@ -1,7 +1,7 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "oss_bucket_secure_transport_enabled",
-  "CheckTitle": "Ensure that 'Secure transfer required' is set to 'Enabled'",
+  "CheckTitle": "'Secure transfer required' is set to 'Enabled'",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards",
@@ -15,6 +15,10 @@
   "Description": "Enable the data encryption in transit. The secure transfer enhances the security of OSS bucket by only allowing requests to the storage account by a secure connection. For example, when calling REST APIs to access storage accounts, the connection must use HTTPS. Any requests using HTTP will be rejected.",
   "Risk": "Without secure transfer enforcement, OSS buckets may accept HTTP requests, which are not encrypted in transit. This exposes data to potential interception and man-in-the-middle attacks.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/85111.htm",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/85111.htm",
+    "https://hub.prowler.com/check/oss_bucket_secure_transport_enabled"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -24,7 +28,7 @@
     },
     "Recommendation": {
       "Text": "Logon to OSS console. In the bucket-list pane, click on a target OSS bucket. Click on Files in top middle of the console. Click on Authorize. Click on Whole Bucket, *, None (Authorized Operation) and http (Conditions:Access Method). Click on Save.",
-      "Url": "https://www.alibabacloud.com/help/doc-detail/85111.htm"
+      "Url": "https://hub.prowler.com/check/oss_bucket_secure_transport_enabled"
     }
   },
   "Categories": [
@@ -32,5 +36,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark v2.0.0 - Section 5.4"
+  "Notes": ""
 }

@@ -1,7 +1,7 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "cs_kubernetes_dashboard_disabled",
-  "CheckTitle": "Ensure Kubernetes web UI / Dashboard is not enabled",
+  "CheckTitle": "Kubernetes web UI / Dashboard is not enabled",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards",
@@ -15,6 +15,10 @@
   "Description": "Dashboard is a web-based Kubernetes user interface. It can be used to deploy containerized applications to a Kubernetes cluster, troubleshoot your containerized application, and manage the cluster itself. You should disable the Kubernetes Web UI (Dashboard) when running on Kubernetes Engine. The Kubernetes Web UI (Dashboard) is backed by a highly privileged Kubernetes Service Account. It is recommended to use ACK User Console instead of Dashboard to avoid any privileged escalation via compromise the dashboard.",
   "Risk": "The Kubernetes Dashboard is backed by a highly privileged Service Account. If the Dashboard is compromised, it could allow an attacker to gain full control over the cluster and potentially escalate privileges.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/86494.html",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/86494.html",
+    "https://hub.prowler.com/check/cs_kubernetes_dashboard_disabled"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "Use kubectl to delete the dashboard deployment: kubectl delete deployment kubernetes-dashboard -n kube-system",
@@ -24,7 +28,7 @@
     },
     "Recommendation": {
       "Text": "Logon to ACK console. Select the target cluster and select the kube-system namespace in the Namespace pop-menu. Input dashboard in the deploy filter bar, make sure there is no result exist after the filter, delete the dashboard deployment by selecting the Delete in More pop-menu.",
-      "Url": "https://www.alibabacloud.com/help/doc-detail/86494.html"
+      "Url": "https://hub.prowler.com/check/cs_kubernetes_dashboard_disabled"
     }
   },
   "Categories": [
@@ -32,5 +36,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark Section 7.5. By default, the kube-dashboard would not install in cluster."
+  "Notes": ""
 }

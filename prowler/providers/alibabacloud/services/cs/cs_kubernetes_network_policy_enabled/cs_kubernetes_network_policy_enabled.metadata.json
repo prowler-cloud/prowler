@@ -1,7 +1,7 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "cs_kubernetes_network_policy_enabled",
-  "CheckTitle": "Ensure Network policy is enabled on Kubernetes Engine Clusters",
+  "CheckTitle": "Network policy is enabled on Kubernetes Engine Clusters",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards",
@@ -15,6 +15,10 @@
   "Description": "A network policy is a specification of how groups of pods are allowed to communicate with each other and other network endpoints. NetworkPolicy resources use labels to select pods and define rules which specify what traffic is allowed to the selected pods. By default, pods are non-isolated; they accept traffic from any source. Pods become isolated by having a NetworkPolicy that selects them.",
   "Risk": "Without Network Policies, all pods in a Kubernetes cluster can communicate with each other freely. This open communication model allows an attacker who compromises a single pod to potentially move laterally within the cluster and access sensitive services or data.",
   "RelatedUrl": "https://help.aliyun.com/document_detail/97621.html",
+  "AdditionalURLs": [
+    "https://help.aliyun.com/document_detail/97621.html",
+    "https://hub.prowler.com/check/cs_kubernetes_network_policy_enabled"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "Network Policy support (Terway) must be selected during cluster creation.",
@@ -24,7 +28,7 @@
     },
     "Recommendation": {
       "Text": "Only the Terway network plugin support the Network Policy feature. When creating a new cluster, select Terway in Network Plugin option. Existing clusters using Flannel cannot be migrated to Terway.",
-      "Url": "https://help.aliyun.com/document_detail/86949.html"
+      "Url": "https://hub.prowler.com/check/cs_kubernetes_network_policy_enabled"
     }
   },
   "Categories": [
@@ -32,5 +36,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark Section 7.7. Only the Terway network plugin supports the Network Policy feature."
+  "Notes": ""
 }

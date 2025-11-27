@@ -1,7 +1,7 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "ram_policy_attached_only_to_group_or_roles",
-  "CheckTitle": "Ensure RAM policies are attached only to groups or roles",
+  "CheckTitle": "RAM policies are attached only to groups or roles",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards",
@@ -15,6 +15,10 @@
   "Description": "By default, RAM users, groups, and roles have no access to Alibaba Cloud resources. RAM policies are the means by which privileges are granted to users, groups, or roles. It is recommended that RAM policies be applied directly to groups and roles but not users.",
   "Risk": "Assigning privileges at the group or role level reduces the complexity of access management as the number of users grows. Reducing access management complexity may in turn reduce opportunity for a principal to inadvertently receive or retain excessive privileges.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/116820.htm",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/116820.htm",
+    "https://hub.prowler.com/check/ram_policy_attached_only_to_group_or_roles"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aliyun ram DetachPolicyFromUser --PolicyName <policy_name> --PolicyType <System|Custom> --UserName <ram_user>",
@@ -24,7 +28,7 @@
     },
     "Recommendation": {
       "Text": "Create RAM user groups and assign policies to those groups, then add users to the appropriate groups. Detach any policies directly attached to users.",
-      "Url": "https://www.alibabacloud.com/help/doc-detail/116820.htm"
+      "Url": "https://hub.prowler.com/check/ram_policy_attached_only_to_group_or_roles"
     }
   },
   "Categories": [
@@ -32,5 +36,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark v2.0.0 - Section 1.16"
+  "Notes": ""
 }

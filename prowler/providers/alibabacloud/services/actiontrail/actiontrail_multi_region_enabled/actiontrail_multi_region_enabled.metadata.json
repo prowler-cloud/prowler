@@ -1,7 +1,7 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "actiontrail_multi_region_enabled",
-  "CheckTitle": "Ensure that ActionTrail are configured to export copies of all Log entries",
+  "CheckTitle": "ActionTrail are configured to export copies of all Log entries",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards",
@@ -15,6 +15,10 @@
   "Description": "ActionTrail is a web service that records API calls for your account and delivers log files to you. The recorded information includes the identity of the API caller, the time of the API call, the source IP address of the API caller, the request parameters, and the response elements returned by the Alibaba Cloud service. ActionTrail provides a history of API calls for an account, including API calls made via the Management Console, SDKs, command line tools.",
   "Risk": "The API call history produced by ActionTrail enables security analysis, resource change tracking, and compliance auditing. Moreover, ensuring that a multi-regions trail exists will ensure that any unexpected activities occurring in otherwise unused regions are detected. Global Service Logging should be enabled by default to capture recording of events generated on Alibaba Cloud global services for a multi-regions trail, therefore, ensuring the recording of management operations that are performed on all resources in an Alibaba Cloud account.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/28829.htm",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/28829.htm",
+    "https://hub.prowler.com/check/actiontrail_multi_region_enabled"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aliyun actiontrail CreateTrail --Name <trail_name> --OssBucketName <oss_bucket_for_actiontrail> --RoleName aliyunactiontraildefaultrole --SlsProjectArn <sls_project_arn_for_actiontrail> --SlsWriteRoleArn <sls_role_arn_for_actiontrail> --EventRW <api_type_for_actiontrail>",
@@ -24,7 +28,7 @@
     },
     "Recommendation": {
       "Text": "Logon to ActionTrail Console. Click on Trails on the left navigation pane. Click Add new trail. Enter a trail name in the Trail name box. Set Yes for Apply Trail to All Regions. Specify an OSS bucket name in the OSS bucket box. Specify an SLS project name in the SLS project box. Click Create.",
-      "Url": "https://www.alibabacloud.com/help/doc-detail/28829.htm"
+      "Url": "https://hub.prowler.com/check/actiontrail_multi_region_enabled"
     }
   },
   "Categories": [
@@ -32,5 +36,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark v2.0.0 - Section 2.1"
+  "Notes": ""
 }

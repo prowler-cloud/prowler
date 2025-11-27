@@ -1,7 +1,7 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "sls_rds_instance_configuration_changes_alert_enabled",
-  "CheckTitle": "Ensure log monitoring and alerts are set up for RDS instance configuration changes",
+  "CheckTitle": "Log monitoring and alerts are set up for RDS instance configuration changes",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards"
@@ -14,6 +14,10 @@
   "Description": "It is recommended that a metric filter and alarm be established for RDS Instance configuration changes.",
   "Risk": "Monitoring changes to RDS Instance configuration changes may reduce time to detect and correct misconfigurations done on database server.",
   "RelatedUrl": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+    "https://hub.prowler.com/check/sls_rds_instance_configuration_changes_alert_enabled"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -23,7 +27,7 @@
     },
     "Recommendation": {
       "Text": "Logon to SLS Console. Ensure the Action Trail are Enabled. Select Alerts. Ensure alert rule has been enabled for RDS instance configuration changes.",
-      "Url": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
+      "Url": "https://hub.prowler.com/check/sls_rds_instance_configuration_changes_alert_enabled"
     }
   },
   "Categories": [
@@ -31,5 +35,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark"
+  "Notes": ""
 }

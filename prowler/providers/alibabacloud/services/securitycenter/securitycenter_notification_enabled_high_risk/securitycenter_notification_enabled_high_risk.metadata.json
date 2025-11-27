@@ -1,7 +1,7 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "securitycenter_notification_enabled_high_risk",
-  "CheckTitle": "Ensure that notification is enabled on all high risk items",
+  "CheckTitle": "Notification is enabled on all high risk items",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards",
@@ -15,6 +15,10 @@
   "Description": "Enable all risk item notification in Vulnerability, Baseline Risks, Alerts and Accesskey Leak event detection categories. To make sure that relevant security operators would receive notifications as soon as security events happens.",
   "Risk": "Without notifications enabled for high-risk items, security operators may not be aware of critical security events in a timely manner, potentially leading to delayed response and increased security exposure.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/111648.htm",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/111648.htm",
+    "https://hub.prowler.com/check/securitycenter_notification_enabled_high_risk"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aliyun sas ModifyNoticeConfig --Project <project_name> --Route <route_value>",
@@ -24,7 +28,7 @@
     },
     "Recommendation": {
       "Text": "Logon to Security Center Console. Select Settings. Click Notification. Enable all high-risk items on Notification setting. Route values: 1=text message, 2=email, 3=internal message, 4=text+email, 5=text+internal, 6=email+internal, 7=all methods.",
-      "Url": "https://www.alibabacloud.com/help/doc-detail/111648.htm"
+      "Url": "https://hub.prowler.com/check/securitycenter_notification_enabled_high_risk"
     }
   },
   "Categories": [
@@ -32,5 +36,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark v2.0.0 - Section 8.5"
+  "Notes": ""
 }

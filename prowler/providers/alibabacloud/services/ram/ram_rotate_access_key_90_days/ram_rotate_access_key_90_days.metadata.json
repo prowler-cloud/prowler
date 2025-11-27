@@ -1,7 +1,7 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "ram_rotate_access_key_90_days",
-  "CheckTitle": "Ensure access keys are rotated every 90 days or less",
+  "CheckTitle": "Access keys are rotated every 90 days or less",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards",
@@ -15,6 +15,10 @@
   "Description": "An access key consists of an access key ID and a secret, which are used to sign programmatic requests that you make to Alibaba Cloud. RAM users need their own access keys to make programmatic calls to Alibaba Cloud from the Alibaba Cloud SDKs, CLIs, or direct HTTP/HTTPS calls using the APIs for individual Alibaba Cloud services. It is recommended that all access keys be regularly rotated.",
   "Risk": "Access keys might be compromised by leaving them in codes, configuration files, on premise and cloud storages, and then stolen by attackers. Rotating access keys will reduce the window of opportunity that a compromised access key to be used.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/116401.htm",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/116401.htm",
+    "https://hub.prowler.com/check/ram_rotate_access_key_90_days"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aliyun ram CreateAccessKey --UserName <ram_user> && aliyun ram UpdateAccessKey --UserAccessKeyId <old_access_key_ID> --Status Inactive --UserName <ram_user> && aliyun ram DeleteAccessKey --UserAccessKeyId <old_access_key_ID> --UserName <ram_user>",
@@ -24,7 +28,7 @@
     },
     "Recommendation": {
       "Text": "Create a new AccessKey pair for rotation. Update all applications and systems to use the new AccessKey pair. Disable the original AccessKey pair. Confirm that your applications and systems are working. Delete the original AccessKey pair.",
-      "Url": "https://www.alibabacloud.com/help/doc-detail/116401.htm"
+      "Url": "https://hub.prowler.com/check/ram_rotate_access_key_90_days"
     }
   },
   "Categories": [
@@ -32,5 +36,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark v2.0.0 - Section 1.6"
+  "Notes": ""
 }

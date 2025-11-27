@@ -1,7 +1,7 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "cs_kubernetes_eni_multiple_ip_enabled",
-  "CheckTitle": "Ensure ENI multiple IP mode support for Kubernetes Cluster",
+  "CheckTitle": "ENI multiple IP mode support for Kubernetes Cluster",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards",
@@ -15,6 +15,10 @@
   "Description": "Alibaba Cloud ENI (Elastic Network Interface) supports assigning ranges of internal IP addresses as aliases to a single virtual machine's ENI network interfaces. With the feature of ENI multiple IP mode, Kubernetes Engine clusters can allocate IP addresses from a CIDR block known to Terway network plugin. This makes your cluster more scalable and allows your cluster to better interact with other Alibaba Cloud products and entities.",
   "Risk": "Without ENI multiple IP mode (provided by Terway), pods share the node's network interface in a less scalable way. Using ENI multiple IPs allows pod IPs to be reserved within the network ahead of time, preventing conflict with other compute resources, and allows firewall controls for Pods to be applied separately from their nodes.",
   "RelatedUrl": "https://github.com/AliyunContainerService/terway/blob/master/README.md#eni-secondary-ip-pod",
+  "AdditionalURLs": [
+    "https://github.com/AliyunContainerService/terway/blob/master/README.md#eni-secondary-ip-pod",
+    "https://hub.prowler.com/check/cs_kubernetes_eni_multiple_ip_enabled"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "Terway network plugin must be selected during cluster creation to support ENI multiple IP mode.",
@@ -24,7 +28,7 @@
     },
     "Recommendation": {
       "Text": "When creating a new cluster, select Terway in Network Plugin option to enable ENI multiple IP mode support. Existing clusters using Flannel cannot be migrated to Terway.",
-      "Url": "https://help.aliyun.com/document_detail/97467.html"
+      "Url": "https://hub.prowler.com/check/cs_kubernetes_eni_multiple_ip_enabled"
     }
   },
   "Categories": [
@@ -32,5 +36,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark Section 7.8. By default, ENI multiple IP mode is not supported in Flannel network plugin."
+  "Notes": ""
 }

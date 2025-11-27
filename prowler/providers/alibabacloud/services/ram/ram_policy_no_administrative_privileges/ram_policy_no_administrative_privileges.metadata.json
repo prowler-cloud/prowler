@@ -1,7 +1,7 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "ram_policy_no_administrative_privileges",
-  "CheckTitle": "Ensure RAM policies that allow full \"*:*\" administrative privileges are not created",
+  "CheckTitle": "RAM policies that allow full \"*:*\" administrative privileges are not created",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards",
@@ -15,6 +15,10 @@
   "Description": "RAM policies represent permissions that can be granted to users, groups, or roles. It is recommended and considered a standard security advice to grant least privilege—that is, granting only the permissions required to perform tasks. Determine what users need to do and then create policies with permissions only fits those tasks, instead of allowing full administrative privileges.",
   "Risk": "It is more secure to start with a minimum set of permissions and grant additional permissions as necessary, rather than starting with permissions that exceed the necessity and then trying to tighten them later. Providing full administrative privileges exposes your resources on Alibaba Cloud to potentially unwanted actions. RAM policies that have a statement with \"Effect\": \"Allow\", \"Action\": \"*\", and \"Resource\": \"*\" should be prohibited.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/93733.htm",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/93733.htm",
+    "https://hub.prowler.com/check/ram_policy_no_administrative_privileges"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aliyun ram DetachPolicyFromUser --PolicyName <policy_name> --PolicyType Custom --UserName <ram_user>",
@@ -24,7 +28,7 @@
     },
     "Recommendation": {
       "Text": "Logon to RAM console. Choose Permissions > Policies. From the Policy Type drop-down list, select Custom Policy. In the Policy Name column, click the name of the target policy. In the Policy Document section, edit the policy to remove the statement with full administrative privileges, or remove the policy from any RAM users, user groups, or roles that have this policy attached.",
-      "Url": "https://www.alibabacloud.com/help/doc-detail/116820.htm"
+      "Url": "https://hub.prowler.com/check/ram_policy_no_administrative_privileges"
     }
   },
   "Categories": [
@@ -32,5 +36,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark v2.0.0 - Section 1.15"
+  "Notes": ""
 }

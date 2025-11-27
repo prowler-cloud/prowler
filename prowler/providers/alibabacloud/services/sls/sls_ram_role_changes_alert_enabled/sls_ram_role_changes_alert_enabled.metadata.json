@@ -1,7 +1,7 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "sls_ram_role_changes_alert_enabled",
-  "CheckTitle": "Ensure log monitoring and alerts are set up for RAM Role changes",
+  "CheckTitle": "Log monitoring and alerts are set up for RAM Role changes",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards"
@@ -14,6 +14,10 @@
   "Description": "It is recommended that a query and alarm should be established for RAM Role creation, deletion and updating activities.",
   "Risk": "Monitoring role creation, deletion and updating activities will help in identifying any potential malicious actions at early stage.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/91784.htm",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/91784.htm",
+    "https://hub.prowler.com/check/sls_ram_role_changes_alert_enabled"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -23,7 +27,7 @@
     },
     "Recommendation": {
       "Text": "Logon to SLS Console. Ensure the Action Trail are Enabled. Select Alerts. Ensure alert rule has been enabled for RAM/ResourceManager policy changes.",
-      "Url": "https://www.alibabacloud.com/help/doc-detail/91784.htm"
+      "Url": "https://hub.prowler.com/check/sls_ram_role_changes_alert_enabled"
     }
   },
   "Categories": [
@@ -31,5 +35,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark"
+  "Notes": ""
 }

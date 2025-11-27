@@ -1,7 +1,7 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "actiontrail_oss_bucket_not_publicly_accessible",
-  "CheckTitle": "Ensure the OSS used to store ActionTrail logs is not publicly accessible",
+  "CheckTitle": "The OSS used to store ActionTrail logs is not publicly accessible",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards",
@@ -15,6 +15,10 @@
   "Description": "ActionTrail logs a record of every API call made in your Alibaba Cloud account. These logs file are stored in an OSS bucket. It is recommended that the access control list (ACL) of the OSS bucket, which ActionTrail logs to, shall prevent public access to the ActionTrail logs.",
   "Risk": "Allowing public access to ActionTrail log content may aid an adversary in identifying weaknesses in the affected account's use or configuration.",
   "RelatedUrl": "https://help.aliyun.com/document_detail/31954.html",
+  "AdditionalURLs": [
+    "https://help.aliyun.com/document_detail/31954.html",
+    "https://hub.prowler.com/check/actiontrail_oss_bucket_not_publicly_accessible"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "ossutil set-acl oss://<bucketName> private -b",
@@ -24,7 +28,7 @@
     },
     "Recommendation": {
       "Text": "Logon to OSS Console. Right on the bucket and click Basic Settings. In the Access Control List pane, click the Configure. The Bucket ACL tab shows three kind of grants. Like Private, Public Read, Public Read/Write. Ensure Private be set to the bucket. Click Save to save the ACL.",
-      "Url": "https://help.aliyun.com/document_detail/31954.html"
+      "Url": "https://hub.prowler.com/check/actiontrail_oss_bucket_not_publicly_accessible"
     }
   },
   "Categories": [
@@ -34,5 +38,5 @@
     "oss_bucket_not_publicly_accessible"
   ],
   "RelatedTo": [],
-  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark v2.0.0 - Section 2.2"
+  "Notes": ""
 }

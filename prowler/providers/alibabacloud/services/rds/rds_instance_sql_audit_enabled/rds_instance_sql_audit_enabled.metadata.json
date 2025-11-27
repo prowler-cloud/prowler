@@ -1,7 +1,7 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "rds_instance_sql_audit_enabled",
-  "CheckTitle": "Ensure that 'Auditing' is set to 'On' for applicable database instances",
+  "CheckTitle": "'Auditing' is set to 'On' for applicable database instances",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards",
@@ -15,6 +15,10 @@
   "Description": "Enable SQL auditing on all RDS except SQL Server 2012/2016/2017 and MariaDB TX. Auditing tracks database events and writes them to an audit log. It helps to maintain regulatory compliance, understand database activity, and gain insight into discrepancies and anomalies that could indicate business concerns or suspected security violations.",
   "Risk": "Without SQL auditing, it's difficult to detect unauthorized access, data breaches, or malicious activity within the database. It also hinders forensic investigations.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/96123.html",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/96123.html",
+    "https://hub.prowler.com/check/rds_instance_sql_audit_enabled"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aliyun rds ModifySQLCollectorPolicy --DBInstanceId <instance_id> --SQLCollectorStatus Enable --StoragePeriod <days>",
@@ -24,7 +28,7 @@
     },
     "Recommendation": {
       "Text": "Logon to RDS Console. In the left-side navigation pane, select SQL Explorer. Click Activate Now. Specify the SQL log storage duration and click Activate.",
-      "Url": "https://www.alibabacloud.com/help/doc-detail/96123.html"
+      "Url": "https://hub.prowler.com/check/rds_instance_sql_audit_enabled"
     }
   },
   "Categories": [
@@ -33,5 +37,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark Section 6.3. Activating Auditing may incur additional charges."
+  "Notes": ""
 }

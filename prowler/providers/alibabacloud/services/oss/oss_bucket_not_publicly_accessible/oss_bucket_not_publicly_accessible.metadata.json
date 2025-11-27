@@ -1,7 +1,7 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "oss_bucket_not_publicly_accessible",
-  "CheckTitle": "Ensure that OSS bucket is not anonymously or publicly accessible",
+  "CheckTitle": "OSS bucket is not anonymously or publicly accessible",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards",
@@ -15,6 +15,10 @@
   "Description": "A bucket is a container used to store objects in Object Storage Service (OSS). All objects in OSS are stored in buckets. It is recommended that the access policy on OSS bucket does not allows anonymous and/or public access.",
   "Risk": "Allowing anonymous and/or public access grants permissions to anyone to access bucket content. Such access might not be desired if you are storing any sensitive data. Hence, ensure that anonymous and/or public access to a bucket is not allowed.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/31896.htm",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/doc-detail/31896.htm",
+    "https://hub.prowler.com/check/oss_bucket_not_publicly_accessible"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aliyun oss PutBucketAcl --bucket <bucket-name> --acl private",
@@ -24,7 +28,7 @@
     },
     "Recommendation": {
       "Text": "Logon to OSS console. In the bucket-list pane, click on a target OSS bucket. Click on Basic Setting in top middle of the console. Under ACL section, click on configure. Click Private. Click Save. For Bucket Policy: Click Bucket, and then click the name of target bucket. Click the Files tab. On the page that appears, click Authorize. In the Authorize dialog box that appears, choose the Anonymous Accounts (*) for Accounts and choose None for Authorized Operation. Click OK.",
-      "Url": "https://www.alibabacloud.com/help/doc-detail/31896.htm"
+      "Url": "https://hub.prowler.com/check/oss_bucket_not_publicly_accessible"
     }
   },
   "Categories": [
@@ -32,5 +36,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark v2.0.0 - Section 5.1"
+  "Notes": ""
 }

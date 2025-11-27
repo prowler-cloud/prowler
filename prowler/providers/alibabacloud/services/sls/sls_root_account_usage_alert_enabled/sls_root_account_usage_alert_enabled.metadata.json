@@ -1,7 +1,7 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "sls_root_account_usage_alert_enabled",
-  "CheckTitle": "Ensure a log monitoring and alerts are set up for usage of root account",
+  "CheckTitle": "A log monitoring and alerts are set up for usage of root account",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards"
@@ -14,6 +14,10 @@
   "Description": "Real-time monitoring of API calls can be achieved by directing ActionTrail Logs to Log Service and establishing corresponding query and alarms. It is recommended that a query and alarm be established for console logins that are not protected by root login attempts.",
   "Risk": "Monitoring for root account logins will provide visibility into the use of a fully privileged account and an opportunity to reduce the use of it.",
   "RelatedUrl": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+    "https://hub.prowler.com/check/sls_root_account_usage_alert_enabled"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -23,7 +27,7 @@
     },
     "Recommendation": {
       "Text": "Logon to SLS Console. Ensure the Action Trail are Enabled. Select Alerts. Ensure alert rule has been enabled for root account usage.",
-      "Url": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
+      "Url": "https://hub.prowler.com/check/sls_root_account_usage_alert_enabled"
     }
   },
   "Categories": [
@@ -31,5 +35,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check aligns with CIS Alibaba Cloud Foundations Benchmark"
+  "Notes": ""
 }
