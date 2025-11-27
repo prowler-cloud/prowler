@@ -4,7 +4,7 @@ This module provides tools for searching, viewing, and analyzing security findin
 across all cloud providers.
 """
 
-from typing import Any
+from typing import Any, Literal
 
 from prowler_mcp_server.prowler_app.models.findings import (
     DetailedFinding,
@@ -26,15 +26,29 @@ class FindingsTools(BaseTool):
 
     async def search_security_findings(
         self,
-        severity: list[str] = Field(
+        severity: list[
+            Literal["critical", "high", "medium", "low", "informational"]
+        ] = Field(
             default=[],
             description="Filter by severity levels. Multiple values allowed: critical, high, medium, low, informational. If empty, all severities are returned.",
         ),
-        status: list[str] = Field(
+        status: list[Literal["FAIL", "PASS", "MANUAL"]] = Field(
             default=["FAIL"],
             description="Filter by finding status. Multiple values allowed: FAIL (security issue found), PASS (no issue found), MANUAL (requires manual verification). Default: ['FAIL'] - only returns findings with security issues. To get all findings, pass an empty list [].",
         ),
-        provider_type: list[str] = Field(
+        provider_type: list[
+            Literal[
+                "aws",
+                "azure",
+                "gcp",
+                "kubernetes",
+                "m365",
+                "github",
+                "mongodbatlas",
+                "iac",
+                "oraclecloud",
+            ]
+        ] = Field(
             default=[],
             description="Filter by cloud provider type. Valid values: 'aws', 'azure', 'gcp', 'kubernetes', 'm365', 'github', 'mongodbatlas', 'iac', 'oraclecloud'. Multiple values allowed. If the parameter is not provided, all providers are returned.",
         ),
@@ -64,7 +78,7 @@ class FindingsTools(BaseTool):
             default=None,
             description="Filter by muted status. True for muted findings only, False for active findings only. If not specified, returns both",
         ),
-        delta: list[str] = Field(
+        delta: list[Literal["new", "changed"]] = Field(
             default=[],
             description="Show only new or changed findings. Multiple values allowed: new (not seen in previous scans), changed (modified since last scan). If empty, all findings are returned.",
         ),
@@ -215,7 +229,19 @@ class FindingsTools(BaseTool):
 
     async def get_findings_overview(
         self,
-        provider_type: list[str] = Field(
+        provider_type: list[
+            Literal[
+                "aws",
+                "azure",
+                "gcp",
+                "kubernetes",
+                "m365",
+                "github",
+                "mongodbatlas",
+                "iac",
+                "oraclecloud",
+            ]
+        ] = Field(
             default=[],
             description="Filter statistics by cloud provider. Valid values: 'aws', 'azure', 'gcp', 'kubernetes', 'm365', 'github', 'mongodbatlas', 'iac', 'oraclecloud'. Multiple values allowed. If empty, all providers are returned.",
         ),
