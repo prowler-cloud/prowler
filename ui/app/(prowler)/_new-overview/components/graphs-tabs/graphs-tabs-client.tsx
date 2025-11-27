@@ -11,7 +11,7 @@ interface GraphsTabsClientProps {
 }
 
 export const GraphsTabsClient = ({ tabsContent }: GraphsTabsClientProps) => {
-  const [activeTab, setActiveTab] = useState<TabId>("threat-map");
+  const [activeTab, setActiveTab] = useState<TabId>("findings");
 
   const handleValueChange = (value: string) => {
     setActiveTab(value as TabId);
@@ -40,7 +40,7 @@ export const GraphsTabsClient = ({ tabsContent }: GraphsTabsClientProps) => {
           <TabsContent
             key={tab.id}
             value={tab.id}
-            className="mt-4 flex flex-1 overflow-visible"
+            className="mt-10 flex flex-1 overflow-visible"
           >
             {tabsContent[tab.id]}
           </TabsContent>

@@ -1,26 +1,3 @@
-// Services Overview Types
-// Corresponds to the /overviews/services endpoint
-
-export interface ServiceOverviewAttributes {
-  total: number;
-  fail: number;
-  muted: number;
-  pass: number;
-}
-
-export interface ServiceOverview {
-  type: "services-overview";
-  id: string;
-  attributes: ServiceOverviewAttributes;
-}
-
-export interface ServicesOverviewResponse {
-  data: ServiceOverview[];
-  meta: {
-    version: string;
-  };
-}
-
 // ThreatScore Snapshot Types
 // Corresponds to the ThreatScoreSnapshot model from the API
 
