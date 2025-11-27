@@ -9,7 +9,7 @@ import { DataTableRowActions } from "@/components/findings/table/data-table-row-
 import { InfoIcon } from "@/components/icons";
 import {
   DateWithTime,
-  EntityInfoShort,
+  EntityInfo,
   SnippetChip,
 } from "@/components/ui/entities";
 import { TriggerSheet } from "@/components/ui/sheet";
@@ -71,7 +71,9 @@ const FindingDetailsCell = ({ row }: { row: any }) => {
   return (
     <div className="flex max-w-10 justify-center">
       <TriggerSheet
-        triggerComponent={<InfoIcon className="text-primary" size={16} />}
+        triggerComponent={
+          <InfoIcon className="text-button-primary" size={16} />
+        }
         title="Finding Details"
         description="View the finding details"
         defaultOpen={isOpen}
@@ -89,8 +91,11 @@ const FindingDetailsCell = ({ row }: { row: any }) => {
 export const ColumnFindings: ColumnDef<FindingProps>[] = [
   {
     id: "moreInfo",
-    header: "Details",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Details" />
+    ),
     cell: ({ row }) => <FindingDetailsCell row={row} />,
+    enableSorting: false,
   },
   {
     accessorKey: "check",
@@ -113,9 +118,7 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
           <div className="flex flex-row items-center gap-4">
             {delta === "new" || delta === "changed" ? (
               <DeltaIndicator delta={delta} />
-            ) : (
-              <div className="w-2" />
-            )}
+            ) : null}
             <p className="mr-7 text-sm break-words whitespace-normal">
               {checktitle}
             </p>
@@ -129,7 +132,9 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
   },
   {
     accessorKey: "resourceName",
-    header: "Resource name",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Resource name" />
+    ),
     cell: ({ row }) => {
       const resourceName = getResourceData(row, "name");
 
@@ -141,6 +146,7 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
         />
       );
     },
+    enableSorting: false,
   },
   {
     accessorKey: "severity",
@@ -208,7 +214,9 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
   // },
   {
     accessorKey: "region",
-    header: "Region",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Region" />
+    ),
     cell: ({ row }) => {
       const region = getResourceData(row, "region");
 
@@ -218,18 +226,24 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
         </div>
       );
     },
+    enableSorting: false,
   },
   {
     accessorKey: "service",
-    header: "Service",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Service" />
+    ),
     cell: ({ row }) => {
       const { servicename } = getFindingsMetadata(row);
       return <p className="max-w-96 truncate text-xs">{servicename}</p>;
     },
+    enableSorting: false,
   },
   {
     accessorKey: "cloudProvider",
-    header: "Cloud Provider",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Cloud Provider" />
+    ),
     cell: ({ row }) => {
       const provider = getProviderData(row, "provider");
       const alias = getProviderData(row, "alias");
@@ -237,7 +251,7 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
 
       return (
         <>
-          <EntityInfoShort
+          <EntityInfo
             cloudProvider={provider as ProviderType}
             entityAlias={alias as string}
             entityId={uid as string}
@@ -245,12 +259,16 @@ export const ColumnFindings: ColumnDef<FindingProps>[] = [
         </>
       );
     },
+    enableSorting: false,
   },
   {
     id: "actions",
-    header: "Actions",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Actions" />
+    ),
     cell: ({ row }) => {
       return <DataTableRowActions row={row} />;
     },
+    enableSorting: false,
   },
 ];

@@ -1,7 +1,12 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Rectangle, ResponsiveContainer, Sankey, Tooltip } from "recharts";
+
+import { PROVIDER_ICONS } from "@/components/icons/providers-badge";
+import { initializeChartColors } from "@/lib/charts/colors";
+import { SEVERITY_FILTER_MAP } from "@/types/severities";
 
 import { ChartTooltip } from "./shared/chart-tooltip";
 
@@ -47,59 +52,7 @@ interface NodeTooltipState {
 }
 
 const TOOLTIP_OFFSET_PX = 10;
-
-// Map color names to CSS variable names defined in globals.css
-const COLOR_MAP: Record<string, string> = {
-  Success: "--color-bg-pass",
-  Fail: "--color-bg-fail",
-  AWS: "--color-bg-data-aws",
-  Azure: "--color-bg-data-azure",
-  "Google Cloud": "--color-bg-data-gcp",
-  Critical: "--color-bg-data-critical",
-  High: "--color-bg-data-high",
-  Medium: "--color-bg-data-medium",
-  Low: "--color-bg-data-low",
-  Info: "--color-bg-data-info",
-  Informational: "--color-bg-data-info",
-};
-
-/**
- * Compute color value from CSS variable name at runtime.
- * SVG fill attributes cannot directly resolve CSS variables,
- * so we extract computed values from globals.css CSS variables.
- * Falls back to black (#000000) if variable not found or access fails.
- *
- * @param colorName - Key in COLOR_MAP (e.g., "AWS", "Fail")
- * @returns Computed CSS variable value or fallback color
- */
-const getColorVariable = (colorName: string): string => {
-  const varName = COLOR_MAP[colorName];
-  if (!varName) return "#000000";
-
-  try {
-    if (typeof document === "undefined") {
-      // SSR context - return fallback
-      return "#000000";
-    }
-    return (
-      getComputedStyle(document.documentElement)
-        .getPropertyValue(varName)
-        .trim() || "#000000"
-    );
-  } catch (error: unknown) {
-    // CSS variables not loaded or access failed - return fallback
-    return "#000000";
-  }
-};
-
-// Initialize all color variables from CSS
-const initializeColors = (): Record<string, string> => {
-  const colors: Record<string, string> = {};
-  for (const [colorName] of Object.entries(COLOR_MAP)) {
-    colors[colorName] = getColorVariable(colorName);
-  }
-  return colors;
-};
+const MIN_LINK_WIDTH = 4;
 
 interface TooltipPayload {
   payload: {
@@ -130,6 +83,7 @@ interface CustomNodeProps {
   onNodeHover?: (data: Omit<NodeTooltipState, "show">) => void;
   onNodeMove?: (position: { x: number; y: number }) => void;
   onNodeLeave?: () => void;
+  onNodeClick?: (nodeName: string) => void;
 }
 
 interface CustomLinkProps {
@@ -184,12 +138,14 @@ const CustomNode = ({
   onNodeHover,
   onNodeMove,
   onNodeLeave,
+  onNodeClick,
 }: CustomNodeProps) => {
   const isOut = x + width + 6 > containerWidth;
   const nodeName = payload.name;
   const color = colors[nodeName] || "var(--color-text-neutral-tertiary)";
   const isHidden = nodeName === "";
   const hasTooltip = !isHidden && payload.newFindings;
+  const isClickable = SEVERITY_FILTER_MAP[nodeName] !== undefined;
 
   const handleMouseEnter = (e: React.MouseEvent) => {
     if (!hasTooltip) return;
@@ -227,12 +183,30 @@ const CustomNode = ({
     onNodeLeave?.();
   };
 
+  const handleClick = () => {
+    if (isClickable) {
+      onNodeClick?.(nodeName);
+    }
+  };
+
+  const IconComponent = PROVIDER_ICONS[nodeName];
+  const hasIcon = IconComponent !== undefined;
+  const iconSize = 24;
+  const iconGap = 8;
+
+  // Calculate text position accounting for icon
+  const textOffsetX = isOut ? x - 6 : x + width + 6;
+  const iconOffsetX = isOut
+    ? textOffsetX - iconSize - iconGap
+    : textOffsetX + iconGap;
+
   return (
     <g
-      style={{ cursor: hasTooltip ? "pointer" : "default" }}
+      style={{ cursor: isClickable || hasTooltip ? "pointer" : "default" }}
       onMouseEnter={handleMouseEnter}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
+      onClick={handleClick}
     >
       <Rectangle
         x={x}
@@ -244,9 +218,27 @@ const CustomNode = ({
       />
       {!isHidden && (
         <>
+          {hasIcon && (
+            <foreignObject
+              x={isOut ? iconOffsetX : textOffsetX}
+              y={y + height / 2 - iconSize / 2 - 2}
+              width={iconSize}
+              height={iconSize}
+            >
+              <div className="flex items-center justify-center">
+                <IconComponent width={iconSize} height={iconSize} />
+              </div>
+            </foreignObject>
+          )}
           <text
             textAnchor={isOut ? "end" : "start"}
-            x={isOut ? x - 6 : x + width + 6}
+            x={
+              hasIcon
+                ? isOut
+                  ? iconOffsetX - iconGap
+                  : textOffsetX + iconSize + iconGap * 2
+                : textOffsetX
+            }
             y={y + height / 2}
             fontSize="14"
             fill="var(--color-text-neutral-primary)"
@@ -255,7 +247,13 @@ const CustomNode = ({
           </text>
           <text
             textAnchor={isOut ? "end" : "start"}
-            x={isOut ? x - 6 : x + width + 6}
+            x={
+              hasIcon
+                ? isOut
+                  ? iconOffsetX - iconGap
+                  : textOffsetX + iconSize + iconGap * 2
+                : textOffsetX
+            }
             y={y + height / 2 + 13}
             fontSize="12"
             fill="var(--color-text-neutral-secondary)"
@@ -293,15 +291,18 @@ const CustomLink = ({
   const isHovered = hoveredLink !== null && hoveredLink === index;
   const hasHoveredLink = hoveredLink !== null;
 
+  // Ensure minimum link width for better visibility of small values
+  const effectiveLinkWidth = Math.max(linkWidth, MIN_LINK_WIDTH);
+
   const pathD = `
-    M${sourceX},${sourceY + linkWidth / 2}
-    C${sourceControlX},${sourceY + linkWidth / 2}
-      ${targetControlX},${targetY + linkWidth / 2}
-      ${targetX},${targetY + linkWidth / 2}
-    L${targetX},${targetY - linkWidth / 2}
-    C${targetControlX},${targetY - linkWidth / 2}
-      ${sourceControlX},${sourceY - linkWidth / 2}
-      ${sourceX},${sourceY - linkWidth / 2}
+    M${sourceX},${sourceY + effectiveLinkWidth / 2}
+    C${sourceControlX},${sourceY + effectiveLinkWidth / 2}
+      ${targetControlX},${targetY + effectiveLinkWidth / 2}
+      ${targetX},${targetY + effectiveLinkWidth / 2}
+    L${targetX},${targetY - effectiveLinkWidth / 2}
+    C${targetControlX},${targetY - effectiveLinkWidth / 2}
+      ${sourceControlX},${sourceY - effectiveLinkWidth / 2}
+      ${sourceX},${sourceY - effectiveLinkWidth / 2}
     Z
   `;
 
@@ -360,6 +361,7 @@ const CustomLink = ({
 };
 
 export function SankeyChart({ data, height = 400 }: SankeyChartProps) {
+  const router = useRouter();
   const [hoveredLink, setHoveredLink] = useState<number | null>(null);
   const [colors, setColors] = useState<Record<string, string>>({});
   const [linkTooltip, setLinkTooltip] = useState<LinkTooltipState>({
@@ -383,7 +385,7 @@ export function SankeyChart({ data, height = 400 }: SankeyChartProps) {
 
   // Initialize colors from CSS variables on mount
   useEffect(() => {
-    setColors(initializeColors());
+    setColors(initializeChartColors());
   }, []);
 
   const handleLinkHover = (
@@ -423,11 +425,18 @@ export function SankeyChart({ data, height = 400 }: SankeyChartProps) {
     setNodeTooltip((prev) => ({ ...prev, show: false }));
   };
 
+  const handleNodeClick = (nodeName: string) => {
+    const severityFilter = SEVERITY_FILTER_MAP[nodeName];
+    if (severityFilter) {
+      router.push(`/findings?filter[severity]=${severityFilter}`);
+    }
+  };
+
   // Create callback references that wrap custom props and Recharts-injected props
   const wrappedCustomNode = (
     props: Omit<
       CustomNodeProps,
-      "colors" | "onNodeHover" | "onNodeMove" | "onNodeLeave"
+      "colors" | "onNodeHover" | "onNodeMove" | "onNodeLeave" | "onNodeClick"
     >,
   ) => (
     <CustomNode
@@ -436,6 +445,7 @@ export function SankeyChart({ data, height = 400 }: SankeyChartProps) {
       onNodeHover={handleNodeHover}
       onNodeMove={handleNodeMove}
       onNodeLeave={handleNodeLeave}
+      onNodeClick={handleNodeClick}
     />
   );
 

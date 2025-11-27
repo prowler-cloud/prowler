@@ -90,6 +90,9 @@ from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_azur
 from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_gcp import (
     ProwlerThreatScoreGCP,
 )
+from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_kubernetes import (
+    ProwlerThreatScoreKubernetes,
+)
 from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_m365 import (
     ProwlerThreatScoreM365,
 )
@@ -430,7 +433,7 @@ def prowler():
         else:
             # Refactor(CLI)
             logger.critical(
-                "Slack integration needs SLACK_API_TOKEN and SLACK_CHANNEL_NAME environment variables (see more in https://docs.prowler.cloud/en/latest/tutorials/integrations/#slack)."
+                "Slack integration needs SLACK_API_TOKEN and SLACK_CHANNEL_NAME environment variables (see more in https://docs.prowler.com/user-guide/cli/tutorials/integrations#configuration-of-the-integration-with-slack)."
             )
             sys.exit(1)
 
@@ -845,6 +848,19 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(iso27001)
                 iso27001.batch_write_data_to_file()
+            elif compliance_name == "prowler_threatscore_kubernetes":
+                # Generate Prowler ThreatScore Finding Object
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                prowler_threatscore = ProwlerThreatScoreKubernetes(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(prowler_threatscore)
+                prowler_threatscore.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"

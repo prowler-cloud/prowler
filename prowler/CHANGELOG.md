@@ -2,7 +2,23 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [v5.14.0] (Prowler UNRELEASED)
+## [v5.15.0] (Prowler UNRELEASED)
+
+### Added
+- `cloudstorage_uses_vpc_service_controls` check for GCP provider [(#9256)](https://github.com/prowler-cloud/prowler/pull/9256)
+- `repository_immutable_releases_enabled` check for GitHub provider [(#9162)](https://github.com/prowler-cloud/prowler/pull/9162)
+
+---
+
+## [v5.14.1] (Prowler UNRELEASED)
+
+### Fixed
+- `sharepoint_external_sharing_managed` check to handle external sharing disabled at organization level [(#9298)](https://github.com/prowler-cloud/prowler/pull/9298)
+- Support multiple Exchange mailbox policies in M365 `exchange_mailbox_policy_additional_storage_restricted` check [(#9241)](https://github.com/prowler-cloud/prowler/pull/9241)
+
+---
+
+## [v5.14.0] (Prowler v5.14.0)
 
 ### Added
 - GitHub provider check `organization_default_repository_permission_strict` [(#8785)](https://github.com/prowler-cloud/prowler/pull/8785)
@@ -11,18 +27,23 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `cloudstorage_bucket_versioning_enabled` check for GCP provider [(#9014)](https://github.com/prowler-cloud/prowler/pull/9014)
 - `cloudstorage_bucket_soft_delete_enabled` check for GCP provider [(#9028)](https://github.com/prowler-cloud/prowler/pull/9028)
 - `cloudstorage_bucket_logging_enabled` check for GCP provider [(#9091)](https://github.com/prowler-cloud/prowler/pull/9091)
+- `cloudstorage_audit_logs_enabled` check for GCP provider [(#9220)](https://github.com/prowler-cloud/prowler/pull/9220)
 - `cloudstorage_bucket_sufficient_retention_period` check for GCP provider [(#9149)](https://github.com/prowler-cloud/prowler/pull/9149)
 - C5 compliance framework for Azure provider [(#9081)](https://github.com/prowler-cloud/prowler/pull/9081)
 - C5 compliance framework for the GCP provider [(#9097)](https://github.com/prowler-cloud/prowler/pull/9097)
 - `organization_repository_creation_limited` check for GitHub provider [(#8844)](https://github.com/prowler-cloud/prowler/pull/8844)
 - HIPAA compliance framework for the GCP provider [(#8955)](https://github.com/prowler-cloud/prowler/pull/8955)
+- Support PDF reporting for ENS compliance framework [(#9158)](https://github.com/prowler-cloud/prowler/pull/9158)
+- PDF reporting for NIS2 compliance framework [(#9170)](https://github.com/prowler-cloud/prowler/pull/9170)
 - Add organization ID parameter for MongoDB Atlas provider [(#9167)](https://github.com/prowler-cloud/prowler/pull/9167)
 - Add multiple compliance improvements [(#9145)](https://github.com/prowler-cloud/prowler/pull/9145)
 - Added validation for invalid checks, services, and categories in `load_checks_to_execute` function [(#8971)](https://github.com/prowler-cloud/prowler/pull/8971)
 - NIST CSF 2.0 compliance framework for the AWS provider [(#9185)](https://github.com/prowler-cloud/prowler/pull/9185)
 - Add FedRAMP 20x KSI Low for AWS, Azure and GCP [(#9198)](https://github.com/prowler-cloud/prowler/pull/9198)
 - Add verification for provider ID in MongoDB Atlas provider [(#9211)](https://github.com/prowler-cloud/prowler/pull/9211)
+- Add Prowler ThreatScore for the K8S provider [(#9235)](https://github.com/prowler-cloud/prowler/pull/9235)
 - Add `postgresql_flexible_server_entra_id_authentication_enabled` check for Azure provider [(#8764)](https://github.com/prowler-cloud/prowler/pull/8764)
+- Add branch name to IaC provider region [(#9296)](https://github.com/prowler-cloud/prowler/pull/9295)
 
 ### Changed
 - Update AWS Direct Connect service metadata to new format [(#8855)](https://github.com/prowler-cloud/prowler/pull/8855)
@@ -33,6 +54,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS EKS service metadata to new format [(#8890)](https://github.com/prowler-cloud/prowler/pull/8890)
 - Update AWS Elastic Beanstalk service metadata to new format [(#8934)](https://github.com/prowler-cloud/prowler/pull/8934)
 - Update AWS ElastiCache service metadata to new format [(#8933)](https://github.com/prowler-cloud/prowler/pull/8933)
+- Update Kubernetes etcd service metadata to new format [(#9096)](https://github.com/prowler-cloud/prowler/pull/9096)
 - Update MongoDB Atlas projects service metadata to new format [(#9093)](https://github.com/prowler-cloud/prowler/pull/9093)
 - Update GitHub Organization service metadata to new format [(#9094)](https://github.com/prowler-cloud/prowler/pull/9094)
 - Update AWS CodeBuild service metadata to new format [(#8851)](https://github.com/prowler-cloud/prowler/pull/8851)
@@ -53,10 +75,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update oraclecloud blockstorage service metadata to new format [(#9222)](https://github.com/prowler-cloud/prowler/pull/9222)
 - Update oraclecloud audit service metadata to new format [(#9221)](https://github.com/prowler-cloud/prowler/pull/9221)
 - Raise ASFF output error for non-AWS providers [(#9225)](https://github.com/prowler-cloud/prowler/pull/9225)
-
----
-
-## [v5.13.2] (Prowler UNRELEASED)
+- Update AWS ECR service metadata to new format [(#8872)](https://github.com/prowler-cloud/prowler/pull/8872)
+- Update AWS ECS service metadata to new format [(#8888)](https://github.com/prowler-cloud/prowler/pull/8888)
+- Update AWS Kinesis service metadata to new format [(#9262)](https://github.com/prowler-cloud/prowler/pull/9262)
+- Update AWS DocumentDB service metadata to new format [(#8862)](https://github.com/prowler-cloud/prowler/pull/8862)
 
 ### Fixed
 - Check `check_name` has no `resource_name` error for GCP provider [(#9169)](https://github.com/prowler-cloud/prowler/pull/9169)
@@ -65,7 +87,11 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Fix M365 Teams `--sp-env-auth` connection error and enhanced timeout logging [(#9191)](https://github.com/prowler-cloud/prowler/pull/9191)
 - Rename `get_oci_assessment_summary` to `get_oraclecloud_assessment_summary` in HTML output [(#9200)](https://github.com/prowler-cloud/prowler/pull/9200)
 - Fix Validation and other errors in Azure provider [(#8915)](https://github.com/prowler-cloud/prowler/pull/8915)
-- Support multiple Exchange mailbox policies in M365 `exchange_mailbox_policy_additional_storage_restricted` check [(#9241)](https://github.com/prowler-cloud/prowler/pull/9241)
+- Update documentation URLs from docs.prowler.cloud to docs.prowler.com [(#9240)](https://github.com/prowler-cloud/prowler/pull/9240)
+- Refresh output report timestamps for each scan [(#9272)](https://github.com/prowler-cloud/prowler/pull/9272)
+- Fix file name parsing for checks on Windows [(#9268)](https://github.com/prowler-cloud/prowler/pull/9268)
+- Remove typo for Prowler ThreatScore - M365 [(#9274)](https://github.com/prowler-cloud/prowler/pull/9274)
+- Point HTML logo to the one present in the Github repository [(#9282)](https://github.com/prowler-cloud/prowler/pull/9282)
 
 ---
 
@@ -127,6 +153,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS Directory Service service metadata to new format [(#8859)](https://github.com/prowler-cloud/prowler/pull/8859)
 - Update AWS CloudFront service metadata to new format [(#8829)](https://github.com/prowler-cloud/prowler/pull/8829)
 - Deprecate user authentication for M365 provider [(#8865)](https://github.com/prowler-cloud/prowler/pull/8865)
+
 
 ### Fixed
 - Fix SNS topics showing empty AWS_ResourceID in Quick Inventory output [(#8762)](https://github.com/prowler-cloud/prowler/issues/8762)
@@ -392,7 +419,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
-## [v5.7.5] (Prowler 5.7.5)
+## [v5.7.5] (Prowler v5.7.5)
 
 ### Fixed
 - Use unified timestamp for all requirements [(#8059)](https://github.com/prowler-cloud/prowler/pull/8059)

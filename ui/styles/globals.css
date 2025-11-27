@@ -6,7 +6,6 @@
 
 /* ===== LIGHT THEME (ROOT) ===== */
 :root {
-  /* ===== NEW VARIABLES (PROWLER-307) - SEMANTIC COLORS ===== */
   /* Button Colors */
   --bg-button-primary: var(--color-emerald-300);
   --bg-button-primary-hover: var(--color-teal-200);
@@ -36,6 +35,7 @@
   --text-neutral-secondary: var(--color-zinc-800);
   --text-neutral-tertiary: var(--color-zinc-500);
   --text-error-primary: var(--color-red-600);
+  --text-warning-primary: var(--color-orange-500);
   --text-success-primary: var(--color-green-600);
 
   /* Border Colors */
@@ -79,7 +79,6 @@
 
 /* ===== DARK THEME ===== */
 .dark {
-  /* ===== NEW VARIABLES (PROWLER-307) - SEMANTIC COLORS ===== */
   /* Button Colors */
   --bg-button-primary: var(--color-emerald-300);
   --bg-button-primary-hover: var(--color-teal-200);
@@ -98,13 +97,14 @@
   --bg-input-primary: var(--color-neutral-900);
   --border-input-primary: var(--color-neutral-800);
   --border-input-primary-press: var(--color-neutral-800);
-  --border-input-primary-fill: var(--color-neutral-800);
+  --border-input-primary-fill: var(--color-neutral-300);
 
   /* Text Colors */
   --text-neutral-primary: var(--color-zinc-100);
   --text-neutral-secondary: var(--color-zinc-300);
   --text-neutral-tertiary: var(--color-zinc-400);
   --text-error-primary: var(--color-red-500);
+  --text-warning-primary: var(--color-orange-500);
   --text-success-primary: var(--color-green-500);
 
   /* Border Colors */
@@ -148,25 +148,6 @@
 
 /* ===== TAILWIND THEME MAPPINGS ===== */
 @theme {
-  /* Remap base variables to --color- prefix for Tailwind compatibility */
-  /* ===== LEGACY CHART COLORS ===== */
-  --color-chart-info: var(--chart-info);
-  --color-chart-warning: var(--chart-warning);
-  --color-chart-warning-emphasis: var(--chart-warning-emphasis);
-  --color-chart-danger: var(--chart-danger);
-  --color-chart-danger-emphasis: var(--chart-danger-emphasis);
-  --color-chart-success: var(--chart-success-color);
-  --color-chart-fail: var(--chart-fail);
-  --color-chart-radar-primary: var(--chart-radar-primary);
-  --color-chart-text-primary: var(--chart-text-primary);
-  --color-chart-text-secondary: var(--chart-text-secondary);
-  --color-chart-border: var(--chart-border);
-  --color-chart-border-emphasis: var(--chart-border-emphasis);
-  --color-chart-background: var(--chart-background);
-  --color-chart-alert-bg: var(--chart-alert-bg);
-  --color-chart-alert-text: var(--chart-alert-text);
-
-  /* ===== NEW SEMANTIC COLORS (PROWLER-307) ===== */
   /* Data Background Colors */
   --color-bg-data-azure: var(--bg-data-azure);
   --color-bg-data-kubernetes: var(--bg-data-kubernetes);
@@ -193,10 +174,10 @@
   --color-button-disabled: var(--bg-button-disabled);
 
   /* Input Colors */
-  --color-input-primary: var(--bg-input-primary);
-  --color-input-border: var(--border-input-primary);
-  --color-input-border-press: var(--border-input-primary-press);
-  --color-input-border-fill: var(--border-input-primary-fill);
+  --color-bg-input-primary: var(--bg-input-primary);
+  --color-border-input-primary: var(--border-input-primary);
+  --color-border-input-primary-press: var(--border-input-primary-press);
+  --color-border-input-primary-fill: var(--border-input-primary-fill);
 
   /* Neutral Map Colors */
   --color-bg-neutral-map: var(--bg-neutral-map);
@@ -216,7 +197,9 @@
   --color-text-neutral-primary: var(--text-neutral-primary);
   --color-text-neutral-secondary: var(--text-neutral-secondary);
   --color-text-neutral-tertiary: var(--text-neutral-tertiary);
-  --color-text-error: var(--text-error-primary);
+  --color-text-error-primary: var(--text-error-primary);
+  --color-text-warning-primary: var(--text-warning-primary);
+  --color-text-success-primary: var(--text-success-primary);
 
   /* Background Colors */
   --color-bg-neutral-primary: var(--bg-neutral-primary);
