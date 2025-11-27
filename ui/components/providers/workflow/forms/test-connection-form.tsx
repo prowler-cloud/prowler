@@ -246,15 +246,15 @@ export const TestConnectionForm = ({
 
         {connectionStatus && !connectionStatus.connected && (
           <>
-            <div className="border-border-error flex items-center gap-4 rounded-lg border p-4">
-              <div className="flex items-center">
+            <div className="border-border-error flex items-start gap-4 rounded-lg border p-4">
+              <div className="flex shrink-0 items-center">
                 <Icon
                   icon="heroicons:exclamation-circle"
                   className="text-text-error-primary h-5 w-5"
                 />
               </div>
-              <div className="flex items-center">
-                <p className="text-small text-text-error-primary">
+              <div className="min-w-0 flex-1">
+                <p className="text-small text-text-error-primary break-words">
                   {connectionStatus.error || "Unknown error"}
                 </p>
               </div>
