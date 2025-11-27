@@ -1573,22 +1573,6 @@ def attack_paths_graph_stub_classes():
     )
 
 
-@pytest.fixture
-def graph_db_mocks():
-    with (
-        patch(
-            "tasks.jobs.deletion.graph_database.drop_tenant_provider_databases"
-        ) as mock_drop_tenant_provider_databases,
-        patch(
-            "tasks.jobs.deletion.graph_database.drop_tenant_databases"
-        ) as mock_drop_tenant_databases,
-    ):
-        yield {
-            "drop_tenant_provider_databases": mock_drop_tenant_provider_databases,
-            "drop_tenant_databases": mock_drop_tenant_databases,
-        }
-
-
 def get_authorization_header(access_token: str) -> dict:
     return {"Authorization": f"Bearer {access_token}"}
 

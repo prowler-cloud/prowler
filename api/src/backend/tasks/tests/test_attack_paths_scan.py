@@ -58,8 +58,8 @@ class TestAttackPathsRun:
                 return_value="bolt://neo4j",
             ),
             patch(
-                "tasks.jobs.attack_paths.scan.graph_database.get_tenant_provider_scan_database_name",
-                return_value="db-tenant-provider-scan",
+                "tasks.jobs.attack_paths.scan.graph_database.get_database_name",
+                return_value="db-scan-id",
             ) as mock_get_db_name,
             patch(
                 "tasks.jobs.attack_paths.scan.graph_database.create_database"
@@ -108,10 +108,10 @@ class TestAttackPathsRun:
         mock_retrieve_scan.assert_called_once_with(str(tenant.id), str(scan.id))
         mock_starting.assert_called_once()
         config = mock_starting.call_args[0][2]
-        assert config.neo4j_database == "db-tenant-provider-scan"
+        assert config.neo4j_database == "db-scan-id"
 
-        mock_create_db.assert_called_once_with("db-tenant-provider-scan")
-        mock_get_session.assert_called_once_with("db-tenant-provider-scan")
+        mock_create_db.assert_called_once_with("db-scan-id")
+        mock_get_session.assert_called_once_with("db-scan-id")
         mock_cartography_indexes.assert_called_once_with(mock_session, config)
         mock_prowler_indexes.assert_called_once_with(mock_session)
         mock_cartography_analysis.assert_called_once_with(mock_session, config)
@@ -132,9 +132,7 @@ class TestAttackPathsRun:
         mock_finish.assert_called_once_with(
             attack_paths_scan, StateChoices.COMPLETED, ingestion_result
         )
-        mock_get_db_name.assert_called_once_with(
-            provider.tenant_id, provider.id, attack_paths_scan.id
-        )
+        mock_get_db_name.assert_called_once_with(attack_paths_scan.id)
 
     def test_run_failure_marks_scan_failed(
         self, tenants_fixture, providers_fixture, scans_fixture
@@ -171,8 +169,8 @@ class TestAttackPathsRun:
             ),
             patch("tasks.jobs.attack_paths.scan.graph_database.get_uri"),
             patch(
-                "tasks.jobs.attack_paths.scan.graph_database.get_tenant_provider_scan_database_name",
-                return_value="db-tenant-provider-scan",
+                "tasks.jobs.attack_paths.scan.graph_database.get_database_name",
+                return_value="db-scan-id",
             ),
             patch("tasks.jobs.attack_paths.scan.graph_database.create_database"),
             patch(

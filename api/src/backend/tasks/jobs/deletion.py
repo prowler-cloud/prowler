@@ -13,6 +13,7 @@ from api.models import (
     ScanSummary,
     Tenant,
 )
+from tasks.jobs.attack_paths.db_utils import get_provider_graph_database_names
 
 logger = get_task_logger(__name__)
 
@@ -32,9 +33,18 @@ def delete_provider(tenant_id: str, pk: str):
     Raises:
         Provider.DoesNotExist: If no instance with the provided primary key exists.
     """
+    # Delete the Attack Paths' graph databases related to the provider
+    graph_database_names = get_provider_graph_database_names(tenant_id, pk)
+    try:
+        for graph_database_name in graph_database_names:
+            graph_database.drop_database(graph_database_name)
+    except graph_database.GraphDatabaseQueryException as gdb_error:
+        logger.error(f"Error deleting Provider databases: {gdb_error}")
+        raise
+
+    # Get all provider related data and delete them in batches
     with rls_transaction(tenant_id):
         instance = Provider.all_objects.get(pk=pk)
-        deletion_summary = {}
         deletion_steps = [
             ("Scan Summaries", ScanSummary.all_objects.filter(scan__provider=instance)),
             ("Findings", Finding.all_objects.filter(scan__provider=instance)),
@@ -43,6 +53,7 @@ def delete_provider(tenant_id: str, pk: str):
             ("AttackPathsScans", AttackPathsScan.all_objects.filter(provider=instance)),
         ]
 
+    deletion_summary = {}
     for step_name, queryset in deletion_steps:
         try:
             _, step_summary = batch_delete(tenant_id, queryset)
@@ -50,13 +61,6 @@ def delete_provider(tenant_id: str, pk: str):
         except DatabaseError as db_error:
             logger.error(f"Error deleting {step_name}: {db_error}")
             raise
-
-    # Delete the Attack Paths' Neo4j data related to the provider
-    try:
-        graph_database.drop_tenant_provider_databases(instance.tenant_id, instance.id)
-    except graph_database.GraphDatabaseQueryException as gdb_error:
-        logger.error(f"Error deleting Provider subgraph: {gdb_error}")
-        raise
 
     try:
         with rls_transaction(tenant_id):
@@ -85,12 +89,6 @@ def delete_tenant(pk: str):
     for provider in Provider.objects.using(MainRouter.admin_db).filter(tenant_id=pk):
         summary = delete_provider(pk, provider.id)
         deletion_summary.update(summary)
-
-    try:  # If there is any remaining Neo4j database for the tenant
-        graph_database.drop_tenant_databases(tenant_id=pk)
-    except graph_database.GraphDatabaseQueryException as gdb_error:
-        logger.error(f"Error deleting Tenant graph database: {gdb_error}")
-        raise
 
     Tenant.objects.using(MainRouter.admin_db).filter(id=pk).delete()
 

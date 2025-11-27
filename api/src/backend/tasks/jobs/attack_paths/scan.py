@@ -43,14 +43,6 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
 
     # Prowler necessary objects
     with rls_transaction(tenant_id):
-        """
-        provider_id_subquery = ProwlerAPIScan.objects.filter(pk=scan_id).values(
-            "provider_id"
-        )[:1]
-        prowler_api_provider = ProwlerAPIProvider.objects.get(
-            id=Subquery(provider_id_subquery)
-        )
-        """  # TODO: Delete this comment and its content if the next line works fine
         prowler_api_provider = ProwlerAPIProvider.objects.get(scan__pk=scan_id)
         prowler_sdk_provider = initialize_prowler_provider(prowler_api_provider)
 
@@ -71,11 +63,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
     # While creating the Cartography configuration, attributes `neo4j_user` and `neo4j_password` are not really needed in this config object
     cartography_config = CartographyConfig(
         neo4j_uri=graph_database.get_uri(),
-        neo4j_database=graph_database.get_tenant_provider_scan_database_name(
-            prowler_api_provider.tenant_id,
-            prowler_api_provider.id,
-            attack_paths_scan.id,
-        ),
+        neo4j_database=graph_database.get_database_name(attack_paths_scan.id),
         update_tag=int(time.time()),
     )
 

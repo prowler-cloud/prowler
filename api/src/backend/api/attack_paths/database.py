@@ -6,7 +6,6 @@ from typing import Iterator
 from uuid import UUID
 
 import neo4j
-import shortuuid
 
 from django.conf import settings
 
@@ -108,92 +107,12 @@ def drop_subgraph(database: str, root_node_label: str, root_node_id: str) -> int
 
 
 # Neo4j functions related to Prowler + Cartography
-TENANT_DATABASE_NAME_PREFIX_TEMPLATE = "db-{tenant_id}-"
-TENANT_PROVIDER_DATABASE_NAME_PREFIX_TEMPLATE = (
-    TENANT_DATABASE_NAME_PREFIX_TEMPLATE + "{provider_id}-"
-)
-TENANT_PROVIDER_SCAN_DATABASE_NAME_TEMPLATE = (
-    TENANT_PROVIDER_DATABASE_NAME_PREFIX_TEMPLATE + "{partial_attack_paths_scan_id}"
-)
+DATABASE_NAME_TEMPLATE = "db-{attack_paths_scan_id}"
 
 
-def get_shortuuid(id: str | UUID) -> str:
-    if isinstance(id, UUID):
-        return shortuuid.encode(id)
-
-    return shortuuid.encode(UUID(id))
-
-
-def get_tenant_provider_scan_database_name(
-    tenant_id: UUID, provider_id: UUID, attack_paths_scan_id: UUID
-) -> str:
-    """
-    Neo4j database names have a maximum of 63 characters:
-      https://neo4j.com/docs/operations-manual/current/database-administration/standard-databases/naming-databases/
-
-    `shourtuuid` always generates 22 characters:
-     https://github.com/skorokithakis/shortuuid/tree/6843c128cb334c272954cce8f1dce1e9f9bf4054?tab=readme-ov-file#usage
-
-    So, `db-{tenant_id}-{provider_id}-` would be:
-      2 + 1 + 22 + 1 + 22 + 1 = 49 characters
-      63 - 49 = 14 characters left for uniqueness
-
-    With 14 characters we have more than enough uniqueness for our use case:
-      https://github.com/oittaa/uuid6-python/tree/89351300ab5c75a158038d1f4e2f586d4ae9120e?tab=readme-ov-file#uuidv7-field-and-bit-layout
-    """
-    short_tenant_id = get_shortuuid(tenant_id)
-    short_provider_id = get_shortuuid(provider_id)
-    partial_short_attack_paths_scan_id = get_shortuuid(attack_paths_scan_id)[:14]
-
-    return TENANT_PROVIDER_SCAN_DATABASE_NAME_TEMPLATE.format(
-        tenant_id=short_tenant_id,
-        provider_id=short_provider_id,
-        partial_attack_paths_scan_id=partial_short_attack_paths_scan_id,
-    )
-
-
-# TODO: Fix the necesity of `toLower` with databases with names as `db-{lower_case_attack_paths_scan_id}`
-def get_databases_by_prefix(prefix: str) -> list[str]:
-    query = f"""
-        SHOW DATABASES
-        YIELD name
-        WHERE name STARTS WITH toLower('{prefix}')
-        RETURN name
-    """
-
-    with get_session() as session:
-        result = session.run(query)
-        result_rows = result.data()
-        return [row["name"] for row in result_rows]
-
-
-def get_tenant_provider_databases(tenant_id: UUID, provider_id: UUID) -> list[str]:
-    short_tenant_id = get_shortuuid(tenant_id)
-    short_provider_id = get_shortuuid(provider_id)
-    prefix = TENANT_PROVIDER_DATABASE_NAME_PREFIX_TEMPLATE.format(
-        tenant_id=short_tenant_id, provider_id=short_provider_id
-    )
-
-    return get_databases_by_prefix(prefix)
-
-
-def drop_tenant_provider_databases(tenant_id: UUID, provider_id: UUID) -> bool:
-    databases = get_tenant_provider_databases(tenant_id, provider_id)
-    for database in databases:
-        drop_database(database)
-
-
-def get_tenant_databases(tenant_id: UUID) -> list[str]:
-    short_tenant_id = get_shortuuid(tenant_id)
-    prefix = TENANT_DATABASE_NAME_PREFIX_TEMPLATE.format(tenant_id=short_tenant_id)
-
-    return get_databases_by_prefix(prefix)
-
-
-def drop_tenant_databases(tenant_id: UUID) -> None:
-    databases = get_tenant_databases(tenant_id)
-    for database in databases:
-        drop_database(database)
+def get_database_name(attack_paths_scan_id: UUID) -> str:
+    attack_paths_scan_id_str = str(attack_paths_scan_id).lower()
+    return DATABASE_NAME_TEMPLATE.format(attack_paths_scan_id=attack_paths_scan_id_str)
 
 
 # Exceptions

@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from typing import Any
+from uuid import UUID
 
 from cartography.config import Config as CartographyConfig
 
@@ -43,7 +44,6 @@ def retrieve_attack_paths_scan(
     try:
         with rls_transaction(tenant_id):
             attack_paths_scan = ProwlerAPIAttackPathsScan.objects.get(
-                tenant_id=tenant_id,
                 scan_id=scan_id,
             )
 
@@ -122,9 +122,8 @@ def get_old_attack_paths_scans(
     """
 
     with rls_transaction(tenant_id):
-        completed_scans = (
+        completed_scans_qs = (
             ProwlerAPIAttackPathsScan.objects.filter(
-                tenant_id=tenant_id,
                 provider_id=provider_id,
                 state=StateChoices.COMPLETED,
                 is_graph_database_deleted=False,
@@ -133,7 +132,7 @@ def get_old_attack_paths_scans(
             .all()
         )
 
-        return list(completed_scans)
+        return list(completed_scans_qs)
 
 
 def update_old_attack_paths_scan(
@@ -142,3 +141,18 @@ def update_old_attack_paths_scan(
     with rls_transaction(old_attack_paths_scan.tenant_id):
         old_attack_paths_scan.is_graph_database_deleted = True
         old_attack_paths_scan.save(update_fields=["is_graph_database_deleted"])
+
+
+def get_provider_graph_database_names(tenant_id: str, provider_id: str) -> list[str]:
+    """
+    Return existing graph database names for a tenant/provider.
+
+    Note: For accesing the `AttackPathsScan` we need to use `all_objects` manager because the provider is soft-deleted.
+    """
+    with rls_transaction(tenant_id):
+        graph_databases_names_qs = ProwlerAPIAttackPathsScan.all_objects.filter(
+            provider_id=provider_id,
+            is_graph_database_deleted=False,
+        ).values_list("graph_database", flat=True)
+
+        return list(graph_databases_names_qs)
