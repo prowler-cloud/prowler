@@ -61,6 +61,7 @@ export async function RiskPipelineViewSSR({
   // Build sankey filters
   const sankeyFilters: SankeyFilters = {
     providerTypes: providerTypesToShow,
+    allSelectedProviderTypes: providerTypesToShow,
   };
 
   const sankeyData = adaptProvidersOverviewToSankey(

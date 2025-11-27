@@ -29,6 +29,8 @@ export interface SankeyData {
 
 export interface SankeyFilters {
   providerTypes?: string[];
+  /** All selected provider types - used to show missing providers in legend */
+  allSelectedProviderTypes?: string[];
 }
 
 interface AggregatedProvider {
@@ -127,6 +129,28 @@ export function adaptProvidersOverviewToSankey(
       displayName: p.displayName,
     }),
   );
+
+  // Add selected provider types that are completely missing from API response
+  // (these are providers with zero findings - not even in the response)
+  if (
+    filters?.allSelectedProviderTypes &&
+    filters.allSelectedProviderTypes.length > 0
+  ) {
+    const existingProviderIds = new Set(
+      aggregatedProviders.map((p) => p.id.toLowerCase()),
+    );
+
+    for (const selectedType of filters.allSelectedProviderTypes) {
+      const normalizedType = selectedType.toLowerCase();
+      if (!existingProviderIds.has(normalizedType)) {
+        // This provider type was selected but has no data at all
+        zeroDataProviders.push({
+          id: normalizedType,
+          displayName: getProviderDisplayName(normalizedType),
+        });
+      }
+    }
+  }
 
   // If no providers have failures, return empty chart with legends
   if (providersWithFailures.length === 0) {
