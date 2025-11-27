@@ -91,7 +91,7 @@ prowler dashboard
 | OCI | 51 | 13 | 1 | 10 | Official | UI, API, CLI |
 | Alibaba Cloud | 61 | 9 | 1 | 9 | Official | CLI |
 | IaC | [See `trivy` docs.](https://trivy.dev/latest/docs/coverage/iac/) | N/A | N/A | N/A | Official | UI, API, CLI |
-| MongoDB Atlas | 10 | 3 | 0 | 0 | Official | CLI, API |
+| MongoDB Atlas | 10 | 3 | 0 | 0 | Official | UI, API, CLI |
 | LLM | [See `promptfoo` docs.](https://www.promptfoo.dev/docs/red-team/plugins/) | N/A | N/A | N/A | Official | CLI |
 | NHN | 6 | 2 | 1 | 0 | Unofficial | CLI |
 
