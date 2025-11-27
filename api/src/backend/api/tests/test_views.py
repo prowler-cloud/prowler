@@ -10462,7 +10462,7 @@ class TestLighthouseProviderConfigViewSet:
 
     def test_bedrock_valid_api_key_credentials_success(self, authenticated_client):
         """Bedrock provider with valid API key + region should succeed and return masked credentials"""
-        valid_api_key = "ABSKQmVkcm9ja0FQSUtleS" + ("A" * 111)
+        valid_api_key = "ABSKQmVkcm9ja0FQSUtleS" + ("A" * 110)
         api_credentials = {
             "api_key": valid_api_key,
             "region": "us-east-1",
@@ -10495,7 +10495,7 @@ class TestLighthouseProviderConfigViewSet:
         self, authenticated_client
     ):
         """Bedrock provider with both API key and access keys should fail validation on create"""
-        valid_api_key = "ABSKQmVkcm9ja0FQSUtleS" + ("A" * 111)
+        valid_api_key = "ABSKQmVkcm9ja0FQSUtleS" + ("A" * 110)
         mixed_credentials = {
             "access_key_id": "AKIAIOSFODNN7EXAMPLE",
             "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
@@ -10524,7 +10524,7 @@ class TestLighthouseProviderConfigViewSet:
         self, authenticated_client
     ):
         """If created with API key, switching to access keys via update should be rejected"""
-        valid_api_key = "ABSKQmVkcm9ja0FQSUtleS" + ("A" * 111)
+        valid_api_key = "ABSKQmVkcm9ja0FQSUtleS" + ("A" * 110)
         create_payload = {
             "data": {
                 "type": "lighthouse-providers",
@@ -10571,7 +10571,7 @@ class TestLighthouseProviderConfigViewSet:
         self, authenticated_client
     ):
         """If created with access keys, switching to API key via update should be rejected"""
-        valid_api_key = "ABSKQmVkcm9ja0FQSUtleS" + ("A" * 111)
+        valid_api_key = "ABSKQmVkcm9ja0FQSUtleS" + ("A" * 110)
         initial_credentials = {
             "access_key_id": "AKIAIOSFODNN7EXAMPLE",
             "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",

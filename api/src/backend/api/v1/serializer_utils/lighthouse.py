@@ -74,7 +74,7 @@ class BedrockCredentialsSerializer(serializers.Serializer):
         """
         Validate Bedrock API key (bearer token).
         """
-        pattern = r"^ABSKQmVkcm9ja0FQSUtleS[A-Za-z0-9+/=]{111}$"
+        pattern = r"^ABSKQmVkcm9ja0FQSUtleS[A-Za-z0-9+/=]{110}$"
         if not re.match(pattern, value or ""):
             raise serializers.ValidationError("Invalid Bedrock API key format.")
         return value
@@ -238,6 +238,7 @@ class OpenAICompatibleCredentialsSerializer(serializers.Serializer):
                 "title": "AWS Bedrock Credentials",
                 "oneOf": [
                     {
+                        "title": "IAM Access Key Pair",
                         "type": "object",
                         "description": "Authenticate with AWS access key and secret key. Recommended when you manage IAM users or roles.",
                         "properties": {
@@ -261,6 +262,7 @@ class OpenAICompatibleCredentialsSerializer(serializers.Serializer):
                         "required": ["access_key_id", "secret_access_key", "region"],
                     },
                     {
+                        "title": "Amazon Bedrock API Key",
                         "type": "object",
                         "description": "Authenticate with an Amazon Bedrock API key (bearer token). Region is still required.",
                         "properties": {
