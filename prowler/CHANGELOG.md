@@ -6,6 +6,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Added
 - `cloudstorage_uses_vpc_service_controls` check for GCP provider [(#9256)](https://github.com/prowler-cloud/prowler/pull/9256)
+- `repository_immutable_releases_enabled` check for GitHub provider [(#9162)](https://github.com/prowler-cloud/prowler/pull/9162)
 
 ---
 
