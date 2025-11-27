@@ -28,8 +28,6 @@ interface AggregatedProvider {
   fail: number;
 }
 
-const EXCLUDED_PROVIDERS = new Set(["mongo", "mongodb", "mongodbatlas"]);
-
 // API can return multiple entries for the same provider type, so we sum their findings
 function aggregateProvidersByType(
   providers: ProviderOverview[],
@@ -38,8 +36,6 @@ function aggregateProvidersByType(
 
   for (const provider of providers) {
     const { id, attributes } = provider;
-
-    if (EXCLUDED_PROVIDERS.has(id)) continue;
 
     const existing = aggregated.get(id);
 

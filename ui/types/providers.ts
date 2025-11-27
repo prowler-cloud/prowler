@@ -4,6 +4,7 @@ export const PROVIDER_TYPES = [
   "gcp",
   "kubernetes",
   "m365",
+  "mongodbatlas",
   "github",
   "iac",
   "oraclecloud",
@@ -17,6 +18,7 @@ export const PROVIDER_DISPLAY_NAMES: Record<ProviderType, string> = {
   gcp: "Google Cloud",
   kubernetes: "Kubernetes",
   m365: "Microsoft 365",
+  mongodbatlas: "MongoDB Atlas",
   github: "GitHub",
   iac: "Infrastructure as Code",
   oraclecloud: "Oracle Cloud Infrastructure",
@@ -83,27 +85,6 @@ export interface ProviderEntity {
 export interface ProviderConnectionStatus {
   label: string;
   value: string;
-}
-
-export interface ProviderOverviewProps {
-  data: {
-    type: "provider-overviews";
-    id: ProviderType;
-    attributes: {
-      findings: {
-        pass: number;
-        fail: number;
-        manual: number;
-        total: number;
-      };
-      resources: {
-        total: number;
-      };
-    };
-  }[];
-  meta: {
-    version: string;
-  };
 }
 
 export interface ProvidersApiResponse {
