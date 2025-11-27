@@ -2,6 +2,8 @@ from typing import Dict
 
 import boto3
 import openai
+from botocore import UNSIGNED
+from botocore.config import Config
 from botocore.exceptions import BotoCoreError, ClientError
 from celery.utils.log import get_task_logger
 
@@ -56,21 +58,39 @@ def _extract_bedrock_credentials(
     """
     Safely extract AWS Bedrock credentials from a provider configuration.
 
+    Supports two authentication methods:
+    1. AWS access key + secret key + region
+    2. Bedrock API key (bearer token) + region
+
     Args:
         provider_cfg (LighthouseProviderConfiguration): The provider configuration instance
             containing the credentials.
 
     Returns:
-        Dict[str, str] | None: Dictionary with 'access_key_id', 'secret_access_key', and
-            'region' if present and valid, otherwise None.
+        Dict[str, str] | None: Dictionary with either:
+            - 'access_key_id', 'secret_access_key', and 'region' for access key auth
+            - 'api_key' and 'region' for API key (bearer token) auth
+            Returns None if credentials are invalid or missing.
     """
     creds = provider_cfg.credentials_decoded
     if not isinstance(creds, dict):
         return None
 
+    region = creds.get("region")
+    if not isinstance(region, str) or not region:
+        return None
+
+    # Check for API key authentication first
+    api_key = creds.get("api_key")
+    if isinstance(api_key, str) and api_key:
+        return {
+            "api_key": api_key,
+            "region": region,
+        }
+
+    # Fall back to access key authentication
     access_key_id = creds.get("access_key_id")
     secret_access_key = creds.get("secret_access_key")
-    region = creds.get("region")
 
     # Validate all required fields are present and are strings
     if (
@@ -78,8 +98,6 @@ def _extract_bedrock_credentials(
         or not access_key_id
         or not isinstance(secret_access_key, str)
         or not secret_access_key
-        or not isinstance(region, str)
-        or not region
     ):
         return None
 
@@ -88,6 +106,51 @@ def _extract_bedrock_credentials(
         "secret_access_key": secret_access_key,
         "region": region,
     }
+
+
+def _create_bedrock_client(
+    bedrock_creds: Dict[str, str], service_name: str = "bedrock"
+):
+    """
+    Create a boto3 Bedrock client with the appropriate authentication method.
+
+    Supports two authentication methods:
+    1. API key (bearer token) - uses unsigned requests with Authorization header
+    2. AWS access key + secret key - uses standard SigV4 signing
+
+    Args:
+        bedrock_creds: Dictionary with either:
+            - 'api_key' and 'region' for API key (bearer token) auth
+            - 'access_key_id', 'secret_access_key', and 'region' for access key auth
+        service_name: The Bedrock service name. Use 'bedrock' for control plane
+            operations (list_foundation_models, etc.) or 'bedrock-runtime' for
+            inference operations.
+
+    Returns:
+        boto3 client configured for the specified Bedrock service.
+    """
+    region = bedrock_creds["region"]
+
+    if "api_key" in bedrock_creds:
+        bearer_token = bedrock_creds["api_key"]
+        client = boto3.client(
+            service_name=service_name,
+            region_name=region,
+            config=Config(signature_version=UNSIGNED),
+        )
+
+        def inject_bearer_token(request, **kwargs):
+            request.headers["Authorization"] = f"Bearer {bearer_token}"
+
+        client.meta.events.register("before-send.*.*", inject_bearer_token)
+        return client
+
+    return boto3.client(
+        service_name=service_name,
+        region_name=region,
+        aws_access_key_id=bedrock_creds["access_key_id"],
+        aws_secret_access_key=bedrock_creds["secret_access_key"],
+    )
 
 
 def check_lighthouse_provider_connection(provider_config_id: str) -> Dict:
@@ -141,12 +204,7 @@ def check_lighthouse_provider_connection(provider_config_id: str) -> Dict:
                 }
 
             # Test connection by listing foundation models
-            bedrock_client = boto3.client(
-                "bedrock",
-                aws_access_key_id=bedrock_creds["access_key_id"],
-                aws_secret_access_key=bedrock_creds["secret_access_key"],
-                region_name=bedrock_creds["region"],
-            )
+            bedrock_client = _create_bedrock_client(bedrock_creds)
             _ = bedrock_client.list_foundation_models()
 
         elif (
@@ -242,7 +300,9 @@ def _fetch_bedrock_models(bedrock_creds: Dict[str, str]) -> Dict[str, str]:
     3. Verifies user has entitlement access to each model
 
     Args:
-        bedrock_creds: Dictionary with 'access_key_id', 'secret_access_key', and 'region'.
+        bedrock_creds: Dictionary with either:
+            - 'access_key_id', 'secret_access_key', and 'region' for access key auth
+            - 'api_key' and 'region' for API key (bearer token) auth
 
     Returns:
         Dict mapping model_id to model_name for all accessible models.
@@ -250,12 +310,7 @@ def _fetch_bedrock_models(bedrock_creds: Dict[str, str]) -> Dict[str, str]:
     Raises:
         BotoCoreError, ClientError: If AWS API calls fail.
     """
-    bedrock_client = boto3.client(
-        "bedrock",
-        aws_access_key_id=bedrock_creds["access_key_id"],
-        aws_secret_access_key=bedrock_creds["secret_access_key"],
-        region_name=bedrock_creds["region"],
-    )
+    bedrock_client = _create_bedrock_client(bedrock_creds)
 
     models_to_check: Dict[str, str] = {}
 
