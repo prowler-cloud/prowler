@@ -8,14 +8,20 @@ import { ChartConfig, ChartContainer } from "@/components/ui/chart/Chart";
 import { ChartLegend } from "./shared/chart-legend";
 import { DonutDataPoint } from "./types";
 
+const CHART_COLORS = {
+  emptyState: "var(--border-neutral-tertiary)",
+};
+
+interface TooltipPayloadData {
+  percentage?: number;
+  change?: number;
+  color?: string;
+}
+
 interface TooltipPayloadEntry {
   name: string;
   color?: string;
-  payload?: {
-    percentage?: number;
-    change?: number;
-    color?: string;
-  };
+  payload?: TooltipPayloadData;
 }
 
 interface CustomTooltipProps {
@@ -23,16 +29,23 @@ interface CustomTooltipProps {
   payload?: TooltipPayloadEntry[];
 }
 
+interface LegendPayloadData {
+  percentage?: number;
+}
+
 interface LegendPayloadEntry {
   value: string;
   color: string;
-  payload: {
-    percentage?: number;
-  };
+  payload: LegendPayloadData;
 }
 
 interface CustomLegendProps {
   payload: LegendPayloadEntry[];
+}
+
+interface CenterLabel {
+  value: string | number;
+  label: string;
 }
 
 interface DonutChartProps {
@@ -41,10 +54,7 @@ interface DonutChartProps {
   innerRadius?: number;
   outerRadius?: number;
   showLegend?: boolean;
-  centerLabel?: {
-    value: string | number;
-    label: string;
-  };
+  centerLabel?: CenterLabel;
   onSegmentClick?: (dataPoint: DonutDataPoint, index: number) => void;
 }
 
@@ -131,8 +141,8 @@ export function DonutChart({
     {
       name: "No data",
       value: 1,
-      fill: "var(--border-neutral-tertiary)",
-      color: "var(--border-neutral-tertiary)",
+      fill: CHART_COLORS.emptyState,
+      color: CHART_COLORS.emptyState,
       percentage: 0,
       change: undefined,
     },
