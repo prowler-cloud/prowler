@@ -65,7 +65,7 @@ class BaseTool(ABC):
         """
         return self._logger
 
-    def register_tools(self, mcp: FastMCP) -> None:
+    def register_tools(self, mcp: "FastMCP") -> None:
         """Automatically register all public async methods as tools with FastMCP.
 
         This method inspects the subclass and automatically registers all public
