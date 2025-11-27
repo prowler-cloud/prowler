@@ -16,9 +16,20 @@ export interface SankeyLink {
   value: number;
 }
 
+export interface ZeroDataProvider {
+  id: string;
+  displayName: string;
+}
+
 export interface SankeyData {
   nodes: SankeyNode[];
   links: SankeyLink[];
+  zeroDataProviders: ZeroDataProvider[];
+}
+
+export interface SankeyFilters {
+  providerTypes?: string[];
+  hasActiveFilter?: boolean;
 }
 
 interface AggregatedProvider {
@@ -66,22 +77,70 @@ const SEVERITY_ORDER = [
 /**
  * Adapts providers overview and findings severity API responses to Sankey chart format.
  * Severity distribution is calculated proportionally based on each provider's fail count.
+ *
+ * @param providersResponse - The providers overview API response
+ * @param severityResponse - The findings severity API response
+ * @param filters - Optional filters to restrict which providers are shown.
+ *                  When filters are set, only selected providers are shown.
+ *                  When no filters, all providers are shown.
  */
 export function adaptProvidersOverviewToSankey(
   providersResponse: ProvidersOverviewResponse | undefined,
   severityResponse?: FindingsSeverityOverviewResponse | undefined,
+  filters?: SankeyFilters,
 ): SankeyData {
   if (!providersResponse?.data || providersResponse.data.length === 0) {
-    return { nodes: [], links: [] };
+    return { nodes: [], links: [], zeroDataProviders: [] };
   }
 
   const aggregatedProviders = aggregateProvidersByType(providersResponse.data);
-  const providersWithFailures = aggregatedProviders.filter((p) => p.fail > 0);
 
-  if (providersWithFailures.length === 0) {
-    return { nodes: [], links: [] };
+  // Filter providers based on selection:
+  // - If providerTypes filter is set: show only those provider types
+  // - If hasActiveFilter is true (e.g., account filter): only show providers with actual data
+  // - If no filters: show all providers from the API response
+  const hasProviderTypeFilter =
+    filters?.providerTypes && filters.providerTypes.length > 0;
+
+  let providersToShow: AggregatedProvider[];
+  if (hasProviderTypeFilter) {
+    // Show only selected provider types
+    providersToShow = aggregatedProviders.filter((p) =>
+      filters.providerTypes!.includes(p.id.toLowerCase()),
+    );
+  } else if (filters?.hasActiveFilter) {
+    // Account filter is active - only show providers that have actual findings data
+    // (not just pass=0, fail=0 which means no scans for that provider type)
+    providersToShow = aggregatedProviders.filter(
+      (p) => p.pass > 0 || p.fail > 0,
+    );
+  } else {
+    // No filters - show all providers but only those with data
+    providersToShow = aggregatedProviders;
   }
 
+  if (providersToShow.length === 0) {
+    return { nodes: [], links: [], zeroDataProviders: [] };
+  }
+
+  // Separate providers with and without failures
+  const providersWithFailures = providersToShow.filter((p) => p.fail > 0);
+  const providersWithoutFailures = providersToShow.filter((p) => p.fail === 0);
+
+  // Zero-data providers to show as legends below the chart
+  const zeroDataProviders: ZeroDataProvider[] = providersWithoutFailures.map(
+    (p) => ({
+      id: p.id,
+      displayName: p.displayName,
+    }),
+  );
+
+  // If no providers have failures, return empty chart with legends
+  if (providersWithFailures.length === 0) {
+    return { nodes: [], links: [], zeroDataProviders };
+  }
+
+  // Only include providers WITH failures in the chart
   const providerNodes: SankeyNode[] = providersWithFailures.map((p) => ({
     name: p.displayName,
   }));
@@ -136,5 +195,5 @@ export function adaptProvidersOverviewToSankey(
     });
   }
 
-  return { nodes, links };
+  return { nodes, links, zeroDataProviders };
 }

@@ -35,11 +35,17 @@ interface SankeyLink {
   value: number;
 }
 
+interface ZeroDataProvider {
+  id: string;
+  displayName: string;
+}
+
 interface SankeyChartProps {
   data: {
     nodes: SankeyNode[];
     links: SankeyLink[];
   };
+  zeroDataProviders?: ZeroDataProvider[];
   height?: number;
 }
 
@@ -382,7 +388,11 @@ const CustomLink = ({
   );
 };
 
-export function SankeyChart({ data, height = 400 }: SankeyChartProps) {
+export function SankeyChart({
+  data,
+  zeroDataProviders = [],
+  height = 400,
+}: SankeyChartProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [hoveredLink, setHoveredLink] = useState<number | null>(null);
@@ -577,6 +587,29 @@ export function SankeyChart({ data, height = 400 }: SankeyChartProps) {
               },
             ]}
           />
+        </div>
+      )}
+      {zeroDataProviders.length > 0 && (
+        <div className="border-divider-primary mt-4 border-t pt-4">
+          <p className="text-text-neutral-tertiary mb-3 text-xs font-medium tracking-wide uppercase">
+            Providers with no findings
+          </p>
+          <div className="flex flex-wrap gap-4">
+            {zeroDataProviders.map((provider) => {
+              const IconComponent = PROVIDER_ICONS[provider.displayName];
+              return (
+                <div
+                  key={provider.id}
+                  className="flex items-center gap-2 text-sm"
+                >
+                  {IconComponent && <IconComponent width={20} height={20} />}
+                  <span className="text-text-neutral-secondary">
+                    {provider.displayName}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

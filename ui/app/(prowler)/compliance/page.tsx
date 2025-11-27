@@ -61,7 +61,8 @@ export default async function Compliance({
 
       // Find the provider data in the included array
       const providerData = scansData.included?.find(
-        (item: any) => item.type === "providers" && item.id === providerId,
+        (item: { type: string; id: string }) =>
+          item.type === "providers" && item.id === providerId,
       );
 
       if (!providerData) {
