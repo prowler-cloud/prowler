@@ -36,10 +36,10 @@ class ComplianceTools(BaseTool):
         ),
         page_size: int = Field(
             default=50,
-            description="Number of results to return per page. Default: 100, Max: 1000",
+            description="Number of results to return per page",
         ),
         page_number: int = Field(
-            default=1, description="Page number to retrieve (1-indexed). Default: 1"
+            default=1, description="Page number to retrieve (1-indexed)"
         ),
     ) -> dict[str, Any]:
         """Search and retrieve compliance frameworks with their status.
