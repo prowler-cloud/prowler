@@ -43,7 +43,7 @@ class ApiConfig(AppConfig):
 
         if not getattr(
             settings, "TESTING", False
-        ):  # TODO: Remove this when we have attack paths tests
+        ):
             graph_database.init_driver()
             atexit.register(graph_database.close_driver)
 
