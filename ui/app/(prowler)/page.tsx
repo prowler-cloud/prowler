@@ -19,7 +19,6 @@ import {
   ThreatScoreSSR,
 } from "./_new-overview/components/threat-score";
 import {
-  ComplianceWatchlistSSR,
   ServiceWatchlistSSR,
   WatchlistCardSkeleton,
 } from "./_new-overview/components/watchlist";
@@ -51,18 +50,13 @@ export default async function Home({
         <Suspense fallback={<RiskSeverityChartSkeleton />}>
           <RiskSeverityChartSSR searchParams={resolvedSearchParams} />
         </Suspense>
+
+        <Suspense fallback={<WatchlistCardSkeleton />}>
+          <ServiceWatchlistSSR searchParams={resolvedSearchParams} />
+        </Suspense>
       </div>
 
-      <div className="mt-6 flex flex-col gap-6">
-        <div className="flex flex-col gap-6 md:flex-row">
-          <Suspense fallback={<WatchlistCardSkeleton />}>
-            <ComplianceWatchlistSSR searchParams={resolvedSearchParams} />
-          </Suspense>
-          <Suspense fallback={<WatchlistCardSkeleton />}>
-            <ServiceWatchlistSSR searchParams={resolvedSearchParams} />
-          </Suspense>
-        </div>
-
+      <div className="mt-6">
         <Suspense fallback={<RiskPipelineViewSkeleton />}>
           <GraphsTabsWrapper searchParams={resolvedSearchParams} />
         </Suspense>

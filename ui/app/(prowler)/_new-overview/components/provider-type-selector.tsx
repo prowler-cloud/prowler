@@ -195,17 +195,35 @@ export const ProviderTypeSelector = ({
         </MultiSelectTrigger>
         <MultiSelectContent search={false}>
           {availableTypes.length > 0 ? (
-            availableTypes.map((providerType) => (
-              <MultiSelectItem
-                key={providerType}
-                value={providerType}
-                badgeLabel={PROVIDER_DATA[providerType].label}
-                aria-label={`${PROVIDER_DATA[providerType].label} provider`}
+            <>
+              <div
+                role="option"
+                aria-selected={selectedTypes.length === 0}
+                aria-label="Select all providers (clears current selection to show all)"
+                tabIndex={0}
+                className="text-text-neutral-secondary flex w-full cursor-pointer items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold hover:bg-slate-200 dark:hover:bg-slate-700/50"
+                onClick={() => handleMultiValueChange([])}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleMultiValueChange([]);
+                  }
+                }}
               >
-                <span aria-hidden="true">{renderIcon(providerType)}</span>
-                <span>{PROVIDER_DATA[providerType].label}</span>
-              </MultiSelectItem>
-            ))
+                Select All
+              </div>
+              {availableTypes.map((providerType) => (
+                <MultiSelectItem
+                  key={providerType}
+                  value={providerType}
+                  badgeLabel={PROVIDER_DATA[providerType].label}
+                  aria-label={`${PROVIDER_DATA[providerType].label} provider`}
+                >
+                  <span aria-hidden="true">{renderIcon(providerType)}</span>
+                  <span>{PROVIDER_DATA[providerType].label}</span>
+                </MultiSelectItem>
+              ))}
+            </>
           ) : (
             <div className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
               No connected providers available
