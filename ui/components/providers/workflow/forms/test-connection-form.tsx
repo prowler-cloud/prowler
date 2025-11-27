@@ -45,7 +45,7 @@ export const TestConnectionForm = ({
         };
         provider: ProviderType;
         alias: string;
-        scanner_args: Record<string, any>;
+        scanner_args: Record<string, unknown>;
       };
       relationships: {
         secret: {
@@ -239,27 +239,27 @@ export const TestConnectionForm = ({
         </div>
 
         {apiErrorMessage && (
-          <div className="text-text-error mt-4 rounded-md bg-red-100 p-3">
+          <div className="text-text-error-primary mt-4 rounded-md p-3">
             <p>{`Provider ID ${apiErrorMessage?.toLowerCase()}. Please check and try again.`}</p>
           </div>
         )}
 
         {connectionStatus && !connectionStatus.connected && (
           <>
-            <div className="flex items-center gap-4 rounded-lg border border-red-200 bg-red-50 p-4">
+            <div className="border-border-error flex items-center gap-4 rounded-lg border p-4">
               <div className="flex items-center">
                 <Icon
                   icon="heroicons:exclamation-circle"
-                  className="text-text-error h-5 w-5"
+                  className="text-text-error-primary h-5 w-5"
                 />
               </div>
               <div className="flex items-center">
-                <p className="text-small text-text-error">
+                <p className="text-small text-text-error-primary">
                   {connectionStatus.error || "Unknown error"}
                 </p>
               </div>
             </div>
-            <p className="text-small text-text-error">
+            <p className="text-small text-text-error-primary">
               It seems there was an issue with your credentials. Please review
               your credentials and try again.
             </p>

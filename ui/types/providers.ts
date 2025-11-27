@@ -18,6 +18,7 @@ export const PROVIDER_DISPLAY_NAMES: Record<ProviderType, string> = {
   gcp: "Google Cloud",
   kubernetes: "Kubernetes",
   m365: "Microsoft 365",
+  mongodbatlas: "MongoDB Atlas",
   github: "GitHub",
   iac: "Infrastructure as Code",
   oraclecloud: "Oracle Cloud Infrastructure",
