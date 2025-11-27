@@ -64,7 +64,7 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
 
                 MATCH path_assume_role = (ec2)-[p:STS_ASSUMEROLE_ALLOW*1..9]-(r:AWSRole)
 
-                CALL apoc.create.vRelationship(ec2, 'IS_ACCESIBLE_FROM', {}, internet)
+                CALL apoc.create.vRelationship(internet, 'CAN_ACCESS', {}, ec2)
                 YIELD rel AS is_accessible_from
 
                 UNWIND nodes(path_s3) + nodes(path_ec2) + nodes(path_role) + nodes(path_assume_role) as n
@@ -204,7 +204,7 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 MATCH path = (aws:AWSAccount {id: $provider_uid})--(ec2:EC2Instance)
                 WHERE ec2.exposed_internet = true
 
-                CALL apoc.create.vRelationship(ec2, 'IS_ACCESIBLE_FROM', {}, internet)
+                CALL apoc.create.vRelationship(internet, 'CAN_ACCESS', {}, ec2)
                 YIELD rel AS is_accessible_from
 
                 UNWIND nodes(path) as n
@@ -232,7 +232,7 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 OPTIONAL MATCH path_dns = (dns:AWSDNSRecord)-[:DNS_POINTS_TO]->(lb)
                 WHERE open.scheme = 'internet-facing'
 
-                CALL apoc.create.vRelationship(open, 'IS_ACCESIBLE_FROM', {}, internet)
+                CALL apoc.create.vRelationship(internet, 'CAN_ACCESS', {}, open)
                 YIELD rel AS is_accessible_from
 
                 UNWIND nodes(path_open) + nodes(path_sg) + nodes(path_ip) + nodes(path_ipi) + nodes(path_dns) as n
@@ -255,7 +255,7 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 MATCH path = (aws:AWSAccount {id: $provider_uid})--(elb:LoadBalancer)--(listener:ELBListener)
                 WHERE elb.exposed_internet = true
 
-                CALL apoc.create.vRelationship(elb, 'IS_ACCESIBLE_FROM', {}, internet)
+                CALL apoc.create.vRelationship(internet, 'CAN_ACCESS', {}, elb)
                 YIELD rel AS is_accessible_from
 
                 UNWIND nodes(path) as n
@@ -278,7 +278,7 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 MATCH path = (aws:AWSAccount {id: $provider_uid})--(elbv2:LoadBalancerV2)--(listener:ELBV2Listener)
                 WHERE elbv2.exposed_internet = true
 
-                CALL apoc.create.vRelationship(elbv2, 'IS_ACCESIBLE_FROM', {}, internet)
+                CALL apoc.create.vRelationship(internet, 'CAN_ACCESS', {}, elbv2)
                 YIELD rel AS is_accessible_from
 
                 UNWIND nodes(path) as n
