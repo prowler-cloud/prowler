@@ -41,9 +41,7 @@ class ApiConfig(AppConfig):
         if "manage.py" not in sys.argv or os.environ.get("RUN_MAIN"):
             self._ensure_crypto_keys()
 
-        if not getattr(
-            settings, "TESTING", False
-        ):
+        if not getattr(settings, "TESTING", False):
             graph_database.init_driver()
             atexit.register(graph_database.close_driver)
 
