@@ -28,7 +28,7 @@ export const GraphControls = ({
   onExport,
 }: GraphControlsProps) => {
   return (
-    <div className="mb-4 flex items-center justify-end">
+    <div className="flex items-center">
       <div className="border-border-neutral-primary bg-bg-neutral-tertiary flex gap-1 rounded-lg border p-1">
         <TooltipProvider>
           <Tooltip>

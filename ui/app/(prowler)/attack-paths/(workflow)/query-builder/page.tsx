@@ -2,7 +2,7 @@
 
 import { Maximize2, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { FormProvider } from "react-hook-form";
 
 import {
@@ -11,6 +11,7 @@ import {
   getAvailableQueries,
 } from "@/actions/attack-paths";
 import { adaptQueryResultToGraphData } from "@/actions/attack-paths/query-result.adapter";
+import { AutoRefresh } from "@/components/scans";
 import { Button, Card, CardContent } from "@/components/shadcn";
 import {
   Dialog,
@@ -96,6 +97,25 @@ export default function AttackPathAnalysisPage() {
     };
 
     loadScans();
+  }, []);
+
+  // Check if there's an executing scan for auto-refresh
+  const hasExecutingScan = scans.some(
+    (scan) =>
+      scan.attributes.state === "executing" ||
+      scan.attributes.state === "scheduled",
+  );
+
+  // Callback to refresh scans (used by AutoRefresh component)
+  const refreshScans = useCallback(async () => {
+    try {
+      const scansData = await getAttackPathScans();
+      if (scansData?.data) {
+        setScans(scansData.data);
+      }
+    } catch (error) {
+      console.error("Failed to refresh scans:", error);
+    }
   }, []);
 
   // Load available queries on mount
@@ -259,6 +279,12 @@ export default function AttackPathAnalysisPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Auto-refresh scans when there's an executing scan */}
+      <AutoRefresh
+        hasExecutingScan={hasExecutingScan}
+        onRefresh={refreshScans}
+      />
+
       {/* Header */}
       <div>
         <h2 className="dark:text-prowler-theme-pale/90 text-xl font-semibold">
@@ -357,18 +383,20 @@ export default function AttackPathAnalysisPage() {
                   Click on any resource node to view its related findings
                 </span>
               </div>
-              <GraphControls
-                onZoomIn={() => graphRef.current?.zoomIn()}
-                onZoomOut={() => graphRef.current?.zoomOut()}
-                onFitToScreen={() => graphRef.current?.resetZoom()}
-                onExport={() =>
-                  handleGraphExport(graphRef.current?.getSVGElement() || null)
-                }
-              />
 
-              {/* Fullscreen button */}
-              <div className="mb-4 flex items-center">
-                <div className="border-border-neutral-primary bg-bg-neutral-tertiary dark:border-border-neutral-primary dark:bg-bg-neutral-tertiary flex gap-1 rounded-lg border p-1">
+              {/* Graph controls and fullscreen button together */}
+              <div className="flex items-center gap-2">
+                <GraphControls
+                  onZoomIn={() => graphRef.current?.zoomIn()}
+                  onZoomOut={() => graphRef.current?.zoomOut()}
+                  onFitToScreen={() => graphRef.current?.resetZoom()}
+                  onExport={() =>
+                    handleGraphExport(graphRef.current?.getSVGElement() || null)
+                  }
+                />
+
+                {/* Fullscreen button */}
+                <div className="border-border-neutral-primary bg-bg-neutral-tertiary flex gap-1 rounded-lg border p-1">
                   <Dialog
                     open={isFullscreenOpen}
                     onOpenChange={setIsFullscreenOpen}
@@ -475,7 +503,7 @@ export default function AttackPathAnalysisPage() {
             </div>
 
             {/* Graph in the middle */}
-            <div ref={graphContainerRef} className="h-[calc(100vh-16rem)]">
+            <div ref={graphContainerRef} className="h-[calc(100vh-22rem)]">
               <AttackPathGraph
                 ref={graphRef}
                 data={graphState.data}
@@ -528,10 +556,10 @@ export default function AttackPathAnalysisPage() {
               ) && (
                 <Button asChild variant="default" size="sm">
                   <a
-                    href={`/findings?id=${graphState.selectedNode.id}`}
+                    href={`/findings?id=${String(graphState.selectedNode.properties?.id || graphState.selectedNode.id)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    aria-label={`View finding ${graphState.selectedNode.id}`}
+                    aria-label={`View finding ${String(graphState.selectedNode.properties?.id || graphState.selectedNode.id)}`}
                   >
                     View Finding →
                   </a>

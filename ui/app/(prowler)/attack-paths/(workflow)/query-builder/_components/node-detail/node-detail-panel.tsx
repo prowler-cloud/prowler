@@ -42,9 +42,6 @@ export const NodeDetailContent = ({
           <h3 className="dark:text-prowler-theme-pale/90 text-sm font-semibold">
             Node Overview
           </h3>
-          <div className="text-text-neutral-secondary dark:text-text-neutral-secondary text-xs">
-            Type: {node.labels.join(", ")}
-          </div>
           <NodeOverview node={node} />
         </CardContent>
       </Card>
@@ -112,10 +109,10 @@ export const NodeDetailPanel = ({
             {node && isProwlerFinding && (
               <Button asChild variant="default" size="sm" className="mt-1">
                 <a
-                  href={`/findings?id=${node.id}`}
+                  href={`/findings?id=${String(node.properties?.id || node.id)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label={`View finding ${node.id}`}
+                  aria-label={`View finding ${String(node.properties?.id || node.id)}`}
                 >
                   View Finding →
                 </a>

@@ -1,6 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/shadcn/badge/badge";
 import { SeverityBadge } from "@/components/ui/table/severity-badge";
 import type { GraphNode } from "@/types/attack-paths";
 
@@ -46,68 +45,58 @@ export const NodeFindings = ({ node, allNodes = [] }: NodeFindingsProps) => {
     return "informational";
   };
 
-  const getStatusVariant = (
-    status?: string | number | boolean | string[] | number[] | null,
-  ): "default" | "destructive" | "secondary" => {
-    const st = String(
-      Array.isArray(status) ? status[0] : status || "",
-    ).toUpperCase();
-    if (st === "PASS") return "default";
-    if (st === "FAIL") return "destructive";
-    return "secondary";
-  };
-
   return (
     <ul className="flex flex-col gap-3">
-      {findingNodes.map((finding) => (
-        <li
-          key={finding.id}
-          className="border-border-neutral-secondary rounded-lg border p-3"
-        >
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                {finding.properties?.severity && (
-                  <SeverityBadge
-                    severity={normalizeSeverity(finding.properties.severity)}
-                  />
-                )}
-                <h5 className="dark:text-prowler-theme-pale/90 text-sm font-medium">
-                  {String(
-                    finding.properties?.finding_id ||
-                      finding.properties?.name ||
-                      finding.id,
+      {findingNodes.map((finding) => {
+        // Get the finding name (check_title preferred, then name)
+        const findingName = String(
+          finding.properties?.check_title ||
+            finding.properties?.name ||
+            finding.properties?.finding_id ||
+            "Unknown Finding",
+        );
+        // Use properties.id for display, fallback to graph node id
+        const findingId = String(finding.properties?.id || finding.id);
+
+        return (
+          <li
+            key={finding.id}
+            className="border-border-neutral-secondary rounded-lg border p-3"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  {finding.properties?.severity && (
+                    <SeverityBadge
+                      severity={normalizeSeverity(finding.properties.severity)}
+                    />
                   )}
-                </h5>
+                  <h5 className="dark:text-prowler-theme-pale/90 text-sm font-medium">
+                    {findingName}
+                  </h5>
+                </div>
+                <p className="text-text-neutral-tertiary dark:text-text-neutral-tertiary mt-1 text-xs">
+                  ID: {findingId}
+                </p>
               </div>
-              <p className="text-text-neutral-tertiary dark:text-text-neutral-tertiary mt-1 text-xs">
-                ID: {finding.id}
-              </p>
-            </div>
-            <div className="flex flex-col gap-1">
               <a
-                href={`/findings?id=${finding.id}`}
+                href={`/findings?id=${findingId}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label={`View full finding for ${finding.properties?.finding_id || finding.id}`}
-                className="text-text-info dark:text-text-info h-auto p-0 text-xs font-medium hover:underline"
+                aria-label={`View full finding for ${findingName}`}
+                className="text-text-info dark:text-text-info h-auto shrink-0 p-0 text-xs font-medium hover:underline"
               >
                 View Full Finding →
               </a>
-              {finding.properties?.status && (
-                <Badge variant={getStatusVariant(finding.properties.status)}>
-                  {String(finding.properties.status)}
-                </Badge>
-              )}
             </div>
-          </div>
-          {finding.properties?.description && (
-            <div className="text-text-neutral-secondary dark:text-text-neutral-secondary mt-2 text-xs">
-              {String(finding.properties.description)}
-            </div>
-          )}
-        </li>
-      ))}
+            {finding.properties?.description && (
+              <div className="text-text-neutral-secondary dark:text-text-neutral-secondary mt-2 text-xs">
+                {String(finding.properties.description)}
+              </div>
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 };

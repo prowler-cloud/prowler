@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/shadcn/select/select";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
-import { EntityInfoShort } from "@/components/ui/entities/entity-info-short";
+import { EntityInfo } from "@/components/ui/entities/entity-info";
 import {
   Table,
   TableBody,
@@ -162,7 +162,7 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
                     }
                   >
                     <TableCell className="font-medium">
-                      <EntityInfoShort
+                      <EntityInfo
                         cloudProvider={
                           scan.attributes.provider_type as ProviderType
                         }

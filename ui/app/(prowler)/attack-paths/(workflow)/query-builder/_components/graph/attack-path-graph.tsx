@@ -16,6 +16,7 @@ import type { AttackPathGraphData, GraphNode } from "@/types/attack-paths";
 
 import {
   formatNodeLabel,
+  getNodeBorderColor,
   getNodeColor,
   GRAPH_EDGE_COLOR,
   GRAPH_SELECTION_COLOR,
@@ -41,46 +42,16 @@ interface AttackPathGraphProps {
  */
 type NodeData = { id: string; x: number; y: number; data: GraphNode };
 
-/**
- * Node type to icon unicode mapping
- */
-const NODE_TYPE_ICONS = {
-  prowlerfinding: "⚠",
-  awsaccount: "☁",
-  ec2instance: "🖥",
-  s3bucket: "💾",
-  iamrole: "🔑",
-  lambdafunction: "λ",
-  securitygroup: "🛡",
-  default: "●",
-} as const;
-
-/**
- * Get icon for node based on label type
- */
-function getNodeTypeIcon(labels: string[]): string {
-  if (!labels || labels.length === 0) return NODE_TYPE_ICONS.default;
-
-  const label = labels[0].toLowerCase();
-
-  // Try exact matches first
-  if (label in NODE_TYPE_ICONS) {
-    return NODE_TYPE_ICONS[label as keyof typeof NODE_TYPE_ICONS];
-  }
-
-  // Try partial matches
-  for (const [key, icon] of Object.entries(NODE_TYPE_ICONS)) {
-    if (key !== "default" && label.includes(key)) {
-      return icon;
-    }
-  }
-
-  return NODE_TYPE_ICONS.default;
-}
+// Node dimensions - modern rounded pill style
+const NODE_WIDTH = 180;
+const NODE_HEIGHT = 50;
+const NODE_RADIUS = 25; // Fully rounded ends for pill shape
+const HEXAGON_WIDTH = 200; // Width for finding hexagons
+const HEXAGON_HEIGHT = 55; // Height for finding hexagons
 
 /**
  * D3 + Dagre hierarchical graph visualization for attack paths
- * Renders static hierarchical graph with left-to-right flow
+ * Renders rounded rectangle nodes with dashed edges
  */
 const AttackPathGraphComponent = forwardRef<
   AttackPathGraphRef,
@@ -99,17 +70,10 @@ const AttackPathGraphComponent = forwardRef<
   > | null>(null);
   const hiddenNodeIdsRef = useRef<Set<string>>(new Set());
   const onNodeClickRef = useRef(onNodeClick);
-  const nodeCirclesRef = useRef<{
-    attr(
-      name: string,
-      value: string | number | ((d: NodeData) => string | number),
-    ): {
-      attr(
-        name: string,
-        value: string | number | ((d: NodeData) => string | number),
-      ): void;
-    };
-  } | null>(null);
+  const nodeShapesRef = useRef<ReturnType<
+    typeof select<SVGRectElement, NodeData>
+  > | null>(null);
+  const resourcesWithFindingsRef = useRef<Set<string>>(new Set());
 
   // Update ref when onNodeClick changes
   useEffect(() => {
@@ -118,14 +82,38 @@ const AttackPathGraphComponent = forwardRef<
 
   // Update selected node styling without re-rendering
   useEffect(() => {
-    if (nodeCirclesRef.current) {
-      nodeCirclesRef.current
-        .attr("stroke", (d: NodeData) =>
-          d.id === selectedNodeId ? GRAPH_SELECTION_COLOR : "none",
-        )
-        .attr("stroke-width", (d: NodeData) =>
-          d.id === selectedNodeId ? 3 : 0,
-        );
+    if (nodeShapesRef.current) {
+      const ALERT_BORDER_COLOR = "#ef4444"; // Red 500
+      nodeShapesRef.current
+        .attr("stroke", (d: NodeData) => {
+          const isFinding = d.data.labels.some((label) =>
+            label.toLowerCase().includes("finding"),
+          );
+          const hasFindings = resourcesWithFindingsRef.current.has(d.id);
+
+          // Resources with findings always keep red border
+          if (!isFinding && hasFindings) {
+            return ALERT_BORDER_COLOR;
+          }
+          // Selected nodes get selection color
+          if (d.id === selectedNodeId) {
+            return GRAPH_SELECTION_COLOR;
+          }
+          // Default border color
+          return getNodeBorderColor(d.data.labels, d.data.properties);
+        })
+        .attr("stroke-width", (d: NodeData) => {
+          const isFinding = d.data.labels.some((label) =>
+            label.toLowerCase().includes("finding"),
+          );
+          const hasFindings = resourcesWithFindingsRef.current.has(d.id);
+
+          // Resources with findings keep their wider stroke
+          if (!isFinding && hasFindings) {
+            return 2.5;
+          }
+          return d.id === selectedNodeId ? 3 : isFinding ? 2 : 1.5;
+        });
     }
   }, [selectedNodeId]);
 
@@ -216,7 +204,7 @@ const AttackPathGraphComponent = forwardRef<
     g.setGraph({
       rankdir: "LR", // Left to right
       nodesep: 80, // Vertical spacing between nodes
-      ranksep: 200, // Horizontal spacing between ranks
+      ranksep: 150, // Horizontal spacing between ranks
       marginx: 50,
       marginy: 50,
     });
@@ -237,12 +225,15 @@ const AttackPathGraphComponent = forwardRef<
     // Create a map to store original node data
     const nodeDataMap = new Map(data.nodes.map((node) => [node.id, node]));
 
-    // Add nodes to dagre graph
+    // Add nodes to dagre graph with appropriate sizes
     data.nodes.forEach((node) => {
+      const isFinding = node.labels.some((label) =>
+        label.toLowerCase().includes("finding"),
+      );
       g.setNode(node.id, {
         label: node.id,
-        width: 90,
-        height: 90,
+        width: isFinding ? HEXAGON_WIDTH : NODE_WIDTH,
+        height: isFinding ? HEXAGON_HEIGHT : NODE_HEIGHT,
       });
     });
 
@@ -308,55 +299,41 @@ const AttackPathGraphComponent = forwardRef<
       });
     });
 
-    const linkGroup = container.append("g").attr("class", "links");
+    // Add defs for filters and markers FIRST (before using them)
+    const defs = svg.append("defs");
 
-    const nodeRadius = 45;
-    const linkElements = linkGroup
-      .selectAll("line")
-      .data(edgesData)
-      .enter()
-      .append("line")
-      .attr("x1", (d) => {
-        // Calculate edge start point at node boundary
-        const dx = d.target.x - d.source.x;
-        const dy = d.target.y - d.source.y;
-        const angle = Math.atan2(dy, dx);
-        return d.source.x + Math.cos(angle) * nodeRadius;
-      })
-      .attr("y1", (d) => {
-        const dx = d.target.x - d.source.x;
-        const dy = d.target.y - d.source.y;
-        const angle = Math.atan2(dy, dx);
-        return d.source.y + Math.sin(angle) * nodeRadius;
-      })
-      .attr("x2", (d) => {
-        // Calculate edge end point at node boundary
-        const dx = d.target.x - d.source.x;
-        const dy = d.target.y - d.source.y;
-        const angle = Math.atan2(dy, dx);
-        return d.target.x - Math.cos(angle) * nodeRadius;
-      })
-      .attr("y2", (d) => {
-        const dx = d.target.x - d.source.x;
-        const dy = d.target.y - d.source.y;
-        const angle = Math.atan2(dy, dx);
-        return d.target.y - Math.sin(angle) * nodeRadius;
-      })
-      .attr("stroke", GRAPH_EDGE_COLOR)
-      .attr("stroke-opacity", 0.6)
-      .attr("stroke-width", 2)
-      .attr("marker-end", "url(#arrowhead)")
-      .style("display", (d) => {
-        // Hide edges connected to hidden nodes
-        return hiddenNodeIdsRef.current.has(d.sourceId) ||
-          hiddenNodeIdsRef.current.has(d.targetId)
-          ? "none"
-          : null;
-      });
+    // Glow filter for nodes
+    const glowFilter = defs.append("filter").attr("id", "glow");
+    glowFilter
+      .append("feGaussianBlur")
+      .attr("stdDeviation", "3")
+      .attr("result", "coloredBlur");
+    const feMerge = glowFilter.append("feMerge");
+    feMerge.append("feMergeNode").attr("in", "coloredBlur");
+    feMerge.append("feMergeNode").attr("in", "SourceGraphic");
 
-    // Add arrow marker definition
-    svg
-      .append("defs")
+    // Edge glow filter
+    const edgeGlowFilter = defs.append("filter").attr("id", "edgeGlow");
+    edgeGlowFilter
+      .append("feGaussianBlur")
+      .attr("stdDeviation", "2")
+      .attr("result", "coloredBlur");
+    const edgeFeMerge = edgeGlowFilter.append("feMerge");
+    edgeFeMerge.append("feMergeNode").attr("in", "coloredBlur");
+    edgeFeMerge.append("feMergeNode").attr("in", "SourceGraphic");
+
+    // Red glow filter for resources with findings
+    const redGlowFilter = defs.append("filter").attr("id", "redGlow");
+    redGlowFilter
+      .append("feDropShadow")
+      .attr("dx", "0")
+      .attr("dy", "0")
+      .attr("stdDeviation", "4")
+      .attr("flood-color", "#ef4444")
+      .attr("flood-opacity", "0.6");
+
+    // Arrow marker - refX=10 places the arrow tip exactly at the line endpoint
+    defs
       .append("marker")
       .attr("id", "arrowhead")
       .attr("viewBox", "0 0 10 10")
@@ -368,6 +345,131 @@ const AttackPathGraphComponent = forwardRef<
       .append("path")
       .attr("d", "M 0 0 L 10 5 L 0 10 z")
       .attr("fill", GRAPH_EDGE_COLOR);
+
+    // Add CSS animation for dashed lines and resource edge styles
+    svg.append("style").text(`
+      @keyframes dash {
+        to {
+          stroke-dashoffset: -20;
+        }
+      }
+      .animated-edge {
+        animation: dash 1s linear infinite;
+      }
+      .resource-edge {
+        stroke-opacity: 1;
+      }
+    `);
+
+    const linkGroup = container.append("g").attr("class", "links");
+
+    // Calculate edge endpoints based on node shape
+    const getEdgePoints = (
+      sourceId: string,
+      targetId: string,
+      source: { x: number; y: number },
+      target: { x: number; y: number },
+    ) => {
+      const sourceNode = nodeDataMap.get(sourceId);
+      const targetNode = nodeDataMap.get(targetId);
+
+      const sourceIsFinding = sourceNode?.labels.some((label) =>
+        label.toLowerCase().includes("finding"),
+      );
+      const targetIsFinding = targetNode?.labels.some((label) =>
+        label.toLowerCase().includes("finding"),
+      );
+      const sourceIsInternet = sourceNode?.labels.some(
+        (label) => label.toLowerCase() === "internet",
+      );
+      const targetIsInternet = targetNode?.labels.some(
+        (label) => label.toLowerCase() === "internet",
+      );
+
+      // Get appropriate widths based on node type
+      // Internet nodes are circles with radius = NODE_HEIGHT * 0.8
+      const sourceHalfWidth = sourceIsInternet
+        ? NODE_HEIGHT * 0.8
+        : sourceIsFinding
+          ? HEXAGON_WIDTH / 2
+          : NODE_WIDTH / 2;
+      const targetHalfWidth = targetIsInternet
+        ? NODE_HEIGHT * 0.8
+        : targetIsFinding
+          ? HEXAGON_WIDTH / 2
+          : NODE_WIDTH / 2;
+
+      // Source exits from right side
+      const x1 = source.x + sourceHalfWidth;
+      const y1 = source.y;
+
+      // Target enters from left side - line ends at node edge, arrow extends from there
+      const x2 = target.x - targetHalfWidth;
+      const y2 = target.y;
+
+      return { x1, y1, x2, y2 };
+    };
+
+    // Helper to check if a node is a finding
+    const isNodeFinding = (nodeId: string) => {
+      const node = nodeDataMap.get(nodeId);
+      return node?.labels.some((label) =>
+        label.toLowerCase().includes("finding"),
+      );
+    };
+
+    const linkElements = linkGroup
+      .selectAll("line")
+      .data(edgesData)
+      .enter()
+      .append("line")
+      .attr(
+        "x1",
+        (d) => getEdgePoints(d.sourceId, d.targetId, d.source, d.target).x1,
+      )
+      .attr(
+        "y1",
+        (d) => getEdgePoints(d.sourceId, d.targetId, d.source, d.target).y1,
+      )
+      .attr(
+        "x2",
+        (d) => getEdgePoints(d.sourceId, d.targetId, d.source, d.target).x2,
+      )
+      .attr(
+        "y2",
+        (d) => getEdgePoints(d.sourceId, d.targetId, d.source, d.target).y2,
+      )
+      .attr("stroke", GRAPH_EDGE_COLOR)
+      .attr("stroke-width", 3)
+      .attr("stroke-linecap", "round")
+      .attr("stroke-dasharray", (d) => {
+        // Dashed lines only for edges connected to findings
+        const hasFinding =
+          isNodeFinding(d.sourceId) || isNodeFinding(d.targetId);
+        return hasFinding ? "8,6" : null;
+      })
+      .attr("class", (d) => {
+        // Animate dashed lines
+        const hasFinding =
+          isNodeFinding(d.sourceId) || isNodeFinding(d.targetId);
+        return hasFinding ? "animated-edge" : "resource-edge";
+      })
+      .attr("marker-end", "url(#arrowhead)")
+      .each(function (d) {
+        // Resource-to-resource edges are ALWAYS visible
+        // Finding edges are only visible when the finding node is visible
+        const sourceIsFinding = isNodeFinding(d.sourceId);
+        const targetIsFinding = isNodeFinding(d.targetId);
+
+        let visibility = "visible";
+        if (sourceIsFinding || targetIsFinding) {
+          const sourceHidden = hiddenNodeIdsRef.current.has(d.sourceId);
+          const targetHidden = hiddenNodeIdsRef.current.has(d.targetId);
+          visibility = sourceHidden || targetHidden ? "hidden" : "visible";
+        }
+
+        select(this).style("visibility", visibility);
+      });
 
     // Draw nodes
     const nodesData = g.nodes().map((v) => {
@@ -459,7 +561,7 @@ const AttackPathGraphComponent = forwardRef<
 
           // Update edge visibility
           linkElements.style(
-            "display",
+            "visibility",
             function (edgeData: {
               source: { x: number; y: number };
               target: { x: number; y: number };
@@ -467,10 +569,19 @@ const AttackPathGraphComponent = forwardRef<
               sourceId: string;
               targetId: string;
             }) {
+              // Resource-to-resource edges are ALWAYS visible
+              const sourceIsFinding = isNodeFinding(edgeData.sourceId);
+              const targetIsFinding = isNodeFinding(edgeData.targetId);
+
+              if (!sourceIsFinding && !targetIsFinding) {
+                return "visible";
+              }
+
+              // Finding edges only visible when finding is not hidden
               return hiddenNodeIdsRef.current.has(edgeData.sourceId) ||
                 hiddenNodeIdsRef.current.has(edgeData.targetId)
-                ? "none"
-                : null;
+                ? "hidden"
+                : "visible";
             },
           );
 
@@ -498,14 +609,14 @@ const AttackPathGraphComponent = forwardRef<
                   minY = Infinity,
                   maxY = -Infinity;
                 visibleNodesData.forEach((n) => {
-                  minX = Math.min(minX, n.x);
-                  maxX = Math.max(maxX, n.x);
-                  minY = Math.min(minY, n.y);
-                  maxY = Math.max(maxY, n.y);
+                  minX = Math.min(minX, n.x - NODE_WIDTH / 2);
+                  maxX = Math.max(maxX, n.x + NODE_WIDTH / 2);
+                  minY = Math.min(minY, n.y - NODE_HEIGHT / 2);
+                  maxY = Math.max(maxY, n.y + NODE_HEIGHT / 2);
                 });
 
-                // Add padding (node radius + extra space)
-                const padding = 100;
+                // Add padding
+                const padding = 80;
                 minX -= padding;
                 maxX += padding;
                 minY -= padding;
@@ -516,14 +627,14 @@ const AttackPathGraphComponent = forwardRef<
                 const fullWidth = svgRect.width;
                 const fullHeight = svgRect.height;
 
-                const width = maxX - minX;
-                const height = maxY - minY;
-                const midX = minX + width / 2;
-                const midY = minY + height / 2;
+                const boxWidth = maxX - minX;
+                const boxHeight = maxY - minY;
+                const midX = minX + boxWidth / 2;
+                const midY = minY + boxHeight / 2;
 
                 // Calculate scale to fit all visible nodes
                 const scale =
-                  0.9 / Math.max(width / fullWidth, height / fullHeight);
+                  0.9 / Math.max(boxWidth / fullWidth, boxHeight / fullHeight);
                 const tx = fullWidth / 2 - scale * midX;
                 const ty = fullHeight / 2 - scale * midY;
 
@@ -559,95 +670,240 @@ const AttackPathGraphComponent = forwardRef<
       }
     });
 
-    // Add circles
-    const nodeCircles = nodeElements
-      .append("circle")
-      .attr("r", 45)
-      .attr("fill", (d) => getNodeColor(d.data.labels))
-      .attr("opacity", 0.8)
-      .attr("stroke", (d) =>
-        d.id === selectedNodeId ? GRAPH_SELECTION_COLOR : "none",
-      )
-      .attr("stroke-width", (d) => (d.id === selectedNodeId ? 3 : 0));
+    // Build a set of resource nodes that have findings connected to them
+    const resourcesWithFindings = new Set<string>();
+    data.edges?.forEach((edge) => {
+      const sourceId =
+        typeof edge.source === "string"
+          ? edge.source
+          : (edge.source as GraphNode).id;
+      const targetId =
+        typeof edge.target === "string"
+          ? edge.target
+          : (edge.target as GraphNode).id;
 
-    // Store reference for updating selection later
-    nodeCirclesRef.current = nodeCircles;
+      const sourceNode = nodeDataMap.get(sourceId);
+      const targetNode = nodeDataMap.get(targetId);
 
-    // Add label text
-    const textGroups = nodeElements
-      .append("text")
-      .attr("pointer-events", "none");
+      const sourceIsFinding = sourceNode?.labels.some((l) =>
+        l.toLowerCase().includes("finding"),
+      );
+      const targetIsFinding = targetNode?.labels.some((l) =>
+        l.toLowerCase().includes("finding"),
+      );
 
-    // Icon
-    textGroups
-      .append("tspan")
-      .attr("x", 0)
-      .attr("dy", "-0.4em")
-      .attr("font-size", "16px")
-      .attr("fill", "white")
-      .attr("opacity", 0.9)
-      .attr("text-anchor", "middle")
-      .text((d) => getNodeTypeIcon(d.data.labels));
+      // If one end is a finding, the other is a resource with findings
+      if (sourceIsFinding && !targetIsFinding) {
+        resourcesWithFindings.add(targetId);
+      }
+      if (targetIsFinding && !sourceIsFinding) {
+        resourcesWithFindings.add(sourceId);
+      }
+    });
 
-    // Type
-    textGroups
-      .append("tspan")
-      .attr("x", 0)
-      .attr("dy", "1.3em")
-      .attr("font-size", "10px")
-      .attr("fill", "white")
-      .attr("font-weight", "bold")
-      .attr("text-anchor", "middle")
-      .text((d) => {
-        const isFinding = d.data.labels.some((label) =>
-          label.toLowerCase().includes("finding"),
+    // Store in ref for use in selection updates
+    resourcesWithFindingsRef.current = resourcesWithFindings;
+
+    // Red alert color for resources with findings
+    const ALERT_BORDER_COLOR = "#ef4444"; // Red 500
+
+    // Add shapes - hexagons for findings, rounded pill shapes for resources
+    nodeElements.each(function (d) {
+      const group = select(this);
+      const isFinding = d.data.labels.some((label) =>
+        label.toLowerCase().includes("finding"),
+      );
+      const nodeColor = getNodeColor(d.data.labels, d.data.properties);
+      const borderColor = getNodeBorderColor(d.data.labels, d.data.properties);
+      const hasFindings = resourcesWithFindings.has(d.id);
+
+      if (isFinding) {
+        // Hexagon for findings - always has glow
+        const w = HEXAGON_WIDTH;
+        const h = HEXAGON_HEIGHT;
+        const sideInset = w * 0.15;
+        const hexPath = `
+          M ${-w / 2 + sideInset} ${-h / 2}
+          L ${w / 2 - sideInset} ${-h / 2}
+          L ${w / 2} 0
+          L ${w / 2 - sideInset} ${h / 2}
+          L ${-w / 2 + sideInset} ${h / 2}
+          L ${-w / 2} 0
+          Z
+        `;
+        group
+          .append("path")
+          .attr("d", hexPath)
+          .attr("fill", nodeColor)
+          .attr("fill-opacity", 0.85)
+          .attr(
+            "stroke",
+            d.id === selectedNodeId ? GRAPH_SELECTION_COLOR : borderColor,
+          )
+          .attr("stroke-width", d.id === selectedNodeId ? 3 : 2)
+          .attr("filter", "url(#glow)")
+          .attr("class", "node-shape");
+      } else {
+        // Check if this is an Internet node
+        const isInternet = d.data.labels.some(
+          (label) => label.toLowerCase() === "internet",
         );
 
-        let title: string;
-        if (isFinding) {
-          title = String(
-            d.data.properties?.check_title ||
-              d.data.properties?.id ||
-              "Finding",
-          );
+        // Resources with findings get red border and red glow (even when selected)
+        const strokeColor = hasFindings
+          ? ALERT_BORDER_COLOR
+          : d.id === selectedNodeId
+            ? GRAPH_SELECTION_COLOR
+            : borderColor;
+
+        if (isInternet) {
+          // Globe shape for Internet nodes - larger than regular nodes
+          const radius = NODE_HEIGHT * 0.8;
+
+          // Main circle
+          group
+            .append("circle")
+            .attr("cx", 0)
+            .attr("cy", 0)
+            .attr("r", radius)
+            .attr("fill", nodeColor)
+            .attr("fill-opacity", 0.85)
+            .attr("stroke", strokeColor)
+            .attr(
+              "stroke-width",
+              hasFindings ? 2.5 : d.id === selectedNodeId ? 3 : 1.5,
+            )
+            .attr("filter", hasFindings ? "url(#redGlow)" : "url(#glow)")
+            .attr("class", "node-shape");
+
+          // Horizontal ellipse (equator)
+          group
+            .append("ellipse")
+            .attr("cx", 0)
+            .attr("cy", 0)
+            .attr("rx", radius)
+            .attr("ry", radius * 0.35)
+            .attr("fill", "none")
+            .attr("stroke", strokeColor)
+            .attr("stroke-width", 1)
+            .attr("stroke-opacity", 0.5);
+
+          // Vertical ellipse (meridian)
+          group
+            .append("ellipse")
+            .attr("cx", 0)
+            .attr("cy", 0)
+            .attr("rx", radius * 0.35)
+            .attr("ry", radius)
+            .attr("fill", "none")
+            .attr("stroke", strokeColor)
+            .attr("stroke-width", 1)
+            .attr("stroke-opacity", 0.5);
         } else {
-          title = String(
+          // Rounded pill shape for other resources
+          group
+            .append("rect")
+            .attr("x", -NODE_WIDTH / 2)
+            .attr("y", -NODE_HEIGHT / 2)
+            .attr("width", NODE_WIDTH)
+            .attr("height", NODE_HEIGHT)
+            .attr("rx", NODE_RADIUS)
+            .attr("ry", NODE_RADIUS)
+            .attr("fill", nodeColor)
+            .attr("fill-opacity", 0.85)
+            .attr("stroke", strokeColor)
+            .attr(
+              "stroke-width",
+              hasFindings ? 2.5 : d.id === selectedNodeId ? 3 : 1.5,
+            )
+            .attr("filter", hasFindings ? "url(#redGlow)" : null)
+            .attr("class", "node-shape");
+        }
+      }
+    });
+
+    // Store reference for updating selection later (select all shapes)
+    const nodeShapes = nodeElements.selectAll(".node-shape");
+    nodeShapesRef.current = nodeShapes as unknown as ReturnType<
+      typeof select<SVGRectElement, NodeData>
+    >;
+
+    // Add label text - white text on all nodes (backgrounds are dark enough)
+    nodeElements.each(function (d) {
+      const group = select(this);
+      const isFinding = d.data.labels.some((label) =>
+        label.toLowerCase().includes("finding"),
+      );
+
+      // Create text container - white text with shadow for readability
+      const textGroup = group
+        .append("text")
+        .attr("pointer-events", "none")
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "middle")
+        .attr("fill", "#ffffff")
+        .style("text-shadow", "0 1px 2px rgba(0,0,0,0.5)");
+
+      if (isFinding) {
+        // For findings: show check_title/name (severity is shown by color)
+        const title = String(
+          d.data.properties?.check_title ||
             d.data.properties?.name ||
-              d.data.properties?.id ||
-              (d.data.labels && d.data.labels.length > 0
-                ? formatNodeLabel(d.data.labels[0])
-                : "Unknown"),
-          );
-        }
-
-        return title.length > 16 ? title.substring(0, 16) + "..." : title;
-      });
-
-    // ID or severity
-    textGroups
-      .append("tspan")
-      .attr("x", 0)
-      .attr("dy", "1.2em")
-      .attr("font-size", "9px")
-      .attr("fill", "white")
-      .attr("text-anchor", "middle")
-      .text((d) => {
-        const isFinding = d.data.labels.some((label) =>
-          label.toLowerCase().includes("finding"),
+            d.data.properties?.id ||
+            "Finding",
         );
+        const maxChars = 24;
+        const displayTitle =
+          title.length > maxChars
+            ? title.substring(0, maxChars) + "..."
+            : title;
 
-        if (isFinding && d.data.properties?.severity) {
-          return String(d.data.properties.severity);
-        }
+        textGroup
+          .append("tspan")
+          .attr("x", 0)
+          .attr("font-size", "11px")
+          .attr("font-weight", "600")
+          .text(displayTitle);
+      } else {
+        // For resources: show name with type below
+        const name = String(
+          d.data.properties?.name ||
+            d.data.properties?.id ||
+            (d.data.labels && d.data.labels.length > 0
+              ? formatNodeLabel(d.data.labels[0])
+              : "Unknown"),
+        );
+        const maxChars = 22;
+        const displayName =
+          name.length > maxChars ? name.substring(0, maxChars) + "..." : name;
 
+        // Name
+        textGroup
+          .append("tspan")
+          .attr("x", 0)
+          .attr("dy", "-0.3em")
+          .attr("font-size", "11px")
+          .attr("font-weight", "600")
+          .text(displayName);
+
+        // Type label - slightly transparent white
         const type =
           d.data.labels && d.data.labels.length > 0
             ? formatNodeLabel(d.data.labels[0])
-            : "Unknown";
-        return type.length > 12 ? type.substring(0, 12) + "." : type;
-      });
+            : "";
+        if (type) {
+          textGroup
+            .append("tspan")
+            .attr("x", 0)
+            .attr("dy", "1.3em")
+            .attr("font-size", "9px")
+            .attr("fill", "rgba(255,255,255,0.8)")
+            .text(type);
+        }
+      }
+    });
 
-    // Add zoom behavior (but disable all mouse interactions)
+    // Add zoom behavior
     const zoomBehavior = zoom<SVGSVGElement, unknown>().on(
       "zoom",
       (event: D3ZoomEvent<SVGSVGElement, unknown>) => {
@@ -660,7 +916,7 @@ const AttackPathGraphComponent = forwardRef<
 
     svg.call(zoomBehavior);
 
-    // Disable ALL mouse zoom/pan interactions (only allow programmatic zoom via buttons)
+    // Disable mouse wheel zoom (only allow programmatic zoom via buttons)
     svg.on("wheel.zoom", null);
     svg.on("dblclick.zoom", null);
 
@@ -690,6 +946,7 @@ const AttackPathGraphComponent = forwardRef<
         );
       }
     }, 100);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   return (
