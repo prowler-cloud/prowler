@@ -10,6 +10,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Service Watchlist component to Overview page [(#9316)](https://github.com/prowler-cloud/prowler/pull/9316)
 - Risk Pipeline component with Sankey chart to Overview page [(#9317)](https://github.com/prowler-cloud/prowler/pull/9317)
 - Threat Map component to Overview Page [(#9324)](https://github.com/prowler-cloud/prowler/pull/9324)
+- MongoDB Atlas provider support [(#9253)](https://github.com/prowler-cloud/prowler/pull/9253)
 
 ## [1.14.0] (Prowler v5.14.0)
 
@@ -22,7 +23,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 - IaC (Infrastructure as Code) provider support for scanning remote repositories [(#8751)](https://github.com/prowler-cloud/prowler/pull/8751)
 - PDF reporting for NIS2 compliance framework [(#9170)](https://github.com/prowler-cloud/prowler/pull/9170)
 - External resource link to IaC findings for direct navigation to source code in Git repositories [(#9151)](https://github.com/prowler-cloud/prowler/pull/9151)
-- MongoDB Atlas provider support [(#9253)](https://github.com/prowler-cloud/prowler/pull/9253)
 - New Overview page and new app styles [(#9234)](https://github.com/prowler-cloud/prowler/pull/9234)
 - Use branch name as region for IaC findings [(#9296)](https://github.com/prowler-cloud/prowler/pull/9296)
 
