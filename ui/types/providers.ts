@@ -12,6 +12,24 @@ export const PROVIDER_TYPES = [
 
 export type ProviderType = (typeof PROVIDER_TYPES)[number];
 
+export const PROVIDER_DISPLAY_NAMES: Record<ProviderType, string> = {
+  aws: "AWS",
+  azure: "Azure",
+  gcp: "Google Cloud",
+  kubernetes: "Kubernetes",
+  m365: "Microsoft 365",
+  github: "GitHub",
+  iac: "Infrastructure as Code",
+  oraclecloud: "Oracle Cloud Infrastructure",
+};
+
+export function getProviderDisplayName(providerId: string): string {
+  return (
+    PROVIDER_DISPLAY_NAMES[providerId.toLowerCase() as ProviderType] ||
+    providerId
+  );
+}
+
 export interface ProviderProps {
   id: string;
   type: "providers";
@@ -79,8 +97,8 @@ export interface ProvidersApiResponse {
   included?: Array<{
     type: string;
     id: string;
-    attributes: any;
-    relationships?: any;
+    attributes: Record<string, unknown>;
+    relationships?: Record<string, unknown>;
   }>;
   meta: {
     pagination: {

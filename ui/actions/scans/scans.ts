@@ -9,6 +9,46 @@ import {
 } from "@/lib/compliance/compliance-report-types";
 import { addScanOperation } from "@/lib/sentry-breadcrumbs";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
+import { ScansApiResponse } from "@/types";
+
+const filterMongoScans = (result: ScansApiResponse | undefined) => {
+  if (!result?.data) return result;
+
+  const included = result.included || [];
+
+  // Get IDs of providers containing "mongo"
+  const mongoProviderIds = new Set(
+    included
+      .filter(
+        (item) =>
+          item.type === "providers" &&
+          item.attributes?.provider?.toLowerCase().includes("mongo"),
+      )
+      .map((item) => item.id),
+  );
+
+  // If no mongo providers found, return as-is
+  if (mongoProviderIds.size === 0) return result;
+
+  // Filter out scans associated with mongo providers
+  result.data = result.data.filter((scan) => {
+    const providerId = scan.relationships?.provider?.data?.id;
+    return !providerId || !mongoProviderIds.has(providerId);
+  });
+
+  // Filter out mongo-related included items
+  if (result.included) {
+    result.included = included.filter(
+      (item) =>
+        !(
+          item.type === "providers" &&
+          item.attributes?.provider?.toLowerCase().includes("mongo")
+        ),
+    );
+  }
+
+  return result;
+};
 
 export const getScans = async ({
   page = 1,
@@ -44,7 +84,10 @@ export const getScans = async ({
   try {
     const response = await fetch(url.toString(), { headers });
 
-    return handleApiResponse(response);
+    const result = await handleApiResponse(response);
+
+    // Filter out mongo-related scans when provider is included
+    return filterMongoScans(result);
   } catch (error) {
     console.error("Error fetching scans:", error);
     return undefined;

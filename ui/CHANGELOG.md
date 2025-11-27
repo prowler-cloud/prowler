@@ -2,6 +2,15 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.15.0] (Unreleased)
+
+### 🚀 Added
+
+- Compliance Watchlist component to Overview page [(#9199)](https://github.com/prowler-cloud/prowler/pull/9199)
+- Service Watchlist component to Overview page [(#9316)](https://github.com/prowler-cloud/prowler/pull/9316)
+- Risk Pipeline component with Sankey chart to Overview page [(#9317)](https://github.com/prowler-cloud/prowler/pull/9317)
+- Threat Map component to Overview Page [(#9324)](https://github.com/prowler-cloud/prowler/pull/9324)
+
 ## [1.14.0] (Prowler v5.14.0)
 
 ### 🚀 Added
@@ -26,7 +35,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ---
 
-## [1.13.1]
+## [1.13.1] (Prolwer v5.13.1)
 
 ### 🔄 Changed
 

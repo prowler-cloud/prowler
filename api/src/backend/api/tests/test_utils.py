@@ -21,6 +21,7 @@ from prowler.providers.aws.lib.security_hub.security_hub import SecurityHubConne
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.github.github_provider import GithubProvider
+from prowler.providers.iac.iac_provider import IacProvider
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
 from prowler.providers.m365.m365_provider import M365Provider
 from prowler.providers.mongodbatlas.mongodbatlas_provider import MongodbatlasProvider
@@ -114,6 +115,7 @@ class TestReturnProwlerProvider:
             (Provider.ProviderChoices.GITHUB.value, GithubProvider),
             (Provider.ProviderChoices.MONGODBATLAS.value, MongodbatlasProvider),
             (Provider.ProviderChoices.ORACLECLOUD.value, OraclecloudProvider),
+            (Provider.ProviderChoices.IAC.value, IacProvider),
         ],
     )
     def test_return_prowler_provider(self, provider_type, expected_provider):
@@ -252,6 +254,72 @@ class TestGetProwlerProviderKwargs:
         result = get_prowler_provider_kwargs(provider, mutelist_processor)
 
         expected_result = {**secret_dict, "mutelist_content": {"key": "value"}}
+        assert result == expected_result
+
+    def test_get_prowler_provider_kwargs_iac_provider(self):
+        """Test that IaC provider gets correct kwargs with repository URL."""
+        provider_uid = "https://github.com/org/repo"
+        secret_dict = {"access_token": "test_token"}
+        secret_mock = MagicMock()
+        secret_mock.secret = secret_dict
+
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.IAC.value
+        provider.secret = secret_mock
+        provider.uid = provider_uid
+
+        result = get_prowler_provider_kwargs(provider)
+
+        expected_result = {
+            "scan_repository_url": provider_uid,
+            "oauth_app_token": "test_token",
+        }
+        assert result == expected_result
+
+    def test_get_prowler_provider_kwargs_iac_provider_without_token(self):
+        """Test that IaC provider works without access token for public repos."""
+        provider_uid = "https://github.com/org/public-repo"
+        secret_dict = {}
+        secret_mock = MagicMock()
+        secret_mock.secret = secret_dict
+
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.IAC.value
+        provider.secret = secret_mock
+        provider.uid = provider_uid
+
+        result = get_prowler_provider_kwargs(provider)
+
+        expected_result = {"scan_repository_url": provider_uid}
+        assert result == expected_result
+
+    def test_get_prowler_provider_kwargs_iac_provider_ignores_mutelist(self):
+        """Test that IaC provider does NOT receive mutelist_content.
+
+        IaC provider uses Trivy's built-in mutelist logic, so it should not
+        receive mutelist_content even when a mutelist processor is configured.
+        """
+        provider_uid = "https://github.com/org/repo"
+        secret_dict = {"access_token": "test_token"}
+        secret_mock = MagicMock()
+        secret_mock.secret = secret_dict
+
+        mutelist_processor = MagicMock()
+        mutelist_processor.configuration = {"Mutelist": {"key": "value"}}
+
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.IAC.value
+        provider.secret = secret_mock
+        provider.uid = provider_uid
+
+        result = get_prowler_provider_kwargs(provider, mutelist_processor)
+
+        # IaC provider should NOT have mutelist_content
+        assert "mutelist_content" not in result
+        expected_result = {
+            "scan_repository_url": provider_uid,
+            "oauth_app_token": "test_token",
+        }
         assert result == expected_result
 
     def test_get_prowler_provider_kwargs_unsupported_provider(self):
