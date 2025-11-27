@@ -37,6 +37,7 @@ from tasks.jobs.lighthouse_providers import (
 from tasks.jobs.muting import mute_historical_findings
 from tasks.jobs.report import generate_compliance_reports_job
 from tasks.jobs.scan import (
+    aggregate_attack_surface,
     aggregate_findings,
     create_compliance_requirements,
     perform_prowler_scan,
@@ -67,6 +68,9 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
         provider_id (str): The primary key of the Provider instance that was scanned.
     """
     create_compliance_requirements_task.apply_async(
+        kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
+    )
+    aggregate_attack_surface_task.apply_async(
         kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
     )
     chain(
@@ -527,6 +531,21 @@ def create_compliance_requirements_task(tenant_id: str, scan_id: str):
         scan_id (str): The ID of the scan for which to create records.
     """
     return create_compliance_requirements(tenant_id=tenant_id, scan_id=scan_id)
+
+
+@shared_task(name="scan-attack-surface-overviews", queue="overview")
+def aggregate_attack_surface_task(tenant_id: str, scan_id: str):
+    """
+    Creates attack surface overview records for a scan.
+
+    This task processes findings and aggregates them into attack surface categories
+    (internet-exposed, secrets, privilege-escalation, ec2-imdsv1) for quick overview queries.
+
+    Args:
+        tenant_id (str): The tenant ID for which to create records.
+        scan_id (str): The ID of the scan for which to create records.
+    """
+    return aggregate_attack_surface(tenant_id=tenant_id, scan_id=scan_id)
 
 
 @shared_task(base=RLSTask, name="lighthouse-connection-check")
