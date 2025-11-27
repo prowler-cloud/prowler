@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { Database } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { DataTableRowDetails } from "@/components/findings/table";
 import { DataTableRowActions } from "@/components/findings/table/data-table-row-actions";
@@ -51,13 +51,18 @@ const getProviderData = (
   );
 };
 
-const FindingDetailsCell = ({ row }: { row: any }) => {
+const FindingDetailsCell = ({ row }: { row: { original: FindingProps } }) => {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
-  const findingId = searchParams.get("id");
-  const isOpen = findingId === row.original.id;
+  const findingIdFromUrl = searchParams.get("id");
+
+  // If there's an id in the URL, the sheet is controlled by FindingDetailsSheet component
+  // so we don't open a local sheet for any row
+  const isUrlControlled = !!findingIdFromUrl;
 
   const handleOpenChange = (open: boolean) => {
-    const params = new URLSearchParams(searchParams);
+    const params = new URLSearchParams(searchParams.toString());
 
     if (open) {
       params.set("id", row.original.id);
@@ -65,7 +70,7 @@ const FindingDetailsCell = ({ row }: { row: any }) => {
       params.delete("id");
     }
 
-    window.history.pushState({}, "", `?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   return (
@@ -76,7 +81,7 @@ const FindingDetailsCell = ({ row }: { row: any }) => {
         }
         title="Finding Details"
         description="View the finding details"
-        defaultOpen={isOpen}
+        open={isUrlControlled ? false : undefined}
         onOpenChange={handleOpenChange}
       >
         <DataTableRowDetails
