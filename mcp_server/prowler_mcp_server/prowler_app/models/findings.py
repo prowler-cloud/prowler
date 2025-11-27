@@ -32,25 +32,28 @@ class CheckMetadata(MinimalSerializerMixin, BaseModel):
     @classmethod
     def from_api_response(cls, data: dict) -> "CheckMetadata":
         """Transform API check_metadata to simplified format."""
-        remediation_data = data.get("remediation", {})
-        code = remediation_data.get("code", {})
-        recommendation = remediation_data.get("recommendation", {})
+        remediation_data = data.get("remediation")
 
-        remediation = CheckRemediation(
-            cli=code.get("cli"),
-            terraform=code.get("terraform"),
-            recommendation_text=recommendation.get("text"),
-            recommendation_url=recommendation.get("url"),
-        )
+        remediation = None
+        if remediation_data:
+            code = remediation_data.get("code", {})
+            recommendation = remediation_data.get("recommendation", {})
+
+            remediation = CheckRemediation(
+                cli=code.get("cli"),
+                terraform=code.get("terraform"),
+                recommendation_text=recommendation.get("text"),
+                recommendation_url=recommendation.get("url"),
+            )
 
         return cls(
-            check_id=data.get("checkid"),
-            title=data.get("checktitle"),
-            description=data.get("description"),
-            provider=data.get("provider"),
+            check_id=data["checkid"],
+            title=data["checktitle"],
+            description=data["description"],
+            provider=data["provider"],
             risk=data.get("risk"),
-            service=data.get("servicename"),
-            resource_type=data.get("resourcetype"),
+            service=data["servicename"],
+            resource_type=data["resourcetype"],
             remediation=remediation,
             related_url=data.get("relatedurl"),
             categories=data.get("categories"),
@@ -73,18 +76,18 @@ class SimplifiedFinding(MinimalSerializerMixin, BaseModel):
     @classmethod
     def from_api_response(cls, data: dict) -> "SimplifiedFinding":
         """Transform JSON:API finding response to simplified format."""
-        attributes = data.get("attributes", {})
-        check_metadata = attributes.get("check_metadata", {})
+        attributes = data["attributes"]
+        check_metadata = attributes["check_metadata"]
 
         return cls(
-            id=data.get("id"),
-            uid=attributes.get("uid"),
-            status=attributes.get("status"),
-            severity=attributes.get("severity"),
+            id=data["id"],
+            uid=attributes["uid"],
+            status=attributes["status"],
+            severity=attributes["severity"],
             check_metadata=CheckMetadata.from_api_response(check_metadata),
             status_extended=attributes.get("status_extended"),
             delta=attributes.get("delta"),
-            muted=attributes.get("muted") if attributes.get("muted") else None,
+            muted=attributes.get("muted"),
             muted_reason=attributes.get("muted_reason"),
         )
 
@@ -105,31 +108,31 @@ class DetailedFinding(SimplifiedFinding):
     @classmethod
     def from_api_response(cls, data: dict) -> "DetailedFinding":
         """Transform JSON:API finding response to detailed format."""
-        attributes = data.get("attributes", {})
-        check_metadata = attributes.get("check_metadata", {})
+        attributes = data["attributes"]
+        check_metadata = attributes["check_metadata"]
         relationships = data.get("relationships", {})
 
         # Parse scan relationship
         scan_id = None
         scan_data = relationships.get("scan", {}).get("data")
         if scan_data:
-            scan_id = scan_data.get("id")
+            scan_id = scan_data["id"]
 
         # Parse resources relationship
         resource_ids = None
         resources_data = relationships.get("resources", {}).get("data", [])
         if resources_data:
-            resource_ids = [r.get("id") for r in resources_data]
+            resource_ids = [r["id"] for r in resources_data]
 
         return cls(
-            id=data.get("id"),
-            uid=attributes.get("uid"),
-            status=attributes.get("status"),
-            severity=attributes.get("severity"),
+            id=data["id"],
+            uid=attributes["uid"],
+            status=attributes["status"],
+            severity=attributes["severity"],
             check_metadata=CheckMetadata.from_api_response(check_metadata),
             status_extended=attributes.get("status_extended"),
             delta=attributes.get("delta"),
-            muted=attributes.get("muted") if attributes.get("muted") else None,
+            muted=attributes.get("muted"),
             muted_reason=attributes.get("muted_reason"),
             inserted_at=attributes.get("inserted_at"),
             updated_at=attributes.get("updated_at"),
@@ -143,28 +146,24 @@ class FindingsListResponse(BaseModel):
     """Simplified response for findings list queries."""
 
     findings: list[SimplifiedFinding]
-    total_count: int = 0
-    page_number: int = 1
-    page_size: int = 100
-    has_next: bool = False
-    has_prev: bool = False
+    total_num_finding: int
+    total_num_pages: int
+    current_page: int
 
     @classmethod
     def from_api_response(cls, response: dict) -> "FindingsListResponse":
         """Transform JSON:API response to simplified format."""
-        data = response.get("data", [])
-        links = response.get("links", {})
-        meta = response.get("meta", {})
+        data = response["data"]
+        meta = response["meta"]
+        pagination = meta["pagination"]
 
         findings = [SimplifiedFinding.from_api_response(item) for item in data]
 
         return cls(
             findings=findings,
-            total_count=meta.get("total", len(findings)),
-            page_number=meta.get("page", {}).get("number", 1),
-            page_size=meta.get("page", {}).get("size", 100),
-            has_next=links.get("next") is not None,
-            has_prev=links.get("prev") is not None,
+            total_num_finding=pagination["count"],
+            total_num_pages=pagination["pages"],
+            current_page=pagination["page"],
         )
 
 
@@ -187,20 +186,20 @@ class FindingsOverview(BaseModel):
     @classmethod
     def from_api_response(cls, response: dict) -> "FindingsOverview":
         """Transform JSON:API overview response to simplified format."""
-        data = response.get("data", {})
-        attributes = data.get("attributes", {})
+        data = response["data"]
+        attributes = data["attributes"]
 
         return cls(
-            total=attributes.get("total", 0),
-            fail=attributes.get("fail", 0),
-            passed=attributes.get("pass", 0),
-            muted=attributes.get("muted", 0),
-            new=attributes.get("new", 0),
-            changed=attributes.get("changed", 0),
-            fail_new=attributes.get("fail_new", 0),
-            fail_changed=attributes.get("fail_changed", 0),
-            pass_new=attributes.get("pass_new", 0),
-            pass_changed=attributes.get("pass_changed", 0),
-            muted_new=attributes.get("muted_new", 0),
-            muted_changed=attributes.get("muted_changed", 0),
+            total=attributes["total"],
+            fail=attributes["fail"],
+            passed=attributes["pass"],
+            muted=attributes["muted"],
+            new=attributes["new"],
+            changed=attributes["changed"],
+            fail_new=attributes["fail_new"],
+            fail_changed=attributes["fail_changed"],
+            pass_new=attributes["pass_new"],
+            pass_changed=attributes["pass_changed"],
+            muted_new=attributes["muted_new"],
+            muted_changed=attributes["muted_changed"],
         )

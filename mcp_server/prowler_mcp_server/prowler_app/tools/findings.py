@@ -162,7 +162,9 @@ class FindingsTools(BaseTool):
         if check_id:
             params["filter[check_id__in]"] = check_id
         if muted is not None:
-            params["filter[muted]"] = muted
+            params["filter[muted]"] = (
+                muted if isinstance(muted, bool) else muted == "true"
+            )
         if delta:
             params["filter[delta__in]"] = delta
         if search:

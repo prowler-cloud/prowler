@@ -235,14 +235,6 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
 
         Raises:
             ValueError: If date range exceeds max_days or date format is invalid
-
-        Examples:
-            >>> normalize_date_range(None, None)
-            None  # Use latest endpoint
-            >>> normalize_date_range("2024-01-15", None)
-            ("2024-01-15", "2024-01-16")  # Auto-complete to_date
-            >>> normalize_date_range(None, "2024-01-16")
-            ("2024-01-15", "2024-01-16")  # Auto-complete from_date
         """
         if not date_from and not date_to:
             return None

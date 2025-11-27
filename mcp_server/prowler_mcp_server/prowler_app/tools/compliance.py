@@ -34,13 +34,6 @@ class ComplianceTools(BaseTool):
             default=[],
             description="Filter by cloud regions. Multiple values allowed. If empty, all regions are returned",
         ),
-        page_size: int = Field(
-            default=50,
-            description="Number of results to return per page",
-        ),
-        page_number: int = Field(
-            default=1, description="Page number to retrieve (1-indexed)"
-        ),
     ) -> dict[str, Any]:
         """Search and retrieve compliance frameworks with their status.
 
@@ -63,11 +56,8 @@ class ComplianceTools(BaseTool):
         - Compliance metrics: total requirements, passed/failed/manual counts, pass percentage
 
         Returns:
-            Paginated list of compliance frameworks with compliance statistics
+            List of compliance frameworks with compliance statistics
         """
-        # Validate page_size parameter
-        self.api_client.validate_page_size(page_size)
-
         params = {}
 
         if scan_id:
@@ -77,10 +67,6 @@ class ComplianceTools(BaseTool):
             params["filter[compliance_id__icontains]"] = compliance_framework_id
         if region:
             params["filter[region__in]"] = region
-
-        # Pagination
-        params["page[size]"] = page_size
-        params["page[number]"] = page_number
 
         # Return only LLM-relevant fields
         params["fields[compliance-overviews]"] = (

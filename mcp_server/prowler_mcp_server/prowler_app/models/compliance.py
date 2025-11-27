@@ -39,19 +39,19 @@ class ComplianceFramework(MinimalSerializerMixin, BaseModel):
     @classmethod
     def from_api_response(cls, data: dict) -> "ComplianceFramework":
         """Transform JSON:API compliance overview response to simplified format."""
-        attributes = data.get("attributes", {})
+        attributes = data["attributes"]
 
         return cls(
-            id=data.get("id"),
+            id=data["id"],
             compliance_id=attributes.get("compliance_id"),
             framework=attributes.get("framework"),
             version=attributes.get("version"),
             provider=attributes.get("provider"),
             region=attributes.get("region"),
-            total_requirements=attributes.get("total_requirements", 0),
-            requirements_passed=attributes.get("requirements_passed", 0),
-            requirements_failed=attributes.get("requirements_failed", 0),
-            requirements_manual=attributes.get("requirements_manual", 0),
+            total_requirements=attributes["total_requirements"],
+            requirements_passed=attributes["requirements_passed"],
+            requirements_failed=attributes["requirements_failed"],
+            requirements_manual=attributes["requirements_manual"],
         )
 
 
@@ -59,26 +59,16 @@ class ComplianceFrameworksListResponse(BaseModel):
     """Simplified response for compliance frameworks list queries."""
 
     frameworks: list[ComplianceFramework]
-    total_count: int = 0
-    page_number: int = 1
-    page_size: int = 100
-    has_next: bool = False
-    has_prev: bool = False
+    total_count: int
 
     @classmethod
     def from_api_response(cls, response: dict) -> "ComplianceFrameworksListResponse":
         """Transform JSON:API response to simplified format."""
-        data = response.get("data", [])
-        links = response.get("links", {})
-        meta = response.get("meta", {})
+        data = response["data"]
 
         frameworks = [ComplianceFramework.from_api_response(item) for item in data]
 
         return cls(
             frameworks=frameworks,
-            total_count=meta.get("total", len(frameworks)),
-            page_number=meta.get("page", {}).get("number", 1),
-            page_size=meta.get("page", {}).get("size", 100),
-            has_next=links.get("next") is not None,
-            has_prev=links.get("prev") is not None,
+            total_count=len(frameworks),
         )
