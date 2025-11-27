@@ -75,6 +75,7 @@ from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from tasks.beat import schedule_provider_scan
 from tasks.jobs.export import get_s3_client
 from tasks.tasks import (
+    backfill_compliance_summaries_task,
     backfill_scan_resource_summaries_task,
     check_integration_connection_task,
     check_lighthouse_connection_task,
@@ -125,6 +126,7 @@ from api.filters import (
     UserFilter,
 )
 from api.models import (
+    ComplianceOverviewSummary,
     ComplianceRequirementOverview,
     Finding,
     Integration,
@@ -3547,7 +3549,16 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             try:
                 scan = Scan.all_objects.select_related("provider").get(pk=scan_id)
             except Scan.DoesNotExist:
-                raise NotFound(detail="Scan not found")
+                raise ValidationError(
+                    [
+                        {
+                            "detail": "Scan not found",
+                            "status": 404,
+                            "source": {"pointer": "filter[scan_id]"},
+                            "code": "not_found",
+                        }
+                    ]
+                )
             provider = scan.provider
 
         if not provider:
@@ -3646,6 +3657,25 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                 {"detail": "Task failed to generate compliance overview data."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+    def _list_without_region_aggregation(self, scan_id):
+        """
+        Fall back aggregation when compliance summaries don't exist yet.
+        Aggregates ComplianceRequirementOverview data across ALL regions.
+        """
+        queryset = self.filter_queryset(self.get_queryset()).filter(scan_id=scan_id)
+        compliance_template = self._get_compliance_template(scan_id=scan_id)
+        data = self._aggregate_compliance_overview(
+            queryset, template_metadata=compliance_template
+        )
+        if data:
+            return Response(data)
+
+        task_response = self._task_response_if_running(scan_id)
+        if task_response:
+            return task_response
+
+        return Response(data)
 
     def list(self, request, *args, **kwargs):
         scan_id = request.query_params.get("filter[scan_id]")
