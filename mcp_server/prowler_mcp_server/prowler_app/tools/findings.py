@@ -80,11 +80,10 @@ class FindingsTools(BaseTool):
             default=None, description="Free-text search term across finding details"
         ),
         page_size: int = Field(
-            default=50,
-            description="Number of results to return per page. Default: 100, Max: 1000",
+            default=50, description="Number of results to return per page"
         ),
         page_number: int = Field(
-            default=1, description="Page number to retrieve (1-indexed). Default: 1"
+            default=1, description="Page number to retrieve (1-indexed)"
         ),
     ) -> dict[str, Any]:
         """Search and filter security findings across all cloud providers with rich filtering capabilities.
