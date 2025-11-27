@@ -24,19 +24,19 @@ class ComplianceTools(BaseTool):
         self,
         scan_id: str | None = Field(
             default=None,
-            description="UUID of the scan to get compliance frameworks for. If omitted, returns compliance data from the latest completed scan of each provider",
+            description="UUID of the scan to get compliance frameworks for (must be a valid UUID format, e.g., '019ac0d6-90d5-73e9-9acf-c22e256f1bac'). If omitted, returns compliance data from the latest completed scan of each provider type",
         ),
-        framework: str | None = Field(
+        compliance_framework_id: str | None = Field(
             default=None,
             description="Filter by specific compliance framework ID (e.g., cis_1.5_aws, pci_dss_v4.0_aws)",
         ),
         region: list[str] = Field(
             default=[],
-            description="Filter by cloud regions. Multiple values allowed. If empty, all regions are returned.",
+            description="Filter by cloud regions. Multiple values allowed. If empty, all regions are returned",
         ),
         page_size: int = Field(
-            default=100,
-            description="Number of results to return per page. Default: 100",
+            default=50,
+            description="Number of results to return per page. Default: 100, Max: 1000",
         ),
         page_number: int = Field(
             default=1, description="Page number to retrieve (1-indexed). Default: 1"
@@ -65,13 +65,16 @@ class ComplianceTools(BaseTool):
         Returns:
             Paginated list of compliance frameworks with compliance statistics
         """
+        # Validate page_size parameter
+        self.api_client.validate_page_size(page_size)
+
         params = {}
 
         if scan_id:
             params["filter[scan_id]"] = scan_id
 
-        if framework:
-            params["filter[framework__icontains]"] = framework
+        if compliance_framework_id:
+            params["filter[compliance_id__icontains]"] = compliance_framework_id
         if region:
             params["filter[region__in]"] = region
 

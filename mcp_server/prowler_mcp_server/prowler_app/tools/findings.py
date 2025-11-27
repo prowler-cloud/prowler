@@ -32,11 +32,11 @@ class FindingsTools(BaseTool):
         ),
         status: list[str] = Field(
             default=["FAIL"],
-            description="Filter by finding status. Multiple values allowed: FAIL (security issue found), PASS (no issue found), MANUAL (requires manual verification)",
+            description="Filter by finding status. Multiple values allowed: FAIL (security issue found), PASS (no issue found), MANUAL (requires manual verification). Default: ['FAIL'] - only returns findings with security issues. To get all findings, pass an empty list [].",
         ),
         provider_type: list[str] = Field(
             default=[],
-            description="Filter by cloud provider type.",
+            description="Filter by cloud provider type. Valid values: 'aws', 'azure', 'gcp', 'kubernetes', 'm365', 'github', 'mongodbatlas', 'iac', 'oraclecloud'. Multiple values allowed. If the parameter is not provided, all providers are returned.",
         ),
         provider_alias: str | None = Field(
             default=None,
@@ -58,7 +58,9 @@ class FindingsTools(BaseTool):
             default=[],
             description="Filter by specific security check IDs. Multiple values allowed. If empty, all check IDs are returned.",
         ),
-        muted: bool | None = Field(
+        muted: (
+            bool | str | None
+        ) = Field(  # Wrong `str` hint type due to bad MCP Clients implementation
             default=None,
             description="Filter by muted status. True for muted findings only, False for active findings only. If not specified, returns both",
         ),
@@ -68,17 +70,17 @@ class FindingsTools(BaseTool):
         ),
         date_from: str | None = Field(
             default=None,
-            description="Start date for range query (ISO 8601 format YYYY-MM-DD). IMPORTANT: Maximum date range is 2 days. If only one boundary is provided, the other will be auto-calculated to maintain the 2-day window",
+            description="Start date for range query in ISO 8601 format (YYYY-MM-DD, e.g., '2025-01-15'). Full date required - partial dates like '2025' or '2025-01' are not accepted. IMPORTANT: Maximum date range is 2 days. If only date_from is provided, date_to is automatically set to 2 days later. If only one boundary is provided, the other will be auto-calculated to maintain the 2-day window.",
         ),
         date_to: str | None = Field(
             default=None,
-            description="End date for range query (ISO 8601 format YYYY-MM-DD). Can be used alone or with date_from",
+            description="End date for range query in ISO 8601 format (YYYY-MM-DD, e.g., '2025-01-15'). Full date required - partial dates are not accepted. If only date_to is provided, date_from is automatically set to 2 days earlier. Can be used alone or with date_from.",
         ),
         search: str | None = Field(
             default=None, description="Free-text search term across finding details"
         ),
         page_size: int = Field(
-            default=100,
+            default=50,
             description="Number of results to return per page. Default: 100, Max: 1000",
         ),
         page_number: int = Field(
@@ -97,7 +99,7 @@ class FindingsTools(BaseTool):
         - Returns 100 results per page
 
         Date filtering:
-        - Without dates: queries latest findings (most efficient)
+        - Without dates: queries findings from the most recent completed scan across all providers (most efficient). This returns the latest snapshot of findings, not a time-based query.
         - With dates: queries historical findings (2-day maximum range)
 
         Each finding includes:
@@ -109,6 +111,9 @@ class FindingsTools(BaseTool):
         Returns:
             Paginated list of simplified findings with total count and pagination metadata
         """
+        # Validate page_size parameter
+        self.api_client.validate_page_size(page_size)
+
         # Determine endpoint based on date parameters
         date_range = self.api_client.normalize_date_range(
             date_from, date_to, max_days=2
@@ -170,7 +175,9 @@ class FindingsTools(BaseTool):
 
     async def get_finding_details(
         self,
-        finding_id: str = Field(description="UUID of the finding to retrieve"),
+        finding_id: str = Field(
+            description="UUID of the finding to retrieve (must be a valid UUID format, e.g., '019ac0d6-90d5-73e9-9acf-c22e256f1bac'). Returns an error if the finding ID is invalid or not found."
+        ),
     ) -> dict[str, Any]:
         """Retrieve comprehensive details about a specific security finding by its ID.
 
@@ -211,7 +218,7 @@ class FindingsTools(BaseTool):
         self,
         provider_type: list[str] = Field(
             default=[],
-            description="Filter statistics by cloud provider. Multiple values allowed. If empty, all providers are returned.",
+            description="Filter statistics by cloud provider. Valid values: 'aws', 'azure', 'gcp', 'kubernetes', 'm365', 'github', 'mongodbatlas', 'iac', 'oraclecloud'. Multiple values allowed. If empty, all providers are returned.",
         ),
     ) -> dict[str, Any]:
         """Get high-level statistics about security findings formatted as a human-readable markdown report.

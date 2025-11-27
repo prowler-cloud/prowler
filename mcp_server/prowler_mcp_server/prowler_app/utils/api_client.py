@@ -180,6 +180,41 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
         """
         return await self._make_request(HTTPMethod.DELETE, path, params=params)
 
+    def _validate_date_format(self, date_str: str, param_name: str) -> datetime:
+        """Validate date string format.
+
+        Args:
+            date_str: Date string to validate
+            param_name: Parameter name for error messages
+
+        Returns:
+            Parsed datetime object
+
+        Raises:
+            ValueError: If date format is invalid
+        """
+        try:
+            return datetime.strptime(date_str, "%Y-%m-%d")
+        except ValueError:
+            raise ValueError(
+                f"Invalid date format for {param_name}. Expected YYYY-MM-DD (e.g., '2025-01-15'), got '{date_str}'. "
+                f"Full date required - partial dates like '2025' or '2025-01' are not accepted."
+            )
+
+    def validate_page_size(self, page_size: int) -> None:
+        """Validate page size parameter.
+
+        Args:
+            page_size: Page size to validate
+
+        Raises:
+            ValueError: If page size is out of valid range (1-1000)
+        """
+        if page_size < 1 or page_size > 1000:
+            raise ValueError(
+                f"Invalid page_size: {page_size}. Must be between 1 and 1000 (inclusive)."
+            )
+
     def normalize_date_range(
         self, date_from: str | None, date_to: str | None, max_days: int = 2
     ) -> tuple[str, str] | None:
@@ -199,7 +234,7 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
             None if no dates provided, otherwise tuple of (date_from, date_to) as strings
 
         Raises:
-            ValueError: If date range exceeds max_days
+            ValueError: If date range exceeds max_days or date format is invalid
 
         Examples:
             >>> normalize_date_range(None, None)
@@ -212,12 +247,12 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
         if not date_from and not date_to:
             return None
 
-        # Parse provided dates
+        # Parse and validate provided dates
         from_date: datetime | None = (
-            datetime.strptime(date_from, "%Y-%m-%d") if date_from else None
+            self._validate_date_format(date_from, "date_from") if date_from else None
         )
         to_date: datetime | None = (
-            datetime.strptime(date_to, "%Y-%m-%d") if date_to else None
+            self._validate_date_format(date_to, "date_to") if date_to else None
         )
 
         # Auto-complete missing boundary to maintain max_days window
@@ -239,7 +274,7 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
     def build_filter_params(
         self, params: dict[str, any], exclude_none: bool = True
     ) -> dict[str, any]:
-        """Build filter parameters for API, converting arrays to comma-separated strings.
+        """Build filter parameters for API, converting types to API-compatible formats.
 
         Args:
             params: Dictionary of parameters
@@ -253,8 +288,11 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
             if value is None and exclude_none:
                 continue
 
+            # Convert boolean values to lowercase strings for API compatibility
+            if isinstance(value, bool):
+                result[key] = str(value).lower()
             # Convert lists/arrays to comma-separated strings
-            if isinstance(value, (list, tuple)):
+            elif isinstance(value, (list, tuple)):
                 result[key] = ",".join(str(v) for v in value)
             else:
                 result[key] = value
