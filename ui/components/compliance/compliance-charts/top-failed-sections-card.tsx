@@ -31,7 +31,7 @@ export function TopFailedSectionsCard({
         <CardTitle>Top Failed Sections</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-1 items-center justify-start">
-        <HorizontalBarChart data={barData} labelWidth="w-60" />
+        <HorizontalBarChart data={barData} />
       </CardContent>
     </Card>
   );

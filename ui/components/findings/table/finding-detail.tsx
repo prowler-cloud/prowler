@@ -72,6 +72,7 @@ export const FindingDetail = ({
           providerDetails.uid,
           resource.name,
           extractLineRangeFromUid(attributes.uid) || "",
+          resource.region,
         )
       : null;
 
