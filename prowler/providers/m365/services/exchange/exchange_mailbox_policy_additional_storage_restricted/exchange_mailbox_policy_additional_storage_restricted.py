@@ -13,32 +13,28 @@ class exchange_mailbox_policy_additional_storage_restricted(Check):
     def execute(self) -> List[CheckReportM365]:
         """Run the check to validate Exchange mailbox policy restrictions.
 
-        Iterates through the mailbox policy configuration to determine if additional storage
-        providers are restricted and generates a report based on the policy status.
+        Iterates through all mailbox policies to determine if additional storage
+        providers are restricted and generates reports for each policy.
 
         Returns:
-            List[CheckReportM365]: A list of reports with the restriction status for the mailbox policy.
+            List[CheckReportM365]: A list of reports with the restriction status for each mailbox policy.
         """
         findings = []
-        mailbox_policy = exchange_client.mailbox_policy
-        if mailbox_policy:
-            report = CheckReportM365(
-                metadata=self.metadata(),
-                resource=mailbox_policy,
-                resource_name="Exchange Mailbox Policy",
-                resource_id=mailbox_policy.id,
-            )
-            report.status = "FAIL"
-            report.status_extended = (
-                "Exchange mailbox policy allows additional storage providers."
-            )
-
-            if not mailbox_policy.additional_storage_enabled:
-                report.status = "PASS"
-                report.status_extended = (
-                    "Exchange mailbox policy restricts additional storage providers."
+        for mailbox_policy in exchange_client.mailbox_policies:
+            if mailbox_policy:
+                report = CheckReportM365(
+                    metadata=self.metadata(),
+                    resource=mailbox_policy,
+                    resource_name=f"Exchange Mailbox Policy - {mailbox_policy.id}",
+                    resource_id=mailbox_policy.id,
                 )
+                report.status = "FAIL"
+                report.status_extended = f"Exchange mailbox policy '{mailbox_policy.id}' allows additional storage providers."
 
-            findings.append(report)
+                if not mailbox_policy.additional_storage_enabled:
+                    report.status = "PASS"
+                    report.status_extended = f"Exchange mailbox policy '{mailbox_policy.id}' restricts additional storage providers."
+
+                findings.append(report)
 
         return findings

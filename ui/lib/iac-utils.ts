@@ -31,12 +31,14 @@ export function extractLineRangeFromUid(findingUid: string): string | null {
  * @param repoUrl - Repository URL (can be HTTPS or git@ format)
  * @param filePath - Path to the file in the repository
  * @param lineRange - Line range in format "10-15" or "10:15" or "10"
+ * @param branch - Git branch name (defaults to "main" if not provided)
  * @returns Complete URL to the file with line numbers, or null if URL cannot be built
  */
 export function buildGitFileUrl(
   repoUrl: string,
   filePath: string,
   lineRange: string,
+  branch?: string,
 ): string | null {
   if (!repoUrl || !filePath) {
     return null;
@@ -70,19 +72,38 @@ export function buildGitFileUrl(
 
     // Build URL based on Git provider
     if (hostname.includes("github")) {
-      return buildGitHubUrl(normalizedUrl, cleanFilePath, startLine, endLine);
+      return buildGitHubUrl(
+        normalizedUrl,
+        cleanFilePath,
+        startLine,
+        endLine,
+        branch,
+      );
     } else if (hostname.includes("gitlab")) {
-      return buildGitLabUrl(normalizedUrl, cleanFilePath, startLine, endLine);
+      return buildGitLabUrl(
+        normalizedUrl,
+        cleanFilePath,
+        startLine,
+        endLine,
+        branch,
+      );
     } else if (hostname.includes("bitbucket")) {
       return buildBitbucketUrl(
         normalizedUrl,
         cleanFilePath,
         startLine,
         endLine,
+        branch,
       );
     } else {
       // Generic Git provider - try GitHub format as fallback
-      return buildGitHubUrl(normalizedUrl, cleanFilePath, startLine, endLine);
+      return buildGitHubUrl(
+        normalizedUrl,
+        cleanFilePath,
+        startLine,
+        endLine,
+        branch,
+      );
     }
   } catch (error) {
     console.error("Error building Git file URL:", error);
@@ -116,17 +137,18 @@ function parseLineRange(lineRange: string): {
 
 /**
  * Builds GitHub-style URL
- * Format: https://github.com/user/repo/blob/main/path/file.tf#L10-L15
+ * Format: https://github.com/user/repo/blob/{branch}/path/file.tf#L10-L15
  */
 function buildGitHubUrl(
   baseUrl: string,
   filePath: string,
   startLine: number | null,
   endLine: number | null,
+  branch?: string,
 ): string {
-  // Assume main/master branch for simplicity
-  const branch = "main";
-  let url = `${baseUrl}/blob/${branch}/${filePath}`;
+  // Use provided branch, default to "main" if not provided
+  const branchName = branch || "main";
+  let url = `${baseUrl}/blob/${branchName}/${filePath}`;
 
   if (startLine !== null) {
     if (endLine !== null && endLine !== startLine) {
@@ -141,16 +163,17 @@ function buildGitHubUrl(
 
 /**
  * Builds GitLab-style URL
- * Format: https://gitlab.com/user/repo/-/blob/main/path/file.tf#L10-15
+ * Format: https://gitlab.com/user/repo/-/blob/{branch}/path/file.tf#L10-15
  */
 function buildGitLabUrl(
   baseUrl: string,
   filePath: string,
   startLine: number | null,
   endLine: number | null,
+  branch?: string,
 ): string {
-  const branch = "main";
-  let url = `${baseUrl}/-/blob/${branch}/${filePath}`;
+  const branchName = branch || "main";
+  let url = `${baseUrl}/-/blob/${branchName}/${filePath}`;
 
   if (startLine !== null) {
     if (endLine !== null && endLine !== startLine) {
@@ -165,16 +188,17 @@ function buildGitLabUrl(
 
 /**
  * Builds Bitbucket-style URL
- * Format: https://bitbucket.org/user/repo/src/main/path/file.tf#lines-10:15
+ * Format: https://bitbucket.org/user/repo/src/{branch}/path/file.tf#lines-10:15
  */
 function buildBitbucketUrl(
   baseUrl: string,
   filePath: string,
   startLine: number | null,
   endLine: number | null,
+  branch?: string,
 ): string {
-  const branch = "main";
-  let url = `${baseUrl}/src/${branch}/${filePath}`;
+  const branchName = branch || "main";
+  let url = `${baseUrl}/src/${branchName}/${filePath}`;
 
   if (startLine !== null) {
     if (endLine !== null && endLine !== startLine) {

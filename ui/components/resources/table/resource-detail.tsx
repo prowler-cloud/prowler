@@ -167,7 +167,12 @@ export const ResourceDetail = ({
   // Build Git URL for IaC resources
   const gitUrl =
     providerData.provider === "iac"
-      ? buildGitFileUrl(providerData.uid, attributes.name, "")
+      ? buildGitFileUrl(
+          providerData.uid,
+          attributes.name,
+          "",
+          attributes.region,
+        )
       : null;
 
   if (selectedFindingId) {
