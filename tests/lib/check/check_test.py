@@ -18,6 +18,7 @@ from prowler.lib.check.check import (
     list_categories,
     list_checks_json,
     list_services,
+    load_custom_checks_metadata,
     parse_checks_from_file,
     parse_checks_from_folder,
     remove_custom_checks_module,
@@ -482,6 +483,49 @@ class TestCheck:
                 parse_checks_from_folder(aws_provider, check_folder) == test["expected"]
             )
             remove_custom_checks_module(check_folder, provider)
+
+    def test_load_custom_checks_metadata(self, tmp_path):
+        """Test loading check metadata from a custom checks folder."""
+        check_name = "custom_test_check"
+        check_folder = tmp_path / check_name
+        check_folder.mkdir()
+
+        metadata = {
+            "Provider": "aws",
+            "CheckID": check_name,
+            "CheckTitle": "Test Custom Check",
+            "CheckType": [],
+            "ServiceName": "custom",
+            "SubServiceName": "",
+            "ResourceIdTemplate": "arn:aws:custom:::resource",
+            "Severity": "low",
+            "ResourceType": "AwsCustomResource",
+            "Description": "A test custom check",
+            "Risk": "Test risk",
+            "RelatedUrl": "https://example.com",
+            "Remediation": {
+                "Code": {"CLI": "", "NativeIaC": "", "Other": "", "Terraform": ""},
+                "Recommendation": {"Text": "", "Url": ""},
+            },
+            "Categories": [],
+            "DependsOn": [],
+            "RelatedTo": [],
+            "Notes": "",
+        }
+        metadata_file = check_folder / f"{check_name}.metadata.json"
+        metadata_file.write_text(json.dumps(metadata))
+
+        result = load_custom_checks_metadata(str(tmp_path))
+
+        assert check_name in result
+        assert result[check_name].CheckID == check_name
+        assert result[check_name].Provider == "aws"
+        assert result[check_name].Severity == "low"
+
+    def test_load_custom_checks_metadata_nonexistent_path(self):
+        """Test that nonexistent paths return empty dict."""
+        result = load_custom_checks_metadata("/nonexistent/path/to/checks")
+        assert result == {}
 
     def test_exclude_checks_to_run(self):
         test_cases = [
