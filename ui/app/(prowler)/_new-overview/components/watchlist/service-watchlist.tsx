@@ -23,7 +23,6 @@ export const ServiceWatchlist = ({ items }: { items: ServiceOverview[] }) => {
     .slice(0, 5)
     .map((item) => ({
       key: item.id,
-      icon: <div className="bg-bg-data-muted size-3 rounded-sm" />,
       label: item.id,
       value: item.attributes.fail,
     }));
