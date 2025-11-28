@@ -6,6 +6,7 @@ import { getSeverityTrendsByTimeRange } from "@/actions/overview/severity-trends
 import { LineChart } from "@/components/graphs/line-chart";
 import { LineConfig, LineDataPoint } from "@/components/graphs/types";
 import { Skeleton } from "@/components/shadcn";
+import { SEVERITY_LINE_CONFIGS } from "@/types/severities";
 
 import { type TimeRange, TimeRangeSelector } from "./time-range-selector";
 
@@ -70,36 +71,10 @@ export const FindingSeverityOverTime = ({
     };
   });
 
-  // Define line configurations for each severity level
-  const lines: LineConfig[] = [
-    {
-      dataKey: "informational",
-      color: "var(--color-bg-data-info)",
-      label: "Informational",
-    },
-    {
-      dataKey: "low",
-      color: "var(--color-bg-data-low)",
-      label: "Low",
-    },
-    {
-      dataKey: "medium",
-      color: "var(--color-bg-data-medium)",
-      label: "Medium",
-    },
-    {
-      dataKey: "high",
-      color: "var(--color-bg-data-high)",
-      label: "High",
-    },
-    {
-      dataKey: "critical",
-      color: "var(--color-bg-data-critical)",
-      label: "Critical",
-    },
-  ];
+  // Build line configurations from shared severity configs
+  const lines: LineConfig[] = [...SEVERITY_LINE_CONFIGS];
 
-  // Only add muted line if data contains it
+  // Only add muted line if data contains it (CSS var for Recharts inline styles)
   if (data.some((item) => item.muted !== undefined)) {
     lines.push({
       dataKey: "muted",

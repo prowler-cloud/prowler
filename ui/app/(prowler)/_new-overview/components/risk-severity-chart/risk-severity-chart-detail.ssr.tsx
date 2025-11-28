@@ -1,5 +1,4 @@
 import { getFindingsBySeverity } from "@/actions/overview/overview";
-import { getProviders } from "@/actions/providers";
 import { SearchParamsProps } from "@/types";
 
 import { pickFilterParams } from "../../lib/filter-params";
@@ -12,10 +11,7 @@ export const RiskSeverityChartDetailSSR = async ({
 }) => {
   const filters = pickFilterParams(searchParams);
 
-  const [findingsBySeverity, providersData] = await Promise.all([
-    getFindingsBySeverity({ filters }),
-    getProviders({ page: 1, pageSize: 200 }),
-  ]);
+  const findingsBySeverity = await getFindingsBySeverity({ filters });
 
   if (!findingsBySeverity) {
     return (
@@ -40,7 +36,6 @@ export const RiskSeverityChartDetailSSR = async ({
       medium={medium}
       low={low}
       informational={informational}
-      providers={providersData?.data}
     />
   );
 };

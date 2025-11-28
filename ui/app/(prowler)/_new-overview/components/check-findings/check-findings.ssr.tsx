@@ -1,5 +1,4 @@
 import { getFindingsByStatus } from "@/actions/overview/overview";
-import { getProviders } from "@/actions/providers";
 import { SearchParamsProps } from "@/types";
 
 import { pickFilterParams } from "../../lib/filter-params";
@@ -12,10 +11,7 @@ export const CheckFindingsSSR = async ({
 }) => {
   const filters = pickFilterParams(searchParams);
 
-  const [findingsByStatus, providersData] = await Promise.all([
-    getFindingsByStatus({ filters }),
-    getProviders({ page: 1, pageSize: 200 }),
-  ]);
+  const findingsByStatus = await getFindingsByStatus({ filters });
 
   if (!findingsByStatus) {
     return (
@@ -39,7 +35,6 @@ export const CheckFindingsSSR = async ({
         total: pass,
         new: pass_new,
       }}
-      providers={providersData?.data}
     />
   );
 };

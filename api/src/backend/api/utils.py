@@ -158,7 +158,8 @@ def get_prowler_provider_kwargs(
 
     if mutelist_processor:
         mutelist_content = mutelist_processor.configuration.get("Mutelist", {})
-        if mutelist_content:
+        # IaC provider doesn't support mutelist (uses Trivy's built-in logic)
+        if mutelist_content and provider.provider != Provider.ProviderChoices.IAC.value:
             prowler_provider_kwargs["mutelist_content"] = mutelist_content
 
     return prowler_provider_kwargs

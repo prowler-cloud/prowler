@@ -51,14 +51,15 @@ export interface WatchlistCardProps
   extends React.HTMLAttributes<HTMLDivElement> {
   title: string;
   items: WatchlistItem[];
-  ctaLabel: string;
-  ctaHref: string;
+  ctaLabel?: string;
+  ctaHref?: string;
   headerAction?: React.ReactNode;
   emptyState?: {
     message?: string;
     description?: string;
     linkText?: string;
   };
+  onItemClick?: (item: WatchlistItem) => void;
 }
 
 export const WatchlistCard = ({
@@ -68,14 +69,12 @@ export const WatchlistCard = ({
   ctaHref,
   headerAction,
   emptyState,
+  onItemClick,
 }: WatchlistCardProps) => {
   const isEmpty = items.length === 0;
 
   return (
-    <Card
-      variant="base"
-      className="flex min-h-[405px] min-w-[328px] flex-1 flex-col justify-between md:max-w-[312px]"
-    >
+    <Card variant="base" className="flex min-h-[405px] min-w-[312px] flex-col">
       <div className="flex items-center justify-between">
         <CardTitle>{title}</CardTitle>
         {headerAction}
@@ -93,7 +92,7 @@ export const WatchlistCard = ({
 
             {/* Description with link */}
             <p className="text-text-neutral-tertiary w-full text-sm leading-6">
-              {emptyState?.description && (
+              {emptyState?.description && ctaHref && (
                 <>
                   Visit the{" "}
                   <Button variant="link" size="link-sm" asChild>
@@ -122,12 +121,25 @@ export const WatchlistCard = ({
                 ? getScoreTextColor(numericValue)
                 : "text-text-neutral-tertiary";
 
+              const isClickable = !!onItemClick;
+
               return (
                 <div
                   key={item.key}
+                  role={isClickable ? "button" : undefined}
+                  tabIndex={isClickable ? 0 : undefined}
+                  onClick={() => onItemClick?.(item)}
+                  onKeyDown={(e) => {
+                    if (isClickable && (e.key === "Enter" || e.key === " ")) {
+                      e.preventDefault();
+                      onItemClick?.(item);
+                    }
+                  }}
                   className={cn(
                     "flex h-[54px] items-center justify-between gap-2 px-3 py-[11px]",
                     !isLast && "border-border-neutral-tertiary border-b",
+                    isClickable &&
+                      "hover:bg-bg-neutral-tertiary cursor-pointer",
                   )}
                 >
                   <div className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-md bg-white">
@@ -154,21 +166,20 @@ export const WatchlistCard = ({
         )}
       </CardContent>
 
-      <CardFooter className="mb-6">
-        <Button variant="link" size="link-sm" asChild className="w-full">
-          <Link href={ctaHref}>{ctaLabel}</Link>
-        </Button>
-      </CardFooter>
+      {ctaLabel && ctaHref && (
+        <CardFooter className="mb-6">
+          <Button variant="link" size="link-sm" asChild className="w-full">
+            <Link href={ctaHref}>{ctaLabel}</Link>
+          </Button>
+        </CardFooter>
+      )}
     </Card>
   );
 };
 
 export function WatchlistCardSkeleton() {
   return (
-    <Card
-      variant="base"
-      className="flex min-h-[500px] min-w-[328px] flex-col md:max-w-[312px]"
-    >
+    <Card variant="base" className="flex min-h-[500px] min-w-[312px] flex-col">
       <CardTitle>
         <Skeleton className="h-7 w-[168px] rounded-xl" />
       </CardTitle>
