@@ -1494,6 +1494,11 @@ class ScanSummary(RowLevelSecurityProtectedModel):
                 fields=["tenant_id", "scan_id", "severity"],
                 name="ss_tenant_scan_severity_idx",
             ),
+            models.Index(
+                fields=["tenant_id", "inserted_at"],
+                include=["severity", "fail", "muted"],
+                name="ss_tenant_time_covering_idx",
+            ),
         ]
 
     class JSONAPIMeta:

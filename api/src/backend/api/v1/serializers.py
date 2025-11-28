@@ -2211,6 +2211,28 @@ class OverviewSeveritySerializer(serializers.Serializer):
         return {"version": "v1"}
 
 
+class OverviewSeverityTimeSeriesSerializer(serializers.Serializer):
+    id = serializers.CharField(source="date")
+    date = serializers.DateTimeField()
+    critical = serializers.IntegerField()
+    high = serializers.IntegerField()
+    medium = serializers.IntegerField()
+    low = serializers.IntegerField()
+    informational = serializers.IntegerField()
+    muted = serializers.IntegerField()
+
+    class JSONAPIMeta:
+        resource_name = "severity-time-series"
+
+    def get_root_meta(self, _resource, _many):
+        return {
+            "version": "v1",
+            "time_range": self.context.get("time_range"),
+            "granularity": self.context.get("granularity"),
+            "timezone": self.context.get("timezone"),
+        }
+
+
 class OverviewServiceSerializer(serializers.Serializer):
     id = serializers.CharField(source="service")
     total = serializers.IntegerField()
