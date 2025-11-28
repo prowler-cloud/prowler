@@ -5,9 +5,14 @@ All notable changes to the **Prowler API** are documented in this file.
 ## [1.15.1] (Prowler v5.14.1)
 
 ### Fixed
+<<<<<<< HEAD
 - Typo in PDF reporting [(#9322)](https://github.com/prowler-cloud/prowler/pull/9322)
 - IaC provider initialization failure when mutelist processor is configured [(#9331)](https://github.com/prowler-cloud/prowler/pull/9331)
 - Match logic for ThreatScore when counting findings [(#9348)](https://github.com/prowler-cloud/prowler/pull/9348)
+=======
+- Fix typo in PDF reporting [(#9345)](https://github.com/prowler-cloud/prowler/pull/9345)
+- Fix IaC provider initialization failure when mutelist processor is configured [(#9331)](https://github.com/prowler-cloud/prowler/pull/9331)
+>>>>>>> bb43e924e (fix(report): use pagina for ENS in footer (#9345))
 
 ---
 
