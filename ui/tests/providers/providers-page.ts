@@ -1,14 +1,11 @@
 import { Page, Locator, expect } from "@playwright/test";
 import { BasePage } from "../base-page";
+import { ScansPage } from "../scans/scans-page";
 
 // AWS provider data
 export interface AWSProviderData {
   accountId: string;
   alias?: string;
-  roleArn?: string;
-  externalId?: string;
-  accessKeyId?: string;
-  secretAccessKey?: string;
 }
 
 // AZURE provider data
@@ -23,10 +20,35 @@ export interface M365ProviderData {
   alias?: string;
 }
 
+// Kubernetes provider data
+export interface KubernetesProviderData {
+  context: string;
+  alias?: string;
+}
+
+// GCP provider data
+export interface GCPProviderData {
+  projectId: string;
+  alias?: string;
+}
+
+// GitHub provider data
+export interface GitHubProviderData {
+  username: string;
+  alias?: string;
+}
+
+// OCI provider data
+export interface OCIProviderData {
+  tenancyId: string;
+  alias?: string;
+}
+
 // AWS credential options
 export const AWS_CREDENTIAL_OPTIONS = {
   AWS_ROLE_ARN: "role",
   AWS_CREDENTIALS: "credentials",
+  AWS_SDK_DEFAULT: "aws-sdk-default",
 } as const;
 
 // AWS credential type
@@ -39,6 +61,8 @@ export interface AWSProviderCredential {
   roleArn?: string;
   externalId?: string;
   accessKeyId?: string;
+  sdkAccessKeyId?: string;
+  sdkSecretAccessKey?: string;
   secretAccessKey?: string;
 }
 
@@ -78,8 +102,79 @@ export interface M365ProviderCredential {
   certificateContent?: string;
 }
 
+// Kubernetes credential options
+export const KUBERNETES_CREDENTIAL_OPTIONS = {
+  KUBECONFIG_CONTENT: "kubeconfig",
+} as const;
+
+// Kubernetes credential type
+type KubernetesCredentialType =
+  (typeof KUBERNETES_CREDENTIAL_OPTIONS)[keyof typeof KUBERNETES_CREDENTIAL_OPTIONS];
+
+// Kubernetes provider credential
+export interface KubernetesProviderCredential {
+  type: KubernetesCredentialType;
+  kubeconfigContent: string;
+}
+
+// GCP credential options
+export const GCP_CREDENTIAL_OPTIONS = {
+  GCP_SERVICE_ACCOUNT: "service_account",
+} as const;
+
+// GCP credential type
+type GCPCredentialType =
+  (typeof GCP_CREDENTIAL_OPTIONS)[keyof typeof GCP_CREDENTIAL_OPTIONS];
+
+// GCP provider credential
+export interface GCPProviderCredential {
+  type: GCPCredentialType;
+  serviceAccountKey: string;
+}
+
+// GitHub credential options
+export const GITHUB_CREDENTIAL_OPTIONS = {
+  GITHUB_PERSONAL_ACCESS_TOKEN: "personal_access_token",
+  GITHUB_ORGANIZATION_ACCESS_TOKEN: "organization_access_token",
+  GITHUB_APP: "github_app",
+} as const;
+
+// GitHub credential type
+type GitHubCredentialType =
+  (typeof GITHUB_CREDENTIAL_OPTIONS)[keyof typeof GITHUB_CREDENTIAL_OPTIONS];
+
+// GitHub provider personal access token credential
+export interface GitHubProviderCredential {
+  type: GitHubCredentialType;
+  personalAccessToken?: string;
+  githubAppId?: string;
+  githubAppPrivateKey?: string;
+}
+
+// OCI credential options
+export const OCI_CREDENTIAL_OPTIONS = {
+  OCI_API_KEY: "api_key",
+} as const;
+
+// OCI credential type
+type OCICredentialType =
+  (typeof OCI_CREDENTIAL_OPTIONS)[keyof typeof OCI_CREDENTIAL_OPTIONS];
+
+// OCI provider credential
+export interface OCIProviderCredential {
+  type: OCICredentialType;
+  tenancyId: string;
+  userId?: string;
+  fingerprint?: string;
+  keyContent?: string;
+  region?: string;
+}
+
 // Providers page
 export class ProvidersPage extends BasePage {
+  // Alias input
+  readonly aliasInput: Locator;
+
   // Button to add a new cloud provider
   readonly addProviderButton: Locator;
   readonly providersTable: Locator;
@@ -91,10 +186,10 @@ export class ProvidersPage extends BasePage {
   readonly m365ProviderRadio: Locator;
   readonly kubernetesProviderRadio: Locator;
   readonly githubProviderRadio: Locator;
+  readonly ociProviderRadio: Locator;
 
   // AWS provider form elements
   readonly accountIdInput: Locator;
-  readonly aliasInput: Locator;
   readonly nextButton: Locator;
   readonly backButton: Locator;
   readonly saveButton: Locator;
@@ -107,6 +202,10 @@ export class ProvidersPage extends BasePage {
   // M365 credentials type selection
   readonly m365StaticCredentialsRadio: Locator;
   readonly m365CertificateCredentialsRadio: Locator;
+
+  // GitHub credentials type selection
+  readonly githubPersonalAccessTokenRadio: Locator;
+  readonly githubAppCredentialsRadio: Locator;
 
   // AWS role credentials form
   readonly roleArnInput: Locator;
@@ -129,14 +228,38 @@ export class ProvidersPage extends BasePage {
   readonly m365TenantIdInput: Locator;
   readonly m365CertificateContentInput: Locator;
 
+  // Kubernetes provider form elements
+  readonly kubernetesContextInput: Locator;
+  readonly kubernetesKubeconfigContentInput: Locator;
+
+  // GCP provider form elements
+  readonly gcpProjectIdInput: Locator;
+  readonly gcpServiceAccountKeyInput: Locator;
+  readonly gcpServiceAccountRadio: Locator;
+
+  // GitHub provider form elements
+  readonly githubUsernameInput: Locator;
+  readonly githubAppIdInput: Locator;
+  readonly githubAppPrivateKeyInput: Locator;
+  readonly githubPersonalAccessTokenInput: Locator;
+
+  // OCI provider form elements
+  readonly ociTenancyIdInput: Locator;
+  readonly ociUserIdInput: Locator;
+  readonly ociFingerprintInput: Locator;
+  readonly ociKeyContentInput: Locator;
+  readonly ociRegionInput: Locator;
+
   // Delete button
   readonly deleteProviderConfirmationButton: Locator;
 
   constructor(page: Page) {
     super(page);
 
+    // Button to add a new cloud provider
     this.addProviderButton = page.getByRole("link", {
       name: "Add Cloud Provider",
+      exact: true,
     });
 
     // Table displaying existing providers
@@ -146,19 +269,30 @@ export class ProvidersPage extends BasePage {
     this.awsProviderRadio = page.getByRole("radio", {
       name: /Amazon Web Services/i,
     });
+    // Google Cloud Platform
     this.gcpProviderRadio = page.getByRole("radio", {
       name: /Google Cloud Platform/i,
     });
+    // Microsoft Azure
     this.azureProviderRadio = page.getByRole("radio", {
       name: /Microsoft Azure/i,
     });
+    // Microsoft 365
     this.m365ProviderRadio = page.getByRole("radio", {
       name: /Microsoft 365/i,
     });
+    // Kubernetes
     this.kubernetesProviderRadio = page.getByRole("radio", {
       name: /Kubernetes/i,
     });
-    this.githubProviderRadio = page.getByRole("radio", { name: /GitHub/i });
+    // GitHub
+    this.githubProviderRadio = page.getByRole("radio", {
+      name: /GitHub/i,
+    });
+    // Oracle Cloud Infrastructure
+    this.ociProviderRadio = page.getByRole("radio", {
+      name: /Oracle Cloud Infrastructure/i,
+    });
 
     // AWS provider form inputs
     this.accountIdInput = page.getByRole("textbox", { name: "Account ID" });
@@ -183,6 +317,45 @@ export class ProvidersPage extends BasePage {
     this.m365CertificateContentInput = page.getByRole("textbox", {
       name: "Certificate Content",
     });
+
+    // Kubernetes provider form inputs
+    this.kubernetesContextInput = page.getByRole("textbox", {
+      name: "Context",
+    });
+    this.kubernetesKubeconfigContentInput = page.getByRole("textbox", {
+      name: "Kubeconfig Content",
+    });
+
+    // GCP provider form inputs
+    this.gcpProjectIdInput = page.getByRole("textbox", { name: "Project ID" });
+    this.gcpServiceAccountKeyInput = page.getByRole("textbox", {
+      name: "Service Account Key",
+    });
+
+    // GitHub provider form inputs
+    this.githubUsernameInput = page.getByRole("textbox", { name: "Username" });
+    this.githubPersonalAccessTokenInput = page.getByRole("textbox", {
+      name: "Personal Access Token",
+    });
+    this.githubAppIdInput = page.getByRole("textbox", {
+      name: "GitHub App ID",
+    });
+    this.githubAppPrivateKeyInput = page.getByRole("textbox", {
+      name: "GitHub App Private Key",
+    });
+
+    // OCI provider form inputs
+    this.ociTenancyIdInput = page.getByRole("textbox", {
+      name: /Tenancy OCID/i,
+    });
+    this.ociUserIdInput = page.getByRole("textbox", { name: /User OCID/i });
+    this.ociFingerprintInput = page.getByRole("textbox", {
+      name: /Fingerprint/i,
+    });
+    this.ociKeyContentInput = page.getByRole("textbox", {
+      name: /Private Key Content/i,
+    });
+    this.ociRegionInput = page.getByRole("textbox", { name: /Region/i });
 
     // Alias input
     this.aliasInput = page.getByRole("textbox", {
@@ -220,6 +393,19 @@ export class ProvidersPage extends BasePage {
       name: /App Certificate Credentials/i,
     });
 
+    // Radios for selecting GCP credentials method
+    this.gcpServiceAccountRadio = page.getByRole("radio", {
+      name: /Service Account Key/i,
+    });
+
+    // Radios for selecting GitHub credentials method
+    this.githubPersonalAccessTokenRadio = page.getByRole("radio", {
+      name: /Personal Access Token/i,
+    });
+    this.githubAppCredentialsRadio = page.getByRole("radio", {
+      name: /GitHub App/i,
+    });
+
     // Inputs for IAM Role credentials
     this.roleArnInput = page.getByRole("textbox", { name: "Role ARN" });
     this.externalIdInput = page.getByRole("textbox", { name: "External ID" });
@@ -249,26 +435,40 @@ export class ProvidersPage extends BasePage {
     // Click the add provider button
 
     await this.addProviderButton.click();
-    await this.waitForPageLoad();
   }
 
   async selectAWSProvider(): Promise<void> {
     // Prefer label-based click for radios, force if overlay intercepts
     await this.awsProviderRadio.click({ force: true });
-    await this.waitForPageLoad();
   }
 
   async selectAZUREProvider(): Promise<void> {
     // Prefer label-based click for radios, force if overlay intercepts
     await this.azureProviderRadio.click({ force: true });
-    await this.waitForPageLoad();
   }
 
   async selectM365Provider(): Promise<void> {
     // Select the M365 provider
 
     await this.m365ProviderRadio.click({ force: true });
-    await this.waitForPageLoad();
+  }
+
+  async selectKubernetesProvider(): Promise<void> {
+    // Select the Kubernetes provider
+
+    await this.kubernetesProviderRadio.click({ force: true });
+  }
+
+  async selectGCPProvider(): Promise<void> {
+    // Select the GCP provider
+
+    await this.gcpProviderRadio.click({ force: true });
+  }
+
+  async selectGitHubProvider(): Promise<void> {
+    // Select the GitHub provider
+
+    await this.githubProviderRadio.click({ force: true });
   }
 
   async fillAWSProviderDetails(data: AWSProviderData): Promise<void> {
@@ -301,6 +501,38 @@ export class ProvidersPage extends BasePage {
     }
   }
 
+  async fillKubernetesProviderDetails(
+    data: KubernetesProviderData,
+  ): Promise<void> {
+    // Fill the Kubernetes provider details
+
+    await this.kubernetesContextInput.fill(data.context);
+
+    if (data.alias) {
+      await this.aliasInput.fill(data.alias);
+    }
+  }
+
+  async fillGCPProviderDetails(data: GCPProviderData): Promise<void> {
+    // Fill the GCP provider details
+
+    await this.gcpProjectIdInput.fill(data.projectId);
+
+    if (data.alias) {
+      await this.aliasInput.fill(data.alias);
+    }
+  }
+
+  async fillGitHubProviderDetails(data: GitHubProviderData): Promise<void> {
+    // Fill the GitHub provider details
+
+    await this.githubUsernameInput.fill(data.username);
+
+    if (data.alias) {
+      await this.aliasInput.fill(data.alias);
+    }
+  }
+
   async clickNext(): Promise<void> {
     // The wizard interface may use different labels for its primary action button on each step.
     // This function determines which button to click depending on the current URL and page content.
@@ -311,7 +543,6 @@ export class ProvidersPage extends BasePage {
     // If on the "connect-account" step, click the "Next" button
     if (/\/providers\/connect-account/.test(url)) {
       await this.nextButton.click();
-      await this.waitForPageLoad();
       return;
     }
 
@@ -319,15 +550,14 @@ export class ProvidersPage extends BasePage {
     if (/\/providers\/add-credentials/.test(url)) {
       // Some UI implementations use "Save" instead of "Next" for primary action
       const saveBtn = this.saveButton;
+
       if (await saveBtn.count()) {
         await saveBtn.click();
-        await this.waitForPageLoad();
         return;
       }
       // If "Save" is not present, try clicking the "Next" button
       if (await this.nextButton.count()) {
         await this.nextButton.click();
-        await this.waitForPageLoad();
         return;
       }
     }
@@ -339,11 +569,11 @@ export class ProvidersPage extends BasePage {
         .filter({ hasText: "Launch scan" });
 
       await buttonByText.click();
-      await this.waitForPageLoad();
 
       // Wait for either success (redirect to scans) or error message to appear
-      // The error container has multiple p.text-text-error elements, we want the first one with the technical error
-      const errorMessage = this.page.locator("p.text-text-error").first();
+      const errorMessage = this.page
+        .locator('div.border-border-error, div.bg-red-100, p.text-text-error-primary, p.text-danger')
+        .first();
 
       try {
         // Wait up to 15 seconds for either the error message or redirect
@@ -359,8 +589,10 @@ export class ProvidersPage extends BasePage {
           const isErrorVisible = await errorMessage
             .isVisible()
             .catch(() => false);
+
           if (isErrorVisible) {
             const errorText = await errorMessage.textContent();
+
             throw new Error(
               `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
             );
@@ -371,8 +603,10 @@ export class ProvidersPage extends BasePage {
         const isErrorVisible = await errorMessage
           .isVisible()
           .catch(() => false);
+
         if (isErrorVisible) {
           const errorText = await errorMessage.textContent();
+
           throw new Error(
             `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
           );
@@ -401,7 +635,6 @@ export class ProvidersPage extends BasePage {
 
       if (await btn.count()) {
         await btn.click();
-        await this.waitForPageLoad();
         return;
       }
     }
@@ -416,6 +649,7 @@ export class ProvidersPage extends BasePage {
     // Ensure we are on the add-credentials page where the selector exists
 
     await expect(this.page).toHaveURL(/\/providers\/add-credentials/);
+
     if (type === AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN) {
       await this.roleCredentialsRadio.click({ force: true });
     } else if (type === AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS) {
@@ -423,14 +657,13 @@ export class ProvidersPage extends BasePage {
     } else {
       throw new Error(`Invalid AWS credential type: ${type}`);
     }
-    // Wait for the page to load
-    await this.waitForPageLoad();
   }
 
   async selectM365CredentialsType(type: M365CredentialType): Promise<void> {
     // Ensure we are on the add-credentials page where the selector exists
 
     await expect(this.page).toHaveURL(/\/providers\/add-credentials/);
+
     if (type === M365_CREDENTIAL_OPTIONS.M365_CREDENTIALS) {
       await this.m365StaticCredentialsRadio.click({ force: true });
     } else if (type === M365_CREDENTIAL_OPTIONS.M365_CERTIFICATE_CREDENTIALS) {
@@ -438,8 +671,31 @@ export class ProvidersPage extends BasePage {
     } else {
       throw new Error(`Invalid M365 credential type: ${type}`);
     }
-    // Wait for the page to load
-    await this.waitForPageLoad();
+  }
+
+  async selectGCPCredentialsType(type: GCPCredentialType): Promise<void> {
+    // Ensure we are on the add-credentials page where the selector exists
+
+    await expect(this.page).toHaveURL(/\/providers\/add-credentials/);
+    if (type === GCP_CREDENTIAL_OPTIONS.GCP_SERVICE_ACCOUNT) {
+      await this.gcpServiceAccountRadio.click({ force: true });
+    } else {
+      throw new Error(`Invalid GCP credential type: ${type}`);
+    }
+  }
+
+  async selectGitHubCredentialsType(type: GitHubCredentialType): Promise<void> {
+    // Ensure we are on the add-credentials page where the selector exists
+
+    await expect(this.page).toHaveURL(/\/providers\/add-credentials/);
+
+    if (type === GITHUB_CREDENTIAL_OPTIONS.GITHUB_PERSONAL_ACCESS_TOKEN) {
+      await this.githubPersonalAccessTokenRadio.click({ force: true });
+    } else if (type === GITHUB_CREDENTIAL_OPTIONS.GITHUB_APP) {
+      await this.githubAppCredentialsRadio.click({ force: true });
+    } else {
+      throw new Error(`Invalid GitHub credential type: ${type}`);
+    }
   }
 
   async fillRoleCredentials(credentials: AWSProviderCredential): Promise<void> {
@@ -525,12 +781,102 @@ export class ProvidersPage extends BasePage {
     }
   }
 
+  async fillKubernetesCredentials(
+    credentials: KubernetesProviderCredential,
+  ): Promise<void> {
+    // Fill the Kubernetes credentials form
+
+    if (credentials.kubeconfigContent) {
+      await this.kubernetesKubeconfigContentInput.fill(
+        credentials.kubeconfigContent,
+      );
+    }
+  }
+
+  async fillGCPServiceAccountKeyCredentials(
+    credentials: GCPProviderCredential,
+  ): Promise<void> {
+    // Fill the GCP credentials form
+
+    if (credentials.serviceAccountKey) {
+      await this.gcpServiceAccountKeyInput.fill(credentials.serviceAccountKey);
+    }
+  }
+
+  async fillGitHubPersonalAccessTokenCredentials(
+    credentials: GitHubProviderCredential,
+  ): Promise<void> {
+    // Fill the GitHub personal access token credentials form
+
+    if (credentials.personalAccessToken) {
+      await this.githubPersonalAccessTokenInput.fill(
+        credentials.personalAccessToken,
+      );
+    }
+  }
+
+  async fillGitHubAppCredentials(
+    credentials: GitHubProviderCredential,
+  ): Promise<void> {
+    // Fill the GitHub app credentials form
+
+    if (credentials.githubAppId) {
+      await this.githubAppIdInput.fill(credentials.githubAppId);
+    }
+    if (credentials.githubAppPrivateKey) {
+      await this.githubAppPrivateKeyInput.fill(credentials.githubAppPrivateKey);
+    }
+  }
+
+  async selectOCIProvider(): Promise<void> {
+    // Select the OCI provider
+
+    await this.ociProviderRadio.click({ force: true });
+  }
+
+  async fillOCIProviderDetails(data: OCIProviderData): Promise<void> {
+    // Fill the OCI provider details
+
+    await this.ociTenancyIdInput.fill(data.tenancyId);
+
+    if (data.alias) {
+      await this.aliasInput.fill(data.alias);
+    }
+  }
+
+  async fillOCICredentials(credentials: OCIProviderCredential): Promise<void> {
+    // Fill the OCI credentials form
+
+    if (credentials.userId) {
+      await this.ociUserIdInput.fill(credentials.userId);
+    }
+    if (credentials.fingerprint) {
+      await this.ociFingerprintInput.fill(credentials.fingerprint);
+    }
+    if (credentials.keyContent) {
+      await this.ociKeyContentInput.fill(credentials.keyContent);
+    }
+    if (credentials.region) {
+      await this.ociRegionInput.fill(credentials.region);
+    }
+  }
+
+  async verifyOCICredentialsPageLoaded(): Promise<void> {
+    // Verify the OCI credentials page is loaded
+
+    await expect(this.page).toHaveTitle(/Prowler/);
+    await expect(this.ociTenancyIdInput).toBeVisible();
+    await expect(this.ociUserIdInput).toBeVisible();
+    await expect(this.ociFingerprintInput).toBeVisible();
+    await expect(this.ociKeyContentInput).toBeVisible();
+    await expect(this.ociRegionInput).toBeVisible();
+  }
+
   async verifyPageLoaded(): Promise<void> {
     // Verify the providers page is loaded
 
     await expect(this.page).toHaveTitle(/Prowler/);
     await expect(this.addProviderButton).toBeVisible();
-    await this.page.waitForLoadState("networkidle");
   }
 
   async verifyConnectAccountPageLoaded(): Promise<void> {
@@ -538,6 +884,12 @@ export class ProvidersPage extends BasePage {
 
     await expect(this.page).toHaveTitle(/Prowler/);
     await expect(this.awsProviderRadio).toBeVisible();
+    await expect(this.ociProviderRadio).toBeVisible();
+    await expect(this.gcpProviderRadio).toBeVisible();
+    await expect(this.azureProviderRadio).toBeVisible();
+    await expect(this.m365ProviderRadio).toBeVisible();
+    await expect(this.kubernetesProviderRadio).toBeVisible();
+    await expect(this.githubProviderRadio).toBeVisible();
   }
 
   async verifyCredentialsPageLoaded(): Promise<void> {
@@ -565,6 +917,35 @@ export class ProvidersPage extends BasePage {
     await expect(this.m365CertificateContentInput).toBeVisible();
   }
 
+  async verifyKubernetesCredentialsPageLoaded(): Promise<void> {
+    // Verify the Kubernetes credentials page is loaded
+
+    await expect(this.page).toHaveTitle(/Prowler/);
+    await expect(this.kubernetesContextInput).toBeVisible();
+  }
+
+  async verifyGCPServiceAccountPageLoaded(): Promise<void> {
+    // Verify the GCP service account page is loaded
+
+    await expect(this.page).toHaveTitle(/Prowler/);
+    await expect(this.gcpServiceAccountKeyInput).toBeVisible();
+  }
+
+  async verifyGitHubPersonalAccessTokenPageLoaded(): Promise<void> {
+    // Verify the GitHub personal access token page is loaded
+
+    await expect(this.page).toHaveTitle(/Prowler/);
+    await expect(this.githubPersonalAccessTokenInput).toBeVisible();
+  }
+
+  async verifyGitHubAppPageLoaded(): Promise<void> {
+    // Verify the GitHub app page is loaded
+
+    await expect(this.page).toHaveTitle(/Prowler/);
+    await expect(this.githubAppIdInput).toBeVisible();
+    await expect(this.githubAppPrivateKeyInput).toBeVisible();
+  }
+
   async verifyLaunchScanPageLoaded(): Promise<void> {
     // Verify the launch scan page is loaded
 
@@ -575,13 +956,13 @@ export class ProvidersPage extends BasePage {
     const launchScanButton = this.page
       .locator("button")
       .filter({ hasText: "Launch scan" });
+
     await expect(launchScanButton).toBeVisible();
   }
 
   async verifyLoadProviderPageAfterNewProvider(): Promise<void> {
     // Verify the provider page is loaded
 
-    await this.waitForPageLoad();
     await expect(this.page).toHaveTitle(/Prowler/);
     await expect(this.providersTable).toBeVisible();
   }
@@ -611,15 +992,13 @@ export class ProvidersPage extends BasePage {
 
     // Find and use the search input to filter the table
     const searchInput = this.page.getByPlaceholder(/search|filter/i);
+
     await expect(searchInput).toBeVisible({ timeout: 5000 });
 
     // Clear and search for the specific provider
     await searchInput.clear();
     await searchInput.fill(providerUID);
     await searchInput.press("Enter");
-
-    // Wait for the table to finish loading/filtering
-    await this.waitForPageLoad();
 
     // Additional wait for React table to re-render with the server-filtered data
     // The filtering happens on the server, but the table component needs time
@@ -693,6 +1072,10 @@ export class ProvidersPage extends BasePage {
       .last()
       .locator("button")
       .first();
+
+    // Ensure the button is in view before clicking (handles horizontal scroll)
+    await actionButton.scrollIntoViewIfNeeded();
+    // Verify the button is visible
     await expect(actionButton).toBeVisible({ timeout: 5000 });
     await actionButton.click();
 
@@ -700,6 +1083,7 @@ export class ProvidersPage extends BasePage {
     const deleteMenuItem = this.page.getByRole("menuitem", {
       name: /delete.*provider/i,
     });
+
     await expect(deleteMenuItem).toBeVisible({ timeout: 5000 });
     await deleteMenuItem.click();
 
@@ -707,6 +1091,7 @@ export class ProvidersPage extends BasePage {
     const modal = this.page
       .locator('[role="dialog"], .modal, [data-testid*="modal"]')
       .first();
+
     await expect(modal).toBeVisible({ timeout: 10000 });
 
     // Find and click the delete confirmation button
@@ -718,12 +1103,65 @@ export class ProvidersPage extends BasePage {
     // Wait for modal to close (this indicates deletion was initiated)
     await expect(modal).not.toBeVisible({ timeout: 10000 });
 
-    // Wait for page to reload
-    await this.waitForPageLoad();
-
     // Navigate back to providers page to ensure clean state
     await this.goto();
     await expect(this.providersTable).toBeVisible({ timeout: 10000 });
+  }
+
+  async AddAWSProvider(
+    accountId: string,
+    accessKey: string,
+    secretKey: string,
+  ): Promise<void> {
+    // Prepare test data for AWS provider
+    const awsProviderData: AWSProviderData = {
+      accountId: accountId,
+      alias: "Test E2E AWS Account - Credentials",
+    };
+
+    // Prepare static credentials
+    const staticCredentials: AWSProviderCredential = {
+      type: AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS,
+      accessKeyId: accessKey,
+      secretAccessKey: secretKey,
+    };
+
+    // Create providers page object
+    const providersPage = new ProvidersPage(this.page);
+
+    // Navigate to providers page
+    await providersPage.goto();
+    await providersPage.verifyPageLoaded();
+
+    // Start adding new provider
+    await providersPage.clickAddProvider();
+    await providersPage.verifyConnectAccountPageLoaded();
+
+    // Select AWS provider
+    await providersPage.selectAWSProvider();
+
+    // Fill provider details
+    await providersPage.fillAWSProviderDetails(awsProviderData);
+    await providersPage.clickNext();
+
+    // Verify credentials page is loaded
+    await providersPage.verifyCredentialsPageLoaded();
+
+    // Select static credentials type
+    await providersPage.selectCredentialsType(
+      AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS,
+    );
+    // Fill static credentials
+    await providersPage.fillStaticCredentials(staticCredentials);
+    await providersPage.clickNext();
+
+    // Launch scan
+    await providersPage.verifyLaunchScanPageLoaded();
+    await providersPage.clickNext();
+
+    // Wait for redirect to provider page
+    const scansPage = new ScansPage(this.page);
+    await scansPage.verifyPageLoaded();
   }
 
   async selectAuthenticationMethod(method: AWSCredentialType): Promise<void> {
@@ -744,6 +1182,11 @@ export class ProvidersPage extends BasePage {
       // Select the role credentials
       this.page
         .getByRole("option", { name: "Access & Secret Key" })
+        .click({ force: true });
+    } else if (method === AWS_CREDENTIAL_OPTIONS.AWS_SDK_DEFAULT) {
+      // Select the AWS SDK Default
+      this.page
+        .getByRole("option", { name: "AWS SDK Default" })
         .click({ force: true });
     } else {
       throw new Error(`Invalid authentication method: ${method}`);
