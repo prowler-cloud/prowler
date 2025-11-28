@@ -41,7 +41,7 @@ def init_driver() -> neo4j.Driver:
             _driver = neo4j.GraphDatabase.driver(
                 uri,
                 auth=(config["USER"], config["PASSWORD"]),
-                max_connection_lifetime=3600,
+                max_connection_lifetime=604800,  # 7 days
             )
             _driver.verify_connectivity()
 
@@ -65,9 +65,6 @@ def close_driver() -> None:  # TODO: Use it
 
 @contextmanager
 def get_session(database: str | None = None) -> Iterator[neo4j.Session]:
-    # Let's close the driver on this thread/process, any new session will re-open it, just in case it's closed from the database
-    close_driver()
-
     try:
         with get_driver().session(database=database) as session:
             yield session
