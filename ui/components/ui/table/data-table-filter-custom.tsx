@@ -116,16 +116,25 @@ export const DataTableFilterCustom = ({
     updateFilter(filter.key, values.length > 0 ? values : null);
   };
 
-  const getSelectedValues = (key: string): string[] => {
-    const filterKey = key.startsWith("filter[") ? key : `filter[${key}]`;
+  const getSelectedValues = (filter: FilterOption): string[] => {
+    const filterKey = filter.key.startsWith("filter[")
+      ? filter.key
+      : `filter[${filter.key}]`;
     const paramValue = searchParams.get(filterKey);
+
+    // If defaultToSelectAll is true and no filter param exists,
+    // treat it as "all selected" by returning all values
+    if (!paramValue && filter.defaultToSelectAll) {
+      return filter.values;
+    }
+
     return paramValue ? paramValue.split(",") : [];
   };
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
       {sortedFilters().map((filter) => {
-        const selectedValues = getSelectedValues(filter.key);
+        const selectedValues = getSelectedValues(filter);
 
         return (
           <MultiSelect
