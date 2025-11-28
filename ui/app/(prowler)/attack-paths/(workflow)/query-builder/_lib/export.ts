@@ -34,24 +34,48 @@ export const exportGraphAsSVG = (
     // Clone the SVG element to avoid modifying the original
     const clonedSvg = svgElement.cloneNode(true) as SVGSVGElement;
 
-    // Export at fixed high resolution (1920x1080)
-    const exportWidth = 1920;
-    const exportHeight = 1080;
-
-    // Calculate scale factor based on current dimensions
-    const currentWidth = svgElement.clientWidth || 800;
-    const scale = exportWidth / currentWidth;
-
-    // Update dimensions
-    clonedSvg.setAttribute("width", `${exportWidth}`);
-    clonedSvg.setAttribute("height", `${exportHeight}`);
-    clonedSvg.setAttribute("viewBox", `0 0 ${exportWidth} ${exportHeight}`);
-
-    // Apply scaling transform
-    const gElement = clonedSvg.querySelector("g");
-    if (gElement) {
-      gElement.setAttribute("transform", `scale(${scale})`);
+    // Find the main container group (first g element with transform)
+    const containerGroup = clonedSvg.querySelector("g");
+    if (!containerGroup) {
+      throw new Error("Could not find graph container");
     }
+
+    // Get the bounding box of the actual graph content
+    // We need to get it from the original SVG since cloned elements don't have computed geometry
+    const originalContainer = svgElement.querySelector("g");
+    if (!originalContainer) {
+      throw new Error("Could not find original graph container");
+    }
+
+    const bbox = originalContainer.getBBox();
+
+    // Add padding around the content
+    const padding = 50;
+    const contentWidth = bbox.width + padding * 2;
+    const contentHeight = bbox.height + padding * 2;
+
+    // Set the SVG dimensions to fit the content
+    clonedSvg.setAttribute("width", `${contentWidth}`);
+    clonedSvg.setAttribute("height", `${contentHeight}`);
+    clonedSvg.setAttribute(
+      "viewBox",
+      `${bbox.x - padding} ${bbox.y - padding} ${contentWidth} ${contentHeight}`,
+    );
+
+    // Remove the zoom transform from the container - the viewBox now handles positioning
+    containerGroup.removeAttribute("transform");
+
+    // Add white background for better visibility
+    const bgRect = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "rect",
+    );
+    bgRect.setAttribute("x", `${bbox.x - padding}`);
+    bgRect.setAttribute("y", `${bbox.y - padding}`);
+    bgRect.setAttribute("width", `${contentWidth}`);
+    bgRect.setAttribute("height", `${contentHeight}`);
+    bgRect.setAttribute("fill", "#1c1917"); // Dark background matching the app
+    clonedSvg.insertBefore(bgRect, clonedSvg.firstChild);
 
     const svgData = new XMLSerializer().serializeToString(clonedSvg);
     const blob = new Blob([svgData], { type: "image/svg+xml" });
