@@ -1,6 +1,6 @@
 "use client";
 
-import * as d3 from "d3";
+import { geoPath } from "d3";
 import type {
   Feature,
   FeatureCollection,
@@ -10,154 +10,28 @@ import type {
 import { AlertTriangle, ChevronDown, Info, MapPin } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { feature } from "topojson-client";
-import type {
-  GeometryCollection,
-  Objects,
-  Topology,
-} from "topojson-specification";
 
 import { Card } from "@/components/shadcn/card/card";
 import { mapProviderFiltersForFindings } from "@/lib/provider-helpers";
 
 import { HorizontalBarChart } from "./horizontal-bar-chart";
+import {
+  DEFAULT_MAP_COLORS,
+  LocationPoint,
+  MAP_CONFIG,
+  MapColorsConfig,
+  STATUS_FILTER_MAP,
+  ThreatMapProps,
+} from "./threat-map.types";
+import {
+  createProjection,
+  createSVGElement,
+  fetchWorldData,
+  getMapColors,
+} from "./threat-map.utils";
 import { BarDataPoint } from "./types";
 
-// Constants
-const MAP_CONFIG = {
-  defaultWidth: 688,
-  defaultHeight: 400,
-  pointRadius: 6,
-  selectedPointRadius: 8,
-  transitionDuration: 300,
-} as const;
-
-// SVG-specific colors: must use actual color values, not Tailwind classes
-// as SVG fill/stroke attributes don't support class-based styling
-// Retrieves computed CSS variable values from globals.css theme variables at runtime
-// Fallback hex colors are used only when CSS variables cannot be computed (SSR context)
-interface MapColorsConfig {
-  landFill: string;
-  landStroke: string;
-  pointDefault: string;
-  pointSelected: string;
-  pointHover: string;
-}
-
-const DEFAULT_MAP_COLORS: MapColorsConfig = {
-  // Fallback: gray-300 (neutral-300) - used for map land fill in light theme
-  landFill: "#d1d5db",
-  // Fallback: slate-300 - used for map borders
-  landStroke: "#cbd5e1",
-  // Fallback: red-600 - error color for points
-  pointDefault: "#dc2626",
-  // Fallback: emerald-500 - success color for selected points
-  pointSelected: "#10b981",
-  // Fallback: red-600 - error color for hover points
-  pointHover: "#dc2626",
-};
-
-function getMapColors(): MapColorsConfig {
-  if (typeof document === "undefined") return DEFAULT_MAP_COLORS;
-
-  const root = document.documentElement;
-  const style = getComputedStyle(root);
-  const getVar = (varName: string): string => {
-    const value = style.getPropertyValue(varName).trim();
-    return value && value.length > 0 ? value : "";
-  };
-
-  const colors: MapColorsConfig = {
-    landFill: getVar("--bg-neutral-map") || DEFAULT_MAP_COLORS.landFill,
-    landStroke:
-      getVar("--border-neutral-tertiary") || DEFAULT_MAP_COLORS.landStroke,
-    pointDefault:
-      getVar("--text-text-error") || DEFAULT_MAP_COLORS.pointDefault,
-    pointSelected:
-      getVar("--bg-button-primary") || DEFAULT_MAP_COLORS.pointSelected,
-    pointHover: getVar("--text-text-error") || DEFAULT_MAP_COLORS.pointHover,
-  };
-
-  return colors;
-}
-
-const RISK_LEVELS = {
-  LOW_HIGH: "low-high",
-  HIGH: "high",
-  CRITICAL: "critical",
-} as const;
-
-type RiskLevel = (typeof RISK_LEVELS)[keyof typeof RISK_LEVELS];
-
-interface LocationPoint {
-  id: string;
-  name: string;
-  region: string;
-  regionCode: string;
-  providerType: string;
-  coordinates: [number, number];
-  totalFindings: number;
-  riskLevel: RiskLevel;
-  severityData: BarDataPoint[];
-  change?: number;
-}
-
-interface ThreatMapData {
-  locations: LocationPoint[];
-  regions: string[];
-}
-
-interface ThreatMapProps {
-  data: ThreatMapData;
-  height?: number;
-  onLocationSelect?: (location: LocationPoint | null) => void;
-}
-
-// Utility functions
-function createProjection(width: number, height: number) {
-  return d3
-    .geoNaturalEarth1()
-    .fitExtent(
-      [
-        [1, 1],
-        [width - 1, height - 1],
-      ],
-      { type: "Sphere" },
-    )
-    .precision(0.2);
-}
-
-async function fetchWorldData(): Promise<FeatureCollection | null> {
-  try {
-    const worldAtlasModule = await import("world-atlas/countries-110m.json");
-    const worldData = worldAtlasModule.default || worldAtlasModule;
-    const topology = worldData as unknown as Topology<Objects>;
-    return feature(
-      topology,
-      topology.objects.countries as GeometryCollection,
-    ) as FeatureCollection;
-  } catch (error) {
-    console.error("Error loading world map data:", error);
-    return null;
-  }
-}
-
-// Helper: Create SVG element
-function createSVGElement<T extends SVGElement>(
-  type: string,
-  attributes: Record<string, string>,
-): T {
-  const element = document.createElementNS(
-    "http://www.w3.org/2000/svg",
-    type,
-  ) as T;
-  Object.entries(attributes).forEach(([key, value]) => {
-    element.setAttribute(key, value);
-  });
-  return element;
-}
-
-// Components
+// Sub-components
 function MapTooltip({
   location,
   position,
@@ -189,13 +63,7 @@ function MapTooltip({
       {location.change !== undefined && (
         <p className="text-text-neutral-secondary mt-1 text-sm font-medium">
           <span
-            className="font-bold"
-            style={{
-              color:
-                location.change > 0
-                  ? "var(--bg-pass-primary)"
-                  : "var(--bg-fail-primary)",
-            }}
+            className={`font-bold ${location.change > 0 ? "text-pass-primary" : "text-fail-primary"}`}
           >
             {location.change > 0 ? "+" : ""}
             {location.change}%{" "}
@@ -207,33 +75,37 @@ function MapTooltip({
   );
 }
 
-function EmptyState() {
+function LocationDetails({
+  location,
+  onBarClick,
+}: {
+  location: Pick<LocationPoint, "name" | "totalFindings" | "severityData">;
+  onBarClick: (dataPoint: BarDataPoint) => void;
+}) {
   return (
-    <div className="flex h-full min-h-[400px] w-full items-center justify-center">
-      <div className="text-center">
-        <Info size={48} className="mx-auto mb-2 text-slate-500" />
-        <p className="text-sm text-slate-400">
-          Select a location on the map to view details
+    <div className="flex w-full flex-col">
+      <div className="mb-4">
+        <div className="mb-1 flex items-center">
+          <MapPin size={21} className="text-text-error" />
+          <div
+            aria-hidden="true"
+            className="bg-pass-primary h-2 w-2 rounded-full"
+          />
+          <h4 className="text-neutral-primary text-base font-semibold">
+            {location.name}
+          </h4>
+        </div>
+        <p className="text-neutral-tertiary text-xs">
+          {location.totalFindings.toLocaleString()} Total Findings
         </p>
       </div>
+      <HorizontalBarChart
+        data={location.severityData}
+        onBarClick={onBarClick}
+      />
     </div>
   );
 }
-
-function LoadingState({ height }: { height: number }) {
-  return (
-    <div className="flex items-center justify-center" style={{ height }}>
-      <div className="text-center">
-        <div className="mb-2 text-slate-400">Loading map...</div>
-      </div>
-    </div>
-  );
-}
-
-const STATUS_FILTER_MAP: Record<string, string> = {
-  Fail: "FAIL",
-  Pass: "PASS",
-};
 
 export function ThreatMap({
   data,
@@ -243,6 +115,7 @@ export function ThreatMap({
   const searchParams = useSearchParams();
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
   const [selectedLocation, setSelectedLocation] =
     useState<LocationPoint | null>(null);
   const [hoveredLocation, setHoveredLocation] = useState<LocationPoint | null>(
@@ -252,7 +125,7 @@ export function ThreatMap({
     x: number;
     y: number;
   } | null>(null);
-  const [selectedRegion, setSelectedRegion] = useState<string>("All Regions");
+  const [selectedRegion, setSelectedRegion] = useState("All Regions");
   const [worldData, setWorldData] = useState<FeatureCollection | null>(null);
   const [isLoadingMap, setIsLoadingMap] = useState(true);
   const [dimensions, setDimensions] = useState<{
@@ -265,165 +138,144 @@ export function ThreatMap({
   const [mapColors, setMapColors] =
     useState<MapColorsConfig>(DEFAULT_MAP_COLORS);
 
-  // Filter out global regions from map display (they don't have clear positions)
-  const locationsForMap = data.locations.filter(
-    (loc) => loc.region.toLowerCase() !== "global",
-  );
+  const isGlobalSelected = selectedRegion.toLowerCase() === "global";
+  const isAllRegions = selectedRegion === "All Regions";
 
-  const filteredLocations =
-    selectedRegion === "All Regions"
-      ? locationsForMap
-      : selectedRegion.toLowerCase() === "global"
-        ? [] // Don't show dots when global is selected
-        : locationsForMap.filter((loc) => loc.region === selectedRegion);
+  // For display count only (not used in useEffect to avoid infinite loop)
+  const locationCount = data.locations.filter((loc) => {
+    if (loc.region.toLowerCase() === "global") return false;
+    if (isAllRegions) return true;
+    if (isGlobalSelected) return false;
+    return loc.region === selectedRegion;
+  }).length;
 
-  // Monitor theme changes and update colors
+  const sortedRegions = [...data.regions].sort((a, b) => {
+    if (a.toLowerCase() === "global") return -1;
+    if (b.toLowerCase() === "global") return 1;
+    return a.localeCompare(b);
+  });
+
+  // Theme colors
   useEffect(() => {
-    const updateColors = () => {
-      setMapColors(getMapColors());
-    };
-
-    // Update colors immediately
-    updateColors();
-
-    // Watch for theme changes (dark class on document)
-    const observer = new MutationObserver(() => {
-      updateColors();
-    });
-
+    setMapColors(getMapColors());
+    const observer = new MutationObserver(() => setMapColors(getMapColors()));
     observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ["class"],
     });
-
     return () => observer.disconnect();
   }, []);
 
-  // Fetch world data once on mount
+  // Fetch world data
   useEffect(() => {
-    let isMounted = true;
+    let mounted = true;
     fetchWorldData()
-      .then((data) => {
-        if (isMounted && data) setWorldData(data);
-      })
-      .catch(console.error)
-      .finally(() => {
-        if (isMounted) setIsLoadingMap(false);
-      });
+      .then((d) => mounted && d && setWorldData(d))
+      .finally(() => mounted && setIsLoadingMap(false));
     return () => {
-      isMounted = false;
+      mounted = false;
     };
   }, []);
 
-  // Update dimensions on resize
+  // Resize handler
   useEffect(() => {
-    const updateDimensions = () => {
-      if (containerRef.current) {
-        setDimensions({ width: containerRef.current.clientWidth, height });
-      }
-    };
-    updateDimensions();
-    window.addEventListener("resize", updateDimensions);
-    return () => window.removeEventListener("resize", updateDimensions);
+    const update = () =>
+      containerRef.current &&
+      setDimensions({ width: containerRef.current.clientWidth, height });
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
   }, [height]);
 
-  // Render the map
+  // Render map
   useEffect(() => {
     if (!svgRef.current || !worldData || isLoadingMap) return;
 
     const svg = svgRef.current;
-    const { width, height } = dimensions;
     svg.innerHTML = "";
 
     // Compute filtered locations inside useEffect to avoid infinite loop
-    // (filteredLocations creates new array reference on each render)
-    const isGlobalSelected = selectedRegion.toLowerCase() === "global";
-    const isAllRegions = selectedRegion === "All Regions";
+    const isGlobal = selectedRegion.toLowerCase() === "global";
+    const isAll = selectedRegion === "All Regions";
     const locationsToRender = data.locations.filter((loc) => {
       if (loc.region.toLowerCase() === "global") return false;
-      if (isAllRegions) return true;
-      if (isGlobalSelected) return false;
+      if (isAll) return true;
+      if (isGlobal) return false;
       return loc.region === selectedRegion;
     });
 
-    const projection = createProjection(width, height);
-    const path = d3.geoPath().projection(projection);
-    const colors = mapColors;
+    const projection = createProjection(dimensions.width, dimensions.height);
+    const path = geoPath().projection(projection);
 
-    // Render countries
+    // Countries
     const mapGroup = createSVGElement<SVGGElement>("g", {
       class: "map-countries",
     });
-
-    const mapFillColor = isGlobalSelected
-      ? colors.pointDefault
-      : colors.landFill;
+    const fillColor = isGlobal ? mapColors.pointDefault : mapColors.landFill;
 
     worldData.features?.forEach(
-      (feature: Feature<Geometry, GeoJsonProperties>) => {
-        const pathData = path(feature);
+      (feat: Feature<Geometry, GeoJsonProperties>) => {
+        const pathData = path(feat);
         if (pathData) {
-          const pathElement = createSVGElement<SVGPathElement>("path", {
+          const el = createSVGElement<SVGPathElement>("path", {
             d: pathData,
-            fill: mapFillColor,
-            stroke: colors.landStroke,
+            fill: fillColor,
+            stroke: mapColors.landStroke,
             "stroke-width": "0.5",
           });
-          mapGroup.appendChild(pathElement);
+          mapGroup.appendChild(el);
         }
       },
     );
     svg.appendChild(mapGroup);
 
-    // Helper to update tooltip position
-    const updateTooltip = (e: MouseEvent) => {
-      const rect = svg.getBoundingClientRect();
-      setTooltipPosition({
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
-      });
-    };
-
     // Helper to create glow rings
     const createGlowRing = (
       cx: string,
       cy: string,
-      radiusOffset: number,
+      r: number,
       color: string,
       opacity: string,
-    ): SVGCircleElement => {
-      return createSVGElement<SVGCircleElement>("circle", {
+    ) =>
+      createSVGElement<SVGCircleElement>("circle", {
         cx,
         cy,
-        r: radiusOffset.toString(),
+        r: r.toString(),
         fill: "none",
         stroke: color,
         "stroke-width": "1",
         opacity,
       });
-    };
 
-    // Helper to create circle with glow
-    const createCircle = (location: LocationPoint) => {
-      const projected = projection(location.coordinates);
-      if (!projected) return null;
+    // Points
+    const pointsGroup = createSVGElement<SVGGElement>("g", {
+      class: "threat-points",
+    });
 
-      const [x, y] = projected;
-      if (x < 0 || x > width || y < 0 || y > height) return null;
+    const createPoint = (loc: LocationPoint) => {
+      const proj = projection(loc.coordinates);
+      if (
+        !proj ||
+        proj[0] < 0 ||
+        proj[0] > dimensions.width ||
+        proj[1] < 0 ||
+        proj[1] > dimensions.height
+      ) {
+        return null;
+      }
 
-      const isSelected = selectedLocation?.id === location.id;
-      const isHovered = hoveredLocation?.id === location.id;
+      const [x, y] = proj;
+      const isSelected = selectedLocation?.id === loc.id;
+      const radius = isSelected
+        ? MAP_CONFIG.selectedPointRadius
+        : MAP_CONFIG.pointRadius;
+      const color = isSelected
+        ? mapColors.pointSelected
+        : mapColors.pointDefault;
 
       const group = createSVGElement<SVGGElement>("g", {
         class: "cursor-pointer",
       });
-
-      const radius = isSelected
-        ? MAP_CONFIG.selectedPointRadius
-        : MAP_CONFIG.pointRadius;
-      const color = isSelected ? colors.pointSelected : colors.pointDefault;
-
-      // Add glow rings for all points (unselected and selected)
       group.appendChild(
         createGlowRing(x.toString(), y.toString(), radius + 4, color, "0.4"),
       );
@@ -436,18 +288,27 @@ export function ThreatMap({
         cy: y.toString(),
         r: radius.toString(),
         fill: color,
-        class: isHovered && !isSelected ? "opacity-70" : "",
       });
       group.appendChild(circle);
 
       group.addEventListener("click", () =>
-        setSelectedLocation(isSelected ? null : location),
+        setSelectedLocation(isSelected ? null : loc),
       );
       group.addEventListener("mouseenter", (e) => {
-        setHoveredLocation(location);
-        updateTooltip(e);
+        setHoveredLocation(loc);
+        const rect = svg.getBoundingClientRect();
+        setTooltipPosition({
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top,
+        });
       });
-      group.addEventListener("mousemove", updateTooltip);
+      group.addEventListener("mousemove", (e) => {
+        const rect = svg.getBoundingClientRect();
+        setTooltipPosition({
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top,
+        });
+      });
       group.addEventListener("mouseleave", () => {
         setHoveredLocation(null);
         setTooltipPosition(null);
@@ -456,27 +317,18 @@ export function ThreatMap({
       return group;
     };
 
-    // Render points
-    const pointsGroup = createSVGElement<SVGGElement>("g", {
-      class: "threat-points",
-    });
-
-    // Unselected points first
-    locationsToRender.forEach((location) => {
-      if (selectedLocation?.id !== location.id) {
-        const circle = createCircle(location);
-        if (circle) pointsGroup.appendChild(circle);
+    locationsToRender.forEach((loc) => {
+      if (selectedLocation?.id !== loc.id) {
+        const point = createPoint(loc);
+        if (point) pointsGroup.appendChild(point);
       }
     });
 
-    // Selected point last (on top)
     if (selectedLocation) {
-      const selectedData = locationsToRender.find(
-        (loc) => loc.id === selectedLocation.id,
-      );
-      if (selectedData) {
-        const circle = createCircle(selectedData);
-        if (circle) pointsGroup.appendChild(circle);
+      const loc = locationsToRender.find((l) => l.id === selectedLocation.id);
+      if (loc) {
+        const point = createPoint(loc);
+        if (point) pointsGroup.appendChild(point);
       }
     }
 
@@ -492,10 +344,22 @@ export function ThreatMap({
     mapColors,
   ]);
 
+  const navigateToFindings = (
+    status: string,
+    regionCode: string,
+    providerType?: string,
+  ) => {
+    const params = new URLSearchParams(searchParams.toString());
+    mapProviderFiltersForFindings(params);
+    if (providerType) params.set("filter[provider_type__in]", providerType);
+    params.set("filter[region__in]", regionCode);
+    params.set("filter[status__in]", status);
+    router.push(`/findings?${params.toString()}`);
+  };
+
   return (
     <div className="flex h-full w-full flex-col gap-4">
       <div className="flex flex-1 gap-12 overflow-hidden">
-        {/* Map Section - in Card */}
         <div className="flex basis-[70%] flex-col overflow-hidden">
           <Card
             ref={containerRef}
@@ -514,18 +378,11 @@ export function ThreatMap({
                   className="border-border-neutral-primary bg-bg-neutral-secondary text-text-neutral-primary appearance-none rounded-lg border px-4 py-2 pr-10 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                 >
                   <option value="All Regions">All Regions</option>
-                  {data.regions
-                    .sort((a, b) => {
-                      // Put "global" first, then sort alphabetically
-                      if (a.toLowerCase() === "global") return -1;
-                      if (b.toLowerCase() === "global") return 1;
-                      return a.localeCompare(b);
-                    })
-                    .map((region) => (
-                      <option key={region} value={region}>
-                        {region}
-                      </option>
-                    ))}
+                  {sortedRegions.map((region) => (
+                    <option key={region} value={region}>
+                      {region}
+                    </option>
+                  ))}
                 </select>
                 <ChevronDown
                   size={16}
@@ -536,96 +393,72 @@ export function ThreatMap({
 
             <div className="relative w-full flex-1">
               {isLoadingMap ? (
-                <LoadingState height={dimensions.height} />
-              ) : (
-                <>
-                  <div className="relative h-full w-full">
-                    <svg
-                      ref={svgRef}
-                      width={dimensions.width}
-                      height={dimensions.height}
-                      className="h-full w-full"
-                      style={{ maxWidth: "100%", maxHeight: "100%" }}
-                      preserveAspectRatio="xMidYMid meet"
-                    />
-                    {hoveredLocation && tooltipPosition && (
-                      <MapTooltip
-                        location={hoveredLocation}
-                        position={tooltipPosition}
-                      />
-                    )}
-                    <div
-                      className="border-border-neutral-primary bg-bg-neutral-secondary absolute bottom-4 left-4 flex items-center gap-2 rounded-full border px-3 py-1.5"
-                      role="status"
-                      aria-label={`${filteredLocations.length} threat locations on map`}
-                    >
-                      <div
-                        aria-hidden="true"
-                        className="h-3 w-3 rounded"
-                        style={{ backgroundColor: "var(--bg-data-critical)" }}
-                      />
-                      <span className="text-text-neutral-primary text-sm font-medium">
-                        {filteredLocations.length} Locations
-                      </span>
-                    </div>
+                <div
+                  className="flex items-center justify-center"
+                  style={{ height: dimensions.height }}
+                >
+                  <div className="text-text-neutral-tertiary mb-2">
+                    Loading map...
                   </div>
-                </>
+                </div>
+              ) : (
+                <div className="relative h-full w-full">
+                  <svg
+                    ref={svgRef}
+                    width={dimensions.width}
+                    height={dimensions.height}
+                    className="h-full w-full"
+                    style={{ maxWidth: "100%", maxHeight: "100%" }}
+                    preserveAspectRatio="xMidYMid meet"
+                  />
+                  {hoveredLocation && tooltipPosition && (
+                    <MapTooltip
+                      location={hoveredLocation}
+                      position={tooltipPosition}
+                    />
+                  )}
+                  <div className="border-border-neutral-primary bg-bg-neutral-secondary absolute bottom-4 left-4 flex items-center gap-2 rounded-full border px-3 py-1.5">
+                    <div
+                      aria-hidden="true"
+                      className="bg-data-critical h-3 w-3 rounded"
+                    />
+                    <span className="text-text-neutral-primary text-sm font-medium">
+                      {locationCount} Locations
+                    </span>
+                  </div>
+                </div>
               )}
             </div>
           </Card>
         </div>
 
-        {/* Details Section - No Card */}
         <div className="flex basis-[30%] items-center overflow-hidden">
           {selectedLocation ? (
-            <div className="flex w-full flex-col">
-              <div className="mb-4">
-                <div
-                  className="mb-1 flex items-center"
-                  aria-label={`Selected location: ${selectedLocation.name}`}
-                >
-                  <MapPin
-                    size={21}
-                    style={{ color: "var(--color-text-text-error)" }}
-                  />
-                  <div
-                    aria-hidden="true"
-                    className="bg-pass-primary h-2 w-2 rounded-full"
-                  />
-                  <h4 className="text-neutral-primary text-base font-semibold">
-                    {selectedLocation.name}
-                  </h4>
-                </div>
-                <p className="text-neutral-tertiary text-xs">
-                  {selectedLocation.totalFindings.toLocaleString()} Total
-                  Findings
+            <LocationDetails
+              location={selectedLocation}
+              onBarClick={(dp) => {
+                const status = STATUS_FILTER_MAP[dp.name];
+                if (status && selectedLocation.providerType) {
+                  navigateToFindings(
+                    status,
+                    selectedLocation.regionCode,
+                    selectedLocation.providerType,
+                  );
+                }
+              }}
+            />
+          ) : (
+            <div className="flex h-full min-h-[400px] w-full items-center justify-center">
+              <div className="text-center">
+                <Info
+                  size={48}
+                  className="text-text-neutral-secondary mx-auto mb-2"
+                />
+                <p className="text-text-neutral-tertiary text-sm">
+                  Select a location on the map to view details
                 </p>
               </div>
-              <HorizontalBarChart
-                data={selectedLocation.severityData}
-                onBarClick={(dataPoint) => {
-                  const status = STATUS_FILTER_MAP[dataPoint.name];
-                  if (status && selectedLocation.providerType) {
-                    const params = new URLSearchParams(searchParams.toString());
-
-                    mapProviderFiltersForFindings(params);
-
-                    params.set(
-                      "filter[provider_type__in]",
-                      selectedLocation.providerType,
-                    );
-                    params.set(
-                      "filter[region__in]",
-                      selectedLocation.regionCode,
-                    );
-                    params.set("filter[status__in]", status);
-                    router.push(`/findings?${params.toString()}`);
-                  }
-                }}
-              />
             </div>
-          ) : (
-            <EmptyState />
           )}
         </div>
       </div>
