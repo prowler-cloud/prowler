@@ -155,6 +155,57 @@ export function ThreatMap({
     return a.localeCompare(b);
   });
 
+  // Compute global aggregated data
+  const globalLocations = data.locations.filter(
+    (loc) => loc.region.toLowerCase() === "global",
+  );
+
+  const globalAggregatedData =
+    globalLocations.length > 0
+      ? (() => {
+          const aggregate = (name: string) =>
+            globalLocations.reduce(
+              (sum, loc) =>
+                sum +
+                (loc.severityData.find((d) => d.name === name)?.value || 0),
+              0,
+            );
+          const failValue = aggregate("Fail");
+          const passValue = aggregate("Pass");
+          const total = failValue + passValue;
+          return {
+            name: "Global Regions",
+            regionCode: "global",
+            providerType: "global",
+            totalFindings: globalLocations.reduce(
+              (sum, loc) => sum + loc.totalFindings,
+              0,
+            ),
+            severityData: [
+              {
+                name: "Fail",
+                value: failValue,
+                percentage:
+                  total > 0 ? Math.round((failValue / total) * 100) : 0,
+                color: "var(--color-bg-fail)",
+              },
+              {
+                name: "Pass",
+                value: passValue,
+                percentage:
+                  total > 0 ? Math.round((passValue / total) * 100) : 0,
+                color: "var(--color-bg-pass)",
+              },
+            ],
+          };
+        })()
+      : null;
+
+  // Reset selected location when region changes
+  useEffect(() => {
+    setSelectedLocation(null);
+  }, [selectedRegion]);
+
   // Theme colors
   useEffect(() => {
     setMapColors(getMapColors());
@@ -444,6 +495,16 @@ export function ThreatMap({
                     selectedLocation.regionCode,
                     selectedLocation.providerType,
                   );
+                }
+              }}
+            />
+          ) : isGlobalSelected && globalAggregatedData ? (
+            <LocationDetails
+              location={globalAggregatedData}
+              onBarClick={(dp) => {
+                const status = STATUS_FILTER_MAP[dp.name];
+                if (status) {
+                  navigateToFindings(status, "global");
                 }
               }}
             />
