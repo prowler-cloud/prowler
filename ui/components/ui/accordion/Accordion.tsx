@@ -120,7 +120,10 @@ export const Accordion = ({
 
   return (
     <NextUIAccordion
-      className={cn("w-full px-0!", className)}
+      className={cn(
+        "bg-bg-neutral-primary border-border-neutral-secondary w-full rounded-lg border",
+        className,
+      )}
       variant={variant}
       selectionMode={selectionMode}
       selectedKeys={expandedKeys}
@@ -139,7 +142,7 @@ export const Accordion = ({
           isDisabled={item.isDisabled}
           indicator={<ChevronDown className="text-gray-500" />}
           classNames={{
-            base: index === 0 || index === 1 ? "my-1" : "my-1",
+            base: index === 0 || index === 1 ? "my-2" : "my-2",
             title: "text-sm",
             subtitle: "text-xs text-gray-500",
             trigger:

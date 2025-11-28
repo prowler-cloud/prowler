@@ -2,7 +2,17 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.14.0] (Unreleased)
+## [1.15.0] (Unreleased)
+
+### 🚀 Added
+
+- Compliance Watchlist component to Overview page [(#9199)](https://github.com/prowler-cloud/prowler/pull/9199)
+- Service Watchlist component to Overview page [(#9316)](https://github.com/prowler-cloud/prowler/pull/9316)
+- Risk Pipeline component with Sankey chart to Overview page [(#9317)](https://github.com/prowler-cloud/prowler/pull/9317)
+- Threat Map component to Overview Page [(#9324)](https://github.com/prowler-cloud/prowler/pull/9324)
+- MongoDB Atlas provider support [(#9253)](https://github.com/prowler-cloud/prowler/pull/9253)
+
+## [1.14.0] (Prowler v5.14.0)
 
 ### 🚀 Added
 
@@ -11,18 +21,22 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Customer Support menu item [(#9143)](https://github.com/prowler-cloud/prowler/pull/9143)
 - PDF reporting for ENS compliance framework [(#9158)](https://github.com/prowler-cloud/prowler/pull/9158)
 - IaC (Infrastructure as Code) provider support for scanning remote repositories [(#8751)](https://github.com/prowler-cloud/prowler/pull/8751)
+- PDF reporting for NIS2 compliance framework [(#9170)](https://github.com/prowler-cloud/prowler/pull/9170)
 - External resource link to IaC findings for direct navigation to source code in Git repositories [(#9151)](https://github.com/prowler-cloud/prowler/pull/9151)
 - New Overview page and new app styles [(#9234)](https://github.com/prowler-cloud/prowler/pull/9234)
+- Use branch name as region for IaC findings [(#9296)](https://github.com/prowler-cloud/prowler/pull/9296)
 
 ### 🔄 Changed
 
 - Resource ID moved up in the findings detail page [(#9141)](https://github.com/prowler-cloud/prowler/pull/9141)
 - C5 compliance logo [(#9224)](https://github.com/prowler-cloud/prowler/pull/9224)
 - Integrated Prowler MCP server with Lighthouse AI for dynamic tool execution [(#9255)](https://github.com/prowler-cloud/prowler/pull/9255)
+- Overview charts now support click navigation to Findings page with filters and keyboard accessibility [(#9281)](https://github.com/prowler-cloud/prowler/pull/9281)
+- Threat score now displays 2 decimal places with note that it doesn't include muted findings [(#9281)](https://github.com/prowler-cloud/prowler/pull/9281)
 
 ---
 
-## [1.13.1]
+## [1.13.1] (Prolwer v5.13.1)
 
 ### 🔄 Changed
 
@@ -212,7 +226,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ---
 
-## [v1.8.1] (Prowler 5.8.1)
+## [v1.8.1] (Prowler v5.8.1)
 
 ### 🔄 Changed
 
