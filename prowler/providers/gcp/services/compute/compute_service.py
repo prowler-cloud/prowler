@@ -134,6 +134,12 @@ class Compute(GCPService):
                                     for disk in instance.get("disks", [])
                                 ],
                                 project_id=project_id,
+                                preemptible=instance.get("scheduling", {}).get(
+                                    "preemptible", False
+                                ),
+                                provisioning_model=instance.get("scheduling", {}).get(
+                                    "provisioningModel", ""
+                                ),
                             )
                         )
 
@@ -365,6 +371,8 @@ class Instance(BaseModel):
     service_accounts: list
     ip_forward: bool
     disks_encryption: list
+    preemptible: bool = False
+    provisioning_model: str = ""
 
 
 class Network(BaseModel):
