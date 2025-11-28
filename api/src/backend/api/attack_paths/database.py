@@ -79,7 +79,7 @@ def create_database(database: str) -> None:
         session.run(query, parameters)
 
 
-def drop_database(database: str):
+def drop_database(database: str) -> None:
     query = f"DROP DATABASE `{database}` IF EXISTS DESTROY DATA"
 
     with get_session() as session:
