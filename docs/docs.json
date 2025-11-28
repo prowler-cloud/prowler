@@ -52,7 +52,7 @@
           {
             "group": "Prowler Lighthouse AI",
             "pages": [
-              "user-guide/tutorials/prowler-app-lighthouse"
+              "getting-started/products/prowler-lighthouse-ai"
             ]
           },
           {
@@ -98,7 +98,7 @@
                 ]
               },
               "user-guide/tutorials/prowler-app-rbac",
-              "user-guide/providers/prowler-app-api-keys",
+              "user-guide/tutorials/prowler-app-api-keys",
               "user-guide/tutorials/prowler-app-mute-findings",
               {
                 "group": "Integrations",
@@ -109,12 +109,20 @@
                   "user-guide/tutorials/prowler-app-jira-integration"
                 ]
               },
-              "user-guide/tutorials/prowler-app-lighthouse",
+              {
+                "group": "Lighthouse AI",
+                "pages": [
+                  "user-guide/tutorials/prowler-app-lighthouse",
+                  "user-guide/tutorials/prowler-app-lighthouse-multi-llm"
+                ]
+              },
+              "user-guide/tutorials/prowler-cloud-public-ips",
               {
                 "group": "Tutorials",
                 "pages": [
                   "user-guide/tutorials/prowler-app-sso-entra",
-                  "user-guide/tutorials/bulk-provider-provisioning"
+                  "user-guide/tutorials/bulk-provider-provisioning",
+                  "user-guide/tutorials/aws-organizations-bulk-provisioning"
                 ]
               }
             ]
@@ -193,8 +201,7 @@
               {
                 "group": "Kubernetes",
                 "pages": [
-                  "user-guide/providers/kubernetes/in-cluster",
-                  "user-guide/providers/kubernetes/outside-cluster",
+                  "user-guide/providers/kubernetes/getting-started-k8s",
                   "user-guide/providers/kubernetes/misc"
                 ]
               },
@@ -403,14 +410,6 @@
     {
       "source": "/projects/prowler-open-source/en/latest/tutorials/gcp/getting-started-gcp",
       "destination": "/user-guide/providers/gcp/getting-started-gcp"
-    },
-    {
-      "source": "/projects/prowler-open-source/en/latest/tutorials/prowler-app",
-      "destination": "/user-guide/tutorials/prowler-app#step-4-4%3A-kubernetes-credentials%3A"
-    },
-    {
-      "source": "/projects/prowler-open-source/en/latest/tutorials/prowler-app/#step-3-add-a-provider",
-      "destination": "/user-guide/tutorials/prowler-app#step-3-add-a-provider"
     },
     {
       "source": "/projects/prowler-open-source/en/latest/tutorials/microsoft365/getting-started-m365",

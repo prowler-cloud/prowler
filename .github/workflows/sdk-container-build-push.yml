@@ -1,0 +1,282 @@
+name: 'SDK: Container Build and Push'
+
+on:
+  push:
+    branches:
+      - 'v3'      # For v3-latest
+      - 'v4.6'    # For v4-latest
+      - 'master'  # For latest
+    paths-ignore:
+      - '.github/**'
+      - '!.github/workflows/sdk-container-build-push.yml'
+      - 'README.md'
+      - 'docs/**'
+      - 'ui/**'
+      - 'api/**'
+  release:
+    types:
+      - 'published'
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag (e.g., 5.14.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  # Container configuration
+  IMAGE_NAME: prowler
+  DOCKERFILE_PATH: ./Dockerfile
+
+  # Python configuration
+  PYTHON_VERSION: '3.12'
+
+  # Tags (dynamically set based on version)
+  LATEST_TAG: latest
+  STABLE_TAG: stable
+
+  # Container registries
+  PROWLERCLOUD_DOCKERHUB_REPOSITORY: prowlercloud
+  PROWLERCLOUD_DOCKERHUB_IMAGE: prowler
+
+  # AWS configuration (for ECR)
+  AWS_REGION: us-east-1
+
+jobs:
+  container-build-push:
+    if: github.repository == 'prowler-cloud/prowler'
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+            arch: amd64
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+            arch: arm64
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      prowler_version: ${{ steps.get-prowler-version.outputs.prowler_version }}
+      prowler_version_major: ${{ steps.get-prowler-version.outputs.prowler_version_major }}
+      latest_tag: ${{ steps.get-prowler-version.outputs.latest_tag }}
+      stable_tag: ${{ steps.get-prowler-version.outputs.stable_tag }}
+    env:
+      POETRY_VIRTUALENVS_CREATE: 'false'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Poetry
+        run: |
+          pipx install poetry==2.1.1
+          pipx inject poetry poetry-bumpversion
+
+      - name: Get Prowler version and set tags
+        id: get-prowler-version
+        run: |
+          PROWLER_VERSION="$(poetry version -s 2>/dev/null)"
+          echo "prowler_version=${PROWLER_VERSION}" >> "${GITHUB_OUTPUT}"
+          echo "PROWLER_VERSION=${PROWLER_VERSION}" >> "${GITHUB_ENV}"
+
+          # Extract major version
+          PROWLER_VERSION_MAJOR="${PROWLER_VERSION%%.*}"
+          echo "prowler_version_major=${PROWLER_VERSION_MAJOR}" >> "${GITHUB_OUTPUT}"
+          echo "PROWLER_VERSION_MAJOR=${PROWLER_VERSION_MAJOR}" >> "${GITHUB_ENV}"
+
+          # Set version-specific tags
+          case ${PROWLER_VERSION_MAJOR} in
+            3)
+              echo "LATEST_TAG=v3-latest" >> "${GITHUB_ENV}"
+              echo "STABLE_TAG=v3-stable" >> "${GITHUB_ENV}"
+              echo "latest_tag=v3-latest" >> "${GITHUB_OUTPUT}"
+              echo "stable_tag=v3-stable" >> "${GITHUB_OUTPUT}"
+              echo "✓ Prowler v3 detected - tags: v3-latest, v3-stable"
+              ;;
+            4)
+              echo "LATEST_TAG=v4-latest" >> "${GITHUB_ENV}"
+              echo "STABLE_TAG=v4-stable" >> "${GITHUB_ENV}"
+              echo "latest_tag=v4-latest" >> "${GITHUB_OUTPUT}"
+              echo "stable_tag=v4-stable" >> "${GITHUB_OUTPUT}"
+              echo "✓ Prowler v4 detected - tags: v4-latest, v4-stable"
+              ;;
+            5)
+              echo "LATEST_TAG=latest" >> "${GITHUB_ENV}"
+              echo "STABLE_TAG=stable" >> "${GITHUB_ENV}"
+              echo "latest_tag=latest" >> "${GITHUB_OUTPUT}"
+              echo "stable_tag=stable" >> "${GITHUB_OUTPUT}"
+              echo "✓ Prowler v5 detected - tags: latest, stable"
+              ;;
+            *)
+              echo "::error::Unsupported Prowler major version: ${PROWLER_VERSION_MAJOR}"
+              exit 1
+              ;;
+          esac
+
+      - name: Login to DockerHub
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to Public ECR
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        with:
+          registry: public.ecr.aws
+          username: ${{ secrets.PUBLIC_ECR_AWS_ACCESS_KEY_ID }}
+          password: ${{ secrets.PUBLIC_ECR_AWS_SECRET_ACCESS_KEY }}
+        env:
+          AWS_REGION: ${{ env.AWS_REGION }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+
+      - name: Notify container push started
+        if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
+        uses: ./.github/actions/slack-notification
+        env:
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_PLATFORM_DEPLOYMENTS }}
+          COMPONENT: SDK
+          RELEASE_TAG: ${{ env.PROWLER_VERSION }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        with:
+          slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload-file-path: "./.github/scripts/slack-messages/container-release-started.json"
+
+      - name: Build and push SDK container for ${{ matrix.arch }}
+        id: container-push
+        if: github.event_name == 'push' || github.event_name == 'release' || github.event_name == 'workflow_dispatch'
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        with:
+          context: .
+          file: ${{ env.DOCKERFILE_PATH }}
+          push: true
+          platforms: ${{ matrix.platform }}
+          tags: |
+            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.LATEST_TAG }}-${{ matrix.arch }}
+          cache-from: type=gha,scope=${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
+
+      - name: Notify container push completed
+        if: (github.event_name == 'release' || github.event_name == 'workflow_dispatch') && always()
+        uses: ./.github/actions/slack-notification
+        env:
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_PLATFORM_DEPLOYMENTS }}
+          COMPONENT: SDK
+          RELEASE_TAG: ${{ env.PROWLER_VERSION }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        with:
+          slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload-file-path: "./.github/scripts/slack-messages/container-release-completed.json"
+          step-outcome: ${{ steps.container-push.outcome }}
+
+  # Create and push multi-architecture manifest
+  create-manifest:
+    needs: [container-build-push]
+    if: github.event_name == 'push' || github.event_name == 'release' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Login to DockerHub
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to Public ECR
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: public.ecr.aws
+          username: ${{ secrets.PUBLIC_ECR_AWS_ACCESS_KEY_ID }}
+          password: ${{ secrets.PUBLIC_ECR_AWS_SECRET_ACCESS_KEY }}
+        env:
+          AWS_REGION: ${{ env.AWS_REGION }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+
+      - name: Create and push manifests for push event
+        if: github.event_name == 'push'
+        run: |
+          docker buildx imagetools create \
+            -t ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.container-build-push.outputs.latest_tag }} \
+            -t ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.container-build-push.outputs.latest_tag }} \
+            -t ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.container-build-push.outputs.latest_tag }} \
+            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.container-build-push.outputs.latest_tag }}-amd64 \
+            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.container-build-push.outputs.latest_tag }}-arm64
+
+      - name: Create and push manifests for release event
+        if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
+        run: |
+          docker buildx imagetools create \
+            -t ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ needs.container-build-push.outputs.prowler_version }} \
+            -t ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ needs.container-build-push.outputs.stable_tag }} \
+            -t ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ needs.container-build-push.outputs.prowler_version }} \
+            -t ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ needs.container-build-push.outputs.stable_tag }} \
+            -t ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.container-build-push.outputs.prowler_version }} \
+            -t ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.container-build-push.outputs.stable_tag }} \
+            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.container-build-push.outputs.latest_tag }}-amd64 \
+            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.container-build-push.outputs.latest_tag }}-arm64
+
+      - name: Install regctl
+        if: always()
+        uses: regclient/actions/regctl-installer@main
+
+      - name: Cleanup intermediate architecture tags
+        if: always()
+        run: |
+          echo "Cleaning up intermediate tags..."
+          regctl tag delete "${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.container-build-push.outputs.latest_tag }}-amd64" || true
+          regctl tag delete "${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.container-build-push.outputs.latest_tag }}-arm64" || true
+          echo "Cleanup completed"
+
+  dispatch-v3-deployment:
+    if: needs.container-build-push.outputs.prowler_version_major == '3'
+    needs: container-build-push
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+
+    steps:
+      - name: Calculate short SHA
+        id: short-sha
+        run: echo "short_sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+
+      - name: Dispatch v3 deployment (latest)
+        if: github.event_name == 'push'
+        uses: peter-evans/repository-dispatch@5fc4efd1a4797ddb68ffd0714a238564e4cc0e6f # v4.0.0
+        with:
+          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
+          repository: ${{ secrets.DISPATCH_OWNER }}/${{ secrets.DISPATCH_REPO }}
+          event-type: dispatch
+          client-payload: '{"version":"v3-latest","tag":"${{ steps.short-sha.outputs.short_sha }}"}'
+
+      - name: Dispatch v3 deployment (release)
+        if: github.event_name == 'release'
+        uses: peter-evans/repository-dispatch@5fc4efd1a4797ddb68ffd0714a238564e4cc0e6f # v4.0.0
+        with:
+          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
+          repository: ${{ secrets.DISPATCH_OWNER }}/${{ secrets.DISPATCH_REPO }}
+          event-type: dispatch
+          client-payload: '{"version":"release","tag":"${{ needs.container-build-push.outputs.prowler_version }}"}'

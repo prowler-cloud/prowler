@@ -248,13 +248,38 @@ export type KubernetesCredentials = {
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
+export type IacCredentials = {
+  [ProviderCredentialFields.REPOSITORY_URL]: string;
+  [ProviderCredentialFields.ACCESS_TOKEN]?: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
+export type OCICredentials = {
+  [ProviderCredentialFields.OCI_USER]: string;
+  [ProviderCredentialFields.OCI_FINGERPRINT]: string;
+  [ProviderCredentialFields.OCI_KEY_CONTENT]: string;
+  [ProviderCredentialFields.OCI_TENANCY]: string;
+  [ProviderCredentialFields.OCI_REGION]: string;
+  [ProviderCredentialFields.OCI_PASS_PHRASE]?: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
+export type MongoDBAtlasCredentials = {
+  [ProviderCredentialFields.ATLAS_PUBLIC_KEY]: string;
+  [ProviderCredentialFields.ATLAS_PRIVATE_KEY]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
 export type CredentialsFormSchema =
   | AWSCredentials
   | AzureCredentials
   | GCPDefaultCredentials
   | GCPServiceAccountKey
   | KubernetesCredentials
-  | M365Credentials;
+  | IacCredentials
+  | M365Credentials
+  | OCICredentials
+  | MongoDBAtlasCredentials;
 
 export interface SearchParamsProps {
   [key: string]: string | string[] | undefined;

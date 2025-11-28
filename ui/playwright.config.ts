@@ -13,7 +13,9 @@ export default defineConfig({
   },
 
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: process.env.AUTH_URL
+      ? process.env.AUTH_URL
+      : "http://localhost:3000",
     trace: "off",
     screenshot: "off",
     video: "off",

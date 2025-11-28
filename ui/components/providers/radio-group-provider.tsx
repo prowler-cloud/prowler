@@ -12,8 +12,11 @@ import {
   AzureProviderBadge,
   GCPProviderBadge,
   GitHubProviderBadge,
+  IacProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
+  MongoDBAtlasProviderBadge,
+  OracleCloudProviderBadge,
 } from "../icons/providers-badge";
 import { CustomRadio } from "../ui/custom";
 import { FormMessage } from "../ui/form";
@@ -66,6 +69,12 @@ export const RadioGroupProvider: React.FC<RadioGroupProviderProps> = ({
                   <span className="ml-2">Microsoft 365</span>
                 </div>
               </CustomRadio>
+              <CustomRadio description="MongoDB Atlas" value="mongodbatlas">
+                <div className="flex items-center">
+                  <MongoDBAtlasProviderBadge size={26} />
+                  <span className="ml-2">MongoDB Atlas</span>
+                </div>
+              </CustomRadio>
               <CustomRadio description="Kubernetes" value="kubernetes">
                 <div className="flex items-center">
                   <KS8ProviderBadge size={26} />
@@ -78,10 +87,25 @@ export const RadioGroupProvider: React.FC<RadioGroupProviderProps> = ({
                   <span className="ml-2">GitHub</span>
                 </div>
               </CustomRadio>
+              <CustomRadio description="Infrastructure as Code" value="iac">
+                <div className="flex items-center">
+                  <IacProviderBadge size={26} />
+                  <span className="ml-2">Infrastructure as Code</span>
+                </div>
+              </CustomRadio>
+              <CustomRadio
+                description="Oracle Cloud Infrastructure"
+                value="oraclecloud"
+              >
+                <div className="flex items-center">
+                  <OracleCloudProviderBadge size={26} />
+                  <span className="ml-2">Oracle Cloud Infrastructure</span>
+                </div>
+              </CustomRadio>
             </div>
           </RadioGroup>
           {errorMessage && (
-            <FormMessage className="text-system-error dark:text-system-error">
+            <FormMessage className="text-text-error">
               {errorMessage}
             </FormMessage>
           )}

@@ -1,16 +1,24 @@
 import uuid
 from unittest.mock import MagicMock, patch
 
+import openai
 import pytest
+from botocore.exceptions import ClientError
 from tasks.tasks import (
     _perform_scan_complete_tasks,
     check_integrations_task,
+    check_lighthouse_provider_connection_task,
     generate_outputs_task,
+    refresh_lighthouse_provider_models_task,
     s3_integration_task,
     security_hub_integration_task,
 )
 
-from api.models import Integration
+from api.models import (
+    Integration,
+    LighthouseProviderConfiguration,
+    LighthouseProviderModels,
+)
 
 
 # TODO Move this to outputs/reports jobs
@@ -98,7 +106,10 @@ class TestGenerateOutputs:
             ),
             patch(
                 "tasks.tasks._generate_output_directory",
-                return_value=("out-dir", "comp-dir"),
+                return_value=(
+                    "/tmp/test/out-dir",
+                    "/tmp/test/comp-dir",
+                ),
             ),
             patch("tasks.tasks.Scan.all_objects.filter") as mock_scan_update,
             patch("tasks.tasks.rmtree"),
@@ -126,7 +137,8 @@ class TestGenerateOutputs:
             patch("tasks.tasks.get_compliance_frameworks"),
             patch("tasks.tasks.Finding.all_objects.filter") as mock_findings,
             patch(
-                "tasks.tasks._generate_output_directory", return_value=("out", "comp")
+                "tasks.tasks._generate_output_directory",
+                return_value=("/tmp/test/out", "/tmp/test/comp"),
             ),
             patch("tasks.tasks.FindingOutput._transform_findings_stats"),
             patch("tasks.tasks.FindingOutput.transform_api_finding"),
@@ -168,15 +180,35 @@ class TestGenerateOutputs:
         mock_finding_output = MagicMock()
         mock_finding_output.compliance = {"cis": ["requirement-1", "requirement-2"]}
 
+        html_writer_mock = MagicMock()
+        html_writer_mock._data = []
+        html_writer_mock.close_file = False
+        html_writer_mock.transform = MagicMock()
+        html_writer_mock.batch_write_data_to_file = MagicMock()
+
+        compliance_writer_mock = MagicMock()
+        compliance_writer_mock._data = []
+        compliance_writer_mock.close_file = False
+        compliance_writer_mock.transform = MagicMock()
+        compliance_writer_mock.batch_write_data_to_file = MagicMock()
+
+        # Create a mock class that returns our mock instance when called
+        mock_compliance_class = MagicMock(return_value=compliance_writer_mock)
+
+        mock_provider = MagicMock()
+        mock_provider.provider = "aws"
+        mock_provider.uid = "test-provider-uid"
+
         with (
             patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter,
-            patch("tasks.tasks.Provider.objects.get"),
+            patch("tasks.tasks.Provider.objects.get", return_value=mock_provider),
             patch("tasks.tasks.initialize_prowler_provider"),
             patch("tasks.tasks.Compliance.get_bulk", return_value={"cis": MagicMock()}),
             patch("tasks.tasks.get_compliance_frameworks", return_value=["cis"]),
             patch("tasks.tasks.Finding.all_objects.filter") as mock_findings,
             patch(
-                "tasks.tasks._generate_output_directory", return_value=("out", "comp")
+                "tasks.tasks._generate_output_directory",
+                return_value=("/tmp/test/out", "/tmp/test/comp"),
             ),
             patch(
                 "tasks.tasks.FindingOutput._transform_findings_stats",
@@ -190,6 +222,20 @@ class TestGenerateOutputs:
             patch("tasks.tasks._upload_to_s3", return_value="s3://bucket/f.zip"),
             patch("tasks.tasks.Scan.all_objects.filter"),
             patch("tasks.tasks.rmtree"),
+            patch(
+                "tasks.tasks.OUTPUT_FORMATS_MAPPING",
+                {
+                    "html": {
+                        "class": lambda *args, **kwargs: html_writer_mock,
+                        "suffix": ".html",
+                        "kwargs": {},
+                    }
+                },
+            ),
+            patch(
+                "tasks.tasks.COMPLIANCE_CLASS_MAP",
+                {"aws": [(lambda x: True, mock_compliance_class)]},
+            ),
         ):
             mock_filter.return_value.exists.return_value = True
             mock_findings.return_value.order_by.return_value.iterator.return_value = [
@@ -197,29 +243,12 @@ class TestGenerateOutputs:
                 True,
             ]
 
-            html_writer_mock = MagicMock()
-            with (
-                patch(
-                    "tasks.tasks.OUTPUT_FORMATS_MAPPING",
-                    {
-                        "html": {
-                            "class": lambda *args, **kwargs: html_writer_mock,
-                            "suffix": ".html",
-                            "kwargs": {},
-                        }
-                    },
-                ),
-                patch(
-                    "tasks.tasks.COMPLIANCE_CLASS_MAP",
-                    {"aws": [(lambda x: True, MagicMock())]},
-                ),
-            ):
-                generate_outputs_task(
-                    scan_id=self.scan_id,
-                    provider_id=self.provider_id,
-                    tenant_id=self.tenant_id,
-                )
-                html_writer_mock.batch_write_data_to_file.assert_called_once()
+            generate_outputs_task(
+                scan_id=self.scan_id,
+                provider_id=self.provider_id,
+                tenant_id=self.tenant_id,
+            )
+            html_writer_mock.batch_write_data_to_file.assert_called_once()
 
     def test_transform_called_only_on_second_batch(self):
         raw1 = MagicMock()
@@ -256,7 +285,10 @@ class TestGenerateOutputs:
             ),
             patch(
                 "tasks.tasks._generate_output_directory",
-                return_value=("outdir", "compdir"),
+                return_value=(
+                    "/tmp/test/outdir",
+                    "/tmp/test/compdir",
+                ),
             ),
             patch("tasks.tasks._compress_output_files", return_value="outdir.zip"),
             patch("tasks.tasks._upload_to_s3", return_value="s3://bucket/outdir.zip"),
@@ -303,12 +335,14 @@ class TestGenerateOutputs:
             def __init__(self, *args, **kwargs):
                 self.transform_calls = []
                 self._data = []
+                self.close_file = False
                 writer_instances.append(self)
 
             def transform(self, fos, comp_obj, name):
                 self.transform_calls.append((fos, comp_obj, name))
 
             def batch_write_data_to_file(self):
+                # Mock implementation - do nothing
                 pass
 
         two_batches = [
@@ -329,7 +363,10 @@ class TestGenerateOutputs:
             patch("tasks.tasks.get_compliance_frameworks", return_value=["cis"]),
             patch(
                 "tasks.tasks._generate_output_directory",
-                return_value=("outdir", "compdir"),
+                return_value=(
+                    "/tmp/test/outdir",
+                    "/tmp/test/compdir",
+                ),
             ),
             patch("tasks.tasks.FindingOutput._transform_findings_stats"),
             patch(
@@ -368,15 +405,35 @@ class TestGenerateOutputs:
         mock_finding_output = MagicMock()
         mock_finding_output.compliance = {"cis": ["requirement-1", "requirement-2"]}
 
+        json_writer_mock = MagicMock()
+        json_writer_mock._data = []
+        json_writer_mock.close_file = False
+        json_writer_mock.transform = MagicMock()
+        json_writer_mock.batch_write_data_to_file = MagicMock()
+
+        compliance_writer_mock = MagicMock()
+        compliance_writer_mock._data = []
+        compliance_writer_mock.close_file = False
+        compliance_writer_mock.transform = MagicMock()
+        compliance_writer_mock.batch_write_data_to_file = MagicMock()
+
+        # Create a mock class that returns our mock instance when called
+        mock_compliance_class = MagicMock(return_value=compliance_writer_mock)
+
+        mock_provider = MagicMock()
+        mock_provider.provider = "aws"
+        mock_provider.uid = "test-provider-uid"
+
         with (
             patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter,
-            patch("tasks.tasks.Provider.objects.get"),
+            patch("tasks.tasks.Provider.objects.get", return_value=mock_provider),
             patch("tasks.tasks.initialize_prowler_provider"),
             patch("tasks.tasks.Compliance.get_bulk", return_value={"cis": MagicMock()}),
             patch("tasks.tasks.get_compliance_frameworks", return_value=["cis"]),
             patch("tasks.tasks.Finding.all_objects.filter") as mock_findings,
             patch(
-                "tasks.tasks._generate_output_directory", return_value=("out", "comp")
+                "tasks.tasks._generate_output_directory",
+                return_value=("/tmp/test/out", "/tmp/test/comp"),
             ),
             patch(
                 "tasks.tasks.FindingOutput._transform_findings_stats",
@@ -390,6 +447,20 @@ class TestGenerateOutputs:
             patch("tasks.tasks._upload_to_s3", return_value="s3://bucket/file.zip"),
             patch("tasks.tasks.Scan.all_objects.filter"),
             patch("tasks.tasks.rmtree", side_effect=Exception("Test deletion error")),
+            patch(
+                "tasks.tasks.OUTPUT_FORMATS_MAPPING",
+                {
+                    "json": {
+                        "class": lambda *args, **kwargs: json_writer_mock,
+                        "suffix": ".json",
+                        "kwargs": {},
+                    }
+                },
+            ),
+            patch(
+                "tasks.tasks.COMPLIANCE_CLASS_MAP",
+                {"aws": [(lambda x: True, mock_compliance_class)]},
+            ),
         ):
             mock_filter.return_value.exists.return_value = True
             mock_findings.return_value.order_by.return_value.iterator.return_value = [
@@ -397,29 +468,13 @@ class TestGenerateOutputs:
                 True,
             ]
 
-            with (
-                patch(
-                    "tasks.tasks.OUTPUT_FORMATS_MAPPING",
-                    {
-                        "json": {
-                            "class": lambda *args, **kwargs: MagicMock(),
-                            "suffix": ".json",
-                            "kwargs": {},
-                        }
-                    },
-                ),
-                patch(
-                    "tasks.tasks.COMPLIANCE_CLASS_MAP",
-                    {"aws": [(lambda x: True, MagicMock())]},
-                ),
-            ):
-                with caplog.at_level("ERROR"):
-                    generate_outputs_task(
-                        scan_id=self.scan_id,
-                        provider_id=self.provider_id,
-                        tenant_id=self.tenant_id,
-                    )
-                    assert "Error deleting output files" in caplog.text
+            with caplog.at_level("ERROR"):
+                generate_outputs_task(
+                    scan_id=self.scan_id,
+                    provider_id=self.provider_id,
+                    tenant_id=self.tenant_id,
+                )
+                assert "Error deleting output files" in caplog.text
 
     @patch("tasks.tasks.rls_transaction")
     @patch("tasks.tasks.Integration.objects.filter")
@@ -435,7 +490,8 @@ class TestGenerateOutputs:
             patch("tasks.tasks.get_compliance_frameworks", return_value=[]),
             patch("tasks.tasks.Finding.all_objects.filter") as mock_findings,
             patch(
-                "tasks.tasks._generate_output_directory", return_value=("out", "comp")
+                "tasks.tasks._generate_output_directory",
+                return_value=("/tmp/test/out", "/tmp/test/comp"),
             ),
             patch("tasks.tasks.FindingOutput._transform_findings_stats"),
             patch("tasks.tasks.FindingOutput.transform_api_finding"),
@@ -476,21 +532,49 @@ class TestScanCompleteTasks:
     @patch("tasks.tasks.create_compliance_requirements_task.apply_async")
     @patch("tasks.tasks.perform_scan_summary_task.si")
     @patch("tasks.tasks.generate_outputs_task.si")
+    @patch("tasks.tasks.generate_compliance_reports_task.si")
+    @patch("tasks.tasks.check_integrations_task.si")
     def test_scan_complete_tasks(
-        self, mock_outputs_task, mock_scan_summary_task, mock_compliance_tasks
+        self,
+        mock_check_integrations_task,
+        mock_compliance_reports_task,
+        mock_outputs_task,
+        mock_scan_summary_task,
+        mock_compliance_requirements_task,
     ):
+        """Test that scan complete tasks are properly orchestrated with optimized reports."""
         _perform_scan_complete_tasks("tenant-id", "scan-id", "provider-id")
-        mock_compliance_tasks.assert_called_once_with(
+
+        # Verify compliance requirements task is called
+        mock_compliance_requirements_task.assert_called_once_with(
             kwargs={"tenant_id": "tenant-id", "scan_id": "scan-id"},
         )
+
+        # Verify scan summary task is called
         mock_scan_summary_task.assert_called_once_with(
             scan_id="scan-id",
             tenant_id="tenant-id",
         )
+
+        # Verify outputs task is called
         mock_outputs_task.assert_called_once_with(
             scan_id="scan-id",
             provider_id="provider-id",
             tenant_id="tenant-id",
+        )
+
+        # Verify optimized compliance reports task is called (replaces individual tasks)
+        mock_compliance_reports_task.assert_called_once_with(
+            tenant_id="tenant-id",
+            scan_id="scan-id",
+            provider_id="provider-id",
+        )
+
+        # Verify integrations task is called
+        mock_check_integrations_task.assert_called_once_with(
+            tenant_id="tenant-id",
+            provider_id="provider-id",
+            scan_id="scan-id",
         )
 
 
@@ -1029,3 +1113,363 @@ class TestCheckIntegrationsTask:
 
         assert result is False
         mock_upload.assert_called_once_with(self.tenant_id, self.provider_id, scan_id)
+
+
+@pytest.mark.django_db
+class TestCheckLighthouseProviderConnectionTask:
+    def setup_method(self):
+        self.tenant_id = str(uuid.uuid4())
+
+    @pytest.mark.parametrize(
+        "provider_type,credentials,base_url,expected_result",
+        [
+            (
+                LighthouseProviderConfiguration.LLMProviderChoices.OPENAI,
+                {"api_key": "sk-test123"},
+                None,
+                {"connected": True, "error": None},
+            ),
+            (
+                LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
+                {"api_key": "sk-test123"},
+                "https://openrouter.ai/api/v1",
+                {"connected": True, "error": None},
+            ),
+            (
+                LighthouseProviderConfiguration.LLMProviderChoices.BEDROCK,
+                {
+                    "access_key_id": "AKIA123",
+                    "secret_access_key": "secret",
+                    "region": "us-east-1",
+                },
+                None,
+                {"connected": True, "error": None},
+            ),
+        ],
+    )
+    def test_check_connection_success_all_providers(
+        self, tenants_fixture, provider_type, credentials, base_url, expected_result
+    ):
+        """Test successful connection check for all provider types."""
+        # Create provider configuration
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=provider_type,
+            base_url=base_url,
+            is_active=False,
+        )
+        provider_cfg.credentials_decoded = credentials
+        provider_cfg.save()
+
+        # Mock the appropriate API calls
+        with (
+            patch("tasks.jobs.lighthouse_providers.openai.OpenAI") as mock_openai,
+            patch("tasks.jobs.lighthouse_providers.boto3.client") as mock_boto3,
+        ):
+            mock_client = MagicMock()
+            mock_client.models.list.return_value = MagicMock()
+            mock_client.list_foundation_models.return_value = {}
+            mock_openai.return_value = mock_client
+            mock_boto3.return_value = mock_client
+
+            # Execute
+            result = check_lighthouse_provider_connection_task(
+                provider_config_id=str(provider_cfg.id),
+                tenant_id=str(tenants_fixture[0].id),
+            )
+
+            # Assert
+            assert result == expected_result
+            provider_cfg.refresh_from_db()
+            assert provider_cfg.is_active is True
+
+    @pytest.mark.parametrize(
+        "provider_type,credentials,base_url,exception_to_raise",
+        [
+            (
+                LighthouseProviderConfiguration.LLMProviderChoices.OPENAI,
+                {"api_key": "sk-invalid"},
+                None,
+                openai.AuthenticationError(
+                    "Invalid API key", response=MagicMock(), body=None
+                ),
+            ),
+            (
+                LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
+                {"api_key": "sk-invalid"},
+                "https://openrouter.ai/api/v1",
+                openai.APIConnectionError(request=MagicMock()),
+            ),
+            (
+                LighthouseProviderConfiguration.LLMProviderChoices.BEDROCK,
+                {
+                    "access_key_id": "AKIA123",
+                    "secret_access_key": "secret",
+                    "region": "us-east-1",
+                },
+                None,
+                ClientError(
+                    {"Error": {"Code": "AccessDenied", "Message": "Access Denied"}},
+                    "list_foundation_models",
+                ),
+            ),
+        ],
+    )
+    def test_check_connection_api_failure(
+        self,
+        tenants_fixture,
+        provider_type,
+        credentials,
+        base_url,
+        exception_to_raise,
+    ):
+        """Test connection check when API calls fail."""
+        # Create provider configuration
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=provider_type,
+            base_url=base_url,
+            is_active=True,
+        )
+        provider_cfg.credentials_decoded = credentials
+        provider_cfg.save()
+
+        # Mock the API to raise exception
+        with (
+            patch("tasks.jobs.lighthouse_providers.openai.OpenAI") as mock_openai,
+            patch("tasks.jobs.lighthouse_providers.boto3.client") as mock_boto3,
+        ):
+            mock_client = MagicMock()
+            if (
+                provider_type
+                == LighthouseProviderConfiguration.LLMProviderChoices.BEDROCK
+            ):
+                mock_client.list_foundation_models.side_effect = exception_to_raise
+                mock_boto3.return_value = mock_client
+            else:
+                mock_client.models.list.side_effect = exception_to_raise
+                mock_openai.return_value = mock_client
+
+            # Execute
+            result = check_lighthouse_provider_connection_task(
+                provider_config_id=str(provider_cfg.id),
+                tenant_id=str(tenants_fixture[0].id),
+            )
+
+            # Assert
+            assert result["connected"] is False
+            assert result["error"] is not None
+            provider_cfg.refresh_from_db()
+            assert provider_cfg.is_active is False
+
+    def test_check_connection_updates_active_status(self, tenants_fixture):
+        """Test that connection check toggles is_active from True to False on failure."""
+        # Create provider with is_active=True
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.OPENAI,
+            base_url=None,
+            is_active=True,
+        )
+        provider_cfg.credentials_decoded = {"api_key": "sk-test123"}
+        provider_cfg.save()
+
+        # Mock API to fail
+        with patch("tasks.jobs.lighthouse_providers.openai.OpenAI") as mock_openai:
+            mock_client = MagicMock()
+            mock_client.models.list.side_effect = openai.AuthenticationError(
+                "Invalid", response=MagicMock(), body=None
+            )
+            mock_openai.return_value = mock_client
+
+            # Execute
+            result = check_lighthouse_provider_connection_task(
+                provider_config_id=str(provider_cfg.id),
+                tenant_id=str(tenants_fixture[0].id),
+            )
+
+            # Assert status changed
+            assert result["connected"] is False
+            provider_cfg.refresh_from_db()
+            assert provider_cfg.is_active is False
+
+    def test_check_connection_provider_does_not_exist(self, tenants_fixture):
+        """Test that checking non-existent provider raises DoesNotExist."""
+        non_existent_id = str(uuid.uuid4())
+
+        with pytest.raises(LighthouseProviderConfiguration.DoesNotExist):
+            check_lighthouse_provider_connection_task(
+                provider_config_id=non_existent_id,
+                tenant_id=str(tenants_fixture[0].id),
+            )
+
+
+@pytest.mark.django_db
+class TestRefreshLighthouseProviderModelsTask:
+    def setup_method(self):
+        self.tenant_id = str(uuid.uuid4())
+
+    @pytest.mark.parametrize(
+        "provider_type,credentials,base_url,mock_models,expected_count",
+        [
+            (
+                LighthouseProviderConfiguration.LLMProviderChoices.OPENAI,
+                {"api_key": "sk-test123"},
+                None,
+                {"gpt-5": "gpt-5", "gpt-4o": "gpt-4o"},
+                2,
+            ),
+            (
+                LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
+                {"api_key": "sk-test123"},
+                "https://openrouter.ai/api/v1",
+                {"model-1": "Model One", "model-2": "Model Two"},
+                2,
+            ),
+            (
+                LighthouseProviderConfiguration.LLMProviderChoices.BEDROCK,
+                {
+                    "access_key_id": "AKIA123",
+                    "secret_access_key": "secret",
+                    "region": "us-east-1",
+                },
+                None,
+                {"openai.gpt-oss-120b-1:0": "gpt-oss-120b"},
+                1,
+            ),
+        ],
+    )
+    def test_refresh_models_create_new(
+        self,
+        tenants_fixture,
+        provider_type,
+        credentials,
+        base_url,
+        mock_models,
+        expected_count,
+    ):
+        """Test creating new models for all provider types."""
+        # Create provider configuration
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=provider_type,
+            base_url=base_url,
+            is_active=True,
+        )
+        provider_cfg.credentials_decoded = credentials
+        provider_cfg.save()
+
+        # Mock the fetch functions
+        with (
+            patch(
+                "tasks.jobs.lighthouse_providers._fetch_openai_models",
+                return_value=mock_models,
+            ),
+            patch(
+                "tasks.jobs.lighthouse_providers._fetch_openai_compatible_models",
+                return_value=mock_models,
+            ),
+            patch(
+                "tasks.jobs.lighthouse_providers._fetch_bedrock_models",
+                return_value=mock_models,
+            ),
+        ):
+            # Execute
+            result = refresh_lighthouse_provider_models_task(
+                provider_config_id=str(provider_cfg.id),
+                tenant_id=str(tenants_fixture[0].id),
+            )
+
+            # Assert
+            assert result["created"] == expected_count
+            assert result["updated"] == 0
+            assert result["deleted"] == 0
+            assert (
+                LighthouseProviderModels.objects.filter(
+                    provider_configuration=provider_cfg
+                ).count()
+                == expected_count
+            )
+
+    def test_refresh_models_mixed_operations(self, tenants_fixture):
+        """Test mixed create, update, and delete operations."""
+        # Create provider configuration
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.OPENAI,
+            base_url=None,
+            is_active=True,
+        )
+        provider_cfg.credentials_decoded = {"api_key": "sk-test123"}
+        provider_cfg.save()
+
+        # Create 2 existing models (A, B)
+        LighthouseProviderModels.objects.create(
+            tenant_id=tenants_fixture[0].id,
+            provider_configuration=provider_cfg,
+            model_id="model-a",
+            model_name="Model A",
+        )
+        LighthouseProviderModels.objects.create(
+            tenant_id=tenants_fixture[0].id,
+            provider_configuration=provider_cfg,
+            model_id="model-b",
+            model_name="Model B",
+        )
+
+        # Mock API to return models B (existing), C (new) - A will be deleted
+        mock_models = {"model-b": "Model B", "model-c": "Model C"}
+        with patch(
+            "tasks.jobs.lighthouse_providers._fetch_openai_models",
+            return_value=mock_models,
+        ):
+            # Execute
+            result = refresh_lighthouse_provider_models_task(
+                provider_config_id=str(provider_cfg.id),
+                tenant_id=str(tenants_fixture[0].id),
+            )
+
+            # Assert
+            assert result["created"] == 1  # model-c created
+            assert result["updated"] == 1  # model-b updated
+            assert result["deleted"] == 1  # model-a deleted
+
+            # Verify only B and C exist
+            remaining_models = LighthouseProviderModels.objects.filter(
+                provider_configuration=provider_cfg
+            )
+            assert remaining_models.count() == 2
+            assert set(remaining_models.values_list("model_id", flat=True)) == {
+                "model-b",
+                "model-c",
+            }
+
+    def test_refresh_models_api_exception(self, tenants_fixture):
+        """Test refresh when API raises an exception."""
+        # Create provider configuration
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.OPENAI,
+            base_url=None,
+            is_active=True,
+        )
+        provider_cfg.credentials_decoded = {"api_key": "sk-test123"}
+        provider_cfg.save()
+
+        # Mock fetch to raise exception
+        with patch(
+            "tasks.jobs.lighthouse_providers._fetch_openai_models",
+            side_effect=openai.APIError("API Error", request=MagicMock(), body=None),
+        ):
+            # Execute
+            result = refresh_lighthouse_provider_models_task(
+                provider_config_id=str(provider_cfg.id),
+                tenant_id=str(tenants_fixture[0].id),
+            )
+
+            # Assert
+            assert result["created"] == 0
+            assert result["updated"] == 0
+            assert result["deleted"] == 0
+            assert "error" in result
+            assert result["error"] is not None

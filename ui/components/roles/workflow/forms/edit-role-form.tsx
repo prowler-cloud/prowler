@@ -5,7 +5,7 @@ import { Divider } from "@heroui/divider";
 import { Tooltip } from "@heroui/tooltip";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { clsx } from "clsx";
-import { InfoIcon, SaveIcon } from "lucide-react";
+import { InfoIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -13,12 +13,8 @@ import { z } from "zod";
 
 import { updateRole } from "@/actions/roles/roles";
 import { useToast } from "@/components/ui";
-import {
-  CustomButton,
-  CustomDropdownSelection,
-  CustomInput,
-} from "@/components/ui/custom";
-import { Form } from "@/components/ui/form";
+import { CustomDropdownSelection, CustomInput } from "@/components/ui/custom";
+import { Form, FormButtons } from "@/components/ui/form";
 import { getErrorMessage, permissionFormFields } from "@/lib";
 import { ApiError, editRoleFormSchema } from "@/types";
 
@@ -182,7 +178,6 @@ export const EditRoleForm = ({
           placeholder="Enter role name"
           variant="bordered"
           isRequired
-          isInvalid={!!form.formState.errors.name}
         />
 
         <div className="flex flex-col gap-4">
@@ -198,6 +193,7 @@ export const EditRoleForm = ({
               label: "text-small",
               wrapper: "checkbox-update",
             }}
+            color="default"
           >
             Grant all admin permissions
           </Checkbox>
@@ -219,6 +215,7 @@ export const EditRoleForm = ({
                       label: "text-small",
                       wrapper: "checkbox-update",
                     }}
+                    color="default"
                   >
                     {label}
                   </Checkbox>
@@ -272,20 +269,7 @@ export const EditRoleForm = ({
             )}
           </div>
         )}
-        <div className="flex w-full justify-end sm:gap-6">
-          <CustomButton
-            type="submit"
-            ariaLabel="Update Role"
-            className="w-1/2"
-            variant="solid"
-            color="action"
-            size="lg"
-            isLoading={isLoading}
-            startContent={!isLoading && <SaveIcon size={24} />}
-          >
-            {isLoading ? <>Loading</> : <span>Update Role</span>}
-          </CustomButton>
-        </div>
+        <FormButtons submitText="Update Role" isDisabled={isLoading} />
       </form>
     </Form>
   );

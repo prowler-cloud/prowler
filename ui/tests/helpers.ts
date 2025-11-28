@@ -1,6 +1,5 @@
 import { Page, expect } from "@playwright/test";
 import { SignInPage, SignInCredentials } from "./sign-in/sign-in-page";
-import { ProvidersPage } from "./providers/providers-page";
 
 export const ERROR_MESSAGES = {
   INVALID_CREDENTIALS: "Invalid email or password",
@@ -98,7 +97,9 @@ export async function verifyNormalModeActive(page: Page) {
 }
 
 export async function logout(page: Page) {
-  await page.getByRole("button", { name: "Sign out" }).click();
+  const navbar = page.locator("header");
+  await navbar.waitFor({ state: "visible" });
+  await navbar.getByRole("button", { name: "Sign out" }).click();
 }
 
 export async function verifyLogoutSuccess(page: Page) {

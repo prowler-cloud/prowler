@@ -1,16 +1,21 @@
-export const dynamic = "force-dynamic";
 import { Suspense } from "react";
 
-import { getCompliancesOverview } from "@/actions/compliances";
-import { getComplianceOverviewMetadataInfo } from "@/actions/compliances";
+import {
+  getComplianceAttributes,
+  getComplianceOverviewMetadataInfo,
+  getComplianceRequirements,
+  getCompliancesOverview,
+} from "@/actions/compliances";
 import { getScans } from "@/actions/scans";
 import {
   ComplianceCard,
   ComplianceSkeletonGrid,
   NoScansAvailable,
+  ThreatScoreBadge,
 } from "@/components/compliance";
 import { ComplianceHeader } from "@/components/compliance/compliance-header/compliance-header";
 import { ContentLayout } from "@/components/ui";
+import { calculateThreatScore } from "@/lib/compliance/threatscore-calculator";
 import {
   ExpandedScanData,
   ScanEntity,
@@ -56,7 +61,8 @@ export default async function Compliance({
 
       // Find the provider data in the included array
       const providerData = scansData.included?.find(
-        (item: any) => item.type === "providers" && item.id === providerId,
+        (item: { type: string; id: string }) =>
+          item.type === "providers" && item.id === providerId,
       );
 
       if (!providerData) {
@@ -74,6 +80,7 @@ export default async function Compliance({
     })
     .filter(Boolean) as ExpandedScanData[];
 
+  // Use scanId from URL, or select the first scan if not provided
   const selectedScanId =
     resolvedSearchParams.scanId || expandedScansData[0]?.id || null;
   const query = (filters["filter[search]"] as string) || "";
@@ -94,6 +101,7 @@ export default async function Compliance({
       }
     : undefined;
 
+  // Fetch metadata if we have a selected scan
   const metadataInfoData = selectedScanId
     ? await getComplianceOverviewMetadataInfo({
         query,
@@ -105,14 +113,52 @@ export default async function Compliance({
 
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
 
+  // Fetch ThreatScore data if we have a selected scan
+  let threatScoreData = null;
+  if (
+    selectedScanId &&
+    typeof selectedScanId === "string" &&
+    selectedScan?.providerInfo?.provider
+  ) {
+    const complianceId = `prowler_threatscore_${selectedScan.providerInfo.provider.toLowerCase()}`;
+
+    const [attributesData, requirementsData] = await Promise.all([
+      getComplianceAttributes(complianceId),
+      getComplianceRequirements({
+        complianceId,
+        scanId: selectedScanId,
+      }),
+    ]);
+
+    threatScoreData = calculateThreatScore(attributesData, requirementsData);
+  }
+
   return (
     <ContentLayout title="Compliance" icon="lucide:shield-check">
       {selectedScanId ? (
         <>
-          <ComplianceHeader
-            scans={expandedScansData}
-            uniqueRegions={uniqueRegions}
-          />
+          <div className="mb-6 flex flex-col gap-6">
+            <div className="flex flex-col items-start justify-between lg:flex-row lg:gap-6">
+              <div className="flex-1">
+                <ComplianceHeader
+                  scans={expandedScansData}
+                  uniqueRegions={uniqueRegions}
+                />
+              </div>
+              {threatScoreData &&
+                typeof selectedScanId === "string" &&
+                selectedScan && (
+                  <div className="w-[360px] flex-shrink-0">
+                    <ThreatScoreBadge
+                      score={threatScoreData.score}
+                      scanId={selectedScanId}
+                      provider={selectedScan.providerInfo.provider}
+                      selectedScan={selectedScanData}
+                    />
+                  </div>
+                )}
+            </div>
+          </div>
           <Suspense key={searchParamsKey} fallback={<ComplianceSkeletonGrid />}>
             <SSRComplianceGrid
               searchParams={resolvedSearchParams}
@@ -184,27 +230,36 @@ const SSRComplianceGrid = async ({
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-      {compliancesData.data.map((compliance: ComplianceOverviewData) => {
-        const { attributes, id } = compliance;
-        const { framework, version, requirements_passed, total_requirements } =
-          attributes;
+      {compliancesData.data
+        .filter((compliance: ComplianceOverviewData) => {
+          // Filter out ProwlerThreatScore from the grid
+          return compliance.attributes.framework !== "ProwlerThreatScore";
+        })
+        .map((compliance: ComplianceOverviewData) => {
+          const { attributes, id } = compliance;
+          const {
+            framework,
+            version,
+            requirements_passed,
+            total_requirements,
+          } = attributes;
 
-        return (
-          <ComplianceCard
-            key={id}
-            title={framework}
-            version={version}
-            passingRequirements={requirements_passed}
-            totalRequirements={total_requirements}
-            prevPassingRequirements={requirements_passed}
-            prevTotalRequirements={total_requirements}
-            scanId={scanId}
-            complianceId={id}
-            id={id}
-            selectedScan={selectedScan}
-          />
-        );
-      })}
+          return (
+            <ComplianceCard
+              key={id}
+              title={framework}
+              version={version}
+              passingRequirements={requirements_passed}
+              totalRequirements={total_requirements}
+              prevPassingRequirements={requirements_passed}
+              prevTotalRequirements={total_requirements}
+              scanId={scanId}
+              complianceId={id}
+              id={id}
+              selectedScan={selectedScan}
+            />
+          );
+        })}
     </div>
   );
 };

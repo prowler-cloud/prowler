@@ -1,31 +1,36 @@
 {
   "Provider": "kubernetes",
   "CheckID": "etcd_no_peer_auto_tls",
-  "CheckTitle": "Ensure that the --peer-auto-tls argument is not set to true for etcd",
+  "CheckTitle": "Etcd pod does not use automatically generated self-signed certificates for peer TLS connections",
   "CheckType": [],
   "ServiceName": "etcd",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "EtcdService",
-  "Description": "This check ensures that etcd is not configured to use automatically generated self-signed certificates for TLS connections between peers. Using self-signed certificates for peer authentication is discouraged in a production environment.",
-  "Risk": "Using self-signed certificates can lead to insecure communications between etcd peers, compromising data security.",
-  "RelatedUrl": "https://etcd.io/docs/latest/op-guide/security/",
+  "ResourceType": "Pod",
+  "Description": "**Etcd peer TLS** configuration is evaluated by checking etcd containers for the `--peer-auto-tls` flag. Presence of `--peer-auto-tls` indicates peers use automatically generated self-signed certificates for inter-peer connections.",
+  "Risk": "With `--peer-auto-tls`, traffic is encrypted but peer identity isn't verified, enabling:\n- MITM on peer links\n- Rogue member joins to read/modify data\n- Quorum disruption\n\nThis degrades **confidentiality**, **integrity**, and **availability** of control-plane state replicated in etcd.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://etcd.io/docs/latest/op-guide/security/",
+    "https://etcd.io/docs/v3.4/op-guide/security/",
+    "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "--peer-auto-tls=false",
-      "NativeIaC": "https://docs.prowler.com/checks/kubernetes/kubernetes-policy-index/ensure-that-the-peer-auto-tls-argument-is-not-set-to-true",
-      "Other": "",
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. SSH to the control-plane node running etcd\n2. Open /etc/kubernetes/manifests/etcd.yaml\n3. In the etcd container args/command, remove any entry that starts with --peer-auto-tls\n4. Save the file; the kubelet will restart etcd automatically",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure etcd is not using automatically generated self-signed certificates for peer TLS connections.",
-      "Url": "https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/"
+      "Text": "Disable `--peer-auto-tls` and use **mTLS** with a trusted CA issuing unique per-member peer certificates. Enforce SAN validation and, *where supported*, peer certificate authentication. Apply **least privilege**, separate CAs for peers/clients, rotate keys, and monitor certificate expiry and peer membership.",
+      "Url": "https://hub.prowler.com/check/etcd_no_peer_auto_tls"
     }
   },
   "Categories": [
     "encryption",
-    "internet-exposed"
+    "cluster-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],

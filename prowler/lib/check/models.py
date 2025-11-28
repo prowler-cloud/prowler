@@ -457,7 +457,8 @@ class Check(ABC, CheckMetadata):
         # Verify names consistency
         check_id = self.CheckID
         class_name = self.__class__.__name__
-        file_name = file_path.split(sep="/")[-1]
+        # os.path.basename handles Windows and POSIX paths reliably
+        file_name = os.path.basename(file_path)
 
         errors = []
         if check_id != class_name:
@@ -588,8 +589,17 @@ class Check_Report_GCP(Check_Report):
             or getattr(resource, "name", None)
             or ""
         )
+
+        # Prefer the explicit resource_name argument, otherwise look for a name attribute on the resource
+        resource_name_candidate = resource_name or getattr(resource, "name", None)
+        if not resource_name_candidate and isinstance(resource, dict):
+            # Some callers pass a dict, so fall back to the dict entry if available
+            resource_name_candidate = resource.get("name")
+        if isinstance(resource_name_candidate, str):
+            # Trim whitespace so empty strings collapse to the default
+            resource_name_candidate = resource_name_candidate.strip()
         self.resource_name = (
-            resource_name or getattr(resource, "name", "") or "GCP Project"
+            str(resource_name_candidate) if resource_name_candidate else "GCP Project"
         )
         self.project_id = project_id or getattr(resource, "project_id", "")
         self.location = (

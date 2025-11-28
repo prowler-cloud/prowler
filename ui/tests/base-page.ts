@@ -130,23 +130,28 @@ export abstract class BasePage {
 
   // Common wait methods
   async waitForElement(element: Locator, timeout: number = 5000): Promise<void> {
+    
     await element.waitFor({ timeout });
   }
 
   async waitForElementToDisappear(element: Locator, timeout: number = 5000): Promise<void> {
+    
     await element.waitFor({ state: "hidden", timeout });
   }
 
   async waitForUrl(expectedUrl: string | RegExp, timeout: number = 5000): Promise<void> {
+    
     await this.page.waitForURL(expectedUrl, { timeout });
   }
 
   // Common screenshot methods
   async takeScreenshot(name: string): Promise<void> {
+    
     await this.page.screenshot({ path: `screenshots/${name}.png` });
   }
 
   async takeElementScreenshot(element: Locator, name: string): Promise<void> {
+    
     await element.screenshot({ path: `screenshots/${name}.png` });
   }
 }

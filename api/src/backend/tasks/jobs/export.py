@@ -15,21 +15,25 @@ from prowler.config.config import (
     html_file_suffix,
     json_asff_file_suffix,
     json_ocsf_file_suffix,
+    set_output_timestamp,
 )
 from prowler.lib.outputs.asff.asff import ASFF
 from prowler.lib.outputs.compliance.aws_well_architected.aws_well_architected import (
     AWSWellArchitected,
 )
+from prowler.lib.outputs.compliance.c5.c5_aws import AWSC5
+from prowler.lib.outputs.compliance.c5.c5_azure import AzureC5
+from prowler.lib.outputs.compliance.c5.c5_gcp import GCPC5
 from prowler.lib.outputs.compliance.ccc.ccc_aws import CCC_AWS
 from prowler.lib.outputs.compliance.ccc.ccc_azure import CCC_Azure
 from prowler.lib.outputs.compliance.ccc.ccc_gcp import CCC_GCP
-from prowler.lib.outputs.compliance.c5.c5_aws import AWSC5
 from prowler.lib.outputs.compliance.cis.cis_aws import AWSCIS
 from prowler.lib.outputs.compliance.cis.cis_azure import AzureCIS
 from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
 from prowler.lib.outputs.compliance.cis.cis_github import GithubCIS
 from prowler.lib.outputs.compliance.cis.cis_kubernetes import KubernetesCIS
 from prowler.lib.outputs.compliance.cis.cis_m365 import M365CIS
+from prowler.lib.outputs.compliance.cis.cis_oraclecloud import OracleCloudCIS
 from prowler.lib.outputs.compliance.ens.ens_aws import AWSENS
 from prowler.lib.outputs.compliance.ens.ens_azure import AzureENS
 from prowler.lib.outputs.compliance.ens.ens_gcp import GCPENS
@@ -54,6 +58,9 @@ from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_azur
 )
 from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_gcp import (
     ProwlerThreatScoreGCP,
+)
+from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_kubernetes import (
+    ProwlerThreatScoreKubernetes,
 )
 from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_m365 import (
     ProwlerThreatScoreM365,
@@ -87,6 +94,7 @@ COMPLIANCE_CLASS_MAP = {
         (lambda name: name.startswith("iso27001_"), AzureISO27001),
         (lambda name: name == "ccc_azure", CCC_Azure),
         (lambda name: name == "prowler_threatscore_azure", ProwlerThreatScoreAzure),
+        (lambda name: name == "c5_azure", AzureC5),
     ],
     "gcp": [
         (lambda name: name.startswith("cis_"), GCPCIS),
@@ -95,10 +103,15 @@ COMPLIANCE_CLASS_MAP = {
         (lambda name: name.startswith("iso27001_"), GCPISO27001),
         (lambda name: name == "prowler_threatscore_gcp", ProwlerThreatScoreGCP),
         (lambda name: name == "ccc_gcp", CCC_GCP),
+        (lambda name: name == "c5_gcp", GCPC5),
     ],
     "kubernetes": [
         (lambda name: name.startswith("cis_"), KubernetesCIS),
         (lambda name: name.startswith("iso27001_"), KubernetesISO27001),
+        (
+            lambda name: name == "prowler_threatscore_kubernetes",
+            ProwlerThreatScoreKubernetes,
+        ),
     ],
     "m365": [
         (lambda name: name.startswith("cis_"), M365CIS),
@@ -107,6 +120,13 @@ COMPLIANCE_CLASS_MAP = {
     ],
     "github": [
         (lambda name: name.startswith("cis_"), GithubCIS),
+    ],
+    "iac": [
+        # IaC provider doesn't have specific compliance frameworks yet
+        # Trivy handles its own compliance checks
+    ],
+    "oraclecloud": [
+        (lambda name: name.startswith("cis_"), OracleCloudCIS),
     ],
 }
 
@@ -183,18 +203,21 @@ def get_s3_client():
     return s3_client
 
 
-def _upload_to_s3(tenant_id: str, zip_path: str, scan_id: str) -> str | None:
+def _upload_to_s3(
+    tenant_id: str, scan_id: str, local_path: str, relative_key: str
+) -> str | None:
     """
-    Upload the specified ZIP file to an S3 bucket.
-    If the S3 bucket environment variables are not configured,
-    the function returns None without performing an upload.
+    Upload a local artifact to an S3 bucket under the tenant/scan prefix.
+
     Args:
-        tenant_id (str): The tenant identifier, used as part of the S3 key prefix.
-        zip_path (str): The local file system path to the ZIP file to be uploaded.
-        scan_id (str): The scan identifier, used as part of the S3 key prefix.
+        tenant_id (str): The tenant identifier used as the first segment of the S3 key.
+        scan_id (str): The scan identifier used as the second segment of the S3 key.
+        local_path (str): Filesystem path to the artifact to upload.
+        relative_key (str): Object key relative to `<tenant_id>/<scan_id>/`.
+
     Returns:
-        str: The S3 URI of the uploaded file (e.g., "s3://<bucket>/<key>") if successful.
-        None: If the required environment variables for the S3 bucket are not set.
+        str | None: S3 URI of the uploaded artifact, or None if the upload is skipped.
+
     Raises:
         botocore.exceptions.ClientError: If the upload attempt to S3 fails for any reason.
     """
@@ -202,60 +225,50 @@ def _upload_to_s3(tenant_id: str, zip_path: str, scan_id: str) -> str | None:
     if not bucket:
         return
 
+    if not relative_key:
+        return
+
+    if not os.path.isfile(local_path):
+        return
+
     try:
         s3 = get_s3_client()
 
-        # Upload the ZIP file (outputs) to the S3 bucket
-        zip_key = f"{tenant_id}/{scan_id}/{os.path.basename(zip_path)}"
-        s3.upload_file(
-            Filename=zip_path,
-            Bucket=bucket,
-            Key=zip_key,
-        )
+        s3_key = f"{tenant_id}/{scan_id}/{relative_key}"
+        s3.upload_file(Filename=local_path, Bucket=bucket, Key=s3_key)
 
-        # Upload the compliance directory to the S3 bucket
-        compliance_dir = os.path.join(os.path.dirname(zip_path), "compliance")
-        for filename in os.listdir(compliance_dir):
-            local_path = os.path.join(compliance_dir, filename)
-            if not os.path.isfile(local_path):
-                continue
-            file_key = f"{tenant_id}/{scan_id}/compliance/{filename}"
-            s3.upload_file(Filename=local_path, Bucket=bucket, Key=file_key)
-
-        return f"s3://{base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET}/{zip_key}"
+        return f"s3://{base.DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET}/{s3_key}"
     except (ClientError, NoCredentialsError, ParamValidationError, ValueError) as e:
         logger.error(f"S3 upload failed: {str(e)}")
 
 
-def _generate_output_directory(
-    output_directory, prowler_provider: object, tenant_id: str, scan_id: str
-) -> tuple[str, str]:
+def _build_output_path(
+    output_directory: str,
+    prowler_provider: str,
+    tenant_id: str,
+    scan_id: str,
+    subdirectory: str = None,
+) -> str:
     """
-    Generate a file system path for the output directory of a prowler scan.
-
-    This function constructs the output directory path by combining a base
-    temporary output directory, the tenant ID, the scan ID, and details about
-    the prowler provider along with a timestamp. The resulting path is used to
-    store the output files of a prowler scan.
-
-    Note:
-        This function depends on one external variable:
-          - `output_file_timestamp`: A timestamp (as a string) used to uniquely identify the output.
+    Build a file system path for the output directory of a prowler scan.
 
     Args:
         output_directory (str): The base output directory.
-        prowler_provider (object): An identifier or descriptor for the prowler provider.
-                                   Typically, this is a string indicating the provider (e.g., "aws").
+        prowler_provider (str): An identifier or descriptor for the prowler provider.
+                               Typically, this is a string indicating the provider (e.g., "aws").
         tenant_id (str): The unique identifier for the tenant.
         scan_id (str): The unique identifier for the scan.
+        subdirectory (str, optional): Optional subdirectory to include in the path
+                                     (e.g., "compliance", "threatscore", "ens").
 
     Returns:
-        str: The constructed file system path for the prowler scan output directory.
+        str: The constructed path with directory created.
 
     Example:
-        >>> _generate_output_directory("/tmp", "aws", "tenant-1234", "scan-5678")
-        '/tmp/tenant-1234/aws/scan-5678/prowler-output-2023-02-15T12:34:56',
-        '/tmp/tenant-1234/aws/scan-5678/compliance/prowler-output-2023-02-15T12:34:56'
+        >>> _build_output_path("/tmp", "aws", "tenant-1234", "scan-5678")
+        '/tmp/tenant-1234/scan-5678/prowler-output-aws-20230215123456'
+        >>> _build_output_path("/tmp", "aws", "tenant-1234", "scan-5678", "threatscore")
+        '/tmp/tenant-1234/scan-5678/threatscore/prowler-output-aws-20230215123456'
     """
     # Sanitize the prowler provider name to ensure it is a valid directory name
     prowler_provider_sanitized = re.sub(r"[^\w\-]", "-", prowler_provider)
@@ -263,17 +276,107 @@ def _generate_output_directory(
     with rls_transaction(tenant_id):
         started_at = Scan.objects.get(id=scan_id).started_at
 
+    set_output_timestamp(started_at)
+
     timestamp = started_at.strftime("%Y%m%d%H%M%S")
-    path = (
-        f"{output_directory}/{tenant_id}/{scan_id}/prowler-output-"
-        f"{prowler_provider_sanitized}-{timestamp}"
-    )
+
+    if subdirectory:
+        path = (
+            f"{output_directory}/{tenant_id}/{scan_id}/{subdirectory}/prowler-output-"
+            f"{prowler_provider_sanitized}-{timestamp}"
+        )
+    else:
+        path = (
+            f"{output_directory}/{tenant_id}/{scan_id}/prowler-output-"
+            f"{prowler_provider_sanitized}-{timestamp}"
+        )
+
+    # Create directory for the path if it doesn't exist
     os.makedirs("/".join(path.split("/")[:-1]), exist_ok=True)
 
-    compliance_path = (
-        f"{output_directory}/{tenant_id}/{scan_id}/compliance/prowler-output-"
-        f"{prowler_provider_sanitized}-{timestamp}"
-    )
-    os.makedirs("/".join(compliance_path.split("/")[:-1]), exist_ok=True)
+    return path
 
-    return path, compliance_path
+
+def _generate_compliance_output_directory(
+    output_directory: str,
+    prowler_provider: str,
+    tenant_id: str,
+    scan_id: str,
+    compliance_framework: str,
+) -> str:
+    """
+    Generate a file system path for a compliance framework output directory.
+
+    This function constructs the output directory path specifically for a compliance
+    framework (e.g., "threatscore", "ens") by combining a base temporary output directory,
+    the tenant ID, the scan ID, the compliance framework name, and details about the
+    prowler provider along with a timestamp.
+
+    Args:
+        output_directory (str): The base output directory.
+        prowler_provider (str): An identifier or descriptor for the prowler provider.
+                               Typically, this is a string indicating the provider (e.g., "aws").
+        tenant_id (str): The unique identifier for the tenant.
+        scan_id (str): The unique identifier for the scan.
+        compliance_framework (str): The compliance framework name (e.g., "threatscore", "ens").
+
+    Returns:
+        str: The path for the compliance framework output directory.
+
+    Example:
+        >>> _generate_compliance_output_directory("/tmp", "aws", "tenant-1234", "scan-5678", "threatscore")
+        '/tmp/tenant-1234/scan-5678/threatscore/prowler-output-aws-20230215123456'
+        >>> _generate_compliance_output_directory("/tmp", "aws", "tenant-1234", "scan-5678", "ens")
+        '/tmp/tenant-1234/scan-5678/ens/prowler-output-aws-20230215123456'
+        >>> _generate_compliance_output_directory("/tmp", "aws", "tenant-1234", "scan-5678", "nis2")
+        '/tmp/tenant-1234/scan-5678/nis2/prowler-output-aws-20230215123456'
+    """
+    return _build_output_path(
+        output_directory,
+        prowler_provider,
+        tenant_id,
+        scan_id,
+        subdirectory=compliance_framework,
+    )
+
+
+def _generate_output_directory(
+    output_directory: str,
+    prowler_provider: str,
+    tenant_id: str,
+    scan_id: str,
+) -> tuple[str, str]:
+    """
+    Generate file system paths for the standard and compliance output directories of a prowler scan.
+
+    This function constructs both the standard output directory path and the compliance
+    output directory path by combining a base temporary output directory, the tenant ID,
+    the scan ID, and details about the prowler provider along with a timestamp.
+
+    Args:
+        output_directory (str): The base output directory.
+        prowler_provider (str): An identifier or descriptor for the prowler provider.
+                               Typically, this is a string indicating the provider (e.g., "aws").
+        tenant_id (str): The unique identifier for the tenant.
+        scan_id (str): The unique identifier for the scan.
+
+    Returns:
+        tuple[str, str]: A tuple containing (standard_path, compliance_path).
+
+    Example:
+        >>> _generate_output_directory("/tmp", "aws", "tenant-1234", "scan-5678")
+        ('/tmp/tenant-1234/scan-5678/prowler-output-aws-20230215123456',
+         '/tmp/tenant-1234/scan-5678/compliance/prowler-output-aws-20230215123456')
+    """
+    standard_path = _build_output_path(
+        output_directory, prowler_provider, tenant_id, scan_id
+    )
+    compliance_path = _build_output_path(
+        output_directory,
+        prowler_provider,
+        tenant_id,
+        scan_id,
+        subdirectory="compliance",
+    )
+
+    return standard_path, compliance_path
