@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/shadcn";
 
@@ -12,9 +12,18 @@ interface GraphsTabsClientProps {
 
 export const GraphsTabsClient = ({ tabsContent }: GraphsTabsClientProps) => {
   const [activeTab, setActiveTab] = useState<TabId>("findings");
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const handleValueChange = (value: string) => {
     setActiveTab(value as TabId);
+
+    // Scroll to the end of the tab content after a short delay for render
+    setTimeout(() => {
+      contentRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
+    }, 100);
   };
 
   return (
@@ -35,17 +44,19 @@ export const GraphsTabsClient = ({ tabsContent }: GraphsTabsClientProps) => {
         ))}
       </TabsList>
 
-      {GRAPH_TABS.map((tab) =>
-        activeTab === tab.id ? (
-          <TabsContent
-            key={tab.id}
-            value={tab.id}
-            className="mt-10 flex flex-1 overflow-visible"
-          >
-            {tabsContent[tab.id]}
-          </TabsContent>
-        ) : null,
-      )}
+      <div ref={contentRef}>
+        {GRAPH_TABS.map((tab) =>
+          activeTab === tab.id ? (
+            <TabsContent
+              key={tab.id}
+              value={tab.id}
+              className="mt-10 flex flex-1 overflow-visible"
+            >
+              {tabsContent[tab.id]}
+            </TabsContent>
+          ) : null,
+        )}
+      </div>
     </Tabs>
   );
 };

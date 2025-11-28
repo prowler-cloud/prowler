@@ -16,9 +16,21 @@ export interface SankeyLink {
   value: number;
 }
 
+export interface ZeroDataProvider {
+  id: string;
+  displayName: string;
+}
+
 export interface SankeyData {
   nodes: SankeyNode[];
   links: SankeyLink[];
+  zeroDataProviders: ZeroDataProvider[];
+}
+
+export interface SankeyFilters {
+  providerTypes?: string[];
+  /** All selected provider types - used to show missing providers in legend */
+  allSelectedProviderTypes?: string[];
 }
 
 interface AggregatedProvider {
@@ -66,22 +78,86 @@ const SEVERITY_ORDER = [
 /**
  * Adapts providers overview and findings severity API responses to Sankey chart format.
  * Severity distribution is calculated proportionally based on each provider's fail count.
+ *
+ * @param providersResponse - The providers overview API response
+ * @param severityResponse - The findings severity API response
+ * @param filters - Optional filters to restrict which providers are shown.
+ *                  When filters are set, only selected providers are shown.
+ *                  When no filters, all providers are shown.
  */
 export function adaptProvidersOverviewToSankey(
   providersResponse: ProvidersOverviewResponse | undefined,
   severityResponse?: FindingsSeverityOverviewResponse | undefined,
+  filters?: SankeyFilters,
 ): SankeyData {
   if (!providersResponse?.data || providersResponse.data.length === 0) {
-    return { nodes: [], links: [] };
+    return { nodes: [], links: [], zeroDataProviders: [] };
   }
 
   const aggregatedProviders = aggregateProvidersByType(providersResponse.data);
-  const providersWithFailures = aggregatedProviders.filter((p) => p.fail > 0);
 
-  if (providersWithFailures.length === 0) {
-    return { nodes: [], links: [] };
+  // Filter providers based on selection:
+  // - If providerTypes filter is set: show only those provider types
+  // - Otherwise: show all providers from the API response
+  const hasProviderTypeFilter =
+    filters?.providerTypes && filters.providerTypes.length > 0;
+
+  let providersToShow: AggregatedProvider[];
+  if (hasProviderTypeFilter) {
+    // Show only selected provider types
+    providersToShow = aggregatedProviders.filter((p) =>
+      filters.providerTypes!.includes(p.id.toLowerCase()),
+    );
+  } else {
+    // No provider type filter - show all providers from the API response
+    // Providers with no findings (pass=0, fail=0) will appear in the legend
+    providersToShow = aggregatedProviders;
   }
 
+  if (providersToShow.length === 0) {
+    return { nodes: [], links: [], zeroDataProviders: [] };
+  }
+
+  // Separate providers with and without failures
+  const providersWithFailures = providersToShow.filter((p) => p.fail > 0);
+  const providersWithoutFailures = providersToShow.filter((p) => p.fail === 0);
+
+  // Zero-data providers to show as legends below the chart
+  const zeroDataProviders: ZeroDataProvider[] = providersWithoutFailures.map(
+    (p) => ({
+      id: p.id,
+      displayName: p.displayName,
+    }),
+  );
+
+  // Add selected provider types that are completely missing from API response
+  // (these are providers with zero findings - not even in the response)
+  if (
+    filters?.allSelectedProviderTypes &&
+    filters.allSelectedProviderTypes.length > 0
+  ) {
+    const existingProviderIds = new Set(
+      aggregatedProviders.map((p) => p.id.toLowerCase()),
+    );
+
+    for (const selectedType of filters.allSelectedProviderTypes) {
+      const normalizedType = selectedType.toLowerCase();
+      if (!existingProviderIds.has(normalizedType)) {
+        // This provider type was selected but has no data at all
+        zeroDataProviders.push({
+          id: normalizedType,
+          displayName: getProviderDisplayName(normalizedType),
+        });
+      }
+    }
+  }
+
+  // If no providers have failures, return empty chart with legends
+  if (providersWithFailures.length === 0) {
+    return { nodes: [], links: [], zeroDataProviders };
+  }
+
+  // Only include providers WITH failures in the chart
   const providerNodes: SankeyNode[] = providersWithFailures.map((p) => ({
     name: p.displayName,
   }));
@@ -136,5 +212,5 @@ export function adaptProvidersOverviewToSankey(
     });
   }
 
-  return { nodes, links };
+  return { nodes, links, zeroDataProviders };
 }
