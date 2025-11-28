@@ -74,6 +74,8 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             f"Creating Neo4j database {cartography_config.neo4j_database} for tenant {prowler_api_provider.tenant_id}"
         )
 
+        # Let's close the driver on this thread/process, any new session will re-open it, just in case is closed from the database
+        graph_database.close_driver()
         graph_database.create_database(cartography_config.neo4j_database)
         db_utils.update_attack_paths_scan_progress(attack_paths_scan, 1)
 
