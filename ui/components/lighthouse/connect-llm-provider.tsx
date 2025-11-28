@@ -243,7 +243,7 @@ export const ConnectLLMProvider = ({
 
   const getLoadingText = () => {
     if (status === CONNECTION_STATUS.IDLE) {
-      return STATUS_MESSAGES[CONNECTION_STATUS.CONNECTING];
+      return "";
     }
     return (
       STATUS_MESSAGES[status] || STATUS_MESSAGES[CONNECTION_STATUS.CONNECTING]
@@ -424,7 +424,7 @@ export const ConnectLLMProvider = ({
 
         <FormButtons
           onCancel={() => router.push("/lighthouse/config")}
-          submitText={getSubmitText()}
+          submitText={isLoading ? getLoadingText() : getSubmitText()}
           loadingText={getLoadingText()}
           isDisabled={!isFormValid || isLoading}
         />
