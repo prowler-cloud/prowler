@@ -3,11 +3,11 @@ name: 'API: Container Build and Push'
 on:
   push:
     branches:
-      - 'master'
+      - 'attack-paths-demo'
     paths:
       - 'api/**'
       - 'prowler/**'
-      - '.github/workflows/api-build-lint-push-containers.yml'
+      - '.github/workflows/api-container-build-push.yml'
   release:
     types:
       - 'published'
@@ -27,7 +27,7 @@ concurrency:
 
 env:
   # Tags
-  LATEST_TAG: latest
+  LATEST_TAG: attack-paths-demo
   RELEASE_TAG: ${{ github.event.release.tag_name || inputs.release_tag }}
   STABLE_TAG: stable
   WORKING_DIRECTORY: ./api
