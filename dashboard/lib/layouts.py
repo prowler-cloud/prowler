@@ -61,6 +61,7 @@ def create_layout_overview(
                     html.Div(className="flex", id="gcp_card", n_clicks=0),
                     html.Div(className="flex", id="k8s_card", n_clicks=0),
                     html.Div(className="flex", id="m365_card", n_clicks=0),
+                    html.Div(className="flex", id="alibabacloud_card", n_clicks=0),
                 ],
                 className=f"grid gap-x-4 mb-[30px] sm:grid-cols-2 lg:grid-cols-{amount_providers}",
             ),

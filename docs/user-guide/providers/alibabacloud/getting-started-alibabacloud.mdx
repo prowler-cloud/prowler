@@ -1,0 +1,129 @@
+---
+title: 'Getting Started With Alibaba Cloud on Prowler'
+---
+
+## Prowler CLI
+
+### Configure Alibaba Cloud Credentials
+
+Prowler requires Alibaba Cloud credentials to perform security checks. Authentication is available through the following methods (in order of priority):
+
+1. **Credentials URI** (Recommended for centralized credential services)
+2. **OIDC Role Authentication** (Recommended for ACK/Kubernetes)
+3. **ECS RAM Role** (Recommended for ECS instances)
+4. **RAM Role Assumption** (Recommended for cross-account access)
+5. **STS Temporary Credentials**
+6. **Permanent Access Keys**
+7. **Default Credential Chain**
+
+> **Security Note**: For security reasons, Prowler does NOT accept credentials via command-line arguments. All credentials must be provided via environment variables or the Alibaba Cloud credential chain.
+
+#### Option 1: Environment Variables (Permanent Credentials)
+
+```bash
+export ALIBABA_CLOUD_ACCESS_KEY_ID="your-access-key-id"
+export ALIBABA_CLOUD_ACCESS_KEY_SECRET="your-access-key-secret"
+prowler alibabacloud
+```
+
+#### Option 2: Environment Variables (STS Temporary Credentials)
+
+```bash
+export ALIBABA_CLOUD_ACCESS_KEY_ID="your-sts-access-key-id"
+export ALIBABA_CLOUD_ACCESS_KEY_SECRET="your-sts-access-key-secret"
+export ALIBABA_CLOUD_SECURITY_TOKEN="your-sts-security-token"
+prowler alibabacloud
+```
+
+#### Option 3: RAM Role Assumption (Environment Variables)
+
+```bash
+export ALIBABA_CLOUD_ACCESS_KEY_ID="your-access-key-id"
+export ALIBABA_CLOUD_ACCESS_KEY_SECRET="your-access-key-secret"
+export ALIBABA_CLOUD_ROLE_ARN="acs:ram::123456789012:role/ProwlerAuditRole"
+export ALIBABA_CLOUD_ROLE_SESSION_NAME="ProwlerAssessmentSession"  # Optional
+prowler alibabacloud
+```
+
+#### Option 4: RAM Role Assumption (CLI + Environment Variables)
+
+```bash
+# Set credentials via environment variables
+export ALIBABA_CLOUD_ACCESS_KEY_ID="your-access-key-id"
+export ALIBABA_CLOUD_ACCESS_KEY_SECRET="your-access-key-secret"
+# Specify role via CLI argument
+prowler alibabacloud --role-arn acs:ram::123456789012:role/ProwlerAuditRole --role-session-name ProwlerAssessmentSession
+```
+
+#### Option 5: ECS Instance Metadata (ECS RAM Role)
+
+```bash
+# When running on an ECS instance with an attached RAM role
+prowler alibabacloud --ecs-ram-role RoleName
+
+# Or using environment variable
+export ALIBABA_CLOUD_ECS_METADATA="RoleName"
+prowler alibabacloud
+```
+
+#### Option 6: OIDC Role Authentication (for ACK/Kubernetes)
+
+```bash
+# For applications running in ACK (Alibaba Container Service for Kubernetes) with RRSA enabled
+export ALIBABA_CLOUD_ROLE_ARN="acs:ram::123456789012:role/YourRole"
+export ALIBABA_CLOUD_OIDC_PROVIDER_ARN="acs:ram::123456789012:oidc-provider/ack-rrsa-provider"
+export ALIBABA_CLOUD_OIDC_TOKEN_FILE="/var/run/secrets/tokens/oidc-token"
+export ALIBABA_CLOUD_ROLE_SESSION_NAME="ProwlerOIDCSession"  # Optional
+prowler alibabacloud
+
+# Or using CLI argument
+prowler alibabacloud --oidc-role-arn acs:ram::123456789012:role/YourRole
+```
+
+#### Option 7: Credentials URI (External Credential Service)
+
+```bash
+# Retrieve credentials from an external URI endpoint
+export ALIBABA_CLOUD_CREDENTIALS_URI="http://localhost:8080/credentials"
+prowler alibabacloud
+
+# Or using CLI argument
+prowler alibabacloud --credentials-uri http://localhost:8080/credentials
+```
+
+#### Option 8: Default Credential Chain
+
+The SDK automatically checks credentials in the following order:
+1. Environment variables (`ALIBABA_CLOUD_*` or `ALIYUN_*`)
+2. OIDC authentication (if OIDC environment variables are set)
+3. Configuration file (`~/.aliyun/config.json`)
+4. ECS instance metadata (if running on ECS)
+5. Credentials URI (if `ALIBABA_CLOUD_CREDENTIALS_URI` is set)
+
+```bash
+prowler alibabacloud
+```
+
+### Specify Regions
+
+To run checks only in specific regions:
+
+```bash
+prowler alibabacloud --regions cn-hangzhou cn-shanghai
+```
+
+### Run Specific Checks
+
+To run specific checks:
+
+```bash
+prowler alibabacloud --checks ram_no_root_access_key ram_user_mfa_enabled_console_access
+```
+
+### Run Compliance Framework
+
+To run a specific compliance framework:
+
+```bash
+prowler alibabacloud --compliance cis_2.0_alibabacloud
+```

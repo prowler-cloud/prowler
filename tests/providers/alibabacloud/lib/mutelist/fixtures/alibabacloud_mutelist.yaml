@@ -1,0 +1,11 @@
+Mutelist:
+  Accounts:
+    "*":
+      Checks:
+        test_check:
+          Regions:
+            - "*"
+          Resources:
+            - "test_resource"
+          Tags:
+            - "Environment=Prod"

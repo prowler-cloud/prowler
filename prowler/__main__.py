@@ -56,6 +56,7 @@ from prowler.lib.outputs.compliance.c5.c5_gcp import GCPC5
 from prowler.lib.outputs.compliance.ccc.ccc_aws import CCC_AWS
 from prowler.lib.outputs.compliance.ccc.ccc_azure import CCC_Azure
 from prowler.lib.outputs.compliance.ccc.ccc_gcp import CCC_GCP
+from prowler.lib.outputs.compliance.cis.cis_alibabacloud import AlibabaCloudCIS
 from prowler.lib.outputs.compliance.cis.cis_aws import AWSCIS
 from prowler.lib.outputs.compliance.cis.cis_azure import AzureCIS
 from prowler.lib.outputs.compliance.cis.cis_gcp import GCPCIS
@@ -104,6 +105,7 @@ from prowler.lib.outputs.ocsf.ocsf import OCSF
 from prowler.lib.outputs.outputs import extract_findings_statistics, report
 from prowler.lib.outputs.slack.slack import Slack
 from prowler.lib.outputs.summary_table import display_summary_table
+from prowler.providers.alibabacloud.models import AlibabaCloudOutputOptions
 from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from prowler.providers.aws.models import AWSOutputOptions
@@ -345,6 +347,10 @@ def prowler():
         output_options = LLMOutputOptions(args, bulk_checks_metadata)
     elif provider == "oraclecloud":
         output_options = OCIOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "alibabacloud":
+        output_options = AlibabaCloudOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
 
@@ -999,6 +1005,34 @@ def prowler():
                     f"{output_options.output_filename}_{compliance_name}.csv"
                 )
                 cis = OracleCloudCIS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(cis)
+                cis.batch_write_data_to_file()
+            else:
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                generic_compliance = GenericCompliance(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(generic_compliance)
+                generic_compliance.batch_write_data_to_file()
+
+    elif provider == "alibabacloud":
+        for compliance_name in input_compliance_frameworks:
+            if compliance_name.startswith("cis_"):
+                # Generate CIS Finding Object
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                cis = AlibabaCloudCIS(
                     findings=finding_outputs,
                     compliance=bulk_compliance_frameworks[compliance_name],
                     file_path=filename,
