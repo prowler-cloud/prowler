@@ -571,8 +571,9 @@ export class ProvidersPage extends BasePage {
       await buttonByText.click();
 
       // Wait for either success (redirect to scans) or error message to appear
-      // The error container has multiple p.text-danger elements, we want the first one with the technical error
-      const errorMessage = this.page.locator("p.text-danger").first();
+      const errorMessage = this.page
+        .locator('div.border-border-error, div.bg-red-100, p.text-text-error-primary, p.text-danger')
+        .first();
 
       try {
         // Wait up to 15 seconds for either the error message or redirect
@@ -1143,12 +1144,13 @@ export class ProvidersPage extends BasePage {
     await providersPage.fillAWSProviderDetails(awsProviderData);
     await providersPage.clickNext();
 
+    // Verify credentials page is loaded
+    await providersPage.verifyCredentialsPageLoaded();
+
     // Select static credentials type
     await providersPage.selectCredentialsType(
       AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS,
     );
-    await providersPage.verifyCredentialsPageLoaded();
-
     // Fill static credentials
     await providersPage.fillStaticCredentials(staticCredentials);
     await providersPage.clickNext();

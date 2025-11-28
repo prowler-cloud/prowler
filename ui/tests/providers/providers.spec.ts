@@ -102,11 +102,12 @@ test.describe("Add Provider", () => {
         await providersPage.fillAWSProviderDetails(awsProviderData);
         await providersPage.clickNext();
 
+        await providersPage.verifyCredentialsPageLoaded();
+
         // Select static credentials type
         await providersPage.selectCredentialsType(
           AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS,
         );
-        await providersPage.verifyCredentialsPageLoaded();
 
         // Fill static credentials
         await providersPage.fillStaticCredentials(staticCredentials);
@@ -174,11 +175,12 @@ test.describe("Add Provider", () => {
         await providersPage.fillAWSProviderDetails(awsProviderData);
         await providersPage.clickNext();
 
+        await providersPage.verifyCredentialsPageLoaded();
+
         // Select role credentials type
         await providersPage.selectCredentialsType(
           AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN,
         );
-        await providersPage.verifyCredentialsPageLoaded();
 
         // Fill role credentials
         await providersPage.fillRoleCredentials(roleCredentials);
