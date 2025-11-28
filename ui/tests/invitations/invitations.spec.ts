@@ -44,7 +44,7 @@ test.describe("New user invitation", () => {
       await invitationsPage.verifyPageLoaded();
 
       // Press the invite button
-      await invitationsPage.clickSendInviteButton();
+      await invitationsPage.clickInviteButton();
       await invitationsPage.verifyInvitePageLoaded();
 
       // Fill the email

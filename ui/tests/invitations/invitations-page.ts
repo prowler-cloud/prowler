@@ -10,11 +10,12 @@ export class InvitationsPage extends BasePage {
 
   // UI elements
   readonly sendInviteButton: Locator;
+  readonly inviteButton: Locator;
   readonly emailInput: Locator;
   readonly roleSelect: Locator;
 
   // Invitation details
-  readonly invitationDetails: Locator;
+  readonly reviewInvitationDetailsButton: Locator;
   readonly shareUrl: Locator;
 
 
@@ -26,6 +27,7 @@ export class InvitationsPage extends BasePage {
     this.pageHeadingSendInvitation = page.getByRole("heading", { name: "Send Invitation" });
 
     // Button to invite a new user
+    this.inviteButton = page.getByRole("link", { name: "Send Invitation", exact: true });
     this.sendInviteButton = page.getByRole("button", { name: "Send Invitation", exact: true });
 
     // Form inputs
@@ -35,7 +37,7 @@ export class InvitationsPage extends BasePage {
     this.roleSelect = page.getByRole("button", { name: /Role|Select a role/i });
 
     // Form details
-    this.invitationDetails = page.getByRole('heading', { name: 'Invitation details' });
+    this.reviewInvitationDetailsButton = page.getByRole('button', { name: /Review Invitation Details/i });
 
     // Multiple strategies to find the share URL
     this.shareUrl = page.locator('a[href*="/sign-up?invitation_token="], [data-testid="share-url"], .share-url, code, pre').first();
@@ -51,14 +53,18 @@ export class InvitationsPage extends BasePage {
     // Click the send invitation button
 
     await this.sendInviteButton.click();
-    await this.waitForPageLoad();
+  }
+
+  async clickInviteButton(): Promise<void> {
+    // Click the invitation button
+
+    await this.inviteButton.click();
   }
 
   async verifyPageLoaded(): Promise<void> {
     // Verify the invitations page is loaded
 
     await expect(this.pageHeadingInvitations).toBeVisible();
-    await this.waitForPageLoad();
   }
 
   async verifyInvitePageLoaded(): Promise<void> {
@@ -66,7 +72,6 @@ export class InvitationsPage extends BasePage {
 
     await expect(this.emailInput).toBeVisible();
     await expect(this.sendInviteButton).toBeVisible();
-    await this.waitForPageLoad();
   }
 
   async fillEmail(email: string): Promise<void> {
@@ -95,8 +100,7 @@ export class InvitationsPage extends BasePage {
   async verifyInviteDataPageLoaded(): Promise<void> {
     // Verify the invite data page is loaded
 
-    await expect(this.invitationDetails).toBeVisible();
-    await this.waitForPageLoad();
+    await expect(this.reviewInvitationDetailsButton).toBeVisible();
   }
 
   async getShareUrl(): Promise<string> {
