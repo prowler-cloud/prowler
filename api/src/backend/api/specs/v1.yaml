@@ -12558,26 +12558,46 @@ components:
                     pattern: ^sk-[\w-]+$
                 required:
                 - api_key
-              - type: object
-                title: AWS Bedrock Credentials
-                properties:
-                  access_key_id:
-                    type: string
-                    description: AWS access key ID.
-                    pattern: ^AKIA[0-9A-Z]{16}$
-                  secret_access_key:
-                    type: string
-                    description: AWS secret access key.
-                    pattern: ^[A-Za-z0-9/+=]{40}$
-                  region:
-                    type: string
-                    description: 'AWS region identifier where Bedrock is available.
-                      Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
-                    pattern: ^[a-z]{2}-[a-z]+-\d+$
-                required:
-                - access_key_id
-                - secret_access_key
-                - region
+              - title: AWS Bedrock Credentials
+                oneOf:
+                - title: IAM Access Key Pair
+                  type: object
+                  description: Authenticate with AWS access key and secret key. Recommended
+                    when you manage IAM users or roles.
+                  properties:
+                    access_key_id:
+                      type: string
+                      description: AWS access key ID.
+                      pattern: ^AKIA[0-9A-Z]{16}$
+                    secret_access_key:
+                      type: string
+                      description: AWS secret access key.
+                      pattern: ^[A-Za-z0-9/+=]{40}$
+                    region:
+                      type: string
+                      description: 'AWS region identifier where Bedrock is available.
+                        Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                      pattern: ^[a-z]{2}-[a-z]+-\d+$
+                  required:
+                  - access_key_id
+                  - secret_access_key
+                  - region
+                - title: Amazon Bedrock API Key
+                  type: object
+                  description: Authenticate with an Amazon Bedrock API key (bearer
+                    token). Region is still required.
+                  properties:
+                    api_key:
+                      type: string
+                      description: Amazon Bedrock API key (bearer token).
+                    region:
+                      type: string
+                      description: 'AWS region identifier where Bedrock is available.
+                        Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                      pattern: ^[a-z]{2}-[a-z]+-\d+$
+                  required:
+                  - api_key
+                  - region
               - type: object
                 title: OpenAI Compatible Credentials
                 properties:
@@ -12645,26 +12665,46 @@ components:
                         pattern: ^sk-[\w-]+$
                     required:
                     - api_key
-                  - type: object
-                    title: AWS Bedrock Credentials
-                    properties:
-                      access_key_id:
-                        type: string
-                        description: AWS access key ID.
-                        pattern: ^AKIA[0-9A-Z]{16}$
-                      secret_access_key:
-                        type: string
-                        description: AWS secret access key.
-                        pattern: ^[A-Za-z0-9/+=]{40}$
-                      region:
-                        type: string
-                        description: 'AWS region identifier where Bedrock is available.
-                          Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
-                        pattern: ^[a-z]{2}-[a-z]+-\d+$
-                    required:
-                    - access_key_id
-                    - secret_access_key
-                    - region
+                  - title: AWS Bedrock Credentials
+                    oneOf:
+                    - title: IAM Access Key Pair
+                      type: object
+                      description: Authenticate with AWS access key and secret key.
+                        Recommended when you manage IAM users or roles.
+                      properties:
+                        access_key_id:
+                          type: string
+                          description: AWS access key ID.
+                          pattern: ^AKIA[0-9A-Z]{16}$
+                        secret_access_key:
+                          type: string
+                          description: AWS secret access key.
+                          pattern: ^[A-Za-z0-9/+=]{40}$
+                        region:
+                          type: string
+                          description: 'AWS region identifier where Bedrock is available.
+                            Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                          pattern: ^[a-z]{2}-[a-z]+-\d+$
+                      required:
+                      - access_key_id
+                      - secret_access_key
+                      - region
+                    - title: Amazon Bedrock API Key
+                      type: object
+                      description: Authenticate with an Amazon Bedrock API key (bearer
+                        token). Region is still required.
+                      properties:
+                        api_key:
+                          type: string
+                          description: Amazon Bedrock API key (bearer token).
+                        region:
+                          type: string
+                          description: 'AWS region identifier where Bedrock is available.
+                            Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                          pattern: ^[a-z]{2}-[a-z]+-\d+$
+                      required:
+                      - api_key
+                      - region
                   - type: object
                     title: OpenAI Compatible Credentials
                     properties:
@@ -12750,26 +12790,46 @@ components:
                     pattern: ^sk-[\w-]+$
                 required:
                 - api_key
-              - type: object
-                title: AWS Bedrock Credentials
-                properties:
-                  access_key_id:
-                    type: string
-                    description: AWS access key ID.
-                    pattern: ^AKIA[0-9A-Z]{16}$
-                  secret_access_key:
-                    type: string
-                    description: AWS secret access key.
-                    pattern: ^[A-Za-z0-9/+=]{40}$
-                  region:
-                    type: string
-                    description: 'AWS region identifier where Bedrock is available.
-                      Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
-                    pattern: ^[a-z]{2}-[a-z]+-\d+$
-                required:
-                - access_key_id
-                - secret_access_key
-                - region
+              - title: AWS Bedrock Credentials
+                oneOf:
+                - title: IAM Access Key Pair
+                  type: object
+                  description: Authenticate with AWS access key and secret key. Recommended
+                    when you manage IAM users or roles.
+                  properties:
+                    access_key_id:
+                      type: string
+                      description: AWS access key ID.
+                      pattern: ^AKIA[0-9A-Z]{16}$
+                    secret_access_key:
+                      type: string
+                      description: AWS secret access key.
+                      pattern: ^[A-Za-z0-9/+=]{40}$
+                    region:
+                      type: string
+                      description: 'AWS region identifier where Bedrock is available.
+                        Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                      pattern: ^[a-z]{2}-[a-z]+-\d+$
+                  required:
+                  - access_key_id
+                  - secret_access_key
+                  - region
+                - title: Amazon Bedrock API Key
+                  type: object
+                  description: Authenticate with an Amazon Bedrock API key (bearer
+                    token). Region is still required.
+                  properties:
+                    api_key:
+                      type: string
+                      description: Amazon Bedrock API key (bearer token).
+                    region:
+                      type: string
+                      description: 'AWS region identifier where Bedrock is available.
+                        Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                      pattern: ^[a-z]{2}-[a-z]+-\d+$
+                  required:
+                  - api_key
+                  - region
               - type: object
                 title: OpenAI Compatible Credentials
                 properties:
@@ -14192,26 +14252,46 @@ components:
                         pattern: ^sk-[\w-]+$
                     required:
                     - api_key
-                  - type: object
-                    title: AWS Bedrock Credentials
-                    properties:
-                      access_key_id:
-                        type: string
-                        description: AWS access key ID.
-                        pattern: ^AKIA[0-9A-Z]{16}$
-                      secret_access_key:
-                        type: string
-                        description: AWS secret access key.
-                        pattern: ^[A-Za-z0-9/+=]{40}$
-                      region:
-                        type: string
-                        description: 'AWS region identifier where Bedrock is available.
-                          Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
-                        pattern: ^[a-z]{2}-[a-z]+-\d+$
-                    required:
-                    - access_key_id
-                    - secret_access_key
-                    - region
+                  - title: AWS Bedrock Credentials
+                    oneOf:
+                    - title: IAM Access Key Pair
+                      type: object
+                      description: Authenticate with AWS access key and secret key.
+                        Recommended when you manage IAM users or roles.
+                      properties:
+                        access_key_id:
+                          type: string
+                          description: AWS access key ID.
+                          pattern: ^AKIA[0-9A-Z]{16}$
+                        secret_access_key:
+                          type: string
+                          description: AWS secret access key.
+                          pattern: ^[A-Za-z0-9/+=]{40}$
+                        region:
+                          type: string
+                          description: 'AWS region identifier where Bedrock is available.
+                            Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                          pattern: ^[a-z]{2}-[a-z]+-\d+$
+                      required:
+                      - access_key_id
+                      - secret_access_key
+                      - region
+                    - title: Amazon Bedrock API Key
+                      type: object
+                      description: Authenticate with an Amazon Bedrock API key (bearer
+                        token). Region is still required.
+                      properties:
+                        api_key:
+                          type: string
+                          description: Amazon Bedrock API key (bearer token).
+                        region:
+                          type: string
+                          description: 'AWS region identifier where Bedrock is available.
+                            Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                          pattern: ^[a-z]{2}-[a-z]+-\d+$
+                      required:
+                      - api_key
+                      - region
                   - type: object
                     title: OpenAI Compatible Credentials
                     properties:
