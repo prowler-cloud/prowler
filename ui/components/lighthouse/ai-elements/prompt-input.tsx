@@ -28,6 +28,7 @@ import {
   type PropsWithChildren,
   type ReactNode,
   type RefObject,
+  useCallback,
   useContext,
   useEffect,
   useLayoutEffect,
@@ -467,68 +468,82 @@ export const PromptInput = ({
     inputRef.current?.click();
   };
 
-  const matchesAccept = (f: File) => {
-    if (!accept || accept.trim() === "") {
+  const matchesAccept = useCallback(
+    (f: File) => {
+      if (!accept || accept.trim() === "") {
+        return true;
+      }
+      if (accept.includes("image/*")) {
+        return f.type.startsWith("image/");
+      }
+      // NOTE: keep simple; expand as needed
       return true;
-    }
-    if (accept.includes("image/*")) {
-      return f.type.startsWith("image/");
-    }
-    // NOTE: keep simple; expand as needed
-    return true;
-  };
+    },
+    [accept],
+  );
 
-  const addLocal = (fileList: File[] | FileList) => {
-    const incoming = Array.from(fileList);
-    const accepted = incoming.filter((f) => matchesAccept(f));
-    if (incoming.length && accepted.length === 0) {
-      onError?.({
-        code: "accept",
-        message: "No files match the accepted types.",
-      });
-      return;
-    }
-    const withinSize = (f: File) =>
-      maxFileSize ? f.size <= maxFileSize : true;
-    const sized = accepted.filter(withinSize);
-    if (accepted.length > 0 && sized.length === 0) {
-      onError?.({
-        code: "max_file_size",
-        message: "All files exceed the maximum size.",
-      });
-      return;
-    }
-
-    setItems((prev) => {
-      const capacity =
-        typeof maxFiles === "number"
-          ? Math.max(0, maxFiles - prev.length)
-          : undefined;
-      const capped =
-        typeof capacity === "number" ? sized.slice(0, capacity) : sized;
-      if (typeof capacity === "number" && sized.length > capacity) {
+  const addLocal = useCallback(
+    (fileList: File[] | FileList) => {
+      const incoming = Array.from(fileList);
+      const accepted = incoming.filter((f) => matchesAccept(f));
+      if (incoming.length && accepted.length === 0) {
         onError?.({
-          code: "max_files",
-          message: "Too many files. Some were not added.",
+          code: "accept",
+          message: "No files match the accepted types.",
         });
+        return;
       }
-      const next: (FileUIPart & { id: string })[] = [];
-      for (const file of capped) {
-        next.push({
-          id: nanoid(),
-          type: "file",
-          url: URL.createObjectURL(file),
-          mediaType: file.type,
-          filename: file.name,
+      const withinSize = (f: File) =>
+        maxFileSize ? f.size <= maxFileSize : true;
+      const sized = accepted.filter(withinSize);
+      if (accepted.length > 0 && sized.length === 0) {
+        onError?.({
+          code: "max_file_size",
+          message: "All files exceed the maximum size.",
         });
+        return;
       }
-      return prev.concat(next);
-    });
-  };
 
-  const add = usingProvider
-    ? (files: File[] | FileList) => controller.attachments.add(files)
-    : addLocal;
+      setItems((prev) => {
+        const capacity =
+          typeof maxFiles === "number"
+            ? Math.max(0, maxFiles - prev.length)
+            : undefined;
+        const capped =
+          typeof capacity === "number" ? sized.slice(0, capacity) : sized;
+        if (typeof capacity === "number" && sized.length > capacity) {
+          onError?.({
+            code: "max_files",
+            message: "Too many files. Some were not added.",
+          });
+        }
+        const next: (FileUIPart & { id: string })[] = [];
+        for (const file of capped) {
+          next.push({
+            id: nanoid(),
+            type: "file",
+            url: URL.createObjectURL(file),
+            mediaType: file.type,
+            filename: file.name,
+          });
+        }
+        return prev.concat(next);
+      });
+    },
+    [matchesAccept, maxFileSize, maxFiles, onError],
+  );
+
+  // useCallback required: used as useEffect dependency for drag-drop handlers
+  const add = useCallback(
+    (files: File[] | FileList) => {
+      if (usingProvider) {
+        controller.attachments.add(files);
+      } else {
+        addLocal(files);
+      }
+    },
+    [usingProvider, controller, addLocal],
+  );
 
   const remove = usingProvider
     ? (id: string) => controller.attachments.remove(id)
@@ -676,8 +691,7 @@ export const PromptInput = ({
 
     // Convert blob URLs to data URLs asynchronously
     Promise.all(
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      files.map(async ({ id, ...item }) => {
+      files.map(async ({ id: _id, ...item }) => {
         if (item.url && item.url.startsWith("blob:")) {
           return {
             ...item,
@@ -788,8 +802,7 @@ export const PromptInputTextarea = ({
 
     const files: File[] = [];
 
-    // @ts-expect-error - Code from AI Elements library
-    for (const item of items) {
+    for (const item of Array.from(items)) {
       if (item.kind === "file") {
         const file = item.getAsFile();
         if (file) {
@@ -960,13 +973,13 @@ interface SpeechRecognition extends EventTarget {
   lang: string;
   start(): void;
   stop(): void;
-  onstart: ((this: SpeechRecognition, ev: Event) => any) | null;
-  onend: ((this: SpeechRecognition, ev: Event) => any) | null;
+  onstart: ((this: SpeechRecognition, ev: Event) => void) | null;
+  onend: ((this: SpeechRecognition, ev: Event) => void) | null;
   onresult:
-    | ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any)
+    | ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => void)
     | null;
   onerror:
-    | ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => any)
+    | ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => void)
     | null;
 }
 
