@@ -65,6 +65,9 @@ def close_driver() -> None:  # TODO: Use it
 
 @contextmanager
 def get_session(database: str | None = None) -> Iterator[neo4j.Session]:
+    # Let's close the driver on this thread/process, any new session will re-open it, just in case it's closed from the database
+    close_driver()
+
     try:
         with get_driver().session(database=database) as session:
             yield session
