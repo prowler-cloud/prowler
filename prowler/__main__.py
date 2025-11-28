@@ -112,6 +112,7 @@ from prowler.providers.common.provider import Provider
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
 from prowler.providers.gcp.models import GCPOutputOptions
 from prowler.providers.github.models import GithubOutputOptions
+from prowler.providers.github_actions.models import GithubActionsOutputOptions
 from prowler.providers.iac.models import IACOutputOptions
 from prowler.providers.kubernetes.models import KubernetesOutputOptions
 from prowler.providers.llm.models import LLMOutputOptions
@@ -168,7 +169,8 @@ def prowler():
     if compliance_framework:
         args.output_formats.extend(compliance_framework)
     # If no input compliance framework, set all, unless a specific service or check is input
-    elif default_execution:
+    # Skip for IAC, GitHub Actions, and LLM providers that don't use compliance frameworks
+    elif default_execution and provider not in ["iac", "github_actions", "llm"]:
         args.output_formats.extend(get_available_compliance_frameworks(provider))
 
     # Set Logger configuration
@@ -199,8 +201,8 @@ def prowler():
     # Load compliance frameworks
     logger.debug("Loading compliance frameworks from .json files")
 
-    # Skip compliance frameworks for IAC and LLM providers
-    if provider != "iac" and provider != "llm":
+    # Skip compliance frameworks for IAC, GitHub Actions, and LLM providers
+    if provider not in ["iac", "github_actions", "llm"]:
         bulk_compliance_frameworks = Compliance.get_bulk(provider)
         # Complete checks metadata with the compliance framework specification
         bulk_checks_metadata = update_checks_metadata_with_compliance(
@@ -341,6 +343,8 @@ def prowler():
         )
     elif provider == "iac":
         output_options = IACOutputOptions(args, bulk_checks_metadata)
+    elif provider == "github_actions":
+        output_options = GithubActionsOutputOptions(args, bulk_checks_metadata)
     elif provider == "llm":
         output_options = LLMOutputOptions(args, bulk_checks_metadata)
     elif provider == "oraclecloud":
@@ -356,8 +360,8 @@ def prowler():
     # Execute checks
     findings = []
 
-    if provider == "iac" or provider == "llm":
-        # For IAC and LLM providers, run the scan directly
+    if provider in ["iac", "github_actions", "llm"]:
+        # For IAC, GitHub Actions, and LLM providers, run the scan directly
         if provider == "llm":
 
             def streaming_callback(findings_batch):
@@ -366,10 +370,11 @@ def prowler():
 
             findings = global_provider.run_scan(streaming_callback=streaming_callback)
         else:
-            # Original behavior for IAC or non-verbose LLM
+            # Original behavior for IAC and GitHub Actions
             findings = global_provider.run()
-            # Note: IaC doesn't support granular progress tracking since Trivy runs as a black box
-            # and returns all findings at once. Progress tracking would just be 0% → 100%.
+            # Note: IaC and GitHub Actions don't support granular progress tracking since
+            # they run external tools as a black box and return all findings at once.
+            # Progress tracking would just be 0% → 100%.
 
             # Filter findings by status if specified
             if hasattr(args, "status") and args.status:
