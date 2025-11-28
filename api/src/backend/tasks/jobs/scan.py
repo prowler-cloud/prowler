@@ -1019,6 +1019,10 @@ def _aggregate_findings_by_region(
                     for requirement_id in finding.compliance[
                         modeled_threatscore_compliance_id
                     ]:
+                        # Only count PASS and FAIL findings for ThreatScore calculation
+                        # (consistent with PDF report generation)
+                        if finding.status not in ("PASS", "FAIL"):
+                            continue
                         requirement_stats = compliance_key.setdefault(
                             requirement_id, {"total": 0, "pass": 0}
                         )
