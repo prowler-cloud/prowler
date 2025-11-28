@@ -298,7 +298,7 @@ def perform_attack_paths_scan_task(self, tenant_id: str, scan_id: str):
         scan_id (str): The Prowler scan identifier for obtaining the tenant and provider context.
 
     Returns:
-        Any: The result from `attack_paths_scan.run`, including any per-scan failure details.
+        Any: The result from `attack_paths_scan`, including any per-scan failure details.
     """
     return attack_paths_scan(
         tenant_id=tenant_id, scan_id=scan_id, task_id=self.request.id

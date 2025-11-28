@@ -2290,7 +2290,6 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
     queryset = AttackPathsScan.objects.all()
     serializer_class = AttackPathsScanSerializer
     http_method_names = ["get", "post"]
-    required_permissions = [Permissions.MANAGE_SCANS]
     filterset_class = AttackPathsScanFilter
     ordering = ["-inserted_at"]
     ordering_fields = [

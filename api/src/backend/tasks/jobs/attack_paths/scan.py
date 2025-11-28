@@ -8,7 +8,6 @@ from cartography.config import Config as CartographyConfig
 from cartography.intel import analysis as cartography_analysis
 from cartography.intel import create_indexes as cartography_create_indexes
 from celery.utils.log import get_task_logger
-from django import db
 
 from api.attack_paths import database as graph_database
 from api.db_utils import rls_transaction
