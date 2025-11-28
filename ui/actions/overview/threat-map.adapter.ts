@@ -147,6 +147,8 @@ const GCP_REGION_COORDINATES: Record<string, { lat: number; lng: number }> = {
   "me-central2": { lat: 24.5, lng: 54.4 }, // Dammam
   "me-west1": { lat: 32.1, lng: 34.8 }, // Tel Aviv
   "africa-south1": { lat: -26.2, lng: 28.0 }, // Johannesburg
+  // Add global as default fallback for any unrecognized GCP region
+  global: { lat: 37.4, lng: -122.1 }, // Mountain View, CA (Google HQ)
 };
 
 // Kubernetes can run anywhere, using global fallback for any region
@@ -219,6 +221,8 @@ const PROVIDER_COORDINATES: Record<
   aws: AWS_REGION_COORDINATES,
   azure: AZURE_REGION_COORDINATES,
   gcp: GCP_REGION_COORDINATES,
+  google: GCP_REGION_COORDINATES, // Alias for gcp
+  "google-cloud": GCP_REGION_COORDINATES, // Alternative naming
   kubernetes: KUBERNETES_COORDINATES,
   m365: M365_COORDINATES,
   github: GITHUB_COORDINATES,
