@@ -3658,6 +3658,27 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+    def _list_with_region_filter(self, scan_id, region_filter):
+        """
+        Fall back to detailed ComplianceRequirementOverview query when region filter is applied.
+        This uses the original aggregation logic across filtered regions.
+        """
+        regions = region_filter.split(",") if "," in region_filter else [region_filter]
+        queryset = self.filter_queryset(self.get_queryset()).filter(
+            scan_id=scan_id,
+            region__in=regions,
+        )
+
+        data = self._aggregate_compliance_overview(queryset)
+        if data:
+            return Response(data)
+
+        task_response = self._task_response_if_running(scan_id)
+        if task_response:
+            return task_response
+
+        return Response(data)
+
     def _list_without_region_aggregation(self, scan_id):
         """
         Fall back aggregation when compliance summaries don't exist yet.
