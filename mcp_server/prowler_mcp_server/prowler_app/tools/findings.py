@@ -36,21 +36,9 @@ class FindingsTools(BaseTool):
             default=["FAIL"],
             description="Filter by finding status. Multiple values allowed: FAIL (security issue found), PASS (no issue found), MANUAL (requires manual verification). Default: ['FAIL'] - only returns findings with security issues. To get all findings, pass an empty list [].",
         ),
-        provider_type: list[
-            Literal[
-                "aws",
-                "azure",
-                "gcp",
-                "kubernetes",
-                "m365",
-                "github",
-                "mongodbatlas",
-                "iac",
-                "oraclecloud",
-            ]
-        ] = Field(
+        provider_type: list[str] = Field(
             default=[],
-            description="Filter by cloud provider type. Valid values: 'aws', 'azure', 'gcp', 'kubernetes', 'm365', 'github', 'mongodbatlas', 'iac', 'oraclecloud'. Multiple values allowed. If the parameter is not provided, all providers are returned.",
+            description="Filter by cloud provider type. Multiple values allowed. If the parameter is not provided, all providers are returned. For valid values, please refer to Prowler Hub/Prowler Documentation that you can also find in form of tools in this MCP Server.",
         ),
         provider_alias: str | None = Field(
             default=None,
@@ -232,21 +220,9 @@ class FindingsTools(BaseTool):
 
     async def get_findings_overview(
         self,
-        provider_type: list[
-            Literal[
-                "aws",
-                "azure",
-                "gcp",
-                "kubernetes",
-                "m365",
-                "github",
-                "mongodbatlas",
-                "iac",
-                "oraclecloud",
-            ]
-        ] = Field(
+        provider_type: list[str] = Field(
             default=[],
-            description="Filter statistics by cloud provider. Valid values: 'aws', 'azure', 'gcp', 'kubernetes', 'm365', 'github', 'mongodbatlas', 'iac', 'oraclecloud'. Multiple values allowed. If empty, all providers are returned.",
+            description="Filter statistics by cloud provider. Multiple values allowed. If empty, all providers are returned. For valid values, please refer to Prowler Hub/Prowler Documentation that you can also find in form of tools in this MCP Server.",
         ),
     ) -> dict[str, Any]:
         """Get high-level statistics about security findings formatted as a human-readable markdown report.
