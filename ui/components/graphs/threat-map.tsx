@@ -265,10 +265,17 @@ export function ThreatMap({
   const [mapColors, setMapColors] =
     useState<MapColorsConfig>(DEFAULT_MAP_COLORS);
 
+  // Filter out global regions from map display (they don't have clear positions)
+  const locationsForMap = data.locations.filter(
+    (loc) => loc.region.toLowerCase() !== "global",
+  );
+
   const filteredLocations =
     selectedRegion === "All Regions"
-      ? data.locations
-      : data.locations.filter((loc) => loc.region === selectedRegion);
+      ? locationsForMap
+      : selectedRegion.toLowerCase() === "global"
+        ? [] // Don't show dots when global is selected
+        : locationsForMap.filter((loc) => loc.region === selectedRegion);
 
   // Monitor theme changes and update colors
   useEffect(() => {
@@ -336,13 +343,20 @@ export function ThreatMap({
     const mapGroup = createSVGElement<SVGGElement>("g", {
       class: "map-countries",
     });
+
+    // When "global" region is selected, paint the whole map red
+    const isGlobalSelected = selectedRegion.toLowerCase() === "global";
+    const mapFillColor = isGlobalSelected
+      ? colors.pointDefault
+      : colors.landFill;
+
     worldData.features?.forEach(
       (feature: Feature<Geometry, GeoJsonProperties>) => {
         const pathData = path(feature);
         if (pathData) {
           const pathElement = createSVGElement<SVGPathElement>("path", {
             d: pathData,
-            fill: colors.landFill,
+            fill: mapFillColor,
             stroke: colors.landStroke,
             "stroke-width": "0.5",
           });
@@ -466,6 +480,7 @@ export function ThreatMap({
     worldData,
     isLoadingMap,
     mapColors,
+    selectedRegion,
   ]);
 
   return (
@@ -490,11 +505,18 @@ export function ThreatMap({
                   className="border-border-neutral-primary bg-bg-neutral-secondary text-text-neutral-primary appearance-none rounded-lg border px-4 py-2 pr-10 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                 >
                   <option value="All Regions">All Regions</option>
-                  {data.regions.map((region) => (
-                    <option key={region} value={region}>
-                      {region}
-                    </option>
-                  ))}
+                  {data.regions
+                    .sort((a, b) => {
+                      // Put "global" first, then sort alphabetically
+                      if (a.toLowerCase() === "global") return -1;
+                      if (b.toLowerCase() === "global") return 1;
+                      return a.localeCompare(b);
+                    })
+                    .map((region) => (
+                      <option key={region} value={region}>
+                        {region}
+                      </option>
+                    ))}
                 </select>
                 <ChevronDown
                   size={16}

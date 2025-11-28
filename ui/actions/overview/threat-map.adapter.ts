@@ -324,8 +324,8 @@ export function adaptRegionsOverviewToThreatMap(
 
     if (!coordinates) continue;
 
-    const providerRegion = getProviderDisplayName(attributes.provider_type);
-    regionSet.add(providerRegion);
+    // Add the actual region code to the set
+    regionSet.add(attributes.region);
 
     const failRate =
       attributes.total > 0 ? attributes.fail / attributes.total : 0;
@@ -333,7 +333,7 @@ export function adaptRegionsOverviewToThreatMap(
     locations.push({
       id,
       name: formatRegionName(attributes.provider_type, attributes.region),
-      region: providerRegion,
+      region: attributes.region, // Use actual region code for filtering
       regionCode: attributes.region,
       providerType: attributes.provider_type,
       coordinates,
