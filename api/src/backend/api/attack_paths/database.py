@@ -42,6 +42,7 @@ def init_driver() -> neo4j.Driver:
                 uri,
                 auth=(config["USER"], config["PASSWORD"]),
                 max_connection_lifetime=604800,  # 7 days
+                keep_alive=True,
             )
             _driver.verify_connectivity()
 
