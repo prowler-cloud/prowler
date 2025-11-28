@@ -1,7 +1,5 @@
 "use client";
 
-import { Snippet } from "@heroui/snippet";
-import { Tooltip } from "@heroui/tooltip";
 import { ExternalLink, Link } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
@@ -11,6 +9,9 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
 } from "@/components/shadcn";
 import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { CustomLink } from "@/components/ui/custom/custom-link";
@@ -18,6 +19,7 @@ import { EntityInfo, InfoField } from "@/components/ui/entities";
 import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import { SeverityBadge } from "@/components/ui/table/severity-badge";
 import { buildGitFileUrl, extractLineRangeFromUid } from "@/lib/iac-utils";
+import { cn } from "@/lib/utils";
 import { FindingProps, ProviderType } from "@/types";
 
 import { Muted } from "../muted";
@@ -83,14 +85,17 @@ export const FindingDetail = ({
         <div>
           <h2 className="dark:text-prowler-theme-pale/90 line-clamp-2 flex items-center gap-2 text-lg leading-tight font-medium text-gray-800">
             {renderValue(attributes.check_metadata.checktitle)}
-            <Tooltip content="Copy finding link to clipboard" size="sm">
-              <button
-                onClick={() => navigator.clipboard.writeText(url)}
-                className="text-bg-data-info inline-flex cursor-pointer transition-opacity hover:opacity-80"
-                aria-label="Copy finding link to clipboard"
-              >
-                <Link size={16} />
-              </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => navigator.clipboard.writeText(url)}
+                  className="text-text-info inline-flex cursor-pointer transition-opacity hover:opacity-80"
+                  aria-label="Copy finding link to clipboard"
+                >
+                  <Link size={16} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>Copy finding link to clipboard</TooltipContent>
             </Tooltip>
           </h2>
         </div>
@@ -164,16 +169,16 @@ export const FindingDetail = ({
 
           {attributes.status === "FAIL" && (
             <InfoField label="Risk" variant="simple">
-              <Snippet
-                className="max-w-full py-2"
-                color="danger"
-                hideCopyButton
-                hideSymbol
+              <div
+                className={cn(
+                  "max-w-full rounded-md border p-2",
+                  "border-border-error-primary bg-bg-fail-secondary",
+                )}
               >
                 <MarkdownContainer>
                   {attributes.check_metadata.risk}
                 </MarkdownContainer>
-              </Snippet>
+              </div>
             </InfoField>
           )}
 
@@ -223,11 +228,13 @@ export const FindingDetail = ({
               {/* CLI Command section */}
               {attributes.check_metadata.remediation.code.cli && (
                 <InfoField label="CLI Command" variant="simple">
-                  <Snippet>
+                  <div
+                    className={cn("rounded-md p-2", "bg-bg-neutral-tertiary")}
+                  >
                     <span className="text-xs whitespace-pre-line">
                       {attributes.check_metadata.remediation.code.cli}
                     </span>
-                  </Snippet>
+                  </div>
                 </InfoField>
               )}
 
@@ -276,16 +283,21 @@ export const FindingDetail = ({
           <CardTitle>Resource Details</CardTitle>
           {providerDetails.provider === "iac" && gitUrl && (
             <CardAction>
-              <Tooltip content="Go to Resource in the Repository" size="sm">
-                <a
-                  href={gitUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-bg-data-info inline-flex cursor-pointer"
-                  aria-label="Open resource in repository"
-                >
-                  <ExternalLink size={16} className="inline" />
-                </a>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <a
+                    href={gitUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-text-info inline-flex cursor-pointer"
+                    aria-label="Open resource in repository"
+                  >
+                    <ExternalLink size={16} className="inline" />
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent>
+                  Go to Resource in the Repository
+                </TooltipContent>
               </Tooltip>
             </CardAction>
           )}

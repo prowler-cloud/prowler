@@ -54,6 +54,7 @@
   --bg-pass-primary: var(--color-emerald-400);
   --bg-pass-secondary: var(--color-emerald-50);
   --bg-warning-primary: var(--color-orange-500);
+  --bg-warning-secondary: var(--color-orange-50);
   --bg-fail-primary: var(--color-rose-500);
   --bg-fail-secondary: var(--color-rose-50);
 
@@ -123,6 +124,7 @@
   --bg-pass-primary: var(--color-green-400);
   --bg-pass-secondary: var(--color-emerald-900);
   --bg-warning-primary: var(--color-orange-400);
+  --bg-warning-secondary: var(--color-orange-900);
   --bg-fail-primary: var(--color-rose-500);
   --bg-fail-secondary: #432232;
 
@@ -209,6 +211,7 @@
   --color-bg-pass: var(--bg-pass-primary);
   --color-bg-pass-secondary: var(--bg-pass-secondary);
   --color-bg-warning: var(--bg-warning-primary);
+  --color-bg-warning-secondary: var(--bg-warning-secondary);
   --color-bg-fail: var(--bg-fail-primary);
   --color-bg-fail-secondary: var(--bg-fail-secondary);
 }

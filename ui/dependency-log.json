@@ -125,7 +125,7 @@
     "from": "1.1.15",
     "to": "1.1.15",
     "strategy": "installed",
-    "generatedAt": "2025-11-20T08:20:16.313Z"
+    "generatedAt": "2025-11-19T12:28:39.510Z"
   },
   {
     "section": "dependencies",
@@ -209,6 +209,14 @@
   },
   {
     "section": "dependencies",
+    "name": "@types/dagre",
+    "from": "0.7.53",
+    "to": "0.7.53",
+    "strategy": "installed",
+    "generatedAt": "2025-11-27T11:47:22.908Z"
+  },
+  {
+    "section": "dependencies",
     "name": "@types/js-yaml",
     "from": "4.0.9",
     "to": "4.0.9",
@@ -253,7 +261,7 @@
     "from": "1.1.1",
     "to": "1.1.1",
     "strategy": "installed",
-    "generatedAt": "2025-11-20T08:20:16.313Z"
+    "generatedAt": "2025-11-19T12:28:39.510Z"
   },
   {
     "section": "dependencies",
@@ -262,6 +270,14 @@
     "to": "7.9.0",
     "strategy": "installed",
     "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "dagre",
+    "from": "0.8.5",
+    "to": "0.8.5",
+    "strategy": "installed",
+    "generatedAt": "2025-11-27T11:47:22.908Z"
   },
   {
     "section": "dependencies",
