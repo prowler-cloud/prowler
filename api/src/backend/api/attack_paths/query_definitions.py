@@ -65,13 +65,13 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 MATCH path_assume_role = (ec2)-[p:STS_ASSUMEROLE_ALLOW*1..9]-(r:AWSRole)
 
                 CALL apoc.create.vRelationship(internet, 'CAN_ACCESS', {}, ec2)
-                YIELD rel AS is_accessible_from
+                YIELD rel AS can_access
 
                 UNWIND nodes(path_s3) + nodes(path_ec2) + nodes(path_role) + nodes(path_assume_role) as n
                 OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
                 WHERE pf.status = 'FAIL'
 
-                RETURN path_s3, path_ec2, path_role, path_assume_role, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr, internet, is_accessible_from
+                RETURN path_s3, path_ec2, path_role, path_assume_role, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr, internet, can_access
             """,
             parameters=[
                 AttackPathsQueryParameterDefinition(
@@ -205,13 +205,13 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 WHERE ec2.exposed_internet = true
 
                 CALL apoc.create.vRelationship(internet, 'CAN_ACCESS', {}, ec2)
-                YIELD rel AS is_accessible_from
+                YIELD rel AS can_access
 
                 UNWIND nodes(path) as n
                 OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
                 WHERE pf.status = 'FAIL'
 
-                RETURN path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr, internet, is_accessible_from
+                RETURN path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr, internet, can_access
             """,
             parameters=[],
         ),
@@ -233,13 +233,13 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 WHERE open.scheme = 'internet-facing'
 
                 CALL apoc.create.vRelationship(internet, 'CAN_ACCESS', {}, open)
-                YIELD rel AS is_accessible_from
+                YIELD rel AS can_access
 
                 UNWIND nodes(path_open) + nodes(path_sg) + nodes(path_ip) + nodes(path_ipi) + nodes(path_dns) as n
                 OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
                 WHERE pf.status = 'FAIL'
 
-                RETURN path_open, path_sg, path_ip, path_ipi, path_dns, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr, internet, is_accessible_from
+                RETURN path_open, path_sg, path_ip, path_ipi, path_dns, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr, internet, can_access
             """,
             parameters=[],
         ),
@@ -256,13 +256,13 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 WHERE elb.exposed_internet = true
 
                 CALL apoc.create.vRelationship(internet, 'CAN_ACCESS', {}, elb)
-                YIELD rel AS is_accessible_from
+                YIELD rel AS can_access
 
                 UNWIND nodes(path) as n
                 OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
                 WHERE pf.status = 'FAIL'
 
-                RETURN path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr, internet, is_accessible_from
+                RETURN path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr, internet, can_access
             """,
             parameters=[],
         ),
@@ -279,13 +279,13 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
                 WHERE elbv2.exposed_internet = true
 
                 CALL apoc.create.vRelationship(internet, 'CAN_ACCESS', {}, elbv2)
-                YIELD rel AS is_accessible_from
+                YIELD rel AS can_access
 
                 UNWIND nodes(path) as n
                 OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
                 WHERE pf.status = 'FAIL'
 
-                RETURN path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr, internet, is_accessible_from
+                RETURN path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr, internet, can_access
             """,
             parameters=[],
         ),
@@ -295,29 +295,37 @@ _QUERY_DEFINITIONS: dict[str, list[AttackPathsQueryDefinition]] = {
             description="Given a public IP address, find the related AWS resource and its adjacent node within the selected account.",
             provider="aws",
             cypher="""
+                CALL apoc.create.vNode(['Internet'], {id: 'Internet', name: 'Internet'})
+                YIELD node AS internet
+
                 CALL () {
                     MATCH path = (aws:AWSAccount {id: $provider_uid})-[r]-(x:EC2PrivateIp)-[q]-(y)
                     WHERE x.public_ip = $ip
-                    RETURN path
+                    RETURN path, x
 
                     UNION MATCH path = (aws:AWSAccount {id: $provider_uid})-[r]-(x:EC2Instance)-[q]-(y)
                     WHERE x.publicipaddress = $ip
-                    RETURN path
+                    RETURN path, x
 
                     UNION MATCH path = (aws:AWSAccount {id: $provider_uid})-[r]-(x:NetworkInterface)-[q]-(y)
                     WHERE x.public_ip = $ip
-                    RETURN path
+                    RETURN path, x
 
                     UNION MATCH path = (aws:AWSAccount {id: $provider_uid})-[r]-(x:ElasticIPAddress)-[q]-(y)
                     WHERE x.public_ip = $ip
-                    RETURN path
+                    RETURN path, x
                 }
+
+                WITH path, x, internet
+
+                CALL apoc.create.vRelationship(internet, 'CAN_ACCESS', {}, x)
+                YIELD rel AS can_access
 
                 UNWIND nodes(path) as n
                 OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding)
                 WHERE pf.status = 'FAIL'
 
-                RETURN path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+                RETURN path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr, internet, can_access
             """,
             parameters=[
                 AttackPathsQueryParameterDefinition(
