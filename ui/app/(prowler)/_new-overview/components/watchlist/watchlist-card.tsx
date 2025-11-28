@@ -41,7 +41,7 @@ const getScoreTextColor = (score: number): string => {
 };
 
 export interface WatchlistItem {
-  icon: ReactNode;
+  icon?: ReactNode;
   label: string;
   key: string;
   value: string | number;
@@ -142,9 +142,11 @@ export const WatchlistCard = ({
                       "hover:bg-bg-neutral-tertiary cursor-pointer",
                   )}
                 >
-                  <div className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-md bg-white">
-                    {item.icon}
-                  </div>
+                  {item.icon && (
+                    <div className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-md bg-white">
+                      {item.icon}
+                    </div>
+                  )}
 
                   <p className="text-text-neutral-secondary flex-1 truncate text-sm leading-6">
                     {item.label}
