@@ -1,6 +1,7 @@
 import io
 import os
 from collections import defaultdict
+from functools import partial
 from pathlib import Path
 from shutil import rmtree
 
@@ -1601,9 +1602,8 @@ def generate_threatscore_report(
         # Build the PDF
         doc.build(
             elements,
-            onFirstPage=_add_pdf_footer,
-            onLaterPages=_add_pdf_footer,
-            compliance_name=compliance_name,
+            onFirstPage=partial(_add_pdf_footer, compliance_name=compliance_name),
+            onLaterPages=partial(_add_pdf_footer, compliance_name=compliance_name),
         )
     except Exception as e:
         tb_lineno = e.__traceback__.tb_lineno if e.__traceback__ else "unknown"
@@ -2827,7 +2827,11 @@ def generate_ens_report(
 
         # Build the PDF
         logger.info("Building PDF...")
-        doc.build(elements, onFirstPage=_add_pdf_footer, onLaterPages=_add_pdf_footer)
+        doc.build(
+            elements,
+            onFirstPage=partial(_add_pdf_footer, compliance_name=compliance_name),
+            onLaterPages=partial(_add_pdf_footer, compliance_name=compliance_name),
+        )
     except Exception as e:
         tb_lineno = e.__traceback__.tb_lineno if e.__traceback__ else "unknown"
         logger.error(f"Error building ENS report, line {tb_lineno} -- {e}")
@@ -3374,7 +3378,11 @@ def generate_nis2_report(
 
         # Build the PDF
         logger.info("Building NIS2 PDF...")
-        doc.build(elements, onFirstPage=_add_pdf_footer, onLaterPages=_add_pdf_footer)
+        doc.build(
+            elements,
+            onFirstPage=partial(_add_pdf_footer, compliance_name=compliance_name),
+            onLaterPages=partial(_add_pdf_footer, compliance_name=compliance_name),
+        )
         logger.info(f"NIS2 report successfully generated at {output_path}")
 
     except Exception as e:
