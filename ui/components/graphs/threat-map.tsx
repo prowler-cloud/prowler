@@ -335,6 +335,17 @@ export function ThreatMap({
     const { width, height } = dimensions;
     svg.innerHTML = "";
 
+    // Compute filtered locations inside useEffect to avoid infinite loop
+    // (filteredLocations creates new array reference on each render)
+    const isGlobalSelected = selectedRegion.toLowerCase() === "global";
+    const isAllRegions = selectedRegion === "All Regions";
+    const locationsToRender = data.locations.filter((loc) => {
+      if (loc.region.toLowerCase() === "global") return false;
+      if (isAllRegions) return true;
+      if (isGlobalSelected) return false;
+      return loc.region === selectedRegion;
+    });
+
     const projection = createProjection(width, height);
     const path = d3.geoPath().projection(projection);
     const colors = mapColors;
@@ -344,8 +355,6 @@ export function ThreatMap({
       class: "map-countries",
     });
 
-    // When "global" region is selected, paint the whole map red
-    const isGlobalSelected = selectedRegion.toLowerCase() === "global";
     const mapFillColor = isGlobalSelected
       ? colors.pointDefault
       : colors.landFill;
@@ -453,7 +462,7 @@ export function ThreatMap({
     });
 
     // Unselected points first
-    filteredLocations.forEach((location) => {
+    locationsToRender.forEach((location) => {
       if (selectedLocation?.id !== location.id) {
         const circle = createCircle(location);
         if (circle) pointsGroup.appendChild(circle);
@@ -462,7 +471,7 @@ export function ThreatMap({
 
     // Selected point last (on top)
     if (selectedLocation) {
-      const selectedData = filteredLocations.find(
+      const selectedData = locationsToRender.find(
         (loc) => loc.id === selectedLocation.id,
       );
       if (selectedData) {
@@ -472,15 +481,15 @@ export function ThreatMap({
     }
 
     svg.appendChild(pointsGroup);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     dimensions,
-    filteredLocations,
+    data.locations,
+    selectedRegion,
     selectedLocation,
-    hoveredLocation,
     worldData,
     isLoadingMap,
     mapColors,
-    selectedRegion,
   ]);
 
   return (
