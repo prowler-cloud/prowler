@@ -214,7 +214,7 @@ class TestComputeInstanceAutomaticRestartEnabled:
             assert non_compliant_result.location == "us-west1"
             assert non_compliant_result.project_id == GCP_PROJECT_ID
 
-    def test_preemptible_instance_passes(self):
+    def test_preemptible_instance_fails(self):
         compute_client = mock.MagicMock()
 
         with (
@@ -258,7 +258,7 @@ class TestComputeInstanceAutomaticRestartEnabled:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "PASS"
+            assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
                 == f"VM Instance {compute_client.instances[0].name} is a Preemptible or Spot instance, which cannot have Automatic Restart enabled by design."
@@ -268,7 +268,7 @@ class TestComputeInstanceAutomaticRestartEnabled:
             assert result[0].location == "us-central1"
             assert result[0].project_id == GCP_PROJECT_ID
 
-    def test_spot_instance_passes(self):
+    def test_spot_instance_fails(self):
         compute_client = mock.MagicMock()
 
         with (
@@ -312,7 +312,7 @@ class TestComputeInstanceAutomaticRestartEnabled:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "PASS"
+            assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
                 == f"VM Instance {compute_client.instances[0].name} is a Preemptible or Spot instance, which cannot have Automatic Restart enabled by design."

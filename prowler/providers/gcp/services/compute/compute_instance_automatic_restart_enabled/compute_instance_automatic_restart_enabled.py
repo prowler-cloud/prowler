@@ -16,7 +16,7 @@ class compute_instance_automatic_restart_enabled(Check):
 
             # Preemptible and Spot VMs cannot have automatic restart enabled
             if instance.preemptible or instance.provisioning_model == "SPOT":
-                report.status = "PASS"
+                report.status = "FAIL"
                 report.status_extended = (
                     f"VM Instance {instance.name} is a Preemptible or Spot instance, "
                     "which cannot have Automatic Restart enabled by design."
