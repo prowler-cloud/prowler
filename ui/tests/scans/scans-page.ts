@@ -41,7 +41,6 @@ export class ScansPage extends BasePage {
 
     await expect(this.page).toHaveTitle(/Prowler/);
     await expect(this.scanTable).toBeVisible();
-    await this.waitForPageLoad();
   }
 
   async selectProviderByUID(uid: string): Promise<void> {

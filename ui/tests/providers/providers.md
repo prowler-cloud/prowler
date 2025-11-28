@@ -649,3 +649,62 @@
 - Requires valid GitHub organization with organization access token
 - Organization access token must have sufficient permissions for security scanning
 - Test validates that organization personal access token goes to the correct field
+
+---
+
+## Test Case: `PROVIDER-E2E-012` - Add OCI Provider with API Key Credentials
+
+**Priority:** `critical`
+
+**Tags:**
+
+- type → @e2e, @serial
+- feature → @providers
+- provider → @oci
+
+**Description/Objective:** Validates the complete flow of adding a new OCI provider using API Key credentials.
+
+**Preconditions:**
+
+- Admin user authentication required (admin.auth.setup setup)
+- Environment variables configured: E2E_OCI_TENANCY_ID, E2E_OCI_USER_ID, E2E_OCI_FINGERPRINT, E2E_OCI_KEY_CONTENT, E2E_OCI_REGION
+- Remove any existing provider with the same Tenancy ID before starting the test
+- This test must be run serially and never in parallel with other tests, as it requires the Tenancy ID not to be already registered beforehand.
+
+### Flow Steps:
+
+1. Navigate to providers page
+2. Click "Add Provider" button
+3. Select OCI provider type
+4. Fill provider details (tenancy ID and alias)
+5. Verify OCI credentials page is loaded
+6. Fill OCI credentials (user ID, fingerprint, key content, region)
+7. Launch initial scan
+8. Verify redirect to Scans page
+9. Verify scheduled scan status in Scans table (provider exists and scan name is "scheduled scan")
+
+### Expected Result:
+
+- OCI provider successfully added with API Key credentials
+- Initial scan launched successfully
+- User redirected to Scans page
+- Scheduled scan appears in Scans table with correct provider and scan name
+
+### Key verification points:
+
+- Provider page loads correctly
+- Connect account page displays OCI option
+- Provider details form accepts tenancy ID and alias
+- OCI credentials page loads
+- Credentials form accepts all required fields (user ID, fingerprint, key content, region)
+- Launch scan page appears
+- Successful redirect to Scans page after scan launch
+- Provider exists in Scans table (verified by tenancy ID)
+- Scan name field contains "scheduled scan"
+
+### Notes:
+
+- Test uses environment variables for OCI credentials
+- Provider cleanup performed before each test to ensure clean state
+- Requires valid OCI account with API Key set up
+- API Key credential type is automatically used for OCI providers

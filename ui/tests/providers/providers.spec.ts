@@ -19,6 +19,9 @@ import {
   GitHubProviderData,
   GitHubProviderCredential,
   GITHUB_CREDENTIAL_OPTIONS,
+  OCIProviderData,
+  OCIProviderCredential,
+  OCI_CREDENTIAL_OPTIONS,
 } from "./providers-page";
 import { ScansPage } from "../scans/scans-page";
 import fs from "fs";
@@ -275,7 +278,6 @@ test.describe("Add Provider", () => {
       },
     );
   });
-  
 
   test.describe.serial("Add AZURE Provider", () => {
     // Providers page object
@@ -1043,5 +1045,99 @@ test.describe("Add Provider", () => {
         },
       );
     });
+  });
+
+  test.describe.serial("Add OCI Provider", () => {
+    // Providers page object
+    let providersPage: ProvidersPage;
+    let scansPage: ScansPage;
+
+    // Test data from environment variables
+    const tenancyId = process.env.E2E_OCI_TENANCY_ID;
+    const userId = process.env.E2E_OCI_USER_ID;
+    const fingerprint = process.env.E2E_OCI_FINGERPRINT;
+    const keyContent = process.env.E2E_OCI_KEY_CONTENT;
+    const region = process.env.E2E_OCI_REGION;
+
+    // Validate required environment variables
+    if (!tenancyId || !userId || !fingerprint || !keyContent || !region) {
+      throw new Error(
+        "E2E_OCI_TENANCY_ID, E2E_OCI_USER_ID, E2E_OCI_FINGERPRINT, E2E_OCI_KEY_CONTENT, and E2E_OCI_REGION environment variables are not set",
+      );
+    }
+
+    // Setup before each test
+    test.beforeEach(async ({ page }) => {
+      providersPage = new ProvidersPage(page);
+      // Clean up existing provider to ensure clean test state
+      await providersPage.deleteProviderIfExists(tenancyId);
+    });
+
+    // Use admin authentication for provider management
+    test.use({ storageState: "playwright/.auth/admin_user.json" });
+
+    test(
+      "should add a new OCI provider with API key credentials",
+      {
+        tag: [
+          "@critical",
+          "@e2e",
+          "@providers",
+          "@oci",
+          "@serial",
+          "@PROVIDER-E2E-012",
+        ],
+      },
+      async ({ page }) => {
+        // Prepare test data for OCI provider
+        const ociProviderData: OCIProviderData = {
+          tenancyId: tenancyId,
+
+          alias: "Test E2E OCI Account - API Key",
+        };
+
+        // Prepare static credentials
+        const ociCredentials: OCIProviderCredential = {
+          type: OCI_CREDENTIAL_OPTIONS.OCI_API_KEY,
+          tenancyId: tenancyId,
+          userId: userId,
+          fingerprint: fingerprint,
+          keyContent: keyContent,
+          region: region,
+        };
+
+        // Navigate to providers page
+        await providersPage.goto();
+
+        // Start adding new provider
+        await providersPage.clickAddProvider();
+        await providersPage.verifyConnectAccountPageLoaded();
+
+        // Select OCI provider
+        await providersPage.selectOCIProvider();
+
+        // Fill provider details
+        await providersPage.fillOCIProviderDetails(ociProviderData);
+        await providersPage.clickNext();
+
+        // Verify OCI credentials page is loaded
+        await providersPage.verifyOCICredentialsPageLoaded();
+
+        // Fill static credentials details
+        await providersPage.fillOCICredentials(ociCredentials);
+        await providersPage.clickNext();
+
+        // Launch scan
+        await providersPage.verifyLaunchScanPageLoaded();
+        await providersPage.clickNext();
+
+        // Wait for redirect to scan page
+        scansPage = new ScansPage(page);
+        await scansPage.verifyPageLoaded();
+
+        // Verify scan status is "Scheduled scan"
+        await scansPage.verifyScheduledScanStatus(tenancyId);
+      },
+    );
   });
 });
