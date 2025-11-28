@@ -52,9 +52,6 @@ export const getFindingsBySeverityTool = tool(
   async (input) => {
     const typedInput = input as z.infer<typeof getFindingsBySeveritySchema>;
     return await getFindingsBySeverity({
-      page: typedInput.page,
-      query: typedInput.query,
-      sort: typedInput.sort,
       filters: typedInput.filters,
     });
   },

@@ -8,6 +8,7 @@ import type {
   Geometry,
 } from "geojson";
 import { AlertTriangle, ChevronDown, Info, MapPin } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { feature } from "topojson-client";
 import type {
@@ -17,6 +18,7 @@ import type {
 } from "topojson-specification";
 
 import { Card } from "@/components/shadcn/card/card";
+import { mapProviderFiltersForFindings } from "@/lib/provider-helpers";
 
 import { HorizontalBarChart } from "./horizontal-bar-chart";
 import { BarDataPoint } from "./types";
@@ -70,10 +72,10 @@ function getMapColors(): MapColorsConfig {
     landStroke:
       getVar("--border-neutral-tertiary") || DEFAULT_MAP_COLORS.landStroke,
     pointDefault:
-      getVar("--text-error-primary") || DEFAULT_MAP_COLORS.pointDefault,
+      getVar("--text-text-error") || DEFAULT_MAP_COLORS.pointDefault,
     pointSelected:
       getVar("--bg-button-primary") || DEFAULT_MAP_COLORS.pointSelected,
-    pointHover: getVar("--text-error-primary") || DEFAULT_MAP_COLORS.pointHover,
+    pointHover: getVar("--text-text-error") || DEFAULT_MAP_COLORS.pointHover,
   };
 
   return colors;
@@ -91,6 +93,8 @@ interface LocationPoint {
   id: string;
   name: string;
   region: string;
+  regionCode: string;
+  providerType: string;
   coordinates: [number, number];
   totalFindings: number;
   riskLevel: RiskLevel;
@@ -226,10 +230,17 @@ function LoadingState({ height }: { height: number }) {
   );
 }
 
+const STATUS_FILTER_MAP: Record<string, string> = {
+  Fail: "FAIL",
+  Pass: "PASS",
+};
+
 export function ThreatMap({
   data,
   height = MAP_CONFIG.defaultHeight,
 }: ThreatMapProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectedLocation, setSelectedLocation] =
@@ -512,23 +523,20 @@ export function ThreatMap({
                         position={tooltipPosition}
                       />
                     )}
-                  </div>
-                  <div
-                    className="mt-3 flex items-center gap-2"
-                    role="status"
-                    aria-label={`${filteredLocations.length} threat locations on map`}
-                  >
                     <div
-                      aria-hidden="true"
-                      className="h-3 w-3 rounded-full"
-                      style={{ backgroundColor: "var(--bg-data-critical)" }}
-                    />
-                    <span
-                      className="text-sm"
-                      style={{ color: "var(--text-neutral-tertiary)" }}
+                      className="border-border-neutral-primary bg-bg-neutral-secondary absolute bottom-4 left-4 flex items-center gap-2 rounded-full border px-3 py-1.5"
+                      role="status"
+                      aria-label={`${filteredLocations.length} threat locations on map`}
                     >
-                      {filteredLocations.length} Locations
-                    </span>
+                      <div
+                        aria-hidden="true"
+                        className="h-3 w-3 rounded"
+                        style={{ backgroundColor: "var(--bg-data-critical)" }}
+                      />
+                      <span className="text-text-neutral-primary text-sm font-medium">
+                        {filteredLocations.length} Locations
+                      </span>
+                    </div>
                   </div>
                 </>
               )}
@@ -542,9 +550,13 @@ export function ThreatMap({
             <div className="flex w-full flex-col">
               <div className="mb-4">
                 <div
-                  className="mb-1 flex items-center gap-2"
+                  className="mb-1 flex items-center"
                   aria-label={`Selected location: ${selectedLocation.name}`}
                 >
+                  <MapPin
+                    size={21}
+                    style={{ color: "var(--color-text-text-error)" }}
+                  />
                   <div
                     aria-hidden="true"
                     className="bg-pass-primary h-2 w-2 rounded-full"
@@ -558,7 +570,28 @@ export function ThreatMap({
                   Findings
                 </p>
               </div>
-              <HorizontalBarChart data={selectedLocation.severityData} />
+              <HorizontalBarChart
+                data={selectedLocation.severityData}
+                onBarClick={(dataPoint) => {
+                  const status = STATUS_FILTER_MAP[dataPoint.name];
+                  if (status && selectedLocation.providerType) {
+                    const params = new URLSearchParams(searchParams.toString());
+
+                    mapProviderFiltersForFindings(params);
+
+                    params.set(
+                      "filter[provider_type__in]",
+                      selectedLocation.providerType,
+                    );
+                    params.set(
+                      "filter[region__in]",
+                      selectedLocation.regionCode,
+                    );
+                    params.set("filter[status__in]", status);
+                    router.push(`/findings?${params.toString()}`);
+                  }
+                }}
+              />
             </div>
           ) : (
             <EmptyState />

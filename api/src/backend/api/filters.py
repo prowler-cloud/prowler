@@ -812,7 +812,8 @@ class ScanSummarySeverityFilter(ScanSummaryFilter):
         elif value == OverviewStatusChoices.PASS:
             return queryset.annotate(status_count=F("_pass"))
         else:
-            return queryset.annotate(status_count=F("total"))
+            # Exclude muted findings by default
+            return queryset.annotate(status_count=F("_pass") + F("fail"))
 
     def filter_status_in(self, queryset, name, value):
         # Validate the status values
@@ -821,7 +822,7 @@ class ScanSummarySeverityFilter(ScanSummaryFilter):
             if status_val not in valid_statuses:
                 raise ValidationError(f"Invalid status value: {status_val}")
 
-        # If all statuses or no valid statuses, use total
+        # If all statuses or no valid statuses, exclude muted findings (pass + fail)
         if (
             set(value)
             >= {
@@ -830,7 +831,7 @@ class ScanSummarySeverityFilter(ScanSummaryFilter):
             }
             or not value
         ):
-            return queryset.annotate(status_count=F("total"))
+            return queryset.annotate(status_count=F("_pass") + F("fail"))
 
         # Build the sum expression based on status values
         sum_expression = None
@@ -848,7 +849,7 @@ class ScanSummarySeverityFilter(ScanSummaryFilter):
                 sum_expression = sum_expression + field_expr
 
         if sum_expression is None:
-            return queryset.annotate(status_count=F("total"))
+            return queryset.annotate(status_count=F("_pass") + F("fail"))
 
         return queryset.annotate(status_count=sum_expression)
 
@@ -858,26 +859,6 @@ class ScanSummarySeverityFilter(ScanSummaryFilter):
             "inserted_at": ["date", "gte", "lte"],
             "region": ["exact", "icontains", "in"],
         }
-
-
-class ServiceOverviewFilter(ScanSummaryFilter):
-    def is_valid(self):
-        # Check if at least one of the inserted_at filters is present
-        inserted_at_filters = [
-            self.data.get("inserted_at"),
-            self.data.get("inserted_at__gte"),
-            self.data.get("inserted_at__lte"),
-        ]
-        if not any(inserted_at_filters):
-            raise ValidationError(
-                {
-                    "inserted_at": [
-                        "At least one of filter[inserted_at], filter[inserted_at__gte], or "
-                        "filter[inserted_at__lte] is required."
-                    ]
-                }
-            )
-        return super().is_valid()
 
 
 class IntegrationFilter(FilterSet):
