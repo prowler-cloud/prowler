@@ -178,6 +178,7 @@ class FindingsTools(BaseTool):
         params["fields[findings]"] = (
             "uid,status,severity,check_id,check_metadata,status_extended,delta,muted,muted_reason"
         )
+        params["sort"] = "severity,-inserted_at"
 
         # Convert lists to comma-separated strings
         clean_params = self.api_client.build_filter_params(params)
