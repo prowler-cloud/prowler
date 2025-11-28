@@ -1,13 +1,26 @@
 import os
+
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from shutil import rmtree
 
 from celery import chain, group, shared_task
 from celery.utils.log import get_task_logger
+from django_celery_beat.models import PeriodicTask
+
+from api.compliance import get_compliance_frameworks
+from api.db_router import READ_REPLICA_ALIAS
+from api.db_utils import rls_transaction
+from api.decorators import set_tenant
+from api.models import Finding, Integration, Provider, Scan, ScanSummary, StateChoices
+from api.utils import initialize_prowler_provider
+from api.v1.serializers import ScanTaskSerializer
 from config.celery import RLSTask
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE, DJANGO_TMP_OUTPUT_DIRECTORY
-from django_celery_beat.models import PeriodicTask
+from prowler.lib.check.compliance_models import Compliance
+from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
+from prowler.lib.outputs.finding import Finding as FindingOutput
+from tasks.jobs.attack_paths import attack_paths_scan
 from tasks.jobs.backfill import (
     backfill_compliance_summaries,
     backfill_resource_scan_summaries,
@@ -43,17 +56,6 @@ from tasks.jobs.scan import (
 )
 from tasks.utils import batched, get_next_execution_datetime
 
-from api.compliance import get_compliance_frameworks
-from api.db_router import READ_REPLICA_ALIAS
-from api.db_utils import rls_transaction
-from api.decorators import set_tenant
-from api.models import Finding, Integration, Provider, Scan, ScanSummary, StateChoices
-from api.utils import initialize_prowler_provider
-from api.v1.serializers import ScanTaskSerializer
-from prowler.lib.check.compliance_models import Compliance
-from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
-from prowler.lib.outputs.finding import Finding as FindingOutput
-
 logger = get_task_logger(__name__)
 
 
@@ -86,6 +88,9 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
             ),
         ),
     ).apply_async()
+    perform_attack_paths_scan_task.apply_async(
+        kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
+    )
 
 
 @shared_task(base=RLSTask, name="provider-connection-check")
@@ -279,6 +284,25 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
 @shared_task(name="scan-summary", queue="overview")
 def perform_scan_summary_task(tenant_id: str, scan_id: str):
     return aggregate_findings(tenant_id=tenant_id, scan_id=scan_id)
+
+
+# TODO: This task must be queued at the `attack-paths` queue, don't forget to add it to the `docker-entrypoint.sh` file
+@shared_task(base=RLSTask, bind=True, name="attack-paths-scan-perform", queue="scans")
+def perform_attack_paths_scan_task(self, tenant_id: str, scan_id: str):
+    """
+    Execute an Attack Paths scan for the given provider within the current tenant RLS context.
+
+    Args:
+        self: The task instance (automatically passed when bind=True).
+        tenant_id (str): The tenant identifier for RLS context.
+        scan_id (str): The Prowler scan identifier for obtaining the tenant and provider context.
+
+    Returns:
+        Any: The result from `attack_paths_scan`, including any per-scan failure details.
+    """
+    return attack_paths_scan(
+        tenant_id=tenant_id, scan_id=scan_id, task_id=self.request.id
+    )
 
 
 @shared_task(name="tenant-deletion", queue="deletion", autoretry_for=(Exception,))

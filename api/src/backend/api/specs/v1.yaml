@@ -280,6 +280,435 @@ paths:
               schema:
                 $ref: '#/components/schemas/OpenApiResponseResponse'
           description: API key was successfully revoked
+  /api/v1/attack-paths-scans:
+    get:
+      operationId: attack_paths_scans_list
+      description: Retrieve Attack Paths scans for the tenant with support for filtering,
+        ordering, and pagination.
+      summary: List Attack Paths scans
+      parameters:
+      - in: query
+        name: fields[attack-paths-scans]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - state
+            - progress
+            - provider
+            - provider_alias
+            - provider_type
+            - provider_uid
+            - scan
+            - task
+            - inserted_at
+            - started_at
+            - completed_at
+            - duration
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[completed_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[provider]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_alias]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          x-spec-enum-id: eca8c51e6bd28935
+          enum:
+          - aws
+          - azure
+          - gcp
+          - github
+          - iac
+          - kubernetes
+          - m365
+          - mongodbatlas
+          - oraclecloud
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            x-spec-enum-id: eca8c51e6bd28935
+            enum:
+            - aws
+            - azure
+            - gcp
+            - github
+            - iac
+            - kubernetes
+            - m365
+            - mongodbatlas
+            - oraclecloud
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[scan]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[scan__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[started_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[state]
+        schema:
+          type: string
+          x-spec-enum-id: d38ba07264e1ed34
+          enum:
+          - available
+          - cancelled
+          - completed
+          - executing
+          - failed
+          - scheduled
+        description: |-
+          * `available` - Available
+          * `scheduled` - Scheduled
+          * `executing` - Executing
+          * `completed` - Completed
+          * `failed` - Failed
+          * `cancelled` - Cancelled
+      - in: query
+        name: filter[state__in]
+        schema:
+          type: array
+          items:
+            type: string
+            x-spec-enum-id: d38ba07264e1ed34
+            enum:
+            - available
+            - cancelled
+            - completed
+            - executing
+            - failed
+            - scheduled
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `available` - Available
+          * `scheduled` - Scheduled
+          * `executing` - Executing
+          * `completed` - Completed
+          * `failed` - Failed
+          * `cancelled` - Cancelled
+        explode: false
+        style: form
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider
+            - scan
+            - task
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      - name: page[number]
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page[size]
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - inserted_at
+            - -inserted_at
+            - started_at
+            - -started_at
+        explode: false
+      tags:
+      - Attack Paths
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAttackPathsScanList'
+          description: ''
+  /api/v1/attack-paths-scans/{id}:
+    get:
+      operationId: attack_paths_scans_retrieve
+      description: Fetch full details for a specific Attack Paths scan.
+      summary: Retrieve Attack Paths scan details
+      parameters:
+      - in: query
+        name: fields[attack-paths-scans]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - state
+            - progress
+            - provider
+            - provider_alias
+            - provider_type
+            - provider_uid
+            - scan
+            - task
+            - inserted_at
+            - started_at
+            - completed_at
+            - duration
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this attack paths scan.
+        required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider
+            - scan
+            - task
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      tags:
+      - Attack Paths
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/AttackPathsScanResponse'
+          description: ''
+  /api/v1/attack-paths-scans/{id}/queries:
+    get:
+      operationId: attack_paths_scans_queries_retrieve
+      description: Retrieve the catalog of Attack Paths queries available for this
+        Attack Paths scan.
+      summary: List attack paths queries
+      parameters:
+      - in: query
+        name: fields[attack-paths-scans]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - state
+            - progress
+            - provider
+            - provider_alias
+            - provider_type
+            - provider_uid
+            - scan
+            - task
+            - inserted_at
+            - started_at
+            - completed_at
+            - duration
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this attack paths scan.
+        required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider
+            - scan
+            - task
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      tags:
+      - Attack Paths
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAttackPathsQueryList'
+          description: ''
+        '404':
+          description: No queries found for the selected provider
+  /api/v1/attack-paths-scans/{id}/queries/run:
+    post:
+      operationId: attack_paths_scans_queries_run_create
+      description: Execute the selected Attack Paths query against the Attack Paths
+        graph and return the resulting subgraph.
+      summary: Execute an Attack Paths query
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this attack paths scan.
+        required: true
+      tags:
+      - Attack Paths
+      requestBody:
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/AttackPathsQueryRunRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AttackPathsQueryRunRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AttackPathsQueryRunRequestRequest'
+        required: true
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/OpenApiResponseResponse'
+          description: ''
+        '400':
+          description: Bad request (e.g., Unknown Attack Paths query for the selected
+            provider)
+        '404':
+          description: No attack paths found for the given query and parameters
+        '500':
+          description: Attack Paths query execution failed due to a database error
   /api/v1/compliance-overviews:
     get:
       operationId: compliance_overviews_list
@@ -10618,6 +11047,349 @@ paths:
           description: ''
 components:
   schemas:
+    AttackPathsNode:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - attack-paths-query-result-node
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            labels:
+              type: array
+              items:
+                type: string
+            properties:
+              type: object
+              additionalProperties: {}
+          required:
+          - id
+          - labels
+          - properties
+    AttackPathsQuery:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - attack-paths-query
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            description:
+              type: string
+            provider:
+              type: string
+            parameters:
+              type: array
+              items:
+                $ref: '#/components/schemas/AttackPathsQueryParameter'
+          required:
+          - id
+          - name
+          - description
+          - provider
+          - parameters
+    AttackPathsQueryParameter:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - attack-paths-query-parameter
+        id: {}
+        attributes:
+          type: object
+          properties:
+            name:
+              type: string
+            label:
+              type: string
+            data_type:
+              type: string
+              default: string
+            description:
+              type: string
+              nullable: true
+            placeholder:
+              type: string
+              nullable: true
+          required:
+          - name
+          - label
+    AttackPathsQueryResult:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - attack-paths-query-result
+        attributes:
+          type: object
+          properties:
+            nodes:
+              type: array
+              items:
+                $ref: '#/components/schemas/AttackPathsNode'
+            relationships:
+              type: array
+              items:
+                $ref: '#/components/schemas/AttackPathsRelationship'
+          required:
+          - nodes
+          - relationships
+    AttackPathsQueryRunRequestRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          required:
+          - type
+          additionalProperties: false
+          properties:
+            type:
+              type: string
+              description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                member is used to describe resource objects that share common attributes
+                and relationships.
+              enum:
+              - attack-paths-query-run-request
+            attributes:
+              type: object
+              properties:
+                id:
+                  type: string
+                  minLength: 1
+                parameters:
+                  type: object
+                  additionalProperties: {}
+              required:
+              - id
+      required:
+      - data
+    AttackPathsRelationship:
+      type: object
+      required:
+      - type
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - attack-paths-query-result-relationship
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            label:
+              type: string
+            source:
+              type: string
+            target:
+              type: string
+            properties:
+              type: object
+              additionalProperties: {}
+          required:
+          - id
+          - label
+          - source
+          - target
+          - properties
+    AttackPathsScan:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - attack-paths-scans
+        id:
+          type: string
+          format: uuid
+        attributes:
+          type: object
+          properties:
+            state:
+              enum:
+              - available
+              - scheduled
+              - executing
+              - completed
+              - failed
+              - cancelled
+              type: string
+              description: |-
+                * `available` - Available
+                * `scheduled` - Scheduled
+                * `executing` - Executing
+                * `completed` - Completed
+                * `failed` - Failed
+                * `cancelled` - Cancelled
+              x-spec-enum-id: d38ba07264e1ed34
+              readOnly: true
+            progress:
+              type: integer
+              maximum: 2147483647
+              minimum: -2147483648
+            provider_alias:
+              type: string
+              readOnly: true
+            provider_type:
+              type: string
+              readOnly: true
+            provider_uid:
+              type: string
+              readOnly: true
+            inserted_at:
+              type: string
+              format: date-time
+              readOnly: true
+            started_at:
+              type: string
+              format: date-time
+              nullable: true
+            completed_at:
+              type: string
+              format: date-time
+              nullable: true
+            duration:
+              type: integer
+              maximum: 2147483647
+              minimum: -2147483648
+              nullable: true
+              description: Duration in seconds
+        relationships:
+          type: object
+          properties:
+            provider:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - providers
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+            scan:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - scans
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              nullable: true
+            task:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    type:
+                      type: string
+                      enum:
+                      - tasks
+                      title: Resource Type Name
+                      description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+                        member is used to describe resource objects that share common
+                        attributes and relationships.
+                  required:
+                  - id
+                  - type
+              required:
+              - data
+              description: The identifier of the related object.
+              title: Resource Identifier
+              nullable: true
+          required:
+          - provider
+    AttackPathsScanResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/AttackPathsScan'
+      required:
+      - data
     ComplianceOverview:
       type: object
       required:
@@ -13574,6 +14346,24 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/OverviewSeverity'
+      required:
+      - data
+    PaginatedAttackPathsQueryList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttackPathsQuery'
+      required:
+      - data
+    PaginatedAttackPathsScanList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AttackPathsScan'
       required:
       - data
     PaginatedComplianceOverviewAttributesList:
@@ -19660,6 +20450,8 @@ tags:
     revoking tasks that have not started.
 - name: Scan
   description: Endpoints for triggering manual scans and viewing scan results.
+- name: Attack Paths
+  description: Endpoints for Attack Paths scan status and executing Attack Paths queries.
 - name: Schedule
   description: Endpoints for managing scan schedules, allowing configuration of automated
     scans with different scheduling options.

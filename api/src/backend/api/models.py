@@ -616,6 +616,101 @@ class Scan(RowLevelSecurityProtectedModel):
         resource_name = "scans"
 
 
+class AttackPathsScan(RowLevelSecurityProtectedModel):
+    objects = ActiveProviderManager()
+    all_objects = models.Manager()
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    state = StateEnumField(choices=StateChoices.choices, default=StateChoices.AVAILABLE)
+    progress = models.IntegerField(default=0)
+
+    # Timing
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    duration = models.IntegerField(
+        null=True, blank=True, help_text="Duration in seconds"
+    )
+
+    # Relationship to the provider and optional prowler Scan and celery Task
+    provider = models.ForeignKey(
+        "Provider",
+        on_delete=models.CASCADE,
+        related_name="attack_paths_scans",
+        related_query_name="attack_paths_scan",
+    )
+    scan = models.ForeignKey(
+        "Scan",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="attack_paths_scans",
+        related_query_name="attack_paths_scan",
+    )
+    task = models.ForeignKey(
+        "Task",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="attack_paths_scans",
+        related_query_name="attack_paths_scan",
+    )
+
+    # Cartography specific metadata
+    update_tag = models.BigIntegerField(
+        null=True, blank=True, help_text="Cartography update tag (epoch)"
+    )
+    graph_database = models.CharField(max_length=63, null=True, blank=True)
+    is_graph_database_deleted = models.BooleanField(default=False)
+    ingestion_exceptions = models.JSONField(default=dict, null=True, blank=True)
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "attack_paths_scans"
+
+        constraints = [
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "provider_id", "-inserted_at"],
+                name="aps_prov_ins_desc_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "state", "-inserted_at"],
+                name="aps_state_ins_desc_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "scan_id"],
+                name="aps_scan_lookup_idx",
+            ),
+            models.Index(
+                fields=["tenant_id", "provider_id"],
+                name="aps_active_graph_idx",
+                include=["graph_database", "id"],
+                condition=Q(is_graph_database_deleted=False),
+            ),
+            models.Index(
+                fields=["tenant_id", "provider_id", "-completed_at"],
+                name="aps_completed_graph_idx",
+                include=["graph_database", "id"],
+                condition=Q(
+                    state=StateChoices.COMPLETED,
+                    is_graph_database_deleted=False,
+                ),
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "attack-paths-scans"
+
+
 class ResourceTag(RowLevelSecurityProtectedModel):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)

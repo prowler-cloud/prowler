@@ -63,6 +63,36 @@ services:
       timeout: 5s
       retries: 3
 
+  neo4j:
+    image: graphstack/dozerdb:5.26.3.0
+    hostname: "neo4j"
+    volumes:
+      - ./_data/neo4j:/data
+    environment:
+      # We can't add our .env file because some of our current variables are not compatible with Neo4j env vars
+      # Auth
+      - NEO4J_AUTH=${NEO4J_USER}/${NEO4J_PASSWORD}
+      # Memory limits
+      - NEO4J_server_memory_pagecache_size=${NEO4J_SERVER_MEMORY_PAGECACHE_SIZE}
+      - NEO4J_server_memory_heap_initial__size=${NEO4J_SERVER_MEMORY_HEAP_INITIAL__SIZE}
+      - NEO4J_server_memory_heap_max__size=${NEO4J_SERVER_MEMORY_HEAP_MAX__SIZE}
+      # APOC
+      - apoc.export.file.enabled=${NEO4J_POC_EXPORT_FILE_ENABLED}
+      - apoc.import.file.enabled=${NEO4J_APOC_IMPORT_FILE_ENABLED}
+      - apoc.import.file.use_neo4j_config=${NEO4J_APOC_IMPORT_FILE_USE_NEO4J_CONFIG}
+      - NEO4J_PLUGINS=${NEO4J_PLUGINS}
+      - NEO4J_dbms_security_procedures_allowlist=${NEO4J_DBMS_SECURITY_PROCEDURES_ALLOWLIST}
+      - NEO4J_dbms_security_procedures_unrestricted=${NEO4J_DBMS_SECURITY_PROCEDURES_UNRESTRICTED}
+      # Networking
+      - dbms.connector.bolt.listen_address=${NEO4J_DBMS_CONNECTOR_BOLT_LISTEN_ADDRESS}
+    ports:
+      - ${NEO4J_PORT:-7687}:7687
+    healthcheck:
+        test: ["CMD", "wget", "--no-verbose", "http://localhost:7474"]
+        interval: 10s
+        timeout: 10s
+        retries: 10
+
   worker:
     image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-stable}
     env_file:

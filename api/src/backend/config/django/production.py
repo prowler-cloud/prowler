@@ -37,6 +37,12 @@ DATABASES = {
         "HOST": env("POSTGRES_REPLICA_HOST", default=default_db_host),
         "PORT": env("POSTGRES_REPLICA_PORT", default=default_db_port),
     },
+    "neo4j": {
+        "HOST": env.str("NEO4J_HOST"),
+        "PORT": env.str("NEO4J_PORT"),
+        "USER": env.str("NEO4J_USER"),
+        "PASSWORD": env.str("NEO4J_PASSWORD"),
+    },
 }
 
 DATABASES["default"] = DATABASES["prowler_user"]

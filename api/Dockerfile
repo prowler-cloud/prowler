@@ -2,6 +2,9 @@ FROM python:3.12.10-slim-bookworm AS build
 
 LABEL maintainer="https://github.com/prowler-cloud/api"
 
+ARG CARTOGRAPHY_VERSION=0.117.0
+ENV CARTOGRAPHY_VERSION=${CARTOGRAPHY_VERSION}
+
 ARG POWERSHELL_VERSION=7.5.0
 ENV POWERSHELL_VERSION=${POWERSHELL_VERSION}
 
@@ -78,6 +81,8 @@ ENV PATH="/home/prowler/.local/bin:$PATH"
 # Add `--no-root` to avoid installing the current project as a package
 RUN poetry install --no-root && \
     rm -rf ~/.cache/pip
+
+RUN poetry run python -m pip install cartography==${CARTOGRAPHY_VERSION}
 
 RUN poetry run python "$(poetry env info --path)/src/prowler/prowler/providers/m365/lib/powershell/m365_powershell.py"
 

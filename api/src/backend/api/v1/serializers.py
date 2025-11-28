@@ -21,6 +21,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from api.db_router import MainRouter
 from api.exceptions import ConflictException
 from api.models import (
+    AttackPathsScan,
     Finding,
     Integration,
     IntegrationProviderRelationship,
@@ -1125,6 +1126,109 @@ class ScanComplianceReportSerializer(serializers.Serializer):
     class Meta:
         resource_name = "scan-reports"
         fields = ["id", "name"]
+
+
+class AttackPathsScanSerializer(RLSSerializer):
+    state = StateEnumSerializerField(read_only=True)
+    provider_alias = serializers.SerializerMethodField(read_only=True)
+    provider_type = serializers.SerializerMethodField(read_only=True)
+    provider_uid = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = AttackPathsScan
+        fields = [
+            "id",
+            "state",
+            "progress",
+            "provider",
+            "provider_alias",
+            "provider_type",
+            "provider_uid",
+            "scan",
+            "task",
+            "inserted_at",
+            "started_at",
+            "completed_at",
+            "duration",
+        ]
+
+    included_serializers = {
+        "provider": "api.v1.serializers.ProviderIncludeSerializer",
+        "scan": "api.v1.serializers.ScanIncludeSerializer",
+        "task": "api.v1.serializers.TaskSerializer",
+    }
+
+    def get_provider_alias(self, obj):
+        provider = getattr(obj, "provider", None)
+        return provider.alias if provider else None
+
+    def get_provider_type(self, obj):
+        provider = getattr(obj, "provider", None)
+        return provider.provider if provider else None
+
+    def get_provider_uid(self, obj):
+        provider = getattr(obj, "provider", None)
+        return provider.uid if provider else None
+
+
+class AttackPathsQueryParameterSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    label = serializers.CharField()
+    data_type = serializers.CharField(default="string")
+    description = serializers.CharField(allow_null=True, required=False)
+    placeholder = serializers.CharField(allow_null=True, required=False)
+
+    class JSONAPIMeta:
+        resource_name = "attack-paths-query-parameter"
+
+
+class AttackPathsQuerySerializer(serializers.Serializer):
+    id = serializers.CharField()
+    name = serializers.CharField()
+    description = serializers.CharField()
+    provider = serializers.CharField()
+    parameters = AttackPathsQueryParameterSerializer(many=True)
+
+    class JSONAPIMeta:
+        resource_name = "attack-paths-query"
+
+
+class AttackPathsQueryRunRequestSerializer(serializers.Serializer):
+    id = serializers.CharField()
+    parameters = serializers.DictField(
+        child=serializers.JSONField(), allow_empty=True, required=False
+    )
+
+    class JSONAPIMeta:
+        resource_name = "attack-paths-query-run-request"
+
+
+class AttackPathsNodeSerializer(serializers.Serializer):
+    id = serializers.CharField()
+    labels = serializers.ListField(child=serializers.CharField())
+    properties = serializers.DictField(child=serializers.JSONField())
+
+    class JSONAPIMeta:
+        resource_name = "attack-paths-query-result-node"
+
+
+class AttackPathsRelationshipSerializer(serializers.Serializer):
+    id = serializers.CharField()
+    label = serializers.CharField()
+    source = serializers.CharField()
+    target = serializers.CharField()
+    properties = serializers.DictField(child=serializers.JSONField())
+
+    class JSONAPIMeta:
+        resource_name = "attack-paths-query-result-relationship"
+
+
+class AttackPathsQueryResultSerializer(serializers.Serializer):
+    nodes = AttackPathsNodeSerializer(many=True)
+    relationships = AttackPathsRelationshipSerializer(many=True)
+
+    class JSONAPIMeta:
+        resource_name = "attack-paths-query-result"
 
 
 class ResourceTagSerializer(RLSSerializer):
