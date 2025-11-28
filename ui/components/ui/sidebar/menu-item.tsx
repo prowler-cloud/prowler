@@ -20,6 +20,7 @@ interface MenuItemProps {
   target?: string;
   tooltip?: string;
   isOpen: boolean;
+  highlight?: boolean;
 }
 
 export const MenuItem = ({
@@ -30,6 +31,7 @@ export const MenuItem = ({
   target,
   tooltip,
   isOpen,
+  highlight,
 }: MenuItemProps) => {
   const pathname = usePathname();
   const isActive = active !== undefined ? active : pathname.startsWith(href);
@@ -44,15 +46,31 @@ export const MenuItem = ({
           variant={isActive ? "menu-active" : "menu-inactive"}
           className={cn(
             isOpen ? "w-full justify-start" : "w-14 justify-center",
+            highlight &&
+              "relative overflow-hidden before:absolute before:inset-0 before:rounded-lg before:bg-gradient-to-r before:from-emerald-500/20 before:via-teal-400/20 before:to-emerald-300/20 before:opacity-70",
           )}
           asChild
         >
           <Link href={href} target={target}>
-            <div className="flex items-center">
-              <span className={cn(isOpen ? "mr-4" : "")}>
+            <div className="relative z-10 flex items-center">
+              <span
+                className={cn(
+                  isOpen ? "mr-4" : "",
+                  highlight && "text-button-primary",
+                )}
+              >
                 <Icon size={18} />
               </span>
-              {isOpen && <p className="max-w-[200px] truncate">{label}</p>}
+              {isOpen && (
+                <p className="max-w-[200px] truncate">
+                  {label}
+                  {highlight && (
+                    <span className="ml-2 rounded-sm bg-emerald-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                      NEW
+                    </span>
+                  )}
+                </p>
+              )}
             </div>
           </Link>
         </Button>

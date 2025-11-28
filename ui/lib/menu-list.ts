@@ -84,6 +84,7 @@ export const getMenuList = ({
           label: "Attack Paths",
           icon: GitBranch,
           active: pathname.startsWith("/attack-paths"),
+          highlight: true,
         },
       ],
     },

@@ -119,6 +119,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                           target={menu.target}
                           tooltip={menu.tooltip}
                           isOpen={isOpen}
+                          highlight={menu.highlight}
                         />
                       )}
                     </div>

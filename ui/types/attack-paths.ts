@@ -5,6 +5,7 @@
 
 // Scan state constants
 export const SCAN_STATES = {
+  AVAILABLE: "available",
   SCHEDULED: "scheduled",
   EXECUTING: "executing",
   COMPLETED: "completed",

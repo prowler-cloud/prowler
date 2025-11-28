@@ -26,9 +26,17 @@ export const ScanStatusBadge = ({
     );
   }
 
+  if (status === "available") {
+    return (
+      <Badge className="bg-bg-neutral-tertiary text-text-neutral-primary gap-2">
+        <span>Queued</span>
+      </Badge>
+    );
+  }
+
   if (status === "executing") {
     return (
-      <Badge className="bg-bg-warning-secondary text-neutral-primary gap-2">
+      <Badge className="bg-bg-warning-secondary text-text-neutral-primary gap-2">
         <Loader2 size={14} className="animate-spin" />
         <span>In Progress ({progress}%)</span>
       </Badge>

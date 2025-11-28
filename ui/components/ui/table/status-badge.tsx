@@ -1,16 +1,18 @@
 import { Chip } from "@heroui/chip";
 import clsx from "clsx";
-import React from "react";
 
 import { SpinnerIcon } from "@/components/icons";
 
-export type Status =
-  | "available"
-  | "scheduled"
-  | "executing"
-  | "completed"
-  | "failed"
-  | "cancelled";
+const STATUS = {
+  available: "available",
+  scheduled: "scheduled",
+  executing: "executing",
+  completed: "completed",
+  failed: "failed",
+  cancelled: "cancelled",
+} as const;
+
+export type Status = (typeof STATUS)[keyof typeof STATUS];
 
 const statusColorMap: Record<
   Status,
@@ -22,6 +24,15 @@ const statusColorMap: Record<
   completed: "success",
   failed: "danger",
   cancelled: "danger",
+};
+
+const statusDisplayMap: Record<Status, string> = {
+  available: "queued",
+  scheduled: "scheduled",
+  executing: "executing",
+  completed: "completed",
+  failed: "failed",
+  cancelled: "cancelled",
 };
 
 export const StatusBadge = ({
@@ -37,6 +48,7 @@ export const StatusBadge = ({
   className?: string;
 }) => {
   const color = statusColorMap[status as keyof typeof statusColorMap];
+  const displayLabel = statusDisplayMap[status] || status;
 
   return (
     <Chip
@@ -59,7 +71,7 @@ export const StatusBadge = ({
           <span>executing</span>
         </div>
       ) : (
-        <span className="flex items-center justify-center">{status}</span>
+        <span className="flex items-center justify-center">{displayLabel}</span>
       )}
     </Chip>
   );

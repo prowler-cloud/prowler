@@ -56,7 +56,6 @@ export const GRAPH_EDGE_GLOW_COLOR = "#fb923c";
 export const GRAPH_SELECTION_COLOR = "#ffffff";
 export const GRAPH_BORDER_COLOR = "#374151";
 
-
 /**
  * Get node fill color based on labels and properties
  */
@@ -83,7 +82,8 @@ export const getNodeColor = (
   if (labels.includes("S3Bucket")) return GRAPH_NODE_COLORS.s3Bucket;
   if (labels.includes("IAMRole")) return GRAPH_NODE_COLORS.iamRole;
   if (labels.includes("IAMPolicy")) return GRAPH_NODE_COLORS.iamPolicy;
-  if (labels.includes("LambdaFunction")) return GRAPH_NODE_COLORS.lambdaFunction;
+  if (labels.includes("LambdaFunction"))
+    return GRAPH_NODE_COLORS.lambdaFunction;
   if (labels.includes("SecurityGroup")) return GRAPH_NODE_COLORS.securityGroup;
 
   return GRAPH_NODE_COLORS.default;
@@ -111,7 +111,8 @@ export const getNodeBorderColor = (
   if (labels.some((l) => l.toLowerCase().includes("attackpattern")))
     return GRAPH_NODE_BORDER_COLORS.attackPattern;
   if (labels.includes("AWSAccount")) return GRAPH_NODE_BORDER_COLORS.awsAccount;
-  if (labels.includes("EC2Instance")) return GRAPH_NODE_BORDER_COLORS.ec2Instance;
+  if (labels.includes("EC2Instance"))
+    return GRAPH_NODE_BORDER_COLORS.ec2Instance;
   if (labels.includes("S3Bucket")) return GRAPH_NODE_BORDER_COLORS.s3Bucket;
   if (labels.includes("IAMRole")) return GRAPH_NODE_BORDER_COLORS.iamRole;
   if (labels.includes("IAMPolicy")) return GRAPH_NODE_BORDER_COLORS.iamPolicy;
@@ -134,4 +135,3 @@ export const isLightBackground = (backgroundColor: string): boolean => {
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
   return luminance > 0.5;
 };
-
