@@ -11,9 +11,13 @@ from django.conf import settings
 
 import neo4j.exceptions
 
+from api.attack_paths.retryable_session import RetryableSession
+
 # Without this Celery goes crazy with Neo4j logging
 logging.getLogger("neo4j").setLevel(logging.ERROR)
 logging.getLogger("neo4j").propagate = False
+
+SERVICE_UNAVAILABLE_MAX_RETRIES = 3
 
 # Module-level process-wide driver singleton
 _driver: neo4j.Driver | None = None
@@ -42,7 +46,7 @@ def init_driver() -> neo4j.Driver:
                 uri,
                 auth=(config["USER"], config["PASSWORD"]),
                 max_connection_lifetime=604800,  # 7 days
-                keep_alive=True,
+                keep_alive=True,  # It's the default value, but let's being explicit
             )
             _driver.verify_connectivity()
 
@@ -65,13 +69,23 @@ def close_driver() -> None:  # TODO: Use it
 
 
 @contextmanager
-def get_session(database: str | None = None) -> Iterator[neo4j.Session]:
+def get_session(database: str | None = None) -> Iterator[RetryableSession]:
+    session_wrapper: RetryableSession | None = None
+
     try:
-        with get_driver().session(database=database) as session:
-            yield session
+        session_wrapper = RetryableSession(
+            session_factory=lambda: get_driver().session(database=database),
+            close_driver=close_driver,  # Just to avoid circular imports
+            max_retries=SERVICE_UNAVAILABLE_MAX_RETRIES,
+        )
+        yield session_wrapper
 
     except neo4j.exceptions.Neo4jError as exc:
         raise GraphDatabaseQueryException(message=exc.message, code=exc.code)
+
+    finally:
+        if session_wrapper is not None:
+            session_wrapper.close()
 
 
 def create_database(database: str) -> None:
