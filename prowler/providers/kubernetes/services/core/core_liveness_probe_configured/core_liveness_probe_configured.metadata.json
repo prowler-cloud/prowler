@@ -1,0 +1,22 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "core_liveness_probe_configured",
+  "CheckTitle": "Ensure liveness probe is configured",
+  "CheckType": [],
+  "ServiceName": "core",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "KubernetesPod",
+  "Description": "Ensure each container has a liveness probe configured to detect and restart unhealthy containers.",
+  "Risk": "Without liveness probes, failed containers may remain running causing degraded service or resource waste.",
+  "RelatedUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/",
+  "Remediation": {
+    "Code": {"CLI": "", "NativeIaC": "", "Other": "", "Terraform": ""},
+    "Recommendation": {"Text": "Add liveness probes to container specs.", "Url": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/"}
+  },
+  "Categories": ["availability"],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Check ensures presence of liveness probe; tune thresholds per application."
+}
