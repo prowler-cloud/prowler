@@ -1,34 +1,36 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "compute_instance_in_transit_encryption_enabled",
-  "CheckTitle": "Ensure In-transit Encryption is enabled on Compute Instance",
-  "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS OCI Foundations Benchmark"
-  ],
+  "CheckTitle": "Compute instance has in-transit encryption enabled",
+  "CheckType": [],
   "ServiceName": "compute",
   "SubServiceName": "",
-  "ResourceIdTemplate": "oci:compute:instance",
+  "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "OciComputeInstance",
-  "Description": "In-transit encryption protects data as it moves between the compute instance and block volumes. This is implemented through the Oracle Cloud Agent management plugin which enables encryption for block volume attachments.",
-  "Risk": "Without in-transit encryption, data moving between compute instances and block volumes could be intercepted or tampered with during transmission.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Block/Concepts/blockvolumeencryption.htm",
+  "ResourceType": "Instance",
+  "Description": "**OCI compute instances** are evaluated for **in-transit encryption** on paravirtualized block or boot volume attachments, confirming that data exchanged between the instance and attached volumes is encrypted during transfer.",
+  "Risk": "Without **in-transit encryption**, volume traffic can be inspected or altered on internal paths. A threat actor or compromised host could read sensitive data, inject corrupted blocks, or replay writes, undermining **confidentiality** and **integrity**, and risking **availability** through data corruption.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://github.com/hitrov/oci-arm-host-capacity/issues/20",
+    "https://skrajend.blogspot.com/2019/02/in-transit-encryption-for-boot-and.html",
+    "https://docs.oracle.com/en-us/iaas/Content/Block/Concepts/blockvolumeencryption.htm",
+    "https://www.pulumi.com/registry/packages/oci/api-docs/core/volumeattachment/",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Compute/enable-encryption-in-transit.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "oci compute instance update --instance-id <instance-ocid> --agent-config '{\"isManagementDisabled\": false}'",
+      "CLI": "oci compute boot-volume-attachment update --boot-volume-attachment-id <boot-volume-attachment-ocid> --is-pv-encryption-in-transit-enabled true",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Compute/enable-encryption-in-transit.html",
-      "Terraform": "resource \"oci_core_instance\" \"example\" {\n  # ... other configuration ...\n  agent_config {\n    is_management_disabled = false\n  }\n}"
+      "Other": "1. In the OCI Console, go to Compute > Instances and open the target instance\n2. Under Resources, click the boot volume attachment, choose Edit, enable \"Use in-transit encryption\", and Save\n3. For each attached block volume (paravirtualized), open the attachment (More actions > Edit), enable \"Use in-transit encryption\", and Save\n4. If Edit isn't available for an attachment, detach it and reattach it with \"Use in-transit encryption\" checked",
+      "Terraform": "```hcl\nresource \"oci_core_instance\" \"<example_resource_name>\" {\n  # ... other required configuration ...\n  launch_options {\n    is_pv_encryption_in_transit_enabled = true  # Critical: enables in-transit encryption for paravirtualized attachments\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable the Oracle Cloud Agent management plugin on all compute instances to enable in-transit encryption for block volume attachments.",
-      "Url": "https://hub.prowler.com/check/oci/compute_instance_in_transit_encryption_enabled"
+      "Text": "Enable **in-transit encryption** for all paravirtualized volume attachments and make it standard in golden images and IaC. Apply **defense in depth** with **customer-managed keys** and regular rotation. Periodically verify attachments and remediate drift so no instance communicates with volumes over unencrypted channels.",
+      "Url": "https://hub.prowler.com/check/compute_instance_in_transit_encryption_enabled"
     }
   },
   "Categories": [
-    "compute",
     "encryption"
   ],
   "DependsOn": [],
