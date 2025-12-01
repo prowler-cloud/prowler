@@ -1,35 +1,34 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "compute_instance_secure_boot_enabled",
-  "CheckTitle": "Ensure Secure Boot is enabled on Compute Instance",
-  "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS OCI Foundations Benchmark"
-  ],
+  "CheckTitle": "Compute instance has Secure Boot enabled",
+  "CheckType": [],
   "ServiceName": "compute",
   "SubServiceName": "",
-  "ResourceIdTemplate": "oci:compute:instance",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "OciComputeInstance",
-  "Description": "Secure Boot helps ensure that the instance boots using only software that is trusted by the platform firmware. This prevents rootkits and bootkits from loading during the boot process.",
-  "Risk": "Without Secure Boot enabled, instances are vulnerable to boot-level malware that can compromise the entire system before the operating system loads.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Compute/References/shielded-instances.htm",
+  "ResourceType": "Instance",
+  "Description": "**OCI compute instances** have **UEFI Secure Boot** enabled so the platform firmware loads only trusted, signed bootloaders, kernels, and drivers at startup.",
+  "Risk": "Without **Secure Boot**, unsigned or tampered boot code can run before the OS, enabling **bootkits/rootkits** to gain kernel-level persistence, bypass monitoring, alter logs, and exfiltrate secrets, eroding **integrity** and **confidentiality**, and risking **availability** through destructive changes or ransom staging.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Compute/enable-secure-boot.html",
+    "https://docs.oracle.com/en-us/iaas/Content/Compute/References/shielded-instances.htm"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "oci compute instance update --instance-id <instance-ocid> --platform-config '{\"isSecureBootEnabled\": true}'",
+      "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Compute/enable-secure-boot.html",
-      "Terraform": "resource \"oci_core_instance\" \"example\" {\n  # ... other configuration ...\n  platform_config {\n    type = \"AMD_MILAN_BM\" # or appropriate platform\n    is_secure_boot_enabled = true\n  }\n}"
+      "Other": "1. In the OCI Console, go to Compute > Instances\n2. Click Create instance\n3. Choose an image and shape that support Shielded instance\n4. In the Security section, click Edit under Shielded instance and enable Secure Boot\n5. Click Create\n6. To remove the failing resource, select the original non-shielded instance > More actions > Terminate",
+      "Terraform": "```hcl\nresource \"oci_core_instance\" \"example\" {\n  # ... other required configuration ...\n\n  platform_config {\n    type                   = \"AMD_VM\"\n    is_secure_boot_enabled = true # Critical: enable Secure Boot to pass the check\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable Secure Boot on all compute instances to protect against boot-level malware and ensure system integrity.",
-      "Url": "https://hub.prowler.com/check/oci/compute_instance_secure_boot_enabled"
+      "Text": "Enable **Secure Boot** across instances and prefer **shielded instances**. Pair with **TPM** and **Measured Boot** where supported for defense in depth. Permit only trusted, signed kernels and drivers, and manage updates via hardened golden images and code signing. *On Windows VMs, use Secure Boot with TPM and Measured Boot.*",
+      "Url": "https://hub.prowler.com/check/compute_instance_secure_boot_enabled"
     }
   },
   "Categories": [
-    "compute",
-    "security-configuration"
+    "node-security"
   ],
   "DependsOn": [],
   "RelatedTo": [],
