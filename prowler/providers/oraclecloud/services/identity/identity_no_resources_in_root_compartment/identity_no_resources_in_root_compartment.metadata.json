@@ -1,29 +1,34 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "identity_no_resources_in_root_compartment",
-  "CheckTitle": "Ensure no resources are created in the root compartment",
+  "CheckTitle": "No resources exist in the root compartment",
   "CheckType": [],
   "ServiceName": "identity",
   "SubServiceName": "",
-  "ResourceIdTemplate": "oci:identity:tenancy",
+  "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "OciTenancy",
-  "Description": "The root compartment is the top-level compartment in your tenancy and should be used only for management purposes. All other cloud resources should be created in child compartments to maintain proper organization, access control, and resource isolation.",
-  "Risk": "Creating resources in the root compartment bypasses the benefits of compartmentalization, makes access control management difficult, violates the principle of least privilege, and increases the risk of unauthorized access to resources. It also makes it harder to implement effective IAM policies and resource governance.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/managingcompartments.htm",
+  "ResourceType": "Compartment",
+  "Description": "**OCI root compartment** is evaluated for the presence of **user resources**. The finding highlights any assets created at the tenancy root and provides a count per `resource_type`.",
+  "Risk": "**Resources in the root compartment** inherit broad tenancy-level policies, weakening **least privilege**. Compromise or error can enable wide **unauthorized access**, **lateral movement**, and destructive changes, degrading **confidentiality** and **integrity**, while complicating audits and quota governance.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/managingcompartments.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-IAM/check-for-root-compartment-resources.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-IAM/check-for-root-compartment-resources.html",
-      "Terraform": ""
+      "Other": "1. In the OCI Console, go to Governance & Administration > Tenancy Explorer\n2. Set Compartment to the root compartment and enable \"Show resources in subcompartments\" off\n3. Note each resource listed in the root compartment\n4. For each resource: navigate to its service page (e.g., Compute > Instances), select the resource, click Actions (three dots) > Move resource\n5. Choose a non-root compartment and confirm\n6. If a resource type cannot be moved, delete it and recreate it in a non-root compartment\n7. Repeat until Tenancy Explorer shows 0 resources in the root compartment",
+      "Terraform": "```hcl\n# Place resources in a non-root compartment to avoid creating them in the root\nresource \"oci_core_vcn\" \"<example_resource_name>\" {\n  compartment_id = \"<example_compartment_id>\" # CRITICAL: ensure this is a non-root compartment OCID to pass the check\n  cidr_block     = \"10.0.0.0/16\"\n  display_name   = \"<example_resource_name>\"\n}\n```"
     },
     "Recommendation": {
-      "Text": "Move all resources from the root compartment to appropriate child compartments. From OCI Console: 1. Identify resources in the root compartment. 2. Create or select appropriate child compartments. 3. Move resources to child compartments using the 'Move Resource' option available for most resource types. 4. Update any policies or automation that reference root compartment resources.",
-      "Url": "https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/managingcompartments.htm"
+      "Text": "Reserve the **root compartment** for governance only.\n- Create workload-specific child compartments\n- Scope IAM to them per **least privilege** and **separation of duties**\n- Enforce boundaries with quotas and tags\n- Update automation to avoid root placement\n- Regularly audit and relocate stray resources",
+      "Url": "https://hub.prowler.com/check/identity_no_resources_in_root_compartment"
     }
   },
   "Categories": [
+    "trust-boundaries",
     "identity-access"
   ],
   "DependsOn": [],

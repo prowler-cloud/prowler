@@ -1,26 +1,36 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "identity_service_level_admins_exist",
-  "CheckTitle": "Ensure service level admins are created to manage resources of particular service",
+  "CheckTitle": "Identity policy does not grant broad 'manage all-resources' permissions",
   "CheckType": [],
   "ServiceName": "identity",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
-  "ResourceType": "OciIdentityPolicy",
-  "Description": "To apply least-privilege security principle, create service-level administrators in corresponding groups and assign specific users to each service-level administrative group in a tenancy. This limits administrative access to specific services.",
-  "Risk": "Without service-level administrators, there is a risk of excessive permissions being granted, violating the principle of least privilege.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Identity/Concepts/policygetstarted.htm",
+  "Severity": "high",
+  "ResourceType": "Policy",
+  "Description": "**OCI IAM policies** are reviewed for **overly broad entitlements**, specifically statements granting `manage all-resources` without scoping to particular services or compartments. Only **active policies** are considered; the default tenant admin policy is excluded.",
+  "Risk": "Broad `manage all-resources` grants erode **least privilege**, enabling access across the tenancy. A compromised user or misused token could cause **privilege escalation**, **data exfiltration**, destructive changes, and service disruption, impacting confidentiality, integrity, and availability.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.linkedin.com/pulse/identity-access-management-oracle-cloud-control-authentication-mklqc",
+    "https://docs.oracle.com/en-us/iaas/Content/Identity/getstarted/identity-domains.htm",
+    "https://docs.prowler.com/checks/oci/oci-iam-policies/identity_service_level_admins_exist",
+    "https://dbarepository.wordpress.com/2025/03/14/identity-and-access-management-policies-in-oci/",
+    "https://monowar-mukul.medium.com/cloud-identity-and-access-management-iam-for-the-beginner-392ba6de238",
+    "https://diversedaily.com/iam-policy-optimization-fine-tuned-iam-policies-prevent-costly-accidental-resource-usage/",
+    "https://docs.oracle.com/en-us/iaas/Content/Identity/Concepts/policygetstarted.htm",
+    "https://www.ateam-oracle.com/post/oracle-cloud-infrastructure-compartments"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "oci iam policy create --compartment-id <compartment-ocid> --name <policy-name> --description '<policy-description>' --statements '[\"Allow group <GroupName> to manage <service>-family in compartment <CompartmentName>\"]'",
+      "CLI": "oci iam policy update --policy-id <policy-ocid> --statements '[\"Allow group <GroupName> to manage instance-family in compartment <CompartmentName>\"]'",
       "NativeIaC": "",
-      "Other": "1. Navigate to Identity → Policies\n2. Click 'Create Policy'\n3. Create policies granting service-level admin permissions to specific groups in specific compartments\n4. Example: 'Allow group VolumeAdmins to manage volume-family in compartment Production'",
-      "Terraform": "resource \"oci_identity_policy\" \"service_admin_policy\" {\n  compartment_id = var.compartment_id\n  name = \"ServiceLevelAdminPolicy\"\n  description = \"Service-level admin policy\"\n  statements = [\n    \"Allow group VolumeAdmins to manage volume-family in compartment Production\"\n  ]\n}"
+      "Other": "1. In OCI Console, go to Identity & Security > Policies\n2. Open the policy that contains a statement with \"manage all-resources\"\n3. Click Edit policy statements\n4. Remove the statement(s) containing \"manage all-resources\"\n5. Add a service-specific statement, e.g.: Allow group <GroupName> to manage instance-family in compartment <CompartmentName>\n6. Click Save changes",
+      "Terraform": "```hcl\nresource \"oci_identity_policy\" \"<example_resource_name>\" {\n  compartment_id = \"<example_resource_id>\"\n  name           = \"<example_resource_name>\"\n  description    = \"<policy-description>\"\n\n  # Critical: restrict to a specific service family to avoid broad 'manage all-resources'\n  statements = [\n    \"Allow group <GroupName> to manage instance-family in compartment <CompartmentName>\"\n  ]\n}\n```"
     },
     "Recommendation": {
-      "Text": "Create service-level administrators with limited permissions to specific services within compartments.",
-      "Url": "https://docs.prowler.com/checks/oci/oci-iam-policies/identity_service_level_admins_exist"
+      "Text": "Apply **least privilege** and **separation of duties**:\n- Replace `manage all-resources` with service-scoped permissions and compartment limits\n- Create service-level admin groups for specific families\n- Use tags/regions for conditions, *when applicable*\n- Employ time-bound elevation and periodic reviews",
+      "Url": "https://hub.prowler.com/check/identity_service_level_admins_exist"
     }
   },
   "Categories": [

@@ -1,30 +1,30 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "identity_user_api_keys_rotated_90_days",
-  "CheckTitle": "Ensure user API keys rotate within 90 days or less",
-  "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS OCI Foundations Benchmark"
-  ],
+  "CheckTitle": "User active API key is rotated within 90 days or less",
+  "CheckType": [],
   "ServiceName": "identity",
   "SubServiceName": "",
-  "ResourceIdTemplate": "oci:identity:user",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "OciIamApiKey",
-  "Description": "Ensure user API keys rotate within 90 days or less. API keys are used to authenticate API calls. For security purposes, it is recommended that API keys be rotated regularly.",
-  "Risk": "Having API keys that have not been rotated in over 90 days increases the risk of unauthorized access if the key is compromised.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/managingcredentials.htm",
+  "ResourceType": "User",
+  "Description": "OCI IAM users with **active API signing keys** older than `90` days are identified. Key age is derived from each key's creation time; only active keys are considered. Users without API keys are recorded.",
+  "Risk": "Long-lived API keys widen exposure. If a key leaks, an attacker can sign OCI API calls without MFA, enabling unauthorized changes (**integrity**), data access (**confidentiality**), and service outages (**availability**). Delayed rotation prolongs dwell time and complicates incident response.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/managingcredentials.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-IAM/rotate-user-api-keys.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "oci iam api-key upload --user-id <user-ocid> --key-file <path-to-new-public-key> && oci iam api-key delete --user-id <user-ocid> --fingerprint <old-key-fingerprint>",
+      "CLI": "oci iam api-key delete --user-id <user-ocid> --fingerprint <old-key-fingerprint> --force",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-IAM/rotate-user-api-keys.html",
+      "Other": "1. Sign in to the OCI Console\n2. Go to Identity & Security > Users, then select the target user\n3. Open API Keys and click Add API Key\n4. Generate API Key Pair (or Upload/Paste Public Key), then click Add and download/copy the private key\n5. For each API key older than 90 days, click the Actions (three dots) next to its fingerprint and select Delete\n6. Confirm deletion",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Rotate API keys that are older than 90 days by creating a new key and deleting the old one.",
-      "Url": "https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/managingcredentials.htm"
+      "Text": "Enforce **API key rotation** every `90` days.\n- Issue a new key, confirm workloads use it, then revoke the old key\n- Apply **least privilege** and avoid shared keys\n- Limit active keys per user and remove unused ones\n- Monitor usage and automate rotation for **defense in depth**",
+      "Url": "https://hub.prowler.com/check/identity_user_api_keys_rotated_90_days"
     }
   },
   "Categories": [

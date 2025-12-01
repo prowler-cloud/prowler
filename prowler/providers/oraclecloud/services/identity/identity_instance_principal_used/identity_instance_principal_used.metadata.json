@@ -1,30 +1,29 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "identity_instance_principal_used",
-  "CheckTitle": "Ensure Instance Principal authentication is used for OCI instances, OCI Cloud Databases and OCI Functions to access OCI resources",
-  "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS OCI Foundations Benchmark"
-  ],
+  "CheckTitle": "Instance principal authentication is configured for OCI instances, OCI Cloud Databases, and OCI Functions",
+  "CheckType": [],
   "ServiceName": "identity",
   "SubServiceName": "",
-  "ResourceIdTemplate": "oci:identity:user",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "OciIamUser",
-  "Description": "Instance Principal authentication should be used instead of user credentials.",
-  "Risk": "Not meeting this IAM requirement increases security risk.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Identity/home.htm",
+  "ResourceType": "DynamicResourceGroup",
+  "Description": "OCI dynamic groups configured for **instance principal** access to workloads like **Compute instances**, **Functions**, and **Autonomous Databases**. The evaluation looks for matching rules that target these resources (e.g., `instance`, `fnfunc`, `autonomousdatabase`) to confirm workload identity usage.",
+  "Risk": "Using user credentials or long-lived keys instead of **instance principals** exposes secrets and weakens **least privilege** and **accountability**. Stolen keys from code or pipelines enable unauthorized API calls, data exfiltration, and privilege abuse, impacting **confidentiality** and **integrity** of OCI resources.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en-us/iaas/Content/Identity/home.htm"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "oci iam dynamic-group create --compartment-id <example_resource_id> --name <example_resource_name> --matching-rule \"ALL {resource.type = 'instance'}\"",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. In the OCI Console, go to Identity & Security > Dynamic Groups\n2. Click Create Dynamic Group\n3. Enter Name: <example_resource_name>\n4. Set Matching Rule to: ALL {resource.type = 'instance'}\n5. Click Create",
+      "Terraform": "```hcl\nresource \"oci_identity_dynamic_group\" \"dg\" {\n  compartment_id = \"<example_resource_id>\"\n  name           = \"<example_resource_name>\"\n  description    = \"Enable instance principals\"\n  matching_rule  = \"ALL {resource.type = 'instance'}\" # Critical: creates a Dynamic Group for instances to enable instance principal auth\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure Instance Principal authentication is used for OCI instances, OCI Cloud Databases and OCI Functions to access OCI resources",
-      "Url": "https://hub.prowler.com/check/oci/identity_instance_principal_used"
+      "Text": "Adopt **workload identities** with **instance principals** and granular dynamic groups. Apply **least privilege** policies to those groups, avoid long-lived user keys, and remove embedded credentials from code and CI/CD. Monitor access patterns and favor short-lived, auditable tokens as part of a **zero trust** approach.",
+      "Url": "https://hub.prowler.com/check/identity_instance_principal_used"
     }
   },
   "Categories": [

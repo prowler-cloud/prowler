@@ -1,34 +1,34 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "identity_tenancy_admin_users_no_api_keys",
-  "CheckTitle": "Ensure API keys are not created for tenancy administrator users",
-  "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS OCI Foundations Benchmark"
-  ],
+  "CheckTitle": "Tenancy administrator user has no API keys",
+  "CheckType": [],
   "ServiceName": "identity",
   "SubServiceName": "",
-  "ResourceIdTemplate": "oci:identity:user",
+  "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "OciIamUser",
-  "Description": "Tenancy administrator users should not have API keys.",
-  "Risk": "Not meeting this IAM requirement increases security risk.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Identity/home.htm",
+  "ResourceType": "User",
+  "Description": "OCI tenancy administrator accounts (members of the `Administrators` group) are inspected for configured user **API keys** tied to those identities.",
+  "Risk": "**Admin API keys** are long-lived secrets that can be stolen from endpoints or repos, enabling non-interactive, MFA-less access. Attackers could run privileged API calls, exfiltrate data, modify policies, or delete resources, impacting **confidentiality**, **integrity**, and **availability**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en-us/iaas/Content/Identity/home.htm"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. Sign in to the Oracle Cloud Console\n2. Open the navigation menu and go to Identity & Security > Domains\n3. Select your domain (<example_resource_name>), then click Users\n4. Click the tenancy administrator user (<example_resource_name>)\n5. Open the API Keys tab\n6. For each API key, click Actions > Delete and confirm\n7. Repeat until the API Keys list is empty",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Ensure API keys are not created for tenancy administrator users",
-      "Url": "https://hub.prowler.com/check/oci/identity_tenancy_admin_users_no_api_keys"
+      "Text": "Do not issue **API keys** to tenancy administrators. Apply **least privilege** and **separation of duties**: use non-admin service accounts or principals with narrowly scoped rights and short-lived credentials. Require **SSO/MFA** for admin access, and enforce rapid key revocation and rotation for any programmatic identities.",
+      "Url": "https://hub.prowler.com/check/identity_tenancy_admin_users_no_api_keys"
     }
   },
   "Categories": [
-    "identity-access"
+    "identity-access",
+    "secrets"
   ],
   "DependsOn": [],
   "RelatedTo": [],
