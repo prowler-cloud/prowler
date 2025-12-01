@@ -76,7 +76,7 @@ jobs:
       - name: Add AWS credentials for testing AWS SDK Default Adding Provider
         run: |
           echo "Adding AWS credentials for testing AWS SDK Default Adding Provider..."
-          echo "AWS_ACCESS_KEY_ID=${{ secrets.E2E_AWS_PROVIDER_ACCESS_KEY }} >> .env
+          echo "AWS_ACCESS_KEY_ID=${{ secrets.E2E_AWS_PROVIDER_ACCESS_KEY }}" >> .env
           echo "AWS_SECRET_ACCESS_KEY=${{ secrets.E2E_AWS_PROVIDER_SECRET_KEY }}" >> .env
       - name: Start API services
         run: |
