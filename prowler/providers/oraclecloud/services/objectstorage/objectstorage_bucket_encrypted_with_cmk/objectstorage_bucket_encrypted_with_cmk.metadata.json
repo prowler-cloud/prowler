@@ -1,34 +1,33 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "objectstorage_bucket_encrypted_with_cmk",
-  "CheckTitle": "Ensure Object Storage Buckets are encrypted with a Customer Managed Key (CMK)",
-  "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS OCI Foundations Benchmark"
-  ],
+  "CheckTitle": "Object Storage bucket is encrypted with a Customer Managed Key (CMK)",
+  "CheckType": [],
   "ServiceName": "objectstorage",
   "SubServiceName": "",
-  "ResourceIdTemplate": "oci:objectstorage:bucket",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "OciBucket",
-  "Description": "Object Storage buckets should be encrypted with Customer Managed Keys.",
-  "Risk": "Not meeting this storage security requirement increases data security risk.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Object/home.htm",
+  "ResourceType": "Bucket",
+  "Description": "**Object Storage buckets** use **customer-managed encryption keys** (`CMEK`) for server-side encryption, with an associated KMS key configured on the bucket.",
+  "Risk": "Without `CMEK`, encryption relies on provider-managed keys, reducing control over **confidentiality** and key lifecycle. You cannot strictly limit key usage, enforce custom rotation, or revoke keys for crypto-erasure, increasing exposure to unauthorized decryption, data exfiltration, and auditability gaps.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-ObjectStorage/buckets-encrypted-with-cmks.html",
+    "https://docs.oracle.com/en-us/iaas/Content/Object/home.htm"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "oci os bucket update --namespace-name <NAMESPACE> --bucket-name <BUCKET_NAME> --kms-key-id <KEY_OCID>",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-ObjectStorage/buckets-encrypted-with-cmks.html",
-      "Terraform": ""
+      "Other": "1. Sign in to the OCI Console\n2. Go to Storage > Object Storage & Archive Storage > Buckets\n3. Open the target bucket\n4. Click Edit bucket\n5. Under Encryption, select Customer-managed key and choose the desired Vault key\n6. Click Save",
+      "Terraform": "```hcl\nresource \"oci_objectstorage_bucket\" \"<example_resource_name>\" {\n  compartment_id = \"<example_resource_id>\"\n  name           = \"<example_resource_name>\"\n  namespace      = \"<example_resource_name>\"\n\n  kms_key_id = \"<example_resource_id>\" # Critical: sets the Customer Managed Key to encrypt the bucket\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure Object Storage Buckets are encrypted with a Customer Managed Key (CMK)",
-      "Url": "https://hub.prowler.com/check/oci/objectstorage_bucket_encrypted_with_cmk"
+      "Text": "Encrypt buckets with `CMEK`. Apply **least privilege** to key usage, enforce **separation of duties** between key and storage admins, mandate regular rotation, and monitor key access. Use **defense in depth** so encryption complements strict IAM and network controls rather than replacing them.",
+      "Url": "https://hub.prowler.com/check/objectstorage_bucket_encrypted_with_cmk"
     }
   },
   "Categories": [
-    "storage",
     "encryption"
   ],
   "DependsOn": [],
