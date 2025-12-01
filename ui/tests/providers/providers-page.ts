@@ -429,44 +429,43 @@ export class ProvidersPage extends BasePage {
     await super.goto("/providers");
   }
 
+  private async verifyPageHasProwlerTitle(): Promise<void> {
+    await expect(this.page).toHaveTitle(/Prowler/);
+  }
+
   async clickAddProvider(): Promise<void> {
     // Click the add provider button
 
     await this.addProviderButton.click();
   }
 
+  private async selectProviderRadio(radio: Locator): Promise<void> {
+    // Force click to handle overlay intercepts
+    await radio.click({ force: true });
+  }
+
   async selectAWSProvider(): Promise<void> {
-    // Prefer label-based click for radios, force if overlay intercepts
-    await this.awsProviderRadio.click({ force: true });
+    await this.selectProviderRadio(this.awsProviderRadio);
   }
 
   async selectAZUREProvider(): Promise<void> {
-    // Prefer label-based click for radios, force if overlay intercepts
-    await this.azureProviderRadio.click({ force: true });
+    await this.selectProviderRadio(this.azureProviderRadio);
   }
 
   async selectM365Provider(): Promise<void> {
-    // Select the M365 provider
-
-    await this.m365ProviderRadio.click({ force: true });
+    await this.selectProviderRadio(this.m365ProviderRadio);
   }
 
   async selectKubernetesProvider(): Promise<void> {
-    // Select the Kubernetes provider
-
-    await this.kubernetesProviderRadio.click({ force: true });
+    await this.selectProviderRadio(this.kubernetesProviderRadio);
   }
 
   async selectGCPProvider(): Promise<void> {
-    // Select the GCP provider
-
-    await this.gcpProviderRadio.click({ force: true });
+    await this.selectProviderRadio(this.gcpProviderRadio);
   }
 
   async selectGitHubProvider(): Promise<void> {
-    // Select the GitHub provider
-
-    await this.githubProviderRadio.click({ force: true });
+    await this.selectProviderRadio(this.githubProviderRadio);
   }
 
   async fillAWSProviderDetails(data: AWSProviderData): Promise<void> {
@@ -575,31 +574,8 @@ export class ProvidersPage extends BasePage {
         )
         .first();
 
-      try {
-        // Wait up to 15 seconds for either the error message or redirect
-        await Promise.race([
-          // Wait for error message to appear
-          errorMessage.waitFor({ state: "visible", timeout: 15000 }),
-          // Wait for redirect to scans page (success case)
-          this.page.waitForURL(/\/scans/, { timeout: 15000 }),
-        ]);
-
-        // If we're still on test-connection page, check for error
-        if (/\/providers\/test-connection/.test(this.page.url())) {
-          const isErrorVisible = await errorMessage
-            .isVisible()
-            .catch(() => false);
-
-          if (isErrorVisible) {
-            const errorText = await errorMessage.textContent();
-
-            throw new Error(
-              `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
-            );
-          }
-        }
-      } catch (error) {
-        // If timeout or other error, check if error message is present
+      // Helper to check and throw error if visible
+      const checkAndThrowError = async (): Promise<void> => {
         const isErrorVisible = await errorMessage
           .isVisible()
           .catch(() => false);
@@ -611,7 +587,21 @@ export class ProvidersPage extends BasePage {
             `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
           );
         }
-        // Re-throw original error if no error message found
+      };
+
+      try {
+        // Wait up to 15 seconds for either the error message or redirect
+        await Promise.race([
+          errorMessage.waitFor({ state: "visible", timeout: 15000 }),
+          this.page.waitForURL(/\/scans/, { timeout: 15000 }),
+        ]);
+
+        // If we're still on test-connection page, check for error
+        if (/\/providers\/test-connection/.test(this.page.url())) {
+          await checkAndThrowError();
+        }
+      } catch (error) {
+        await checkAndThrowError();
         throw error;
       }
 
@@ -828,9 +818,7 @@ export class ProvidersPage extends BasePage {
   }
 
   async selectOCIProvider(): Promise<void> {
-    // Select the OCI provider
-
-    await this.ociProviderRadio.click({ force: true });
+    await this.selectProviderRadio(this.ociProviderRadio);
   }
 
   async fillOCIProviderDetails(data: OCIProviderData): Promise<void> {
@@ -863,7 +851,7 @@ export class ProvidersPage extends BasePage {
   async verifyOCICredentialsPageLoaded(): Promise<void> {
     // Verify the OCI credentials page is loaded
 
-    await expect(this.page).toHaveTitle(/Prowler/);
+    await this.verifyPageHasProwlerTitle();
     await expect(this.ociTenancyIdInput).toBeVisible();
     await expect(this.ociUserIdInput).toBeVisible();
     await expect(this.ociFingerprintInput).toBeVisible();
@@ -874,14 +862,14 @@ export class ProvidersPage extends BasePage {
   async verifyPageLoaded(): Promise<void> {
     // Verify the providers page is loaded
 
-    await expect(this.page).toHaveTitle(/Prowler/);
+    await this.verifyPageHasProwlerTitle();
     await expect(this.addProviderButton).toBeVisible();
   }
 
   async verifyConnectAccountPageLoaded(): Promise<void> {
     // Verify the connect account page is loaded
 
-    await expect(this.page).toHaveTitle(/Prowler/);
+    await this.verifyPageHasProwlerTitle();
     await expect(this.awsProviderRadio).toBeVisible();
     await expect(this.ociProviderRadio).toBeVisible();
     await expect(this.gcpProviderRadio).toBeVisible();
@@ -894,14 +882,14 @@ export class ProvidersPage extends BasePage {
   async verifyCredentialsPageLoaded(): Promise<void> {
     // Verify the credentials page is loaded
 
-    await expect(this.page).toHaveTitle(/Prowler/);
+    await this.verifyPageHasProwlerTitle();
     await expect(this.roleCredentialsRadio).toBeVisible();
   }
 
   async verifyM365CredentialsPageLoaded(): Promise<void> {
     // Verify the M365 credentials page is loaded
 
-    await expect(this.page).toHaveTitle(/Prowler/);
+    await this.verifyPageHasProwlerTitle();
     await expect(this.m365ClientIdInput).toBeVisible();
     await expect(this.m365ClientSecretInput).toBeVisible();
     await expect(this.m365TenantIdInput).toBeVisible();
@@ -910,7 +898,7 @@ export class ProvidersPage extends BasePage {
   async verifyM365CertificateCredentialsPageLoaded(): Promise<void> {
     // Verify the M365 certificate credentials page is loaded
 
-    await expect(this.page).toHaveTitle(/Prowler/);
+    await this.verifyPageHasProwlerTitle();
     await expect(this.m365ClientIdInput).toBeVisible();
     await expect(this.m365TenantIdInput).toBeVisible();
     await expect(this.m365CertificateContentInput).toBeVisible();
@@ -919,28 +907,28 @@ export class ProvidersPage extends BasePage {
   async verifyKubernetesCredentialsPageLoaded(): Promise<void> {
     // Verify the Kubernetes credentials page is loaded
 
-    await expect(this.page).toHaveTitle(/Prowler/);
+    await this.verifyPageHasProwlerTitle();
     await expect(this.kubernetesContextInput).toBeVisible();
   }
 
   async verifyGCPServiceAccountPageLoaded(): Promise<void> {
     // Verify the GCP service account page is loaded
 
-    await expect(this.page).toHaveTitle(/Prowler/);
+    await this.verifyPageHasProwlerTitle();
     await expect(this.gcpServiceAccountKeyInput).toBeVisible();
   }
 
   async verifyGitHubPersonalAccessTokenPageLoaded(): Promise<void> {
     // Verify the GitHub personal access token page is loaded
 
-    await expect(this.page).toHaveTitle(/Prowler/);
+    await this.verifyPageHasProwlerTitle();
     await expect(this.githubPersonalAccessTokenInput).toBeVisible();
   }
 
   async verifyGitHubAppPageLoaded(): Promise<void> {
     // Verify the GitHub app page is loaded
 
-    await expect(this.page).toHaveTitle(/Prowler/);
+    await this.verifyPageHasProwlerTitle();
     await expect(this.githubAppIdInput).toBeVisible();
     await expect(this.githubAppPrivateKeyInput).toBeVisible();
   }
@@ -948,7 +936,7 @@ export class ProvidersPage extends BasePage {
   async verifyLaunchScanPageLoaded(): Promise<void> {
     // Verify the launch scan page is loaded
 
-    await expect(this.page).toHaveTitle(/Prowler/);
+    await this.verifyPageHasProwlerTitle();
     await expect(this.page).toHaveURL(/\/providers\/test-connection/);
 
     // Verify the Launch scan button is visible
@@ -962,7 +950,7 @@ export class ProvidersPage extends BasePage {
   async verifyLoadProviderPageAfterNewProvider(): Promise<void> {
     // Verify the provider page is loaded
 
-    await expect(this.page).toHaveTitle(/Prowler/);
+    await this.verifyPageHasProwlerTitle();
     await expect(this.providersTable).toBeVisible();
   }
 
@@ -1124,66 +1112,62 @@ export class ProvidersPage extends BasePage {
       secretAccessKey: secretKey,
     };
 
-    // Create providers page object
-    const providersPage = new ProvidersPage(this.page);
-
     // Navigate to providers page
-    await providersPage.goto();
-    await providersPage.verifyPageLoaded();
+    await this.goto();
+    await this.verifyPageLoaded();
 
     // Start adding new provider
-    await providersPage.clickAddProvider();
-    await providersPage.verifyConnectAccountPageLoaded();
+    await this.clickAddProvider();
+    await this.verifyConnectAccountPageLoaded();
 
     // Select AWS provider
-    await providersPage.selectAWSProvider();
+    await this.selectAWSProvider();
 
     // Fill provider details
-    await providersPage.fillAWSProviderDetails(awsProviderData);
-    await providersPage.clickNext();
+    await this.fillAWSProviderDetails(awsProviderData);
+    await this.clickNext();
 
     // Verify credentials page is loaded
-    await providersPage.verifyCredentialsPageLoaded();
+    await this.verifyCredentialsPageLoaded();
 
     // Select static credentials type
-    await providersPage.selectCredentialsType(
-      AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS,
-    );
+    await this.selectCredentialsType(AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS);
+
     // Fill static credentials
-    await providersPage.fillStaticCredentials(staticCredentials);
-    await providersPage.clickNext();
+    await this.fillStaticCredentials(staticCredentials);
+    await this.clickNext();
 
     // Launch scan
-    await providersPage.verifyLaunchScanPageLoaded();
-    await providersPage.clickNext();
+    await this.verifyLaunchScanPageLoaded();
+    await this.clickNext();
 
-    // Wait for redirect to provider page
+    // Wait for redirect to scans page
     const scansPage = new ScansPage(this.page);
+
     await scansPage.verifyPageLoaded();
   }
 
   async selectAuthenticationMethod(method: AWSCredentialType): Promise<void> {
     // Select the authentication method
 
-    // Search botton that contains text AWS SDK Default or Prowler Cloud will assume or Access & Secret Key
     const button = this.page.locator("button").filter({
       hasText: /AWS SDK Default|Prowler Cloud will assume|Access & Secret Key/i,
     });
+
     await button.click();
 
-    if (method === AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN) {
-      const modal = this.page
-        .locator('[role="dialog"], .modal, [data-testid*="modal"]')
-        .first();
-      await expect(modal).toBeVisible({ timeout: 10000 });
+    const modal = this.page
+      .locator('[role="dialog"], .modal, [data-testid*="modal"]')
+      .first();
 
-      // Select the role credentials
-      this.page
+    await expect(modal).toBeVisible({ timeout: 10000 });
+
+    if (method === AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN) {
+      await this.page
         .getByRole("option", { name: "Access & Secret Key" })
         .click({ force: true });
     } else if (method === AWS_CREDENTIAL_OPTIONS.AWS_SDK_DEFAULT) {
-      // Select the AWS SDK Default
-      this.page
+      await this.page
         .getByRole("option", { name: "AWS SDK Default" })
         .click({ force: true });
     } else {
