@@ -145,8 +145,6 @@ class Compute(GCPService):
                                 ),
                                 deletion_protection=instance.get(
                                     "deletionProtection", False
-                                preemptible=instance.get("scheduling", {}).get(
-                                    "preemptible", False
                                 ),
                             )
                         )
@@ -383,9 +381,6 @@ class Instance(BaseModel):
     preemptible: bool = False
     provisioning_model: str = ""
     deletion_protection: bool = False
-    automatic_restart: bool = False
-    preemptible: bool = False
-    provisioning_model: str = "STANDARD"
 
 
 class Network(BaseModel):
