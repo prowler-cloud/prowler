@@ -61,8 +61,6 @@ export interface AWSProviderCredential {
   roleArn?: string;
   externalId?: string;
   accessKeyId?: string;
-  sdkAccessKeyId?: string;
-  sdkSecretAccessKey?: string;
   secretAccessKey?: string;
 }
 

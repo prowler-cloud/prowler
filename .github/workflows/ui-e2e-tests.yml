@@ -49,7 +49,9 @@ jobs:
       E2E_OCI_KEY_CONTENT: ${{ secrets.E2E_OCI_KEY_CONTENT }}
       E2E_OCI_REGION: ${{ secrets.E2E_OCI_REGION }}
       E2E_NEW_USER_PASSWORD: ${{ secrets.E2E_NEW_USER_PASSWORD }}
-      
+      AWS_ACCESS_KEY_ID: ${{ secrets.E2E_AWS_PROVIDER_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.E2E_AWS_PROVIDER_SECRET_KEY }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -59,11 +61,11 @@ jobs:
           cluster_name: kind
       - name: Modify kubeconfig
         run: |
-            # Modify the kubeconfig to use the kind cluster server to https://kind-control-plane:6443 
+            # Modify the kubeconfig to use the kind cluster server to https://kind-control-plane:6443
             # from worker service into docker-compose.yml
             kubectl config set-cluster kind-kind --server=https://kind-control-plane:6443
-            kubectl config view 
-      - name: Add network kind to docker compose  
+            kubectl config view
+      - name: Add network kind to docker compose
         run: |
           # Add the network kind to the docker compose to interconnect to kind cluster
           yq -i '.networks.kind.external = true' docker-compose.yml

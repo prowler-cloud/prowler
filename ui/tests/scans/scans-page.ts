@@ -20,7 +20,7 @@ export class ScansPage extends BasePage {
     super(page);
 
     // Scan provider selection elements
-    this.scanProviderSelect = page.getByRole("button", { name: "Select a cloud provider to launch a scan" });
+    this.scanProviderSelect = page.getByRole('combobox').filter({ hasText: 'Choose a cloud provider' })
     this.scanAliasInput = page.getByRole("textbox", { name: "Scan label (optional)" });
     this.startNowButton = page.getByRole("button", { name: /Start now|Start scan now/i });
 
@@ -62,7 +62,7 @@ export class ScansPage extends BasePage {
     await expect(this.startNowButton).toBeVisible();
     await this.startNowButton.click();
   }
-  
+
   async verifyScanLaunched(alias: string): Promise<void> {
     // Verify the scan was launched
 
@@ -119,5 +119,5 @@ export class ScansPage extends BasePage {
       ignoreCase: true,
     });
   }
-  
+
 }

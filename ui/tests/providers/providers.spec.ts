@@ -140,9 +140,9 @@ test.describe("Add Provider", () => {
       },
       async ({ page }) => {
         // Validate required environment variables
-        if (!accountId || !accessKey || !secretKey || !roleArn) {
+        if (!roleArn) {
           throw new Error(
-            "E2E_AWS_PROVIDER_ACCOUNT_ID, E2E_AWS_PROVIDER_ACCESS_KEY, E2E_AWS_PROVIDER_SECRET_KEY, and E2E_AWS_PROVIDER_ROLE_ARN environment variables are not set",
+            "E2E_AWS_PROVIDER_ROLE_ARN environment variable is not set",
           );
         }
 
@@ -232,8 +232,6 @@ test.describe("Add Provider", () => {
         // Prepare role-based credentials
         const roleCredentials: AWSProviderCredential = {
           type: AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN,
-          sdkAccessKeyId: accessKey,
-          sdkSecretAccessKey: secretKey,
           roleArn: roleArn,
         };
 
