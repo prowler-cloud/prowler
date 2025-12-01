@@ -1,34 +1,34 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "integration_instance_access_restricted",
-  "CheckTitle": "Ensure Oracle Integration Cloud (OIC) access is restricted to allowed sources",
-  "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS OCI Foundations Benchmark"
-  ],
+  "CheckTitle": "Oracle Integration Cloud instance uses a private endpoint or a public endpoint with IP or VCN allowlists",
+  "CheckType": [],
   "ServiceName": "integration",
   "SubServiceName": "",
-  "ResourceIdTemplate": "oci:integration:instance",
+  "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "IntegrationInstance",
-  "Description": "Oracle Integration Cloud access should be restricted to allowed sources.",
-  "Risk": "Not meeting this network security requirement increases risk of unauthorized access.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Network/home.htm",
+  "Description": "**Oracle Integration Cloud instances** are evaluated for **network endpoint restrictions**, confirming access is limited to approved IPs or VCNs. Configurations with `0.0.0.0/0`, missing endpoint details, or **PUBLIC** endpoints without allowlists are identified; **PRIVATE** endpoints or PUBLIC endpoints with IP/VCN allowlists indicate restricted access.",
+  "Risk": "Unrestricted OIC endpoints expose integration APIs and consoles to the Internet, enabling credential brute force, token theft, and unauthorized invocations. Attackers can exfiltrate data, alter workflows, and pivot into connected backends, impacting confidentiality and integrity, and causing availability issues via abuse or DoS.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en-us/iaas/Content/Network/home.htm"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "oci integration integration-instance update --integration-instance-id <example_resource_id> --network-endpoint-details '{\"networkEndpointType\":\"PUBLIC\",\"allowlistedHttpIps\":[\"<ALLOWED_CIDR>\"]}'",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. In the OCI Console, go to Developer Services > Integration > Integration instances\n2. Open <example_resource_name> and click Edit\n3. If using Public endpoint: add an entry under Allowed IPs (e.g., <ALLOWED_CIDR>) and remove any 0.0.0.0/0\n4. Alternatively, switch to Private endpoint if desired and select the required VCN/subnet\n5. Click Save",
+      "Terraform": "```hcl\n# Restrict OIC access by allowlisting specific IPs\nresource \"oci_integration_integration_instance\" \"<example_resource_name>\" {\n  network_endpoint_details {\n    network_endpoint_type = \"PUBLIC\"\n    allowlisted_http_ips  = [\"<ALLOWED_CIDR>\"]  # Critical: restricts access to specified IP/CIDR\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure Oracle Integration Cloud (OIC) access is restricted to allowed sources",
-      "Url": "https://hub.prowler.com/check/oci/integration_instance_access_restricted"
+      "Text": "Prefer **PRIVATE** endpoints and restrict access to specific VCNs. *If PUBLIC is required*, enforce strict IP allowlists-never `0.0.0.0/0`. Apply **least privilege** at network layers, place OIC behind **WAF/VPN**, segment with security lists, and monitor access logs. Review allowlists regularly as part of **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/integration_instance_access_restricted"
     }
   },
   "Categories": [
-    "network-security"
+    "internet-exposed",
+    "trust-boundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],
