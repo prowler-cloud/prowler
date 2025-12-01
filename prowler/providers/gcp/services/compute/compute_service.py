@@ -140,6 +140,9 @@ class Compute(GCPService):
                                     "provisioningModel", "STANDARD"
                                 ),
                                 project_id=project_id,
+                                preemptible=instance.get("scheduling", {}).get(
+                                    "preemptible", False
+                                ),
                                 deletion_protection=instance.get(
                                     "deletionProtection", False
                                 preemptible=instance.get("scheduling", {}).get(
@@ -376,6 +379,9 @@ class Instance(BaseModel):
     service_accounts: list
     ip_forward: bool
     disks_encryption: list
+    automatic_restart: bool = False
+    preemptible: bool = False
+    provisioning_model: str = ""
     deletion_protection: bool = False
     automatic_restart: bool = False
     preemptible: bool = False
