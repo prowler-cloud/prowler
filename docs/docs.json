@@ -163,13 +163,6 @@
             "group": "Providers",
             "pages": [
               {
-                "group": "Alibaba Cloud",
-                "pages": [
-                  "user-guide/providers/alibabacloud/getting-started-alibabacloud",
-                  "user-guide/providers/alibabacloud/authentication"
-                ]
-              },
-              {
                 "group": "AWS",
                 "pages": [
                   "user-guide/providers/aws/getting-started-aws",
@@ -203,6 +196,13 @@
                   "user-guide/providers/gcp/projects",
                   "user-guide/providers/gcp/organization",
                   "user-guide/providers/gcp/retry-configuration"
+                ]
+              },
+              {
+                "group": "Alibaba Cloud",
+                "pages": [
+                  "user-guide/providers/alibabacloud/getting-started-alibabacloud",
+                  "user-guide/providers/alibabacloud/authentication"
                 ]
               },
               {
