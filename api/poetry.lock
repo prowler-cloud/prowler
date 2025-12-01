@@ -7064,8 +7064,4 @@ testing = ["coverage[toml]", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<3.13"
-<<<<<<< HEAD
-content-hash = "ed4c11443ea6a54da50a62c8c27efbf69608ef9f15894746696169fa010d04c9"
-=======
-content-hash = "77ef098291cb8631565a1ab5027ce33e7fcb5a04883dc7160bf373eac9e1fb49"
->>>>>>> 495aee015 (build: add gevent to API deps (#9359))
+content-hash = "6dcdbbed2a46ab0111f4e32979fb7e5c7e3f6a80c4d293ac21b8c1f73c555204"
