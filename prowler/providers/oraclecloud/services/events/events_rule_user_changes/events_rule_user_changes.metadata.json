@@ -1,35 +1,37 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "events_rule_user_changes",
-  "CheckTitle": "Ensure a notification is configured for user changes",
-  "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS OCI Foundations Benchmark"
-  ],
+  "CheckTitle": "Event rule monitoring user changes has notification actions configured",
+  "CheckType": [],
   "ServiceName": "events",
   "SubServiceName": "",
-  "ResourceIdTemplate": "oci:events:rule",
-  "Severity": "medium",
-  "ResourceType": "OciEventsRule",
-  "Description": "Event rules should be configured to notify on user changes.",
-  "Risk": "Without proper event monitoring, security-relevant changes may go unnoticed.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Events/home.htm",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "EventRule",
+  "Description": "OCI **Events rules** targeting **IAM user changes** (e.g., `com.oraclecloud.identitycontrolplane.createuser` and related update/delete/state events) are assessed for attached **notification actions**.\n\nThe finding indicates which rules listen for these events and whether they are configured to emit alerts.",
+  "Risk": "Absent alerts on user lifecycle events, **unauthorized account creation**, **privilege escalation**, or **re-enabling disabled users** may go undetected. This delays containment, enabling persistence and lateral movement that erode **confidentiality** and **integrity**, and introduces audit gaps reducing **accountability**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Events/detect-iam-user-changes.html",
+    "https://orca.security/resources/cloud-risk-encyclopedia/notification-not-configured-for-iam-user-changes/",
+    "https://docs.oracle.com/en-us/iaas/Content/Events/home.htm",
+    "https://www.ateam-oracle.com/post/part-1-event-based-integration-with-oci-iam"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "oci events rule create --display-name <name> --condition <event-condition> --actions <notification-actions>",
+      "CLI": "oci events rule create --compartment-id <COMPARTMENT_OCID> --display-name <example_resource_name> --condition '{\"eventType\":[\"com.oraclecloud.identitycontrolplane.createuser\",\"com.oraclecloud.identitycontrolplane.deleteuser\",\"com.oraclecloud.identitycontrolplane.updateuser\",\"com.oraclecloud.identitycontrolplane.updateusercapabilities\",\"com.oraclecloud.identitycontrolplane.updateuserstate\"]}' --actions '{\"actions\":[{\"actionType\":\"ONS\",\"topicId\":\"<TOPIC_OCID>\"}]}'",
       "NativeIaC": "",
-      "Other": "1. Navigate to Observability & Management > Events Service\n2. Create a new rule\n3. Configure the event condition\n4. Add notification action\n5. Save the rule",
-      "Terraform": "resource \"oci_events_rule\" \"example\" {\n  display_name = \"rule\"\n  is_enabled = true\n  condition = jsonencode({\n    eventType = [\"com.oraclecloud.*\"]\n  })\n  actions {\n    actions {\n      action_type = \"ONS\"\n      topic_id = var.topic_id\n    }\n  }\n}"
+      "Other": "1. In the OCI Console, go to Observability & Management > Events Service > Rules and click Create Rule\n2. Select the Compartment and enter a Name\n3. Under Rule Conditions, set Event Type to include:\n   - com.oraclecloud.identitycontrolplane.createuser\n   - com.oraclecloud.identitycontrolplane.deleteuser\n   - com.oraclecloud.identitycontrolplane.updateuser\n   - com.oraclecloud.identitycontrolplane.updateusercapabilities\n   - com.oraclecloud.identitycontrolplane.updateuserstate\n4. Under Actions, add a Notification action and select the desired Notifications (ONS) Topic\n5. Click Create",
+      "Terraform": "```hcl\nresource \"oci_events_rule\" \"<example_resource_name>\" {\n  compartment_id = \"<example_resource_id>\"\n  display_name   = \"<example_resource_name>\"\n\n  # Critical: monitor IAM user change event types\n  condition = jsonencode({\n    eventType = [\n      \"com.oraclecloud.identitycontrolplane.createuser\",\n      \"com.oraclecloud.identitycontrolplane.deleteuser\",\n      \"com.oraclecloud.identitycontrolplane.updateuser\",\n      \"com.oraclecloud.identitycontrolplane.updateusercapabilities\",\n      \"com.oraclecloud.identitycontrolplane.updateuserstate\",\n    ]\n  })\n\n  actions {\n    actions {\n      action_type = \"ONS\"            # Critical: notification action type\n      topic_id    = \"<example_resource_id>\" # Critical: ONS topic to notify\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure a notification is configured for user changes",
-      "Url": "https://hub.prowler.com/check/oci/events_rule_user_changes"
+      "Text": "Create and maintain **Events rules** for IAM user lifecycle changes and attach reliable **notification actions** to security-owned channels (SIEM, paging, email, chat).\n\nEnforce **least privilege** and **separation of duties** on rule management, and use **defense in depth** by correlating alerts with audit logs and automating containment.",
+      "Url": "https://hub.prowler.com/check/events_rule_user_changes"
     }
   },
   "Categories": [
-    "logging",
-    "monitoring"
+    "identity-access",
+    "logging"
   ],
   "DependsOn": [],
   "RelatedTo": [],

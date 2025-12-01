@@ -1,34 +1,33 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "events_rule_cloudguard_problems",
-  "CheckTitle": "Ensure a notification is configured for Oracle Cloud Guard problems detected",
-  "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS OCI Foundations Benchmark"
-  ],
+  "CheckTitle": "Event rule monitoring Cloud Guard problems has notification actions configured",
+  "CheckType": [],
   "ServiceName": "events",
   "SubServiceName": "",
-  "ResourceIdTemplate": "oci:events:rule",
-  "Severity": "medium",
-  "ResourceType": "OciEventRule",
-  "Description": "Ensure a notification is configured for Oracle Cloud Guard problems detected",
-  "Risk": "Without Cloud Guard, security threats may not be detected and remediated.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/cloud-guard/home.htm",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "EventRule",
+  "Description": "**OCI Events rules** subscribe to **Cloud Guard problem lifecycle events**-`com.oraclecloud.cloudguard.problemdetected`, `com.oraclecloud.cloudguard.problemdismissed`, and `com.oraclecloud.cloudguard.problemremediated`-and include **notification actions**. *When Cloud Guard sets a reporting region, rules are expected in that region.*",
+  "Risk": "Without notifications for Cloud Guard problems, incidents can go unseen, delaying response. Ongoing issues can erode **confidentiality** via data exfiltration, threaten **integrity** through unremediated changes, and impact **availability** by allowing attacks to persist. Silent failures of automated remediation may also go unnoticed.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en-us/iaas/cloud-guard/home.htm"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "oci cloud-guard configuration update --compartment-id <tenancy-ocid> --status ENABLED --reporting-region <region>",
+      "CLI": "oci events rule create --compartment-id <example_resource_id> --display-name <example_resource_name> --is-enabled true --condition '{\"eventType\":[\"com.oraclecloud.cloudguard.problemdetected\",\"com.oraclecloud.cloudguard.problemdismissed\",\"com.oraclecloud.cloudguard.problemremediated\"]}' --actions '{\"actions\":[{\"actionType\":\"ONS\",\"isEnabled\":true,\"topicId\":\"<example_resource_id>\"}]}' --region <region>",
       "NativeIaC": "",
-      "Other": "1. Navigate to Security > Cloud Guard\n2. Enable Cloud Guard\n3. Select reporting region\n4. Configure detectors and responders",
-      "Terraform": "resource \"oci_cloud_guard_cloud_guard_configuration\" \"example\" {\n  compartment_id = var.tenancy_ocid\n  reporting_region = var.region\n  status = \"ENABLED\"\n}"
+      "Other": "1. In the OCI Console, go to Menu > Application Integration > Events Service > Rules\n2. Click Create Rule and select the Compartment; switch to the Cloud Guard reporting Region\n3. In Conditions, add event types: com.oraclecloud.cloudguard.problemdetected, com.oraclecloud.cloudguard.problemdismissed, com.oraclecloud.cloudguard.problemremediated\n4. Under Actions, add Notifications and select the desired Topic\n5. Ensure the rule is Enabled and click Create",
+      "Terraform": "```hcl\nresource \"oci_events_rule\" \"<example_resource_name>\" {\n  compartment_id = \"<example_resource_id>\"\n  display_name   = \"<example_resource_name>\"\n  is_enabled     = true\n\n  # critical: monitor Cloud Guard problem events\n  condition = jsonencode({\n    eventType = [\n      \"com.oraclecloud.cloudguard.problemdetected\",\n      \"com.oraclecloud.cloudguard.problemdismissed\",\n      \"com.oraclecloud.cloudguard.problemremediated\"\n    ]\n  })\n\n  actions {\n    actions {\n      action_type = \"ONS\"\n      is_enabled  = true\n      topic_id    = \"<example_resource_id>\" # critical: send notifications to this topic\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure a notification is configured for Oracle Cloud Guard problems detected",
-      "Url": "https://hub.prowler.com/check/oci/cloudguard_notification_configured"
+      "Text": "Implement **event-driven alerts** for Cloud Guard problem lifecycle events and route them to trusted **notification channels** and your **SOC/SIEM**. Enforce **least privilege** on publish/subscribe, align rules with the **reporting region**, and use **severity-based filtering** to prioritize response within a **defense-in-depth** approach.",
+      "Url": "https://hub.prowler.com/check/events_rule_cloudguard_problems"
     }
   },
   "Categories": [
-    "monitoring"
+    "threat-detection"
   ],
   "DependsOn": [],
   "RelatedTo": [],

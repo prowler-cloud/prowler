@@ -1,35 +1,38 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "events_rule_iam_policy_changes",
-  "CheckTitle": "Ensure a notification is configured for IAM policy changes",
-  "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS OCI Foundations Benchmark"
-  ],
+  "CheckTitle": "Event rule monitoring IAM policy changes has notification actions configured",
+  "CheckType": [],
   "ServiceName": "events",
   "SubServiceName": "",
-  "ResourceIdTemplate": "oci:events:rule",
-  "Severity": "medium",
-  "ResourceType": "OciEventsRule",
-  "Description": "Event rules should be configured to notify on IAM policy changes.",
-  "Risk": "Without proper event monitoring, security-relevant changes may go unnoticed.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Events/home.htm",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "EventRule",
+  "Description": "OCI Events rules configured to capture **IAM policy create, update, and delete** events (`com.oraclecloud.identitycontrolplane.createpolicy`, `com.oraclecloud.identitycontrolplane.updatepolicy`, `com.oraclecloud.identitycontrolplane.deletepolicy`) and include a **notification action**.",
+  "Risk": "Without alerts on **IAM policy changes**, permissions can be altered unnoticed, enabling **privilege escalation**, unauthorized data access, and persistent footholds. Delayed visibility degrades **confidentiality** and **integrity** and slows incident response across compartments.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://github.com/bridgecrewio/checkov/issues/1957",
+    "https://www.ateam-oracle.com/post/part-1-event-based-integration-with-oci-iam",
+    "https://hub.steampipe.io/mods/turbot/oci_compliance/queries/events_rule_notification_iam_policy_changes",
+    "https://docs.public.content.oci.oraclecloud.com/en-us/iaas/Content/cloud-guard/using/export-notifs-config.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Events/detect-iam-policy-changes.html",
+    "https://docs.oracle.com/en-us/iaas/Content/Events/home.htm"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "oci events rule create --display-name <name> --condition <event-condition> --actions <notification-actions>",
+      "CLI": "oci events rule create --compartment-id <compartment_ocid> --display-name <example_resource_name> --condition '{\"eventType\":[\"com.oraclecloud.identitycontrolplane.createpolicy\",\"com.oraclecloud.identitycontrolplane.deletepolicy\",\"com.oraclecloud.identitycontrolplane.updatepolicy\"]}' --actions '{\"actions\":[{\"actionType\":\"ONS\",\"topicId\":\"<topic_ocid>\"}]}'",
       "NativeIaC": "",
-      "Other": "1. Navigate to Observability & Management > Events Service\n2. Create a new rule\n3. Configure the event condition\n4. Add notification action\n5. Save the rule",
-      "Terraform": "resource \"oci_events_rule\" \"example\" {\n  display_name = \"rule\"\n  is_enabled = true\n  condition = jsonencode({\n    eventType = [\"com.oraclecloud.*\"]\n  })\n  actions {\n    actions {\n      action_type = \"ONS\"\n      topic_id = var.topic_id\n    }\n  }\n}"
+      "Other": "1. In the OCI Console, go to Observability & Management > Events Service\n2. Click Create Rule and set Display Name (leave Enabled)\n3. Under Conditions, choose Event Type, set Service Name to Identity and Access Management, and select:\n   - com.oraclecloud.identitycontrolplane.createpolicy\n   - com.oraclecloud.identitycontrolplane.deletepolicy\n   - com.oraclecloud.identitycontrolplane.updatepolicy\n4. Under Actions, select Action Type: Notifications, then choose the target Topic\n5. Click Create",
+      "Terraform": "```hcl\nresource \"oci_events_rule\" \"<example_resource_name>\" {\n  compartment_id = var.compartment_id\n  display_name   = \"<example_resource_name>\"\n  is_enabled     = true\n\n  # Critical: monitor IAM policy create/delete/update events\n  condition = jsonencode({\n    eventType = [\n      \"com.oraclecloud.identitycontrolplane.createpolicy\",\n      \"com.oraclecloud.identitycontrolplane.deletepolicy\",\n      \"com.oraclecloud.identitycontrolplane.updatepolicy\"\n    ]\n  })\n\n  actions {\n    actions {\n      action_type = \"ONS\"        # Critical: adds a Notifications action\n      topic_id    = var.topic_id  # Critical: target Notifications topic\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure a notification is configured for IAM policy changes",
-      "Url": "https://hub.prowler.com/check/oci/events_rule_iam_policy_changes"
+      "Text": "Create OCI Events rules for `...createpolicy`, `...updatepolicy`, and `...deletepolicy` with a **notification action** to trusted channels. Enforce **least privilege** on IAM and Events administration, require change approvals, and routinely test alerting to ensure rapid detection.",
+      "Url": "https://hub.prowler.com/check/events_rule_iam_policy_changes"
     }
   },
   "Categories": [
-    "logging",
-    "monitoring"
+    "identity-access"
   ],
   "DependsOn": [],
   "RelatedTo": [],

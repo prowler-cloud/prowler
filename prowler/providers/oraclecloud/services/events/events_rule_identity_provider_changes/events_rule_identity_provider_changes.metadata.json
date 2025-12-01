@@ -1,35 +1,37 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "events_rule_identity_provider_changes",
-  "CheckTitle": "Ensure a notification is configured for Identity Provider changes",
-  "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS OCI Foundations Benchmark"
-  ],
+  "CheckTitle": "Event rule for identity provider changes has notification actions configured",
+  "CheckType": [],
   "ServiceName": "events",
   "SubServiceName": "",
-  "ResourceIdTemplate": "oci:events:rule",
-  "Severity": "medium",
-  "ResourceType": "OciEventsRule",
-  "Description": "Event rules should be configured to notify on identity provider changes.",
-  "Risk": "Without proper event monitoring, security-relevant changes may go unnoticed.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Events/home.htm",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "EventRule",
+  "Description": "OCI Events rules monitor **IAM identity provider** creation, update, and deletion and include a **notification action**. The evaluation identifies rules that filter these events and route matching activity to a notification destination.",
+  "Risk": "Without alerts on **identity provider** changes, federation can be modified unnoticed, enabling unauthorized SSO, privilege escalation, or account takeover. Delayed visibility degrades incident response and threatens **confidentiality** and **integrity** of tenant access.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Events/",
+    "https://hub.steampipe.io/mods/turbot/oci_compliance/queries/events_rule_notification_identity_provider_changes",
+    "https://docs.oracle.com/en-us/iaas/Content/Events/home.htm",
+    "https://docs.oracle.com/en-us/iaas/Content/Events/Reference/eventsproducers.htm"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "oci events rule create --display-name <name> --condition <event-condition> --actions <notification-actions>",
+      "CLI": "oci events rule create --compartment-id <example_resource_id> --display-name <example_resource_name> --condition '{\"eventType\":[\"com.oraclecloud.identitycontrolplane.createidentityprovider\",\"com.oraclecloud.identitycontrolplane.deleteidentityprovider\",\"com.oraclecloud.identitycontrolplane.updateidentityprovider\"]}' --is-enabled true --actions '{\"actions\":[{\"actionType\":\"ONS\",\"topicId\":\"<example_resource_id>\"}]}'",
       "NativeIaC": "",
-      "Other": "1. Navigate to Observability & Management > Events Service\n2. Create a new rule\n3. Configure the event condition\n4. Add notification action\n5. Save the rule",
-      "Terraform": "resource \"oci_events_rule\" \"example\" {\n  display_name = \"rule\"\n  is_enabled = true\n  condition = jsonencode({\n    eventType = [\"com.oraclecloud.*\"]\n  })\n  actions {\n    actions {\n      action_type = \"ONS\"\n      topic_id = var.topic_id\n    }\n  }\n}"
+      "Other": "1. In the OCI Console, go to Observability & Management > Events Service > Rules and click Create rule\n2. Set Name and select the target Compartment\n3. In Rule condition, add event types: CreateIdentityProvider, DeleteIdentityProvider, UpdateIdentityProvider (service: Identity)\n4. In Actions, add Notification, select your Topic\n5. Ensure Enabled is On and click Create",
+      "Terraform": "```hcl\nresource \"oci_events_rule\" \"<example_resource_name>\" {\n  compartment_id = \"<example_resource_id>\"\n  display_name   = \"<example_resource_name>\"\n  is_enabled     = true\n\n  # Critical: monitor identity provider create/delete/update events\n  condition = jsonencode({\n    eventType = [\n      \"com.oraclecloud.identitycontrolplane.createidentityprovider\",\n      \"com.oraclecloud.identitycontrolplane.deleteidentityprovider\",\n      \"com.oraclecloud.identitycontrolplane.updateidentityprovider\",\n    ]\n  })\n\n  actions {\n    actions {\n      action_type = \"ONS\"                 # Critical: send notifications via OCI Notifications\n      topic_id    = \"<example_resource_id>\"  # Topic to notify\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure a notification is configured for Identity Provider changes",
-      "Url": "https://hub.prowler.com/check/oci/events_rule_identity_provider_changes"
+      "Text": "Configure rules to capture **identity provider** `create`, `update`, and `delete` events and send notifications to responders and SIEM. Enforce **least privilege** on IdP management, require approvals for changes, and test alert paths. Use **defense in depth** with audit logging to spot anomalous identity changes.",
+      "Url": "https://hub.prowler.com/check/events_rule_identity_provider_changes"
     }
   },
   "Categories": [
-    "logging",
-    "monitoring"
+    "identity-access",
+    "logging"
   ],
   "DependsOn": [],
   "RelatedTo": [],
