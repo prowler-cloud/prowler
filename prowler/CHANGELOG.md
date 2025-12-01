@@ -83,6 +83,8 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS ECS service metadata to new format [(#8888)](https://github.com/prowler-cloud/prowler/pull/8888)
 - Update AWS Kinesis service metadata to new format [(#9262)](https://github.com/prowler-cloud/prowler/pull/9262)
 - Update AWS DocumentDB service metadata to new format [(#8862)](https://github.com/prowler-cloud/prowler/pull/8862)
+- Update AWS Resource Explorer v2 service metadata to new format [(#9386)](https://github.com/prowler-cloud/prowler/pull/9386)
+
 
 ### Fixed
 - Check `check_name` has no `resource_name` error for GCP provider [(#9169)](https://github.com/prowler-cloud/prowler/pull/9169)
