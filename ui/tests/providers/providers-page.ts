@@ -1,6 +1,5 @@
 import { Page, Locator, expect } from "@playwright/test";
 import { BasePage } from "../base-page";
-import { ScansPage } from "../scans/scans-page";
 
 // AWS provider data
 export interface AWSProviderData {
@@ -546,10 +545,9 @@ export class ProvidersPage extends BasePage {
     // If on the "add-credentials" step, check for "Save" and "Next" buttons
     if (/\/providers\/add-credentials/.test(url)) {
       // Some UI implementations use "Save" instead of "Next" for primary action
-      const saveBtn = this.saveButton;
 
-      if (await saveBtn.count()) {
-        await saveBtn.click();
+      if (await this.saveButton.count()) {
+        await this.saveButton.click();
         return;
       }
       // If "Save" is not present, try clicking the "Next" button
@@ -968,183 +966,6 @@ export class ProvidersPage extends BasePage {
     const count = await matchingRows.count();
     if (count !== 1) return false;
     return true;
-  }
-
-  async deleteProviderIfExists(providerUID: string): Promise<void> {
-    // Delete the provider if it exists
-
-    // Navigate to providers page
-    await this.goto();
-    await expect(this.providersTable).toBeVisible({ timeout: 10000 });
-
-    // Find and use the search input to filter the table
-    const searchInput = this.page.getByPlaceholder(/search|filter/i);
-
-    await expect(searchInput).toBeVisible({ timeout: 5000 });
-
-    // Clear and search for the specific provider
-    await searchInput.clear();
-    await searchInput.fill(providerUID);
-    await searchInput.press("Enter");
-
-    // Additional wait for React table to re-render with the server-filtered data
-    // The filtering happens on the server, but the table component needs time
-    // to process the response and update the DOM after network idle
-    await this.page.waitForTimeout(1500);
-
-    // Get all rows from the table
-    const allRows = this.providersTable.locator("tbody tr");
-
-    // Helper function to check if a row is the "No results" row
-    const isNoResultsRow = async (row: Locator): Promise<boolean> => {
-      const text = await row.textContent();
-      return text?.includes("No results") || text?.includes("No data") || false;
-    };
-
-    // Helper function to find the row with the specific UID
-    const findProviderRow = async (): Promise<Locator | null> => {
-      const count = await allRows.count();
-
-      for (let i = 0; i < count; i++) {
-        const row = allRows.nth(i);
-
-        // Skip "No results" rows
-        if (await isNoResultsRow(row)) {
-          continue;
-        }
-
-        // Check if this row contains the UID in the UID column (column 3)
-        const uidCell = row.locator("td").nth(3);
-        const uidText = await uidCell.textContent();
-
-        if (uidText?.includes(providerUID)) {
-          return row;
-        }
-      }
-
-      return null;
-    };
-
-    // Wait for filtering to complete (max 0 or 1 data rows)
-    await expect(async () => {
-      const count = await allRows.count();
-
-      // Count only real data rows (not "No results")
-      let dataRowCount = 0;
-      for (let i = 0; i < count; i++) {
-        if (!(await isNoResultsRow(allRows.nth(i)))) {
-          dataRowCount++;
-        }
-      }
-
-      // Should have 0 or 1 data row
-      expect(dataRowCount).toBeLessThanOrEqual(1);
-    }).toPass({ timeout: 20000 });
-
-    // Find the provider row
-    const targetRow = await findProviderRow();
-
-    if (!targetRow) {
-      // Provider not found, nothing to delete
-      // Navigate back to providers page to ensure clean state
-      await this.goto();
-      await expect(this.providersTable).toBeVisible({ timeout: 10000 });
-      return;
-    }
-
-    // Find and click the action button (last cell = actions column)
-    const actionButton = targetRow
-      .locator("td")
-      .last()
-      .locator("button")
-      .first();
-
-    // Ensure the button is in view before clicking (handles horizontal scroll)
-    await actionButton.scrollIntoViewIfNeeded();
-    // Verify the button is visible
-    await expect(actionButton).toBeVisible({ timeout: 5000 });
-    await actionButton.click();
-
-    // Wait for dropdown menu to appear and find delete option
-    const deleteMenuItem = this.page.getByRole("menuitem", {
-      name: /delete.*provider/i,
-    });
-
-    await expect(deleteMenuItem).toBeVisible({ timeout: 5000 });
-    await deleteMenuItem.click();
-
-    // Wait for confirmation modal to appear
-    const modal = this.page
-      .locator('[role="dialog"], .modal, [data-testid*="modal"]')
-      .first();
-
-    await expect(modal).toBeVisible({ timeout: 10000 });
-
-    // Find and click the delete confirmation button
-    await expect(this.deleteProviderConfirmationButton).toBeVisible({
-      timeout: 5000,
-    });
-    await this.deleteProviderConfirmationButton.click();
-
-    // Wait for modal to close (this indicates deletion was initiated)
-    await expect(modal).not.toBeVisible({ timeout: 10000 });
-
-    // Navigate back to providers page to ensure clean state
-    await this.goto();
-    await expect(this.providersTable).toBeVisible({ timeout: 10000 });
-  }
-
-  async AddAWSProvider(
-    accountId: string,
-    accessKey: string,
-    secretKey: string,
-  ): Promise<void> {
-    // Prepare test data for AWS provider
-    const awsProviderData: AWSProviderData = {
-      accountId: accountId,
-      alias: "Test E2E AWS Account - Credentials",
-    };
-
-    // Prepare static credentials
-    const staticCredentials: AWSProviderCredential = {
-      type: AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS,
-      accessKeyId: accessKey,
-      secretAccessKey: secretKey,
-    };
-
-    // Navigate to providers page
-    await this.goto();
-    await this.verifyPageLoaded();
-
-    // Start adding new provider
-    await this.clickAddProvider();
-    await this.verifyConnectAccountPageLoaded();
-
-    // Select AWS provider
-    await this.selectAWSProvider();
-
-    // Fill provider details
-    await this.fillAWSProviderDetails(awsProviderData);
-    await this.clickNext();
-
-    // Verify credentials page is loaded
-    await this.verifyCredentialsPageLoaded();
-
-    // Select static credentials type
-    await this.selectCredentialsType(AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS);
-
-    // Fill static credentials
-    await this.fillStaticCredentials(staticCredentials);
-    await this.clickNext();
-
-    // Launch scan
-    await this.verifyLaunchScanPageLoaded();
-    await this.clickNext();
-
-    // Wait for redirect to scans page
-    const scansPage = new ScansPage(this.page);
-
-    await scansPage.verifyPageLoaded();
   }
 
   async selectAuthenticationMethod(method: AWSCredentialType): Promise<void> {

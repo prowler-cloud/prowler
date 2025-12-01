@@ -1,6 +1,7 @@
-import { test, expect } from "@playwright/test";
+import { test } from "@playwright/test";
 import { ScansPage } from "./scans-page";
 import { ProvidersPage } from "../providers/providers-page";
+import { deleteProviderIfExists, addAWSProvider } from "../helpers";
 
 // Scans E2E suite scaffold
 test.describe("Scans", () => {
@@ -28,9 +29,9 @@ test.describe("Scans", () => {
       }
 
       // Clean up existing provider to ensure clean test state
-      await providersPage.deleteProviderIfExists(accountId);
+      await deleteProviderIfExists(providersPage, accountId);
       // Add AWS provider
-      await providersPage.AddAWSProvider(accountId, accessKey, secretKey);
+      await addAWSProvider(providersPage.page, accountId, accessKey, secretKey);
     });
 
     test(
@@ -39,7 +40,7 @@ test.describe("Scans", () => {
         tag: ["@e2e", "@scans", "@critical", "@serial", "@SCAN-E2E-001"],
       },
       async ({ page }) => {
-        
+
         const accountId = process.env.E2E_AWS_PROVIDER_ACCOUNT_ID;
 
         if (!accountId) {
@@ -63,7 +64,7 @@ test.describe("Scans", () => {
         // Verify the scan was launched
         await scansPage.verifyScanLaunched("E2E Test Scan - On Demand");
 
-        
+
       },
     );
   });

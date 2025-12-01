@@ -25,6 +25,7 @@ import {
 } from "./providers-page";
 import { ScansPage } from "../scans/scans-page";
 import fs from "fs";
+import { deleteProviderIfExists } from "../helpers";
 
 test.describe("Add Provider", () => {
   test.describe.serial("Add AWS Provider", () => {
@@ -48,7 +49,7 @@ test.describe("Add Provider", () => {
     test.beforeEach(async ({ page }) => {
       providersPage = new ProvidersPage(page);
       // Clean up existing provider to ensure clean test state
-      await providersPage.deleteProviderIfExists(accountId);
+      await deleteProviderIfExists(providersPage, accountId);
     });
 
     // Use admin authentication for provider management
@@ -298,7 +299,7 @@ test.describe("Add Provider", () => {
     test.beforeEach(async ({ page }) => {
       providersPage = new ProvidersPage(page);
       // Clean up existing provider to ensure clean test state
-      await providersPage.deleteProviderIfExists(subscriptionId);
+      await deleteProviderIfExists(providersPage, subscriptionId);
     });
 
     // Use admin authentication for provider management
@@ -385,7 +386,7 @@ test.describe("Add Provider", () => {
     test.beforeEach(async ({ page }) => {
       providersPage = new ProvidersPage(page);
       // Clean up existing provider to ensure clean test state
-      await providersPage.deleteProviderIfExists(domainId);
+      await deleteProviderIfExists(providersPage, domainId);
     });
 
     // Use admin authentication for provider management
@@ -562,7 +563,7 @@ test.describe("Add Provider", () => {
     test.beforeEach(async ({ page }) => {
       providersPage = new ProvidersPage(page);
       // Clean up existing provider to ensure clean test state
-      await providersPage.deleteProviderIfExists(context);
+      await deleteProviderIfExists(providersPage, context);
     });
 
     // Use admin authentication for provider management
@@ -663,7 +664,7 @@ test.describe("Add Provider", () => {
     test.beforeEach(async ({ page }) => {
       providersPage = new ProvidersPage(page);
       // Clean up existing provider to ensure clean test state
-      await providersPage.deleteProviderIfExists(projectId);
+      await deleteProviderIfExists(providersPage, projectId);
     });
 
     // Use admin authentication for provider management
@@ -775,7 +776,7 @@ test.describe("Add Provider", () => {
       test.beforeEach(async ({ page }) => {
         providersPage = new ProvidersPage(page);
         // Clean up existing provider to ensure clean test state
-        await providersPage.deleteProviderIfExists(username);
+        await deleteProviderIfExists(providersPage, username);
       });
 
       // Use admin authentication for provider management
@@ -959,7 +960,7 @@ test.describe("Add Provider", () => {
       test.beforeEach(async ({ page }) => {
         providersPage = new ProvidersPage(page);
         // Clean up existing provider to ensure clean test state
-        await providersPage.deleteProviderIfExists(organization);
+        await deleteProviderIfExists(providersPage, organization);
       });
 
       // Use admin authentication for provider management
@@ -1067,7 +1068,7 @@ test.describe("Add Provider", () => {
     test.beforeEach(async ({ page }) => {
       providersPage = new ProvidersPage(page);
       // Clean up existing provider to ensure clean test state
-      await providersPage.deleteProviderIfExists(tenancyId);
+      await deleteProviderIfExists(providersPage, tenancyId);
     });
 
     // Use admin authentication for provider management
