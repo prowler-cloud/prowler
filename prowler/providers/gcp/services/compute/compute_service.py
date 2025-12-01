@@ -133,9 +133,17 @@ class Compute(GCPService):
                                     )
                                     for disk in instance.get("disks", [])
                                 ],
+                                automatic_restart=instance.get("scheduling", {}).get(
+                                    "automaticRestart", False
+                                ),
+                                provisioning_model=instance.get("scheduling", {}).get(
+                                    "provisioningModel", "STANDARD"
+                                ),
                                 project_id=project_id,
                                 deletion_protection=instance.get(
                                     "deletionProtection", False
+                                preemptible=instance.get("scheduling", {}).get(
+                                    "preemptible", False
                                 ),
                             )
                         )
@@ -369,6 +377,9 @@ class Instance(BaseModel):
     ip_forward: bool
     disks_encryption: list
     deletion_protection: bool = False
+    automatic_restart: bool = False
+    preemptible: bool = False
+    provisioning_model: str = "STANDARD"
 
 
 class Network(BaseModel):
