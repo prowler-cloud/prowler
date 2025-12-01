@@ -1,30 +1,30 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "identity_iam_admins_cannot_update_tenancy_admins",
-  "CheckTitle": "Ensure IAM administrators cannot update tenancy Administrators group",
-  "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS OCI Foundations Benchmark"
-  ],
+  "CheckTitle": "All IAM policies granting manage/use on groups or users in the tenancy restrict access to the Administrators group",
+  "CheckType": [],
   "ServiceName": "identity",
   "SubServiceName": "",
-  "ResourceIdTemplate": "oci:identity:user",
-  "Severity": "high",
-  "ResourceType": "OciIamUser",
-  "Description": "IAM administrators should not be able to update the tenancy Administrators group.",
-  "Risk": "Not meeting this IAM requirement increases security risk.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Identity/home.htm",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "Policy",
+  "Description": "**OCI IAM policies** granting **manage/use** on **groups or users** in the tenancy are evaluated for a condition that excludes the **Administrators** group, such as `target.group.name != 'Administrators'`.\n\nPolicies missing this restriction are identified.",
+  "Risk": "Ability to modify the **Administrators** group enables **privilege escalation** to full tenancy control. This threatens confidentiality (broad data access), integrity (policy/user changes), and availability (resource deletion). Attackers could add persistence accounts, disable safeguards, and evade oversight.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en-us/iaas/Content/Identity/home.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-IAM/protect-administrators-group-with-access-policies.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "oci iam policy update --policy-id <example_resource_id> --statements \"[\\\"Allow group <example_resource_name> to manage groups, users in tenancy where target.group.name != 'Administrators'\\\"]\"",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-IAM/protect-administrators-group-with-access-policies.html",
-      "Terraform": ""
+      "Other": "1. In OCI Console, go to Identity & Security > Policies\n2. Open any policy that allows a group to manage or use groups/users in the tenancy\n3. Click Edit policy and update each affected statement to append exactly:\n   where target.group.name != 'Administrators'\n4. Save changes\n5. Repeat for all such policies",
+      "Terraform": "```hcl\nresource \"oci_identity_policy\" \"<example_resource_name>\" {\n  name           = \"<example_resource_name>\"\n  compartment_id = \"<example_resource_id>\"\n  description    = \"<example_resource_name>\"\n  statements = [\n    # Critical: Protect the Administrators group from modification by this policy\n    # Adds a where clause so the policy can't target the Administrators group\n    \"Allow group <example_resource_name> to manage groups, users in tenancy where target.group.name != 'Administrators'\"\n  ]\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure IAM administrators cannot update tenancy Administrators group",
-      "Url": "https://hub.prowler.com/check/oci/identity_iam_admins_cannot_update_tenancy_admins"
+      "Text": "Apply **least privilege**: avoid tenancy-wide manage/use on groups or users. When delegation is required, include a condition excluding the **Administrators** group (e.g., `target.group.name != 'Administrators'`). Enforce **segregation of duties**, require approvals for group changes, and monitor/audit identity policy activity.",
+      "Url": "https://hub.prowler.com/check/identity_iam_admins_cannot_update_tenancy_admins"
     }
   },
   "Categories": [

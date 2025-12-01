@@ -1,30 +1,34 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "identity_user_mfa_enabled_console_access",
-  "CheckTitle": "Ensure MFA is enabled for all users with a console password",
-  "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS OCI Foundations Benchmark"
-  ],
+  "CheckTitle": "User with console password has MFA enabled for console access",
+  "CheckType": [],
   "ServiceName": "identity",
   "SubServiceName": "",
-  "ResourceIdTemplate": "oci:identity:user",
+  "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "OciIamUser",
-  "Description": "Ensure MFA is enabled for all users with a console password. Multi-factor authentication is a method of authentication that requires the use of more than one factor to verify a user's identity.",
-  "Risk": "Enabling MFA provides increased security by requiring two methods of verification at sign-in. With MFA enabled, a user must possess a device that emits a time-sensitive key and have knowledge of a username and password.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/usingmfa.htm",
+  "ResourceType": "User",
+  "Description": "**OCI IAM users** with **console password access** are expected to have **multifactor authentication** enabled. The evaluation inspects each local user allowed to sign in to the Console and identifies those without an active second factor.",
+  "Risk": "Console-password accounts without **MFA** are exposed to **phishing**, **credential stuffing**, and **brute force**.\n\nA stolen password can grant Console access, enabling privilege escalation, key creation, and data access-compromising **confidentiality**, **integrity**, and **availability** across OCI.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en-us/iaas/Content/Security/Reference/iam_security_topic-IAM_MFA.htm",
+    "https://docs.oracle.com/en-us/iaas/Content/Security/Reference/iam_security_topic-iam_mfa_identity_domains_signon_policy.htm",
+    "https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/usingmfa.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-IAM/enable-mfa-for-user-accounts.html",
+    "https://dzone.com/articles/strengthening-iam-security-for-cloud-iaas-accounts",
+    "https://docs.oracle.com/en-us/iaas/tools/oci-cli/3.63.3/oci_cli_docs/cmdref/iam/mfa-totp-device.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "oci iam user update-user-capabilities --user-id <USER_OCID> --can-use-console-password false",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-IAM/enable-mfa-for-user-accounts.html",
+      "Other": "1. Enable MFA (user action):\n   - Sign in to the OCI Console as the affected user\n   - Click your profile icon > User settings\n   - Click \"Enable Multi-Factor Authentication\"\n   - Scan the QR code with an authenticator app and enter the verification code, then click \"Enable\"\n2. Or, remove console access (admin action) if the user doesn't need it:\n   - In the Console, go to Identity & Security > Users\n   - Open the user's page > Edit user capabilities\n   - Uncheck \"Can use Console password\" and Save",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable MFA for all users with console password access.",
-      "Url": "https://docs.oracle.com/en-us/iaas/Content/Identity/Tasks/usingmfa.htm"
+      "Text": "Require **MFA** for all users with Console passwords; prefer **phishing-resistant authenticators** (e.g., FIDO). Enforce via sign-on policies, prioritizing admins. Apply **least privilege**, disable Console passwords for service or federated users, and monitor auth logs to confirm ongoing MFA coverage.",
+      "Url": "https://hub.prowler.com/check/identity_user_mfa_enabled_console_access"
     }
   },
   "Categories": [

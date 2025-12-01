@@ -1,30 +1,34 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "identity_tenancy_admin_permissions_limited",
-  "CheckTitle": "Ensure permissions on all resources are given only to the tenancy administrator group",
-  "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS OCI Foundations Benchmark"
-  ],
+  "CheckTitle": "OCI IAM policy does not grant 'manage all-resources in tenancy' unless it is the Tenant Admin Policy",
+  "CheckType": [],
   "ServiceName": "identity",
   "SubServiceName": "",
-  "ResourceIdTemplate": "oci:identity:user",
-  "Severity": "high",
-  "ResourceType": "OciIamUser",
-  "Description": "Only the tenancy administrator group should have permissions to manage all resources in the tenancy.",
-  "Risk": "Not meeting this IAM requirement increases security risk.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Identity/home.htm",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "Policy",
+  "Description": "**OCI IAM policies** are analyzed for statements granting `manage all-resources in tenancy` to groups. Only the `Tenant Admin Policy` for the Administrators group should include this broad verb. Any other active policy containing this tenancy-wide permission is identified.",
+  "Risk": "Tenancy-wide `manage` rights for non-admins allow complete control of identities and resources. A compromised account can escalate privileges, exfiltrate data across compartments, alter or delete workloads and backups, and disable monitoring-impacting **confidentiality**, **integrity**, and **availability** of the entire tenancy.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://speakerdeck.com/ocise/ociji-shu-zi-liao-idoyobiakusesuguan-li-iam-gai-yao",
+    "https://docs.oracle.com/en-us/iaas/Content/Identity/home.htm",
+    "https://blog.rishoradev.com/2025/05/12/enabling-oracle-generative-ai-rag-agent-for-oci-regions/",
+    "https://speakerdeck.com/ocise/oci-design-guide-for-csps",
+    "https://www.thatfinnishguy.blog/2018/04/27/deep-dive-into-oci-with-compartments-users-groups-and-policies/",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-IAM/tenancy-administrator-group-access.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "oci iam policy delete --policy-id <POLICY_OCID> --force",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-IAM/tenancy-administrator-group-access.html",
-      "Terraform": ""
+      "Other": "1. In OCI Console, go to Identity & Security > Policies\n2. Open each ACTIVE policy that is NOT named \"Tenant Admin Policy\"\n3. Click Edit policy\n4. Remove any statement containing: to manage all-resources in tenancy; or change it to: in compartment <compartment_name>\n5. Click Save",
+      "Terraform": "```hcl\nresource \"oci_identity_policy\" \"<example_resource_name>\" {\n  name           = \"<POLICY_NAME>\"\n  compartment_id = \"<example_compartment_id>\"\n  description    = \"Replace tenancy-wide admin with scoped permissions\"\n\n  statements = [\n    # FIX: Replace \"in tenancy\" with compartment scope to remove overly broad permission\n    \"allow group <group_name> to manage all-resources in compartment <compartment_name>\"\n  ]\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure permissions on all resources are given only to the tenancy administrator group",
-      "Url": "https://hub.prowler.com/check/oci/identity_tenancy_admin_permissions_limited"
+      "Text": "Restrict `manage all-resources in tenancy` to the **Administrators** group only. Apply **least privilege** by scoping access to compartments and specific resource families, using conditions to narrow rights. Enforce **separation of duties**, maintain a *break-glass* admin model, and review policies regularly to prevent privilege drift.",
+      "Url": "https://hub.prowler.com/check/identity_tenancy_admin_permissions_limited"
     }
   },
   "Categories": [
