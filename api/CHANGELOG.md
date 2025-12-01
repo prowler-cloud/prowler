@@ -14,6 +14,7 @@ All notable changes to the **Prowler API** are documented in this file.
 ### Fixed
 - Fix typo in PDF reporting [(#9345)](https://github.com/prowler-cloud/prowler/pull/9345)
 - Fix IaC provider initialization failure when mutelist processor is configured [(#9331)](https://github.com/prowler-cloud/prowler/pull/9331)
+- Match logic for ThreatScore when counting findings [(#9348)](https://github.com/prowler-cloud/prowler/pull/9348)
 
 ---
 
