@@ -35,7 +35,8 @@ dependencies = [
   "markdown (>=3.9,<4.0)",
   "drf-simple-apikey (==2.2.1)",
   "matplotlib (>=3.10.6,<4.0.0)",
-  "reportlab (>=4.4.4,<5.0.0)"
+  "reportlab (>=4.4.4,<5.0.0)",
+  "gevent (>=25.9.1,<26.0.0)"
 ]
 description = "Prowler's API (Django/DRF)"
 license = "Apache-2.0"
