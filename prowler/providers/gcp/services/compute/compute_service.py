@@ -134,6 +134,9 @@ class Compute(GCPService):
                                     for disk in instance.get("disks", [])
                                 ],
                                 project_id=project_id,
+                                deletion_protection=instance.get(
+                                    "deletionProtection", False
+                                ),
                             )
                         )
 
@@ -365,6 +368,7 @@ class Instance(BaseModel):
     service_accounts: list
     ip_forward: bool
     disks_encryption: list
+    deletion_protection: bool = False
 
 
 class Network(BaseModel):
