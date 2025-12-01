@@ -1,26 +1,37 @@
 {
   "Provider": "aws",
   "CheckID": "redshift_cluster_public_access",
-  "CheckTitle": "Check for Publicly Accessible Redshift Clusters",
-  "CheckType": [],
+  "CheckTitle": "Redshift cluster is not publicly exposed to the Internet",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
   "ServiceName": "redshift",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:redshift:region:account-id:cluster:cluster-name",
-  "Severity": "high",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
   "ResourceType": "AwsRedshiftCluster",
-  "Description": "Check for Publicly Accessible Redshift Clusters",
-  "Risk": "Publicly accessible services could expose sensitive data to bad actors.",
-  "RelatedUrl": "https://docs.aws.amazon.com/redshift/latest/mgmt/managing-clusters-vpc.html",
+  "Description": "Amazon Redshift clusters with `publicly accessible` endpoints in **public subnets** and security groups allowing TCP from `0.0.0.0/0` or `::/0` are identified as internet-exposed.\n\nPublic endpoints without internet reachability due to private subnets or restrictive rules are recognized separately.",
+  "Risk": "Internet-exposed Redshift endpoints allow direct DB access from any host, impacting:\n- **Confidentiality**: credential brute force, unauthorized queries, data exfiltration\n- **Integrity**: unauthorized writes or schema changes\n- **Availability**: scanning/abuse leading to connection exhaustion or disruption",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/de_de/redshift/latest/mgmt/rs-ra3-VPC-public-private.html",
+    "https://docs.prowler.com/checks/aws/public-policies/public_9#terraform",
+    "https://docs.prowler.com/checks/aws/public-policies/public_9",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Redshift/redshift-cluster-publicly-accessible.html",
+    "https://docs.aws.amazon.com/redshift/latest/mgmt/managing-clusters-vpc.html",
+    "https://stackoverflow.com/questions/46162487/how-to-connect-to-amazon-redshift-cluster-from-within-my-amazon-ec2-instance"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aws redshift modify-cluster --cluster-identifier <CLUSTER_ID> --no-publicly-accessible",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/public-policies/public_9#cloudformation",
-      "Other": "https://docs.prowler.com/checks/aws/public-policies/public_9",
-      "Terraform": "https://docs.prowler.com/checks/aws/public-policies/public_9#terraform"
+      "NativeIaC": "```yaml\n# CloudFormation: Redshift cluster not publicly accessible\nResources:\n  <example_resource_name>:\n    Type: AWS::Redshift::Cluster\n    Properties:\n      ClusterType: single-node\n      DBName: <example_db_name>\n      MasterUsername: <example_username>\n      MasterUserPassword: <example_password>\n      NodeType: dc2.large\n      PubliclyAccessible: false  # Critical: disables public access to prevent Internet exposure\n```",
+      "Other": "1. Open the AWS Management Console and go to Amazon Redshift\n2. Select your cluster\n3. Click Edit (or Actions > Modify)\n4. Set Publicly accessible to Off/No\n5. Save changes and apply the modification",
+      "Terraform": "```hcl\n# Redshift cluster not publicly accessible\nresource \"aws_redshift_cluster\" \"<example_resource_name>\" {\n  cluster_identifier  = \"<example_resource_id>\"\n  node_type           = \"dc2.large\"\n  cluster_type        = \"single-node\"\n  master_username     = \"<example_username>\"\n  master_password     = \"<example_password>\"\n\n  publicly_accessible = false  # Critical: disables public access to prevent Internet exposure\n}\n```"
     },
     "Recommendation": {
-      "Text": "List all shared Redshift clusters and make sure there is a business reason for them.",
-      "Url": "https://docs.aws.amazon.com/redshift/latest/mgmt/managing-clusters-vpc.html"
+      "Text": "Prefer **private connectivity**: disable public access, place clusters in private subnets, and apply **least privilege** security groups limited to trusted CIDRs or VPC sources. Use **defense in depth** with VPN/peering/endpoints, strong authentication, and monitoring. Avoid `0.0.0.0/0` or `::/0` to database ports.",
+      "Url": "https://hub.prowler.com/check/redshift_cluster_public_access"
     }
   },
   "Categories": [
