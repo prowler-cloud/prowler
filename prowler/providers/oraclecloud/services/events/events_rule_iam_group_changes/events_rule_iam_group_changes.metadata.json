@@ -1,35 +1,37 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "events_rule_iam_group_changes",
-  "CheckTitle": "Ensure a notification is configured for IAM group changes",
-  "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS OCI Foundations Benchmark"
-  ],
+  "CheckTitle": "Event rule monitoring IAM group changes has notification actions configured",
+  "CheckType": [],
   "ServiceName": "events",
   "SubServiceName": "",
-  "ResourceIdTemplate": "oci:events:rule",
-  "Severity": "medium",
-  "ResourceType": "OciEventsRule",
-  "Description": "Event rules should be configured to notify on IAM group changes.",
-  "Risk": "Without proper event monitoring, security-relevant changes may go unnoticed.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Events/home.htm",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "EventRule",
+  "Description": "**OCI Events rules** monitor **IAM group lifecycle events** (`creategroup`, `updategroup`, `deletegroup`) and include **notification actions** to generate alerts when these changes occur.",
+  "Risk": "Without alerts on **IAM group changes**, unauthorized privilege changes can persist unnoticed, enabling **privilege escalation** and broader access. This undermines **confidentiality** and **integrity**, and delays response to identity misuse.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://orca.security/resources/cloud-risk-encyclopedia/notification-not-configured-for-iam-group-changes/",
+    "https://blogs.oracle.com/ateam/post/part-1-event-based-integration-with-oci-iam",
+    "https://qiita.com/tkhsyuk/items/d95b97ffbbdab5c9300d",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Events/detect-iam-group-changes.html",
+    "https://docs.oracle.com/en-us/iaas/Content/Events/home.htm"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "oci events rule create --display-name <name> --condition <event-condition> --actions <notification-actions>",
+      "CLI": "oci events rule create --compartment-id <compartment_ocid> --display-name <example_resource_name> --condition '{\"eventType\":[\"com.oraclecloud.identitycontrolplane.creategroup\",\"com.oraclecloud.identitycontrolplane.deletegroup\",\"com.oraclecloud.identitycontrolplane.updategroup\"]}' --actions '{\"actions\":[{\"actionType\":\"ONS\",\"topicId\":\"<example_resource_id>\"}]}'",
       "NativeIaC": "",
-      "Other": "1. Navigate to Observability & Management > Events Service\n2. Create a new rule\n3. Configure the event condition\n4. Add notification action\n5. Save the rule",
-      "Terraform": "resource \"oci_events_rule\" \"example\" {\n  display_name = \"rule\"\n  is_enabled = true\n  condition = jsonencode({\n    eventType = [\"com.oraclecloud.*\"]\n  })\n  actions {\n    actions {\n      action_type = \"ONS\"\n      topic_id = var.topic_id\n    }\n  }\n}"
+      "Other": "1. In the OCI Console, go to Observability & Management > Events Service > Rules\n2. Click Create rule and set Name\n3. In Condition, select Event types and add:\n   - com.oraclecloud.identitycontrolplane.creategroup\n   - com.oraclecloud.identitycontrolplane.deletegroup\n   - com.oraclecloud.identitycontrolplane.updategroup\n4. In Actions, add Notifications and select an existing Topic\n5. Click Create to save the rule",
+      "Terraform": "```hcl\nresource \"oci_events_rule\" \"<example_resource_name>\" {\n  compartment_id = \"<example_resource_id>\"\n  display_name   = \"<example_resource_name>\"\n\n  # Critical: Monitor IAM group changes\n  condition = jsonencode({\n    eventType = [\n      \"com.oraclecloud.identitycontrolplane.creategroup\",\n      \"com.oraclecloud.identitycontrolplane.deletegroup\",\n      \"com.oraclecloud.identitycontrolplane.updategroup\"\n    ]\n  })\n\n  actions {\n    actions {\n      action_type = \"ONS\"               # Critical: Send notifications via OCI Notifications\n      topic_id    = \"<example_resource_id>\"  # Topic OCID for notifications\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure a notification is configured for IAM group changes",
-      "Url": "https://hub.prowler.com/check/oci/events_rule_iam_group_changes"
+      "Text": "Create **Events rules** for IAM group `create`, `update`, and `delete` and route them to **Notifications** channels consumed by the SOC. Enforce **least privilege** and **separation of duties** on rules/topics, forward events to a **SIEM**, and periodically test alert delivery.",
+      "Url": "https://hub.prowler.com/check/events_rule_iam_group_changes"
     }
   },
   "Categories": [
-    "logging",
-    "monitoring"
+    "threat-detection"
   ],
   "DependsOn": [],
   "RelatedTo": [],

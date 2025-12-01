@@ -1,35 +1,37 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "events_rule_vcn_changes",
-  "CheckTitle": "Ensure a notification is configured for VCN changes",
-  "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS OCI Foundations Benchmark"
-  ],
+  "CheckTitle": "Event rule monitoring VCN changes has notification actions configured",
+  "CheckType": [],
   "ServiceName": "events",
   "SubServiceName": "",
-  "ResourceIdTemplate": "oci:events:rule",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "OciEventsRule",
-  "Description": "Event rules should be configured to notify on VCN changes.",
-  "Risk": "Without proper event monitoring, security-relevant changes may go unnoticed.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Events/home.htm",
+  "ResourceType": "EventRule",
+  "Description": "**OCI Events rules** exist to capture **VCN lifecycle changes** (`create`, `update`, `delete`) via event types `com.oraclecloud.virtualnetwork.createvcn`, `com.oraclecloud.virtualnetwork.updatevcn`, `com.oraclecloud.virtualnetwork.deletevcn`, and include **notification actions**.",
+  "Risk": "Missing alerts for **VCN changes** reduces visibility of network perimeter modifications.\n\nAttackers or mistakes can silently open Internet access, alter routes for **data exfiltration**, or delete gateways/subnets, harming **confidentiality** and **availability**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.public.content.oci.oraclecloud.com/en-us/iaas/Content/Events/Reference/eventsproducers.htm",
+    "https://hub.steampipe.io/mods/turbot/oci_compliance/queries/events_rule_notification_vcn_changes",
+    "https://github.com/bridgecrewio/checkov/issues/1965",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Events/detect-vcn-changes.html",
+    "https://docs.oracle.com/en-us/iaas/Content/Events/home.htm"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "oci events rule create --display-name <name> --condition <event-condition> --actions <notification-actions>",
+      "CLI": "oci events rule create --compartment-id <compartment_ocid> --display-name <example_resource_name> --is-enabled true --condition '{\"eventType\":[\"com.oraclecloud.virtualnetwork.createvcn\",\"com.oraclecloud.virtualnetwork.deletevcn\",\"com.oraclecloud.virtualnetwork.updatevcn\"]}' --actions '{\"actions\":[{\"actionType\":\"ONS\",\"isEnabled\":true,\"topicId\":\"<example_resource_id>\"}]}'",
       "NativeIaC": "",
-      "Other": "1. Navigate to Observability & Management > Events Service\n2. Create a new rule\n3. Configure the event condition\n4. Add notification action\n5. Save the rule",
-      "Terraform": "resource \"oci_events_rule\" \"example\" {\n  display_name = \"rule\"\n  is_enabled = true\n  condition = jsonencode({\n    eventType = [\"com.oraclecloud.*\"]\n  })\n  actions {\n    actions {\n      action_type = \"ONS\"\n      topic_id = var.topic_id\n    }\n  }\n}"
+      "Other": "1. In OCI Console, go to Observability & Management > Events Service > Rules\n2. Click Create rule and enter a name; set Rule state to Enabled\n3. Under Conditions, add Event types: com.oraclecloud.virtualnetwork.createvcn, com.oraclecloud.virtualnetwork.deletevcn, com.oraclecloud.virtualnetwork.updatevcn\n4. Under Actions, add Notification and select the target Notifications topic\n5. Click Create to save the rule",
+      "Terraform": "```hcl\nresource \"oci_events_rule\" \"<example_resource_name>\" {\n  compartment_id = var.compartment_id\n  display_name   = \"<example_resource_name>\"\n  is_enabled     = true\n\n  # critical: monitor VCN create/delete/update events\n  condition = jsonencode({\n    eventType = [\n      \"com.oraclecloud.virtualnetwork.createvcn\",\n      \"com.oraclecloud.virtualnetwork.deletevcn\",\n      \"com.oraclecloud.virtualnetwork.updatevcn\"\n    ]\n  })\n\n  actions {\n    actions {\n      action_type = \"ONS\"         # critical: send notifications via OCI Notifications\n      topic_id    = var.topic_id   # critical: target Notifications topic\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure a notification is configured for VCN changes",
-      "Url": "https://hub.prowler.com/check/oci/events_rule_vcn_changes"
+      "Text": "Create and enable **Events rules** for VCN lifecycle changes (**create**, **update**, **delete**) with **notification actions** to monitored channels.\n\nApply **least privilege** to manage rules and notifications, integrate alerts with incident response, and periodically test to support **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/events_rule_vcn_changes"
     }
   },
   "Categories": [
-    "logging",
-    "monitoring"
+    "logging"
   ],
   "DependsOn": [],
   "RelatedTo": [],

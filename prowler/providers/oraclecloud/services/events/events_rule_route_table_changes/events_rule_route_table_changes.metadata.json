@@ -1,35 +1,33 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "events_rule_route_table_changes",
-  "CheckTitle": "Ensure a notification is configured for changes to route tables",
-  "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS OCI Foundations Benchmark"
-  ],
+  "CheckTitle": "Event rule for route table changes has notification actions configured",
+  "CheckType": [],
   "ServiceName": "events",
   "SubServiceName": "",
-  "ResourceIdTemplate": "oci:events:rule",
-  "Severity": "medium",
-  "ResourceType": "OciEventsRule",
-  "Description": "Event rules should be configured to notify on route table changes.",
-  "Risk": "Without proper event monitoring, security-relevant changes may go unnoticed.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Events/home.htm",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "EventRule",
+  "Description": "**OCI Events rules** for **VCN route tables** monitor lifecycle and compartment changes and include **notification actions**.\n\nThe evaluation looks for rules that capture `create`, `update`, `delete`, and `changeCompartment` events for route tables and send notifications.",
+  "Risk": "Without notifications on route table changes, **routing tampering** can persist unnoticed:\n- Exposure of private subnets to the Internet\n- Traffic hijack or blackholing\n- Segmentation bypass enabling lateral movement\nThis threatens **confidentiality**, **integrity**, and **availability**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en-us/iaas/Content/Events/home.htm"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "oci events rule create --display-name <name> --condition <event-condition> --actions <notification-actions>",
+      "CLI": "oci events rule create --compartment-id <example_compartment_ocid> --display-name <example_resource_name> --condition '{\"eventType\":[\"com.oraclecloud.virtualnetwork.changeroutetablecompartment\",\"com.oraclecloud.virtualnetwork.createroutetable\",\"com.oraclecloud.virtualnetwork.deleteroutetable\",\"com.oraclecloud.virtualnetwork.updateroutetable\"]}' --actions '{\"actions\":[{\"actionType\":\"ONS\",\"topicId\":\"<example_resource_id>\"}]}'",
       "NativeIaC": "",
-      "Other": "1. Navigate to Observability & Management > Events Service\n2. Create a new rule\n3. Configure the event condition\n4. Add notification action\n5. Save the rule",
-      "Terraform": "resource \"oci_events_rule\" \"example\" {\n  display_name = \"rule\"\n  is_enabled = true\n  condition = jsonencode({\n    eventType = [\"com.oraclecloud.*\"]\n  })\n  actions {\n    actions {\n      action_type = \"ONS\"\n      topic_id = var.topic_id\n    }\n  }\n}"
+      "Other": "1. In OCI Console, go to Observability & Management > Events Service > Rules.\n2. Click Create rule and select the target Compartment; set a Display name.\n3. In Condition, add event types:\n   - com.oraclecloud.virtualnetwork.changeroutetablecompartment\n   - com.oraclecloud.virtualnetwork.createroutetable\n   - com.oraclecloud.virtualnetwork.deleteroutetable\n   - com.oraclecloud.virtualnetwork.updateroutetable\n4. In Actions, add Notifications (ONS) and select the desired Topic.\n5. Ensure the rule is Enabled and click Create.",
+      "Terraform": "```hcl\nresource \"oci_events_rule\" \"<example_resource_name>\" {\n  compartment_id = \"<example_compartment_ocid>\"\n  display_name   = \"<example_resource_name>\"\n\n  condition = jsonencode({\n    eventType = [\n      \"com.oraclecloud.virtualnetwork.changeroutetablecompartment\", # critical: monitor route table change events\n      \"com.oraclecloud.virtualnetwork.createroutetable\",\n      \"com.oraclecloud.virtualnetwork.deleteroutetable\",\n      \"com.oraclecloud.virtualnetwork.updateroutetable\"\n    ]\n  })\n\n  actions {\n    actions {\n      action_type = \"ONS\"                   # critical: adds notification action\n      topic_id    = \"<example_resource_id>\" # critical: ONS topic to receive notifications\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure a notification is configured for changes to route tables",
-      "Url": "https://hub.prowler.com/check/oci/events_rule_route_table_changes"
+      "Text": "Create an **Events rule** that captures route table `create`, `update`, `delete`, and `changeCompartment` events and routes them to **notifications** used by on-call and SIEM. Enforce **least privilege** on route edits, require **change approvals**, and apply **defense in depth** with auditing and automated response.",
+      "Url": "https://hub.prowler.com/check/events_rule_route_table_changes"
     }
   },
   "Categories": [
-    "logging",
-    "monitoring"
+    "logging"
   ],
   "DependsOn": [],
   "RelatedTo": [],

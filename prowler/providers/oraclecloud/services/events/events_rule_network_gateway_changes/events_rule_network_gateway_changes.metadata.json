@@ -1,35 +1,33 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "events_rule_network_gateway_changes",
-  "CheckTitle": "Ensure a notification is configured for changes to network gateways",
-  "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS OCI Foundations Benchmark"
-  ],
+  "CheckTitle": "Event rule monitoring network gateway changes has notification actions configured",
+  "CheckType": [],
   "ServiceName": "events",
   "SubServiceName": "",
-  "ResourceIdTemplate": "oci:events:rule",
-  "Severity": "medium",
-  "ResourceType": "OciEventsRule",
-  "Description": "Event rules should be configured to notify on network gateway changes.",
-  "Risk": "Without proper event monitoring, security-relevant changes may go unnoticed.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Events/home.htm",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "EventRule",
+  "Description": "OCI Events rules monitor **network gateway** lifecycle and attachment changes (DRG, Internet, NAT, Service, and Local Peering gateways) and include **notification actions** so changes generate alerts.\n\nThe evaluation looks for rules filtered to these events and confirms they trigger notifications.",
+  "Risk": "Unalerted gateway changes can reroute traffic, expose services, or sever connectivity.\n\nAttackers or misconfigurations may modify routes or attachments to enable data exfiltration, man-in-the-middle, or denial of service, degrading **confidentiality**, **integrity**, and **availability**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en-us/iaas/Content/Events/home.htm"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "oci events rule create --display-name <name> --condition <event-condition> --actions <notification-actions>",
+      "CLI": "oci events rule create --compartment-id <example_resource_id> --display-name <example_resource_name> --condition '{\"eventType\":[\"com.oraclecloud.virtualnetwork.createdrg\",\"com.oraclecloud.virtualnetwork.deletedrg\",\"com.oraclecloud.virtualnetwork.updatedrg\",\"com.oraclecloud.virtualnetwork.createdrgattachment\",\"com.oraclecloud.virtualnetwork.deletedrgattachment\",\"com.oraclecloud.virtualnetwork.updatedrgattachment\",\"com.oraclecloud.virtualnetwork.changeinternetgatewaycompartment\",\"com.oraclecloud.virtualnetwork.createinternetgateway\",\"com.oraclecloud.virtualnetwork.deleteinternetgateway\",\"com.oraclecloud.virtualnetwork.updateinternetgateway\",\"com.oraclecloud.virtualnetwork.changelocalpeeringgatewaycompartment\",\"com.oraclecloud.virtualnetwork.createlocalpeeringgateway\",\"com.oraclecloud.virtualnetwork.deletelocalpeeringgateway.end\",\"com.oraclecloud.virtualnetwork.updatelocalpeeringgateway\",\"com.oraclecloud.natgateway.changenatgatewaycompartment\",\"com.oraclecloud.natgateway.createnatgateway\",\"com.oraclecloud.natgateway.deletenatgateway\",\"com.oraclecloud.natgateway.updatenatgateway\",\"com.oraclecloud.servicegateway.attachserviceid\",\"com.oraclecloud.servicegateway.changeservicegatewaycompartment\",\"com.oraclecloud.servicegateway.createservicegateway\",\"com.oraclecloud.servicegateway.deleteservicegateway.end\",\"com.oraclecloud.servicegateway.detachserviceid\",\"com.oraclecloud.servicegateway.updateservicegateway\"]}' --actions '{\"actions\":[{\"actionType\":\"ONS\",\"topicId\":\"<example_resource_id>\"}]}'",
       "NativeIaC": "",
-      "Other": "1. Navigate to Observability & Management > Events Service\n2. Create a new rule\n3. Configure the event condition\n4. Add notification action\n5. Save the rule",
-      "Terraform": "resource \"oci_events_rule\" \"example\" {\n  display_name = \"rule\"\n  is_enabled = true\n  condition = jsonencode({\n    eventType = [\"com.oraclecloud.*\"]\n  })\n  actions {\n    actions {\n      action_type = \"ONS\"\n      topic_id = var.topic_id\n    }\n  }\n}"
+      "Other": "1. In OCI Console, go to Observability & Management > Events Service > Rules\n2. Click Create rule and select the target Compartment\n3. Set Display name\n4. Under Matching events, add these Event types:\n   - com.oraclecloud.virtualnetwork.createdrg\n   - com.oraclecloud.virtualnetwork.deletedrg\n   - com.oraclecloud.virtualnetwork.updatedrg\n   - com.oraclecloud.virtualnetwork.createdrgattachment\n   - com.oraclecloud.virtualnetwork.deletedrgattachment\n   - com.oraclecloud.virtualnetwork.updatedrgattachment\n   - com.oraclecloud.virtualnetwork.changeinternetgatewaycompartment\n   - com.oraclecloud.virtualnetwork.createinternetgateway\n   - com.oraclecloud.virtualnetwork.deleteinternetgateway\n   - com.oraclecloud.virtualnetwork.updateinternetgateway\n   - com.oraclecloud.virtualnetwork.changelocalpeeringgatewaycompartment\n   - com.oraclecloud.virtualnetwork.createlocalpeeringgateway\n   - com.oraclecloud.virtualnetwork.deletelocalpeeringgateway.end\n   - com.oraclecloud.virtualnetwork.updatelocalpeeringgateway\n   - com.oraclecloud.natgateway.changenatgatewaycompartment\n   - com.oraclecloud.natgateway.createnatgateway\n   - com.oraclecloud.natgateway.deletenatgateway\n   - com.oraclecloud.natgateway.updatenatgateway\n   - com.oraclecloud.servicegateway.attachserviceid\n   - com.oraclecloud.servicegateway.changeservicegatewaycompartment\n   - com.oraclecloud.servicegateway.createservicegateway\n   - com.oraclecloud.servicegateway.deleteservicegateway.end\n   - com.oraclecloud.servicegateway.detachserviceid\n   - com.oraclecloud.servicegateway.updateservicegateway\n5. Add action: Notification, select the target Notifications (ONS) topic\n6. Click Create (ensure the rule is enabled)",
+      "Terraform": "```hcl\nresource \"oci_events_rule\" \"<example_resource_name>\" {\n  compartment_id = \"<example_resource_id>\"\n  display_name   = \"<example_resource_name>\"\n\n  # Critical: Monitor required network gateway event types\n  condition = jsonencode({\n    eventType = [\n      \"com.oraclecloud.virtualnetwork.createdrg\",\n      \"com.oraclecloud.virtualnetwork.deletedrg\",\n      \"com.oraclecloud.virtualnetwork.updatedrg\",\n      \"com.oraclecloud.virtualnetwork.createdrgattachment\",\n      \"com.oraclecloud.virtualnetwork.deletedrgattachment\",\n      \"com.oraclecloud.virtualnetwork.updatedrgattachment\",\n      \"com.oraclecloud.virtualnetwork.changeinternetgatewaycompartment\",\n      \"com.oraclecloud.virtualnetwork.createinternetgateway\",\n      \"com.oraclecloud.virtualnetwork.deleteinternetgateway\",\n      \"com.oraclecloud.virtualnetwork.updateinternetgateway\",\n      \"com.oraclecloud.virtualnetwork.changelocalpeeringgatewaycompartment\",\n      \"com.oraclecloud.virtualnetwork.createlocalpeeringgateway\",\n      \"com.oraclecloud.virtualnetwork.deletelocalpeeringgateway.end\",\n      \"com.oraclecloud.virtualnetwork.updatelocalpeeringgateway\",\n      \"com.oraclecloud.natgateway.changenatgatewaycompartment\",\n      \"com.oraclecloud.natgateway.createnatgateway\",\n      \"com.oraclecloud.natgateway.deletenatgateway\",\n      \"com.oraclecloud.natgateway.updatenatgateway\",\n      \"com.oraclecloud.servicegateway.attachserviceid\",\n      \"com.oraclecloud.servicegateway.changeservicegatewaycompartment\",\n      \"com.oraclecloud.servicegateway.createservicegateway\",\n      \"com.oraclecloud.servicegateway.deleteservicegateway.end\",\n      \"com.oraclecloud.servicegateway.detachserviceid\",\n      \"com.oraclecloud.servicegateway.updateservicegateway\"\n    ]\n  })\n\n  actions {\n    actions {\n      # Critical: Add notification action so the rule passes the check\n      action_type = \"ONS\"   # Sends to Notifications service (ONS)\n      topic_id    = \"<example_resource_id>\"  # ONS topic OCID\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure a notification is configured for changes to network gateways",
-      "Url": "https://hub.prowler.com/check/oci/events_rule_network_gateway_changes"
+      "Text": "Define **event rules** that match `create`, `update`, `delete`, `attach`, and `detach` actions for all gateway types and send **notifications** to monitored channels.\n\nApply **least privilege** on topics, cover all compartments/regions, integrate with SIEM, and use **defense in depth** with network change approvals.",
+      "Url": "https://hub.prowler.com/check/events_rule_network_gateway_changes"
     }
   },
   "Categories": [
-    "logging",
-    "monitoring"
+    "logging"
   ],
   "DependsOn": [],
   "RelatedTo": [],

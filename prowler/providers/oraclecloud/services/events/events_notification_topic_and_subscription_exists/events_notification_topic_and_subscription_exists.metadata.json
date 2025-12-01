@@ -1,35 +1,33 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "events_notification_topic_and_subscription_exists",
-  "CheckTitle": "Create at least one notification topic and subscription to receive monitoring alerts",
-  "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS OCI Foundations Benchmark"
-  ],
+  "CheckTitle": "Tenancy has at least one notification topic with active subscriptions",
+  "CheckType": [],
   "ServiceName": "events",
   "SubServiceName": "",
-  "ResourceIdTemplate": "oci:events:rule",
-  "Severity": "medium",
-  "ResourceType": "OciEventsRule",
-  "Description": "At least one notification topic and subscription should exist to receive monitoring alerts.",
-  "Risk": "Without proper event monitoring, security-relevant changes may go unnoticed.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Events/home.htm",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "OnsTopic",
+  "Description": "**OCI Notifications** is evaluated for the existence of at least one **topic** that has one or more **subscriptions**.\n\nThe focus is on whether subscribed endpoints are present to receive Events and monitoring alerts.",
+  "Risk": "Without subscribed topics, alerts are not delivered, reducing **visibility** and delaying detection of malicious or accidental changes. This undermines **confidentiality** (undetected data access), **integrity** (unauthorized config changes), and **availability** (unresolved outages).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en-us/iaas/Content/Events/home.htm"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "oci events rule create --display-name <name> --condition <event-condition> --actions <notification-actions>",
+      "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Navigate to Observability & Management > Events Service\n2. Create a new rule\n3. Configure the event condition\n4. Add notification action\n5. Save the rule",
-      "Terraform": "resource \"oci_events_rule\" \"example\" {\n  display_name = \"rule\"\n  is_enabled = true\n  condition = jsonencode({\n    eventType = [\"com.oraclecloud.*\"]\n  })\n  actions {\n    actions {\n      action_type = \"ONS\"\n      topic_id = var.topic_id\n    }\n  }\n}"
+      "Other": "1. In the OCI Console, go to Menu > Application Integration > Notifications > Topics\n2. Click Create Topic, enter a name, and click Create\n3. Open the topic, click Create Subscription\n4. Select a protocol (e.g., Function), choose/provide the endpoint, and click Create\n5. Verify the subscription lifecycle state shows Active (confirm if prompted for protocols like Email)",
+      "Terraform": "```hcl\n# Create a notification topic\nresource \"oci_ons_notification_topic\" \"<example_resource_name>\" {\n  compartment_id = var.compartment_ocid\n  name           = \"<example_resource_name>\"  # Critical: creates the notification topic needed for the check\n}\n\n# Create a subscription on the topic (ensures topic has an active subscription)\nresource \"oci_ons_subscription\" \"<example_resource_name>\" {\n  compartment_id = var.compartment_ocid\n  topic_id       = oci_ons_notification_topic.<example_resource_name>.id  # Critical: attaches the subscription to the topic\n  protocol       = \"ORACLE_FUNCTIONS\"  # Critical: protocol that can become active without manual confirmation\n  endpoint       = \"<function_ocid>\"   # Critical: endpoint for the subscription\n}\n```"
     },
     "Recommendation": {
-      "Text": "Create at least one notification topic and subscription to receive monitoring alerts",
-      "Url": "https://hub.prowler.com/check/oci/events_notification_topic_and_subscription_exists"
+      "Text": "Create a centralized **Notifications** topic with one or more **subscriptions**, and route critical Events/monitoring to it. Apply **least privilege** to topic management, use redundant channels, test delivery regularly, and tune filters to reduce noise. *Consider* escalation paths for `critical` alerts.",
+      "Url": "https://hub.prowler.com/check/events_notification_topic_and_subscription_exists"
     }
   },
   "Categories": [
-    "logging",
-    "monitoring"
+    "logging"
   ],
   "DependsOn": [],
   "RelatedTo": [],

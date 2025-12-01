@@ -1,35 +1,36 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "events_rule_idp_group_mapping_changes",
-  "CheckTitle": "Ensure a notification is configured for IdP group mapping changes",
-  "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS OCI Foundations Benchmark"
-  ],
+  "CheckTitle": "Event rule for IdP group mapping changes has notification actions configured",
+  "CheckType": [],
   "ServiceName": "events",
   "SubServiceName": "",
-  "ResourceIdTemplate": "oci:events:rule",
-  "Severity": "medium",
-  "ResourceType": "OciEventsRule",
-  "Description": "Event rules should be configured to notify on IdP group mapping changes.",
-  "Risk": "Without proper event monitoring, security-relevant changes may go unnoticed.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Events/home.htm",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "EventRule",
+  "Description": "**OCI Events rules** monitor **IdP group mapping changes** with **notification actions** for `com.oraclecloud.identitycontrolplane.createidpgroupmapping`, `com.oraclecloud.identitycontrolplane.deleteidpgroupmapping`, and `com.oraclecloud.identitycontrolplane.updateidpgroupmapping`.",
+  "Risk": "Without **alerts** on IdP group mapping changes, federated users can gain unauthorized group memberships unnoticed, enabling **privilege escalation** and broader access to OCI resources. This undermines **confidentiality** and **integrity**, and may affect **availability** through misuse of elevated permissions.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://github.com/bridgecrewio/checkov/issues/1959",
+    "https://docs.oracle.com/en-us/iaas/Content/Events/home.htm",
+    "https://docs.public.content.oci.oraclecloud.com/en-us/iaas/Content/Events/Reference/eventsproducers.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Events/detect-idp-group-mapping-changes.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "oci events rule create --display-name <name> --condition <event-condition> --actions <notification-actions>",
+      "CLI": "oci events rule create --compartment-id <COMPARTMENT_OCID> --display-name <example_resource_name> --is-enabled true --condition '{\"eventType\":[\"com.oraclecloud.identitycontrolplane.createidpgroupmapping\",\"com.oraclecloud.identitycontrolplane.deleteidpgroupmapping\",\"com.oraclecloud.identitycontrolplane.updateidpgroupmapping\"]}' --actions '{\"actions\":[{\"actionType\":\"ONS\",\"isEnabled\":true,\"topicId\":\"<TOPIC_OCID>\"}]}'",
       "NativeIaC": "",
-      "Other": "1. Navigate to Observability & Management > Events Service\n2. Create a new rule\n3. Configure the event condition\n4. Add notification action\n5. Save the rule",
-      "Terraform": "resource \"oci_events_rule\" \"example\" {\n  display_name = \"rule\"\n  is_enabled = true\n  condition = jsonencode({\n    eventType = [\"com.oraclecloud.*\"]\n  })\n  actions {\n    actions {\n      action_type = \"ONS\"\n      topic_id = var.topic_id\n    }\n  }\n}"
+      "Other": "1. In OCI Console, go to Observability & Management > Events Service > Rules\n2. Click Create rule\n3. Condition: add Event types:\n   - com.oraclecloud.identitycontrolplane.createidpgroupmapping\n   - com.oraclecloud.identitycontrolplane.deleteidpgroupmapping\n   - com.oraclecloud.identitycontrolplane.updateidpgroupmapping\n4. Actions: Add action > Notifications (ONS) and select the target Topic\n5. Ensure Rule is Enabled and click Create",
+      "Terraform": "```hcl\nresource \"oci_events_rule\" \"<example_resource_name>\" {\n  compartment_id = \"<example_resource_id>\"\n  display_name   = \"<example_resource_name>\"\n  is_enabled     = true\n\n  condition = jsonencode({\n    eventType = [\n      \"com.oraclecloud.identitycontrolplane.createidpgroupmapping\", # critical: monitor IdP group mapping create\n      \"com.oraclecloud.identitycontrolplane.deleteidpgroupmapping\", # critical: monitor IdP group mapping delete\n      \"com.oraclecloud.identitycontrolplane.updateidpgroupmapping\"  # critical: monitor IdP group mapping update\n    ]\n  })\n\n  actions {\n    actions {\n      action_type = \"ONS\"                       # critical: adds notification action\n      topic_id    = \"<example_resource_id>\"     # critical: ONS topic to notify\n      is_enabled  = true\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure a notification is configured for IdP group mapping changes",
-      "Url": "https://hub.prowler.com/check/oci/events_rule_idp_group_mapping_changes"
+      "Text": "Define **Events rules** for IdP group mapping changes (`com.oraclecloud.identitycontrolplane.createidpgroupmapping`, `...deleteidpgroupmapping`, `...updateidpgroupmapping`) and route notifications to monitored channels via **OCI Notifications**. Apply **least privilege** and **separation of duties**, and integrate alerts with a SIEM for **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/events_rule_idp_group_mapping_changes"
     }
   },
   "Categories": [
-    "logging",
-    "monitoring"
+    "identity-access"
   ],
   "DependsOn": [],
   "RelatedTo": [],

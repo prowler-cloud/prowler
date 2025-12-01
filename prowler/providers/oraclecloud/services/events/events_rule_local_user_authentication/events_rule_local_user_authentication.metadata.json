@@ -1,36 +1,35 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "events_rule_local_user_authentication",
-  "CheckTitle": "Ensure a notification is configured for Local OCI User Authentication",
-  "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS OCI Foundations Benchmark"
-  ],
+  "CheckTitle": "Event rule monitoring local OCI user authentication has notification actions configured",
+  "CheckType": [],
   "ServiceName": "events",
   "SubServiceName": "",
-  "ResourceIdTemplate": "oci:events:rule",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "OciEventRule",
-  "Description": "Ensure that an Event Rule and Notification are configured to detect when a user authenticates via OCI local authentication. Event Rules are compartment-scoped and will detect events in child compartments. This Event rule is required to be created at the root compartment level.",
-  "Risk": "Without proper notification for local user authentication events, unauthorized access attempts or suspicious authentication activity may go undetected, increasing the risk of security breaches.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Events/home.htm",
+  "ResourceType": "EventRule",
+  "Description": "**OCI Events rules** targeting `com.oraclecloud.identitysignon.interactivelogin` are assessed for configured **notification actions** to monitor local user interactive sign-ins. Rules are compartment-scoped and can cover child compartments.",
+  "Risk": "Without alerts on local sign-ins, **account takeovers** and **brute-force** attempts can go unnoticed. Attackers with local access can exfiltrate data (confidentiality), change configurations (integrity), and disrupt services (availability), delaying detection and response.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Events/detect-oci-local-authentication.html",
+    "https://docs.oracle.com/en-us/iaas/Content/Events/home.htm",
+    "https://blogs.oracle.com/ateam/post/methods-and-ways-to-extract-session-information-using-oci-audit-and-integrate-into-external-systems"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "oci events rule create --display-name user-authentication-rule --is-enabled true --condition '{\"eventType\":[\"com.oraclecloud.identitysignon.interactivelogin\"]}' --compartment-id <root-compartment-ocid> --actions '{\"actions\":[{\"actionType\":\"ONS\",\"isEnabled\":true,\"topicId\":\"<topic-ocid>\"}]}'",
+      "CLI": "oci events rule create --display-name <example_resource_name> --is-enabled true --condition '{\"eventType\":[\"com.oraclecloud.identitysignon.interactivelogin\"]}' --compartment-id <example_resource_id> --actions '{\"actions\":[{\"actionType\":\"ONS\",\"isEnabled\":true,\"topicId\":\"<example_resource_id>\"}]}'",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Events/detect-oci-local-authentication.html",
-      "Terraform": "resource \"oci_events_rule\" \"user_auth_rule\" {\n  display_name    = \"user-authentication-events\"\n  is_enabled      = true\n  compartment_id  = var.tenancy_ocid\n  condition       = \"{\\\"eventType\\\":[\\\"com.oraclecloud.identitysignon.interactivelogin\\\"]}\"\n  actions {\n    actions {\n      action_type = \"ONS\"\n      is_enabled  = true\n      topic_id    = oci_ons_notification_topic.topic.id\n    }\n  }\n}"
+      "Other": "1. In the OCI Console, go to Application Integration > Events Service > Rules\n2. Click Create rule\n3. Set Name and select the target Compartment\n4. In Condition, set Event Type to: com.oraclecloud.identitysignon.interactivelogin\n5. Add Action: choose Notifications, select the Topic, and ensure it is Enabled\n6. Click Create",
+      "Terraform": "```hcl\nresource \"oci_events_rule\" \"example\" {\n  display_name   = \"<example_resource_name>\"\n  is_enabled     = true\n  compartment_id = \"<example_resource_id>\"\n\n  # Critical: filter for local OCI user authentication events\n  condition = jsonencode({ eventType = [\"com.oraclecloud.identitysignon.interactivelogin\"] })\n\n  actions {\n    actions {\n      # Critical: ONS notification action to a topic\n      action_type = \"ONS\"\n      is_enabled  = true\n      topic_id    = \"<example_resource_id>\"\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Create an Event Rule with notifications configured to monitor local OCI user authentication events (com.oraclecloud.identitysignon.interactivelogin)",
-      "Url": "https://hub.prowler.com/check/oci/events_rule_local_user_authentication"
+      "Text": "Create an Events rule for `com.oraclecloud.identitysignon.interactivelogin` with **notification actions** delivering real-time alerts to monitored channels or workflows. Integrate with a SIEM, tune filters to reduce noise, and apply **least privilege** and **defense in depth** to limit local account exposure.",
+      "Url": "https://hub.prowler.com/check/events_rule_local_user_authentication"
     }
   },
   "Categories": [
-    "logging",
-    "monitoring",
-    "security-configuration"
+    "threat-detection"
   ],
   "DependsOn": [],
   "RelatedTo": [],
