@@ -2211,6 +2211,25 @@ class OverviewSeveritySerializer(serializers.Serializer):
         return {"version": "v1"}
 
 
+class FindingsSeverityOverTimeSerializer(serializers.Serializer):
+    """Serializer for daily findings severity trend data."""
+
+    id = serializers.DateField(source="date")
+    date = serializers.DateField()
+    critical = serializers.IntegerField()
+    high = serializers.IntegerField()
+    medium = serializers.IntegerField()
+    low = serializers.IntegerField()
+    informational = serializers.IntegerField()
+    muted = serializers.IntegerField()
+
+    class JSONAPIMeta:
+        resource_name = "findings-severity-over-time"
+
+    def get_root_meta(self, _resource, _many):
+        return {"version": "v1"}
+
+
 class OverviewServiceSerializer(serializers.Serializer):
     id = serializers.CharField(source="service")
     total = serializers.IntegerField()

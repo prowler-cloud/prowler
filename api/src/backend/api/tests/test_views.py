@@ -35,6 +35,7 @@ from rest_framework.response import Response
 from api.compliance import get_compliance_frameworks
 from api.db_router import MainRouter
 from api.models import (
+    DailyFindingsSeverity,
     Finding,
     Integration,
     Invitation,
@@ -6855,6 +6856,251 @@ class TestOverviewViewSet:
         assert combined_attributes["high"] == 8
         assert combined_attributes["medium"] == 4
         assert combined_attributes["critical"] == 3
+
+    def test_overview_findings_severity_over_time_requires_date_from(
+        self, authenticated_client
+    ):
+        response = authenticated_client.get(
+            reverse("overview-findings_severity_over_time")
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "date_from" in response.json()["errors"][0]["detail"]
+
+    def test_overview_findings_severity_over_time_invalid_date_format(
+        self, authenticated_client
+    ):
+        response = authenticated_client.get(
+            reverse("overview-findings_severity_over_time"),
+            {"filter[date_from]": "invalid-date"},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "Invalid date format" in response.json()["errors"][0]["detail"]
+
+    def test_overview_findings_severity_over_time_empty_data(
+        self, authenticated_client
+    ):
+        response = authenticated_client.get(
+            reverse("overview-findings_severity_over_time"),
+            {
+                "filter[date_from]": "2024-01-01",
+                "filter[date_to]": "2024-01-03",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        # Should return 3 days with fill-forward (all zeros since no data)
+        assert len(data) == 3
+        for item in data:
+            assert item["attributes"]["critical"] == 0
+            assert item["attributes"]["high"] == 0
+            assert item["attributes"]["medium"] == 0
+            assert item["attributes"]["low"] == 0
+            assert item["attributes"]["informational"] == 0
+            assert item["attributes"]["muted"] == 0
+
+    def test_overview_findings_severity_over_time_with_data(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        from datetime import date
+
+        tenant = tenants_fixture[0]
+        provider1, provider2, *_ = providers_fixture
+
+        scan1 = Scan.objects.create(
+            name="severity-over-time-scan-1",
+            provider=provider1,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        # Create daily severity data for 3 days
+        DailyFindingsSeverity.objects.create(
+            tenant=tenant,
+            provider=provider1,
+            scan=scan1,
+            provider_type="aws",
+            date=date(2024, 1, 1),
+            critical=10,
+            high=20,
+            medium=30,
+            low=40,
+            informational=50,
+            muted=5,
+        )
+        DailyFindingsSeverity.objects.create(
+            tenant=tenant,
+            provider=provider1,
+            scan=scan1,
+            provider_type="aws",
+            date=date(2024, 1, 3),
+            critical=15,
+            high=25,
+            medium=35,
+            low=45,
+            informational=55,
+            muted=10,
+        )
+
+        response = authenticated_client.get(
+            reverse("overview-findings_severity_over_time"),
+            {
+                "filter[date_from]": "2024-01-01",
+                "filter[date_to]": "2024-01-03",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 3
+
+        # Day 1 - actual data
+        assert data[0]["attributes"]["date"] == "2024-01-01"
+        assert data[0]["attributes"]["critical"] == 10
+        assert data[0]["attributes"]["high"] == 20
+
+        # Day 2 - fill forward from day 1 (no data for this day)
+        assert data[1]["attributes"]["date"] == "2024-01-02"
+        assert data[1]["attributes"]["critical"] == 10
+        assert data[1]["attributes"]["high"] == 20
+
+        # Day 3 - actual data
+        assert data[2]["attributes"]["date"] == "2024-01-03"
+        assert data[2]["attributes"]["critical"] == 15
+        assert data[2]["attributes"]["high"] == 25
+
+    def test_overview_findings_severity_over_time_aggregates_providers(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        from datetime import date
+
+        tenant = tenants_fixture[0]
+        provider1, provider2, *_ = providers_fixture
+
+        scan1 = Scan.objects.create(
+            name="severity-over-time-scan-p1",
+            provider=provider1,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+        scan2 = Scan.objects.create(
+            name="severity-over-time-scan-p2",
+            provider=provider2,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        # Same day, different providers
+        DailyFindingsSeverity.objects.create(
+            tenant=tenant,
+            provider=provider1,
+            scan=scan1,
+            provider_type="aws",
+            date=date(2024, 2, 1),
+            critical=10,
+            high=20,
+            medium=30,
+            low=40,
+            informational=50,
+            muted=5,
+        )
+        DailyFindingsSeverity.objects.create(
+            tenant=tenant,
+            provider=provider2,
+            scan=scan2,
+            provider_type="aws",
+            date=date(2024, 2, 1),
+            critical=5,
+            high=10,
+            medium=15,
+            low=20,
+            informational=25,
+            muted=3,
+        )
+
+        response = authenticated_client.get(
+            reverse("overview-findings_severity_over_time"),
+            {
+                "filter[date_from]": "2024-02-01",
+                "filter[date_to]": "2024-02-01",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+
+        # Should aggregate both providers
+        assert data[0]["attributes"]["critical"] == 15  # 10 + 5
+        assert data[0]["attributes"]["high"] == 30  # 20 + 10
+        assert data[0]["attributes"]["medium"] == 45  # 30 + 15
+        assert data[0]["attributes"]["low"] == 60  # 40 + 20
+        assert data[0]["attributes"]["informational"] == 75  # 50 + 25
+        assert data[0]["attributes"]["muted"] == 8  # 5 + 3
+
+    def test_overview_findings_severity_over_time_provider_filter(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        from datetime import date
+
+        tenant = tenants_fixture[0]
+        provider1, provider2, *_ = providers_fixture
+
+        scan1 = Scan.objects.create(
+            name="severity-over-time-filter-scan-p1",
+            provider=provider1,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+        scan2 = Scan.objects.create(
+            name="severity-over-time-filter-scan-p2",
+            provider=provider2,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        DailyFindingsSeverity.objects.create(
+            tenant=tenant,
+            provider=provider1,
+            scan=scan1,
+            provider_type="aws",
+            date=date(2024, 3, 1),
+            critical=100,
+            high=0,
+            medium=0,
+            low=0,
+            informational=0,
+            muted=0,
+        )
+        DailyFindingsSeverity.objects.create(
+            tenant=tenant,
+            provider=provider2,
+            scan=scan2,
+            provider_type="aws",
+            date=date(2024, 3, 1),
+            critical=50,
+            high=0,
+            medium=0,
+            low=0,
+            informational=0,
+            muted=0,
+        )
+
+        # Filter by provider1 only
+        response = authenticated_client.get(
+            reverse("overview-findings_severity_over_time"),
+            {
+                "filter[date_from]": "2024-03-01",
+                "filter[date_to]": "2024-03-01",
+                "filter[provider_id]": str(provider1.id),
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["attributes"]["critical"] == 100  # Only provider1
 
 
 @pytest.mark.django_db

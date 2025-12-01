@@ -99,6 +99,7 @@ from api.exceptions import TaskFailedException
 from api.filters import (
     ComplianceOverviewFilter,
     CustomDjangoFilterBackend,
+    DailyFindingsSeverityFilter,
     FindingFilter,
     IntegrationFilter,
     IntegrationJiraFindingsFilter,
@@ -126,6 +127,7 @@ from api.filters import (
 )
 from api.models import (
     ComplianceRequirementOverview,
+    DailyFindingsSeverity,
     Finding,
     Integration,
     Invitation,
@@ -178,6 +180,7 @@ from api.v1.serializers import (
     FindingDynamicFilterSerializer,
     FindingMetadataSerializer,
     FindingSerializer,
+    FindingsSeverityOverTimeSerializer,
     IntegrationCreateSerializer,
     IntegrationJiraDispatchSerializer,
     IntegrationSerializer,
@@ -3889,6 +3892,16 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         ),
         filters=True,
     ),
+    findings_severity_over_time=extend_schema(
+        summary="Get findings severity data over time",
+        description=(
+            "Retrieve daily aggregated findings data grouped by severity levels over a date range. "
+            "Returns one data point per day with counts of failed findings by severity (critical, high, "
+            "medium, low, informational) and muted findings. Days without scans are filled forward with "
+            "the most recent known values. Use date_from (required) and date_to filters to specify the range."
+        ),
+        filters=True,
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 class OverviewViewSet(BaseRLSViewSet):
@@ -3917,6 +3930,8 @@ class OverviewViewSet(BaseRLSViewSet):
             return OverviewFindingSerializer
         elif self.action == "findings_severity":
             return OverviewSeveritySerializer
+        elif self.action == "findings_severity_over_time":
+            return FindingsSeverityOverTimeSerializer
         elif self.action == "services":
             return OverviewServiceSerializer
         elif self.action == "regions":
@@ -3932,6 +3947,8 @@ class OverviewViewSet(BaseRLSViewSet):
             return ScanSummaryFilter
         elif self.action == "findings_severity":
             return ScanSummarySeverityFilter
+        elif self.action == "findings_severity_over_time":
+            return DailyFindingsSeverityFilter
         return None
 
     @extend_schema(exclude=True)
@@ -4146,6 +4163,150 @@ class OverviewViewSet(BaseRLSViewSet):
 
         serializer = self.get_serializer(regions_data, many=True)
 
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_name="findings_severity_over_time")
+    def findings_severity_over_time(self, request):
+        """
+        Get daily findings severity data over time for trend charts.
+
+        Returns aggregated data per day with fill-forward for days without scans.
+        Requires date_from filter parameter.
+        """
+        from datetime import date, timedelta
+
+        tenant_id = self.request.tenant_id
+
+        # Get filter parameters
+        date_from = request.query_params.get("filter[date_from]")
+        date_to = request.query_params.get("filter[date_to]")
+
+        if not date_from:
+            raise ValidationError(
+                [
+                    {
+                        "detail": "This query parameter is required.",
+                        "status": "400",
+                        "source": {"pointer": "filter[date_from]"},
+                        "code": "required",
+                    }
+                ]
+            )
+
+        try:
+            date_from = date.fromisoformat(date_from)
+            date_to = date.fromisoformat(date_to) if date_to else date.today()
+        except ValueError:
+            raise ValidationError(
+                [
+                    {
+                        "detail": "Invalid date format. Use YYYY-MM-DD.",
+                        "status": "400",
+                        "source": {"pointer": "filter[date_from]"},
+                        "code": "invalid",
+                    }
+                ]
+            )
+
+        # Limit to 365 days maximum for performance
+        max_days = 365
+        if (date_to - date_from).days > max_days:
+            raise ValidationError(
+                [
+                    {
+                        "detail": f"Date range cannot exceed {max_days} days.",
+                        "status": "400",
+                        "source": {"pointer": "filter[date_from]"},
+                        "code": "invalid",
+                    }
+                ]
+            )
+
+        queryset = DailyFindingsSeverity.objects.filter(
+            tenant_id=tenant_id,
+            date__gte=date_from,
+            date__lte=date_to,
+        )
+
+        # Apply RBAC provider restrictions
+        if hasattr(self, "allowed_providers"):
+            allowed_ids = list(self.allowed_providers.values_list("id", flat=True))
+            if not allowed_ids:
+                # No access to any providers
+                return Response(
+                    self.get_serializer([], many=True).data,
+                    status=status.HTTP_200_OK,
+                )
+            queryset = queryset.filter(provider_id__in=allowed_ids)
+
+        # Apply provider filters from query params
+        provider_id = request.query_params.get("filter[provider_id]")
+        provider_id_in = request.query_params.get("filter[provider_id__in]")
+        provider_type = request.query_params.get("filter[provider_type]")
+        provider_type_in = request.query_params.get("filter[provider_type__in]")
+
+        if provider_id:
+            queryset = queryset.filter(provider_id=provider_id)
+        if provider_id_in:
+            provider_ids = [p.strip() for p in provider_id_in.split(",")]
+            queryset = queryset.filter(provider_id__in=provider_ids)
+        if provider_type:
+            queryset = queryset.filter(provider_type=provider_type)
+        if provider_type_in:
+            provider_types = [p.strip() for p in provider_type_in.split(",")]
+            queryset = queryset.filter(provider_type__in=provider_types)
+
+        # Aggregate by date across all matching providers
+        daily_data = (
+            queryset.values("date")
+            .annotate(
+                critical=Sum("critical"),
+                high=Sum("high"),
+                medium=Sum("medium"),
+                low=Sum("low"),
+                informational=Sum("informational"),
+                muted=Sum("muted"),
+            )
+            .order_by("date")
+        )
+
+        # Convert to dict for fill-forward logic
+        data_by_date = {item["date"]: item for item in daily_data}
+
+        # Fill forward logic: generate all dates in range
+        result = []
+        current_date = date_from
+        last_known_values = {
+            "critical": 0,
+            "high": 0,
+            "medium": 0,
+            "low": 0,
+            "informational": 0,
+            "muted": 0,
+        }
+
+        while current_date <= date_to:
+            if current_date in data_by_date:
+                # Use actual data
+                day_data = data_by_date[current_date]
+                last_known_values = {
+                    "critical": day_data["critical"] or 0,
+                    "high": day_data["high"] or 0,
+                    "medium": day_data["medium"] or 0,
+                    "low": day_data["low"] or 0,
+                    "informational": day_data["informational"] or 0,
+                    "muted": day_data["muted"] or 0,
+                }
+            # Use last known values (either from today or carried forward)
+            result.append(
+                {
+                    "date": current_date,
+                    **last_known_values,
+                }
+            )
+            current_date += timedelta(days=1)
+
+        serializer = self.get_serializer(result, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(

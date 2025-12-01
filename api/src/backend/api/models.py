@@ -2405,3 +2405,88 @@ class ThreatScoreSnapshot(RowLevelSecurityProtectedModel):
 
     class JSONAPIMeta:
         resource_name = "threatscore-snapshots"
+
+
+class DailyFindingsSeverity(RowLevelSecurityProtectedModel):
+    """
+    Daily aggregation of findings by severity for trend charts.
+
+    Stores one row per provider per day, updated when each scan completes.
+    Days without scans have no row - the endpoint performs fill-forward.
+    """
+
+    objects = ActiveProviderManager()
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+
+    # Dimensions
+    date = models.DateField(help_text="Snapshot date (from scan.completed_at)")
+    provider = models.ForeignKey(
+        Provider,
+        on_delete=models.CASCADE,
+        related_name="daily_findings_severity",
+        related_query_name="daily_finding_severity",
+    )
+
+    # Reference to the scan that generated this data (last completed scan of the day)
+    scan = models.ForeignKey(
+        Scan,
+        on_delete=models.CASCADE,
+        related_name="daily_findings_severity",
+        related_query_name="daily_finding_severity",
+    )
+
+    # Denormalized provider type for efficient filtering without JOIN
+    provider_type = ProviderEnumField(
+        choices=Provider.ProviderChoices.choices,
+        help_text="Denormalized from provider.provider for query performance",
+    )
+
+    # FAIL counts by severity
+    critical = models.IntegerField(default=0)
+    high = models.IntegerField(default=0)
+    medium = models.IntegerField(default=0)
+    low = models.IntegerField(default=0)
+    informational = models.IntegerField(default=0)
+
+    # Muted count (regardless of severity)
+    muted = models.IntegerField(default=0)
+
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "daily_findings_severity"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant", "provider", "date"),
+                name="unique_daily_findings_severity",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+        indexes = [
+            # Primary query: by tenant + date range (most common - page load without filters)
+            models.Index(
+                fields=["tenant_id", "date"],
+                name="dfs_tenant_date_idx",
+            ),
+            # Filter by provider(s)
+            models.Index(
+                fields=["tenant_id", "provider_id", "date"],
+                name="dfs_tenant_provider_date_idx",
+            ),
+            # Filter by provider type (denormalized for performance)
+            models.Index(
+                fields=["tenant_id", "provider_type", "date"],
+                name="dfs_tenant_type_date_idx",
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "daily-findings-severity"

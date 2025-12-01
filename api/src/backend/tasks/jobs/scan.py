@@ -28,6 +28,7 @@ from api.exceptions import ProviderConnectionError
 from api.models import (
     ComplianceOverviewSummary,
     ComplianceRequirementOverview,
+    DailyFindingsSeverity,
     Finding,
     MuteRule,
     Processor,
@@ -955,6 +956,81 @@ def aggregate_findings(tenant_id: str, scan_id: str):
             for agg in aggregation
         }
         ScanSummary.objects.bulk_create(scan_aggregations, batch_size=3000)
+
+
+def aggregate_daily_findings_severity(tenant_id: str, scan_id: str):
+    """
+    Aggregate findings by severity for daily trend charts.
+
+    Creates or updates a single row per provider per day with FAIL counts
+    by severity level and total muted count. Uses the scan's completed_at
+    date as the snapshot date.
+
+    Args:
+        tenant_id: Tenant that owns the scan.
+        scan_id: Scan UUID whose findings should be aggregated.
+    """
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        scan = Scan.all_objects.select_related("provider").get(
+            tenant_id=tenant_id, id=scan_id
+        )
+
+        if not scan.completed_at:
+            logger.warning(
+                f"Scan {scan_id} has no completed_at, skipping daily severity aggregation"
+            )
+            return
+
+        snapshot_date = scan.completed_at.date()
+        provider_id = scan.provider_id
+        provider_type = scan.provider.provider  # Denormalized for query performance
+
+        severity_aggregation = (
+            ScanSummary.all_objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+            .values("severity")
+            .annotate(
+                fail_count=Sum("fail"),
+                muted_count=Sum("muted"),
+            )
+        )
+
+        # Initialize counts
+        severity_counts = {
+            "critical": 0,
+            "high": 0,
+            "medium": 0,
+            "low": 0,
+            "informational": 0,
+        }
+        total_muted = 0
+
+        # Map severity values to lowercase keys
+        for agg in severity_aggregation:
+            severity_key = agg["severity"].lower()
+            if severity_key in severity_counts:
+                severity_counts[severity_key] = agg["fail_count"] or 0
+            total_muted += agg["muted_count"] or 0
+
+    with rls_transaction(tenant_id):
+        DailyFindingsSeverity.all_objects.update_or_create(
+            tenant_id=tenant_id,
+            provider_id=provider_id,
+            date=snapshot_date,
+            defaults={
+                "scan_id": scan_id,
+                "provider_type": provider_type,
+                "critical": severity_counts["critical"],
+                "high": severity_counts["high"],
+                "medium": severity_counts["medium"],
+                "low": severity_counts["low"],
+                "informational": severity_counts["informational"],
+                "muted": total_muted,
+            },
+        )
+
+    logger.info(
+        f"Updated daily findings severity for provider {provider_id} on {snapshot_date}"
+    )
 
 
 def _aggregate_findings_by_region(

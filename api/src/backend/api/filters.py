@@ -24,6 +24,7 @@ from api.db_utils import (
 )
 from api.models import (
     ComplianceRequirementOverview,
+    DailyFindingsSeverity,
     Finding,
     Integration,
     Invitation,
@@ -1012,4 +1013,30 @@ class ThreatScoreSnapshotFilter(FilterSet):
             "compliance_id": ["exact", "in"],
             "inserted_at": ["date", "gte", "lte"],
             "overall_score": ["exact", "gte", "lte"],
+        }
+
+
+class DailyFindingsSeverityFilter(FilterSet):
+    """Filter for daily findings severity over time endpoint."""
+
+    date_from = DateFilter(field_name="date", lookup_expr="gte", required=True)
+    date_to = DateFilter(field_name="date", lookup_expr="lte")
+    provider_id = UUIDFilter(field_name="provider_id", lookup_expr="exact")
+    provider_id__in = UUIDInFilter(field_name="provider_id", lookup_expr="in")
+    # Use denormalized provider_type field - no JOIN required
+    provider_type = ChoiceFilter(
+        field_name="provider_type", choices=Provider.ProviderChoices.choices
+    )
+    provider_type__in = ChoiceInFilter(
+        field_name="provider_type",
+        choices=Provider.ProviderChoices.choices,
+        lookup_expr="in",
+    )
+
+    class Meta:
+        model = DailyFindingsSeverity
+        fields = {
+            "date": ["gte", "lte"],
+            "provider_id": ["exact", "in"],
+            "provider_type": ["exact", "in"],
         }

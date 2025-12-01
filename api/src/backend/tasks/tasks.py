@@ -37,6 +37,7 @@ from tasks.jobs.lighthouse_providers import (
 from tasks.jobs.muting import mute_historical_findings
 from tasks.jobs.report import generate_compliance_reports_job
 from tasks.jobs.scan import (
+    aggregate_daily_findings_severity,
     aggregate_findings,
     create_compliance_requirements,
     perform_prowler_scan,
@@ -71,8 +72,13 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
     )
     chain(
         perform_scan_summary_task.si(tenant_id=tenant_id, scan_id=scan_id),
-        generate_outputs_task.si(
-            scan_id=scan_id, provider_id=provider_id, tenant_id=tenant_id
+        group(
+            update_daily_findings_severity_task.si(
+                tenant_id=tenant_id, scan_id=scan_id
+            ),
+            generate_outputs_task.si(
+                scan_id=scan_id, provider_id=provider_id, tenant_id=tenant_id
+            ),
         ),
         group(
             # Use optimized task that generates both reports with shared queries
@@ -279,6 +285,22 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
 @shared_task(name="scan-summary", queue="overview")
 def perform_scan_summary_task(tenant_id: str, scan_id: str):
     return aggregate_findings(tenant_id=tenant_id, scan_id=scan_id)
+
+
+@shared_task(base=RLSTask, name="scan-daily-severity")
+@set_tenant
+def update_daily_findings_severity_task(tenant_id: str, scan_id: str):
+    """
+    Task to update daily findings severity aggregation after a scan completes.
+
+    Creates or updates a single row per provider per day with FAIL counts
+    by severity level for trend chart visualization.
+
+    Args:
+        tenant_id (str): The tenant ID under which the scan was performed.
+        scan_id (str): The ID of the completed scan.
+    """
+    return aggregate_daily_findings_severity(tenant_id=tenant_id, scan_id=scan_id)
 
 
 @shared_task(name="tenant-deletion", queue="deletion", autoretry_for=(Exception,))
