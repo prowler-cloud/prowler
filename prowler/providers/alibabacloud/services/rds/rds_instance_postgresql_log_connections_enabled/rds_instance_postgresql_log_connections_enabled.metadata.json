@@ -1,7 +1,7 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "rds_instance_postgresql_log_connections_enabled",
-  "CheckTitle": "Parameter 'log_connections' is set to 'ON' for PostgreSQL Database",
+  "CheckTitle": "Parameter log_connections is set to ON for PostgreSQL Database",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards",
@@ -16,8 +16,7 @@
   "Risk": "Without connection logging, unauthorized access attempts might go unnoticed, and troubleshooting connection issues becomes more difficult.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/96751.htm",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/96751.htm",
-    "https://hub.prowler.com/check/rds_instance_postgresql_log_connections_enabled"
+    "https://www.alibabacloud.com/help/doc-detail/96751.htm"
   ],
   "Remediation": {
     "Code": {

@@ -16,8 +16,7 @@
   "Risk": "Without notifications enabled for high-risk items, security operators may not be aware of critical security events in a timely manner, potentially leading to delayed response and increased security exposure.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/111648.htm",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/111648.htm",
-    "https://hub.prowler.com/check/securitycenter_notification_enabled_high_risk"
+    "https://www.alibabacloud.com/help/doc-detail/111648.htm"
   ],
   "Remediation": {
     "Code": {

@@ -16,8 +16,7 @@
   "Risk": "Exposing the API server endpoint to the public internet increases the attack surface of your cluster. Attackers can attempt to probe for vulnerabilities, perform brute force attacks, or exploit misconfigurations if the API server is publicly accessible. Using a private cluster significantly reduces network security risks.",
   "RelatedUrl": "https://help.aliyun.com/document_detail/100380.html",
   "AdditionalURLs": [
-    "https://help.aliyun.com/document_detail/100380.html",
-    "https://hub.prowler.com/check/cs_kubernetes_private_cluster_enabled"
+    "https://help.aliyun.com/document_detail/100380.html"
   ],
   "Remediation": {
     "Code": {

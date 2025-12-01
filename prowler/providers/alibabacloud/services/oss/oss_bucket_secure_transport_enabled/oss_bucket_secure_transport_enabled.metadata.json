@@ -1,7 +1,7 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "oss_bucket_secure_transport_enabled",
-  "CheckTitle": "'Secure transfer required' is set to 'Enabled'",
+  "CheckTitle": "Secure transfer required is set to Enabled",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards",
@@ -16,8 +16,7 @@
   "Risk": "Without secure transfer enforcement, OSS buckets may accept HTTP requests, which are not encrypted in transit. This exposes data to potential interception and man-in-the-middle attacks.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/85111.htm",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/85111.htm",
-    "https://hub.prowler.com/check/oss_bucket_secure_transport_enabled"
+    "https://www.alibabacloud.com/help/doc-detail/85111.htm"
   ],
   "Remediation": {
     "Code": {

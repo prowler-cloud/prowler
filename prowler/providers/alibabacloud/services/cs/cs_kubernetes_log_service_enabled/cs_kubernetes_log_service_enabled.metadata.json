@@ -1,7 +1,7 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "cs_kubernetes_log_service_enabled",
-  "CheckTitle": "Log Service is set to 'Enabled' on Kubernetes Engine Clusters",
+  "CheckTitle": "Log Service is set to Enabled on Kubernetes Engine Clusters",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards",
@@ -16,8 +16,7 @@
   "Risk": "By enabling you will have container and system logs, Kubernetes Engine deploys a per-node logging agent that reads container logs, adds helpful metadata, and then stores them. The logging agent would help to collecting the following sources: kube-apiserver audit logs, ingress visiting logs, and Standard output and standard error logs from containerized processes.",
   "RelatedUrl": "https://help.aliyun.com/document_detail/91406.html",
   "AdditionalURLs": [
-    "https://help.aliyun.com/document_detail/91406.html",
-    "https://hub.prowler.com/check/cs_kubernetes_log_service_enabled"
+    "https://help.aliyun.com/document_detail/91406.html"
   ],
   "Remediation": {
     "Code": {

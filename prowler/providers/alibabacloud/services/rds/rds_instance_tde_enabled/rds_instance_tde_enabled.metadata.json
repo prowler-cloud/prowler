@@ -1,7 +1,7 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "rds_instance_tde_enabled",
-  "CheckTitle": "'TDE' is set to 'Enabled' on for applicable database instance",
+  "CheckTitle": "TDE is set to Enabled on for applicable database instance",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards",
@@ -16,8 +16,7 @@
   "Risk": "Data at rest that is not encrypted is vulnerable to unauthorized access if the underlying storage media or backups are compromised.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/33510.html",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/33510.html",
-    "https://hub.prowler.com/check/rds_instance_tde_enabled"
+    "https://www.alibabacloud.com/help/doc-detail/33510.html"
   ],
   "Remediation": {
     "Code": {

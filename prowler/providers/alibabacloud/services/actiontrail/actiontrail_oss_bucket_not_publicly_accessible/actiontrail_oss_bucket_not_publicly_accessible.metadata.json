@@ -16,8 +16,7 @@
   "Risk": "Allowing public access to ActionTrail log content may aid an adversary in identifying weaknesses in the affected account's use or configuration.",
   "RelatedUrl": "https://help.aliyun.com/document_detail/31954.html",
   "AdditionalURLs": [
-    "https://help.aliyun.com/document_detail/31954.html",
-    "https://hub.prowler.com/check/actiontrail_oss_bucket_not_publicly_accessible"
+    "https://help.aliyun.com/document_detail/31954.html"
   ],
   "Remediation": {
     "Code": {

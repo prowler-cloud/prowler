@@ -1,7 +1,7 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "rds_instance_postgresql_log_disconnections_enabled",
-  "CheckTitle": "Server parameter 'log_disconnections' is set to 'ON' for PostgreSQL Database Server",
+  "CheckTitle": "Server parameter log_disconnections is set to ON for PostgreSQL Database Server",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards",
@@ -16,8 +16,7 @@
   "Risk": "Without disconnection logging, it's harder to track session durations and identify abnormal disconnection patterns that might indicate attacks or stability issues.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/96751.htm",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/96751.htm",
-    "https://hub.prowler.com/check/rds_instance_postgresql_log_disconnections_enabled"
+    "https://www.alibabacloud.com/help/doc-detail/96751.htm"
   ],
   "Remediation": {
     "Code": {

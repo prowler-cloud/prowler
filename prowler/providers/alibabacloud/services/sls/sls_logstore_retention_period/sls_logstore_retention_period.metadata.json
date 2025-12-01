@@ -15,8 +15,7 @@
   "Risk": "Logstore life cycle controls how your activity log is exported and retained. It is recommended to retain your activity log for 365 days or more in order to have time to respond to any incidents.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/48990.htm",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/48990.htm",
-    "https://hub.prowler.com/check/sls_logstore_retention_period"
+    "https://www.alibabacloud.com/help/doc-detail/48990.htm"
   ],
   "Remediation": {
     "Code": {

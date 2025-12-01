@@ -16,8 +16,7 @@
   "Risk": "The Kubernetes Dashboard is backed by a highly privileged Service Account. If the Dashboard is compromised, it could allow an attacker to gain full control over the cluster and potentially escalate privileges.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/86494.html",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/86494.html",
-    "https://hub.prowler.com/check/cs_kubernetes_dashboard_disabled"
+    "https://www.alibabacloud.com/help/doc-detail/86494.html"
   ],
   "Remediation": {
     "Code": {

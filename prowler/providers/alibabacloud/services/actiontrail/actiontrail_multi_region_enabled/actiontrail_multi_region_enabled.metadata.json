@@ -16,8 +16,7 @@
   "Risk": "The API call history produced by ActionTrail enables security analysis, resource change tracking, and compliance auditing. Moreover, ensuring that a multi-regions trail exists will ensure that any unexpected activities occurring in otherwise unused regions are detected. Global Service Logging should be enabled by default to capture recording of events generated on Alibaba Cloud global services for a multi-regions trail, therefore, ensuring the recording of management operations that are performed on all resources in an Alibaba Cloud account.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/28829.htm",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/28829.htm",
-    "https://hub.prowler.com/check/actiontrail_multi_region_enabled"
+    "https://www.alibabacloud.com/help/doc-detail/28829.htm"
   ],
   "Remediation": {
     "Code": {

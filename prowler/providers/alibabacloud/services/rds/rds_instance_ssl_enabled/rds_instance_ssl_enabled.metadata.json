@@ -16,8 +16,7 @@
   "Risk": "If SSL is not enabled, data in transit (including credentials and query results) can be intercepted by attackers performing Man-in-the-Middle (MITM) attacks.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/32474.htm",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/32474.htm",
-    "https://hub.prowler.com/check/rds_instance_ssl_enabled"
+    "https://www.alibabacloud.com/help/doc-detail/32474.htm"
   ],
   "Remediation": {
     "Code": {

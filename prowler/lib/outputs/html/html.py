@@ -1035,9 +1035,21 @@ class HTML(Output):
         """
         try:
             account_id = getattr(provider.identity, "account_id", "unknown")
-            account_name = getattr(provider.identity, "account_name", "unknown")
+            account_name = getattr(provider.identity, "account_name", "")
+            audited_regions = getattr(
+                provider.identity, "audited_regions", "All Regions"
+            )
             identity_arn = getattr(provider.identity, "identity_arn", "unknown")
             user_name = getattr(provider.identity, "user_name", "unknown")
+
+            account_name_item = (
+                f"""
+                            <li class="list-group-item">
+                                <b>Account Name:</b> {account_name}
+                            </li>"""
+                if account_name
+                else ""
+            )
 
             return f"""
                 <div class="col-md-2">
@@ -1049,8 +1061,9 @@ class HTML(Output):
                             <li class="list-group-item">
                                 <b>Account ID:</b> {account_id}
                             </li>
+                            {account_name_item}
                             <li class="list-group-item">
-                                <b>Account Name:</b> {account_name if account_name != "unknown" else "N/A"}
+                                <b>Audited Regions:</b> {audited_regions}
                             </li>
                         </ul>
                     </div>

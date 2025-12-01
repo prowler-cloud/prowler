@@ -16,8 +16,7 @@
   "Risk": "In Kubernetes, RBAC is used to grant permissions to resources at the cluster and namespace level. RBAC allows you to define roles with rules containing a set of permissions, and the subaccounts who bind the roles could only have the permissions to access the specific resources in the cluster or namespaces defined in RBAC policies. Without RBAC, legacy authorization mechanisms like ABAC grant overly broad permissions.",
   "RelatedUrl": "https://help.aliyun.com/document_detail/87656.html",
   "AdditionalURLs": [
-    "https://help.aliyun.com/document_detail/87656.html",
-    "https://hub.prowler.com/check/cs_kubernetes_rbac_enabled"
+    "https://help.aliyun.com/document_detail/87656.html"
   ],
   "Remediation": {
     "Code": {

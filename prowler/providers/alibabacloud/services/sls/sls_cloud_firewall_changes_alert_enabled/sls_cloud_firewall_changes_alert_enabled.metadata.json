@@ -15,8 +15,7 @@
   "Risk": "Monitoring for Create or Update firewall rule events gives insight network access changes and may reduce the time it takes to detect suspicious activity.",
   "RelatedUrl": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
-    "https://hub.prowler.com/check/sls_cloud_firewall_changes_alert_enabled"
+    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
   ],
   "Remediation": {
     "Code": {

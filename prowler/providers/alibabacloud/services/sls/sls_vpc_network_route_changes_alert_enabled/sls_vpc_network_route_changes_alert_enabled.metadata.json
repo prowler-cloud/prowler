@@ -15,8 +15,7 @@
   "Risk": "Monitoring changes to route tables will help ensure that all VPC traffic flows through an expected path.",
   "RelatedUrl": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
-    "https://hub.prowler.com/check/sls_vpc_network_route_changes_alert_enabled"
+    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
   ],
   "Remediation": {
     "Code": {

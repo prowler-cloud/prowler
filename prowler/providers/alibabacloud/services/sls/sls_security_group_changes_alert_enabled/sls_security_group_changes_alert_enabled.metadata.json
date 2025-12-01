@@ -15,8 +15,7 @@
   "Risk": "Monitoring changes to security group will help ensure that resources and services are not unintentionally exposed.",
   "RelatedUrl": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
-    "https://hub.prowler.com/check/sls_security_group_changes_alert_enabled"
+    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
   ],
   "Remediation": {
     "Code": {

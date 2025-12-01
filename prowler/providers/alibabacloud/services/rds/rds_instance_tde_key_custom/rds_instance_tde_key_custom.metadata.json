@@ -16,8 +16,7 @@
   "Risk": "Using service-managed keys means the cloud provider manages the encryption keys. BYOK (Bring Your Own Key) gives you full control over the key lifecycle and permissions, ensuring that even the cloud provider cannot access your data without your explicit permission.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/96121.html",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/96121.html",
-    "https://hub.prowler.com/check/rds_instance_tde_key_custom"
+    "https://www.alibabacloud.com/help/doc-detail/96121.html"
   ],
   "Remediation": {
     "Code": {

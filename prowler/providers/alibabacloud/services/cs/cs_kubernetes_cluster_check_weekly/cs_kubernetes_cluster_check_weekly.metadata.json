@@ -16,8 +16,7 @@
   "Risk": "Kubernetes Engine uses the node's health status to determine if a node needs to be repaired. A node reporting a Ready status is considered healthy. A cluster health check includes: The cloud resource healthy status including VPC/VSwitch, SLB and every ECS node status in cluster; The kubelet, docker daemon, kernel, iptables configurations on every node in cluster. Without regular cluster checks, potential issues may go undetected and could lead to cluster instability or security vulnerabilities.",
   "RelatedUrl": "https://help.aliyun.com/document_detail/114882.html",
   "AdditionalURLs": [
-    "https://help.aliyun.com/document_detail/114882.html",
-    "https://hub.prowler.com/check/cs_kubernetes_cluster_check_weekly"
+    "https://help.aliyun.com/document_detail/114882.html"
   ],
   "Remediation": {
     "Code": {

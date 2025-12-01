@@ -140,6 +140,11 @@ class AlibabacloudProvider(Provider):
             profile_region=profile_region,
         )
 
+        # Populate account alias if available
+        account_alias = self.get_account_alias()
+        if account_alias:
+            self._identity.account_name = account_alias
+
         # Get regions
         self._regions = self.get_regions_to_audit(regions)
 
@@ -564,7 +569,7 @@ class AlibabacloudProvider(Provider):
 
         return AlibabaCloudIdentityInfo(
             account_id=caller_identity.account_id,
-            account_name="",  # Will be populated if we can get it
+            account_name="",
             user_id=user_id,
             user_name=user_name,
             identity_arn=identity_arn,
@@ -617,6 +622,26 @@ class AlibabacloudProvider(Provider):
             self._identity.audited_regions = set([r.region_id for r in region_list])
 
         return region_list
+
+    def get_account_alias(self) -> str:
+        """
+        Retrieve the Alibaba Cloud account alias from RAM.
+
+        Returns:
+            str: Account alias if available, otherwise empty string.
+        """
+        try:
+            ram_client = self._session.client("ram")
+            response = ram_client.get_account_alias()
+            account_alias = getattr(response.body, "account_alias", "") or ""
+            if account_alias:
+                logger.info(f"Alibaba Cloud Account Alias: {account_alias}")
+            return account_alias
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return ""
 
     def setup_audit_config(self, input_config: dict) -> dict:
         """
@@ -795,7 +820,7 @@ class AlibabacloudProvider(Provider):
                         regional_clients[region.region_id] = client
                 except Exception as error:
                     logger.error(
-                        f"Error creating {service} client for region {region.region_id}: {error}"
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
 
             return regional_clients

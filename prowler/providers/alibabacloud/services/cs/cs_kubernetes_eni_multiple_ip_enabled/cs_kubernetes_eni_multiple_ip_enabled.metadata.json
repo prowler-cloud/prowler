@@ -16,8 +16,7 @@
   "Risk": "Without ENI multiple IP mode (provided by Terway), pods share the node's network interface in a less scalable way. Using ENI multiple IPs allows pod IPs to be reserved within the network ahead of time, preventing conflict with other compute resources, and allows firewall controls for Pods to be applied separately from their nodes.",
   "RelatedUrl": "https://github.com/AliyunContainerService/terway/blob/master/README.md#eni-secondary-ip-pod",
   "AdditionalURLs": [
-    "https://github.com/AliyunContainerService/terway/blob/master/README.md#eni-secondary-ip-pod",
-    "https://hub.prowler.com/check/cs_kubernetes_eni_multiple_ip_enabled"
+    "https://github.com/AliyunContainerService/terway/blob/master/README.md#eni-secondary-ip-pod"
   ],
   "Remediation": {
     "Code": {

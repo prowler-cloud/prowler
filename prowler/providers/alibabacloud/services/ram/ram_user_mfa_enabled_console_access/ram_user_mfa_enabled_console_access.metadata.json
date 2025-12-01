@@ -16,8 +16,7 @@
   "Risk": "MFA requires users to verify their identities by entering two authentication factors. When MFA is enabled, an attacker faces at least two different authentication mechanisms. The additional security makes it harder for an attacker to gain access to protected resources or data.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/119555.htm",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/119555.htm",
-    "https://hub.prowler.com/check/ram_user_mfa_enabled_console_access"
+    "https://www.alibabacloud.com/help/doc-detail/119555.htm"
   ],
   "Remediation": {
     "Code": {

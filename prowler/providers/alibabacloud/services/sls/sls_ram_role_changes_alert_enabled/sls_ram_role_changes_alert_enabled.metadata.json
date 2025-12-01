@@ -15,8 +15,7 @@
   "Risk": "Monitoring role creation, deletion and updating activities will help in identifying any potential malicious actions at early stage.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/91784.htm",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/91784.htm",
-    "https://hub.prowler.com/check/sls_ram_role_changes_alert_enabled"
+    "https://www.alibabacloud.com/help/doc-detail/91784.htm"
   ],
   "Remediation": {
     "Code": {

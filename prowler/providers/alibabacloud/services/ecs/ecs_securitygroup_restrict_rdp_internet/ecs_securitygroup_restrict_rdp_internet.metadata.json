@@ -16,8 +16,7 @@
   "Risk": "Removing unfettered connectivity to remote console services, such as RDP, reduces a server's exposure to risk.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/25387.htm",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/25387.htm",
-    "https://hub.prowler.com/check/ecs_securitygroup_restrict_rdp_internet"
+    "https://www.alibabacloud.com/help/doc-detail/25387.htm"
   ],
   "Remediation": {
     "Code": {

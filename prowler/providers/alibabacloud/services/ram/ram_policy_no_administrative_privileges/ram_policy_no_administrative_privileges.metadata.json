@@ -16,8 +16,7 @@
   "Risk": "It is more secure to start with a minimum set of permissions and grant additional permissions as necessary, rather than starting with permissions that exceed the necessity and then trying to tighten them later. Providing full administrative privileges exposes your resources on Alibaba Cloud to potentially unwanted actions. RAM policies that have a statement with \"Effect\": \"Allow\", \"Action\": \"*\", and \"Resource\": \"*\" should be prohibited.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/93733.htm",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/93733.htm",
-    "https://hub.prowler.com/check/ram_policy_no_administrative_privileges"
+    "https://www.alibabacloud.com/help/doc-detail/93733.htm"
   ],
   "Remediation": {
     "Code": {

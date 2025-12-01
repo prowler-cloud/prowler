@@ -16,8 +16,7 @@
   "Risk": "Disabling users from having unnecessary logon privileges will reduce the opportunity that an abandoned user or a user with compromised password to be used.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/116820.htm",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/116820.htm",
-    "https://hub.prowler.com/check/ram_user_console_access_unused"
+    "https://www.alibabacloud.com/help/doc-detail/116820.htm"
   ],
   "Remediation": {
     "Code": {

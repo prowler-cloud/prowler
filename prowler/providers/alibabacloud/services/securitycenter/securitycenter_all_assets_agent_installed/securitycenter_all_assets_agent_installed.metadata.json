@@ -16,8 +16,7 @@
   "Risk": "Assets without Security Center agent installed are not protected by endpoint intrusion detection and protection capabilities, leaving them vulnerable to security threats.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/111650.htm",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/111650.htm",
-    "https://hub.prowler.com/check/securitycenter_all_assets_agent_installed"
+    "https://www.alibabacloud.com/help/doc-detail/111650.htm"
   ],
   "Remediation": {
     "Code": {

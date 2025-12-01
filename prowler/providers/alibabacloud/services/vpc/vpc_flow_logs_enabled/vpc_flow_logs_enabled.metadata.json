@@ -16,8 +16,7 @@
   "Risk": "VPC Flow Logs provide visibility into network traffic that traverses the VPC and can be used to detect anomalous traffic or insight during security workflows.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/90628.html",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/90628.html",
-    "https://hub.prowler.com/check/vpc_flow_logs_enabled"
+    "https://www.alibabacloud.com/help/doc-detail/90628.html"
   ],
   "Remediation": {
     "Code": {

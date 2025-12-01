@@ -15,8 +15,7 @@
   "Risk": "Data encrypted with disabled or deleted keys will no longer be accessible.",
   "RelatedUrl": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
-    "https://hub.prowler.com/check/sls_customer_created_cmk_changes_alert_enabled"
+    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
   ],
   "Remediation": {
     "Code": {

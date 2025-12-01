@@ -1,7 +1,7 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "ecs_unattached_disk_encrypted",
-  "CheckTitle": "'Unattached disks' are encrypted",
+  "CheckTitle": "Unattached disks are encrypted",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards",
@@ -16,8 +16,7 @@
   "Risk": "Unencrypted unattached disks pose a security risk as they may contain sensitive data that could be accessed if the disk is compromised or accessed by unauthorized parties.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/59643.htm",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/59643.htm",
-    "https://hub.prowler.com/check/ecs_unattached_disk_encrypted"
+    "https://www.alibabacloud.com/help/doc-detail/59643.htm"
   ],
   "Remediation": {
     "Code": {

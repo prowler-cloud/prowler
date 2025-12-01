@@ -1,7 +1,7 @@
 {
   "Provider": "alibabacloud",
   "CheckID": "rds_instance_sql_audit_enabled",
-  "CheckTitle": "'Auditing' is set to 'On' for applicable database instances",
+  "CheckTitle": "Auditing is set to On for applicable database instances",
   "CheckType": [
     "Software and Configuration Checks",
     "Industry and Regulatory Standards",
@@ -16,8 +16,7 @@
   "Risk": "Without SQL auditing, it's difficult to detect unauthorized access, data breaches, or malicious activity within the database. It also hinders forensic investigations.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/96123.html",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/96123.html",
-    "https://hub.prowler.com/check/rds_instance_sql_audit_enabled"
+    "https://www.alibabacloud.com/help/doc-detail/96123.html"
   ],
   "Remediation": {
     "Code": {

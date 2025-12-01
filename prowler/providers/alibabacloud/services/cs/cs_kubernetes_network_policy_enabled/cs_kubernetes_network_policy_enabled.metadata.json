@@ -16,8 +16,7 @@
   "Risk": "Without Network Policies, all pods in a Kubernetes cluster can communicate with each other freely. This open communication model allows an attacker who compromises a single pod to potentially move laterally within the cluster and access sensitive services or data.",
   "RelatedUrl": "https://help.aliyun.com/document_detail/97621.html",
   "AdditionalURLs": [
-    "https://help.aliyun.com/document_detail/97621.html",
-    "https://hub.prowler.com/check/cs_kubernetes_network_policy_enabled"
+    "https://help.aliyun.com/document_detail/97621.html"
   ],
   "Remediation": {
     "Code": {

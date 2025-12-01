@@ -16,8 +16,7 @@
   "Risk": "ECS instances without endpoint protection are vulnerable to malware, viruses, and other security threats. Endpoint protection provides real-time monitoring and protection capabilities.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/28460.htm",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/28460.htm",
-    "https://hub.prowler.com/check/ecs_instance_endpoint_protection_installed"
+    "https://www.alibabacloud.com/help/doc-detail/28460.htm"
   ],
   "Remediation": {
     "Code": {

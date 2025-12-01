@@ -16,8 +16,7 @@
   "Risk": "Assigning privileges at the group or role level reduces the complexity of access management as the number of users grows. Reducing access management complexity may in turn reduce opportunity for a principal to inadvertently receive or retain excessive privileges.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/116820.htm",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/116820.htm",
-    "https://hub.prowler.com/check/ram_policy_attached_only_to_group_or_roles"
+    "https://www.alibabacloud.com/help/doc-detail/116820.htm"
   ],
   "Remediation": {
     "Code": {

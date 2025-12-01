@@ -15,8 +15,7 @@
   "Risk": "Monitoring changes to VPC will help ensure VPC traffic flow is not getting impacted.",
   "RelatedUrl": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
-    "https://hub.prowler.com/check/sls_vpc_changes_alert_enabled"
+    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
   ],
   "Remediation": {
     "Code": {

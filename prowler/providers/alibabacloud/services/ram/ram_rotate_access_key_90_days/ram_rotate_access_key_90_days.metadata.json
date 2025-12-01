@@ -16,8 +16,7 @@
   "Risk": "Access keys might be compromised by leaving them in codes, configuration files, on premise and cloud storages, and then stolen by attackers. Rotating access keys will reduce the window of opportunity that a compromised access key to be used.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/116401.htm",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/116401.htm",
-    "https://hub.prowler.com/check/ram_rotate_access_key_90_days"
+    "https://www.alibabacloud.com/help/doc-detail/116401.htm"
   ],
   "Remediation": {
     "Code": {

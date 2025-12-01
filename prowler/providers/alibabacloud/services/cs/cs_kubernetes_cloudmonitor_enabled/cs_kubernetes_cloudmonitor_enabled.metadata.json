@@ -16,8 +16,7 @@
   "Risk": "By enabling CloudMonitor installation you will have system metrics and custom metrics. System metrics are measurements of the cluster's infrastructure, such as CPU or memory usage. For system metrics, a monitor controller would be created and periodically connects to each node and collects metrics about its Pods and containers, then sends the metrics to CloudMonitor server. Metrics for usage of system resources are collected from the CPU, Memory, Evictable memory, Non-evictable memory, and Disk sources.",
   "RelatedUrl": "https://help.aliyun.com/document_detail/125508.html",
   "AdditionalURLs": [
-    "https://help.aliyun.com/document_detail/125508.html",
-    "https://hub.prowler.com/check/cs_kubernetes_cloudmonitor_enabled"
+    "https://help.aliyun.com/document_detail/125508.html"
   ],
   "Remediation": {
     "Code": {

@@ -15,8 +15,7 @@
   "Risk": "Monitoring changes to OSS bucket policies may reduce time to detect and correct permissive policies on sensitive OSS buckets.",
   "RelatedUrl": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
-    "https://hub.prowler.com/check/sls_oss_bucket_policy_changes_alert_enabled"
+    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
   ],
   "Remediation": {
     "Code": {

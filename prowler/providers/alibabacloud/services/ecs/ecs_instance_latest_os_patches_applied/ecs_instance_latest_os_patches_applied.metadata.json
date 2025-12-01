@@ -16,8 +16,7 @@
   "Risk": "Unpatched systems are vulnerable to known security exploits and may be compromised by attackers. Keeping systems updated with the latest patches is critical for maintaining security.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/28460.htm",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/28460.htm",
-    "https://hub.prowler.com/check/ecs_instance_latest_os_patches_applied"
+    "https://www.alibabacloud.com/help/doc-detail/28460.htm"
   ],
   "Remediation": {
     "Code": {

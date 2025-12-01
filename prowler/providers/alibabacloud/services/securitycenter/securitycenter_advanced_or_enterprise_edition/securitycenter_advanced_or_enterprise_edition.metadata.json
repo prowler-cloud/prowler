@@ -16,8 +16,7 @@
   "Risk": "Using Basic or Free Edition of Security Center may not provide comprehensive protection against cloud threats. Advanced or Enterprise Edition allows for full protection to defend cloud threats.",
   "RelatedUrl": "https://www.alibabacloud.com/help/product/28498.htm",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/product/28498.htm",
-    "https://hub.prowler.com/check/securitycenter_advanced_or_enterprise_edition"
+    "https://www.alibabacloud.com/help/product/28498.htm"
   ],
   "Remediation": {
     "Code": {

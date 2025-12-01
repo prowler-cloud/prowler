@@ -16,8 +16,7 @@
   "Risk": "By enabling OSS bucket logging on target OSS buckets, it is possible to capture all events which may affect objects within an target buckets. Configuring logs to be placed in a separate bucket allows access to log information which can be useful in security and incident response workflows.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/31900.htm",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/31900.htm",
-    "https://hub.prowler.com/check/oss_bucket_logging_enabled"
+    "https://www.alibabacloud.com/help/doc-detail/31900.htm"
   ],
   "Remediation": {
     "Code": {

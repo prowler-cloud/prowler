@@ -16,8 +16,7 @@
   "Risk": "Legacy networks can thus have an impact for high network traffic ECS instance and subject to the single point of failure.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/87190.htm",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/87190.htm",
-    "https://hub.prowler.com/check/ecs_instance_no_legacy_network"
+    "https://www.alibabacloud.com/help/doc-detail/87190.htm"
   ],
   "Remediation": {
     "Code": {

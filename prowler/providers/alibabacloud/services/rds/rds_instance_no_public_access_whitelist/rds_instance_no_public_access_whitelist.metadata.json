@@ -16,8 +16,7 @@
   "Risk": "Allowing public access (0.0.0.0/0) to the database significantly increases the risk of brute-force attacks, unauthorized access, and data exfiltration.",
   "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/26198.htm",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/26198.htm",
-    "https://hub.prowler.com/check/rds_instance_no_public_access_whitelist"
+    "https://www.alibabacloud.com/help/doc-detail/26198.htm"
   ],
   "Remediation": {
     "Code": {
