@@ -6,10 +6,9 @@ from typing import Iterator
 from uuid import UUID
 
 import neo4j
+import neo4j.exceptions
 
 from django.conf import settings
-
-import neo4j.exceptions
 
 from api.attack_paths.retryable_session import RetryableSession
 
