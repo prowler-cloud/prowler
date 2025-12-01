@@ -466,6 +466,7 @@ export function SankeyChart({
       mapProviderFiltersForFindings(params);
 
       params.set("filter[severity__in]", severityFilter);
+      params.set("filter[status__in]", "FAIL");
       router.push(`/findings?${params.toString()}`);
     }
   };
@@ -481,6 +482,7 @@ export function SankeyChart({
 
       params.set("filter[provider_type__in]", providerType);
       params.set("filter[severity__in]", severityFilter);
+      params.set("filter[status__in]", "FAIL");
       router.push(`/findings?${params.toString()}`);
     }
   };

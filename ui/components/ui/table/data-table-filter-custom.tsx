@@ -146,9 +146,7 @@ export const DataTableFilterCustom = ({
               <MultiSelectValue placeholder={filter.labelCheckboxGroup} />
             </MultiSelectTrigger>
             <MultiSelectContent search={false}>
-              <MultiSelectSelectAll allValues={filter.values}>
-                Select All
-              </MultiSelectSelectAll>
+              <MultiSelectSelectAll>Select All</MultiSelectSelectAll>
               <MultiSelectSeparator />
               {filter.values.map((value) => {
                 const entity = getEntityForValue(filter, value);
