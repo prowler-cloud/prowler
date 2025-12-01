@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [v5.14.1] (Prowler UNRELEASED)
+## [v5.14.1] (Prowler v5.14.1)
 
 ### Fixed
 - `sharepoint_external_sharing_managed` check to handle external sharing disabled at organization level [(#9298)](https://github.com/prowler-cloud/prowler/pull/9298)
