@@ -51,8 +51,6 @@ jobs:
       E2E_OCI_KEY_CONTENT: ${{ secrets.E2E_OCI_KEY_CONTENT }}
       E2E_OCI_REGION: ${{ secrets.E2E_OCI_REGION }}
       E2E_NEW_USER_PASSWORD: ${{ secrets.E2E_NEW_USER_PASSWORD }}
-      AWS_ACCESS_KEY_ID: ${{ secrets.E2E_AWS_PROVIDER_ACCESS_KEY }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.E2E_AWS_PROVIDER_SECRET_KEY }}
 
     steps:
       - name: Checkout repository
@@ -75,6 +73,11 @@ jobs:
           yq -i '.services.worker.networks = ["kind","default"]' docker-compose.yml
       - name: Fix API data directory permissions
         run: docker run --rm -v $(pwd)/_data/api:/data alpine chown -R 1000:1000 /data
+      - name: Add AWS credentials for testing AWS SDK Default Adding Provider
+        run: |
+          echo "Adding AWS credentials for testing AWS SDK Default Adding Provider..."
+          echo "AWS_ACCESS_KEY_ID=${{ secrets.E2E_AWS_PROVIDER_ACCESS_KEY }} >> .env
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.E2E_AWS_PROVIDER_SECRET_KEY }}" >> .env
       - name: Start API services
         run: |
           # Override docker-compose image tag to use latest instead of stable
