@@ -212,14 +212,11 @@ test.describe("Add Provider", () => {
         ],
       },
       async ({ page }) => {
-        // Validate required environment variables from environment variables
-        const awsAccessKeyId = process.env.AWS_ACCESS_KEY_ID;
-        const awsSecretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
 
         // Validate required environment variables
-        if (!accountId || !awsAccessKeyId || !awsSecretAccessKey || !roleArn) {
+        if (!accountId  || !roleArn) {
           throw new Error(
-            "E2E_AWS_PROVIDER_ACCOUNT_ID, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and E2E_AWS_PROVIDER_ROLE_ARN environment variables are not set",
+            "E2E_AWS_PROVIDER_ACCOUNT_ID, and E2E_AWS_PROVIDER_ROLE_ARN environment variables are not set",
           );
         }
 
