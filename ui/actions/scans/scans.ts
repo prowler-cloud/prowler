@@ -3,8 +3,12 @@
 import { redirect } from "next/navigation";
 
 import { apiBaseUrl, getAuthHeaders, getErrorMessage } from "@/lib";
+import {
+  COMPLIANCE_REPORT_DISPLAY_NAMES,
+  type ComplianceReportType,
+} from "@/lib/compliance/compliance-report-types";
+import { addScanOperation } from "@/lib/sentry-breadcrumbs";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
-
 export const getScans = async ({
   page = 1,
   query = "",
@@ -89,6 +93,11 @@ export const scanOnDemand = async (formData: FormData) => {
     return { error: "Provider ID is required" };
   }
 
+  addScanOperation("create", undefined, {
+    provider_id: String(providerId),
+    scan_name: scanName ? String(scanName) : undefined,
+  });
+
   const url = new URL(`${apiBaseUrl}/scans`);
 
   try {
@@ -113,8 +122,13 @@ export const scanOnDemand = async (formData: FormData) => {
       body: JSON.stringify(requestBody),
     });
 
-    return handleApiResponse(response, "/scans");
+    const result = await handleApiResponse(response, "/scans");
+    if (result?.data?.id) {
+      addScanOperation("start", result.data.id);
+    }
+    return result;
   } catch (error) {
+    addScanOperation("create");
     return handleApiError(error);
   }
 };
@@ -269,10 +283,19 @@ export const getComplianceCsv = async (
   }
 };
 
-export const getThreatScorePdf = async (scanId: string) => {
+/**
+ * Generic function to get a compliance PDF report (ThreatScore, ENS, etc.)
+ * @param scanId - The scan ID
+ * @param reportType - Type of report (from COMPLIANCE_REPORT_TYPES)
+ * @returns Promise with the PDF data or error
+ */
+export const getCompliancePdfReport = async (
+  scanId: string,
+  reportType: ComplianceReportType,
+) => {
   const headers = await getAuthHeaders({ contentType: false });
 
-  const url = new URL(`${apiBaseUrl}/scans/${scanId}/threatscore`);
+  const url = new URL(`${apiBaseUrl}/scans/${scanId}/${reportType}`);
 
   try {
     const response = await fetch(url.toString(), { headers });
@@ -290,9 +313,10 @@ export const getThreatScorePdf = async (scanId: string) => {
 
     if (!response.ok) {
       const errorData = await response.json();
+      const reportName = COMPLIANCE_REPORT_DISPLAY_NAMES[reportType];
       throw new Error(
         errorData?.errors?.detail ||
-          "Unable to retrieve ThreatScore PDF report. Contact support if the issue continues.",
+          `Unable to retrieve ${reportName} PDF report. Contact support if the issue continues.`,
       );
     }
 
@@ -302,7 +326,7 @@ export const getThreatScorePdf = async (scanId: string) => {
     return {
       success: true,
       data: base64,
-      filename: `scan-${scanId}-threatscore.pdf`,
+      filename: `scan-${scanId}-${reportType}.pdf`,
     };
   } catch (error) {
     return {

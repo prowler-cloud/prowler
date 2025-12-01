@@ -157,7 +157,7 @@ export const useCredentialsForm = ({
           };
         }
         return baseDefaults;
-      case "oci":
+      case "oraclecloud":
         return {
           ...baseDefaults,
           [ProviderCredentialFields.OCI_USER]: "",
@@ -166,6 +166,12 @@ export const useCredentialsForm = ({
           [ProviderCredentialFields.OCI_TENANCY]: providerUid || "",
           [ProviderCredentialFields.OCI_REGION]: "",
           [ProviderCredentialFields.OCI_PASS_PHRASE]: "",
+        };
+      case "mongodbatlas":
+        return {
+          ...baseDefaults,
+          [ProviderCredentialFields.ATLAS_PUBLIC_KEY]: "",
+          [ProviderCredentialFields.ATLAS_PRIVATE_KEY]: "",
         };
       default:
         return baseDefaults;

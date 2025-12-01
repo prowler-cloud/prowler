@@ -8,19 +8,57 @@ import { ChartConfig, ChartContainer } from "@/components/ui/chart/Chart";
 import { ChartLegend } from "./shared/chart-legend";
 import { DonutDataPoint } from "./types";
 
+const CHART_COLORS = {
+  emptyState: "var(--border-neutral-tertiary)",
+};
+
+interface TooltipPayloadData {
+  percentage?: number;
+  change?: number;
+  color?: string;
+}
+
+interface TooltipPayloadEntry {
+  name: string;
+  color?: string;
+  payload?: TooltipPayloadData;
+}
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: TooltipPayloadEntry[];
+}
+
+interface LegendPayloadData {
+  percentage?: number;
+}
+
+interface LegendPayloadEntry {
+  value: string;
+  color: string;
+  payload: LegendPayloadData;
+}
+
+interface CustomLegendProps {
+  payload: LegendPayloadEntry[];
+}
+
+interface CenterLabel {
+  value: string | number;
+  label: string;
+}
+
 interface DonutChartProps {
   data: DonutDataPoint[];
   height?: number;
   innerRadius?: number;
   outerRadius?: number;
   showLegend?: boolean;
-  centerLabel?: {
-    value: string | number;
-    label: string;
-  };
+  centerLabel?: CenterLabel;
+  onSegmentClick?: (dataPoint: DonutDataPoint, index: number) => void;
 }
 
-const CustomTooltip = ({ active, payload }: any) => {
+const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
   if (!active || !payload || !payload.length) return null;
 
   const entry = payload[0];
@@ -30,7 +68,7 @@ const CustomTooltip = ({ active, payload }: any) => {
   const change = entry.payload?.change;
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 shadow-lg dark:border-[#202020] dark:bg-[#121110]">
+    <div className="border-border-neutral-tertiary bg-bg-neutral-tertiary rounded-xl border px-3 py-1.5 shadow-lg">
       <div className="flex flex-col gap-0.5">
         {/* Title with color chip */}
         <div className="flex items-center gap-1">
@@ -38,7 +76,7 @@ const CustomTooltip = ({ active, payload }: any) => {
             className="size-3 shrink-0 rounded"
             style={{ backgroundColor: color }}
           />
-          <p className="text-sm leading-5 font-medium text-slate-900 dark:text-[#f4f4f5]">
+          <p className="text-text-neutral-primary text-xs leading-5 font-medium">
             {percentage}% {name}
           </p>
         </div>
@@ -46,7 +84,7 @@ const CustomTooltip = ({ active, payload }: any) => {
         {/* Change percentage row */}
         {change !== undefined && (
           <div className="flex items-start">
-            <p className="text-sm leading-5 font-medium text-slate-600 dark:text-[#d4d4d8]">
+            <p className="text-text-neutral-primary text-xs leading-5 font-medium">
               {change > 0 ? "+" : ""}
               {change}% Since last scan
             </p>
@@ -57,9 +95,9 @@ const CustomTooltip = ({ active, payload }: any) => {
   );
 };
 
-const CustomLegend = ({ payload }: any) => {
-  const items = payload.map((entry: any) => ({
-    label: `${entry.value} (${entry.payload.percentage}%)`,
+const CustomLegend = ({ payload }: CustomLegendProps) => {
+  const items = payload.map((entry: LegendPayloadEntry) => ({
+    label: `${entry.value} (${entry.payload.percentage ?? 0}%)`,
     color: entry.color,
   }));
 
@@ -72,6 +110,7 @@ export function DonutChart({
   outerRadius = 86,
   showLegend = true,
   centerLabel,
+  onSegmentClick,
 }: DonutChartProps) {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
@@ -102,8 +141,8 @@ export function DonutChart({
     {
       name: "No data",
       value: 1,
-      fill: "var(--chart-border-emphasis)",
-      color: "var(--chart-border-emphasis)",
+      fill: CHART_COLORS.emptyState,
+      color: CHART_COLORS.emptyState,
       percentage: 0,
       change: undefined,
     },
@@ -137,14 +176,23 @@ export function DonutChart({
             {(isEmpty ? emptyData : chartData).map((entry, index) => {
               const opacity =
                 hoveredIndex === null ? 1 : hoveredIndex === index ? 1 : 0.5;
+              const isClickable = !isEmpty && onSegmentClick;
               return (
                 <Cell
                   key={`cell-${index}`}
                   fill={entry.fill}
                   opacity={opacity}
-                  style={{ transition: "opacity 0.2s" }}
+                  className={isClickable ? "cursor-pointer" : ""}
+                  style={{
+                    transition: "opacity 0.2s",
+                  }}
                   onMouseEnter={() => setHoveredIndex(index)}
                   onMouseLeave={() => setHoveredIndex(null)}
+                  onClick={() => {
+                    if (isClickable) {
+                      onSegmentClick(data[index], index);
+                    }
+                  }}
                 />
               );
             })}
@@ -171,7 +219,7 @@ export function DonutChart({
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) - 6}
-                          className="text-2xl font-bold text-zinc-800 dark:text-zinc-300"
+                          className="text-text-neutral-secondary text-2xl font-bold"
                           style={{
                             fill: "currentColor",
                           }}
@@ -181,7 +229,7 @@ export function DonutChart({
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) + 24}
-                          className="text-sm text-nowrap text-zinc-800 dark:text-zinc-300"
+                          className="text-text-neutral-secondary text-sm text-nowrap"
                           style={{
                             fill: "currentColor",
                           }}

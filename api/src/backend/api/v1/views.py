@@ -3,7 +3,10 @@ import glob
 import json
 import logging
 import os
+from collections import defaultdict
+from copy import deepcopy
 from datetime import datetime, timedelta, timezone
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from urllib.parse import urljoin
 
 import sentry_sdk
@@ -24,9 +27,23 @@ from django.conf import settings as django_settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.search import SearchQuery
 from django.db import transaction
-from django.db.models import Count, F, Prefetch, Q, Subquery, Sum
+from django.db.models import (
+    Case,
+    Count,
+    DecimalField,
+    ExpressionWrapper,
+    F,
+    IntegerField,
+    Max,
+    Prefetch,
+    Q,
+    Subquery,
+    Sum,
+    Value,
+    When,
+)
 from django.db.models.functions import Coalesce
-from django.http import HttpResponse
+from django.http import HttpResponse, QueryDict
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.dateparse import parse_date
@@ -101,10 +118,10 @@ from api.filters import (
     ScanFilter,
     ScanSummaryFilter,
     ScanSummarySeverityFilter,
-    ServiceOverviewFilter,
     TaskFilter,
     TenantApiKeyFilter,
     TenantFilter,
+    ThreatScoreSnapshotFilter,
     UserFilter,
 )
 from api.models import (
@@ -138,6 +155,7 @@ from api.models import (
     StateChoices,
     Task,
     TenantAPIKey,
+    ThreatScoreSnapshot,
     User,
     UserRoleRelationship,
 )
@@ -184,6 +202,7 @@ from api.v1.serializers import (
     OverviewFindingSerializer,
     OverviewProviderCountSerializer,
     OverviewProviderSerializer,
+    OverviewRegionSerializer,
     OverviewServiceSerializer,
     OverviewSeveritySerializer,
     ProcessorCreateSerializer,
@@ -218,6 +237,7 @@ from api.v1.serializers import (
     TenantApiKeySerializer,
     TenantApiKeyUpdateSerializer,
     TenantSerializer,
+    ThreatScoreSnapshotSerializer,
     TokenRefreshSerializer,
     TokenSerializer,
     TokenSocialLoginSerializer,
@@ -1640,6 +1660,44 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
             ),
         },
     ),
+    ens=extend_schema(
+        tags=["Scan"],
+        summary="Retrieve ENS RD2022 compliance report",
+        description="Download ENS RD2022 compliance report (e.g., 'ens_rd2022_aws') as a PDF file.",
+        request=None,
+        responses={
+            200: OpenApiResponse(
+                description="PDF file containing the ENS compliance report"
+            ),
+            202: OpenApiResponse(description="The task is in progress"),
+            401: OpenApiResponse(
+                description="API key missing or user not Authenticated"
+            ),
+            403: OpenApiResponse(description="There is a problem with credentials"),
+            404: OpenApiResponse(
+                description="The scan has no ENS reports, or the ENS report generation task has not started yet"
+            ),
+        },
+    ),
+    nis2=extend_schema(
+        tags=["Scan"],
+        summary="Retrieve NIS2 compliance report",
+        description="Download NIS2 compliance report (Directive (EU) 2022/2555) as a PDF file.",
+        request=None,
+        responses={
+            200: OpenApiResponse(
+                description="PDF file containing the NIS2 compliance report"
+            ),
+            202: OpenApiResponse(description="The task is in progress"),
+            401: OpenApiResponse(
+                description="API key missing or user not Authenticated"
+            ),
+            403: OpenApiResponse(description="There is a problem with credentials"),
+            404: OpenApiResponse(
+                description="The scan has no NIS2 reports, or the NIS2 report generation task has not started yet"
+            ),
+        },
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
@@ -1697,6 +1755,12 @@ class ScanViewSet(BaseRLSViewSet):
                 return self.response_serializer_class
             return ScanComplianceReportSerializer
         elif self.action == "threatscore":
+            if hasattr(self, "response_serializer_class"):
+                return self.response_serializer_class
+        elif self.action == "ens":
+            if hasattr(self, "response_serializer_class"):
+                return self.response_serializer_class
+        elif self.action == "nis2":
             if hasattr(self, "response_serializer_class"):
                 return self.response_serializer_class
         return super().get_serializer_class()
@@ -1952,6 +2016,7 @@ class ScanViewSet(BaseRLSViewSet):
         if running_resp:
             return running_resp
 
+        # TODO: add detailed response if the compliance framework is not supported for the provider
         if not scan.output_location:
             return Response(
                 {
@@ -1980,6 +2045,85 @@ class ScanViewSet(BaseRLSViewSet):
         content, filename = loader
         return self._serve_file(content, filename, "application/pdf")
 
+    @action(
+        detail=True,
+        methods=["get"],
+        url_name="ens",
+    )
+    def ens(self, request, pk=None):
+        scan = self.get_object()
+        running_resp = self._get_task_status(scan)
+        if running_resp:
+            return running_resp
+
+        # TODO: add detailed response if the compliance framework is not supported for the provider
+        if not scan.output_location:
+            return Response(
+                {
+                    "detail": "The scan has no reports, or the ENS report generation task has not started yet."
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if scan.output_location.startswith("s3://"):
+            bucket = env.str("DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET", "")
+            key_prefix = scan.output_location.removeprefix(f"s3://{bucket}/")
+            prefix = os.path.join(
+                os.path.dirname(key_prefix),
+                "ens",
+                "*_ens_report.pdf",
+            )
+            loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
+        else:
+            base = os.path.dirname(scan.output_location)
+            pattern = os.path.join(base, "ens", "*_ens_report.pdf")
+            loader = self._load_file(pattern, s3=False)
+
+        if isinstance(loader, Response):
+            return loader
+
+        content, filename = loader
+        return self._serve_file(content, filename, "application/pdf")
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_name="nis2",
+    )
+    def nis2(self, request, pk=None):
+        scan = self.get_object()
+        running_resp = self._get_task_status(scan)
+        if running_resp:
+            return running_resp
+
+        if not scan.output_location:
+            return Response(
+                {
+                    "detail": "The scan has no reports, or the NIS2 report generation task has not started yet."
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if scan.output_location.startswith("s3://"):
+            bucket = env.str("DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET", "")
+            key_prefix = scan.output_location.removeprefix(f"s3://{bucket}/")
+            prefix = os.path.join(
+                os.path.dirname(key_prefix),
+                "nis2",
+                "*_nis2_report.pdf",
+            )
+            loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
+        else:
+            base = os.path.dirname(scan.output_location)
+            pattern = os.path.join(base, "nis2", "*_nis2_report.pdf")
+            loader = self._load_file(pattern, s3=False)
+
+        if isinstance(loader, Response):
+            return loader
+
+        content, filename = loader
+        return self._serve_file(content, filename, "application/pdf")
+
     def create(self, request, *args, **kwargs):
         input_serializer = self.get_serializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
@@ -1992,7 +2136,7 @@ class ScanViewSet(BaseRLSViewSet):
                     "scan_id": str(scan.id),
                     "provider_id": str(scan.provider_id),
                     # Disabled for now
-                    # checks_to_execute=scan.scanner_args.get("checks_to_execute"),
+                    # checks_to_execute=scan.scanner_args.get("checks_to_execute")
                 },
             )
 
@@ -3378,6 +3522,20 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
     def retrieve(self, request, *args, **kwargs):
         raise MethodNotAllowed(method="GET")
 
+    def _task_response_if_running(self, scan_id):
+        """Check for an in-progress task only when no compliance data exists."""
+        try:
+            return self.get_task_response_if_running(
+                task_name="scan-compliance-overviews",
+                task_kwargs={"tenant_id": self.request.tenant_id, "scan_id": scan_id},
+                raise_on_not_found=False,
+            )
+        except TaskFailedException:
+            return Response(
+                {"detail": "Task failed to generate compliance overview data."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
     def list(self, request, *args, **kwargs):
         scan_id = request.query_params.get("filter[scan_id]")
         if not scan_id:
@@ -3482,18 +3640,6 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                     }
                 ]
             )
-        try:
-            if task := self.get_task_response_if_running(
-                task_name="scan-compliance-overviews",
-                task_kwargs={"tenant_id": self.request.tenant_id, "scan_id": scan_id},
-                raise_on_not_found=False,
-            ):
-                return task
-        except TaskFailedException:
-            return Response(
-                {"detail": "Task failed to generate compliance overview data."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
         regions = list(
             self.get_queryset()
             .filter(scan_id=scan_id)
@@ -3502,6 +3648,15 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             .distinct()
         )
         result = {"regions": regions}
+
+        if regions:
+            serializer = self.get_serializer(data=result)
+            serializer.is_valid(raise_exception=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        task_response = self._task_response_if_running(scan_id)
+        if task_response:
+            return task_response
 
         serializer = self.get_serializer(data=result)
         serializer.is_valid(raise_exception=True)
@@ -3534,18 +3689,6 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                         "code": "required",
                     }
                 ]
-            )
-        try:
-            if task := self.get_task_response_if_running(
-                task_name="scan-compliance-overviews",
-                task_kwargs={"tenant_id": self.request.tenant_id, "scan_id": scan_id},
-                raise_on_not_found=False,
-            ):
-                return task
-        except TaskFailedException:
-            return Response(
-                {"detail": "Task failed to generate compliance overview data."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
         filtered_queryset = self.filter_queryset(self.get_queryset())
 
@@ -3606,6 +3749,13 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                 requirements_summary, many=True
             )
 
+        if requirements_summary:
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        task_response = self._task_response_if_running(scan_id)
+        if task_response:
+            return task_response
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], url_name="attributes")
@@ -3624,15 +3774,6 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             )
 
         provider_type = None
-        try:
-            sample_requirement = (
-                self.get_queryset().filter(compliance_id=compliance_id).first()
-            )
-
-            if sample_requirement:
-                provider_type = sample_requirement.scan.provider.provider
-        except Exception:
-            pass
 
         # If we couldn't determine from database, try each provider type
         if not provider_type:
@@ -3735,8 +3876,16 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         summary="Get findings data by service",
         description=(
             "Retrieve an aggregated summary of findings grouped by service. The response includes the total count "
-            "of findings for each service, as long as there are at least one finding for that service. At least "
-            "one of the `inserted_at` filters must be provided."
+            "of findings for each service, as long as there are at least one finding for that service."
+        ),
+        filters=True,
+    ),
+    regions=extend_schema(
+        summary="Get findings data by region",
+        description=(
+            "Retrieve an aggregated summary of findings grouped by region. The response includes the total, passed, "
+            "failed, and muted findings for each region based on the latest completed scans per provider. "
+            "Standard overview filters (inserted_at, provider filters, region filters, etc.) are supported."
         ),
         filters=True,
     ),
@@ -3770,17 +3919,19 @@ class OverviewViewSet(BaseRLSViewSet):
             return OverviewSeveritySerializer
         elif self.action == "services":
             return OverviewServiceSerializer
+        elif self.action == "regions":
+            return OverviewRegionSerializer
+        elif self.action == "threatscore":
+            return ThreatScoreSnapshotSerializer
         return super().get_serializer_class()
 
     def get_filterset_class(self):
         if self.action == "providers":
             return None
-        elif self.action == "findings":
+        elif self.action in ["findings", "services", "regions"]:
             return ScanSummaryFilter
         elif self.action == "findings_severity":
             return ScanSummarySeverityFilter
-        elif self.action == "services":
-            return ServiceOverviewFilter
         return None
 
     @extend_schema(exclude=True)
@@ -3790,6 +3941,35 @@ class OverviewViewSet(BaseRLSViewSet):
     @extend_schema(exclude=True)
     def retrieve(self, request, *args, **kwargs):
         raise MethodNotAllowed(method="GET")
+
+    def _get_latest_scans_queryset(self):
+        """
+        Get filtered queryset for the latest completed scans per provider.
+
+        Returns:
+            Filtered ScanSummary queryset with latest scan IDs applied.
+        """
+        tenant_id = self.request.tenant_id
+        queryset = self.get_queryset()
+        filtered_queryset = self.filter_queryset(queryset)
+        provider_filter = (
+            {"provider__in": self.allowed_providers}
+            if hasattr(self, "allowed_providers")
+            else {}
+        )
+
+        latest_scan_ids = (
+            Scan.all_objects.filter(
+                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
+            )
+            .order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values_list("id", flat=True)
+        )
+
+        return filtered_queryset.filter(
+            tenant_id=tenant_id, scan_id__in=latest_scan_ids
+        )
 
     @action(detail=False, methods=["get"], url_name="providers")
     def providers(self, request):
@@ -3883,26 +4063,7 @@ class OverviewViewSet(BaseRLSViewSet):
 
     @action(detail=False, methods=["get"], url_name="findings")
     def findings(self, request):
-        tenant_id = self.request.tenant_id
-        queryset = self.get_queryset()
-        filtered_queryset = self.filter_queryset(queryset)
-        provider_filter = (
-            {"provider__in": self.allowed_providers}
-            if hasattr(self, "allowed_providers")
-            else {}
-        )
-
-        latest_scan_ids = (
-            Scan.all_objects.filter(
-                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
-            )
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
-        filtered_queryset = filtered_queryset.filter(
-            tenant_id=tenant_id, scan_id__in=latest_scan_ids
-        )
+        filtered_queryset = self._get_latest_scans_queryset()
 
         aggregated_totals = filtered_queryset.aggregate(
             _pass=Sum("_pass") or 0,
@@ -3929,37 +4090,14 @@ class OverviewViewSet(BaseRLSViewSet):
 
     @action(detail=False, methods=["get"], url_name="findings_severity")
     def findings_severity(self, request):
-        tenant_id = self.request.tenant_id
-
-        # Load only required fields
-        queryset = self.get_queryset().only(
-            "tenant_id", "scan_id", "severity", "fail", "_pass", "total"
-        )
-
-        filtered_queryset = self.filter_queryset(queryset)
-        provider_filter = (
-            {"provider__in": self.allowed_providers}
-            if hasattr(self, "allowed_providers")
-            else {}
-        )
-
-        latest_scan_ids = (
-            Scan.all_objects.filter(
-                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
-            )
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
-        filtered_queryset = filtered_queryset.filter(
-            tenant_id=tenant_id, scan_id__in=latest_scan_ids
-        )
+        filtered_queryset = self._get_latest_scans_queryset()
 
         # The filter will have added a status_count annotation if any status filter was used
         if "status_count" in filtered_queryset.query.annotations:
             sum_expression = Sum("status_count")
         else:
-            sum_expression = Sum("total")
+            # Exclude muted findings by default
+            sum_expression = Sum(F("_pass") + F("fail"))
 
         severity_counts = (
             filtered_queryset.values("severity")
@@ -3977,26 +4115,7 @@ class OverviewViewSet(BaseRLSViewSet):
 
     @action(detail=False, methods=["get"], url_name="services")
     def services(self, request):
-        tenant_id = self.request.tenant_id
-        queryset = self.get_queryset()
-        filtered_queryset = self.filter_queryset(queryset)
-        provider_filter = (
-            {"provider__in": self.allowed_providers}
-            if hasattr(self, "allowed_providers")
-            else {}
-        )
-
-        latest_scan_ids = (
-            Scan.all_objects.filter(
-                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
-            )
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
-        filtered_queryset = filtered_queryset.filter(
-            tenant_id=tenant_id, scan_id__in=latest_scan_ids
-        )
+        filtered_queryset = self._get_latest_scans_queryset()
 
         services_data = (
             filtered_queryset.values("service")
@@ -4010,6 +4129,350 @@ class OverviewViewSet(BaseRLSViewSet):
         serializer = self.get_serializer(services_data, many=True)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["get"], url_name="regions")
+    def regions(self, request):
+        filtered_queryset = self._get_latest_scans_queryset()
+
+        regions_data = (
+            filtered_queryset.annotate(provider_type=F("scan__provider__provider"))
+            .values("provider_type", "region")
+            .annotate(_pass=Sum("_pass"))
+            .annotate(fail=Sum("fail"))
+            .annotate(muted=Sum("muted"))
+            .annotate(total=Sum("total"))
+            .order_by("provider_type", "region")
+        )
+
+        serializer = self.get_serializer(regions_data, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        summary="Get ThreatScore snapshots",
+        description=(
+            "Retrieve ThreatScore metrics. By default, returns the latest snapshot for each provider. "
+            "Use snapshot_id to retrieve a specific historical snapshot."
+        ),
+        tags=["Overview"],
+        parameters=[
+            OpenApiParameter(
+                name="snapshot_id",
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.QUERY,
+                description="Retrieve a specific snapshot by ID. If not provided, returns latest snapshots.",
+            ),
+            OpenApiParameter(
+                name="provider_id",
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.QUERY,
+                description="Filter by specific provider ID",
+            ),
+            OpenApiParameter(
+                name="provider_id__in",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="Filter by multiple provider IDs (comma-separated UUIDs)",
+            ),
+            OpenApiParameter(
+                name="provider_type",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="Filter by provider type (aws, azure, gcp, etc.)",
+            ),
+            OpenApiParameter(
+                name="provider_type__in",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="Filter by multiple provider types (comma-separated)",
+            ),
+        ],
+    )
+    @action(detail=False, methods=["get"], url_name="threatscore")
+    def threatscore(self, request):
+        """
+        Get ThreatScore snapshots.
+
+        Default behavior: Returns the latest snapshot for each provider.
+        With snapshot_id: Returns the specific snapshot requested.
+        """
+        tenant_id = self.request.tenant_id
+        snapshot_id = request.query_params.get("snapshot_id")
+
+        # Base queryset with RLS
+        base_queryset = ThreatScoreSnapshot.objects.filter(tenant_id=tenant_id)
+
+        # Apply RBAC filtering
+        if hasattr(self, "allowed_providers"):
+            base_queryset = base_queryset.filter(provider__in=self.allowed_providers)
+
+        # Case 1: Specific snapshot requested
+        if snapshot_id:
+            try:
+                snapshot = base_queryset.get(id=snapshot_id)
+                serializer = ThreatScoreSnapshotSerializer(
+                    snapshot, context={"request": request}
+                )
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            except ThreatScoreSnapshot.DoesNotExist:
+                raise NotFound(detail="ThreatScore snapshot not found")
+
+        # Case 2: Latest snapshot per provider (default)
+        # Apply filters manually: this @action is outside the standard list endpoint flow,
+        # so DRF's filter backends don't execute and we must flatten JSON:API params ourselves.
+        normalized_params = QueryDict(mutable=True)
+        for param_key, values in request.query_params.lists():
+            normalized_key = param_key
+            if param_key.startswith("filter[") and param_key.endswith("]"):
+                normalized_key = param_key[7:-1]
+            if normalized_key == "snapshot_id":
+                continue
+            normalized_params.setlist(normalized_key, values)
+
+        filterset = ThreatScoreSnapshotFilter(normalized_params, queryset=base_queryset)
+        filtered_queryset = filterset.qs
+
+        # Get distinct provider IDs from filtered queryset
+        # Pick the latest snapshot per provider using Postgres DISTINCT ON pattern.
+        # This avoids issuing one query per provider (N+1) when the filtered dataset is large.
+        latest_snapshot_ids = list(
+            filtered_queryset.order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values_list("id", flat=True)
+        )
+        latest_snapshot_map = {
+            snapshot.id: snapshot
+            for snapshot in filtered_queryset.filter(id__in=latest_snapshot_ids)
+        }
+        latest_snapshots = [
+            latest_snapshot_map[snapshot_id]
+            for snapshot_id in latest_snapshot_ids
+            if snapshot_id in latest_snapshot_map
+        ]
+
+        if len(latest_snapshots) <= 1:
+            serializer = ThreatScoreSnapshotSerializer(
+                latest_snapshots, many=True, context={"request": request}
+            )
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        snapshot_ids = [
+            snapshot.id for snapshot in latest_snapshots if snapshot and snapshot.id
+        ]
+        aggregated_snapshot = self._build_threatscore_overview_snapshot(
+            snapshot_ids, tenant_id
+        )
+        serializer = ThreatScoreSnapshotSerializer(
+            [aggregated_snapshot], many=True, context={"request": request}
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def _build_threatscore_overview_snapshot(self, snapshot_ids, tenant_id):
+        """
+        Aggregate the latest snapshots into a single overview snapshot for the tenant.
+        """
+        if not snapshot_ids:
+            raise ValueError(
+                "Snapshot id list cannot be empty when aggregating threatscore overview"
+            )
+
+        base_queryset = ThreatScoreSnapshot.objects.filter(
+            tenant_id=tenant_id, id__in=snapshot_ids
+        )
+
+        annotated_queryset = (
+            base_queryset.annotate(
+                active_requirements=ExpressionWrapper(
+                    F("total_requirements") - F("manual_requirements"),
+                    output_field=IntegerField(),
+                )
+            )
+            .annotate(
+                weight=Case(
+                    When(total_findings__gt=0, then=F("total_findings")),
+                    When(
+                        active_requirements__gt=0,
+                        then=F("active_requirements"),
+                    ),
+                    default=Value(1, output_field=IntegerField()),
+                    output_field=IntegerField(),
+                )
+            )
+            .order_by()
+        )
+
+        aggregated_metrics = annotated_queryset.aggregate(
+            total_requirements=Sum("total_requirements"),
+            passed_requirements=Sum("passed_requirements"),
+            failed_requirements=Sum("failed_requirements"),
+            manual_requirements=Sum("manual_requirements"),
+            total_findings=Sum("total_findings"),
+            passed_findings=Sum("passed_findings"),
+            failed_findings=Sum("failed_findings"),
+            weighted_overall_sum=Sum(
+                ExpressionWrapper(
+                    F("overall_score") * F("weight"),
+                    output_field=DecimalField(max_digits=14, decimal_places=4),
+                )
+            ),
+            overall_weight=Sum("weight"),
+            unweighted_overall_sum=Sum("overall_score"),
+            weighted_delta_sum=Sum(
+                Case(
+                    When(
+                        score_delta__isnull=False,
+                        then=ExpressionWrapper(
+                            F("score_delta") * F("weight"),
+                            output_field=DecimalField(max_digits=14, decimal_places=4),
+                        ),
+                    ),
+                    default=Value(
+                        Decimal("0"),
+                        output_field=DecimalField(max_digits=14, decimal_places=4),
+                    ),
+                    output_field=DecimalField(max_digits=14, decimal_places=4),
+                )
+            ),
+            delta_weight=Sum(
+                Case(
+                    When(score_delta__isnull=False, then=F("weight")),
+                    default=Value(0, output_field=IntegerField()),
+                    output_field=IntegerField(),
+                )
+            ),
+            provider_count=Count("id"),
+            latest_inserted_at=Max("inserted_at"),
+        )
+
+        total_requirements = aggregated_metrics["total_requirements"] or 0
+        passed_requirements = aggregated_metrics["passed_requirements"] or 0
+        failed_requirements = aggregated_metrics["failed_requirements"] or 0
+        manual_requirements = aggregated_metrics["manual_requirements"] or 0
+        total_findings = aggregated_metrics["total_findings"] or 0
+        passed_findings = aggregated_metrics["passed_findings"] or 0
+        failed_findings = aggregated_metrics["failed_findings"] or 0
+
+        weighted_overall_sum = aggregated_metrics["weighted_overall_sum"]
+        if weighted_overall_sum is None:
+            weighted_overall_sum = Decimal("0")
+        unweighted_overall_sum = aggregated_metrics["unweighted_overall_sum"]
+        if unweighted_overall_sum is None:
+            unweighted_overall_sum = Decimal("0")
+
+        overall_weight = aggregated_metrics["overall_weight"] or 0
+        provider_count = aggregated_metrics["provider_count"] or 0
+
+        weighted_delta_sum = aggregated_metrics["weighted_delta_sum"]
+        if weighted_delta_sum is None:
+            weighted_delta_sum = Decimal("0")
+        delta_weight = aggregated_metrics["delta_weight"] or 0
+
+        if overall_weight > 0:
+            overall_score = (weighted_overall_sum / Decimal(overall_weight)).quantize(
+                Decimal("0.01"), rounding=ROUND_HALF_UP
+            )
+        elif provider_count > 0:
+            overall_score = (unweighted_overall_sum / Decimal(provider_count)).quantize(
+                Decimal("0.01"), rounding=ROUND_HALF_UP
+            )
+        else:
+            overall_score = Decimal("0.00")
+
+        if delta_weight > 0:
+            score_delta = (weighted_delta_sum / Decimal(delta_weight)).quantize(
+                Decimal("0.01"), rounding=ROUND_HALF_UP
+            )
+        else:
+            score_delta = None
+
+        section_weighted_sums = defaultdict(lambda: Decimal("0"))
+        section_weights = defaultdict(lambda: Decimal("0"))
+
+        combined_critical_requirements = {}
+
+        snapshots_with_weight = list(annotated_queryset)
+
+        for snapshot in snapshots_with_weight:
+            weight_value = getattr(snapshot, "weight", None)
+            try:
+                weight_decimal = Decimal(weight_value)
+            except (InvalidOperation, TypeError):
+                weight_decimal = Decimal("1")
+            if weight_decimal <= 0:
+                weight_decimal = Decimal("1")
+
+            section_scores = snapshot.section_scores or {}
+            for section, score in section_scores.items():
+                try:
+                    score_decimal = Decimal(str(score))
+                except (InvalidOperation, TypeError):
+                    continue
+                section_weighted_sums[section] += score_decimal * weight_decimal
+                section_weights[section] += weight_decimal
+
+            for requirement in snapshot.critical_requirements or []:
+                key = requirement.get("requirement_id") or requirement.get("title")
+                if not key:
+                    continue
+                existing = combined_critical_requirements.get(key)
+
+                def requirement_sort_key(item):
+                    return (
+                        item.get("risk_level") or 0,
+                        item.get("weight") or 0,
+                    )
+
+                if existing is None or requirement_sort_key(
+                    requirement
+                ) > requirement_sort_key(existing):
+                    combined_critical_requirements[key] = deepcopy(requirement)
+
+        aggregated_section_scores = {}
+        for section, total in section_weighted_sums.items():
+            weight_total = section_weights[section]
+            if weight_total > 0:
+                aggregated_section_scores[section] = str(
+                    (total / weight_total).quantize(
+                        Decimal("0.01"), rounding=ROUND_HALF_UP
+                    )
+                )
+
+        aggregated_section_scores = dict(sorted(aggregated_section_scores.items()))
+
+        aggregated_critical_requirements = sorted(
+            combined_critical_requirements.values(),
+            key=lambda item: (
+                item.get("risk_level") or 0,
+                item.get("weight") or 0,
+            ),
+            reverse=True,
+        )
+
+        aggregated_snapshot = ThreatScoreSnapshot(
+            tenant_id=tenant_id,
+            scan=None,
+            provider=None,
+            compliance_id="prowler_threatscore_overview",
+            overall_score=overall_score,
+            score_delta=score_delta,
+            section_scores=aggregated_section_scores,
+            critical_requirements=aggregated_critical_requirements,
+            total_requirements=total_requirements,
+            passed_requirements=passed_requirements,
+            failed_requirements=failed_requirements,
+            manual_requirements=manual_requirements,
+            total_findings=total_findings,
+            passed_findings=passed_findings,
+            failed_findings=failed_findings,
+        )
+
+        latest_inserted_at = aggregated_metrics["latest_inserted_at"]
+        if latest_inserted_at is not None:
+            aggregated_snapshot.inserted_at = latest_inserted_at
+
+        aggregated_snapshot._aggregated = True
+
+        return aggregated_snapshot
 
 
 @extend_schema(tags=["Schedule"])

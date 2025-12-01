@@ -14,6 +14,7 @@ import {
   CustomProviderInputIac,
   CustomProviderInputKubernetes,
   CustomProviderInputM365,
+  CustomProviderInputMongoDBAtlas,
   CustomProviderInputOracleCloud,
 } from "./custom-provider-inputs";
 
@@ -25,21 +26,13 @@ const providerDisplayData: Record<
     label: "Amazon Web Services",
     component: <CustomProviderInputAWS />,
   },
-  gcp: {
-    label: "Google Cloud Platform",
-    component: <CustomProviderInputGCP />,
-  },
   azure: {
     label: "Microsoft Azure",
     component: <CustomProviderInputAzure />,
   },
-  m365: {
-    label: "Microsoft 365",
-    component: <CustomProviderInputM365 />,
-  },
-  kubernetes: {
-    label: "Kubernetes",
-    component: <CustomProviderInputKubernetes />,
+  gcp: {
+    label: "Google Cloud Platform",
+    component: <CustomProviderInputGCP />,
   },
   github: {
     label: "GitHub",
@@ -49,7 +42,19 @@ const providerDisplayData: Record<
     label: "Infrastructure as Code",
     component: <CustomProviderInputIac />,
   },
-  oci: {
+  kubernetes: {
+    label: "Kubernetes",
+    component: <CustomProviderInputKubernetes />,
+  },
+  m365: {
+    label: "Microsoft 365",
+    component: <CustomProviderInputM365 />,
+  },
+  mongodbatlas: {
+    label: "MongoDB Atlas",
+    component: <CustomProviderInputMongoDBAtlas />,
+  },
+  oraclecloud: {
     label: "Oracle Cloud Infrastructure",
     component: <CustomProviderInputOracleCloud />,
   },

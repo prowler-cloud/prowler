@@ -1,32 +1,41 @@
 {
   "Provider": "aws",
   "CheckID": "ecr_repositories_lifecycle_policy_enabled",
-  "CheckTitle": "Check if ECR repositories have lifecycle policies enabled",
+  "CheckTitle": "ECR repository has a lifecycle policy configured",
   "CheckType": [
-    "Identify",
-    "Resource configuration"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Effects/Resource Consumption"
   ],
   "ServiceName": "ecr",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsEcrRepository",
-  "Description": "Check if ECR repositories have lifecycle policies enabled",
-  "Risk": "Amazon ECR repositories run the risk of retaining huge volumes of images, increasing unnecessary cost.",
+  "Description": "Amazon ECR repositories have a **lifecycle policy** configured to automatically expire container images based on age, count, or tags.",
+  "Risk": "Without **lifecycle policies**, images accumulate indefinitely, leading to:\n- **Availability** issues when quotas block pushes and CI/CD\n- **Integrity** risk from redeploying outdated, vulnerable images\n- **Cost** growth from unnecessary storage",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/AmazonECR/latest/userguide/LifecyclePolicies.html",
+    "https://docs.aws.amazon.com/AmazonECR/latest/userguide/lp_creation.html",
+    "https://aws.plainenglish.io/automation-deletion-untagged-container-image-in-amazon-ecr-using-ecr-lifecycle-policy-995eae2f5b8d",
+    "https://blog.stackademic.com/title-implementing-lifecycle-policies-in-aws-ecr-a-practical-guide-3860b612b477",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ECR/lifecycle-policy-in-use.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws ecr put-lifecycle-policy --repository-name <REPOSITORY_NAME> --lifecycle-policy-text <LIFECYCLE_POLICY> [--registry-id <REGISTRY_ID>]",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ECR/lifecycle-policy-in-use.html",
-      "Terraform": ""
+      "CLI": "aws ecr put-lifecycle-policy --repository-name <REPOSITORY_NAME> --lifecycle-policy-text '{\"rules\":[{\"rulePriority\":1,\"selection\":{\"tagStatus\":\"untagged\",\"countType\":\"imageCountMoreThan\",\"countNumber\":1},\"action\":{\"type\":\"expire\"}}]}'",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::ECR::Repository\n    Properties:\n      # Critical: Adding a lifecycle policy makes the repo PASS this check\n      LifecyclePolicy:\n        # Critical: The policy content; any valid rule satisfies the requirement\n        LifecyclePolicyText: >-\n          {\"rules\":[{\"rulePriority\":1,\"selection\":{\"tagStatus\":\"untagged\",\"countType\":\"imageCountMoreThan\",\"countNumber\":1},\"action\":{\"type\":\"expire\"}}]}\n```",
+      "Other": "1. Open the AWS Console and go to Amazon ECR > Repositories\n2. Select the target repository\n3. From Actions, choose \"Lifecycle policies\"\n4. Click \"Create rule\"\n5. Set Image status: Untagged, Match criteria: Image count more than = 1, Action: Expire\n6. Click \"Save\" to apply the lifecycle policy",
+      "Terraform": "```hcl\nresource \"aws_ecr_lifecycle_policy\" \"<example_resource_name>\" {\n  repository = \"<example_resource_name>\"\n  # Critical: The policy ensures a lifecycle policy is configured for the repo\n  policy = <<POLICY\n{\"rules\":[{\"rulePriority\":1,\"selection\":{\"tagStatus\":\"untagged\",\"countType\":\"imageCountMoreThan\",\"countNumber\":1},\"action\":{\"type\":\"expire\"}}]}\nPOLICY\n}\n```"
     },
     "Recommendation": {
-      "Text": "Open the Amazon ECR console. Create an ECR lifecycle policy.",
-      "Url": "https://docs.aws.amazon.com/AmazonECR/latest/userguide/LifecyclePolicies.html"
+      "Text": "Implement **lifecycle policies** per repository to expire untagged, old, or excess images and retain a small set of trusted releases. Validate outcomes before applying, review rules regularly, and apply consistently across Regions when replicating. This supports **defense in depth** by reducing image attack surface and operational risk.",
+      "Url": "https://hub.prowler.com/check/ecr_repositories_lifecycle_policy_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "container-security"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

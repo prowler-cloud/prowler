@@ -4,6 +4,7 @@ import json
 import os
 import tempfile
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import ANY, MagicMock, Mock, patch
@@ -56,6 +57,7 @@ from api.models import (
     StateChoices,
     Task,
     TenantAPIKey,
+    ThreatScoreSnapshot,
     User,
     UserRoleRelationship,
 )
@@ -1153,6 +1155,11 @@ class TestProviderViewSet:
                     "uid": "https://gitlab.com/user/project",
                     "alias": "GitLab Repo",
                 },
+                {
+                    "provider": "mongodbatlas",
+                    "uid": "64b1d3c0e4b03b1234567890",
+                    "alias": "Atlas Organization",
+                },
             ]
         ),
     )
@@ -1165,6 +1172,161 @@ class TestProviderViewSet:
         assert Provider.objects.get().provider == provider_json_payload["provider"]
         assert Provider.objects.get().uid == provider_json_payload["uid"]
         assert Provider.objects.get().alias == provider_json_payload["alias"]
+
+    @pytest.mark.parametrize(
+        "provider_json_payload",
+        (
+            [
+                {"provider": "aws", "uid": "111111111111", "alias": "test"},
+                {"provider": "gcp", "uid": "a12322-test54321", "alias": "test"},
+                {
+                    "provider": "kubernetes",
+                    "uid": "kubernetes-test-123456789",
+                    "alias": "test",
+                },
+                {
+                    "provider": "kubernetes",
+                    "uid": "arn:aws:eks:us-east-1:111122223333:cluster/test-cluster-long-name-123456789",
+                    "alias": "EKS",
+                },
+                {
+                    "provider": "kubernetes",
+                    "uid": "gke_aaaa-dev_europe-test1_dev-aaaa-test-cluster-long-name-123456789",
+                    "alias": "GKE",
+                },
+                {
+                    "provider": "kubernetes",
+                    "uid": "gke_project/cluster-name",
+                    "alias": "GKE",
+                },
+                {
+                    "provider": "kubernetes",
+                    "uid": "admin@k8s-demo",
+                    "alias": "test",
+                },
+                {
+                    "provider": "azure",
+                    "uid": "8851db6b-42e5-4533-aa9e-30a32d67e875",
+                    "alias": "test",
+                },
+                {
+                    "provider": "m365",
+                    "uid": "TestingPro.onmicrosoft.com",
+                    "alias": "test",
+                },
+                {
+                    "provider": "m365",
+                    "uid": "subdomain.domain.es",
+                    "alias": "test",
+                },
+                {
+                    "provider": "m365",
+                    "uid": "microsoft.net",
+                    "alias": "test",
+                },
+                {
+                    "provider": "m365",
+                    "uid": "subdomain1.subdomain2.subdomain3.subdomain4.domain.net",
+                    "alias": "test",
+                },
+                {
+                    "provider": "github",
+                    "uid": "test-user",
+                    "alias": "test",
+                },
+                {
+                    "provider": "github",
+                    "uid": "test-organization",
+                    "alias": "GitHub Org",
+                },
+                {
+                    "provider": "github",
+                    "uid": "prowler-cloud",
+                    "alias": "Prowler",
+                },
+                {
+                    "provider": "github",
+                    "uid": "microsoft",
+                    "alias": "Microsoft",
+                },
+                {
+                    "provider": "github",
+                    "uid": "a12345678901234567890123456789012345678",
+                    "alias": "Long Username",
+                },
+            ]
+        ),
+    )
+    @patch("api.v1.views.Task.objects.get")
+    @patch("api.v1.views.delete_provider_task.delay")
+    def test_providers_soft_delete(
+        self,
+        mock_delete_task,
+        mock_task_get,
+        authenticated_client,
+        provider_json_payload,
+        tasks_fixture,
+    ):
+        # Mock the Celery task response
+        prowler_task = tasks_fixture[0]
+        task_mock = Mock()
+        task_mock.id = prowler_task.id
+        mock_delete_task.return_value = task_mock
+        mock_task_get.return_value = prowler_task
+
+        # 1.Create a provider
+        response = authenticated_client.post(
+            reverse("provider-list"), data=provider_json_payload, format="json"
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert Provider.objects.count() == 1
+        provider_id = response.json()["data"]["id"]
+
+        # 2. Soft delete the provider using the actual API endpoint
+        response = authenticated_client.delete(
+            reverse("provider-detail", kwargs={"pk": provider_id})
+        )
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        assert Provider.objects.count() == 0
+        assert Provider.all_objects.count() == 1
+
+        mock_delete_task.assert_called_once_with(
+            provider_id=str(provider_id), tenant_id=ANY
+        )
+
+        # 3. Create a provider with the same UID should succeed (since the old one is soft deleted)
+        response = authenticated_client.post(
+            reverse("provider-list"), data=provider_json_payload, format="json"
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert Provider.objects.count() == 1
+        assert Provider.all_objects.count() == 2
+        provider_id = response.json()["data"]["id"]
+
+        # 4. Creating another provider with the same UID should fail (duplicate)
+        response = authenticated_client.post(
+            reverse("provider-list"), data=provider_json_payload, format="json"
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+        mock_delete_task.reset_mock()
+        mock_delete_task.return_value = task_mock
+
+        # 5. Delete the second provider
+        response = authenticated_client.delete(
+            reverse("provider-detail", kwargs={"pk": provider_id})
+        )
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        assert Provider.objects.count() == 0
+        assert Provider.all_objects.count() == 2
+
+        # 6. Creating a provider with the same UID should succeed again
+        response = authenticated_client.post(
+            reverse("provider-list"), data=provider_json_payload, format="json"
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert Provider.objects.count() == 1
+        assert Provider.all_objects.count() == 3
 
     @pytest.mark.parametrize(
         "provider_json_payload, error_code, error_pointer",
@@ -1327,6 +1489,24 @@ class TestProviderViewSet:
                         "alias": "test",
                     },
                     "iac-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "mongodbatlas",
+                        "uid": "64b1d3c0e4b03b123456789g",
+                        "alias": "test",
+                    },
+                    "mongodbatlas-uid",
+                    "uid",
+                ),
+                (
+                    {
+                        "provider": "mongodbatlas",
+                        "uid": "1234",
+                        "alias": "test",
+                    },
+                    "mongodbatlas-uid",
                     "uid",
                 ),
             ]
@@ -1502,22 +1682,22 @@ class TestProviderViewSet:
                 (
                     "uid.icontains",
                     "1",
-                    6,
-                ),  # Updated: includes OCI provider with "1" in UID
+                    7,
+                ),
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
-                ("inserted_at", TODAY, 7),  # Updated: 7 providers now (added OCI)
+                ("inserted_at", TODAY, 8),
                 (
                     "inserted_at.gte",
                     "2024-01-01",
-                    7,
-                ),  # Updated: 7 providers now (added OCI)
+                    8,
+                ),
                 ("inserted_at.lte", "2024-01-01", 0),
                 (
                     "updated_at.gte",
                     "2024-01-01",
-                    7,
-                ),  # Updated: 7 providers now (added OCI)
+                    8,
+                ),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
         ),
@@ -2022,7 +2202,7 @@ class TestProviderSecretViewSet:
             ),
             # OCI with API key credentials (with key_content)
             (
-                Provider.ProviderChoices.OCI.value,
+                Provider.ProviderChoices.ORACLECLOUD.value,
                 ProviderSecret.TypeChoices.STATIC,
                 {
                     "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
@@ -2034,7 +2214,7 @@ class TestProviderSecretViewSet:
             ),
             # OCI with API key credentials (with key_file)
             (
-                Provider.ProviderChoices.OCI.value,
+                Provider.ProviderChoices.ORACLECLOUD.value,
                 ProviderSecret.TypeChoices.STATIC,
                 {
                     "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
@@ -2046,7 +2226,7 @@ class TestProviderSecretViewSet:
             ),
             # OCI with API key credentials (with passphrase)
             (
-                Provider.ProviderChoices.OCI.value,
+                Provider.ProviderChoices.ORACLECLOUD.value,
                 ProviderSecret.TypeChoices.STATIC,
                 {
                     "user": "ocid1.user.oc1..aaaaaaaakldibrbov4ubh25aqdeiroklxjngwka7u6w7no3glmdq3n5sxtkq",
@@ -2055,6 +2235,15 @@ class TestProviderSecretViewSet:
                     "tenancy": "ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
                     "region": "us-ashburn-1",
                     "pass_phrase": "my-secure-passphrase",
+                },
+            ),
+            # MongoDB Atlas credentials
+            (
+                Provider.ProviderChoices.MONGODBATLAS.value,
+                ProviderSecret.TypeChoices.STATIC,
+                {
+                    "atlas_public_key": "public-key",
+                    "atlas_private_key": "private-key",
                 },
             ),
         ],
@@ -3353,6 +3542,9 @@ class TestResourceViewSet:
         )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == len(resources_fixture)
+        assert "metadata" in response.json()["data"][0]["attributes"]
+        assert "details" in response.json()["data"][0]["attributes"]
+        assert "partition" in response.json()["data"][0]["attributes"]
 
     @pytest.mark.parametrize(
         "include_values, expected_resources",
@@ -5120,9 +5312,11 @@ class TestUserRoleRelationshipViewSet:
     def test_create_relationship_already_exists(
         self, authenticated_client, roles_fixture, create_test_user
     ):
+        # Only add Role One (which has manage_account=True) to ensure
+        # the second request has permission to add roles
         data = {
             "data": [
-                {"type": "roles", "id": str(role.id)} for role in roles_fixture[:2]
+                {"type": "roles", "id": str(roles_fixture[0].id)},
             ]
         }
         authenticated_client.post(
@@ -5939,10 +6133,10 @@ class TestOverviewViewSet:
         response = authenticated_client.get(reverse("overview-providers"))
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 1
-        assert response.json()["data"][0]["attributes"]["findings"]["total"] == 4
+        assert response.json()["data"][0]["attributes"]["findings"]["total"] == 9
         assert response.json()["data"][0]["attributes"]["findings"]["pass"] == 2
         assert response.json()["data"][0]["attributes"]["findings"]["fail"] == 1
-        assert response.json()["data"][0]["attributes"]["findings"]["muted"] == 1
+        assert response.json()["data"][0]["attributes"]["findings"]["muted"] == 6
         # Aggregated resources include all AWS providers present in the tenant
         assert response.json()["data"][0]["attributes"]["resources"]["total"] == 3
 
@@ -5994,10 +6188,10 @@ class TestOverviewViewSet:
         assert len(data) == 1
         attributes = data[0]["attributes"]
 
-        assert attributes["findings"]["total"] == 10
+        assert attributes["findings"]["total"] == 15
         assert attributes["findings"]["pass"] == 5
         assert attributes["findings"]["fail"] == 3
-        assert attributes["findings"]["muted"] == 2
+        assert attributes["findings"]["muted"] == 7
         assert attributes["resources"]["total"] == 4
 
     def test_overview_providers_count(
@@ -6034,11 +6228,440 @@ class TestOverviewViewSet:
         for entry in grouped_data:
             assert "findings" not in entry["attributes"]
 
+    def _create_scan(self, tenant, provider, name, started_at=None):
+        scan_started = started_at or datetime.now(timezone.utc) - timedelta(hours=1)
+        return Scan.objects.create(
+            tenant=tenant,
+            provider=provider,
+            name=name,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            started_at=scan_started,
+            completed_at=scan_started + timedelta(minutes=30),
+        )
+
+    def _create_threatscore_snapshot(
+        self,
+        tenant,
+        scan,
+        provider,
+        *,
+        compliance_id,
+        overall_score,
+        score_delta,
+        section_scores,
+        critical_requirements,
+        total_requirements,
+        passed_requirements,
+        failed_requirements,
+        manual_requirements,
+        total_findings,
+        passed_findings,
+        failed_findings,
+    ):
+        return ThreatScoreSnapshot.objects.create(
+            tenant=tenant,
+            scan=scan,
+            provider=provider,
+            compliance_id=compliance_id,
+            overall_score=Decimal(overall_score),
+            score_delta=Decimal(score_delta) if score_delta is not None else None,
+            section_scores=section_scores,
+            critical_requirements=critical_requirements,
+            total_requirements=total_requirements,
+            passed_requirements=passed_requirements,
+            failed_requirements=failed_requirements,
+            manual_requirements=manual_requirements,
+            total_findings=total_findings,
+            passed_findings=passed_findings,
+            failed_findings=failed_findings,
+        )
+
+    def test_overview_threatscore_returns_weighted_aggregate_snapshot(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        tenant = tenants_fixture[0]
+        provider1, provider2, *_ = providers_fixture
+
+        scan1 = self._create_scan(tenant, provider1, "agg-scan-one")
+        scan2 = self._create_scan(tenant, provider2, "agg-scan-two")
+
+        snapshot1 = self._create_threatscore_snapshot(
+            tenant,
+            scan1,
+            provider1,
+            compliance_id="prowler_threatscore_aws",
+            overall_score="80.00",
+            score_delta="5.00",
+            section_scores={"1. IAM": "70.00", "2. Attack Surface": "60.00"},
+            critical_requirements=[
+                {
+                    "requirement_id": "req_shared",
+                    "title": "Shared requirement (preferred)",
+                    "section": "1. IAM",
+                    "subsection": "Sub IAM",
+                    "risk_level": 5,
+                    "weight": 150,
+                    "passed_findings": 14,
+                    "total_findings": 20,
+                    "description": "Higher risk duplicate",
+                },
+                {
+                    "requirement_id": "req_unique_one",
+                    "title": "Unique provider one",
+                    "section": "2. Attack Surface",
+                    "subsection": "Sub Attack",
+                    "risk_level": 4,
+                    "weight": 90,
+                    "passed_findings": 20,
+                    "total_findings": 30,
+                    "description": "Lower risk",
+                },
+            ],
+            total_requirements=120,
+            passed_requirements=90,
+            failed_requirements=30,
+            manual_requirements=0,
+            total_findings=100,
+            passed_findings=70,
+            failed_findings=30,
+        )
+
+        snapshot2 = self._create_threatscore_snapshot(
+            tenant,
+            scan2,
+            provider2,
+            compliance_id="prowler_threatscore_aws",
+            overall_score="20.00",
+            score_delta="-2.00",
+            section_scores={
+                "1. IAM": "10.00",
+                "2. Attack Surface": "40.00",
+                "3. Logging": "30.00",
+            },
+            critical_requirements=[
+                {
+                    "requirement_id": "req_shared",
+                    "title": "Shared requirement (secondary)",
+                    "section": "1. IAM",
+                    "subsection": "Sub IAM",
+                    "risk_level": 4,
+                    "weight": 120,
+                    "passed_findings": 8,
+                    "total_findings": 12,
+                    "description": "Lower risk duplicate",
+                },
+                {
+                    "requirement_id": "req_unique_two",
+                    "title": "Unique provider two",
+                    "section": "3. Logging",
+                    "subsection": "Sub Logging",
+                    "risk_level": 5,
+                    "weight": 110,
+                    "passed_findings": 6,
+                    "total_findings": 10,
+                    "description": "Another critical requirement",
+                },
+            ],
+            total_requirements=80,
+            passed_requirements=30,
+            failed_requirements=50,
+            manual_requirements=0,
+            total_findings=50,
+            passed_findings=15,
+            failed_findings=35,
+        )
+
+        older_inserted = datetime(2025, 1, 1, 12, 0, tzinfo=timezone.utc)
+        newer_inserted = datetime(2025, 1, 2, 12, 0, tzinfo=timezone.utc)
+        ThreatScoreSnapshot.objects.filter(id=snapshot1.id).update(
+            inserted_at=older_inserted
+        )
+        ThreatScoreSnapshot.objects.filter(id=snapshot2.id).update(
+            inserted_at=newer_inserted
+        )
+        snapshot2.refresh_from_db()
+
+        response = authenticated_client.get(reverse("overview-threatscore"))
+
+        assert response.status_code == status.HTTP_200_OK
+        body = response.json()
+        assert len(body["data"]) == 1
+        aggregated = body["data"][0]
+
+        assert aggregated["id"] == "n/a"
+        assert aggregated["relationships"]["scan"]["data"] is None
+        assert aggregated["relationships"]["provider"]["data"] is None
+
+        attrs = aggregated["attributes"]
+        assert Decimal(attrs["overall_score"]) == Decimal("60.00")
+        assert Decimal(attrs["score_delta"]) == Decimal("2.67")
+        assert attrs["inserted_at"] == snapshot2.inserted_at.isoformat().replace(
+            "+00:00", "Z"
+        )
+        assert attrs["total_findings"] == 150
+        assert attrs["passed_findings"] == 85
+        assert attrs["failed_findings"] == 65
+        assert attrs["total_requirements"] == 200
+        assert attrs["passed_requirements"] == 120
+        assert attrs["failed_requirements"] == 80
+        assert attrs["manual_requirements"] == 0
+
+        assert attrs["section_scores"] == {
+            "1. IAM": "50.00",
+            "2. Attack Surface": "53.33",
+            "3. Logging": "30.00",
+        }
+
+        expected_critical = [
+            {
+                "requirement_id": "req_shared",
+                "title": "Shared requirement (preferred)",
+                "section": "1. IAM",
+                "subsection": "Sub IAM",
+                "risk_level": 5,
+                "weight": 150,
+                "passed_findings": 14,
+                "total_findings": 20,
+                "description": "Higher risk duplicate",
+            },
+            {
+                "requirement_id": "req_unique_two",
+                "title": "Unique provider two",
+                "section": "3. Logging",
+                "subsection": "Sub Logging",
+                "risk_level": 5,
+                "weight": 110,
+                "passed_findings": 6,
+                "total_findings": 10,
+                "description": "Another critical requirement",
+            },
+            {
+                "requirement_id": "req_unique_one",
+                "title": "Unique provider one",
+                "section": "2. Attack Surface",
+                "subsection": "Sub Attack",
+                "risk_level": 4,
+                "weight": 90,
+                "passed_findings": 20,
+                "total_findings": 30,
+                "description": "Lower risk",
+            },
+        ]
+        assert attrs["critical_requirements"] == expected_critical
+
+    def test_overview_threatscore_weight_fallback_to_requirements(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        tenant = tenants_fixture[0]
+        provider1, provider2, *_ = providers_fixture
+
+        scan1 = self._create_scan(tenant, provider1, "fallback-scan-1")
+        scan2 = self._create_scan(tenant, provider2, "fallback-scan-2")
+
+        self._create_threatscore_snapshot(
+            tenant,
+            scan1,
+            provider1,
+            compliance_id="prowler_threatscore_aws",
+            overall_score="90.00",
+            score_delta="4.00",
+            section_scores={"1. IAM": "90.00"},
+            critical_requirements=[],
+            total_requirements=10,
+            passed_requirements=8,
+            failed_requirements=0,
+            manual_requirements=2,
+            total_findings=0,
+            passed_findings=0,
+            failed_findings=0,
+        )
+        self._create_threatscore_snapshot(
+            tenant,
+            scan2,
+            provider2,
+            compliance_id="prowler_threatscore_aws",
+            overall_score="50.00",
+            score_delta="1.00",
+            section_scores={"1. IAM": "40.00"},
+            critical_requirements=[],
+            total_requirements=12,
+            passed_requirements=5,
+            failed_requirements=7,
+            manual_requirements=0,
+            total_findings=10,
+            passed_findings=4,
+            failed_findings=6,
+        )
+
+        response = authenticated_client.get(reverse("overview-threatscore"))
+        assert response.status_code == status.HTTP_200_OK
+        aggregate = response.json()["data"][0]["attributes"]
+
+        assert Decimal(aggregate["overall_score"]) == Decimal("67.78")
+        assert Decimal(aggregate["score_delta"]) == Decimal("2.33")
+        assert aggregate["total_findings"] == 10
+        assert aggregate["total_requirements"] == 22
+        assert aggregate["manual_requirements"] == 2
+        assert aggregate["section_scores"] == {"1. IAM": "62.22"}
+
+    def test_overview_threatscore_filter_by_scan_id_returns_snapshot(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        tenant = tenants_fixture[0]
+        provider1, *_ = providers_fixture
+        scan = self._create_scan(tenant, provider1, "filter-scan")
+
+        snapshot = self._create_threatscore_snapshot(
+            tenant,
+            scan,
+            provider1,
+            compliance_id="prowler_threatscore_aws",
+            overall_score="75.00",
+            score_delta="3.00",
+            section_scores={"1. IAM": "70.00"},
+            critical_requirements=[],
+            total_requirements=50,
+            passed_requirements=30,
+            failed_requirements=20,
+            manual_requirements=0,
+            total_findings=25,
+            passed_findings=15,
+            failed_findings=10,
+        )
+
+        response = authenticated_client.get(
+            reverse("overview-threatscore"), {"filter[scan_id]": str(scan.id)}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        body = response.json()
+        assert len(body["data"]) == 1
+        assert body["data"][0]["id"] == str(snapshot.id)
+        assert body["data"][0]["attributes"]["overall_score"] == "75.00"
+
+    def test_overview_threatscore_snapshot_id_returns_specific_snapshot(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        tenant = tenants_fixture[0]
+        provider1, *_ = providers_fixture
+        scan = self._create_scan(tenant, provider1, "snapshot-id-scan")
+
+        snapshot = self._create_threatscore_snapshot(
+            tenant,
+            scan,
+            provider1,
+            compliance_id="prowler_threatscore_aws",
+            overall_score="88.50",
+            score_delta=None,
+            section_scores={"1. IAM": "80.00"},
+            critical_requirements=[],
+            total_requirements=60,
+            passed_requirements=45,
+            failed_requirements=15,
+            manual_requirements=0,
+            total_findings=30,
+            passed_findings=25,
+            failed_findings=5,
+        )
+
+        response = authenticated_client.get(
+            reverse("overview-threatscore"), {"snapshot_id": str(snapshot.id)}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["data"]["id"] == str(snapshot.id)
+        assert data["data"]["attributes"]["score_delta"] is None
+
+    def test_overview_threatscore_provider_filter_returns_unaggregated_snapshot(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        tenant = tenants_fixture[0]
+        provider1, provider2, *_ = providers_fixture
+
+        scan1 = self._create_scan(tenant, provider1, "provider-filter-scan-1")
+        scan2 = self._create_scan(tenant, provider2, "provider-filter-scan-2")
+
+        snapshot1 = self._create_threatscore_snapshot(
+            tenant,
+            scan1,
+            provider1,
+            compliance_id="prowler_threatscore_aws",
+            overall_score="55.55",
+            score_delta="1.10",
+            section_scores={"1. IAM": "50.00"},
+            critical_requirements=[],
+            total_requirements=40,
+            passed_requirements=25,
+            failed_requirements=15,
+            manual_requirements=0,
+            total_findings=12,
+            passed_findings=7,
+            failed_findings=5,
+        )
+        self._create_threatscore_snapshot(
+            tenant,
+            scan2,
+            provider2,
+            compliance_id="prowler_threatscore_aws",
+            overall_score="44.44",
+            score_delta="0.80",
+            section_scores={"1. IAM": "40.00"},
+            critical_requirements=[],
+            total_requirements=30,
+            passed_requirements=18,
+            failed_requirements=12,
+            manual_requirements=0,
+            total_findings=10,
+            passed_findings=6,
+            failed_findings=4,
+        )
+
+        response = authenticated_client.get(
+            reverse("overview-threatscore"),
+            {"filter[provider_id__in]": str(provider1.id)},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["id"] == str(snapshot1.id)
+        assert data[0]["attributes"]["overall_score"] == "55.55"
+
     def test_overview_services_list_no_required_filters(
         self, authenticated_client, scan_summaries_fixture
     ):
         response = authenticated_client.get(reverse("overview-services"))
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_200_OK
+        # Should return services from latest scans
+        assert len(response.json()["data"]) == 2
+
+    def test_overview_regions_list(self, authenticated_client, scan_summaries_fixture):
+        response = authenticated_client.get(
+            reverse("overview-regions"), {"filter[inserted_at]": TODAY}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        # Only two different regions in the fixture (region1, region2)
+        assert len(response.json()["data"]) == 2
+
+        data = response.json()["data"]
+        regions = {item["id"]: item["attributes"] for item in data}
+
+        assert "aws:region1" in regions
+        assert "aws:region2" in regions
+
+        # region1 has 5 findings (2 pass, 0 fail, 3 muted)
+        assert regions["aws:region1"]["total"] == 5
+        assert regions["aws:region1"]["pass"] == 2
+        assert regions["aws:region1"]["fail"] == 0
+        assert regions["aws:region1"]["muted"] == 3
+
+        # region2 has 4 findings (0 pass, 1 fail, 3 muted)
+        assert regions["aws:region2"]["total"] == 4
+        assert regions["aws:region2"]["pass"] == 0
+        assert regions["aws:region2"]["fail"] == 1
+        assert regions["aws:region2"]["muted"] == 3
 
     def test_overview_services_list(self, authenticated_client, scan_summaries_fixture):
         response = authenticated_client.get(
@@ -6047,15 +6670,14 @@ class TestOverviewViewSet:
         assert response.status_code == status.HTTP_200_OK
         # Only two different services
         assert len(response.json()["data"]) == 2
-        # Fixed data from the fixture, TODO improve this at some point with something more dynamic
+        # Fixed data from the fixture
         service1_data = response.json()["data"][0]
         service2_data = response.json()["data"][1]
         assert service1_data["id"] == "service1"
         assert service2_data["id"] == "service2"
 
-        # TODO fix numbers when muted_findings filter is fixed
-        assert service1_data["attributes"]["total"] == 3
-        assert service2_data["attributes"]["total"] == 1
+        assert service1_data["attributes"]["total"] == 7
+        assert service2_data["attributes"]["total"] == 2
 
         assert service1_data["attributes"]["pass"] == 1
         assert service2_data["attributes"]["pass"] == 1
@@ -6063,8 +6685,8 @@ class TestOverviewViewSet:
         assert service1_data["attributes"]["fail"] == 1
         assert service2_data["attributes"]["fail"] == 0
 
-        assert service1_data["attributes"]["muted"] == 1
-        assert service2_data["attributes"]["muted"] == 0
+        assert service1_data["attributes"]["muted"] == 5
+        assert service2_data["attributes"]["muted"] == 1
 
     def test_overview_findings_provider_id_in_filter(
         self, authenticated_client, tenants_fixture, providers_fixture
@@ -6174,6 +6796,7 @@ class TestOverviewViewSet:
             tenant=tenant,
         )
 
+        # Muted findings should be excluded from severity counts
         ScanSummary.objects.create(
             tenant=tenant,
             scan=scan1,
@@ -6183,8 +6806,8 @@ class TestOverviewViewSet:
             region="region-a",
             _pass=4,
             fail=4,
-            muted=0,
-            total=8,
+            muted=3,
+            total=11,
         )
         ScanSummary.objects.create(
             tenant=tenant,
@@ -6195,8 +6818,8 @@ class TestOverviewViewSet:
             region="region-b",
             _pass=2,
             fail=2,
-            muted=0,
-            total=4,
+            muted=2,
+            total=6,
         )
         ScanSummary.objects.create(
             tenant=tenant,
@@ -6207,8 +6830,8 @@ class TestOverviewViewSet:
             region="region-c",
             _pass=1,
             fail=2,
-            muted=0,
-            total=3,
+            muted=5,
+            total=8,
         )
 
         single_response = authenticated_client.get(
@@ -6217,6 +6840,7 @@ class TestOverviewViewSet:
         )
         assert single_response.status_code == status.HTTP_200_OK
         single_attributes = single_response.json()["data"]["attributes"]
+        # Should only count pass + fail, excluding muted (3 muted in high, 2 in medium)
         assert single_attributes["high"] == 8
         assert single_attributes["medium"] == 4
         assert single_attributes["critical"] == 0
@@ -6227,6 +6851,7 @@ class TestOverviewViewSet:
         )
         assert combined_response.status_code == status.HTTP_200_OK
         combined_attributes = combined_response.json()["data"]["attributes"]
+        # Should only count pass + fail, excluding muted (5 muted in critical)
         assert combined_attributes["high"] == 8
         assert combined_attributes["medium"] == 4
         assert combined_attributes["critical"] == 3

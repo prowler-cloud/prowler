@@ -1,29 +1,37 @@
 {
   "Provider": "aws",
   "CheckID": "elbv2_cross_zone_load_balancing_enabled",
-  "CheckTitle": "Ensure Cross-Zone Load Balancing is enabled for Network (NLBs) and Gateway (GWLB) Load Balancers",
-  "CheckType": [],
+  "CheckTitle": "ELBv2 Network or Gateway Load Balancer has cross-zone load balancing enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
   "ServiceName": "elbv2",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsElbv2LoadBalancer",
-  "Description": "Checks whether cross-zone load balancing is enabled for Network Load Balancers (NLBs) and Gateway Load Balancers (GWLB). Cross-zone load balancing ensures even distribution of traffic across all registered targets in all Availability Zones, improving fault tolerance and load distribution.",
-  "Risk": "If cross-zone load balancing is not enabled, traffic may not be evenly distributed across Availability Zones, leading to over-utilization of resources in certain zones and potential application performance degradation or outages.",
-  "RelatedUrl": "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/network-load-balancers.html#cross-zone-load-balancing",
+  "Description": "**Network and Gateway Load Balancers** have **cross-zone load balancing** enabled (`load_balancing.cross_zone.enabled`), so each node distributes requests to targets in all enabled Availability Zones rather than only its own.",
+  "Risk": "Without cross-zone distribution, traffic can concentrate in one zone, degrading **availability** through target saturation, uneven failover, and connection drops. Zonal impairment can cause partial outages and increase **latency** under load.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/enable-cross-zone-load-balancing.html#",
+    "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/network-load-balancers.html#cross-zone-load-balancing"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws elbv2 modify-load-balancer-attributes --load-balancer-name <load-balancer-name> --attributes Key=load_balancing.cross_zone.enabled,Value=true",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/ELBv2/enable-cross-zone-load-balancing.html#",
-      "Terraform": ""
+      "CLI": "aws elbv2 modify-load-balancer-attributes --load-balancer-arn <load-balancer-arn> --attributes Key=load_balancing.cross_zone.enabled,Value=true",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::ElasticLoadBalancingV2::LoadBalancer\n    Properties:\n      Type: network\n      Subnets:\n        - <subnet-id-1>\n        - <subnet-id-2>\n      LoadBalancerAttributes:\n        - Key: load_balancing.cross_zone.enabled  # Critical: enable cross-zone load balancing\n          Value: true  # Ensures the check passes for NLB/GLB\n```",
+      "Other": "1. Open the AWS EC2 console and go to Load Balancers\n2. Select your Network or Gateway Load Balancer\n3. Choose the Attributes tab > Edit attributes\n4. Turn on Cross-zone load balancing\n5. Save changes",
+      "Terraform": "```hcl\nresource \"aws_lb\" \"<example_resource_name>\" {\n  load_balancer_type = \"network\"\n  subnets            = [\"<subnet-id-1>\", \"<subnet-id-2>\"]\n  enable_cross_zone_load_balancing = true  # Critical: enable cross-zone load balancing\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable cross-zone load balancing for Network and Gateway Load Balancers to ensure even traffic distribution and enhance fault tolerance across Availability Zones.",
-      "Url": "https://docs.aws.amazon.com/elasticloadbalancing/latest/network/network-load-balancers.html#cross-zone-load-balancing"
+      "Text": "Enable **cross-zone load balancing** to spread load across zones and design for AZ redundancy.\n\n- Balance capacity per AZ and use health-based routing\n- Avoid single-AZ dependencies and sticky designs\n- Monitor zonal health to sustain **fault tolerance**",
+      "Url": "https://hub.prowler.com/check/elbv2_cross_zone_load_balancing_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

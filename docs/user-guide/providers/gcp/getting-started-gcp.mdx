@@ -32,39 +32,51 @@ title: 'Getting Started With GCP on Prowler'
 
 ### Step 3: Set Up GCP Authentication
 
-Choose the preferred authentication mode before proceeding:
+For Google Cloud, first enter your `GCP Project ID` and then select the authentication method you want to use:
 
-**User Credentials (Application Default Credentials)**
+- **Service Account Authentication** (**Recommended**)
+    * Authenticates as a service identity
+    * Stable and auditable
+    * Recommended for production
+- **Application Default Credentials**
+    * Quick scan as current user
+    * Uses Google Cloud CLI authentication
+    * Credentials may time out
 
-* Quick scan as current user
-* Uses Google Cloud CLI authentication
-* Credentials may time out
+**Service Account Authentication** is the recommended authentication method for automated systems and machine-to-machine interactions, like Prowler. For detailed information about this, refer to the [Google Cloud documentation](https://cloud.google.com/iam/docs/service-account-overview).
 
-**Service Account Key File**
+<img src="/images/prowler-app/gcp-auth-methods.png" alt="GCP Authentication Methods" width="700" />
 
-* Authenticates as a service identity
-* Stable and auditable
-* Recommended for production
+<Tabs>
+  <Tab title="Service Account Authentication">
+    First of all, in the same project that you selected in the previous step, you need to create a service account and then generate a key in JSON format for it. For more information about this, you can follow the next Google Cloud documentation tutorials:
 
-For detailed instructions on how to set up authentication, see [Authentication](/user-guide/providers/gcp/authentication).
+    - [Create a service account](https://cloud.google.com/iam/docs/creating-managing-service-accounts)
+    - [Generate a key for a service account](https://cloud.google.com/iam/docs/creating-managing-service-account-keys)
 
-6. Once credentials are configured, return to Prowler App and enter the required values:
+    <img src="/images/prowler-app/gcp-service-account-creds.png" alt="GCP Service Account Credentials" width="700" />
+     For detailed instructions on how to setup Service Account authentication, see the [Authentication](/user-guide/providers/gcp/authentication#service-account-authentication) page.
+  </Tab>
+  <Tab title="Application Default Credentials">
+    1. Run the following command in your terminal to authenticate with GCP:
 
-    For "Service Account Key":
+    ```bash
+    gcloud auth application-default login
+    ```
 
-    - `Service Account Key JSON`
+    2. Once authenticated, get the `Client ID`, `Client Secret` and `Refresh Token` from `~/.config/gcloud/application_default_credentials`.
 
-    For "Application Default Credentials":
+    3. Paste the `Client ID`, `Client Secret` and `Refresh Token` into Prowler App.
 
-    - `client_id`
-    - `client_secret`
-    - `refresh_token`
+    <img src="/images/gcp-credentials.png" alt="GCP Credentials" width="700" />
 
-    ![Enter the Credentials](/images/providers/enter-credentials-prowler-cloud.png)
+  </Tab>
+</Tabs>
+
 
 7. Click "Next", then "Launch Scan"
 
-    ![Launch Scan GCP](/images/providers/launch-scan.png)
+    ![Launch Scan GCP](./img/launch-scan.png)
 
 ---
 

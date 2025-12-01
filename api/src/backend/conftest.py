@@ -501,13 +501,28 @@ def providers_fixture(tenants_fixture):
         tenant_id=tenant.id,
     )
     provider7 = Provider.objects.create(
-        provider="oci",
+        provider="oraclecloud",
         uid="ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
         alias="oci_testing",
         tenant_id=tenant.id,
     )
+    provider8 = Provider.objects.create(
+        provider="mongodbatlas",
+        uid="64b1d3c0e4b03b1234567890",
+        alias="mongodbatlas_testing",
+        tenant_id=tenant.id,
+    )
 
-    return provider1, provider2, provider3, provider4, provider5, provider6, provider7
+    return (
+        provider1,
+        provider2,
+        provider3,
+        provider4,
+        provider5,
+        provider6,
+        provider7,
+        provider8,
+    )
 
 
 @pytest.fixture
@@ -1093,8 +1108,8 @@ def scan_summaries_fixture(tenants_fixture, providers_fixture):
         region="region1",
         _pass=1,
         fail=0,
-        muted=0,
-        total=1,
+        muted=2,
+        total=3,
         new=1,
         changed=0,
         unchanged=0,
@@ -1102,7 +1117,7 @@ def scan_summaries_fixture(tenants_fixture, providers_fixture):
         fail_changed=0,
         pass_new=1,
         pass_changed=0,
-        muted_new=0,
+        muted_new=2,
         muted_changed=0,
         scan=scan,
     )
@@ -1115,8 +1130,8 @@ def scan_summaries_fixture(tenants_fixture, providers_fixture):
         region="region2",
         _pass=0,
         fail=1,
-        muted=1,
-        total=2,
+        muted=3,
+        total=4,
         new=2,
         changed=0,
         unchanged=0,
@@ -1124,7 +1139,7 @@ def scan_summaries_fixture(tenants_fixture, providers_fixture):
         fail_changed=0,
         pass_new=0,
         pass_changed=0,
-        muted_new=1,
+        muted_new=3,
         muted_changed=0,
         scan=scan,
     )
@@ -1137,8 +1152,8 @@ def scan_summaries_fixture(tenants_fixture, providers_fixture):
         region="region1",
         _pass=1,
         fail=0,
-        muted=0,
-        total=1,
+        muted=1,
+        total=2,
         new=1,
         changed=0,
         unchanged=0,
@@ -1146,7 +1161,7 @@ def scan_summaries_fixture(tenants_fixture, providers_fixture):
         fail_changed=0,
         pass_new=1,
         pass_changed=0,
-        muted_new=0,
+        muted_new=1,
         muted_changed=0,
         scan=scan,
     )

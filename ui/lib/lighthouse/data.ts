@@ -1,6 +1,21 @@
 import { getProviders } from "@/actions/providers/providers";
 import { getScans } from "@/actions/scans/scans";
 import { getUserInfo } from "@/actions/users/users";
+import type { ProviderProps } from "@/types/providers";
+
+interface ProviderEntry {
+  alias: string;
+  name: string;
+  provider_type: string;
+  id: string;
+  last_checked_at: string;
+}
+
+interface ProviderWithScans extends ProviderEntry {
+  scan_id?: string;
+  scan_duration?: number;
+  resource_count?: number;
+}
 
 export async function getCurrentDataSection(): Promise<string> {
   try {
@@ -22,17 +37,19 @@ export async function getCurrentDataSection(): Promise<string> {
       throw new Error("Unable to fetch providers data");
     }
 
-    const providerEntries = providersData.data.map((provider: any) => ({
-      alias: provider.attributes?.alias || "Unknown",
-      name: provider.attributes?.uid || "Unknown",
-      provider_type: provider.attributes?.provider || "Unknown",
-      id: provider.id || "Unknown",
-      last_checked_at:
-        provider.attributes?.connection?.last_checked_at || "Unknown",
-    }));
+    const providerEntries: ProviderEntry[] = providersData.data.map(
+      (provider: ProviderProps) => ({
+        alias: provider.attributes?.alias || "Unknown",
+        name: provider.attributes?.uid || "Unknown",
+        provider_type: provider.attributes?.provider || "Unknown",
+        id: provider.id || "Unknown",
+        last_checked_at:
+          provider.attributes?.connection?.last_checked_at || "Unknown",
+      }),
+    );
 
-    const providersWithScans = await Promise.all(
-      providerEntries.map(async (provider: any) => {
+    const providersWithScans: ProviderWithScans[] = await Promise.all(
+      providerEntries.map(async (provider: ProviderEntry) => {
         try {
           // Get scan data for this provider
           const scansData = await getScans({

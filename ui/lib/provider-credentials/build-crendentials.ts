@@ -197,6 +197,20 @@ export const buildGitHubSecret = (formData: FormData) => {
   return {};
 };
 
+export const buildMongoDBAtlasSecret = (formData: FormData) => {
+  const secret = {
+    [ProviderCredentialFields.ATLAS_PUBLIC_KEY]: getFormValue(
+      formData,
+      ProviderCredentialFields.ATLAS_PUBLIC_KEY,
+    ),
+    [ProviderCredentialFields.ATLAS_PRIVATE_KEY]: getFormValue(
+      formData,
+      ProviderCredentialFields.ATLAS_PRIVATE_KEY,
+    ),
+  };
+  return filterEmptyValues(secret);
+};
+
 export const buildIacSecret = (formData: FormData) => {
   const secret = {
     [ProviderCredentialFields.REPOSITORY_URL]: getFormValue(
@@ -304,9 +318,13 @@ export const buildSecretConfig = (
       secretType: "static",
       secret: buildIacSecret(formData),
     }),
-    oci: () => ({
+    oraclecloud: () => ({
       secretType: "static",
       secret: buildOracleCloudSecret(formData, providerUid),
+    }),
+    mongodbatlas: () => ({
+      secretType: "static",
+      secret: buildMongoDBAtlasSecret(formData),
     }),
   };
 

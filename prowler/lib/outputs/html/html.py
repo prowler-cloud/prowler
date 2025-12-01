@@ -241,7 +241,7 @@ class HTML(Output):
                     <th scope="col">Status</th>
                     <th scope="col">Severity</th>
                     <th scope="col">Service Name</th>
-                    <th scope="col">{"Line Range" if provider.type == "iac" else "Region"}</th>
+                    <th scope="col">Region</th>
                     <th style="width:20%" scope="col">Check ID</th>
                     <th style="width:20%" scope="col">Check Title</th>
                     <th scope="col">Resource ID</th>
@@ -974,18 +974,20 @@ class HTML(Output):
             return ""
 
     @staticmethod
-    def get_oci_assessment_summary(provider: Provider) -> str:
+    def get_oraclecloud_assessment_summary(provider: Provider) -> str:
         """
-        get_oci_assessment_summary gets the HTML assessment summary for the OCI provider
+        get_oraclecloud_assessment_summary gets the HTML assessment summary for the OracleCloud provider
 
         Args:
-            provider (Provider): the OCI provider object
+            provider (Provider): the OracleCloud provider object
 
         Returns:
-            str: HTML assessment summary for the OCI provider
+            str: HTML assessment summary for the OracleCloud provider
         """
         try:
             profile = getattr(provider.session, "profile", "default")
+            if profile is None:
+                profile = "instance-principal"
             tenancy_name = getattr(provider.identity, "tenancy_name", "unknown")
             tenancy_id = getattr(provider.identity, "tenancy_id", "unknown")
 
@@ -993,11 +995,11 @@ class HTML(Output):
                 <div class="col-md-2">
                     <div class="card">
                         <div class="card-header">
-                            OCI Assessment Summary
+                            OracleCloud Assessment Summary
                         </div>
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item">
-                                <b>OCI Tenancy:</b> {tenancy_name if tenancy_name != "unknown" else tenancy_id}
+                                <b>OracleCloud Tenancy:</b> {tenancy_name if tenancy_name != "unknown" else tenancy_id}
                             </li>
                         </ul>
                     </div>
@@ -1005,7 +1007,7 @@ class HTML(Output):
                 <div class="col-md-4">
                     <div class="card">
                         <div class="card-header">
-                            OCI Credentials
+                            OracleCloud Credentials
                         </div>
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item">

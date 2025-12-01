@@ -1,5 +1,5 @@
 {
-  "Provider": "oci",
+  "Provider": "oraclecloud",
   "CheckID": "identity_user_valid_email_address",
   "CheckTitle": "Ensure all OCI IAM user accounts have a valid and current email address",
   "CheckType": [

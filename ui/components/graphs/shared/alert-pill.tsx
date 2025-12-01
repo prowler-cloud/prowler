@@ -1,6 +1,6 @@
 import { AlertTriangle } from "lucide-react";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib";
 
 interface AlertPillProps {
   value: number;
@@ -9,30 +9,41 @@ interface AlertPillProps {
   textSize?: "xs" | "sm" | "base";
 }
 
+const TEXT_SIZE_CLASSES = {
+  sm: "text-sm",
+  base: "text-base",
+  xs: "text-xs",
+} as const;
+
 export function AlertPill({
   value,
   label = "Fail Findings",
   iconSize = 12,
   textSize = "xs",
 }: AlertPillProps) {
+  const textSizeClass = TEXT_SIZE_CLASSES[textSize];
+
+  // Chart alert colors are theme-aware variables from globals.css
   return (
     <div className="flex items-center gap-2">
       <div
         className="flex items-center gap-1 rounded-full px-2 py-1"
-        style={{ backgroundColor: "var(--chart-alert-bg)" }}
+        style={{ backgroundColor: "var(--color-bg-fail-secondary)" }}
       >
         <AlertTriangle
           size={iconSize}
-          style={{ color: "var(--chart-alert-text)" }}
+          style={{ color: "var(--color-text-text-error)" }}
         />
         <span
-          className={cn(`text-${textSize}`, "font-semibold")}
-          style={{ color: "var(--chart-alert-text)" }}
+          className={cn(textSizeClass, "font-semibold")}
+          style={{ color: "var(--color-text-text-error)" }}
         >
           {value}
         </span>
       </div>
-      <span className={cn(`text-${textSize}`, "text-slate-400")}>{label}</span>
+      <span className="text-text-neutral-secondary text-sm font-medium">
+        {label}
+      </span>
     </div>
   );
 }
