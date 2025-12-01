@@ -23,9 +23,7 @@ class compute_instance_deletion_protection_enabled(Check):
             )
             if not instance.deletion_protection:
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"VM Instance {instance.name} does not have deletion protection enabled."
-                )
+                report.status_extended = f"VM Instance {instance.name} does not have deletion protection enabled."
             findings.append(report)
 
         return findings
