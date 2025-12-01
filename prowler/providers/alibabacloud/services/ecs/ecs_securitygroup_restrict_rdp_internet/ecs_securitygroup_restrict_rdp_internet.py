@@ -1,30 +1,9 @@
 from prowler.lib.check.models import Check, CheckReportAlibabaCloud
 from prowler.providers.alibabacloud.services.ecs.ecs_client import ecs_client
-
-
-def _check_port_in_range(port_range: str, target_port: int) -> bool:
-    """
-    Check if target port is in the port range.
-
-    Port range format: "3389/3389" (from/to) or "3389" (single port)
-    """
-    if not port_range:
-        return False
-
-    try:
-        if "/" in port_range:
-            from_port, to_port = map(int, port_range.split("/"))
-            return from_port <= target_port <= to_port
-        else:
-            port = int(port_range)
-            return port == target_port
-    except (ValueError, AttributeError):
-        return False
-
-
-def _is_public_cidr(cidr: str) -> bool:
-    """Check if CIDR is public (0.0.0.0/0)."""
-    return cidr == "0.0.0.0/0" or cidr == "::/0"
+from prowler.providers.alibabacloud.services.ecs.lib.security_groups import (
+    is_public_cidr,
+    port_in_range,
+)
 
 
 class ecs_securitygroup_restrict_rdp_internet(Check):
@@ -57,7 +36,7 @@ class ecs_securitygroup_restrict_rdp_internet(Check):
 
                 # Check if source is public (0.0.0.0/0)
                 source_cidr = ingress_rule.get("source_cidr_ip", "")
-                if not _is_public_cidr(source_cidr):
+                if not is_public_cidr(source_cidr):
                     continue
 
                 # Check if port range includes RDP port
@@ -67,7 +46,7 @@ class ecs_securitygroup_restrict_rdp_internet(Check):
                     # If protocol is "all", all ports are open
                     has_unrestricted_access = True
                     break
-                elif _check_port_in_range(port_range, check_port):
+                elif port_in_range(port_range, check_port):
                     has_unrestricted_access = True
                     break
 
