@@ -1,31 +1,39 @@
 {
   "Provider": "aws",
   "CheckID": "redshift_cluster_non_default_username",
-  "CheckTitle": "Check if Amazon Redshift clusters are using the default Admin username.",
+  "CheckTitle": "Amazon Redshift cluster does not use the default admin username",
   "CheckType": [
-    "Software and Configuration Checks/AWS Security Best Practices"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "TTPs/Initial Access/Unauthorized Access"
   ],
   "ServiceName": "redshift",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:redshift:region:account-id:cluster/cluster-name",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRedshiftCluster",
-  "Description": "This control checks whether an Amazon Redshift cluster has changed the admin username from its default value. The control fails if the admin username is set to 'awsuser'.",
-  "Risk": "Using the default admin username increases the risk of unauthorized access, as default credentials are publicly known and often targeted by attackers.",
-  "RelatedUrl": "https://docs.aws.amazon.com/redshift/latest/gsg/rs-gsg-prereq.html",
+  "Description": "**Amazon Redshift clusters** are assessed for use of a **non-default admin username**; clusters using the known default `awsuser` are identified.",
+  "Risk": "Default admin names make accounts predictable, enabling username enumeration, password spraying, and brute-force attempts. A takeover can expose warehouse data (**confidentiality**), enable unauthorized queries or schema changes (**integrity**), and disrupt analytics workloads (**availability**).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/redshift-controls.html#redshift-8",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Redshift/master-username.html",
+    "https://docs.aws.amazon.com/redshift/latest/gsg/rs-gsg-prereq.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws redshift create-cluster --cluster-identifier <cluster-id> --master-username <new-username> --master-user-password <password>",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/redshift-controls.html#redshift-8",
-      "Terraform": ""
+      "CLI": "",
+      "NativeIaC": "```yaml\n# CloudFormation: Redshift cluster with non-default admin username\nResources:\n  <example_resource_name>:\n    Type: AWS::Redshift::Cluster\n    Properties:\n      ClusterType: single-node\n      NodeType: <example_node_type>\n      MasterUsername: <new-username>  # Critical: not 'awsuser' to pass the check\n      MasterUserPassword: <password>\n```",
+      "Other": "1. In the Amazon Redshift console, choose Create cluster\n2. Set Admin user name to a value other than awsuser (critical)\n3. Enter the required minimal settings (password, node type) and create the cluster\n4. Migrate data from the old cluster if needed\n5. Delete the old cluster that uses the awsuser admin to remove the failing resource",
+      "Terraform": "```hcl\nresource \"aws_redshift_cluster\" \"<example_resource_name>\" {\n  cluster_identifier = \"<example_resource_id>\"\n  node_type          = \"<example_node_type>\"\n  cluster_type       = \"single-node\"\n  master_username    = \"<new-username>\"  # Critical: not 'awsuser' to pass the check\n  master_password    = \"<password>\"\n}\n```"
     },
     "Recommendation": {
-      "Text": "Change the default admin username by creating a new Redshift cluster with a unique admin username.",
-      "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Redshift/master-username.html"
+      "Text": "Use a **unique, non-predictable** admin username at creation instead of `awsuser`. Apply **least privilege** by using dedicated roles and limiting superuser use. Enforce strong authentication, rotate credentials, and audit access. *For existing clusters*, create a new one with a unique admin and migrate.",
+      "Url": "https://hub.prowler.com/check/redshift_cluster_non_default_username"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "identity-access"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

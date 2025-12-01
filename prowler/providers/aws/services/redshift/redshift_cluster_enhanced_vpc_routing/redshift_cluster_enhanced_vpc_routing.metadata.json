@@ -1,32 +1,44 @@
 {
   "Provider": "aws",
   "CheckID": "redshift_cluster_enhanced_vpc_routing",
-  "CheckTitle": "Check if Redshift clusters are using enhanced VPC routing.",
+  "CheckTitle": "Redshift cluster has Enhanced VPC Routing enabled",
   "CheckType": [
-    "Software and Configuration Checks/AWS Security Best Practices"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
   ],
   "ServiceName": "redshift",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:redshift:region:account-id:cluster/cluster-name",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRedshiftCluster",
-  "Description": "This control checks whether an Amazon Redshift cluster has EnhancedVpcRouting enabled. Enhanced VPC routing forces all COPY and UNLOAD traffic between the cluster and data repositories to go through your VPC, allowing you to use VPC security features such as security groups and network access control lists.",
-  "Risk": "Without enhanced VPC routing, network traffic between the Redshift cluster and data repositories might bypass VPC-level security controls, increasing the risk of unauthorized access or data exfiltration.",
-  "RelatedUrl": "https://docs.aws.amazon.com/redshift/latest/mgmt/enhanced-vpc-enabling-cluster.html",
+  "Description": "**Amazon Redshift clusters** are assessed for the `EnhancedVpcRouting` setting, which routes all `COPY` and `UNLOAD` traffic between the cluster and data repositories through the VPC, enabling use of VPC security controls and logging.",
+  "Risk": "**Without enhanced VPC routing**, `COPY`/`UNLOAD` transfers can leave VPC oversight, reducing control and visibility.\n- VPC egress filtering and endpoint policies can be bypassed (confidentiality)\n- Limited flow-log telemetry (visibility)\n- Higher risk of unauthorized exfiltration or tampering (confidentiality, integrity)",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.datadoghq.com/security/default_rules/def-000-4ix/",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/redshift-controls.html#redshift-7",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Redshift/enable-enhanced-vpc-routing.html",
+    "https://repost.aws/knowledge-center/redshift-enhanced-vpc-routing",
+    "https://docs.aws.amazon.com/redshift/latest/mgmt/enhanced-vpc-enabling-cluster.html",
+    "https://docs.aws.amazon.com/redshift/latest/mgmt/enhanced-vpc-routing.html",
+    "https://jayendrapatil.com/tag/enhanced-vpc-routing/",
+    "https://www.educba.com/redshift-enhanced-vpc-routing/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aws redshift modify-cluster --cluster-identifier <cluster-id> --enhanced-vpc-routing",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/redshift-controls.html#redshift-7",
-      "Terraform": ""
+      "NativeIaC": "```yaml\n# CloudFormation: Enable Enhanced VPC Routing on a Redshift cluster\nResources:\n  <example_resource_name>:\n    Type: AWS::Redshift::Cluster\n    Properties:\n      ClusterIdentifier: <example_resource_name>\n      ClusterType: single-node\n      NodeType: ra3.xlplus\n      DBName: dev\n      MasterUsername: <USERNAME>\n      MasterUserPassword: <PASSWORD>\n      EnhancedVpcRouting: true  # Critical: forces COPY/UNLOAD traffic through the VPC\n```",
+      "Other": "1. Open the AWS Console and go to Amazon Redshift\n2. Choose Provisioned clusters, select your cluster\n3. Click Actions > Modify\n4. In Network and security, turn on Enhanced VPC routing\n5. Click Save changes (apply immediately if prompted)",
+      "Terraform": "```hcl\n# Terraform: Enable Enhanced VPC Routing on a Redshift cluster\nresource \"aws_redshift_cluster\" \"<example_resource_name>\" {\n  cluster_identifier  = \"<example_resource_name>\"\n  cluster_type        = \"single-node\"\n  node_type           = \"ra3.xlplus\"\n  master_username     = \"<USERNAME>\"\n  master_password     = \"<PASSWORD>\"\n  enhanced_vpc_routing = true  # Critical: routes COPY/UNLOAD via VPC\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable enhanced VPC routing for your Redshift clusters to enforce network traffic through your VPC and apply additional security controls.",
-      "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Redshift/enable-enhanced-vpc-routing.html"
+      "Text": "Enable `EnhancedVpcRouting` and enforce **least privilege** egress:\n- Prefer private access with VPC endpoints and restrictive policies\n- Constrain outbound paths via security groups, NACLs, and routing\n- Monitor transfers with VPC Flow Logs\n\nThis strengthens **defense in depth** and **zero trust** for data movement.",
+      "Url": "https://hub.prowler.com/check/redshift_cluster_enhanced_vpc_routing"
     }
   },
   "Categories": [
-    "trustboundaries"
+    "trust-boundaries",
+    "internet-exposed"
   ],
   "DependsOn": [],
   "RelatedTo": [],

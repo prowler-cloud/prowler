@@ -1,28 +1,35 @@
 {
   "Provider": "aws",
   "CheckID": "redshift_cluster_in_transit_encryption_enabled",
-  "CheckTitle": "Check if connections to Amazon Redshift clusters are encrypted in transit.",
+  "CheckTitle": "Redshift cluster is encrypted in transit",
   "CheckType": [
-    "Software and Configuration Checks/AWS Security Best Practices"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "redshift",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:redshift:region:account-id:cluster/cluster-name",
-  "Severity": "medium",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
   "ResourceType": "AwsRedshiftCluster",
-  "Description": "This control checks whether connections to Amazon Redshift clusters are required to use encryption in transit. The control fails if the Redshift cluster parameter 'require_SSL' isn't set to True.",
-  "Risk": "Without encryption in transit, connections to the Redshift cluster are vulnerable to eavesdropping or person-in-the-middle attacks, exposing sensitive data to unauthorized access.",
-  "RelatedUrl": "https://docs.aws.amazon.com/redshift/latest/mgmt/security-encryption-in-transit.html",
+  "Description": "**Amazon Redshift clusters** enforce **encryption in transit** by requiring **TLS** for client connections when `require_ssl` is enabled.\n\nThis evaluation identifies clusters where connections are not forced to use TLS.",
+  "Risk": "Allowing plaintext or optional TLS exposes SQL sessions to:\n- **Confidentiality** loss: credentials, queries, and results can be intercepted.\n- **Integrity** compromise: statements or data may be modified in transit.\n- **Availability** impact: session hijacking can disrupt workloads.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/redshift/latest/mgmt/security-encryption-in-transit.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/redshift-controls.html#redshift-2",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Redshift/redshift-parameter-groups-require-ssl.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws redshift modify-cluster-parameter-group --parameter-group-name <group-name> --parameters ParameterName=require_ssl,ParameterValue=true,ApplyType=static",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/redshift-controls.html#redshift-2",
-      "Terraform": ""
+      "CLI": "aws redshift modify-cluster-parameter-group --parameter-group-name <example_resource_name> --parameters ParameterName=require_ssl,ParameterValue=true",
+      "NativeIaC": "```yaml\n# CloudFormation: Set require_ssl to true in the Redshift parameter group in use\nResources:\n  <example_resource_name>:\n    Type: AWS::Redshift::ClusterParameterGroup\n    Properties:\n      Description: Require SSL for Redshift connections\n      ParameterGroupFamily: redshift-1.0\n      Parameters:\n        - ParameterName: require_ssl   # CRITICAL: Enforces TLS for client connections\n          ParameterValue: true         # CRITICAL: Enable SSL requirement\n```",
+      "Other": "1. In the AWS Console, go to Amazon Redshift > Parameter groups\n2. Open the parameter group used by your cluster\n3. Click Edit parameters, set require_ssl to true, and Save\n4. Reboot the cluster to apply the static parameter change",
+      "Terraform": "```hcl\n# Set require_ssl to true in the Redshift parameter group used by the cluster\nresource \"aws_redshift_parameter_group\" \"<example_resource_name>\" {\n  name   = \"<example_resource_name>\"\n  family = \"redshift-1.0\"\n\n  parameter {\n    name  = \"require_ssl\"   # CRITICAL: Enforces TLS for client connections\n    value = \"true\"          # CRITICAL: Enable SSL requirement\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure that connections to Amazon Redshift clusters use encryption in transit by setting the 'require_ssl' parameter to True.",
-      "Url": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Redshift/redshift-parameter-groups-require-ssl.html"
+      "Text": "Require **TLS** for all Redshift connections by setting `require_ssl=true` and disallow plaintext.\n\nConfigure clients to validate certificates and prefer private network paths. Keep drivers/TLS policies current. Apply **least privilege** and **defense in depth** to limit exposure if transport security fails.",
+      "Url": "https://hub.prowler.com/check/redshift_cluster_in_transit_encryption_enabled"
     }
   },
   "Categories": [
