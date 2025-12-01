@@ -1,4 +1,5 @@
 import logging
+
 from collections.abc import Callable
 from typing import Any
 
@@ -18,7 +19,6 @@ class RetryableSession:
         session_factory: Callable[[], neo4j.Session],
         close_driver: Callable[[], None],  # Just to avoid circular imports
         max_retries: int,
-        logger: logging.Logger | None = None,
     ) -> None:
         self._session_factory = session_factory
         self._close_driver = close_driver
