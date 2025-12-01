@@ -280,7 +280,7 @@ def display_data(
             ].apply(lambda x: x.split(" - ")[0])
     # Filter the chosen level of the CIS
     if is_level_1:
-        data = data[data["REQUIREMENTS_ATTRIBUTES_PROFILE"] == "Level 1"]
+        data = data[data["REQUIREMENTS_ATTRIBUTES_PROFILE"].str.contains("Level 1")]
 
     # Rename the column PROJECTID to ACCOUNTID for GCP
     if data.columns.str.contains("PROJECTID").any():
