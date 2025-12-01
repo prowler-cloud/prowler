@@ -570,7 +570,9 @@ export class ProvidersPage extends BasePage {
 
       // Wait for either success (redirect to scans) or error message to appear
       const errorMessage = this.page
-        .locator('div.border-border-error, div.bg-red-100, p.text-text-error-primary, p.text-danger')
+        .locator(
+          "div.border-border-error, div.bg-red-100, p.text-text-error-primary, p.text-danger",
+        )
         .first();
 
       try {
@@ -617,18 +619,17 @@ export class ProvidersPage extends BasePage {
     }
 
     // Fallback logic: try finding any common primary action buttons in expected order
-    const candidates = [
+    const candidates: Array<{ name: string | RegExp }> = [
       { name: "Next" }, // Try the "Next" button
       { name: "Save" }, // Try the "Save" button
       { name: "Launch scan" }, // Try the "Launch scan" button
       { name: /Continue|Proceed/i }, // Try "Continue" or "Proceed" (case-insensitive)
-    ] as const;
+    ];
 
     // Try each candidate name and click it if found
     for (const candidate of candidates) {
-      // Try each candidate name and click it if found
       const btn = this.page.getByRole("button", {
-        name: candidate.name as any,
+        name: candidate.name,
       });
 
       if (await btn.count()) {
@@ -1038,7 +1039,6 @@ export class ProvidersPage extends BasePage {
 
     // Wait for filtering to complete (max 0 or 1 data rows)
     await expect(async () => {
-      const targetRow = await findProviderRow();
       const count = await allRows.count();
 
       // Count only real data rows (not "No results")
