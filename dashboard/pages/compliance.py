@@ -125,7 +125,7 @@ if data is None:
     )
 else:
 
-    data["ASSESSMENTDATE"] = pd.to_datetime(data["ASSESSMENTDATE"])
+    data["ASSESSMENTDATE"] = pd.to_datetime(data["ASSESSMENTDATE"], format="mixed")
     data["ASSESSMENT_TIME"] = data["ASSESSMENTDATE"].dt.strftime("%Y-%m-%d %H:%M:%S")
 
     data_values = data["ASSESSMENT_TIME"].unique()
