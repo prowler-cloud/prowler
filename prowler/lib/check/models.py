@@ -768,6 +768,14 @@ class CheckReportIAC(Check_Report):
 
 
 @dataclass
+class CheckReportGithubAction(Check_Report):
+    """Contains the GitHub Action Check's finding information using zizmor."""
+
+    resource_name: str
+    resource_line_range: str
+
+
+@dataclass
 class CheckReportLLM(Check_Report):
     """Contains the LLM Check's finding information."""
 

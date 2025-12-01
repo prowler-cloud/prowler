@@ -1,0 +1,528 @@
+import json
+import shutil
+import subprocess
+import sys
+import tempfile
+from fnmatch import fnmatch
+from os import environ
+from typing import List
+
+from alive_progress import alive_bar
+from colorama import Fore, Style
+from dulwich import porcelain
+
+from prowler.config.config import (
+    default_config_file_path,
+    load_and_validate_config_file,
+)
+from prowler.lib.check.models import CheckMetadata, CheckReportGithubAction
+from prowler.lib.logger import logger
+from prowler.lib.utils.utils import print_boxes
+from prowler.providers.common.models import Audit_Metadata
+from prowler.providers.common.provider import Provider
+
+
+class GithubActionsProvider(Provider):
+    _type: str = "github_actions"
+    audit_metadata: Audit_Metadata
+
+    def __init__(
+        self,
+        workflow_path: str = ".",
+        repository_url: str = None,
+        exclude_workflows: list[str] = [],
+        config_path: str = None,
+        config_content: dict = None,
+        fixer_config: dict = {},
+        personal_access_token: str = None,
+        oauth_app_token: str = None,
+    ):
+        logger.info("Instantiating GitHub Actions Provider...")
+
+        self.workflow_path = workflow_path
+        self.repository_url = repository_url
+        self.exclude_workflows = exclude_workflows
+        self.region = "global"
+        self.audited_account = "github_actions"
+        self._session = None
+        self._identity = "prowler"
+        self._auth_method = "No auth"
+
+        if repository_url:
+            oauth_app_token = oauth_app_token or environ.get("GITHUB_OAUTH_APP_TOKEN")
+            personal_access_token = personal_access_token or environ.get(
+                "GITHUB_PERSONAL_ACCESS_TOKEN"
+            )
+
+            if oauth_app_token:
+                self.oauth_app_token = oauth_app_token
+                self.personal_access_token = None
+                self._auth_method = "OAuth App Token"
+                logger.info("Using OAuth App Token for GitHub authentication")
+            elif personal_access_token:
+                self.personal_access_token = personal_access_token
+                self.oauth_app_token = None
+                self._auth_method = "Personal Access Token"
+                logger.info("Using personal access token for authentication")
+            else:
+                self.personal_access_token = None
+                self.oauth_app_token = None
+                logger.debug(
+                    "No GitHub authentication method provided; proceeding without authentication."
+                )
+
+        # Audit Config
+        if config_content:
+            self._audit_config = config_content
+        else:
+            if not config_path:
+                config_path = default_config_file_path
+            self._audit_config = load_and_validate_config_file(self._type, config_path)
+
+        # Fixer Config
+        self._fixer_config = fixer_config
+
+        # Mutelist (not needed for GitHub Actions since zizmor has its own ignore logic)
+        self._mutelist = None
+
+        self.audit_metadata = Audit_Metadata(
+            provider=self._type,
+            account_id=self.audited_account,
+            account_name="github_actions",
+            region=self.region,
+            services_scanned=0,  # GitHub Actions doesn't use services
+            expected_checks=[],  # GitHub Actions doesn't use checks
+            completed_checks=0,  # GitHub Actions doesn't use checks
+            audit_progress=0,  # GitHub Actions doesn't use progress tracking
+        )
+
+        Provider.set_global_provider(self)
+
+    @property
+    def auth_method(self):
+        return self._auth_method
+
+    @property
+    def type(self):
+        return self._type
+
+    @property
+    def identity(self):
+        return self._identity
+
+    @property
+    def session(self):
+        return self._session
+
+    @property
+    def audit_config(self):
+        return self._audit_config
+
+    @property
+    def fixer_config(self):
+        return self._fixer_config
+
+    def setup_session(self):
+        """GitHub Actions provider doesn't need a session since it uses zizmor directly"""
+        return None
+
+    def _should_exclude_workflow(
+        self, workflow_file: str, exclude_patterns: list[str]
+    ) -> bool:
+        """
+        Check if a workflow file should be excluded based on exclude patterns.
+
+        Patterns can match against either:
+        - The full workflow path (e.g., ".github/workflows/test-*.yml")
+        - Just the filename (e.g., "test-*.yml")
+
+        Args:
+            workflow_file: The workflow file path
+            exclude_patterns: List of glob patterns to exclude
+
+        Returns:
+            True if the workflow should be excluded, False otherwise
+        """
+        if not exclude_patterns:
+            return False
+
+        # Get just the filename from the path
+        from os.path import basename
+
+        filename = basename(workflow_file)
+
+        # Check if the pattern matches either the full path or just the filename
+        for pattern in exclude_patterns:
+            # Try matching against full path first
+            if fnmatch(workflow_file, pattern):
+                logger.debug(
+                    f"Excluding workflow {workflow_file} (matches full path pattern: {pattern})"
+                )
+                return True
+
+            # Also try matching against just the filename for convenience
+            if fnmatch(filename, pattern):
+                logger.debug(
+                    f"Excluding workflow {workflow_file} (matches filename pattern: {pattern})"
+                )
+                return True
+
+        return False
+
+    def _extract_workflow_file_from_location(self, location: dict) -> str | None:
+        """
+        Extract the workflow file path from a location object.
+        Supports zizmor v1.x+ JSON format.
+
+        Args:
+            location: The location object from zizmor output
+
+        Returns:
+            The workflow file path, or None if not found
+        """
+        try:
+            symbolic = location.get("symbolic", {})
+
+            # v1.x+ format: symbolic.key.Local.given_path
+            if "key" in symbolic:
+                key = symbolic["key"]
+                if isinstance(key, dict) and "Local" in key:
+                    local = key["Local"]
+                    if isinstance(local, dict) and "given_path" in local:
+                        return local["given_path"]
+
+            logger.warning(f"Could not extract workflow file from location: {location}")
+            return None
+
+        except Exception as error:
+            logger.error(
+                f"Error extracting workflow file from location: {error.__class__.__name__} - {error}"
+            )
+            return None
+
+    def _process_zizmor_finding(
+        self, finding: dict, workflow_file: str, location: dict
+    ) -> CheckReportGithubAction:
+        """
+        Process a zizmor finding (v1.x+ format).
+
+        Args:
+            finding: The finding object from zizmor output
+            workflow_file: The path to the workflow file
+            location: The specific location object for this finding
+
+        Returns:
+            CheckReportGithubAction: The processed check report
+        """
+        try:
+            # Extract location details
+            concrete_location = location.get("concrete", {}).get("location", {})
+            start = concrete_location.get("start_point", {})
+            end = concrete_location.get("end_point", {})
+
+            # Format line range
+            if start and end:
+                if start.get("row") == end.get("row"):
+                    line_range = f"line {start.get('row', 'unknown')}"
+                else:
+                    line_range = f"lines {start.get('row', 'unknown')}-{end.get('row', 'unknown')}"
+            else:
+                line_range = "location unknown"
+
+            # Get determinations (severity/confidence)
+            determinations = finding.get("determinations", {})
+            severity = determinations.get("severity", "Unknown").lower()
+            confidence = determinations.get("confidence", "Unknown")
+
+            # Map zizmor severity to Prowler severity
+            severity_map = {
+                "critical": "critical",
+                "high": "high",
+                "medium": "medium",
+                "low": "low",
+                "informational": "informational",
+                "unknown": "medium",
+            }
+            prowler_severity = severity_map.get(severity, "medium")
+
+            # Create CheckReport
+            finding_id = (
+                f"githubactions_{finding.get('ident', 'unknown').replace('-', '_')}"
+            )
+
+            # Prepare metadata dict
+            metadata = {
+                "Provider": "github_actions",
+                "CheckID": finding_id,
+                "CheckTitle": finding.get(
+                    "desc", "Unknown GitHub Actions Security Issue"
+                ),
+                "CheckType": ["Security"],
+                "ServiceName": "githubactions",
+                "SubServiceName": "",
+                "ResourceIdTemplate": "",
+                "Severity": prowler_severity,
+                "ResourceType": "GitHubActionsWorkflow",
+                "Description": finding.get(
+                    "desc", "Security issue detected in GitHub Actions workflow"
+                ),
+                "Risk": location.get("symbolic", {}).get(
+                    "annotation", "Security risk in workflow"
+                ),
+                "RelatedUrl": finding.get("url", "https://docs.zizmor.sh/"),
+                "Remediation": {
+                    "Code": {
+                        "CLI": "",
+                        "NativeIaC": "",
+                        "Other": "Review and fix the security issue in your GitHub Actions workflow",
+                        "Terraform": "",
+                    },
+                    "Recommendation": {
+                        "Text": f"Review the security issue at {line_range} in {workflow_file}. {finding.get('desc', '')}",
+                        "Url": finding.get("url", "https://docs.zizmor.sh/"),
+                    },
+                },
+                "Categories": ["security"],
+                "DependsOn": [],
+                "RelatedTo": [],
+                "Notes": "",
+            }
+
+            # Create the report - need to pass all required fields to the dataclass
+            # Since CheckReportGithubAction is a dataclass without custom __init__,
+            # we need to create it with all required fields from Check_Report
+            report = CheckReportGithubAction(
+                status="FAIL",
+                status_extended=(
+                    f"GitHub Actions security issue found in {workflow_file} at {line_range}: "
+                    f"{finding.get('desc', 'Unknown issue')}. "
+                    f"Confidence: {confidence}. "
+                    f"Details: {location.get('symbolic', {}).get('annotation', 'No details available')}"
+                ),
+                check_metadata=CheckMetadata.parse_raw(json.dumps(metadata)),
+                resource=finding,
+                resource_details="",
+                resource_tags=[],
+                muted=False,
+                resource_name=workflow_file,
+                resource_line_range=line_range,
+            )
+
+            return report
+        except Exception as error:
+            logger.critical(
+                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+            )
+            sys.exit(1)
+
+    def _clone_repository(
+        self,
+        repository_url: str,
+        personal_access_token: str = None,
+        oauth_app_token: str = None,
+    ) -> str:
+        """
+        Clone a git repository to a temporary directory, supporting GitHub authentication.
+        """
+        try:
+            original_url = repository_url
+
+            if personal_access_token:
+                repository_url = repository_url.replace(
+                    "https://github.com/",
+                    f"https://{personal_access_token}@github.com/",
+                )
+            elif oauth_app_token:
+                repository_url = repository_url.replace(
+                    "https://github.com/",
+                    f"https://oauth2:{oauth_app_token}@github.com/",
+                )
+
+            temporary_directory = tempfile.mkdtemp()
+            logger.info(
+                f"Cloning repository {original_url} into {temporary_directory}..."
+            )
+            with alive_bar(
+                ctrl_c=False,
+                bar="blocks",
+                spinner="classic",
+                stats=False,
+                enrich_print=False,
+            ) as bar:
+                try:
+                    bar.title = f"-> Cloning {original_url}..."
+                    porcelain.clone(repository_url, temporary_directory, depth=1)
+                    bar.title = "-> Repository cloned successfully!"
+                except Exception as clone_error:
+                    bar.title = "-> Cloning failed!"
+                    raise clone_error
+            return temporary_directory
+        except Exception as error:
+            logger.critical(
+                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+            )
+            sys.exit(1)
+            return ""  # Unreachable, but satisfies static analysis
+
+    def run(self) -> List[CheckReportGithubAction]:
+        temp_dir = None
+        if self.repository_url:
+            scan_dir = temp_dir = self._clone_repository(
+                self.repository_url,
+                getattr(self, "personal_access_token", None),
+                getattr(self, "oauth_app_token", None),
+            )
+        else:
+            scan_dir = self.workflow_path
+
+        try:
+            reports = self.run_scan(scan_dir, self.exclude_workflows)
+        finally:
+            if temp_dir:
+                logger.info(f"Removing temporary directory {temp_dir}...")
+                shutil.rmtree(temp_dir)
+
+        return reports
+
+    def run_scan(
+        self, directory: str, exclude_workflows: list[str]
+    ) -> List[CheckReportGithubAction]:
+        try:
+            # Check zizmor version
+            try:
+                version_result = subprocess.run(
+                    ["zizmor", "--version"],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                )
+                zizmor_version = version_result.stdout.strip()
+                logger.info(f"Using {zizmor_version}")
+            except Exception as version_error:
+                logger.warning(f"Could not determine zizmor version: {version_error}")
+
+            logger.info(f"Running GitHub Actions security scan on {directory} ...")
+
+            # Build zizmor command
+            # Note: zizmor doesn't support --exclude, so we filter findings after scanning
+            zizmor_command = [
+                "zizmor",
+                directory,
+                "--format",
+                "json",
+            ]
+
+            with alive_bar(
+                ctrl_c=False,
+                bar="blocks",
+                spinner="classic",
+                stats=False,
+                enrich_print=False,
+            ) as bar:
+                try:
+                    bar.title = (
+                        f"-> Running GitHub Actions security scan on {directory} ..."
+                    )
+                    # Run zizmor with JSON output
+                    # Note: zizmor exits with non-zero code when findings exist (e.g., 14)
+                    # This is expected behavior, not an error
+                    process = subprocess.run(
+                        zizmor_command,
+                        capture_output=True,
+                        text=True,
+                    )
+                    bar.title = "-> Scan completed!"
+                except Exception as error:
+                    bar.title = "-> Scan failed!"
+                    raise error
+
+            # Log zizmor's stderr output
+            if process.stderr:
+                for line in process.stderr.strip().split("\n"):
+                    if line.strip():
+                        logger.debug(f"zizmor: {line}")
+
+            try:
+                # Parse zizmor JSON output
+                if process.stdout:
+                    output = json.loads(process.stdout)
+                else:
+                    logger.warning("No output returned from zizmor scan")
+                    return []
+
+                # zizmor returns an array of findings directly
+                if not output or (isinstance(output, list) and len(output) == 0):
+                    logger.info("No security issues found in GitHub Actions workflows")
+                    return []
+
+            except json.JSONDecodeError as error:
+                # zizmor might not output JSON for certain cases
+                logger.warning(f"Failed to parse zizmor output as JSON: {error}")
+                logger.debug(f"Raw output: {process.stdout}")
+                return []
+            except Exception as error:
+                logger.critical(
+                    f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+                )
+                sys.exit(1)
+
+            reports = []
+
+            # zizmor returns an array of findings, each with its own location info
+            for finding in output:
+                # Extract workflow file from the finding's location
+                if "locations" in finding and finding["locations"]:
+                    for location in finding["locations"]:
+                        workflow_file = self._extract_workflow_file_from_location(
+                            location
+                        )
+                        if workflow_file:
+                            # Check if this workflow should be excluded
+                            if self._should_exclude_workflow(
+                                workflow_file, exclude_workflows
+                            ):
+                                continue
+
+                            report = self._process_zizmor_finding(
+                                finding, workflow_file, location
+                            )
+                            reports.append(report)
+
+            return reports
+
+        except Exception as error:
+            if "No such file or directory: 'zizmor'" in str(error):
+                logger.critical(
+                    "zizmor binary not found. Please install zizmor from https://github.com/woodruffw/zizmor "
+                    "or use your system package manager (e.g., 'cargo install zizmor' with Rust cargo)"
+                )
+                sys.exit(1)
+            logger.critical(
+                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+            )
+            sys.exit(1)
+
+    def print_credentials(self):
+        if self.repository_url:
+            report_title = (
+                f"{Style.BRIGHT}Scanning remote GitHub repository:{Style.RESET_ALL}"
+            )
+            report_lines = [
+                f"Repository: {Fore.YELLOW}{self.repository_url}{Style.RESET_ALL}",
+            ]
+        else:
+            report_title = f"{Style.BRIGHT}Scanning local GitHub Actions workflows:{Style.RESET_ALL}"
+            report_lines = [
+                f"Directory: {Fore.YELLOW}{self.workflow_path}{Style.RESET_ALL}",
+            ]
+
+        if self.exclude_workflows:
+            report_lines.append(
+                f"Excluded workflows: {Fore.YELLOW}{', '.join(self.exclude_workflows)}{Style.RESET_ALL}"
+            )
+
+        report_lines.append(
+            f"Authentication method: {Fore.YELLOW}{self.auth_method}{Style.RESET_ALL}"
+        )
+
+        print_boxes(report_lines, report_title)
