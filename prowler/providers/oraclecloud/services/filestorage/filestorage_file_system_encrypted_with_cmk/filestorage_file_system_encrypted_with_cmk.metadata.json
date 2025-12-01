@@ -1,34 +1,36 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "filestorage_file_system_encrypted_with_cmk",
-  "CheckTitle": "Ensure File Storage Systems are encrypted with Customer Managed Keys",
-  "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS OCI Foundations Benchmark"
-  ],
+  "CheckTitle": "File Storage file system is encrypted with a customer-managed KMS key",
+  "CheckType": [],
   "ServiceName": "filestorage",
   "SubServiceName": "",
-  "ResourceIdTemplate": "oci:filestorage:resource",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "OciFilestorageResource",
-  "Description": "File systems should be encrypted with Customer Managed Keys (CMK) for enhanced security and control over encryption keys.",
-  "Risk": "Not meeting this requirement increases security risk.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/",
+  "ResourceType": "FileSystem",
+  "Description": "**OCI File Storage** file systems use **Customer-Managed Keys** (`CMEK`) for encryption when a KMS key is associated, instead of the default Oracle-managed encryption.",
+  "Risk": "Using provider-managed keys limits control over key lifecycle and access, weakening **confidentiality**. You cannot enforce custom rotation, revoke use, or apply granular key permissions, increasing exposure to insider misuse, legal compulsion, or compromised services. It may hinder **compliance** and complicate incident response.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prismacloud.io/en/enterprise-edition/policy-reference/oci-policies/storage/ensure-oci-file-system-is-encrypted-with-a-customer-managed-key",
+    "https://avd.aquasec.com/misconfig/oracle/file-storage/file-systems-cmk-encryption/",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-FileStorage/file-storage-systems-encrypted-with-cmks.html",
+    "https://docs.oracle.com/en-us/iaas/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "oci fs file-system update --file-system-id <FILE_SYSTEM_OCID> --kms-key-id <KMS_KEY_OCID>",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-FileStorage/file-storage-systems-encrypted-with-cmks.html",
-      "Terraform": ""
+      "Other": "1. Sign in to the OCI Console\n2. Go to Storage > File Storage > File Systems and select the target file system\n3. In the Encryption section, click Edit (or Change key)\n4. Select Customer-managed key, choose the Vault and KMS key\n5. Click Save to apply",
+      "Terraform": "```hcl\nresource \"oci_file_storage_file_system\" \"<example_resource_name>\" {\n  availability_domain = \"<AVAILABILITY_DOMAIN>\"\n  compartment_id      = \"<COMPARTMENT_OCID>\"\n  kms_key_id          = \"<KMS_KEY_OCID>\"  # Critical: associates a customer-managed KMS key to encrypt the file system\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure File Storage Systems are encrypted with Customer Managed Keys",
-      "Url": "https://hub.prowler.com/check/oci/filestorage_file_system_encrypted_with_cmk"
+      "Text": "Encrypt file systems with **Customer-Managed Keys** in OCI KMS. Apply **least privilege** on key usage, enable periodic rotation, and require dual control for key administration. Monitor key activity with centralized logging. Use **defense in depth** by combining `CMEK` with network isolation and strong access governance.",
+      "Url": "https://hub.prowler.com/check/filestorage_file_system_encrypted_with_cmk"
     }
   },
   "Categories": [
-    "security-configuration"
+    "encryption"
   ],
   "DependsOn": [],
   "RelatedTo": [],
