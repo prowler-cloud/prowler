@@ -1,34 +1,38 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "kms_key_rotation_enabled",
-  "CheckTitle": "Ensure customer created Customer Managed Key (CMK) is rotated at least annually",
-  "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS OCI Foundations Benchmark"
-  ],
+  "CheckTitle": "Customer-managed KMS key has rotation enabled with interval of 365 days or less",
+  "CheckType": [],
   "ServiceName": "kms",
   "SubServiceName": "",
-  "ResourceIdTemplate": "oci:kms:resource",
-  "Severity": "medium",
-  "ResourceType": "OciKmsResource",
-  "Description": "Customer Managed Keys should be rotated at least annually to reduce the risk of key compromise.",
-  "Risk": "Not meeting this requirement increases security risk.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Key",
+  "Description": "**OCI KMS customer-managed keys** configured for **automatic rotation** or with a rotation interval set to `<= 365` days.",
+  "Risk": "Without regular rotation, a compromised key can be used longer to decrypt data at rest and backups or to forge signatures. This erodes **confidentiality** and **integrity**, increases the blast radius, and complicates incident response due to broad reuse of the same key version.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.cloud.oracle.com/en-us/Content/KeyManagement/Tasks/tasks_tasks_managingkeys_topic_edit_auto_key_rotation.htm",
+    "https://www.ateam-oracle.com/post/automating-kms-key-rotation-for-enhanced-volume-security",
+    "https://www.linkedin.com/posts/oracle-security_automatic-key-rotation-in-oci-kms-private-activity-7173893380685377536-t_-4",
+    "https://docs.public.content.oci.oraclecloud.com/en-us/Content/KeyManagement/Tasks/managingkeys_topic-To_create_a_new_key.htm",
+    "https://www.pulumi.com/registry/packages/oci/api-docs/kms/key/",
+    "https://docs.oracle.com/en-us/iaas/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-KMS/rotate-customer-managed-keys.html",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "oci kms management key update --key-id <example_resource_id> --endpoint <example_management_endpoint> --is-auto-rotation-enabled true --auto-key-rotation-details '{\"rotationIntervalInDays\": 365}'",
+      "NativeIaC": "",
+      "Other": "1. In OCI Console, go to Identity & Security > Vault\n2. Open the vault, then under Resources select Master Encryption Keys\n3. Click the target key name\n4. Click Edit auto-rotation settings\n5. Enable Auto rotation and set Rotation interval to 365 days (or less)\n6. Click Update",
+      "Terraform": "```hcl\nresource \"oci_kms_key\" \"<example_resource_name>\" {\n  compartment_id      = \"<example_resource_id>\"\n  display_name        = \"<example_resource_name>\"\n  management_endpoint = \"<example_management_endpoint>\"\n\n  key_shape {\n    algorithm = \"AES\"\n    length    = 16\n  }\n\n  is_auto_rotation_enabled = true  # Critical: enables auto rotation\n  auto_key_rotation_details {\n    rotation_interval_in_days = 365  # Critical: interval <= 365 days\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure customer created Customer Managed Key (CMK) is rotated at least annually",
-      "Url": "https://hub.prowler.com/check/oci/kms_key_rotation_enabled"
+      "Text": "Enable **automatic key rotation** and set an interval `<= 365` days (*shorter for sensitive data*). Apply **least privilege** and **separation of duties** for key administration. Monitor rotation status, retire old key versions, and ensure applications handle key versioning to prevent outages.",
+      "Url": "https://hub.prowler.com/check/kms_key_rotation_enabled"
     }
   },
   "Categories": [
-    "security-configuration"
+    "encryption"
   ],
   "DependsOn": [],
   "RelatedTo": [],
