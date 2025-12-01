@@ -1,34 +1,34 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "network_security_list_ingress_from_internet_to_rdp_port",
-  "CheckTitle": "Ensure no security lists allow ingress from 0.0.0.0/0 to port 3389",
-  "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS OCI Foundations Benchmark"
-  ],
+  "CheckTitle": "Security list does not allow ingress from 0.0.0.0/0 to port 3389 (RDP)",
+  "CheckType": [],
   "ServiceName": "network",
   "SubServiceName": "",
-  "ResourceIdTemplate": "oci:network:vcn",
+  "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "OciVcn",
-  "Description": "Security lists should not allow unrestricted RDP access from the internet.",
-  "Risk": "Not meeting this network security requirement increases risk of unauthorized access.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Network/home.htm",
+  "ResourceType": "SecurityList",
+  "Description": "**OCI security lists** are evaluated for rules that permit **inbound RDP** from the Internet: any source `0.0.0.0/0` allowing **TCP 3389**-including rules that allow all TCP ports or all protocols-signals public RDP exposure.",
+  "Risk": "Exposed RDP enables:\n- **Brute-force/credential stuffing** to gain console access\n- **RCE via RDP flaws** and **lateral movement**\n\nImpact: data exfiltration (confidentiality), unauthorized changes (integrity), and disruption or ransomware (availability).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en-us/iaas/Content/Network/home.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Networking/unrestricted-rdp-access.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Networking/unrestricted-rdp-access.html",
-      "Terraform": ""
+      "Other": "1. In the OCI Console, go to Networking > Virtual Cloud Networks and select your VCN\n2. Under Resources, click Security Lists and open the list attached to the affected subnet\n3. In Ingress Rules, locate any rule with Source CIDR 0.0.0.0/0 that allows TCP port 3389 or All Protocols\n4. Delete that rule, or edit it so Source CIDR is a restricted range (e.g., your IP) and Destination Port is 3389 only\n5. Click Save Changes",
+      "Terraform": "```hcl\nresource \"oci_core_security_list\" \"<example_resource_name>\" {\n  compartment_id = \"<example_resource_id>\"\n  vcn_id         = \"<example_resource_id>\"\n\n  ingress_security_rules {\n    protocol = \"6\"                # TCP\n    source   = \"10.0.0.0/8\"       # CRITICAL: not 0.0.0.0/0; restricts RDP to trusted range to avoid open Internet\n    tcp_options {\n      destination_port_range {\n        min = 3389                # CRITICAL: limit to RDP port only\n        max = 3389\n      }\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure no security lists allow ingress from 0.0.0.0/0 to port 3389",
-      "Url": "https://hub.prowler.com/check/oci/network_security_list_ingress_from_internet_to_rdp_port"
+      "Text": "Block Internet access to RDP. \n- Deny `0.0.0.0/0` to `3389`; allow only trusted CIDRs.\n- Prefer **private access** via a bastion, VPN, or zero-trust remote management.\n- Enforce **least privilege** network rules, use **defense in depth**, and adopt *just-in-time* administrative access.",
+      "Url": "https://hub.prowler.com/check/network_security_list_ingress_from_internet_to_rdp_port"
     }
   },
   "Categories": [
-    "network-security"
+    "internet-exposed"
   ],
   "DependsOn": [],
   "RelatedTo": [],

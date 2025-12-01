@@ -1,34 +1,35 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "network_security_group_ingress_from_internet_to_rdp_port",
-  "CheckTitle": "Ensure no network security groups allow ingress from 0.0.0.0/0 to port 3389",
-  "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS OCI Foundations Benchmark"
-  ],
+  "CheckTitle": "Network security group does not allow ingress from 0.0.0.0/0 to port 3389 (RDP)",
+  "CheckType": [],
   "ServiceName": "network",
   "SubServiceName": "",
-  "ResourceIdTemplate": "oci:network:vcn",
+  "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "OciVcn",
-  "Description": "Network security groups should not allow unrestricted RDP access from the internet.",
-  "Risk": "Not meeting this network security requirement increases risk of unauthorized access.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Network/home.htm",
+  "ResourceType": "NetworkSecurityGroup",
+  "Description": "**OCI Network Security Groups** are evaluated for inbound source `0.0.0.0/0` permitting **RDP** on `TCP 3389`, including broad rules (all TCP or any protocol) that implicitly include that port.",
+  "Risk": "Exposed **RDP** enables Internet-scale **brute-force** and **protocol exploit** attempts. Compromise yields interactive access for **data exfiltration** (C), **unauthorized changes** (I), and **service disruption** via ransomware (A), with potential **lateral movement** across the VCN.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en-us/iaas/Content/Network/home.htm",
+    "https://www.cloudquery.io/blog/how-to-find-internet-facing-cloud-assets-in-aws-azure-and-gcp",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Networking/unrestricted-rdp-access-via-nsgs.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "oci network nsg rules delete --network-security-group-id <NSG_OCID> --security-rule-id <SECURITY_RULE_ID>",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Networking/unrestricted-rdp-access-via-nsgs.html",
-      "Terraform": ""
+      "Other": "1. In the OCI Console, go to Networking > Network Security Groups\n2. Open the <NSG_NAME>\n3. Click Security Rules, then the Ingress tab\n4. Find the rule with Source 0.0.0.0/0 and Protocol TCP (or All) allowing port 3389\n5. Click Delete to remove the rule\n   - If RDP is required, Edit instead and set Source to a specific CIDR (not 0.0.0.0/0)\n6. Save changes",
+      "Terraform": "```hcl\nresource \"oci_core_network_security_group_security_rule\" \"<example_resource_name>\" {\n  network_security_group_id = \"<example_resource_id>\"\n  direction = \"INGRESS\"\n  protocol  = \"6\" # TCP\n  source    = \"10.0.0.0/8\" # Critical: not 0.0.0.0/0; restricts RDP to an internal CIDR to remove internet exposure\n\n  tcp_options {\n    destination_port_range {\n      min = 3389  # Critical: explicit RDP port\n      max = 3389  # Critical: ensures only 3389 is allowed\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure no network security groups allow ingress from 0.0.0.0/0 to port 3389",
-      "Url": "https://hub.prowler.com/check/oci/network_security_group_ingress_from_internet_to_rdp_port"
+      "Text": "Eliminate open `0.0.0.0/0` rules. Restrict **RDP** to trusted IPs and only when necessary. Prefer **private connectivity** via **VPN**, **bastion/jump hosts**, or **zero-trust** brokers. Apply **least privilege** and time-bound access, monitor logs, and disable RDP where unnecessary.",
+      "Url": "https://hub.prowler.com/check/network_security_group_ingress_from_internet_to_rdp_port"
     }
   },
   "Categories": [
-    "network-security"
+    "internet-exposed"
   ],
   "DependsOn": [],
   "RelatedTo": [],
