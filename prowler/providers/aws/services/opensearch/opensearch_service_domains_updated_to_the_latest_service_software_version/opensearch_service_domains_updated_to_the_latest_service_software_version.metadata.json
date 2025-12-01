@@ -1,32 +1,42 @@
 {
   "Provider": "aws",
   "CheckID": "opensearch_service_domains_updated_to_the_latest_service_software_version",
-  "CheckTitle": "Check if Amazon Elasticsearch/Opensearch Service domains have updates available",
+  "CheckTitle": "Amazon OpenSearch Service domain is updated to the latest service software version",
   "CheckType": [
-    "Detect",
-    "Vulnerability, patch, and version management"
+    "Software and Configuration Checks/Patch Management",
+    "Software and Configuration Checks/AWS Security Best Practices"
   ],
   "ServiceName": "opensearch",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "Severity": "low",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
   "ResourceType": "AwsOpenSearchServiceDomain",
-  "Description": "Check if Amazon Elasticsearch/Opensearch Service domains have updates available",
-  "Risk": "Amazon ES regularly releases system software updates that add features or otherwise improve your domains.",
+  "Description": "**OpenSearch Service domains** are assessed for pending **service software updates**. This focuses on internal platform updates, distinct from engine version upgrades.",
+  "Risk": "**Missing service software updates** can leave known flaws unpatched, threatening data confidentiality and index integrity.\n\nRequired updates missed may lead to AWS isolating the domain, causing **outages** and, if prolonged, **permanent deletion**.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.rs/aws-sdk-opensearch/latest/aws_sdk_opensearch/struct.Client.html",
+    "https://search.r-project.org/CRAN/refmans/paws/html/opensearchservice.html",
+    "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/service-software.html",
+    "https://hexdocs.pm/aws/AWS.OpenSearch.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Elasticsearch/version.html",
+    "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-service-software.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws es upgrade-elasticsearch-domain --domain-name <DOMAIN_NAME> --target-version <TARGET_VERSION> --perform-check-only",
+      "CLI": "aws opensearch start-service-software-update --domain-name <DOMAIN_NAME>",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Elasticsearch/version.html",
+      "Other": "1. Sign in to the AWS Console and open Amazon OpenSearch Service\n2. Select the target domain\n3. Click Actions > Update\n4. Choose Apply update now\n5. Click Confirm to start the service software update",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "The Notifications panel in the console is the easiest way to see if an update is available or check the status of an update. You can also receive these notifications through Amazon EventBridge. If you take no action on required updates, Amazon ES still updates your domain service software automatically after a certain timeframe (typically two weeks). In this situation, Amazon ES sends notifications when it starts the update and when the update is complete.",
-      "Url": "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-service-software.html"
+      "Text": "Apply the latest **service software updates** promptly. Schedule updates during the domain's **off-peak window** or enable automatic updates. Monitor console or **EventBridge** notifications, and test changes in staging to support **defense in depth** while minimizing downtime.",
+      "Url": "https://hub.prowler.com/check/opensearch_service_domains_updated_to_the_latest_service_software_version"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

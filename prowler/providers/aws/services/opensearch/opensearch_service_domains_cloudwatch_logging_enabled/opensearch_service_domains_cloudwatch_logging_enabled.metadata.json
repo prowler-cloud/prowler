@@ -1,33 +1,43 @@
 {
   "Provider": "aws",
   "CheckID": "opensearch_service_domains_cloudwatch_logging_enabled",
-  "CheckTitle": "Check if Amazon Elasticsearch/Opensearch Service domains have logging enabled",
+  "CheckTitle": "Amazon OpenSearch Service domain publishes search and index slow logs to CloudWatch Logs",
   "CheckType": [
-    "Identify",
-    "Logging"
+    "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
   ],
   "ServiceName": "opensearch",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "Severity": "medium",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
   "ResourceType": "AwsOpenSearchServiceDomain",
-  "Description": "Check if Amazon Elasticsearch/Opensearch Service domains have logging enabled",
-  "Risk": "Amazon ES exposes four Elasticsearch/Opensearch logs through Amazon CloudWatch Logs: error logs, search slow logs, index slow logs, and audit logs.",
+  "Description": "**Amazon OpenSearch Service** domains have **slow log publishing** enabled for both **search** and **indexing** operations to CloudWatch Logs (`SEARCH_SLOW_LOGS` and `INDEX_SLOW_LOGS`).",
+  "Risk": "Without these logs, visibility into **expensive searches** and **slow indexing** is lost, masking hotspots and abuse.\n- Availability: timeouts, throttling, node pressure\n- Integrity: missed or delayed indexing\n- Operations: slower incident response and capacity planning",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-createdomain-configure-slow-logs.html",
+    "https://support.icompaas.com/support/solutions/articles/62000129471-ensure-amazon-elasticsearch-service-es-domains-have-logging-enabled",
+    "https://docs.prowler.com/checks/aws/elasticsearch-policies/elasticsearch_7",
+    "https://docs.prowler.com/checks/aws/elasticsearch-policies/elasticsearch_7#terraform",
+    "https://bigdataboutique.com/blog/inspecting-search-slow-logs-on-elasticsearch-and-opensearch-b05d87",
+    "https://repost.aws/knowledge-center/opensearch-troubleshoot-slow-logs",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Elasticsearch/slow-logs.html",
+    "https://medium.com/heyjobs-tech/how-to-create-an-opensearch-cluster-using-terraform-926b4a62b489",
+    "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/createdomain-configure-slow-logs.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws logs put-resource-policy --policy-name <POLICY_NAME> --policy-document <POLICY_DOC_JSON>",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/elasticsearch-policies/elasticsearch_7#cloudformation",
-      "Other": "https://docs.prowler.com/checks/aws/elasticsearch-policies/elasticsearch_7",
-      "Terraform": "https://docs.prowler.com/checks/aws/elasticsearch-policies/elasticsearch_7#terraform"
+      "CLI": "aws opensearch update-domain-config --domain-name <DOMAIN_NAME> --log-publishing-options \"SEARCH_SLOW_LOGS={CloudWatchLogsLogGroupArn=<LOG_GROUP_ARN>,Enabled=true},INDEX_SLOW_LOGS={CloudWatchLogsLogGroupArn=<LOG_GROUP_ARN>,Enabled=true}\"",
+      "NativeIaC": "```yaml\n# CloudFormation: enable OpenSearch search and index slow logs to CloudWatch\nResources:\n  <example_resource_name>:\n    Type: AWS::OpenSearchService::Domain\n    Properties:\n      DomainName: <example_resource_name>\n      LogPublishingOptions:\n        SEARCH_SLOW_LOGS:\n          CloudWatchLogsLogGroupArn: <LOG_GROUP_ARN>\n          Enabled: true  # Critical: enables SEARCH_SLOW_LOGS publishing\n        INDEX_SLOW_LOGS:\n          CloudWatchLogsLogGroupArn: <LOG_GROUP_ARN>\n          Enabled: true  # Critical: enables INDEX_SLOW_LOGS publishing\n```",
+      "Other": "1. In the AWS Console, open Amazon OpenSearch Service and select your domain\n2. Go to the Logs tab\n3. For Search slow logs, click Enable, choose or create a CloudWatch log group, accept/attach the suggested resource policy, then Save\n4. For Index slow logs, click Enable, choose or create a CloudWatch log group, accept/attach the suggested resource policy, then Save\n5. Wait for domain status to return to Active",
+      "Terraform": "```hcl\n# Enable OpenSearch search and index slow logs to CloudWatch\nresource \"aws_opensearch_domain\" \"<example_resource_name>\" {\n  domain_name = \"<example_resource_name>\"\n\n  # Critical: enables SEARCH_SLOW_LOGS publishing\n  log_publishing_options {\n    log_type                 = \"SEARCH_SLOW_LOGS\"\n    cloudwatch_log_group_arn = \"<LOG_GROUP_ARN>\"\n    enabled                  = true\n  }\n\n  # Critical: enables INDEX_SLOW_LOGS publishing\n  log_publishing_options {\n    log_type                 = \"INDEX_SLOW_LOGS\"\n    cloudwatch_log_group_arn = \"<LOG_GROUP_ARN>\"\n    enabled                  = true\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable Elasticsearch/Opensearch log. Create use cases for them. Using audit logs check for access denied events.",
-      "Url": "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-createdomain-configure-slow-logs.html"
+      "Text": "Enable both `SEARCH_SLOW_LOGS` and `INDEX_SLOW_LOGS` for all domains and publish to CloudWatch. Set meaningful thresholds and retention, separate log groups, and alert on anomalies. Apply **least privilege** to log access and use **defense in depth** with complementary error and audit logs.",
+      "Url": "https://hub.prowler.com/check/opensearch_service_domains_cloudwatch_logging_enabled"
     }
   },
   "Categories": [
-    "forensics-ready",
     "logging"
   ],
   "DependsOn": [],

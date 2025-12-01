@@ -1,30 +1,34 @@
 {
   "Provider": "aws",
   "CheckID": "opensearch_service_domains_encryption_at_rest_enabled",
-  "CheckTitle": "Check if Amazon Elasticsearch/Opensearch Service domains have encryption at-rest enabled",
+  "CheckTitle": "Amazon OpenSearch Service domain has encryption at rest enabled",
   "CheckType": [
-    "Protect",
-    "Data protection",
-    "Encryption of data at rest"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "opensearch",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
-  "Severity": "medium",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
   "ResourceType": "AwsOpenSearchServiceDomain",
-  "Description": "Check if Amazon Elasticsearch/Opensearch Service domains have encryption at-rest enabled",
-  "Risk": "If not enable unauthorized access to your data could risk increases.",
+  "Description": "**Amazon OpenSearch Service domains** are evaluated for `encryption at rest` using AWS KMS (`AES-256`) across stored data, including indexes, swap files, and automated snapshots.",
+  "Risk": "**Unencrypted OpenSearch data** can be read or copied if an attacker gains **disk-level access**, steals **automated snapshots**, or compromises the host. This jeopardizes **confidentiality** and enables tampering with stored indices, affecting **integrity**.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/encryption-at-rest.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Elasticsearch/encryption-at-rest.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws es update-elasticsearch-domain-config --domain-name <DOMAIN_NAME> --encryption-at-rest-options Enabled=true,KmsKeyId=<KMS_KEY_ID>",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/elasticsearch-policies/elasticsearch_3-enable-encryptionatrest#cloudformation",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Elasticsearch/encryption-at-rest.html",
-      "Terraform": ""
+      "CLI": "aws opensearch update-domain-config --domain-name <DOMAIN_NAME> --encryption-at-rest-options Enabled=true",
+      "NativeIaC": "```yaml\n# CloudFormation: Enable encryption at rest for an OpenSearch domain\nResources:\n  <example_resource_name>:\n    Type: AWS::OpenSearchService::Domain\n    Properties:\n      DomainName: <example_resource_name>\n      EncryptionAtRestOptions:\n        Enabled: true  # Critical: turns on encryption at rest for the domain\n```",
+      "Other": "1. In the AWS Console, go to OpenSearch Service > Domains and select your domain\n2. Click Actions > Edit security configuration\n3. Under Encryption, check Enable encryption of data at rest\n4. Keep the default AWS owned key (or select a KMS key if required)\n5. Click Save changes\n",
+      "Terraform": "```hcl\n# Terraform: Enable encryption at rest for an OpenSearch domain\nresource \"aws_opensearch_domain\" \"<example_resource_name>\" {\n  domain_name = \"<example_resource_name>\"\n\n  encrypt_at_rest {\n    enabled = true  # Critical: turns on encryption at rest for the domain\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable encryption at rest using AWS KMS to store and manage your encryption keys and the Advanced Encryption Standard algorithm with 256-bit keys (AES-256) to perform the encryption.",
-      "Url": "https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/encryption-at-rest.html"
+      "Text": "Enable `encryption at rest` with AWS KMS, preferably using **customer-managed keys**.\n- Enforce **least privilege** key policies and restrict grants\n- Enable automatic key rotation and monitor KMS usage\n- Encrypt logs and any exported snapshots\n- Apply **defense in depth** with network and IAM controls",
+      "Url": "https://hub.prowler.com/check/opensearch_service_domains_encryption_at_rest_enabled"
     }
   },
   "Categories": [
