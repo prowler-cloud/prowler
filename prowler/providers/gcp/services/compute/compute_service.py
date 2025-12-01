@@ -379,7 +379,7 @@ class Instance(BaseModel):
     disks_encryption: list
     automatic_restart: bool = False
     preemptible: bool = False
-    provisioning_model: str = ""
+    provisioning_model: str = "STANDARD"
     deletion_protection: bool = False
 
 
