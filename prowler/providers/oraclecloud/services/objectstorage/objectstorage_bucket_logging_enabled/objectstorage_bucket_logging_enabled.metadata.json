@@ -1,26 +1,31 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "objectstorage_bucket_logging_enabled",
-  "CheckTitle": "Ensure write level Object Storage logging is enabled for all buckets",
+  "CheckTitle": "Object Storage bucket has write-level logging enabled",
   "CheckType": [],
   "ServiceName": "objectstorage",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "OciObjectStorageBucket",
-  "Description": "Write-level logging for Object Storage buckets provides an audit trail of all write operations (PUT, POST, DELETE) performed on buckets, enabling security monitoring and compliance requirements.",
-  "Risk": "Without write-level logging, unauthorized or malicious modifications to Object Storage data cannot be detected or investigated.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Logging/Concepts/loggingoverview.htm",
+  "ResourceType": "Bucket",
+  "Description": "**Object Storage buckets** have service logs for **write access events** enabled.\n\nThe evaluation identifies buckets with an active `write` logging category scoped to the bucket and region; only `read` logging does not satisfy this condition.",
+  "Risk": "Without **write logging**, unauthorized or accidental overwrites and deletions can go **undetected**, degrading **data integrity** and **availability**.\n\nMissing audit evidence weakens **non-repudiation**, impedes incident response, and allows covert tampering without reliable forensic reconstruction.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-ObjectStorage/enable-write-level-logging.html",
+    "https://docs.prowler.com/checks/oci/oci-logging/objectstorage_bucket_logging_enabled",
+    "https://docs.oracle.com/en-us/iaas/Content/Logging/Concepts/loggingoverview.htm"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "oci logging log create --log-group-id <log-group-ocid> --display-name 'ObjectStorage-Write-Logs' --log-type SERVICE --configuration '{\"compartmentId\":\"<compartment-ocid>\",\"source\":{\"service\":\"objectstorage\",\"resource\":\"<bucket-name>\",\"category\":\"write\",\"sourceType\":\"OCISERVICE\"}}'",
+      "CLI": "oci logging log create --log-group-id <log-group-ocid> --display-name ObjectStorage-Write-Logs --log-type SERVICE --configuration '{\"compartmentId\":\"<compartment-ocid>\",\"source\":{\"service\":\"objectstorage\",\"resource\":\"<bucket-name>\",\"category\":\"write\",\"sourceType\":\"OCISERVICE\"}}'",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-ObjectStorage/enable-write-level-logging.html",
-      "Terraform": "resource \"oci_logging_log\" \"objectstorage_write_log\" {\n  display_name = \"ObjectStorage-Write-Logs\"\n  log_group_id = oci_logging_log_group.log_group.id\n  log_type = \"SERVICE\"\n  configuration {\n    source {\n      category = \"write\"\n      resource = oci_objectstorage_bucket.bucket.name\n      service = \"objectstorage\"\n      source_type = \"OCISERVICE\"\n    }\n    compartment_id = var.compartment_id\n  }\n  is_enabled = true\n}"
+      "Other": "1. In the OCI Console, select the target region and go to Observability & Management > Logging > Log groups\n2. Open an existing log group or click Create log group\n3. Click Create log\n4. Type: Service\n5. Service: Object Storage\n6. Category: write\n7. Resource: select the target bucket (bucket name must match)\n8. Ensure Enabled is checked\n9. Click Create",
+      "Terraform": "```hcl\nresource \"oci_logging_log\" \"<example_resource_name>\" {\n  display_name = \"ObjectStorage-Write-Logs\"\n  log_group_id = \"<example_resource_id>\"\n  log_type     = \"SERVICE\"\n\n  configuration {\n    compartment_id = \"<example_resource_id>\"\n    source {\n      service     = \"objectstorage\"          # Critical: Service must be Object Storage\n      category    = \"write\"                   # Critical: Enable write-level logging\n      resource    = \"<example_resource_name>\" # Critical: Bucket name must match the target bucket\n      source_type = \"OCISERVICE\"\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable write-level logging for all Object Storage buckets to maintain audit trails of data modifications.",
-      "Url": "https://docs.prowler.com/checks/oci/oci-logging/objectstorage_bucket_logging_enabled"
+      "Text": "Enable `write` service logs on all buckets and route them to a centralized log group for monitoring.\n\nApply **least privilege** to log data, enforce retention and immutability, and alert on anomalous write activity. Use **defense in depth** so bucket changes are accountable and swiftly detected.",
+      "Url": "https://hub.prowler.com/check/objectstorage_bucket_logging_enabled"
     }
   },
   "Categories": [

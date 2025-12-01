@@ -1,35 +1,34 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "objectstorage_bucket_versioning_enabled",
-  "CheckTitle": "Ensure Versioning is Enabled for Object Storage Buckets",
-  "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS OCI Foundations Benchmark"
-  ],
+  "CheckTitle": "Object Storage bucket has versioning enabled",
+  "CheckType": [],
   "ServiceName": "objectstorage",
   "SubServiceName": "",
-  "ResourceIdTemplate": "oci:objectstorage:bucket",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "OciBucket",
-  "Description": "Object Storage buckets should have versioning enabled.",
-  "Risk": "Not meeting this storage security requirement increases data security risk.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Object/home.htm",
+  "ResourceType": "Bucket",
+  "Description": "**OCI Object Storage buckets** are assessed for **versioning** being set to `Enabled`, indicating prior object versions are retained when updates or deletions occur.",
+  "Risk": "**No versioning** lets overwrites or deletions permanently remove data, harming **availability** and **integrity**. Malicious or accidental actions, automated jobs, or malware can wipe or corrupt objects without rollback, enabling **ransomware-style** encryption and large-scale data loss.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en-us/iaas/Content/Object/home.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-ObjectStorage/enable-versioning.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "oci os bucket update --namespace-name <NAMESPACE> --bucket-name <BUCKET_NAME> --versioning Enabled",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-ObjectStorage/enable-versioning.html",
-      "Terraform": ""
+      "Other": "1. Sign in to the OCI Console\n2. Go to Storage > Buckets and open the target bucket\n3. In Bucket details, find Versioning and click Edit\n4. Select Enabled and click Save",
+      "Terraform": "```hcl\nresource \"oci_objectstorage_bucket\" \"<example_resource_name>\" {\n  compartment_id = \"<example_resource_id>\"\n  name           = \"<example_resource_name>\"\n  namespace      = \"<example_resource_id>\"\n  versioning     = \"Enabled\" # Critical: enables bucket versioning to pass the check\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure Versioning is Enabled for Object Storage Buckets",
-      "Url": "https://hub.prowler.com/check/oci/objectstorage_bucket_versioning_enabled"
+      "Text": "Enable **bucket versioning** (`Enabled`) for data that needs recovery. Apply **least privilege** to delete and overwrite actions, use **retention rules** or legal holds for critical data, and add **lifecycle policies** to manage older versions-providing **defense in depth** against destructive changes.",
+      "Url": "https://hub.prowler.com/check/objectstorage_bucket_versioning_enabled"
     }
   },
   "Categories": [
-    "storage",
-    "encryption"
+    "resilience"
   ],
   "DependsOn": [],
   "RelatedTo": [],
