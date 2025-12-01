@@ -979,11 +979,14 @@ def _aggregate_findings_by_region(
     findings_count_by_compliance = {}
 
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-        # Fetch findings with resources in a single efficient query
-        # Use select_related for finding fields and prefetch_related for many-to-many resources
+        # Fetch only PASS/FAIL findings (optimized query reduces data transfer)
+        # Other statuses are not needed for check_status or ThreatScore calculation
         findings = (
             Finding.all_objects.filter(
-                tenant_id=tenant_id, scan_id=scan_id, muted=False
+                tenant_id=tenant_id,
+                scan_id=scan_id,
+                muted=False,
+                status__in=["PASS", "FAIL"],
             )
             .only("id", "check_id", "status", "compliance")
             .prefetch_related(
@@ -1001,6 +1004,8 @@ def _aggregate_findings_by_region(
         )
 
         for finding in findings:
+            status = finding.status
+
             for resource in finding.small_resources:
                 region = resource.region
 
@@ -1008,7 +1013,7 @@ def _aggregate_findings_by_region(
                 current_status = check_status_by_region.setdefault(region, {})
                 # Priority: FAIL > any other status
                 if current_status.get(finding.check_id) != "FAIL":
-                    current_status[finding.check_id] = finding.status
+                    current_status[finding.check_id] = status
 
                 # Aggregate ThreatScore compliance counts
                 if modeled_threatscore_compliance_id in (finding.compliance or {}):
@@ -1023,7 +1028,7 @@ def _aggregate_findings_by_region(
                             requirement_id, {"total": 0, "pass": 0}
                         )
                         requirement_stats["total"] += 1
-                        if finding.status == "PASS":
+                        if status == "PASS":
                             requirement_stats["pass"] += 1
 
     return check_status_by_region, findings_count_by_compliance

@@ -11,18 +11,9 @@ import {
   CardTitle,
   Skeleton,
 } from "@/components/shadcn";
+import { mapProviderFiltersForFindings } from "@/lib/provider-helpers";
 import { calculatePercentage } from "@/lib/utils";
 import { SEVERITY_FILTER_MAP } from "@/types/severities";
-
-interface ProviderAttributes {
-  uid: string;
-  provider: string;
-}
-
-interface Provider {
-  id: string;
-  attributes: ProviderAttributes;
-}
 
 interface RiskSeverityChartProps {
   critical: number;
@@ -30,7 +21,6 @@ interface RiskSeverityChartProps {
   medium: number;
   low: number;
   informational: number;
-  providers?: Provider[];
 }
 
 export const RiskSeverityChart = ({
@@ -39,7 +29,6 @@ export const RiskSeverityChart = ({
   medium,
   low,
   informational,
-  providers = [],
 }: RiskSeverityChartProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -48,25 +37,7 @@ export const RiskSeverityChart = ({
     // Build the URL with current filters plus severity and muted
     const params = new URLSearchParams(searchParams.toString());
 
-    // Convert filter[provider_id__in] to filter[provider_uid__in] for findings page
-    const providerIds = params.get("filter[provider_id__in]");
-    if (providerIds) {
-      params.delete("filter[provider_id__in]");
-      // Remove provider_type__in since provider_id__in is more specific
-      params.delete("filter[provider_type__in]");
-
-      const ids = providerIds.split(",");
-      const uids = ids
-        .map((id) => {
-          const provider = providers.find((p) => p.id === id);
-          return provider?.attributes.uid;
-        })
-        .filter(Boolean);
-
-      if (uids.length > 0) {
-        params.set("filter[provider_uid__in]", uids.join(","));
-      }
-    }
+    mapProviderFiltersForFindings(params);
 
     const severity = SEVERITY_FILTER_MAP[dataPoint.name];
     if (severity) {

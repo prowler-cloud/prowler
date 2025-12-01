@@ -6,6 +6,8 @@ export interface ThreatMapLocation {
   id: string;
   name: string;
   region: string;
+  regionCode: string;
+  providerType: string;
   coordinates: [number, number];
   totalFindings: number;
   riskLevel: "low-high" | "high" | "critical";
@@ -173,8 +175,8 @@ function getRiskLevel(failRate: number): "low-high" | "high" | "critical" {
 }
 
 // CSS variables are used for Recharts inline styles, not className
-function buildSeverityData(fail: number, pass: number, muted: number) {
-  const total = fail + pass + muted;
+function buildSeverityData(fail: number, pass: number) {
+  const total = fail + pass;
   const pct = (value: number) =>
     total > 0 ? Math.round((value / total) * 100) : 0;
 
@@ -190,12 +192,6 @@ function buildSeverityData(fail: number, pass: number, muted: number) {
       value: pass,
       percentage: pct(pass),
       color: "var(--color-bg-pass)",
-    },
-    {
-      name: "Muted",
-      value: muted,
-      percentage: pct(muted),
-      color: "var(--color-bg-data-muted)",
     },
   ];
 }
@@ -254,14 +250,12 @@ export function adaptRegionsOverviewToThreatMap(
       id,
       name: formatRegionName(attributes.provider_type, attributes.region),
       region: providerRegion,
+      regionCode: attributes.region,
+      providerType: attributes.provider_type,
       coordinates,
       totalFindings: attributes.fail,
       riskLevel: getRiskLevel(failRate),
-      severityData: buildSeverityData(
-        attributes.fail,
-        attributes.pass,
-        attributes.muted,
-      ),
+      severityData: buildSeverityData(attributes.fail, attributes.pass),
     });
   }
 

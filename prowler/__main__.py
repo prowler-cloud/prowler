@@ -24,6 +24,7 @@ from prowler.lib.check.check import (
     list_checks_json,
     list_fixers,
     list_services,
+    load_custom_checks_metadata,
     parse_checks_from_file,
     parse_checks_from_folder,
     print_categories,
@@ -186,6 +187,11 @@ def prowler():
     # Load checks metadata
     logger.debug("Loading checks metadata from .metadata.json files")
     bulk_checks_metadata = CheckMetadata.get_bulk(provider)
+
+    # Load custom checks metadata before validation
+    if checks_folder:
+        custom_folder_metadata = load_custom_checks_metadata(checks_folder)
+        bulk_checks_metadata.update(custom_folder_metadata)
 
     if args.list_categories:
         print_categories(list_categories(bulk_checks_metadata))

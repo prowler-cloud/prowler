@@ -127,7 +127,7 @@ if data is None:
     )
 else:
 
-    data["ASSESSMENTDATE"] = pd.to_datetime(data["ASSESSMENTDATE"])
+    data["ASSESSMENTDATE"] = pd.to_datetime(data["ASSESSMENTDATE"], format="mixed")
     data["ASSESSMENT_TIME"] = data["ASSESSMENTDATE"].dt.strftime("%Y-%m-%d %H:%M:%S")
 
     data_values = data["ASSESSMENT_TIME"].unique()
@@ -286,7 +286,7 @@ def display_data(
         data = data.rename(columns={"LOCATION": "REGION"})
     # Filter the chosen level of the CIS
     if is_level_1:
-        data = data[data["REQUIREMENTS_ATTRIBUTES_PROFILE"] == "Level 1"]
+        data = data[data["REQUIREMENTS_ATTRIBUTES_PROFILE"].str.contains("Level 1")]
 
     # Rename the column PROJECTID to ACCOUNTID for GCP
     if data.columns.str.contains("PROJECTID").any():

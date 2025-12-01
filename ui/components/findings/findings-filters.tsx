@@ -6,8 +6,8 @@ import { useRelatedFilters } from "@/hooks";
 import { FilterEntity, FilterType, ScanEntity, ScanProps } from "@/types";
 
 interface FindingsFiltersProps {
-  providerUIDs: string[];
-  providerDetails: { [uid: string]: FilterEntity }[];
+  providerIds: string[];
+  providerDetails: { [id: string]: FilterEntity }[];
   completedScans: ScanProps[];
   completedScanIds: string[];
   scanDetails: { [key: string]: ScanEntity }[];
@@ -17,7 +17,7 @@ interface FindingsFiltersProps {
 }
 
 export const FindingsFilters = ({
-  providerUIDs,
+  providerIds,
   providerDetails,
   completedScanIds,
   scanDetails,
@@ -25,8 +25,8 @@ export const FindingsFilters = ({
   uniqueServices,
   uniqueResourceTypes,
 }: FindingsFiltersProps) => {
-  const { availableProviderUIDs, availableScans } = useRelatedFilters({
-    providerUIDs,
+  const { availableProviderIds, availableScans } = useRelatedFilters({
+    providerIds,
     providerDetails,
     completedScanIds,
     scanDetails,
@@ -42,9 +42,9 @@ export const FindingsFilters = ({
         customFilters={[
           ...filterFindings,
           {
-            key: FilterType.PROVIDER_UID,
-            labelCheckboxGroup: "Provider UID",
-            values: availableProviderUIDs,
+            key: FilterType.PROVIDER,
+            labelCheckboxGroup: "Provider",
+            values: availableProviderIds,
             valueLabelMapping: providerDetails,
             index: 6,
           },
