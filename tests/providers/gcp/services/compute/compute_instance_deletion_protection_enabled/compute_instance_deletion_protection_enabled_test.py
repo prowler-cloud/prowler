@@ -119,7 +119,9 @@ class TestComputeInstanceDeletionProtectionEnabled:
                     shielded_enabled_integrity_monitoring=True,
                     confidential_computing=False,
                     service_accounts=[
-                        {"email": f"{GCP_PROJECT_ID}-compute@developer.gserviceaccount.com"}
+                        {
+                            "email": f"{GCP_PROJECT_ID}-compute@developer.gserviceaccount.com"
+                        }
                     ],
                     ip_forward=False,
                     disks_encryption=[],
