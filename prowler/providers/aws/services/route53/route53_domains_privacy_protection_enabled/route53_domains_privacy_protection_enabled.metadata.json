@@ -1,29 +1,45 @@
 {
   "Provider": "aws",
   "CheckID": "route53_domains_privacy_protection_enabled",
-  "CheckTitle": "Enable Privacy Protection for for a Route53 Domain.",
-  "CheckType": [],
+  "CheckTitle": "Route 53 domain has admin contact privacy protection enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Effects/Data Exposure",
+    "Sensitive Data Identifications/PII"
+  ],
   "ServiceName": "route53",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
-  "Description": "Enable Privacy Protection for for a Route53 Domain.",
-  "Risk": "Without privacy protection enabled, ones personal information is published to the public WHOIS database.",
-  "RelatedUrl": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-privacy-protection.html",
+  "Description": "**Route 53 domain** administrative contact has **privacy protection** enabled, so WHOIS queries return redacted or proxy details.\n\nEvaluates whether contact data is hidden instead of publicly listed.",
+  "Risk": "**Public WHOIS contact data** exposes names, emails, phones, and addresses, enabling:\n- **Phishing/social engineering** of the registrar\n- **SIM-swap** or account takeover\n- **Domain hijacking**, affecting DNS integrity/availability\nIt also increases spam and targeted harassment.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://hexdocs.pm/aws_erlang/aws_route53_domains.html",
+    "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-privacy-protection.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Route53/privacy-protection.html",
+    "https://notes.kodekloud.com/docs/AWS-Solutions-Architect-Associate-Certification/Services-Networking/Demo-Route-53",
+    "https://support.icompaas.com/support/solutions/articles/62000233459-enable-privacy-protection-for-for-a-route53-domain-",
+    "https://boto3.amazonaws.com/v1/documentation/api/1.14.53/reference/services/route53domains.html",
+    "https://hackage.haskell.org/package/amazonka-route53-domains-0.0.7/docs/Network-AWS-Route53Domains-RegisterDomain.html",
+    "https://fig.io/manual/aws/route53domains"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws route53domains update-domain-contact-privacy --domain-name domain.com --registrant-privacy",
+      "CLI": "aws route53domains update-domain-contact-privacy --domain-name <DOMAIN_NAME> --admin-privacy",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Route53/privacy-protection.html",
-      "Terraform": ""
+      "Other": "1. Open the AWS Console and go to Route 53\n2. Click Registered domains and select <DOMAIN_NAME>\n3. Click Edit in Contact information\n4. Enable Privacy protection (ensures Admin contact privacy is on)\n5. Save changes",
+      "Terraform": "```hcl\nresource \"aws_route53domains_registered_domain\" \"<example_resource_name>\" {\n  domain_name   = \"<example_resource_name>\"\n  admin_privacy = true # Critical: enables admin contact privacy to pass the check\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure default Privacy is enabled.",
-      "Url": "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-privacy-protection.html"
+      "Text": "Enable **WHOIS privacy** for all contacts (admin, registrant, tech) to minimize exposure. Apply **defense in depth**: use dedicated, monitored contact emails, enforce **transfer lock** and **MFA** on registrar access, and regularly review settings. *If a TLD lacks privacy*, provide minimal, role-based contact details.",
+      "Url": "https://hub.prowler.com/check/route53_domains_privacy_protection_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
