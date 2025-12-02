@@ -133,7 +133,7 @@ export function LineChart({
             top: 10,
             left: 0,
             right: 30,
-            bottom: 20,
+            bottom: 40,
           }}
         >
           <CartesianGrid
