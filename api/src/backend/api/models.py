@@ -2490,3 +2490,63 @@ class DailyFindingsSeverity(RowLevelSecurityProtectedModel):
 
     class JSONAPIMeta:
         resource_name = "daily-findings-severity"
+
+
+class AttackSurfaceOverview(RowLevelSecurityProtectedModel):
+    """
+    Pre-aggregated attack surface metrics per scan.
+
+    Stores counts for each attack surface type (internet-exposed, secrets,
+    privilege-escalation, ec2-imdsv1) to enable fast overview queries.
+    """
+
+    class AttackSurfaceTypeChoices(models.TextChoices):
+        INTERNET_EXPOSED = "internet-exposed", _("Internet Exposed")
+        SECRETS = "secrets", _("Exposed Secrets")
+        PRIVILEGE_ESCALATION = "privilege-escalation", _("Privilege Escalation")
+        EC2_IMDSV1 = "ec2-imdsv1", _("EC2 IMDSv1 Enabled")
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+
+    scan = models.ForeignKey(
+        Scan,
+        on_delete=models.CASCADE,
+        related_name="attack_surface_overviews",
+        related_query_name="attack_surface_overview",
+    )
+
+    attack_surface_type = models.CharField(
+        max_length=50,
+        choices=AttackSurfaceTypeChoices.choices,
+    )
+
+    # Finding counts
+    total_findings = models.IntegerField(default=0)  # All findings (PASS + FAIL)
+    failed_findings = models.IntegerField(default=0)  # Non-muted failed findings
+    muted_failed_findings = models.IntegerField(default=0)  # Muted failed findings
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "attack_surface_overviews"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "scan_id", "attack_surface_type"),
+                name="unique_attack_surface_per_scan",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "scan_id"],
+                name="attack_surf_tenant_scan_idx",
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "attack-surface-overviews"

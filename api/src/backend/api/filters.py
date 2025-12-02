@@ -23,6 +23,7 @@ from api.db_utils import (
     StatusEnumField,
 )
 from api.models import (
+    AttackSurfaceOverview,
     ComplianceRequirementOverview,
     DailyFindingsSeverity,
     Finding,
@@ -1040,3 +1041,22 @@ class DailyFindingsSeverityFilter(FilterSet):
             "provider_id": ["exact", "in"],
             "provider_type": ["exact", "in"],
         }
+
+
+class AttackSurfaceOverviewFilter(FilterSet):
+    """Filter for attack surface overview aggregations by provider."""
+
+    provider_id = UUIDFilter(field_name="scan__provider__id", lookup_expr="exact")
+    provider_id__in = UUIDInFilter(field_name="scan__provider__id", lookup_expr="in")
+    provider_type = ChoiceFilter(
+        field_name="scan__provider__provider", choices=Provider.ProviderChoices.choices
+    )
+    provider_type__in = ChoiceInFilter(
+        field_name="scan__provider__provider",
+        choices=Provider.ProviderChoices.choices,
+        lookup_expr="in",
+    )
+
+    class Meta:
+        model = AttackSurfaceOverview
+        fields = {}

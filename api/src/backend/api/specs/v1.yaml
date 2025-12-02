@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.15.0
+  version: 1.16.0
   description: |-
     Prowler API specification.
 
@@ -4497,6 +4497,60 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/overviews/attack-surfaces:
+    get:
+      operationId: overviews_attack_surfaces_retrieve
+      description: Retrieve aggregated attack surface metrics from latest completed
+        scans per provider.
+      summary: Get attack surface overview
+      parameters:
+      - in: query
+        name: fields[attack-surface-overviews]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - total_findings
+            - failed_findings
+            - muted_failed_findings
+            - check_ids
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[provider_id.in]
+        schema:
+          type: string
+        description: Filter by multiple provider IDs (comma-separated UUIDs)
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+        description: Filter by specific provider ID
+      - in: query
+        name: filter[provider_type.in]
+        schema:
+          type: string
+        description: Filter by multiple provider types (comma-separated)
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+        description: Filter by provider type (aws, azure, gcp, etc.)
+      tags:
+      - Overview
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/AttackSurfaceOverviewResponse'
+          description: ''
   /api/v1/overviews/findings:
     get:
       operationId: overviews_findings_retrieve
@@ -10779,6 +10833,49 @@ paths:
           description: ''
 components:
   schemas:
+    AttackSurfaceOverview:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - attack-surface-overviews
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            total_findings:
+              type: integer
+            failed_findings:
+              type: integer
+            muted_failed_findings:
+              type: integer
+            check_ids:
+              type: array
+              items:
+                type: string
+              readOnly: true
+          required:
+          - id
+          - total_findings
+          - failed_findings
+          - muted_failed_findings
+    AttackSurfaceOverviewResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/AttackSurfaceOverview'
+      required:
+      - data
     ComplianceOverview:
       type: object
       required:
