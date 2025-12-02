@@ -40,6 +40,14 @@ interface TooltipPayloadItem {
   payload: LineDataPoint;
 }
 
+const formatTooltipDate = (dateStr: string) => {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+};
+
 const CustomLineTooltip = ({
   active,
   payload,
@@ -51,10 +59,11 @@ const CustomLineTooltip = ({
 
   const typedPayload = payload as unknown as TooltipPayloadItem[];
   const totalValue = typedPayload.reduce((sum, item) => sum + item.value, 0);
+  const formattedDate = formatTooltipDate(String(label));
 
   return (
     <div className="border-border-neutral-tertiary bg-bg-neutral-tertiary pointer-events-none min-w-[200px] rounded-xl border p-3 shadow-lg">
-      <p className="text-text-neutral-secondary mb-3 text-xs">{label}</p>
+      <p className="text-text-neutral-secondary mb-3 text-xs">{formattedDate}</p>
 
       <div className="mb-3">
         <AlertPill value={totalValue} textSize="sm" />
@@ -147,7 +156,7 @@ export function LineChart({
             axisLine={false}
             tickMargin={8}
             interval={xAxisInterval}
-            tick={CustomXAxisTickWithToday}
+            tick={(props) => <CustomXAxisTickWithToday {...props} data={data} />}
           />
           <YAxis
             tickLine={false}

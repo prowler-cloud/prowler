@@ -45,23 +45,16 @@ export const FindingSeverityOverTime = ({
   };
 
   // Transform API data into LineDataPoint format
-  const chartData: LineDataPoint[] = data.map((item) => {
-    const date = new Date(item.date);
-    const formattedDate = date.toLocaleDateString("en-US", {
-      month: "2-digit",
-      day: "2-digit",
-    });
-
-    return {
-      date: formattedDate,
-      informational: item.informational,
-      low: item.low,
-      medium: item.medium,
-      high: item.high,
-      critical: item.critical,
-      ...(item.muted && { muted: item.muted }),
-    };
-  });
+  // Pass ISO date string for proper formatting in the chart tick
+  const chartData: LineDataPoint[] = data.map((item) => ({
+    date: item.date,
+    informational: item.informational,
+    low: item.low,
+    medium: item.medium,
+    high: item.high,
+    critical: item.critical,
+    ...(item.muted && { muted: item.muted }),
+  }));
 
   // Build line configurations from shared severity configs
   const lines: LineConfig[] = [...SEVERITY_LINE_CONFIGS];
