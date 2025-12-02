@@ -3341,7 +3341,10 @@ class TestAggregateFindingsByRegion:
 
         # Verify filter was called with muted=False
         mock_findings_filter.assert_called_once_with(
-            tenant_id=tenant_id, scan_id=scan_id, muted=False
+            tenant_id=tenant_id,
+            scan_id=scan_id,
+            muted=False,
+            status__in=["PASS", "FAIL"],
         )
 
     @patch("tasks.jobs.scan.Finding.all_objects.filter")

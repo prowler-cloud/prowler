@@ -1,14 +1,27 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Rectangle, ResponsiveContainer, Sankey, Tooltip } from "recharts";
 
 import { PROVIDER_ICONS } from "@/components/icons/providers-badge";
 import { initializeChartColors } from "@/lib/charts/colors";
+import { mapProviderFiltersForFindings } from "@/lib/provider-helpers";
+import { PROVIDER_DISPLAY_NAMES } from "@/types/providers";
 import { SEVERITY_FILTER_MAP } from "@/types/severities";
 
 import { ChartTooltip } from "./shared/chart-tooltip";
+
+// Reverse mapping from display name to provider type for URL filters
+const PROVIDER_TYPE_MAP: Record<string, string> = Object.entries(
+  PROVIDER_DISPLAY_NAMES,
+).reduce(
+  (acc, [type, displayName]) => {
+    acc[displayName] = type;
+    return acc;
+  },
+  {} as Record<string, string>,
+);
 
 interface SankeyNode {
   name: string;
@@ -22,11 +35,17 @@ interface SankeyLink {
   value: number;
 }
 
+interface ZeroDataProvider {
+  id: string;
+  displayName: string;
+}
+
 interface SankeyChartProps {
   data: {
     nodes: SankeyNode[];
     links: SankeyLink[];
   };
+  zeroDataProviders?: ZeroDataProvider[];
   height?: number;
 }
 
@@ -105,6 +124,7 @@ interface CustomLinkProps {
   onLinkHover?: (index: number, data: Omit<LinkTooltipState, "show">) => void;
   onLinkMove?: (position: { x: number; y: number }) => void;
   onLinkLeave?: () => void;
+  onLinkClick?: (sourceName: string, targetName: string) => void;
 }
 
 const CustomTooltip = ({ active, payload }: TooltipProps) => {
@@ -281,6 +301,7 @@ const CustomLink = ({
   onLinkHover,
   onLinkMove,
   onLinkLeave,
+  onLinkClick,
 }: CustomLinkProps) => {
   const sourceName = payload.source?.name || "";
   const targetName = payload.target?.name || "";
@@ -344,6 +365,12 @@ const CustomLink = ({
     onLinkLeave?.();
   };
 
+  const handleClick = () => {
+    if (!isHidden && onLinkClick) {
+      onLinkClick(sourceName, targetName);
+    }
+  };
+
   return (
     <g>
       <path
@@ -355,13 +382,19 @@ const CustomLink = ({
         onMouseEnter={handleMouseEnter}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
+        onClick={handleClick}
       />
     </g>
   );
 };
 
-export function SankeyChart({ data, height = 400 }: SankeyChartProps) {
+export function SankeyChart({
+  data,
+  zeroDataProviders = [],
+  height = 400,
+}: SankeyChartProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [hoveredLink, setHoveredLink] = useState<number | null>(null);
   const [colors, setColors] = useState<Record<string, string>>({});
   const [linkTooltip, setLinkTooltip] = useState<LinkTooltipState>({
@@ -428,7 +461,27 @@ export function SankeyChart({ data, height = 400 }: SankeyChartProps) {
   const handleNodeClick = (nodeName: string) => {
     const severityFilter = SEVERITY_FILTER_MAP[nodeName];
     if (severityFilter) {
-      router.push(`/findings?filter[severity]=${severityFilter}`);
+      const params = new URLSearchParams(searchParams.toString());
+
+      mapProviderFiltersForFindings(params);
+
+      params.set("filter[severity__in]", severityFilter);
+      router.push(`/findings?${params.toString()}`);
+    }
+  };
+
+  const handleLinkClick = (sourceName: string, targetName: string) => {
+    const providerType = PROVIDER_TYPE_MAP[sourceName];
+    const severityFilter = SEVERITY_FILTER_MAP[targetName];
+
+    if (providerType && severityFilter) {
+      const params = new URLSearchParams(searchParams.toString());
+
+      mapProviderFiltersForFindings(params);
+
+      params.set("filter[provider_type__in]", providerType);
+      params.set("filter[severity__in]", severityFilter);
+      router.push(`/findings?${params.toString()}`);
     }
   };
 
@@ -452,7 +505,12 @@ export function SankeyChart({ data, height = 400 }: SankeyChartProps) {
   const wrappedCustomLink = (
     props: Omit<
       CustomLinkProps,
-      "colors" | "hoveredLink" | "onLinkHover" | "onLinkMove" | "onLinkLeave"
+      | "colors"
+      | "hoveredLink"
+      | "onLinkHover"
+      | "onLinkMove"
+      | "onLinkLeave"
+      | "onLinkClick"
     >,
   ) => (
     <CustomLink
@@ -462,6 +520,7 @@ export function SankeyChart({ data, height = 400 }: SankeyChartProps) {
       onLinkHover={handleLinkHover}
       onLinkMove={handleLinkMove}
       onLinkLeave={handleLinkLeave}
+      onLinkClick={handleLinkClick}
     />
   );
 
@@ -528,6 +587,29 @@ export function SankeyChart({ data, height = 400 }: SankeyChartProps) {
               },
             ]}
           />
+        </div>
+      )}
+      {zeroDataProviders.length > 0 && (
+        <div className="border-divider-primary mt-4 border-t pt-4">
+          <p className="text-text-neutral-tertiary mb-3 text-xs font-medium tracking-wide uppercase">
+            Providers with no failed findings
+          </p>
+          <div className="flex flex-wrap gap-4">
+            {zeroDataProviders.map((provider) => {
+              const IconComponent = PROVIDER_ICONS[provider.displayName];
+              return (
+                <div
+                  key={provider.id}
+                  className="flex items-center gap-2 text-sm"
+                >
+                  {IconComponent && <IconComponent width={20} height={20} />}
+                  <span className="text-text-neutral-secondary">
+                    {provider.displayName}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

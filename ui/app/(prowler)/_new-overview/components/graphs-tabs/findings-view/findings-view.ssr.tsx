@@ -36,7 +36,16 @@ export async function FindingsViewSSR({ searchParams }: FindingsViewSSRProps) {
   };
 
   const filters = pickFilterParams(searchParams);
-  const combinedFilters = { ...defaultFilters, ...filters };
+
+  // Map provider_id__in to provider__in for findings API
+  const mappedFilters = { ...filters };
+  if (mappedFilters["filter[provider_id__in]"]) {
+    mappedFilters["filter[provider__in]"] =
+      mappedFilters["filter[provider_id__in]"];
+    delete mappedFilters["filter[provider_id__in]"];
+  }
+
+  const combinedFilters = { ...defaultFilters, ...mappedFilters };
 
   const findingsData = await getLatestFindings({
     query: undefined,

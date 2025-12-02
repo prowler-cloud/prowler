@@ -11,6 +11,7 @@ import {
   IacProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
+  MongoDBAtlasProviderBadge,
   OracleCloudProviderBadge,
 } from "@/components/icons/providers-badge";
 import {
@@ -31,6 +32,7 @@ const PROVIDER_ICON: Record<ProviderType, ReactNode> = {
   github: <GitHubProviderBadge width={18} height={18} />,
   iac: <IacProviderBadge width={18} height={18} />,
   oraclecloud: <OracleCloudProviderBadge width={18} height={18} />,
+  mongodbatlas: <MongoDBAtlasProviderBadge width={18} height={18} />,
 };
 
 interface AccountsSelectorProps {
@@ -126,23 +128,41 @@ export function AccountsSelector({ providers }: AccountsSelectorProps) {
         </MultiSelectTrigger>
         <MultiSelectContent search={false}>
           {visibleProviders.length > 0 ? (
-            visibleProviders.map((p) => {
-              const id = p.id;
-              const displayName = p.attributes.alias || p.attributes.uid;
-              const providerType = p.attributes.provider as ProviderType;
-              const icon = PROVIDER_ICON[providerType];
-              return (
-                <MultiSelectItem
-                  key={id}
-                  value={id}
-                  badgeLabel={displayName}
-                  aria-label={`${displayName} account (${providerType.toUpperCase()})`}
-                >
-                  <span aria-hidden="true">{icon}</span>
-                  <span className="truncate">{displayName}</span>
-                </MultiSelectItem>
-              );
-            })
+            <>
+              <div
+                role="option"
+                aria-selected={selectedIds.length === 0}
+                aria-label="Select all accounts (clears current selection to show all)"
+                tabIndex={0}
+                className="text-text-neutral-secondary flex w-full cursor-pointer items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold hover:bg-slate-200 dark:hover:bg-slate-700/50"
+                onClick={() => handleMultiValueChange([])}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    handleMultiValueChange([]);
+                  }
+                }}
+              >
+                Select All
+              </div>
+              {visibleProviders.map((p) => {
+                const id = p.id;
+                const displayName = p.attributes.alias || p.attributes.uid;
+                const providerType = p.attributes.provider as ProviderType;
+                const icon = PROVIDER_ICON[providerType];
+                return (
+                  <MultiSelectItem
+                    key={id}
+                    value={id}
+                    badgeLabel={displayName}
+                    aria-label={`${displayName} account (${providerType.toUpperCase()})`}
+                  >
+                    <span aria-hidden="true">{icon}</span>
+                    <span className="truncate">{displayName}</span>
+                  </MultiSelectItem>
+                );
+              })}
+            </>
           ) : (
             <div className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
               {selectedTypesList.length > 0

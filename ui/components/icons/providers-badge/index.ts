@@ -7,6 +7,7 @@ import { GitHubProviderBadge } from "./github-provider-badge";
 import { IacProviderBadge } from "./iac-provider-badge";
 import { KS8ProviderBadge } from "./ks8-provider-badge";
 import { M365ProviderBadge } from "./m365-provider-badge";
+import { MongoDBAtlasProviderBadge } from "./mongodbatlas-provider-badge";
 import { OracleCloudProviderBadge } from "./oraclecloud-provider-badge";
 
 export {
@@ -17,6 +18,7 @@ export {
   IacProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
+  MongoDBAtlasProviderBadge,
   OracleCloudProviderBadge,
 };
 
@@ -30,4 +32,5 @@ export const PROVIDER_ICONS: Record<string, React.FC<IconSvgProps>> = {
   GitHub: GitHubProviderBadge,
   "Infrastructure as Code": IacProviderBadge,
   "Oracle Cloud Infrastructure": OracleCloudProviderBadge,
+  "MongoDB Atlas": MongoDBAtlasProviderBadge,
 };

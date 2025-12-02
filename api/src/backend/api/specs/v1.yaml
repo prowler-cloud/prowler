@@ -283,11 +283,8 @@ paths:
   /api/v1/compliance-overviews:
     get:
       operationId: compliance_overviews_list
-      description: Retrieve an overview of all compliance frameworks. If scan_id is
-        provided, returns compliance data for that specific scan. If scan_id is omitted,
-        returns compliance data aggregated from the latest completed scan of each
-        provider.
-      summary: List compliance overviews
+      description: Retrieve an overview of all the compliance in a given scan.
+      summary: List compliance overviews for a scan
       parameters:
       - in: query
         name: fields[compliance-overviews]
@@ -347,32 +344,6 @@ paths:
           type: string
           format: date-time
       - in: query
-        name: filter[provider_id]
-        schema:
-          type: string
-          format: uuid
-        description: Filter by specific provider ID.
-      - in: query
-        name: filter[provider_id__in]
-        schema:
-          type: array
-          items:
-            type: string
-            format: uuid
-        description: Filter by multiple provider IDs (comma-separated).
-      - in: query
-        name: filter[provider_type]
-        schema:
-          type: string
-        description: Filter by provider type (e.g., aws, azure, gcp).
-      - in: query
-        name: filter[provider_type__in]
-        schema:
-          type: array
-          items:
-            type: string
-        description: Filter by multiple provider types (comma-separated).
-      - in: query
         name: filter[region]
         schema:
           type: string
@@ -394,8 +365,8 @@ paths:
         schema:
           type: string
           format: uuid
-        description: Optional scan ID. If provided, returns compliance for that scan.
-          If omitted, returns compliance for the latest completed scan per provider.
+        description: Related scan ID.
+        required: true
       - name: filter[search]
         required: false
         in: query
@@ -635,77 +606,6 @@ paths:
         schema:
           type: string
           format: date-time
-      - in: query
-        name: filter[provider_id]
-        schema:
-          type: string
-          format: uuid
-      - in: query
-        name: filter[provider_id__in]
-        schema:
-          type: array
-          items:
-            type: string
-            format: uuid
-        description: Multiple values may be separated by commas.
-        explode: false
-        style: form
-      - in: query
-        name: filter[provider_type]
-        schema:
-          type: string
-          x-spec-enum-id: eca8c51e6bd28935
-          enum:
-          - aws
-          - azure
-          - gcp
-          - github
-          - iac
-          - kubernetes
-          - m365
-          - mongodbatlas
-          - oraclecloud
-        description: |-
-          * `aws` - AWS
-          * `azure` - Azure
-          * `gcp` - GCP
-          * `kubernetes` - Kubernetes
-          * `m365` - M365
-          * `github` - GitHub
-          * `mongodbatlas` - MongoDB Atlas
-          * `iac` - IaC
-          * `oraclecloud` - Oracle Cloud Infrastructure
-      - in: query
-        name: filter[provider_type__in]
-        schema:
-          type: array
-          items:
-            type: string
-            x-spec-enum-id: eca8c51e6bd28935
-            enum:
-            - aws
-            - azure
-            - gcp
-            - github
-            - iac
-            - kubernetes
-            - m365
-            - mongodbatlas
-            - oraclecloud
-        description: |-
-          Multiple values may be separated by commas.
-
-          * `aws` - AWS
-          * `azure` - Azure
-          * `gcp` - GCP
-          * `kubernetes` - Kubernetes
-          * `m365` - M365
-          * `github` - GitHub
-          * `mongodbatlas` - MongoDB Atlas
-          * `iac` - IaC
-          * `oraclecloud` - Oracle Cloud Infrastructure
-        explode: false
-        style: form
       - in: query
         name: filter[region]
         schema:
