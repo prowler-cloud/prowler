@@ -2,6 +2,13 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [v5.14.2] (Prowler UNRELEASED)
+
+### Fixed
+- Custom check folder metadata validation [(#9335)](https://github.com/prowler-cloud/prowler/pull/9335)
+
+---
+
 ## [v5.14.1] (Prowler v5.14.1)
 
 ### Fixed
