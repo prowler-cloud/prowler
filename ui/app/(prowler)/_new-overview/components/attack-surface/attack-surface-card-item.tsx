@@ -1,5 +1,3 @@
-import { CircleAlert } from "lucide-react";
-
 import { AttackSurfaceItem } from "@/actions/overview";
 import { Card, CardContent } from "@/components/shadcn";
 
@@ -12,16 +10,9 @@ export function AttackSurfaceCardItem({ item }: AttackSurfaceCardItemProps) {
     <Card
       variant="inner"
       padding="md"
-      className="relative flex min-h-[120px] min-w-[200px] flex-1 flex-col justify-between"
+      className="flex min-h-[120px] min-w-[200px] flex-1 flex-col justify-between"
       aria-label={`${item.label}: ${item.failedFindings} failed findings`}
     >
-      {item.hasFailures && (
-        <CircleAlert
-          size={20}
-          className="text-text-error-primary absolute top-3 right-3"
-          aria-label="Has failed findings"
-        />
-      )}
       <CardContent className="flex flex-col gap-2 p-0">
         <span
           className="text-5xl leading-none font-light tracking-tight"

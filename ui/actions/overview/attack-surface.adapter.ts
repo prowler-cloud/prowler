@@ -18,7 +18,6 @@ export interface AttackSurfaceItem {
   label: string;
   failedFindings: number;
   totalFindings: number;
-  hasFailures: boolean;
 }
 
 const ATTACK_SURFACE_LABELS: Record<AttackSurfaceId, string> = {
@@ -42,7 +41,6 @@ function mapAttackSurfaceItem(item: AttackSurfaceOverview): AttackSurfaceItem {
     label: ATTACK_SURFACE_LABELS[id] || item.id,
     failedFindings: item.attributes.failed_findings,
     totalFindings: item.attributes.total_findings,
-    hasFailures: item.attributes.failed_findings > 0,
   };
 }
 
