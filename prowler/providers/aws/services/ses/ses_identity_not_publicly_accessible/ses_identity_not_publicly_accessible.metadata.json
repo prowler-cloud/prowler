@@ -1,28 +1,34 @@
 {
   "Provider": "aws",
   "CheckID": "ses_identity_not_publicly_accessible",
-  "CheckTitle": "Ensure that SES identities are not publicly accessible",
+  "CheckTitle": "SES identity resource policy does not allow public access",
   "CheckType": [
-    "Software and Configuration Checks/AWS Security Best Practices"
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "TTPs/Initial Access",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "ses",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:ses:region:account-id:identity/<IDENTITY-NAME>",
+  "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "AwsSesIdentity",
-  "Description": "This control checks whether SES identities are not publicly accessible via resource policies.",
-  "Risk": "Publicly accessible SES identities can allow unauthorized email sending or receiving, leading to potential abuse or phishing attacks.",
-  "RelatedUrl": "https://docs.aws.amazon.com/ses/latest/dg/identity-authorization-policies.html",
+  "ResourceType": "AwsIamPolicy",
+  "Description": "**Amazon SES identities** are evaluated for **publicly accessible resource policies**-for example, statements with `Principal:\"*\"` or broadly trusted principals that permit actions against the identity.",
+  "Risk": "Public SES identity policies allow unauthorized email sending or configuration changes.\n- Integrity: spoofed emails and brand impersonation\n- Confidentiality: exposure of identity details\n- Availability: reputation loss causing throttling or suspension",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/ses/latest/dg/policy-anatomy.html",
+    "https://docs.aws.amazon.com/ses/latest/dg/identity-authorization-policies.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws ses delete-email-identity-policy --identity <IDENTITY-NAME> --policy-name <POLICY-NAME>",
+      "CLI": "aws sesv2 delete-email-identity-policy --email-identity <IDENTITY-NAME> --policy-name <POLICY-NAME>",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. In the AWS Console, go to Simple Email Service (SES)\n2. Open Verified identities and select the affected identity\n3. Click Resource policies\n4. Delete the public policy, or Edit it to remove any Principal of \"*\" and restrict to a specific AWS account\n5. Save changes",
+      "Terraform": "```hcl\nresource \"aws_ses_identity_policy\" \"<example_resource_name>\" {\n  identity = \"<example_resource_name>\"\n  name     = \"<example_resource_name>\"\n\n  policy = jsonencode({\n    Version   = \"2012-10-17\"\n    Statement = [{\n      Effect    = \"Allow\"\n      Principal = { AWS = [\"<account_id>\"] } # Critical: restrict to a specific AWS account, not \"*\"\n      Action    = [\"ses:SendEmail\"]\n      Resource  = \"arn:aws:ses:<region>:<account_id>:identity/<example_resource_name>\"\n    }]\n  })\n}\n```"
     },
     "Recommendation": {
-      "Text": "Review and restrict SES identity policies to prevent public access. Ensure policies follow the Principle of Least Privilege.",
-      "Url": "https://docs.aws.amazon.com/ses/latest/dg/policy-anatomy.html"
+      "Text": "Restrict SES identity policies to known principals and actions following **least privilege**. Prefer explicit account ARNs for sending authorization, and add conditions like `aws:SourceIp` and `aws:SecureTransport`. Review grants regularly and remove unused access as part of **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/ses_identity_not_publicly_accessible"
     }
   },
   "Categories": [
