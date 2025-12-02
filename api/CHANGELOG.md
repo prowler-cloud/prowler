@@ -4,6 +4,9 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.16.0] (Unreleased)
 
+### Added
+- New endpoint to retrieve an overview of the attack surfaces [(#9309)](https://github.com/prowler-cloud/prowler/pull/9309)
+
 ### Changed
 - Restore the compliance overview endpoint's mandatory filters [(#9330)](https://github.com/prowler-cloud/prowler/pull/9330)
 
