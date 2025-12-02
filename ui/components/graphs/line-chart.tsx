@@ -160,7 +160,7 @@ export function LineChart({
           />
           <ChartTooltip
             cursor={{
-              stroke: "var(--color-border-neutral-secondary)",
+              stroke: "var(--color-text-neutral-tertiary)",
               strokeWidth: 1,
               strokeDasharray: "4 4",
             }}
