@@ -1,30 +1,37 @@
 {
   "Provider": "aws",
   "CheckID": "sagemaker_notebook_instance_vpc_settings_configured",
-  "CheckTitle": "Check if Amazon SageMaker Notebook instances have VPC settings configured",
-  "CheckType": [],
+  "CheckTitle": "Amazon SageMaker notebook instance has VPC settings configured",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
   "ServiceName": "sagemaker",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:sagemaker:region:account-id:notebook-instance",
-  "Severity": "medium",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
   "ResourceType": "AwsSageMakerNotebookInstance",
-  "Description": "Check if Amazon SageMaker Notebook instances have VPC settings configured",
-  "Risk": "This could provide an avenue for unauthorized access to your data.",
-  "RelatedUrl": "https://docs.aws.amazon.com/sagemaker/latest/dg/studio-notebooks-and-internet-access.html",
+  "Description": "**SageMaker notebook instances** are evaluated for **VPC attachment**. Instances configured with a VPC (via a `subnet_id` and security groups) use private networking; those without VPC settings rely on public networking.",
+  "Risk": "Without a VPC, notebooks lose **network isolation**. Traffic to AWS services may traverse the public internet, limiting **egress control** and **private endpoints**, enabling data exfiltration and interception, and easing lateral movement-impacting **confidentiality** and **integrity**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SageMaker/notebook-instance-in-vpc.html",
+    "https://docs.aws.amazon.com/sagemaker/latest/dg/studio-notebooks-and-internet-access.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SageMaker/notebook-instance-in-vpc.html",
-      "Terraform": ""
+      "NativeIaC": "```yaml\n# CloudFormation: SageMaker Notebook Instance with VPC settings\nResources:\n  <example_resource_name>:\n    Type: AWS::SageMaker::NotebookInstance\n    Properties:\n      InstanceType: ml.t3.medium\n      RoleArn: <example_resource_id>\n      SubnetId: <example_resource_id>  # critical: places the notebook in a VPC subnet so the check passes\n```",
+      "Other": "1. In the AWS Console, go to SageMaker > Notebook instances\n2. Select the failing notebook instance, choose Stop, then Delete\n3. Click Create notebook instance and use the same name\n4. Under Network, select your VPC and a Subnet (select any required Security group)\n5. Create the notebook instance\n6. After it is InService, rerun the check",
+      "Terraform": "```hcl\nresource \"aws_sagemaker_notebook_instance\" \"<example_resource_name>\" {\n  name          = \"<example_resource_name>\"\n  role_arn      = \"<example_resource_id>\"\n  instance_type = \"ml.t3.medium\"\n  subnet_id     = \"<example_resource_id>\" # critical: ensures the notebook is in a VPC subnet to pass the check\n}\n```"
     },
     "Recommendation": {
-      "Text": "Restrict which traffic can access by launching Studio in a Virtual Private Cloud (VPC) of your choosing..",
-      "Url": "https://docs.aws.amazon.com/sagemaker/latest/dg/studio-notebooks-and-internet-access.html"
+      "Text": "Run notebooks in a **private VPC**, applying **least-privilege** security groups and **network segmentation**. Prefer **VPC endpoints** for AWS services and restrict outbound traffic to approved destinations to enforce **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/sagemaker_notebook_instance_vpc_settings_configured"
     }
   },
   "Categories": [
-    "gen-ai"
+    "trust-boundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],

@@ -1,31 +1,39 @@
 {
   "Provider": "aws",
   "CheckID": "sagemaker_notebook_instance_encryption_enabled",
-  "CheckTitle": "Check if Amazon SageMaker Notebook instances have data encryption enabled",
-  "CheckType": [],
+  "CheckTitle": "SageMaker notebook instance is encrypted with a KMS key",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Data Exposure"
+  ],
   "ServiceName": "sagemaker",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:sagemaker:region:account-id:notebook-instance",
-  "Severity": "medium",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
   "ResourceType": "AwsSageMakerNotebookInstance",
-  "Description": "Check if Amazon SageMaker Notebook instances have data encryption enabled",
-  "Risk": "Data exfiltration could happen if information is not protected. KMS keys provide additional security level to IAM policies.",
-  "RelatedUrl": "https://docs.aws.amazon.com/sagemaker/latest/dg/key-management.html",
+  "Description": "**Amazon SageMaker notebook instances** are assessed for **at-rest encryption** using an AWS KMS key. The finding reflects whether a `KmsKeyId` is configured for the notebook's ML volume encryption.",
+  "Risk": "Without **at-rest encryption** using a customer-managed KMS key, data on notebook EBS volumes and snapshots can be exposed via storage access, copied backups, or host compromise, reducing **confidentiality** and limiting **key rotation** and **revocation** controls.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_40#fix---buildtime",
+    "https://docs.aws.amazon.com/sagemaker/latest/dg/key-management.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SageMaker/notebook-data-encrypted.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SageMaker/notebook-data-encrypted.html",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_40#fix---buildtime"
+      "NativeIaC": "```yaml\n# CloudFormation: SageMaker notebook with KMS encryption\nResources:\n  <example_resource_name>:\n    Type: AWS::SageMaker::NotebookInstance\n    Properties:\n      InstanceType: ml.t3.medium\n      RoleArn: <example_resource_arn>\n      KmsKeyId: <example_resource_id>  # Critical: encrypts the notebook's EBS volume with the specified KMS key\n```",
+      "Other": "1. Open the AWS Console > Amazon SageMaker > Notebook instances\n2. Select the failing notebook instance and click Stop\n3. Click Create notebook instance\n4. Enter name, choose instance type and IAM role\n5. In Encryption key, select your KMS key\n6. Create the instance and verify it starts\n7. Migrate notebooks/data as needed (e.g., via S3)\n8. Delete the old unencrypted notebook instance",
+      "Terraform": "```hcl\n# SageMaker notebook with KMS encryption\nresource \"aws_sagemaker_notebook_instance\" \"<example_resource_name>\" {\n  name          = \"<example_resource_name>\"\n  role_arn      = \"<example_resource_arn>\"\n  instance_type = \"ml.t3.medium\"\n  kms_key_id    = \"<example_resource_id>\"  # Critical: enables EBS encryption using this KMS key\n}\n```"
     },
     "Recommendation": {
-      "Text": "Specify AWS KMS keys to use for input and output from S3 and EBS.",
-      "Url": "https://docs.aws.amazon.com/sagemaker/latest/dg/key-management.html"
+      "Text": "Use a **customer-managed KMS key** for notebook ML volumes by setting `KmsKeyId`, and apply KMS to related S3 inputs/outputs. Enforce **least privilege** on key usage, enable **rotation**, and align key access with **defense in depth** to protect data at rest.",
+      "Url": "https://hub.prowler.com/check/sagemaker_notebook_instance_encryption_enabled"
     }
   },
   "Categories": [
-    "encryption",
-    "gen-ai"
+    "encryption"
   ],
   "DependsOn": [],
   "RelatedTo": [],
