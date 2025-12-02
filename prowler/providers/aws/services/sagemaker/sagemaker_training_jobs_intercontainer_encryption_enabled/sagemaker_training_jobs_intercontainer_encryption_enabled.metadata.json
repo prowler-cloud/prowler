@@ -1,31 +1,41 @@
 {
   "Provider": "aws",
   "CheckID": "sagemaker_training_jobs_intercontainer_encryption_enabled",
-  "CheckTitle": "Check if Amazon SageMaker Training jobs have intercontainer encryption enabled",
-  "CheckType": [],
+  "CheckTitle": "Amazon SageMaker training job has inter-container traffic encryption enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Security",
+    "Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Data Exposure"
+  ],
   "ServiceName": "sagemaker",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:sagemaker:region:account-id:training-job",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
-  "Description": "Check if Amazon SageMaker Training jobs have intercontainer encryption enabled",
-  "Risk": "If not restricted unintended access could happen.",
-  "RelatedUrl": "https://docs.aws.amazon.com/sagemaker/latest/dg/interface-vpc-endpoint.html",
+  "Description": "Amazon SageMaker training jobs have **inter-container traffic encryption** configured for container-to-container communications during training.\n\nThe evaluation inspects the `EnableInterContainerTrafficEncryption` setting on training jobs.",
+  "Risk": "Without inter-container encryption, in-node traffic may be plaintext, enabling capture by a compromised host or co-resident workload. This threatens **confidentiality** (training data, model parameters, credentials) and **integrity** (tampering with gradients/results), and can facilitate **lateral movement** via token or session theft.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://github.com/awslabs/aws-config-rules/issues/262",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SageMaker/enable-inter-container-traffic-encryption.html",
+    "https://docs.aws.amazon.com/sagemaker/latest/dg/interface-vpc-endpoint.html",
+    "https://www.examtopics.com/discussions/amazon/view/103024-exam-aws-certified-machine-learning-specialty-topic-1/",
+    "https://runebook.dev/en/aws/sagemaker/NetworkConfig"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "NativeIaC": "```yaml\n# CloudFormation: SageMaker Training Job with inter-container traffic encryption enabled\nResources:\n  SageMakerTrainingJob:\n    Type: AWS::SageMaker::TrainingJob\n    Properties:\n      TrainingJobName: <example_resource_name>\n      RoleArn: <example_resource_id>\n      AlgorithmSpecification:\n        TrainingImage: <example_resource_id>\n        TrainingInputMode: File\n      OutputDataConfig:\n        S3OutputPath: s3://<example_resource_name>/\n      ResourceConfig:\n        InstanceCount: 1\n        InstanceType: ml.m5.large\n        VolumeSizeInGB: 10\n      StoppingCondition:\n        MaxRuntimeInSeconds: 3600\n      EnableInterContainerTrafficEncryption: true  # Critical: encrypts traffic between containers to pass the check\n```",
+      "Other": "1. In the AWS console, go to Amazon SageMaker > Training jobs\n2. Click Create training job\n3. Configure required fields (algorithm, role, inputs, output, resources)\n4. Enable the setting: Enable inter-container traffic encryption\n5. Click Create to start the new job (existing jobs cannot be modified)",
+      "Terraform": "```hcl\n# Terraform: SageMaker Training Job with inter-container traffic encryption enabled\nresource \"aws_sagemaker_training_job\" \"job\" {\n  name     = \"<example_resource_name>\"\n  role_arn = \"<example_resource_id>\"\n\n  algorithm_specification {\n    training_image      = \"<example_resource_id>\"\n    training_input_mode = \"File\"\n  }\n\n  output_data_config {\n    s3_output_path = \"s3://<example_resource_name>/\"\n  }\n\n  resource_config {\n    instance_count = 1\n    instance_type  = \"ml.m5.large\"\n    volume_size_gb = 10\n  }\n\n  stopping_condition {\n    max_runtime_in_seconds = 3600\n  }\n\n  enable_inter_container_traffic_encryption = true  # Critical: ensures inter-container traffic is encrypted\n}\n```"
     },
     "Recommendation": {
-      "Text": "Internetwork communications support TLS 1.2 encryption between all components and clients.",
-      "Url": "https://docs.aws.amazon.com/sagemaker/latest/dg/interface-vpc-endpoint.html"
+      "Text": "Enable `EnableInterContainerTrafficEncryption` on all training jobs to enforce **encryption in transit**.\n\nApply **defense in depth**: combine with **network isolation**, limit roles and container privileges per **least privilege**, and standardize secure job templates or guardrails to prevent launching unencrypted jobs.",
+      "Url": "https://hub.prowler.com/check/sagemaker_training_jobs_intercontainer_encryption_enabled"
     }
   },
   "Categories": [
-    "encryption",
-    "gen-ai"
+    "encryption"
   ],
   "DependsOn": [],
   "RelatedTo": [],

@@ -1,31 +1,41 @@
 {
   "Provider": "aws",
   "CheckID": "sagemaker_notebook_instance_without_direct_internet_access_configured",
-  "CheckTitle": "Check if Amazon SageMaker Notebook instances have direct internet access",
-  "CheckType": [],
+  "CheckTitle": "Amazon SageMaker notebook instance has direct internet access disabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Data Exposure",
+    "Effects/Data Exfiltration"
+  ],
   "ServiceName": "sagemaker",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:sagemaker:region:account-id:notebook-instance",
-  "Severity": "medium",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
   "ResourceType": "AwsSageMakerNotebookInstance",
-  "Description": "Check if Amazon SageMaker Notebook instances have direct internet access",
-  "Risk": "This could provide an avenue for unauthorized access to your data.",
-  "RelatedUrl": "https://docs.aws.amazon.com/sagemaker/latest/dg/interface-vpc-endpoint.html",
+  "Description": "Amazon SageMaker notebook instances are evaluated for the `DirectInternetAccess` setting.\n\nInstances with it disabled use only VPC connectivity; instances with it enabled permit direct outbound internet access.",
+  "Risk": "Direct internet access from notebooks weakens **egress control**, risking **confidentiality** and **integrity**.\n\nAdversaries or unvetted code can exfiltrate data, download malware, or run command-and-control. Public package installs bypass inspection, enabling supply-chain tampering and **lateral movement** from compromised sessions.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.prowler.com/checks/aws/networking-policies/ensure-that-direct-internet-access-is-disabled-for-an-amazon-sagemaker-notebook-instance#fix---buildtime",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SageMaker/notebook-direct-internet-access.html",
+    "https://docs.aws.amazon.com/sagemaker/latest/dg/interface-vpc-endpoint.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SageMaker/notebook-direct-internet-access.html",
-      "Terraform": "https://docs.prowler.com/checks/aws/networking-policies/ensure-that-direct-internet-access-is-disabled-for-an-amazon-sagemaker-notebook-instance#fix---buildtime"
+      "NativeIaC": "```yaml\n# CloudFormation: SageMaker notebook with direct internet access disabled\nResources:\n  <example_resource_name>:\n    Type: AWS::SageMaker::NotebookInstance\n    Properties:\n      NotebookInstanceName: <example_resource_name>\n      InstanceType: ml.t3.medium\n      RoleArn: <example_role_arn>\n      SubnetId: <example_subnet_id>               # Required when disabling direct internet access\n      SecurityGroupIds:                           # Required when disabling direct internet access\n        - <example_security_group_id>\n      DirectInternetAccess: \"Disabled\"            # CRITICAL: disables direct internet access to pass the check\n```",
+      "Other": "1. In the AWS Console, go to SageMaker > Notebook instances\n2. Select the notebook instance, choose Stop, and wait until status is Stopped\n3. Click Edit\n4. Set Direct internet access to Disabled\n5. If prompted, select a Subnet and at least one Security group (VPC required when disabled)\n6. Click Update, then choose Start to bring the instance back online",
+      "Terraform": "```hcl\n# SageMaker notebook with direct internet access disabled\nresource \"aws_sagemaker_notebook_instance\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  role_arn            = \"<example_role_arn>\"\n  instance_type       = \"ml.t3.medium\"\n  subnet_id           = \"<example_subnet_id>\"          # Required when disabling direct internet access\n  security_groups     = [\"<example_security_group_id>\"] # Required when disabling direct internet access\n\n  direct_internet_access = \"Disabled\" # CRITICAL: disables direct internet access to pass the check\n}\n```"
     },
     "Recommendation": {
-      "Text": "Restrict which traffic can access by launching Studio in a Virtual Private Cloud (VPC) of your choosing.",
-      "Url": "https://docs.aws.amazon.com/sagemaker/latest/dg/interface-vpc-endpoint.html"
+      "Text": "Disable direct internet access (`DirectInternetAccess: Disabled`) and place notebooks in private subnets.\n\nUse **VPC endpoints/PrivateLink** for required services, restrict egress with allowlists and **least privilege** security groups, and apply **defense in depth** with network isolation and monitoring of outbound traffic.",
+      "Url": "https://hub.prowler.com/check/sagemaker_notebook_instance_without_direct_internet_access_configured"
     }
   },
   "Categories": [
     "internet-exposed",
-    "gen-ai"
+    "trust-boundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],
