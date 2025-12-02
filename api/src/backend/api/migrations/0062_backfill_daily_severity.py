@@ -97,7 +97,7 @@ def backfill_daily_severity(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0060_dailyfindingsseverity"),
+        ("api", "0061_dailyfindingsseverity"),
     ]
 
     operations = [

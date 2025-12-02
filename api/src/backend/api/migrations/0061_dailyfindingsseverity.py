@@ -12,7 +12,7 @@ import api.rls
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("api", "0059_compliance_overview_summary"),
+        ("api", "0060_attack_surface_overview"),
     ]
 
     operations = [
