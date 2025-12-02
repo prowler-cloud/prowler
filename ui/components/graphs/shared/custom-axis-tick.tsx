@@ -64,7 +64,7 @@ export const CustomXAxisTickWithToday = Object.assign(
         {showMonth && (
           <text
             x={0}
-            y={36}
+            y={42}
             textAnchor="middle"
             fill="var(--color-text-neutral-tertiary)"
             fontSize={MONTH_FONT_SIZE}
@@ -75,7 +75,7 @@ export const CustomXAxisTickWithToday = Object.assign(
         {isToday && (
           <text
             x={0}
-            y={showMonth ? 50 : 36}
+            y={showMonth ? 56 : 42}
             textAnchor="middle"
             fill="var(--color-text-neutral-secondary)"
             fontSize={TODAY_FONT_SIZE}
