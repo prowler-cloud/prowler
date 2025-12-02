@@ -1,10 +1,14 @@
 import uuid
 from functools import wraps
 
-from django.db import connection, transaction
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import IntegrityError, connection, transaction
 from rest_framework_json_api.serializers import ValidationError
 
-from api.db_utils import POSTGRES_TENANT_VAR, SET_CONFIG_QUERY
+from api.db_router import READ_REPLICA_ALIAS
+from api.db_utils import POSTGRES_TENANT_VAR, SET_CONFIG_QUERY, rls_transaction
+from api.exceptions import ProviderDeletedException
+from api.models import Provider, Scan
 
 
 def set_tenant(func=None, *, keep_tenant=False):
@@ -66,3 +70,49 @@ def set_tenant(func=None, *, keep_tenant=False):
         return decorator
     else:
         return decorator(func)
+
+
+def handle_provider_deletion(func):
+    """
+    Decorator that raises ProviderDeletedException if provider was deleted during execution.
+
+    Catches ObjectDoesNotExist and IntegrityError, checks if provider still exists,
+    and raises ProviderDeletedException if not. Otherwise, re-raises original exception.
+
+    Requires tenant_id and provider_id in kwargs.
+
+    Example:
+        @shared_task
+        @handle_provider_deletion
+        def scan_task(scan_id, tenant_id, provider_id):
+            ...
+    """
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except (ObjectDoesNotExist, IntegrityError):
+            tenant_id = kwargs.get("tenant_id")
+            provider_id = kwargs.get("provider_id")
+
+            with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+                if provider_id is None:
+                    scan_id = kwargs.get("scan_id")
+                    if scan_id is None:
+                        raise AssertionError(
+                            "This task does not have provider or scan in the kwargs"
+                        )
+                    scan = Scan.objects.filter(pk=scan_id).first()
+                    if scan is None:
+                        raise ProviderDeletedException(
+                            f"Provider for scan '{scan_id}' was deleted during the scan"
+                        ) from None
+                    provider_id = str(scan.provider_id)
+                if not Provider.objects.filter(pk=provider_id).exists():
+                    raise ProviderDeletedException(
+                        f"Provider '{provider_id}' was deleted during the scan"
+                    ) from None
+            raise
+
+    return wrapper
