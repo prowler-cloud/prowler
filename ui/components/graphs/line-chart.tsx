@@ -29,6 +29,7 @@ interface LineChartProps {
   data: LineDataPoint[];
   lines: LineConfig[];
   height?: number;
+  xAxisInterval?: number | "preserveStart" | "preserveEnd" | "preserveStartEnd";
 }
 
 interface TooltipPayloadItem {
@@ -106,7 +107,12 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function LineChart({ data, lines, height = 400 }: LineChartProps) {
+export function LineChart({
+  data,
+  lines,
+  height = 400,
+  xAxisInterval = "preserveStartEnd",
+}: LineChartProps) {
   const [hoveredLine, setHoveredLine] = useState<string | null>(null);
 
   const legendItems = lines.map((line) => ({
@@ -140,6 +146,7 @@ export function LineChart({ data, lines, height = 400 }: LineChartProps) {
             tickLine={false}
             axisLine={false}
             tickMargin={8}
+            interval={xAxisInterval}
             tick={CustomXAxisTickWithToday}
           />
           <YAxis
