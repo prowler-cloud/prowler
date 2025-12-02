@@ -6864,7 +6864,7 @@ class TestOverviewViewSet:
             reverse("overview-findings_severity_over_time")
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert "date_from" in response.json()["errors"][0]["detail"]
+        assert "date_from" in response.json()["errors"][0]["source"]["pointer"]
 
     def test_overview_findings_severity_over_time_invalid_date_format(
         self, authenticated_client

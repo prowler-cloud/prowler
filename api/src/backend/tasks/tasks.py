@@ -288,7 +288,7 @@ def perform_scan_summary_task(tenant_id: str, scan_id: str):
 
 
 @shared_task(base=RLSTask, name="scan-daily-severity")
-@set_tenant
+@set_tenant(keep_tenant=True)
 def update_daily_findings_severity_task(tenant_id: str, scan_id: str):
     """
     Task to update daily findings severity aggregation after a scan completes.

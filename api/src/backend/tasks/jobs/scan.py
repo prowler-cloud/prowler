@@ -1012,7 +1012,7 @@ def aggregate_daily_findings_severity(tenant_id: str, scan_id: str):
             total_muted += agg["muted_count"] or 0
 
     with rls_transaction(tenant_id):
-        DailyFindingsSeverity.all_objects.update_or_create(
+        DailyFindingsSeverity.objects.update_or_create(
             tenant_id=tenant_id,
             provider_id=provider_id,
             date=snapshot_date,
