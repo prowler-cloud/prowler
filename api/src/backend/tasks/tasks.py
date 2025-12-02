@@ -10,6 +10,7 @@ from config.django.base import DJANGO_FINDINGS_BATCH_SIZE, DJANGO_TMP_OUTPUT_DIR
 from django_celery_beat.models import PeriodicTask
 from tasks.jobs.backfill import (
     backfill_compliance_summaries,
+    backfill_daily_findings_severity,
     backfill_resource_scan_summaries,
 )
 from tasks.jobs.connection import (
@@ -537,6 +538,21 @@ def backfill_compliance_summaries_task(tenant_id: str, scan_id: str):
         scan_id (str): The scan identifier.
     """
     return backfill_compliance_summaries(tenant_id=tenant_id, scan_id=scan_id)
+
+
+@shared_task(name="backfill-daily-findings-severity", queue="backfill")
+def backfill_daily_findings_severity_task(tenant_id: str, scan_id: str):
+    """
+    Backfill DailyFindingsSeverity for a completed scan.
+
+    Creates or updates a single row per provider per day with FAIL counts
+    by severity level for trend chart visualization.
+
+    Args:
+        tenant_id (str): The tenant identifier.
+        scan_id (str): The scan identifier.
+    """
+    return backfill_daily_findings_severity(tenant_id=tenant_id, scan_id=scan_id)
 
 
 @shared_task(base=RLSTask, name="scan-compliance-overviews", queue="compliance")

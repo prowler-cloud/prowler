@@ -1,14 +1,18 @@
 from collections import defaultdict
 
+from django.db.models import Sum
+
 from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import rls_transaction
 from api.models import (
     ComplianceOverviewSummary,
     ComplianceRequirementOverview,
+    DailyFindingsSeverity,
     Resource,
     ResourceFindingMapping,
     ResourceScanSummary,
     Scan,
+    ScanSummary,
     StateChoices,
 )
 
@@ -175,3 +179,94 @@ def backfill_compliance_summaries(tenant_id: str, scan_id: str):
             )
 
     return {"status": "backfilled", "inserted": len(summary_objects)}
+
+
+def backfill_daily_findings_severity(tenant_id: str, scan_id: str):
+    """
+    Backfill DailyFindingsSeverity for a completed scan.
+
+    Creates or updates a single row per provider per day with FAIL counts
+    by severity level for trend chart visualization.
+
+    Args:
+        tenant_id: Target tenant UUID
+        scan_id: Scan UUID to backfill
+
+    Returns:
+        dict: Status indicating whether backfill was performed
+    """
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        scan = (
+            Scan.all_objects.select_related("provider")
+            .filter(tenant_id=tenant_id, id=scan_id)
+            .first()
+        )
+
+        if not scan:
+            return {"status": "scan not found"}
+
+        if scan.state not in (StateChoices.COMPLETED, StateChoices.FAILED):
+            return {"status": "scan is not completed"}
+
+        if not scan.completed_at:
+            return {"status": "scan has no completed_at"}
+
+        snapshot_date = scan.completed_at.date()
+        provider_id = scan.provider_id
+        provider_type = scan.provider.provider
+
+        # Check if already backfilled for this provider+date
+        if DailyFindingsSeverity.objects.filter(
+            tenant_id=tenant_id,
+            provider_id=provider_id,
+            date=snapshot_date,
+        ).exists():
+            return {"status": "already backfilled"}
+
+        # Aggregate severity counts from ScanSummary
+        severity_aggregation = (
+            ScanSummary.all_objects.filter(tenant_id=tenant_id, scan_id=scan_id)
+            .values("severity")
+            .annotate(
+                fail_count=Sum("fail"),
+                muted_count=Sum("muted"),
+            )
+        )
+
+        severity_counts = {
+            "critical": 0,
+            "high": 0,
+            "medium": 0,
+            "low": 0,
+            "informational": 0,
+        }
+        total_muted = 0
+
+        for agg in severity_aggregation:
+            severity_key = agg["severity"].lower()
+            if severity_key in severity_counts:
+                severity_counts[severity_key] = agg["fail_count"] or 0
+            total_muted += agg["muted_count"] or 0
+
+    with rls_transaction(tenant_id):
+        DailyFindingsSeverity.objects.update_or_create(
+            tenant_id=tenant_id,
+            provider_id=provider_id,
+            date=snapshot_date,
+            defaults={
+                "scan_id": scan_id,
+                "provider_type": provider_type,
+                "critical": severity_counts["critical"],
+                "high": severity_counts["high"],
+                "medium": severity_counts["medium"],
+                "low": severity_counts["low"],
+                "informational": severity_counts["informational"],
+                "muted": total_muted,
+            },
+        )
+
+    return {
+        "status": "backfilled",
+        "provider_id": str(provider_id),
+        "date": str(snapshot_date),
+    }
