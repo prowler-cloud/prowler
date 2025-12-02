@@ -3,7 +3,6 @@
 import { cn } from "@/lib/utils";
 
 const TIME_RANGE_OPTIONS = {
-  ONE_DAY: "1D",
   FIVE_DAYS: "5D",
   ONE_WEEK: "1W",
   ONE_MONTH: "1M",
