@@ -2204,6 +2204,20 @@ class OverviewSeveritySerializer(BaseSerializerV1):
         resource_name = "findings-severity-overview"
 
 
+class OverviewProviderSeveritySerializer(BaseSerializerV1):
+    """Serializer for severity breakdown of failed findings grouped by provider type."""
+
+    id = serializers.CharField(source="provider_type")
+    critical = serializers.IntegerField()
+    high = serializers.IntegerField()
+    medium = serializers.IntegerField()
+    low = serializers.IntegerField()
+    informational = serializers.IntegerField()
+
+    class JSONAPIMeta:
+        resource_name = "provider-severity-overview"
+
+
 class OverviewServiceSerializer(BaseSerializerV1):
     id = serializers.CharField(source="service")
     total = serializers.IntegerField()

@@ -6857,6 +6857,192 @@ class TestOverviewViewSet:
         assert combined_attributes["medium"] == 4
         assert combined_attributes["critical"] == 3
 
+    def test_overview_providers_severity(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        """Test providers/severity endpoint returns fail counts grouped by provider type and severity."""
+        tenant = tenants_fixture[0]
+        provider_aws1, provider_aws2, provider_gcp, *_ = providers_fixture
+
+        # Create scans for different providers
+        scan_aws1 = Scan.objects.create(
+            name="aws-scan-one",
+            provider=provider_aws1,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+        scan_aws2 = Scan.objects.create(
+            name="aws-scan-two",
+            provider=provider_aws2,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+        scan_gcp = Scan.objects.create(
+            name="gcp-scan",
+            provider=provider_gcp,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        # AWS provider 1: high=5 fail, medium=3 fail
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan_aws1,
+            check_id="aws-check-one",
+            service="s3",
+            severity="high",
+            region="us-east-1",
+            _pass=2,
+            fail=5,
+            muted=1,
+            total=8,
+        )
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan_aws1,
+            check_id="aws-check-two",
+            service="ec2",
+            severity="medium",
+            region="us-east-1",
+            _pass=1,
+            fail=3,
+            muted=0,
+            total=4,
+        )
+
+        # AWS provider 2: high=2 fail, critical=1 fail
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan_aws2,
+            check_id="aws-check-three",
+            service="iam",
+            severity="high",
+            region="us-west-2",
+            _pass=0,
+            fail=2,
+            muted=0,
+            total=2,
+        )
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan_aws2,
+            check_id="aws-check-four",
+            service="iam",
+            severity="critical",
+            region="us-west-2",
+            _pass=0,
+            fail=1,
+            muted=0,
+            total=1,
+        )
+
+        # GCP provider: medium=4 fail
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan_gcp,
+            check_id="gcp-check-one",
+            service="compute",
+            severity="medium",
+            region="us-central1",
+            _pass=2,
+            fail=4,
+            muted=0,
+            total=6,
+        )
+
+        # Test without filters - should return all providers aggregated
+        response = authenticated_client.get(reverse("overview-providers-severity"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+
+        # Should have 2 provider types: aws and gcp
+        assert len(data) == 2
+
+        # Find AWS and GCP in response
+        aws_data = next((d for d in data if d["id"] == "aws"), None)
+        gcp_data = next((d for d in data if d["id"] == "gcp"), None)
+
+        assert aws_data is not None
+        assert gcp_data is not None
+
+        # AWS: critical=1, high=5+2=7, medium=3
+        assert aws_data["attributes"]["critical"] == 1
+        assert aws_data["attributes"]["high"] == 7
+        assert aws_data["attributes"]["medium"] == 3
+        assert aws_data["attributes"]["low"] == 0
+        assert aws_data["attributes"]["informational"] == 0
+
+        # GCP: medium=4
+        assert gcp_data["attributes"]["critical"] == 0
+        assert gcp_data["attributes"]["high"] == 0
+        assert gcp_data["attributes"]["medium"] == 4
+        assert gcp_data["attributes"]["low"] == 0
+        assert gcp_data["attributes"]["informational"] == 0
+
+    def test_overview_providers_severity_with_provider_filter(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        """Test providers/severity endpoint with provider_id filter."""
+        tenant = tenants_fixture[0]
+        provider_aws1, provider_aws2, provider_gcp, *_ = providers_fixture
+
+        scan_aws1 = Scan.objects.create(
+            name="aws-scan-one",
+            provider=provider_aws1,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+        scan_gcp = Scan.objects.create(
+            name="gcp-scan",
+            provider=provider_gcp,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan_aws1,
+            check_id="aws-check",
+            service="s3",
+            severity="high",
+            region="us-east-1",
+            _pass=0,
+            fail=10,
+            muted=0,
+            total=10,
+        )
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan_gcp,
+            check_id="gcp-check",
+            service="compute",
+            severity="medium",
+            region="us-central1",
+            _pass=0,
+            fail=5,
+            muted=0,
+            total=5,
+        )
+
+        # Filter by AWS provider only
+        response = authenticated_client.get(
+            reverse("overview-providers-severity"),
+            {"filter[provider_id__in]": str(provider_aws1.id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+
+        # Should only return AWS
+        assert len(data) == 1
+        assert data[0]["id"] == "aws"
+        assert data[0]["attributes"]["high"] == 10
+        assert data[0]["attributes"]["medium"] == 0
+
     def test_overview_attack_surface_no_data(self, authenticated_client):
         response = authenticated_client.get(reverse("overview-attack-surface"))
         assert response.status_code == status.HTTP_200_OK
