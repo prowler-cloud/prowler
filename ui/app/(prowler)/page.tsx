@@ -6,6 +6,10 @@ import { SearchParamsProps } from "@/types";
 
 import { AccountsSelector } from "./_new-overview/components/accounts-selector";
 import { CheckFindingsSSR } from "./_new-overview/components/check-findings";
+import {
+  FindingSeverityOverTimeSkeleton,
+  FindingSeverityOverTimeSSR,
+} from "./_new-overview/components/finding-severity-over-time/finding-severity-over-time.ssr";
 import { GraphsTabsWrapper } from "./_new-overview/components/graphs-tabs/graphs-tabs-wrapper";
 import { RiskPipelineViewSkeleton } from "./_new-overview/components/graphs-tabs/risk-pipeline-view";
 import { ProviderTypeSelector } from "./_new-overview/components/provider-type-selector";
@@ -50,9 +54,14 @@ export default async function Home({
         <Suspense fallback={<RiskSeverityChartSkeleton />}>
           <RiskSeverityChartSSR searchParams={resolvedSearchParams} />
         </Suspense>
+      </div>
 
+      <div className="mt-6 flex flex-col gap-6 md:flex-row">
         <Suspense fallback={<WatchlistCardSkeleton />}>
           <ServiceWatchlistSSR searchParams={resolvedSearchParams} />
+        </Suspense>
+        <Suspense fallback={<FindingSeverityOverTimeSkeleton />}>
+          <FindingSeverityOverTimeSSR searchParams={resolvedSearchParams} />
         </Suspense>
       </div>
 

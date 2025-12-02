@@ -1,5 +1,11 @@
 "use server";
 
+import {
+  AdaptedSeverityTrendsResponse,
+  adaptSeverityTrendsResponse,
+  FindingsSeverityOverTimeResponse,
+} from "./severity-trends.adapter";
+
 const TIME_RANGE_OPTIONS = {
   ONE_DAY: { value: "1D", days: 1 },
   FIVE_DAYS: { value: "5D", days: 5 },
@@ -14,28 +20,29 @@ const getFindingsSeverityTrends = async ({
   filters = {},
 }: {
   filters?: Record<string, string | string[] | undefined>;
-} = {}) => {
+} = {}): Promise<AdaptedSeverityTrendsResponse> => {
   // TODO: Replace with actual API call when endpoint is available
   // const headers = await getAuthHeaders({ contentType: false });
-  // const url = new URL(`${apiBaseUrl}/findings/severity/time-series`);
+  // const url = new URL(`${apiBaseUrl}/findings/severity-over-time`);
   // Object.entries(filters).forEach(([key, value]) => {
   //   if (value) url.searchParams.append(key, String(value));
   // });
   // const response = await fetch(url.toString(), { headers });
-  // return handleApiResponse(response);
+  // const apiResponse = await handleApiResponse(response);
+  // return adaptSeverityTrendsResponse(apiResponse);
 
-  // Extract date range from filters to simulate different data based on selection
-  const startDateStr = filters["filter[inserted_at__gte]"] as
-    | string
-    | undefined;
-  const endDateStr = filters["filter[inserted_at__lte]"] as string | undefined;
+  // Extract date range from filters
+  const dateFrom = filters["date_from"] as string | undefined;
+  const dateTo = filters["date_to"] as string | undefined;
 
   // Generate mock data based on the date range
-  let mockData;
+  let mockApiResponse: FindingsSeverityOverTimeResponse;
 
-  if (startDateStr && endDateStr) {
-    const startDate = new Date(startDateStr);
-    const endDate = new Date(endDateStr);
+  // If date_to is not specified, use today
+  const endDate = dateTo ? new Date(dateTo) : new Date();
+
+  if (dateFrom) {
+    const startDate = new Date(dateFrom);
     const daysDiff = Math.ceil(
       (endDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000),
     );
@@ -50,102 +57,104 @@ const getFindingsSeverityTrends = async ({
       // Vary the data based on the day for visual difference
       const dayOffset = i;
       dataPoints.push({
-        type: "severity-time-series",
+        type: "findings-severity-over-time" as const,
         id: dateStr,
-        date: `${dateStr}T00:00:00Z`,
-        informational: Math.max(0, 380 + dayOffset * 15),
-        low: Math.max(0, 720 + dayOffset * 20),
-        medium: Math.max(0, 550 + dayOffset * 10),
-        high: Math.max(0, 1000 - dayOffset * 5),
-        critical: Math.max(0, 1200 - dayOffset * 30),
-        muted: Math.max(0, 500 - dayOffset * 25),
+        attributes: {
+          date: dateStr,
+          critical: Math.max(0, 1200 - dayOffset * 30),
+          high: Math.max(0, 1000 - dayOffset * 5),
+          medium: Math.max(0, 550 + dayOffset * 10),
+          low: Math.max(0, 720 + dayOffset * 20),
+          informational: Math.max(0, 380 + dayOffset * 15),
+          muted: Math.max(0, 500 - dayOffset * 25),
+        },
       });
     }
 
-    mockData = {
+    mockApiResponse = {
       data: dataPoints,
-      links: {
-        self: `https://api.prowler.com/api/v1/findings/severity/time-series?start=${startDateStr}&end=${endDateStr}`,
-      },
       meta: {
-        date_range: `${startDateStr} to ${endDateStr}`,
-        days: daysDiff,
-        granularity: "daily",
-        timezone: "UTC",
+        version: "v1",
       },
     };
   } else {
     // Default 5-day data if no date range provided
-    mockData = {
+    mockApiResponse = {
       data: [
         {
-          type: "severity-time-series",
-          id: "2025-10-26",
-          date: "2025-10-26T00:00:00Z",
-          informational: 420,
-          low: 950,
-          medium: 720,
-          high: 1150,
-          critical: 1350,
-          muted: 600,
+          type: "findings-severity-over-time",
+          id: "2025-09-02",
+          attributes: {
+            date: "2025-09-02",
+            critical: 1500,
+            high: 1300,
+            medium: 850,
+            low: 1100,
+            informational: 450,
+            muted: 700,
+          },
         },
         {
-          type: "severity-time-series",
-          id: "2025-10-27",
-          date: "2025-10-27T00:00:00Z",
-          informational: 450,
-          low: 1100,
-          medium: 850,
-          high: 1300,
-          critical: 1500,
-          muted: 700,
+          type: "findings-severity-over-time",
+          id: "2025-09-03",
+          attributes: {
+            date: "2025-09-03",
+            critical: 550,
+            high: 1000,
+            medium: 350,
+            low: 750,
+            informational: 500,
+            muted: 100,
+          },
         },
         {
-          type: "severity-time-series",
-          id: "2025-10-28",
-          date: "2025-10-28T00:00:00Z",
-          informational: 400,
-          low: 850,
-          medium: 650,
-          high: 1200,
-          critical: 2000,
-          muted: 750,
+          type: "findings-severity-over-time",
+          id: "2025-09-04",
+          attributes: {
+            date: "2025-09-04",
+            critical: 1350,
+            high: 1150,
+            medium: 720,
+            low: 950,
+            informational: 420,
+            muted: 600,
+          },
         },
         {
-          type: "severity-time-series",
-          id: "2025-10-29",
-          date: "2025-10-29T00:00:00Z",
-          informational: 380,
-          low: 720,
-          medium: 550,
-          high: 1000,
-          critical: 1200,
-          muted: 500,
+          type: "findings-severity-over-time",
+          id: "2025-09-05",
+          attributes: {
+            date: "2025-09-05",
+            critical: 1200,
+            high: 1000,
+            medium: 550,
+            low: 720,
+            informational: 380,
+            muted: 500,
+          },
         },
         {
-          type: "severity-time-series",
-          id: "2025-11-10",
-          date: "2025-11-10T00:00:00Z",
-          informational: 500,
-          low: 750,
-          medium: 350,
-          high: 1000,
-          critical: 550,
-          muted: 100,
+          type: "findings-severity-over-time",
+          id: "2025-09-06",
+          attributes: {
+            date: "2025-09-06",
+            critical: 2000,
+            high: 1200,
+            medium: 650,
+            low: 850,
+            informational: 400,
+            muted: 750,
+          },
         },
       ],
-      links: {
-        self: "https://api.prowler.com/api/v1/findings/severity/time-series?range=5D",
-      },
       meta: {
-        time_range: "5D",
-        granularity: "daily",
-        timezone: "UTC",
+        version: "v1",
       },
     };
   }
 
-  return mockData;
+  // Use the adapter to transform API response to UI format
+  return adaptSeverityTrendsResponse(mockApiResponse);
 };
 
 export const getSeverityTrendsByTimeRange = async ({
@@ -154,7 +163,7 @@ export const getSeverityTrendsByTimeRange = async ({
 }: {
   timeRange: TimeRange;
   filters?: Record<string, string | string[] | undefined>;
-}) => {
+}): Promise<AdaptedSeverityTrendsResponse> => {
   // Find the days value from TIME_RANGE_OPTIONS
   const timeRangeConfig = Object.values(TIME_RANGE_OPTIONS).find(
     (option) => option.value === timeRange,
@@ -169,15 +178,13 @@ export const getSeverityTrendsByTimeRange = async ({
     endDate.getTime() - timeRangeConfig.days * 24 * 60 * 60 * 1000,
   );
 
-  // Format dates as ISO strings for API
-  const startDateStr = startDate.toISOString().split("T")[0];
-  const endDateStr = endDate.toISOString().split("T")[0];
+  // Format dates as ISO strings for API (date_from, date_to is optional)
+  const dateFrom = startDate.toISOString().split("T")[0];
 
   // Add date filters to the request
   const dateFilters = {
     ...filters,
-    "filter[inserted_at__gte]": startDateStr,
-    "filter[inserted_at__lte]": endDateStr,
+    date_from: dateFrom,
   };
 
   return getFindingsSeverityTrends({ filters: dateFilters });
