@@ -5,7 +5,7 @@ import { useState } from "react";
 import { getSeverityTrendsByTimeRange } from "@/actions/overview/severity-trends";
 import { SeverityDataPoint } from "@/actions/overview/severity-trends.adapter";
 import { LineChart } from "@/components/graphs/line-chart";
-import { LineConfig, LineDataPoint } from "@/components/graphs/types";
+import { LineConfig } from "@/components/graphs/types";
 import { Skeleton } from "@/components/shadcn";
 import { MUTED_COLOR, SEVERITY_LINE_CONFIGS } from "@/types/severities";
 
@@ -43,18 +43,6 @@ export const FindingSeverityOverTime = ({
       setIsLoading(false);
     }
   };
-
-  // Transform API data into LineDataPoint format
-  // Pass ISO date string for proper formatting in the chart tick
-  const chartData: LineDataPoint[] = data.map((item) => ({
-    date: item.date,
-    informational: item.informational,
-    low: item.low,
-    medium: item.medium,
-    high: item.high,
-    critical: item.critical,
-    ...(item.muted && { muted: item.muted }),
-  }));
 
   // Build line configurations from shared severity configs
   const lines: LineConfig[] = [...SEVERITY_LINE_CONFIGS];
@@ -94,7 +82,7 @@ export const FindingSeverityOverTime = ({
       ) : (
         <div className="mb-4 w-full">
           <LineChart
-            data={chartData}
+            data={data}
             lines={lines}
             height={400}
             xAxisInterval={getXAxisInterval()}
