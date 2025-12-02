@@ -4502,7 +4502,7 @@ paths:
       operationId: overviews_attack_surfaces_retrieve
       description: Retrieve aggregated attack surface metrics from latest completed
         scans per provider.
-      summary: Get Attack surface overview
+      summary: Get attack surface overview
       parameters:
       - in: query
         name: fields[attack-surface-overviews]
@@ -4515,9 +4515,15 @@ paths:
             - total_findings
             - failed_findings
             - muted_failed_findings
+            - check_ids
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[provider_id.in]
+        schema:
+          type: string
+        description: Filter by multiple provider IDs (comma-separated UUIDs)
       - in: query
         name: filter[provider_id]
         schema:
@@ -4525,20 +4531,15 @@ paths:
           format: uuid
         description: Filter by specific provider ID
       - in: query
-        name: filter[provider_id__in]
+        name: filter[provider_type.in]
         schema:
           type: string
-        description: Filter by multiple provider IDs (comma-separated UUIDs)
+        description: Filter by multiple provider types (comma-separated)
       - in: query
         name: filter[provider_type]
         schema:
           type: string
         description: Filter by provider type (aws, azure, gcp, etc.)
-      - in: query
-        name: filter[provider_type__in]
-        schema:
-          type: string
-        description: Filter by multiple provider types (comma-separated)
       tags:
       - Overview
       security:
@@ -10697,6 +10698,11 @@ components:
               type: integer
             muted_failed_findings:
               type: integer
+            check_ids:
+              type: array
+              items:
+                type: string
+              readOnly: true
           required:
           - id
           - total_findings
