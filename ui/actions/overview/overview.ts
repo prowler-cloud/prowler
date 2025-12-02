@@ -221,7 +221,7 @@ export const getAttackSurfaceOverview = async ({
 } = {}): Promise<AttackSurfaceOverviewResponse | undefined> => {
   const headers = await getAuthHeaders({ contentType: false });
 
-  const url = new URL(`${apiBaseUrl}/overviews/attack_surface`);
+  const url = new URL(`${apiBaseUrl}/overviews/attack-surfaces`);
 
   // Handle multiple filters
   Object.entries(filters).forEach(([key, value]) => {

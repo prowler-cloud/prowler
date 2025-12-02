@@ -1,5 +1,5 @@
 // Attack Surface Overview Types
-// Corresponds to the /overviews/attack_surface endpoint
+// Corresponds to the /overviews/attack-surfaces endpoint
 
 import { OverviewResponseMeta } from "./common";
 
