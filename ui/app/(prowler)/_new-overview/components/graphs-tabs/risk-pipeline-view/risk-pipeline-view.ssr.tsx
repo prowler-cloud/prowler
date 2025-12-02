@@ -1,8 +1,7 @@
 import {
-  adaptProvidersOverviewToSankey,
-  getFindingsBySeverity,
-  getProvidersOverview,
-  SankeyFilters,
+  adaptToSankeyData,
+  getProvidersSeverityOverview,
+  SeverityByProviderType,
 } from "@/actions/overview";
 import { getProviders } from "@/actions/providers";
 import { SankeyChart } from "@/components/graphs/sankey-chart";
@@ -17,57 +16,54 @@ export async function RiskPipelineViewSSR({
 }) {
   const filters = pickFilterParams(searchParams);
 
-  // Check if any provider/account filter is active
   const providerTypeFilter = filters["filter[provider_type__in]"];
   const providerIdFilter = filters["filter[provider_id__in]"];
 
-  // Fetch data in parallel
-  const [providersResponse, severityResponse, providersListResponse] =
-    await Promise.all([
-      getProvidersOverview({ filters }),
-      getFindingsBySeverity({ filters }),
-      // Only fetch providers list if we need to look up account IDs
-      providerIdFilter && !providerTypeFilter
-        ? getProviders({ pageSize: 200 })
-        : Promise.resolve(null),
-    ]);
-
-  // Determine provider types to show
-  let providerTypesToShow: string[] | undefined;
-
-  if (providerTypeFilter) {
-    // Provider type filter is set - use it directly
-    providerTypesToShow = String(providerTypeFilter)
-      .split(",")
-      .map((t) => t.trim().toLowerCase());
-  } else if (providerIdFilter && providersListResponse?.data) {
-    // Account filter is set - look up provider types from account IDs
-    const selectedAccountIds = String(providerIdFilter)
-      .split(",")
-      .map((id) => id.trim());
-
-    const providerTypesSet = new Set<string>();
-    for (const accountId of selectedAccountIds) {
-      const provider = providersListResponse.data.find(
-        (p) => p.id === accountId,
-      );
-      if (provider) {
-        providerTypesSet.add(provider.attributes.provider.toLowerCase());
-      }
-    }
-    providerTypesToShow = Array.from(providerTypesSet);
+  // If accounts are selected, remove provider_type filter since accounts are more specific
+  const apiFilters = { ...filters };
+  if (providerIdFilter) {
+    delete apiFilters["filter[provider_type__in]"];
   }
 
-  // Build sankey filters
-  const sankeyFilters: SankeyFilters = {
-    providerTypes: providerTypesToShow,
-    allSelectedProviderTypes: providerTypesToShow,
-  };
+  // Fetch providers severity data
+  // If accounts are filtered, also fetch provider details to know their types
+  const [providersSeverityResponse, providersListResponse] = await Promise.all([
+    getProvidersSeverityOverview({ filters: apiFilters }),
+    // Only fetch providers list if we have account filter (to get their types for zero-data display)
+    providerIdFilter
+      ? getProviders({ filters: { "filter[id__in]": providerIdFilter } })
+      : null,
+  ]);
 
-  const sankeyData = adaptProvidersOverviewToSankey(
-    providersResponse,
-    severityResponse,
-    sankeyFilters,
+  // Build severityByProviderType from the endpoint response
+  const severityByProviderType: SeverityByProviderType = {};
+
+  if (providersSeverityResponse?.data) {
+    for (const provider of providersSeverityResponse.data) {
+      const providerType = provider.id.toLowerCase();
+      severityByProviderType[providerType] = provider.attributes;
+    }
+  }
+
+  // Determine selected provider types for zero-data display
+  let selectedProviderTypes: string[] | undefined;
+
+  if (providerIdFilter && providersListResponse?.data) {
+    // Get unique provider types from the selected accounts
+    const typesSet = new Set<string>();
+    for (const provider of providersListResponse.data) {
+      typesSet.add(provider.attributes.provider.toLowerCase());
+    }
+    selectedProviderTypes = Array.from(typesSet);
+  } else if (providerTypeFilter) {
+    selectedProviderTypes = String(providerTypeFilter)
+      .split(",")
+      .map((t) => t.trim().toLowerCase());
+  }
+
+  const sankeyData = adaptToSankeyData(
+    severityByProviderType,
+    selectedProviderTypes,
   );
 
   // If no chart data and no zero-data providers, show empty state message

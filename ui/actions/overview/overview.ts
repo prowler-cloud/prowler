@@ -152,6 +152,51 @@ export const getFindingsBySeverity = async ({
   }
 };
 
+export interface ProviderSeverityData {
+  type: "provider-severity-overview";
+  id: string;
+  attributes: {
+    critical: number;
+    high: number;
+    medium: number;
+    low: number;
+    informational: number;
+  };
+}
+
+export interface ProvidersSeverityOverviewResponse {
+  data: ProviderSeverityData[];
+  meta: { version: string };
+}
+
+export const getProvidersSeverityOverview = async ({
+  filters = {},
+}: {
+  filters?: Record<string, string | string[] | undefined>;
+} = {}): Promise<ProvidersSeverityOverviewResponse | undefined> => {
+  const headers = await getAuthHeaders({ contentType: false });
+
+  const url = new URL(`${apiBaseUrl}/overviews/providers/severity`);
+
+  // Handle multiple filters
+  Object.entries(filters).forEach(([key, value]) => {
+    if (key !== "filter[search]" && value !== undefined) {
+      url.searchParams.append(key, String(value));
+    }
+  });
+
+  try {
+    const response = await fetch(url.toString(), {
+      headers,
+    });
+
+    return handleApiResponse(response);
+  } catch (error) {
+    console.error("Error fetching providers severity overview:", error);
+    return undefined;
+  }
+};
+
 export const getThreatScore = async ({
   filters = {},
 }: {

@@ -482,7 +482,9 @@ export function SankeyChart({
       mapProviderFiltersForFindings(params);
 
       // Only set provider_type filter if user had one selected in global filters
-      const hasProviderTypeFilter = searchParams.has("filter[provider_type__in]");
+      const hasProviderTypeFilter = searchParams.has(
+        "filter[provider_type__in]",
+      );
       if (providerType && hasProviderTypeFilter) {
         params.set("filter[provider_type__in]", providerType);
       }
