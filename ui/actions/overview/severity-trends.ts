@@ -36,12 +36,30 @@ const generateMockData = (
       id: dateStr,
       attributes: {
         date: dateStr,
-        critical: Math.max(100, 1500 - dayIndex * 30 + Math.floor(Math.random() * 200)),
-        high: Math.max(200, 1300 - dayIndex * 20 + Math.floor(Math.random() * 150)),
-        medium: Math.max(150, 850 + dayIndex * 10 + Math.floor(Math.random() * 100)),
-        low: Math.max(300, 1100 + dayIndex * 15 + Math.floor(Math.random() * 80)),
-        informational: Math.max(100, 450 + dayIndex * 5 + Math.floor(Math.random() * 50)),
-        muted: Math.max(50, 700 - dayIndex * 10 + Math.floor(Math.random() * 60)),
+        critical: Math.max(
+          100,
+          1500 - dayIndex * 30 + Math.floor(Math.random() * 200),
+        ),
+        high: Math.max(
+          200,
+          1300 - dayIndex * 20 + Math.floor(Math.random() * 150),
+        ),
+        medium: Math.max(
+          150,
+          850 + dayIndex * 10 + Math.floor(Math.random() * 100),
+        ),
+        low: Math.max(
+          300,
+          1100 + dayIndex * 15 + Math.floor(Math.random() * 80),
+        ),
+        informational: Math.max(
+          100,
+          450 + dayIndex * 5 + Math.floor(Math.random() * 50),
+        ),
+        muted: Math.max(
+          50,
+          700 - dayIndex * 10 + Math.floor(Math.random() * 60),
+        ),
       },
     });
   }

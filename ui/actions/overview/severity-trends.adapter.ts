@@ -1,3 +1,5 @@
+import { LineDataPoint } from "@/components/graphs/types";
+
 // API Response Types (what comes from the backend)
 export interface FindingsSeverityOverTimeAttributes {
   date: string;
@@ -25,44 +27,34 @@ export interface FindingsSeverityOverTimeResponse {
 }
 
 // Adapted Types (what the UI components expect)
-export interface SeverityDataPoint {
-  type: string;
-  id: string;
-  date: string;
-  informational: number;
-  low: number;
-  medium: number;
-  high: number;
-  critical: number;
-  muted?: number;
-}
-
 export interface AdaptedSeverityTrendsResponse {
-  data: SeverityDataPoint[];
+  data: LineDataPoint[];
   meta: FindingsSeverityOverTimeMeta;
 }
 
 /**
- * Adapts the API findings severity over time response to the format expected by UI components.
- * Main transformation: Flattens `attributes` into the data point object
+ * Adapts the API findings severity over time response to the format expected by LineChart.
+ * Transforms API response with nested attributes into flat LineDataPoint objects.
  *
- * @param response - The raw API response from /findings/severity-over-time
- * @returns Adapted response with flattened data points
+ * @param response - The raw API response from /overviews/findings_severity_over_time
+ * @returns Adapted response with LineDataPoint array ready for the chart
  */
 export function adaptSeverityTrendsResponse(
   response: FindingsSeverityOverTimeResponse,
 ): AdaptedSeverityTrendsResponse {
-  const adaptedData: SeverityDataPoint[] = response.data.map((item) => ({
-    type: item.type,
-    id: item.id,
-    date: item.attributes.date,
-    informational: item.attributes.informational,
-    low: item.attributes.low,
-    medium: item.attributes.medium,
-    high: item.attributes.high,
-    critical: item.attributes.critical,
-    muted: item.attributes.muted,
-  }));
+  const adaptedData: LineDataPoint[] = response.data.map(
+    ({
+      attributes: { date, informational, low, medium, high, critical, muted },
+    }) => ({
+      date,
+      informational,
+      low,
+      medium,
+      high,
+      critical,
+      muted,
+    }),
+  );
 
   return {
     data: adaptedData,

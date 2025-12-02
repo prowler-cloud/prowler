@@ -63,7 +63,9 @@ const CustomLineTooltip = ({
 
   return (
     <div className="border-border-neutral-tertiary bg-bg-neutral-tertiary pointer-events-none min-w-[200px] rounded-xl border p-3 shadow-lg">
-      <p className="text-text-neutral-secondary mb-3 text-xs">{formattedDate}</p>
+      <p className="text-text-neutral-secondary mb-3 text-xs">
+        {formattedDate}
+      </p>
 
       <div className="mb-3">
         <AlertPill value={totalValue} textSize="sm" />
@@ -156,7 +158,9 @@ export function LineChart({
             axisLine={false}
             tickMargin={8}
             interval={xAxisInterval}
-            tick={(props) => <CustomXAxisTickWithToday {...props} data={data} />}
+            tick={(props) => (
+              <CustomXAxisTickWithToday {...props} data={data} />
+            )}
           />
           <YAxis
             tickLine={false}

@@ -33,15 +33,17 @@ const getMonthFromDate = (dateStr: string) => {
 };
 
 export const CustomXAxisTickWithToday = Object.assign(
-  function CustomXAxisTickWithToday(props: CustomXAxisTickProps & { data?: Array<{ date: string }> }) {
+  function CustomXAxisTickWithToday(
+    props: CustomXAxisTickProps & { data?: Array<{ date: string }> },
+  ) {
     const { x, y, payload, index = 0, data = [] } = props;
     const dateStr = String(payload.value);
     const todayISO = getTodayISO();
     const isToday = dateStr === todayISO;
-    
+
     const dayNumber = getDayNumber(dateStr);
     const currentMonth = getMonthFromDate(dateStr);
-    
+
     // Show month name if it's the first tick or if the month changed from previous tick
     const isFirstTick = index === 0;
     const previousDate = index > 0 && data[index - 1]?.date;

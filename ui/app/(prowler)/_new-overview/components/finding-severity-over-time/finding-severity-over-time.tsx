@@ -3,23 +3,22 @@
 import { useState } from "react";
 
 import { getSeverityTrendsByTimeRange } from "@/actions/overview/severity-trends";
-import { SeverityDataPoint } from "@/actions/overview/severity-trends.adapter";
 import { LineChart } from "@/components/graphs/line-chart";
-import { LineConfig } from "@/components/graphs/types";
+import { LineConfig, LineDataPoint } from "@/components/graphs/types";
 import { Skeleton } from "@/components/shadcn";
 import { MUTED_COLOR, SEVERITY_LINE_CONFIGS } from "@/types/severities";
 
 import { type TimeRange, TimeRangeSelector } from "./time-range-selector";
 
 interface FindingSeverityOverTimeProps {
-  data: SeverityDataPoint[];
+  data: LineDataPoint[];
 }
 
 export const FindingSeverityOverTime = ({
   data: initialData,
 }: FindingSeverityOverTimeProps) => {
   const [timeRange, setTimeRange] = useState<TimeRange>("5D");
-  const [data, setData] = useState<SeverityDataPoint[]>(initialData);
+  const [data, setData] = useState<LineDataPoint[]>(initialData);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
