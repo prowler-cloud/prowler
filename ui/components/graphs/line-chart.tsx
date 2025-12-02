@@ -158,7 +158,14 @@ export function LineChart({
               fontSize: AXIS_FONT_SIZE,
             }}
           />
-          <ChartTooltip cursor={false} content={<CustomLineTooltip />} />
+          <ChartTooltip
+            cursor={{
+              stroke: "var(--color-border-neutral-secondary)",
+              strokeWidth: 1,
+              strokeDasharray: "4 4",
+            }}
+            content={<CustomLineTooltip />}
+          />
           {lines.map((line) => {
             const isHovered = hoveredLine === line.dataKey;
             const isFaded = hoveredLine !== null && !isHovered;
