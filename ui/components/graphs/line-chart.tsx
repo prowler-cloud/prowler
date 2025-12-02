@@ -132,7 +132,7 @@ export function LineChart({
           margin={{
             top: 10,
             left: 0,
-            right: 8,
+            right: 30,
             bottom: 20,
           }}
         >

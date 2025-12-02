@@ -76,14 +76,10 @@ export const FindingSeverityOverTime = ({
   }
 
   // Calculate x-axis interval based on data length to show all labels without overlap
-  const getXAxisInterval = ():
-    | number
-    | "preserveStart"
-    | "preserveEnd"
-    | "preserveStartEnd" => {
+  const getXAxisInterval = (): number => {
     const dataLength = data.length;
     if (dataLength <= 7) return 0; // Show all labels for 5D and 1W
-    return "preserveStartEnd"; // For 1M: auto-calculate but always show first and last (today)
+    return 0; // Show all labels for 1M too
   };
 
   return (
