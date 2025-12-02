@@ -113,7 +113,7 @@ export function DataTablePagination({
                 }
               }}
             >
-              <SelectTrigger size="sm" className="w-18">
+              <SelectTrigger className="h-8 w-[6rem]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent side="top">

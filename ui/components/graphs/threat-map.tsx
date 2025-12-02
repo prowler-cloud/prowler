@@ -31,17 +31,6 @@ import {
 } from "./threat-map.utils";
 import { BarDataPoint } from "./types";
 
-/**
- * Formats a region code from SCREAMING_SNAKE_CASE to Title Case
- * e.g., "EUROPE_WEST" -> "Europe West"
- */
-function formatRegionName(region: string): string {
-  return region
-    .split("_")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(" ");
-}
-
 // Sub-components
 function MapTooltip({
   location,
@@ -442,7 +431,7 @@ export function ThreatMap({
                   <option value="All Regions">All Regions</option>
                   {sortedRegions.map((region) => (
                     <option key={region} value={region}>
-                      {formatRegionName(region)}
+                      {region}
                     </option>
                   ))}
                 </select>
