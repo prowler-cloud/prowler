@@ -51,27 +51,48 @@ To generate an OpenAI API key, visit https://platform.openai.com/api-keys
 
 ### Amazon Bedrock
 
-#### Required Information
+Prowler connects to Amazon Bedrock using either [Amazon Bedrock API keys](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started-api-keys.html) or IAM credentials.
+
+<Note>
+Amazon Bedrock models depend on AWS region and account entitlements. Lighthouse AI displays only accessible models that support tool calling and text input/output.
+</Note>
+
+#### Amazon Bedrock API Key
+
+<Warning>
+Recommended only for exploration of Amazon Bedrock.
+</Warning>
+
+Amazon Bedrock API keys provide simpler authentication with automatically assigned permissions.
+
+##### Required Information
+
+- **Bedrock API Key**: Amazon Bedrock API key
+- **AWS Region**: Region where Bedrock is available (e.g., `us-east-1`, `us-west-2`)
+
+<Note>
+Amazon Bedrock API keys are automatically assigned the necessary permissions (`AmazonBedrockLimitedAccess` policy).
+
+Learn more: [Getting Started with Amazon Bedrock API Keys](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started-api-keys.html)
+</Note>
+
+#### AWS IAM Access Keys
+
+Standard AWS IAM credentials can be used as an alternative authentication method.
+
+##### Required Information
 
 - **AWS Access Key ID**: AWS access key ID
 - **AWS Secret Access Key**: AWS secret access key
 - **AWS Region**: Region where Bedrock is available (e.g., `us-east-1`, `us-west-2`)
 
-#### Required Permissions
+##### Required Permissions
 
-The AWS user must have the `AmazonBedrockLimitedAccess` managed policy attached:
+The AWS IAM user must have the `AmazonBedrockLimitedAccess` managed policy attached:
 
 ```text
 arn:aws:iam::aws:policy/AmazonBedrockLimitedAccess
 ```
-
-<Note>
-Currently, only AWS access key and secret key authentication is supported. Amazon Bedrock API key support will be available soon.
-</Note>
-
-<Note>
-Available models depend on AWS region and account entitlements. Lighthouse AI displays only accessible models.
-</Note>
 
 ### OpenAI Compatible
 
