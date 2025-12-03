@@ -274,7 +274,7 @@ export const ConnectLLMProvider = ({
         onChange={(e) => handleFieldChange(id, e.target.value)}
         placeholder={
           isEditMode
-            ? `Enter new ${label.toLowerCase()} or leave empty`
+            ? `Enter new ${label} or leave empty`
             : placeholder
         }
         className="border-border-neutral-primary bg-bg-neutral-primary w-full rounded-lg border px-3 py-2"
@@ -423,7 +423,7 @@ export const ConnectLLMProvider = ({
                 onChange={(e) => handleFieldChange(field.name, e.target.value)}
                 placeholder={
                   isEditMode
-                    ? `Enter new ${field.label.toLowerCase()} or leave empty`
+                    ? `Enter new ${field.label} or leave empty`
                     : field.placeholder
                 }
                 className="border-border-neutral-primary bg-bg-neutral-primary w-full rounded-lg border px-3 py-2"
