@@ -1,0 +1,32 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zones_hotlink_protection_enabled",
+  "CheckTitle": "Hotlink Protection is enabled to prevent bandwidth theft",
+  "CheckType": [],
+  "ServiceName": "zones",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "Zone",
+  "Description": "Verifies that Hotlink Protection (Scrape Shield) is enabled to prevent other websites from directly linking to images and media, consuming bandwidth without authorization.",
+  "Risk": "Without Hotlink Protection, external websites can embed your images and media directly, consuming your bandwidth, increasing costs, and potentially using your content without attribution or permission.",
+  "RelatedUrl": "https://developers.cloudflare.com/waf/tools/scrape-shield/hotlink-protection/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "resource \"cloudflare_zone_settings_override\" \"example\" {\n  zone_id = var.zone_id\n  settings {\n    hotlink_protection = \"on\"\n  }\n}"
+    },
+    "Recommendation": {
+      "Text": "Enable Hotlink Protection to prevent unauthorized embedding of your media resources. Review allowed referrers if legitimate integrations require access to your hosted content.",
+      "Url": "https://hub.prowler.com/checks/zones_hotlink_protection_enabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Hotlink Protection blocks requests to images when the HTTP referer does not match your domain."
+}

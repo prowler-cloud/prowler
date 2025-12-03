@@ -1,0 +1,30 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zones_rate_limiting_enabled",
+  "CheckTitle": "Rate limiting is configured for the zone",
+  "CheckType": [],
+  "ServiceName": "zones",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Zone",
+  "Description": "Verifies that rate limiting rules are configured for the zone to protect against DDoS attacks, brute force attempts, and API abuse.",
+  "Risk": "Without rate limiting, applications are vulnerable to volumetric attacks, credential brute forcing, and API abuse that can exhaust resources, compromise accounts, or cause service degradation and availability issues.",
+  "RelatedUrl": "https://developers.cloudflare.com/waf/rate-limiting-rules/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "resource \"cloudflare_ruleset\" \"rate_limit\" {\n  zone_id = var.zone_id\n  name    = \"Rate limiting\"\n  kind    = \"zone\"\n  phase   = \"http_ratelimit\"\n  rules {\n    action = \"block\"\n    ratelimit {\n      characteristics = [\"ip.src\"]\n      period         = 60\n      requests_per_period = 100\n      mitigation_timeout = 600\n    }\n    expression  = \"true\"\n    description = \"Rate limit all requests\"\n  }\n}"
+    },
+    "Recommendation": {
+      "Text": "Implement rate limiting as part of defense in depth. Configure thresholds based on expected traffic patterns and apply stricter limits to sensitive endpoints like authentication and APIs.",
+      "Url": "https://hub.prowler.com/checks/zones_rate_limiting_enabled"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Rate limiting rules are in the http_ratelimit phase."
+}

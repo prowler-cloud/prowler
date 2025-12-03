@@ -1,0 +1,30 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zones_bot_fight_mode_enabled",
+  "CheckTitle": "Bot Fight Mode is enabled to detect and mitigate automated bot traffic",
+  "CheckType": [],
+  "ServiceName": "zones",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Zone",
+  "Description": "Verifies that Bot Fight Mode (Browser Integrity Check) is enabled to detect and mitigate automated bot traffic targeting the zone.",
+  "Risk": "Without Bot Fight Mode, zones are vulnerable to automated attacks including web scraping, credential stuffing, inventory hoarding, and other bot-driven threats that can compromise data integrity and availability.",
+  "RelatedUrl": "https://developers.cloudflare.com/bots/get-started/free/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable Bot Fight Mode as part of a layered bot management strategy. Combine with rate limiting and WAF rules for comprehensive protection against automated threats while minimizing impact on legitimate users.",
+      "Url": "https://hub.prowler.com/checks/zones_bot_fight_mode_enabled"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

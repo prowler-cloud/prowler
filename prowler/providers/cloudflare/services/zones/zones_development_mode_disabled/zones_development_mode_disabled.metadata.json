@@ -1,0 +1,32 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zones_development_mode_disabled",
+  "CheckTitle": "Development mode is disabled for production zones",
+  "CheckType": [],
+  "ServiceName": "zones",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "Zone",
+  "Description": "Verifies that development mode is disabled in production zones to ensure caching, security features, and performance optimizations are active.",
+  "Risk": "With development mode enabled, Cloudflare caching is bypassed, exposing the origin server to increased load and potentially degrading performance. Security features may also be affected.",
+  "RelatedUrl": "https://developers.cloudflare.com/cache/reference/development-mode/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable development mode for production environments. Use development mode only temporarily during active development when cache bypassing is necessary, and ensure it auto-expires or is manually disabled afterward.",
+      "Url": "https://hub.prowler.com/checks/zones_development_mode_disabled"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

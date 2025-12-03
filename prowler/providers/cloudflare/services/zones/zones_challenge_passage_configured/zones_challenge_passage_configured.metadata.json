@@ -1,0 +1,30 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zones_challenge_passage_configured",
+  "CheckTitle": "Challenge Passage is configured with an appropriate security window",
+  "CheckType": [],
+  "ServiceName": "zones",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "Zone",
+  "Description": "Verifies that Challenge Passage (challenge TTL) is configured to an appropriate value (recommended: 1 hour) to balance security with user experience for verified visitors.",
+  "Risk": "Challenge Passage set too short causes excessive challenges degrading user experience. Set too long, it may allow attackers extended access after passing initial challenge, reducing security effectiveness.",
+  "RelatedUrl": "https://developers.cloudflare.com/waf/tools/challenge-passage/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "resource \"cloudflare_zone_settings_override\" \"example\" {\n  zone_id = var.zone_id\n  settings {\n    challenge_ttl = 3600\n  }\n}"
+    },
+    "Recommendation": {
+      "Text": "Configure Challenge Passage to balance security and usability. A 1-hour window is generally recommended, but adjust based on your threat model and user experience requirements.",
+      "Url": "https://hub.prowler.com/checks/zones_challenge_passage_configured"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Challenge Passage determines how long a visitor who passes a challenge can access the site without being challenged again."
+}
