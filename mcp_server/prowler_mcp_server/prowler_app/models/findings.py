@@ -3,31 +3,70 @@
 from typing import Literal
 
 from prowler_mcp_server.prowler_app.models.base import MinimalSerializerMixin
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class CheckRemediation(MinimalSerializerMixin, BaseModel):
     """Remediation information for a security check."""
 
-    cli: str | None = None
-    terraform: str | None = None
-    recommendation_text: str | None = None
-    recommendation_url: str | None = None
+    model_config = ConfigDict(frozen=True)
+
+    cli: str | None = Field(
+        default=None,
+        description="Command-line interface commands for remediation",
+    )
+    terraform: str | None = Field(
+        default=None,
+        description="Terraform code snippet with best practices for remediation",
+    )
+    recommendation_text: str | None = Field(
+        default=None, description="Text description with best practices"
+    )
+    recommendation_url: str | None = Field(
+        default=None,
+        description="URL to external remediation documentation",
+    )
 
 
 class CheckMetadata(MinimalSerializerMixin, BaseModel):
     """Essential metadata for a security check."""
 
-    check_id: str
-    title: str
-    description: str
-    provider: str
-    risk: str | None = None
-    service: str
-    resource_type: str
-    remediation: CheckRemediation | None = None
-    related_url: str | None = None
-    categories: list[str] | None = None
+    model_config = ConfigDict(frozen=True)
+
+    check_id: str = Field(
+        description="Unique provider identifier for the security check (e.g., 's3_bucket_public_access')",
+    )
+    title: str = Field(
+        description="Human-readable title of the security check",
+    )
+    description: str = Field(
+        description="Detailed description of what the check validates",
+    )
+    provider: str = Field(
+        description="Prowler provider this check belongs to (e.g., 'aws', 'azure', 'gcp')",
+    )
+    service: str = Field(
+        description="Prowler service being checked (e.g., 's3', 'ec2', 'keyvault')",
+    )
+    resource_type: str = Field(
+        description="Type of resource being evaluated (e.g., 'AwsS3Bucket')",
+    )
+    risk: str | None = Field(
+        default=None,
+        description="Risk description if the check fails",
+    )
+    remediation: CheckRemediation | None = Field(
+        default=None,
+        description="Remediation guidance including CLI commands and recommendations",
+    )
+    related_url: str | None = Field(
+        default=None,
+        description="URL to additional documentation or references",
+    )
+    categories: list[str] = Field(
+        default_factory=list,
+        description="Categories this check belongs to (e.g., ['encryption', 'logging'])",
+    )
 
     @classmethod
     def from_api_response(cls, data: dict) -> "CheckMetadata":
@@ -56,22 +95,43 @@ class CheckMetadata(MinimalSerializerMixin, BaseModel):
             resource_type=data["resourcetype"],
             remediation=remediation,
             related_url=data.get("relatedurl"),
-            categories=data.get("categories"),
+            categories=data.get("categories", []),
         )
 
 
 class SimplifiedFinding(MinimalSerializerMixin, BaseModel):
     """Simplified security finding with only LLM-relevant information."""
 
-    id: str
-    uid: str
-    status: Literal["FAIL", "PASS", "MANUAL"]
-    severity: Literal["critical", "high", "medium", "low", "informational"]
-    check_metadata: CheckMetadata
-    status_extended: str | None = None
-    delta: Literal["new", "changed"] | None = None
-    muted: bool | None = None
-    muted_reason: str | None = None
+    model_config = ConfigDict(frozen=True)
+
+    id: str = Field(
+        description="Unique UUIDv4 identifier for this finding in Prowler database"
+    )
+    uid: str = Field(
+        description="Human-readable unique identifier assigned by Prowler. Format: prowler-{provider}-{check_id}-{account_uid}-{region}-{resource_name}",
+    )
+    status: Literal["FAIL", "PASS", "MANUAL"] = Field(
+        description="Result status: FAIL (security issue found), PASS (no issue), MANUAL (requires manual verification)",
+    )
+    severity: Literal["critical", "high", "medium", "low", "informational"] = Field(
+        description="Severity level of the finding",
+    )
+    check_metadata: CheckMetadata = Field(
+        description="Metadata about the security check that generated this finding",
+    )
+    status_extended: str = Field(
+        description="Extended status information providing additional context",
+    )
+    delta: Literal["new", "changed"] = Field(
+        description="Change status: 'new' (not seen before), 'changed' (modified since last scan), or None (unchanged)",
+    )
+    muted: bool = Field(
+        description="Whether this finding has been muted/suppressed by the user",
+    )
+    muted_reason: str = Field(
+        default=None,
+        description="Reason provided when muting this finding (3-500 chars if muted)",
+    )
 
     @classmethod
     def from_api_response(cls, data: dict) -> "SimplifiedFinding":
@@ -85,10 +145,10 @@ class SimplifiedFinding(MinimalSerializerMixin, BaseModel):
             status=attributes["status"],
             severity=attributes["severity"],
             check_metadata=CheckMetadata.from_api_response(check_metadata),
-            status_extended=attributes.get("status_extended"),
-            delta=attributes.get("delta"),
-            muted=attributes.get("muted"),
-            muted_reason=attributes.get("muted_reason"),
+            status_extended=attributes["status_extended"],
+            delta=attributes["delta"],
+            muted=attributes["muted"],
+            muted_reason=attributes["muted_reason"],
         )
 
 
@@ -99,11 +159,26 @@ class DetailedFinding(SimplifiedFinding):
     Use this when you need complete context about a specific finding.
     """
 
-    inserted_at: str | None = None
-    updated_at: str | None = None
-    first_seen_at: str | None = None
-    scan_id: str | None = None
-    resource_ids: list[str] | None = None
+    model_config = ConfigDict(frozen=True)
+
+    inserted_at: str = Field(
+        description="ISO 8601 timestamp when this finding was first inserted into the database",
+    )
+    updated_at: str = Field(
+        description="ISO 8601 timestamp when this finding was last updated",
+    )
+    first_seen_at: str | None = Field(
+        default=None,
+        description="ISO 8601 timestamp when this finding was first detected across all scans",
+    )
+    scan_id: str | None = Field(
+        default=None,
+        description="UUID of the scan that generated this finding",
+    )
+    resource_ids: list[str] = Field(
+        default_factory=list,
+        description="List of UUIDs for cloud resources associated with this finding",
+    )
 
     @classmethod
     def from_api_response(cls, data: dict) -> "DetailedFinding":
@@ -119,7 +194,7 @@ class DetailedFinding(SimplifiedFinding):
             scan_id = scan_data["id"]
 
         # Parse resources relationship
-        resource_ids = None
+        resource_ids = []
         resources_data = relationships.get("resources", {}).get("data", [])
         if resources_data:
             resource_ids = [r["id"] for r in resources_data]
@@ -132,10 +207,10 @@ class DetailedFinding(SimplifiedFinding):
             check_metadata=CheckMetadata.from_api_response(check_metadata),
             status_extended=attributes.get("status_extended"),
             delta=attributes.get("delta"),
-            muted=attributes.get("muted"),
+            muted=attributes["muted"],
             muted_reason=attributes.get("muted_reason"),
-            inserted_at=attributes.get("inserted_at"),
-            updated_at=attributes.get("updated_at"),
+            inserted_at=attributes["inserted_at"],
+            updated_at=attributes["updated_at"],
             first_seen_at=attributes.get("first_seen_at"),
             scan_id=scan_id,
             resource_ids=resource_ids,
@@ -145,10 +220,23 @@ class DetailedFinding(SimplifiedFinding):
 class FindingsListResponse(BaseModel):
     """Simplified response for findings list queries."""
 
-    findings: list[SimplifiedFinding]
-    total_num_finding: int
-    total_num_pages: int
-    current_page: int
+    model_config = ConfigDict(frozen=True)
+
+    findings: list[SimplifiedFinding] = Field(
+        description="List of security findings matching the query",
+    )
+    total_num_finding: int = Field(
+        description="Total number of findings matching the query across all pages",
+        ge=0,
+    )
+    total_num_pages: int = Field(
+        description="Total number of pages available",
+        ge=0,
+    )
+    current_page: int = Field(
+        description="Current page number (1-indexed)",
+        ge=1,
+    )
 
     @classmethod
     def from_api_response(cls, response: dict) -> "FindingsListResponse":
@@ -170,18 +258,58 @@ class FindingsListResponse(BaseModel):
 class FindingsOverview(BaseModel):
     """Simplified findings overview with aggregate statistics."""
 
-    total: int = 0
-    fail: int = 0
-    passed: int = 0  # Using 'passed' instead of 'pass' since 'pass' is a Python keyword
-    muted: int = 0
-    new: int = 0
-    changed: int = 0
-    fail_new: int = 0
-    fail_changed: int = 0
-    pass_new: int = 0
-    pass_changed: int = 0
-    muted_new: int = 0
-    muted_changed: int = 0
+    model_config = ConfigDict(frozen=True)
+
+    total: int = Field(
+        description="Total number of findings",
+        ge=0,
+    )
+    fail: int = Field(
+        description="Total number of failed security checks",
+        ge=0,
+    )
+    passed: int = (  # Using 'passed' instead of 'pass' since 'pass' is a Python keyword
+        Field(
+            description="Total number of passed security checks",
+            ge=0,
+        )
+    )
+    muted: int = Field(
+        description="Total number of muted findings",
+        ge=0,
+    )
+    new: int = Field(
+        description="Total number of new findings (not seen in previous scans)",
+        ge=0,
+    )
+    changed: int = Field(
+        description="Total number of changed findings (modified since last scan)",
+        ge=0,
+    )
+    fail_new: int = Field(
+        description="Number of new findings with FAIL status",
+        ge=0,
+    )
+    fail_changed: int = Field(
+        description="Number of changed findings with FAIL status",
+        ge=0,
+    )
+    pass_new: int = Field(
+        description="Number of new findings with PASS status",
+        ge=0,
+    )
+    pass_changed: int = Field(
+        description="Number of changed findings with PASS status",
+        ge=0,
+    )
+    muted_new: int = Field(
+        description="Number of new muted findings",
+        ge=0,
+    )
+    muted_changed: int = Field(
+        description="Number of changed muted findings",
+        ge=0,
+    )
 
     @classmethod
     def from_api_response(cls, response: dict) -> "FindingsOverview":
