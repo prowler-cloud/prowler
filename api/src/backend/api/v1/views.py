@@ -5,7 +5,7 @@ import logging
 import os
 from collections import defaultdict
 from copy import deepcopy
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from urllib.parse import urljoin
 
@@ -4272,8 +4272,6 @@ class OverviewViewSet(BaseRLSViewSet):
         Returns aggregated data per day with fill-forward for days without scans.
         Requires date_from filter parameter.
         """
-        from datetime import date, timedelta
-
         tenant_id = self.request.tenant_id
 
         # Get filter parameters
