@@ -20,9 +20,9 @@ Lighthouse AI supports the following LLM providers:
 
 For Lighthouse AI to work properly, models **must** support all of the following capabilities:
 
-- **Text input**: Ability to receive text prompts
-- **Text output**: Ability to generate text responses
-- **Tool calling**: Ability to invoke tools and functions
+- **Text input**: Ability to receive text prompts.
+- **Text output**: Ability to generate text responses.
+- **Tool calling**: Ability to invoke tools and functions.
 
 If any of these capabilities are missing, the model will not be compatible with Lighthouse AI.
 
@@ -53,12 +53,12 @@ To connect a provider:
   <Tab title="OpenAI">
     ### Required Information
 
-    - **API Key**: OpenAI API key (starts with `sk-` or `sk-proj-`). You can create an API key from the [OpenAI platform](https://platform.openai.com/api-keys).
+    - **API Key**: OpenAI API key (starts with `sk-` or `sk-proj-`). API keys can be created from the [OpenAI platform](https://platform.openai.com/api-keys).
 
     ### Before Connecting
 
-    - Ensure the OpenAI account has sufficient credits
-    - Verify that the `gpt-5` model (recommended for Lighthouse AI) is not blocked in the OpenAI organization settings
+    - Ensure the OpenAI account has sufficient credits.
+    - Verify that the `gpt-5` model (recommended for Lighthouse AI) is not blocked in the OpenAI organization settings.
   </Tab>
 
   <Tab title="Amazon Bedrock">
@@ -68,21 +68,23 @@ To connect a provider:
     Amazon Bedrock models depend on AWS region and account entitlements. Lighthouse AI displays only accessible models that support tool calling and text input/output.
     </Note>
 
-    ### Amazon Bedrock API Key
+    ### Amazon Bedrock Long-Term API Key
+
+    <VersionBadge version="5.15.0" />
 
     <Warning>
-    Recommended only for exploration of Amazon Bedrock with Lighthouse.
+    Amazon Bedrock Long-Term API keys are recommended only for exploration purposes. For production environments, use AWS IAM Access Keys with properly scoped permissions.
     </Warning>
 
     Amazon Bedrock API keys provide simpler authentication with automatically assigned permissions.
 
     #### Required Information
 
-    - **Bedrock API Key**: Amazon Bedrock API key
-    - **AWS Region**: Region where Bedrock is available
+    - **Bedrock Long-Term API Key**: The API key generated from Amazon Bedrock.
+    - **AWS Region**: Region where Bedrock is available.
 
     <Note>
-    Amazon Bedrock API keys are automatically assigned the necessary permissions (`AmazonBedrockLimitedAccess` policy).
+    Amazon Bedrock Long-Term API keys are automatically assigned the necessary permissions (`AmazonBedrockLimitedAccess` policy).
 
     Learn more: [Getting Started with Amazon Bedrock API Keys](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started-api-keys.html)
     </Note>
@@ -93,9 +95,9 @@ To connect a provider:
 
     #### Required Information
 
-    - **AWS Access Key ID**: AWS access key ID
-    - **AWS Secret Access Key**: AWS secret access key
-    - **AWS Region**: Region where Bedrock is available
+    - **AWS Access Key ID**: The access key ID for the IAM user.
+    - **AWS Secret Access Key**: The secret access key for the IAM user.
+    - **AWS Region**: Region where Bedrock is available.
 
     #### Required Permissions
 
@@ -116,8 +118,8 @@ To connect a provider:
 
     ### Required Information
 
-    - **API Key**: API key from the compatible service
-    - **Base URL**: API endpoint URL including the API version (e.g., `https://openrouter.ai/api/v1`)
+    - **API Key**: API key from the compatible service.
+    - **Base URL**: API endpoint URL including the API version (e.g., `https://openrouter.ai/api/v1`).
 
     ### Example: OpenRouter
 
