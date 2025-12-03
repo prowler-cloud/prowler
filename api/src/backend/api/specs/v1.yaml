@@ -4958,37 +4958,24 @@ paths:
             type: string
             enum:
             - id
-            - date
             - critical
             - high
             - medium
             - low
             - informational
             - muted
+            - scan_ids
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
       - in: query
-        name: filter[date__gte]
-        schema:
-          type: string
-          format: date
-      - in: query
-        name: filter[date__lte]
-        schema:
-          type: string
-          format: date
-      - in: query
         name: filter[date_from]
         schema:
           type: string
-          format: date
-        required: true
       - in: query
         name: filter[date_to]
         schema:
           type: string
-          format: date
       - in: query
         name: filter[provider_id]
         schema:
@@ -5075,8 +5062,6 @@ paths:
             enum:
             - id
             - -id
-            - date
-            - -date
             - critical
             - -critical
             - high
@@ -5089,6 +5074,8 @@ paths:
             - -informational
             - muted
             - -muted
+            - scan_ids
+            - -scan_ids
         explode: false
       tags:
       - Overview
@@ -11281,9 +11268,6 @@ components:
             id:
               type: string
               format: date
-            date:
-              type: string
-              format: date
             critical:
               type: integer
             high:
@@ -11296,15 +11280,20 @@ components:
               type: integer
             muted:
               type: integer
+            scan_ids:
+              type: array
+              items:
+                type: string
+                format: uuid
           required:
           - id
-          - date
           - critical
           - high
           - medium
           - low
           - informational
           - muted
+          - scan_ids
     FindingsSeverityOverTimeResponse:
       type: object
       properties:
