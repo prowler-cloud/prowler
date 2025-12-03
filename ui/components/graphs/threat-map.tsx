@@ -403,6 +403,7 @@ export function ThreatMap({
     if (providerType) params.set("filter[provider_type__in]", providerType);
     params.set("filter[region__in]", regionCode);
     params.set("filter[status__in]", status);
+    params.set("filter[muted]", "false");
     router.push(`/findings?${params.toString()}`);
   };
 
