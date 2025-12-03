@@ -205,7 +205,7 @@ def backfill_daily_severity_summaries(tenant_id: str, days: int = None):
             scan_filter["completed_at__gte"] = cutoff_date
 
         completed_scans = (
-            Scan.all_objects.filter(**scan_filter)
+            Scan.objects.filter(**scan_filter)
             .order_by("provider_id", "-completed_at")
             .values("id", "provider_id", "completed_at")
         )
@@ -226,7 +226,7 @@ def backfill_daily_severity_summaries(tenant_id: str, days: int = None):
 
         with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
             severity_totals = (
-                ScanSummary.all_objects.filter(
+                ScanSummary.objects.filter(
                     tenant_id=tenant_id,
                     scan_id=scan_id,
                 )

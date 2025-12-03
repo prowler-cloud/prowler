@@ -1354,7 +1354,7 @@ def aggregate_attack_surface(tenant_id: str, scan_id: str):
 def aggregate_daily_severity(tenant_id: str, scan_id: str):
     """Aggregate scan severity counts into DailySeveritySummary (one record per provider/day)."""
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-        scan = Scan.all_objects.filter(
+        scan = Scan.objects.filter(
             tenant_id=tenant_id,
             id=scan_id,
             state=StateChoices.COMPLETED,
@@ -1362,13 +1362,13 @@ def aggregate_daily_severity(tenant_id: str, scan_id: str):
 
         if not scan:
             logger.warning(f"Scan {scan_id} not found or not completed")
-            return {"status": "scan_not_found"}
+            return {"status": "scan is not completed"}
 
         provider_id = scan.provider_id
         scan_date = scan.completed_at.date()
 
         severity_totals = (
-            ScanSummary.all_objects.filter(
+            ScanSummary.objects.filter(
                 tenant_id=tenant_id,
                 scan_id=scan_id,
             )
