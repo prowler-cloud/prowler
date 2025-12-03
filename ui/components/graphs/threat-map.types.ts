@@ -24,6 +24,7 @@ export interface LocationPoint {
   providerType: string;
   coordinates: [number, number];
   totalFindings: number;
+  failFindings: number;
   riskLevel: RiskLevel;
   severityData: BarDataPoint[];
   change?: number;

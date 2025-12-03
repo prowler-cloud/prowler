@@ -57,7 +57,7 @@ function MapTooltip({
       <div className="mt-1 flex items-center gap-2">
         <AlertTriangle size={14} className="text-bg-data-critical" />
         <span className="text-text-neutral-secondary text-sm font-medium">
-          {location.totalFindings.toLocaleString()} Fail Findings
+          {location.failFindings.toLocaleString()} Fail Findings
         </span>
       </div>
       {location.change !== undefined && (
@@ -177,10 +177,8 @@ export function ThreatMap({
             name: "Global Regions",
             regionCode: "global",
             providerType: "global",
-            totalFindings: globalLocations.reduce(
-              (sum, loc) => sum + loc.totalFindings,
-              0,
-            ),
+            totalFindings: total,
+            failFindings: failValue,
             severityData: [
               {
                 name: "Fail",

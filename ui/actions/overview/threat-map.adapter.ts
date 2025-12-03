@@ -10,6 +10,7 @@ export interface ThreatMapLocation {
   providerType: string;
   coordinates: [number, number];
   totalFindings: number;
+  failFindings: number;
   riskLevel: "low-high" | "high" | "critical";
   severityData: Array<{
     name: string;
@@ -337,7 +338,8 @@ export function adaptRegionsOverviewToThreatMap(
       regionCode: attributes.region,
       providerType: attributes.provider_type,
       coordinates,
-      totalFindings: attributes.fail,
+      totalFindings: attributes.total,
+      failFindings: attributes.fail,
       riskLevel: getRiskLevel(failRate),
       severityData: buildSeverityData(attributes.fail, attributes.pass),
     });
