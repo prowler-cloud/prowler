@@ -265,7 +265,7 @@ export const FindingDetail = ({
           )}
 
           <InfoField label="Categories">
-            {attributes.check_metadata.categories?.join(", ") || "-"}
+            {attributes.check_metadata.categories?.join(", ") || "none"}
           </InfoField>
         </CardContent>
       </Card>

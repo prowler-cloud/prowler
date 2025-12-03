@@ -57,7 +57,6 @@ export const ComplianceHeader = ({
           labelCheckboxGroup: "Regions",
           values: uniqueRegions,
           index: 1, // Show after framework filters
-          defaultToSelectAll: true, // Default to all regions selected
         },
       ]
     : [];
