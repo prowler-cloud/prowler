@@ -1,26 +1,39 @@
 {
   "Provider": "aws",
   "CheckID": "sqs_queues_server_side_encryption_enabled",
-  "CheckTitle": "Check if SQS queues have Server Side Encryption enabled",
-  "CheckType": [],
+  "CheckTitle": "SQS queue has server-side encryption enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Data Exposure"
+  ],
   "ServiceName": "sqs",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:sqs:region:account-id:queue",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsSqsQueue",
-  "Description": "Check if SQS queues have Server Side Encryption enabled",
-  "Risk": "If not enabled sensitive information in transit is not protected.",
-  "RelatedUrl": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-configure-sse-existing-queue.html",
+  "Description": "**Amazon SQS queues** are evaluated for **server-side encryption** configured with a **KMS key** (`SSE-KMS`) protecting message bodies at rest.\n\nQueues without an associated KMS key are identified.",
+  "Risk": "Without **KMS-backed SSE**, message bodies lack tenant-controlled keys and detailed audit. Secrets, tokens, or PII in messages become easier to access through **privilege misuse**, misconfiguration, or unintended integrations, reducing **confidentiality** and limiting containment since you cannot revoke access via key disable/rotation.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-server-side-encryption.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SQS/queue-encrypted-with-kms-customer-master-keys.html",
+    "https://docs.prowler.com/checks/aws/general-policies/general_16-encrypt-sqs-queue#terraform",
+    "https://stackoverflow.com/questions/56947804/sqs-encryption-using-cmk",
+    "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-configure-sse-existing-queue.html",
+    "https://repost.aws/knowledge-center/sns-topic-sqs-queue-sse-cmk-policy",
+    "https://www.linkedin.com/pulse/amazon-simple-queue-service-sqs-encryption-using-aws-sam-ahsan-qadeer"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws sqs set-queue-attributes --queue-url <QUEUE_URL> --attributes KmsMasterKeyId=<KEY>",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/general_16-encrypt-sqs-queue#cloudformation",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/SQS/queue-encrypted-with-kms-customer-master-keys.html",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/general_16-encrypt-sqs-queue#terraform"
+      "CLI": "aws sqs set-queue-attributes --queue-url <QUEUE_URL> --attributes KmsMasterKeyId=<KMS_KEY_ID_OR_ALIAS>",
+      "NativeIaC": "```yaml\n# CloudFormation: Enable SSE-KMS for an SQS queue\nResources:\n  <example_resource_name>:\n    Type: AWS::SQS::Queue\n    Properties:\n      KmsMasterKeyId: alias/aws/sqs  # Critical: sets a KMS key, enabling SSE-KMS so the queue reports a kms_key_id\n```",
+      "Other": "1. In the AWS Console, go to Amazon SQS > Queues\n2. Select the queue and click Edit\n3. Expand Encryption\n4. Set Server-side encryption to Enabled\n5. For AWS KMS key, select alias/aws/sqs (or choose a specific KMS key)\n6. Click Save",
+      "Terraform": "```hcl\n# Enable SSE-KMS for an SQS queue\nresource \"aws_sqs_queue\" \"<example_resource_name>\" {\n  kms_master_key_id = \"alias/aws/sqs\"  # Critical: sets a KMS key, enabling SSE-KMS so the queue reports a kms_key_id\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable Encryption. Use a CMK where possible. It will provide additional management and privacy benefits",
-      "Url": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-configure-sse-existing-queue.html"
+      "Text": "Enable **SSE-KMS** on all queues using a **customer-managed KMS key**.\n- Apply **least privilege** to key and queue policies; restrict `Encrypt/Decrypt`\n- Enforce key rotation and separation of duties\n- Tune data key reuse for security vs. cost\n- Monitor key and queue access to support **defense in depth**",
+      "Url": "https://hub.prowler.com/check/sqs_queues_server_side_encryption_enabled"
     }
   },
   "Categories": [
