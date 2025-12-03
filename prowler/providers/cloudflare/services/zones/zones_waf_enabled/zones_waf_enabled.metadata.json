@@ -1,0 +1,32 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zones_waf_enabled",
+  "CheckTitle": "WAF is enabled to protect against web application attacks",
+  "CheckType": [],
+  "ServiceName": "zones",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Zone",
+  "Description": "Verifies that the Web Application Firewall (WAF) is enabled to protect against common web vulnerabilities including SQL injection, XSS, and OWASP Top 10 threats.",
+  "Risk": "Without WAF, web applications are exposed to common attack vectors including SQL injection, cross-site scripting, and other exploitation techniques that can lead to data breaches or system compromise.",
+  "RelatedUrl": "https://developers.cloudflare.com/waf/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "resource \"cloudflare_zone_settings_override\" \"example\" {\n  zone_id = var.zone_id\n  settings {\n    waf = \"on\"\n  }\n}"
+    },
+    "Recommendation": {
+      "Text": "Enable WAF as a critical layer of defense for web applications. Configure managed rulesets and create custom rules based on your application's specific threat model and traffic patterns.",
+      "Url": "https://hub.prowler.com/checks/zones_waf_enabled"
+    }
+  },
+  "Categories": [
+    "vulnerabilities"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "WAF is available on Pro, Business, and Enterprise plans."
+}

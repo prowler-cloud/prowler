@@ -1,0 +1,32 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zones_server_side_excludes_enabled",
+  "CheckTitle": "Server Side Excludes is enabled to hide sensitive content from bots",
+  "CheckType": [],
+  "ServiceName": "zones",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "Zone",
+  "Description": "Verifies that Server Side Excludes (Scrape Shield) is enabled to automatically hide content wrapped in SSE tags from visitors identified as suspicious bots or crawlers.",
+  "Risk": "Without Server Side Excludes, sensitive content marked for exclusion remains visible to malicious bots and crawlers that may scrape, index, or misuse the information.",
+  "RelatedUrl": "https://developers.cloudflare.com/waf/tools/scrape-shield/server-side-excludes/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "resource \"cloudflare_zone_settings_override\" \"example\" {\n  zone_id = var.zone_id\n  settings {\n    server_side_exclude = \"on\"\n  }\n}"
+    },
+    "Recommendation": {
+      "Text": "Enable Server Side Excludes and wrap sensitive content in SSE HTML comments. This provides selective content protection while maintaining full functionality for legitimate visitors.",
+      "Url": "https://hub.prowler.com/checks/zones_server_side_excludes_enabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Server Side Excludes requires wrapping sensitive content with special HTML comments to mark content for exclusion."
+}

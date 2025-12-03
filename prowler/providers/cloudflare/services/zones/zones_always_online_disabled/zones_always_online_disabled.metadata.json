@@ -1,0 +1,32 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zones_always_online_disabled",
+  "CheckTitle": "Always Online is disabled to prevent serving stale cached content",
+  "CheckType": [],
+  "ServiceName": "zones",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Zone",
+  "Description": "Verifies that Always Online is disabled for Cloudflare zones. This legacy feature can serve stale cached content when the origin is unavailable, potentially exposing outdated or sensitive information.",
+  "Risk": "With Always Online enabled, Cloudflare serves cached pages when the origin is down, potentially exposing outdated content, sensitive information that should have been removed, or pages cached before security patches were applied.",
+  "RelatedUrl": "https://developers.cloudflare.com/cache/how-to/always-online/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "resource \"cloudflare_zone_settings_override\" \"example\" {\n  zone_id = var.zone_id\n  settings {\n    always_online = \"off\"\n  }\n}"
+    },
+    "Recommendation": {
+      "Text": "Disable Always Online and implement proper high availability through redundant origins, load balancing, or failover configurations that serve fresh content rather than potentially stale cached versions.",
+      "Url": "https://hub.prowler.com/checks/zones_always_online_disabled"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Always Online is a legacy feature. Consider using alternative solutions like redundant origins or failover configurations for high availability."
+}
