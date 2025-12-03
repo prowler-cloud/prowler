@@ -33,6 +33,7 @@ export const ServiceWatchlist = ({ items }: { items: ServiceOverview[] }) => {
     mapProviderFiltersForFindings(params);
 
     params.set("filter[service__in]", item.key);
+    params.set("filter[status__in]", "FAIL");
     router.push(`/findings?${params.toString()}`);
   };
 
