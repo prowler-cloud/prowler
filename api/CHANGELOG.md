@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+
+## [1.15.2] (Prowler v5.14.2)
+
+### Fixed
+- Unique constraint violation during compliance overviews task [(#9436)](https://github.com/prowler-cloud/prowler/pull/9436)
+
+---
+
 ## [1.15.1] (Prowler v5.14.1)
 
 ### Fixed
