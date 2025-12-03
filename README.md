@@ -153,7 +153,7 @@ You can find more information in the [Troubleshooting](./docs/troubleshooting.md
 
 * `git` installed.
 * `poetry` v2 installed: [poetry installation](https://python-poetry.org/docs/#installation).
-* `npm` installed: [npm installation](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
+* `pnpm` installed: [pnpm installation](https://pnpm.io/installation).
 * `Docker Compose` installed: https://docs.docker.com/compose/install/.
 
 **Commands to run the API**
@@ -209,9 +209,9 @@ python -m celery -A config.celery beat -l info --scheduler django_celery_beat.sc
 ``` console
 git clone https://github.com/prowler-cloud/prowler
 cd prowler/ui
-npm install
-npm run build
-npm start
+pnpm install
+pnpm run build
+pnpm start
 ```
 
 > Once configured, access the Prowler App at http://localhost:3000. Sign up using your email and password to get started.

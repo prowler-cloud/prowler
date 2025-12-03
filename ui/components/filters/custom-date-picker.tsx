@@ -9,8 +9,9 @@ import {
   today,
 } from "@internationalized/date";
 import { useLocale } from "@react-aria/i18n";
+import type { DateValue } from "@react-types/datepicker";
 import { useSearchParams } from "next/navigation";
-import React, { useCallback, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useUrlFilters } from "@/hooks/use-url-filters";
 
@@ -18,7 +19,7 @@ export const CustomDatePicker = () => {
   const searchParams = useSearchParams();
   const { updateFilter } = useUrlFilters();
 
-  const [value, setValue] = React.useState(() => {
+  const [value, setValue] = useState<DateValue | null>(() => {
     const dateParam = searchParams.get("filter[inserted_at]");
     return dateParam ? today(getLocalTimeZone()) : null;
   });
@@ -29,16 +30,13 @@ export const CustomDatePicker = () => {
   const nextWeek = startOfWeek(now.add({ weeks: 1 }), locale);
   const nextMonth = startOfMonth(now.add({ months: 1 }));
 
-  const applyDateFilter = useCallback(
-    (date: any) => {
-      if (date) {
-        updateFilter("inserted_at", date.toString());
-      } else {
-        updateFilter("inserted_at", null);
-      }
-    },
-    [updateFilter],
-  );
+  const applyDateFilter = (date: DateValue | null) => {
+    if (date) {
+      updateFilter("inserted_at", date.toString());
+    } else {
+      updateFilter("inserted_at", null);
+    }
+  };
 
   const initialRender = useRef(true);
 
@@ -53,7 +51,7 @@ export const CustomDatePicker = () => {
     }
   }, [searchParams]);
 
-  const handleDateChange = (newValue: any) => {
+  const handleDateChange = (newValue: DateValue | null) => {
     setValue(newValue);
     applyDateFilter(newValue);
   };

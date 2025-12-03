@@ -7,6 +7,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🚀 Added
 
 - Attack Surface component to Overview page [(#9412)](https://github.com/prowler-cloud/prowler/pull/9412)
+
+### 🔄 Changed
+
+- Migrate package manager from npm to pnpm for faster installs and stricter dependency resolution [(#9442)](https://github.com/prowler-cloud/prowler/pull/9442)
 - Compliance Watchlist component to Overview page [(#9199)](https://github.com/prowler-cloud/prowler/pull/9199)
 - Service Watchlist component to Overview page [(#9316)](https://github.com/prowler-cloud/prowler/pull/9316)
 - Risk Pipeline component with Sankey chart to Overview page [(#9317)](https://github.com/prowler-cloud/prowler/pull/9317)

@@ -1,6 +1,10 @@
 FROM node:20-alpine AS base
 
 LABEL maintainer="https://github.com/prowler-cloud"
+
+# Enable corepack for pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
 # Install dependencies only when needed
 FROM base AS deps
 # Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
@@ -9,12 +13,9 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Install dependencies based on the preferred package manager
-COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
+COPY package.json pnpm-lock.yaml .npmrc ./
 COPY scripts ./scripts
-RUN \
-  if [ -f package-lock.json ]; then npm install; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
+RUN pnpm install --frozen-lockfile
 
 
 # Rebuild the source code only when needed
@@ -34,10 +35,7 @@ ENV NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID=${NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID}
 ARG NEXT_PUBLIC_API_BASE_URL
 ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
 
-RUN \
-  if [ -f package-lock.json ]; then npm run build; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
+RUN pnpm run build
 
 # Development stage
 FROM base AS dev
@@ -49,7 +47,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=builder /app /app
 
 # Run development server with hot-reloading
-CMD ["npm", "run", "dev"]
+CMD ["pnpm", "run", "dev"]
 
 # Production stage
 FROM base AS prod
