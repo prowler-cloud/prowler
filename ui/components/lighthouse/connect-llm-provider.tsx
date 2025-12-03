@@ -273,9 +273,7 @@ export const ConnectLLMProvider = ({
         value={formData[id] || ""}
         onChange={(e) => handleFieldChange(id, e.target.value)}
         placeholder={
-          isEditMode
-            ? `Enter new ${label} or leave empty`
-            : placeholder
+          isEditMode ? `Enter new ${label} or leave empty` : placeholder
         }
         className="border-border-neutral-primary bg-bg-neutral-primary w-full rounded-lg border px-3 py-2"
       />
@@ -356,8 +354,8 @@ export const ConnectLLMProvider = ({
                 <p className="text-text-warning text-sm font-medium">
                   Recommended only for exploration of Amazon Bedrock.
                 </p>
-                <p className="text-text-warning text-xs mt-1">
-                  Please ensure you're using long-term Bedrock API keys.
+                <p className="text-text-warning mt-1 text-xs">
+                  Please ensure you&apos;re using long-term Bedrock API keys.
                 </p>
               </div>
             )}
