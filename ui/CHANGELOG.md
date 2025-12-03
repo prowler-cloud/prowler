@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.15.0] (Unreleased)
+## [1.15.0] (Prowler Unreleased)
 
 ### 🚀 Added
 
@@ -12,9 +12,15 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Threat Map component to Overview Page [(#9324)](https://github.com/prowler-cloud/prowler/pull/9324)
 - MongoDB Atlas provider support [(#9253)](https://github.com/prowler-cloud/prowler/pull/9253)
 
+---
+
+## [1.14.2] (Prowler v5.14.2)
+
 ### 🐞 Fixed
 
 - Models list in Lighthouse selector when default model is not set for provider [(9402)](https://github.com/prowler-cloud/prowler/pull/9402)
+
+---
 
 ## [1.14.0] (Prowler v5.14.0)
 
