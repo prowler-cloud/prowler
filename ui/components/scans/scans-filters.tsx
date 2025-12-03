@@ -18,6 +18,7 @@ export const ScansFilters = ({
     providerUIDs,
     providerDetails,
     enableScanRelation: false,
+    providerFilterType: FilterType.PROVIDER_UID,
   });
 
   return (

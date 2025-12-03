@@ -74,6 +74,7 @@ from rest_framework_json_api.views import RelationshipView, Response
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from tasks.beat import schedule_provider_scan
 from tasks.jobs.export import get_s3_client
+from tasks.jobs.scan import _get_attack_surface_mapping_from_provider
 from tasks.tasks import (
     backfill_compliance_summaries_task,
     backfill_scan_resource_summaries_task,
@@ -98,6 +99,7 @@ from api.db_router import MainRouter
 from api.db_utils import rls_transaction
 from api.exceptions import TaskFailedException
 from api.filters import (
+    AttackSurfaceOverviewFilter,
     ComplianceOverviewFilter,
     CustomDjangoFilterBackend,
     FindingFilter,
@@ -126,6 +128,7 @@ from api.filters import (
     UserFilter,
 )
 from api.models import (
+    AttackSurfaceOverview,
     ComplianceOverviewSummary,
     ComplianceRequirementOverview,
     Finding,
@@ -172,6 +175,7 @@ from api.utils import (
 from api.uuid_utils import datetime_to_uuid7, uuid7_start
 from api.v1.mixins import DisablePaginationMixin, PaginateByPkMixin, TaskManagementMixin
 from api.v1.serializers import (
+    AttackSurfaceOverviewSerializer,
     ComplianceOverviewAttributesSerializer,
     ComplianceOverviewDetailSerializer,
     ComplianceOverviewDetailThreatscoreSerializer,
@@ -350,7 +354,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.15.0"
+        spectacular_settings.VERSION = "1.16.0"
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -4005,6 +4009,37 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         ),
         filters=True,
     ),
+    attack_surface=extend_schema(
+        summary="Get attack surface overview",
+        description="Retrieve aggregated attack surface metrics from latest completed scans per provider.",
+        tags=["Overview"],
+        parameters=[
+            OpenApiParameter(
+                name="filter[provider_id]",
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.QUERY,
+                description="Filter by specific provider ID",
+            ),
+            OpenApiParameter(
+                name="filter[provider_id.in]",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="Filter by multiple provider IDs (comma-separated UUIDs)",
+            ),
+            OpenApiParameter(
+                name="filter[provider_type]",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="Filter by provider type (aws, azure, gcp, etc.)",
+            ),
+            OpenApiParameter(
+                name="filter[provider_type.in]",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="Filter by multiple provider types (comma-separated)",
+            ),
+        ],
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 class OverviewViewSet(BaseRLSViewSet):
@@ -4039,6 +4074,8 @@ class OverviewViewSet(BaseRLSViewSet):
             return OverviewRegionSerializer
         elif self.action == "threatscore":
             return ThreatScoreSnapshotSerializer
+        elif self.action == "attack_surface":
+            return AttackSurfaceOverviewSerializer
         return super().get_serializer_class()
 
     def get_filterset_class(self):
@@ -4086,6 +4123,68 @@ class OverviewViewSet(BaseRLSViewSet):
         return filtered_queryset.filter(
             tenant_id=tenant_id, scan_id__in=latest_scan_ids
         )
+
+    def _normalize_jsonapi_params(self, query_params, exclude_keys=None):
+        """Convert JSON:API filter params (filter[X]) to flat params (X)."""
+        exclude_keys = exclude_keys or set()
+        normalized = QueryDict(mutable=True)
+        for key, values in query_params.lists():
+            normalized_key = (
+                key[7:-1] if key.startswith("filter[") and key.endswith("]") else key
+            )
+            if normalized_key not in exclude_keys:
+                normalized.setlist(normalized_key, values)
+        return normalized
+
+    def _ensure_allowed_providers(self):
+        """Populate allowed providers for RBAC-aware queries once per request."""
+        if getattr(self, "_providers_initialized", False):
+            return
+        self.get_queryset()
+        self._providers_initialized = True
+
+    def _get_provider_filter(self, provider_field="provider"):
+        self._ensure_allowed_providers()
+        if hasattr(self, "allowed_providers"):
+            return {f"{provider_field}__in": self.allowed_providers}
+        return {}
+
+    def _apply_provider_filter(self, queryset, provider_field="provider"):
+        provider_filter = self._get_provider_filter(provider_field)
+        if provider_filter:
+            return queryset.filter(**provider_filter)
+        return queryset
+
+    def _apply_filterset(self, queryset, filterset_class, exclude_keys=None):
+        normalized_params = self._normalize_jsonapi_params(
+            self.request.query_params, exclude_keys=set(exclude_keys or [])
+        )
+        filterset = filterset_class(normalized_params, queryset=queryset)
+        return filterset.qs
+
+    def _latest_scan_ids_for_allowed_providers(self, tenant_id):
+        provider_filter = self._get_provider_filter()
+        return (
+            Scan.all_objects.filter(
+                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
+            )
+            .order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values_list("id", flat=True)
+        )
+
+    def _attack_surface_check_ids_by_provider_types(self, provider_types):
+        check_ids_by_type = {
+            attack_surface_type: set()
+            for attack_surface_type in AttackSurfaceOverview.AttackSurfaceTypeChoices.values
+        }
+        for provider_type in provider_types:
+            attack_surface_mapping = _get_attack_surface_mapping_from_provider(
+                provider_type=provider_type
+            )
+            for attack_surface_type, check_ids in attack_surface_mapping.items():
+                check_ids_by_type[attack_surface_type].update(check_ids)
+        return check_ids_by_type
 
     @action(detail=False, methods=["get"], url_name="providers")
     def providers(self, request):
@@ -4316,11 +4415,9 @@ class OverviewViewSet(BaseRLSViewSet):
         snapshot_id = request.query_params.get("snapshot_id")
 
         # Base queryset with RLS
-        base_queryset = ThreatScoreSnapshot.objects.filter(tenant_id=tenant_id)
-
-        # Apply RBAC filtering
-        if hasattr(self, "allowed_providers"):
-            base_queryset = base_queryset.filter(provider__in=self.allowed_providers)
+        base_queryset = self._apply_provider_filter(
+            ThreatScoreSnapshot.objects.filter(tenant_id=tenant_id)
+        )
 
         # Case 1: Specific snapshot requested
         if snapshot_id:
@@ -4336,17 +4433,9 @@ class OverviewViewSet(BaseRLSViewSet):
         # Case 2: Latest snapshot per provider (default)
         # Apply filters manually: this @action is outside the standard list endpoint flow,
         # so DRF's filter backends don't execute and we must flatten JSON:API params ourselves.
-        normalized_params = QueryDict(mutable=True)
-        for param_key, values in request.query_params.lists():
-            normalized_key = param_key
-            if param_key.startswith("filter[") and param_key.endswith("]"):
-                normalized_key = param_key[7:-1]
-            if normalized_key == "snapshot_id":
-                continue
-            normalized_params.setlist(normalized_key, values)
-
-        filterset = ThreatScoreSnapshotFilter(normalized_params, queryset=base_queryset)
-        filtered_queryset = filterset.qs
+        filtered_queryset = self._apply_filterset(
+            base_queryset, ThreatScoreSnapshotFilter, exclude_keys={"snapshot_id"}
+        )
 
         # Get distinct provider IDs from filtered queryset
         # Pick the latest snapshot per provider using Postgres DISTINCT ON pattern.
@@ -4589,6 +4678,67 @@ class OverviewViewSet(BaseRLSViewSet):
         aggregated_snapshot._aggregated = True
 
         return aggregated_snapshot
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_name="attack-surface",
+        url_path="attack-surfaces",
+    )
+    def attack_surface(self, request):
+        tenant_id = request.tenant_id
+        latest_scan_ids = self._latest_scan_ids_for_allowed_providers(tenant_id)
+
+        # Build base queryset and apply user filters via FilterSet
+        base_queryset = AttackSurfaceOverview.objects.filter(
+            tenant_id=tenant_id, scan_id__in=latest_scan_ids
+        )
+        filtered_queryset = self._apply_filterset(
+            base_queryset, AttackSurfaceOverviewFilter
+        )
+        provider_types = list(
+            filtered_queryset.values_list(
+                "scan__provider__provider", flat=True
+            ).distinct()
+        )
+        attack_surface_check_ids = self._attack_surface_check_ids_by_provider_types(
+            provider_types
+        )
+        # Aggregate attack surface data
+        aggregation = filtered_queryset.values("attack_surface_type").annotate(
+            total_findings=Coalesce(Sum("total_findings"), 0),
+            failed_findings=Coalesce(Sum("failed_findings"), 0),
+            muted_failed_findings=Coalesce(Sum("muted_failed_findings"), 0),
+        )
+
+        results = {
+            attack_surface_type: {
+                "total_findings": 0,
+                "failed_findings": 0,
+                "muted_failed_findings": 0,
+            }
+            for attack_surface_type in AttackSurfaceOverview.AttackSurfaceTypeChoices.values
+        }
+        for item in aggregation:
+            results[item["attack_surface_type"]] = {
+                "total_findings": item["total_findings"],
+                "failed_findings": item["failed_findings"],
+                "muted_failed_findings": item["muted_failed_findings"],
+            }
+
+        response_data = [
+            {
+                "attack_surface_type": key,
+                **value,
+                "check_ids": attack_surface_check_ids.get(key, []),
+            }
+            for key, value in results.items()
+        ]
+
+        return Response(
+            self.get_serializer(response_data, many=True).data,
+            status=status.HTTP_200_OK,
+        )
 
 
 @extend_schema(tags=["Schedule"])

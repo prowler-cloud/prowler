@@ -759,6 +759,11 @@ def mock_api_instances_calls(client: MagicMock, service: str):
                             "diskType": "disk_type",
                         }
                     ],
+                    "scheduling": {
+                        "automaticRestart": False,
+                        "preemptible": False,
+                        "provisioningModel": "STANDARD",
+                    },
                 },
                 {
                     "name": "instance2",
@@ -785,6 +790,11 @@ def mock_api_instances_calls(client: MagicMock, service: str):
                             "diskType": "disk_type",
                         }
                     ],
+                    "scheduling": {
+                        "automaticRestart": False,
+                        "preemptible": False,
+                        "provisioningModel": "STANDARD",
+                    },
                 },
             ]
         }

@@ -5,6 +5,10 @@ import { ContentLayout } from "@/components/ui";
 import { SearchParamsProps } from "@/types";
 
 import { AccountsSelector } from "./_new-overview/components/accounts-selector";
+import {
+  AttackSurfaceSkeleton,
+  AttackSurfaceSSR,
+} from "./_new-overview/components/attack-surface";
 import { CheckFindingsSSR } from "./_new-overview/components/check-findings";
 import { GraphsTabsWrapper } from "./_new-overview/components/graphs-tabs/graphs-tabs-wrapper";
 import { RiskPipelineViewSkeleton } from "./_new-overview/components/graphs-tabs/risk-pipeline-view";
@@ -19,7 +23,6 @@ import {
   ThreatScoreSSR,
 } from "./_new-overview/components/threat-score";
 import {
-  ComplianceWatchlistSSR,
   ServiceWatchlistSSR,
   WatchlistCardSkeleton,
 } from "./_new-overview/components/watchlist";
@@ -53,16 +56,19 @@ export default async function Home({
         </Suspense>
       </div>
 
-      <div className="mt-6 flex flex-col gap-6">
-        <div className="flex flex-col gap-6 md:flex-row">
-          <Suspense fallback={<WatchlistCardSkeleton />}>
-            <ComplianceWatchlistSSR searchParams={resolvedSearchParams} />
-          </Suspense>
-          <Suspense fallback={<WatchlistCardSkeleton />}>
-            <ServiceWatchlistSSR searchParams={resolvedSearchParams} />
-          </Suspense>
-        </div>
+      <div className="mt-6">
+        <Suspense fallback={<AttackSurfaceSkeleton />}>
+          <AttackSurfaceSSR searchParams={resolvedSearchParams} />
+        </Suspense>
+      </div>
 
+      <div className="mt-6 flex flex-col gap-6 md:flex-row">
+        <Suspense fallback={<WatchlistCardSkeleton />}>
+          <ServiceWatchlistSSR searchParams={resolvedSearchParams} />
+        </Suspense>
+      </div>
+
+      <div className="mt-6">
         <Suspense fallback={<RiskPipelineViewSkeleton />}>
           <GraphsTabsWrapper searchParams={resolvedSearchParams} />
         </Suspense>

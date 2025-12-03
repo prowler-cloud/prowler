@@ -5,6 +5,8 @@ IGNORED_EXCEPTIONS = [
     # Provider is not connected due to credentials errors
     "is not connected",
     "ProviderConnectionError",
+    # Provider was deleted during a scan
+    "ProviderDeletedException",
     # Authentication Errors from AWS
     "InvalidToken",
     "AccessDeniedException",

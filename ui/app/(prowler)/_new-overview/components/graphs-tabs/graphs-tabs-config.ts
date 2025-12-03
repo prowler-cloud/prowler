@@ -1,7 +1,7 @@
 export const GRAPH_TABS = [
   {
     id: "findings",
-    label: "Findings",
+    label: "New Findings",
   },
   {
     id: "risk-pipeline",
