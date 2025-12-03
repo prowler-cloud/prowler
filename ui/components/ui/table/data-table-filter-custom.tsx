@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 
 import { ComplianceScanInfo } from "@/components/compliance/compliance-header/compliance-scan-info";
+import { ActiveCheckIdFilter } from "@/components/filters/active-check-id-filter";
 import { ClearFiltersButton } from "@/components/filters/clear-filters-button";
 import {
   MultiSelect,
@@ -164,7 +165,8 @@ export const DataTableFilterCustom = ({
           </MultiSelect>
         );
       })}
-      <div className="flex items-center justify-start">
+      <div className="flex items-center justify-start gap-2">
+        <ActiveCheckIdFilter />
         <ClearFiltersButton />
       </div>
     </div>

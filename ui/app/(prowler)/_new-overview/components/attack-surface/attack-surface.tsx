@@ -5,9 +5,10 @@ import { AttackSurfaceCardItem } from "./attack-surface-card-item";
 
 interface AttackSurfaceProps {
   items: AttackSurfaceItem[];
+  filters?: Record<string, string | string[] | undefined>;
 }
 
-export function AttackSurface({ items }: AttackSurfaceProps) {
+export function AttackSurface({ items, filters }: AttackSurfaceProps) {
   const isEmpty = items.length === 0;
 
   return (
@@ -25,7 +26,7 @@ export function AttackSurface({ items }: AttackSurfaceProps) {
           </div>
         ) : (
           items.map((item) => (
-            <AttackSurfaceCardItem key={item.id} item={item} />
+            <AttackSurfaceCardItem key={item.id} item={item} filters={filters} />
           ))
         )}
       </CardContent>
