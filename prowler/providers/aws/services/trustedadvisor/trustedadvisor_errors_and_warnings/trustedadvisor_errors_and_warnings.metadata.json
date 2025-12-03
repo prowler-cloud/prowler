@@ -1,29 +1,37 @@
 {
   "Provider": "aws",
   "CheckID": "trustedadvisor_errors_and_warnings",
-  "CheckTitle": "Check Trusted Advisor for errors and warnings.",
-  "CheckType": [],
+  "CheckTitle": "Trusted Advisor check has no errors or warnings",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
   "ServiceName": "trustedadvisor",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:service:region:account-id",
-  "Severity": "medium",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
   "ResourceType": "Other",
-  "Description": "Check Trusted Advisor for errors and warnings.",
-  "Risk": "Improve the security of your application by closing gaps, enabling various AWS security features and examining your permissions.",
-  "RelatedUrl": "https://aws.amazon.com/premiumsupport/technology/trusted-advisor/best-practice-checklist/",
+  "Description": "**AWS Trusted Advisor** check statuses are assessed to identify items in `warning` or `error`. The finding reflects the state reported by Trusted Advisor across categories such as **Security**, **Fault Tolerance**, **Service Limits**, and **Cost**, indicating where configurations or quotas require attention.",
+  "Risk": "Unaddressed **warnings/errors** can leave misconfigurations that impact CIA:\n- **Confidentiality**: public access or weak auth exposes data\n- **Integrity**: overly permissive settings allow unwanted changes\n- **Availability**: limit exhaustion or poor resilience triggers outages\nThey can also increase unnecessary cost.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://aws.amazon.com/premiumsupport/technology/trusted-advisor/best-practice-checklist/",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/TrustedAdvisor/checks.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/TrustedAdvisor/checks.html",
+      "Other": "1. Sign in to the AWS Console and open Trusted Advisor\n2. Go to Checks and filter Status to Warning and Error\n3. Open each failing check and click View details/Recommended actions\n4. Apply the listed fix to the affected resources\n5. Click Refresh on the check and repeat until all checks show OK",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Review and act upon its recommendations.",
-      "Url": "https://aws.amazon.com/premiumsupport/technology/trusted-advisor/best-practice-checklist/"
+      "Text": "Adopt a continuous process to remediate Trusted Advisor findings:\n- Prioritize **`error`** then `warning`\n- Assign ownership and SLAs\n- Integrate alerts with workflows\n- Enforce **least privilege**, segmentation, encryption, MFA, and tested backups\n- Reassess regularly to confirm fixes and prevent regression",
+      "Url": "https://hub.prowler.com/check/trustedadvisor_errors_and_warnings"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
