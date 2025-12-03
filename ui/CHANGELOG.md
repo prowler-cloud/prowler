@@ -15,6 +15,14 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ---
 
+## [1.14.3] (Prowler Unreleased)
+
+### 🐞 Fixed
+
+- Sort compliance cards by name from the compliance overview [(9422)](https://github.com/prowler-cloud/prowler/pull/9422)
+
+---
+
 ## [1.14.2] (Prowler v5.14.2)
 
 ### 🐞 Fixed
