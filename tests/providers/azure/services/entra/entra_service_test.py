@@ -251,38 +251,54 @@ def test_azure_entra__get_users_handles_pagination():
     )
     with_url_mock = MagicMock(return_value=users_with_url_builder)
 
-    def by_user_id_side_effect(user_id):
-        auth_methods_response = SimpleNamespace(
-            value=[
-                SimpleNamespace(
-                    id=f"{user_id}-method",
-                    odata_type="#microsoft.graph.passwordAuthenticationMethod",
-                )
-            ]
-        )
-        return SimpleNamespace(
-            authentication=SimpleNamespace(
-                methods=SimpleNamespace(
-                    get=AsyncMock(return_value=auth_methods_response)
-                )
-            )
-        )
-
     users_builder = SimpleNamespace(
         get=AsyncMock(return_value=users_response_page_one),
         with_url=with_url_mock,
-        by_user_id=MagicMock(side_effect=by_user_id_side_effect),
     )
 
-    entra_service.clients = {"tenant-1": SimpleNamespace(users=users_builder)}
+    registration_details_response = SimpleNamespace(
+        value=[
+            SimpleNamespace(
+                id="user-1",
+                methods_registered=["microsoftAuthenticator"],
+            ),
+            SimpleNamespace(
+                id="user-2",
+                methods_registered=["hardwareOath"],
+            ),
+        ],
+        odata_next_link=None,
+    )
+
+    registration_details_builder = SimpleNamespace(
+        get=AsyncMock(return_value=registration_details_response),
+        with_url=MagicMock(),
+    )
+
+    entra_service.clients = {
+        "tenant-1": SimpleNamespace(
+            users=users_builder,
+            reports=SimpleNamespace(
+                authentication_methods=SimpleNamespace(
+                    user_registration_details=registration_details_builder
+                )
+            ),
+        )
+    }
 
     users = asyncio.run(entra_service._get_users())
 
     assert len(users["tenant-1"]) == 3
     assert users_builder.get.await_count == 1
     with_url_mock.assert_called_once_with("next-link")
-    assert users["tenant-1"]["user-1"].authentication_methods[0].id == "user-1-method"
+    registration_details_builder.get.assert_awaited()
+    registration_details_builder.with_url.assert_not_called()
     assert (
-        users["tenant-1"]["user-3"].authentication_methods[0].type
-        == "#microsoft.graph.passwordAuthenticationMethod"
+        users["tenant-1"]["user-1"].authentication_methods[0].type
+        == "microsoftAuthenticator"
     )
+    assert (
+        users["tenant-1"]["user-2"].authentication_methods[0].id
+        == "user-2-hardwareOath"
+    )
+    assert users["tenant-1"]["user-3"].authentication_methods == []
