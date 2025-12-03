@@ -30,6 +30,7 @@ interface LineChartProps {
   lines: LineConfig[];
   height?: number;
   xAxisInterval?: number | "preserveStart" | "preserveEnd" | "preserveStartEnd";
+  onPointClick?: (data: LineDataPoint) => void;
 }
 
 interface TooltipPayloadItem {
@@ -123,6 +124,7 @@ export function LineChart({
   lines,
   height = 400,
   xAxisInterval = "preserveStartEnd",
+  onPointClick,
 }: LineChartProps) {
   const [hoveredLine, setHoveredLine] = useState<string | null>(null);
 
@@ -146,6 +148,16 @@ export function LineChart({
             right: 30,
             bottom: 40,
           }}
+          onClick={
+            onPointClick
+              ? (state) => {
+                  if (state?.activePayload?.[0]?.payload) {
+                    onPointClick(state.activePayload[0].payload);
+                  }
+                }
+              : undefined
+          }
+          style={{ cursor: onPointClick ? "pointer" : "default" }}
         >
           <CartesianGrid
             vertical={false}
@@ -192,7 +204,10 @@ export function LineChart({
                 strokeOpacity={isFaded ? 0.5 : 1}
                 name={line.label}
                 dot={{ fill: line.color, r: 4 }}
-                activeDot={{ r: 6 }}
+                activeDot={{
+                  r: 6,
+                  cursor: onPointClick ? "pointer" : "default",
+                }}
                 onMouseEnter={() => setHoveredLine(line.dataKey)}
                 onMouseLeave={() => setHoveredLine(null)}
                 style={{ transition: "stroke-opacity 0.2s" }}

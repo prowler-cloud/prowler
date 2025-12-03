@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { getSeverityTrendsByTimeRange } from "@/actions/overview/severity-trends";
@@ -17,10 +18,15 @@ interface FindingSeverityOverTimeProps {
 export const FindingSeverityOverTime = ({
   data: initialData,
 }: FindingSeverityOverTimeProps) => {
+  const router = useRouter();
   const [timeRange, setTimeRange] = useState<TimeRange>("5D");
   const [data, setData] = useState<LineDataPoint[]>(initialData);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const handlePointClick = (pointData: LineDataPoint) => {
+    router.push(`/findings?filter[inserted_at]=${pointData.date}`);
+  };
 
   const handleTimeRangeChange = async (newRange: TimeRange) => {
     setTimeRange(newRange);
@@ -85,6 +91,7 @@ export const FindingSeverityOverTime = ({
             lines={lines}
             height={400}
             xAxisInterval={getXAxisInterval()}
+            onPointClick={handlePointClick}
           />
         </div>
       )}
