@@ -2,7 +2,30 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.14.0] (Unreleased)
+## [1.15.0] (Prowler Unreleased)
+
+### 🚀 Added
+
+- Attack Surface component to Overview page [(#9412)](https://github.com/prowler-cloud/prowler/pull/9412)
+- Compliance Watchlist component to Overview page [(#9199)](https://github.com/prowler-cloud/prowler/pull/9199)
+- Service Watchlist component to Overview page [(#9316)](https://github.com/prowler-cloud/prowler/pull/9316)
+- Risk Pipeline component with Sankey chart to Overview page [(#9317)](https://github.com/prowler-cloud/prowler/pull/9317)
+- Threat Map component to Overview Page [(#9324)](https://github.com/prowler-cloud/prowler/pull/9324)
+- MongoDB Atlas provider support [(#9253)](https://github.com/prowler-cloud/prowler/pull/9253)
+- Lighthouse AI support for Amazon Bedrock API key [(#9343)](https://github.com/prowler-cloud/prowler/pull/9343)
+
+---
+
+## [1.14.2] (Prowler v5.14.2)
+
+### 🐞 Fixed
+
+- Models list in Lighthouse selector when default model is not set for provider [(9402)](https://github.com/prowler-cloud/prowler/pull/9402)
+- Sort compliance cards by name from the compliance overview [(9422)](https://github.com/prowler-cloud/prowler/pull/9422)
+
+---
+
+## [1.14.0] (Prowler v5.14.0)
 
 ### 🚀 Added
 
@@ -14,6 +37,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - PDF reporting for NIS2 compliance framework [(#9170)](https://github.com/prowler-cloud/prowler/pull/9170)
 - External resource link to IaC findings for direct navigation to source code in Git repositories [(#9151)](https://github.com/prowler-cloud/prowler/pull/9151)
 - New Overview page and new app styles [(#9234)](https://github.com/prowler-cloud/prowler/pull/9234)
+- Use branch name as region for IaC findings [(#9296)](https://github.com/prowler-cloud/prowler/pull/9296)
 
 ### 🔄 Changed
 
@@ -24,7 +48,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ---
 
-## [1.13.1]
+## [1.13.1] (Prolwer v5.13.1)
 
 ### 🔄 Changed
 
@@ -214,7 +238,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ---
 
-## [v1.8.1] (Prowler 5.8.1)
+## [v1.8.1] (Prowler v5.8.1)
 
 ### 🔄 Changed
 
