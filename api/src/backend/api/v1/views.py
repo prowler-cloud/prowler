@@ -76,6 +76,7 @@ from tasks.beat import schedule_provider_scan
 from tasks.jobs.export import get_s3_client
 from tasks.jobs.scan import _get_attack_surface_mapping_from_provider
 from tasks.tasks import (
+    backfill_compliance_summaries_task,
     backfill_scan_resource_summaries_task,
     check_integration_connection_task,
     check_lighthouse_connection_task,
@@ -128,6 +129,7 @@ from api.filters import (
 )
 from api.models import (
     AttackSurfaceOverview,
+    ComplianceOverviewSummary,
     ComplianceRequirementOverview,
     Finding,
     Integration,
@@ -3526,6 +3528,126 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
     def retrieve(self, request, *args, **kwargs):
         raise MethodNotAllowed(method="GET")
 
+    def _compliance_summaries_queryset(self, scan_id):
+        """Return pre-aggregated summaries constrained by RBAC visibility."""
+        role = get_role(self.request.user)
+        unlimited_visibility = getattr(
+            role, Permissions.UNLIMITED_VISIBILITY.value, False
+        )
+        summaries = ComplianceOverviewSummary.objects.filter(
+            tenant_id=self.request.tenant_id,
+            scan_id=scan_id,
+        )
+
+        if not unlimited_visibility:
+            providers = Provider.all_objects.filter(
+                provider_groups__in=role.provider_groups.all()
+            ).distinct()
+            summaries = summaries.filter(scan__provider__in=providers)
+
+        return summaries
+
+    def _get_compliance_template(self, *, provider=None, scan_id=None):
+        """Return the compliance template for the given provider or scan."""
+        if provider is None and scan_id is not None:
+            try:
+                scan = Scan.all_objects.select_related("provider").get(pk=scan_id)
+            except Scan.DoesNotExist:
+                raise ValidationError(
+                    [
+                        {
+                            "detail": "Scan not found",
+                            "status": 404,
+                            "source": {"pointer": "filter[scan_id]"},
+                            "code": "not_found",
+                        }
+                    ]
+                )
+            provider = scan.provider
+
+        if not provider:
+            return {}
+
+        return PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE.get(provider.provider, {})
+
+    def _aggregate_compliance_overview(self, queryset, template_metadata=None):
+        """
+        Aggregate requirement rows into compliance overview dictionaries.
+
+        Args:
+            queryset: ComplianceRequirementOverview queryset already filtered.
+            template_metadata: Optional dict mapping compliance_id -> metadata.
+        """
+        template_metadata = template_metadata or {}
+        requirement_status_subquery = queryset.values(
+            "compliance_id", "requirement_id"
+        ).annotate(
+            fail_count=Count("id", filter=Q(requirement_status="FAIL")),
+            pass_count=Count("id", filter=Q(requirement_status="PASS")),
+            total_count=Count("id"),
+        )
+
+        compliance_data = {}
+        fallback_metadata = {
+            item["compliance_id"]: {
+                "framework": item["framework"],
+                "version": item["version"],
+            }
+            for item in queryset.values(
+                "compliance_id", "framework", "version"
+            ).distinct()
+        }
+
+        for item in requirement_status_subquery:
+            compliance_id = item["compliance_id"]
+
+            if item["fail_count"] > 0:
+                req_status = "FAIL"
+            elif item["pass_count"] == item["total_count"]:
+                req_status = "PASS"
+            else:
+                req_status = "MANUAL"
+
+            compliance_status = compliance_data.setdefault(
+                compliance_id,
+                {
+                    "total_requirements": 0,
+                    "requirements_passed": 0,
+                    "requirements_failed": 0,
+                    "requirements_manual": 0,
+                },
+            )
+
+            compliance_status["total_requirements"] += 1
+            if req_status == "PASS":
+                compliance_status["requirements_passed"] += 1
+            elif req_status == "FAIL":
+                compliance_status["requirements_failed"] += 1
+            else:
+                compliance_status["requirements_manual"] += 1
+
+        response_data = []
+        for compliance_id, data in compliance_data.items():
+            template = template_metadata.get(compliance_id, {})
+            fallback = fallback_metadata.get(compliance_id, {})
+
+            response_data.append(
+                {
+                    "id": compliance_id,
+                    "compliance_id": compliance_id,
+                    "framework": template.get("framework")
+                    or fallback.get("framework", ""),
+                    "version": template.get("version") or fallback.get("version", ""),
+                    "requirements_passed": data["requirements_passed"],
+                    "requirements_failed": data["requirements_failed"],
+                    "requirements_manual": data["requirements_manual"],
+                    "total_requirements": data["total_requirements"],
+                }
+            )
+
+        serializer = self.get_serializer(response_data, many=True)
+        return serializer.data
+
     def _task_response_if_running(self, scan_id):
         """Check for an in-progress task only when no compliance data exists."""
         try:
@@ -3540,90 +3662,84 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-    def list(self, request, *args, **kwargs):
-        scan_id = request.query_params.get("filter[scan_id]")
-        if not scan_id:
-            raise ValidationError(
-                [
-                    {
-                        "detail": "This query parameter is required.",
-                        "status": 400,
-                        "source": {"pointer": "filter[scan_id]"},
-                        "code": "required",
-                    }
-                ]
-            )
-        try:
-            if task := self.get_task_response_if_running(
-                task_name="scan-compliance-overviews",
-                task_kwargs={"tenant_id": self.request.tenant_id, "scan_id": scan_id},
-                raise_on_not_found=False,
-            ):
-                return task
-        except TaskFailedException:
-            return Response(
-                {"detail": "Task failed to generate compliance overview data."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-        queryset = self.filter_queryset(self.filter_queryset(self.get_queryset()))
-
-        requirement_status_subquery = queryset.values(
-            "compliance_id", "requirement_id"
-        ).annotate(
-            fail_count=Count("id", filter=Q(requirement_status="FAIL")),
-            pass_count=Count("id", filter=Q(requirement_status="PASS")),
-            total_count=Count("id"),
+    def _list_with_region_filter(self, scan_id, region_filter):
+        """
+        Fall back to detailed ComplianceRequirementOverview query when region filter is applied.
+        This uses the original aggregation logic across filtered regions.
+        """
+        regions = region_filter.split(",") if "," in region_filter else [region_filter]
+        queryset = self.filter_queryset(self.get_queryset()).filter(
+            scan_id=scan_id,
+            region__in=regions,
         )
 
-        compliance_data = {}
-        framework_info = {}
+        data = self._aggregate_compliance_overview(queryset)
+        if data:
+            return Response(data)
 
-        for item in queryset.values("compliance_id", "framework", "version").distinct():
-            framework_info[item["compliance_id"]] = {
-                "framework": item["framework"],
-                "version": item["version"],
-            }
+        task_response = self._task_response_if_running(scan_id)
+        if task_response:
+            return task_response
 
-        for item in requirement_status_subquery:
-            compliance_id = item["compliance_id"]
+        return Response(data)
 
-            if item["fail_count"] > 0:
-                req_status = "FAIL"
-            elif item["pass_count"] == item["total_count"]:
-                req_status = "PASS"
-            else:
-                req_status = "MANUAL"
+    def _list_without_region_aggregation(self, scan_id):
+        """
+        Fall back aggregation when compliance summaries don't exist yet.
+        Aggregates ComplianceRequirementOverview data across ALL regions.
+        """
+        queryset = self.filter_queryset(self.get_queryset()).filter(scan_id=scan_id)
+        compliance_template = self._get_compliance_template(scan_id=scan_id)
+        data = self._aggregate_compliance_overview(
+            queryset, template_metadata=compliance_template
+        )
+        if data:
+            return Response(data)
 
-            if compliance_id not in compliance_data:
-                compliance_data[compliance_id] = {
-                    "total_requirements": 0,
-                    "requirements_passed": 0,
-                    "requirements_failed": 0,
-                    "requirements_manual": 0,
-                }
+        task_response = self._task_response_if_running(scan_id)
+        if task_response:
+            return task_response
 
-            compliance_data[compliance_id]["total_requirements"] += 1
-            if req_status == "PASS":
-                compliance_data[compliance_id]["requirements_passed"] += 1
-            elif req_status == "FAIL":
-                compliance_data[compliance_id]["requirements_failed"] += 1
-            else:
-                compliance_data[compliance_id]["requirements_manual"] += 1
+        return Response(data)
 
+    def list(self, request, *args, **kwargs):
+        scan_id = request.query_params.get("filter[scan_id]")
+
+        # Specific scan requested - use optimized summaries with region support
+        region_filter = request.query_params.get(
+            "filter[region]"
+        ) or request.query_params.get("filter[region__in]")
+
+        if region_filter:
+            # Fall back to detailed query with region filtering
+            return self._list_with_region_filter(scan_id, region_filter)
+
+        summaries = list(self._compliance_summaries_queryset(scan_id))
+        if not summaries:
+            # Trigger async backfill for next time
+            backfill_compliance_summaries_task.delay(
+                tenant_id=self.request.tenant_id, scan_id=scan_id
+            )
+            # Use fallback aggregation for this request
+            return self._list_without_region_aggregation(scan_id)
+
+        # Get compliance template for provider to enrich with framework/version
+        compliance_template = self._get_compliance_template(scan_id=scan_id)
+
+        # Convert to response format with framework/version enrichment
         response_data = []
-        for compliance_id, data in compliance_data.items():
-            framework = framework_info.get(compliance_id, {})
-
+        for summary in summaries:
+            compliance_metadata = compliance_template.get(summary.compliance_id, {})
             response_data.append(
                 {
-                    "id": compliance_id,
-                    "compliance_id": compliance_id,
-                    "framework": framework.get("framework", ""),
-                    "version": framework.get("version", ""),
-                    "requirements_passed": data["requirements_passed"],
-                    "requirements_failed": data["requirements_failed"],
-                    "requirements_manual": data["requirements_manual"],
-                    "total_requirements": data["total_requirements"],
+                    "id": summary.compliance_id,
+                    "compliance_id": summary.compliance_id,
+                    "framework": compliance_metadata.get("framework", ""),
+                    "version": compliance_metadata.get("version", ""),
+                    "requirements_passed": summary.requirements_passed,
+                    "requirements_failed": summary.requirements_failed,
+                    "requirements_manual": summary.requirements_manual,
+                    "total_requirements": summary.total_requirements,
                 }
             )
 

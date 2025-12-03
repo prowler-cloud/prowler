@@ -23,7 +23,6 @@ export const ServiceWatchlist = ({ items }: { items: ServiceOverview[] }) => {
     .slice(0, 5)
     .map((item) => ({
       key: item.id,
-      icon: <div className="bg-bg-data-muted size-3 rounded-sm" />,
       label: item.id,
       value: item.attributes.fail,
     }));
@@ -34,6 +33,7 @@ export const ServiceWatchlist = ({ items }: { items: ServiceOverview[] }) => {
     mapProviderFiltersForFindings(params);
 
     params.set("filter[service__in]", item.key);
+    params.set("filter[status__in]", "FAIL");
     router.push(`/findings?${params.toString()}`);
   };
 
@@ -53,6 +53,7 @@ export const ServiceWatchlist = ({ items }: { items: ServiceOverview[] }) => {
         message: "This space is looking empty.",
       }}
       onItemClick={handleItemClick}
+      useFailureColoring
     />
   );
 };

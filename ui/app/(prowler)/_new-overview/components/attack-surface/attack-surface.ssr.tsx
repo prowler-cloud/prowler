@@ -18,5 +18,5 @@ export const AttackSurfaceSSR = async ({
 
   const items = adaptAttackSurfaceOverview(response);
 
-  return <AttackSurface items={items} />;
+  return <AttackSurface items={items} filters={filters} />;
 };
