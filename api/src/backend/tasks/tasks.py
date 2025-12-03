@@ -47,7 +47,7 @@ from tasks.utils import batched, get_next_execution_datetime
 from api.compliance import get_compliance_frameworks
 from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import rls_transaction
-from api.decorators import set_tenant
+from api.decorators import handle_provider_deletion, set_tenant
 from api.models import Finding, Integration, Provider, Scan, ScanSummary, StateChoices
 from api.utils import initialize_prowler_provider
 from api.v1.serializers import ScanTaskSerializer
@@ -144,6 +144,7 @@ def delete_provider_task(provider_id: str, tenant_id: str):
 
 
 @shared_task(base=RLSTask, name="scan-perform", queue="scans")
+@handle_provider_deletion
 def perform_scan_task(
     tenant_id: str, scan_id: str, provider_id: str, checks_to_execute: list[str] = None
 ):
@@ -176,6 +177,7 @@ def perform_scan_task(
 
 
 @shared_task(base=RLSTask, bind=True, name="scan-perform-scheduled", queue="scans")
+@handle_provider_deletion
 def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
     """
     Task to perform a scheduled Prowler scan on a given provider.
@@ -281,6 +283,7 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
 
 
 @shared_task(name="scan-summary", queue="overview")
+@handle_provider_deletion
 def perform_scan_summary_task(tenant_id: str, scan_id: str):
     return aggregate_findings(tenant_id=tenant_id, scan_id=scan_id)
 
@@ -296,6 +299,7 @@ def delete_tenant_task(tenant_id: str):
     queue="scan-reports",
 )
 @set_tenant(keep_tenant=True)
+@handle_provider_deletion
 def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
     """
     Process findings in batches and generate output files in multiple formats.
@@ -491,6 +495,7 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
 
 
 @shared_task(name="backfill-scan-resource-summaries", queue="backfill")
+@handle_provider_deletion
 def backfill_scan_resource_summaries_task(tenant_id: str, scan_id: str):
     """
     Tries to backfill the resource scan summaries table for a given scan.
@@ -503,6 +508,7 @@ def backfill_scan_resource_summaries_task(tenant_id: str, scan_id: str):
 
 
 @shared_task(name="backfill-compliance-summaries", queue="backfill")
+@handle_provider_deletion
 def backfill_compliance_summaries_task(tenant_id: str, scan_id: str):
     """
     Tries to backfill compliance overview summaries for a completed scan.
@@ -518,6 +524,7 @@ def backfill_compliance_summaries_task(tenant_id: str, scan_id: str):
 
 
 @shared_task(base=RLSTask, name="scan-compliance-overviews", queue="compliance")
+@handle_provider_deletion
 def create_compliance_requirements_task(tenant_id: str, scan_id: str):
     """
     Creates detailed compliance requirement records for a scan.
@@ -534,6 +541,7 @@ def create_compliance_requirements_task(tenant_id: str, scan_id: str):
 
 
 @shared_task(name="scan-attack-surface-overviews", queue="overview")
+@handle_provider_deletion
 def aggregate_attack_surface_task(tenant_id: str, scan_id: str):
     """
     Creates attack surface overview records for a scan.
@@ -586,6 +594,7 @@ def refresh_lighthouse_provider_models_task(
 
 
 @shared_task(name="integration-check")
+@handle_provider_deletion
 def check_integrations_task(tenant_id: str, provider_id: str, scan_id: str = None):
     """
     Check and execute all configured integrations for a provider.
@@ -650,6 +659,7 @@ def check_integrations_task(tenant_id: str, provider_id: str, scan_id: str = Non
     name="integration-s3",
     queue="integrations",
 )
+@handle_provider_deletion
 def s3_integration_task(
     tenant_id: str,
     provider_id: str,
@@ -709,6 +719,7 @@ def jira_integration_task(
     name="scan-compliance-reports",
     queue="scan-reports",
 )
+@handle_provider_deletion
 def generate_compliance_reports_task(tenant_id: str, scan_id: str, provider_id: str):
     """
     Optimized task to generate ThreatScore, ENS, and NIS2 reports with shared queries.
