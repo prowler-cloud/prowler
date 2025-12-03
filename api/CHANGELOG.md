@@ -2,18 +2,6 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-<<<<<<< HEAD
-=======
-## [1.16.0] (Unreleased)
-
-### Added
-- New endpoint to retrieve an overview of the attack surfaces [(#9309)](https://github.com/prowler-cloud/prowler/pull/9309)
-- Exception handler for provider deletions during scans [(#9414)](https://github.com/prowler-cloud/prowler/pull/9414)
-
-### Changed
-- Restore the compliance overview endpoint's mandatory filters [(#9338)](https://github.com/prowler-cloud/prowler/pull/9338)
-
----
 
 ## [1.15.2] (Prowler v5.14.2)
 
@@ -22,7 +10,6 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
->>>>>>> f58c1fddf (fix(compliance): ignore conflicts with unique summaries (#9436))
 ## [1.15.1] (Prowler v5.14.1)
 
 ### Fixed
