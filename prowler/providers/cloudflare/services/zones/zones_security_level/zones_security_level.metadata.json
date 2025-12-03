@@ -1,0 +1,30 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zones_security_level",
+  "CheckTitle": "Security level is set to medium or higher for adequate threat protection",
+  "CheckType": [],
+  "ServiceName": "zones",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Zone",
+  "Description": "Verifies that the security level is set to medium, high, or under_attack to ensure adequate threat protection based on visitor reputation scores.",
+  "Risk": "A low security level allows more potentially malicious traffic to reach the origin, increasing the attack surface and risk of successful attacks against web applications.",
+  "RelatedUrl": "https://developers.cloudflare.com/waf/tools/security-level/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Set security level to Medium or High based on your threat tolerance. Use Under Attack mode during active attacks, but avoid keeping it enabled permanently as it may impact legitimate user experience.",
+      "Url": "https://hub.prowler.com/checks/zones_security_level"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

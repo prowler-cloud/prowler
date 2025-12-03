@@ -1,0 +1,32 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zones_spf_record_exists",
+  "CheckTitle": "SPF record exists for email authentication",
+  "CheckType": [],
+  "ServiceName": "zones",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Zone",
+  "Description": "Verifies that an SPF (Sender Policy Framework) TXT record exists to specify which mail servers are authorized to send email on behalf of the domain.",
+  "Risk": "Without SPF, attackers can forge emails appearing to come from your domain, enabling phishing attacks, brand impersonation, and reputation damage that impacts email deliverability.",
+  "RelatedUrl": "https://developers.cloudflare.com/dns/manage-dns-records/how-to/email-records/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "resource \"cloudflare_record\" \"spf\" {\n  zone_id = var.zone_id\n  name    = \"@\"\n  type    = \"TXT\"\n  value   = \"v=spf1 include:_spf.google.com ~all\"\n}"
+    },
+    "Recommendation": {
+      "Text": "Configure SPF records listing authorized mail servers. Combine SPF with DKIM and DMARC for comprehensive email authentication following defense in depth principles for email security.",
+      "Url": "https://hub.prowler.com/checks/zones_spf_record_exists"
+    }
+  },
+  "Categories": [
+    "email-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "SPF records start with 'v=spf1' and define authorized mail servers."
+}

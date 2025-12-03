@@ -1,0 +1,32 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zones_tls_1_3_enabled",
+  "CheckTitle": "TLS 1.3 is enabled for improved security and performance",
+  "CheckType": [],
+  "ServiceName": "zones",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Zone",
+  "Description": "Verifies that TLS 1.3 is enabled to benefit from improved security through simplified cipher suites and faster handshakes with zero round-trip time resumption.",
+  "Risk": "Without TLS 1.3, connections use older TLS versions with more complex cipher negotiations, slower handshakes, and lack of modern security improvements that protect against downgrade attacks.",
+  "RelatedUrl": "https://developers.cloudflare.com/ssl/edge-certificates/additional-options/tls-13/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable TLS 1.3 to provide the most secure and efficient TLS connections. All modern browsers support TLS 1.3, ensuring broad compatibility while improving security posture.",
+      "Url": "https://hub.prowler.com/checks/zones_tls_1_3_enabled"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

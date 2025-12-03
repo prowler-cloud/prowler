@@ -1,0 +1,32 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zones_universal_ssl_enabled",
+  "CheckTitle": "Universal SSL is enabled to provide SSL/TLS certificates",
+  "CheckType": [],
+  "ServiceName": "zones",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Zone",
+  "Description": "Verifies that Universal SSL is enabled to provide free SSL/TLS certificates for the domain and its subdomains, enabling HTTPS connections.",
+  "Risk": "Without Universal SSL, visitors cannot establish HTTPS connections, leaving all traffic unencrypted and vulnerable to interception. Browsers will display security warnings, degrading trust and user experience.",
+  "RelatedUrl": "https://developers.cloudflare.com/ssl/edge-certificates/universal-ssl/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable Universal SSL to provide HTTPS capability for your domain. This is the foundation for transport security and is required before implementing HSTS or other HTTPS-dependent features.",
+      "Url": "https://hub.prowler.com/checks/zones_universal_ssl_enabled"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
