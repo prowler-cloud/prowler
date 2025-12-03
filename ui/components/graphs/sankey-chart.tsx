@@ -468,6 +468,7 @@ export function SankeyChart({
 
       params.set("filter[severity__in]", severityFilter);
       params.set("filter[status__in]", "FAIL");
+      params.set("filter[muted]", "false");
       router.push(`/findings?${params.toString()}`);
     }
   };
@@ -481,16 +482,16 @@ export function SankeyChart({
 
       mapProviderFiltersForFindings(params);
 
-      // Only set provider_type filter if user had one selected in global filters
-      const hasProviderTypeFilter = searchParams.has(
-        "filter[provider_type__in]",
-      );
-      if (providerType && hasProviderTypeFilter) {
+      // Always set provider_type filter based on the clicked link's source (provider)
+      // This ensures clicking "AWS → High" filters by AWS even when no global filter is set
+      const hasProviderIdFilter = searchParams.has("filter[provider_id__in]");
+      if (providerType && !hasProviderIdFilter) {
         params.set("filter[provider_type__in]", providerType);
       }
 
       params.set("filter[severity__in]", severityFilter);
       params.set("filter[status__in]", "FAIL");
+      params.set("filter[muted]", "false");
       router.push(`/findings?${params.toString()}`);
     }
   };

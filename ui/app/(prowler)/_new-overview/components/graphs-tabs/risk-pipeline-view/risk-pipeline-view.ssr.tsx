@@ -1,6 +1,6 @@
 import {
   adaptToSankeyData,
-  getProvidersSeverityOverview,
+  getFindingsBySeverity,
   SeverityByProviderType,
 } from "@/actions/overview";
 import { getProviders } from "@/actions/providers";
@@ -19,46 +19,103 @@ export async function RiskPipelineViewSSR({
   const providerTypeFilter = filters["filter[provider_type__in]"];
   const providerIdFilter = filters["filter[provider_id__in]"];
 
-  // If accounts are selected, remove provider_type filter since accounts are more specific
-  const apiFilters = { ...filters };
-  if (providerIdFilter) {
-    delete apiFilters["filter[provider_type__in]"];
-  }
+  // Fetch providers list to know account types
+  const providersListResponse = await getProviders({ pageSize: 200 });
+  const allProviders = providersListResponse?.data || [];
 
-  // Fetch providers severity data
-  // If accounts are filtered, also fetch provider details to know their types
-  const [providersSeverityResponse, providersListResponse] = await Promise.all([
-    getProvidersSeverityOverview({ filters: apiFilters }),
-    // Only fetch providers list if we have account filter (to get their types for zero-data display)
-    providerIdFilter
-      ? getProviders({ filters: { "filter[id__in]": providerIdFilter } })
-      : null,
-  ]);
-
-  // Build severityByProviderType from the endpoint response
+  // Build severityByProviderType based on filters
   const severityByProviderType: SeverityByProviderType = {};
-
-  if (providersSeverityResponse?.data) {
-    for (const provider of providersSeverityResponse.data) {
-      const providerType = provider.id.toLowerCase();
-      severityByProviderType[providerType] = provider.attributes;
-    }
-  }
-
-  // Determine selected provider types for zero-data display
   let selectedProviderTypes: string[] | undefined;
 
-  if (providerIdFilter && providersListResponse?.data) {
-    // Get unique provider types from the selected accounts
-    const typesSet = new Set<string>();
-    for (const provider of providersListResponse.data) {
-      typesSet.add(provider.attributes.provider.toLowerCase());
+  if (providerIdFilter) {
+    // Case: Accounts are selected - group by provider type and make parallel calls
+    const selectedAccountIds = String(providerIdFilter)
+      .split(",")
+      .map((id) => id.trim());
+
+    // Group selected accounts by provider type
+    const accountsByType: Record<string, string[]> = {};
+    for (const accountId of selectedAccountIds) {
+      const provider = allProviders.find((p) => p.id === accountId);
+      if (provider) {
+        const type = provider.attributes.provider.toLowerCase();
+        if (!accountsByType[type]) {
+          accountsByType[type] = [];
+        }
+        accountsByType[type].push(accountId);
+      }
     }
-    selectedProviderTypes = Array.from(typesSet);
+
+    selectedProviderTypes = Object.keys(accountsByType);
+
+    // Make parallel calls for each provider type
+    const severityPromises = Object.entries(accountsByType).map(
+      async ([providerType, accountIds]) => {
+        const response = await getFindingsBySeverity({
+          filters: {
+            "filter[provider_id__in]": accountIds.join(","),
+            "filter[status]": "FAIL", // Only count failed findings
+          },
+        });
+        return { providerType, data: response?.data?.attributes };
+      },
+    );
+
+    const severityResults = await Promise.all(severityPromises);
+
+    for (const result of severityResults) {
+      if (result.data) {
+        severityByProviderType[result.providerType] = result.data;
+      }
+    }
   } else if (providerTypeFilter) {
+    // Case: Provider types are selected - make parallel calls for each type
     selectedProviderTypes = String(providerTypeFilter)
       .split(",")
       .map((t) => t.trim().toLowerCase());
+
+    const severityPromises = selectedProviderTypes.map(async (providerType) => {
+      const response = await getFindingsBySeverity({
+        filters: {
+          ...filters,
+          "filter[provider_type__in]": providerType,
+          "filter[status]": "FAIL", // Only count failed findings
+        },
+      });
+      return { providerType, data: response?.data?.attributes };
+    });
+
+    const severityResults = await Promise.all(severityPromises);
+
+    for (const result of severityResults) {
+      if (result.data) {
+        severityByProviderType[result.providerType] = result.data;
+      }
+    }
+  } else {
+    // Case: No filters - get all provider types and make parallel calls
+    const allProviderTypes = Array.from(
+      new Set(allProviders.map((p) => p.attributes.provider.toLowerCase())),
+    );
+
+    const severityPromises = allProviderTypes.map(async (providerType) => {
+      const response = await getFindingsBySeverity({
+        filters: {
+          ...filters,
+          "filter[provider_type__in]": providerType,
+          "filter[status]": "FAIL", // Only count failed findings
+        },
+      });
+      return { providerType, data: response?.data?.attributes };
+    });
+
+    const severityResults = await Promise.all(severityPromises);
+
+    for (const result of severityResults) {
+      if (result.data) {
+        severityByProviderType[result.providerType] = result.data;
+      }
+    }
   }
 
   const sankeyData = adaptToSankeyData(
