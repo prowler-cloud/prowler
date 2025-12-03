@@ -3,19 +3,19 @@
   "CheckID": "sls_logstore_retention_period",
   "CheckTitle": "Logstore data retention period is set to the recommended period (default 365 days)",
   "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards"
+    "Cloud threat detection"
   ],
   "ServiceName": "sls",
   "SubServiceName": "",
   "ResourceIdTemplate": "acs:log:region:account-id:project/project-name/logstore/logstore-name",
   "Severity": "medium",
   "ResourceType": "AlibabaCloudSLSLogStore",
-  "Description": "Ensure Activity Log Retention is set for 365 days or greater.",
-  "Risk": "Logstore life cycle controls how your activity log is exported and retained. It is recommended to retain your activity log for 365 days or more in order to have time to respond to any incidents.",
-  "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/48990.htm",
+  "Description": "Ensure **Activity Log Retention** is set for **365 days** or greater.",
+  "Risk": "Logstore lifecycle controls how your activity log is exported and retained. It is recommended to retain your activity log for **365 days or more** to have time to respond to any incidents.\n\nShort retention periods may result in loss of **forensic evidence** needed for security investigations.",
+  "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/48990.htm"
+    "https://www.alibabacloud.com/help/doc-detail/48990.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/sufficient-logstore-data-retention-period.html"
   ],
   "Remediation": {
     "Code": {
@@ -25,7 +25,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Logon to SLS Console. Find the project in the Projects section. Click Modify a Logstore icon next to the Logstore. Modify the Data Retention Period to 365 or greater.",
+      "Text": "1. Log on to the **SLS Console**\n2. Find the project in the Projects section\n3. Click **Modify** icon next to the Logstore\n4. Modify the `Data Retention Period` to `365` or greater",
       "Url": "https://hub.prowler.com/check/sls_logstore_retention_period"
     }
   },

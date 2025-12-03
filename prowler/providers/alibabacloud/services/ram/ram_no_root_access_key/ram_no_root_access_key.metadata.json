@@ -3,20 +3,20 @@
   "CheckID": "ram_no_root_access_key",
   "CheckTitle": "No root account access key exists",
   "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS Alibaba Cloud Foundations Benchmark"
+    "Unusual logon",
+    "Cloud threat detection"
   ],
   "ServiceName": "ram",
   "SubServiceName": "",
   "ResourceIdTemplate": "acs:ram::account-id:root",
   "Severity": "critical",
   "ResourceType": "AlibabaCloudRAMAccessKey",
-  "Description": "Ensure no root account access key exists. Access keys provide programmatic access to a given Alibaba Cloud account. It is recommended that all access keys associated with the root account be removed.",
-  "Risk": "The root account is the most privileged user in an Alibaba Cloud account. Access Keys provide programmatic access to a given Alibaba Cloud account. Removing access keys associated with the root account limits vectors by which the account can be compromised. Removing the root access keys encourages the creation and use of role based accounts that are least privileged.",
-  "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/102600.htm",
+  "Description": "Ensure no **root account access key** exists. Access keys provide programmatic access to a given Alibaba Cloud account.\n\nIt is recommended that all access keys associated with the root account be removed.",
+  "Risk": "The **root account** is the most privileged user in an Alibaba Cloud account. Access Keys provide programmatic access to a given Alibaba Cloud account.\n\nRemoving access keys associated with the root account limits vectors by which the account can be compromised and encourages the creation and use of **role-based accounts** that are least privileged.",
+  "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/102600.htm"
+    "https://www.alibabacloud.com/help/doc-detail/102600.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-RAM/remove-root-access-keys.html"
   ],
   "Remediation": {
     "Code": {
@@ -26,7 +26,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Logon to RAM console by using your Alibaba Cloud account (root account). Move the pointer over the account icon in the upper-right corner and click AccessKey. Click Continue to manage AccessKey. On the Security Management page, find the target access keys and click Delete to delete the target access keys permanently.",
+      "Text": "1. Log on to the **RAM Console** by using your Alibaba Cloud account (root account)\n2. Move the pointer over the account icon in the upper-right corner and click **AccessKey**\n3. Click **Continue to manage AccessKey**\n4. On the Security Management page, find the target access keys and click **Delete** to delete the target access keys permanently",
       "Url": "https://hub.prowler.com/check/ram_no_root_access_key"
     }
   },

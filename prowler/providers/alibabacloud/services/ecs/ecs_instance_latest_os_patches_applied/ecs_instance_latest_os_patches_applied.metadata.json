@@ -3,20 +3,19 @@
   "CheckID": "ecs_instance_latest_os_patches_applied",
   "CheckTitle": "The latest OS Patches for all Virtual Machines are applied",
   "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS Alibaba Cloud Foundations Benchmark"
+    "Malicious software",
+    "Web application threat detection"
   ],
   "ServiceName": "ecs",
   "SubServiceName": "",
   "ResourceIdTemplate": "acs:ecs:region:account-id:instance/{instance-id}",
   "Severity": "high",
   "ResourceType": "AlibabaCloudECSInstance",
-  "Description": "Windows and Linux virtual machines should be kept updated to address specific bugs or flaws, improve OS or application's general stability, and fix security vulnerabilities. The Alibaba Cloud Security Center checks for the latest updates in Linux and Windows systems.",
-  "Risk": "Unpatched systems are vulnerable to known security exploits and may be compromised by attackers. Keeping systems updated with the latest patches is critical for maintaining security.",
-  "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/28460.htm",
+  "Description": "Windows and Linux virtual machines should be kept updated to address specific bugs or flaws, improve OS or application's general stability, and fix **security vulnerabilities**.\n\nThe Alibaba Cloud **Security Center** checks for the latest updates in Linux and Windows systems.",
+  "Risk": "**Unpatched systems** are vulnerable to known security exploits and may be compromised by attackers.\n\nKeeping systems updated with the latest patches is critical for maintaining security and preventing **exploitation of known vulnerabilities**.",
+  "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/28460.htm"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-ECS/apply-latest-os-patches.html"
   ],
   "Remediation": {
     "Code": {
@@ -26,7 +25,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Logon to Security Center Console. Select Vulnerabilities. Ensure all vulnerabilities are fixed. Apply all patches for vulnerabilities.",
+      "Text": "1. Log on to the **Security Center Console**\n2. Select **Vulnerabilities**\n3. Ensure all vulnerabilities are fixed\n4. Apply all patches for vulnerabilities",
       "Url": "https://hub.prowler.com/check/ecs_instance_latest_os_patches_applied"
     }
   },

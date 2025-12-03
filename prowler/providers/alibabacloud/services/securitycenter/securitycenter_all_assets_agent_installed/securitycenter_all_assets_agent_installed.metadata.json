@@ -3,20 +3,23 @@
   "CheckID": "securitycenter_all_assets_agent_installed",
   "CheckTitle": "All assets are installed with security agent",
   "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS Alibaba Cloud Foundations Benchmark"
+    "Suspicious process",
+    "Webshell",
+    "Unusual logon",
+    "Sensitive file tampering",
+    "Malicious software"
   ],
   "ServiceName": "securitycenter",
   "SubServiceName": "",
   "ResourceIdTemplate": "acs:sas:region:account-id:machine/{machine-id}",
   "Severity": "high",
   "ResourceType": "AlibabaCloudSecurityCenterMachine",
-  "Description": "The endpoint protection of Security requires an agent to be installed on the endpoint to work. Such an agent-based approach allows the security center to provide a set of more comprehensive endpoint intrusion detection and protection capabilities, such as includes remote logon detection, webshell detection and removal, anomaly detection (detection of abnormal process behaviors and abnormal network connections), and detection of changes in key files and suspicious accounts in systems and applications.",
-  "Risk": "Assets without Security Center agent installed are not protected by endpoint intrusion detection and protection capabilities, leaving them vulnerable to security threats.",
-  "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/111650.htm",
+  "Description": "The endpoint protection of **Security Center** requires an agent to be installed on the endpoint to work. Such an agent-based approach allows the security center to provide comprehensive endpoint intrusion detection and protection capabilities.\n\nThis includes remote logon detection, **webshell detection** and removal, **anomaly detection** (detection of abnormal process behaviors and network connections), and detection of changes in key files and suspicious accounts.",
+  "Risk": "Assets without **Security Center agent** installed are not protected by endpoint intrusion detection and protection capabilities, leaving them vulnerable to security threats.\n\nUnprotected assets become blind spots in your security monitoring.",
+  "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/111650.htm"
+    "https://www.alibabacloud.com/help/doc-detail/111650.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-SecurityCenter/install-security-agent.html"
   ],
   "Remediation": {
     "Code": {
@@ -26,7 +29,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Logon to Security Center Console. Select Settings. Click Agent. On Client to be installed tab, select all items on the list. Click On-click installation to install the agent all asset.",
+      "Text": "1. Log on to the **Security Center Console**\n2. Select **Settings**\n3. Click **Agent**\n4. On the `Client to be installed` tab, select all items on the list\n5. Click **One-click installation** to install the agent on all assets",
       "Url": "https://hub.prowler.com/check/securitycenter_all_assets_agent_installed"
     }
   },

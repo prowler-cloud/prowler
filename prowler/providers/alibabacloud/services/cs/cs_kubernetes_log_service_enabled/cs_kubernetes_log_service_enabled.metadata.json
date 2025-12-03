@@ -3,30 +3,30 @@
   "CheckID": "cs_kubernetes_log_service_enabled",
   "CheckTitle": "Log Service is set to Enabled on Kubernetes Engine Clusters",
   "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS Alibaba Cloud Foundations Benchmark"
+    "Threat detection during container runtime"
   ],
   "ServiceName": "cs",
   "SubServiceName": "",
   "ResourceIdTemplate": "acs:cs:region:account-id:cluster/{cluster-id}",
   "Severity": "high",
   "ResourceType": "AlibabaCloudKubernetesCluster",
-  "Description": "Log Service is a complete real-time data logging service on Alibaba Cloud to support collection, shipping, search, storage and analysis for logs. It includes a user interface to call the Log Viewer and an API to management logs pragmatically. Log Service could automatically collect, process, and store your container and audit logs in a dedicated, persistent datastore. Container logs are collected from your containers. Audit logs are collected from the kube-apiserver or the deployed ingress. Events are logs about activity in the cluster, such as the deleting of Pods or Secrets.",
-  "Risk": "By enabling you will have container and system logs, Kubernetes Engine deploys a per-node logging agent that reads container logs, adds helpful metadata, and then stores them. The logging agent would help to collecting the following sources: kube-apiserver audit logs, ingress visiting logs, and Standard output and standard error logs from containerized processes.",
-  "RelatedUrl": "https://help.aliyun.com/document_detail/91406.html",
+  "Description": "**Log Service** is a complete real-time data logging service on Alibaba Cloud supporting collection, shipping, search, storage, and analysis for logs.\n\nLog Service can automatically collect, process, and store your container and audit logs in a dedicated, persistent datastore. Container logs are collected from your containers, audit logs from the `kube-apiserver` or deployed ingress, and events about cluster activity such as the deletion of Pods or Secrets.",
+  "Risk": "Without **Log Service** enabled, you lose visibility into container and system logs. The per-node logging agent collects: `kube-apiserver` audit logs, ingress visiting logs, and standard output/error logs from containerized processes.\n\nLack of logging makes **incident investigation**, **compliance auditing**, and **security monitoring** significantly more difficult.",
+  "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://help.aliyun.com/document_detail/91406.html"
+    "https://help.aliyun.com/document_detail/91406.html",
+    "https://help.aliyun.com/document_detail/86532.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-ACK/enable-log-service.html"
   ],
   "Remediation": {
     "Code": {
       "CLI": "aliyun cs GET /clusters/[cluster_id] to verify AuditProjectName is set. When creating a new cluster, set Enable Log Service to Enabled.",
       "NativeIaC": "",
-      "Other": "https://help.aliyun.com/document_detail/86532.html",
+      "Other": "",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Logon to ACK console. Select the target cluster and click its name into cluster detail page. Select Cluster Auditing on the left column and check if audit page shown. To enable: When creating a new cluster, set Enable Log Service to Enabled.",
+      "Text": "1. Log on to the **ACK Console**\n2. Select the target cluster and click its name to open the cluster detail page\n3. Select **Cluster Auditing** on the left column and check if the audit page is shown\n4. To enable: When creating a new cluster, set `Enable Log Service` to **Enabled**",
       "Url": "https://hub.prowler.com/check/cs_kubernetes_log_service_enabled"
     }
   },

@@ -3,20 +3,22 @@
   "CheckID": "ecs_instance_endpoint_protection_installed",
   "CheckTitle": "The endpoint protection for all Virtual Machines is installed",
   "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS Alibaba Cloud Foundations Benchmark"
+    "Suspicious process",
+    "Webshell",
+    "Unusual logon",
+    "Sensitive file tampering",
+    "Malicious software"
   ],
   "ServiceName": "ecs",
   "SubServiceName": "",
   "ResourceIdTemplate": "acs:ecs:region:account-id:instance/{instance-id}",
   "Severity": "high",
   "ResourceType": "AlibabaCloudECSInstance",
-  "Description": "Installing endpoint protection systems (like Security Center for Alibaba Cloud) provides for real-time protection capability that helps identify and remove viruses, spyware, and other malicious software, with configurable alerts when known malicious software attempts to install itself or run on ECS.",
-  "Risk": "ECS instances without endpoint protection are vulnerable to malware, viruses, and other security threats. Endpoint protection provides real-time monitoring and protection capabilities.",
-  "RelatedUrl": "https://www.alibabacloud.com/help/doc-detail/28460.htm",
+  "Description": "Installing **endpoint protection systems** (like **Security Center** for Alibaba Cloud) provides real-time protection capability that helps identify and remove viruses, spyware, and other malicious software.\n\nConfigurable alerts notify when known malicious software attempts to install itself or run on ECS instances.",
+  "Risk": "ECS instances without **endpoint protection** are vulnerable to **malware**, **viruses**, and other security threats.\n\nEndpoint protection provides real-time monitoring and protection capabilities essential for detecting and preventing security incidents.",
+  "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/doc-detail/28460.htm"
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-ECS/enable-endpoint-protection.html"
   ],
   "Remediation": {
     "Code": {
@@ -26,7 +28,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Logon to Security Center Console. Select Settings. Click Agent. On the Agent tab, select the virtual machines without Security Center agent installed. Click Install.",
+      "Text": "1. Log on to the **Security Center Console**\n2. Select **Settings**\n3. Click **Agent**\n4. On the Agent tab, select the virtual machines without Security Center agent installed\n5. Click **Install**",
       "Url": "https://hub.prowler.com/check/ecs_instance_endpoint_protection_installed"
     }
   },

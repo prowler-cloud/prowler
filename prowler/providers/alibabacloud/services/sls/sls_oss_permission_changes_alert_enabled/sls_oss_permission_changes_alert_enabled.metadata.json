@@ -3,19 +3,20 @@
   "CheckID": "sls_oss_permission_changes_alert_enabled",
   "CheckTitle": "Log monitoring and alerts are set up for OSS permission changes",
   "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards"
+    "Sensitive file tampering",
+    "Cloud threat detection"
   ],
   "ServiceName": "sls",
   "SubServiceName": "",
   "ResourceIdTemplate": "acs:log:region:account-id:project/project-name/alert/alert-name",
   "Severity": "medium",
   "ResourceType": "AlibabaCloudSLSAlert",
-  "Description": "It is recommended that a metric filter and alarm be established for OSS Bucket RAM changes.",
-  "Risk": "Monitoring changes to OSS permissions may reduce time to detect and correct permissions on sensitive OSS bucket and objects inside the bucket.",
-  "RelatedUrl": "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+  "Description": "It is recommended that a **metric filter and alarm** be established for **OSS Bucket RAM** changes.",
+  "Risk": "Monitoring changes to **OSS permissions** may reduce time to detect and correct permissions on sensitive OSS buckets and objects inside the bucket.\n\nThis helps prevent **unauthorized access** to stored data.",
+  "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm"
+    "https://www.alibabacloud.com/help/en/doc-detail/91784.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/alibaba-cloud/AlibabaCloud-SLS/oss-bucket-permission-changes-alert.html"
   ],
   "Remediation": {
     "Code": {
@@ -25,7 +26,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Logon to SLS Console. Ensure the OSS are Enabled. Select Alerts. Ensure alert rule has been enabled for OSS permission changes.",
+      "Text": "1. Log on to the **SLS Console**\n2. Ensure **OSS logging** is enabled\n3. Select **Alerts**\n4. Ensure alert rule has been enabled for OSS permission changes",
       "Url": "https://hub.prowler.com/check/sls_oss_permission_changes_alert_enabled"
     }
   },
