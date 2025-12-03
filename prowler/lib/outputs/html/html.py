@@ -1023,6 +1023,62 @@ class HTML(Output):
             return ""
 
     @staticmethod
+    def get_cloudflare_assessment_summary(provider: Provider) -> str:
+        """
+        get_cloudflare_assessment_summary gets the HTML assessment summary for the Cloudflare provider
+
+        Args:
+            provider (Provider): the Cloudflare provider object
+
+        Returns:
+            str: HTML assessment summary for the Cloudflare provider
+        """
+        try:
+            accounts = (
+                ", ".join([acc.id for acc in provider.accounts])
+                if provider.accounts
+                else "N/A"
+            )
+            zones = (
+                ", ".join([z.name for z in provider.zones]) if provider.zones else "N/A"
+            )
+            email = getattr(provider.identity, "email", "N/A") or "N/A"
+
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Cloudflare Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Accounts:</b> {accounts}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Zones:</b> {zones}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Cloudflare Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Email:</b> {email}
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
     def get_assessment_summary(provider: Provider) -> str:
         """
         get_assessment_summary gets the HTML assessment summary for the provider

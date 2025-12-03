@@ -589,3 +589,10 @@ github:
 mongodbatlas:
   # mongodbatlas.organizations_service_account_secrets_expiration --> Maximum hours for service account secrets validity
   max_service_account_secret_validity_hours: 8
+
+# Cloudflare Configuration
+cloudflare:
+  # zone_min_tls_version_secure --> Recommended minimum TLS version
+  min_tls_version: "1.2"
+  # zone_https_redirect_enabled --> Enforce HTTPS redirects
+  require_https_redirect: true

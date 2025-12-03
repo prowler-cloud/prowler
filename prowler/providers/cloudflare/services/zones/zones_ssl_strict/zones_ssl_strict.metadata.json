@@ -1,0 +1,32 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zones_ssl_strict",
+  "CheckTitle": "SSL/TLS encryption mode is set to Full (Strict) for end-to-end encryption",
+  "CheckType": [],
+  "ServiceName": "zones",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Zone",
+  "Description": "Verifies that SSL/TLS encryption mode is set to Full (Strict) to ensure end-to-end encryption with certificate validation between visitors, Cloudflare, and the origin server.",
+  "Risk": "Without strict SSL mode, traffic between Cloudflare and origin may use unvalidated or unencrypted connections, enabling man-in-the-middle attacks that can intercept sensitive data in transit.",
+  "RelatedUrl": "https://developers.cloudflare.com/ssl/origin-configuration/ssl-modes/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure SSL/TLS mode to Full (Strict) and install a valid certificate on your origin server. Use Cloudflare Origin CA certificates for seamless integration and strong encryption throughout.",
+      "Url": "https://hub.prowler.com/checks/zones_ssl_strict"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
