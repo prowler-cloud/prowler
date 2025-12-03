@@ -25,7 +25,7 @@ from api.db_utils import (
 from api.models import (
     AttackSurfaceOverview,
     ComplianceRequirementOverview,
-    DailyFindingsSeverity,
+    DailySeveritySummary,
     Finding,
     Integration,
     Invitation,
@@ -796,6 +796,29 @@ class ScanSummaryFilter(FilterSet):
         }
 
 
+class DailySeveritySummaryFilter(FilterSet):
+    """Filter for findings_severity_over_time endpoint."""
+
+    provider_id = UUIDFilter(field_name="provider_id", lookup_expr="exact")
+    provider_id__in = UUIDInFilter(field_name="provider_id", lookup_expr="in")
+    provider_type = ChoiceFilter(
+        field_name="provider__provider", choices=Provider.ProviderChoices.choices
+    )
+    provider_type__in = ChoiceInFilter(
+        field_name="provider__provider", choices=Provider.ProviderChoices.choices
+    )
+    # Date params handled in view, declared here for validation
+    date_from = CharFilter(method="filter_noop")
+    date_to = CharFilter(method="filter_noop")
+
+    def filter_noop(self, queryset, name, value):
+        return queryset
+
+    class Meta:
+        model = DailySeveritySummary
+        fields = ["provider_id"]
+
+
 class ScanSummarySeverityFilter(ScanSummaryFilter):
     """Filter for findings_severity ScanSummary endpoint - includes status filters"""
 
@@ -1014,32 +1037,6 @@ class ThreatScoreSnapshotFilter(FilterSet):
             "compliance_id": ["exact", "in"],
             "inserted_at": ["date", "gte", "lte"],
             "overall_score": ["exact", "gte", "lte"],
-        }
-
-
-class DailyFindingsSeverityFilter(FilterSet):
-    """Filter for daily findings severity over time endpoint."""
-
-    date_from = DateFilter(field_name="date", lookup_expr="gte", required=True)
-    date_to = DateFilter(field_name="date", lookup_expr="lte")
-    provider_id = UUIDFilter(field_name="provider_id", lookup_expr="exact")
-    provider_id__in = UUIDInFilter(field_name="provider_id", lookup_expr="in")
-    # Use denormalized provider_type field - no JOIN required
-    provider_type = ChoiceFilter(
-        field_name="provider_type", choices=Provider.ProviderChoices.choices
-    )
-    provider_type__in = ChoiceInFilter(
-        field_name="provider_type",
-        choices=Provider.ProviderChoices.choices,
-        lookup_expr="in",
-    )
-
-    class Meta:
-        model = DailyFindingsSeverity
-        fields = {
-            "date": ["gte", "lte"],
-            "provider_id": ["exact", "in"],
-            "provider_type": ["exact", "in"],
         }
 
 

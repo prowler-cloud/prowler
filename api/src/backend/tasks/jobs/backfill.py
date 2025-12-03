@@ -7,7 +7,7 @@ from api.db_utils import rls_transaction
 from api.models import (
     ComplianceOverviewSummary,
     ComplianceRequirementOverview,
-    DailyFindingsSeverity,
+    DailySeveritySummary,
     Resource,
     ResourceFindingMapping,
     ResourceScanSummary,
@@ -181,92 +181,98 @@ def backfill_compliance_summaries(tenant_id: str, scan_id: str):
     return {"status": "backfilled", "inserted": len(summary_objects)}
 
 
-def backfill_daily_findings_severity(tenant_id: str, scan_id: str):
+def backfill_daily_severity_summaries(tenant_id: str, days: int = None):
     """
-    Backfill DailyFindingsSeverity for a completed scan.
-
-    Creates or updates a single row per provider per day with FAIL counts
-    by severity level for trend chart visualization.
-
-    Args:
-        tenant_id: Target tenant UUID
-        scan_id: Scan UUID to backfill
-
-    Returns:
-        dict: Status indicating whether backfill was performed
+    Backfill DailySeveritySummary from completed scans.
+    Groups by provider+date, keeps latest scan per day.
     """
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    created_count = 0
+    updated_count = 0
+
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-        scan = (
-            Scan.all_objects.select_related("provider")
-            .filter(tenant_id=tenant_id, id=scan_id)
-            .first()
-        )
-
-        if not scan:
-            return {"status": "scan not found"}
-
-        if scan.state not in (StateChoices.COMPLETED, StateChoices.FAILED):
-            return {"status": "scan is not completed"}
-
-        if not scan.completed_at:
-            return {"status": "scan has no completed_at"}
-
-        snapshot_date = scan.completed_at.date()
-        provider_id = scan.provider_id
-        provider_type = scan.provider.provider
-
-        # Check if already backfilled for this provider+date
-        if DailyFindingsSeverity.objects.filter(
-            tenant_id=tenant_id,
-            provider_id=provider_id,
-            date=snapshot_date,
-        ).exists():
-            return {"status": "already backfilled"}
-
-        # Aggregate severity counts from ScanSummary
-        severity_aggregation = (
-            ScanSummary.all_objects.filter(tenant_id=tenant_id, scan_id=scan_id)
-            .values("severity")
-            .annotate(
-                fail_count=Sum("fail"),
-                muted_count=Sum("muted"),
-            )
-        )
-
-        severity_counts = {
-            "critical": 0,
-            "high": 0,
-            "medium": 0,
-            "low": 0,
-            "informational": 0,
+        scan_filter = {
+            "tenant_id": tenant_id,
+            "state": StateChoices.COMPLETED,
+            "completed_at__isnull": False,
         }
-        total_muted = 0
 
-        for agg in severity_aggregation:
-            severity_key = agg["severity"].lower()
-            if severity_key in severity_counts:
-                severity_counts[severity_key] = agg["fail_count"] or 0
-            total_muted += agg["muted_count"] or 0
+        if days is not None:
+            cutoff_date = timezone.now() - timedelta(days=days)
+            scan_filter["completed_at__gte"] = cutoff_date
 
-    with rls_transaction(tenant_id):
-        DailyFindingsSeverity.objects.update_or_create(
-            tenant_id=tenant_id,
-            provider_id=provider_id,
-            date=snapshot_date,
-            defaults={
-                "scan_id": scan_id,
-                "provider_type": provider_type,
-                "critical": severity_counts["critical"],
-                "high": severity_counts["high"],
-                "medium": severity_counts["medium"],
-                "low": severity_counts["low"],
-                "informational": severity_counts["informational"],
-                "muted": total_muted,
-            },
+        completed_scans = (
+            Scan.all_objects.filter(**scan_filter)
+            .order_by("provider_id", "-completed_at")
+            .values("id", "provider_id", "completed_at")
         )
+
+        if not completed_scans:
+            return {"status": "no scans to backfill"}
+
+        # Keep only latest scan per provider/day
+        latest_scans_by_day = {}
+        for scan in completed_scans:
+            key = (scan["provider_id"], scan["completed_at"].date())
+            if key not in latest_scans_by_day:
+                latest_scans_by_day[key] = scan
+
+    # Process each provider/day
+    for (provider_id, scan_date), scan in latest_scans_by_day.items():
+        scan_id = scan["id"]
+
+        with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+            severity_totals = (
+                ScanSummary.all_objects.filter(
+                    tenant_id=tenant_id,
+                    scan_id=scan_id,
+                )
+                .values("severity")
+                .annotate(total_fail=Sum("fail"), total_muted=Sum("muted"))
+            )
+
+            severity_data = {
+                "critical": 0,
+                "high": 0,
+                "medium": 0,
+                "low": 0,
+                "informational": 0,
+                "muted": 0,
+            }
+
+            for row in severity_totals:
+                severity = row["severity"]
+                if severity in severity_data:
+                    severity_data[severity] = row["total_fail"] or 0
+                severity_data["muted"] += row["total_muted"] or 0
+
+        with rls_transaction(tenant_id):
+            _, created = DailySeveritySummary.objects.update_or_create(
+                tenant_id=tenant_id,
+                provider_id=provider_id,
+                date=scan_date,
+                defaults={
+                    "scan_id": scan_id,
+                    "critical": severity_data["critical"],
+                    "high": severity_data["high"],
+                    "medium": severity_data["medium"],
+                    "low": severity_data["low"],
+                    "informational": severity_data["informational"],
+                    "muted": severity_data["muted"],
+                },
+            )
+
+            if created:
+                created_count += 1
+            else:
+                updated_count += 1
 
     return {
         "status": "backfilled",
-        "provider_id": str(provider_id),
-        "date": str(snapshot_date),
+        "created": created_count,
+        "updated": updated_count,
+        "total_days": len(latest_scans_by_day),
     }

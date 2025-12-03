@@ -3,7 +3,7 @@ import io
 import json
 import os
 import tempfile
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
@@ -38,7 +38,7 @@ from api.models import (
     AttackSurfaceOverview,
     ComplianceOverviewSummary,
     ComplianceRequirementOverview,
-    DailyFindingsSeverity,
+    DailySeveritySummary,
     Finding,
     Integration,
     Invitation,
@@ -7025,29 +7025,39 @@ class TestOverviewViewSet:
             assert item["attributes"]["low"] == 0
             assert item["attributes"]["informational"] == 0
             assert item["attributes"]["muted"] == 0
+            assert item["attributes"]["scan_ids"] == []
 
     def test_overview_findings_severity_over_time_with_data(
         self, authenticated_client, tenants_fixture, providers_fixture
     ):
-        from datetime import date
-
         tenant = tenants_fixture[0]
         provider1, provider2, *_ = providers_fixture
 
+        # Create scan for day 1
         scan1 = Scan.objects.create(
             name="severity-over-time-scan-1",
             provider=provider1,
             trigger=Scan.TriggerChoices.MANUAL,
             state=StateChoices.COMPLETED,
             tenant=tenant,
+            completed_at=datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
         )
 
-        # Create daily severity data for 3 days
-        DailyFindingsSeverity.objects.create(
+        # Create scan for day 3
+        scan3 = Scan.objects.create(
+            name="severity-over-time-scan-3",
+            provider=provider1,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+            completed_at=datetime(2024, 1, 3, 12, 0, 0, tzinfo=timezone.utc),
+        )
+
+        # Create DailySeveritySummary for day 1
+        DailySeveritySummary.objects.create(
             tenant=tenant,
             provider=provider1,
             scan=scan1,
-            provider_type="aws",
             date=date(2024, 1, 1),
             critical=10,
             high=20,
@@ -7056,11 +7066,12 @@ class TestOverviewViewSet:
             informational=50,
             muted=5,
         )
-        DailyFindingsSeverity.objects.create(
+
+        # Create DailySeveritySummary for day 3
+        DailySeveritySummary.objects.create(
             tenant=tenant,
             provider=provider1,
-            scan=scan1,
-            provider_type="aws",
+            scan=scan3,
             date=date(2024, 1, 3),
             critical=15,
             high=25,
@@ -7081,35 +7092,38 @@ class TestOverviewViewSet:
         data = response.json()["data"]
         assert len(data) == 3
 
-        # Day 1 - actual data
-        assert data[0]["attributes"]["date"] == "2024-01-01"
+        # Day 1 - actual data (id is the date)
+        assert data[0]["id"] == "2024-01-01"
         assert data[0]["attributes"]["critical"] == 10
         assert data[0]["attributes"]["high"] == 20
+        assert data[0]["attributes"]["scan_ids"] == [str(scan1.id)]
 
         # Day 2 - fill forward from day 1 (no data for this day)
-        assert data[1]["attributes"]["date"] == "2024-01-02"
+        assert data[1]["id"] == "2024-01-02"
         assert data[1]["attributes"]["critical"] == 10
         assert data[1]["attributes"]["high"] == 20
+        assert data[1]["attributes"]["scan_ids"] == [str(scan1.id)]
 
         # Day 3 - actual data
-        assert data[2]["attributes"]["date"] == "2024-01-03"
+        assert data[2]["id"] == "2024-01-03"
         assert data[2]["attributes"]["critical"] == 15
         assert data[2]["attributes"]["high"] == 25
+        assert data[2]["attributes"]["scan_ids"] == [str(scan3.id)]
 
     def test_overview_findings_severity_over_time_aggregates_providers(
         self, authenticated_client, tenants_fixture, providers_fixture
     ):
-        from datetime import date
-
         tenant = tenants_fixture[0]
         provider1, provider2, *_ = providers_fixture
 
+        # Same day, different providers
         scan1 = Scan.objects.create(
             name="severity-over-time-scan-p1",
             provider=provider1,
             trigger=Scan.TriggerChoices.MANUAL,
             state=StateChoices.COMPLETED,
             tenant=tenant,
+            completed_at=datetime(2024, 2, 1, 12, 0, 0, tzinfo=timezone.utc),
         )
         scan2 = Scan.objects.create(
             name="severity-over-time-scan-p2",
@@ -7117,14 +7131,14 @@ class TestOverviewViewSet:
             trigger=Scan.TriggerChoices.MANUAL,
             state=StateChoices.COMPLETED,
             tenant=tenant,
+            completed_at=datetime(2024, 2, 1, 14, 0, 0, tzinfo=timezone.utc),
         )
 
-        # Same day, different providers
-        DailyFindingsSeverity.objects.create(
+        # Create DailySeveritySummary for provider1
+        DailySeveritySummary.objects.create(
             tenant=tenant,
             provider=provider1,
             scan=scan1,
-            provider_type="aws",
             date=date(2024, 2, 1),
             critical=10,
             high=20,
@@ -7133,11 +7147,12 @@ class TestOverviewViewSet:
             informational=50,
             muted=5,
         )
-        DailyFindingsSeverity.objects.create(
+
+        # Create DailySeveritySummary for provider2
+        DailySeveritySummary.objects.create(
             tenant=tenant,
             provider=provider2,
             scan=scan2,
-            provider_type="aws",
             date=date(2024, 2, 1),
             critical=5,
             high=10,
@@ -7165,12 +7180,12 @@ class TestOverviewViewSet:
         assert data[0]["attributes"]["low"] == 60  # 40 + 20
         assert data[0]["attributes"]["informational"] == 75  # 50 + 25
         assert data[0]["attributes"]["muted"] == 8  # 5 + 3
+        # scan_ids should contain both scans (order may vary)
+        assert set(data[0]["attributes"]["scan_ids"]) == {str(scan1.id), str(scan2.id)}
 
     def test_overview_findings_severity_over_time_provider_filter(
         self, authenticated_client, tenants_fixture, providers_fixture
     ):
-        from datetime import date
-
         tenant = tenants_fixture[0]
         provider1, provider2, *_ = providers_fixture
 
@@ -7180,6 +7195,7 @@ class TestOverviewViewSet:
             trigger=Scan.TriggerChoices.MANUAL,
             state=StateChoices.COMPLETED,
             tenant=tenant,
+            completed_at=datetime(2024, 3, 1, 12, 0, 0, tzinfo=timezone.utc),
         )
         scan2 = Scan.objects.create(
             name="severity-over-time-filter-scan-p2",
@@ -7187,13 +7203,14 @@ class TestOverviewViewSet:
             trigger=Scan.TriggerChoices.MANUAL,
             state=StateChoices.COMPLETED,
             tenant=tenant,
+            completed_at=datetime(2024, 3, 1, 14, 0, 0, tzinfo=timezone.utc),
         )
 
-        DailyFindingsSeverity.objects.create(
+        # Provider 1 - critical=100
+        DailySeveritySummary.objects.create(
             tenant=tenant,
             provider=provider1,
             scan=scan1,
-            provider_type="aws",
             date=date(2024, 3, 1),
             critical=100,
             high=0,
@@ -7202,11 +7219,12 @@ class TestOverviewViewSet:
             informational=0,
             muted=0,
         )
-        DailyFindingsSeverity.objects.create(
+
+        # Provider 2 - critical=50
+        DailySeveritySummary.objects.create(
             tenant=tenant,
             provider=provider2,
             scan=scan2,
-            provider_type="aws",
             date=date(2024, 3, 1),
             critical=50,
             high=0,
@@ -7229,6 +7247,7 @@ class TestOverviewViewSet:
         data = response.json()["data"]
         assert len(data) == 1
         assert data[0]["attributes"]["critical"] == 100  # Only provider1
+        assert data[0]["attributes"]["scan_ids"] == [str(scan1.id)]
 
     def test_overview_attack_surface_no_data(self, authenticated_client):
         response = authenticated_client.get(reverse("overview-attack-surface"))

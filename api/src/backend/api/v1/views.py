@@ -102,7 +102,7 @@ from api.filters import (
     AttackSurfaceOverviewFilter,
     ComplianceOverviewFilter,
     CustomDjangoFilterBackend,
-    DailyFindingsSeverityFilter,
+    DailySeveritySummaryFilter,
     FindingFilter,
     IntegrationFilter,
     IntegrationJiraFindingsFilter,
@@ -132,7 +132,7 @@ from api.models import (
     AttackSurfaceOverview,
     ComplianceOverviewSummary,
     ComplianceRequirementOverview,
-    DailyFindingsSeverity,
+    DailySeveritySummary,
     Finding,
     Integration,
     Invitation,
@@ -4070,7 +4070,16 @@ class OverviewViewSet(BaseRLSViewSet):
         if not role.unlimited_visibility:
             self.allowed_providers = providers
 
-        return ScanSummary.all_objects.filter(tenant_id=self.request.tenant_id)
+        tenant_id = self.request.tenant_id
+
+        # Return appropriate queryset per action
+        if self.action == "findings_severity_over_time":
+            qs = DailySeveritySummary.all_objects.filter(tenant_id=tenant_id)
+            if hasattr(self, "allowed_providers"):
+                qs = qs.filter(provider_id__in=self.allowed_providers)
+            return qs
+
+        return ScanSummary.all_objects.filter(tenant_id=tenant_id)
 
     def get_serializer_class(self):
         if self.action == "providers":
@@ -4101,8 +4110,16 @@ class OverviewViewSet(BaseRLSViewSet):
         elif self.action == "findings_severity":
             return ScanSummarySeverityFilter
         elif self.action == "findings_severity_over_time":
-            return DailyFindingsSeverityFilter
+            return DailySeveritySummaryFilter
         return None
+
+    def filter_queryset(self, queryset):
+        # Skip OrderingFilter for findings_severity_over_time (no inserted_at field)
+        if self.action == "findings_severity_over_time":
+            return CustomDjangoFilterBackend().filter_queryset(
+                self.request, queryset, self
+            )
+        return super().filter_queryset(queryset)
 
     @extend_schema(exclude=True)
     def list(self, request, *args, **kwargs):
@@ -4383,18 +4400,16 @@ class OverviewViewSet(BaseRLSViewSet):
     @action(detail=False, methods=["get"], url_name="findings_severity_over_time")
     def findings_severity_over_time(self, request):
         """
-        Get daily findings severity data over time for trend charts.
-
-        Returns aggregated data per day with fill-forward for days without scans.
-        Requires date_from filter parameter.
+        Daily severity trends for charts. Uses DailySeveritySummary pre-aggregation.
+        Requires date_from filter.
         """
-        tenant_id = self.request.tenant_id
+        from collections import defaultdict
 
-        # Get filter parameters
-        date_from = request.query_params.get("filter[date_from]")
-        date_to = request.query_params.get("filter[date_to]")
+        # Validate date parameters
+        date_from_str = request.query_params.get("filter[date_from]")
+        date_to_str = request.query_params.get("filter[date_to]")
 
-        if not date_from:
+        if not date_from_str:
             raise ValidationError(
                 [
                     {
@@ -4407,8 +4422,8 @@ class OverviewViewSet(BaseRLSViewSet):
             )
 
         try:
-            date_from = date.fromisoformat(date_from)
-            date_to = date.fromisoformat(date_to) if date_to else date.today()
+            date_from = date.fromisoformat(date_from_str)
+            date_to = date.fromisoformat(date_to_str) if date_to_str else date.today()
         except ValueError:
             raise ValidationError(
                 [
@@ -4421,7 +4436,7 @@ class OverviewViewSet(BaseRLSViewSet):
                 ]
             )
 
-        # Limit to 365 days maximum for performance
+        # Limit to 365 days maximum
         max_days = 365
         if (date_to - date_from).days > max_days:
             raise ValidationError(
@@ -4435,92 +4450,95 @@ class OverviewViewSet(BaseRLSViewSet):
                 ]
             )
 
-        queryset = DailyFindingsSeverity.objects.filter(
-            tenant_id=tenant_id,
-            date__gte=date_from,
-            date__lte=date_to,
-        )
+        # Get queryset with RBAC and provider filters applied
+        queryset = self.filter_queryset(self.get_queryset())
 
-        # Apply RBAC provider restrictions
-        if hasattr(self, "allowed_providers"):
-            allowed_ids = list(self.allowed_providers.values_list("id", flat=True))
-            if not allowed_ids:
-                # No access to any providers
-                return Response(
-                    self.get_serializer([], many=True).data,
-                    status=status.HTTP_200_OK,
-                )
-            queryset = queryset.filter(provider_id__in=allowed_ids)
+        # Apply date filter for fill-forward logic
+        daily_qs = queryset.filter(date__lte=date_to)
 
-        # Apply provider filters from query params
-        provider_id = request.query_params.get("filter[provider_id]")
-        provider_id_in = request.query_params.get("filter[provider_id__in]")
-        provider_type = request.query_params.get("filter[provider_type]")
-        provider_type_in = request.query_params.get("filter[provider_type__in]")
+        if not daily_qs.exists():
+            # No data matches filters - return zeros
+            result = self._generate_zero_result(date_from, date_to)
+            serializer = self.get_serializer(result, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
-        if provider_id:
-            queryset = queryset.filter(provider_id=provider_id)
-        if provider_id_in:
-            provider_ids = [p.strip() for p in provider_id_in.split(",")]
-            queryset = queryset.filter(provider_id__in=provider_ids)
-        if provider_type:
-            queryset = queryset.filter(provider_type=provider_type)
-        if provider_type_in:
-            provider_types = [p.strip() for p in provider_type_in.split(",")]
-            queryset = queryset.filter(provider_type__in=provider_types)
-
-        # Aggregate by date across all matching providers
-        daily_data = (
-            queryset.values("date")
-            .annotate(
-                critical=Sum("critical"),
-                high=Sum("high"),
-                medium=Sum("medium"),
-                low=Sum("low"),
-                informational=Sum("informational"),
-                muted=Sum("muted"),
+        # Fetch all data for fill-forward logic
+        daily_summaries = list(
+            daily_qs.order_by("provider_id", "-date").values(
+                "provider_id",
+                "scan_id",
+                "date",
+                "critical",
+                "high",
+                "medium",
+                "low",
+                "informational",
+                "muted",
             )
-            .order_by("date")
         )
 
-        # Convert to dict for fill-forward logic
-        data_by_date = {item["date"]: item for item in daily_data}
+        if not daily_summaries:
+            result = self._generate_zero_result(date_from, date_to)
+            serializer = self.get_serializer(result, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
-        # Fill forward logic: generate all dates in range
+        # Build provider_data: {provider_id: [(date, data), ...]} sorted by date desc
+        provider_data = defaultdict(list)
+        for summary in daily_summaries:
+            provider_data[summary["provider_id"]].append(summary)
+
+        # For each day, find the latest data per provider and sum values
         result = []
         current_date = date_from
-        last_known_values = {
+        while current_date <= date_to:
+            day_totals = {
+                "critical": 0,
+                "high": 0,
+                "medium": 0,
+                "low": 0,
+                "informational": 0,
+                "muted": 0,
+            }
+            day_scan_ids = []
+
+            for provider_id, summaries in provider_data.items():
+                # Find the latest data for this provider <= current_date
+                for summary in summaries:  # Already sorted by date desc
+                    if summary["date"] <= current_date:
+                        day_totals["critical"] += summary["critical"] or 0
+                        day_totals["high"] += summary["high"] or 0
+                        day_totals["medium"] += summary["medium"] or 0
+                        day_totals["low"] += summary["low"] or 0
+                        day_totals["informational"] += summary["informational"] or 0
+                        day_totals["muted"] += summary["muted"] or 0
+                        day_scan_ids.append(summary["scan_id"])
+                        break  # Found the latest data for this provider
+
+            result.append(
+                {"date": current_date, "scan_ids": day_scan_ids, **day_totals}
+            )
+            current_date += timedelta(days=1)
+
+        serializer = self.get_serializer(result, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def _generate_zero_result(self, date_from, date_to):
+        """Generate a list of zero-filled results for each date in range."""
+        result = []
+        current_date = date_from
+        zero_values = {
             "critical": 0,
             "high": 0,
             "medium": 0,
             "low": 0,
             "informational": 0,
             "muted": 0,
+            "scan_ids": [],
         }
-
         while current_date <= date_to:
-            if current_date in data_by_date:
-                # Use actual data
-                day_data = data_by_date[current_date]
-                last_known_values = {
-                    "critical": day_data["critical"] or 0,
-                    "high": day_data["high"] or 0,
-                    "medium": day_data["medium"] or 0,
-                    "low": day_data["low"] or 0,
-                    "informational": day_data["informational"] or 0,
-                    "muted": day_data["muted"] or 0,
-                }
-            # Use last known values (either from today or carried forward)
-            result.append(
-                {
-                    "date": current_date,
-                    **last_known_values,
-                }
-            )
+            result.append({"date": current_date, **zero_values})
             current_date += timedelta(days=1)
-
-        serializer = self.get_serializer(result, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return result
 
     @extend_schema(
         summary="Get ThreatScore snapshots",
