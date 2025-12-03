@@ -370,7 +370,7 @@ def _create_compliance_summaries(
     if summary_objects:
         with rls_transaction(tenant_id):
             ComplianceOverviewSummary.objects.bulk_create(
-                summary_objects, batch_size=500
+                summary_objects, batch_size=500, ignore_conflicts=True
             )
 
 
