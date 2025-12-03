@@ -88,28 +88,28 @@ export const PasswordRequirementsMessage = ({
               aria-label="Password requirements"
             >
               {results.map((req) => (
-                  <li
-                    key={req.key}
-                    className="flex items-center gap-2 text-xs leading-tight"
-                  >
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={`h-2 w-2 shrink-0 rounded-full ${
-                          req.isMet ? "bg-bg-pass" : "bg-bg-fail"
-                        }`}
-                        aria-hidden="true"
-                      />
-                      <span
-                        className="text-text-neutral-secondary"
-                        aria-label={`${req.label} ${req.isMet ? "satisfied" : "required"}`}
-                      >
-                        {req.label}
-                      </span>
-                    </div>
-                    <span className="sr-only">
-                      {req.isMet ? "Requirement met" : "Requirement not met"}
+                <li
+                  key={req.key}
+                  className="flex items-center gap-2 text-xs leading-tight"
+                >
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`h-2 w-2 shrink-0 rounded-full ${
+                        req.isMet ? "bg-bg-pass" : "bg-bg-fail"
+                      }`}
+                      aria-hidden="true"
+                    />
+                    <span
+                      className="text-text-neutral-secondary"
+                      aria-label={`${req.label} ${req.isMet ? "satisfied" : "required"}`}
+                    >
+                      {req.label}
                     </span>
-                  </li>
+                  </div>
+                  <span className="sr-only">
+                    {req.isMet ? "Requirement met" : "Requirement not met"}
+                  </span>
+                </li>
               ))}
             </ul>
           </div>

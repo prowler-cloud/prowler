@@ -26,7 +26,11 @@ export function AttackSurface({ items, filters }: AttackSurfaceProps) {
           </div>
         ) : (
           items.map((item) => (
-            <AttackSurfaceCardItem key={item.id} item={item} filters={filters} />
+            <AttackSurfaceCardItem
+              key={item.id}
+              item={item}
+              filters={filters}
+            />
           ))
         )}
       </CardContent>
