@@ -119,12 +119,21 @@ from .config import (  # Main configuration; Color constants; ENS colors; NIS2 c
     get_framework_config,
 )
 
+# Framework-specific generators
+from .ens import ENSReportGenerator
+from .nis2 import NIS2ReportGenerator
+from .threatscore import ThreatScoreReportGenerator
+
 __all__ = [
     # Base classes
     "BaseComplianceReportGenerator",
     "ComplianceData",
     "RequirementData",
     "create_pdf_styles",
+    # Framework-specific generators
+    "ThreatScoreReportGenerator",
+    "ENSReportGenerator",
+    "NIS2ReportGenerator",
     # Configuration
     "FrameworkConfig",
     "FRAMEWORK_REGISTRY",
