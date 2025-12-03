@@ -98,10 +98,22 @@ export default defineConfig({
       name: "sign-up",
       testMatch: "sign-up.spec.ts",
     },
+    // This project runs the scans test suite
+    {
+      name: "scans",
+      testMatch: "scans.spec.ts",
+      dependencies: ["admin.auth.setup"],
+    },
     // This project runs the providers test suite
     {
       name: "providers",
       testMatch: "providers.spec.ts",
+      dependencies: ["admin.auth.setup"],
+    },
+    // This project runs the invitations test suite
+    {
+      name: "invitations",
+      testMatch: "invitations.spec.ts",
       dependencies: ["admin.auth.setup"],
     },
   ],
