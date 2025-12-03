@@ -206,6 +206,7 @@ from api.v1.serializers import (
     OverviewFindingSerializer,
     OverviewProviderCountSerializer,
     OverviewProviderSerializer,
+    OverviewProviderSeveritySerializer,
     OverviewRegionSerializer,
     OverviewServiceSerializer,
     OverviewSeveritySerializer,
@@ -3856,6 +3857,16 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             "This endpoint counts every provider in the tenant, including those without completed scans."
         ),
     ),
+    providers_severity=extend_schema(
+        summary="Get severity breakdown by provider type",
+        description=(
+            "Retrieve the count of failed findings grouped by provider type and severity level. "
+            "The response includes the number of critical, high, medium, low, and informational "
+            "failed findings for each provider type (aws, azure, gcp, etc.). Only failed findings "
+            "from the latest completed scans are considered. Supports provider_id and provider_type filters."
+        ),
+        filters=True,
+    ),
     findings=extend_schema(
         summary="Get aggregated findings data",
         description=(
@@ -3948,6 +3959,8 @@ class OverviewViewSet(BaseRLSViewSet):
             return OverviewProviderSerializer
         elif self.action == "providers_count":
             return OverviewProviderCountSerializer
+        elif self.action == "providers_severity":
+            return OverviewProviderSeveritySerializer
         elif self.action == "findings":
             return OverviewFindingSerializer
         elif self.action == "findings_severity":
@@ -3965,7 +3978,7 @@ class OverviewViewSet(BaseRLSViewSet):
     def get_filterset_class(self):
         if self.action == "providers":
             return None
-        elif self.action in ["findings", "services", "regions"]:
+        elif self.action in ["findings", "services", "regions", "providers_severity"]:
             return ScanSummaryFilter
         elif self.action == "findings_severity":
             return ScanSummarySeverityFilter
@@ -4210,6 +4223,38 @@ class OverviewViewSet(BaseRLSViewSet):
         )
 
         serializer = self.get_serializer(severity_data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="providers/severity",
+        url_name="providers-severity",
+    )
+    def providers_severity(self, request):
+        """
+        Get severity breakdown of failed findings grouped by provider type.
+        """
+        filtered_queryset = self._get_latest_scans_queryset()
+
+        severity_by_provider = (
+            filtered_queryset.annotate(provider_type=F("scan__provider__provider"))
+            .values("provider_type", "severity")
+            .annotate(count=Sum("fail"))
+            .order_by("provider_type", "severity")
+        )
+
+        provider_data = {}
+        for row in severity_by_provider:
+            provider_type = row["provider_type"]
+            if provider_type not in provider_data:
+                provider_data[provider_type] = {
+                    "provider_type": provider_type,
+                    **{sev[0].lower(): 0 for sev in SeverityChoices},
+                }
+            provider_data[provider_type][row["severity"].lower()] = row["count"] or 0
+
+        serializer = self.get_serializer(list(provider_data.values()), many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], url_name="services")

@@ -117,7 +117,8 @@ repos:
         name: safety
         description: "Safety is a tool that checks your installed dependencies for known security vulnerabilities"
         # TODO: Botocore needs urllib3 1.X so we need to ignore these vulnerabilities 77744,77745. Remove this once we upgrade to urllib3 2.X
-        entry: bash -c 'safety check --ignore 70612,66963,74429,76352,76353,77744,77745'
+        # TODO: xmltodict 0.14.2 has vulnerability 79408, upgrade to >=0.15.1 to fix
+        entry: bash -c 'safety check --ignore 70612,66963,74429,76352,76353,77744,77745,79408'
         language: system
 
       - id: vulture
