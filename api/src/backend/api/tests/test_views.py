@@ -35,6 +35,9 @@ from rest_framework.response import Response
 from api.compliance import get_compliance_frameworks
 from api.db_router import MainRouter
 from api.models import (
+    AttackSurfaceOverview,
+    ComplianceOverviewSummary,
+    ComplianceRequirementOverview,
     Finding,
     Integration,
     Invitation,
@@ -55,6 +58,7 @@ from api.models import (
     Scan,
     ScanSummary,
     StateChoices,
+    StatusChoices,
     Task,
     TenantAPIKey,
     ThreatScoreSnapshot,
@@ -5819,16 +5823,44 @@ class TestProviderGroupMembershipViewSet:
 
 @pytest.mark.django_db
 class TestComplianceOverviewViewSet:
-    def test_compliance_overview_list_none(self, authenticated_client):
+    @pytest.fixture(autouse=True)
+    def mock_backfill_task(self):
+        with patch("api.v1.views.backfill_compliance_summaries_task.delay") as mock:
+            yield mock
+
+    def test_compliance_overview_list_none(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        mock_backfill_task,
+    ):
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        scan = Scan.objects.create(
+            name="empty-compliance-scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
         response = authenticated_client.get(
             reverse("complianceoverview-list"),
-            {"filter[scan_id]": "8d20ac7d-4cbc-435e-85f4-359be37af821"},
+            {"filter[scan_id]": str(scan.id)},
         )
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 0
+        mock_backfill_task.assert_called_once()
+        _, kwargs = mock_backfill_task.call_args
+        assert kwargs["scan_id"] == str(scan.id)
+        assert str(kwargs["tenant_id"]) == str(tenant.id)
 
     def test_compliance_overview_list(
-        self, authenticated_client, compliance_requirements_overviews_fixture
+        self,
+        authenticated_client,
+        compliance_requirements_overviews_fixture,
+        mock_backfill_task,
     ):
         # List compliance overviews with existing data
         requirement_overview1 = compliance_requirements_overviews_fixture[0]
@@ -5858,6 +5890,90 @@ class TestComplianceOverviewViewSet:
             assert "requirements_failed" in attributes
             assert "requirements_manual" in attributes
             assert "total_requirements" in attributes
+        mock_backfill_task.assert_called_once()
+        _, kwargs = mock_backfill_task.call_args
+        assert kwargs["scan_id"] == scan_id
+
+    def test_compliance_overview_list_uses_preaggregated_summaries(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        mock_backfill_task,
+    ):
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        scan = Scan.objects.create(
+            name="preaggregated-scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        ComplianceRequirementOverview.objects.create(
+            tenant=tenant,
+            scan=scan,
+            compliance_id="cis_1.4_aws",
+            framework="CIS-1.4-AWS",
+            version="1.4",
+            description="CIS AWS Foundations Benchmark v1.4.0",
+            region="eu-west-1",
+            requirement_id="framework-metadata",
+            requirement_status=StatusChoices.PASS,
+            passed_checks=1,
+            failed_checks=0,
+            total_checks=1,
+        )
+
+        ComplianceOverviewSummary.objects.create(
+            tenant=tenant,
+            scan=scan,
+            compliance_id="cis_1.4_aws",
+            requirements_passed=5,
+            requirements_failed=1,
+            requirements_manual=2,
+            total_requirements=8,
+        )
+
+        response = authenticated_client.get(
+            reverse("complianceoverview-list"),
+            {"filter[scan_id]": str(scan.id)},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        overview = data[0]
+        assert overview["id"] == "cis_1.4_aws"
+        assert overview["attributes"]["requirements_passed"] == 5
+        assert overview["attributes"]["requirements_failed"] == 1
+        assert overview["attributes"]["requirements_manual"] == 2
+        assert overview["attributes"]["total_requirements"] == 8
+        assert "framework" in overview["attributes"]
+        assert "version" in overview["attributes"]
+        mock_backfill_task.assert_not_called()
+
+    def test_compliance_overview_region_filter_skips_backfill(
+        self,
+        authenticated_client,
+        compliance_requirements_overviews_fixture,
+        mock_backfill_task,
+    ):
+        requirement_overview = compliance_requirements_overviews_fixture[0]
+        scan_id = str(requirement_overview.scan.id)
+
+        response = authenticated_client.get(
+            reverse("complianceoverview-list"),
+            {
+                "filter[scan_id]": scan_id,
+                "filter[region]": requirement_overview.region,
+            },
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) >= 1
+        mock_backfill_task.assert_not_called()
 
     def test_compliance_overview_metadata(
         self, authenticated_client, compliance_requirements_overviews_fixture
@@ -6011,6 +6127,11 @@ class TestComplianceOverviewViewSet:
         requirement_overview1 = compliance_requirements_overviews_fixture[0]
         scan_id = str(requirement_overview1.scan.id)
 
+        # Remove existing compliance data so the view falls back to task checks
+        scan = requirement_overview1.scan
+        ComplianceOverviewSummary.objects.filter(scan=scan).delete()
+        ComplianceRequirementOverview.objects.filter(scan=scan).delete()
+
         # Mock a running task
         with patch.object(
             ComplianceOverviewViewSet, "get_task_response_if_running"
@@ -6038,6 +6159,11 @@ class TestComplianceOverviewViewSet:
         requirement_overview1 = compliance_requirements_overviews_fixture[0]
         scan_id = str(requirement_overview1.scan.id)
 
+        # Remove existing compliance data so the view falls back to task checks
+        scan = requirement_overview1.scan
+        ComplianceOverviewSummary.objects.filter(scan=scan).delete()
+        ComplianceRequirementOverview.objects.filter(scan=scan).delete()
+
         # Mock a failed task
         with patch.object(
             ComplianceOverviewViewSet, "get_task_response_if_running"
@@ -6061,6 +6187,8 @@ class TestComplianceOverviewViewSet:
             ("framework", "framework", 1),
             ("version", "version", 1),
             ("region", "region", 1),
+            ("region__in", "region", 1),
+            ("region.in", "region", 1),
         ],
     )
     def test_compliance_overview_filters(
@@ -6855,6 +6983,390 @@ class TestOverviewViewSet:
         assert combined_attributes["high"] == 8
         assert combined_attributes["medium"] == 4
         assert combined_attributes["critical"] == 3
+
+    def test_overview_attack_surface_no_data(self, authenticated_client):
+        response = authenticated_client.get(reverse("overview-attack-surface"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 4
+        for item in data:
+            assert item["attributes"]["total_findings"] == 0
+            assert item["attributes"]["failed_findings"] == 0
+            assert item["attributes"]["muted_failed_findings"] == 0
+            assert item["attributes"]["check_ids"] == []
+
+    def test_overview_attack_surface_with_data(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        create_attack_surface_overview,
+    ):
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+
+        mapping = {
+            "internet-exposed": {"aws-check-1", "aws-check-2"},
+            "secrets": {"aws-secret-check"},
+            "privilege-escalation": {"aws-priv-check"},
+            "ec2-imdsv1": {"aws-imdsv1-check"},
+        }
+
+        scan = Scan.objects.create(
+            name="attack-surface-scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        create_attack_surface_overview(
+            tenant,
+            scan,
+            AttackSurfaceOverview.AttackSurfaceTypeChoices.INTERNET_EXPOSED,
+            total=20,
+            failed=10,
+            muted_failed=3,
+        )
+        create_attack_surface_overview(
+            tenant,
+            scan,
+            AttackSurfaceOverview.AttackSurfaceTypeChoices.SECRETS,
+            total=15,
+            failed=8,
+            muted_failed=2,
+        )
+
+        with patch(
+            "api.v1.views._get_attack_surface_mapping_from_provider",
+            return_value=mapping,
+        ):
+            response = authenticated_client.get(reverse("overview-attack-surface"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 4
+
+        results_by_type = {item["id"]: item["attributes"] for item in data}
+        assert results_by_type["internet-exposed"]["total_findings"] == 20
+        assert results_by_type["internet-exposed"]["failed_findings"] == 10
+        assert set(results_by_type["internet-exposed"]["check_ids"]) == {
+            "aws-check-1",
+            "aws-check-2",
+        }
+        assert results_by_type["secrets"]["total_findings"] == 15
+        assert results_by_type["secrets"]["failed_findings"] == 8
+        assert set(results_by_type["secrets"]["check_ids"]) == {"aws-secret-check"}
+        assert results_by_type["privilege-escalation"]["total_findings"] == 0
+        assert set(results_by_type["privilege-escalation"]["check_ids"]) == {
+            "aws-priv-check"
+        }
+        assert results_by_type["ec2-imdsv1"]["total_findings"] == 0
+        assert set(results_by_type["ec2-imdsv1"]["check_ids"]) == {"aws-imdsv1-check"}
+
+    def test_overview_attack_surface_provider_filter(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        create_attack_surface_overview,
+    ):
+        tenant = tenants_fixture[0]
+        provider1, provider2, *_ = providers_fixture
+
+        scan1 = Scan.objects.create(
+            name="attack-surface-scan-1",
+            provider=provider1,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+        scan2 = Scan.objects.create(
+            name="attack-surface-scan-2",
+            provider=provider2,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        mapping = {
+            "internet-exposed": {"shared-check", "shared-check"},
+            "secrets": set(),
+            "privilege-escalation": {"priv-check"},
+            "ec2-imdsv1": {"imdsv1-check"},
+        }
+
+        create_attack_surface_overview(
+            tenant,
+            scan1,
+            AttackSurfaceOverview.AttackSurfaceTypeChoices.INTERNET_EXPOSED,
+            total=10,
+            failed=5,
+            muted_failed=1,
+        )
+        create_attack_surface_overview(
+            tenant,
+            scan2,
+            AttackSurfaceOverview.AttackSurfaceTypeChoices.INTERNET_EXPOSED,
+            total=20,
+            failed=15,
+            muted_failed=3,
+        )
+
+        with patch(
+            "api.v1.views._get_attack_surface_mapping_from_provider",
+            return_value=mapping,
+        ):
+            response = authenticated_client.get(
+                reverse("overview-attack-surface"),
+                {"filter[provider_id]": str(provider1.id)},
+            )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        results_by_type = {item["id"]: item["attributes"] for item in data}
+        assert results_by_type["internet-exposed"]["total_findings"] == 10
+        assert results_by_type["internet-exposed"]["failed_findings"] == 5
+        assert results_by_type["internet-exposed"]["check_ids"] == ["shared-check"]
+
+    def test_overview_services_region_filter(
+        self, authenticated_client, scan_summaries_fixture
+    ):
+        response = authenticated_client.get(
+            reverse("overview-services"),
+            {"filter[region]": "region1"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 2
+        service_ids = {item["id"] for item in data}
+        assert service_ids == {"service1", "service2"}
+
+    def test_overview_services_provider_type_filter(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        tenant = tenants_fixture[0]
+        aws_provider, _, gcp_provider, *_ = providers_fixture
+
+        aws_scan = Scan.objects.create(
+            name="aws-scan",
+            provider=aws_provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+        gcp_scan = Scan.objects.create(
+            name="gcp-scan",
+            provider=gcp_provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=aws_scan,
+            check_id="aws-check",
+            service="aws-service",
+            severity="high",
+            region="us-east-1",
+            _pass=5,
+            fail=2,
+            muted=1,
+            total=8,
+        )
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=gcp_scan,
+            check_id="gcp-check",
+            service="gcp-service",
+            severity="medium",
+            region="us-central1",
+            _pass=3,
+            fail=1,
+            muted=0,
+            total=4,
+        )
+
+        response = authenticated_client.get(
+            reverse("overview-services"),
+            {"filter[provider_type]": "aws"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        service_ids = [item["id"] for item in data]
+        assert "aws-service" in service_ids
+        assert "gcp-service" not in service_ids
+
+    @pytest.mark.parametrize(
+        "status_filter,field_to_check",
+        [
+            ("FAIL", "fail"),
+            ("PASS", "_pass"),
+        ],
+    )
+    def test_overview_findings_severity_status_filter(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        status_filter,
+        field_to_check,
+    ):
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+
+        scan = Scan.objects.create(
+            name="status-filter-scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan,
+            check_id="status-check-high",
+            service="service-a",
+            severity="high",
+            region="us-east-1",
+            _pass=10,
+            fail=5,
+            muted=3,
+            total=18,
+        )
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan,
+            check_id="status-check-medium",
+            service="service-a",
+            severity="medium",
+            region="us-east-1",
+            _pass=8,
+            fail=2,
+            muted=1,
+            total=11,
+        )
+
+        response = authenticated_client.get(
+            reverse("overview-findings_severity"),
+            {
+                "filter[provider_id]": str(provider.id),
+                "filter[status]": status_filter,
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        attrs = response.json()["data"]["attributes"]
+        if status_filter == "FAIL":
+            assert attrs["high"] == 5
+            assert attrs["medium"] == 2
+        else:
+            assert attrs["high"] == 10
+            assert attrs["medium"] == 8
+
+    def test_overview_threatscore_compliance_id_filter(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        scan = self._create_scan(tenant, provider, "compliance-filter-scan")
+
+        self._create_threatscore_snapshot(
+            tenant,
+            scan,
+            provider,
+            compliance_id="prowler_threatscore_aws",
+            overall_score="75.00",
+            score_delta="2.00",
+            section_scores={"1. IAM": "70.00"},
+            critical_requirements=[],
+            total_requirements=50,
+            passed_requirements=35,
+            failed_requirements=15,
+            manual_requirements=0,
+            total_findings=30,
+            passed_findings=20,
+            failed_findings=10,
+        )
+        self._create_threatscore_snapshot(
+            tenant,
+            scan,
+            provider,
+            compliance_id="cis_1.4_aws",
+            overall_score="65.00",
+            score_delta="1.00",
+            section_scores={"1. IAM": "60.00"},
+            critical_requirements=[],
+            total_requirements=40,
+            passed_requirements=25,
+            failed_requirements=15,
+            manual_requirements=0,
+            total_findings=25,
+            passed_findings=15,
+            failed_findings=10,
+        )
+
+        response = authenticated_client.get(
+            reverse("overview-threatscore"),
+            {"filter[compliance_id]": "prowler_threatscore_aws"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["attributes"]["overall_score"] == "75.00"
+        assert data[0]["attributes"]["compliance_id"] == "prowler_threatscore_aws"
+
+    def test_overview_threatscore_provider_type_filter(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        tenant = tenants_fixture[0]
+        aws_provider, _, gcp_provider, *_ = providers_fixture
+
+        aws_scan = self._create_scan(tenant, aws_provider, "aws-threatscore-scan")
+        gcp_scan = self._create_scan(tenant, gcp_provider, "gcp-threatscore-scan")
+
+        self._create_threatscore_snapshot(
+            tenant,
+            aws_scan,
+            aws_provider,
+            compliance_id="prowler_threatscore_aws",
+            overall_score="80.00",
+            score_delta="3.00",
+            section_scores={"1. IAM": "75.00"},
+            critical_requirements=[],
+            total_requirements=60,
+            passed_requirements=45,
+            failed_requirements=15,
+            manual_requirements=0,
+            total_findings=40,
+            passed_findings=30,
+            failed_findings=10,
+        )
+        self._create_threatscore_snapshot(
+            tenant,
+            gcp_scan,
+            gcp_provider,
+            compliance_id="prowler_threatscore_gcp",
+            overall_score="70.00",
+            score_delta="2.00",
+            section_scores={"1. IAM": "65.00"},
+            critical_requirements=[],
+            total_requirements=50,
+            passed_requirements=35,
+            failed_requirements=15,
+            manual_requirements=0,
+            total_findings=35,
+            passed_findings=25,
+            failed_findings=10,
+        )
+
+        response = authenticated_client.get(
+            reverse("overview-threatscore"),
+            {"filter[provider_type]": "aws"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["attributes"]["overall_score"] == "80.00"
 
 
 @pytest.mark.django_db

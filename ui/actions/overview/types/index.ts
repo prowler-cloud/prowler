@@ -1,3 +1,4 @@
+export * from "./attack-surface";
 export * from "./common";
 export * from "./findings-severity";
 export * from "./providers";

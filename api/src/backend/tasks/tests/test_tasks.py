@@ -529,6 +529,7 @@ class TestGenerateOutputs:
 
 
 class TestScanCompleteTasks:
+    @patch("tasks.tasks.aggregate_attack_surface_task.apply_async")
     @patch("tasks.tasks.create_compliance_requirements_task.apply_async")
     @patch("tasks.tasks.perform_scan_summary_task.si")
     @patch("tasks.tasks.generate_outputs_task.si")
@@ -541,12 +542,18 @@ class TestScanCompleteTasks:
         mock_outputs_task,
         mock_scan_summary_task,
         mock_compliance_requirements_task,
+        mock_attack_surface_task,
     ):
         """Test that scan complete tasks are properly orchestrated with optimized reports."""
         _perform_scan_complete_tasks("tenant-id", "scan-id", "provider-id")
 
         # Verify compliance requirements task is called
         mock_compliance_requirements_task.assert_called_once_with(
+            kwargs={"tenant_id": "tenant-id", "scan_id": "scan-id"},
+        )
+
+        # Verify attack surface task is called
+        mock_attack_surface_task.assert_called_once_with(
             kwargs={"tenant_id": "tenant-id", "scan_id": "scan-id"},
         )
 

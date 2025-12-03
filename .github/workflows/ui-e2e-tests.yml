@@ -10,6 +10,7 @@ on:
       - 'ui/**'
 
 jobs:
+
   e2e-tests:
     if: github.repository == 'prowler-cloud/prowler'
     runs-on: ubuntu-latest
@@ -33,12 +34,50 @@ jobs:
       E2E_M365_SECRET_ID: ${{ secrets.E2E_M365_SECRET_ID }}
       E2E_M365_TENANT_ID: ${{ secrets.E2E_M365_TENANT_ID }}
       E2E_M365_CERTIFICATE_CONTENT: ${{ secrets.E2E_M365_CERTIFICATE_CONTENT }}
-      E2E_NEW_PASSWORD: ${{ secrets.E2E_NEW_PASSWORD }}
+      E2E_KUBERNETES_CONTEXT: 'kind-kind'
+      E2E_KUBERNETES_KUBECONFIG_PATH: /home/runner/.kube/config
+      E2E_GCP_BASE64_SERVICE_ACCOUNT_KEY: ${{ secrets.E2E_GCP_BASE64_SERVICE_ACCOUNT_KEY }}
+      E2E_GCP_PROJECT_ID: ${{ secrets.E2E_GCP_PROJECT_ID }}
+      E2E_GITHUB_APP_ID: ${{ secrets.E2E_GITHUB_APP_ID }}
+      E2E_GITHUB_BASE64_APP_PRIVATE_KEY: ${{ secrets.E2E_GITHUB_BASE64_APP_PRIVATE_KEY }}
+      E2E_GITHUB_USERNAME: ${{ secrets.E2E_GITHUB_USERNAME }}
+      E2E_GITHUB_PERSONAL_ACCESS_TOKEN: ${{ secrets.E2E_GITHUB_PERSONAL_ACCESS_TOKEN }}
+      E2E_GITHUB_ORGANIZATION: ${{ secrets.E2E_GITHUB_ORGANIZATION }}
+      E2E_GITHUB_ORGANIZATION_ACCESS_TOKEN: ${{ secrets.E2E_GITHUB_ORGANIZATION_ACCESS_TOKEN }}
+      E2E_ORGANIZATION_ID: ${{ secrets.E2E_ORGANIZATION_ID }}
+      E2E_OCI_TENANCY_ID: ${{ secrets.E2E_OCI_TENANCY_ID }}
+      E2E_OCI_USER_ID: ${{ secrets.E2E_OCI_USER_ID }}
+      E2E_OCI_FINGERPRINT: ${{ secrets.E2E_OCI_FINGERPRINT }}
+      E2E_OCI_KEY_CONTENT: ${{ secrets.E2E_OCI_KEY_CONTENT }}
+      E2E_OCI_REGION: ${{ secrets.E2E_OCI_REGION }}
+      E2E_NEW_USER_PASSWORD: ${{ secrets.E2E_NEW_USER_PASSWORD }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      - name: Create k8s Kind Cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: kind
+      - name: Modify kubeconfig
+        run: |
+            # Modify the kubeconfig to use the kind cluster server to https://kind-control-plane:6443
+            # from worker service into docker-compose.yml
+            kubectl config set-cluster kind-kind --server=https://kind-control-plane:6443
+            kubectl config view
+      - name: Add network kind to docker compose
+        run: |
+          # Add the network kind to the docker compose to interconnect to kind cluster
+          yq -i '.networks.kind.external = true' docker-compose.yml
+          # Add network kind to worker service and default network too
+          yq -i '.services.worker.networks = ["kind","default"]' docker-compose.yml
       - name: Fix API data directory permissions
         run: docker run --rm -v $(pwd)/_data/api:/data alpine chown -R 1000:1000 /data
+      - name: Add AWS credentials for testing AWS SDK Default Adding Provider
+        run: |
+          echo "Adding AWS credentials for testing AWS SDK Default Adding Provider..."
+          echo "AWS_ACCESS_KEY_ID=${{ secrets.E2E_AWS_PROVIDER_ACCESS_KEY }}" >> .env
+          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.E2E_AWS_PROVIDER_SECRET_KEY }}" >> .env
       - name: Start API services
         run: |
           # Override docker-compose image tag to use latest instead of stable

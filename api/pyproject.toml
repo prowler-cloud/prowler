@@ -35,7 +35,8 @@ dependencies = [
   "markdown (>=3.9,<4.0)",
   "drf-simple-apikey (==2.2.1)",
   "matplotlib (>=3.10.6,<4.0.0)",
-  "reportlab (>=4.4.4,<5.0.0)"
+  "reportlab (>=4.4.4,<5.0.0)",
+  "gevent (>=25.9.1,<26.0.0)"
 ]
 description = "Prowler's API (Django/DRF)"
 license = "Apache-2.0"
@@ -43,7 +44,7 @@ name = "prowler-api"
 package-mode = false
 # Needed for the SDK compatibility
 requires-python = ">=3.11,<3.13"
-version = "1.15.0"
+version = "1.16.0"
 
 [project.scripts]
 celery = "src.backend.config.settings.celery"
