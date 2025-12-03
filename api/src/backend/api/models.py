@@ -1507,7 +1507,6 @@ class DailySeveritySummary(RowLevelSecurityProtectedModel):
     """
 
     objects = ActiveProviderManager()
-    all_objects = models.Manager()
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     date = models.DateField()

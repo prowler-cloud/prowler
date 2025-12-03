@@ -4074,7 +4074,7 @@ class OverviewViewSet(BaseRLSViewSet):
 
         # Return appropriate queryset per action
         if self.action == "findings_severity_over_time":
-            qs = DailySeveritySummary.all_objects.filter(tenant_id=tenant_id)
+            qs = DailySeveritySummary.objects.filter(tenant_id=tenant_id)
             if hasattr(self, "allowed_providers"):
                 qs = qs.filter(provider_id__in=self.allowed_providers)
             return qs
