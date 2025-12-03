@@ -351,13 +351,23 @@ export const ConnectLLMProvider = ({
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {isBedrockProvider ? (
           <>
+            {bedrockMode === BEDROCK_CREDENTIAL_MODES.API_KEY && (
+              <div className="border-border-warning-primary bg-bg-warning-secondary rounded-lg border p-4">
+                <p className="text-text-warning text-sm font-medium">
+                  Recommended only for exploration of Amazon Bedrock.
+                </p>
+                <p className="text-text-warning text-xs mt-1">
+                  Please ensure you're using long-term Bedrock API keys.
+                </p>
+              </div>
+            )}
             {bedrockMode === BEDROCK_CREDENTIAL_MODES.API_KEY ? (
               <>
                 {renderFormField(
                   "api_key",
-                  "API key",
+                  "API key (long-term)",
                   "password",
-                  "Enter your API key",
+                  "Enter your long-term API key",
                 )}
                 {renderFormField(
                   "region",
