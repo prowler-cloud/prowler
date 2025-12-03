@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.14.2] (Prowler v5.14.2)
+
+### 🐞 Fixed
+
+- Models list in Lighthouse selector when default model is not set for provider [(9402)](https://github.com/prowler-cloud/prowler/pull/9402)
+
+---
+
 ## [1.14.0] (Prowler v5.14.0)
 
 ### 🚀 Added
