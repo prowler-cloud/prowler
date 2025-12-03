@@ -19,6 +19,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### Fixed
 - Unique constraint violation during compliance overviews task [(#9436)](https://github.com/prowler-cloud/prowler/pull/9436)
+- Division by zero error in ENS PDF report when all requirements are manual [(#9443)](https://github.com/prowler-cloud/prowler/pull/9443)
 
 ---
 
