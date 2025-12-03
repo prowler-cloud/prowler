@@ -12,6 +12,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Risk Pipeline component with Sankey chart to Overview page [(#9317)](https://github.com/prowler-cloud/prowler/pull/9317)
 - Threat Map component to Overview Page [(#9324)](https://github.com/prowler-cloud/prowler/pull/9324)
 - MongoDB Atlas provider support [(#9253)](https://github.com/prowler-cloud/prowler/pull/9253)
+- Lighthouse AI support for Amazon Bedrock API key [(#9343)](https://github.com/prowler-cloud/prowler/pull/9343)
 
 ---
 

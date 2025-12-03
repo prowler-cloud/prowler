@@ -62,17 +62,42 @@ To connect a provider:
   </Tab>
 
   <Tab title="Amazon Bedrock">
-    ### Required Information
+    Prowler connects to Amazon Bedrock using either [Amazon Bedrock API keys](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started-api-keys.html) or IAM credentials.
 
-    To connect Amazon Bedrock, you need:
+    <Note>
+    Amazon Bedrock models depend on AWS region and account entitlements. Lighthouse AI displays only accessible models that support tool calling and text input/output.
+    </Note>
+
+    ### Amazon Bedrock API Key
+
+    <Warning>
+    Recommended only for exploration of Amazon Bedrock with Lighthouse.
+    </Warning>
+
+    Amazon Bedrock API keys provide simpler authentication with automatically assigned permissions.
+
+    #### Required Information
+
+    - **Bedrock API Key**: Amazon Bedrock API key
+    - **AWS Region**: Region where Bedrock is available
+
+    <Note>
+    Amazon Bedrock API keys are automatically assigned the necessary permissions (`AmazonBedrockLimitedAccess` policy).
+
+    Learn more: [Getting Started with Amazon Bedrock API Keys](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started-api-keys.html)
+    </Note>
+
+    ### AWS IAM Access Keys
+
+    Standard AWS IAM credentials can be used as an alternative authentication method.
+
+    #### Required Information
 
     - **AWS Access Key ID**: AWS access key ID
     - **AWS Secret Access Key**: AWS secret access key
-    - **AWS Region**: Region where Bedrock is available (e.g., `us-east-1`, `us-west-2`)
+    - **AWS Region**: Region where Bedrock is available
 
-    Available models are region dependent. See [Amazon Bedrock models by region](https://docs.aws.amazon.com/bedrock/latest/userguide/models-regions.html) for details.
-
-    ### Required Permissions
+    #### Required Permissions
 
     The AWS IAM user must have the `AmazonBedrockLimitedAccess` managed policy attached:
 
@@ -82,12 +107,6 @@ To connect a provider:
 
     <Note>
     Access to all Amazon Bedrock foundation models is enabled by default. When you select a model or invoke it for the first time (using Prowler or otherwise), you agree to Amazon's EULA. More info: [Amazon Bedrock Model Access](https://docs.aws.amazon.com/bedrock/latest/userguide/model-access.html)
-    </Note>
-
-    Prowler provides flexibility to select available models. When you select a model, you are subscribed in the Amazon Marketplace, but you are charged only on a usage basis.
-
-    <Note>
-    Lighthouse AI automatically filters Amazon Bedrock models to display only those that support text input, text output, and tool calling capabilities. This ensures all available models are compatible with Lighthouse AI features.
     </Note>
 
   </Tab>
