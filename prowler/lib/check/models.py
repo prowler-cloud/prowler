@@ -705,6 +705,76 @@ class CheckReportGithub(Check_Report):
 
 
 @dataclass
+class CheckReportCloudflare(Check_Report):
+    """Contains the Cloudflare Check's finding information.
+
+    Zone acts as the regional context (similar to AWS regions).
+    All zone-related attributes are derived from the zone object.
+    """
+
+    resource_name: str
+    resource_id: str
+    _zone: Any  # CloudflareZone object
+
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        zone: Any = None,
+        resource_name: str = None,
+        resource_id: str = None,
+    ) -> None:
+        """Initialize the Cloudflare Check's finding information.
+
+        Args:
+            metadata: Check metadata dictionary
+            resource: The resource being checked
+            zone: CloudflareZone object (regional context)
+            resource_name: Override for resource name
+            resource_id: Override for resource ID
+        """
+        super().__init__(metadata, resource)
+
+        # Zone context - similar to AWS region
+        self._zone = zone or getattr(resource, "zone", None) or resource
+
+        self.resource_name = resource_name or getattr(
+            resource, "name", getattr(resource, "resource_name", "")
+        )
+        self.resource_id = resource_id or getattr(
+            resource, "id", getattr(resource, "resource_id", "")
+        )
+
+    @property
+    def zone(self) -> Any:
+        """The CloudflareZone object (regional context)."""
+        return self._zone
+
+    @property
+    def zone_id(self) -> str:
+        """Zone ID derived from zone context."""
+        return getattr(self._zone, "id", "")
+
+    @property
+    def zone_name(self) -> str:
+        """Zone name derived from zone context."""
+        return getattr(self._zone, "name", "")
+
+    @property
+    def account_id(self) -> str:
+        """Account ID derived from zone's account."""
+        zone_account = getattr(self._zone, "account", None)
+        if zone_account:
+            return getattr(zone_account, "id", "")
+        return ""
+
+    @property
+    def region(self) -> str:
+        """Region alias for zone_name (for output compatibility)."""
+        return self.zone_name
+
+
+@dataclass
 class CheckReportM365(Check_Report):
     """Contains the M365 Check's finding information."""
 

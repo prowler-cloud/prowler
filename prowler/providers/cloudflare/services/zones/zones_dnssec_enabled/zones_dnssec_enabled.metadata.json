@@ -1,0 +1,32 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zones_dnssec_enabled",
+  "CheckTitle": "DNSSEC is enabled to protect DNS responses from tampering",
+  "CheckType": [],
+  "ServiceName": "zones",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Zone",
+  "Description": "Verifies that DNSSEC is enabled for Cloudflare zones to cryptographically sign DNS responses and protect against DNS spoofing and cache poisoning attacks.",
+  "Risk": "Without DNSSEC, DNS responses can be spoofed or modified by attackers, enabling man-in-the-middle attacks, phishing through DNS hijacking, and redirection of users to malicious infrastructure.",
+  "RelatedUrl": "https://developers.cloudflare.com/dns/dnssec/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable DNSSEC and ensure DS records are properly configured at your domain registrar. DNSSEC provides cryptographic authenticity for DNS responses as a critical layer in domain security.",
+      "Url": "https://hub.prowler.com/checks/zones_dnssec_enabled"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

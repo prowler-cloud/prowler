@@ -1,0 +1,32 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zones_min_tls_version_secure",
+  "CheckTitle": "Minimum TLS version is set to 1.2 or higher",
+  "CheckType": [],
+  "ServiceName": "zones",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Zone",
+  "Description": "Verifies that the minimum TLS version is configured to at least TLS 1.2 to ensure connections use secure, modern cryptographic protocols.",
+  "Risk": "Allowing legacy TLS versions (1.0, 1.1) exposes connections to known protocol vulnerabilities including BEAST, POODLE, and weak cipher suites that can be exploited for traffic decryption.",
+  "RelatedUrl": "https://developers.cloudflare.com/ssl/origin-configuration/ssl-modes/#minimum-tls-version",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Set minimum TLS version to 1.2 or higher. TLS 1.0 and 1.1 are deprecated by all major browsers and contain known vulnerabilities that compromise connection security.",
+      "Url": "https://hub.prowler.com/checks/zones_min_tls_version_secure"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

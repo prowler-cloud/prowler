@@ -344,6 +344,14 @@ class Finding(BaseModel):
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["region"] = check_output.region
 
+            elif provider.type == "cloudflare":
+                output_data["auth_method"] = "api_token"
+                output_data["account_uid"] = check_output.account_id
+                output_data["account_name"] = check_output.account_id
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = check_output.zone_name
+
             # check_output Unique ID
             # TODO: move this to a function
             # TODO: in Azure, GCP and K8s there are findings without resource_name
@@ -420,6 +428,9 @@ class Finding(BaseModel):
             finding.resource_line_range = ""  # Set empty for compatibility
         elif provider.type == "oraclecloud":
             finding.compartment_id = getattr(finding, "compartment_id", "")
+        elif provider.type == "cloudflare":
+            finding.zone_name = resource.region
+            finding.account_id = getattr(finding, "account_id", "")
 
         finding.check_metadata = CheckMetadata(
             Provider=finding.check_metadata["provider"],

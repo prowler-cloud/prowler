@@ -107,6 +107,7 @@ from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from prowler.providers.aws.models import AWSOutputOptions
 from prowler.providers.azure.models import AzureOutputOptions
+from prowler.providers.cloudflare.models import CloudflareOutputOptions
 from prowler.providers.common.provider import Provider
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
 from prowler.providers.gcp.models import GCPOutputOptions
@@ -319,6 +320,10 @@ def prowler():
         )
     elif provider == "github":
         output_options = GithubOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "cloudflare":
+        output_options = CloudflareOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
     elif provider == "m365":
