@@ -1,0 +1,32 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zones_dmarc_record_exists",
+  "CheckTitle": "DMARC record exists for email authentication and reporting",
+  "CheckType": [],
+  "ServiceName": "zones",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Zone",
+  "Description": "Verifies that a DMARC (Domain-based Message Authentication, Reporting, and Conformance) TXT record exists to define email authentication policy and enable reporting on spoofing attempts.",
+  "Risk": "Without DMARC, there is no policy enforcement for SPF and DKIM failures, allowing attackers to spoof emails from your domain for phishing campaigns while you receive no visibility into abuse attempts.",
+  "RelatedUrl": "https://developers.cloudflare.com/dns/manage-dns-records/how-to/email-records/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "resource \"cloudflare_record\" \"dmarc\" {\n  zone_id = var.zone_id\n  name    = \"_dmarc\"\n  type    = \"TXT\"\n  value   = \"v=DMARC1; p=quarantine; rua=mailto:dmarc@example.com\"\n}"
+    },
+    "Recommendation": {
+      "Text": "Implement DMARC as part of a complete email authentication strategy with SPF and DKIM. Start with a monitoring policy (p=none) to gather data, then progressively enforce stricter policies (quarantine, reject).",
+      "Url": "https://hub.prowler.com/checks/zones_dmarc_record_exists"
+    }
+  },
+  "Categories": [
+    "email-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "DMARC records are TXT records at _dmarc subdomain starting with 'v=DMARC1'."
+}

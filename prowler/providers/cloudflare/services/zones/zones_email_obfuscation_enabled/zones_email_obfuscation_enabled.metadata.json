@@ -1,0 +1,32 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zones_email_obfuscation_enabled",
+  "CheckTitle": "Email Obfuscation is enabled to protect against email harvesting",
+  "CheckType": [],
+  "ServiceName": "zones",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "Zone",
+  "Description": "Verifies that Email Obfuscation (Scrape Shield) is enabled to protect email addresses on the website from automated harvesting by bots and spammers.",
+  "Risk": "Without Email Obfuscation, email addresses displayed on the website can be harvested by bots, leading to spam, phishing attacks targeting employees or users, and potential social engineering attempts.",
+  "RelatedUrl": "https://developers.cloudflare.com/waf/tools/scrape-shield/email-address-obfuscation/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "resource \"cloudflare_zone_settings_override\" \"example\" {\n  zone_id = var.zone_id\n  settings {\n    email_obfuscation = \"on\"\n  }\n}"
+    },
+    "Recommendation": {
+      "Text": "Enable Email Obfuscation as part of anti-scraping protections. The feature automatically encodes email addresses for bots while keeping them visible and functional for human visitors.",
+      "Url": "https://hub.prowler.com/checks/zones_email_obfuscation_enabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Email Obfuscation automatically hides email addresses from bots while keeping them visible and clickable for human visitors."
+}
