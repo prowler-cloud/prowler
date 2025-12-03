@@ -42,7 +42,7 @@ export default async function Home({
         <AccountsSelector providers={providersData?.data ?? []} />
       </div>
 
-      <div className="flex flex-col gap-6 md:flex-row md:flex-wrap md:items-stretch">
+      <div className="flex flex-col gap-6 xl:flex-row xl:flex-wrap xl:items-stretch">
         <Suspense fallback={<ThreatScoreSkeleton />}>
           <ThreatScoreSSR searchParams={resolvedSearchParams} />
         </Suspense>
@@ -56,7 +56,7 @@ export default async function Home({
         </Suspense>
       </div>
 
-      <div className="mt-6 flex flex-col gap-6 md:flex-row">
+      <div className="mt-6 flex flex-col gap-6 xl:flex-row">
         <Suspense fallback={<WatchlistCardSkeleton />}>
           <ServiceWatchlistSSR searchParams={resolvedSearchParams} />
         </Suspense>

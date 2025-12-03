@@ -119,7 +119,7 @@ export function ThreatScore({
   return (
     <Card
       variant="base"
-      className="flex min-h-[372px] min-w-[328px] flex-col justify-between md:max-w-[312px]"
+      className="flex min-h-[372px] w-full flex-col justify-between lg:max-w-[312px]"
     >
       <CardHeader>
         <CardTitle>Prowler Threat Score</CardTitle>
@@ -213,7 +213,7 @@ export function ThreatScoreSkeleton() {
   return (
     <Card
       variant="base"
-      className="flex min-h-[372px] min-w-[328px] flex-col justify-between md:max-w-[312px]"
+      className="flex min-h-[372px] w-full flex-col justify-between lg:max-w-[312px]"
     >
       <CardHeader>
         <Skeleton className="h-7 w-36 rounded-xl" />
