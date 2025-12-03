@@ -52,6 +52,7 @@ export const ServiceWatchlist = ({ items }: { items: ServiceOverview[] }) => {
         message: "This space is looking empty.",
       }}
       onItemClick={handleItemClick}
+      useFailureColoring
     />
   );
 };
