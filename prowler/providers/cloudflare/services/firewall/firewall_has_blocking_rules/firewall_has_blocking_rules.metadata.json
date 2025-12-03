@@ -1,0 +1,30 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "firewall_has_blocking_rules",
+  "CheckTitle": "Firewall rules use blocking actions to protect against threats",
+  "CheckType": [],
+  "ServiceName": "firewall",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "FirewallRule",
+  "Description": "Verifies that Cloudflare firewall rules use blocking actions (block, challenge, js_challenge, managed_challenge) to actively protect against threats rather than only logging.",
+  "Risk": "Firewall rules configured only for logging provide visibility but no protection. Malicious traffic reaches the origin server, enabling attacks such as credential stuffing, application exploits, and data exfiltration.",
+  "RelatedUrl": "https://developers.cloudflare.com/waf/custom-rules/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": "resource \"cloudflare_ruleset\" \"example\" {\n  zone_id = var.zone_id\n  name    = \"Block malicious requests\"\n  kind    = \"zone\"\n  phase   = \"http_request_firewall_custom\"\n  rules {\n    action      = \"block\"\n    expression  = \"(ip.geoip.country eq \\\"XX\\\")\"\n    description = \"Block traffic from country XX\"\n  }\n}"
+    },
+    "Recommendation": {
+      "Text": "Configure firewall rules with blocking actions to enforce security policies. Use challenge actions for suspicious traffic and block actions for known malicious patterns following the principle of least privilege.",
+      "Url": "https://hub.prowler.com/checks/firewall_has_blocking_rules"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Blocking actions include: block, challenge, js_challenge, managed_challenge."
+}

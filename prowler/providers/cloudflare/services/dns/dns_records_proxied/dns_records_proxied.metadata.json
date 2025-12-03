@@ -1,0 +1,32 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "dns_records_proxied",
+  "CheckTitle": "Cloudflare proxy is enabled for applicable DNS records",
+  "CheckType": [],
+  "ServiceName": "dns",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "DNSRecord",
+  "Description": "Verifies that A, AAAA, and CNAME DNS records are proxied through Cloudflare to benefit from DDoS protection, WAF, and caching capabilities.",
+  "Risk": "Unproxied DNS records expose origin server IP addresses directly to the internet, bypassing Cloudflare's security protections and increasing the attack surface for direct attacks against the origin infrastructure.",
+  "RelatedUrl": "https://developers.cloudflare.com/dns/manage-dns-records/reference/proxied-dns-records/",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable the Cloudflare proxy (orange cloud) for DNS records that should be protected. Apply defense in depth by combining proxy protection with origin server hardening and access controls.",
+      "Url": "https://hub.prowler.com/checks/dns_records_proxied"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
