@@ -20,8 +20,9 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🐞 Fixed
 
-- Models list in Lighthouse selector when default model is not set for provider [(9402)](https://github.com/prowler-cloud/prowler/pull/9402)
-- Sort compliance cards by name from the compliance overview [(9422)](https://github.com/prowler-cloud/prowler/pull/9422)
+- Models list in Lighthouse selector when default model is not set for provider [(#9402)](https://github.com/prowler-cloud/prowler/pull/9402)
+- Sort compliance cards by name from the compliance overview [(#9422)](https://github.com/prowler-cloud/prowler/pull/9422)
+- Risk severity chart must show only FAIL findings [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
 
 ---
 
