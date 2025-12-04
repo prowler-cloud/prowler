@@ -6,7 +6,7 @@ import { handleApiResponse } from "@/lib/server-actions-helper";
 import {
   AdaptedSeverityTrendsResponse,
   FindingsSeverityOverTimeResponse,
-} from "../types";
+} from "./types";
 import { adaptSeverityTrendsResponse } from "./severity-trends.adapter";
 
 const TIME_RANGE_VALUES = {

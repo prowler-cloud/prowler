@@ -6,4 +6,3 @@ export * from "./regions";
 export * from "./services";
 export * from "./severity-trends";
 export * from "./threat-score";
-export * from "./types";

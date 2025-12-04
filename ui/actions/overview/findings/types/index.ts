@@ -1,7 +1,9 @@
 // Findings Severity Overview Types
 // Corresponds to the /overviews/findings_severity endpoint
 
-import { OverviewResponseMeta } from "./common";
+interface OverviewResponseMeta {
+  version: string;
+}
 
 export interface FindingsSeverityAttributes {
   critical: number;
