@@ -4940,9 +4940,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/OverviewSeverityResponse'
           description: ''
-  /api/v1/overviews/findings_severity_over_time:
+  /api/v1/overviews/findings_severity/timeseries:
     get:
-      operationId: overviews_findings_severity_over_time_retrieve
+      operationId: overviews_findings_severity_timeseries_retrieve
       description: Retrieve daily aggregated findings data grouped by severity levels
         over a date range. Returns one data point per day with counts of failed findings
         by severity (critical, high, medium, low, informational) and muted findings.
@@ -4951,7 +4951,7 @@ paths:
       summary: Get findings severity data over time
       parameters:
       - in: query
-        name: fields[findings-severity-over-time]
+        name: fields[findings-severity-timeseries]
         schema:
           type: array
           items:

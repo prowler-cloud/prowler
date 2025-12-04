@@ -797,7 +797,7 @@ class ScanSummaryFilter(FilterSet):
 
 
 class DailySeveritySummaryFilter(FilterSet):
-    """Filter for findings_severity_over_time endpoint."""
+    """Filter for findings_severity/timeseries endpoint."""
 
     provider_id = UUIDFilter(field_name="provider_id", lookup_expr="exact")
     provider_id__in = UUIDInFilter(field_name="provider_id", lookup_expr="in")

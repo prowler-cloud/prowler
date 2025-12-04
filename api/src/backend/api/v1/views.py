@@ -4012,7 +4012,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
         ),
         filters=True,
     ),
-    findings_severity_over_time=extend_schema(
+    findings_severity_timeseries=extend_schema(
         summary="Get findings severity data over time",
         description=(
             "Retrieve daily aggregated findings data grouped by severity levels over a date range. "
@@ -4073,7 +4073,7 @@ class OverviewViewSet(BaseRLSViewSet):
         tenant_id = self.request.tenant_id
 
         # Return appropriate queryset per action
-        if self.action == "findings_severity_over_time":
+        if self.action == "findings_severity_timeseries":
             qs = DailySeveritySummary.objects.filter(tenant_id=tenant_id)
             if hasattr(self, "allowed_providers"):
                 qs = qs.filter(provider_id__in=self.allowed_providers)
@@ -4090,7 +4090,7 @@ class OverviewViewSet(BaseRLSViewSet):
             return OverviewFindingSerializer
         elif self.action == "findings_severity":
             return OverviewSeveritySerializer
-        elif self.action == "findings_severity_over_time":
+        elif self.action == "findings_severity_timeseries":
             return FindingsSeverityOverTimeSerializer
         elif self.action == "services":
             return OverviewServiceSerializer
@@ -4109,13 +4109,13 @@ class OverviewViewSet(BaseRLSViewSet):
             return ScanSummaryFilter
         elif self.action == "findings_severity":
             return ScanSummarySeverityFilter
-        elif self.action == "findings_severity_over_time":
+        elif self.action == "findings_severity_timeseries":
             return DailySeveritySummaryFilter
         return None
 
     def filter_queryset(self, queryset):
-        # Skip OrderingFilter for findings_severity_over_time (no inserted_at field)
-        if self.action == "findings_severity_over_time":
+        # Skip OrderingFilter for findings_severity_timeseries (no inserted_at field)
+        if self.action == "findings_severity_timeseries":
             return CustomDjangoFilterBackend().filter_queryset(
                 self.request, queryset, self
             )
@@ -4397,14 +4397,17 @@ class OverviewViewSet(BaseRLSViewSet):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(detail=False, methods=["get"], url_name="findings_severity_over_time")
-    def findings_severity_over_time(self, request):
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="findings_severity/timeseries",
+        url_name="findings_severity_timeseries",
+    )
+    def findings_severity_timeseries(self, request):
         """
         Daily severity trends for charts. Uses DailySeveritySummary pre-aggregation.
         Requires date_from filter.
         """
-        from collections import defaultdict
-
         # Validate date parameters
         date_from_str = request.query_params.get("filter[date_from]")
         date_to_str = request.query_params.get("filter[date_to]")

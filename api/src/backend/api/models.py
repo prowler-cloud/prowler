@@ -1503,7 +1503,7 @@ class ScanSummary(RowLevelSecurityProtectedModel):
 class DailySeveritySummary(RowLevelSecurityProtectedModel):
     """
     Pre-aggregated daily severity counts per provider.
-    Used by findings_severity_over_time endpoint for efficient queries.
+    Used by findings_severity/timeseries endpoint for efficient queries.
     """
 
     objects = ActiveProviderManager()

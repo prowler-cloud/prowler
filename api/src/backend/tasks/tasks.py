@@ -568,7 +568,7 @@ def aggregate_attack_surface_task(tenant_id: str, scan_id: str):
 @shared_task(name="scan-daily-severity", queue="overview")
 @handle_provider_deletion
 def aggregate_daily_severity_task(tenant_id: str, scan_id: str):
-    """Aggregate scan severity into DailySeveritySummary for findings_severity_over_time endpoint."""
+    """Aggregate scan severity into DailySeveritySummary for findings_severity/timeseries endpoint."""
     return aggregate_daily_severity(tenant_id=tenant_id, scan_id=scan_id)
 
 

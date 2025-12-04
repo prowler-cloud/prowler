@@ -6985,30 +6985,30 @@ class TestOverviewViewSet:
         assert combined_attributes["medium"] == 4
         assert combined_attributes["critical"] == 3
 
-    def test_overview_findings_severity_over_time_requires_date_from(
+    def test_overview_findings_severity_timeseries_requires_date_from(
         self, authenticated_client
     ):
         response = authenticated_client.get(
-            reverse("overview-findings_severity_over_time")
+            reverse("overview-findings_severity_timeseries")
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert "date_from" in response.json()["errors"][0]["source"]["pointer"]
 
-    def test_overview_findings_severity_over_time_invalid_date_format(
+    def test_overview_findings_severity_timeseries_invalid_date_format(
         self, authenticated_client
     ):
         response = authenticated_client.get(
-            reverse("overview-findings_severity_over_time"),
+            reverse("overview-findings_severity_timeseries"),
             {"filter[date_from]": "invalid-date"},
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert "Invalid date format" in response.json()["errors"][0]["detail"]
 
-    def test_overview_findings_severity_over_time_empty_data(
+    def test_overview_findings_severity_timeseries_empty_data(
         self, authenticated_client
     ):
         response = authenticated_client.get(
-            reverse("overview-findings_severity_over_time"),
+            reverse("overview-findings_severity_timeseries"),
             {
                 "filter[date_from]": "2024-01-01",
                 "filter[date_to]": "2024-01-03",
@@ -7027,7 +7027,7 @@ class TestOverviewViewSet:
             assert item["attributes"]["muted"] == 0
             assert item["attributes"]["scan_ids"] == []
 
-    def test_overview_findings_severity_over_time_with_data(
+    def test_overview_findings_severity_timeseries_with_data(
         self, authenticated_client, tenants_fixture, providers_fixture
     ):
         tenant = tenants_fixture[0]
@@ -7082,7 +7082,7 @@ class TestOverviewViewSet:
         )
 
         response = authenticated_client.get(
-            reverse("overview-findings_severity_over_time"),
+            reverse("overview-findings_severity_timeseries"),
             {
                 "filter[date_from]": "2024-01-01",
                 "filter[date_to]": "2024-01-03",
@@ -7110,7 +7110,7 @@ class TestOverviewViewSet:
         assert data[2]["attributes"]["high"] == 25
         assert data[2]["attributes"]["scan_ids"] == [str(scan3.id)]
 
-    def test_overview_findings_severity_over_time_aggregates_providers(
+    def test_overview_findings_severity_timeseries_aggregates_providers(
         self, authenticated_client, tenants_fixture, providers_fixture
     ):
         tenant = tenants_fixture[0]
@@ -7163,7 +7163,7 @@ class TestOverviewViewSet:
         )
 
         response = authenticated_client.get(
-            reverse("overview-findings_severity_over_time"),
+            reverse("overview-findings_severity_timeseries"),
             {
                 "filter[date_from]": "2024-02-01",
                 "filter[date_to]": "2024-02-01",
@@ -7183,7 +7183,7 @@ class TestOverviewViewSet:
         # scan_ids should contain both scans (order may vary)
         assert set(data[0]["attributes"]["scan_ids"]) == {str(scan1.id), str(scan2.id)}
 
-    def test_overview_findings_severity_over_time_provider_filter(
+    def test_overview_findings_severity_timeseries_provider_filter(
         self, authenticated_client, tenants_fixture, providers_fixture
     ):
         tenant = tenants_fixture[0]
@@ -7236,7 +7236,7 @@ class TestOverviewViewSet:
 
         # Filter by provider1 only
         response = authenticated_client.get(
-            reverse("overview-findings_severity_over_time"),
+            reverse("overview-findings_severity_timeseries"),
             {
                 "filter[date_from]": "2024-03-01",
                 "filter[date_to]": "2024-03-01",
