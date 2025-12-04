@@ -10,6 +10,7 @@ export interface ThreatMapLocation {
   providerType: string;
   coordinates: [number, number];
   totalFindings: number;
+  failFindings: number;
   riskLevel: "low-high" | "high" | "critical";
   severityData: Array<{
     name: string;
@@ -147,6 +148,71 @@ const GCP_REGION_COORDINATES: Record<string, { lat: number; lng: number }> = {
   "me-central2": { lat: 24.5, lng: 54.4 }, // Dammam
   "me-west1": { lat: 32.1, lng: 34.8 }, // Tel Aviv
   "africa-south1": { lat: -26.2, lng: 28.0 }, // Johannesburg
+  // Add global as default fallback for any unrecognized GCP region
+  global: { lat: 37.4, lng: -122.1 }, // Mountain View, CA (Google HQ)
+};
+
+// Kubernetes can run anywhere, using global fallback for any region
+const KUBERNETES_COORDINATES: Record<string, { lat: number; lng: number }> = {
+  global: { lat: 37.7, lng: -122.4 }, // Global fallback
+};
+
+// M365 regions (Microsoft datacenter locations)
+const M365_COORDINATES: Record<string, { lat: number; lng: number }> = {
+  global: { lat: 47.6, lng: -122.3 }, // Global fallback
+};
+
+// GitHub regions
+const GITHUB_COORDINATES: Record<string, { lat: number; lng: number }> = {
+  global: { lat: 37.8, lng: -122.4 }, // Global fallback
+};
+
+// IAC has no regions - it's code scanning
+const IAC_COORDINATES: Record<string, { lat: number; lng: number }> = {
+  global: { lat: 40.7, lng: -74.0 }, // Global fallback
+};
+
+// Oracle Cloud Infrastructure regions
+const ORACLECLOUD_COORDINATES: Record<string, { lat: number; lng: number }> = {
+  // Americas
+  "us-phoenix-1": { lat: 33.4, lng: -112.1 },
+  "us-ashburn-1": { lat: 39.0, lng: -77.5 },
+  "us-sanjose-1": { lat: 37.3, lng: -121.9 },
+  "ca-toronto-1": { lat: 43.7, lng: -79.4 },
+  "ca-montreal-1": { lat: 45.5, lng: -73.6 },
+  "sa-saopaulo-1": { lat: -23.5, lng: -46.6 },
+  "sa-santiago-1": { lat: -33.4, lng: -70.6 },
+  // Europe
+  "uk-london-1": { lat: 51.5, lng: -0.1 },
+  "eu-frankfurt-1": { lat: 50.1, lng: 8.7 },
+  "eu-zurich-1": { lat: 47.4, lng: 8.5 },
+  "eu-amsterdam-1": { lat: 52.4, lng: 4.9 },
+  "eu-paris-1": { lat: 48.9, lng: 2.3 },
+  "eu-marseille-1": { lat: 43.3, lng: 5.4 },
+  "eu-stockholm-1": { lat: 59.3, lng: 18.1 },
+  "eu-milan-1": { lat: 45.5, lng: 9.2 },
+  // Middle East & Africa
+  "me-jeddah-1": { lat: 21.5, lng: 39.2 },
+  "me-dubai-1": { lat: 25.3, lng: 55.3 },
+  "il-jerusalem-1": { lat: 31.8, lng: 35.2 },
+  "af-johannesburg-1": { lat: -26.2, lng: 28.0 },
+  // Asia Pacific
+  "ap-mumbai-1": { lat: 19.1, lng: 72.9 },
+  "ap-tokyo-1": { lat: 35.7, lng: 139.7 },
+  "ap-osaka-1": { lat: 34.7, lng: 135.5 },
+  "ap-seoul-1": { lat: 37.6, lng: 127.0 },
+  "ap-sydney-1": { lat: -33.9, lng: 151.2 },
+  "ap-melbourne-1": { lat: -37.8, lng: 145.0 },
+  "ap-singapore-1": { lat: 1.3, lng: 103.8 },
+  "ap-hyderabad-1": { lat: 17.4, lng: 78.5 },
+  "ap-chuncheon-1": { lat: 37.9, lng: 127.7 },
+  global: { lat: 37.5, lng: -122.3 }, // Global fallback
+};
+
+// MongoDB Atlas runs on AWS/Azure/GCP infrastructure
+// Using global fallback since it inherits regions from underlying cloud provider
+const MONGODBATLAS_COORDINATES: Record<string, { lat: number; lng: number }> = {
+  global: { lat: 40.8, lng: -74.0 }, // Global fallback
 };
 
 const PROVIDER_COORDINATES: Record<
@@ -156,6 +222,14 @@ const PROVIDER_COORDINATES: Record<
   aws: AWS_REGION_COORDINATES,
   azure: AZURE_REGION_COORDINATES,
   gcp: GCP_REGION_COORDINATES,
+  google: GCP_REGION_COORDINATES, // Alias for gcp
+  "google-cloud": GCP_REGION_COORDINATES, // Alternative naming
+  kubernetes: KUBERNETES_COORDINATES,
+  m365: M365_COORDINATES,
+  github: GITHUB_COORDINATES,
+  iac: IAC_COORDINATES,
+  oraclecloud: ORACLECLOUD_COORDINATES,
+  mongodbatlas: MONGODBATLAS_COORDINATES,
 };
 
 // Returns [lng, lat] format for D3/GeoJSON compatibility
@@ -163,8 +237,19 @@ function getRegionCoordinates(
   providerType: string,
   region: string,
 ): [number, number] | null {
-  const coords =
-    PROVIDER_COORDINATES[providerType.toLowerCase()]?.[region.toLowerCase()];
+  const provider = providerType.toLowerCase();
+  const providerCoords = PROVIDER_COORDINATES[provider];
+
+  if (!providerCoords) return null;
+
+  // Try to find specific region coordinates
+  let coords = providerCoords[region.toLowerCase()];
+
+  // For providers without traditional regions, fallback to "global"
+  if (!coords && providerCoords["global"]) {
+    coords = providerCoords["global"];
+  }
+
   return coords ? [coords.lng, coords.lat] : null;
 }
 
@@ -240,8 +325,8 @@ export function adaptRegionsOverviewToThreatMap(
 
     if (!coordinates) continue;
 
-    const providerRegion = getProviderDisplayName(attributes.provider_type);
-    regionSet.add(providerRegion);
+    // Add the actual region code to the set
+    regionSet.add(attributes.region);
 
     const failRate =
       attributes.total > 0 ? attributes.fail / attributes.total : 0;
@@ -249,11 +334,12 @@ export function adaptRegionsOverviewToThreatMap(
     locations.push({
       id,
       name: formatRegionName(attributes.provider_type, attributes.region),
-      region: providerRegion,
+      region: attributes.region, // Use actual region code for filtering
       regionCode: attributes.region,
       providerType: attributes.provider_type,
       coordinates,
-      totalFindings: attributes.fail,
+      totalFindings: attributes.total,
+      failFindings: attributes.fail,
       riskLevel: getRiskLevel(failRate),
       severityData: buildSeverityData(attributes.fail, attributes.pass),
     });

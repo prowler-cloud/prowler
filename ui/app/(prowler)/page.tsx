@@ -6,6 +6,7 @@ import { SearchParamsProps } from "@/types";
 
 import { AccountsSelector } from "./_new-overview/_components/accounts-selector";
 import { ProviderTypeSelector } from "./_new-overview/_components/provider-type-selector";
+import { AttackSurfaceSkeleton, AttackSurfaceSSR } from "./_new-overview/attack-surface";
 import { CheckFindingsSSR } from "./_new-overview/check-findings";
 import { GraphsTabsWrapper } from "./_new-overview/graphs-tabs/graphs-tabs-wrapper";
 import { RiskPipelineViewSkeleton } from "./_new-overview/graphs-tabs/risk-pipeline-view";
@@ -44,6 +45,12 @@ export default async function Home({
 
         <Suspense fallback={<RiskSeverityChartSkeleton />}>
           <RiskSeverityChartSSR searchParams={resolvedSearchParams} />
+        </Suspense>
+      </div>
+
+      <div className="mt-6">
+        <Suspense fallback={<AttackSurfaceSkeleton />}>
+          <AttackSurfaceSSR searchParams={resolvedSearchParams} />
         </Suspense>
       </div>
 

@@ -46,6 +46,9 @@ export const RiskSeverityChart = ({
     // Add exclude muted findings filter
     params.set("filter[muted]", "false");
 
+    // Filter by FAIL findings
+    params.set("filter[status__in]", "FAIL");
+
     // Navigate to findings page
     router.push(`/findings?${params.toString()}`);
   };

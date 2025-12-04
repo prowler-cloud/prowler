@@ -8,6 +8,8 @@ export const RiskSeverityChartDetailSSR = async ({
   searchParams,
 }: SSRComponentProps) => {
   const filters = pickFilterParams(searchParams);
+  // Filter by FAIL findings
+  filters["filter[status]"] = "FAIL";
 
   const findingsBySeverity = await getFindingsBySeverity({ filters });
 

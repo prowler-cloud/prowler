@@ -1,4 +1,5 @@
 // Re-export all overview actions from feature-based subfolders
+export * from "./attack-surface";
 export * from "./findings";
 export * from "./providers";
 export * from "./regions";

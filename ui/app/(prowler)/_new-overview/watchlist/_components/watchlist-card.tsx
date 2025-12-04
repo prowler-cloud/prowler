@@ -39,8 +39,14 @@ const getScoreTextColor = (score: number): string => {
   return SCORE_CONFIG.WARNING.textColor;
 };
 
+const getFailureTextColor = (value: number): string => {
+  return value === 0
+    ? SCORE_CONFIG.PASS.textColor
+    : SCORE_CONFIG.FAIL.textColor;
+};
+
 export interface WatchlistItem {
-  icon: ReactNode;
+  icon?: ReactNode;
   label: string;
   key: string;
   value: string | number;
@@ -59,6 +65,11 @@ export interface WatchlistCardProps
     linkText?: string;
   };
   onItemClick?: (item: WatchlistItem) => void;
+  /**
+   * When true, uses failure-based coloring: green for 0, red otherwise.
+   * When false (default), uses score-based coloring (0-30 red, 31-60 yellow, 61-100 green).
+   */
+  useFailureColoring?: boolean;
 }
 
 export const WatchlistCard = ({
@@ -69,6 +80,7 @@ export const WatchlistCard = ({
   headerAction,
   emptyState,
   onItemClick,
+  useFailureColoring = false,
 }: WatchlistCardProps) => {
   const isEmpty = items.length === 0;
 
@@ -115,9 +127,11 @@ export const WatchlistCard = ({
                   ? parseFloat(item.value.replace("%", ""))
                   : item.value;
 
-              // Get color based on score
+              // Get color based on score or failure count
               const valueColorClass = !isNaN(numericValue)
-                ? getScoreTextColor(numericValue)
+                ? useFailureColoring
+                  ? getFailureTextColor(numericValue)
+                  : getScoreTextColor(numericValue)
                 : "text-text-neutral-tertiary";
 
               const isClickable = !!onItemClick;
@@ -141,9 +155,11 @@ export const WatchlistCard = ({
                       "hover:bg-bg-neutral-tertiary cursor-pointer",
                   )}
                 >
-                  <div className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-md bg-white">
-                    {item.icon}
-                  </div>
+                  {item.icon && (
+                    <div className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-md bg-white">
+                      {item.icon}
+                    </div>
+                  )}
 
                   <p className="text-text-neutral-secondary flex-1 truncate text-sm leading-6">
                     {item.label}

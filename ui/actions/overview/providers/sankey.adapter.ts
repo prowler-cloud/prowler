@@ -1,11 +1,5 @@
 import { getProviderDisplayName } from "@/types/providers";
 
-import {
-  FindingsSeverityOverviewResponse,
-  ProviderOverview,
-  ProvidersOverviewResponse,
-} from "../types";
-
 export interface SankeyNode {
   name: string;
 }
@@ -27,44 +21,16 @@ export interface SankeyData {
   zeroDataProviders: ZeroDataProvider[];
 }
 
-export interface SankeyFilters {
-  providerTypes?: string[];
-  /** All selected provider types - used to show missing providers in legend */
-  allSelectedProviderTypes?: string[];
+export interface SeverityData {
+  critical: number;
+  high: number;
+  medium: number;
+  low: number;
+  informational: number;
 }
 
-interface AggregatedProvider {
-  id: string;
-  displayName: string;
-  pass: number;
-  fail: number;
-}
-
-// API can return multiple entries for the same provider type, so we sum their findings
-function aggregateProvidersByType(
-  providers: ProviderOverview[],
-): AggregatedProvider[] {
-  const aggregated = new Map<string, AggregatedProvider>();
-
-  for (const provider of providers) {
-    const { id, attributes } = provider;
-
-    const existing = aggregated.get(id);
-
-    if (existing) {
-      existing.pass += attributes.findings.pass;
-      existing.fail += attributes.findings.fail;
-    } else {
-      aggregated.set(id, {
-        id,
-        displayName: getProviderDisplayName(id),
-        pass: attributes.findings.pass,
-        fail: attributes.findings.fail,
-      });
-    }
-  }
-
-  return Array.from(aggregated.values());
+export interface SeverityByProviderType {
+  [providerType: string]: SeverityData;
 }
 
 const SEVERITY_ORDER = [
@@ -75,76 +41,79 @@ const SEVERITY_ORDER = [
   "Informational",
 ] as const;
 
+const SEVERITY_KEYS: (keyof SeverityData)[] = [
+  "critical",
+  "high",
+  "medium",
+  "low",
+  "informational",
+];
+
 /**
- * Adapts providers overview and findings severity API responses to Sankey chart format.
- * Severity distribution is calculated proportionally based on each provider's fail count.
+ * Adapts severity by provider type data to Sankey chart format.
  *
- * @param providersResponse - The providers overview API response
- * @param severityResponse - The findings severity API response
- * @param filters - Optional filters to restrict which providers are shown.
- *                  When filters are set, only selected providers are shown.
- *                  When no filters, all providers are shown.
+ * @param severityByProviderType - Severity breakdown per provider type from the API
+ * @param selectedProviderTypes - Provider types that were selected but may have no data
  */
-export function adaptProvidersOverviewToSankey(
-  providersResponse: ProvidersOverviewResponse | undefined,
-  severityResponse?: FindingsSeverityOverviewResponse | undefined,
-  filters?: SankeyFilters,
+export function adaptToSankeyData(
+  severityByProviderType: SeverityByProviderType,
+  selectedProviderTypes?: string[],
 ): SankeyData {
-  if (!providersResponse?.data || providersResponse.data.length === 0) {
-    return { nodes: [], links: [], zeroDataProviders: [] };
+  if (Object.keys(severityByProviderType).length === 0) {
+    // No data - check if there are selected providers to show as zero-data
+    const zeroDataProviders: ZeroDataProvider[] = (
+      selectedProviderTypes || []
+    ).map((type) => ({
+      id: type.toLowerCase(),
+      displayName: getProviderDisplayName(type),
+    }));
+    return { nodes: [], links: [], zeroDataProviders };
   }
 
-  const aggregatedProviders = aggregateProvidersByType(providersResponse.data);
+  // Calculate total fails per provider to identify which have data
+  const providersWithData: {
+    id: string;
+    displayName: string;
+    totalFail: number;
+  }[] = [];
+  const providersWithoutData: ZeroDataProvider[] = [];
 
-  // Filter providers based on selection:
-  // - If providerTypes filter is set: show only those provider types
-  // - Otherwise: show all providers from the API response
-  const hasProviderTypeFilter =
-    filters?.providerTypes && filters.providerTypes.length > 0;
+  for (const [providerType, severity] of Object.entries(
+    severityByProviderType,
+  )) {
+    const totalFail =
+      severity.critical +
+      severity.high +
+      severity.medium +
+      severity.low +
+      severity.informational;
 
-  let providersToShow: AggregatedProvider[];
-  if (hasProviderTypeFilter) {
-    // Show only selected provider types
-    providersToShow = aggregatedProviders.filter((p) =>
-      filters.providerTypes!.includes(p.id.toLowerCase()),
-    );
-  } else {
-    // No provider type filter - show all providers from the API response
-    // Providers with no findings (pass=0, fail=0) will appear in the legend
-    providersToShow = aggregatedProviders;
+    const normalizedType = providerType.toLowerCase();
+
+    if (totalFail > 0) {
+      providersWithData.push({
+        id: normalizedType,
+        displayName: getProviderDisplayName(normalizedType),
+        totalFail,
+      });
+    } else {
+      providersWithoutData.push({
+        id: normalizedType,
+        displayName: getProviderDisplayName(normalizedType),
+      });
+    }
   }
 
-  if (providersToShow.length === 0) {
-    return { nodes: [], links: [], zeroDataProviders: [] };
-  }
-
-  // Separate providers with and without failures
-  const providersWithFailures = providersToShow.filter((p) => p.fail > 0);
-  const providersWithoutFailures = providersToShow.filter((p) => p.fail === 0);
-
-  // Zero-data providers to show as legends below the chart
-  const zeroDataProviders: ZeroDataProvider[] = providersWithoutFailures.map(
-    (p) => ({
-      id: p.id,
-      displayName: p.displayName,
-    }),
-  );
-
-  // Add selected provider types that are completely missing from API response
-  // (these are providers with zero findings - not even in the response)
-  if (
-    filters?.allSelectedProviderTypes &&
-    filters.allSelectedProviderTypes.length > 0
-  ) {
+  // Add selected provider types that are not in the response at all
+  if (selectedProviderTypes && selectedProviderTypes.length > 0) {
     const existingProviderIds = new Set(
-      aggregatedProviders.map((p) => p.id.toLowerCase()),
+      Object.keys(severityByProviderType).map((t) => t.toLowerCase()),
     );
 
-    for (const selectedType of filters.allSelectedProviderTypes) {
+    for (const selectedType of selectedProviderTypes) {
       const normalizedType = selectedType.toLowerCase();
       if (!existingProviderIds.has(normalizedType)) {
-        // This provider type was selected but has no data at all
-        zeroDataProviders.push({
+        providersWithoutData.push({
           id: normalizedType,
           displayName: getProviderDisplayName(normalizedType),
         });
@@ -152,65 +121,42 @@ export function adaptProvidersOverviewToSankey(
     }
   }
 
-  // If no providers have failures, return empty chart with legends
-  if (providersWithFailures.length === 0) {
-    return { nodes: [], links: [], zeroDataProviders };
+  // If no providers have failures, return empty chart with zero-data legends
+  if (providersWithData.length === 0) {
+    return { nodes: [], links: [], zeroDataProviders: providersWithoutData };
   }
 
-  // Only include providers WITH failures in the chart
-  const providerNodes: SankeyNode[] = providersWithFailures.map((p) => ({
+  // Build nodes: providers first, then severities
+  const providerNodes: SankeyNode[] = providersWithData.map((p) => ({
     name: p.displayName,
   }));
   const severityNodes: SankeyNode[] = SEVERITY_ORDER.map((severity) => ({
     name: severity,
   }));
   const nodes = [...providerNodes, ...severityNodes];
+
+  // Build links
   const severityStartIndex = providerNodes.length;
   const links: SankeyLink[] = [];
 
-  if (severityResponse?.data?.attributes) {
-    const { critical, high, medium, low, informational } =
-      severityResponse.data.attributes;
+  providersWithData.forEach((provider, sourceIndex) => {
+    const severity =
+      severityByProviderType[provider.id] ||
+      severityByProviderType[provider.id.toUpperCase()];
 
-    const severityValues = [critical, high, medium, low, informational];
-    const totalSeverity = severityValues.reduce((sum, v) => sum + v, 0);
-
-    if (totalSeverity > 0) {
-      const totalFails = providersWithFailures.reduce(
-        (sum, p) => sum + p.fail,
-        0,
-      );
-
-      providersWithFailures.forEach((provider, sourceIndex) => {
-        const providerRatio = provider.fail / totalFails;
-
-        severityValues.forEach((severityValue, severityIndex) => {
-          const value = Math.round(severityValue * providerRatio);
-
-          if (value > 0) {
-            links.push({
-              source: sourceIndex,
-              target: severityStartIndex + severityIndex,
-              value,
-            });
-          }
-        });
+    if (severity) {
+      SEVERITY_KEYS.forEach((key, severityIndex) => {
+        const value = severity[key];
+        if (value > 0) {
+          links.push({
+            source: sourceIndex,
+            target: severityStartIndex + severityIndex,
+            value,
+          });
+        }
       });
     }
-  } else {
-    // Fallback when no severity data available
-    const failNode: SankeyNode = { name: "Fail" };
-    nodes.push(failNode);
-    const failIndex = nodes.length - 1;
+  });
 
-    providersWithFailures.forEach((provider, sourceIndex) => {
-      links.push({
-        source: sourceIndex,
-        target: failIndex,
-        value: provider.fail,
-      });
-    });
-  }
-
-  return { nodes, links, zeroDataProviders };
+  return { nodes, links, zeroDataProviders: providersWithoutData };
 }
