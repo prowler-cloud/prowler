@@ -55,14 +55,14 @@ const formatTooltipDate = (dateStr: string) => {
 };
 
 interface CustomLineTooltipProps extends TooltipProps<number, string> {
-  selectedLine?: string | null;
+  filterLine?: string | null;
 }
 
 const CustomLineTooltip = ({
   active,
   payload,
   label,
-  selectedLine,
+  filterLine,
 }: CustomLineTooltipProps) => {
   if (!active || !payload || payload.length === 0) {
     return null;
@@ -70,9 +70,9 @@ const CustomLineTooltip = ({
 
   const typedPayload = payload as unknown as TooltipPayloadItem[];
 
-  // Filter payload if a line is selected
-  const displayPayload = selectedLine
-    ? typedPayload.filter((item) => item.dataKey === selectedLine)
+  // Filter payload if a line is selected or hovered
+  const displayPayload = filterLine
+    ? typedPayload.filter((item) => item.dataKey === filterLine)
     : typedPayload;
 
   if (displayPayload.length === 0) {
@@ -210,7 +210,7 @@ export function LineChart({
               strokeWidth: 1,
               strokeDasharray: "4 4",
             }}
-            content={<CustomLineTooltip selectedLine={selectedLine} />}
+            content={<CustomLineTooltip filterLine={activeLine} />}
           />
           {lines.map((line) => {
             const isActive = activeLine === line.dataKey;
