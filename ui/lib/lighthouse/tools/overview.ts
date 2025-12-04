@@ -5,7 +5,7 @@ import {
   getFindingsBySeverity,
   getFindingsByStatus,
   getProvidersOverview,
-} from "@/actions/overview/overview";
+} from "@/actions/overview";
 import {
   getFindingsBySeveritySchema,
   getFindingsByStatusSchema,
