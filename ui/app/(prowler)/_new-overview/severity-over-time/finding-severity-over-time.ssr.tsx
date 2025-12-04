@@ -8,25 +8,31 @@ import { FindingSeverityOverTimeSkeleton } from "./_components/finding-severity-
 
 export { FindingSeverityOverTimeSkeleton };
 
+const EmptyState = ({ message }: { message: string }) => (
+  <Card variant="base" className="flex h-full min-h-[405px] flex-1 flex-col">
+    <CardHeader className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <CardTitle>Finding Severity Over Time</CardTitle>
+      </div>
+    </CardHeader>
+    <CardContent className="flex flex-1 items-center justify-center">
+      <p className="text-text-neutral-tertiary">{message}</p>
+    </CardContent>
+  </Card>
+);
+
 export const FindingSeverityOverTimeSSR = async ({
   searchParams,
 }: SSRComponentProps) => {
   const filters = pickFilterParams(searchParams);
+  const result = await getFindingsSeverityTrends({ filters });
 
-  const severityTrends = await getFindingsSeverityTrends({ filters });
+  if (result.status === "error") {
+    return <EmptyState message="Failed to load severity trends data" />;
+  }
 
-  if (
-    !severityTrends ||
-    !severityTrends.data ||
-    severityTrends.data.length === 0
-  ) {
-    return (
-      <div className="border-border-neutral-primary bg-bg-neutral-secondary flex h-[400px] w-full items-center justify-center rounded-xl border">
-        <p className="text-text-neutral-tertiary">
-          Failed to load severity trends data
-        </p>
-      </div>
-    );
+  if (result.status === "empty") {
+    return <EmptyState message="No severity trends data available" />;
   }
 
   return (
@@ -38,7 +44,7 @@ export const FindingSeverityOverTimeSSR = async ({
       </CardHeader>
 
       <CardContent className="flex flex-1 flex-col px-6">
-        <FindingSeverityOverTime data={severityTrends.data} />
+        <FindingSeverityOverTime data={result.data.data} />
       </CardContent>
     </Card>
   );

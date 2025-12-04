@@ -3,11 +3,11 @@
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 
+import { adaptSeverityTrendsResponse } from "./severity-trends.adapter";
 import {
   AdaptedSeverityTrendsResponse,
-  adaptSeverityTrendsResponse,
   FindingsSeverityOverTimeResponse,
-} from "./severity-trends.adapter";
+} from "./types";
 
 const TIME_RANGE_VALUES = {
   FIVE_DAYS: "5D",
@@ -23,11 +23,16 @@ const TIME_RANGE_DAYS: Record<TimeRange, number> = {
   "1M": 30,
 };
 
+export type SeverityTrendsResult =
+  | { status: "success"; data: AdaptedSeverityTrendsResponse }
+  | { status: "empty" }
+  | { status: "error" };
+
 const getFindingsSeverityTrends = async ({
   filters = {},
 }: {
   filters?: Record<string, string | string[] | undefined>;
-} = {}): Promise<AdaptedSeverityTrendsResponse | undefined> => {
+} = {}): Promise<SeverityTrendsResult> => {
   const headers = await getAuthHeaders({ contentType: false });
 
   const url = new URL(`${apiBaseUrl}/overviews/findings_severity_over_time`);
@@ -46,14 +51,21 @@ const getFindingsSeverityTrends = async ({
     const apiResponse: FindingsSeverityOverTimeResponse | undefined =
       await handleApiResponse(response);
 
-    if (!apiResponse) {
-      return undefined;
+    if (!apiResponse?.data || !Array.isArray(apiResponse.data)) {
+      return { status: "empty" };
     }
 
-    return adaptSeverityTrendsResponse(apiResponse);
+    if (apiResponse.data.length === 0) {
+      return { status: "empty" };
+    }
+
+    return {
+      status: "success",
+      data: adaptSeverityTrendsResponse(apiResponse),
+    };
   } catch (error) {
     console.error("Error fetching findings severity trends:", error);
-    return undefined;
+    return { status: "error" };
   }
 };
 
@@ -63,12 +75,12 @@ export const getSeverityTrendsByTimeRange = async ({
 }: {
   timeRange: TimeRange;
   filters?: Record<string, string | string[] | undefined>;
-}): Promise<AdaptedSeverityTrendsResponse | undefined> => {
+}): Promise<SeverityTrendsResult> => {
   const days = TIME_RANGE_DAYS[timeRange];
 
   if (!days) {
     console.error("Invalid time range provided");
-    return undefined;
+    return { status: "error" };
   }
 
   const endDate = new Date();

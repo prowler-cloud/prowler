@@ -73,12 +73,17 @@ export const FindingSeverityOverTime = ({
     setError(null);
 
     try {
-      const response = await getSeverityTrendsByTimeRange({
+      const result = await getSeverityTrendsByTimeRange({
         timeRange: newRange,
       });
 
-      if (response?.data) {
-        setData(response.data);
+      if (result.status === "success") {
+        setData(result.data.data);
+      } else if (result.status === "empty") {
+        setData([]);
+        setError("No severity trends data available for this time range");
+      } else {
+        setError("Failed to load severity trends. Please try again.");
       }
     } catch (err) {
       console.error("Error fetching severity trends:", err);
