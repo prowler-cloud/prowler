@@ -1,13 +1,18 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { getSeverityTrendsByTimeRange } from "@/actions/overview/severity-trends";
 import { LineChart } from "@/components/graphs/line-chart";
 import { LineConfig, LineDataPoint } from "@/components/graphs/types";
 import { Skeleton } from "@/components/shadcn";
-import { MUTED_COLOR, SEVERITY_LINE_CONFIGS } from "@/types/severities";
+import {
+  MUTED_COLOR,
+  SEVERITY_LEVELS,
+  SEVERITY_LINE_CONFIGS,
+  SeverityLevel,
+} from "@/types/severities";
 
 import { type TimeRange, TimeRangeSelector } from "./time-range-selector";
 
@@ -19,21 +24,45 @@ export const FindingSeverityOverTime = ({
   data: initialData,
 }: FindingSeverityOverTimeProps) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [timeRange, setTimeRange] = useState<TimeRange>("5D");
   const [data, setData] = useState<LineDataPoint[]>(initialData);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handlePointClick = (pointData: LineDataPoint) => {
+  const handlePointClick = ({
+    point,
+    dataKey,
+  }: {
+    point: LineDataPoint;
+    dataKey?: string;
+  }) => {
     const params = new URLSearchParams();
-    params.set("filter[inserted_at]", pointData.date);
+    params.set("filter[inserted_at]", point.date);
 
+    // Add scan_ids filter
     if (
-      pointData.scan_ids &&
-      Array.isArray(pointData.scan_ids) &&
-      pointData.scan_ids.length > 0
+      point.scan_ids &&
+      Array.isArray(point.scan_ids) &&
+      point.scan_ids.length > 0
     ) {
-      params.set("filter[scan__in]", pointData.scan_ids.join(","));
+      params.set("filter[scan__in]", point.scan_ids.join(","));
+    }
+
+    // Add severity filter if clicked on a specific severity line
+    if (dataKey && SEVERITY_LEVELS.includes(dataKey as SeverityLevel)) {
+      params.set("filter[severity__in]", dataKey);
+    }
+
+    // Preserve provider filters from overview
+    const providerType = searchParams.get("filter[provider_type__in]");
+    const providerId = searchParams.get("filter[provider_id__in]");
+
+    if (providerType) {
+      params.set("filter[provider_type__in]", providerType);
+    }
+    if (providerId) {
+      params.set("filter[provider__in]", providerId);
     }
 
     router.push(`/findings?${params.toString()}`);

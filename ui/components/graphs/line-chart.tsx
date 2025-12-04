@@ -25,12 +25,17 @@ import {
 } from "./shared/custom-axis-tick";
 import { LineConfig, LineDataPoint } from "./types";
 
+interface PointClickData {
+  point: LineDataPoint;
+  dataKey?: string;
+}
+
 interface LineChartProps {
   data: LineDataPoint[];
   lines: LineConfig[];
   height?: number;
   xAxisInterval?: number | "preserveStart" | "preserveEnd" | "preserveStartEnd";
-  onPointClick?: (data: LineDataPoint) => void;
+  onPointClick?: (data: PointClickData) => void;
 }
 
 interface TooltipPayloadItem {
@@ -148,15 +153,6 @@ export function LineChart({
             right: 30,
             bottom: 40,
           }}
-          onClick={
-            onPointClick
-              ? (state) => {
-                  if (state?.activePayload?.[0]?.payload) {
-                    onPointClick(state.activePayload[0].payload);
-                  }
-                }
-              : undefined
-          }
           style={{ cursor: onPointClick ? "pointer" : "default" }}
         >
           <CartesianGrid
@@ -201,15 +197,23 @@ export function LineChart({
                 dataKey={line.dataKey}
                 stroke={line.color}
                 strokeWidth={2}
-                strokeOpacity={isFaded ? 0.5 : 1}
+                strokeOpacity={isFaded ? 0.2 : 1}
                 name={line.label}
                 dot={{ fill: line.color, r: 4 }}
                 activeDot={{
                   r: 6,
                   cursor: onPointClick ? "pointer" : "default",
+                  onClick: onPointClick
+                    ? (_: unknown, dotProps: { payload: LineDataPoint }) => {
+                        onPointClick({
+                          point: dotProps.payload,
+                          dataKey: line.dataKey,
+                        });
+                      }
+                    : undefined,
+                  onMouseEnter: () => setHoveredLine(line.dataKey),
+                  onMouseLeave: () => setHoveredLine(null),
                 }}
-                onMouseEnter={() => setHoveredLine(line.dataKey)}
-                onMouseLeave={() => setHoveredLine(null)}
                 style={{ transition: "stroke-opacity 0.2s" }}
               />
             );
