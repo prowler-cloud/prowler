@@ -38,54 +38,27 @@ export async function POST(req: Request) {
     const accessToken = session.accessToken;
 
     return await authContextStorage.run(accessToken, async () => {
-      const processedMessages = [...messages];
-
+      // Get AI configuration to access business context
       const tenantConfigResult = await getTenantConfig();
       const businessContext =
         tenantConfigResult?.data?.attributes?.business_context;
 
+      // Get current user data
       const currentData = await getCurrentDataSection();
 
-      const contextMessages: UIMessage[] = [];
-
-      if (businessContext) {
-        contextMessages.push({
-          id: "business-context",
-          role: "assistant",
-          parts: [
-            {
-              type: "text",
-              text: `Business Context Information:\n${businessContext}`,
-            },
-          ],
-        });
-      }
-
-      if (currentData) {
-        contextMessages.push({
-          id: "current-data",
-          role: "assistant",
-          parts: [
-            {
-              type: "text",
-              text: currentData,
-            },
-          ],
-        });
-      }
-
-      processedMessages.unshift(...contextMessages);
-
+      // Pass context to workflow instead of injecting as assistant messages
       const runtimeConfig: RuntimeConfig = {
         model,
         provider,
+        businessContext,
+        currentData,
       };
 
       const app = await initLighthouseWorkflow(runtimeConfig);
 
       const agentStream = app.streamEvents(
         {
-          messages: processedMessages
+          messages: messages
             .filter(
               (message: UIMessage) =>
                 message.role === "user" || message.role === "assistant",
@@ -129,7 +102,7 @@ export async function POST(req: Request) {
               contexts: {
                 lighthouse: {
                   event_type: "stream_error",
-                  message_count: processedMessages.length,
+                  message_count: messages.length,
                 },
               },
             });
