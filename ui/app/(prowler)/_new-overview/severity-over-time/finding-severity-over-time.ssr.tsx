@@ -3,10 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
 
 import { SSRComponentProps } from "../_types";
 import { pickFilterParams } from "../_lib/filter-params";
-import {
-  FindingSeverityOverTime,
-  FindingSeverityOverTimeSkeleton,
-} from "./finding-severity-over-time";
+import { FindingSeverityOverTime } from "./finding-severity-over-time";
+import { FindingSeverityOverTimeSkeleton } from "./finding-severity-over-time.skeleton";
 
 export { FindingSeverityOverTimeSkeleton };
 
