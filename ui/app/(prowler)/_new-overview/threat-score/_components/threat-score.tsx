@@ -5,7 +5,7 @@ import { MessageCircleWarning, ThumbsUp } from "lucide-react";
 import type {
   CriticalRequirement,
   SectionScores,
-} from "@/actions/overview/types";
+} from "@/actions/overview/threat-score";
 import { RadialChart } from "@/components/graphs/radial-chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
 
