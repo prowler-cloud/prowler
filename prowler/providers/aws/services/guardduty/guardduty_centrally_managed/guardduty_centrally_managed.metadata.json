@@ -9,7 +9,7 @@
   "ServiceName": "guardduty",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "AwsGuardDutyDetector",
   "Description": "Amazon GuardDuty detectors are under **centralized management** when linked to a delegated administrator account, or when the detector's account serves as the **administrator** with associated member accounts.",
   "Risk": "Lack of central management fragments **visibility** and slows **incident response** across accounts and regions. Adversaries can persist unnoticed, perform **lateral movement**, exfiltrate data, and alter configurations, harming **confidentiality**, **integrity**, and **availability**.",
@@ -20,18 +20,16 @@
   "Remediation": {
     "Code": {
       "CLI": "aws guardduty enable-organization-admin-account --admin-account-id <ADMIN_ACCOUNT_ID>",
-      "NativeIaC": "```yaml\n# Designate a delegated administrator for GuardDuty via AWS Organizations\nResources:\n  <example_resource_name>:\n    Type: AWS::Organizations::DelegatedAdministrator\n    Properties:\n      AccountId: \"<example_account_id>\"          # CRITICAL: the account to act as GuardDuty admin\n      ServicePrincipal: guardduty.amazonaws.com   # CRITICAL: delegates admin for GuardDuty\n```",
+      "NativeIaC": "",
       "Other": "1. Sign in to the AWS Organizations management account\n2. Open the AWS Organizations console\n3. Go to Services > Amazon GuardDuty\n4. Click Register delegated administrator\n5. Enter the admin account ID and click Register",
-      "Terraform": "```hcl\n# Designate a delegated administrator for GuardDuty (run in the Organizations management account)\nresource \"aws_guardduty_organization_admin_account\" \"<example_resource_name>\" {\n  admin_account_id = \"<example_account_id>\"  # CRITICAL: sets the GuardDuty admin account\n}\n```"
+      "Terraform": ""
     },
     "Recommendation": {
       "Text": "Designate a **delegated administrator** (preferably via *AWS Organizations*) and enroll all accounts as **members**. Enable auto-enrollment for new accounts, standardize detector settings across required regions, and route findings to central monitoring. Apply **least privilege** and **separation of duties**.",
       "Url": "https://hub.prowler.com/check/guardduty_centrally_managed"
     }
   },
-  "Categories": [
-    "threat-detection"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -20,7 +20,6 @@
     "https://docs.aws.amazon.com/guardduty/latest/ug/s3_detection.html",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/GuardDuty/enable-s3-protection.html",
     "https://docs.aws.amazon.com/guardduty/latest/ug/s3-protection.html",
-    "https://support.icompaas.com/support/solutions/articles/62000233477-ensure-guardduty-s3-protection-is-enabled-",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/guardduty-controls.html#guardduty-10"
   ],
   "Remediation": {
@@ -35,9 +34,7 @@
       "Url": "https://hub.prowler.com/check/guardduty_s3_protection_enabled"
     }
   },
-  "Categories": [
-    "threat-detection"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

@@ -32,7 +32,6 @@
     }
   },
   "Categories": [
-    "threat-detection",
     "cluster-security"
   ],
   "DependsOn": [],

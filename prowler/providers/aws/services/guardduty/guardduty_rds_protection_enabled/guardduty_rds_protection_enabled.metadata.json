@@ -10,7 +10,7 @@
   "ServiceName": "guardduty",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
+  "Severity": "high",
   "ResourceType": "AwsGuardDutyDetector",
   "Description": "Active **Amazon GuardDuty detectors** are assessed for **RDS Protection** being enabled, allowing analysis of RDS and Aurora login activity to profile and flag anomalous access patterns.",
   "Risk": "Without **RDS Protection**, anomalous database logins can go unnoticed. Attackers using **stolen** or **brute-forced** credentials may access data, alter schemas, or pivot via the DB, impacting **confidentiality** and **integrity**, and potentially **availability**.",
@@ -32,9 +32,7 @@
       "Url": "https://hub.prowler.com/check/guardduty_rds_protection_enabled"
     }
   },
-  "Categories": [
-    "threat-detection"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

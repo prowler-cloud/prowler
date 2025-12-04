@@ -31,9 +31,7 @@
       "Url": "https://hub.prowler.com/check/guardduty_lambda_protection_enabled"
     }
   },
-  "Categories": [
-    "threat-detection"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

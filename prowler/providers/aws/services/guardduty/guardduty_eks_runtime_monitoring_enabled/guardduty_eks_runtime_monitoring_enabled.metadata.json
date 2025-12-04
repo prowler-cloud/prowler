@@ -9,7 +9,7 @@
   "ServiceName": "guardduty",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "high",
+  "Severity": "medium",
   "ResourceType": "AwsGuardDutyDetector",
   "Description": "GuardDuty detectors are evaluated for **EKS Runtime Monitoring** being enabled for Amazon EKS. The configuration is at the detector level and relates to visibility into *process, file, and network* activity on EKS nodes and containers.",
   "Risk": "Absent **EKS runtime monitoring**, in-cluster activity is blind to detection. Adversaries can run malware or cryptominers, exfiltrate secrets via pods, tamper with workloads, or pivot to other services, degrading confidentiality, corrupting integrity, and exhausting resources (availability).",
@@ -31,9 +31,7 @@
       "Url": "https://hub.prowler.com/check/guardduty_eks_runtime_monitoring_enabled"
     }
   },
-  "Categories": [
-    "threat-detection"
-  ],
+  "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

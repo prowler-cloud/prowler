@@ -16,14 +16,10 @@
   "Risk": "Without active **GuardDuty**, threats in CloudTrail, VPC Flow Logs, DNS, S3, EKS, EBS, and Lambda can go unnoticed. Attackers can exfiltrate data, move laterally, and mine crypto, degrading confidentiality, integrity, and availability-especially in unmonitored Regions.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.prowler.com/checks/aws/general-policies/ensure-guardduty-is-enabled-to-specific-orgregion#fix---buildtime",
     "https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_settingup.html",
     "https://aws.plainenglish.io/how-to-protect-your-organizations-aws-account-with-aws-guardduty-a1a635c417aa",
-    "https://dev.to/dgwhited/introducing-amazon-guardduty-detector-checker-verify-enablement-and-finding-publishing-configurations-47dj",
     "https://medium.com/swlh/aws-cdk-automating-guardduty-event-notifications-in-all-regions-f0bbcec6077d",
     "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/GuardDuty/guardduty-enabled.html",
-    "https://docs.gruntwork.io/reference/modules/terraform-aws-security/guardduty-multi-region/",
-    "https://github.com/mozilla/guardduty-multi-account-manager",
     "https://docs.aws.amazon.com/prescriptive-guidance/latest/patterns/use-terraform-to-automatically-enable-amazon-guardduty-for-an-organization.html"
   ],
   "Remediation": {
@@ -39,7 +35,7 @@
     }
   },
   "Categories": [
-    "threat-detection"
+    "forensics-ready"
   ],
   "DependsOn": [],
   "RelatedTo": [],
