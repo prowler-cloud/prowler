@@ -136,13 +136,16 @@ class Compute(GCPService):
                                 automatic_restart=instance.get("scheduling", {}).get(
                                     "automaticRestart", False
                                 ),
-                                preemptible=instance.get("scheduling", {}).get(
-                                    "preemptible", False
-                                ),
                                 provisioning_model=instance.get("scheduling", {}).get(
                                     "provisioningModel", "STANDARD"
                                 ),
                                 project_id=project_id,
+                                preemptible=instance.get("scheduling", {}).get(
+                                    "preemptible", False
+                                ),
+                                deletion_protection=instance.get(
+                                    "deletionProtection", False
+                                ),
                             )
                         )
 
@@ -377,6 +380,7 @@ class Instance(BaseModel):
     automatic_restart: bool = False
     preemptible: bool = False
     provisioning_model: str = "STANDARD"
+    deletion_protection: bool = False
 
 
 class Network(BaseModel):

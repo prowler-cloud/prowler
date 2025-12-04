@@ -88,58 +88,55 @@ jobs:
 
     - name: Read changelog versions from release branch
       run: |
-        # Function to extract the latest version from changelog
-        extract_latest_version() {
+        # Function to extract the version for a specific Prowler release from changelog
+        # This looks for entries with "(Prowler X.Y.Z)" to find the released version
+        extract_version_for_release() {
           local changelog_file="$1"
+          local prowler_version="$2"
           if [ -f "$changelog_file" ]; then
-            # Extract the first version entry (most recent) from changelog
-            # Format: ## [version] (1.2.3) or ## [vversion] (v1.2.3)
-            local version=$(grep -m 1 '^## \[' "$changelog_file" | sed 's/^## \[\(.*\)\].*/\1/' | sed 's/^v//' | tr -d '[:space:]')
+            # Extract version that matches this Prowler release
+            # Format: ## [version] (Prowler X.Y.Z) or ## [vversion] (Prowler vX.Y.Z)
+            local version=$(grep '^## \[' "$changelog_file" | grep "(Prowler v\?${prowler_version})" | head -1 | sed 's/^## \[\(.*\)\].*/\1/' | sed 's/^v//' | tr -d '[:space:]')
             echo "$version"
           else
             echo ""
           fi
         }
 
-        # Read actual versions from changelogs (source of truth)
-        UI_VERSION=$(extract_latest_version "ui/CHANGELOG.md")
-        API_VERSION=$(extract_latest_version "api/CHANGELOG.md")
-        SDK_VERSION=$(extract_latest_version "prowler/CHANGELOG.md")
-        MCP_VERSION=$(extract_latest_version "mcp_server/CHANGELOG.md")
+        # Read versions from changelogs for this specific Prowler release
+        SDK_VERSION=$(extract_version_for_release "prowler/CHANGELOG.md" "$PROWLER_VERSION")
+        API_VERSION=$(extract_version_for_release "api/CHANGELOG.md" "$PROWLER_VERSION")
+        UI_VERSION=$(extract_version_for_release "ui/CHANGELOG.md" "$PROWLER_VERSION")
+        MCP_VERSION=$(extract_version_for_release "mcp_server/CHANGELOG.md" "$PROWLER_VERSION")
 
-        echo "UI_VERSION=${UI_VERSION}" >> "${GITHUB_ENV}"
-        echo "API_VERSION=${API_VERSION}" >> "${GITHUB_ENV}"
         echo "SDK_VERSION=${SDK_VERSION}" >> "${GITHUB_ENV}"
+        echo "API_VERSION=${API_VERSION}" >> "${GITHUB_ENV}"
+        echo "UI_VERSION=${UI_VERSION}" >> "${GITHUB_ENV}"
         echo "MCP_VERSION=${MCP_VERSION}" >> "${GITHUB_ENV}"
 
-        if [ -n "$UI_VERSION" ]; then
-          echo "Read UI version from changelog: $UI_VERSION"
+        if [ -n "$SDK_VERSION" ]; then
+          echo "✓ SDK version for Prowler $PROWLER_VERSION: $SDK_VERSION"
         else
-          echo "Warning: No UI version found in ui/CHANGELOG.md"
+          echo "ℹ No SDK version found for Prowler $PROWLER_VERSION in prowler/CHANGELOG.md"
         fi
 
         if [ -n "$API_VERSION" ]; then
-          echo "Read API version from changelog: $API_VERSION"
+          echo "✓ API version for Prowler $PROWLER_VERSION: $API_VERSION"
         else
-          echo "Warning: No API version found in api/CHANGELOG.md"
+          echo "ℹ No API version found for Prowler $PROWLER_VERSION in api/CHANGELOG.md"
         fi
 
-        if [ -n "$SDK_VERSION" ]; then
-          echo "Read SDK version from changelog: $SDK_VERSION"
+        if [ -n "$UI_VERSION" ]; then
+          echo "✓ UI version for Prowler $PROWLER_VERSION: $UI_VERSION"
         else
-          echo "Warning: No SDK version found in prowler/CHANGELOG.md"
+          echo "ℹ No UI version found for Prowler $PROWLER_VERSION in ui/CHANGELOG.md"
         fi
 
         if [ -n "$MCP_VERSION" ]; then
-          echo "Read MCP version from changelog: $MCP_VERSION"
+          echo "✓ MCP version for Prowler $PROWLER_VERSION: $MCP_VERSION"
         else
-          echo "Warning: No MCP version found in mcp_server/CHANGELOG.md"
+          echo "ℹ No MCP version found for Prowler $PROWLER_VERSION in mcp_server/CHANGELOG.md"
         fi
-
-        echo "UI version: $UI_VERSION"
-        echo "API version: $API_VERSION"
-        echo "SDK version: $SDK_VERSION"
-        echo "MCP version: $MCP_VERSION"
 
     - name: Extract and combine changelog entries
       run: |
@@ -171,65 +168,50 @@ jobs:
           sed -i -e :a -e '/^\s*$/d;N;ba' "$output_file"
         }
 
-        # Calculate expected versions for this release
-        if [[ $PROWLER_VERSION =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
-          EXPECTED_UI_VERSION="1.${BASH_REMATCH[2]}.${BASH_REMATCH[3]}"
-          EXPECTED_API_VERSION="1.$((${BASH_REMATCH[2]} + 1)).${BASH_REMATCH[3]}"
-
-          echo "Expected UI version for this release: $EXPECTED_UI_VERSION"
-          echo "Expected API version for this release: $EXPECTED_API_VERSION"
-        fi
-
         # Determine if components have changes for this specific release
-        # UI has changes if its current version matches what we expect for this release
-        if [ -n "$UI_VERSION" ] && [ "$UI_VERSION" = "$EXPECTED_UI_VERSION" ]; then
-          echo "HAS_UI_CHANGES=true" >> $GITHUB_ENV
-          echo "✓ UI changes detected - version matches expected: $UI_VERSION"
-          extract_changelog "ui/CHANGELOG.md" "$UI_VERSION" "ui_changelog.md"
-        else
-          echo "HAS_UI_CHANGES=false" >> $GITHUB_ENV
-          echo "ℹ No UI changes for this release (current: $UI_VERSION, expected: $EXPECTED_UI_VERSION)"
-          touch "ui_changelog.md"
-        fi
+        # A component has changes if we found a version for it in the changelog
 
-        # API has changes if its current version matches what we expect for this release
-        if [ -n "$API_VERSION" ] && [ "$API_VERSION" = "$EXPECTED_API_VERSION" ]; then
-          echo "HAS_API_CHANGES=true" >> $GITHUB_ENV
-          echo "✓ API changes detected - version matches expected: $API_VERSION"
-          extract_changelog "api/CHANGELOG.md" "$API_VERSION" "api_changelog.md"
-        else
-          echo "HAS_API_CHANGES=false" >> $GITHUB_ENV
-          echo "ℹ No API changes for this release (current: $API_VERSION, expected: $EXPECTED_API_VERSION)"
-          touch "api_changelog.md"
-        fi
-
-        # SDK has changes if its current version matches the input version
-        if [ -n "$SDK_VERSION" ] && [ "$SDK_VERSION" = "$PROWLER_VERSION" ]; then
+        # SDK has changes if we found a version
+        if [ -n "$SDK_VERSION" ]; then
           echo "HAS_SDK_CHANGES=true" >> $GITHUB_ENV
-          echo "✓ SDK changes detected - version matches input: $SDK_VERSION"
-          extract_changelog "prowler/CHANGELOG.md" "$PROWLER_VERSION" "prowler_changelog.md"
+          echo "✓ SDK changes detected - version: $SDK_VERSION"
+          extract_changelog "prowler/CHANGELOG.md" "$SDK_VERSION" "prowler_changelog.md"
         else
           echo "HAS_SDK_CHANGES=false" >> $GITHUB_ENV
-          echo "ℹ No SDK changes for this release (current: $SDK_VERSION, input: $PROWLER_VERSION)"
+          echo "ℹ No SDK changes for this release"
           touch "prowler_changelog.md"
         fi
 
-        # MCP has changes if the changelog references this Prowler version
-        # Check if the changelog contains "(Prowler X.Y.Z)" or "(Prowler UNRELEASED)"
-        if [ -f "mcp_server/CHANGELOG.md" ]; then
-          MCP_PROWLER_REF=$(grep -m 1 "^## \[.*\] (Prowler" mcp_server/CHANGELOG.md | sed -E 's/.*\(Prowler ([^)]+)\).*/\1/' | tr -d '[:space:]')
-          if [ "$MCP_PROWLER_REF" = "$PROWLER_VERSION" ] || [ "$MCP_PROWLER_REF" = "UNRELEASED" ]; then
-            echo "HAS_MCP_CHANGES=true" >> $GITHUB_ENV
-            echo "✓ MCP changes detected - Prowler reference: $MCP_PROWLER_REF (version: $MCP_VERSION)"
-            extract_changelog "mcp_server/CHANGELOG.md" "$MCP_VERSION" "mcp_changelog.md"
-          else
-            echo "HAS_MCP_CHANGES=false" >> $GITHUB_ENV
-            echo "ℹ No MCP changes for this release (Prowler reference: $MCP_PROWLER_REF, input: $PROWLER_VERSION)"
-            touch "mcp_changelog.md"
-          fi
+        # API has changes if we found a version
+        if [ -n "$API_VERSION" ]; then
+          echo "HAS_API_CHANGES=true" >> $GITHUB_ENV
+          echo "✓ API changes detected - version: $API_VERSION"
+          extract_changelog "api/CHANGELOG.md" "$API_VERSION" "api_changelog.md"
+        else
+          echo "HAS_API_CHANGES=false" >> $GITHUB_ENV
+          echo "ℹ No API changes for this release"
+          touch "api_changelog.md"
+        fi
+
+        # UI has changes if we found a version
+        if [ -n "$UI_VERSION" ]; then
+          echo "HAS_UI_CHANGES=true" >> $GITHUB_ENV
+          echo "✓ UI changes detected - version: $UI_VERSION"
+          extract_changelog "ui/CHANGELOG.md" "$UI_VERSION" "ui_changelog.md"
+        else
+          echo "HAS_UI_CHANGES=false" >> $GITHUB_ENV
+          echo "ℹ No UI changes for this release"
+          touch "ui_changelog.md"
+        fi
+
+        # MCP has changes if we found a version
+        if [ -n "$MCP_VERSION" ]; then
+          echo "HAS_MCP_CHANGES=true" >> $GITHUB_ENV
+          echo "✓ MCP changes detected - version: $MCP_VERSION"
+          extract_changelog "mcp_server/CHANGELOG.md" "$MCP_VERSION" "mcp_changelog.md"
         else
           echo "HAS_MCP_CHANGES=false" >> $GITHUB_ENV
-          echo "ℹ No MCP changelog found"
+          echo "ℹ No MCP changes for this release"
           touch "mcp_changelog.md"
         fi
 
@@ -324,6 +306,17 @@ jobs:
           exit 1
         fi
         echo "✓ api/src/backend/api/v1/views.py version: $CURRENT_API_VERSION"
+
+    - name: Verify API version in api/src/backend/api/specs/v1.yaml
+      if: ${{ env.HAS_API_CHANGES == 'true' }}
+      run: |
+        CURRENT_API_VERSION=$(grep '^  version: ' api/src/backend/api/specs/v1.yaml | sed -E 's/  version: ([0-9]+\.[0-9]+\.[0-9]+)/\1/' | tr -d '[:space:]')
+        API_VERSION_TRIMMED=$(echo "$API_VERSION" | tr -d '[:space:]')
+        if [ "$CURRENT_API_VERSION" != "$API_VERSION_TRIMMED" ]; then
+          echo "ERROR: API version mismatch in api/src/backend/api/specs/v1.yaml (expected: '$API_VERSION_TRIMMED', found: '$CURRENT_API_VERSION')"
+          exit 1
+        fi
+        echo "✓ api/src/backend/api/specs/v1.yaml version: $CURRENT_API_VERSION"
 
     - name: Update API prowler dependency for minor release
       if: ${{ env.PATCH_VERSION == '0' }}
