@@ -13,6 +13,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `compute_instance_deletion_protection_enabled` check for GCP provider [(#9358)](https://github.com/prowler-cloud/prowler/pull/9358)
 
 ### Changed
+- Update AWS Lightsail service metadata to new format [(#9264)](https://github.com/prowler-cloud/prowler/pull/9264)
 - Update AWS GuardDuty service metadata to new format [(#9259)](https://github.com/prowler-cloud/prowler/pull/9259)
 
 ---
