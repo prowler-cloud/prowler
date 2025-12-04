@@ -1,9 +1,8 @@
-from typing import List
+from typing import Any, List
 
 from fastmcp import FastMCP
 from prowler_mcp_server.prowler_documentation.search_engine import (
     ProwlerDocsSearchEngine,
-    SearchResult,
 )
 
 # Initialize FastMCP server
@@ -15,7 +14,7 @@ prowler_docs_search_engine = ProwlerDocsSearchEngine()
 def search(
     query: str,
     page_size: int = 5,
-) -> List[SearchResult]:
+) -> List[dict[str, Any]]:
     """
     Search in Prowler documentation.
 

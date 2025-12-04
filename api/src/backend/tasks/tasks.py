@@ -35,8 +35,9 @@ from tasks.jobs.lighthouse_providers import (
     refresh_lighthouse_provider_models,
 )
 from tasks.jobs.muting import mute_historical_findings
-from tasks.jobs.report import generate_threatscore_report_job
+from tasks.jobs.report import generate_compliance_reports_job
 from tasks.jobs.scan import (
+    aggregate_attack_surface,
     aggregate_findings,
     create_compliance_requirements,
     perform_prowler_scan,
@@ -46,7 +47,7 @@ from tasks.utils import batched, get_next_execution_datetime
 from api.compliance import get_compliance_frameworks
 from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import rls_transaction
-from api.decorators import set_tenant
+from api.decorators import handle_provider_deletion, set_tenant
 from api.models import Finding, Integration, Provider, Scan, ScanSummary, StateChoices
 from api.utils import initialize_prowler_provider
 from api.v1.serializers import ScanTaskSerializer
@@ -69,13 +70,17 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
     create_compliance_requirements_task.apply_async(
         kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
     )
+    aggregate_attack_surface_task.apply_async(
+        kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
+    )
     chain(
         perform_scan_summary_task.si(tenant_id=tenant_id, scan_id=scan_id),
         generate_outputs_task.si(
             scan_id=scan_id, provider_id=provider_id, tenant_id=tenant_id
         ),
         group(
-            generate_threatscore_report_task.si(
+            # Use optimized task that generates both reports with shared queries
+            generate_compliance_reports_task.si(
                 tenant_id=tenant_id, scan_id=scan_id, provider_id=provider_id
             ),
             check_integrations_task.si(
@@ -139,6 +144,7 @@ def delete_provider_task(provider_id: str, tenant_id: str):
 
 
 @shared_task(base=RLSTask, name="scan-perform", queue="scans")
+@handle_provider_deletion
 def perform_scan_task(
     tenant_id: str, scan_id: str, provider_id: str, checks_to_execute: list[str] = None
 ):
@@ -171,6 +177,7 @@ def perform_scan_task(
 
 
 @shared_task(base=RLSTask, bind=True, name="scan-perform-scheduled", queue="scans")
+@handle_provider_deletion
 def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
     """
     Task to perform a scheduled Prowler scan on a given provider.
@@ -276,6 +283,7 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
 
 
 @shared_task(name="scan-summary", queue="overview")
+@handle_provider_deletion
 def perform_scan_summary_task(tenant_id: str, scan_id: str):
     return aggregate_findings(tenant_id=tenant_id, scan_id=scan_id)
 
@@ -291,6 +299,7 @@ def delete_tenant_task(tenant_id: str):
     queue="scan-reports",
 )
 @set_tenant(keep_tenant=True)
+@handle_provider_deletion
 def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
     """
     Process findings in batches and generate output files in multiple formats.
@@ -319,7 +328,7 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
 
     frameworks_bulk = Compliance.get_bulk(provider_type)
     frameworks_avail = get_compliance_frameworks(provider_type)
-    out_dir, comp_dir, _ = _generate_output_directory(
+    out_dir, comp_dir = _generate_output_directory(
         DJANGO_TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id
     )
 
@@ -486,6 +495,7 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
 
 
 @shared_task(name="backfill-scan-resource-summaries", queue="backfill")
+@handle_provider_deletion
 def backfill_scan_resource_summaries_task(tenant_id: str, scan_id: str):
     """
     Tries to backfill the resource scan summaries table for a given scan.
@@ -498,6 +508,7 @@ def backfill_scan_resource_summaries_task(tenant_id: str, scan_id: str):
 
 
 @shared_task(name="backfill-compliance-summaries", queue="backfill")
+@handle_provider_deletion
 def backfill_compliance_summaries_task(tenant_id: str, scan_id: str):
     """
     Tries to backfill compliance overview summaries for a completed scan.
@@ -513,6 +524,7 @@ def backfill_compliance_summaries_task(tenant_id: str, scan_id: str):
 
 
 @shared_task(base=RLSTask, name="scan-compliance-overviews", queue="compliance")
+@handle_provider_deletion
 def create_compliance_requirements_task(tenant_id: str, scan_id: str):
     """
     Creates detailed compliance requirement records for a scan.
@@ -526,6 +538,22 @@ def create_compliance_requirements_task(tenant_id: str, scan_id: str):
         scan_id (str): The ID of the scan for which to create records.
     """
     return create_compliance_requirements(tenant_id=tenant_id, scan_id=scan_id)
+
+
+@shared_task(name="scan-attack-surface-overviews", queue="overview")
+@handle_provider_deletion
+def aggregate_attack_surface_task(tenant_id: str, scan_id: str):
+    """
+    Creates attack surface overview records for a scan.
+
+    This task processes findings and aggregates them into attack surface categories
+    (internet-exposed, secrets, privilege-escalation, ec2-imdsv1) for quick overview queries.
+
+    Args:
+        tenant_id (str): The tenant ID for which to create records.
+        scan_id (str): The ID of the scan for which to create records.
+    """
+    return aggregate_attack_surface(tenant_id=tenant_id, scan_id=scan_id)
 
 
 @shared_task(base=RLSTask, name="lighthouse-connection-check")
@@ -566,6 +594,7 @@ def refresh_lighthouse_provider_models_task(
 
 
 @shared_task(name="integration-check")
+@handle_provider_deletion
 def check_integrations_task(tenant_id: str, provider_id: str, scan_id: str = None):
     """
     Check and execute all configured integrations for a provider.
@@ -630,6 +659,7 @@ def check_integrations_task(tenant_id: str, provider_id: str, scan_id: str = Non
     name="integration-s3",
     queue="integrations",
 )
+@handle_provider_deletion
 def s3_integration_task(
     tenant_id: str,
     provider_id: str,
@@ -686,19 +716,34 @@ def jira_integration_task(
 
 @shared_task(
     base=RLSTask,
-    name="scan-threatscore-report",
+    name="scan-compliance-reports",
     queue="scan-reports",
 )
-def generate_threatscore_report_task(tenant_id: str, scan_id: str, provider_id: str):
+@handle_provider_deletion
+def generate_compliance_reports_task(tenant_id: str, scan_id: str, provider_id: str):
     """
-    Task to generate a threatscore report for a given scan.
+    Optimized task to generate ThreatScore, ENS, and NIS2 reports with shared queries.
+
+    This task is more efficient than running separate report tasks because it reuses database queries:
+    - Provider object fetched once (instead of three times)
+    - Requirement statistics aggregated once (instead of three times)
+    - Can reduce database load by up to 50-70%
+
     Args:
         tenant_id (str): The tenant identifier.
         scan_id (str): The scan identifier.
         provider_id (str): The provider identifier.
+
+    Returns:
+        dict: Results for all reports containing upload status and paths.
     """
-    return generate_threatscore_report_job(
-        tenant_id=tenant_id, scan_id=scan_id, provider_id=provider_id
+    return generate_compliance_reports_job(
+        tenant_id=tenant_id,
+        scan_id=scan_id,
+        provider_id=provider_id,
+        generate_threatscore=True,
+        generate_ens=True,
+        generate_nis2=True,
     )
 
 

@@ -8,27 +8,53 @@ import {
   getLighthouseProviderByType,
   updateLighthouseProviderByType,
 } from "@/actions/lighthouse/lighthouse";
-import { CustomButton } from "@/components/ui/custom";
+import { FormButtons } from "@/components/ui/form";
 import type { LighthouseProvider } from "@/types/lighthouse";
 
 import { getMainFields, getProviderConfig } from "./llm-provider-registry";
 import {
   isProviderFormValid,
+  type LLMCredentialsFormData,
   shouldTestConnection,
   testAndRefreshModels,
 } from "./llm-provider-utils";
 
+const BEDROCK_CREDENTIAL_MODES = {
+  API_KEY: "api_key",
+  IAM: "iam",
+} as const;
+
+type BedrockCredentialMode =
+  (typeof BEDROCK_CREDENTIAL_MODES)[keyof typeof BEDROCK_CREDENTIAL_MODES];
+
+const CONNECTION_STATUS = {
+  IDLE: "idle",
+  CONNECTING: "connecting",
+  VERIFYING: "verifying",
+  LOADING_MODELS: "loading-models",
+} as const;
+
+type ConnectionStatus =
+  (typeof CONNECTION_STATUS)[keyof typeof CONNECTION_STATUS];
+
+const STATUS_MESSAGES: Record<Exclude<ConnectionStatus, "idle">, string> = {
+  [CONNECTION_STATUS.CONNECTING]: "Connecting...",
+  [CONNECTION_STATUS.VERIFYING]: "Verifying...",
+  [CONNECTION_STATUS.LOADING_MODELS]: "Loading models...",
+};
+
 interface ConnectLLMProviderProps {
   provider: LighthouseProvider;
   mode?: string;
+  initialAuthMode?: BedrockCredentialMode;
 }
 
 type FormData = Record<string, string>;
-type Status = "idle" | "connecting" | "verifying" | "loading-models";
 
 export const ConnectLLMProvider = ({
   provider,
   mode = "create",
+  initialAuthMode,
 }: ConnectLLMProviderProps) => {
   const router = useRouter();
   const providerConfig = getProviderConfig(provider);
@@ -38,9 +64,17 @@ export const ConnectLLMProvider = ({
   const [existingProviderId, setExistingProviderId] = useState<string | null>(
     null,
   );
-  const [status, setStatus] = useState<Status>("idle");
+  const [status, setStatus] = useState<ConnectionStatus>(
+    CONNECTION_STATUS.IDLE,
+  );
   const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [bedrockMode, setBedrockMode] = useState<BedrockCredentialMode>(() => {
+    if (provider === "bedrock" && mode !== "edit" && initialAuthMode) {
+      return initialAuthMode;
+    }
+    return BEDROCK_CREDENTIAL_MODES.API_KEY;
+  });
 
   // Fetch existing provider ID in edit mode
   useEffect(() => {
@@ -56,6 +90,25 @@ export const ConnectLLMProvider = ({
           );
         }
         setExistingProviderId(result.data.id);
+
+        // For Bedrock, detect existing credential mode (API key vs IAM)
+        if (provider === "bedrock") {
+          const attributes = (result.data as any)?.attributes;
+          const credentials = attributes?.credentials as
+            | LLMCredentialsFormData
+            | undefined;
+
+          if (credentials) {
+            if (credentials.api_key) {
+              setBedrockMode(BEDROCK_CREDENTIAL_MODES.API_KEY);
+            } else if (
+              credentials.access_key_id ||
+              credentials.secret_access_key
+            ) {
+              setBedrockMode(BEDROCK_CREDENTIAL_MODES.IAM);
+            }
+          }
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err));
       } finally {
@@ -66,13 +119,30 @@ export const ConnectLLMProvider = ({
     fetchProvider();
   }, [isEditMode, provider, providerConfig]);
 
-  const buildPayload = (): Record<string, any> => {
-    if (!providerConfig) return {};
+  const buildBedrockPayload = (): Record<string, any> => {
+    const credentials: LLMCredentialsFormData = {};
 
+    if (bedrockMode === BEDROCK_CREDENTIAL_MODES.API_KEY) {
+      if (formData.api_key) credentials.api_key = formData.api_key;
+      if (formData.region) credentials.region = formData.region;
+    } else {
+      if (formData.access_key_id) {
+        credentials.access_key_id = formData.access_key_id;
+      }
+      if (formData.secret_access_key) {
+        credentials.secret_access_key = formData.secret_access_key;
+      }
+      if (formData.region) credentials.region = formData.region;
+    }
+
+    return Object.keys(credentials).length > 0 ? { credentials } : {};
+  };
+
+  const buildGenericPayload = (): Record<string, any> => {
     const credentials: Record<string, string> = {};
     const otherFields: Record<string, string> = {};
 
-    providerConfig.fields.forEach((field) => {
+    providerConfig?.fields.forEach((field) => {
       if (formData[field.name]) {
         if (field.requiresConnectionTest) {
           credentials[field.name] = formData[field.name];
@@ -88,10 +158,18 @@ export const ConnectLLMProvider = ({
     };
   };
 
-  const handleConnect = async () => {
+  const buildPayload = (): Record<string, any> => {
+    if (!providerConfig) return {};
+    return provider === "bedrock"
+      ? buildBedrockPayload()
+      : buildGenericPayload();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!providerConfig) return;
 
-    setStatus("connecting");
+    setStatus(CONNECTION_STATUS.CONNECTING);
     setError(null);
 
     try {
@@ -124,11 +202,23 @@ export const ConnectLLMProvider = ({
         setExistingProviderId(providerId);
       }
 
+      const shouldTestBedrock =
+        (bedrockMode === BEDROCK_CREDENTIAL_MODES.API_KEY &&
+          !!formData.api_key?.trim()) ||
+        (bedrockMode === BEDROCK_CREDENTIAL_MODES.IAM &&
+          (!!formData.access_key_id?.trim() ||
+            !!formData.secret_access_key?.trim()));
+
+      const shouldTest =
+        provider === "bedrock"
+          ? shouldTestBedrock
+          : shouldTestConnection(provider, formData);
+
       // Test connection if credentials provided
-      if (shouldTestConnection(provider, formData)) {
-        setStatus("verifying");
+      if (shouldTest) {
+        setStatus(CONNECTION_STATUS.VERIFYING);
         await testAndRefreshModels(providerId);
-        setStatus("loading-models");
+        setStatus(CONNECTION_STATUS.LOADING_MODELS);
       }
 
       // Navigate to model selection on success
@@ -137,7 +227,7 @@ export const ConnectLLMProvider = ({
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
-      setStatus("idle");
+      setStatus(CONNECTION_STATUS.IDLE);
     }
   };
 
@@ -146,25 +236,54 @@ export const ConnectLLMProvider = ({
     if (error) setError(null);
   };
 
-  const getButtonText = () => {
-    if (status === "idle") {
-      if (error && existingProviderId) return "Retry Connection";
-      return isEditMode ? "Continue" : "Connect";
-    }
-
-    const statusText = {
-      connecting: "Connecting...",
-      verifying: "Verifying...",
-      "loading-models": "Loading models...",
-    };
-
-    return statusText[status] || "Connecting...";
+  const getSubmitText = () => {
+    if (error && existingProviderId) return "Retry Connection";
+    return isEditMode ? "Continue" : "Connect";
   };
+
+  const getLoadingText = () => {
+    if (status === CONNECTION_STATUS.IDLE) {
+      return "";
+    }
+    return (
+      STATUS_MESSAGES[status] || STATUS_MESSAGES[CONNECTION_STATUS.CONNECTING]
+    );
+  };
+
+  const renderFormField = (
+    id: string,
+    label: string,
+    type: string,
+    placeholder: string,
+    required = true,
+  ) => (
+    <div>
+      <label htmlFor={id} className="mb-2 block text-sm font-medium">
+        {label}{" "}
+        {!isEditMode && required && <span className="text-text-error">*</span>}
+        {isEditMode && (
+          <span className="text-text-neutral-tertiary text-xs">
+            (leave empty to keep existing)
+          </span>
+        )}
+      </label>
+      <input
+        id={id}
+        type={type}
+        value={formData[id] || ""}
+        onChange={(e) => handleFieldChange(id, e.target.value)}
+        placeholder={
+          isEditMode ? `Enter new ${label} or leave empty` : placeholder
+        }
+        className="border-border-neutral-primary bg-bg-neutral-primary w-full rounded-lg border px-3 py-2"
+      />
+    </div>
+  );
 
   if (!providerConfig) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="text-sm text-red-600 dark:text-red-400">
+        <div className="text-text-error text-sm">
           Provider configuration not found: {provider}
         </div>
       </div>
@@ -174,7 +293,7 @@ export const ConnectLLMProvider = ({
   if (isFetching) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="text-sm text-gray-600 dark:text-gray-400">
+        <div className="text-text-neutral-secondary text-sm">
           Loading provider configuration...
         </div>
       </div>
@@ -182,8 +301,29 @@ export const ConnectLLMProvider = ({
   }
 
   const mainFields = getMainFields(provider);
-  const isFormValid = isProviderFormValid(provider, formData, isEditMode);
-  const isLoading = status !== "idle";
+
+  const isBedrockProvider = provider === "bedrock";
+
+  const isBedrockFormValid = (): boolean => {
+    if (isEditMode) return true;
+
+    const hasRegion = !!formData.region?.trim();
+
+    if (bedrockMode === BEDROCK_CREDENTIAL_MODES.API_KEY) {
+      return !!formData.api_key?.trim() && hasRegion;
+    }
+
+    return (
+      !!formData.access_key_id?.trim() &&
+      !!formData.secret_access_key?.trim() &&
+      hasRegion
+    );
+  };
+
+  const isFormValid = isBedrockProvider
+    ? isBedrockFormValid()
+    : isProviderFormValid(provider, formData, isEditMode);
+  const isLoading = status !== CONNECTION_STATUS.IDLE;
 
   return (
     <div className="flex w-full flex-col gap-6">
@@ -193,7 +333,7 @@ export const ConnectLLMProvider = ({
             ? `Update ${providerConfig.name}`
             : `Connect to ${providerConfig.name}`}
         </h2>
-        <p className="text-sm text-gray-600 dark:text-gray-300">
+        <p className="text-text-neutral-secondary text-sm">
           {isEditMode
             ? `Update your API credentials or settings for ${providerConfig.name}.`
             : `Enter your API credentials to connect to ${providerConfig.name}.`}
@@ -201,71 +341,102 @@ export const ConnectLLMProvider = ({
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+        <div className="border-border-error-primary bg-bg-fail-secondary rounded-lg border p-4">
+          <p className="text-text-error text-sm">{error}</p>
         </div>
       )}
 
-      <div className="flex flex-col gap-4">
-        {mainFields.map((field) => (
-          <div key={field.name}>
-            <label
-              htmlFor={field.name}
-              className="mb-2 block text-sm font-medium"
-            >
-              {field.label}{" "}
-              {!isEditMode && field.required && (
-                <span className="text-red-500">*</span>
-              )}
-              {isEditMode && (
-                <span className="text-xs text-gray-500">
-                  (leave empty to keep existing)
-                </span>
-              )}
-            </label>
-            <input
-              id={field.name}
-              type={field.type}
-              value={formData[field.name] || ""}
-              onChange={(e) => handleFieldChange(field.name, e.target.value)}
-              placeholder={
-                isEditMode
-                  ? `Enter new ${field.label.toLowerCase()} or leave empty`
-                  : field.placeholder
-              }
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 dark:border-gray-700 dark:bg-gray-800"
-            />
-          </div>
-        ))}
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        {isBedrockProvider ? (
+          <>
+            {bedrockMode === BEDROCK_CREDENTIAL_MODES.API_KEY && (
+              <div className="border-border-warning-primary bg-bg-warning-secondary rounded-lg border p-4">
+                <p className="text-text-warning text-sm font-medium">
+                  Recommended only for exploration of Amazon Bedrock.
+                </p>
+                <p className="text-text-warning mt-1 text-xs">
+                  Please ensure you&apos;re using long-term Bedrock API keys.
+                </p>
+              </div>
+            )}
+            {bedrockMode === BEDROCK_CREDENTIAL_MODES.API_KEY ? (
+              <>
+                {renderFormField(
+                  "api_key",
+                  "API key (long-term)",
+                  "password",
+                  "Enter your long-term API key",
+                )}
+                {renderFormField(
+                  "region",
+                  "AWS region",
+                  "text",
+                  "Enter the AWS region",
+                )}
+              </>
+            ) : (
+              <>
+                {renderFormField(
+                  "access_key_id",
+                  "AWS access key ID",
+                  "password",
+                  "Enter the AWS Access Key ID",
+                )}
+                {renderFormField(
+                  "secret_access_key",
+                  "AWS secret access key",
+                  "password",
+                  "Enter the AWS Secret Access Key",
+                )}
+                {renderFormField(
+                  "region",
+                  "AWS region",
+                  "text",
+                  "Enter the AWS Region",
+                )}
+              </>
+            )}
+          </>
+        ) : (
+          mainFields.map((field) => (
+            <div key={field.name}>
+              <label
+                htmlFor={field.name}
+                className="mb-2 block text-sm font-medium"
+              >
+                {field.label}{" "}
+                {!isEditMode && field.required && (
+                  <span className="text-text-error">*</span>
+                )}
+                {isEditMode && (
+                  <span className="text-text-neutral-tertiary text-xs">
+                    (leave empty to keep existing)
+                  </span>
+                )}
+              </label>
+              <input
+                id={field.name}
+                type={field.type}
+                value={formData[field.name] || ""}
+                onChange={(e) => handleFieldChange(field.name, e.target.value)}
+                placeholder={
+                  isEditMode
+                    ? `Enter new ${field.label} or leave empty`
+                    : field.placeholder
+                }
+                className="border-border-neutral-primary bg-bg-neutral-primary w-full rounded-lg border px-3 py-2"
+              />
+            </div>
+          ))
+        )}
 
-        <div className="mt-4 flex justify-end gap-4">
-          <CustomButton
-            type="button"
-            ariaLabel="Cancel"
-            className="w-full bg-transparent"
-            variant="faded"
-            size="lg"
-            radius="lg"
-            onPress={() => router.push("/lighthouse/config")}
-            isDisabled={isLoading}
-          >
-            <span>Cancel</span>
-          </CustomButton>
-          <CustomButton
-            ariaLabel={isEditMode ? "Update" : "Connect"}
-            className="w-full"
-            variant="solid"
-            color="action"
-            size="lg"
-            radius="lg"
-            isLoading={isLoading}
-            isDisabled={!isFormValid}
-            onPress={handleConnect}
-          >
-            {getButtonText()}
-          </CustomButton>
-        </div>
-      </div>
+        <FormButtons
+          onCancel={() => router.push("/lighthouse/config")}
+          submitText={isLoading ? getLoadingText() : getSubmitText()}
+          loadingText={getLoadingText()}
+          isDisabled={!isFormValid || isLoading}
+        />
+      </form>
     </div>
   );
 };

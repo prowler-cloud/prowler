@@ -19,16 +19,20 @@ import {
 
 import { AlertPill } from "./shared/alert-pill";
 import { ChartLegend } from "./shared/chart-legend";
+import { CustomActiveDot, PointClickData } from "./shared/custom-active-dot";
 import {
   AXIS_FONT_SIZE,
   CustomXAxisTickWithToday,
 } from "./shared/custom-axis-tick";
+import { CustomDot } from "./shared/custom-dot";
 import { LineConfig, LineDataPoint } from "./types";
 
 interface LineChartProps {
   data: LineDataPoint[];
   lines: LineConfig[];
   height?: number;
+  xAxisInterval?: number | "preserveStart" | "preserveEnd" | "preserveStartEnd";
+  onPointClick?: (data: PointClickData) => void;
 }
 
 interface TooltipPayloadItem {
@@ -39,28 +43,54 @@ interface TooltipPayloadItem {
   payload: LineDataPoint;
 }
 
+const formatTooltipDate = (dateStr: string) => {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+};
+
+interface CustomLineTooltipProps extends TooltipProps<number, string> {
+  filterLine?: string | null;
+}
+
 const CustomLineTooltip = ({
   active,
   payload,
   label,
-}: TooltipProps<number, string>) => {
+  filterLine,
+}: CustomLineTooltipProps) => {
   if (!active || !payload || payload.length === 0) {
     return null;
   }
 
   const typedPayload = payload as unknown as TooltipPayloadItem[];
-  const totalValue = typedPayload.reduce((sum, item) => sum + item.value, 0);
+
+  // Filter payload if a line is selected or hovered
+  const displayPayload = filterLine
+    ? typedPayload.filter((item) => item.dataKey === filterLine)
+    : typedPayload;
+
+  if (displayPayload.length === 0) {
+    return null;
+  }
+
+  const totalValue = displayPayload.reduce((sum, item) => sum + item.value, 0);
+  const formattedDate = formatTooltipDate(String(label));
 
   return (
     <div className="border-border-neutral-tertiary bg-bg-neutral-tertiary pointer-events-none min-w-[200px] rounded-xl border p-3 shadow-lg">
-      <p className="text-text-neutral-secondary mb-3 text-xs">{label}</p>
+      <p className="text-text-neutral-secondary mb-3 text-xs">
+        {formattedDate}
+      </p>
 
       <div className="mb-3">
         <AlertPill value={totalValue} textSize="sm" />
       </div>
 
       <div className="space-y-3">
-        {typedPayload.map((item) => {
+        {displayPayload.map((item) => {
           const newFindings = item.payload[`${item.dataKey}_newFindings`];
           const change = item.payload[`${item.dataKey}_change`];
 
@@ -106,13 +136,29 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function LineChart({ data, lines, height = 400 }: LineChartProps) {
+export function LineChart({
+  data,
+  lines,
+  height = 400,
+  xAxisInterval = "preserveStartEnd",
+  onPointClick,
+}: LineChartProps) {
   const [hoveredLine, setHoveredLine] = useState<string | null>(null);
+  const [selectedLine, setSelectedLine] = useState<string | null>(null);
+
+  // Active line is either selected (persistent) or hovered (temporary)
+  const activeLine = selectedLine ?? hoveredLine;
 
   const legendItems = lines.map((line) => ({
     label: line.label,
     color: line.color,
+    dataKey: line.dataKey,
   }));
+
+  const handleLegendClick = (dataKey: string) => {
+    // Toggle selection: if already selected, deselect; otherwise select
+    setSelectedLine((current) => (current === dataKey ? null : dataKey));
+  };
 
   return (
     <div className="w-full">
@@ -126,9 +172,10 @@ export function LineChart({ data, lines, height = 400 }: LineChartProps) {
           margin={{
             top: 10,
             left: 0,
-            right: 8,
-            bottom: 20,
+            right: 30,
+            bottom: 40,
           }}
+          style={{ cursor: onPointClick ? "pointer" : "default" }}
         >
           <CartesianGrid
             vertical={false}
@@ -140,7 +187,10 @@ export function LineChart({ data, lines, height = 400 }: LineChartProps) {
             tickLine={false}
             axisLine={false}
             tickMargin={8}
-            tick={CustomXAxisTickWithToday}
+            interval={xAxisInterval}
+            tick={(props) => (
+              <CustomXAxisTickWithToday {...props} data={data} />
+            )}
           />
           <YAxis
             tickLine={false}
@@ -151,10 +201,17 @@ export function LineChart({ data, lines, height = 400 }: LineChartProps) {
               fontSize: AXIS_FONT_SIZE,
             }}
           />
-          <ChartTooltip cursor={false} content={<CustomLineTooltip />} />
+          <ChartTooltip
+            cursor={{
+              stroke: "var(--color-text-neutral-tertiary)",
+              strokeWidth: 1,
+              strokeDasharray: "4 4",
+            }}
+            content={<CustomLineTooltip filterLine={activeLine} />}
+          />
           {lines.map((line) => {
-            const isHovered = hoveredLine === line.dataKey;
-            const isFaded = hoveredLine !== null && !isHovered;
+            const isActive = activeLine === line.dataKey;
+            const isFaded = activeLine !== null && !isActive;
             return (
               <Line
                 key={line.dataKey}
@@ -162,12 +219,38 @@ export function LineChart({ data, lines, height = 400 }: LineChartProps) {
                 dataKey={line.dataKey}
                 stroke={line.color}
                 strokeWidth={2}
-                strokeOpacity={isFaded ? 0.5 : 1}
+                strokeOpacity={isFaded ? 0.2 : 1}
                 name={line.label}
-                dot={{ fill: line.color, r: 4 }}
-                activeDot={{ r: 6 }}
-                onMouseEnter={() => setHoveredLine(line.dataKey)}
-                onMouseLeave={() => setHoveredLine(null)}
+                dot={({
+                  key,
+                  ...props
+                }: {
+                  key?: string;
+                  cx?: number;
+                  cy?: number;
+                }) => (
+                  <CustomDot
+                    key={key}
+                    {...props}
+                    color={line.color}
+                    isFaded={isFaded}
+                  />
+                )}
+                activeDot={(props: {
+                  cx?: number;
+                  cy?: number;
+                  payload?: LineDataPoint;
+                }) => (
+                  <CustomActiveDot
+                    {...props}
+                    dataKey={line.dataKey}
+                    color={line.color}
+                    isFaded={isFaded}
+                    onPointClick={onPointClick}
+                    onMouseEnter={() => setHoveredLine(line.dataKey)}
+                    onMouseLeave={() => setHoveredLine(null)}
+                  />
+                )}
                 style={{ transition: "stroke-opacity 0.2s" }}
               />
             );
@@ -175,8 +258,15 @@ export function LineChart({ data, lines, height = 400 }: LineChartProps) {
         </RechartsLine>
       </ChartContainer>
 
-      <div className="mt-4">
-        <ChartLegend items={legendItems} />
+      <div className="mt-4 flex flex-col items-start gap-2">
+        <p className="text-text-neutral-tertiary pl-2 text-xs">
+          Click to filter by severity.
+        </p>
+        <ChartLegend
+          items={legendItems}
+          selectedItem={selectedLine}
+          onItemClick={handleLegendClick}
+        />
       </div>
     </div>
   );

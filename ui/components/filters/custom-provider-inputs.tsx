@@ -8,6 +8,7 @@ import {
   IacProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
+  MongoDBAtlasProviderBadge,
   OracleCloudProviderBadge,
 } from "../icons/providers-badge";
 
@@ -34,6 +35,15 @@ export const CustomProviderInputM365 = () => {
     <div className="flex items-center gap-x-2">
       <M365ProviderBadge width={25} height={25} />
       <p className="text-sm">Microsoft 365</p>
+    </div>
+  );
+};
+
+export const CustomProviderInputMongoDBAtlas = () => {
+  return (
+    <div className="flex items-center gap-x-2">
+      <MongoDBAtlasProviderBadge width={25} height={25} />
+      <p className="text-sm">MongoDB Atlas</p>
     </div>
   );
 };

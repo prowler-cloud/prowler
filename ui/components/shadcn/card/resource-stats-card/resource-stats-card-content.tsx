@@ -1,9 +1,8 @@
 import { cva } from "class-variance-authority";
 import { LucideIcon } from "lucide-react";
 
+import { CardVariant } from "@/components/shadcn/card/card";
 import { cn } from "@/lib/utils";
-
-import { CardVariant } from "../card";
 
 export interface StatItem {
   icon: LucideIcon;
@@ -11,7 +10,7 @@ export interface StatItem {
 }
 
 const variantColors = {
-  default: "var(--bg-neutral-tertiary)",
+  default: "var(--text-neutral-tertiary)",
   fail: "var(--bg-fail-primary)",
   pass: "var(--bg-pass-primary)",
   warning: "var(--bg-warning-primary)",
