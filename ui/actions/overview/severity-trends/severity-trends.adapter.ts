@@ -3,7 +3,7 @@ import { LineDataPoint } from "@/components/graphs/types";
 import {
   AdaptedSeverityTrendsResponse,
   FindingsSeverityOverTimeResponse,
-} from "../types";
+} from "./types";
 
 export type { AdaptedSeverityTrendsResponse, FindingsSeverityOverTimeResponse };
 
@@ -11,7 +11,7 @@ export type { AdaptedSeverityTrendsResponse, FindingsSeverityOverTimeResponse };
  * Adapts the API findings severity over time response to the format expected by LineChart.
  * Transforms API response with nested attributes into flat LineDataPoint objects.
  *
- * @param response - The raw API response from /overviews/findings_severity_over_time
+ * @param response - The raw API response from /overviews/findings_severity/timeseries
  * @returns Adapted response with LineDataPoint array ready for the chart
  */
 export function adaptSeverityTrendsResponse(

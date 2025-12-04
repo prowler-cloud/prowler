@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 
-import { ProvidersOverviewResponse } from "../types";
+import { ProvidersOverviewResponse } from "./types";
 
 export const getProvidersOverview = async ({
   page = 1,

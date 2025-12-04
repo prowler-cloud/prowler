@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 
-import { FindingsSeverityOverviewResponse } from "../types";
+import { FindingsSeverityOverviewResponse } from "./types";
 
 export const getFindingsByStatus = async ({
   page = 1,

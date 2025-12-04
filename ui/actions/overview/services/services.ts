@@ -3,7 +3,7 @@
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 
-import { ServicesOverviewResponse } from "../types";
+import { ServicesOverviewResponse } from "./types";
 
 export const getServicesOverview = async ({
   filters = {},
