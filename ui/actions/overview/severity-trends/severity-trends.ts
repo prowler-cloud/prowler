@@ -3,11 +3,11 @@
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 
+import { adaptSeverityTrendsResponse } from "./severity-trends.adapter";
 import {
   AdaptedSeverityTrendsResponse,
   FindingsSeverityOverTimeResponse,
 } from "./types";
-import { adaptSeverityTrendsResponse } from "./severity-trends.adapter";
 
 const TIME_RANGE_VALUES = {
   FIVE_DAYS: "5D",
