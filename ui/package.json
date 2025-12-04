@@ -15,10 +15,10 @@
     "format:check": "./node_modules/.bin/prettier --check ./app",
     "format:write": "./node_modules/.bin/prettier --config .prettierrc.json --write ./app",
     "prepare": "husky",
-    "test:e2e": "playwright test --project=chromium --project=sign-up --project=providers",
-    "test:e2e:ui": "playwright test --project=chromium --project=sign-up --project=providers --ui",
-    "test:e2e:debug": "playwright test --project=chromium --project=sign-up --project=providers --debug",
-    "test:e2e:headed": "playwright test --project=chromium --project=sign-up --project=providers --headed",
+    "test:e2e": "playwright test --project=chromium --project=sign-up --project=providers --project=invitations --project=scans",
+    "test:e2e:ui": "playwright test --project=chromium --project=sign-up --project=providers --project=invitations --project=scans --ui",
+    "test:e2e:debug": "playwright test --project=chromium --project=sign-up --project=providers --project=invitations --project=scans --debug",
+    "test:e2e:headed": "playwright test --project=chromium --project=sign-up --project=providers --project=invitations --project=scans --headed",
     "test:e2e:report": "playwright show-report",
     "test:e2e:install": "playwright install"
   },
@@ -64,12 +64,12 @@
     "jwt-decode": "4.0.0",
     "lucide-react": "0.543.0",
     "marked": "15.0.12",
-    "next": "15.5.3",
+    "next": "15.5.7",
     "next-auth": "5.0.0-beta.29",
     "next-themes": "0.2.1",
     "radix-ui": "1.4.2",
-    "react": "19.2.0",
-    "react-dom": "19.2.0",
+    "react": "19.2.1",
+    "react-dom": "19.2.1",
     "react-hook-form": "7.62.0",
     "react-markdown": "10.1.0",
     "recharts": "2.15.4",
@@ -102,7 +102,7 @@
     "autoprefixer": "10.4.19",
     "babel-plugin-react-compiler": "19.1.0-rc.3",
     "eslint": "8.57.1",
-    "eslint-config-next": "15.5.3",
+    "eslint-config-next": "15.5.7",
     "eslint-config-prettier": "10.1.5",
     "eslint-plugin-import": "2.32.0",
     "eslint-plugin-jsx-a11y": "6.10.2",
@@ -126,18 +126,18 @@
   "overrides": {
     "@react-types/shared": "3.26.0",
     "alert": {
-      "react": "19.2.0",
-      "react-dom": "19.2.0"
+      "react": "19.2.1",
+      "react-dom": "19.2.1"
     },
     "@react-aria/ssr": {
-      "react": "19.2.0",
-      "react-dom": "19.2.0"
+      "react": "19.2.1",
+      "react-dom": "19.2.1"
     },
     "@react-aria/visually-hidden": {
-      "react": "19.2.0"
+      "react": "19.2.1"
     },
     "@react-aria/interactions": {
-      "react": "19.2.0"
+      "react": "19.2.1"
     }
   },
   "resolutions": {

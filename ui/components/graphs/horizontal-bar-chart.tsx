@@ -132,7 +132,9 @@ export function HorizontalBarChart({
                         <p className="text-text-neutral-primary text-xs leading-5 font-medium">
                           {item.value.toLocaleString()}{" "}
                           {item.name === "Informational" ? "Info" : item.name}{" "}
-                          Risk
+                          {item.name === "Fail" || item.name === "Pass"
+                            ? "Findings"
+                            : "Risk"}
                         </p>
                       </div>
 
