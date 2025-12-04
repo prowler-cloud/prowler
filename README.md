@@ -89,6 +89,7 @@ prowler dashboard
 | GitHub | 17 | 2 | 1 | 0 | Official | Stable | UI, API, CLI |
 | M365 | 70 | 7 | 3 | 2 | Official | UI, API, CLI |
 | OCI | 51 | 13 | 1 | 10 | Official | UI, API, CLI |
+| Alibaba Cloud | 61 | 9 | 1 | 9 | Official | CLI |
 | IaC | [See `trivy` docs.](https://trivy.dev/latest/docs/coverage/iac/) | N/A | N/A | N/A | Official | UI, API, CLI |
 | MongoDB Atlas | 10 | 3 | 0 | 0 | Official | UI, API, CLI |
 | LLM | [See `promptfoo` docs.](https://www.promptfoo.dev/docs/red-team/plugins/) | N/A | N/A | N/A | Official | CLI |
@@ -153,7 +154,7 @@ You can find more information in the [Troubleshooting](./docs/troubleshooting.md
 
 * `git` installed.
 * `poetry` v2 installed: [poetry installation](https://python-poetry.org/docs/#installation).
-* `npm` installed: [npm installation](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
+* `pnpm` installed: [pnpm installation](https://pnpm.io/installation).
 * `Docker Compose` installed: https://docs.docker.com/compose/install/.
 
 **Commands to run the API**
@@ -209,9 +210,9 @@ python -m celery -A config.celery beat -l info --scheduler django_celery_beat.sc
 ``` console
 git clone https://github.com/prowler-cloud/prowler
 cd prowler/ui
-npm install
-npm run build
-npm start
+pnpm install
+pnpm run build
+pnpm start
 ```
 
 > Once configured, access the Prowler App at http://localhost:3000. Sign up using your email and password to get started.
