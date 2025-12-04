@@ -35,7 +35,7 @@ const getFindingsSeverityTrends = async ({
 } = {}): Promise<SeverityTrendsResult> => {
   const headers = await getAuthHeaders({ contentType: false });
 
-  const url = new URL(`${apiBaseUrl}/overviews/findings_severity_over_time`);
+  const url = new URL(`${apiBaseUrl}/overviews/findings_severity/timeseries`);
 
   Object.entries(filters).forEach(([key, value]) => {
     if (value !== undefined) {
