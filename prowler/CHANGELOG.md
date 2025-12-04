@@ -14,6 +14,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Changed
 - Update AWS Macie service metadata to new format [(#9265)](https://github.com/prowler-cloud/prowler/pull/9265)
+- Update AWS Lightsail service metadata to new format [(#9264)](https://github.com/prowler-cloud/prowler/pull/9264)
 
 ---
 
