@@ -17,20 +17,17 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/rabbitmq-basic-elements.html",
-    "https://www.rdocumentation.org/packages/paws.application.integration/versions/0.1.13/topics/mq_create_broker",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/mq-controls.html#mq-6",
     "https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/rabbitmq-broker-architecture.html#rabbitmq-broker-architecture-cluster",
     "https://docs.amazonaws.cn/en_us/AWSCloudFormation/latest/TemplateReference/aws-resource-amazonmq-broker.html",
-    "https://repost.aws/ko/questions/QUeO4erwFeT_KqM2IOGL_ikw/amazon-mq-cluster-classic-queues-with-ha-mode-exactly-2",
-    "https://docs.aws.amazon.com/controltower/latest/controlreference/mq-rules.html",
-    "https://thenote.app/post/en/amazon-mq-now-supports-graviton3-based-m7g-instances-for-rabbitmq-fuytc6govl"
+    "https://docs.aws.amazon.com/controltower/latest/controlreference/mq-rules.html"
   ],
   "Remediation": {
     "Code": {
       "CLI": "aws mq create-broker --broker-name <example_resource_name> --engine-type RABBITMQ --deployment-mode CLUSTER_MULTI_AZ --host-instance-type mq.m5.large --publicly-accessible --auto-minor-version-upgrade --users '[{\"Username\":\"<example_username>\",\"Password\":\"<example_password>\"}]'",
       "NativeIaC": "```yaml\n# CloudFormation: create a RabbitMQ broker in cluster (Multi-AZ) mode\nResources:\n  ExampleBroker:\n    Type: AWS::AmazonMQ::Broker\n    Properties:\n      BrokerName: \"<example_resource_name>\"\n      EngineType: RABBITMQ            # Critical: ensures the broker is RabbitMQ\n      DeploymentMode: CLUSTER_MULTI_AZ # Critical: sets cluster (Multi-AZ) to pass the check\n      HostInstanceType: mq.m5.large\n      PubliclyAccessible: true\n      Users:\n        - Username: \"<example_username>\"\n          Password: \"<example_password>\"\n```",
       "Other": "1. Open the AWS Console and go to Amazon MQ\n2. Click Brokers > Create broker\n3. Select RabbitMQ as the engine\n4. Set Deployment mode to Cluster (Multi-AZ)\n5. Enter a broker name, choose an instance type, set Public access as needed, and create one admin user\n6. Click Create broker\n7. Migrate applications to the new broker endpoint, then delete the old single-instance broker\n\nNote: Deployment mode cannot be changed on an existing broker; you must create a new cluster broker.",
-      "Terraform": "```hcl\n# Terraform: create a RabbitMQ broker in cluster (Multi-AZ) mode\nresource \"aws_mq_broker\" \"example\" {\n  broker_name         = \"<example_resource_name>\"\n  engine_type         = \"RABBITMQ\"         # Critical: RabbitMQ engine\n  deployment_mode     = \"CLUSTER_MULTI_AZ\" # Critical: cluster (Multi-AZ) to pass the check\n  host_instance_type  = \"mq.m5.large\"\n  publicly_accessible = true\n\n  user {\n    username = \"<example_username>\"\n    password = \"<example_password>\"\n  }\n}\n```"
+      "Terraform": "```hcl\n# Terraform: create a RabbitMQ broker in cluster (Multi-AZ) mode\nresource \"aws_mq_broker\" \"example\" {\n  broker_name         = \"<example_resource_name>\"\n  engine_type         = \"RabbitMQ\"         # Critical: RabbitMQ engine\n  deployment_mode     = \"CLUSTER_MULTI_AZ\" # Critical: cluster (Multi-AZ) to pass the check\n  host_instance_type  = \"mq.m5.large\"\n  publicly_accessible = true\n\n  user {\n    username = \"<example_username>\"\n    password = \"<example_password>\"\n  }\n}\n```"
     },
     "Recommendation": {
       "Text": "Use **cluster deployment** (`CLUSTER_MULTI_AZ`) for RabbitMQ to remove single-instance risk.\n\nApply **resiliency by design**: clients auto-reconnect, retries with backoff, and idempotent processing; test failover, size for node loss, and enforce **least privilege** with monitoring for defense in depth.",
