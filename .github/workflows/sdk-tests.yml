@@ -33,47 +33,47 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
-      - name: Check for SDK changes
-        id: check-changes
-        uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
-        with:
-          files: ./**
-          files_ignore: |
-            .github/**
-            prowler/CHANGELOG.md
-            docs/**
-            permissions/**
-            api/**
-            ui/**
-            dashboard/**
-            mcp_server/**
-            README.md
-            mkdocs.yml
-            .backportrc.json
-            .env
-            docker-compose*
-            examples/**
-            .gitignore
-            contrib/**
+      # - name: Check for SDK changes
+      #   id: check-changes
+      #   uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
+      #   with:
+      #     files: ./**
+      #     files_ignore: |
+      #       .github/**
+      #       prowler/CHANGELOG.md
+      #       docs/**
+      #       permissions/**
+      #       api/**
+      #       ui/**
+      #       dashboard/**
+      #       mcp_server/**
+      #       README.md
+      #       mkdocs.yml
+      #       .backportrc.json
+      #       .env
+      #       docker-compose*
+      #       examples/**
+      #       .gitignore
+      #       contrib/**
 
       - name: Install Poetry
-        if: steps.check-changes.outputs.any_changed == 'true'
+        # if: steps.check-changes.outputs.any_changed == 'true'
         run: pipx install poetry==2.1.1
 
       - name: Set up Python ${{ matrix.python-version }}
-        if: steps.check-changes.outputs.any_changed == 'true'
+        # if: steps.check-changes.outputs.any_changed == 'true'
         uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
 
       - name: Install dependencies
-        if: steps.check-changes.outputs.any_changed == 'true'
+        # if: steps.check-changes.outputs.any_changed == 'true'
         run: poetry install --no-root
 
       # AWS Provider
       - name: Check if AWS files changed
-        if: steps.check-changes.outputs.any_changed == 'true'
+        # if: steps.check-changes.outputs.any_changed == 'true'
         id: changed-aws
         uses: tj-actions/changed-files@24d32ffd492484c1d75e0c0b894501ddb9d30d62 # v47.0.0
         with:
@@ -83,11 +83,11 @@ jobs:
             ./poetry.lock
 
       - name: Run AWS tests
-        if: steps.changed-aws.outputs.any_changed == 'true'
+        # if: steps.changed-aws.outputs.any_changed == 'true'
         run: poetry run pytest -n auto --cov=./prowler/providers/aws --cov-report=xml:aws_coverage.xml tests/providers/aws
 
       - name: Upload AWS coverage to Codecov
-        if: steps.changed-aws.outputs.any_changed == 'true'
+        # if: steps.changed-aws.outputs.any_changed == 'true'
         uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
