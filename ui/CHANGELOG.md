@@ -38,7 +38,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ---
 
-## [1.13.1]
+## [1.13.1] (Prowler v5.13.1)
 
 ### 🔄 Changed
 
