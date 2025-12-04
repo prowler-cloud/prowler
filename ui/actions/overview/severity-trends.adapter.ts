@@ -2,13 +2,13 @@ import { LineDataPoint } from "@/components/graphs/types";
 
 // API Response Types (what comes from the backend)
 export interface FindingsSeverityOverTimeAttributes {
-  date: string;
   critical: number;
   high: number;
   medium: number;
   low: number;
   informational: number;
   muted: number;
+  scan_ids: string[];
 }
 
 export interface FindingsSeverityOverTimeItem {
@@ -44,15 +44,25 @@ export function adaptSeverityTrendsResponse(
 ): AdaptedSeverityTrendsResponse {
   const adaptedData: LineDataPoint[] = response.data.map(
     ({
-      attributes: { date, informational, low, medium, high, critical, muted },
+      id,
+      attributes: {
+        informational,
+        low,
+        medium,
+        high,
+        critical,
+        muted,
+        scan_ids,
+      },
     }) => ({
-      date,
+      date: id,
       informational,
       low,
       medium,
       high,
       critical,
       muted,
+      scan_ids,
     }),
   );
 

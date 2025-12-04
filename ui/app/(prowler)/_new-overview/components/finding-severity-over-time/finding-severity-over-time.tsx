@@ -25,7 +25,18 @@ export const FindingSeverityOverTime = ({
   const [error, setError] = useState<string | null>(null);
 
   const handlePointClick = (pointData: LineDataPoint) => {
-    router.push(`/findings?filter[inserted_at]=${pointData.date}`);
+    const params = new URLSearchParams();
+    params.set("filter[inserted_at]", pointData.date);
+
+    if (
+      pointData.scan_ids &&
+      Array.isArray(pointData.scan_ids) &&
+      pointData.scan_ids.length > 0
+    ) {
+      params.set("filter[scan__in]", pointData.scan_ids.join(","));
+    }
+
+    router.push(`/findings?${params.toString()}`);
   };
 
   const handleTimeRangeChange = async (newRange: TimeRange) => {
