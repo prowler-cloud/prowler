@@ -9,6 +9,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Models list in Lighthouse selector when default model is not set for provider [(9402)](https://github.com/prowler-cloud/prowler/pull/9402)
 - Sort compliance cards by name from the compliance overview [(9422)](https://github.com/prowler-cloud/prowler/pull/9422)
 
+### Security
+
+- Bump Next.js and React for CVE-2025-66478 [(#9447)](https://github.com/prowler-cloud/prowler/pull/9447)
+
 ---
 
 ## [1.14.0] (Prowler v5.14.0)
@@ -34,7 +38,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ---
 
-## [1.13.1]
+## [1.13.1] (Prowler v5.13.1)
 
 ### 🔄 Changed
 
