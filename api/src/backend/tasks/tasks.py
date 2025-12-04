@@ -77,9 +77,11 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
     )
     chain(
         perform_scan_summary_task.si(tenant_id=tenant_id, scan_id=scan_id),
-        aggregate_daily_severity_task.si(tenant_id=tenant_id, scan_id=scan_id),
-        generate_outputs_task.si(
-            scan_id=scan_id, provider_id=provider_id, tenant_id=tenant_id
+        group(
+            aggregate_daily_severity_task.si(tenant_id=tenant_id, scan_id=scan_id),
+            generate_outputs_task.si(
+                scan_id=scan_id, provider_id=provider_id, tenant_id=tenant_id
+            ),
         ),
         group(
             # Use optimized task that generates both reports with shared queries
