@@ -16,6 +16,12 @@ on:
   release:
     types:
       - 'published'
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag (e.g., 5.14.0)'
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -46,7 +52,7 @@ env:
 jobs:
   container-build-push:
     if: github.repository == 'prowler-cloud/prowler'
-    runs-on: ${{ matrix.runner }} 
+    runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
         include:
@@ -141,21 +147,9 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
 
-      - name: Build and push SDK container for ${{ matrix.arch }}
-        if: github.event_name == 'push' || github.event_name == 'release'
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
-        with:
-          context: .
-          file: ${{ env.DOCKERFILE_PATH }}
-          push: true
-          platforms: ${{ matrix.platform }}
-          tags: |
-            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.LATEST_TAG }}-${{ matrix.arch }}
-          cache-from: type=gha,scope=${{ matrix.arch }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
-
       - name: Notify container push started
-        if: github.event_name == 'release'
+        id: slack-notification-started
+        if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
         uses: ./.github/actions/slack-notification
         env:
           SLACK_CHANNEL_ID: ${{ secrets.SLACK_PLATFORM_DEPLOYMENTS }}
@@ -167,12 +161,27 @@ jobs:
         with:
           slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
           payload-file-path: "./.github/scripts/slack-messages/container-release-started.json"
- 
+
+      - name: Build and push SDK container for ${{ matrix.arch }}
+        id: container-push
+        if: github.event_name == 'push' || github.event_name == 'release' || github.event_name == 'workflow_dispatch'
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        with:
+          context: .
+          file: ${{ env.DOCKERFILE_PATH }}
+          push: true
+          platforms: ${{ matrix.platform }}
+          tags: |
+            ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ env.LATEST_TAG }}-${{ matrix.arch }}
+          cache-from: type=gha,scope=${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.arch }}
+
       - name: Notify container push completed
-        if: github.event_name == 'release' && always()
+        if: (github.event_name == 'release' || github.event_name == 'workflow_dispatch') && always()
         uses: ./.github/actions/slack-notification
         env:
           SLACK_CHANNEL_ID: ${{ secrets.SLACK_PLATFORM_DEPLOYMENTS }}
+          MESSAGE_TS: ${{ steps.slack-notification-started.outputs.ts }}
           COMPONENT: SDK
           RELEASE_TAG: ${{ env.PROWLER_VERSION }}
           GITHUB_SERVER_URL: ${{ github.server_url }}
@@ -182,11 +191,12 @@ jobs:
           slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
           payload-file-path: "./.github/scripts/slack-messages/container-release-completed.json"
           step-outcome: ${{ steps.container-push.outcome }}
+          update-ts: ${{ steps.slack-notification-started.outputs.ts }}
 
   # Create and push multi-architecture manifest
   create-manifest:
     needs: [container-build-push]
-    if: github.event_name == 'push' || github.event_name == 'release'
+    if: github.event_name == 'push' || github.event_name == 'release' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
 
     steps:
@@ -195,6 +205,15 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to Public ECR
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          registry: public.ecr.aws
+          username: ${{ secrets.PUBLIC_ECR_AWS_ACCESS_KEY_ID }}
+          password: ${{ secrets.PUBLIC_ECR_AWS_SECRET_ACCESS_KEY }}
+        env:
+          AWS_REGION: ${{ env.AWS_REGION }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
@@ -210,13 +229,13 @@ jobs:
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.container-build-push.outputs.latest_tag }}-arm64
 
       - name: Create and push manifests for release event
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
         run: |
           docker buildx imagetools create \
             -t ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ needs.container-build-push.outputs.prowler_version }} \
             -t ${{ secrets.DOCKER_HUB_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ needs.container-build-push.outputs.stable_tag }} \
             -t ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ needs.container-build-push.outputs.prowler_version }} \
-            -t ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ needs.container-build-push.outputs.stable_tag }} \ 
+            -t ${{ secrets.PUBLIC_ECR_REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ needs.container-build-push.outputs.stable_tag }} \
             -t ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.container-build-push.outputs.prowler_version }} \
             -t ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.container-build-push.outputs.stable_tag }} \
             ${{ env.PROWLERCLOUD_DOCKERHUB_REPOSITORY }}/${{ env.PROWLERCLOUD_DOCKERHUB_IMAGE }}:${{ needs.container-build-push.outputs.latest_tag }}-amd64 \

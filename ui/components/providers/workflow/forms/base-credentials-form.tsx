@@ -1,10 +1,10 @@
 "use client";
 
 import { Divider } from "@heroui/divider";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon, Loader2 } from "lucide-react";
 import { Control } from "react-hook-form";
 
-import { CustomButton } from "@/components/ui/custom";
+import { Button } from "@/components/shadcn";
 import { Form } from "@/components/ui/form";
 import { useCredentialsForm } from "@/hooks/use-credentials-form";
 import { getAWSCredentialsTemplateLinks } from "@/lib";
@@ -20,6 +20,7 @@ import {
   KubernetesCredentials,
   M365CertificateCredentials,
   M365ClientSecretCredentials,
+  MongoDBAtlasCredentials,
   OCICredentials,
   ProviderType,
 } from "@/types";
@@ -37,6 +38,7 @@ import { AzureCredentialsForm } from "./via-credentials/azure-credentials-form";
 import { GitHubCredentialsForm } from "./via-credentials/github-credentials-form";
 import { IacCredentialsForm } from "./via-credentials/iac-credentials-form";
 import { KubernetesCredentialsForm } from "./via-credentials/k8s-credentials-form";
+import { MongoDBAtlasCredentialsForm } from "./via-credentials/mongodbatlas-credentials-form";
 import { OracleCloudCredentialsForm } from "./via-credentials/oraclecloud-credentials-form";
 
 type BaseCredentialsFormProps = {
@@ -172,44 +174,40 @@ export const BaseCredentialsForm = ({
             control={form.control as unknown as Control<OCICredentials>}
           />
         )}
+        {providerType === "mongodbatlas" && (
+          <MongoDBAtlasCredentialsForm
+            control={
+              form.control as unknown as Control<MongoDBAtlasCredentials>
+            }
+          />
+        )}
 
-        <div className="flex w-full justify-end sm:gap-6">
+        <div className="flex w-full justify-end gap-4">
           {showBackButton && requiresBackButton(searchParamsObj.get("via")) && (
-            <CustomButton
+            <Button
               type="button"
-              ariaLabel="Back"
-              className="w-1/2 bg-transparent"
-              variant="faded"
+              variant="ghost"
               size="lg"
-              radius="lg"
-              onPress={handleBackStep}
-              startContent={!isLoading && <ChevronLeftIcon size={24} />}
-              isDisabled={isLoading}
+              onClick={handleBackStep}
+              disabled={isLoading}
             >
-              <span>Back</span>
-            </CustomButton>
+              {!isLoading && <ChevronLeftIcon size={24} />}
+              Back
+            </Button>
           )}
-          <CustomButton
+          <Button
             type="submit"
-            ariaLabel="Save"
-            className="w-1/2"
-            variant="solid"
-            color="action"
+            variant="default"
             size="lg"
-            isLoading={isLoading}
-            endContent={!isLoading && <ChevronRightIcon size={24} />}
-            onPress={(e) => {
-              const formElement = e.target as HTMLElement;
-              const form = formElement.closest("form");
-              if (form) {
-                form.dispatchEvent(
-                  new Event("submit", { bubbles: true, cancelable: true }),
-                );
-              }
-            }}
+            disabled={isLoading}
           >
-            {isLoading ? <>Loading</> : <span>{submitButtonText}</span>}
-          </CustomButton>
+            {isLoading ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              <ChevronRightIcon size={24} />
+            )}
+            {isLoading ? "Loading" : submitButtonText}
+          </Button>
         </div>
       </form>
     </Form>

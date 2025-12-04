@@ -24,6 +24,7 @@ export interface CustomDropdownFilterProps {
 
 export enum FilterType {
   SCAN = "scan__in",
+  PROVIDER = "provider__in",
   PROVIDER_UID = "provider_uid__in",
   PROVIDER_TYPE = "provider_type__in",
   REGION = "region__in",

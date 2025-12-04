@@ -1,6 +1,5 @@
 import { Spacer } from "@heroui/spacer";
-import Image from "next/image";
-import React, { Suspense } from "react";
+import { Suspense } from "react";
 
 import {
   getComplianceAttributes,
@@ -8,28 +7,27 @@ import {
   getComplianceRequirements,
 } from "@/actions/compliances";
 import {
-  BarChart,
-  BarChartSkeleton,
   ClientAccordionWrapper,
+  ComplianceDownloadButton,
   ComplianceHeader,
-  ComplianceScanInfo,
-  HeatmapChart,
-  HeatmapChartSkeleton,
-  PieChart,
-  PieChartSkeleton,
+  RequirementsStatusCard,
+  RequirementsStatusCardSkeleton,
+  // SectionsFailureRateCard,
+  // SectionsFailureRateCardSkeleton,
   SkeletonAccordion,
+  TopFailedSectionsCard,
+  TopFailedSectionsCardSkeleton,
 } from "@/components/compliance";
 import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
 import { ContentLayout } from "@/components/ui";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
+import { getReportTypeForFramework } from "@/lib/compliance/compliance-report-types";
 import {
   AttributesData,
   Framework,
   RequirementsTotals,
 } from "@/types/compliance";
 import { ScanEntity } from "@/types/scans";
-
-import { ThreatScoreDownloadButton } from "./threatscore-download-button";
 
 interface ComplianceDetailSearchParams {
   complianceId: string;
@@ -41,38 +39,6 @@ interface ComplianceDetailSearchParams {
   page?: string;
   pageSize?: string;
 }
-
-const ComplianceIconSmall = ({
-  logoPath,
-  title,
-}: {
-  logoPath: string;
-  title: string;
-}) => {
-  return (
-    <div className="relative h-6 w-6 shrink-0">
-      <Image
-        src={logoPath}
-        alt={`${title} logo`}
-        fill
-        className="h-8 w-8 min-w-8 rounded-md border border-gray-300 bg-white object-contain p-[2px]"
-      />
-    </div>
-  );
-};
-
-const ChartsWrapper = ({
-  children,
-}: {
-  children: React.ReactNode;
-  logoPath?: string;
-}) => {
-  return (
-    <div className="mb-8 flex w-full flex-wrap items-center justify-center gap-12 lg:justify-start lg:gap-24">
-      {children}
-    </div>
-  );
-};
 
 export default async function ComplianceDetail({
   params,
@@ -98,8 +64,8 @@ export default async function ComplianceDetail({
 
   const formattedTitle = compliancetitle.split("-").join(" ");
   const pageTitle = version
-    ? `Compliance Details: ${formattedTitle} - ${version}`
-    : `Compliance Details: ${formattedTitle}`;
+    ? `${formattedTitle} - ${version}`
+    : `${formattedTitle}`;
 
   let selectedScan: ScanEntity | null = null;
 
@@ -122,29 +88,10 @@ export default async function ComplianceDetail({
 
   // Use compliance_name from attributes if available, otherwise fallback to formatted title
   const complianceName = attributesData?.data?.[0]?.attributes?.compliance_name;
-  const finalPageTitle = complianceName
-    ? `Compliance Details: ${complianceName}`
-    : pageTitle;
+  const finalPageTitle = complianceName ? `${complianceName}` : pageTitle;
 
   return (
-    <ContentLayout
-      title={finalPageTitle}
-      icon={
-        logoPath ? (
-          <ComplianceIconSmall logoPath={logoPath} title={compliancetitle} />
-        ) : (
-          "fluent-mdl2:compliance-audit"
-        )
-      }
-    >
-      {selectedScanId && selectedScan && (
-        <div className="flex max-w-[328px] flex-col items-start">
-          <div className="rounded-lg bg-gray-50 p-2 dark:bg-gray-800">
-            <ComplianceScanInfo scan={selectedScan} />
-          </div>
-          <Spacer y={8} />
-        </div>
-      )}
+    <ContentLayout title={finalPageTitle}>
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1">
           <ComplianceHeader
@@ -153,26 +100,35 @@ export default async function ComplianceDetail({
             showSearch={false}
             framework={compliancetitle}
             showProviders={false}
+            logoPath={logoPath}
+            complianceTitle={compliancetitle}
+            selectedScan={selectedScan}
           />
         </div>
-        {attributesData?.data?.[0]?.attributes?.framework ===
-          "ProwlerThreatScore" &&
-          selectedScanId && (
+        {(() => {
+          const framework = attributesData?.data?.[0]?.attributes?.framework;
+          const reportType = getReportTypeForFramework(framework);
+
+          return selectedScanId && reportType ? (
             <div className="flex-shrink-0 pt-1">
-              <ThreatScoreDownloadButton scanId={selectedScanId} />
+              <ComplianceDownloadButton
+                scanId={selectedScanId}
+                reportType={reportType}
+              />
             </div>
-          )}
+          ) : null;
+        })()}
       </div>
 
       <Suspense
         key={searchParamsKey}
         fallback={
           <div className="flex flex-col gap-8">
-            <ChartsWrapper logoPath={logoPath}>
-              <PieChartSkeleton />
-              <BarChartSkeleton />
-              <HeatmapChartSkeleton />
-            </ChartsWrapper>
+            <div className="flex flex-col gap-6 md:flex-row md:flex-wrap md:items-stretch">
+              <RequirementsStatusCardSkeleton />
+              <TopFailedSectionsCardSkeleton />
+              {/* <SectionsFailureRateCardSkeleton /> */}
+            </div>
             <SkeletonAccordion />
           </div>
         }
@@ -182,7 +138,6 @@ export default async function ComplianceDetail({
           scanId={selectedScanId || ""}
           region={regionFilter}
           filter={cisProfileFilter}
-          logoPath={logoPath}
           attributesData={attributesData}
         />
       </Suspense>
@@ -195,14 +150,12 @@ const SSRComplianceContent = async ({
   scanId,
   region,
   filter,
-  logoPath,
   attributesData,
 }: {
   complianceId: string;
   scanId: string;
   region?: string;
   filter?: string;
-  logoPath?: string;
   attributesData: AttributesData;
 }) => {
   const requirementsData = await getComplianceRequirements({
@@ -215,11 +168,11 @@ const SSRComplianceContent = async ({
   if (!scanId || type === "tasks") {
     return (
       <div className="flex flex-col gap-8">
-        <ChartsWrapper logoPath={logoPath}>
-          <PieChart pass={0} fail={0} manual={0} />
-          <BarChart sections={[]} />
-          <HeatmapChart categories={[]} />
-        </ChartsWrapper>
+        <div className="flex flex-col gap-6 md:flex-row md:flex-wrap md:items-stretch">
+          <RequirementsStatusCard pass={0} fail={0} manual={0} />
+          <TopFailedSectionsCard sections={[]} />
+          {/* <SectionsFailureRateCard categories={[]} /> */}
+        </div>
         <ClientAccordionWrapper items={[]} defaultExpandedKeys={[]} />
       </div>
     );
@@ -232,7 +185,7 @@ const SSRComplianceContent = async ({
     requirementsData,
     filter,
   );
-  const categoryHeatmapData = mapper.calculateCategoryHeatmapData(data);
+  // const categoryHeatmapData = mapper.calculateCategoryHeatmapData(data);
   const totalRequirements: RequirementsTotals = data.reduce(
     (acc: RequirementsTotals, framework: Framework) => ({
       pass: acc.pass + framework.pass,
@@ -246,17 +199,17 @@ const SSRComplianceContent = async ({
 
   return (
     <div className="flex flex-col gap-8">
-      <ChartsWrapper logoPath={logoPath}>
-        <PieChart
+      <div className="flex flex-col gap-6 md:flex-row md:items-stretch">
+        <RequirementsStatusCard
           pass={totalRequirements.pass}
           fail={totalRequirements.fail}
           manual={totalRequirements.manual}
         />
-        <BarChart sections={topFailedSections} />
-        <HeatmapChart categories={categoryHeatmapData} />
-      </ChartsWrapper>
+        <TopFailedSectionsCard sections={topFailedSections} />
+        {/* <SectionsFailureRateCard categories={categoryHeatmapData} /> */}
+      </div>
 
-      <Spacer className="h-1 w-full rounded-full bg-gray-200 dark:bg-gray-800" />
+      <Spacer className="bg-border-neutral-primary h-1 w-full rounded-full" />
       <ClientAccordionWrapper
         hideExpandButton={complianceId.includes("mitre_attack")}
         items={accordionItems}
