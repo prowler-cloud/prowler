@@ -1,6 +1,6 @@
 import { getProviderDisplayName } from "@/types/providers";
 
-import { RegionsOverviewResponse } from "./types";
+import { RegionsOverviewResponse } from "../types";
 
 export interface ThreatMapLocation {
   id: string;

@@ -4,7 +4,7 @@ import {
   FindingsSeverityOverviewResponse,
   ProviderOverview,
   ProvidersOverviewResponse,
-} from "./types";
+} from "../types";
 
 export interface SankeyNode {
   name: string;

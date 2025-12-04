@@ -1,4 +1,4 @@
-import { getThreatScore } from "@/actions/overview/overview";
+import { getThreatScore } from "@/actions/overview";
 
 import { SSRComponentProps } from "../_types";
 import { pickFilterParams } from "../_lib/filter-params";

@@ -1,4 +1,4 @@
-import { getFindingsByStatus } from "@/actions/overview/overview";
+import { getFindingsByStatus } from "@/actions/overview";
 
 import { SSRComponentProps } from "../_types";
 import { pickFilterParams } from "../_lib/filter-params";

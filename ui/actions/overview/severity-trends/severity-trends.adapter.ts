@@ -3,7 +3,7 @@ import { LineDataPoint } from "@/components/graphs/types";
 import {
   AdaptedSeverityTrendsResponse,
   FindingsSeverityOverTimeResponse,
-} from "./types";
+} from "../types";
 
 export type { AdaptedSeverityTrendsResponse, FindingsSeverityOverTimeResponse };
 

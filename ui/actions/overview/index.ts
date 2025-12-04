@@ -1,4 +1,8 @@
-export * from "./overview";
-export * from "./sankey.adapter";
-export * from "./threat-map.adapter";
+// Re-export all overview actions from feature-based subfolders
+export * from "./findings";
+export * from "./providers";
+export * from "./regions";
+export * from "./services";
+export * from "./severity-trends";
+export * from "./threat-score";
 export * from "./types";

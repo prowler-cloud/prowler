@@ -7,7 +7,7 @@ import { adaptSeverityTrendsResponse } from "./severity-trends.adapter";
 import {
   AdaptedSeverityTrendsResponse,
   FindingsSeverityOverTimeResponse,
-} from "./types";
+} from "../types";
 
 const TIME_RANGE_VALUES = {
   FIVE_DAYS: "5D",
