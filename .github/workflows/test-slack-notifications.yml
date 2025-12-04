@@ -64,6 +64,11 @@ jobs:
         run: |
           echo "Simulating build for ${{ matrix.arch }}..."
           sleep 10
+          # Simulate failure on arm64 build
+          if [[ "${{ matrix.arch }}" == "arm64" ]]; then
+            echo "ERROR: Build failed for ${{ matrix.arch }}"
+            exit 1
+          fi
           echo "Build completed for ${{ matrix.arch }}"
 
   simulate-manifest:
