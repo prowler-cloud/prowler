@@ -799,6 +799,8 @@ class ScanSummaryFilter(FilterSet):
 class DailySeveritySummaryFilter(FilterSet):
     """Filter for findings_severity/timeseries endpoint."""
 
+    MAX_DATE_RANGE_DAYS = 365
+
     provider_id = UUIDFilter(field_name="provider_id", lookup_expr="exact")
     provider_id__in = UUIDInFilter(field_name="provider_id", lookup_expr="in")
     provider_type = ChoiceFilter(
@@ -807,16 +809,53 @@ class DailySeveritySummaryFilter(FilterSet):
     provider_type__in = ChoiceInFilter(
         field_name="provider__provider", choices=Provider.ProviderChoices.choices
     )
-    # Date params handled in view, declared here for validation
-    date_from = CharFilter(method="filter_noop")
-    date_to = CharFilter(method="filter_noop")
-
-    def filter_noop(self, queryset, name, value):
-        return queryset
+    date_from = DateFilter(method="filter_noop")
+    date_to = DateFilter(method="filter_noop")
 
     class Meta:
         model = DailySeveritySummary
         fields = ["provider_id"]
+
+    def filter_noop(self, queryset, name, value):
+        return queryset
+
+    def filter_queryset(self, queryset):
+        if not self.data.get("date_from"):
+            raise ValidationError(
+                [
+                    {
+                        "detail": "This query parameter is required.",
+                        "status": "400",
+                        "source": {"pointer": "filter[date_from]"},
+                        "code": "required",
+                    }
+                ]
+            )
+
+        today = date.today()
+        date_from = self.form.cleaned_data.get("date_from")
+        date_to = min(self.form.cleaned_data.get("date_to") or today, today)
+
+        if (date_to - date_from).days > self.MAX_DATE_RANGE_DAYS:
+            raise ValidationError(
+                [
+                    {
+                        "detail": f"Date range cannot exceed {self.MAX_DATE_RANGE_DAYS} days.",
+                        "status": "400",
+                        "source": {"pointer": "filter[date_from]"},
+                        "code": "invalid",
+                    }
+                ]
+            )
+
+        # View access
+        self.request._date_from = date_from
+        self.request._date_to = date_to
+
+        # Apply date filter (only lte for fill-forward logic)
+        queryset = queryset.filter(date__lte=date_to)
+
+        return super().filter_queryset(queryset)
 
 
 class ScanSummarySeverityFilter(ScanSummaryFilter):

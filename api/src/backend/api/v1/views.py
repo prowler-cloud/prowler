@@ -5,7 +5,7 @@ import logging
 import os
 from collections import defaultdict
 from copy import deepcopy
-from datetime import date, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from urllib.parse import urljoin
 
@@ -4408,56 +4408,12 @@ class OverviewViewSet(BaseRLSViewSet):
         Daily severity trends for charts. Uses DailySeveritySummary pre-aggregation.
         Requires date_from filter.
         """
-        # Validate date parameters
-        date_from_str = request.query_params.get("filter[date_from]")
-        date_to_str = request.query_params.get("filter[date_to]")
+        # Get queryset with RBAC, provider, and date filters applied
+        # Date validation is handled by DailySeveritySummaryFilter
+        daily_qs = self.filter_queryset(self.get_queryset())
 
-        if not date_from_str:
-            raise ValidationError(
-                [
-                    {
-                        "detail": "This query parameter is required.",
-                        "status": "400",
-                        "source": {"pointer": "filter[date_from]"},
-                        "code": "required",
-                    }
-                ]
-            )
-
-        try:
-            date_from = date.fromisoformat(date_from_str)
-            date_to = date.fromisoformat(date_to_str) if date_to_str else date.today()
-        except ValueError:
-            raise ValidationError(
-                [
-                    {
-                        "detail": "Invalid date format. Use YYYY-MM-DD.",
-                        "status": "400",
-                        "source": {"pointer": "filter[date_from]"},
-                        "code": "invalid",
-                    }
-                ]
-            )
-
-        # Limit to 365 days maximum
-        max_days = 365
-        if (date_to - date_from).days > max_days:
-            raise ValidationError(
-                [
-                    {
-                        "detail": f"Date range cannot exceed {max_days} days.",
-                        "status": "400",
-                        "source": {"pointer": "filter[date_from]"},
-                        "code": "invalid",
-                    }
-                ]
-            )
-
-        # Get queryset with RBAC and provider filters applied
-        queryset = self.filter_queryset(self.get_queryset())
-
-        # Apply date filter for fill-forward logic
-        daily_qs = queryset.filter(date__lte=date_to)
+        date_from = request._date_from
+        date_to = request._date_to
 
         if not daily_qs.exists():
             # No data matches filters - return zeros
