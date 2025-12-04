@@ -16,11 +16,9 @@
   "Risk": "Without rule groups, traffic isn't meaningfully inspected, allowing unauthorized flows across VPC boundaries.\n\nImpacts:\n- Confidentiality: data exfiltration\n- Integrity: unauthorized changes via exposed services\n- Availability: C2, scanning, or DoS traffic passes; enables lateral movement",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://github.com/cloudposse-terraform-components/aws-network-firewall/blob/main/README.yaml",
     "https://docs.aws.amazon.com/network-firewall/latest/developerguide/rule-groups.html",
     "https://docs.aws.amazon.com/network-firewall/latest/developerguide/firewall-policy-updating.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/networkfirewall-controls.html#networkfirewall-3",
-    "https://docs.cloudposse.com/components/library/aws/network-firewall/",
     "https://medium.com/slalom-blog/secure-internet-access-egress-filtering-with-aws-network-firewall-ddf52ae121f9",
     "https://docs.aws.amazon.com/de_de/network-firewall/latest/developerguide/nwfw-using-managed-rule-groups-add-to-policy.html"
   ],

@@ -20,12 +20,8 @@
     "https://docs.aws.amazon.com/network-firewall/latest/APIReference/API_FirewallPolicy.html",
     "https://docs.aws.amazon.com/securityhub/latest/userguide/networkfirewall-controls.html#networkfirewall-5",
     "https://docs.aws.amazon.com/network-firewall/latest/developerguide/firewall-policy-updating.html",
-    "https://awscli.amazonaws.com/v2/documentation/api/latest/reference/network-firewall/describe-firewall-policy.html",
     "https://docs.aws.amazon.com/network-firewall/latest/developerguide/stateless-default-actions.html",
-    "https://docs.aws.amazon.com/de_de/cli/latest/reference/network-firewall/update-firewall-policy.html",
-    "https://docs.aws.amazon.com/config/latest/developerguide/netfw-policy-default-action-fragment-packets.html",
-    "https://docs.aws.amazon.com/cli/latest/reference/network-firewall/update-firewall-policy.html",
-    "https://docs.aws.amazon.com/de_de/cli/latest/reference/network-firewall/create-firewall-policy.html"
+    "https://docs.aws.amazon.com/config/latest/developerguide/netfw-policy-default-action-fragment-packets.html"
   ],
   "Remediation": {
     "Code": {
