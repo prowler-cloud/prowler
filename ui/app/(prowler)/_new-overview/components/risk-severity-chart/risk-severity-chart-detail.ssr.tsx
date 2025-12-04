@@ -11,6 +11,8 @@ export const RiskSeverityChartDetailSSR = async ({
   searchParams: SearchParamsProps | undefined | null;
 }) => {
   const filters = pickFilterParams(searchParams);
+  // Filter by FAIL findings
+  filters["filter[status]"] = "FAIL";
 
   const [findingsBySeverity, providersData] = await Promise.all([
     getFindingsBySeverity({ filters }),
