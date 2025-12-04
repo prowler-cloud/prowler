@@ -154,6 +154,12 @@ jobs:
             return
           fi
 
+          echo "DEBUG: Extracting from $file for version $version"
+          echo "DEBUG: Looking for pattern: ^## \[v?${version}\]"
+          
+          # Show what we're trying to match
+          grep "^## \[" "$file" | head -3
+          
           # Extract changelog section for this version
           awk -v version="$version" '
             /^## \[v?'"$version"'\]/ { found=1; next }
@@ -161,11 +167,14 @@ jobs:
             found && !/^## \[v?'"$version"'\]/ { print }
           ' "$file" > "$output_file"
 
+          echo "DEBUG: Extracted $(wc -l < "$output_file") lines, $(wc -c < "$output_file") bytes"
+          
           # Remove --- separators
           sed -i '/^---$/d' "$output_file"
-
-          # Remove only trailing empty lines (not all empty lines)
-          sed -i -e :a -e '/^\s*$/d;N;ba' "$output_file"
+          
+          echo "DEBUG: After sed: $(wc -l < "$output_file") lines, $(wc -c < "$output_file") bytes"
+          echo "DEBUG: First 3 lines of output:"
+          head -3 "$output_file" || echo "(empty)"
         }
 
         # Determine if components have changes for this specific release
