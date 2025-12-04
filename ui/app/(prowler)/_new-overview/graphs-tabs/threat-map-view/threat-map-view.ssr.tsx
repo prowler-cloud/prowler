@@ -5,7 +5,7 @@ import {
 import { ThreatMap } from "@/components/graphs/threat-map";
 import { SearchParamsProps } from "@/types";
 
-import { pickFilterParams } from "../../../lib/filter-params";
+import { pickFilterParams } from "../../_lib/filter-params";
 
 export async function ThreatMapViewSSR({
   searchParams,

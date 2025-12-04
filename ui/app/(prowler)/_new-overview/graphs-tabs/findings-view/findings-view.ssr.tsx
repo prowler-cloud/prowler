@@ -7,20 +7,12 @@ import { LinkToFindings } from "@/components/overview";
 import { ColumnNewFindingsToDate } from "@/components/overview/new-findings-table/table/column-new-findings-to-date";
 import { DataTable } from "@/components/ui/table";
 import { createDict } from "@/lib/helper";
+import { mapProviderFiltersForFindingsObject } from "@/lib/provider-helpers";
 import { FindingProps, SearchParamsProps } from "@/types";
 
-import { LighthouseBanner } from "../../../../../../components/lighthouse/banner";
+import { LighthouseBanner } from "@/components/lighthouse/banner";
 
-const FILTER_PREFIX = "filter[";
-
-function pickFilterParams(
-  params: SearchParamsProps | undefined | null,
-): Record<string, string | string[] | undefined> {
-  if (!params) return {};
-  return Object.fromEntries(
-    Object.entries(params).filter(([key]) => key.startsWith(FILTER_PREFIX)),
-  );
-}
+import { pickFilterParams } from "../../_lib/filter-params";
 
 interface FindingsViewSSRProps {
   searchParams: SearchParamsProps;
@@ -36,15 +28,7 @@ export async function FindingsViewSSR({ searchParams }: FindingsViewSSRProps) {
   };
 
   const filters = pickFilterParams(searchParams);
-
-  // Map provider_id__in to provider__in for findings API
-  const mappedFilters = { ...filters };
-  if (mappedFilters["filter[provider_id__in]"]) {
-    mappedFilters["filter[provider__in]"] =
-      mappedFilters["filter[provider_id__in]"];
-    delete mappedFilters["filter[provider_id__in]"];
-  }
-
+  const mappedFilters = mapProviderFiltersForFindingsObject(filters);
   const combinedFilters = { ...defaultFilters, ...mappedFilters };
 
   const findingsData = await getLatestFindings({

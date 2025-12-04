@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/shadcn";
 
-import { GRAPH_TABS, type TabId } from "./graphs-tabs-config";
+import { GRAPH_TABS, type TabId } from "../_config/graphs-tabs-config";
 
 interface GraphsTabsClientProps {
   tabsContent: Record<TabId, React.ReactNode>;

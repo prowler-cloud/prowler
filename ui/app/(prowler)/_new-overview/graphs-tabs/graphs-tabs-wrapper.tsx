@@ -3,9 +3,9 @@ import { Suspense } from "react";
 
 import { SearchParamsProps } from "@/types";
 
+import { GraphsTabsClient } from "./_components/graphs-tabs-client";
+import { GRAPH_TABS, type TabId } from "./_config/graphs-tabs-config";
 import { FindingsViewSSR } from "./findings-view";
-import { GraphsTabsClient } from "./graphs-tabs-client";
-import { GRAPH_TABS, type TabId } from "./graphs-tabs-config";
 import { RiskPipelineViewSSR } from "./risk-pipeline-view/risk-pipeline-view.ssr";
 import { ThreatMapViewSSR } from "./threat-map-view/threat-map-view.ssr";
 // TODO: Uncomment when ready to enable other tabs

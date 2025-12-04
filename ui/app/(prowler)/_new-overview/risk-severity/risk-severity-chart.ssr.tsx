@@ -1,13 +1,10 @@
-import { SearchParamsProps } from "@/types";
-
-import { pickFilterParams } from "../../lib/filter-params";
+import { SSRComponentProps } from "../_types";
+import { pickFilterParams } from "../_lib/filter-params";
 import { RiskSeverityChartDetailSSR } from "./risk-severity-chart-detail.ssr";
 
 export const RiskSeverityChartSSR = async ({
   searchParams,
-}: {
-  searchParams: SearchParamsProps | undefined | null;
-}) => {
+}: SSRComponentProps) => {
   const filters = pickFilterParams(searchParams);
 
   return <RiskSeverityChartDetailSSR searchParams={filters} />;

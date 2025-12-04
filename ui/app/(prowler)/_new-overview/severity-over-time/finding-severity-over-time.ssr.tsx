@@ -1,8 +1,8 @@
 import { getFindingsSeverityTrends } from "@/actions/overview/severity-trends";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
-import { SearchParamsProps } from "@/types";
 
-import { pickFilterParams } from "../../lib/filter-params";
+import { SSRComponentProps } from "../_types";
+import { pickFilterParams } from "../_lib/filter-params";
 import {
   FindingSeverityOverTime,
   FindingSeverityOverTimeSkeleton,
@@ -12,9 +12,7 @@ export { FindingSeverityOverTimeSkeleton };
 
 export const FindingSeverityOverTimeSSR = async ({
   searchParams,
-}: {
-  searchParams: SearchParamsProps | undefined | null;
-}) => {
+}: SSRComponentProps) => {
   const filters = pickFilterParams(searchParams);
 
   const severityTrends = await getFindingsSeverityTrends({ filters });

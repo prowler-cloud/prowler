@@ -1,14 +1,12 @@
 import { getThreatScore } from "@/actions/overview/overview";
-import { SearchParamsProps } from "@/types";
 
-import { pickFilterParams } from "../../lib/filter-params";
+import { SSRComponentProps } from "../_types";
+import { pickFilterParams } from "../_lib/filter-params";
 import { ThreatScore } from "./threat-score";
 
 export const ThreatScoreSSR = async ({
   searchParams,
-}: {
-  searchParams: SearchParamsProps | undefined | null;
-}) => {
+}: SSRComponentProps) => {
   const filters = pickFilterParams(searchParams);
   const threatScoreData = await getThreatScore({ filters });
 

@@ -8,7 +8,7 @@ import { getProviders } from "@/actions/providers";
 import { SankeyChart } from "@/components/graphs/sankey-chart";
 import { SearchParamsProps } from "@/types";
 
-import { pickFilterParams } from "../../../lib/filter-params";
+import { pickFilterParams } from "../../_lib/filter-params";
 
 export async function RiskPipelineViewSSR({
   searchParams,

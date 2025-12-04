@@ -4,6 +4,7 @@ import { Bell } from "lucide-react";
 import { useState } from "react";
 import {
   CartesianGrid,
+  Dot,
   Line,
   LineChart as RechartsLine,
   TooltipProps,
@@ -29,6 +30,47 @@ interface PointClickData {
   point: LineDataPoint;
   dataKey?: string;
 }
+
+interface ActiveDotProps {
+  cx?: number;
+  cy?: number;
+  payload?: LineDataPoint;
+  dataKey: string;
+  color: string;
+  onPointClick?: (data: PointClickData) => void;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
+}
+
+const CustomActiveDot = ({
+  cx,
+  cy,
+  payload,
+  dataKey,
+  color,
+  onPointClick,
+  onMouseEnter,
+  onMouseLeave,
+}: ActiveDotProps) => {
+  if (cx === undefined || cy === undefined) return null;
+
+  return (
+    <Dot
+      cx={cx}
+      cy={cy}
+      r={6}
+      fill={color}
+      style={{ cursor: onPointClick ? "pointer" : "default" }}
+      onClick={() => {
+        if (onPointClick && payload) {
+          onPointClick({ point: payload, dataKey });
+        }
+      }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    />
+  );
+};
 
 interface LineChartProps {
   data: LineDataPoint[];
@@ -200,20 +242,16 @@ export function LineChart({
                 strokeOpacity={isFaded ? 0.2 : 1}
                 name={line.label}
                 dot={{ fill: line.color, r: 4 }}
-                activeDot={{
-                  r: 6,
-                  cursor: onPointClick ? "pointer" : "default",
-                  onClick: onPointClick
-                    ? (_: unknown, dotProps: { payload: LineDataPoint }) => {
-                        onPointClick({
-                          point: dotProps.payload,
-                          dataKey: line.dataKey,
-                        });
-                      }
-                    : undefined,
-                  onMouseEnter: () => setHoveredLine(line.dataKey),
-                  onMouseLeave: () => setHoveredLine(null),
-                }}
+                activeDot={(props: { cx?: number; cy?: number; payload?: LineDataPoint }) => (
+                  <CustomActiveDot
+                    {...props}
+                    dataKey={line.dataKey}
+                    color={line.color}
+                    onPointClick={onPointClick}
+                    onMouseEnter={() => setHoveredLine(line.dataKey)}
+                    onMouseLeave={() => setHoveredLine(null)}
+                  />
+                )}
                 style={{ transition: "stroke-opacity 0.2s" }}
               />
             );

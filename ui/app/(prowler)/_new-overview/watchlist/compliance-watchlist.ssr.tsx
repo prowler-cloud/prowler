@@ -2,16 +2,14 @@ import {
   adaptComplianceOverviewsResponse,
   getCompliancesOverview,
 } from "@/actions/compliances";
-import { SearchParamsProps } from "@/types";
 
-import { pickFilterParams } from "../../lib/filter-params";
+import { SSRComponentProps } from "../_types";
+import { pickFilterParams } from "../_lib/filter-params";
 import { ComplianceWatchlist } from "./compliance-watchlist";
 
 export const ComplianceWatchlistSSR = async ({
   searchParams,
-}: {
-  searchParams: SearchParamsProps | undefined | null;
-}) => {
+}: SSRComponentProps) => {
   const filters = pickFilterParams(searchParams);
 
   const response = await getCompliancesOverview({ filters });

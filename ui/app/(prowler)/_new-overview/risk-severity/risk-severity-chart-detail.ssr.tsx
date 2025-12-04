@@ -1,14 +1,12 @@
 import { getFindingsBySeverity } from "@/actions/overview/overview";
-import { SearchParamsProps } from "@/types";
 
-import { pickFilterParams } from "../../lib/filter-params";
+import { SSRComponentProps } from "../_types";
+import { pickFilterParams } from "../_lib/filter-params";
 import { RiskSeverityChart } from "./risk-severity-chart";
 
 export const RiskSeverityChartDetailSSR = async ({
   searchParams,
-}: {
-  searchParams: SearchParamsProps | undefined | null;
-}) => {
+}: SSRComponentProps) => {
   const filters = pickFilterParams(searchParams);
 
   const findingsBySeverity = await getFindingsBySeverity({ filters });
