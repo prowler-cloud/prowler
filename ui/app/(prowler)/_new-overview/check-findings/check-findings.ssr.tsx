@@ -2,7 +2,7 @@ import { getFindingsByStatus } from "@/actions/overview/overview";
 
 import { SSRComponentProps } from "../_types";
 import { pickFilterParams } from "../_lib/filter-params";
-import { StatusChart } from "../status-chart/status-chart";
+import { StatusChart } from "../status-chart/_components/status-chart";
 
 export const CheckFindingsSSR = async ({
   searchParams,

@@ -1,10 +1,10 @@
 import { getFindingsSeverityTrends } from "@/actions/overview/severity-trends";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
 
-import { SSRComponentProps } from "../_types";
 import { pickFilterParams } from "../_lib/filter-params";
-import { FindingSeverityOverTime } from "./finding-severity-over-time";
-import { FindingSeverityOverTimeSkeleton } from "./finding-severity-over-time.skeleton";
+import { SSRComponentProps } from "../_types";
+import { FindingSeverityOverTime } from "./_components/finding-severity-over-time";
+import { FindingSeverityOverTimeSkeleton } from "./_components/finding-severity-over-time.skeleton";
 
 export { FindingSeverityOverTimeSkeleton };
 

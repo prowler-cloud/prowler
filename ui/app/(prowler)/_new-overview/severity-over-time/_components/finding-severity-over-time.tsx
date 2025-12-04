@@ -13,7 +13,7 @@ import {
   SeverityLevel,
 } from "@/types/severities";
 
-import { type TimeRange, TimeRangeSelector } from "./_components/time-range-selector";
+import { type TimeRange, TimeRangeSelector } from "./time-range-selector";
 
 interface FindingSeverityOverTimeProps {
   data: LineDataPoint[];
@@ -137,5 +137,3 @@ export const FindingSeverityOverTime = ({
     </>
   );
 };
-
-

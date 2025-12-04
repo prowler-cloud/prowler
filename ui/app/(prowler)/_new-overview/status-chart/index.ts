@@ -1,2 +1,2 @@
-export { StatusChart } from "./status-chart";
-export { StatusChartSkeleton } from "./status-chart.skeleton";
+export { StatusChart } from "./_components/status-chart";
+export { StatusChartSkeleton } from "./_components/status-chart.skeleton";

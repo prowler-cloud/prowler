@@ -2,7 +2,7 @@ import { getFindingsSeverityTrends } from "@/actions/overview/severity-trends";
 
 import { SSRComponentProps } from "../_types";
 import { pickFilterParams } from "../_lib/filter-params";
-import { FindingSeverityOverTime } from "./finding-severity-over-time";
+import { FindingSeverityOverTime } from "./_components/finding-severity-over-time";
 
 export const FindingSeverityOverTimeDetailSSR = async ({
   searchParams,

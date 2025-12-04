@@ -6,8 +6,8 @@ import { useState } from "react";
 import { ServiceOverview } from "@/actions/overview";
 import { mapProviderFiltersForFindings } from "@/lib/provider-helpers";
 
-import { SortToggleButton } from "./_components/sort-toggle-button";
-import { WatchlistCard, WatchlistItem } from "./_components/watchlist-card";
+import { SortToggleButton } from "./sort-toggle-button";
+import { WatchlistCard, WatchlistItem } from "./watchlist-card";
 
 export const ServiceWatchlist = ({ items }: { items: ServiceOverview[] }) => {
   const router = useRouter();

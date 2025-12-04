@@ -3,8 +3,8 @@
 import Image, { type StaticImageData } from "next/image";
 import { useState } from "react";
 
-import { SortToggleButton } from "./_components/sort-toggle-button";
-import { WatchlistCard } from "./_components/watchlist-card";
+import { SortToggleButton } from "./sort-toggle-button";
+import { WatchlistCard } from "./watchlist-card";
 
 export interface ComplianceData {
   id: string;

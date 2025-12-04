@@ -1,3 +1,3 @@
-export { RiskSeverityChart } from "./risk-severity-chart";
-export { RiskSeverityChartSkeleton } from "./risk-severity-chart.skeleton";
+export { RiskSeverityChart } from "./_components/risk-severity-chart";
+export { RiskSeverityChartSkeleton } from "./_components/risk-severity-chart.skeleton";
 export { RiskSeverityChartSSR } from "./risk-severity-chart.ssr";

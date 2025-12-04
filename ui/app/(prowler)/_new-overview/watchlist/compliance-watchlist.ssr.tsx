@@ -5,7 +5,7 @@ import {
 
 import { SSRComponentProps } from "../_types";
 import { pickFilterParams } from "../_lib/filter-params";
-import { ComplianceWatchlist } from "./compliance-watchlist";
+import { ComplianceWatchlist } from "./_components/compliance-watchlist";
 
 export const ComplianceWatchlistSSR = async ({
   searchParams,
