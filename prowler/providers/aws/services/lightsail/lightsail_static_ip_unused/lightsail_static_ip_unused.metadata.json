@@ -15,12 +15,8 @@
   "Risk": "**Unattached static IPs** incur ongoing charges and indicate asset drift. If DNS or apps still reference the address, requests are blackholed, impacting **availability**. Later attaching the same IP to an unintended host can expose services and data, affecting **confidentiality** and **integrity**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.ansible.com/ansible/latest/collections/community/aws/lightsail_static_ip_module.html",
     "https://docs.aws.amazon.com/lightsail/latest/userguide/understanding-public-ip-and-private-ip-addresses-in-amazon-lightsail.html",
-    "https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Lightsail.html",
-    "https://www.linkedin.com/pulse/automated-real-time-slack-notification-unused-static-ip-jon-bonso-gp2jc",
-    "https://runebook.dev/en/docs/ansible/collections/community/aws/lightsail_static_ip_module",
-    "https://repost.aws/questions/QUaviCA-HwTTOFaxEw1ZC1sg/lightsail-unused-static-ip-address-billing"
+    "https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Lightsail.html"
   ],
   "Remediation": {
     "Code": {

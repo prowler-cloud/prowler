@@ -16,10 +16,7 @@
   "Risk": "Public IP plus open ports enables Internet scanning, brute force, and exploits.\n- Confidentiality: data exfiltration\n- Integrity: RCE/admin takeover via exposed services\n- Availability: DoS or abuse (botnets, cryptomining), service disruption",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://docs.plesk.com/en-US/obsidian/deployment-guide/plesk-installation-and-upgrade-on-public-cloud-services/installing-plesk-on-amazon-lightsail/open-access-to-plesk-services-on-an-amazon-lightsail-instance.79159/",
     "https://docs.aws.amazon.com/lightsail/latest/userguide/amazon-lightsail-editing-firewall-rules.html",
-    "https://stackoverflow.com/questions/74825762/add-ip-restricted-firewall-rule-in-lightsail-with-terraform",
-    "https://serverfault.com/questions/1074615/why-cant-i-connect-to-my-amazon-lightsail-instance-using-ip-addressport-num",
     "https://docs.aws.amazon.com/lightsail/latest/userguide/understanding-public-ip-and-private-ip-addresses-in-amazon-lightsail.html#ipv4-addresses"
   ],
   "Remediation": {

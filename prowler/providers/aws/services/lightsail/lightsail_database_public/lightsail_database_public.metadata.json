@@ -17,7 +17,6 @@
   "Risk": "**Publicly reachable databases** expose confidential data and credentials to the Internet, enabling:\n- **Brute-force** and credential stuffing\n- **Data exfiltration** via unauthorized queries\n- **Service disruption** from scanning or DoS\n\nCompromise enables **lateral movement** and tampering, impacting confidentiality, integrity, and availability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://stackoverflow.com/questions/68317705/is-there-a-way-to-configure-aws-lightsail-database-public-mode-by-api",
     "https://docs.aws.amazon.com/lightsail/latest/userguide/amazon-lightsail-databases.html",
     "https://docs.aws.amazon.com/lightsail/latest/userguide/amazon-lightsail-configuring-database-public-mode.html",
     "https://spinupwp.com/doc/external-database-amazon-lightsail/"
