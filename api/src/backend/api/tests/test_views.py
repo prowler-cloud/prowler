@@ -35,6 +35,7 @@ from rest_framework.response import Response
 from api.compliance import get_compliance_frameworks
 from api.db_router import MainRouter
 from api.models import (
+    AttackSurfaceOverview,
     ComplianceOverviewSummary,
     ComplianceRequirementOverview,
     Finding,
@@ -5315,9 +5316,11 @@ class TestUserRoleRelationshipViewSet:
     def test_create_relationship_already_exists(
         self, authenticated_client, roles_fixture, create_test_user
     ):
+        # Only add Role One (which has manage_account=True) to ensure
+        # the second request has permission to add roles
         data = {
             "data": [
-                {"type": "roles", "id": str(role.id)} for role in roles_fixture[:2]
+                {"type": "roles", "id": str(roles_fixture[0].id)},
             ]
         }
         authenticated_client.post(
@@ -6258,10 +6261,10 @@ class TestOverviewViewSet:
         response = authenticated_client.get(reverse("overview-providers"))
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 1
-        assert response.json()["data"][0]["attributes"]["findings"]["total"] == 4
+        assert response.json()["data"][0]["attributes"]["findings"]["total"] == 9
         assert response.json()["data"][0]["attributes"]["findings"]["pass"] == 2
         assert response.json()["data"][0]["attributes"]["findings"]["fail"] == 1
-        assert response.json()["data"][0]["attributes"]["findings"]["muted"] == 1
+        assert response.json()["data"][0]["attributes"]["findings"]["muted"] == 6
         # Aggregated resources include all AWS providers present in the tenant
         assert response.json()["data"][0]["attributes"]["resources"]["total"] == 3
 
@@ -6313,10 +6316,10 @@ class TestOverviewViewSet:
         assert len(data) == 1
         attributes = data[0]["attributes"]
 
-        assert attributes["findings"]["total"] == 10
+        assert attributes["findings"]["total"] == 15
         assert attributes["findings"]["pass"] == 5
         assert attributes["findings"]["fail"] == 3
-        assert attributes["findings"]["muted"] == 2
+        assert attributes["findings"]["muted"] == 7
         assert attributes["resources"]["total"] == 4
 
     def test_overview_providers_count(
@@ -6758,7 +6761,35 @@ class TestOverviewViewSet:
         self, authenticated_client, scan_summaries_fixture
     ):
         response = authenticated_client.get(reverse("overview-services"))
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.status_code == status.HTTP_200_OK
+        # Should return services from latest scans
+        assert len(response.json()["data"]) == 2
+
+    def test_overview_regions_list(self, authenticated_client, scan_summaries_fixture):
+        response = authenticated_client.get(
+            reverse("overview-regions"), {"filter[inserted_at]": TODAY}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        # Only two different regions in the fixture (region1, region2)
+        assert len(response.json()["data"]) == 2
+
+        data = response.json()["data"]
+        regions = {item["id"]: item["attributes"] for item in data}
+
+        assert "aws:region1" in regions
+        assert "aws:region2" in regions
+
+        # region1 has 5 findings (2 pass, 0 fail, 3 muted)
+        assert regions["aws:region1"]["total"] == 5
+        assert regions["aws:region1"]["pass"] == 2
+        assert regions["aws:region1"]["fail"] == 0
+        assert regions["aws:region1"]["muted"] == 3
+
+        # region2 has 4 findings (0 pass, 1 fail, 3 muted)
+        assert regions["aws:region2"]["total"] == 4
+        assert regions["aws:region2"]["pass"] == 0
+        assert regions["aws:region2"]["fail"] == 1
+        assert regions["aws:region2"]["muted"] == 3
 
     def test_overview_services_list(self, authenticated_client, scan_summaries_fixture):
         response = authenticated_client.get(
@@ -6767,15 +6798,14 @@ class TestOverviewViewSet:
         assert response.status_code == status.HTTP_200_OK
         # Only two different services
         assert len(response.json()["data"]) == 2
-        # Fixed data from the fixture, TODO improve this at some point with something more dynamic
+        # Fixed data from the fixture
         service1_data = response.json()["data"][0]
         service2_data = response.json()["data"][1]
         assert service1_data["id"] == "service1"
         assert service2_data["id"] == "service2"
 
-        # TODO fix numbers when muted_findings filter is fixed
-        assert service1_data["attributes"]["total"] == 3
-        assert service2_data["attributes"]["total"] == 1
+        assert service1_data["attributes"]["total"] == 7
+        assert service2_data["attributes"]["total"] == 2
 
         assert service1_data["attributes"]["pass"] == 1
         assert service2_data["attributes"]["pass"] == 1
@@ -6783,8 +6813,8 @@ class TestOverviewViewSet:
         assert service1_data["attributes"]["fail"] == 1
         assert service2_data["attributes"]["fail"] == 0
 
-        assert service1_data["attributes"]["muted"] == 1
-        assert service2_data["attributes"]["muted"] == 0
+        assert service1_data["attributes"]["muted"] == 5
+        assert service2_data["attributes"]["muted"] == 1
 
     def test_overview_findings_provider_id_in_filter(
         self, authenticated_client, tenants_fixture, providers_fixture
@@ -6894,6 +6924,7 @@ class TestOverviewViewSet:
             tenant=tenant,
         )
 
+        # Muted findings should be excluded from severity counts
         ScanSummary.objects.create(
             tenant=tenant,
             scan=scan1,
@@ -6903,8 +6934,8 @@ class TestOverviewViewSet:
             region="region-a",
             _pass=4,
             fail=4,
-            muted=0,
-            total=8,
+            muted=3,
+            total=11,
         )
         ScanSummary.objects.create(
             tenant=tenant,
@@ -6915,8 +6946,8 @@ class TestOverviewViewSet:
             region="region-b",
             _pass=2,
             fail=2,
-            muted=0,
-            total=4,
+            muted=2,
+            total=6,
         )
         ScanSummary.objects.create(
             tenant=tenant,
@@ -6927,8 +6958,8 @@ class TestOverviewViewSet:
             region="region-c",
             _pass=1,
             fail=2,
-            muted=0,
-            total=3,
+            muted=5,
+            total=8,
         )
 
         single_response = authenticated_client.get(
@@ -6937,6 +6968,7 @@ class TestOverviewViewSet:
         )
         assert single_response.status_code == status.HTTP_200_OK
         single_attributes = single_response.json()["data"]["attributes"]
+        # Should only count pass + fail, excluding muted (3 muted in high, 2 in medium)
         assert single_attributes["high"] == 8
         assert single_attributes["medium"] == 4
         assert single_attributes["critical"] == 0
@@ -6947,9 +6979,394 @@ class TestOverviewViewSet:
         )
         assert combined_response.status_code == status.HTTP_200_OK
         combined_attributes = combined_response.json()["data"]["attributes"]
+        # Should only count pass + fail, excluding muted (5 muted in critical)
         assert combined_attributes["high"] == 8
         assert combined_attributes["medium"] == 4
         assert combined_attributes["critical"] == 3
+
+    def test_overview_attack_surface_no_data(self, authenticated_client):
+        response = authenticated_client.get(reverse("overview-attack-surface"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 4
+        for item in data:
+            assert item["attributes"]["total_findings"] == 0
+            assert item["attributes"]["failed_findings"] == 0
+            assert item["attributes"]["muted_failed_findings"] == 0
+            assert item["attributes"]["check_ids"] == []
+
+    def test_overview_attack_surface_with_data(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        create_attack_surface_overview,
+    ):
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+
+        mapping = {
+            "internet-exposed": {"aws-check-1", "aws-check-2"},
+            "secrets": {"aws-secret-check"},
+            "privilege-escalation": {"aws-priv-check"},
+            "ec2-imdsv1": {"aws-imdsv1-check"},
+        }
+
+        scan = Scan.objects.create(
+            name="attack-surface-scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        create_attack_surface_overview(
+            tenant,
+            scan,
+            AttackSurfaceOverview.AttackSurfaceTypeChoices.INTERNET_EXPOSED,
+            total=20,
+            failed=10,
+            muted_failed=3,
+        )
+        create_attack_surface_overview(
+            tenant,
+            scan,
+            AttackSurfaceOverview.AttackSurfaceTypeChoices.SECRETS,
+            total=15,
+            failed=8,
+            muted_failed=2,
+        )
+
+        with patch(
+            "api.v1.views._get_attack_surface_mapping_from_provider",
+            return_value=mapping,
+        ):
+            response = authenticated_client.get(reverse("overview-attack-surface"))
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 4
+
+        results_by_type = {item["id"]: item["attributes"] for item in data}
+        assert results_by_type["internet-exposed"]["total_findings"] == 20
+        assert results_by_type["internet-exposed"]["failed_findings"] == 10
+        assert set(results_by_type["internet-exposed"]["check_ids"]) == {
+            "aws-check-1",
+            "aws-check-2",
+        }
+        assert results_by_type["secrets"]["total_findings"] == 15
+        assert results_by_type["secrets"]["failed_findings"] == 8
+        assert set(results_by_type["secrets"]["check_ids"]) == {"aws-secret-check"}
+        assert results_by_type["privilege-escalation"]["total_findings"] == 0
+        assert set(results_by_type["privilege-escalation"]["check_ids"]) == {
+            "aws-priv-check"
+        }
+        assert results_by_type["ec2-imdsv1"]["total_findings"] == 0
+        assert set(results_by_type["ec2-imdsv1"]["check_ids"]) == {"aws-imdsv1-check"}
+
+    def test_overview_attack_surface_provider_filter(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        create_attack_surface_overview,
+    ):
+        tenant = tenants_fixture[0]
+        provider1, provider2, *_ = providers_fixture
+
+        scan1 = Scan.objects.create(
+            name="attack-surface-scan-1",
+            provider=provider1,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+        scan2 = Scan.objects.create(
+            name="attack-surface-scan-2",
+            provider=provider2,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        mapping = {
+            "internet-exposed": {"shared-check", "shared-check"},
+            "secrets": set(),
+            "privilege-escalation": {"priv-check"},
+            "ec2-imdsv1": {"imdsv1-check"},
+        }
+
+        create_attack_surface_overview(
+            tenant,
+            scan1,
+            AttackSurfaceOverview.AttackSurfaceTypeChoices.INTERNET_EXPOSED,
+            total=10,
+            failed=5,
+            muted_failed=1,
+        )
+        create_attack_surface_overview(
+            tenant,
+            scan2,
+            AttackSurfaceOverview.AttackSurfaceTypeChoices.INTERNET_EXPOSED,
+            total=20,
+            failed=15,
+            muted_failed=3,
+        )
+
+        with patch(
+            "api.v1.views._get_attack_surface_mapping_from_provider",
+            return_value=mapping,
+        ):
+            response = authenticated_client.get(
+                reverse("overview-attack-surface"),
+                {"filter[provider_id]": str(provider1.id)},
+            )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        results_by_type = {item["id"]: item["attributes"] for item in data}
+        assert results_by_type["internet-exposed"]["total_findings"] == 10
+        assert results_by_type["internet-exposed"]["failed_findings"] == 5
+        assert results_by_type["internet-exposed"]["check_ids"] == ["shared-check"]
+
+    def test_overview_services_region_filter(
+        self, authenticated_client, scan_summaries_fixture
+    ):
+        response = authenticated_client.get(
+            reverse("overview-services"),
+            {"filter[region]": "region1"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 2
+        service_ids = {item["id"] for item in data}
+        assert service_ids == {"service1", "service2"}
+
+    def test_overview_services_provider_type_filter(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        tenant = tenants_fixture[0]
+        aws_provider, _, gcp_provider, *_ = providers_fixture
+
+        aws_scan = Scan.objects.create(
+            name="aws-scan",
+            provider=aws_provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+        gcp_scan = Scan.objects.create(
+            name="gcp-scan",
+            provider=gcp_provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=aws_scan,
+            check_id="aws-check",
+            service="aws-service",
+            severity="high",
+            region="us-east-1",
+            _pass=5,
+            fail=2,
+            muted=1,
+            total=8,
+        )
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=gcp_scan,
+            check_id="gcp-check",
+            service="gcp-service",
+            severity="medium",
+            region="us-central1",
+            _pass=3,
+            fail=1,
+            muted=0,
+            total=4,
+        )
+
+        response = authenticated_client.get(
+            reverse("overview-services"),
+            {"filter[provider_type]": "aws"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        service_ids = [item["id"] for item in data]
+        assert "aws-service" in service_ids
+        assert "gcp-service" not in service_ids
+
+    @pytest.mark.parametrize(
+        "status_filter,field_to_check",
+        [
+            ("FAIL", "fail"),
+            ("PASS", "_pass"),
+        ],
+    )
+    def test_overview_findings_severity_status_filter(
+        self,
+        authenticated_client,
+        tenants_fixture,
+        providers_fixture,
+        status_filter,
+        field_to_check,
+    ):
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+
+        scan = Scan.objects.create(
+            name="status-filter-scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant=tenant,
+        )
+
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan,
+            check_id="status-check-high",
+            service="service-a",
+            severity="high",
+            region="us-east-1",
+            _pass=10,
+            fail=5,
+            muted=3,
+            total=18,
+        )
+        ScanSummary.objects.create(
+            tenant=tenant,
+            scan=scan,
+            check_id="status-check-medium",
+            service="service-a",
+            severity="medium",
+            region="us-east-1",
+            _pass=8,
+            fail=2,
+            muted=1,
+            total=11,
+        )
+
+        response = authenticated_client.get(
+            reverse("overview-findings_severity"),
+            {
+                "filter[provider_id]": str(provider.id),
+                "filter[status]": status_filter,
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        attrs = response.json()["data"]["attributes"]
+        if status_filter == "FAIL":
+            assert attrs["high"] == 5
+            assert attrs["medium"] == 2
+        else:
+            assert attrs["high"] == 10
+            assert attrs["medium"] == 8
+
+    def test_overview_threatscore_compliance_id_filter(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        scan = self._create_scan(tenant, provider, "compliance-filter-scan")
+
+        self._create_threatscore_snapshot(
+            tenant,
+            scan,
+            provider,
+            compliance_id="prowler_threatscore_aws",
+            overall_score="75.00",
+            score_delta="2.00",
+            section_scores={"1. IAM": "70.00"},
+            critical_requirements=[],
+            total_requirements=50,
+            passed_requirements=35,
+            failed_requirements=15,
+            manual_requirements=0,
+            total_findings=30,
+            passed_findings=20,
+            failed_findings=10,
+        )
+        self._create_threatscore_snapshot(
+            tenant,
+            scan,
+            provider,
+            compliance_id="cis_1.4_aws",
+            overall_score="65.00",
+            score_delta="1.00",
+            section_scores={"1. IAM": "60.00"},
+            critical_requirements=[],
+            total_requirements=40,
+            passed_requirements=25,
+            failed_requirements=15,
+            manual_requirements=0,
+            total_findings=25,
+            passed_findings=15,
+            failed_findings=10,
+        )
+
+        response = authenticated_client.get(
+            reverse("overview-threatscore"),
+            {"filter[compliance_id]": "prowler_threatscore_aws"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["attributes"]["overall_score"] == "75.00"
+        assert data[0]["attributes"]["compliance_id"] == "prowler_threatscore_aws"
+
+    def test_overview_threatscore_provider_type_filter(
+        self, authenticated_client, tenants_fixture, providers_fixture
+    ):
+        tenant = tenants_fixture[0]
+        aws_provider, _, gcp_provider, *_ = providers_fixture
+
+        aws_scan = self._create_scan(tenant, aws_provider, "aws-threatscore-scan")
+        gcp_scan = self._create_scan(tenant, gcp_provider, "gcp-threatscore-scan")
+
+        self._create_threatscore_snapshot(
+            tenant,
+            aws_scan,
+            aws_provider,
+            compliance_id="prowler_threatscore_aws",
+            overall_score="80.00",
+            score_delta="3.00",
+            section_scores={"1. IAM": "75.00"},
+            critical_requirements=[],
+            total_requirements=60,
+            passed_requirements=45,
+            failed_requirements=15,
+            manual_requirements=0,
+            total_findings=40,
+            passed_findings=30,
+            failed_findings=10,
+        )
+        self._create_threatscore_snapshot(
+            tenant,
+            gcp_scan,
+            gcp_provider,
+            compliance_id="prowler_threatscore_gcp",
+            overall_score="70.00",
+            score_delta="2.00",
+            section_scores={"1. IAM": "65.00"},
+            critical_requirements=[],
+            total_requirements=50,
+            passed_requirements=35,
+            failed_requirements=15,
+            manual_requirements=0,
+            total_findings=35,
+            passed_findings=25,
+            failed_findings=10,
+        )
+
+        response = authenticated_client.get(
+            reverse("overview-threatscore"),
+            {"filter[provider_type]": "aws"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == 1
+        assert data[0]["attributes"]["overall_score"] == "80.00"
 
 
 @pytest.mark.django_db
@@ -10154,6 +10571,540 @@ class TestLighthouseProviderConfigViewSet:
         # Unrelated entries should remain untouched
         assert cfg.default_models.get("other") == "model-x"
 
+    @pytest.mark.parametrize(
+        "credentials",
+        [
+            {},  # empty credentials
+            {
+                "access_key_id": "AKIAIOSFODNN7EXAMPLE"
+            },  # missing secret_access_key and region
+            {
+                "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+            },  # missing access_key_id and region
+            {
+                "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+                "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+            },  # missing region
+            {  # invalid access_key_id format (not starting with AKIA)
+                "access_key_id": "ABCD0123456789ABCDEF",
+                "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+                "region": "us-east-1",
+            },
+            {  # invalid access_key_id format (wrong length)
+                "access_key_id": "AKIAIOSFODNN7EXAMPL",
+                "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+                "region": "us-east-1",
+            },
+            {  # invalid secret_access_key format (wrong length)
+                "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+                "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEK",
+                "region": "us-east-1",
+            },
+            {  # invalid region format
+                "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+                "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+                "region": "invalid-region",
+            },
+            {  # invalid region format (uppercase)
+                "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+                "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+                "region": "US-EAST-1",
+            },
+        ],
+    )
+    def test_bedrock_invalid_credentials(self, authenticated_client, credentials):
+        """Bedrock provider with invalid credentials should error"""
+        payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "bedrock",
+                    "credentials": credentials,
+                },
+            }
+        }
+        resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_bedrock_valid_credentials_success(self, authenticated_client):
+        """Bedrock provider with valid AWS credentials should succeed and mask credentials"""
+        valid_credentials = {
+            "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+            "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+            "region": "us-east-1",
+        }
+        payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "bedrock",
+                    "credentials": valid_credentials,
+                },
+            }
+        }
+        resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp.status_code == status.HTTP_201_CREATED
+        data = resp.json()["data"]
+
+        # Verify credentials are returned masked
+        masked_creds = data["attributes"].get("credentials")
+        assert masked_creds is not None
+        assert "access_key_id" in masked_creds
+        assert "secret_access_key" in masked_creds
+        assert "region" in masked_creds
+        # Verify all characters are masked with asterisks
+        assert all(c == "*" for c in masked_creds["access_key_id"])
+        assert all(c == "*" for c in masked_creds["secret_access_key"])
+
+    def test_bedrock_provider_duplicate_per_tenant(self, authenticated_client):
+        """Creating a second Bedrock provider for same tenant should fail"""
+        valid_credentials = {
+            "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+            "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+            "region": "us-west-2",
+        }
+        payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "bedrock",
+                    "credentials": valid_credentials,
+                },
+            }
+        }
+        # First creation succeeds
+        resp1 = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp1.status_code == status.HTTP_201_CREATED
+
+        # Second creation should fail with validation error
+        resp2 = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp2.status_code == status.HTTP_400_BAD_REQUEST
+        assert "already exists" in str(resp2.json()).lower()
+
+    def test_bedrock_patch_credentials_and_fields_filter(self, authenticated_client):
+        """PATCH credentials and verify fields filter returns decrypted values"""
+        valid_credentials = {
+            "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+            "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+            "region": "eu-west-1",
+        }
+        create_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "bedrock",
+                    "credentials": valid_credentials,
+                },
+            }
+        }
+        create_resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=create_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert create_resp.status_code == status.HTTP_201_CREATED
+        provider_id = create_resp.json()["data"]["id"]
+
+        # Update credentials with new valid ones
+        new_credentials = {
+            "access_key_id": "AKIAZZZZZZZZZZZZZZZZ",
+            "secret_access_key": "aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789+/==",
+            "region": "ap-south-1",
+        }
+        patch_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "id": provider_id,
+                "attributes": {
+                    "credentials": new_credentials,
+                    "is_active": False,
+                },
+            }
+        }
+        patch_resp = authenticated_client.patch(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id}),
+            data=patch_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert patch_resp.status_code == status.HTTP_200_OK
+        updated = patch_resp.json()["data"]["attributes"]
+        assert updated["is_active"] is False
+
+        # Default GET should return masked credentials
+        get_resp = authenticated_client.get(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id})
+        )
+        assert get_resp.status_code == status.HTTP_200_OK
+        masked = get_resp.json()["data"]["attributes"]["credentials"]
+        assert all(c == "*" for c in masked["access_key_id"])
+        assert all(c == "*" for c in masked["secret_access_key"])
+
+        # Fields filter should return decrypted credentials
+        get_full = authenticated_client.get(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id})
+            + "?fields[lighthouse-providers]=credentials"
+        )
+        assert get_full.status_code == status.HTTP_200_OK
+        creds = get_full.json()["data"]["attributes"]["credentials"]
+        assert creds["access_key_id"] == new_credentials["access_key_id"]
+        assert creds["secret_access_key"] == new_credentials["secret_access_key"]
+        assert creds["region"] == new_credentials["region"]
+
+    def test_bedrock_partial_credential_update(self, authenticated_client):
+        """Test partial update of Bedrock credentials (e.g., only region)"""
+        # Create provider with full credentials
+        initial_credentials = {
+            "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+            "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+            "region": "us-east-1",
+        }
+        create_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "bedrock",
+                    "credentials": initial_credentials,
+                },
+            }
+        }
+        create_resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=create_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert create_resp.status_code == status.HTTP_201_CREATED
+        provider_id = create_resp.json()["data"]["id"]
+
+        # Update only the region field
+        partial_update = {
+            "region": "eu-west-1",
+        }
+        patch_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "id": provider_id,
+                "attributes": {
+                    "credentials": partial_update,
+                },
+            }
+        }
+        patch_resp = authenticated_client.patch(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id}),
+            data=patch_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert patch_resp.status_code == status.HTTP_200_OK
+
+        # Verify credentials with fields filter - region should be updated, keys preserved
+        get_full = authenticated_client.get(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id})
+            + "?fields[lighthouse-providers]=credentials"
+        )
+        assert get_full.status_code == status.HTTP_200_OK
+        creds = get_full.json()["data"]["attributes"]["credentials"]
+
+        # Original keys should be preserved
+        assert creds["access_key_id"] == initial_credentials["access_key_id"]
+        assert creds["secret_access_key"] == initial_credentials["secret_access_key"]
+        # Region should be updated
+        assert creds["region"] == "eu-west-1"
+
+    def test_bedrock_valid_api_key_credentials_success(self, authenticated_client):
+        """Bedrock provider with valid API key + region should succeed and return masked credentials"""
+        valid_api_key = "ABSKQmVkcm9ja0FQSUtleS" + ("A" * 110)
+        api_credentials = {
+            "api_key": valid_api_key,
+            "region": "us-east-1",
+        }
+        payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "bedrock",
+                    "credentials": api_credentials,
+                },
+            }
+        }
+        resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp.status_code == status.HTTP_201_CREATED
+        data = resp.json()["data"]
+
+        # Verify credentials are returned masked
+        masked_creds = data["attributes"].get("credentials")
+        assert masked_creds is not None
+        assert "api_key" in masked_creds
+        assert "region" in masked_creds
+        assert all(c == "*" for c in masked_creds["api_key"])
+
+    def test_bedrock_mixed_api_key_and_access_keys_invalid_on_create(
+        self, authenticated_client
+    ):
+        """Bedrock provider with both API key and access keys should fail validation on create"""
+        valid_api_key = "ABSKQmVkcm9ja0FQSUtleS" + ("A" * 110)
+        mixed_credentials = {
+            "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+            "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+            "api_key": valid_api_key,
+            "region": "us-east-1",
+        }
+        payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "bedrock",
+                    "credentials": mixed_credentials,
+                },
+            }
+        }
+        resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        error_body = str(resp.json()).lower()
+        assert "either access key + secret key or api key" in error_body
+
+    def test_bedrock_cannot_switch_from_api_key_to_access_keys_on_update(
+        self, authenticated_client
+    ):
+        """If created with API key, switching to access keys via update should be rejected"""
+        valid_api_key = "ABSKQmVkcm9ja0FQSUtleS" + ("A" * 110)
+        create_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "bedrock",
+                    "credentials": {
+                        "api_key": valid_api_key,
+                        "region": "us-east-1",
+                    },
+                },
+            }
+        }
+        create_resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=create_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert create_resp.status_code == status.HTTP_201_CREATED
+        provider_id = create_resp.json()["data"]["id"]
+
+        # Attempt to introduce access keys on update
+        patch_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "id": provider_id,
+                "attributes": {
+                    "credentials": {
+                        "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+                        "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+                    },
+                },
+            }
+        }
+        patch_resp = authenticated_client.patch(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id}),
+            data=patch_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert patch_resp.status_code == status.HTTP_400_BAD_REQUEST
+        error_body = str(patch_resp.json()).lower()
+        assert "cannot change bedrock authentication method from api key" in error_body
+
+    def test_bedrock_cannot_switch_from_access_keys_to_api_key_on_update(
+        self, authenticated_client
+    ):
+        """If created with access keys, switching to API key via update should be rejected"""
+        valid_api_key = "ABSKQmVkcm9ja0FQSUtleS" + ("A" * 110)
+        initial_credentials = {
+            "access_key_id": "AKIAIOSFODNN7EXAMPLE",
+            "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+            "region": "us-east-1",
+        }
+        create_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "bedrock",
+                    "credentials": initial_credentials,
+                },
+            }
+        }
+        create_resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=create_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert create_resp.status_code == status.HTTP_201_CREATED
+        provider_id = create_resp.json()["data"]["id"]
+
+        # Attempt to introduce API key on update
+        patch_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "id": provider_id,
+                "attributes": {
+                    "credentials": {
+                        "api_key": valid_api_key,
+                    },
+                },
+            }
+        }
+        patch_resp = authenticated_client.patch(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id}),
+            data=patch_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert patch_resp.status_code == status.HTTP_400_BAD_REQUEST
+        error_body = str(patch_resp.json()).lower()
+        assert (
+            "cannot change bedrock authentication method from access key" in error_body
+        )
+
+    @pytest.mark.parametrize(
+        "attributes",
+        [
+            pytest.param(
+                {
+                    "provider_type": "openai_compatible",
+                    "credentials": {"api_key": "compat-key"},
+                },
+                id="missing",
+            ),
+            pytest.param(
+                {
+                    "provider_type": "openai_compatible",
+                    "credentials": {"api_key": "compat-key"},
+                    "base_url": "",
+                },
+                id="empty",
+            ),
+        ],
+    )
+    def test_openai_compatible_missing_base_url(self, authenticated_client, attributes):
+        payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": attributes,
+            }
+        }
+
+        resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        error_detail = str(resp.json()).lower()
+        assert "base_url" in error_detail
+
+    def test_openai_compatible_invalid_credentials(self, authenticated_client):
+        payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "openai_compatible",
+                    "base_url": "https://compat.example/v1",
+                    "credentials": {"api_key": ""},
+                },
+            }
+        }
+
+        resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        errors = resp.json().get("errors", [])
+        assert any(
+            error.get("source", {}).get("pointer")
+            == "/data/attributes/credentials/api_key"
+            for error in errors
+        )
+        assert any(
+            "may not be blank" in error.get("detail", "").lower() for error in errors
+        )
+
+    def test_openai_compatible_patch_credentials_and_fields(self, authenticated_client):
+        create_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "openai_compatible",
+                    "base_url": "https://compat.example/v1",
+                    "credentials": {"api_key": "compat-key-123"},
+                },
+            }
+        }
+
+        create_resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=create_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert create_resp.status_code == status.HTTP_201_CREATED
+        provider_id = create_resp.json()["data"]["id"]
+
+        updated_base_url = "https://compat.example/v2"
+        updated_api_key = "compat-key-456"
+        patch_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "id": provider_id,
+                "attributes": {
+                    "base_url": updated_base_url,
+                    "credentials": {"api_key": updated_api_key},
+                },
+            }
+        }
+
+        patch_resp = authenticated_client.patch(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id}),
+            data=patch_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert patch_resp.status_code == status.HTTP_200_OK
+        updated_attrs = patch_resp.json()["data"]["attributes"]
+        assert updated_attrs["base_url"] == updated_base_url
+        assert updated_attrs["credentials"]["api_key"] == "*" * len(updated_api_key)
+
+        get_resp = authenticated_client.get(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id})
+        )
+        assert get_resp.status_code == status.HTTP_200_OK
+        masked = get_resp.json()["data"]["attributes"]["credentials"]["api_key"]
+        assert masked == "*" * len(updated_api_key)
+
+        get_full = authenticated_client.get(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id})
+            + "?fields[lighthouse-providers]=credentials"
+        )
+        assert get_full.status_code == status.HTTP_200_OK
+        creds = get_full.json()["data"]["attributes"]["credentials"]
+        assert creds["api_key"] == updated_api_key
+
 
 @pytest.mark.django_db
 class TestMuteRuleViewSet:
@@ -10707,380 +11658,3 @@ class TestMuteRuleViewSet:
         assert len(data) == len(mute_rules_fixture)
         for rule_data in data:
             assert rule_data["id"] != str(other_rule.id)
-
-    @pytest.mark.parametrize(
-        "credentials",
-        [
-            {},  # empty credentials
-            {
-                "access_key_id": "AKIAIOSFODNN7EXAMPLE"
-            },  # missing secret_access_key and region
-            {
-                "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
-            },  # missing access_key_id and region
-            {
-                "access_key_id": "AKIAIOSFODNN7EXAMPLE",
-                "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
-            },  # missing region
-            {  # invalid access_key_id format (not starting with AKIA)
-                "access_key_id": "ABCD0123456789ABCDEF",
-                "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
-                "region": "us-east-1",
-            },
-            {  # invalid access_key_id format (wrong length)
-                "access_key_id": "AKIAIOSFODNN7EXAMPL",
-                "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
-                "region": "us-east-1",
-            },
-            {  # invalid secret_access_key format (wrong length)
-                "access_key_id": "AKIAIOSFODNN7EXAMPLE",
-                "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEK",
-                "region": "us-east-1",
-            },
-            {  # invalid region format
-                "access_key_id": "AKIAIOSFODNN7EXAMPLE",
-                "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
-                "region": "invalid-region",
-            },
-            {  # invalid region format (uppercase)
-                "access_key_id": "AKIAIOSFODNN7EXAMPLE",
-                "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
-                "region": "US-EAST-1",
-            },
-        ],
-    )
-    def test_bedrock_invalid_credentials(self, authenticated_client, credentials):
-        """Bedrock provider with invalid credentials should error"""
-        payload = {
-            "data": {
-                "type": "lighthouse-providers",
-                "attributes": {
-                    "provider_type": "bedrock",
-                    "credentials": credentials,
-                },
-            }
-        }
-        resp = authenticated_client.post(
-            reverse("lighthouse-providers-list"),
-            data=payload,
-            content_type=API_JSON_CONTENT_TYPE,
-        )
-        assert resp.status_code == status.HTTP_400_BAD_REQUEST
-
-    def test_bedrock_valid_credentials_success(self, authenticated_client):
-        """Bedrock provider with valid AWS credentials should succeed and mask credentials"""
-        valid_credentials = {
-            "access_key_id": "AKIAIOSFODNN7EXAMPLE",
-            "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
-            "region": "us-east-1",
-        }
-        payload = {
-            "data": {
-                "type": "lighthouse-providers",
-                "attributes": {
-                    "provider_type": "bedrock",
-                    "credentials": valid_credentials,
-                },
-            }
-        }
-        resp = authenticated_client.post(
-            reverse("lighthouse-providers-list"),
-            data=payload,
-            content_type=API_JSON_CONTENT_TYPE,
-        )
-        assert resp.status_code == status.HTTP_201_CREATED
-        data = resp.json()["data"]
-
-        # Verify credentials are returned masked
-        masked_creds = data["attributes"].get("credentials")
-        assert masked_creds is not None
-        assert "access_key_id" in masked_creds
-        assert "secret_access_key" in masked_creds
-        assert "region" in masked_creds
-        # Verify all characters are masked with asterisks
-        assert all(c == "*" for c in masked_creds["access_key_id"])
-        assert all(c == "*" for c in masked_creds["secret_access_key"])
-
-    def test_bedrock_provider_duplicate_per_tenant(self, authenticated_client):
-        """Creating a second Bedrock provider for same tenant should fail"""
-        valid_credentials = {
-            "access_key_id": "AKIAIOSFODNN7EXAMPLE",
-            "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
-            "region": "us-west-2",
-        }
-        payload = {
-            "data": {
-                "type": "lighthouse-providers",
-                "attributes": {
-                    "provider_type": "bedrock",
-                    "credentials": valid_credentials,
-                },
-            }
-        }
-        # First creation succeeds
-        resp1 = authenticated_client.post(
-            reverse("lighthouse-providers-list"),
-            data=payload,
-            content_type=API_JSON_CONTENT_TYPE,
-        )
-        assert resp1.status_code == status.HTTP_201_CREATED
-
-        # Second creation should fail with validation error
-        resp2 = authenticated_client.post(
-            reverse("lighthouse-providers-list"),
-            data=payload,
-            content_type=API_JSON_CONTENT_TYPE,
-        )
-        assert resp2.status_code == status.HTTP_400_BAD_REQUEST
-        assert "already exists" in str(resp2.json()).lower()
-
-    def test_bedrock_patch_credentials_and_fields_filter(self, authenticated_client):
-        """PATCH credentials and verify fields filter returns decrypted values"""
-        valid_credentials = {
-            "access_key_id": "AKIAIOSFODNN7EXAMPLE",
-            "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
-            "region": "eu-west-1",
-        }
-        create_payload = {
-            "data": {
-                "type": "lighthouse-providers",
-                "attributes": {
-                    "provider_type": "bedrock",
-                    "credentials": valid_credentials,
-                },
-            }
-        }
-        create_resp = authenticated_client.post(
-            reverse("lighthouse-providers-list"),
-            data=create_payload,
-            content_type=API_JSON_CONTENT_TYPE,
-        )
-        assert create_resp.status_code == status.HTTP_201_CREATED
-        provider_id = create_resp.json()["data"]["id"]
-
-        # Update credentials with new valid ones
-        new_credentials = {
-            "access_key_id": "AKIAZZZZZZZZZZZZZZZZ",
-            "secret_access_key": "aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789+/==",
-            "region": "ap-south-1",
-        }
-        patch_payload = {
-            "data": {
-                "type": "lighthouse-providers",
-                "id": provider_id,
-                "attributes": {
-                    "credentials": new_credentials,
-                    "is_active": False,
-                },
-            }
-        }
-        patch_resp = authenticated_client.patch(
-            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id}),
-            data=patch_payload,
-            content_type=API_JSON_CONTENT_TYPE,
-        )
-        assert patch_resp.status_code == status.HTTP_200_OK
-        updated = patch_resp.json()["data"]["attributes"]
-        assert updated["is_active"] is False
-
-        # Default GET should return masked credentials
-        get_resp = authenticated_client.get(
-            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id})
-        )
-        assert get_resp.status_code == status.HTTP_200_OK
-        masked = get_resp.json()["data"]["attributes"]["credentials"]
-        assert all(c == "*" for c in masked["access_key_id"])
-        assert all(c == "*" for c in masked["secret_access_key"])
-
-        # Fields filter should return decrypted credentials
-        get_full = authenticated_client.get(
-            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id})
-            + "?fields[lighthouse-providers]=credentials"
-        )
-        assert get_full.status_code == status.HTTP_200_OK
-        creds = get_full.json()["data"]["attributes"]["credentials"]
-        assert creds["access_key_id"] == new_credentials["access_key_id"]
-        assert creds["secret_access_key"] == new_credentials["secret_access_key"]
-        assert creds["region"] == new_credentials["region"]
-
-    def test_bedrock_partial_credential_update(self, authenticated_client):
-        """Test partial update of Bedrock credentials (e.g., only region)"""
-        # Create provider with full credentials
-        initial_credentials = {
-            "access_key_id": "AKIAIOSFODNN7EXAMPLE",
-            "secret_access_key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
-            "region": "us-east-1",
-        }
-        create_payload = {
-            "data": {
-                "type": "lighthouse-providers",
-                "attributes": {
-                    "provider_type": "bedrock",
-                    "credentials": initial_credentials,
-                },
-            }
-        }
-        create_resp = authenticated_client.post(
-            reverse("lighthouse-providers-list"),
-            data=create_payload,
-            content_type=API_JSON_CONTENT_TYPE,
-        )
-        assert create_resp.status_code == status.HTTP_201_CREATED
-        provider_id = create_resp.json()["data"]["id"]
-
-        # Update only the region field
-        partial_update = {
-            "region": "eu-west-1",
-        }
-        patch_payload = {
-            "data": {
-                "type": "lighthouse-providers",
-                "id": provider_id,
-                "attributes": {
-                    "credentials": partial_update,
-                },
-            }
-        }
-        patch_resp = authenticated_client.patch(
-            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id}),
-            data=patch_payload,
-            content_type=API_JSON_CONTENT_TYPE,
-        )
-        assert patch_resp.status_code == status.HTTP_200_OK
-
-        # Verify credentials with fields filter - region should be updated, keys preserved
-        get_full = authenticated_client.get(
-            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id})
-            + "?fields[lighthouse-providers]=credentials"
-        )
-        assert get_full.status_code == status.HTTP_200_OK
-        creds = get_full.json()["data"]["attributes"]["credentials"]
-
-        # Original keys should be preserved
-        assert creds["access_key_id"] == initial_credentials["access_key_id"]
-        assert creds["secret_access_key"] == initial_credentials["secret_access_key"]
-        # Region should be updated
-        assert creds["region"] == "eu-west-1"
-
-    @pytest.mark.parametrize(
-        "attributes",
-        [
-            pytest.param(
-                {
-                    "provider_type": "openai_compatible",
-                    "credentials": {"api_key": "compat-key"},
-                },
-                id="missing",
-            ),
-            pytest.param(
-                {
-                    "provider_type": "openai_compatible",
-                    "credentials": {"api_key": "compat-key"},
-                    "base_url": "",
-                },
-                id="empty",
-            ),
-        ],
-    )
-    def test_openai_compatible_missing_base_url(self, authenticated_client, attributes):
-        payload = {
-            "data": {
-                "type": "lighthouse-providers",
-                "attributes": attributes,
-            }
-        }
-
-        resp = authenticated_client.post(
-            reverse("lighthouse-providers-list"),
-            data=payload,
-            content_type=API_JSON_CONTENT_TYPE,
-        )
-        assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        error_detail = str(resp.json()).lower()
-        assert "base_url" in error_detail
-
-    def test_openai_compatible_invalid_credentials(self, authenticated_client):
-        payload = {
-            "data": {
-                "type": "lighthouse-providers",
-                "attributes": {
-                    "provider_type": "openai_compatible",
-                    "base_url": "https://compat.example/v1",
-                    "credentials": {"api_key": ""},
-                },
-            }
-        }
-
-        resp = authenticated_client.post(
-            reverse("lighthouse-providers-list"),
-            data=payload,
-            content_type=API_JSON_CONTENT_TYPE,
-        )
-        assert resp.status_code == status.HTTP_400_BAD_REQUEST
-        errors = resp.json().get("errors", [])
-        assert any(
-            error.get("source", {}).get("pointer")
-            == "/data/attributes/credentials/api_key"
-            for error in errors
-        )
-        assert any(
-            "may not be blank" in error.get("detail", "").lower() for error in errors
-        )
-
-    def test_openai_compatible_patch_credentials_and_fields(self, authenticated_client):
-        create_payload = {
-            "data": {
-                "type": "lighthouse-providers",
-                "attributes": {
-                    "provider_type": "openai_compatible",
-                    "base_url": "https://compat.example/v1",
-                    "credentials": {"api_key": "compat-key-123"},
-                },
-            }
-        }
-
-        create_resp = authenticated_client.post(
-            reverse("lighthouse-providers-list"),
-            data=create_payload,
-            content_type=API_JSON_CONTENT_TYPE,
-        )
-        assert create_resp.status_code == status.HTTP_201_CREATED
-        provider_id = create_resp.json()["data"]["id"]
-
-        updated_base_url = "https://compat.example/v2"
-        updated_api_key = "compat-key-456"
-        patch_payload = {
-            "data": {
-                "type": "lighthouse-providers",
-                "id": provider_id,
-                "attributes": {
-                    "base_url": updated_base_url,
-                    "credentials": {"api_key": updated_api_key},
-                },
-            }
-        }
-
-        patch_resp = authenticated_client.patch(
-            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id}),
-            data=patch_payload,
-            content_type=API_JSON_CONTENT_TYPE,
-        )
-        assert patch_resp.status_code == status.HTTP_200_OK
-        updated_attrs = patch_resp.json()["data"]["attributes"]
-        assert updated_attrs["base_url"] == updated_base_url
-        assert updated_attrs["credentials"]["api_key"] == "*" * len(updated_api_key)
-
-        get_resp = authenticated_client.get(
-            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id})
-        )
-        assert get_resp.status_code == status.HTTP_200_OK
-        masked = get_resp.json()["data"]["attributes"]["credentials"]["api_key"]
-        assert masked == "*" * len(updated_api_key)
-
-        get_full = authenticated_client.get(
-            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id})
-            + "?fields[lighthouse-providers]=credentials"
-        )
-        assert get_full.status_code == status.HTTP_200_OK
-        creds = get_full.json()["data"]["attributes"]["credentials"]
-        assert creds["api_key"] == updated_api_key

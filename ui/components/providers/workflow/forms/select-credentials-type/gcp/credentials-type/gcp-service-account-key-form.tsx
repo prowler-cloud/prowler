@@ -27,7 +27,6 @@ export const GCPServiceAccountKeyForm = ({
         variant="bordered"
         minRows={10}
         isRequired
-        isInvalid={!!control._formState.errors.service_account_key}
       />
     </>
   );

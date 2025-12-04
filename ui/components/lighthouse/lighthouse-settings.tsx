@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Icon } from "@iconify/react";
-import { SaveIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -11,8 +10,16 @@ import {
   getTenantConfig,
   updateTenantConfig,
 } from "@/actions/lighthouse/lighthouse";
+import { SaveIcon } from "@/components/icons";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/shadcn";
 import { useToast } from "@/components/ui";
-import { CustomButton, CustomTextarea } from "@/components/ui/custom";
+import { CustomTextarea } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
 
 const lighthouseSettingsSchema = z.object({
@@ -97,55 +104,58 @@ export const LighthouseSettings = () => {
 
   if (isFetchingData) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
-        <h2 className="mb-4 text-xl font-semibold">Settings</h2>
-        <div className="flex items-center justify-center py-12">
-          <Icon
-            icon="heroicons:arrow-path"
-            className="h-8 w-8 animate-spin text-gray-400"
-          />
-        </div>
-      </div>
+      <Card variant="base" padding="lg">
+        <CardHeader>
+          <CardTitle>Settings</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-12">
+            <Icon
+              icon="heroicons:arrow-path"
+              className="h-8 w-8 animate-spin text-gray-400"
+            />
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
-      <h2 className="mb-4 text-xl font-semibold">Settings</h2>
+    <Card variant="base" padding="lg">
+      <CardHeader>
+        <CardTitle>Settings</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex flex-col gap-6"
+          >
+            <CustomTextarea
+              control={form.control}
+              name="businessContext"
+              label="Business Context"
+              labelPlacement="inside"
+              placeholder="Enter business context and relevant information for the chatbot (max 1000 characters)"
+              variant="bordered"
+              minRows={4}
+              maxRows={8}
+              description={`${form.watch("businessContext")?.length || 0}/1000 characters`}
+            />
 
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="flex flex-col gap-6"
-        >
-          <CustomTextarea
-            control={form.control}
-            name="businessContext"
-            label="Business Context"
-            labelPlacement="inside"
-            placeholder="Enter business context and relevant information for the chatbot (max 1000 characters)"
-            variant="bordered"
-            minRows={4}
-            maxRows={8}
-            description={`${form.watch("businessContext")?.length || 0}/1000 characters`}
-            isInvalid={!!form.formState.errors.businessContext}
-          />
-
-          <div className="flex w-full justify-end">
-            <CustomButton
-              type="submit"
-              ariaLabel="Save Settings"
-              variant="solid"
-              color="action"
-              size="md"
-              isLoading={isLoading}
-              startContent={!isLoading && <SaveIcon size={20} />}
-            >
-              {isLoading ? "Saving..." : "Save"}
-            </CustomButton>
-          </div>
-        </form>
-      </Form>
-    </div>
+            <div className="flex w-full justify-end">
+              <Button
+                type="submit"
+                aria-label="Save Settings"
+                disabled={isLoading}
+              >
+                {!isLoading && <SaveIcon size={20} />}
+                {isLoading ? "Saving..." : "Save"}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
   );
 };
