@@ -1,0 +1,112 @@
+name: 'Test: Slack Notifications Flow'
+
+on:
+  push:
+    paths:
+      - '.github/workflows/test-slack-notifications.yml'
+
+permissions:
+  contents: read
+
+env:
+  RELEASE_TAG: 5.14.2-test
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      short-sha: ${{ steps.set-short-sha.outputs.short-sha }}
+    steps:
+      - name: Calculate short SHA
+        id: set-short-sha
+        run: echo "short-sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+
+  notify-release-started:
+    needs: setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      message-ts: ${{ steps.slack-notification.outputs.ts }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Notify container push started
+        id: slack-notification
+        uses: ./.github/actions/slack-notification
+        env:
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_PLATFORM_DEPLOYMENTS }}
+          COMPONENT: MCP (TEST)
+          RELEASE_TAG: ${{ env.RELEASE_TAG }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        with:
+          slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload-file-path: "./.github/scripts/slack-messages/container-release-started.json"
+
+  simulate-build:
+    needs: [setup, notify-release-started]
+    if: always() && needs.setup.result == 'success' && (needs.notify-release-started.result == 'success' || needs.notify-release-started.result == 'skipped')
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            arch: amd64
+          - runner: ubuntu-latest
+            arch: arm64
+    timeout-minutes: 5
+    steps:
+      - name: Simulate build for ${{ matrix.arch }}
+        id: simulate-build
+        run: |
+          echo "Simulating build for ${{ matrix.arch }}..."
+          sleep 10
+          echo "Build completed for ${{ matrix.arch }}"
+
+  simulate-manifest:
+    needs: [setup, simulate-build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Simulate manifest creation
+        run: |
+          echo "Simulating manifest creation..."
+          sleep 5
+          echo "Manifest created"
+
+  notify-release-completed:
+    if: always() && needs.notify-release-started.result == 'success'
+    needs: [setup, notify-release-started, simulate-build, simulate-manifest]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Determine overall outcome
+        id: outcome
+        run: |
+          if [[ "${{ needs.simulate-build.result }}" == "success" && "${{ needs.simulate-manifest.result }}" == "success" ]]; then
+            echo "outcome=success" >> $GITHUB_OUTPUT
+          else
+            echo "outcome=failure" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Notify container push completed
+        uses: ./.github/actions/slack-notification
+        env:
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_PLATFORM_DEPLOYMENTS }}
+          MESSAGE_TS: ${{ needs.notify-release-started.outputs.message-ts }}
+          COMPONENT: MCP (TEST)
+          RELEASE_TAG: ${{ env.RELEASE_TAG }}
+          GITHUB_SERVER_URL: ${{ github.server_url }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        with:
+          slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload-file-path: "./.github/scripts/slack-messages/container-release-completed.json"
+          step-outcome: ${{ steps.outcome.outputs.outcome }}
+          update-ts: ${{ needs.notify-release-started.outputs.message-ts }}
