@@ -11,6 +11,8 @@ All notable changes to the **Prowler API** are documented in this file.
 - Support to use admin credentials through the read replica database [(#9440)](https://github.com/prowler-cloud/prowler/pull/9440)
 
 ### Changed
+
+- Error messages from Lighthouse celery tasks [(#9165)](https://github.com/prowler-cloud/prowler/pull/9165)
 - Restore the compliance overview endpoint's mandatory filters [(#9338)](https://github.com/prowler-cloud/prowler/pull/9338)
 
 ---

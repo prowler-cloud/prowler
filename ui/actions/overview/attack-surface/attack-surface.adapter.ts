@@ -1,4 +1,4 @@
-import { AttackSurfaceOverview, AttackSurfaceOverviewResponse } from "../types";
+import { AttackSurfaceOverview, AttackSurfaceOverviewResponse } from "./types";
 
 const ATTACK_SURFACE_IDS = {
   INTERNET_EXPOSED: "internet-exposed",

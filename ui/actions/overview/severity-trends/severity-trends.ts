@@ -3,11 +3,11 @@
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 
+import { adaptSeverityTrendsResponse } from "./severity-trends.adapter";
 import {
   AdaptedSeverityTrendsResponse,
   FindingsSeverityOverTimeResponse,
-} from "../types";
-import { adaptSeverityTrendsResponse } from "./severity-trends.adapter";
+} from "./types";
 
 const TIME_RANGE_VALUES = {
   FIVE_DAYS: "5D",
@@ -35,7 +35,7 @@ const getFindingsSeverityTrends = async ({
 } = {}): Promise<SeverityTrendsResult> => {
   const headers = await getAuthHeaders({ contentType: false });
 
-  const url = new URL(`${apiBaseUrl}/overviews/findings_severity_over_time`);
+  const url = new URL(`${apiBaseUrl}/overviews/findings_severity/timeseries`);
 
   Object.entries(filters).forEach(([key, value]) => {
     if (value !== undefined) {

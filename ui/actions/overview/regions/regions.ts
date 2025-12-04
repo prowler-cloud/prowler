@@ -3,7 +3,7 @@
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 
-import { RegionsOverviewResponse } from "../types";
+import { RegionsOverviewResponse } from "./types";
 
 export const getRegionsOverview = async ({
   filters = {},
