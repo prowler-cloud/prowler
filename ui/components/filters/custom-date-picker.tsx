@@ -4,6 +4,7 @@ import { Button, ButtonGroup } from "@heroui/button";
 import { DatePicker } from "@heroui/date-picker";
 import {
   getLocalTimeZone,
+  parseDate,
   startOfMonth,
   startOfWeek,
   today,
@@ -20,7 +21,12 @@ export const CustomDatePicker = () => {
 
   const [value, setValue] = React.useState(() => {
     const dateParam = searchParams.get("filter[inserted_at]");
-    return dateParam ? today(getLocalTimeZone()) : null;
+    if (!dateParam) return null;
+    try {
+      return parseDate(dateParam);
+    } catch {
+      return null;
+    }
   });
 
   const { locale } = useLocale();

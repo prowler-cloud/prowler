@@ -6,6 +6,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🚀 Added
 
+- Finding Severity Over Time chart component to Overview page [(#9405)](https://github.com/prowler-cloud/prowler/pull/9405)
 - Attack Surface component to Overview page [(#9412)](https://github.com/prowler-cloud/prowler/pull/9412)
 - Compliance Watchlist component to Overview page [(#9199)](https://github.com/prowler-cloud/prowler/pull/9199)
 - Service Watchlist component to Overview page [(#9316)](https://github.com/prowler-cloud/prowler/pull/9316)
