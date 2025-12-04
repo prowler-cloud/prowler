@@ -163,9 +163,6 @@ jobs:
 
           # Remove --- separators
           sed -i '/^---$/d' "$output_file"
-
-          # Remove only trailing empty lines (not all empty lines)
-          sed -i -e :a -e '/^\s*$/d;N;ba' "$output_file"
         }
 
         # Determine if components have changes for this specific release
