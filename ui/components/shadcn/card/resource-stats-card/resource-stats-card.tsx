@@ -1,9 +1,9 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import { LucideIcon } from "lucide-react";
 
+import { Card, CardVariant } from "@/components/shadcn/card/card";
 import { cn } from "@/lib/utils";
 
-import { Card, CardVariant } from "../card";
 import type { StatItem } from "./resource-stats-card-content";
 import { ResourceStatsCardContent } from "./resource-stats-card-content";
 import { ResourceStatsCardHeader } from "./resource-stats-card-header";
@@ -103,7 +103,7 @@ export const ResourceStatsCard = ({
       >
         {header && <ResourceStatsCardHeader {...header} size={resolvedSize} />}
         {emptyState ? (
-          <div className="flex h-[51px] w-full flex-col items-center justify-center">
+          <div className="flex h-[51px] w-full flex-col items-start justify-center md:items-center">
             <p className="text-text-neutral-secondary text-center text-sm leading-5 font-medium">
               {emptyState.message}
             </p>

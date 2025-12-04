@@ -15,6 +15,7 @@ from tasks.jobs.backfill import backfill_resource_scan_summaries
 
 from api.db_utils import rls_transaction
 from api.models import (
+    AttackSurfaceOverview,
     ComplianceOverview,
     ComplianceRequirementOverview,
     Finding,
@@ -1108,8 +1109,8 @@ def scan_summaries_fixture(tenants_fixture, providers_fixture):
         region="region1",
         _pass=1,
         fail=0,
-        muted=0,
-        total=1,
+        muted=2,
+        total=3,
         new=1,
         changed=0,
         unchanged=0,
@@ -1117,7 +1118,7 @@ def scan_summaries_fixture(tenants_fixture, providers_fixture):
         fail_changed=0,
         pass_new=1,
         pass_changed=0,
-        muted_new=0,
+        muted_new=2,
         muted_changed=0,
         scan=scan,
     )
@@ -1130,8 +1131,8 @@ def scan_summaries_fixture(tenants_fixture, providers_fixture):
         region="region2",
         _pass=0,
         fail=1,
-        muted=1,
-        total=2,
+        muted=3,
+        total=4,
         new=2,
         changed=0,
         unchanged=0,
@@ -1139,7 +1140,7 @@ def scan_summaries_fixture(tenants_fixture, providers_fixture):
         fail_changed=0,
         pass_new=0,
         pass_changed=0,
-        muted_new=1,
+        muted_new=3,
         muted_changed=0,
         scan=scan,
     )
@@ -1152,8 +1153,8 @@ def scan_summaries_fixture(tenants_fixture, providers_fixture):
         region="region1",
         _pass=1,
         fail=0,
-        muted=0,
-        total=1,
+        muted=1,
+        total=2,
         new=1,
         changed=0,
         unchanged=0,
@@ -1161,7 +1162,7 @@ def scan_summaries_fixture(tenants_fixture, providers_fixture):
         fail_changed=0,
         pass_new=1,
         pass_changed=0,
-        muted_new=0,
+        muted_new=1,
         muted_changed=0,
         scan=scan,
     )
@@ -1467,6 +1468,21 @@ def mute_rules_fixture(tenants_fixture, create_test_user, findings_fixture):
     )
 
     return mute_rule1, mute_rule2
+
+
+@pytest.fixture
+def create_attack_surface_overview():
+    def _create(tenant, scan, attack_surface_type, total=10, failed=5, muted_failed=2):
+        return AttackSurfaceOverview.objects.create(
+            tenant=tenant,
+            scan=scan,
+            attack_surface_type=attack_surface_type,
+            total_findings=total,
+            failed_findings=failed,
+            muted_failed_findings=muted_failed,
+        )
+
+    return _create
 
 
 def get_authorization_header(access_token: str) -> dict:

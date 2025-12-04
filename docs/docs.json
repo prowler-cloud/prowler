@@ -52,7 +52,7 @@
           {
             "group": "Prowler Lighthouse AI",
             "pages": [
-              "user-guide/tutorials/prowler-app-lighthouse"
+              "getting-started/products/prowler-lighthouse-ai"
             ]
           },
           {
@@ -109,7 +109,13 @@
                   "user-guide/tutorials/prowler-app-jira-integration"
                 ]
               },
-              "user-guide/tutorials/prowler-app-lighthouse",
+              {
+                "group": "Lighthouse AI",
+                "pages": [
+                  "user-guide/tutorials/prowler-app-lighthouse",
+                  "user-guide/tutorials/prowler-app-lighthouse-multi-llm"
+                ]
+              },
               "user-guide/tutorials/prowler-cloud-public-ips",
               {
                 "group": "Tutorials",
@@ -190,6 +196,13 @@
                   "user-guide/providers/gcp/projects",
                   "user-guide/providers/gcp/organization",
                   "user-guide/providers/gcp/retry-configuration"
+                ]
+              },
+              {
+                "group": "Alibaba Cloud",
+                "pages": [
+                  "user-guide/providers/alibabacloud/getting-started-alibabacloud",
+                  "user-guide/providers/alibabacloud/authentication"
                 ]
               },
               {

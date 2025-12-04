@@ -9,17 +9,43 @@ import { useEffect, useState } from "react";
 import { getFindingById } from "@/actions/findings";
 import { getResourceById } from "@/actions/resources";
 import { FindingDetail } from "@/components/findings/table/finding-detail";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
 import { BreadcrumbNavigation, CustomBreadcrumbItem } from "@/components/ui";
-import { CustomSection } from "@/components/ui/custom";
 import {
   DateWithTime,
-  EntityInfoShort,
+  getProviderLogo,
   InfoField,
 } from "@/components/ui/entities";
 import { SeverityBadge, StatusFindingBadge } from "@/components/ui/table";
 import { createDict } from "@/lib";
 import { buildGitFileUrl } from "@/lib/iac-utils";
 import { FindingProps, ProviderType, ResourceProps } from "@/types";
+
+const SEVERITY_ORDER = {
+  critical: 0,
+  high: 1,
+  medium: 2,
+  low: 3,
+  informational: 4,
+} as const;
+
+type SeverityLevel = keyof typeof SEVERITY_ORDER;
+
+interface ResourceFinding {
+  type: "findings";
+  id: string;
+  attributes: {
+    status: "PASS" | "FAIL" | "MANUAL";
+    severity: SeverityLevel;
+    check_metadata?: {
+      checktitle?: string;
+    };
+  };
+}
+
+interface FindingReference {
+  id: string;
+}
 
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";
@@ -57,7 +83,7 @@ export const ResourceDetail = ({
   resourceId: string;
   initialResourceData: ResourceProps;
 }) => {
-  const [findingsData, setFindingsData] = useState<any[]>([]);
+  const [findingsData, setFindingsData] = useState<ResourceFinding[]>([]);
   const [resourceTags, setResourceTags] = useState<Record<string, string>>({});
   const [findingsLoading, setFindingsLoading] = useState(true);
   const [selectedFindingId, setSelectedFindingId] = useState<string | null>(
@@ -86,9 +112,9 @@ export const ResourceDetail = ({
             const findingsDict = createDict("findings", resourceData);
             const findings =
               resourceData.data.relationships.findings.data?.map(
-                (finding: any) => findingsDict[finding.id],
+                (finding: FindingReference) => findingsDict[finding.id],
               ) || [];
-            setFindingsData(findings);
+            setFindingsData(findings as ResourceFinding[]);
           } else {
             setFindingsData([]);
           }
@@ -162,12 +188,31 @@ export const ResourceDetail = ({
   const resource = initialResourceData;
   const attributes = resource.attributes;
   const providerData = resource.relationships.provider.data.attributes;
-  const allFindings = findingsData;
+
+  // Filter only failed findings and sort by severity
+  const failedFindings = findingsData
+    .filter(
+      (finding: ResourceFinding) => finding?.attributes?.status === "FAIL",
+    )
+    .sort((a: ResourceFinding, b: ResourceFinding) => {
+      const severityA = (a?.attributes?.severity?.toLowerCase() ||
+        "informational") as SeverityLevel;
+      const severityB = (b?.attributes?.severity?.toLowerCase() ||
+        "informational") as SeverityLevel;
+      return (
+        (SEVERITY_ORDER[severityA] ?? 999) - (SEVERITY_ORDER[severityB] ?? 999)
+      );
+    });
 
   // Build Git URL for IaC resources
   const gitUrl =
     providerData.provider === "iac"
-      ? buildGitFileUrl(providerData.uid, attributes.name, "")
+      ? buildGitFileUrl(
+          providerData.uid,
+          attributes.name,
+          "",
+          attributes.region,
+        )
       : null;
 
   if (selectedFindingId) {
@@ -194,150 +239,150 @@ export const ResourceDetail = ({
   return (
     <div className="flex flex-col gap-6 rounded-lg">
       {/* Resource Details section */}
-      <CustomSection
-        title={
-          providerData.provider === "iac" ? (
-            <span className="flex items-center gap-2">
-              Resource Details
-              {gitUrl && (
-                <Tooltip content="Go to Resource in the Repository" size="sm">
-                  <a
-                    href={gitUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-bg-data-info inline-flex cursor-pointer"
-                    aria-label="Open resource in repository"
-                  >
-                    <ExternalLink size={16} className="inline" />
-                  </a>
-                </Tooltip>
-              )}
-            </span>
-          ) : (
-            "Resource Details"
-          )
-        }
-      >
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <Card variant="base" padding="lg">
+        <CardHeader className="flex flex-row items-center justify-between gap-2">
+          <div className="flex flex-row items-center justify-start gap-2">
+            <CardTitle>Resource Details</CardTitle>
+            {providerData.provider === "iac" && gitUrl && (
+              <Tooltip content="Go to Resource in the Repository" size="sm">
+                <a
+                  href={gitUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-bg-data-info mt-1 inline-flex cursor-pointer"
+                  aria-label="Open resource in repository"
+                >
+                  <ExternalLink size={16} className="inline" />
+                </a>
+              </Tooltip>
+            )}
+          </div>
+          {getProviderLogo(providerData.provider as ProviderType)}
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
           <InfoField label="Resource UID" variant="simple">
-            <Snippet className="bg-gray-50 py-1 dark:bg-slate-800" hideSymbol>
+            <Snippet
+              className="border-border-neutral-tertiary bg-bg-neutral-tertiary rounded-lg border py-1"
+              hideSymbol
+            >
               <span className="text-xs whitespace-pre-line">
                 {renderValue(attributes.uid)}
               </span>
             </Snippet>
           </InfoField>
-          <div className="flex w-full items-end justify-between gap-2">
-            <EntityInfoShort
-              cloudProvider={providerData.provider as ProviderType}
-              entityAlias={providerData.alias as string}
-              entityId={providerData.uid as string}
-            />
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <InfoField label="Resource Name">
+              {renderValue(attributes.name)}
+            </InfoField>
+            <InfoField label="Resource Type">
+              {renderValue(attributes.type)}
+            </InfoField>
           </div>
-        </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <InfoField label="Service">
+              {renderValue(attributes.service)}
+            </InfoField>
+            <InfoField label="Region">
+              {renderValue(attributes.region)}
+            </InfoField>
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <InfoField label="Created At">
+              <DateWithTime inline dateTime={attributes.inserted_at} />
+            </InfoField>
+            <InfoField label="Last Updated">
+              <DateWithTime inline dateTime={attributes.updated_at} />
+            </InfoField>
+          </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <InfoField label="Resource Name">
-            {renderValue(attributes.name)}
-          </InfoField>
-          <InfoField label="Resource Type">
-            {renderValue(attributes.type)}
-          </InfoField>
-        </div>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <InfoField label="Service">
-            {renderValue(attributes.service)}
-          </InfoField>
-          <InfoField label="Region">{renderValue(attributes.region)}</InfoField>
-        </div>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <InfoField label="Created At">
-            <DateWithTime inline dateTime={attributes.inserted_at} />
-          </InfoField>
-          <InfoField label="Last Updated">
-            <DateWithTime inline dateTime={attributes.updated_at} />
-          </InfoField>
-        </div>
-
-        {resourceTags && Object.entries(resourceTags).length > 0 ? (
-          <div className="flex flex-col gap-4">
-            <h4 className="text-sm font-bold text-gray-500 dark:text-gray-400">
-              Tags
-            </h4>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {Object.entries(resourceTags).map(([key, value]) => (
-                <InfoField key={key} label={key}>
-                  {renderValue(value)}
-                </InfoField>
-              ))}
+          {resourceTags && Object.entries(resourceTags).length > 0 ? (
+            <div className="flex flex-col gap-4">
+              <h4 className="text-sm font-bold text-gray-500 dark:text-gray-400">
+                Tags
+              </h4>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {Object.entries(resourceTags).map(([key, value]) => (
+                  <InfoField key={key} label={key}>
+                    {renderValue(value)}
+                  </InfoField>
+                ))}
+              </div>
             </div>
-          </div>
-        ) : null}
-      </CustomSection>
+          ) : null}
+        </CardContent>
+      </Card>
 
-      {/* Finding associated with this resource section */}
-      <CustomSection title="Findings associated with this resource">
-        {findingsLoading ? (
-          <div className="flex items-center justify-center gap-2 py-8">
-            <Spinner size="sm" />
-            <p className="dark:text-prowler-theme-pale/80 text-sm text-gray-600">
-              Loading findings...
-            </p>
-          </div>
-        ) : allFindings.length > 0 ? (
-          <div className="flex flex-col gap-4">
-            <p className="dark:text-prowler-theme-pale/80 text-sm text-gray-600">
-              Total findings: {allFindings.length}
-            </p>
-            {allFindings.map((finding: any, index: number) => {
-              const { attributes: findingAttrs, id } = finding;
+      {/* Failed findings associated with this resource section */}
+      <Card variant="base" padding="lg">
+        <CardHeader>
+          <CardTitle>Failed findings associated with this resource</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {findingsLoading ? (
+            <div className="flex items-center justify-center gap-2 py-8">
+              <Spinner size="sm" />
+              <p className="dark:text-prowler-theme-pale/80 text-sm text-gray-600">
+                Loading findings...
+              </p>
+            </div>
+          ) : failedFindings.length > 0 ? (
+            <div className="flex flex-col gap-4">
+              <p className="dark:text-prowler-theme-pale/80 text-sm text-gray-600">
+                Total failed findings: {failedFindings.length}
+              </p>
+              {failedFindings.map((finding: ResourceFinding, index: number) => {
+                const { attributes: findingAttrs, id } = finding;
 
-              // Handle cases where finding might not have all attributes
-              if (!findingAttrs) {
-                return (
-                  <div
-                    key={index}
-                    className="shadow-small dark:bg-prowler-blue-400 flex flex-col gap-2 rounded-lg px-4 py-2"
-                  >
-                    <p className="text-sm text-red-600">
-                      Finding {id} - No attributes available
-                    </p>
-                  </div>
-                );
-              }
-
-              const { severity, check_metadata, status } = findingAttrs;
-              const checktitle = check_metadata?.checktitle || "Unknown check";
-
-              return (
-                <button
-                  key={index}
-                  onClick={() => navigateToFinding(id)}
-                  className="shadow-small dark:bg-prowler-blue-400 flex w-full cursor-pointer flex-col gap-2 rounded-lg px-4 py-2"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className="dark:text-prowler-theme-pale/90 text-left text-sm font-medium text-gray-800">
-                      {checktitle}
-                    </h3>
-                    <div className="flex items-center gap-2">
-                      <SeverityBadge severity={severity || "-"} />
-                      <StatusFindingBadge status={status || "-"} />
-                      <InfoIcon
-                        className="text-primary cursor-pointer"
-                        size={16}
-                        onClick={() => navigateToFinding(id)}
-                      />
+                // Handle cases where finding might not have all attributes
+                if (!findingAttrs) {
+                  return (
+                    <div
+                      key={index}
+                      className="shadow-small dark:bg-prowler-blue-400 flex flex-col gap-2 rounded-lg px-4 py-2"
+                    >
+                      <p className="text-sm text-red-600">
+                        Finding {id} - No attributes available
+                      </p>
                     </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        ) : (
-          <p className="dark:text-prowler-theme-pale/80 text-gray-600">
-            No findings found for this resource.
-          </p>
-        )}
-      </CustomSection>
+                  );
+                }
+
+                const { severity, check_metadata, status } = findingAttrs;
+                const checktitle =
+                  check_metadata?.checktitle || "Unknown check";
+
+                return (
+                  <button
+                    key={index}
+                    onClick={() => navigateToFinding(id)}
+                    className="shadow-small border-border-neutral-tertiary bg-bg-neutral-tertiary flex w-full cursor-pointer flex-col gap-2 rounded-lg px-4 py-2"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="dark:text-prowler-theme-pale/90 text-left text-sm font-medium text-gray-800">
+                        {checktitle}
+                      </h3>
+                      <div className="flex items-center gap-2">
+                        <SeverityBadge severity={severity || "-"} />
+                        <StatusFindingBadge status={status || "-"} />
+                        <InfoIcon
+                          className="text-button-primary cursor-pointer"
+                          size={16}
+                          onClick={() => navigateToFinding(id)}
+                        />
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="dark:text-prowler-theme-pale/80 text-gray-600">
+              No failed findings found for this resource.
+            </p>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

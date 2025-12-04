@@ -282,7 +282,6 @@ export const S3IntegrationForm = ({
               providers={providers}
               label="Cloud Providers"
               placeholder="Select providers to integrate with"
-              isInvalid={!!form.formState.errors.providers}
               selectionMode="multiple"
               enableSearch={true}
             />
@@ -301,7 +300,6 @@ export const S3IntegrationForm = ({
               placeholder="my-security-findings-bucket"
               variant="bordered"
               isRequired
-              isInvalid={!!form.formState.errors.bucket_name}
             />
 
             <CustomInput
@@ -313,7 +311,6 @@ export const S3IntegrationForm = ({
               placeholder="output"
               variant="bordered"
               isRequired
-              isInvalid={!!form.formState.errors.output_directory}
             />
           </div>
         </>

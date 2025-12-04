@@ -5,6 +5,22 @@ import {
   ProviderType,
 } from "@/types/providers";
 
+/**
+ * Maps overview provider filters to findings page provider filters.
+ * Converts provider_id__in to provider__in and removes provider_type__in
+ * since provider__in is more specific.
+ */
+export const mapProviderFiltersForFindings = (
+  params: URLSearchParams,
+): void => {
+  const providerIds = params.get("filter[provider_id__in]");
+  if (providerIds) {
+    params.delete("filter[provider_id__in]");
+    params.delete("filter[provider_type__in]");
+    params.set("filter[provider__in]", providerIds);
+  }
+};
+
 export const extractProviderUIDs = (
   providersData: ProvidersApiResponse,
 ): string[] => {
@@ -17,6 +33,16 @@ export const extractProviderUIDs = (
         .filter(Boolean),
     ),
   );
+};
+
+export const extractProviderIds = (
+  providersData: ProvidersApiResponse,
+): string[] => {
+  if (!providersData?.data) return [];
+
+  return providersData.data
+    .map((provider: ProviderProps) => provider.id)
+    .filter(Boolean);
 };
 
 export const createProviderDetailsMapping = (
@@ -34,6 +60,25 @@ export const createProviderDetailsMapping = (
       [uid]: {
         provider: provider?.attributes?.provider || "aws",
         uid: uid,
+        alias: provider?.attributes?.alias ?? null,
+      },
+    };
+  });
+};
+
+export const createProviderDetailsMappingById = (
+  providerIds: string[],
+  providersData: ProvidersApiResponse,
+): Array<{ [id: string]: ProviderEntity }> => {
+  if (!providersData?.data) return [];
+
+  return providerIds.map((id) => {
+    const provider = providersData.data.find((p: ProviderProps) => p.id === id);
+
+    return {
+      [id]: {
+        provider: provider?.attributes?.provider || "aws",
+        uid: provider?.attributes?.uid || "",
         alias: provider?.attributes?.alias ?? null,
       },
     };
