@@ -1,7 +1,9 @@
 // Regions Overview Types
 // Corresponds to the /overviews/regions endpoint
 
-import { OverviewResponseMeta } from "./common";
+interface OverviewResponseMeta {
+  version: string;
+}
 
 export interface RegionOverviewAttributes {
   provider_type: string;

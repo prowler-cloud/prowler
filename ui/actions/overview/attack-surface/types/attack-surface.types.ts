@@ -1,7 +1,9 @@
 // Attack Surface Overview Types
 // Corresponds to the /overviews/attack-surfaces endpoint
 
-import { OverviewResponseMeta } from "./common";
+interface OverviewResponseMeta {
+  version: string;
+}
 
 export interface AttackSurfaceOverviewAttributes {
   total_findings: number;
