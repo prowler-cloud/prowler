@@ -1,9 +1,4 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  Skeleton,
-} from "@/components/shadcn";
+import { Card, CardContent, CardHeader, Skeleton } from "@/components/shadcn";
 
 export function ThreatScoreSkeleton() {
   return (

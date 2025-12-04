@@ -7,12 +7,7 @@ import type {
   SectionScores,
 } from "@/actions/overview/types";
 import { RadialChart } from "@/components/graphs/radial-chart";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/shadcn";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
 
 // CSS variables are required here as they're passed to RadialChart component
 // which uses Recharts library that needs actual color values, not Tailwind classes
@@ -207,5 +202,3 @@ export function ThreatScore({
     </Card>
   );
 }
-
-

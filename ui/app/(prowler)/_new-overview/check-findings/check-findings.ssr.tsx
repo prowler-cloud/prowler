@@ -1,12 +1,10 @@
 import { getFindingsByStatus } from "@/actions/overview";
 
-import { SSRComponentProps } from "../_types";
 import { pickFilterParams } from "../_lib/filter-params";
+import { SSRComponentProps } from "../_types";
 import { StatusChart } from "../status-chart/_components/status-chart";
 
-export const CheckFindingsSSR = async ({
-  searchParams,
-}: SSRComponentProps) => {
+export const CheckFindingsSSR = async ({ searchParams }: SSRComponentProps) => {
   const filters = pickFilterParams(searchParams);
 
   const findingsByStatus = await getFindingsByStatus({ filters });

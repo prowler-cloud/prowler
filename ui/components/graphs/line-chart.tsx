@@ -19,10 +19,7 @@ import {
 
 import { AlertPill } from "./shared/alert-pill";
 import { ChartLegend } from "./shared/chart-legend";
-import {
-  CustomActiveDot,
-  PointClickData,
-} from "./shared/custom-active-dot";
+import { CustomActiveDot, PointClickData } from "./shared/custom-active-dot";
 import {
   AXIS_FONT_SIZE,
   CustomXAxisTickWithToday,
@@ -224,7 +221,14 @@ export function LineChart({
                 strokeWidth={2}
                 strokeOpacity={isFaded ? 0.2 : 1}
                 name={line.label}
-                dot={({ key, ...props }: { key?: string; cx?: number; cy?: number }) => (
+                dot={({
+                  key,
+                  ...props
+                }: {
+                  key?: string;
+                  cx?: number;
+                  cy?: number;
+                }) => (
                   <CustomDot
                     key={key}
                     {...props}
@@ -232,7 +236,11 @@ export function LineChart({
                     isFaded={isFaded}
                   />
                 )}
-                activeDot={(props: { cx?: number; cy?: number; payload?: LineDataPoint }) => (
+                activeDot={(props: {
+                  cx?: number;
+                  cy?: number;
+                  payload?: LineDataPoint;
+                }) => (
                   <CustomActiveDot
                     {...props}
                     dataKey={line.dataKey}

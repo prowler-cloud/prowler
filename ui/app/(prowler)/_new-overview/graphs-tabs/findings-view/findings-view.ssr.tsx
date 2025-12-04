@@ -3,14 +3,13 @@
 import { Spacer } from "@heroui/spacer";
 
 import { getLatestFindings } from "@/actions/findings/findings";
+import { LighthouseBanner } from "@/components/lighthouse/banner";
 import { LinkToFindings } from "@/components/overview";
 import { ColumnNewFindingsToDate } from "@/components/overview/new-findings-table/table/column-new-findings-to-date";
 import { DataTable } from "@/components/ui/table";
 import { createDict } from "@/lib/helper";
 import { mapProviderFiltersForFindingsObject } from "@/lib/provider-helpers";
 import { FindingProps, SearchParamsProps } from "@/types";
-
-import { LighthouseBanner } from "@/components/lighthouse/banner";
 
 import { pickFilterParams } from "../../_lib/filter-params";
 

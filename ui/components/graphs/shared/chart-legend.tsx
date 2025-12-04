@@ -29,7 +29,9 @@ export function ChartLegend({
             key={`legend-${index}`}
             type="button"
             className={`flex items-center gap-2 px-4 py-3 transition-opacity duration-200 ${
-              isInteractive ? "cursor-pointer hover:opacity-80" : "cursor-default"
+              isInteractive
+                ? "cursor-pointer hover:opacity-80"
+                : "cursor-default"
             } ${isFaded ? "opacity-30" : "opacity-100"}`}
             onClick={() => onItemClick?.(dataKey)}
             disabled={!isInteractive}

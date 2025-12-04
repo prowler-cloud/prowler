@@ -1,8 +1,4 @@
-import {
-  Card,
-  CardContent,
-  CardTitle,
-} from "@/components/shadcn/card/card";
+import { Card, CardContent, CardTitle } from "@/components/shadcn/card/card";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 
 export function WatchlistCardSkeleton() {

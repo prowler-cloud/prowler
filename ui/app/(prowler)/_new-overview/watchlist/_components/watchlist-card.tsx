@@ -191,5 +191,3 @@ export const WatchlistCard = ({
     </Card>
   );
 };
-
-

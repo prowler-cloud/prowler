@@ -1,12 +1,10 @@
 import { getThreatScore } from "@/actions/overview";
 
-import { SSRComponentProps } from "../_types";
 import { pickFilterParams } from "../_lib/filter-params";
+import { SSRComponentProps } from "../_types";
 import { ThreatScore } from "./_components/threat-score";
 
-export const ThreatScoreSSR = async ({
-  searchParams,
-}: SSRComponentProps) => {
+export const ThreatScoreSSR = async ({ searchParams }: SSRComponentProps) => {
   const filters = pickFilterParams(searchParams);
   const threatScoreData = await getThreatScore({ filters });
 

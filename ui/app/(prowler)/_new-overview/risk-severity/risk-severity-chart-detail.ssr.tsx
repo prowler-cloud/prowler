@@ -1,7 +1,7 @@
 import { getFindingsBySeverity } from "@/actions/overview";
 
-import { SSRComponentProps } from "../_types";
 import { pickFilterParams } from "../_lib/filter-params";
+import { SSRComponentProps } from "../_types";
 import { RiskSeverityChart } from "./_components/risk-severity-chart";
 
 export const RiskSeverityChartDetailSSR = async ({
