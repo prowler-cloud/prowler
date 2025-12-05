@@ -14,7 +14,7 @@ function convertToRiskScore(overallScore: number | null): number {
   if (overallScore === null) return 0;
   // ThreatScore is 0-100, we need 0-10
   // Higher = better in both scales
-  return Math.round((overallScore / 10) * 10) / 10;
+  return overallScore / 10;
 }
 
 /**
