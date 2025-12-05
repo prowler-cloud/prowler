@@ -109,7 +109,7 @@ const CustomTooltip = ({ active, payload }: TooltipProps) => {
     const data = payload[0].payload;
     const riskColor = getRiskScoreColor(data.x);
     // Convert Risk Score (0-10) to percentage (0-100) for display
-    const riskScorePercentage = Math.round(data.x * 10);
+    const riskScorePercentage = data.x * 10;
 
     return (
       <div className="border-border-neutral-tertiary bg-bg-neutral-tertiary pointer-events-none min-w-[200px] rounded-xl border p-3 shadow-lg">
