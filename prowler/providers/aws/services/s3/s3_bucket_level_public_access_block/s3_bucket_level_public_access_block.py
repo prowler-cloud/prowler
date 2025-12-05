@@ -24,6 +24,5 @@ class s3_bucket_level_public_access_block(Check):
                     else:
                         report.status = "FAIL"
                         report.status_extended = f"Block Public Access is not configured for the S3 Bucket {bucket.name}."
-                print("This print is for testing purposes")
                 findings.append(report)
         return findings
