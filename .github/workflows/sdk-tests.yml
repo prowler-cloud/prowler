@@ -82,9 +82,110 @@ jobs:
             ./tests/**/aws/**
             ./poetry.lock
 
+      - name: Resolve AWS services under test
+        if: steps.changed-aws.outputs.any_changed == 'true'
+        id: aws-services
+        shell: bash
+        run: |
+          python3 <<'PY'
+          import os
+          from pathlib import Path
+
+          dependents = {
+              "acm": ["elb"],
+              "autoscaling": ["dynamodb"],
+              "awslambda": ["ec2", "inspector2"],
+              "backup": ["dynamodb", "ec2", "rds"],
+              "cloudfront": ["shield"],
+              "cloudtrail": ["awslambda", "cloudwatch"],
+              "cloudwatch": ["bedrock"],
+              "ec2": ["dlm", "dms", "elbv2", "emr", "inspector2", "rds", "redshift", "route53", "shield", "ssm"],
+              "ecr": ["inspector2"],
+              "elb": ["shield"],
+              "elbv2": ["shield"],
+              "globalaccelerator": ["shield"],
+              "iam": ["bedrock", "cloudtrail", "cloudwatch", "codebuild"],
+              "kafka": ["firehose"],
+              "kinesis": ["firehose"],
+              "kms": ["kafka"],
+              "organizations": ["iam", "servicecatalog"],
+              "route53": ["shield"],
+              "s3": ["bedrock", "cloudfront", "cloudtrail", "macie"],
+              "ssm": ["ec2"],
+              "vpc": ["awslambda", "ec2", "efs", "elasticache", "neptune", "networkfirewall", "rds", "redshift", "workspaces"],
+              "waf": ["elbv2"],
+              "wafv2": ["cognito", "elbv2"],
+          }
+
+          changed_raw = """${{ steps.changed-aws.outputs.all_changed_files }}"""
+          # all_changed_files is space-separated, not newline-separated
+          # Strip leading "./" if present for consistent path handling
+          changed_files = [Path(f.lstrip("./")) for f in changed_raw.split() if f]
+
+          services = set()
+          run_all = False
+
+          for path in changed_files:
+              path_str = path.as_posix()
+              parts = path.parts
+              if path_str.startswith("prowler/providers/aws/services/"):
+                  if len(parts) > 4 and "." not in parts[4]:
+                      services.add(parts[4])
+                  else:
+                      run_all = True
+              elif path_str.startswith("tests/providers/aws/services/"):
+                  if len(parts) > 4 and "." not in parts[4]:
+                      services.add(parts[4])
+                  else:
+                      run_all = True
+              elif path_str.startswith("prowler/providers/aws/") or path_str.startswith("tests/providers/aws/"):
+                  run_all = True
+
+          # Expand with direct dependent services (one level only)
+          # We only test services that directly depend on the changed services,
+          # not transitive dependencies (services that depend on dependents)
+          original_services = set(services)
+          for svc in original_services:
+              for dep in dependents.get(svc, []):
+                  services.add(dep)
+
+          if run_all or not services:
+              run_all = True
+              services = set()
+
+          service_paths = " ".join(sorted(f"tests/providers/aws/services/{svc}" for svc in services))
+
+          output_lines = [
+              f"run_all={'true' if run_all else 'false'}",
+              f"services={' '.join(sorted(services))}",
+              f"service_paths={service_paths}",
+          ]
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as gh_out:
+              for line in output_lines:
+                  gh_out.write(line + "\n")
+
+          print(f"AWS changed files (filtered): {changed_raw or 'none'}")
+          print(f"Run all AWS tests: {run_all}")
+          if services:
+              print(f"AWS service test paths: {service_paths}")
+          else:
+              print("AWS service test paths: none detected")
+          PY
+
       - name: Run AWS tests
         if: steps.changed-aws.outputs.any_changed == 'true'
-        run: poetry run pytest -n auto --cov=./prowler/providers/aws --cov-report=xml:aws_coverage.xml tests/providers/aws
+        run: |
+          echo "AWS run_all=${{ steps.aws-services.outputs.run_all }}"
+          echo "AWS service_paths='${{ steps.aws-services.outputs.service_paths }}'"
+
+          if [ "${{ steps.aws-services.outputs.run_all }}" = "true" ]; then
+            poetry run pytest -n auto --cov=./prowler/providers/aws --cov-report=xml:aws_coverage.xml tests/providers/aws
+          elif [ -z "${{ steps.aws-services.outputs.service_paths }}" ]; then
+            echo "No AWS service paths detected; skipping AWS tests."
+          else
+            poetry run pytest -n auto --cov=./prowler/providers/aws --cov-report=xml:aws_coverage.xml ${{ steps.aws-services.outputs.service_paths }}
+          fi
 
       - name: Upload AWS coverage to Codecov
         if: steps.changed-aws.outputs.any_changed == 'true'
