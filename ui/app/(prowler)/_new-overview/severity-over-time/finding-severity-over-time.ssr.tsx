@@ -1,20 +1,13 @@
-import { getFindingsSeverityTrends } from "@/actions/overview/severity-trends";
+import { getSeverityTrendsByTimeRange } from "@/actions/overview/severity-trends";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
 
 import { pickFilterParams } from "../_lib/filter-params";
 import { SSRComponentProps } from "../_types";
 import { FindingSeverityOverTime } from "./_components/finding-severity-over-time";
 import { FindingSeverityOverTimeSkeleton } from "./_components/finding-severity-over-time.skeleton";
+import { DEFAULT_TIME_RANGE } from "./_constants/time-range.constants";
 
 export { FindingSeverityOverTimeSkeleton };
-
-const DEFAULT_DAYS = 5;
-
-const getDefaultDateFrom = (): string => {
-  const date = new Date();
-  date.setDate(date.getDate() - DEFAULT_DAYS);
-  return date.toISOString().split("T")[0];
-};
 
 const EmptyState = ({ message }: { message: string }) => (
   <Card variant="base" className="flex h-full min-h-[405px] flex-1 flex-col">
@@ -34,12 +27,10 @@ export const FindingSeverityOverTimeSSR = async ({
 }: SSRComponentProps) => {
   const filters = pickFilterParams(searchParams);
 
-  // API requires filter[date_from], add default if not provided
-  if (!filters["filter[date_from]"]) {
-    filters["filter[date_from]"] = getDefaultDateFrom();
-  }
-
-  const result = await getFindingsSeverityTrends({ filters });
+  const result = await getSeverityTrendsByTimeRange({
+    timeRange: DEFAULT_TIME_RANGE,
+    filters,
+  });
 
   if (result.status === "error") {
     return <EmptyState message="Failed to load severity trends data" />;
