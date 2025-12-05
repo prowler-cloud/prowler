@@ -492,6 +492,87 @@
       "Checks": [
         "cloudstorage_bucket_log_retention_policy_lock"
       ]
+    },
+    {
+      "Id": "pi_1_2",
+      "Name": "PI1.2 System inputs are measured and recorded completely, accurately, and timely to meet the entity's processing integrity commitments and system requirements",
+      "Description": "The entity implements policies and procedures over system inputs, including controls over completeness and accuracy, to result in products, services, and reporting to meet the entity's objectives. This includes defining accuracy targets, monitoring input quality, and creating detailed records of each input event.",
+      "Attributes": [
+        {
+          "ItemId": "pi_1_2",
+          "Section": "PI1.0 - Processing Integrity",
+          "Service": "gcp",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "compute_loadbalancer_logging_enabled",
+        "compute_subnet_flow_logs_enabled",
+        "logging_sink_created",
+        "iam_audit_logs_enabled"
+      ]
+    },
+    {
+      "Id": "pi_1_3",
+      "Name": "PI1.3 Data is processed completely, accurately, and timely as authorized to meet the entity's processing integrity commitments and system requirements",
+      "Description": "The entity implements controls to ensure data is processed completely, accurately, and timely. This includes defining processing specifications, identifying processing activities, detecting and correcting errors throughout processing, recording processing activities with accurate logs, and ensuring completeness and timeliness of processing.",
+      "Attributes": [
+        {
+          "ItemId": "pi_1_3",
+          "Section": "PI1.0 - Processing Integrity",
+          "Service": "gcp",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+        "cloudsql_instance_postgres_log_connections_flag",
+        "cloudsql_instance_postgres_log_disconnections_flag",
+        "cloudsql_instance_postgres_log_statement_flag",
+        "iam_audit_logs_enabled"
+      ]
+    },
+    {
+      "Id": "pi_1_4",
+      "Name": "PI1.4 System outputs are complete, accurate, distributed only to intended parties, and retained to meet the entity's processing integrity commitments and system requirements",
+      "Description": "The entity implements controls to ensure system outputs are delivered to authorized recipients in the correct format and protected against unauthorized access, modification, theft, destruction, or corruption. This includes output encryption, access controls, and audit trails for output delivery.",
+      "Attributes": [
+        {
+          "ItemId": "pi_1_4",
+          "Section": "PI1.0 - Processing Integrity",
+          "Service": "gcp",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "cloudstorage_bucket_uniform_bucket_level_access",
+        "bigquery_dataset_cmk_encryption",
+        "bigquery_table_cmk_encryption",
+        "compute_instance_confidential_computing_enabled",
+        "pubsub_topic_encryption_with_cmk"
+      ]
+    },
+    {
+      "Id": "pi_1_5",
+      "Name": "PI1.5 Stored data is maintained complete, accurate, and protected from unauthorized modification to meet the entity's processing integrity commitments and system requirements",
+      "Description": "The entity implements controls to protect stored inputs, items in processing, and outputs from theft, destruction, corruption, or deterioration. This includes data encryption at rest, key management, backup and recovery procedures, access controls, and data integrity validation.",
+      "Attributes": [
+        {
+          "ItemId": "pi_1_5",
+          "Section": "PI1.0 - Processing Integrity",
+          "Service": "gcp",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "cloudstorage_bucket_log_retention_policy_lock",
+        "cloudsql_instance_automated_backups",
+        "compute_instance_encryption_with_csek_enabled",
+        "kms_key_rotation_enabled",
+        "dataproc_encrypted_with_cmks_disabled"
+      ]
     }
   ]
 }
