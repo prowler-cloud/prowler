@@ -108,19 +108,26 @@ const CustomTooltip = ({ active, payload }: TooltipProps) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     const riskColor = getRiskScoreColor(data.x);
+    // Convert Risk Score (0-10) to percentage (0-100) for display
+    const riskScorePercentage = Math.round(data.x * 10);
 
     return (
       <div className="border-border-neutral-tertiary bg-bg-neutral-tertiary pointer-events-none min-w-[200px] rounded-xl border p-3 shadow-lg">
         <p className="text-text-neutral-primary mb-2 text-sm font-semibold">
           {data.name}
         </p>
-        <p className="text-text-neutral-secondary text-sm font-medium">
-          {/* Dynamic color based on risk level - required inline style */}
-          <span style={{ color: riskColor, fontWeight: "bold" }}>
-            {data.x}
-          </span>{" "}
-          Risk Score
-        </p>
+        <div className="flex items-end gap-1">
+          <p className="text-text-neutral-primary text-xs leading-5 font-medium">
+            Risk Score
+          </p>
+          <div className="border-text-neutral-primary mb-[4px] flex-1 border-b border-dotted" />
+          <p
+            className="text-xs leading-5 font-medium"
+            style={{ color: riskColor }}
+          >
+            {riskScorePercentage}%
+          </p>
+        </div>
         <div className="mt-2">
           <AlertPill value={data.y} />
         </div>
