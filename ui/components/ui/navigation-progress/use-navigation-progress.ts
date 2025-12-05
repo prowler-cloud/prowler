@@ -3,117 +3,84 @@
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useSyncExternalStore } from "react";
 
-// Simple global state for progress bar
 interface ProgressState {
   isLoading: boolean;
   progress: number;
 }
 
+// Global state
 let state: ProgressState = { isLoading: false, progress: 0 };
 const listeners = new Set<() => void>();
+let progressInterval: ReturnType<typeof setInterval> | null = null;
+let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+// Cached server snapshot to avoid infinite loop with useSyncExternalStore
+const SERVER_SNAPSHOT: ProgressState = { isLoading: false, progress: 0 };
 
 function notify() {
   listeners.forEach((listener) => listener());
 }
 
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
+function setState(newState: ProgressState) {
+  state = newState;
+  notify();
 }
 
-function getSnapshot(): ProgressState {
-  return state;
-}
-
-// Cached server snapshot to avoid infinite loop with useSyncExternalStore
-const SERVER_SNAPSHOT: ProgressState = { isLoading: false, progress: 0 };
-
-function getServerSnapshot(): ProgressState {
-  return SERVER_SNAPSHOT;
-}
-
-let progressInterval: ReturnType<typeof setInterval> | null = null;
-let timeoutId: ReturnType<typeof setTimeout> | null = null;
-
-/**
- * Start the progress bar animation.
- * Progress increases quickly at first, then slows down as it approaches 90%.
- * If already loading, restarts from 0.
- */
-export function startProgress() {
-  // Clear any pending reset timeout
+function clearTimers() {
+  if (progressInterval) {
+    clearInterval(progressInterval);
+    progressInterval = null;
+  }
   if (timeoutId) {
     clearTimeout(timeoutId);
     timeoutId = null;
   }
+}
 
-  if (progressInterval) {
-    clearInterval(progressInterval);
-  }
+/**
+ * Start the progress bar animation.
+ * Progress increases quickly at first, then slows down as it approaches 90%.
+ */
+export function startProgress() {
+  clearTimers();
+  setState({ isLoading: true, progress: 0 });
 
-  // Always restart from 0
-  state = { isLoading: true, progress: 0 };
-  notify();
-
-  // Animate progress: fast at first, slower as it approaches 90%
   progressInterval = setInterval(() => {
     if (state.progress < 90) {
       const increment = (90 - state.progress) * 0.1;
-      state = { ...state, progress: Math.min(90, state.progress + increment) };
-      notify();
+      setState({
+        ...state,
+        progress: Math.min(90, state.progress + increment),
+      });
     }
   }, 100);
 }
 
 /**
  * Complete the progress bar animation.
- * Jumps to 100% and then hides.
+ * Jumps to 100% and then hides after a brief delay.
  */
 export function completeProgress() {
-  if (progressInterval) {
-    clearInterval(progressInterval);
-    progressInterval = null;
-  }
+  clearTimers();
+  setState({ isLoading: false, progress: 100 });
 
-  // Clear any pending reset timeout
-  if (timeoutId) {
-    clearTimeout(timeoutId);
-  }
-
-  state = { isLoading: false, progress: 100 };
-  notify();
-
-  // Reset after animation completes
   timeoutId = setTimeout(() => {
-    state = { isLoading: false, progress: 0 };
-    notify();
+    setState({ isLoading: false, progress: 0 });
     timeoutId = null;
   }, 200);
 }
 
 /**
  * Cancel the progress bar immediately without animation.
- * Use when navigation is cancelled (e.g., clicking same URL).
  */
 export function cancelProgress() {
-  if (progressInterval) {
-    clearInterval(progressInterval);
-    progressInterval = null;
-  }
-
-  if (timeoutId) {
-    clearTimeout(timeoutId);
-    timeoutId = null;
-  }
-
-  // Immediately hide without animation
-  state = { isLoading: false, progress: 0 };
-  notify();
+  clearTimers();
+  setState({ isLoading: false, progress: 0 });
 }
 
 /**
  * Hook to access progress bar state.
- * Also automatically completes progress when pathname or search params change.
+ * Automatically completes progress when URL changes.
  */
 export function useNavigationProgress() {
   const pathname = usePathname();
@@ -121,12 +88,14 @@ export function useNavigationProgress() {
   const prevUrl = useRef(`${pathname}?${searchParams.toString()}`);
 
   const currentState = useSyncExternalStore(
-    subscribe,
-    getSnapshot,
-    getServerSnapshot,
+    (listener) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    () => state,
+    () => SERVER_SNAPSHOT,
   );
 
-  // Complete progress when URL changes (pathname or search params)
   useEffect(() => {
     const currentUrl = `${pathname}?${searchParams.toString()}`;
     if (prevUrl.current !== currentUrl) {

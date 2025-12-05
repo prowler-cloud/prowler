@@ -6,25 +6,17 @@ import { cn } from "@/lib";
 
 import { useNavigationProgress } from "./use-navigation-progress";
 
-/**
- * A top progress bar that shows during page navigation.
- * Renders at the very top of the viewport with fixed positioning.
- *
- * Navigation start is detected via onRouterTransitionStart in instrumentation-client.ts
- * Navigation end is detected via URL change in useNavigationProgress hook.
- */
+const HIDE_DELAY_MS = 200;
+
 export function NavigationProgress() {
   const { isLoading, progress } = useNavigationProgress();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (isLoading) {
-      setVisible(true);
-    } else {
-      // Keep visible briefly after loading completes for smooth animation
-      const timeout = setTimeout(() => setVisible(false), 200);
-      return () => clearTimeout(timeout);
-    }
+    if (isLoading) return setVisible(true);
+
+    const timeout = setTimeout(() => setVisible(false), HIDE_DELAY_MS);
+    return () => clearTimeout(timeout);
   }, [isLoading]);
 
   if (!visible) return null;
