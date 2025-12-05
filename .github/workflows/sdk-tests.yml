@@ -163,16 +163,24 @@ jobs:
               for line in output_lines:
                   gh_out.write(line + "\n")
 
+          print(f"AWS changed files (filtered): {changed_raw or 'none'}")
           print(f"Run all AWS tests: {run_all}")
           if services:
               print(f"AWS service test paths: {service_paths}")
+          else:
+              print("AWS service test paths: none detected")
           PY
 
       - name: Run AWS tests
         if: steps.changed-aws.outputs.any_changed == 'true'
         run: |
+          echo "AWS run_all=${{ steps.aws-services.outputs.run_all }}"
+          echo "AWS service_paths='${{ steps.aws-services.outputs.service_paths }}'"
+
           if [ "${{ steps.aws-services.outputs.run_all }}" = "true" ]; then
             poetry run pytest -n auto --cov=./prowler/providers/aws --cov-report=xml:aws_coverage.xml tests/providers/aws
+          elif [ -z "${{ steps.aws-services.outputs.service_paths }}" ]; then
+            echo "No AWS service paths detected; skipping AWS tests."
           else
             poetry run pytest -n auto --cov=./prowler/providers/aws --cov-report=xml:aws_coverage.xml ${{ steps.aws-services.outputs.service_paths }}
           fi
