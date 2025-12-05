@@ -7002,7 +7002,7 @@ class TestOverviewViewSet:
             {"filter[date_from]": "invalid-date"},
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert "Invalid date format" in response.json()["errors"][0]["detail"]
+        assert "Enter a valid date." in response.json()["errors"][0]["detail"]
 
     def test_overview_findings_severity_timeseries_empty_data(
         self, authenticated_client
