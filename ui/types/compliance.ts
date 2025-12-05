@@ -68,15 +68,23 @@ export interface Framework {
   fail: number;
   manual: number;
   categories: Category[];
+  // Optional: flat structure for frameworks like MITRE that don't have categories
+  requirements?: Requirement[];
 }
 
 export interface FailedSection {
   name: string;
   total: number;
-  types?: { [key: string]: number };
+  types?: Record<string, number>;
 }
 
-export type TopFailedDataType = "sections" | "requirements";
+export const TOP_FAILED_DATA_TYPE = {
+  SECTIONS: "sections",
+  REQUIREMENTS: "requirements",
+} as const;
+
+export type TopFailedDataType =
+  (typeof TOP_FAILED_DATA_TYPE)[keyof typeof TOP_FAILED_DATA_TYPE];
 
 export interface TopFailedResult {
   items: FailedSection[];
@@ -99,7 +107,7 @@ export interface ENSAttributesMetadata {
   Nivel: string;
   Dimensiones: string[];
   ModoEjecucion: string;
-  Dependencias: any[];
+  Dependencias: unknown[];
 }
 
 export interface ISO27001AttributesMetadata {

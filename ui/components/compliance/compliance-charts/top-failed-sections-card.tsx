@@ -3,7 +3,11 @@
 import { HorizontalBarChart } from "@/components/graphs/horizontal-bar-chart";
 import { BarDataPoint } from "@/components/graphs/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
-import { FailedSection, TopFailedDataType } from "@/types/compliance";
+import {
+  FailedSection,
+  TOP_FAILED_DATA_TYPE,
+  TopFailedDataType,
+} from "@/types/compliance";
 
 interface TopFailedSectionsCardProps {
   sections: FailedSection[];
@@ -12,7 +16,7 @@ interface TopFailedSectionsCardProps {
 
 export function TopFailedSectionsCard({
   sections,
-  dataType = "sections",
+  dataType = TOP_FAILED_DATA_TYPE.SECTIONS,
 }: TopFailedSectionsCardProps) {
   // Transform FailedSection[] to BarDataPoint[]
   const total = sections.reduce((sum, section) => sum + section.total, 0);
@@ -25,7 +29,7 @@ export function TopFailedSectionsCard({
   }));
 
   const title =
-    dataType === "requirements"
+    dataType === TOP_FAILED_DATA_TYPE.REQUIREMENTS
       ? "Top Failed Requirements"
       : "Top Failed Sections";
 
