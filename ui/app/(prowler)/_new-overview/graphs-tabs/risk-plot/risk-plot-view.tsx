@@ -7,6 +7,7 @@ const mockScatterData: ScatterPoint[] = [
     y: 1456,
     provider: "AWS",
     name: "Amazon RDS",
+    providerId: "mock-aws-1",
     severityData: [
       { name: "Critical", value: 456 },
       { name: "High", value: 600 },
@@ -20,6 +21,7 @@ const mockScatterData: ScatterPoint[] = [
     y: 892,
     provider: "AWS",
     name: "Amazon EC2",
+    providerId: "mock-aws-2",
     severityData: [
       { name: "Critical", value: 280 },
       { name: "High", value: 350 },
@@ -33,6 +35,7 @@ const mockScatterData: ScatterPoint[] = [
     y: 445,
     provider: "AWS",
     name: "Amazon S3",
+    providerId: "mock-aws-3",
     severityData: [
       { name: "Critical", value: 140 },
       { name: "High", value: 180 },
@@ -46,6 +49,7 @@ const mockScatterData: ScatterPoint[] = [
     y: 678,
     provider: "AWS",
     name: "AWS Lambda",
+    providerId: "mock-aws-4",
     severityData: [
       { name: "Critical", value: 214 },
       { name: "High", value: 270 },
@@ -59,6 +63,7 @@ const mockScatterData: ScatterPoint[] = [
     y: 156,
     provider: "AWS",
     name: "AWS Backup",
+    providerId: "mock-aws-5",
     severityData: [
       { name: "Critical", value: 49 },
       { name: "High", value: 62 },
@@ -72,6 +77,7 @@ const mockScatterData: ScatterPoint[] = [
     y: 1023,
     provider: "Azure",
     name: "Azure SQL Database",
+    providerId: "mock-azure-1",
     severityData: [
       { name: "Critical", value: 323 },
       { name: "High", value: 410 },
@@ -85,6 +91,7 @@ const mockScatterData: ScatterPoint[] = [
     y: 834,
     provider: "Azure",
     name: "Azure Virtual Machines",
+    providerId: "mock-azure-2",
     severityData: [
       { name: "Critical", value: 263 },
       { name: "High", value: 334 },
@@ -98,6 +105,7 @@ const mockScatterData: ScatterPoint[] = [
     y: 567,
     provider: "Azure",
     name: "Azure Storage",
+    providerId: "mock-azure-3",
     severityData: [
       { name: "Critical", value: 179 },
       { name: "High", value: 227 },
@@ -111,6 +119,7 @@ const mockScatterData: ScatterPoint[] = [
     y: 289,
     provider: "Azure",
     name: "Azure Key Vault",
+    providerId: "mock-azure-4",
     severityData: [
       { name: "Critical", value: 91 },
       { name: "High", value: 115 },
@@ -124,6 +133,7 @@ const mockScatterData: ScatterPoint[] = [
     y: 712,
     provider: "Google",
     name: "Cloud SQL",
+    providerId: "mock-gcp-1",
     severityData: [
       { name: "Critical", value: 225 },
       { name: "High", value: 285 },
@@ -137,6 +147,7 @@ const mockScatterData: ScatterPoint[] = [
     y: 623,
     provider: "Google",
     name: "Compute Engine",
+    providerId: "mock-gcp-2",
     severityData: [
       { name: "Critical", value: 197 },
       { name: "High", value: 249 },
@@ -150,6 +161,7 @@ const mockScatterData: ScatterPoint[] = [
     y: 412,
     provider: "Google",
     name: "Cloud Storage",
+    providerId: "mock-gcp-3",
     severityData: [
       { name: "Critical", value: 130 },
       { name: "High", value: 165 },
@@ -163,6 +175,7 @@ const mockScatterData: ScatterPoint[] = [
     y: 198,
     provider: "Google",
     name: "Cloud Run",
+    providerId: "mock-gcp-4",
     severityData: [
       { name: "Critical", value: 63 },
       { name: "High", value: 79 },
@@ -176,6 +189,7 @@ const mockScatterData: ScatterPoint[] = [
     y: 945,
     provider: "AWS",
     name: "Amazon RDS Aurora",
+    providerId: "mock-aws-6",
     severityData: [
       { name: "Critical", value: 299 },
       { name: "High", value: 378 },
