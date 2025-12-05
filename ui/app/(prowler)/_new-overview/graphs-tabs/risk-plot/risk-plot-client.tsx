@@ -116,18 +116,12 @@ const CustomTooltip = ({ active, payload }: TooltipProps) => {
         <p className="text-text-neutral-primary mb-2 text-sm font-semibold">
           {data.name}
         </p>
-        <div className="flex items-end gap-1">
-          <p className="text-text-neutral-primary text-xs leading-5 font-medium">
-            Risk Score
-          </p>
-          <div className="border-text-neutral-primary mb-[4px] flex-1 border-b border-dotted" />
-          <p
-            className="text-xs leading-5 font-medium"
-            style={{ color: riskColor }}
-          >
+        <p className="text-text-neutral-secondary text-sm font-medium">
+          <span style={{ color: riskColor, fontWeight: "bold" }}>
             {riskScorePercentage}%
-          </p>
-        </div>
+          </span>{" "}
+          Risk Score
+        </p>
         <div className="mt-2">
           <AlertPill value={data.y} />
         </div>
