@@ -547,6 +547,106 @@
         "cloudwatch_log_group_retention_policy_specific_days_enabled",
         "kinesis_stream_data_retention_period"
       ]
+    },
+    {
+      "Id": "pi_1_2",
+      "Name": "PI1.2 System inputs are measured and recorded completely, accurately, and timely to meet the entity's processing integrity commitments and system requirements",
+      "Description": "The entity implements policies and procedures over system inputs, including controls over completeness and accuracy, to result in products, services, and reporting to meet the entity's objectives. This includes defining accuracy targets, monitoring input quality, and creating detailed records of each input event.",
+      "Attributes": [
+        {
+          "ItemId": "pi_1_2",
+          "Section": "PI1.0 - Processing Integrity",
+          "Service": "aws",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "apigateway_restapi_logging_enabled",
+        "apigatewayv2_api_access_logging_enabled",
+        "elbv2_logging_enabled",
+        "elb_logging_enabled",
+        "wafv2_webacl_logging_enabled",
+        "waf_global_webacl_logging_enabled",
+        "cloudtrail_s3_dataevents_write_enabled",
+        "cloudfront_distributions_logging_enabled"
+      ]
+    },
+    {
+      "Id": "pi_1_3",
+      "Name": "PI1.3 Data is processed completely, accurately, and timely as authorized to meet the entity's processing integrity commitments and system requirements",
+      "Description": "The entity implements controls to ensure data is processed completely, accurately, and timely. This includes defining processing specifications, identifying processing activities, detecting and correcting errors throughout processing, recording processing activities with accurate logs, and ensuring completeness and timeliness of processing.",
+      "Attributes": [
+        {
+          "ItemId": "pi_1_3",
+          "Section": "PI1.0 - Processing Integrity",
+          "Service": "aws",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_log_file_validation_enabled",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_log_metric_filter_policy_changes",
+        "cloudwatch_log_metric_filter_root_usage",
+        "config_recorder_all_regions_enabled",
+        "rds_instance_integration_cloudwatch_logs",
+        "rds_cluster_integration_cloudwatch_logs",
+        "glue_etl_jobs_logging_enabled",
+        "stepfunctions_statemachine_logging_enabled"
+      ]
+    },
+    {
+      "Id": "pi_1_4",
+      "Name": "PI1.4 System outputs are complete, accurate, distributed only to intended parties, and retained to meet the entity's processing integrity commitments and system requirements",
+      "Description": "The entity implements controls to ensure system outputs are delivered to authorized recipients in the correct format and protected against unauthorized access, modification, theft, destruction, or corruption. This includes output encryption, access controls, and audit trails for output delivery.",
+      "Attributes": [
+        {
+          "ItemId": "pi_1_4",
+          "Section": "PI1.0 - Processing Integrity",
+          "Service": "aws",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "s3_bucket_default_encryption",
+        "s3_bucket_kms_encryption",
+        "cloudwatch_log_group_kms_encryption_enabled",
+        "sns_topics_kms_encryption_at_rest_enabled",
+        "kinesis_stream_encrypted_at_rest",
+        "cloudfront_distributions_field_level_encryption_enabled",
+        "cloudwatch_log_group_not_publicly_accessible",
+        "cloudwatch_cross_account_sharing_disabled",
+        "glue_etl_jobs_cloudwatch_logs_encryption_enabled",
+        "glue_etl_jobs_amazon_s3_encryption_enabled"
+      ]
+    },
+    {
+      "Id": "pi_1_5",
+      "Name": "PI1.5 Stored data is maintained complete, accurate, and protected from unauthorized modification to meet the entity's processing integrity commitments and system requirements",
+      "Description": "The entity implements controls to protect stored inputs, items in processing, and outputs from theft, destruction, corruption, or deterioration. This includes data encryption at rest, key management, backup and recovery procedures, access controls, and data integrity validation.",
+      "Attributes": [
+        {
+          "ItemId": "pi_1_5",
+          "Section": "PI1.0 - Processing Integrity",
+          "Service": "aws",
+          "Type": "automated"
+        }
+      ],
+      "Checks": [
+        "s3_bucket_object_versioning",
+        "s3_bucket_object_lock",
+        "rds_instance_storage_encrypted",
+        "rds_cluster_storage_encrypted",
+        "dynamodb_tables_kms_cmk_encryption_enabled",
+        "ec2_ebs_volume_encryption",
+        "backup_plans_exist",
+        "backup_recovery_point_encrypted",
+        "backup_vaults_encrypted",
+        "kms_cmk_rotation_enabled"
+      ]
     }
   ]
 }
