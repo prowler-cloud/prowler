@@ -1,30 +1,38 @@
 {
   "Provider": "aws",
   "CheckID": "ssm_documents_set_as_public",
-  "CheckTitle": "Check if there are SSM Documents set as public.",
-  "CheckType": [],
+  "CheckTitle": "SSM document is not public and shared only with trusted AWS accounts",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Effects/Data Exposure"
+  ],
   "ServiceName": "ssm",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:ssm:region:account-id:document/document-name",
+  "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "AwsSsmDocument",
-  "Description": "Check if there are SSM Documents set as public.",
-  "Risk": "SSM Documents may contain private information or even secrets and tokens.",
-  "RelatedUrl": "https://docs.aws.amazon.com/systems-manager/latest/userguide/ssm-before-you-share.html",
+  "ResourceType": "AwsSsmPatchCompliance",
+  "Description": "**SSM documents** are evaluated for **public sharing** (`all`) and for shares with AWS accounts outside a defined trusted list. Documents that remain private or are shared only with trusted accounts indicate restricted distribution.",
+  "Risk": "Public or non-trusted sharing exposes document content, eroding **confidentiality** of scripts, parameters, and embedded secrets. Adversaries can study runbooks to craft targeted attacks and reuse logic, causing credential leakage and downstream **integrity** and **availability** impacts.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://github.com/cloudmatos/matos/tree/master/remediations/aws/ssm/ssm-doc-block",
+    "https://docs.aws.amazon.com/systems-manager/latest/userguide/ssm-before-you-share.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aws ssm modify-document-permission --name <DOCUMENT_NAME> --permission-type Share --account-ids-to-remove all",
       "NativeIaC": "",
-      "Other": "https://github.com/cloudmatos/matos/tree/master/remediations/aws/ssm/ssm-doc-block",
-      "Terraform": ""
+      "Other": "1. Open AWS Systems Manager > Documents\n2. Select the document > Permissions tab > Edit\n3. Select Private (remove Public/'all')\n4. Remove any non-trusted AWS account IDs\n5. Save",
+      "Terraform": "```hcl\nresource \"aws_ssm_document\" \"<example_resource_name>\" {\n  name          = \"<example_resource_name>\"\n  document_type = \"Command\"\n  content       = jsonencode({\n    schemaVersion = \"2.2\"\n    mainSteps     = []\n  })\n  # Critical: no permissions block -> document remains private (not public/shared)\n}\n```"
     },
     "Recommendation": {
-      "Text": "Carefully review the contents of the document before is shared. Enable SSM Block public sharing for documents.",
-      "Url": "https://docs.aws.amazon.com/systems-manager/latest/userguide/ssm-before-you-share.html"
+      "Text": "Apply **least privilege** to document distribution:\n- Keep documents private; share only with specific trusted account IDs\n- Enable account-level block public sharing for documents\n- Remove secrets from content; use secure parameters\n- Limit who can share or run documents; require reviews and version control",
+      "Url": "https://hub.prowler.com/check/ssm_documents_set_as_public"
     }
   },
   "Categories": [
-    "internet-exposed"
+    "identity-access",
+    "trust-boundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],
