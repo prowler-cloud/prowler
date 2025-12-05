@@ -15,6 +15,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### Changed
 - Update AWS Lightsail service metadata to new format [(#9264)](https://github.com/prowler-cloud/prowler/pull/9264)
 - Update AWS GuardDuty service metadata to new format [(#9259)](https://github.com/prowler-cloud/prowler/pull/9259)
+- Update AWS Network Firewall service metadata to new format [(#9382)](https://github.com/prowler-cloud/prowler/pull/9382)
 - Update AWS MQ service metadata to new format [(#9267)](https://github.com/prowler-cloud/prowler/pull/9267)
 - Update AWS Macie service metadata to new format [(#9265)](https://github.com/prowler-cloud/prowler/pull/9265)
 - Update AWS Lightsail service metadata to new format [(#9264)](https://github.com/prowler-cloud/prowler/pull/9264)
@@ -97,6 +98,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS ECS service metadata to new format [(#8888)](https://github.com/prowler-cloud/prowler/pull/8888)
 - Update AWS Kinesis service metadata to new format [(#9262)](https://github.com/prowler-cloud/prowler/pull/9262)
 - Update AWS DocumentDB service metadata to new format [(#8862)](https://github.com/prowler-cloud/prowler/pull/8862)
+
 
 ### Fixed
 - Check `check_name` has no `resource_name` error for GCP provider [(#9169)](https://github.com/prowler-cloud/prowler/pull/9169)

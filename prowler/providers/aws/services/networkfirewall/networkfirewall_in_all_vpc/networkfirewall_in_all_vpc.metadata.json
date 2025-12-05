@@ -1,29 +1,40 @@
 {
   "Provider": "aws",
   "CheckID": "networkfirewall_in_all_vpc",
-  "CheckTitle": "Ensure all VPCs have Network Firewall enabled",
-  "CheckType": [],
+  "CheckTitle": "VPC has Network Firewall enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
   "ServiceName": "networkfirewall",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:network-firewall::account-id:firewall/firewall-name",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEc2Vpc",
-  "Description": "Ensure all VPCs have Network Firewall enabled",
-  "Risk": "Without a network firewall, it can be difficult to monitor and control traffic within the VPC. This can make it harder to detect and prevent attacks or unauthorized access to resources.",
-  "RelatedUrl": "https://docs.aws.amazon.com/network-firewall/latest/developerguide/setting-up.html",
+  "Description": "**VPCs** with an **AWS Network Firewall** associated to the same VPC to inspect and filter network traffic.\n\nIdentifies VPCs that do not have a Network Firewall resource linked to them.",
+  "Risk": "Without a **Network Firewall**, VPC traffic can bypass deep inspection and centralized policy enforcement, enabling **data exfiltration**, **command-and-control**, and **lateral movement**. Confidentiality is reduced by unmonitored flows; integrity and availability are threatened by malware and disruptive traffic.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/network-firewall/latest/developerguide/vpc-config.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/NetworkFirewall/network-firewall-in-use.html",
+    "https://docs.aws.amazon.com/network-firewall/latest/developerguide/setting-up.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws network-firewall create-firewall --firewall-name <value> --vpc-id <value>",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/NetworkFirewall/network-firewall-in-use.html",
-      "Terraform": ""
+      "CLI": "aws network-firewall create-firewall --firewall-name <example_resource_name> --firewall-policy-arn <example_resource_id> --vpc-id <example_resource_id> --subnet-mappings \"SubnetId=<example_resource_id>\"",
+      "NativeIaC": "```yaml\n# CloudFormation: Create a Network Firewall in the VPC\nResources:\n  <example_resource_name>:\n    Type: AWS::NetworkFirewall::Firewall\n    Properties:\n      FirewallName: <example_resource_name>\n      FirewallPolicyArn: <example_resource_id>  # Critical: required policy for the firewall\n      VpcId: <example_resource_id>              # Critical: associates the firewall to the target VPC (fixes the check)\n      SubnetMappings:                           # Critical: creates firewall endpoints in the VPC\n        - SubnetId: <example_resource_id>\n```",
+      "Other": "1. In the AWS Console, go to Network Firewall > Firewalls > Create firewall\n2. Enter a name and select the target VPC\n3. Select an existing Firewall policy (or create one when prompted)\n4. Add at least one subnet from the VPC under Subnet mappings\n5. Choose Create firewall\n6. Verify the firewall shows under the selected VPC",
+      "Terraform": "```hcl\n# Create a Network Firewall in the VPC\nresource \"aws_networkfirewall_firewall\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  firewall_policy_arn = \"<example_resource_id>\"  # Critical: required policy\n  vpc_id              = \"<example_resource_id>\"  # Critical: associates firewall to the VPC (fixes the check)\n\n  subnet_mapping {                                # Critical: creates firewall endpoint in the VPC\n    subnet_id = \"<example_resource_id>\"\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure all VPCs have Network Firewall enabled",
-      "Url": "https://docs.aws.amazon.com/network-firewall/latest/developerguide/vpc-config.html"
+      "Text": "Deploy **AWS Network Firewall** in each VPC or centralize inspection through a dedicated hub VPC.\n\nAdopt a `default-deny` posture with least-privilege rules, restrict egress to required destinations, segment workloads (**defense in depth**, **zero trust**), and enable logging to monitor and tune network policies.",
+      "Url": "https://hub.prowler.com/check/networkfirewall_in_all_vpc"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "trust-boundaries",
+    "threat-detection"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
