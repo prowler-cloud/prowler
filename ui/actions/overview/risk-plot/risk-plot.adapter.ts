@@ -7,17 +7,6 @@ import type {
 } from "./types/risk-plot.types";
 
 /**
- * Converts ThreatScore (0-100) to Risk Score (0-10).
- * Both scales use "higher = better" convention.
- */
-function convertToRiskScore(overallScore: number | null): number {
-  if (overallScore === null) return 0;
-  // ThreatScore is 0-100, we need 0-10
-  // Higher = better in both scales
-  return overallScore / 10;
-}
-
-/**
  * Calculates percentage with proper rounding.
  */
 function calculatePercentage(value: number, total: number): number {
@@ -90,7 +79,7 @@ export function adaptToRiskPlotData(
     }
 
     points.push({
-      x: convertToRiskScore(providerData.overallScore),
+      x: providerData.overallScore ?? 0,
       y: providerData.failedFindings,
       provider: providerDisplayName,
       name: providerData.providerName,

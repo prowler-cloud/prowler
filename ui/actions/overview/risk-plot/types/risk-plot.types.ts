@@ -8,7 +8,7 @@ import type { BarDataPoint } from "@/components/graphs/types";
  * Each point represents a provider/account with its risk metrics.
  */
 export interface RiskPlotPoint {
-  /** Risk Score (0-10 scale, derived from ThreatScore 0-100) */
+  /** ThreatScore (0-100 scale, higher = better) */
   x: number;
   /** Total failed findings count */
   y: number;
