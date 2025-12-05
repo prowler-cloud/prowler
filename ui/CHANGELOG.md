@@ -24,6 +24,13 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ---
 
+## [1.14.3] (Prowler Unreleased)
+
+### 🐞 Fixed
+- Show top failed requirements in compliance specific view for compliance without sections [(#9471)](https://github.com/prowler-cloud/prowler/pull/9471)
+
+---
+
 ## [1.14.2] (Prowler v5.14.2)
 
 ### 🐞 Fixed
