@@ -1,0 +1,22 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "core_memory_requests_set",
+  "CheckTitle": "Ensure memory requests are set",
+  "CheckType": [],
+  "ServiceName": "core",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "KubernetesPod",
+  "Description": "Ensure memory requests are set for containers to enable proper scheduling and resource guarantees.",
+  "Risk": "Missing memory requests can lead to scheduling and resource contention issues.",
+  "RelatedUrl": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+  "Remediation": {
+    "Code": {"CLI": "", "NativeIaC": "", "Other": "", "Terraform": ""},
+    "Recommendation": {"Text": "Set memory requests in container resources.", "Url": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/"}
+  },
+  "Categories": ["resource-management"],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Requests should be tuned per workload."
+}

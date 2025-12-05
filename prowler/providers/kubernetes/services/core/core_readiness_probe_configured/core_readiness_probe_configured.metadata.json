@@ -1,0 +1,22 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "core_readiness_probe_configured",
+  "CheckTitle": "Ensure readiness probe is configured",
+  "CheckType": [],
+  "ServiceName": "core",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "KubernetesPod",
+  "Description": "Ensure each container has a readiness probe configured to signal when it is ready to serve traffic.",
+  "Risk": "Without readiness probes, services may receive traffic before containers are ready, causing errors.",
+  "RelatedUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/",
+  "Remediation": {
+    "Code": {"CLI": "", "NativeIaC": "", "Other": "", "Terraform": ""},
+    "Recommendation": {"Text": "Add readiness probes to container specs.", "Url": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/"}
+  },
+  "Categories": ["availability"],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Check ensures presence of readiness probe; tune thresholds per application."
+}

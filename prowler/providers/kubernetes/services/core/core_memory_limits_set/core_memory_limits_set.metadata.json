@@ -1,0 +1,22 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "core_memory_limits_set",
+  "CheckTitle": "Ensure memory limits are set",
+  "CheckType": [],
+  "ServiceName": "core",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "KubernetesPod",
+  "Description": "Ensure memory limits are set for containers to prevent memory exhaustion and OOMs.",
+  "Risk": "Missing memory limits can allow containers to consume excessive memory, causing OOM kills or node instability.",
+  "RelatedUrl": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+  "Remediation": {
+    "Code": {"CLI": "", "NativeIaC": "", "Other": "", "Terraform": ""},
+    "Recommendation": {"Text": "Set memory limits in container resources.", "Url": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/"}
+  },
+  "Categories": ["resource-management"],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Limits should be tuned per workload."
+}
