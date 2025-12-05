@@ -141,14 +141,13 @@ jobs:
               elif path_str.startswith("prowler/providers/aws/") or path_str.startswith("tests/providers/aws/"):
                   run_all = True
 
-          # Expand with dependent services (propagate until stable)
-          queue = list(services)
-          while queue:
-              svc = queue.pop()
+          # Expand with direct dependent services (one level only)
+          # We only test services that directly depend on the changed services,
+          # not transitive dependencies (services that depend on dependents)
+          original_services = set(services)
+          for svc in original_services:
               for dep in dependents.get(svc, []):
-                  if dep not in services:
-                      services.add(dep)
-                      queue.append(dep)
+                  services.add(dep)
 
           if run_all or not services:
               run_all = True
