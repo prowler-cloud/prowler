@@ -1,12 +1,12 @@
 import {
   CategoryData,
-  FailedSection,
   Framework,
   Requirement,
   REQUIREMENT_STATUS,
   RequirementItemData,
   RequirementsData,
   RequirementStatus,
+  TopFailedResult,
 } from "@/types/compliance";
 
 export const updateCounters = (
@@ -24,9 +24,48 @@ export const updateCounters = (
 
 export const getTopFailedSections = (
   mappedData: Framework[],
-): FailedSection[] => {
+): TopFailedResult => {
   const failedSectionMap = new Map();
 
+  // Check if we have a flat structure (requirements directly in framework)
+  const hasFlatStructure = mappedData.some((framework) => {
+    const directRequirements = (framework as any).requirements || [];
+    return directRequirements.length > 0 && framework.categories.length === 0;
+  });
+
+  if (hasFlatStructure) {
+    // Handle flat structure: count failed requirements directly
+    mappedData.forEach((framework) => {
+      const directRequirements =
+        ((framework as any).requirements as Requirement[]) || [];
+
+      directRequirements.forEach((requirement) => {
+        if (requirement.status === REQUIREMENT_STATUS.FAIL) {
+          const requirementName = requirement.name;
+
+          if (!failedSectionMap.has(requirementName)) {
+            failedSectionMap.set(requirementName, { total: 0, types: {} });
+          }
+
+          const requirementData = failedSectionMap.get(requirementName);
+          requirementData.total += 1;
+
+          const type = (requirement.type as string) || "Fails";
+          requirementData.types[type] = (requirementData.types[type] || 0) + 1;
+        }
+      });
+    });
+
+    return {
+      items: Array.from(failedSectionMap.entries())
+        .map(([name, data]) => ({ name, ...data }))
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 5),
+      type: "requirements",
+    };
+  }
+
+  // Handle hierarchical structure: count by category (section)
   mappedData.forEach((framework) => {
     framework.categories.forEach((category) => {
       category.controls.forEach((control) => {
@@ -41,10 +80,9 @@ export const getTopFailedSections = (
             const sectionData = failedSectionMap.get(sectionName);
             sectionData.total += 1;
 
-            const type = requirement.type || "Fails";
+            const type = (requirement.type as string) || "Fails";
 
-            sectionData.types[type as string] =
-              (sectionData.types[type as string] || 0) + 1;
+            sectionData.types[type] = (sectionData.types[type] || 0) + 1;
           }
         });
       });
@@ -52,10 +90,13 @@ export const getTopFailedSections = (
   });
 
   // Convert in descending order and slice top 5
-  return Array.from(failedSectionMap.entries())
-    .map(([name, data]) => ({ name, ...data }))
-    .sort((a, b) => b.total - a.total)
-    .slice(0, 5); // Top 5
+  return {
+    items: Array.from(failedSectionMap.entries())
+      .map(([name, data]) => ({ name, ...data }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5),
+    type: "sections",
+  };
 };
 
 export const calculateCategoryHeatmapData = (

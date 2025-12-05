@@ -5,13 +5,13 @@ import { FindingStatus } from "@/components/ui/table/status-finding-badge";
 import {
   AttributesData,
   CategoryData,
-  FailedSection,
   Framework,
   MITREAttributesMetadata,
   Requirement,
   REQUIREMENT_STATUS,
   RequirementsData,
   RequirementStatus,
+  TopFailedResult,
 } from "@/types/compliance";
 
 import {
@@ -149,7 +149,7 @@ export const toAccordionItems = (
 // Custom function for MITRE to get top failed sections grouped by tactics
 export const getTopFailedSections = (
   mappedData: Framework[],
-): FailedSection[] => {
+): TopFailedResult => {
   const failedSectionMap = new Map();
 
   mappedData.forEach((framework) => {
@@ -175,10 +175,13 @@ export const getTopFailedSections = (
   });
 
   // Convert in descending order and slice top 5
-  return Array.from(failedSectionMap.entries())
-    .map(([name, data]) => ({ name, ...data }))
-    .sort((a, b) => b.total - a.total)
-    .slice(0, 5); // Top 5
+  return {
+    items: Array.from(failedSectionMap.entries())
+      .map(([name, data]) => ({ name, ...data }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5),
+    type: "sections",
+  };
 };
 
 // Custom function for MITRE to calculate category heatmap data grouped by tactics
