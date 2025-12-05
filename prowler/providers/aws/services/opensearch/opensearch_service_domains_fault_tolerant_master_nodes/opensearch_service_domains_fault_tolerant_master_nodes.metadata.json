@@ -1,30 +1,42 @@
 {
   "Provider": "aws",
   "CheckID": "opensearch_service_domains_fault_tolerant_master_nodes",
-  "CheckTitle": "OpenSearch Service Domain should have at least three dedicated master nodes",
-  "CheckType": [],
+  "CheckTitle": "OpenSearch domain has at least 3 dedicated master nodes",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Effects/Denial of Service"
+  ],
   "ServiceName": "opensearch",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:es:region:account-id:domain/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsOpenSearchServiceDomain",
-  "Description": "OpenSearch Service uses dedicated master nodes to increase cluster stability. A minimum of three dedicated master nodes is recommended to ensure high availability.",
-  "Risk": "If a master node fails, the cluster may become unavailable.",
-  "RelatedUrl": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/managedomains-dedicatedmasternodes.html#dedicatedmasternodes-number",
+  "Description": "**Amazon OpenSearch domains** have **dedicated master nodes** enabled with a master node count of at least `3` to support stable cluster coordination and elections",
+  "Risk": "With fewer than `3` or disabled **dedicated master nodes**, the cluster can lose **quorum**, blocking leader election.\n\nEffects include stalled cluster state updates, failed reads/writes, shard allocation issues, and possible split-brain, reducing **availability** and **integrity**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.icompaas.com/support/solutions/articles/62000233340-ensure-opensearch-service-domain-should-have-at-least-three-dedicated-master-nodes",
+    "https://medium.com/@stetseng/handling-10m-offline-matchmaking-using-amazon-opensearch-part-2-of-4-a6e92cce402f",
+    "https://repost.aws/questions/QUPeRkfj8fRNufXMfFKfo_jQ/how-to-select-correct-of-data-nodes-and-dedicated-nodes-in-opensearch",
+    "https://confluence.atlassian.com/adminjiraserver/opensearch-hardware-recommendations-for-jira-1680483410.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/opensearch-controls.html#opensearch-11",
+    "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/managedomains-dedicatedmasternodes.html#dedicatedmasternodes-number",
+    "https://orca.security/resources/blog/elasticsearch-without-at-least-three-dedicated-master-nodes/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws es update-elasticsearch-domain-config --region <region> --domain-name <name> --elasticsearch-cluster-config DedicatedMasterEnabled=true,DedicatedMasterType='<instance_type>',DedicatedMasterCount=3",
-      "NativeIaC": "",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/opensearch-controls.html#opensearch-11",
-      "Terraform": ""
+      "CLI": "aws opensearch update-domain-config --domain-name <name> --cluster-config \"DedicatedMasterEnabled=true,DedicatedMasterType=<instance_type>,DedicatedMasterCount=3\"",
+      "NativeIaC": "```yaml\n# CloudFormation: set at least 3 dedicated master nodes\nResources:\n  <example_resource_name>:\n    Type: AWS::OpenSearchService::Domain\n    Properties:\n      ClusterConfig:\n        DedicatedMasterEnabled: true  # Critical: enable dedicated master nodes\n        DedicatedMasterCount: 3       # Critical: ensure minimum of 3 masters\n        DedicatedMasterType: \"<instance_type>\"  # Critical: required when enabling masters\n```",
+      "Other": "1. Sign in to the AWS Console and open Amazon OpenSearch Service\n2. Select your domain and choose Edit\n3. In Cluster configuration:\n   - Enable Dedicated master nodes\n   - Set Dedicated master node count to 3\n   - Select a Dedicated master instance type\n4. Choose Save changes",
+      "Terraform": "```hcl\n# Terraform: set at least 3 dedicated master nodes\nresource \"aws_opensearch_domain\" \"<example_resource_name>\" {\n  domain_name = \"<example_resource_name>\"\n\n  cluster_config {\n    dedicated_master_enabled = true  # Critical: enable dedicated masters\n    dedicated_master_count   = 3     # Critical: ensure minimum of 3 masters\n    dedicated_master_type    = \"<instance_type>\"  # Critical: required when enabling masters\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure that your OpenSearch Service domain has at least three dedicated master nodes",
-      "Url": "https://docs.aws.amazon.com/opensearch-service/latest/developerguide/managedomains-dedicatedmasternodes.html#dedicatedmasternodes-number"
+      "Text": "Enable **dedicated master nodes** and set the count to at least `3` (use an odd number) to maintain **quorum**. Use *Multi-AZ with standby* to distribute masters across zones. Right-size master instances and monitor cluster health to uphold high availability and resilience.",
+      "Url": "https://hub.prowler.com/check/opensearch_service_domains_fault_tolerant_master_nodes"
     }
   },
   "Categories": [
-    "redundancy"
+    "resilience"
   ],
   "DependsOn": [],
   "RelatedTo": [],
