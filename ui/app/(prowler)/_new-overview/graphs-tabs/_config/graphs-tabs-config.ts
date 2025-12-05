@@ -11,14 +11,14 @@ export const GRAPH_TABS = [
     id: "threat-map",
     label: "Threat Map",
   },
+  {
+    id: "risk-plot",
+    label: "Risk Plot",
+  },
   // TODO: Uncomment when ready to enable other tabs
   // {
   //   id: "risk-radar",
   //   label: "Risk Radar",
-  // },
-  // {
-  //   id: "risk-plot",
-  //   label: "Risk Plot",
   // },
 ] as const;
 

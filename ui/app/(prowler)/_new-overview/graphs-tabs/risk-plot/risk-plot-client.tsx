@@ -1,9 +1,19 @@
 "use client";
 
+/**
+ * Risk Plot Client Component
+ *
+ * NOTE: This component uses CSS variables (var()) for Recharts styling.
+ * Recharts SVG-based components (Scatter, XAxis, YAxis, CartesianGrid, etc.)
+ * do not support Tailwind classes and require raw color values or CSS variables.
+ * This is a documented limitation of the Recharts library.
+ * @see https://recharts.org/en-US/api
+ */
+
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import {
   CartesianGrid,
-  Legend,
   ResponsiveContainer,
   Scatter,
   ScatterChart,
@@ -12,6 +22,7 @@ import {
   YAxis,
 } from "recharts";
 
+import type { RiskPlotPoint } from "@/actions/overview/risk-plot";
 import { HorizontalBarChart } from "@/components/graphs/horizontal-bar-chart";
 import { AlertPill } from "@/components/graphs/shared/alert-pill";
 import { ChartLegend } from "@/components/graphs/shared/chart-legend";
@@ -19,69 +30,83 @@ import {
   AXIS_FONT_SIZE,
   CustomXAxisTick,
 } from "@/components/graphs/shared/custom-axis-tick";
-import { getSeverityColorByRiskScore } from "@/components/graphs/shared/utils";
 import type { BarDataPoint } from "@/components/graphs/types";
+import { mapProviderFiltersForFindings } from "@/lib/provider-helpers";
+import { SEVERITY_FILTER_MAP } from "@/types/severities";
 
-const PROVIDER_COLORS = {
-  AWS: "var(--color-bg-data-aws)",
-  Azure: "var(--color-bg-data-azure)",
-  Google: "var(--color-bg-data-gcp)",
-};
+// Threat Score colors (0-100 scale, higher = better)
+const THREAT_COLORS = {
+  DANGER: "var(--bg-fail-primary)", // 0-30
+  WARNING: "var(--bg-warning-primary)", // 31-60
+  SUCCESS: "var(--bg-pass-primary)", // 61-100
+} as const;
 
-export interface ScatterPoint {
-  x: number;
-  y: number;
-  provider: string;
-  name: string;
-  severityData?: BarDataPoint[];
+/**
+ * Get color based on ThreatScore (0-100 scale, higher = better)
+ */
+function getThreatScoreColor(score: number): string {
+  if (score > 60) return THREAT_COLORS.SUCCESS;
+  if (score > 30) return THREAT_COLORS.WARNING;
+  return THREAT_COLORS.DANGER;
 }
 
+// Provider colors from globals.css
+const PROVIDER_COLORS: Record<string, string> = {
+  AWS: "var(--bg-data-aws)",
+  Azure: "var(--bg-data-azure)",
+  "Google Cloud": "var(--bg-data-gcp)",
+  Kubernetes: "var(--bg-data-kubernetes)",
+  "Microsoft 365": "var(--bg-data-m365)",
+  GitHub: "var(--bg-data-github)",
+  "MongoDB Atlas": "var(--bg-data-azure)",
+  "Infrastructure as Code": "var(--bg-data-kubernetes)",
+  "Oracle Cloud Infrastructure": "var(--bg-data-gcp)",
+};
+
 interface RiskPlotClientProps {
-  data: ScatterPoint[];
+  data: RiskPlotPoint[];
 }
 
 interface TooltipProps {
   active?: boolean;
-  payload?: Array<{ payload: ScatterPoint }>;
+  payload?: Array<{ payload: RiskPlotPoint }>;
 }
 
-interface ScatterDotProps {
+// Props that Recharts passes to the shape component
+interface RechartsScatterDotProps {
   cx: number;
   cy: number;
-  payload: ScatterPoint;
-  selectedPoint: ScatterPoint | null;
-  onSelectPoint: (point: ScatterPoint) => void;
-  allData: ScatterPoint[];
+  payload: RiskPlotPoint;
 }
 
-interface LegendProps {
-  payload?: Array<{ value: string; color: string }>;
+// Extended props for our custom scatter dot component
+interface ScatterDotProps extends RechartsScatterDotProps {
+  selectedPoint: RiskPlotPoint | null;
+  onSelectPoint: (point: RiskPlotPoint) => void;
+  allData: RiskPlotPoint[];
+  selectedProvider: string | null;
 }
 
 const CustomTooltip = ({ active, payload }: TooltipProps) => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload;
-    const severityColor = getSeverityColorByRiskScore(data.x);
+  if (!active || !payload?.length) return null;
 
-    return (
-      <div className="border-border-neutral-tertiary bg-bg-neutral-tertiary pointer-events-none min-w-[200px] rounded-xl border p-3 shadow-lg">
-        <p className="text-text-neutral-primary mb-2 text-sm font-semibold">
-          {data.name}
-        </p>
-        <p className="text-text-neutral-secondary text-sm font-medium">
-          {/* Dynamic color from getSeverityColorByRiskScore - required inline style */}
-          <span style={{ color: severityColor, fontWeight: "bold" }}>
-            {data.x}
-          </span>{" "}
-          Risk Score
-        </p>
-        <div className="mt-2">
-          <AlertPill value={data.y} />
-        </div>
+  const { name, x, y } = payload[0].payload;
+  const scoreColor = getThreatScoreColor(x);
+
+  return (
+    <div className="border-border-neutral-tertiary bg-bg-neutral-tertiary pointer-events-none min-w-[200px] rounded-xl border p-3 shadow-lg">
+      <p className="text-text-neutral-primary mb-2 text-sm font-semibold">
+        {name}
+      </p>
+      <p className="text-text-neutral-secondary text-sm font-medium">
+        <span style={{ color: scoreColor, fontWeight: "bold" }}>{x}%</span>{" "}
+        Threat Score
+      </p>
+      <div className="mt-2">
+        <AlertPill value={y} />
       </div>
-    );
-  }
-  return null;
+    </div>
+  );
 };
 
 const CustomScatterDot = ({
@@ -91,24 +116,31 @@ const CustomScatterDot = ({
   selectedPoint,
   onSelectPoint,
   allData,
+  selectedProvider,
 }: ScatterDotProps) => {
   const isSelected = selectedPoint?.name === payload.name;
   const size = isSelected ? 18 : 8;
-  const selectedColor = "var(--bg-button-primary)"; // emerald-400
+  const selectedColor = "var(--bg-button-primary)";
   const fill = isSelected
     ? selectedColor
-    : PROVIDER_COLORS[payload.provider as keyof typeof PROVIDER_COLORS] ||
-      "var(--color-text-neutral-tertiary)";
+    : PROVIDER_COLORS[payload.provider] || "var(--color-text-neutral-tertiary)";
+  const isFaded =
+    selectedProvider !== null && payload.provider !== selectedProvider;
 
   const handleClick = () => {
-    const fullDataItem = allData?.find(
-      (d: ScatterPoint) => d.name === payload.name,
-    );
+    const fullDataItem = allData?.find((d) => d.name === payload.name);
     onSelectPoint?.(fullDataItem || payload);
   };
 
   return (
-    <g style={{ cursor: "pointer" }} onClick={handleClick}>
+    <g
+      style={{
+        cursor: "pointer",
+        opacity: isFaded ? 0.2 : 1,
+        transition: "opacity 0.2s",
+      }}
+      onClick={handleClick}
+    >
       {isSelected && (
         <>
           <circle
@@ -143,60 +175,86 @@ const CustomScatterDot = ({
   );
 };
 
-const CustomLegend = ({ payload }: LegendProps) => {
-  const items =
-    payload?.map((entry: { value: string; color: string }) => ({
-      label: entry.value,
-      color: entry.color,
-    })) || [];
-
-  return <ChartLegend items={items} />;
-};
-
+/**
+ * Factory function that creates a scatter dot shape component with closure over selection state.
+ * Recharts shape prop types the callback parameter as `unknown` due to its flexible API.
+ * We safely cast to RechartsScatterDotProps since we know the actual shape of props passed by Scatter.
+ * @see https://recharts.org/en-US/api/Scatter#shape
+ */
 function createScatterDotShape(
-  selectedPoint: ScatterPoint | null,
-  onSelectPoint: (point: ScatterPoint) => void,
-  allData: ScatterPoint[],
-) {
-  const ScatterDotShape = (props: unknown) => {
-    const dotProps = props as Omit<
-      ScatterDotProps,
-      "selectedPoint" | "onSelectPoint" | "allData"
-    >;
-    return (
-      <CustomScatterDot
-        {...dotProps}
-        selectedPoint={selectedPoint}
-        onSelectPoint={onSelectPoint}
-        allData={allData}
-      />
-    );
-  };
+  selectedPoint: RiskPlotPoint | null,
+  onSelectPoint: (point: RiskPlotPoint) => void,
+  allData: RiskPlotPoint[],
+  selectedProvider: string | null,
+): (props: unknown) => React.JSX.Element {
+  const ScatterDotShape = (props: unknown) => (
+    <CustomScatterDot
+      {...(props as RechartsScatterDotProps)}
+      selectedPoint={selectedPoint}
+      onSelectPoint={onSelectPoint}
+      allData={allData}
+      selectedProvider={selectedProvider}
+    />
+  );
   ScatterDotShape.displayName = "ScatterDotShape";
   return ScatterDotShape;
 }
 
 export function RiskPlotClient({ data }: RiskPlotClientProps) {
-  const [selectedPoint, setSelectedPoint] = useState<ScatterPoint | null>(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [selectedPoint, setSelectedPoint] = useState<RiskPlotPoint | null>(
+    null,
+  );
+  const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
 
-  const dataByProvider = data.reduce(
+  // Group data by provider for separate Scatter series
+  const dataByProvider = data.reduce<Record<string, RiskPlotPoint[]>>(
     (acc, point) => {
-      const provider = point.provider;
-      if (!acc[provider]) {
-        acc[provider] = [];
-      }
-      acc[provider].push(point);
+      (acc[point.provider] ??= []).push(point);
       return acc;
     },
-    {} as Record<string, typeof data>,
+    {},
   );
 
-  const handleSelectPoint = (point: ScatterPoint) => {
-    if (selectedPoint?.name === point.name) {
-      setSelectedPoint(null);
-    } else {
-      setSelectedPoint(point);
+  const providers = Object.keys(dataByProvider);
+
+  const handleSelectPoint = (point: RiskPlotPoint) => {
+    setSelectedPoint((current) =>
+      current?.name === point.name ? null : point,
+    );
+  };
+
+  const handleProviderClick = (provider: string) => {
+    setSelectedProvider((current) => (current === provider ? null : provider));
+  };
+
+  const handleBarClick = (dataPoint: BarDataPoint) => {
+    if (!selectedPoint) return;
+
+    // Build the URL with current filters
+    const params = new URLSearchParams(searchParams.toString());
+
+    // Transform provider filters (provider_id__in -> provider__in)
+    mapProviderFiltersForFindings(params);
+
+    // Add severity filter
+    const severity = SEVERITY_FILTER_MAP[dataPoint.name];
+    if (severity) {
+      params.set("filter[severity__in]", severity);
     }
+
+    // Add provider filter for the selected point
+    params.set("filter[provider__in]", selectedPoint.providerId);
+
+    // Add exclude muted findings filter
+    params.set("filter[muted]", "false");
+
+    // Filter by FAIL findings
+    params.set("filter[status__in]", "FAIL");
+
+    // Navigate to findings page
+    router.push(`/findings?${params.toString()}`);
   };
 
   return (
@@ -204,26 +262,14 @@ export function RiskPlotClient({ data }: RiskPlotClientProps) {
       <div className="flex flex-1 gap-12">
         {/* Plot Section - in Card */}
         <div className="flex basis-[70%] flex-col">
-          <div
-            className="flex flex-1 flex-col rounded-lg border p-4"
-            style={{
-              borderColor: "var(--border-neutral-primary)",
-              backgroundColor: "var(--bg-neutral-secondary)",
-            }}
-          >
+          <div className="border-border-neutral-primary bg-bg-neutral-secondary flex flex-1 flex-col rounded-lg border p-4">
             <div className="mb-4">
-              <h3
-                className="text-lg font-semibold"
-                style={{ color: "var(--text-neutral-primary)" }}
-              >
+              <h3 className="text-text-neutral-primary text-lg font-semibold">
                 Risk Plot
               </h3>
             </div>
 
-            <div
-              className="relative w-full flex-1"
-              style={{ minHeight: "400px" }}
-            >
+            <div className="relative min-h-[400px] w-full flex-1">
               <ResponsiveContainer width="100%" height="100%">
                 <ScatterChart
                   margin={{ top: 20, right: 30, bottom: 60, left: 60 }}
@@ -237,16 +283,16 @@ export function RiskPlotClient({ data }: RiskPlotClientProps) {
                   <XAxis
                     type="number"
                     dataKey="x"
-                    name="Risk Score"
+                    name="Threat Score"
                     label={{
-                      value: "Risk Score",
+                      value: "Threat Score",
                       position: "bottom",
                       offset: 10,
                       fill: "var(--color-text-neutral-secondary)",
                     }}
                     tick={CustomXAxisTick}
                     tickLine={false}
-                    domain={[0, 10]}
+                    domain={[0, 100]}
                     axisLine={false}
                   />
                   <YAxis
@@ -268,29 +314,42 @@ export function RiskPlotClient({ data }: RiskPlotClientProps) {
                     axisLine={false}
                   />
                   <Tooltip content={<CustomTooltip />} />
-                  <Legend
-                    content={<CustomLegend />}
-                    wrapperStyle={{ paddingTop: "40px" }}
-                  />
                   {Object.entries(dataByProvider).map(([provider, points]) => (
                     <Scatter
                       key={provider}
                       name={provider}
                       data={points}
                       fill={
-                        PROVIDER_COLORS[
-                          provider as keyof typeof PROVIDER_COLORS
-                        ] || "var(--color-text-neutral-tertiary)"
+                        PROVIDER_COLORS[provider] ||
+                        "var(--color-text-neutral-tertiary)"
                       }
                       shape={createScatterDotShape(
                         selectedPoint,
                         handleSelectPoint,
                         data,
+                        selectedProvider,
                       )}
                     />
                   ))}
                 </ScatterChart>
               </ResponsiveContainer>
+            </div>
+
+            {/* Interactive Legend - below chart */}
+            <div className="mt-4 flex flex-col items-start gap-2">
+              <p className="text-text-neutral-tertiary pl-2 text-xs">
+                Click to filter by provider.
+              </p>
+              <ChartLegend
+                items={providers.map((p) => ({
+                  label: p,
+                  color:
+                    PROVIDER_COLORS[p] || "var(--color-text-neutral-tertiary)",
+                  dataKey: p,
+                }))}
+                selectedItem={selectedProvider}
+                onItemClick={handleProviderClick}
+              />
             </div>
           </div>
         </div>
@@ -300,28 +359,22 @@ export function RiskPlotClient({ data }: RiskPlotClientProps) {
           {selectedPoint && selectedPoint.severityData ? (
             <div className="flex w-full flex-col">
               <div className="mb-4">
-                <h4
-                  className="text-base font-semibold"
-                  style={{ color: "var(--text-neutral-primary)" }}
-                >
+                <h4 className="text-text-neutral-primary text-base font-semibold">
                   {selectedPoint.name}
                 </h4>
-                <p
-                  className="text-xs"
-                  style={{ color: "var(--text-neutral-tertiary)" }}
-                >
-                  Risk Score: {selectedPoint.x} | Failed Findings:{" "}
+                <p className="text-text-neutral-tertiary text-xs">
+                  Threat Score: {selectedPoint.x}% | Failed Findings:{" "}
                   {selectedPoint.y}
                 </p>
               </div>
-              <HorizontalBarChart data={selectedPoint.severityData} />
+              <HorizontalBarChart
+                data={selectedPoint.severityData}
+                onBarClick={handleBarClick}
+              />
             </div>
           ) : (
             <div className="flex w-full items-center justify-center text-center">
-              <p
-                className="text-sm"
-                style={{ color: "var(--text-neutral-tertiary)" }}
-              >
+              <p className="text-text-neutral-tertiary text-sm">
                 Select a point on the plot to view details
               </p>
             </div>
