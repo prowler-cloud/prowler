@@ -44,43 +44,45 @@ export function adaptToRiskPlotData(
 
     // Build severity data for the horizontal bar chart with percentages
     let severityData;
+    let totalFailedFindings = 0;
+
     if (providerData.severity) {
       const { critical, high, medium, low, informational } =
         providerData.severity;
-      const total = critical + high + medium + low + informational;
+      totalFailedFindings = critical + high + medium + low + informational;
 
       severityData = [
         {
           name: "Critical",
           value: critical,
-          percentage: calculatePercentage(critical, total),
+          percentage: calculatePercentage(critical, totalFailedFindings),
         },
         {
           name: "High",
           value: high,
-          percentage: calculatePercentage(high, total),
+          percentage: calculatePercentage(high, totalFailedFindings),
         },
         {
           name: "Medium",
           value: medium,
-          percentage: calculatePercentage(medium, total),
+          percentage: calculatePercentage(medium, totalFailedFindings),
         },
         {
           name: "Low",
           value: low,
-          percentage: calculatePercentage(low, total),
+          percentage: calculatePercentage(low, totalFailedFindings),
         },
         {
           name: "Info",
           value: informational,
-          percentage: calculatePercentage(informational, total),
+          percentage: calculatePercentage(informational, totalFailedFindings),
         },
       ];
     }
 
     points.push({
       x: providerData.overallScore ?? 0,
-      y: providerData.failedFindings,
+      y: totalFailedFindings,
       provider: providerDisplayName,
       name: providerData.providerName,
       providerId: providerData.providerId,
