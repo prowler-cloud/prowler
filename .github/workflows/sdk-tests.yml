@@ -84,7 +84,7 @@ jobs:
 
       - name: Run AWS tests
         # if: steps.changed-aws.outputs.any_changed == 'true'
-        run: poetry run pytest -n auto --cov=./prowler/providers/aws --cov-report=xml:aws_coverage.xml tests/providers/aws
+        run: poetry run pytest -n 4 --cov=./prowler/providers/aws --cov-report=xml:aws_coverage.xml tests/providers/aws
 
       - name: Upload AWS coverage to Codecov
         # if: steps.changed-aws.outputs.any_changed == 'true'
