@@ -2204,6 +2204,22 @@ class OverviewSeveritySerializer(BaseSerializerV1):
         resource_name = "findings-severity-overview"
 
 
+class FindingsSeverityOverTimeSerializer(BaseSerializerV1):
+    """Serializer for daily findings severity trend data."""
+
+    id = serializers.DateField(source="date")
+    critical = serializers.IntegerField()
+    high = serializers.IntegerField()
+    medium = serializers.IntegerField()
+    low = serializers.IntegerField()
+    informational = serializers.IntegerField()
+    muted = serializers.IntegerField()
+    scan_ids = serializers.ListField(child=serializers.UUIDField())
+
+    class JSONAPIMeta:
+        resource_name = "findings-severity-over-time"
+
+
 class OverviewServiceSerializer(BaseSerializerV1):
     id = serializers.CharField(source="service")
     total = serializers.IntegerField()

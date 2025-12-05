@@ -29,6 +29,7 @@ from api.models import (
     AttackSurfaceOverview,
     ComplianceOverviewSummary,
     ComplianceRequirementOverview,
+    DailySeveritySummary,
     Finding,
     MuteRule,
     Processor,
@@ -1348,3 +1349,72 @@ def aggregate_attack_surface(tenant_id: str, scan_id: str):
             )
     else:
         logger.info(f"No attack surface overview records created for scan {scan_id}")
+
+
+def aggregate_daily_severity(tenant_id: str, scan_id: str):
+    """Aggregate scan severity counts into DailySeveritySummary (one record per provider/day)."""
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        scan = Scan.objects.filter(
+            tenant_id=tenant_id,
+            id=scan_id,
+            state=StateChoices.COMPLETED,
+        ).first()
+
+        if not scan:
+            logger.warning(f"Scan {scan_id} not found or not completed")
+            return {"status": "scan is not completed"}
+
+        provider_id = scan.provider_id
+        scan_date = scan.completed_at.date()
+
+        severity_totals = (
+            ScanSummary.objects.filter(
+                tenant_id=tenant_id,
+                scan_id=scan_id,
+            )
+            .values("severity")
+            .annotate(total_fail=Sum("fail"), total_muted=Sum("muted"))
+        )
+
+        severity_data = {
+            "critical": 0,
+            "high": 0,
+            "medium": 0,
+            "low": 0,
+            "informational": 0,
+            "muted": 0,
+        }
+
+        for row in severity_totals:
+            severity = row["severity"]
+            if severity in severity_data:
+                severity_data[severity] = row["total_fail"] or 0
+            severity_data["muted"] += row["total_muted"] or 0
+
+    with rls_transaction(tenant_id):
+        summary, created = DailySeveritySummary.objects.update_or_create(
+            tenant_id=tenant_id,
+            provider_id=provider_id,
+            date=scan_date,
+            defaults={
+                "scan_id": scan_id,
+                "critical": severity_data["critical"],
+                "high": severity_data["high"],
+                "medium": severity_data["medium"],
+                "low": severity_data["low"],
+                "informational": severity_data["informational"],
+                "muted": severity_data["muted"],
+            },
+        )
+
+    action = "created" if created else "updated"
+    logger.info(
+        f"Daily severity summary {action} for provider {provider_id} on {scan_date}"
+    )
+
+    return {
+        "status": action,
+        "provider_id": str(provider_id),
+        "date": str(scan_date),
+        "severity_data": severity_data,
+    }
