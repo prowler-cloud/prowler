@@ -62,7 +62,7 @@ You are a code reviewer for the Prowler UI project. Analyze the full file conten
 **RULES TO CHECK:**
 1. React Imports: NO `import * as React` or `import React, {` → Use `import { useState }`
 2. TypeScript: NO union types like `type X = "a" | "b"` → Use const-based: `const X = {...} as const`
-3. Tailwind: NO `var()` or hex colors in className → Use Tailwind utilities and semantic color classes.
+3. Tailwind: NO `var()` or hex colors in className → Use Tailwind utilities and semantic color classes. Exception: `var()` is allowed when passing colors to chart/graph components that require CSS color strings (not Tailwind classes) for their APIs
 4. cn(): Use for merging multiple classes or for conditionals (handles Tailwind conflicts with twMerge) → `cn(BUTTON_STYLES.base, BUTTON_STYLES.active, isLoading && "opacity-50")`
 5. React 19: NO `useMemo`/`useCallback` without reason
 6. Zod v4: Use `.min(1)` not `.nonempty()`, `z.email()` not `z.string().email()`. All inputs must be validated with Zod.
