@@ -1,34 +1,35 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "network_default_security_list_restricts_traffic",
-  "CheckTitle": "Ensure the default security list of every VCN restricts all traffic except ICMP",
-  "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS OCI Foundations Benchmark"
-  ],
+  "CheckTitle": "Default security list restricts all traffic except ICMP within VCN",
+  "CheckType": [],
   "ServiceName": "network",
   "SubServiceName": "",
-  "ResourceIdTemplate": "oci:network:securitylist",
+  "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "OciNetworkSecurityList",
-  "Description": "Ensure the default security list of every VCN restricts all traffic except ICMP within VCN. A default security list is automatically created when you create a VCN. It is recommended that the default security list restrict all traffic except for ICMP within the VCN.",
-  "Risk": "The default security list should not be used for any purpose other than as a fail-safe. It is recommended to create custom security lists for your resources.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Network/Concepts/securitylists.htm",
+  "ResourceType": "SecurityList",
+  "Description": "**Default security list** of each VCN is evaluated to allow only VCN-internal `ICMP`. Non-`ICMP` ingress from `0.0.0.0/0` or sources outside the VCN, and non-`ICMP` egress to `0.0.0.0/0`, are considered overly permissive. Only default lists are in scope.",
+  "Risk": "Over-permissive default rules expose subnet workloads to the Internet and enable unrestricted outbound traffic. This risks confidentiality (unauthorized access, data exfiltration), integrity (remote exploitation, lateral movement), and availability (DoS/C2) through broad non-`ICMP` `0.0.0.0/0` paths.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en-us/iaas/Content/Network/Concepts/securitylists.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Networking/restrict-traffic-for-default-security-lists.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "oci network security-list update --security-list-id <default-security-list-ocid> --ingress-security-rules <restricted-rules-json> --egress-security-rules <restricted-rules-json>",
+      "CLI": "oci network security-list update --security-list-id <default-security-list-ocid> --ingress-security-rules '[{\"protocol\":\"1\",\"source\":\"<VCN_CIDR>\"}]' --egress-security-rules '[{\"protocol\":\"1\",\"destination\":\"<VCN_CIDR>\"}]'",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Networking/restrict-traffic-for-default-security-lists.html",
-      "Terraform": ""
+      "Other": "1. Sign in to the OCI Console\n2. Go to Networking > Virtual Cloud Networks and select your VCN\n3. Open Security Lists and select the default security list\n4. Click Edit All Rules\n5. Remove all non-ICMP ingress and egress rules\n6. Add an ingress rule: Protocol ICMP, Source <VCN_CIDR>\n7. Add an egress rule: Protocol ICMP, Destination <VCN_CIDR>\n8. Save changes",
+      "Terraform": "```hcl\nresource \"oci_core_default_security_list\" \"<example_resource_name>\" {\n  manage_default_resource_id = \"<default_security_list_ocid>\"  # Critical: targets the default security list\n\n  ingress_security_rules {\n    protocol = \"1\"            # Critical: allow only ICMP\n    source   = \"<VCN_CIDR>\"   # Critical: restrict to VCN\n  }\n\n  egress_security_rules {\n    protocol    = \"1\"            # Critical: allow only ICMP\n    destination = \"<VCN_CIDR>\"   # Critical: restrict to VCN\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Configure the default security list to restrict all traffic except ICMP within the VCN. Create custom security lists for your resources.",
-      "Url": "https://docs.oracle.com/en-us/iaas/Content/Network/Concepts/securitylists.htm"
+      "Text": "Adopt a **deny-by-default** stance on the default list: allow only VCN-local `ICMP` for diagnostics. Use dedicated security lists or **network security groups** per application to explicitly allow needed ports and sources, and restrict egress to approved ranges. Review regularly under **least privilege**.",
+      "Url": "https://hub.prowler.com/check/network_default_security_list_restricts_traffic"
     }
   },
   "Categories": [
-    "network-security"
+    "internet-exposed",
+    "trust-boundaries"
   ],
   "DependsOn": [],
   "RelatedTo": [],

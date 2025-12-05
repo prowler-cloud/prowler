@@ -1,35 +1,34 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "network_security_list_ingress_from_internet_to_ssh_port",
-  "CheckTitle": "Ensure no security lists allow ingress from 0.0.0.0/0 to port 22",
-  "CheckType": [
-    "Software and Configuration Checks",
-    "Industry and Regulatory Standards",
-    "CIS OCI Foundations Benchmark"
-  ],
+  "CheckTitle": "Security list does not allow ingress from 0.0.0.0/0 to port 22 (SSH)",
+  "CheckType": [],
   "ServiceName": "network",
   "SubServiceName": "",
-  "ResourceIdTemplate": "oci:network:securitylist",
+  "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "OciNetworkSecurityList",
-  "Description": "Ensure no security lists allow ingress from 0.0.0.0/0 to port 22. Security lists provide stateful or stateless filtering of ingress and egress network traffic to OCI resources.",
-  "Risk": "Removing unfettered connectivity to remote console services, such as SSH, reduces a server's exposure to risk.",
-  "RelatedUrl": "https://docs.oracle.com/en-us/iaas/Content/Network/Concepts/securitylists.htm",
+  "ResourceType": "SecurityList",
+  "Description": "**OCI security lists** are evaluated for rules that permit **inbound SSH** from `0.0.0.0/0`. Any rule where the destination includes `TCP 22`-or broader rules allowing all TCP or all protocols from `0.0.0.0/0`-indicates public SSH exposure.",
+  "Risk": "**Public SSH access** enables Internet-wide **brute force** and **credential stuffing**, risking unauthorized shell access. Compromise can cause data exfiltration (**confidentiality**), command tampering (**integrity**), service disruption (**availability**), and lateral movement in the VCN.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en-us/iaas/Content/Network/Concepts/securitylists.htm",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Networking/unrestricted-ssh-access.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "oci network security-list update --security-list-id <example_resource_id> --ingress-security-rules '[{\"protocol\":\"6\",\"source\":\"<ALLOWED_CIDR>\",\"tcp-options\":{\"destination-port-range\":{\"min\":22,\"max\":22}}}]'",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/oci/OCI-Networking/unrestricted-ssh-access.html",
-      "Terraform": ""
+      "Other": "1. In the OCI Console, go to Networking > Virtual Cloud Networks and open your VCN\n2. Click Security Lists, then select <example_resource_name>\n3. In Ingress Rules, locate any rule with Source CIDR 0.0.0.0/0 and Protocol TCP (or All) that includes port 22\n4. Edit the rule: change Source CIDR to a specific allowed range (e.g., your office IP/CIDR) and set Destination Port Range to 22, or delete the rule\n5. Click Save changes",
+      "Terraform": "```hcl\nresource \"oci_core_security_list\" \"<example_resource_name>\" {\n  compartment_id = \"<example_compartment_ocid>\"\n  vcn_id         = \"<example_vcn_id>\"\n\n  ingress_security_rules {\n    protocol = \"6\"\n    source   = \"<ALLOWED_CIDR>\" # Critical: restrict source; do not use 0.0.0.0/0 to block public SSH\n\n    tcp_options {\n      destination_port_range {\n        min = 22  # Critical: only SSH port\n        max = 22\n      }\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Update security lists to remove ingress rules allowing access from 0.0.0.0/0 to port 22. Restrict SSH access to known IP addresses.",
-      "Url": "https://docs.oracle.com/en-us/iaas/Content/Network/Concepts/securitylists.htm"
+      "Text": "Restrict **SSH** to trusted sources using least-privilege network rules; avoid `0.0.0.0/0`. Prefer **private access** via VPN/peering or a hardened **bastion**. Apply **network segmentation** (NSGs/security lists) to narrow scope. Enforce **key-based authentication**, disable password login, and monitor access.",
+      "Url": "https://hub.prowler.com/check/network_security_list_ingress_from_internet_to_ssh_port"
     }
   },
   "Categories": [
-    "internet-exposed",
-    "network-security"
+    "internet-exposed"
   ],
   "DependsOn": [],
   "RelatedTo": [],
