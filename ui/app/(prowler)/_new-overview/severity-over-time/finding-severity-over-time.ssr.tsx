@@ -8,6 +8,14 @@ import { FindingSeverityOverTimeSkeleton } from "./_components/finding-severity-
 
 export { FindingSeverityOverTimeSkeleton };
 
+const DEFAULT_DAYS = 5;
+
+const getDefaultDateFrom = (): string => {
+  const date = new Date();
+  date.setDate(date.getDate() - DEFAULT_DAYS);
+  return date.toISOString().split("T")[0];
+};
+
 const EmptyState = ({ message }: { message: string }) => (
   <Card variant="base" className="flex h-full min-h-[405px] flex-1 flex-col">
     <CardHeader className="flex flex-col gap-4">
@@ -25,6 +33,12 @@ export const FindingSeverityOverTimeSSR = async ({
   searchParams,
 }: SSRComponentProps) => {
   const filters = pickFilterParams(searchParams);
+
+  // API requires filter[date_from], add default if not provided
+  if (!filters["filter[date_from]"]) {
+    filters["filter[date_from]"] = getDefaultDateFrom();
+  }
+
   const result = await getFindingsSeverityTrends({ filters });
 
   if (result.status === "error") {
