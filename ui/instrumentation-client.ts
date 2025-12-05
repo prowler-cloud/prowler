@@ -20,6 +20,10 @@ const NAVIGATION_TYPE = {
 
 type NavigationType = (typeof NAVIGATION_TYPE)[keyof typeof NAVIGATION_TYPE];
 
+function getCurrentUrl(): string {
+  return window.location.pathname + window.location.search;
+}
+
 /**
  * Called by Next.js when router navigation begins.
  * Triggers the navigation progress bar.
@@ -28,11 +32,9 @@ export function onRouterTransitionStart(
   url: string,
   _navigationType: NavigationType,
 ) {
-  // Check if navigating to the same URL (only pathname, ignore query params for this check)
-  const targetPath = url.split("?")[0];
-  const currentPath = window.location.pathname;
+  const currentUrl = getCurrentUrl();
 
-  if (targetPath === currentPath && url === window.location.href) {
+  if (url === currentUrl) {
     // Same URL - cancel any ongoing progress
     cancelProgress();
   } else {

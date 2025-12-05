@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 
 interface ProgressState {
   isLoading: boolean;
@@ -85,7 +85,6 @@ export function cancelProgress() {
 export function useNavigationProgress() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const prevUrl = useRef(`${pathname}?${searchParams.toString()}`);
 
   const currentState = useSyncExternalStore(
     (listener) => {
@@ -96,11 +95,10 @@ export function useNavigationProgress() {
     () => SERVER_SNAPSHOT,
   );
 
+  // Complete progress when URL changes (only if currently loading)
   useEffect(() => {
-    const currentUrl = `${pathname}?${searchParams.toString()}`;
-    if (prevUrl.current !== currentUrl) {
+    if (state.isLoading) {
       completeProgress();
-      prevUrl.current = currentUrl;
     }
   }, [pathname, searchParams]);
 
