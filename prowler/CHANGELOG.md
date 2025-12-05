@@ -12,6 +12,13 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `compute_instance_automatic_restart_enabled` check for GCP provider [(#9271)](https://github.com/prowler-cloud/prowler/pull/9271)
 - `compute_instance_deletion_protection_enabled` check for GCP provider [(#9358)](https://github.com/prowler-cloud/prowler/pull/9358)
 
+### Changed
+- Update AWS Lightsail service metadata to new format [(#9264)](https://github.com/prowler-cloud/prowler/pull/9264)
+- Update AWS GuardDuty service metadata to new format [(#9259)](https://github.com/prowler-cloud/prowler/pull/9259)
+- Update AWS MQ service metadata to new format [(#9267)](https://github.com/prowler-cloud/prowler/pull/9267)
+- Update AWS Macie service metadata to new format [(#9265)](https://github.com/prowler-cloud/prowler/pull/9265)
+- Update AWS Lightsail service metadata to new format [(#9264)](https://github.com/prowler-cloud/prowler/pull/9264)
+
 ---
 
 ## [v5.14.2] (Prowler UNRELEASED)

@@ -1,31 +1,40 @@
 {
   "Provider": "aws",
   "CheckID": "mq_broker_auto_minor_version_upgrades",
-  "CheckTitle": "MQ Broker Auto Minor Version Upgrades should be enabled.",
+  "CheckTitle": "Amazon MQ broker has automated minor version upgrades enabled",
   "CheckType": [
+    "Software and Configuration Checks/Patch Management",
     "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls"
   ],
   "ServiceName": "mq",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:mq:region:account-id:broker:broker-id",
+  "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsAmazonMQBroker",
-  "Description": "Ensure that automatic minor version upgrades are enabled on Amazon MQ brokers.",
-  "Risk": "Amazon MQ brokers without automatic minor version upgrades may miss critical updates, leaving them vulnerable to security risks, bugs, and performance issues.",
-  "RelatedUrl": "https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/upgrading-brokers.html#upgrading-brokers-automatic-upgrades",
+  "Description": "**Amazon MQ brokers** have `autoMinorVersionUpgrade` enabled to automatically apply supported minor and patch engine updates during the scheduled maintenance window.",
+  "Risk": "Without automatic minor upgrades, brokers may run **known-vulnerable engine versions**, enabling exploits that impact:\n- **Confidentiality**: message disclosure\n- **Integrity**: tampering or replay\n- **Availability**: crashes/DoS and instability\n\nDelayed patches also increase operational risk and drift.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MQ/auto-minor-version-upgrade.html",
+    "https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/upgrading-brokers.html#upgrading-brokers-automatic-upgrades",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/mq-controls.html#mq-3",
+    "https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/upgrading-brokers.html#upgrading-brokers-automatic-upgrades.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws mq update-broker --broker-id <broker-id> --auto-minor-version-upgrade",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/ensure-aws-mqbrokers-minor-version-updates-are-enabled/",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/mq-controls.html#mq-3",
-      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/MQ/auto-minor-version-upgrade.html"
+      "CLI": "aws mq update-broker --broker-id <example_resource_id> --auto-minor-version-upgrade",
+      "NativeIaC": "```yaml\n# CloudFormation: Enable automatic minor version upgrades on an MQ broker\nResources:\n  <example_resource_name>:\n    Type: AWS::AmazonMQ::Broker\n    Properties:\n      BrokerName: <example_resource_name>\n      AutoMinorVersionUpgrade: true  # Critical: enables automatic minor version upgrades\n      DeploymentMode: SINGLE_INSTANCE\n      EngineType: ACTIVEMQ\n      EngineVersion: <ENGINE_VERSION>\n      HostInstanceType: mq.t3.micro\n      PubliclyAccessible: true\n      Users:\n        - Username: <USERNAME>\n          Password: <PASSWORD>\n```",
+      "Other": "1. Open the Amazon MQ console\n2. Go to Brokers and select the target broker\n3. Click Edit\n4. Under Maintenance, check Enable automatic minor version upgrades\n5. Click Save",
+      "Terraform": "```hcl\n# Terraform: Enable automatic minor version upgrades on an MQ broker\nresource \"aws_mq_broker\" \"<example_resource_name>\" {\n  broker_name                = \"<example_resource_name>\"\n  engine_type                = \"ActiveMQ\"\n  engine_version             = \"<ENGINE_VERSION>\"\n  host_instance_type         = \"mq.t3.micro\"\n  publicly_accessible        = true\n  auto_minor_version_upgrade = true  # Critical: enables automatic minor version upgrades\n\n  user {\n    username = \"<USERNAME>\"\n    password = \"<PASSWORD>\"\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure that automatic minor version upgrades are enabled on Amazon MQ brokers to receive the latest security patches and improvements automatically.",
-      "Url": "https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/upgrading-brokers.html#upgrading-brokers-automatic-upgrades.html"
+      "Text": "Enable `autoMinorVersionUpgrade` on all brokers to reduce patch latency.\n\n- Align upgrades with a defined maintenance window\n- Validate changes in staging before production\n- Monitor broker health and logs after updates\n- Maintain HA and tested backups for rollback (*defense in depth*)",
+      "Url": "https://hub.prowler.com/check/mq_broker_auto_minor_version_upgrades"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "vulnerabilities"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
