@@ -76,6 +76,13 @@ export interface FailedSection {
   types?: { [key: string]: number };
 }
 
+export type TopFailedDataType = "sections" | "requirements";
+
+export interface TopFailedResult {
+  items: FailedSection[];
+  type: TopFailedDataType;
+}
+
 export interface RequirementsTotals {
   pass: number;
   fail: number;

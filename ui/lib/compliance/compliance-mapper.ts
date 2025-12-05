@@ -14,10 +14,10 @@ import { AccordionItemProps } from "@/components/ui/accordion/Accordion";
 import {
   AttributesData,
   CategoryData,
-  FailedSection,
   Framework,
   Requirement,
   RequirementsData,
+  TopFailedResult,
 } from "@/types/compliance";
 
 import {
@@ -74,7 +74,7 @@ export interface ComplianceMapper {
     data: Framework[],
     scanId: string | undefined,
   ) => AccordionItemProps[];
-  getTopFailedSections: (mappedData: Framework[]) => FailedSection[];
+  getTopFailedSections: (mappedData: Framework[]) => TopFailedResult;
   calculateCategoryHeatmapData: (complianceData: Framework[]) => CategoryData[];
   getDetailsComponent: (requirement: Requirement) => React.ReactNode;
 }
