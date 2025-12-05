@@ -1,31 +1,40 @@
 {
   "Provider": "aws",
   "CheckID": "storagegateway_gateway_fault_tolerant",
-  "CheckTitle": "Check if AWS StorageGateway Gateways are hosted in a fault-tolerant environment.",
+  "CheckTitle": "AWS Storage Gateway gateway is not hosted on EC2",
   "CheckType": [
-    "Resilience"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Effects/Denial of Service"
   ],
   "ServiceName": "storagegateway",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:storagegateway:region:account-id:share",
-  "Severity": "low",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
   "ResourceType": "Other",
-  "Description": "Storage Gateway, when hosted on an EC2 environment, runs on a single EC2 instance. This is a single-point of failure for any applications expecting highly available access to application storage.",
-  "Risk": "Running Storage Gateway as a mechanism for providing file-based application storage that require high-availability increases the risk of application outages if any AZ outages occur.",
-  "RelatedUrl": "https://docs.aws.amazon.com/filegateway/latest/files3/disaster-recovery-resiliency.html",
+  "Description": "AWS Storage Gateway hosted on an **EC2 instance** is flagged by assessing each gateway's hosting environment, distinguishing **single-instance EC2** deployments from **non-EC2** platforms that can leverage platform-level high availability.",
+  "Risk": "A **single EC2-hosted gateway** concentrates failure risk. Instance or AZ disruption, reboots, or network faults can halt file access, causing downtime and stalled writes. This degrades **availability** and can affect **integrity** via partial operations or cache desynchronization.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://aws.amazon.com/blogs/storage/author/sekhrip/",
+    "https://docs.aws.amazon.com/filegateway/latest/files3/resource-vm-setup.html",
+    "https://docs.aws.amazon.com/filegateway/latest/files3/disaster-recovery-resiliency.html",
+    "https://repost.aws/questions/QU7uSNAm4qR1C1VKircva_NQ/questions/QU7uSNAm4qR1C1VKircva_NQ/aws-storage-gateway-ec2-high-availability"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "",
+      "Other": "1. In the AWS Console, go to Storage Gateway and click Create gateway\n2. Choose your gateway type, then under Host platform select VMware ESXi, Microsoft Hyper-V, Linux KVM, or Hardware Appliance (do not select Amazon EC2)\n3. Download and deploy the VM on your host, power it on, and note its IP\n4. In the console, connect to and Activate the new gateway\n5. Recreate equivalent resources (shares/volumes/tapes) on the new gateway and update clients to use the new gateway IP/DNS\n6. In Storage Gateway > Gateways, delete the old EC2-hosted gateway\n7. Verify the new gateway's details show Host platform not equal to Amazon EC2",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Migrating workloads to Amazon EFS, FSx, or other storage services can provide higher availability architectures if required.",
-      "Url": "https://docs.aws.amazon.com/filegateway/latest/files3/resource-vm-setup.html"
+      "Text": "Design for **high availability**: avoid single-instance gateways for critical workloads. Prefer managed multi-AZ services like **EFS** or **FSx**, or use multiple gateways with client failover and resilient naming. Apply **defense in depth**, validate failover regularly, and monitor health to prevent outages.",
+      "Url": "https://hub.prowler.com/check/storagegateway_gateway_fault_tolerant"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

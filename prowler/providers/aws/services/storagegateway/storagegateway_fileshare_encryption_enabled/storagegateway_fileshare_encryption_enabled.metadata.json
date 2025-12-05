@@ -1,31 +1,44 @@
 {
   "Provider": "aws",
   "CheckID": "storagegateway_fileshare_encryption_enabled",
-  "CheckTitle": "Check if AWS StorageGateway File Shares are encrypted with KMS CMK.",
+  "CheckTitle": "Storage Gateway file share is encrypted with KMS CMK",
   "CheckType": [
-    "Security"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls (USA)",
+    "Software and Configuration Checks/Industry and Regulatory Standards/PCI-DSS",
+    "Software and Configuration Checks/Industry and Regulatory Standards/ISO 27001 Controls",
+    "Software and Configuration Checks/Industry and Regulatory Standards/SOC 2",
+    "Software and Configuration Checks/Industry and Regulatory Standards/HIPAA Controls (USA)",
+    "Effects/Data Exposure"
   ],
   "ServiceName": "storagegateway",
-  "SubServiceName": "filegateway",
-  "ResourceIdTemplate": "arn:aws:storagegateway:region:account-id:share",
-  "Severity": "low",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
   "ResourceType": "Other",
-  "Description": "Ensure that Amazon Storage Gateway service is using AWS KMS Customer Master Keys (CMKs) instead of AWS managed-keys (i.e. default keys) for file share data encryption, in order to have a fine-grained control over data-at-rest encryption/decryption process and meet compliance requirements. An AWS Storage Gateway file share is a file system mount point backed by Amazon S3 cloud storage.",
-  "Risk": "This could provide an avenue for unauthorized access to your data by not having fine-grained control over data-at-rest encryption/decryption process and meet compliance requirements.",
-  "RelatedUrl": "https://docs.aws.amazon.com/filegateway/latest/files3/encrypt-objects-stored-by-file-gateway-in-amazon-s3.html",
+  "Description": "Storage Gateway file shares configured with **customer-managed KMS keys (CMKs)** for server-side encryption of objects written to S3.\n\nFile shares without an explicit KMS key (e.g., `SSE-KMS` or `DSSE-KMS`) are identified.",
+  "Risk": "Without **CMEK**, encryption relies on provider-managed keys, reducing control over who can decrypt and when. This weakens confidentiality by limiting key-policy enforcement, revocation, and auditable key use, increasing exposure from stolen S3 credentials or overly permissive roles.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/StorageGateway/file-shares-encrypted-with-cmk.html#",
+    "https://docs.aws.amazon.com/filegateway/latest/files3/encrypt-objects-stored-by-file-gateway-in-amazon-s3.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws storagegateway update-nfs-file-share --region us-east-1 --file-share-arn arn:aws:storagegateway:us-east-1:123456789012:share/share-abcd1234 --kms-encrypted --kms-key arn:aws:kms:us-east-1:123456789012:key/abcdabcd-1234-1234-1234-abcdabcdabcd",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/aws/StorageGateway/file-shares-encrypted-with-cmk.html#",
-      "Terraform": ""
+      "CLI": "aws storagegateway update-nfs-file-share --file-share-arn <example_resource_arn> --kms-encrypted --kms-key <example_kms_key_arn>",
+      "NativeIaC": "```yaml\n# CloudFormation: enable KMS CMK encryption for a Storage Gateway NFS file share\nResources:\n  <example_resource_name>:\n    Type: AWS::StorageGateway::NFSFileShare\n    Properties:\n      ClientToken: \"<example_resource_id>\"\n      GatewayARN: \"<example_resource_arn>\"\n      LocationARN: \"<example_resource_arn>\"\n      Role: \"<example_resource_arn>\"\n      KMSEncrypted: true  # Critical: enables KMS CMK encryption for the file share\n      KMSKey: \"<example_kms_key_arn>\"  # Critical: CMK ARN used for encryption\n```",
+      "Other": "1. In the AWS Console, go to Storage Gateway > File shares\n2. Select the affected file share and click Edit\n3. Under Encryption, choose AWS KMS key\n4. Select the CMK to use (or paste its ARN)\n5. Save changes",
+      "Terraform": "```hcl\n# Enable KMS CMK encryption for a Storage Gateway NFS file share\nresource \"aws_storagegateway_nfs_file_share\" \"<example_resource_name>\" {\n  client_list  = [\"<example_cidr_block>\"]\n  gateway_arn  = \"<example_resource_arn>\"\n  location_arn = \"<example_resource_arn>\"\n  role_arn     = \"<example_resource_arn>\"\n\n  kms_encrypted = true              # Critical: enables KMS CMK encryption\n  kms_key_arn   = \"<example_kms_key_arn>\"  # Critical: CMK ARN used for encryption\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure that Amazon Storage Gateway service is using AWS KMS Customer Master Keys (CMKs).",
-      "Url": "https://docs.aws.amazon.com/filegateway/latest/files3/encrypt-objects-stored-by-file-gateway-in-amazon-s3.html"
+      "Text": "Use a **customer-managed KMS key** for each file share's server-side encryption (`SSE-KMS`; *consider* `DSSE-KMS` for multilayer needs). Apply **least privilege** and **separation of duties** to key access, rotate keys, monitor key usage, and restrict scope to necessary principals and regions.",
+      "Url": "https://hub.prowler.com/check/storagegateway_fileshare_encryption_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "encryption"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
