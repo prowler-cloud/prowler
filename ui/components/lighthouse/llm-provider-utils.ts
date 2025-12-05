@@ -69,7 +69,7 @@ export const refreshModelsInBackground = async (
   }
 
   // Wait for task to complete
-  const modelsStatus = await checkTaskStatus(modelsResult.data.id);
+  const modelsStatus = await checkTaskStatus(modelsResult.data.id, 40, 2000);
   if (!modelsStatus.completed) {
     throw new Error(modelsStatus.error || "Model refresh failed");
   }
