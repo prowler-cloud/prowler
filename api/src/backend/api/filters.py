@@ -157,6 +157,9 @@ class CommonFindingFilters(FilterSet):
         field_name="resources__type", lookup_expr="icontains"
     )
 
+    categories = CharFilter(method="filter_categories")
+    categories__in = CharInFilter(method="filter_categories_in")
+
     # Temporarily disabled until we implement tag filtering in the UI
     # resource_tag_key = CharFilter(field_name="resources__tags__key")
     # resource_tag_key__in = CharInFilter(
@@ -197,6 +200,15 @@ class CommonFindingFilters(FilterSet):
                 resources__tags__value__icontains=tag_value,
             )
         return queryset.filter(overall_query).distinct()
+
+    def filter_categories(self, queryset, name, value):
+        return queryset.filter(check_metadata__categories__contains=[value])
+
+    def filter_categories_in(self, queryset, name, value):
+        query = Q()
+        for category in value:
+            query |= Q(check_metadata__categories__contains=[category])
+        return queryset.filter(query)
 
 
 class TenantFilter(FilterSet):
