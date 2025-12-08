@@ -1206,7 +1206,13 @@
     "awstransform": {
       "regions": {
         "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-2",
+          "ca-central-1",
           "eu-central-1",
+          "eu-west-2",
           "us-east-1"
         ],
         "aws-cn": [],
@@ -3219,6 +3225,7 @@
           "ap-southeast-1",
           "ap-southeast-2",
           "ap-southeast-5",
+          "ap-southeast-7",
           "ca-central-1",
           "eu-central-1",
           "eu-central-2",
@@ -6046,27 +6053,6 @@
         ]
       }
     },
-    "iotfleethub": {
-      "regions": {
-        "aws": [
-          "ap-northeast-1",
-          "ap-northeast-2",
-          "ap-south-1",
-          "ap-southeast-1",
-          "ap-southeast-2",
-          "ca-central-1",
-          "eu-central-1",
-          "eu-north-1",
-          "eu-west-1",
-          "eu-west-2",
-          "us-east-1",
-          "us-east-2",
-          "us-west-2"
-        ],
-        "aws-cn": [],
-        "aws-us-gov": []
-      }
-    },
     "iotfleetwise": {
       "regions": {
         "aws": [
@@ -8091,6 +8077,15 @@
         "aws-us-gov": []
       }
     },
+    "nova-act": {
+      "regions": {
+        "aws": [
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
+      }
+    },
     "oam": {
       "regions": {
         "aws": [
@@ -8922,25 +8917,6 @@
         "aws-us-gov": []
       }
     },
-    "qldb-session": {
-      "regions": {
-        "aws": [
-          "ap-northeast-1",
-          "ap-northeast-2",
-          "ap-southeast-1",
-          "ap-southeast-2",
-          "ca-central-1",
-          "eu-central-1",
-          "eu-west-1",
-          "eu-west-2",
-          "us-east-1",
-          "us-east-2",
-          "us-west-2"
-        ],
-        "aws-cn": [],
-        "aws-us-gov": []
-      }
-    },
     "quicksight": {
       "regions": {
         "aws": [
@@ -9378,6 +9354,7 @@
           "ap-southeast-3",
           "ap-southeast-4",
           "ap-southeast-5",
+          "ap-southeast-6",
           "ap-southeast-7",
           "ca-central-1",
           "ca-west-1",
@@ -10008,6 +9985,28 @@
           "us-gov-east-1",
           "us-gov-west-1"
         ]
+      }
+    },
+    "s3vectors": {
+      "regions": {
+        "aws": [
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-us-gov": []
       }
     },
     "sagemaker": {
