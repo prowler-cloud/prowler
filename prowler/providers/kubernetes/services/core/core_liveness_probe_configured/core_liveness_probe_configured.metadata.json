@@ -2,7 +2,10 @@
   "Provider": "kubernetes",
   "CheckID": "core_liveness_probe_configured",
   "CheckTitle": "Ensure liveness probe is configured",
-  "CheckType": [],
+  "CheckType": [
+    "Software and Configuration Checks/Kubernetes Best Practices",
+    "Availability/Health Checks"
+  ],
   "ServiceName": "core",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
@@ -11,12 +14,24 @@
   "Description": "Ensure each container has a liveness probe configured to detect and restart unhealthy containers.",
   "Risk": "Without liveness probes, failed containers may remain running causing degraded service or resource waste.",
   "RelatedUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/",
+    "https://sre.google/workbook/" 
+  ],
   "Remediation": {
-    "Code": {"CLI": "", "NativeIaC": "", "Other": "", "Terraform": ""},
-    "Recommendation": {"Text": "Add liveness probes to container specs.", "Url": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/"}
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "# Example: add a livenessProbe to your container spec\nreadinessProbe:\n  httpGet:\n    path: /healthz\n    port: 8080\n  initialDelaySeconds: 10\n  periodSeconds: 10",
+      "Other": "1. Edit the Pod/Deployment manifest and add a `livenessProbe` to each container.\n2. Tune `initialDelaySeconds`, `periodSeconds` and failure thresholds to your app.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Add and tune liveness probes for containers to allow Kubernetes to detect and restart unhealthy containers.",
+      "Url": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/"
+    }
   },
   "Categories": ["availability"],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Check ensures presence of liveness probe; tune thresholds per application."
+  "Notes": "Presence of a probe is checked; adjust thresholds for app behavior to avoid false positives."
 }

@@ -2,7 +2,10 @@
   "Provider": "kubernetes",
   "CheckID": "core_cpu_requests_set",
   "CheckTitle": "Ensure CPU request is set",
-  "CheckType": [],
+  "CheckType": [
+    "Software and Configuration Checks/Kubernetes Best Practices",
+    "Resource Management"
+  ],
   "ServiceName": "core",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
@@ -11,12 +14,23 @@
   "Description": "Ensure CPU requests are set for containers to enable proper scheduling and resource guarantees.",
   "Risk": "Missing CPU requests can lead to scheduling and resource contention issues.",
   "RelatedUrl": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/"
+  ],
   "Remediation": {
-    "Code": {"CLI": "", "NativeIaC": "", "Other": "", "Terraform": ""},
-    "Recommendation": {"Text": "Set CPU requests in container resources.", "Url": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/"}
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "# Example: set cpu requests in container resources\nresources:\n  requests:\n    cpu: \"100m\"",
+      "Other": "1. Edit the Pod/Deployment manifest and set `resources.requests.cpu` for each container.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Define sensible CPU requests to enable efficient scheduling and fair resource allocation.",
+      "Url": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/"
+    }
   },
   "Categories": ["resource-management"],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Requests should be tuned per workload."
+  "Notes": "Requests should be tuned per workload and cluster capacity."
 }

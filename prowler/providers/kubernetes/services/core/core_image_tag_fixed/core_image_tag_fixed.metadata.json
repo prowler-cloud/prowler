@@ -2,21 +2,36 @@
   "Provider": "kubernetes",
   "CheckID": "core_image_tag_fixed",
   "CheckTitle": "Ensure image tag is set to Fixed – not Latest or Blank",
-  "CheckType": [],
+  "CheckType": [
+    "Software and Configuration Checks/Kubernetes Best Practices",
+    "Image Security"
+  ],
   "ServiceName": "core",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "KubernetesPod",
-  "Description": "Ensure container images use fixed tags (not 'latest' or blank) or are referenced by digest.",
+  "Description": "Ensure container images use fixed tags (not 'latest' or blank) or are referenced by digest for reproducible and auditable deployments.",
   "Risk": "Using floating image tags can make deployments non-reproducible and introduce unexpected changes or vulnerabilities.",
   "RelatedUrl": "https://kubernetes.io/docs/concepts/containers/images/",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/concepts/containers/images/",
+    "https://slsa.dev/"
+  ],
   "Remediation": {
-    "Code": {"CLI": "", "NativeIaC": "", "Other": "", "Terraform": ""},
-    "Recommendation": {"Text": "Use explicit image tags or digests instead of 'latest' or leaving tags blank.", "Url": "https://kubernetes.io/docs/concepts/containers/images/"}
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "# Example: use image: repo/image:1.2.3 or image@sha256:<digest>\ncontainers:\n- name: app\n  image: myrepo/myapp:1.2.3",
+      "Other": "1. Pin image tags in manifests or use image digests (sha256) to ensure immutability.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Use explicit image tags or digests for deployment manifests; avoid 'latest' or omitted tags.",
+      "Url": "https://kubernetes.io/docs/concepts/containers/images/"
+    }
   },
   "Categories": ["image-security"],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Image digests (sha256) are recommended for immutability."
+  "Notes": "Image digests (sha256) are recommended for immutability and reproducibility."
 }

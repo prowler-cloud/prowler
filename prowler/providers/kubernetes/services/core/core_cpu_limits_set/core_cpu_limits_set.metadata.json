@@ -2,7 +2,10 @@
   "Provider": "kubernetes",
   "CheckID": "core_cpu_limits_set",
   "CheckTitle": "Ensure CPU limits are set",
-  "CheckType": [],
+  "CheckType": [
+    "Software and Configuration Checks/Kubernetes Best Practices",
+    "Resource Management"
+  ],
   "ServiceName": "core",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
@@ -11,12 +14,23 @@
   "Description": "Ensure CPU limits are set for containers to prevent noisy neighbors and resource exhaustion.",
   "Risk": "Missing CPU limits can allow containers to consume unbounded CPU leading to performance issues.",
   "RelatedUrl": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/"
+  ],
   "Remediation": {
-    "Code": {"CLI": "", "NativeIaC": "", "Other": "", "Terraform": ""},
-    "Recommendation": {"Text": "Set CPU limits in container resources.", "Url": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/"}
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "# Example: set cpu limits in container resources\nresources:\n  limits:\n    cpu: \"500m\"",
+      "Other": "1. Edit the Pod/Deployment manifest and set `resources.limits.cpu` for each container.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Define CPU limits to bound a container's CPU usage and protect node stability.",
+      "Url": "https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/"
+    }
   },
   "Categories": ["resource-management"],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Limits should be tuned per workload."
+  "Notes": "Limits should be tuned per workload and monitored."
 }

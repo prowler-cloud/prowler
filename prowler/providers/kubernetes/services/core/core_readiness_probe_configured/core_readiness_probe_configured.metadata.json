@@ -2,7 +2,10 @@
   "Provider": "kubernetes",
   "CheckID": "core_readiness_probe_configured",
   "CheckTitle": "Ensure readiness probe is configured",
-  "CheckType": [],
+  "CheckType": [
+    "Software and Configuration Checks/Kubernetes Best Practices",
+    "Availability/Health Checks"
+  ],
   "ServiceName": "core",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
@@ -11,12 +14,23 @@
   "Description": "Ensure each container has a readiness probe configured to signal when it is ready to serve traffic.",
   "Risk": "Without readiness probes, services may receive traffic before containers are ready, causing errors.",
   "RelatedUrl": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/"
+  ],
   "Remediation": {
-    "Code": {"CLI": "", "NativeIaC": "", "Other": "", "Terraform": ""},
-    "Recommendation": {"Text": "Add readiness probes to container specs.", "Url": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/"}
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "# Example readiness probe\nreadinessProbe:\n  httpGet:\n    path: /ready\n    port: 8080\n  initialDelaySeconds: 5\n  periodSeconds: 5",
+      "Other": "1. Add a `readinessProbe` to the container spec in Deployments/Pods.\n2. Ensure the probe accurately reflects service readiness.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Add readiness probes to prevent routing traffic to unready containers.",
+      "Url": "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/"
+    }
   },
   "Categories": ["availability"],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Check ensures presence of readiness probe; tune thresholds per application."
+  "Notes": "Readiness and liveness probes serve different purposes; implement both where appropriate."
 }
