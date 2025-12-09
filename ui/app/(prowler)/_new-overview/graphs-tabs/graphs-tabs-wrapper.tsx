@@ -7,9 +7,9 @@ import { GraphsTabsClient } from "./_components/graphs-tabs-client";
 import { GRAPH_TABS, type TabId } from "./_config/graphs-tabs-config";
 import { FindingsViewSSR } from "./findings-view";
 import { RiskPipelineViewSSR } from "./risk-pipeline-view/risk-pipeline-view.ssr";
+import { RiskPlotSSR } from "./risk-plot/risk-plot.ssr";
 import { ThreatMapViewSSR } from "./threat-map-view/threat-map-view.ssr";
 // TODO: Uncomment when ready to enable other tabs
-// import { RiskPlotView } from "./risk-plot/risk-plot-view";
 // import { RiskRadarViewSSR } from "./risk-radar-view/risk-radar-view.ssr";
 
 const LoadingFallback = () => (
@@ -25,9 +25,9 @@ const GRAPH_COMPONENTS: Record<TabId, GraphComponent> = {
   findings: FindingsViewSSR as GraphComponent,
   "risk-pipeline": RiskPipelineViewSSR as GraphComponent,
   "threat-map": ThreatMapViewSSR as GraphComponent,
+  "risk-plot": RiskPlotSSR as GraphComponent,
   // TODO: Uncomment when ready to enable other tabs
   // "risk-radar": RiskRadarViewSSR as GraphComponent,
-  // "risk-plot": RiskPlotView as GraphComponent,
 };
 
 interface GraphsTabsWrapperProps {
