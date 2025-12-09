@@ -11,6 +11,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `compute_instance_preemptible_vm_disabled` check for GCP provider [(#9342)](https://github.com/prowler-cloud/prowler/pull/9342)
 - `compute_instance_automatic_restart_enabled` check for GCP provider [(#9271)](https://github.com/prowler-cloud/prowler/pull/9271)
 - `compute_instance_deletion_protection_enabled` check for GCP provider [(#9358)](https://github.com/prowler-cloud/prowler/pull/9358)
+- Add needed changes to AlibabaCloud provider from the API [(#9485)](https://github.com/prowler-cloud/prowler/pull/9485)
 
 ### Changed
 - Update AWS Macie service metadata to new format [(#9265)](https://github.com/prowler-cloud/prowler/pull/9265)
