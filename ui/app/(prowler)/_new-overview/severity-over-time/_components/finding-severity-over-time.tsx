@@ -13,6 +13,7 @@ import {
   SeverityLevel,
 } from "@/types/severities";
 
+import { DEFAULT_TIME_RANGE } from "../_constants/time-range.constants";
 import { type TimeRange, TimeRangeSelector } from "./time-range-selector";
 
 interface FindingSeverityOverTimeProps {
@@ -24,7 +25,7 @@ export const FindingSeverityOverTime = ({
 }: FindingSeverityOverTimeProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [timeRange, setTimeRange] = useState<TimeRange>("5D");
+  const [timeRange, setTimeRange] = useState<TimeRange>(DEFAULT_TIME_RANGE);
   const [data, setData] = useState<LineDataPoint[]>(initialData);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
