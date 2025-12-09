@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import os
-from typing import Iterable
+from typing import TYPE_CHECKING, Iterable
 
 from cloudflare import Cloudflare
 from colorama import Fore, Style
@@ -23,10 +25,12 @@ from prowler.providers.cloudflare.models import (
     CloudflareAccount,
     CloudflareIdentityInfo,
     CloudflareSession,
-    CloudflareZone,
 )
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
+
+if TYPE_CHECKING:
+    from prowler.providers.cloudflare.services.zones.zones_service import CloudflareZone
 
 
 class CloudflareProvider(Provider):
@@ -230,6 +234,11 @@ class CloudflareProvider(Provider):
         self, provided_zones: Iterable[str] | None = None
     ) -> list[CloudflareZone]:
         """Enumerate Cloudflare zones available to the authenticated identity."""
+        # Late import to avoid circular dependency
+        from prowler.providers.cloudflare.services.zones.zones_service import (
+            CloudflareZone,
+        )
+
         zones: list[CloudflareZone] = []
         filters = set(provided_zones) if provided_zones else set()
         seen_zone_ids: set[str] = set()

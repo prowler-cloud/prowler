@@ -1,8 +1,13 @@
+from __future__ import annotations
+
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import TYPE_CHECKING
 
 from prowler.lib.logger import logger
 from prowler.providers.cloudflare.cloudflare_provider import CloudflareProvider
-from prowler.providers.cloudflare.models import CloudflareZone
+
+if TYPE_CHECKING:
+    from prowler.providers.cloudflare.services.zones.zones_service import CloudflareZone
 
 MAX_WORKERS = 10
 
