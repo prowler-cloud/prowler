@@ -2,7 +2,6 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-
 ## [v5.14.3] (Prowler UNRELEASED)
 
 ### Fixed
