@@ -23,7 +23,13 @@
       "Url": "https://docs.aws.amazon.com/network-firewall/latest/developerguide/vpc-config.html"
     }
   },
+<<<<<<< HEAD
   "Categories": [],
+=======
+  "Categories": [
+    "trust-boundaries"
+  ],
+>>>>>>> 01fe379b5 (fix: remove incorrect `threat-detection` category from checks (#9489))
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
