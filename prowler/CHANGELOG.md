@@ -4,6 +4,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ## [v5.15.0] (Prowler UNRELEASED)
 
+### Fixed
+- Pin `alibabacloud-gateway-oss-util` to version 0.0.3 to address missing dependency [(#9487)](https://github.com/prowler-cloud/prowler/pull/9487)
+
 ### Added
 - `cloudstorage_uses_vpc_service_controls` check for GCP provider [(#9256)](https://github.com/prowler-cloud/prowler/pull/9256)
 - Alibaba Cloud provider with CIS 2.0 benchmark [(#9329)](https://github.com/prowler-cloud/prowler/pull/9329)
