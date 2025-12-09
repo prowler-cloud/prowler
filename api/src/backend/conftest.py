@@ -15,6 +15,7 @@ from tasks.jobs.backfill import backfill_resource_scan_summaries
 
 from api.db_utils import rls_transaction
 from api.models import (
+    AttackSurfaceOverview,
     ComplianceOverview,
     ComplianceRequirementOverview,
     Finding,
@@ -1467,6 +1468,21 @@ def mute_rules_fixture(tenants_fixture, create_test_user, findings_fixture):
     )
 
     return mute_rule1, mute_rule2
+
+
+@pytest.fixture
+def create_attack_surface_overview():
+    def _create(tenant, scan, attack_surface_type, total=10, failed=5, muted_failed=2):
+        return AttackSurfaceOverview.objects.create(
+            tenant=tenant,
+            scan=scan,
+            attack_surface_type=attack_surface_type,
+            total_findings=total,
+            failed_findings=failed,
+            muted_failed_findings=muted_failed,
+        )
+
+    return _create
 
 
 def get_authorization_header(access_token: str) -> dict:

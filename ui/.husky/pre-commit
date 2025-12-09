@@ -140,7 +140,7 @@ echo -e "${BLUE}🏥 Running healthcheck...${NC}"
 echo ""
 
 cd ui || cd .
-if npm run healthcheck; then
+if pnpm run healthcheck; then
   echo ""
   echo -e "${GREEN}✅ Healthcheck passed${NC}"
   echo ""
@@ -156,7 +156,7 @@ fi
 echo -e "${BLUE}🔨 Running build...${NC}"
 echo ""
 
-if npm run build; then
+if pnpm run build; then
   echo ""
   echo -e "${GREEN}✅ Build passed${NC}"
   echo ""

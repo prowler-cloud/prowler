@@ -9,7 +9,6 @@ import {
 } from "@/lib/compliance/compliance-report-types";
 import { addScanOperation } from "@/lib/sentry-breadcrumbs";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
-
 export const getScans = async ({
   page = 1,
   query = "",

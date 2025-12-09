@@ -78,6 +78,8 @@ def load_csv_files(csv_files):
                 result = result.replace("_KUBERNETES", " - KUBERNETES")
             if "M65" in result:
                 result = result.replace("_M65", " - M65")
+            if "ALIBABACLOUD" in result:
+                result = result.replace("_ALIBABACLOUD", " - ALIBABACLOUD")
             results.append(result)
 
     unique_results = set(results)
@@ -125,7 +127,7 @@ if data is None:
     )
 else:
 
-    data["ASSESSMENTDATE"] = pd.to_datetime(data["ASSESSMENTDATE"])
+    data["ASSESSMENTDATE"] = pd.to_datetime(data["ASSESSMENTDATE"], format="mixed")
     data["ASSESSMENT_TIME"] = data["ASSESSMENTDATE"].dt.strftime("%Y-%m-%d %H:%M:%S")
 
     data_values = data["ASSESSMENT_TIME"].unique()
@@ -278,9 +280,13 @@ def display_data(
             data["REQUIREMENTS_ATTRIBUTES_PROFILE"] = data[
                 "REQUIREMENTS_ATTRIBUTES_PROFILE"
             ].apply(lambda x: x.split(" - ")[0])
+
+    # Rename the column LOCATION to REGION for Alibaba Cloud
+    if "alibabacloud" in analytics_input:
+        data = data.rename(columns={"LOCATION": "REGION"})
     # Filter the chosen level of the CIS
     if is_level_1:
-        data = data[data["REQUIREMENTS_ATTRIBUTES_PROFILE"] == "Level 1"]
+        data = data[data["REQUIREMENTS_ATTRIBUTES_PROFILE"].str.contains("Level 1")]
 
     # Rename the column PROJECTID to ACCOUNTID for GCP
     if data.columns.str.contains("PROJECTID").any():
