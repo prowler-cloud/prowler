@@ -32,6 +32,7 @@ Please add a detailed description of how to review this PR.
 #### API
 - [ ] Verify if API specs need to be regenerated.
 - [ ] Check if version updates are required (e.g., specs, Poetry, etc.).
+- [ ] Query performance validated with `EXPLAIN ANALYZE` for new/modified endpoints. See [Query Performance Guide](https://github.com/prowler-cloud/prowler/blob/master/api/docs/query-performance-guide.md).
 - [ ] Ensure new entries are added to [CHANGELOG.md](https://github.com/prowler-cloud/prowler/blob/master/api/CHANGELOG.md), if applicable.
 
 ### License
