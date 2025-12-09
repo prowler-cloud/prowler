@@ -18,6 +18,13 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
+## [1.15.3] (Prowler Unresealed)
+
+### Fixed
+- Pin `alibabacloud-gateway-oss-util` to version 0.0.3 to fix missing dependency bug [(#9487)](https://github.com/prowler-cloud/prowler/pull/9487)
+
+---
+
 ## [1.15.2] (Prowler v5.14.2)
 
 ### Fixed
