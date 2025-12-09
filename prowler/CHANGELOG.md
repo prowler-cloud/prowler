@@ -2,6 +2,9 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+<<<<<<< HEAD
+## [v5.14.2] (Prowler v5.14.2)
+=======
 ## [v5.15.0] (Prowler UNRELEASED)
 
 ### Added
@@ -31,6 +34,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ---
 
 ## [v5.14.2] (Prowler 5.14.2)
+>>>>>>> 01fe379b5 (fix: remove incorrect `threat-detection` category from checks (#9489))
 
 ### Fixed
 - Custom check folder metadata validation [(#9335)](https://github.com/prowler-cloud/prowler/pull/9335)
