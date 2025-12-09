@@ -1,28 +1,38 @@
 {
   "Provider": "aws",
   "CheckID": "wafv2_webacl_logging_enabled",
-  "CheckTitle": "Check if AWS WAFv2 WebACL logging is enabled",
+  "CheckTitle": "AWS WAFv2 Web ACL has logging enabled",
   "CheckType": [
-    "Logging and Monitoring"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
   ],
   "ServiceName": "wafv2",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:wafv2:region:account-id:webacl/webacl-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsWafv2WebAcl",
-  "Description": "Check if AWS WAFv2 logging is enabled",
-  "Risk": "Enabling AWS WAFv2 logging helps monitor and analyze traffic patterns for enhanced security.",
-  "RelatedUrl": "https://docs.aws.amazon.com/waf/latest/developerguide/logging.html",
+  "Description": "**AWS WAFv2 Web ACLs** with **logging** capture details of inspected requests and rule evaluations. The assessment determines for each Web ACL whether logging is configured to record traffic analyzed by that ACL.",
+  "Risk": "Without **WAF logging**, visibility into allowed/blocked requests is lost, degrading detection and response. **SQLi**, **credential stuffing**, and **bot/DDoS probes** can go unnoticed, risking data exposure (C), undetected rule misuse (I), and service instability from unseen abuse (A).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/WAF/enable-web-acls-logging.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/waf-controls.html#waf-11",
+    "https://docs.aws.amazon.com/cli/latest/reference/wafv2/put-logging-configuration.html",
+    "https://docs.aws.amazon.com/waf/latest/APIReference/API_LoggingConfiguration.html",
+    "https://docs.aws.amazon.com/cli/latest/reference/waf/put-logging-configuration.html",
+    "https://docs.aws.amazon.com/waf/latest/APIReference/API_PutLoggingConfiguration.html",
+    "https://docs.aws.amazon.com/waf/latest/developerguide/logging.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws wafv2 update-web-acl-logging-configuration --scope REGIONAL --web-acl-arn arn:partition:wafv2:region:account-id:webacl/webacl-id --logging-configuration '{\"LogDestinationConfigs\": [\"arn:partition:logs:region:account-id:log-group:log-group-name\"]}'",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/logging-policies/bc_aws_logging_33#terraform",
-      "Other": "https://docs.aws.amazon.com/securityhub/latest/userguide/waf-controls.html#waf-11",
-      "Terraform": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/WAF/enable-web-acls-logging.html"
+      "CLI": "aws wafv2 put-logging-configuration --logging-configuration ResourceArn=<WEB_ACL_ARN>,LogDestinationConfigs=<DESTINATION_ARN>",
+      "NativeIaC": "```yaml\n# CloudFormation: Enable logging for a WAFv2 Web ACL\nResources:\n  <example_resource_name>:\n    Type: AWS::WAFv2::LoggingConfiguration\n    Properties:\n      ResourceArn: arn:aws:wafv2:<region>:<account-id>:regional/webacl/<example_resource_name>/<example_resource_id>  # CRITICAL: target Web ACL to log\n      LogDestinationConfigs:  # CRITICAL: where logs are sent\n        - arn:aws:logs:<region>:<account-id>:log-group:aws-waf-logs-<example_resource_name>\n```",
+      "Other": "1. In the AWS Console, go to AWS WAF & Shield > Web ACLs\n2. Select the target Web ACL\n3. Open the Logging and metrics (or Logging) section and click Enable logging\n4. Choose a log destination (CloudWatch Logs log group, S3 bucket, or Kinesis Data Firehose)\n5. Click Save to enable logging",
+      "Terraform": "```hcl\n# Enable logging for a WAFv2 Web ACL\nresource \"aws_wafv2_web_acl_logging_configuration\" \"<example_resource_name>\" {\n  resource_arn           = \"<example_resource_arn>\"                 # CRITICAL: target Web ACL ARN\n  log_destination_configs = [\"<example_destination_arn>\"]           # CRITICAL: log destination ARN\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable AWS WAFv2 logging for your Web ACLs to monitor and analyze traffic patterns effectively.",
-      "Url": "https://docs.aws.amazon.com/waf/latest/developerguide/logging.html"
+      "Text": "Enable **logging** on all WAFv2 Web ACLs to a centralized destination. Apply **least privilege** for log delivery, **redact sensitive fields**, and filter to retain high-value events. Integrate with monitoring/SIEM for **alerting and correlation**, and review routinely as part of **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/wafv2_webacl_logging_enabled"
     }
   },
   "Categories": [
