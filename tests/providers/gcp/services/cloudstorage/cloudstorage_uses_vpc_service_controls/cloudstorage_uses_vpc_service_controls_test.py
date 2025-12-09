@@ -376,7 +376,7 @@ class TestCloudStorageUsesVPCServiceControls:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Project {GCP_PROJECT_ID} has VPC Service Controls enabled for Cloud Storage (verified by API access restriction)."
+                == f"Project {GCP_PROJECT_ID} has VPC Service Controls enabled for Cloud Storage in undetermined perimeter (verified by API access restriction)."
             )
             assert result[0].resource_id == GCP_PROJECT_ID
             assert result[0].resource_name == "test-project"

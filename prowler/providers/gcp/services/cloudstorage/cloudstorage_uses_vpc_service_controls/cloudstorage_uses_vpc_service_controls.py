@@ -60,7 +60,7 @@ class cloudstorage_uses_vpc_service_controls(Check):
                 in cloudstorage_client.vpc_service_controls_protected_projects
             ):
                 report.status = "PASS"
-                report.status_extended = f"Project {project.id} has VPC Service Controls enabled for Cloud Storage (verified by API access restriction)."
+                report.status_extended = f"Project {project.id} has VPC Service Controls enabled for Cloud Storage in undetermined perimeter (verified by API access restriction)."
 
             findings.append(report)
 

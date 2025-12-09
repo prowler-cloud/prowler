@@ -99,7 +99,7 @@ class CloudStorage(GCPService):
                 # Check if the error is due to VPC Service Controls blocking the API
                 if "vpcServiceControlsUniqueIdentifier" in str(http_error):
                     self.vpc_service_controls_protected_projects.add(project_id)
-                    logger.info(
+                    logger.warning(
                         f"Project {project_id} is protected by VPC Service Controls for Cloud Storage API."
                     )
                 else:
