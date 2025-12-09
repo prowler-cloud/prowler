@@ -7,7 +7,6 @@ import { getSeverityTrendsByTimeRange } from "@/actions/overview/severity-trends
 import { LineChart } from "@/components/graphs/line-chart";
 import { LineConfig, LineDataPoint } from "@/components/graphs/types";
 import {
-  MUTED_COLOR,
   SEVERITY_LEVELS,
   SEVERITY_LINE_CONFIGS,
   SeverityLevel,
@@ -39,6 +38,9 @@ export const FindingSeverityOverTime = ({
   }) => {
     const params = new URLSearchParams();
     params.set("filter[inserted_at]", point.date);
+
+    // Always filter by FAIL status since this chart shows failed findings
+    params.set("filter[status__in]", "FAIL");
 
     // Add scan_ids filter
     if (
@@ -96,15 +98,6 @@ export const FindingSeverityOverTime = ({
 
   // Build line configurations from shared severity configs
   const lines: LineConfig[] = [...SEVERITY_LINE_CONFIGS];
-
-  // Only add muted line if data contains it
-  if (data.some((item) => item.muted !== undefined)) {
-    lines.push({
-      dataKey: "muted",
-      color: MUTED_COLOR,
-      label: "Muted",
-    });
-  }
 
   // Calculate x-axis interval based on data length to show all labels without overlap
   const getXAxisInterval = (): number => {
