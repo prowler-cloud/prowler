@@ -1,29 +1,37 @@
 {
   "Provider": "aws",
   "CheckID": "wellarchitected_workload_no_high_or_medium_risks",
-  "CheckTitle": "Check for medium and high risks identified in workloads defined in the AWS Well-Architected Tool.",
-  "CheckType": [],
+  "CheckTitle": "AWS Well-Architected Tool workload has no high or medium risks",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
   "ServiceName": "wellarchitected",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:wellarchitected:region:account-id:workload/workload-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
-  "Description": "The Well-Architected Tool uses the AWS Well-Architected Framework to compare your cloud workloads against best practices across five architectural pillars: security, reliability, performance efficiency, operational excellence, and cost optimization",
-  "Risk": "A given workload can have medium and/or high risks that have been identified based on answers provided to the questions in the Well-Architected Tool. These issues are architectural and operational choices that are not aligned with the best practices from the Well-Architected Framework",
-  "RelatedUrl": "https://aws.amazon.com/architecture/well-architected/",
+  "Description": "**AWS Well-Architected workloads** are assessed for the presence and count of risks labeled `HIGH` or `MEDIUM` across the framework pillars. The result indicates whether any such risks remain recorded for the workload.",
+  "Risk": "`HIGH`/`MEDIUM` risks indicate gaps that can drive:\n- **Confidentiality** loss (public data, excessive access)\n- **Integrity** issues (weak controls, unmonitored changes)\n- **Availability** failures (fragile resilience, poor recovery)\nAdversaries can exploit open endpoints and broad privileges to escalate, exfiltrate, and disrupt.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://aws.amazon.com/architecture/well-architected/",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/WellArchitected/findings.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/WellArchitected/findings.html",
+      "Other": "1. In the AWS Console, open Services > Well-Architected Tool\n2. Select the workload to fix\n3. Open Improvement plan (or Answer questions) and filter to High and Medium risks\n4. For each listed question, open it and change the answer to the AWS recommended best-practice choices until the question's risk shows Low/None, then click Save\n5. Repeat until no High or Medium risks remain\n6. Go back to the workload overview and confirm High = 0 and Medium = 0",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "With the AWS Well-Architected Tool tool, you can analyze your workloads using a consistent process, pinpoint any medium or high-risk issues, and identify the next steps that must be taken for improvement",
-      "Url": "https://aws.amazon.com/architecture/well-architected/"
+      "Text": "Remediate findings, prioritizing `HIGH` then `MEDIUM`.\n\nEnforce **least privilege**, strong **encryption**, and continuous **logging/alerting**; minimize public exposure with **defense in depth**; architect for **resilience** with tested recovery. Embed regular reviews in the SDLC and automate guardrails for consistency.",
+      "Url": "https://hub.prowler.com/check/wellarchitected_workload_no_high_or_medium_risks"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""
