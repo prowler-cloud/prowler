@@ -34,6 +34,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Fixed
 - Custom check folder metadata validation [(#9335)](https://github.com/prowler-cloud/prowler/pull/9335)
+- Pin `alibabacloud-gateway-oss-util` to version 0.0.3 to address missing dependency [(#9487)](https://github.com/prowler-cloud/prowler/pull/9487)
 
 ---
 
