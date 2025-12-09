@@ -15,12 +15,12 @@ from pydantic import Field
 
 
 class ProvidersTools(BaseTool):
-    """Tools for cloud provider management operations.
+    """Tools for cloud provider management operations
 
     Provides tools for:
-    - Searching and viewing configured providers
-    - Connecting new providers with credentials
-    - Deleting providers
+    - prowler_app_search_cloud_providers: Search and view configured cloud providers with their connection status
+    - prowler_app_connect_provider: Connect or register a cloud provider account for security scanning in Prowler
+    - prowler_app_delete_provider: Permanently remove a cloud provider from Prowler
     """
 
     async def search_cloud_providers(
@@ -31,7 +31,7 @@ class ProvidersTools(BaseTool):
         ),
         provider_uid: list[str] = Field(
             default=[],
-            description="Filter by provider's unique identifier(s). Format varies by provider type: AWS Account ID (12 digits), Azure Subscription ID (UUID), GCP Project ID (string), Kubernetes namespace, GitHub username/organization, M365 domain ID, etc. All supported provider types are listed in the Prowler Hub/Prowler Documentation that you can also find in form of tools in this MCP Server",
+            description="Filter by provider's unique identifier(s), this ID is the one provided by the provider itself. Format varies by provider type: AWS Account ID (12 digits), Azure Subscription ID (UUID), GCP Project ID (string), Kubernetes namespace, GitHub username/organization, M365 domain ID, etc. All supported provider types are listed in the Prowler Hub/Prowler Documentation that you can also find in form of tools in this MCP Server",
         ),
         provider_type: list[str] = Field(
             default=[],
@@ -57,20 +57,16 @@ class ProvidersTools(BaseTool):
     ) -> dict[str, Any]:
         """Search and view configured cloud providers with their connection status.
 
-        This tool returns a unified view of all cloud accounts/subscriptions/projects configured in Prowler.
-        Each provider represents a cloud account (AWS account ID, Azure subscription, GCP project, K8s cluster, etc.)
-        that has been added for security scanning.
+        This tool returns a unified view of all providers configured in Prowler.
 
-        For getting more details about what types of providers are available or what are the IDs format for each provider type, please refer to Prowler Hub/Prowler Documentation
+        For getting more details about what types of providers are available or
+        what are the IDs format for each provider type, please refer to Prowler Hub/Prowler Documentation
         that you can also find in form of tools in this MCP Server.
 
         Each provider includes:
         - Provider identification: id, uid, alias
-        - Cloud context: provider type
+        - Provider context: provider type
         - Connection status: connected
-
-        Returns:
-            dict with 'providers' array, pagination info (total_num_providers, total_num_pages, current_page)
         """
         self.api_client.validate_page_size(page_size)
 
@@ -90,11 +86,17 @@ class ProvidersTools(BaseTool):
         if alias:
             params["filter[alias__icontains]"] = alias
         if connected is not None:
-            params["filter[connected]"] = (
-                connected
-                if isinstance(connected, bool)
-                else connected.lower() == "true"
-            )
+            if isinstance(connected, bool):
+                params["filter[connected]"] = connected
+            else:
+                if connected.lower() == "true":
+                    params["filter[connected]"] = True
+                elif connected.lower() == "false":
+                    params["filter[connected]"] = False
+                else:
+                    raise ValueError(
+                        f"Invalid connected value: {connected}. Valid values are True, False, 'true', 'false' or None."
+                    )
 
         clean_params = self.api_client.build_filter_params(params)
 
@@ -122,22 +124,17 @@ class ProvidersTools(BaseTool):
             description="Cloud-specific credentials for authentication. Optional - if not provided, provider is created but not connected. Structure varies by provider type. For supported provider types, please refer to Prowler Hub/Prowler Documentation that you can also find in form of tools in this MCP Server",
         ),
     ) -> dict[str, Any]:
-        """Connect or register a cloud provider account for security scanning in Prowler.
+        """Register a provider for security scanning with Prowler.
 
-        This tool performs a complete provider onboarding workflow:
-        1. Checks if provider already exists
-        2. Creates new provider if it doesn't exist or updates existing one
-        3. Stores credentials securely
-        4. Tests connection to verify credentials work
-        5. Returns provider details with connection status
-
-        The tool is idempotent - calling it multiple times with the same provider_uid will:
-        - Update the alias if provided
-        - Update credentials if provided
-        - Re-test the connection
+        This tool will register a provider in Prowler, even if the UID is wrong.
+        If the provider is already registered, it will be updated with the new provided alias or credentials.
+        If credentials are provided, they will be added to the indicated provider, if the provider does not exist, it will be created and the credentials will be added to it.
+        If the connection test is successful, the provider will be connected.
+        If the connection test fails, the provider will be created but not connected.
+        The tool always returns the provider details after its registration or update.
 
         Example Input:
-        AWS Static Credentials:
+        - AWS Static Credentials:
         ```json
         {
             "provider_uid": "123456789012",
@@ -150,7 +147,7 @@ class ProvidersTools(BaseTool):
             }
         }
         ```
-        AWS Assume Role:
+        - AWS Assume Role:
         ```json
         {
             "provider_uid": "987654321098",
@@ -167,7 +164,7 @@ class ProvidersTools(BaseTool):
             }
         }
         ```
-        Azure/M365 Static Credentials:
+        - Azure/M365 Static Credentials:
         ```json
         {
             "provider_uid": "a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d",
@@ -180,7 +177,7 @@ class ProvidersTools(BaseTool):
             }
         }
         ```
-        GCP Service Account Account Key:
+        - GCP Service Account Account Key:
         ```json
         {
             "provider_uid": "my-gcp-project-prod",
@@ -197,7 +194,7 @@ class ProvidersTools(BaseTool):
             }
         }
         ```
-        Kubernetes Static Credentials:
+        - Kubernetes Static Credentials:
         ```json
         {
             "provider_uid": "prod-k8s-cluster",
@@ -208,7 +205,7 @@ class ProvidersTools(BaseTool):
             }
         }
         ```
-        GitHub OAuth App Token:
+        - GitHub OAuth App Token:
         ```json
         {
             "provider_uid": "my-organization",
@@ -219,15 +216,7 @@ class ProvidersTools(BaseTool):
             }
         }
 
-        NOTE: THERE ARE MORE PROVIDER TYPES AND CREDENTIAL TYPES AVAILABLE, PLEASE REFER TO THE Prowler Documentation that you can also find in form of tools in this MCP Server.
-
-        Response structure:
-        - provider: Detailed provider object with all metadata
-        - status: "connected" if credentials work, "failed" if connection test failed
-        - message: Human-readable status message with error details if failed
-
-        Returns:
-            dict with provider details, connection status ("connected" or "failed"), and status message
+        NOTE: THERE ARE MORE PROVIDER TYPES AND CREDENTIAL TYPES AVAILABLE, PLEASE REFER TO THE Prowler Hub/Prowler Documentation that you can also find in form of tools in this MCP Server.
         """
         # Step 1: Check if provider already exists
         prowler_provider_id = await self._check_provider_exists(provider_uid)
@@ -264,17 +253,12 @@ class ProvidersTools(BaseTool):
             description="Prowler's internal UUID (v4) for the provider to permanently remove, generated when the provider was registered in the system. Use `prowler_app_search_cloud_providers` tool to find the provider_id if you only know the alias or the provider's own identifier (provider_uid)"
         ),
     ) -> dict[str, Any]:
-        """Permanently remove a cloud provider from Prowler.
+        """Permanently remove a registered provider from Prowler.
 
         WARNING: This is a destructive operation that cannot be undone. The provider will need to be
-        re-added with connect_provider if you want to scan it again.
+        re-added with prowler_app_connect_provider if you want to scan it again.
 
-        Response structure:
-        - status: "deleted" on success
-        - message: Confirmation message with the deleted provider_id
-
-        Returns:
-            dict with deletion confirmation status and message
+        The tool always returns the deletion status and message.
         """
         self.logger.info(f"Deleting provider {provider_id}...")
         try:
