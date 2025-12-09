@@ -267,6 +267,10 @@ export function RiskPlotClient({ data }: RiskPlotClientProps) {
               <h3 className="text-text-neutral-primary text-lg font-semibold">
                 Risk Plot
               </h3>
+              <p className="text-text-neutral-tertiary mt-1 text-xs">
+                Threat Score is severity-weighted, not quantity-based. Higher
+                severity findings have greater impact on the score.
+              </p>
             </div>
 
             <div className="relative min-h-[400px] w-full flex-1">
@@ -298,9 +302,9 @@ export function RiskPlotClient({ data }: RiskPlotClientProps) {
                   <YAxis
                     type="number"
                     dataKey="y"
-                    name="Failed Findings"
+                    name="Fail Findings"
                     label={{
-                      value: "Failed Findings",
+                      value: "Fail Findings",
                       angle: -90,
                       position: "left",
                       offset: 10,
@@ -338,7 +342,7 @@ export function RiskPlotClient({ data }: RiskPlotClientProps) {
             {/* Interactive Legend - below chart */}
             <div className="mt-4 flex flex-col items-start gap-2">
               <p className="text-text-neutral-tertiary pl-2 text-xs">
-                Click to filter by provider.
+                Click to filter by provider
               </p>
               <ChartLegend
                 items={providers.map((p) => ({
@@ -363,7 +367,7 @@ export function RiskPlotClient({ data }: RiskPlotClientProps) {
                   {selectedPoint.name}
                 </h4>
                 <p className="text-text-neutral-tertiary text-xs">
-                  Threat Score: {selectedPoint.x}% | Failed Findings:{" "}
+                  Threat Score: {selectedPoint.x}% | Fail Findings:{" "}
                   {selectedPoint.y}
                 </p>
               </div>
