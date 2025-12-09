@@ -19,32 +19,50 @@ You **must** run `EXPLAIN ANALYZE` when:
 
 ### 1. Get Your Query
 
-If you're using Django ORM, you can print the raw SQL:
+#### Option A: Using Django Shell with RLS
 
-```python
-from api.models import Finding
-
-queryset = Finding.objects.filter(tenant_id=tenant_id, status="FAIL")
-print(queryset.query)
-```
-
-Or in Django shell:
+This is the recommended approach since it mirrors how queries run in production with Row Level Security enabled:
 
 ```bash
 cd api/src/backend
-python manage.py shell
+poetry run python manage.py shell
 ```
 
 ```python
 from django.db import connection
+from api.db_utils import rls_transaction
 from api.models import Finding
 
-# Execute your queryset
-qs = Finding.objects.filter(status="FAIL")[:10]
-list(qs)  # Force evaluation
+tenant_id = "your-tenant-uuid"
 
-# Print the last query
-print(connection.queries[-1]['sql'])
+with rls_transaction(tenant_id):
+    # Build your queryset
+    qs = Finding.objects.filter(status="FAIL").order_by("-inserted_at")[:25]
+
+    # Force evaluation
+    list(qs)
+
+    # Get the SQL
+    print(connection.queries[-1]['sql'])
+```
+
+#### Option B: Print Query Without Execution
+
+```python
+from api.models import Finding
+
+queryset = Finding.objects.filter(status="FAIL")
+print(queryset.query)
+```
+
+> **Note:** This won't include RLS filters, so the actual production query will differ.
+
+#### Option C: Enable SQL Logging
+
+Set `DJANGO_LOGGING_LEVEL=DEBUG` in your environment. The `django.db` logger will output all SQL queries to the console.
+
+```bash
+DJANGO_LOGGING_LEVEL=DEBUG poetry run python manage.py runserver
 ```
 
 ### 2. Run EXPLAIN ANALYZE
@@ -59,6 +77,18 @@ Or with more details:
 
 ```sql
 EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT) <your_query>;
+```
+
+#### Running EXPLAIN with RLS Context
+
+To test with RLS enabled (as it runs in production), set the tenant context first:
+
+```sql
+-- Set tenant context
+SELECT set_config('api.tenant_id', 'your-tenant-uuid', TRUE);
+
+-- Then run your EXPLAIN ANALYZE
+EXPLAIN ANALYZE SELECT * FROM findings WHERE status = 'FAIL' LIMIT 25;
 ```
 
 ### 3. Interpret the Results
@@ -176,19 +206,49 @@ WHERE tenant_id = '...' AND scan_id = '...'
 
 ## RLS (Row Level Security) Considerations
 
-Prowler uses Row Level Security. When analyzing queries, remember:
+Prowler uses Row Level Security via PostgreSQL's `set_config`. When analyzing queries, remember:
 
 1. RLS policies add implicit `WHERE tenant_id = current_tenant()` to queries
 2. Always test with RLS enabled (how it runs in production)
-3. Ensure `tenant_id` is the first column in composite indexes
+3. Ensure `tenant_id` is the **first column** in composite indexes
+
+### Using rls_transaction in Code
+
+The `rls_transaction` context manager from `api.db_utils` sets the tenant context for all queries within its scope:
 
 ```python
-# Use rls_transaction context manager for testing
 from api.db_utils import rls_transaction
+from api.models import Finding
 
 with rls_transaction(tenant_id):
+    # All queries here will have RLS applied
     qs = Finding.objects.filter(status="FAIL")
-    # Now run EXPLAIN ANALYZE on this query
+    list(qs)  # Execute
+```
+
+### Using RLS in Raw SQL (psql)
+
+```sql
+-- Set tenant context for the transaction
+SELECT set_config('api.tenant_id', 'your-tenant-uuid', TRUE);
+
+-- Now RLS policies will filter by this tenant
+EXPLAIN ANALYZE SELECT * FROM findings WHERE status = 'FAIL';
+```
+
+### Index Design for RLS
+
+Since every query includes `tenant_id` via RLS, your composite indexes should **always start with `tenant_id`**:
+
+```python
+class Meta:
+    indexes = [
+        # Good: tenant_id first
+        models.Index(fields=['tenant_id', 'status', 'severity']),
+
+        # Bad: tenant_id not first - RLS queries won't use this efficiently
+        models.Index(fields=['status', 'tenant_id']),
+    ]
 ```
 
 ## Performance Checklist for PRs
@@ -259,6 +319,42 @@ FROM pg_catalog.pg_statio_user_tables
 WHERE relname IN ('findings', 'resources', 'scans')
 ORDER BY pg_total_relation_size(relid) DESC;
 ```
+
+## Working with Partitioned Tables
+
+The `findings` table is partitioned. When adding indexes, use the helper functions from `api.db_utils`:
+
+### Adding Indexes to Partitions
+
+```python
+# In a migration file
+from api.db_utils import create_index_on_partitions, drop_index_on_partitions
+
+def forwards(apps, schema_editor):
+    create_index_on_partitions(
+        apps,
+        schema_editor,
+        parent_table="findings",
+        index_name="my_new_idx",
+        columns="tenant_id, status, severity",
+        all_partitions=False,  # Only current/future partitions
+    )
+
+def backwards(apps, schema_editor):
+    drop_index_on_partitions(
+        apps,
+        schema_editor,
+        parent_table="findings",
+        index_name="my_new_idx",
+    )
+```
+
+### Parameters
+
+- `all_partitions=False` (default): Only creates indexes on current and future partitions. Use this for new indexes to avoid maintenance overhead on old data.
+- `all_partitions=True`: Creates indexes on all partitions. Use when migrating critical existing indexes.
+
+See [Partitions Documentation](./partitions.md) for more details on partitioning strategy.
 
 ## Further Reading
 
