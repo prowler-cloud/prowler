@@ -1,28 +1,34 @@
 {
   "Provider": "aws",
   "CheckID": "glue_development_endpoints_cloudwatch_logs_encryption_enabled",
-  "CheckTitle": "Check if Glue development endpoints have CloudWatch logs encryption enabled.",
+  "CheckTitle": "Glue development endpoint has CloudWatch Logs encryption enabled",
   "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
     "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark"
   ],
   "ServiceName": "glue",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:partition:glue:region:account-id:certificate/resource-id",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
-  "Description": "Check if Glue development endpoints have CloudWatch logs encryption enabled.",
-  "Risk": "If not enabled sensitive information at rest is not protected.",
-  "RelatedUrl": "https://docs.aws.amazon.com/glue/latest/dg/console-security-configurations.html",
+  "Description": "**AWS Glue development endpoints** are assessed for an associated **security configuration** that enables **CloudWatch Logs encryption**. It confirms the endpoint references a configuration and that log encryption is not `DISABLED`.",
+  "Risk": "Unencrypted Glue logs erode **confidentiality**: credentials, connection strings, and data samples may be readable to unintended principals, enabling **lateral movement**.\nLack of KMS-backed encryption weakens **auditability** and **separation of duties**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/glue/latest/dg/console-security-configurations.html",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Glue/cloud-watch-logs-encryption-enabled.html"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "aws glue create-security-configuration --name cw-encrypted-sec-config --encryption-configuration {'CloudWatchEncryption': [{'CloudWatchEncryptionMode': 'SSE-KMS','KmsKeyArn': <kms_arn>}]}",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_41#cloudformation",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/Glue/cloud-watch-logs-encryption-enabled.html",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/bc_aws_general_41#terraform"
+      "CLI": "",
+      "NativeIaC": "```yaml\n# CloudFormation: Glue Security Configuration with CloudWatch Logs encryption enabled\nResources:\n  <example_resource_name>:\n    Type: AWS::Glue::SecurityConfiguration\n    Properties:\n      Name: <example_resource_name>\n      EncryptionConfiguration:\n        CloudWatchEncryption:\n          CloudWatchEncryptionMode: SSE-KMS  # Critical: enables CloudWatch Logs encryption\n          KmsKeyArn: <kms_key_arn>           # Critical: KMS key used for encrypting Glue logs\n```",
+      "Other": "1. In the AWS Console, go to Glue > Security configurations > Add security configuration\n2. Enter a name and enable CloudWatch Logs encryption\n3. Select a KMS key (or enter its ARN) and click Create\n4. Go to Glue > Dev endpoints\n5. Create a new Dev endpoint (or delete and recreate the existing one) and select the new Security configuration\n6. Create the endpoint to apply the encryption",
+      "Terraform": "```hcl\n# Glue Security Configuration with CloudWatch Logs encryption enabled\nresource \"aws_glue_security_configuration\" \"<example_resource_name>\" {\n  name = \"<example_resource_name>\"\n\n  encryption_configuration {\n    cloudwatch_encryption {\n      cloudwatch_encryption_mode = \"SSE-KMS\"  # Critical: enables CloudWatch Logs encryption\n      kms_key_arn                = \"<kms_key_arn>\"  # Critical: KMS key used for encrypting Glue logs\n    }\n\n    # Required blocks for valid config (kept minimal)\n    job_bookmarks_encryption { job_bookmarks_encryption_mode = \"DISABLED\" }\n    s3_encryption             { s3_encryption_mode             = \"DISABLED\" }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable Encryption in the Security configurations.",
-      "Url": "https://docs.aws.amazon.com/glue/latest/dg/console-security-configurations.html"
+      "Text": "Attach a **security configuration** to all development endpoints with **CloudWatch Logs encryption** enabled using a tightly scoped **KMS key**.\nApply **least privilege** to key and log access, rotate keys, and standardize configs via IaC to enforce **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/glue_development_endpoints_cloudwatch_logs_encryption_enabled"
     }
   },
   "Categories": [
