@@ -23,7 +23,14 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
-## [v5.14.2] (Prowler UNRELEASED)
+## [v5.14.3] (Prowler UNRELEASED)
+
+### Fixed
+- Fix duplicate requirement IDs in ISO 27001:2013 AWS compliance framework by adding unique letter suffixes
+
+---
+
+## [v5.14.2] (Prowler v5.14.2)
 
 ### Fixed
 - Custom check folder metadata validation [(#9335)](https://github.com/prowler-cloud/prowler/pull/9335)
