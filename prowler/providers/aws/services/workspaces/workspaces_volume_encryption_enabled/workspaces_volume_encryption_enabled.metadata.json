@@ -1,26 +1,37 @@
 {
   "Provider": "aws",
   "CheckID": "workspaces_volume_encryption_enabled",
-  "CheckTitle": "Ensure that your Amazon WorkSpaces storage volumes are encrypted in order to meet security and compliance requirements",
-  "CheckType": [],
+  "CheckTitle": "Amazon WorkSpaces workspace root and user volumes are encrypted",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Data Exposure"
+  ],
   "ServiceName": "workspaces",
   "SubServiceName": "",
-  "ResourceIdTemplate": "arn:aws:workspaces:region:account-id:workspace",
+  "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "AwsWorkSpacesWorkspace",
-  "Description": "Ensure that your Amazon WorkSpaces storage volumes are encrypted in order to meet security and compliance requirements",
-  "Risk": "If the value listed in the Volume Encryption column is Disabled the selected AWS WorkSpaces instance volumes (root and user volumes) are not encrypted. Therefore your data-at-rest is not protected from unauthorized access and does not meet the compliance requirements regarding data encryption.",
-  "RelatedUrl": "https://docs.aws.amazon.com/workspaces/latest/adminguide/encrypt-workspaces.html",
+  "ResourceType": "AwsEc2Volume",
+  "Description": "**Amazon WorkSpaces** evaluates **encryption at rest** on each workspace's EBS volumes. It checks whether the **root** and **user** volumes are encrypted with a KMS key and identifies workspaces where either volume is unencrypted.",
+  "Risk": "Unencrypted volumes allow offline access to files, cached credentials, and profile data from snapshots or underlying storage, harming **confidentiality**. Storage-level access can enable data tampering, impacting **integrity**, and facilitate token reuse for lateral movement.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/workspaces/latest/adminguide/encrypt-workspaces.html",
+    "https://docs.prowler.com/checks/aws/general-policies/ensure-that-workspace-root-volumes-are-encrypted#terraform",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/WorkSpaces/storage-encryption.html",
+    "https://medium.com/@craig.kilpatrick/unlocking-the-ability-to-work-from-home-with-amazon-workspaces-897b15704895",
+    "https://cloud-kb.sentinelone.com/workspaces-user-volume-encryption-disabled"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
-      "NativeIaC": "https://docs.prowler.com/checks/aws/general-policies/ensure-that-workspace-root-volumes-are-encrypted#cloudformation",
-      "Other": "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/WorkSpaces/storage-encryption.html",
-      "Terraform": "https://docs.prowler.com/checks/aws/general-policies/ensure-that-workspace-root-volumes-are-encrypted#terraform"
+      "NativeIaC": "```yaml\n# CloudFormation: create a WorkSpace with both volumes encrypted\nResources:\n  ExampleWorkspace:\n    Type: AWS::WorkSpaces::Workspace\n    Properties:\n      BundleId: <example_bundle_id>\n      DirectoryId: <example_directory_id>\n      UserName: <example_user_name>\n      RootVolumeEncryptionEnabled: true  # Critical: encrypts the root volume to pass the check\n      UserVolumeEncryptionEnabled: true  # Critical: encrypts the user volume to pass the check\n```",
+      "Other": "1. In the AWS Console, go to WorkSpaces > WorkSpaces and click Launch WorkSpaces\n2. Select the directory and user, proceed to the WorkSpaces Configuration step\n3. Under Encryption, enable Root volume and User volume\n4. Keep the default AWS managed key (aws/workspaces) or select a CMK if required\n5. Launch the WorkSpace, then migrate the user and terminate the unencrypted WorkSpace\n6. Verify the Volume Encryption column shows Enabled for both volumes",
+      "Terraform": "```hcl\n# Terraform: create a WorkSpace with both volumes encrypted\nresource \"aws_workspaces_workspace\" \"example\" {\n  bundle_id    = \"<example_bundle_id>\"\n  directory_id = \"<example_directory_id>\"\n  user_name    = \"<example_user_name>\"\n\n  root_volume_encryption_enabled = true  # Critical: encrypts the root volume\n  user_volume_encryption_enabled = true  # Critical: encrypts the user volume\n}\n```"
     },
     "Recommendation": {
-      "Text": "WorkSpaces is integrated with the AWS Key Management Service (AWS KMS). This enables you to encrypt storage volumes of WorkSpaces using AWS KMS Key. When you launch a WorkSpace you can encrypt the root volume (for Microsoft Windows - the C drive, for Linux - /) and the user volume (for Windows - the D drive, for Linux - /home). Doing so ensures that the data stored at rest - disk I/O to the volume - and snapshots created from the volumes are all encrypted",
-      "Url": "https://docs.aws.amazon.com/workspaces/latest/adminguide/encrypt-workspaces.html"
+      "Text": "Enable KMS-backed encryption for both **root** and **user** volumes on all WorkSpaces. Prefer **customer-managed keys**, enforce **least privilege** on key use, and enable rotation. Embed encryption into provisioning templates and policies to block unencrypted launches. *Keep required keys enabled for rebuilds and restores*.",
+      "Url": "https://hub.prowler.com/check/workspaces_volume_encryption_enabled"
     }
   },
   "Categories": [
