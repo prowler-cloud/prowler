@@ -21,6 +21,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS Macie service metadata to new format [(#9265)](https://github.com/prowler-cloud/prowler/pull/9265)
 - Update AWS Lightsail service metadata to new format [(#9264)](https://github.com/prowler-cloud/prowler/pull/9264)
 
+### Fixed
+- GCP `cloudstorage_uses_vpc_service_controls` check to handle VPC Service Controls blocked API access [(#9478)](https://github.com/prowler-cloud/prowler/pull/9478)
+
 ---
 
 ## [v5.14.2] (Prowler UNRELEASED)
