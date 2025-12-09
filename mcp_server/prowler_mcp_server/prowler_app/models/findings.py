@@ -122,15 +122,17 @@ class SimplifiedFinding(MinimalSerializerMixin, BaseModel):
     status_extended: str = Field(
         description="Extended status information providing additional context",
     )
-    delta: Literal["new", "changed"] = Field(
+    delta: Literal["new", "changed"] | None = Field(
+        default=None,
         description="Change status: 'new' (not seen before), 'changed' (modified since last scan), or None (unchanged)",
     )
-    muted: bool = Field(
+    muted: bool | None = Field(
+        default=None,
         description="Whether this finding has been muted/suppressed by the user",
     )
-    muted_reason: str = Field(
+    muted_reason: str | None = Field(
         default=None,
-        description="Reason provided when muting this finding (3-500 chars if muted)",
+        description="Reason provided when muting this finding",
     )
 
     @classmethod
