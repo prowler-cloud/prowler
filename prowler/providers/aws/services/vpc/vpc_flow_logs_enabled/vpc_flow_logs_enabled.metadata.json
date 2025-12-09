@@ -1,33 +1,47 @@
 {
   "Provider": "aws",
   "CheckID": "vpc_flow_logs_enabled",
-  "CheckTitle": "Ensure VPC Flow Logging is Enabled in all VPCs.",
+  "CheckTitle": "VPC flow logs are enabled",
   "CheckType": [
-    "Logging and Monitoring"
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/CIS AWS Foundations Benchmark",
+    "Software and Configuration Checks/Industry and Regulatory Standards/PCI-DSS",
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls (USA)",
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST CSF Controls (USA)"
   ],
   "ServiceName": "vpc",
-  "SubServiceName": "flow_log",
-  "ResourceIdTemplate": "arn:partition:service:region:account-id:resource-id",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEc2Vpc",
-  "Description": "Ensure VPC Flow Logging is Enabled in all VPCs.",
-  "Risk": "VPC Flow Logs provide visibility into network traffic that traverses the VPC and can be used to detect anomalous traffic or insight during security workflows.",
+  "Description": "**AWS VPCs** have **Flow Logs** configured to capture IP traffic for their network interfaces and deliver records to a logging destination.\n\nVPCs lacking an active flow log configuration are highlighted.",
+  "Risk": "Without flow logs, network activity is opaque, hindering detection and investigation of malicious traffic. Attackers can probe, exfiltrate, or move laterally unnoticed, impacting **confidentiality** and **integrity**; outages and misconfigurations are harder to diagnose, reducing **availability**.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.panther.com/search/data-explorer/example-queries/vpc-flow-logs-queries",
+    "https://www.kentik.com/blog/vpc-flow-logs-aws-monitor-traffic-edge-cloud-network/",
+    "https://github.com/mlevit/aws-auto-remediate/blob/master/auto_remediate/lambda_handler.py",
+    "https://docs.prowler.com/checks/aws/logging-policies/logging_9-enable-vpc-flow-logging#aws-console",
+    "http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/flow-logs.html",
+    "https://docs.prowler.com/checks/aws/logging-policies/logging_9-enable-vpc-flow-logging#terraform",
+    "https://avd.aquasec.com/misconfig/aws/ec2/vpc-flow-logs-enabled/"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "https://docs.prowler.com/checks/aws/logging-policies/logging_9-enable-vpc-flow-logging#aws-console",
-      "Terraform": "https://docs.prowler.com/checks/aws/logging-policies/logging_9-enable-vpc-flow-logging#terraform"
+      "CLI": "aws ec2 create-flow-logs --resource-type VPC --resource-ids <VPC_ID> --traffic-type ALL --log-destination-type s3 --log-destination arn:aws:s3:::<S3_BUCKET_NAME>",
+      "NativeIaC": "```yaml\n# CloudFormation: Enable VPC Flow Logs to S3 for an existing VPC\nResources:\n  FlowLog:\n    Type: AWS::EC2::FlowLog\n    Properties:\n      ResourceId: <example_resource_id>         # Critical: target the VPC ID\n      ResourceType: VPC                         # Critical: enable flow logs at VPC level\n      TrafficType: ALL                          # Critical: log all traffic\n      LogDestinationType: s3                    # Critical: send logs to S3 (no IAM role needed)\n      LogDestination: arn:aws:s3:::<example_resource_name>  # Critical: S3 bucket ARN\n```",
+      "Other": "1. In the AWS Console, go to VPC > Your VPCs\n2. Select the target VPC\n3. Open the Flow logs tab and click Create flow log\n4. Set Traffic type to All\n5. Set Destination to S3 and enter Bucket ARN: arn:aws:s3:::<example_resource_name>\n6. Click Create flow log",
+      "Terraform": "```hcl\n# Enable VPC Flow Logs to S3 for an existing VPC\nresource \"aws_flow_log\" \"vpc\" {\n  vpc_id               = \"<example_resource_id>\"                 # Critical: target the VPC to enable flow logs\n  traffic_type         = \"ALL\"                                   # Critical: log all traffic\n  log_destination_type = \"s3\"                                    # Critical: send logs to S3 (no IAM role needed)\n  log_destination      = \"arn:aws:s3:::<example_resource_name>\"  # Critical: S3 bucket ARN\n}\n```"
     },
     "Recommendation": {
-      "Text": "It is recommended that VPC Flow Logs be enabled for packet Rejects for VPCs.",
-      "Url": "http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/flow-logs.html"
+      "Text": "Enable **VPC Flow Logs** for all VPCs to provide baseline telemetry.\nPrefer capturing at least `REJECT` and, for sensitive networks, `ALL`. Send logs to a centralized, access-controlled destination with retention. Apply **least privilege** to writers/readers and integrate with monitoring for **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/vpc_flow_logs_enabled"
     }
   },
   "Categories": [
-    "forensics-ready",
-    "logging"
+    "logging",
+    "forensics-ready"
   ],
   "DependsOn": [],
   "RelatedTo": [],
