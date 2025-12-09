@@ -19,12 +19,17 @@ class CheckRemediation(MinimalSerializerMixin, BaseModel):
         default=None,
         description="Terraform code snippet with best practices for remediation",
     )
-    recommendation_text: str | None = Field(
-        default=None, description="Text description with best practices"
-    )
-    recommendation_url: str | None = Field(
+    nativeiac: str | None = Field(
         default=None,
-        description="URL to external remediation documentation",
+        description="Native Infrastructure as Code code snippet with best practices for remediation",
+    )
+    other: str | None = Field(
+        default=None,
+        description="Other remediation code snippet with best practices for remediation, usually used for web interfaces or other tools",
+    )
+    recommendation: str | None = Field(
+        default=None,
+        description="Text description with general best recommended practices to avoid the issue",
     )
 
 
@@ -33,9 +38,6 @@ class CheckMetadata(MinimalSerializerMixin, BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    check_id: str = Field(
-        description="Unique provider identifier for the security check (e.g., 's3_bucket_public_access')",
-    )
     title: str = Field(
         description="Human-readable title of the security check",
     )
@@ -59,9 +61,9 @@ class CheckMetadata(MinimalSerializerMixin, BaseModel):
         default=None,
         description="Remediation guidance including CLI commands and recommendations",
     )
-    related_url: str | None = Field(
-        default=None,
-        description="URL to additional documentation or references",
+    additional_urls: list[str] = Field(
+        default_factory=list,
+        description="List of additional URLs related to the check",
     )
     categories: list[str] = Field(
         default_factory=list,
@@ -79,23 +81,23 @@ class CheckMetadata(MinimalSerializerMixin, BaseModel):
             recommendation = remediation_data.get("recommendation", {})
 
             remediation = CheckRemediation(
-                cli=code.get("cli"),
-                terraform=code.get("terraform"),
-                recommendation_text=recommendation.get("text"),
-                recommendation_url=recommendation.get("url"),
+                cli=code["cli"],
+                terraform=code["terraform"],
+                nativeiac=code["nativeiac"],
+                other=code["other"],
+                recommendation=recommendation["text"],
             )
 
         return cls(
-            check_id=data["checkid"],
             title=data["checktitle"],
             description=data["description"],
             provider=data["provider"],
-            risk=data.get("risk"),
+            risk=data["risk"],
             service=data["servicename"],
             resource_type=data["resourcetype"],
             remediation=remediation,
-            related_url=data.get("relatedurl"),
-            categories=data.get("categories", []),
+            additional_urls=data["additionalurls"],
+            categories=data["categories"],
         )
 
 
@@ -116,8 +118,8 @@ class SimplifiedFinding(MinimalSerializerMixin, BaseModel):
     severity: Literal["critical", "high", "medium", "low", "informational"] = Field(
         description="Severity level of the finding",
     )
-    check_metadata: CheckMetadata = Field(
-        description="Metadata about the security check that generated this finding",
+    check_id: str = Field(
+        description="ID of the security check that generated this finding",
     )
     status_extended: str = Field(
         description="Extended status information providing additional context",
@@ -139,14 +141,13 @@ class SimplifiedFinding(MinimalSerializerMixin, BaseModel):
     def from_api_response(cls, data: dict) -> "SimplifiedFinding":
         """Transform JSON:API finding response to simplified format."""
         attributes = data["attributes"]
-        check_metadata = attributes["check_metadata"]
 
         return cls(
             id=data["id"],
             uid=attributes["uid"],
             status=attributes["status"],
             severity=attributes["severity"],
-            check_metadata=CheckMetadata.from_api_response(check_metadata),
+            check_id=attributes["check_metadata"]["checkid"],
             status_extended=attributes["status_extended"],
             delta=attributes["delta"],
             muted=attributes["muted"],
@@ -181,6 +182,9 @@ class DetailedFinding(SimplifiedFinding):
         default_factory=list,
         description="List of UUIDs for cloud resources associated with this finding",
     )
+    check_metadata: CheckMetadata = Field(
+        description="Metadata about the security check that generated this finding",
+    )
 
     @classmethod
     def from_api_response(cls, data: dict) -> "DetailedFinding":
@@ -206,6 +210,7 @@ class DetailedFinding(SimplifiedFinding):
             uid=attributes["uid"],
             status=attributes["status"],
             severity=attributes["severity"],
+            check_id=check_metadata["checkid"],
             check_metadata=CheckMetadata.from_api_response(check_metadata),
             status_extended=attributes.get("status_extended"),
             delta=attributes.get("delta"),
