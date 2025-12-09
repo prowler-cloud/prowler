@@ -195,7 +195,7 @@ const SSRComplianceContent = async ({
     { pass: 0, fail: 0, manual: 0 },
   );
   const accordionItems = mapper.toAccordionItems(data, scanId);
-  const topFailedSections = mapper.getTopFailedSections(data);
+  const topFailedResult = mapper.getTopFailedSections(data);
 
   return (
     <div className="flex flex-col gap-8">
@@ -205,7 +205,10 @@ const SSRComplianceContent = async ({
           fail={totalRequirements.fail}
           manual={totalRequirements.manual}
         />
-        <TopFailedSectionsCard sections={topFailedSections} />
+        <TopFailedSectionsCard
+          sections={topFailedResult.items}
+          dataType={topFailedResult.type}
+        />
         {/* <SectionsFailureRateCard categories={categoryHeatmapData} /> */}
       </div>
 
