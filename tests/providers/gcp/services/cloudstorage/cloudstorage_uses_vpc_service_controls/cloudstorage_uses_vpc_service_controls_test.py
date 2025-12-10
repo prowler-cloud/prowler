@@ -315,3 +315,70 @@ class TestCloudStorageUsesVPCServiceControls:
             result = check.execute()
 
             assert len(result) == 0
+
+    def test_project_protected_by_vpc_sc_api_blocked(self):
+        cloudresourcemanager_client = mock.MagicMock()
+        accesscontextmanager_client = mock.MagicMock()
+        cloudstorage_client = mock.MagicMock()
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudstorage.cloudstorage_uses_vpc_service_controls.cloudstorage_uses_vpc_service_controls.cloudresourcemanager_client",
+                new=cloudresourcemanager_client,
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudstorage.cloudstorage_uses_vpc_service_controls.cloudstorage_uses_vpc_service_controls.accesscontextmanager_client",
+                new=accesscontextmanager_client,
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.cloudstorage.cloudstorage_uses_vpc_service_controls.cloudstorage_uses_vpc_service_controls.cloudstorage_client",
+                new=cloudstorage_client,
+            ),
+        ):
+            from prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_service import (
+                Project,
+            )
+            from prowler.providers.gcp.services.cloudstorage.cloudstorage_uses_vpc_service_controls.cloudstorage_uses_vpc_service_controls import (
+                cloudstorage_uses_vpc_service_controls,
+            )
+
+            project1 = Project(
+                id=GCP_PROJECT_ID, number="123456789012", audit_logging=True
+            )
+
+            cloudresourcemanager_client.project_ids = [GCP_PROJECT_ID]
+            cloudresourcemanager_client.cloud_resource_manager_projects = [project1]
+            cloudresourcemanager_client.projects = {
+                GCP_PROJECT_ID: GCPProject(
+                    id=GCP_PROJECT_ID,
+                    number="123456789012",
+                    name="test-project",
+                    labels={},
+                    lifecycle_state="ACTIVE",
+                )
+            }
+            cloudresourcemanager_client.region = GCP_US_CENTER1_LOCATION
+
+            # No service perimeters configured, but API access is blocked by VPC SC
+            accesscontextmanager_client.service_perimeters = []
+            cloudstorage_client.vpc_service_controls_protected_projects = {
+                GCP_PROJECT_ID
+            }
+
+            check = cloudstorage_uses_vpc_service_controls()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"Project {GCP_PROJECT_ID} has VPC Service Controls enabled for Cloud Storage in undetermined perimeter (verified by API access restriction)."
+            )
+            assert result[0].resource_id == GCP_PROJECT_ID
+            assert result[0].resource_name == "test-project"
+            assert result[0].location == GCP_US_CENTER1_LOCATION
+            assert result[0].project_id == GCP_PROJECT_ID
