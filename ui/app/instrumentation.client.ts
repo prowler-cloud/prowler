@@ -8,8 +8,8 @@
  * For runtime-specific configs, see: sentry/sentry.server.config.ts and sentry/sentry.edge.config.ts
  */
 
-import { browserTracingIntegration } from "@sentry/browser";
 import * as Sentry from "@sentry/nextjs";
+import { browserTracingIntegration } from "@sentry/nextjs";
 
 const SENTRY_DSN = process.env.NEXT_PUBLIC_SENTRY_DSN;
 

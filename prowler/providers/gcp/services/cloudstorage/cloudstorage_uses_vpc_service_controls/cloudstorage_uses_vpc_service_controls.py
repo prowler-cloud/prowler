@@ -5,14 +5,22 @@ from prowler.providers.gcp.services.accesscontextmanager.accesscontextmanager_cl
 from prowler.providers.gcp.services.cloudresourcemanager.cloudresourcemanager_client import (
     cloudresourcemanager_client,
 )
+from prowler.providers.gcp.services.cloudstorage.cloudstorage_client import (
+    cloudstorage_client,
+)
 
 
 class cloudstorage_uses_vpc_service_controls(Check):
     """
     Ensure Cloud Storage is protected by VPC Service Controls at project level.
 
-    Reports PASS if a project is in a VPC Service Controls perimeter
-    with storage.googleapis.com as a restricted service, otherwise FAIL.
+    Reports PASS if:
+    - A project is in a VPC Service Controls perimeter with storage.googleapis.com
+      as a restricted service, OR
+    - The Cloud Storage API access is blocked by VPC Service Controls
+      (verified by vpcServiceControlsUniqueIdentifier in the error response)
+
+    Otherwise reports FAIL.
     """
 
     def execute(self) -> list[Check_Report_GCP]:
@@ -47,6 +55,12 @@ class cloudstorage_uses_vpc_service_controls(Check):
             if project_resource_id in protected_projects:
                 report.status = "PASS"
                 report.status_extended = f"Project {project.id} has VPC Service Controls enabled for Cloud Storage in perimeter {protected_projects[project_resource_id]}."
+            elif (
+                project.id
+                in cloudstorage_client.vpc_service_controls_protected_projects
+            ):
+                report.status = "PASS"
+                report.status_extended = f"Project {project.id} has VPC Service Controls enabled for Cloud Storage in undetermined perimeter (verified by API access restriction)."
 
             findings.append(report)
 
