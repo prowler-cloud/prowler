@@ -7,6 +7,7 @@ All notable changes to the **Prowler MCP Server** are documented in this file.
 ### Added
 
 - Remove all Prowler App MCP tools; and add new MCP Server tools for Prowler Findings and Compliance [(#9300)](https://github.com/prowler-cloud/prowler/pull/9300)
+- Add new MCP Server tools for Prowler Providers Management [(#9350)](https://github.com/prowler-cloud/prowler/pull/9350)
 
 ---
 
