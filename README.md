@@ -82,16 +82,16 @@ prowler dashboard
 
 | Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) | Support | Interface |
 |---|---|---|---|---|---|---|
-| AWS | 576 | 82 | 39 | 10 | Official | UI, API, CLI |
-| GCP | 79 | 13 | 13 | 3 | Official | UI, API, CLI |
-| Azure | 162 | 19 | 13 | 4 | Official | UI, API, CLI |
-| Kubernetes | 83 | 7 | 5 | 7 | Official | UI, API, CLI |
-| GitHub | 17 | 2 | 1 | 0 | Official | Stable | UI, API, CLI |
+| AWS | 584 | 85 | 40 | 17 | Official | UI, API, CLI |
+| GCP | 89 | 17 | 14 | 5 | Official | UI, API, CLI |
+| Azure | 169 | 22 | 15 | 8 | Official | UI, API, CLI |
+| Kubernetes | 84 | 7 | 6 | 9 | Official | UI, API, CLI |
+| GitHub | 20 | 2 | 1 | 2 | Official | UI, API, CLI |
 | M365 | 70 | 7 | 3 | 2 | Official | UI, API, CLI |
-| OCI | 51 | 13 | 1 | 10 | Official | UI, API, CLI |
-| Alibaba Cloud | 61 | 9 | 1 | 9 | Official | CLI |
+| OCI | 52 | 15 | 1 | 12 | Official | UI, API, CLI |
+| Alibaba Cloud | 63 | 10 | 1 | 9 | Official | CLI |
 | IaC | [See `trivy` docs.](https://trivy.dev/latest/docs/coverage/iac/) | N/A | N/A | N/A | Official | UI, API, CLI |
-| MongoDB Atlas | 10 | 3 | 0 | 0 | Official | UI, API, CLI |
+| MongoDB Atlas | 10 | 4 | 0 | 3 | Official | UI, API, CLI |
 | LLM | [See `promptfoo` docs.](https://www.promptfoo.dev/docs/red-team/plugins/) | N/A | N/A | N/A | Official | CLI |
 | NHN | 6 | 2 | 1 | 0 | Unofficial | CLI |
 
