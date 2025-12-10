@@ -2,14 +2,12 @@
 
 import { cn } from "@/lib/utils";
 
-const TIME_RANGE_OPTIONS = {
-  FIVE_DAYS: "5D",
-  ONE_WEEK: "1W",
-  ONE_MONTH: "1M",
-} as const;
+import {
+  TIME_RANGE_OPTIONS,
+  type TimeRange,
+} from "../_constants/time-range.constants";
 
-export type TimeRange =
-  (typeof TIME_RANGE_OPTIONS)[keyof typeof TIME_RANGE_OPTIONS];
+export type { TimeRange };
 
 interface TimeRangeSelectorProps {
   value: TimeRange;

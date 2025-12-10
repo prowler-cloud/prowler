@@ -117,29 +117,42 @@ jobs:
         uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
         with:
           node-version: '20.x'
-          cache: 'npm'
-          cache-dependency-path: './ui/package-lock.json'
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+      - name: Get pnpm store directory
+        shell: bash
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      - name: Setup pnpm cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('ui/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
       - name: Install UI dependencies
         working-directory: ./ui
-        run: npm ci
+        run: pnpm install --frozen-lockfile
       - name: Build UI application
         working-directory: ./ui
-        run: npm run build
+        run: pnpm run build
       - name: Cache Playwright browsers
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('ui/package-lock.json') }}
+          key: ${{ runner.os }}-playwright-${{ hashFiles('ui/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-playwright-
       - name: Install Playwright browsers
         working-directory: ./ui
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npm run test:e2e:install
+        run: pnpm run test:e2e:install
       - name: Run E2E tests
         working-directory: ./ui
-        run: npm run test:e2e
+        run: pnpm run test:e2e
       - name: Upload test reports
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: failure()

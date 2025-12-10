@@ -12,16 +12,31 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `compute_instance_automatic_restart_enabled` check for GCP provider [(#9271)](https://github.com/prowler-cloud/prowler/pull/9271)
 - `compute_instance_deletion_protection_enabled` check for GCP provider [(#9358)](https://github.com/prowler-cloud/prowler/pull/9358)
 - Update SOC2 - GCP with Processing Integrity requirements [(#9464)](https://github.com/prowler-cloud/prowler/pull/9464)
+- Update SOC2 - AWS with Processing Integrity requirements [(#9462)](https://github.com/prowler-cloud/prowler/pull/9462)
 
 ### Changed
+- Update AWS Macie service metadata to new format [(#9265)](https://github.com/prowler-cloud/prowler/pull/9265)
+- Update AWS Lightsail service metadata to new format [(#9264)](https://github.com/prowler-cloud/prowler/pull/9264)
 - Update AWS GuardDuty service metadata to new format [(#9259)](https://github.com/prowler-cloud/prowler/pull/9259)
+- Update AWS Network Firewall service metadata to new format [(#9382)](https://github.com/prowler-cloud/prowler/pull/9382)
+- Update AWS MQ service metadata to new format [(#9267)](https://github.com/prowler-cloud/prowler/pull/9267)
+- Update AWS Macie service metadata to new format [(#9265)](https://github.com/prowler-cloud/prowler/pull/9265)
+- Update AWS Lightsail service metadata to new format [(#9264)](https://github.com/prowler-cloud/prowler/pull/9264)
 
 ---
 
-## [v5.14.2] (Prowler UNRELEASED)
+## [v5.14.3] (Prowler UNRELEASED)
+
+### Fixed
+- Removed incorrect threat-detection category from checks metadata [(#9489)](https://github.com/prowler-cloud/prowler/pull/9489)
+
+---
+
+## [v5.14.2] (Prowler 5.14.2)
 
 ### Fixed
 - Custom check folder metadata validation [(#9335)](https://github.com/prowler-cloud/prowler/pull/9335)
+- Pin `alibabacloud-gateway-oss-util` to version 0.0.3 to address missing dependency [(#9487)](https://github.com/prowler-cloud/prowler/pull/9487)
 
 ---
 
@@ -94,6 +109,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS ECS service metadata to new format [(#8888)](https://github.com/prowler-cloud/prowler/pull/8888)
 - Update AWS Kinesis service metadata to new format [(#9262)](https://github.com/prowler-cloud/prowler/pull/9262)
 - Update AWS DocumentDB service metadata to new format [(#8862)](https://github.com/prowler-cloud/prowler/pull/8862)
+
 
 ### Fixed
 - Check `check_name` has no `resource_name` error for GCP provider [(#9169)](https://github.com/prowler-cloud/prowler/pull/9169)
