@@ -816,6 +816,25 @@ class CheckReportNHN(Check_Report):
 
 
 @dataclass
+class CheckReportOpenStack(Check_Report):
+    """Contains the OpenStack Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    project_id: str
+    region: str
+
+    def __init__(self, metadata: Dict, resource: Any) -> None:
+        super().__init__(metadata, resource)
+        self.resource_name = getattr(
+            resource, "name", getattr(resource, "resource_name", "default")
+        )
+        self.resource_id = getattr(resource, "id", getattr(resource, "resource_id", ""))
+        self.project_id = getattr(resource, "project_id", "")
+        self.region = getattr(resource, "region", "global")
+
+
+@dataclass
 class CheckReportMongoDBAtlas(Check_Report):
     """Contains the MongoDB Atlas Check's finding information."""
 

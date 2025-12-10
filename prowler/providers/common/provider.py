@@ -286,6 +286,12 @@ class Provider(ABC):
                         fixer_config=fixer_config,
                         use_instance_principal=arguments.use_instance_principal,
                     )
+                elif "openstack" in provider_class_name.lower():
+                    provider_class(
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
 
         except TypeError as error:
             logger.critical(
