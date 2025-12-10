@@ -2,7 +2,7 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.15.0] (Prowler Unreleased)
+## [1.15.0] (Prowler v5.15.0)
 
 ### 🚀 Added
 
@@ -22,11 +22,8 @@ All notable changes to the **Prowler UI** are documented in this file.
 - MongoDB Atlas provider support [(#9253)](https://github.com/prowler-cloud/prowler/pull/9253)
 - Lighthouse AI support for Amazon Bedrock API key [(#9343)](https://github.com/prowler-cloud/prowler/pull/9343)
 
----
-
-## [1.14.3] (Prowler Unreleased)
-
 ### 🐞 Fixed
+
 - Show top failed requirements in compliance specific view for compliance without sections [(#9471)](https://github.com/prowler-cloud/prowler/pull/9471)
 
 ---
