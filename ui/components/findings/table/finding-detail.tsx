@@ -72,6 +72,7 @@ export const FindingDetail = ({
           providerDetails.uid,
           resource.name,
           extractLineRangeFromUid(attributes.uid) || "",
+          resource.region,
         )
       : null;
 
@@ -264,7 +265,7 @@ export const FindingDetail = ({
           )}
 
           <InfoField label="Categories">
-            {attributes.check_metadata.categories?.join(", ") || "-"}
+            {attributes.check_metadata.categories?.join(", ") || "none"}
           </InfoField>
         </CardContent>
       </Card>

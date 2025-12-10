@@ -83,9 +83,9 @@ def display_summary_table(
                 if provider.identity.tenancy_name != "unknown"
                 else provider.identity.tenancy_id
             )
-        else:
-            entity_type = "Scope"
-            audited_entities = getattr(provider.identity, "account", "unknown")
+        elif provider.type == "alibabacloud":
+            entity_type = "Account"
+            audited_entities = provider.identity.account_id
 
         # Check if there are findings and that they are not all MANUAL
         if findings and not all(finding.status == "MANUAL" for finding in findings):

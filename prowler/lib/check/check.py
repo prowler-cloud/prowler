@@ -14,7 +14,7 @@ from colorama import Fore, Style
 import prowler
 from prowler.config.config import orange_color
 from prowler.lib.check.custom_checks_metadata import update_check_metadata
-from prowler.lib.check.models import Check
+from prowler.lib.check.models import Check, load_check_metadata
 from prowler.lib.check.utils import recover_checks_from_provider
 from prowler.lib.logger import logger
 from prowler.lib.outputs.outputs import report
@@ -108,6 +108,48 @@ def parse_checks_from_folder(provider, input_folder: str) -> set:
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
         )
         sys.exit(1)
+
+
+def load_custom_checks_metadata(input_folder: str) -> dict:
+    """
+    Load check metadata from a custom checks folder without copying the checks.
+    This is used to validate check names before the provider is initialized.
+
+    Args:
+        input_folder (str): Path to the folder containing custom checks.
+
+    Returns:
+        dict: A dictionary with CheckID as key and CheckMetadata as value.
+    """
+    custom_checks_metadata = {}
+
+    try:
+        if not os.path.isdir(input_folder):
+            return custom_checks_metadata
+
+        with os.scandir(input_folder) as checks:
+            for check in checks:
+                if check.is_dir():
+                    check_name = check.name
+                    metadata_file = os.path.join(
+                        input_folder, check_name, f"{check_name}.metadata.json"
+                    )
+                    if os.path.isfile(metadata_file):
+                        try:
+                            check_metadata = load_check_metadata(metadata_file)
+                            custom_checks_metadata[check_metadata.CheckID] = (
+                                check_metadata
+                            )
+                        except Exception as error:
+                            logger.warning(
+                                f"Could not load metadata from {metadata_file}: {error}"
+                            )
+        return custom_checks_metadata
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+        )
+        return custom_checks_metadata
 
 
 # Load checks from custom folder
@@ -640,6 +682,10 @@ def execute(
             elif global_provider.type == "mongodbatlas":
                 is_finding_muted_args["organization_id"] = (
                     global_provider.identity.organization_id
+                )
+            elif global_provider.type == "alibabacloud":
+                is_finding_muted_args["account_id"] = (
+                    global_provider.identity.account_id
                 )
             for finding in check_findings:
                 if global_provider.type == "cloudflare":

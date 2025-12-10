@@ -12,26 +12,33 @@ import {
 } from "@/types";
 
 interface UseRelatedFiltersProps {
-  providerUIDs: string[];
-  providerDetails: { [uid: string]: FilterEntity }[];
+  providerIds?: string[];
+  providerUIDs?: string[];
+  providerDetails: { [key: string]: FilterEntity }[];
   completedScanIds?: string[];
   scanDetails?: { [key: string]: ScanEntity }[];
   enableScanRelation?: boolean;
+  providerFilterType?: FilterType.PROVIDER | FilterType.PROVIDER_UID;
 }
 
 export const useRelatedFilters = ({
-  providerUIDs,
+  providerIds = [],
+  providerUIDs = [],
   providerDetails,
   completedScanIds = [],
   scanDetails = [],
   enableScanRelation = false,
+  providerFilterType = FilterType.PROVIDER,
 }: UseRelatedFiltersProps) => {
   const searchParams = useSearchParams();
   const { updateFilter } = useUrlFilters();
   const [availableScans, setAvailableScans] =
     useState<string[]>(completedScanIds);
-  const [availableProviderUIDs, setAvailableProviderUIDs] =
-    useState<string[]>(providerUIDs);
+
+  // Use providerIds if provided (for findings), otherwise use providerUIDs (for scans)
+  const providers = providerIds.length > 0 ? providerIds : providerUIDs;
+  const [availableProviders, setAvailableProviders] =
+    useState<string[]>(providers);
   const previousProviders = useRef<string[]>([]);
   const previousProviderTypes = useRef<ProviderType[]>([]);
   const isManualDeselection = useRef(false);
@@ -52,13 +59,13 @@ export const useRelatedFilters = ({
     return scanDetail ? scanDetail[scanId]?.providerInfo?.provider : null;
   };
 
-  const getProviderType = (providerUid: string): ProviderType | null => {
+  const getProviderType = (providerKey: string): ProviderType | null => {
     const providerDetail = providerDetails.find(
-      (detail) => Object.keys(detail)[0] === providerUid,
+      (detail) => Object.keys(detail)[0] === providerKey,
     );
     if (!providerDetail) return null;
 
-    const entity = providerDetail[providerUid];
+    const entity = providerDetail[providerKey];
     if (!isScanEntity(entity as ScanEntity)) {
       return (entity as ProviderEntity).provider;
     }
@@ -69,9 +76,7 @@ export const useRelatedFilters = ({
     const scanParam = enableScanRelation
       ? searchParams.get(`filter[${FilterType.SCAN}]`)
       : null;
-    const providerParam = searchParams.get(
-      `filter[${FilterType.PROVIDER_UID}]`,
-    );
+    const providerParam = searchParams.get(`filter[${providerFilterType}]`);
     const providerTypeParam = searchParams.get(
       `filter[${FilterType.PROVIDER_TYPE}]`,
     );
@@ -162,25 +167,25 @@ export const useRelatedFilters = ({
 
     // Update available providers
     if (currentProviderTypes.length > 0) {
-      const filteredProviderUIDs = providerUIDs.filter((uid) => {
-        const providerType = getProviderType(uid);
+      const filteredProviders = providers.filter((key) => {
+        const providerType = getProviderType(key);
         return providerType && currentProviderTypes.includes(providerType);
       });
-      setAvailableProviderUIDs(filteredProviderUIDs);
+      setAvailableProviders(filteredProviders);
 
-      const validProviders = currentProviders.filter((uid) => {
-        const providerType = getProviderType(uid);
+      const validProviders = currentProviders.filter((key) => {
+        const providerType = getProviderType(key);
         return providerType && currentProviderTypes.includes(providerType);
       });
 
       if (validProviders.length !== currentProviders.length) {
         updateFilter(
-          FilterType.PROVIDER_UID,
+          providerFilterType,
           validProviders.length > 0 ? validProviders : null,
         );
       }
     } else {
-      setAvailableProviderUIDs(providerUIDs);
+      setAvailableProviders(providers);
     }
 
     // Update available scans
@@ -207,7 +212,8 @@ export const useRelatedFilters = ({
   }, [searchParams]);
 
   return {
-    availableProviderUIDs,
+    availableProviderIds: providerIds.length > 0 ? availableProviders : [],
+    availableProviderUIDs: providerUIDs.length > 0 ? availableProviders : [],
     availableScans,
   };
 };
