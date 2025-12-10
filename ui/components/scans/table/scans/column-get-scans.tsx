@@ -1,9 +1,11 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
+import { ColumnDef, Row } from "@tanstack/react-table";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { InfoIcon } from "@/components/icons";
+import { Button } from "@/components/shadcn";
 import { TableLink } from "@/components/ui/custom";
 import { DateWithTime, EntityInfo } from "@/components/ui/entities";
 import { TriggerSheet } from "@/components/ui/sheet";
@@ -19,7 +21,7 @@ const getScanData = (row: { original: ScanProps }) => {
   return row.original;
 };
 
-const ScanDetailsCell = ({ row }: { row: any }) => {
+const ScanDetailsCell = ({ row }: { row: Row<ScanProps> }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const scanId = searchParams.get("scanId");
@@ -192,11 +194,28 @@ export const ColumnGetScans: ColumnDef<ScanProps>[] = [
     ),
     cell: ({ row }) => {
       const {
-        attributes: { unique_resource_count },
+        id,
+        attributes: { unique_resource_count, state },
       } = getScanData(row);
+      const isCompleted = state === "completed";
+
+      if (!isCompleted) {
+        return (
+          <div className="flex w-fit items-center justify-center">
+            <span className="text-default-500 text-xs font-medium">
+              {unique_resource_count ?? "-"}
+            </span>
+          </div>
+        );
+      }
+
       return (
         <div className="flex w-fit items-center justify-center">
-          <span className="text-xs font-medium">{unique_resource_count}</span>
+          <Button asChild variant="link" size="sm" className="text-xs">
+            <Link href={`/resources?filter[scan__in]=${id}`}>
+              {unique_resource_count}
+            </Link>
+          </Button>
         </div>
       );
     },
