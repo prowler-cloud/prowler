@@ -1301,6 +1301,7 @@ class FindingSerializer(RLSSerializer):
             "severity",
             "check_id",
             "check_metadata",
+            "categories",
             "raw_result",
             "inserted_at",
             "updated_at",
@@ -1356,6 +1357,7 @@ class FindingMetadataSerializer(BaseSerializerV1):
     resource_types = serializers.ListField(
         child=serializers.CharField(), allow_empty=True
     )
+    categories = serializers.ListField(child=serializers.CharField(), allow_empty=True)
     # Temporarily disabled until we implement tag filtering in the UI
     # tags = serializers.JSONField(help_text="Tags are described as key-value pairs.")
 

@@ -157,6 +157,9 @@ class CommonFindingFilters(FilterSet):
         field_name="resources__type", lookup_expr="icontains"
     )
 
+    category = CharFilter(method="filter_category")
+    category__in = CharInFilter(field_name="categories", lookup_expr="overlap")
+
     # Temporarily disabled until we implement tag filtering in the UI
     # resource_tag_key = CharFilter(field_name="resources__tags__key")
     # resource_tag_key__in = CharInFilter(
@@ -187,6 +190,9 @@ class CommonFindingFilters(FilterSet):
 
     def filter_resource_type(self, queryset, name, value):
         return queryset.filter(resource_types__contains=[value])
+
+    def filter_category(self, queryset, name, value):
+        return queryset.filter(categories__contains=[value])
 
     def filter_resource_tag(self, queryset, name, value):
         overall_query = Q()

@@ -157,6 +157,7 @@ from api.models import (
     SAMLDomainIndex,
     SAMLToken,
     Scan,
+    ScanCategorySummary,
     ScanSummary,
     SeverityChoices,
     StateChoices,
@@ -2855,10 +2856,30 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
             .order_by("resource_type")
         )
 
+        # Get categories from ScanCategorySummary table
+        scan_ids = list(queryset.values_list("scan_id", flat=True).distinct())
+        categories_set = set()
+        for cat_list in ScanCategorySummary.objects.filter(
+            tenant_id=tenant_id, scan_id__in=scan_ids
+        ).values_list("categories", flat=True):
+            if cat_list:
+                categories_set.update(cat_list)
+
+        # Fallback to finding aggregation if no ScanCategorySummary exists
+        if not categories_set:
+            for categories_list in filtered_queryset.values_list(
+                "categories", flat=True
+            ):
+                if categories_list:
+                    categories_set.update(categories_list)
+
+        categories = sorted(categories_set)
+
         result = {
             "services": services,
             "regions": regions,
             "resource_types": resource_types,
+            "categories": categories,
         }
 
         serializer = self.get_serializer(data=result)
@@ -2963,10 +2984,34 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
             .order_by("resource_type")
         )
 
+        # Get categories from ScanCategorySummary table for latest scans
+        categories_set = set()
+        for cat_list in ScanCategorySummary.objects.filter(
+            tenant_id=tenant_id,
+            scan_id__in=latest_scans_queryset.values_list("id", flat=True),
+        ).values_list("categories", flat=True):
+            if cat_list:
+                categories_set.update(cat_list)
+
+        # Fallback to finding aggregation if no ScanCategorySummary exists
+        if not categories_set:
+            filtered_queryset = self.filter_queryset(self.get_queryset()).filter(
+                tenant_id=tenant_id,
+                scan_id__in=latest_scans_queryset.values_list("id", flat=True),
+            )
+            for categories_list in filtered_queryset.values_list(
+                "categories", flat=True
+            ):
+                if categories_list:
+                    categories_set.update(categories_list)
+
+        categories = sorted(categories_set)
+
         result = {
             "services": services,
             "regions": regions,
             "resource_types": resource_types,
+            "categories": categories,
         }
 
         serializer = self.get_serializer(data=result)

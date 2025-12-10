@@ -8,6 +8,7 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from typing import Any
 
+import sentry_sdk
 from celery.utils.log import get_task_logger
 from config.env import env
 from config.settings.celery import CELERY_DEADLOCK_ATTEMPTS
@@ -39,6 +40,7 @@ from api.models import (
     ResourceScanSummary,
     ResourceTag,
     Scan,
+    ScanCategorySummary,
     ScanSummary,
     StateChoices,
 )
@@ -398,6 +400,7 @@ def _process_finding_micro_batch(
     unique_resources: set,
     scan_resource_cache: set,
     mute_rules_cache: dict,
+    scan_categories_cache: set,
 ) -> None:
     """
     Process a micro-batch of findings and persist them using bulk operations.
@@ -418,6 +421,7 @@ def _process_finding_micro_batch(
         unique_resources: Set tracking (uid, region) pairs seen in the scan.
         scan_resource_cache: Set of tuples used to create `ResourceScanSummary` rows.
         mute_rules_cache: Map of finding UID -> mute reason gathered before the scan.
+        scan_categories_cache: Set collecting unique categories across all findings.
     """
     # Accumulate objects for bulk operations
     findings_to_create = []
@@ -573,11 +577,12 @@ def _process_finding_micro_batch(
             resource_failed_findings_cache[resource_uid] += 1
 
         # Create finding object (don't save yet)
+        check_metadata = finding.get_metadata()
         finding_instance = Finding(
             tenant_id=tenant_id,
             uid=finding_uid,
             delta=delta,
-            check_metadata=finding.get_metadata(),
+            check_metadata=check_metadata,
             status=status,
             status_extended=finding.status_extended,
             severity=finding.severity,
@@ -590,6 +595,7 @@ def _process_finding_micro_batch(
             muted_at=datetime.now(tz=timezone.utc) if is_muted else None,
             muted_reason=muted_reason,
             compliance=finding.compliance,
+            categories=check_metadata.get("categories", []) or [],
         )
         findings_to_create.append(finding_instance)
         resource_denormalized_data.append((finding_instance, resource_instance))
@@ -603,6 +609,10 @@ def _process_finding_micro_batch(
                 resource_instance.type,
             )
         )
+
+        # Track categories for ScanCategorySummary
+        finding_categories = check_metadata.get("categories", []) or []
+        scan_categories_cache.update(finding_categories)
 
     # Bulk operations within single transaction
     with rls_transaction(tenant_id):
@@ -703,6 +713,7 @@ def perform_prowler_scan(
     exception = None
     unique_resources = set()
     scan_resource_cache: set[tuple[str, str, str, str]] = set()
+    scan_categories_cache: set[str] = set()
     start_time = time.time()
     exc = None
 
@@ -792,6 +803,7 @@ def perform_prowler_scan(
                     unique_resources=unique_resources,
                     scan_resource_cache=scan_resource_cache,
                     mute_rules_cache=mute_rules_cache,
+                    scan_categories_cache=scan_categories_cache,
                 )
 
             # Update scan progress
@@ -851,12 +863,21 @@ def perform_prowler_scan(
                 resource_scan_summaries, batch_size=500, ignore_conflicts=True
             )
     except Exception as filter_exception:
-        import sentry_sdk
-
         sentry_sdk.capture_exception(filter_exception)
         logger.error(
             f"Error storing filter values for scan {scan_id}: {filter_exception}"
         )
+
+    try:
+        with rls_transaction(tenant_id):
+            ScanCategorySummary.objects.update_or_create(
+                tenant_id=tenant_id,
+                scan_id=scan_id,
+                defaults={"categories": sorted(scan_categories_cache)},
+            )
+    except Exception as cat_exception:
+        sentry_sdk.capture_exception(cat_exception)
+        logger.error(f"Error storing categories for scan {scan_id}: {cat_exception}")
 
     serializer = ScanTaskSerializer(instance=scan_instance)
     return serializer.data

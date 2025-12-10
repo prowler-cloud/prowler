@@ -8,10 +8,12 @@ from api.models import (
     ComplianceOverviewSummary,
     ComplianceRequirementOverview,
     DailySeveritySummary,
+    Finding,
     Resource,
     ResourceFindingMapping,
     ResourceScanSummary,
     Scan,
+    ScanCategorySummary,
     ScanSummary,
     StateChoices,
 )
@@ -276,3 +278,51 @@ def backfill_daily_severity_summaries(tenant_id: str, days: int = None):
         "updated": updated_count,
         "total_days": len(latest_scans_by_day),
     }
+
+
+def backfill_scan_category_summaries(tenant_id: str, scan_id: str):
+    """
+    Backfill ScanCategorySummary for a completed scan.
+
+    Aggregates unique categories from all findings in the scan and creates
+    a single ScanCategorySummary row.
+
+    Args:
+        tenant_id: Target tenant UUID
+        scan_id: Scan UUID to backfill
+
+    Returns:
+        dict: Status indicating whether backfill was performed
+    """
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        if ScanCategorySummary.objects.filter(
+            tenant_id=tenant_id, scan_id=scan_id
+        ).exists():
+            return {"status": "already backfilled"}
+
+    with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
+        if not Scan.objects.filter(
+            tenant_id=tenant_id,
+            id=scan_id,
+            state__in=(StateChoices.COMPLETED, StateChoices.FAILED),
+        ).exists():
+            return {"status": "scan is not completed"}
+
+        categories_set = set()
+        for categories_list in Finding.all_objects.filter(
+            tenant_id=tenant_id, scan_id=scan_id
+        ).values_list("categories", flat=True):
+            if categories_list:
+                categories_set.update(categories_list)
+
+        if not categories_set:
+            return {"status": "no categories to backfill"}
+
+    with rls_transaction(tenant_id):
+        ScanCategorySummary.objects.update_or_create(
+            tenant_id=tenant_id,
+            scan_id=scan_id,
+            defaults={"categories": sorted(categories_set)},
+        )
+
+    return {"status": "backfilled", "categories_count": len(categories_set)}
