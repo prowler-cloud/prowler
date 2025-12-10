@@ -1,13 +1,14 @@
 "use client";
 
 import { RadioGroup } from "@heroui/radio";
-import React from "react";
+import { FC } from "react";
 import { Control, Controller } from "react-hook-form";
 import { z } from "zod";
 
 import { addProviderFormSchema } from "@/types";
 
 import {
+  AlibabaCloudProviderBadge,
   AWSProviderBadge,
   AzureProviderBadge,
   GCPProviderBadge,
@@ -27,7 +28,7 @@ interface RadioGroupProviderProps {
   errorMessage?: string;
 }
 
-export const RadioGroupProvider: React.FC<RadioGroupProviderProps> = ({
+export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
   control,
   isInvalid,
   errorMessage,
@@ -100,6 +101,12 @@ export const RadioGroupProvider: React.FC<RadioGroupProviderProps> = ({
                 <div className="flex items-center">
                   <OracleCloudProviderBadge size={26} />
                   <span className="ml-2">Oracle Cloud Infrastructure</span>
+                </div>
+              </CustomRadio>
+              <CustomRadio description="Alibaba Cloud" value="alibabacloud">
+                <div className="flex items-center">
+                  <AlibabaCloudProviderBadge size={26} />
+                  <span className="ml-2">Alibaba Cloud</span>
                 </div>
               </CustomRadio>
             </div>

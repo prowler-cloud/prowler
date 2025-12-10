@@ -2,6 +2,14 @@ import { getProviderDisplayName } from "@/types/providers";
 
 import { RegionsOverviewResponse } from "./types";
 
+export const RISK_LEVELS = {
+  LOW_HIGH: "low-high",
+  HIGH: "high",
+  CRITICAL: "critical",
+} as const;
+
+export type RiskLevel = (typeof RISK_LEVELS)[keyof typeof RISK_LEVELS];
+
 export interface ThreatMapLocation {
   id: string;
   name: string;
@@ -11,7 +19,7 @@ export interface ThreatMapLocation {
   coordinates: [number, number];
   totalFindings: number;
   failFindings: number;
-  riskLevel: "low-high" | "high" | "critical";
+  riskLevel: RiskLevel;
   severityData: Array<{
     name: string;
     value: number;
@@ -215,6 +223,44 @@ const MONGODBATLAS_COORDINATES: Record<string, { lat: number; lng: number }> = {
   global: { lat: 40.8, lng: -74.0 }, // Global fallback
 };
 
+// Alibaba Cloud regions
+const ALIBABACLOUD_COORDINATES: Record<string, { lat: number; lng: number }> = {
+  // China regions
+  "cn-hangzhou": { lat: 30.3, lng: 120.2 }, // Hangzhou
+  "cn-shanghai": { lat: 31.2, lng: 121.5 }, // Shanghai
+  "cn-beijing": { lat: 39.9, lng: 116.4 }, // Beijing
+  "cn-shenzhen": { lat: 22.5, lng: 114.1 }, // Shenzhen
+  "cn-zhangjiakou": { lat: 40.8, lng: 114.9 }, // Zhangjiakou
+  "cn-huhehaote": { lat: 40.8, lng: 111.7 }, // Hohhot
+  "cn-wulanchabu": { lat: 41.0, lng: 113.1 }, // Ulanqab
+  "cn-chengdu": { lat: 30.7, lng: 104.1 }, // Chengdu
+  "cn-qingdao": { lat: 36.1, lng: 120.4 }, // Qingdao
+  "cn-nanjing": { lat: 32.1, lng: 118.8 }, // Nanjing
+  "cn-fuzhou": { lat: 26.1, lng: 119.3 }, // Fuzhou
+  "cn-guangzhou": { lat: 23.1, lng: 113.3 }, // Guangzhou
+  "cn-heyuan": { lat: 23.7, lng: 114.7 }, // Heyuan
+  "cn-hongkong": { lat: 22.3, lng: 114.2 }, // Hong Kong
+  // Asia Pacific regions
+  "ap-southeast-1": { lat: 1.4, lng: 103.8 }, // Singapore
+  "ap-southeast-2": { lat: -33.9, lng: 151.2 }, // Sydney
+  "ap-southeast-3": { lat: 3.1, lng: 101.7 }, // Kuala Lumpur
+  "ap-southeast-5": { lat: -6.2, lng: 106.8 }, // Jakarta
+  "ap-southeast-6": { lat: 13.8, lng: 100.5 }, // Bangkok
+  "ap-southeast-7": { lat: 10.8, lng: 106.6 }, // Ho Chi Minh City
+  "ap-northeast-1": { lat: 35.7, lng: 139.7 }, // Tokyo
+  "ap-northeast-2": { lat: 37.6, lng: 127.0 }, // Seoul
+  "ap-south-1": { lat: 19.1, lng: 72.9 }, // Mumbai
+  // US & Europe regions
+  "us-west-1": { lat: 37.4, lng: -121.9 }, // Silicon Valley
+  "us-east-1": { lat: 39.0, lng: -77.5 }, // Virginia
+  "eu-west-1": { lat: 51.5, lng: -0.1 }, // London
+  "eu-central-1": { lat: 50.1, lng: 8.7 }, // Frankfurt
+  // Middle East regions
+  "me-east-1": { lat: 25.3, lng: 55.3 }, // Dubai
+  "me-central-1": { lat: 24.5, lng: 54.4 }, // Riyadh
+  global: { lat: 30.3, lng: 120.2 }, // Global fallback (Hangzhou HQ)
+};
+
 const PROVIDER_COORDINATES: Record<
   string,
   Record<string, { lat: number; lng: number }>
@@ -230,6 +276,7 @@ const PROVIDER_COORDINATES: Record<
   iac: IAC_COORDINATES,
   oraclecloud: ORACLECLOUD_COORDINATES,
   mongodbatlas: MONGODBATLAS_COORDINATES,
+  alibabacloud: ALIBABACLOUD_COORDINATES,
 };
 
 // Returns [lng, lat] format for D3/GeoJSON compatibility
@@ -253,10 +300,10 @@ function getRegionCoordinates(
   return coords ? [coords.lng, coords.lat] : null;
 }
 
-function getRiskLevel(failRate: number): "low-high" | "high" | "critical" {
-  if (failRate >= 0.5) return "critical";
-  if (failRate >= 0.25) return "high";
-  return "low-high";
+function getRiskLevel(failRate: number): RiskLevel {
+  if (failRate >= 0.5) return RISK_LEVELS.CRITICAL;
+  if (failRate >= 0.25) return RISK_LEVELS.HIGH;
+  return RISK_LEVELS.LOW_HIGH;
 }
 
 // CSS variables are used for Recharts inline styles, not className

@@ -270,6 +270,20 @@ export type MongoDBAtlasCredentials = {
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
+export type AlibabaCloudCredentials = {
+  [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_ID]: string;
+  [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_SECRET]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
+export type AlibabaCloudCredentialsRole = {
+  [ProviderCredentialFields.ALIBABACLOUD_ROLE_ARN]: string;
+  [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_ID]: string;
+  [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_SECRET]: string;
+  [ProviderCredentialFields.ALIBABACLOUD_ROLE_SESSION_NAME]?: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
 export type CredentialsFormSchema =
   | AWSCredentials
   | AzureCredentials
@@ -279,7 +293,9 @@ export type CredentialsFormSchema =
   | IacCredentials
   | M365Credentials
   | OCICredentials
-  | MongoDBAtlasCredentials;
+  | MongoDBAtlasCredentials
+  | AlibabaCloudCredentials
+  | AlibabaCloudCredentialsRole;
 
 export interface SearchParamsProps {
   [key: string]: string | string[] | undefined;

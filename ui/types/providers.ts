@@ -8,6 +8,7 @@ export const PROVIDER_TYPES = [
   "github",
   "iac",
   "oraclecloud",
+  "alibabacloud",
 ] as const;
 
 export type ProviderType = (typeof PROVIDER_TYPES)[number];
@@ -22,6 +23,7 @@ export const PROVIDER_DISPLAY_NAMES: Record<ProviderType, string> = {
   github: "GitHub",
   iac: "Infrastructure as Code",
   oraclecloud: "Oracle Cloud Infrastructure",
+  alibabacloud: "Alibaba Cloud",
 };
 
 export function getProviderDisplayName(providerId: string): string {

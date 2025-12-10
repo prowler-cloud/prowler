@@ -11,14 +11,23 @@ import {
   addCredentialsFormSchema,
   addCredentialsRoleFormSchema,
   addCredentialsServiceAccountFormSchema,
+  ApiError,
   ProviderType,
 } from "@/types";
+
+type ApiResponse = {
+  error?: string;
+  errors?: ApiError[];
+  data?: unknown;
+  success?: boolean;
+  status?: number;
+};
 
 type UseCredentialsFormProps = {
   providerType: ProviderType;
   providerId: string;
   providerUid?: string;
-  onSubmit: (formData: FormData) => Promise<any>;
+  onSubmit: (formData: FormData) => Promise<ApiResponse>;
   successNavigationUrl: string;
 };
 
@@ -37,6 +46,9 @@ export const useCredentialsForm = ({
   // Select the appropriate schema based on provider type and via parameter
   const getFormSchema = () => {
     if (providerType === "aws" && via === "role") {
+      return addCredentialsRoleFormSchema(providerType);
+    }
+    if (providerType === "alibabacloud" && via === "role") {
       return addCredentialsRoleFormSchema(providerType);
     }
     if (providerType === "gcp" && via === "service-account") {
@@ -172,6 +184,22 @@ export const useCredentialsForm = ({
           ...baseDefaults,
           [ProviderCredentialFields.ATLAS_PUBLIC_KEY]: "",
           [ProviderCredentialFields.ATLAS_PRIVATE_KEY]: "",
+        };
+      case "alibabacloud":
+        // AlibabaCloud Role credentials
+        if (via === "role") {
+          return {
+            ...baseDefaults,
+            [ProviderCredentialFields.ALIBABACLOUD_ROLE_ARN]: "",
+            [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_ID]: "",
+            [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_SECRET]: "",
+            [ProviderCredentialFields.ALIBABACLOUD_ROLE_SESSION_NAME]: "",
+          };
+        }
+        return {
+          ...baseDefaults,
+          [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_ID]: "",
+          [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_SECRET]: "",
         };
       default:
         return baseDefaults;
