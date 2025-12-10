@@ -60,7 +60,7 @@ def validate_arguments(arguments) -> tuple[bool, str]:
     if not token and not (api_key and api_email):
         return (
             False,
-            "Cloudflare provider requires --cloudflare-api-token or the combination of --cloudflare-api-key and --cloudflare-api-email (or matching environment variables).",
+            "Cloudflare provider requires CLOUDFLARE_API_TOKEN (or --cloudflare-api-token) or the combination of CLOUDFLARE_API_KEY and CLOUDFLARE_API_EMAIL (or --cloudflare-api-key and --cloudflare-api-email).",
         )
 
     return (True, "")

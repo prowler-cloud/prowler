@@ -60,22 +60,25 @@ class CloudflareProvider(Provider):
     ):
         logger.info("Instantiating Cloudflare provider...")
 
-        self._session = CloudflareProvider.setup_session(
-            api_token=api_token,
-            api_key=api_key,
-            api_email=api_email,
-        )
-
-        self._identity = CloudflareProvider.setup_identity(
-            self._session, account_ids=account_ids
-        )
-
         if config_content:
             self._audit_config = config_content
         else:
             if not config_path:
                 config_path = default_config_file_path
             self._audit_config = load_and_validate_config_file(self._type, config_path)
+
+        max_retries = self._audit_config.get("max_retries", 2)
+
+        self._session = CloudflareProvider.setup_session(
+            api_token=api_token,
+            api_key=api_key,
+            api_email=api_email,
+            max_retries=max_retries,
+        )
+
+        self._identity = CloudflareProvider.setup_identity(
+            self._session, account_ids=account_ids
+        )
 
         self._fixer_config = fixer_config
 
@@ -128,27 +131,53 @@ class CloudflareProvider(Provider):
         api_token: str = None,
         api_key: str = None,
         api_email: str = None,
+        max_retries: int = 2,
     ) -> CloudflareSession:
-        """Initialize Cloudflare SDK client."""
+        """Initialize Cloudflare SDK client.
+
+        Args:
+            api_token: Cloudflare API token.
+            api_key: Cloudflare API key.
+            api_email: Cloudflare API email.
+            max_retries: Maximum number of retries for API requests (default is 2).
+        """
         token = api_token or os.environ.get("CLOUDFLARE_API_TOKEN", "")
         key = api_key or os.environ.get("CLOUDFLARE_API_KEY", "")
         email = api_email or os.environ.get("CLOUDFLARE_API_EMAIL", "")
 
-        if not token and not (key and email):
-            raise CloudflareCredentialsError(
-                file=os.path.basename(__file__),
-                message="Cloudflare credentials not found. Provide --cloudflare-api-token or --cloudflare-api-key and --cloudflare-api-email.",
+        # Warn if both auth methods are set, use API Token (recommended)
+        if token and key and email:
+            logger.error(
+                "Both API Token and API Key + Email credentials are set. "
+                "Using API Token (recommended). "
+                "To avoid this error, unset CLOUDFLARE_API_KEY and CLOUDFLARE_API_EMAIL, or CLOUDFLARE_API_TOKEN. "
+                "Note: The Cloudflare SDK automatically reads credentials from environment variables, which causes conflicts."
             )
+
+        # The Cloudflare SDK reads credentials from environment variables automatically.
+        # To ensure we use only the selected auth method, temporarily unset env vars.
+        env_token = os.environ.pop("CLOUDFLARE_API_TOKEN", None)
+        env_key = os.environ.pop("CLOUDFLARE_API_KEY", None)
+        env_email = os.environ.pop("CLOUDFLARE_API_EMAIL", None)
 
         try:
             if token:
-                client = Cloudflare(api_token=token)
+                client = Cloudflare(api_token=token, max_retries=max_retries)
+            elif key and email:
+                client = Cloudflare(
+                    api_key=key, api_email=email, max_retries=max_retries
+                )
             else:
-                client = Cloudflare(api_email=email, api_key=key)
+                raise CloudflareCredentialsError(
+                    file=os.path.basename(__file__),
+                    message="Cloudflare credentials not found. Available authentication methods: "
+                    "(1) API Token: use --cloudflare-api-token or set CLOUDFLARE_API_TOKEN environment variable; "
+                    "(2) API Key + Email: use --cloudflare-api-key and --cloudflare-api-email or set CLOUDFLARE_API_KEY and CLOUDFLARE_API_EMAIL environment variables.",
+                )
 
             return CloudflareSession(
                 client=client,
-                api_token=token or None,
+                api_token=client.api_token,
                 api_key=key or None,
                 api_email=email or None,
             )
@@ -160,6 +189,14 @@ class CloudflareProvider(Provider):
                 file=os.path.basename(__file__),
                 original_exception=error,
             )
+        finally:
+            # Restore environment variables
+            if env_token:
+                os.environ["CLOUDFLARE_API_TOKEN"] = env_token
+            if env_key:
+                os.environ["CLOUDFLARE_API_KEY"] = env_key
+            if env_email:
+                os.environ["CLOUDFLARE_API_EMAIL"] = env_email
 
     @staticmethod
     def setup_identity(

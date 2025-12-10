@@ -592,6 +592,9 @@ mongodbatlas:
 
 # Cloudflare Configuration
 cloudflare:
+  # Maximum number of retries for API requests (default is 2)
+  # Set to 0 to disable retries
+  max_retries: 3
   # zone_min_tls_version_secure --> Recommended minimum TLS version
   min_tls_version: "1.2"
   # zone_https_redirect_enabled --> Enforce HTTPS redirects
