@@ -1034,15 +1034,45 @@ class HTML(Output):
             str: HTML assessment summary for the Cloudflare provider
         """
         try:
-            accounts = (
-                ", ".join([acc.id for acc in provider.accounts])
-                if provider.accounts
-                else "N/A"
+            # Build assessment summary items (only non-None values)
+            assessment_items = ""
+            if provider.accounts:
+                accounts = ", ".join([acc.id for acc in provider.accounts])
+                assessment_items += f"""
+                            <li class="list-group-item">
+                                <b>Accounts:</b> {accounts}
+                            </li>"""
+            if provider.zones:
+                zones = ", ".join([z.name for z in provider.zones])
+                assessment_items += f"""
+                            <li class="list-group-item">
+                                <b>Zones:</b> {zones}
+                            </li>"""
+
+            # Build credentials items (only non-None values)
+            credentials_items = ""
+
+            # Authentication method
+            if provider.session.api_token:
+                credentials_items += """
+                            <li class="list-group-item">
+                                <b>Authentication:</b> API Token
+                            </li>"""
+            elif provider.session.api_key and provider.session.api_email:
+                credentials_items += """
+                            <li class="list-group-item">
+                                <b>Authentication:</b> API Key + Email
+                            </li>"""
+
+            # Email (from identity or session)
+            email = getattr(provider.identity, "email", None) or getattr(
+                provider.session, "api_email", None
             )
-            zones = (
-                ", ".join([z.name for z in provider.zones]) if provider.zones else "N/A"
-            )
-            email = getattr(provider.identity, "email", "N/A") or "N/A"
+            if email:
+                credentials_items += f"""
+                            <li class="list-group-item">
+                                <b>Email:</b> {email}
+                            </li>"""
 
             return f"""
                 <div class="col-md-2">
@@ -1050,13 +1080,7 @@ class HTML(Output):
                         <div class="card-header">
                             Cloudflare Assessment Summary
                         </div>
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item">
-                                <b>Accounts:</b> {accounts}
-                            </li>
-                            <li class="list-group-item">
-                                <b>Zones:</b> {zones}
-                            </li>
+                        <ul class="list-group list-group-flush">{assessment_items}
                         </ul>
                     </div>
                 </div>
@@ -1065,10 +1089,7 @@ class HTML(Output):
                         <div class="card-header">
                             Cloudflare Credentials
                         </div>
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item">
-                                <b>Email:</b> {email}
-                            </li>
+                        <ul class="list-group list-group-flush">{credentials_items}
                         </ul>
                     </div>
                 </div>"""

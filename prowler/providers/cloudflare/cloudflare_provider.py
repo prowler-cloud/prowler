@@ -304,27 +304,35 @@ class CloudflareProvider(Provider):
             )
 
     def print_credentials(self) -> None:
-        accounts = (
-            ", ".join([account.id for account in self.accounts])
-            if self.accounts
-            else "all accessible accounts"
-        )
-        zones = (
-            ", ".join([zone.name for zone in self._zones])
-            if self._zones
-            else "all accessible zones"
-        )
         report_title = (
             f"{Style.BRIGHT}Using the Cloudflare credentials below:{Style.RESET_ALL}"
         )
-        report_lines = [
-            f"Account: {Fore.YELLOW}{accounts}{Style.RESET_ALL}",
-            f"Zones: {Fore.YELLOW}{zones}{Style.RESET_ALL}",
-        ]
-        if self.identity.email:
+        report_lines = []
+
+        # Authentication method
+        if self._session.api_token:
             report_lines.append(
-                f"Email: {Fore.YELLOW}{self.identity.email}{Style.RESET_ALL}"
+                f"Authentication: {Fore.YELLOW}API Token{Style.RESET_ALL}"
             )
+        elif self._session.api_key and self._session.api_email:
+            report_lines.append(
+                f"Authentication: {Fore.YELLOW}API Key + Email{Style.RESET_ALL}"
+            )
+
+        # Email (from identity or session)
+        email = self.identity.email or self._session.api_email
+        if email:
+            report_lines.append(f"Email: {Fore.YELLOW}{email}{Style.RESET_ALL}")
+
+        # Accounts
+        if self.accounts:
+            accounts = ", ".join([account.id for account in self.accounts])
+            report_lines.append(f"Accounts: {Fore.YELLOW}{accounts}{Style.RESET_ALL}")
+
+        # Zones
+        if self._zones:
+            zones = ", ".join([zone.name for zone in self._zones])
+            report_lines.append(f"Zones: {Fore.YELLOW}{zones}{Style.RESET_ALL}")
 
         print_boxes(report_lines, report_title)
 
