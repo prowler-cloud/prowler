@@ -316,6 +316,14 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
         elif to_date and not from_date:
             from_date = to_date - timedelta(days=max_days - 1)
 
+        # Validate that date_from is before or equal to date_to
+        if from_date > to_date:
+            raise ValueError(
+                f"Invalid date range: date_from must be before or equal to date_to. "
+                f"Got date_from='{from_date.date()}' and date_to='{to_date.date()}'. "
+                f"Please swap the dates or use the correct order."
+            )
+
         # Validate range doesn't exceed max_days
         delta: int = (to_date - from_date).days + 1
         if delta > max_days:

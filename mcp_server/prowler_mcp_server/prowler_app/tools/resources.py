@@ -56,11 +56,11 @@ class ResourcesTools(BaseTool):
         ),
         tag_key: str | None = Field(
             default=None,
-            description="Filter resources by tag key (e.g., 'Environment', 'CostCenter', 'Owner'). Useful for cost allocation and ownership tracking.",
+            description="Filter resources by tag key (e.g., 'Environment', 'CostCenter', 'Owner').",
         ),
         tag_value: str | None = Field(
             default=None,
-            description="Filter resources by tag value (e.g., 'production', 'staging', 'development'). Often used with tag_key for precise filtering.",
+            description="Filter resources by tag value (e.g., 'production', 'staging', 'development').",
         ),
         date_from: str | None = Field(
             default=None,
@@ -82,6 +82,10 @@ class ResourcesTools(BaseTool):
     ) -> dict[str, Any]:
         """List and filter all resources scanned by Prowler.
 
+        IMPORTANT: This tool returns LIGHTWEIGHT resource information. Use this for fast searching
+        and filtering across many resources. For complete configuration details, metadata, and finding
+        relationships, use prowler_app_get_resource on specific resources of interest.
+
         This is the primary tool for browsing resources with rich filtering capabilities.
         Returns current state by default (latest scan per provider). Specify dates to query
         historical data (2-day maximum window).
@@ -92,16 +96,20 @@ class ResourcesTools(BaseTool):
         - Sorted by service, region, and name for logical grouping
 
         Date filtering:
-        - Without dates: queries resources from the most recent completed scan (most efficient)
-        - With dates: queries historical resources (2-day maximum range)
+        - Without dates: queries resources from the most recent completed scan per provider (most efficient)
+        - With dates: queries historical resource state (2-day maximum range between date_from and date_to)
 
         Each resource includes:
-        - Core identification: id, uid, name
+        - Core identification: id (UUID for prowler_app_get_resource), uid, name
         - Location context: region, service, type
-        - Security context: failed_findings_count
+        - Security context: failed_findings_count (number of active security issues)
+        - Tags: tags associated with the resource
 
-        Returns:
-            Paginated list of simplified resources with total count and pagination metadata
+        Useful Workflow:
+        1. Use this tool to search and filter resources by provider, region, service, tags, etc.
+        2. Use prowler_app_get_resource with the resource 'id' to get complete configuration and metadata
+        3. Use prowler_app_search_security_findings to find security issues for specific resources
+        4. Use prowler_app_get_finding_details to get details about the security issues for specific resources
         """
         # Validate page_size parameter
         self.api_client.validate_page_size(page_size)
@@ -167,39 +175,40 @@ class ResourcesTools(BaseTool):
     async def get_resource(
         self,
         resource_id: str = Field(
-            description="UUID of the resource to retrieve (must be a valid UUID format, e.g., '019ac0d6-90d5-73e9-9acf-c22e256f1bac'). Returns an error if the resource ID is invalid or not found."
+            description="Prowler's internal UUID (v4) for the resource to retrieve, generated when the resource was discovered in the system. Use `prowler_app_list_resources` tool to find the right ID"
         ),
     ) -> dict[str, Any]:
-        """Retrieve comprehensive details about a specific cloud resource by its ID.
+        """Retrieve comprehensive details about a specific resource by its ID.
 
-        This tool provides MORE detailed information than prowler_app_list_resources. Use this when
-        you need to deeply analyze a specific resource or understand its complete configuration
-        and security context.
+        IMPORTANT: This tool provides COMPLETE resource details with all available information.
+        Use this after finding a specific resource via prowler_app_list_resources.
 
-        Additional information compared to prowler_app_list_resources:
-        - Metadata: Provider-specific metadata
-        - Partition: Provider-specific partition information (e.g., aws, aws-cn, aws-us-gov)
-        - Metadata: Provider-specific metadata
-        - Finding relationships: IDs of all security findings associated with this resource
+        This tool provides ALL information that prowler_app_list_resources returns PLUS:
 
-        Workflow:
+        1. Configuration Details:
+           - metadata: Provider-specific configuration (tags, policies, encryption settings, network rules)
+           - partition: Provider-specific partition/region grouping (e.g., aws, aws-cn, aws-us-gov for AWS)
+
+        2. Temporal Tracking:
+           - inserted_at: When Prowler first discovered this resource
+           - updated_at: When resource configuration last changed
+
+        3. Security Relationships:
+           - finding_ids: Prowler's internal UUIDs (v4) of all security findings associated with this resource
+           - Use prowler_app_get_finding_details on these IDs to get remediation guidance
+
+        Useful Workflow:
         1. Use prowler_app_list_resources to browse and filter across many resources
-        2. Use prowler_app_get_resource to drill down into specific resources of interest
-
-        Returns:
-            dict containing detailed resource with comprehensive information
+        2. Use this tool to drill down into specific resources of interest
+        3. Use prowler_app_get_finding_details to get details about the security issues for specific resources
         """
-        params = {
-            # Return comprehensive fields including temporal metadata
-            "fields[resources]": "uid,name,region,service,type,failed_findings_count,tags,metadata,partition,inserted_at,updated_at",
-            # Include relationships to findings and provider
-            "include": "findings,provider",
-        }
+        params = {}
 
         # Get API response and transform to detailed format
         api_response = await self.api_client.get(
             f"/api/v1/resources/{resource_id}", params=params
         )
+        self.logger.info(f"API response: {api_response}")
         detailed_resource = DetailedResource.from_api_response(
             api_response.get("data", {})
         )
@@ -229,30 +238,25 @@ class ResourcesTools(BaseTool):
             description="End date for range query in ISO 8601 format (YYYY-MM-DD).",
         ),
     ) -> dict[str, Any]:
-        """Generate a markdown overview of your cloud resources with statistics and insights.
+        """Generate a markdown overview of your resources with statistics and insights.
 
-        Use this tool to get a high-level view of your infrastructure footprint without
-        retrieving individual resources. Perfect for understanding resource distribution,
-        identifying concentration areas, and auditing multi-cloud deployments.
+        IMPORTANT: This tool provides HIGH-LEVEL STATISTICS without returning individual resources.
+        Use this when you need a summary view before drilling into details.
 
         The report includes:
-        - Total resource count
-        - Available services across your infrastructure
+        - Total number of resources
+        - Available services across your providers
         - Regions where resources are deployed
-        - Resource types present in your environment
-        - Resources with security findings (count and percentage)
+        - Resource types present in your providers
 
         Output format: Markdown-formatted report ready to present to users or include in documentation.
 
         Use cases:
         - Understanding infrastructure footprint
         - Identifying resource concentration (which regions, services)
-        - Multi-cloud deployment auditing
+        - Multi-provider deployment auditing
         - Resource inventory reporting
-        - Cost allocation planning (by service/region)
-
-        Returns:
-            Dictionary with 'report' key containing markdown-formatted overview with statistics
+        - Tags planning (by provider, service, region)
         """
         # Determine endpoint based on date parameters
         date_range = self.api_client.normalize_date_range(
