@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.15.0
+  version: 1.16.0
   description: |-
     Prowler API specification.
 
@@ -4497,6 +4497,60 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/overviews/attack-surfaces:
+    get:
+      operationId: overviews_attack_surfaces_retrieve
+      description: Retrieve aggregated attack surface metrics from latest completed
+        scans per provider.
+      summary: Get attack surface overview
+      parameters:
+      - in: query
+        name: fields[attack-surface-overviews]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - total_findings
+            - failed_findings
+            - muted_failed_findings
+            - check_ids
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[provider_id.in]
+        schema:
+          type: string
+        description: Filter by multiple provider IDs (comma-separated UUIDs)
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+        description: Filter by specific provider ID
+      - in: query
+        name: filter[provider_type.in]
+        schema:
+          type: string
+        description: Filter by multiple provider types (comma-separated)
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+        description: Filter by provider type (aws, azure, gcp, etc.)
+      tags:
+      - Overview
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/AttackSurfaceOverviewResponse'
+          description: ''
   /api/v1/overviews/findings:
     get:
       operationId: overviews_findings_retrieve
@@ -4885,6 +4939,154 @@ paths:
             application/vnd.api+json:
               schema:
                 $ref: '#/components/schemas/OverviewSeverityResponse'
+          description: ''
+  /api/v1/overviews/findings_severity/timeseries:
+    get:
+      operationId: overviews_findings_severity_timeseries_retrieve
+      description: Retrieve daily aggregated findings data grouped by severity levels
+        over a date range. Returns one data point per day with counts of failed findings
+        by severity (critical, high, medium, low, informational) and muted findings.
+        Days without scans are filled forward with the most recent known values. Use
+        date_from (required) and date_to filters to specify the range.
+      summary: Get findings severity data over time
+      parameters:
+      - in: query
+        name: fields[findings-severity-timeseries]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - critical
+            - high
+            - medium
+            - low
+            - informational
+            - muted
+            - scan_ids
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[date_from]
+        schema:
+          type: string
+      - in: query
+        name: filter[date_to]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          enum:
+          - aws
+          - azure
+          - gcp
+          - github
+          - iac
+          - kubernetes
+          - m365
+          - mongodbatlas
+          - oraclecloud
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - aws
+            - azure
+            - gcp
+            - github
+            - iac
+            - kubernetes
+            - m365
+            - mongodbatlas
+            - oraclecloud
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+        explode: false
+        style: form
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - critical
+            - -critical
+            - high
+            - -high
+            - medium
+            - -medium
+            - low
+            - -low
+            - informational
+            - -informational
+            - muted
+            - -muted
+            - scan_ids
+            - -scan_ids
+        explode: false
+      tags:
+      - Overview
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/FindingsSeverityOverTimeResponse'
           description: ''
   /api/v1/overviews/providers:
     get:
@@ -10618,6 +10820,49 @@ paths:
           description: ''
 components:
   schemas:
+    AttackSurfaceOverview:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - attack-surface-overviews
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+            total_findings:
+              type: integer
+            failed_findings:
+              type: integer
+            muted_failed_findings:
+              type: integer
+            check_ids:
+              type: array
+              items:
+                type: string
+              readOnly: true
+          required:
+          - id
+          - total_findings
+          - failed_findings
+          - muted_failed_findings
+    AttackSurfaceOverviewResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/AttackSurfaceOverview'
+      required:
+      - data
     ComplianceOverview:
       type: object
       required:
@@ -11000,6 +11245,60 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/Finding'
+      required:
+      - data
+    FindingsSeverityOverTime:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - findings-severity-over-time
+        id: {}
+        attributes:
+          type: object
+          properties:
+            id:
+              type: string
+              format: date
+            critical:
+              type: integer
+            high:
+              type: integer
+            medium:
+              type: integer
+            low:
+              type: integer
+            informational:
+              type: integer
+            muted:
+              type: integer
+            scan_ids:
+              type: array
+              items:
+                type: string
+                format: uuid
+          required:
+          - id
+          - critical
+          - high
+          - medium
+          - low
+          - informational
+          - muted
+          - scan_ids
+    FindingsSeverityOverTimeResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/FindingsSeverityOverTime'
       required:
       - data
     Integration:
@@ -12558,26 +12857,46 @@ components:
                     pattern: ^sk-[\w-]+$
                 required:
                 - api_key
-              - type: object
-                title: AWS Bedrock Credentials
-                properties:
-                  access_key_id:
-                    type: string
-                    description: AWS access key ID.
-                    pattern: ^AKIA[0-9A-Z]{16}$
-                  secret_access_key:
-                    type: string
-                    description: AWS secret access key.
-                    pattern: ^[A-Za-z0-9/+=]{40}$
-                  region:
-                    type: string
-                    description: 'AWS region identifier where Bedrock is available.
-                      Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
-                    pattern: ^[a-z]{2}-[a-z]+-\d+$
-                required:
-                - access_key_id
-                - secret_access_key
-                - region
+              - title: AWS Bedrock Credentials
+                oneOf:
+                - title: IAM Access Key Pair
+                  type: object
+                  description: Authenticate with AWS access key and secret key. Recommended
+                    when you manage IAM users or roles.
+                  properties:
+                    access_key_id:
+                      type: string
+                      description: AWS access key ID.
+                      pattern: ^AKIA[0-9A-Z]{16}$
+                    secret_access_key:
+                      type: string
+                      description: AWS secret access key.
+                      pattern: ^[A-Za-z0-9/+=]{40}$
+                    region:
+                      type: string
+                      description: 'AWS region identifier where Bedrock is available.
+                        Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                      pattern: ^[a-z]{2}-[a-z]+-\d+$
+                  required:
+                  - access_key_id
+                  - secret_access_key
+                  - region
+                - title: Amazon Bedrock API Key
+                  type: object
+                  description: Authenticate with an Amazon Bedrock API key (bearer
+                    token). Region is still required.
+                  properties:
+                    api_key:
+                      type: string
+                      description: Amazon Bedrock API key (bearer token).
+                    region:
+                      type: string
+                      description: 'AWS region identifier where Bedrock is available.
+                        Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                      pattern: ^[a-z]{2}-[a-z]+-\d+$
+                  required:
+                  - api_key
+                  - region
               - type: object
                 title: OpenAI Compatible Credentials
                 properties:
@@ -12645,26 +12964,46 @@ components:
                         pattern: ^sk-[\w-]+$
                     required:
                     - api_key
-                  - type: object
-                    title: AWS Bedrock Credentials
-                    properties:
-                      access_key_id:
-                        type: string
-                        description: AWS access key ID.
-                        pattern: ^AKIA[0-9A-Z]{16}$
-                      secret_access_key:
-                        type: string
-                        description: AWS secret access key.
-                        pattern: ^[A-Za-z0-9/+=]{40}$
-                      region:
-                        type: string
-                        description: 'AWS region identifier where Bedrock is available.
-                          Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
-                        pattern: ^[a-z]{2}-[a-z]+-\d+$
-                    required:
-                    - access_key_id
-                    - secret_access_key
-                    - region
+                  - title: AWS Bedrock Credentials
+                    oneOf:
+                    - title: IAM Access Key Pair
+                      type: object
+                      description: Authenticate with AWS access key and secret key.
+                        Recommended when you manage IAM users or roles.
+                      properties:
+                        access_key_id:
+                          type: string
+                          description: AWS access key ID.
+                          pattern: ^AKIA[0-9A-Z]{16}$
+                        secret_access_key:
+                          type: string
+                          description: AWS secret access key.
+                          pattern: ^[A-Za-z0-9/+=]{40}$
+                        region:
+                          type: string
+                          description: 'AWS region identifier where Bedrock is available.
+                            Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                          pattern: ^[a-z]{2}-[a-z]+-\d+$
+                      required:
+                      - access_key_id
+                      - secret_access_key
+                      - region
+                    - title: Amazon Bedrock API Key
+                      type: object
+                      description: Authenticate with an Amazon Bedrock API key (bearer
+                        token). Region is still required.
+                      properties:
+                        api_key:
+                          type: string
+                          description: Amazon Bedrock API key (bearer token).
+                        region:
+                          type: string
+                          description: 'AWS region identifier where Bedrock is available.
+                            Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                          pattern: ^[a-z]{2}-[a-z]+-\d+$
+                      required:
+                      - api_key
+                      - region
                   - type: object
                     title: OpenAI Compatible Credentials
                     properties:
@@ -12750,26 +13089,46 @@ components:
                     pattern: ^sk-[\w-]+$
                 required:
                 - api_key
-              - type: object
-                title: AWS Bedrock Credentials
-                properties:
-                  access_key_id:
-                    type: string
-                    description: AWS access key ID.
-                    pattern: ^AKIA[0-9A-Z]{16}$
-                  secret_access_key:
-                    type: string
-                    description: AWS secret access key.
-                    pattern: ^[A-Za-z0-9/+=]{40}$
-                  region:
-                    type: string
-                    description: 'AWS region identifier where Bedrock is available.
-                      Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
-                    pattern: ^[a-z]{2}-[a-z]+-\d+$
-                required:
-                - access_key_id
-                - secret_access_key
-                - region
+              - title: AWS Bedrock Credentials
+                oneOf:
+                - title: IAM Access Key Pair
+                  type: object
+                  description: Authenticate with AWS access key and secret key. Recommended
+                    when you manage IAM users or roles.
+                  properties:
+                    access_key_id:
+                      type: string
+                      description: AWS access key ID.
+                      pattern: ^AKIA[0-9A-Z]{16}$
+                    secret_access_key:
+                      type: string
+                      description: AWS secret access key.
+                      pattern: ^[A-Za-z0-9/+=]{40}$
+                    region:
+                      type: string
+                      description: 'AWS region identifier where Bedrock is available.
+                        Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                      pattern: ^[a-z]{2}-[a-z]+-\d+$
+                  required:
+                  - access_key_id
+                  - secret_access_key
+                  - region
+                - title: Amazon Bedrock API Key
+                  type: object
+                  description: Authenticate with an Amazon Bedrock API key (bearer
+                    token). Region is still required.
+                  properties:
+                    api_key:
+                      type: string
+                      description: Amazon Bedrock API key (bearer token).
+                    region:
+                      type: string
+                      description: 'AWS region identifier where Bedrock is available.
+                        Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                      pattern: ^[a-z]{2}-[a-z]+-\d+$
+                  required:
+                  - api_key
+                  - region
               - type: object
                 title: OpenAI Compatible Credentials
                 properties:
@@ -14192,26 +14551,46 @@ components:
                         pattern: ^sk-[\w-]+$
                     required:
                     - api_key
-                  - type: object
-                    title: AWS Bedrock Credentials
-                    properties:
-                      access_key_id:
-                        type: string
-                        description: AWS access key ID.
-                        pattern: ^AKIA[0-9A-Z]{16}$
-                      secret_access_key:
-                        type: string
-                        description: AWS secret access key.
-                        pattern: ^[A-Za-z0-9/+=]{40}$
-                      region:
-                        type: string
-                        description: 'AWS region identifier where Bedrock is available.
-                          Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
-                        pattern: ^[a-z]{2}-[a-z]+-\d+$
-                    required:
-                    - access_key_id
-                    - secret_access_key
-                    - region
+                  - title: AWS Bedrock Credentials
+                    oneOf:
+                    - title: IAM Access Key Pair
+                      type: object
+                      description: Authenticate with AWS access key and secret key.
+                        Recommended when you manage IAM users or roles.
+                      properties:
+                        access_key_id:
+                          type: string
+                          description: AWS access key ID.
+                          pattern: ^AKIA[0-9A-Z]{16}$
+                        secret_access_key:
+                          type: string
+                          description: AWS secret access key.
+                          pattern: ^[A-Za-z0-9/+=]{40}$
+                        region:
+                          type: string
+                          description: 'AWS region identifier where Bedrock is available.
+                            Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                          pattern: ^[a-z]{2}-[a-z]+-\d+$
+                      required:
+                      - access_key_id
+                      - secret_access_key
+                      - region
+                    - title: Amazon Bedrock API Key
+                      type: object
+                      description: Authenticate with an Amazon Bedrock API key (bearer
+                        token). Region is still required.
+                      properties:
+                        api_key:
+                          type: string
+                          description: Amazon Bedrock API key (bearer token).
+                        region:
+                          type: string
+                          description: 'AWS region identifier where Bedrock is available.
+                            Examples: us-east-1, us-west-2, eu-west-1, ap-northeast-1.'
+                          pattern: ^[a-z]{2}-[a-z]+-\d+$
+                      required:
+                      - api_key
+                      - region
                   - type: object
                     title: OpenAI Compatible Credentials
                     properties:

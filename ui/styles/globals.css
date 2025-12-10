@@ -75,6 +75,9 @@
 
   /* Chart Dots */
   --chart-dots: var(--color-neutral-200);
+
+  /* Progress Bar */
+  --shadow-progress-glow: 0 0 10px var(--bg-button-primary), 0 0 5px var(--bg-button-primary);
 }
 
 /* ===== DARK THEME ===== */
@@ -144,6 +147,9 @@
 
   /* Chart Dots */
   --chart-dots: var(--text-neutral-primary);
+
+  /* Progress Bar */
+  --shadow-progress-glow: 0 0 10px var(--bg-button-primary), 0 0 5px var(--bg-button-primary);
 }
 
 /* ===== TAILWIND THEME MAPPINGS ===== */
@@ -211,6 +217,9 @@
   --color-bg-warning: var(--bg-warning-primary);
   --color-bg-fail: var(--bg-fail-primary);
   --color-bg-fail-secondary: var(--bg-fail-secondary);
+
+  /* Shadows */
+  --shadow-progress-glow: var(--shadow-progress-glow);
 }
 
 /* ===== CONTAINER UTILITY ===== */

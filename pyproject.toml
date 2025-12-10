@@ -68,8 +68,21 @@ dependencies = [
   "tabulate==0.9.0",
   "tzlocal==5.3.1",
   "py-iam-expand==0.1.0",
-  "h2 (==4.3.0)",
-  "oci==2.160.3"
+  "h2==4.3.0",
+  "oci==2.160.3",
+  "alibabacloud_credentials==1.0.3",
+  "alibabacloud_ram20150501==1.2.0",
+  "alibabacloud_tea_openapi==0.4.1",
+  "alibabacloud_sts20150401==1.1.6",
+  "alibabacloud_vpc20160428==6.13.0",
+  "alibabacloud_ecs20140526==7.2.5",
+  "alibabacloud_sas20181203==6.1.0",
+  "alibabacloud_oss20190517==1.0.6",
+  "alibabacloud-gateway-oss-util==0.0.3",
+  "alibabacloud_actiontrail20200706==2.4.1",
+  "alibabacloud_cs20151215==6.1.0",
+  "alibabacloud-rds20140815==12.0.0",
+  "alibabacloud-sls20201230==5.9.0"
 ]
 description = "Prowler is an Open Source security tool to perform AWS, GCP and Azure security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness. It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, FedRAMP, PCI-DSS, GDPR, HIPAA, FFIEC, SOC2, GXP, AWS Well-Architected Framework Security Pillar, AWS Foundational Technical Review (FTR), ENS (Spanish National Security Scheme) and your custom security frameworks."
 license = "Apache-2.0"

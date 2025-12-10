@@ -2238,12 +2238,20 @@ def generate_ens_report(
             [
                 "CUMPLE",
                 str(passed_requirements),
-                f"{(passed_requirements / total_requirements * 100):.1f}%",
+                (
+                    f"{(passed_requirements / total_requirements * 100):.1f}%"
+                    if total_requirements > 0
+                    else "0.0%"
+                ),
             ],
             [
                 "NO CUMPLE",
                 str(failed_requirements),
-                f"{(failed_requirements / total_requirements * 100):.1f}%",
+                (
+                    f"{(failed_requirements / total_requirements * 100):.1f}%"
+                    if total_requirements > 0
+                    else "0.0%"
+                ),
             ],
             ["TOTAL", str(total_requirements), "100%"],
         ]

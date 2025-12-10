@@ -6,17 +6,48 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### Added
 - `cloudstorage_uses_vpc_service_controls` check for GCP provider [(#9256)](https://github.com/prowler-cloud/prowler/pull/9256)
+- Alibaba Cloud provider with CIS 2.0 benchmark [(#9329)](https://github.com/prowler-cloud/prowler/pull/9329)
 - `repository_immutable_releases_enabled` check for GitHub provider [(#9162)](https://github.com/prowler-cloud/prowler/pull/9162)
 - `compute_instance_preemptible_vm_disabled` check for GCP provider [(#9342)](https://github.com/prowler-cloud/prowler/pull/9342)
 - `compute_instance_automatic_restart_enabled` check for GCP provider [(#9271)](https://github.com/prowler-cloud/prowler/pull/9271)
+- `compute_instance_deletion_protection_enabled` check for GCP provider [(#9358)](https://github.com/prowler-cloud/prowler/pull/9358)
+- Update SOC2 - Azure with Processing Integrity requirements [(#9463)](https://github.com/prowler-cloud/prowler/pull/9463)
+- Update SOC2 - GCP with Processing Integrity requirements [(#9464)](https://github.com/prowler-cloud/prowler/pull/9464)
+- Update SOC2 - AWS with Processing Integrity requirements [(#9462)](https://github.com/prowler-cloud/prowler/pull/9462)
+- RBI Cyber Security Framework compliance for Azure provider [(#8822)](https://github.com/prowler-cloud/prowler/pull/8822)
+
+
+### Changed
+- Update AWS Macie service metadata to new format [(#9265)](https://github.com/prowler-cloud/prowler/pull/9265)
+- Update AWS Lightsail service metadata to new format [(#9264)](https://github.com/prowler-cloud/prowler/pull/9264)
+- Update AWS GuardDuty service metadata to new format [(#9259)](https://github.com/prowler-cloud/prowler/pull/9259)
+- Update AWS Network Firewall service metadata to new format [(#9382)](https://github.com/prowler-cloud/prowler/pull/9382)
+- Update AWS MQ service metadata to new format [(#9267)](https://github.com/prowler-cloud/prowler/pull/9267)
+- Update AWS Macie service metadata to new format [(#9265)](https://github.com/prowler-cloud/prowler/pull/9265)
+- Update AWS Lightsail service metadata to new format [(#9264)](https://github.com/prowler-cloud/prowler/pull/9264)
 
 ---
 
-## [v5.14.1] (Prowler UNRELEASED)
+## [v5.14.3] (Prowler UNRELEASED)
+
+### Fixed
+- Fix duplicate requirement IDs in ISO 27001:2013 AWS compliance framework by adding unique letter suffixes
+- Removed incorrect threat-detection category from checks metadata [(#9489)](https://github.com/prowler-cloud/prowler/pull/9489)
+
+---
+
+## [v5.14.2] (Prowler 5.14.2)
+
+### Fixed
+- Custom check folder metadata validation [(#9335)](https://github.com/prowler-cloud/prowler/pull/9335)
+- Pin `alibabacloud-gateway-oss-util` to version 0.0.3 to address missing dependency [(#9487)](https://github.com/prowler-cloud/prowler/pull/9487)
+
+---
+
+## [v5.14.1] (Prowler v5.14.1)
 
 ### Fixed
 - `sharepoint_external_sharing_managed` check to handle external sharing disabled at organization level [(#9298)](https://github.com/prowler-cloud/prowler/pull/9298)
-- Custom check folder metadata validation [(#9335)](https://github.com/prowler-cloud/prowler/pull/9335)
 - Support multiple Exchange mailbox policies in M365 `exchange_mailbox_policy_additional_storage_restricted` check [(#9241)](https://github.com/prowler-cloud/prowler/pull/9241)
 
 ---
@@ -82,6 +113,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Update AWS ECS service metadata to new format [(#8888)](https://github.com/prowler-cloud/prowler/pull/8888)
 - Update AWS Kinesis service metadata to new format [(#9262)](https://github.com/prowler-cloud/prowler/pull/9262)
 - Update AWS DocumentDB service metadata to new format [(#8862)](https://github.com/prowler-cloud/prowler/pull/8862)
+
 
 ### Fixed
 - Check `check_name` has no `resource_name` error for GCP provider [(#9169)](https://github.com/prowler-cloud/prowler/pull/9169)
