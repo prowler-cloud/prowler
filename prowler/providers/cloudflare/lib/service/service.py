@@ -4,9 +4,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import TYPE_CHECKING
 
 from prowler.lib.logger import logger
-from prowler.providers.cloudflare.cloudflare_provider import CloudflareProvider
 
 if TYPE_CHECKING:
+    from prowler.providers.cloudflare.cloudflare_provider import CloudflareProvider
     from prowler.providers.cloudflare.services.zones.zones_service import CloudflareZone
 
 MAX_WORKERS = 10
