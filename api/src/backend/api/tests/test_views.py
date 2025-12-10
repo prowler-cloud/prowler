@@ -4267,6 +4267,74 @@ class TestFindingViewSet:
         assert attributes["regions"] == latest_scan_finding.resource_regions
         assert attributes["resource_types"] == latest_scan_finding.resource_types
 
+    def test_findings_metadata_categories(
+        self, authenticated_client, findings_with_categories
+    ):
+        finding = findings_with_categories
+        response = authenticated_client.get(
+            reverse("finding-metadata"),
+            {"filter[inserted_at]": finding.inserted_at.strftime("%Y-%m-%d")},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+        assert set(attributes["categories"]) == {"gen-ai", "security"}
+
+    def test_findings_metadata_latest_categories(
+        self, authenticated_client, latest_scan_finding_with_categories
+    ):
+        response = authenticated_client.get(
+            reverse("finding-metadata_latest"),
+        )
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+        assert set(attributes["categories"]) == {"gen-ai", "iam"}
+
+    def test_findings_filter_by_category(
+        self, authenticated_client, findings_with_categories
+    ):
+        finding = findings_with_categories
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[category]": "gen-ai",
+                "filter[inserted_at]": finding.inserted_at.strftime("%Y-%m-%d"),
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 1
+        assert set(response.json()["data"][0]["attributes"]["categories"]) == {
+            "gen-ai",
+            "security",
+        }
+
+    def test_findings_filter_by_category_in(
+        self, authenticated_client, findings_with_multiple_categories
+    ):
+        finding1, _ = findings_with_multiple_categories
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[category__in]": "gen-ai,iam",
+                "filter[inserted_at]": finding1.inserted_at.strftime("%Y-%m-%d"),
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 2
+
+    def test_findings_filter_by_category_no_match(
+        self, authenticated_client, findings_with_categories
+    ):
+        finding = findings_with_categories
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[category]": "nonexistent",
+                "filter[inserted_at]": finding.inserted_at.strftime("%Y-%m-%d"),
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == 0
+
 
 @pytest.mark.django_db
 class TestJWTFields:

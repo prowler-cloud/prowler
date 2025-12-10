@@ -1377,6 +1377,7 @@ class TestProcessFindingMicroBatch:
         unique_resources: set[tuple[str, str]] = set()
         scan_resource_cache: set[tuple[str, str, str, str]] = set()
         mute_rules_cache = {}
+        scan_categories_cache: set[str] = set()
 
         with (
             patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
@@ -1394,6 +1395,7 @@ class TestProcessFindingMicroBatch:
                 unique_resources,
                 scan_resource_cache,
                 mute_rules_cache,
+                scan_categories_cache,
             )
 
         created_finding = Finding.objects.get(uid=finding.uid)
@@ -1486,6 +1488,7 @@ class TestProcessFindingMicroBatch:
         unique_resources: set[tuple[str, str]] = set()
         scan_resource_cache: set[tuple[str, str, str, str]] = set()
         mute_rules_cache = {finding.uid: "Muted via rule"}
+        scan_categories_cache: set[str] = set()
 
         with (
             patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
@@ -1503,6 +1506,7 @@ class TestProcessFindingMicroBatch:
                 unique_resources,
                 scan_resource_cache,
                 mute_rules_cache,
+                scan_categories_cache,
             )
 
         existing_resource.refresh_from_db()
@@ -1610,6 +1614,7 @@ class TestProcessFindingMicroBatch:
         unique_resources: set[tuple[str, str]] = set()
         scan_resource_cache: set[tuple[str, str, str, str]] = set()
         mute_rules_cache = {}
+        scan_categories_cache: set[str] = set()
 
         with (
             patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
@@ -1628,6 +1633,7 @@ class TestProcessFindingMicroBatch:
                 unique_resources,
                 scan_resource_cache,
                 mute_rules_cache,
+                scan_categories_cache,
             )
 
         # Verify the long UID finding was NOT created
@@ -1647,6 +1653,90 @@ class TestProcessFindingMicroBatch:
             f"Scan {scan.id}: Skipped 1 finding(s)" in str(call)
             for call in warning_calls
         )
+
+    def test_process_finding_micro_batch_tracks_categories(
+        self, tenants_fixture, scans_fixture
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = scan.provider
+
+        finding1 = FakeFinding(
+            uid="finding-cat-1",
+            status=StatusChoices.PASS,
+            status_extended="all good",
+            severity=Severity.low,
+            check_id="genai_check",
+            resource_uid="arn:aws:bedrock:::model/test",
+            resource_name="test-model",
+            region="us-east-1",
+            service_name="bedrock",
+            resource_type="model",
+            resource_tags={},
+            resource_metadata={},
+            resource_details={},
+            partition="aws",
+            raw={},
+            compliance={},
+            metadata={"categories": ["gen-ai", "security"]},
+            muted=False,
+        )
+
+        finding2 = FakeFinding(
+            uid="finding-cat-2",
+            status=StatusChoices.FAIL,
+            status_extended="bad",
+            severity=Severity.high,
+            check_id="iam_check",
+            resource_uid="arn:aws:iam:::user/test",
+            resource_name="test-user",
+            region="us-east-1",
+            service_name="iam",
+            resource_type="user",
+            resource_tags={},
+            resource_metadata={},
+            resource_details={},
+            partition="aws",
+            raw={},
+            compliance={},
+            metadata={"categories": ["security", "iam"]},
+            muted=False,
+        )
+
+        resource_cache = {}
+        tag_cache = {}
+        last_status_cache = {}
+        resource_failed_findings_cache = {}
+        unique_resources: set[tuple[str, str]] = set()
+        scan_resource_cache: set[tuple[str, str, str, str]] = set()
+        mute_rules_cache = {}
+        scan_categories_cache: set[str] = set()
+
+        with (
+            patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
+            patch("api.db_utils.rls_transaction", new=noop_rls_transaction),
+        ):
+            _process_finding_micro_batch(
+                str(tenant.id),
+                [finding1, finding2],
+                scan,
+                provider,
+                resource_cache,
+                tag_cache,
+                last_status_cache,
+                resource_failed_findings_cache,
+                unique_resources,
+                scan_resource_cache,
+                mute_rules_cache,
+                scan_categories_cache,
+            )
+
+        assert scan_categories_cache == {"gen-ai", "security", "iam"}
+
+        created_finding1 = Finding.objects.get(uid="finding-cat-1")
+        created_finding2 = Finding.objects.get(uid="finding-cat-2")
+        assert set(created_finding1.categories) == {"gen-ai", "security"}
+        assert set(created_finding2.categories) == {"security", "iam"}
 
 
 @pytest.mark.django_db
