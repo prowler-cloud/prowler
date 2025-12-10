@@ -1,5 +1,6 @@
 """Shared API client utilities for Prowler App tools."""
 
+import asyncio
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict
@@ -180,6 +181,68 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
         """
         return await self._make_request(HTTPMethod.DELETE, path, params=params)
 
+    async def poll_task_until_complete(
+        self,
+        task_id: str,
+        timeout: int = 60,
+        poll_interval: float = 1.0,
+    ) -> dict[str, any]:
+        """Poll a task until it reaches a terminal state.
+
+        This method polls the task endpoint at regular intervals until the task
+        completes, fails, or times out. It's designed for async operations like
+        provider connection tests and deletions that return task IDs.
+
+        Args:
+            task_id: The UUID of the task to poll (UUID object or string)
+            timeout: Maximum time to wait in seconds (default: 60)
+            poll_interval: Time between polls in seconds (default: 1.0)
+
+        Returns:
+            The complete task response when terminal state is reached
+
+        Raises:
+            Exception: If task fails, is cancelled, or timeout is exceeded
+        """
+        terminal_states = {"completed", "failed", "cancelled"}
+        start_time = asyncio.get_event_loop().time()
+        max_time = start_time + timeout
+
+        logger.info(
+            f"Polling task {task_id} (timeout: {timeout}s, interval: {poll_interval}s)"
+        )
+
+        while True:
+            # Check if we've exceeded the timeout
+            current_time = asyncio.get_event_loop().time()
+            if current_time >= max_time:
+                raise Exception(
+                    f"Task {task_id} polling timed out after {timeout} seconds. "
+                    f"The task may still be running. Try increasing the timeout or check task status manually."
+                )
+
+            # Fetch current task state
+            response = await self.get(f"/api/v1/tasks/{task_id}")
+            task_data = response.get("data", {})
+            task_attrs = task_data.get("attributes", {})
+            state = task_attrs.get("state")
+
+            logger.debug(f"Task {task_id} state: {state}")
+
+            # Check if we've reached a terminal state
+            if state in terminal_states:
+                if state == "completed":
+                    logger.info(f"Task {task_id} completed successfully")
+                    return response
+                elif state == "failed":
+                    error_msg = task_attrs.get("error", "Unknown error")
+                    raise Exception(f"Task {task_id} failed: {error_msg}")
+                elif state == "cancelled":
+                    raise Exception(f"Task {task_id} was cancelled")
+
+            # Wait before next poll
+            await asyncio.sleep(poll_interval)
+
     def _validate_date_format(self, date_str: str, param_name: str) -> datetime:
         """Validate date string format.
 
@@ -252,6 +315,14 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
             to_date = from_date + timedelta(days=max_days - 1)
         elif to_date and not from_date:
             from_date = to_date - timedelta(days=max_days - 1)
+
+        # Validate that date_from is before or equal to date_to
+        if from_date > to_date:
+            raise ValueError(
+                f"Invalid date range: date_from must be before or equal to date_to. "
+                f"Got date_from='{from_date.date()}' and date_to='{to_date.date()}'. "
+                f"Please swap the dates or use the correct order."
+            )
 
         # Validate range doesn't exceed max_days
         delta: int = (to_date - from_date).days + 1
