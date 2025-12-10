@@ -2,18 +2,66 @@
 title: 'Getting Started with MongoDB Atlas'
 ---
 
-## Prowler CLI
+Prowler now supports MongoDB Atlas both from the CLI and from **Prowler App**. This guide walks you through the requirements, how to connect the provider in the UI, and how to run scans from the command line.
+
+## Prerequisites
+
+Before you begin, make sure you have:
+
+1. A MongoDB Atlas organization with **API Access** enabled.
+2. An **Organization ID** (24-character hex string).
+3. An **API Key pair** (public and private keys) with _Organization Read Only_ or any role that can list projects/clusters. If you want to run checks for Auditing configuration it's also necessary to add _Organization Owner_ permission.
+4. Prowler App access (cloud or self-hosted) or the Prowler CLI (`pip install prowler`).
+
+For detailed instructions on creating API keys, see the [MongoDB Atlas authentication guide](./authentication.mdx).
+
+<Warning>
+If **Require IP Access List for the Atlas Administration API** is enabled in your organization settings, you **must** add the IP address of the host running Prowler (or the public IP of Prowler Cloud) to the organization IP Access List or Atlas will reject every API call. You can manage this under **Settings → Organization Settings → Security**. See step 7 of the [authentication guide](./authentication) for detailed instructions, and refer to the [Prowler Cloud public IP list](../../tutorials/prowler-cloud-public-ips) when using Prowler Cloud.
+</Warning>
+
+---
+
+## Connecting MongoDB Atlas in Prowler App
+
+### Step 1 – Add the provider
+
+1. Navigate to **Cloud Providers** and click **Add Cloud Provider**.
+   ![Add provider list](./img/add-provider-list.png)
+2. Select **MongoDB Atlas** from the provider list.
+3. Enter your **Organization ID** (24 hex characters). This value is visible in the Atlas UI under **Organization Settings**.
+   ![Add organization ID](./img/add-org-id.png)
+4. (Optional) Add a friendly alias to identify this organization in dashboards.
+
+### Step 2 – Provide API credentials
+
+1. Click **Next** to open the credentials form.
+2. Paste the **Atlas Public Key** and **Atlas Private Key** generated in the Atlas console.
+   ![Add credentials](./img/add-credentials.png)
+
+### Step 3 – Test the connection and start scanning
+
+1. Click **Test connection** to ensure Prowler App can reach the Atlas API.
+2. Save the credentials. The provider will appear in the list with its current connection status.
+3. Launch a scan from the provider row or from the **Scans** page.
+   ![Launch scan](./img/launch-scan.png)
+
+---
+
+## Using the Prowler CLI
+
+You can also run MongoDB Atlas assessments directly from the CLI. Both command-line flags and environment variables are supported.
 
 ### Authentication Methods
 
-#### Command-Line Arguments
-
+#### Command-line arguments
 
 ```bash
-prowler mongodbatlas --atlas-public-key <public_key> --atlas-private-key <private_key>
+prowler mongodbatlas \
+  --atlas-public-key <public_key> \
+  --atlas-private-key <private_key>
 ```
 
-#### Environment Variables
+#### Environment variables
 
 ```bash
 export ATLAS_PUBLIC_KEY=<public_key>
@@ -21,33 +69,26 @@ export ATLAS_PRIVATE_KEY=<private_key>
 prowler mongodbatlas
 ```
 
-
-
-### Scan All Projects and Clusters
-
-After storing API keys, run Prowler with the following command:
-
-```bash
-prowler mongodbatlas --atlas-public-key <key> --atlas-private-key <secret>
-```
-
-Alternatively, set API keys as environment variables:
-
-```bash
-export ATLAS_PUBLIC_KEY=<key>
-export ATLAS_PRIVATE_KEY=<secret>
-```
-
-Then run Prowler with the following command:
+### Scan all projects and clusters
 
 ```bash
 prowler mongodbatlas
 ```
 
-### Scanning a Specific Project
+This command enumerates all projects accessible to the API key and scans every cluster.
 
-To scan a specific project, add the following argument to the command above:
+### Scan a specific project
+
+Add the `--atlas-project-id` flag when you only want to assess one project:
 
 ```bash
 prowler mongodbatlas --atlas-project-id <project-id>
 ```
+
+### Additional tips
+
+- Combine flags (for example, `--checks` or `--services`) just like with other providers.
+- Use `--output-modes` to export findings in JSON, CSV, ASFF, etc.
+- Rotate API keys regularly and update the stored credentials in Prowler App to maintain connectivity.
+
+For more examples (filters, outputs, scheduling), refer back to the [MongoDB Atlas documentation hub](./authentication.mdx) and the main Prowler CLI usage guide.
