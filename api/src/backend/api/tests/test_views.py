@@ -1722,21 +1722,21 @@ class TestProviderViewSet:
                 (
                     "uid.icontains",
                     "1",
-                    7,
+                    8,
                 ),
                 ("alias", "aws_testing_1", 1),
                 ("alias.icontains", "aws", 2),
-                ("inserted_at", TODAY, 8),
+                ("inserted_at", TODAY, 9),
                 (
                     "inserted_at.gte",
                     "2024-01-01",
-                    8,
+                    9,
                 ),
                 ("inserted_at.lte", "2024-01-01", 0),
                 (
                     "updated_at.gte",
                     "2024-01-01",
-                    8,
+                    9,
                 ),
                 ("updated_at.lte", "2024-01-01", 0),
             ]
