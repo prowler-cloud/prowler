@@ -14,7 +14,6 @@ class SimplifiedProvider(MinimalSerializerMixin, BaseModel):
     alias: str | None = None
     provider: str
     connected: bool | None = None
-    connection_error: str | None = None
 
     @classmethod
     def from_api_response(cls, data: dict[str, Any]) -> "SimplifiedProvider":
@@ -28,7 +27,6 @@ class SimplifiedProvider(MinimalSerializerMixin, BaseModel):
             alias=attributes.get("alias"),
             provider=attributes["provider"],
             connected=connection_data.get("connected"),
-            connection_error=connection_data.get("error"),
         )
 
 
@@ -63,7 +61,6 @@ class DetailedProvider(SimplifiedProvider):
             alias=attributes.get("alias"),
             provider=attributes["provider"],
             connected=connection_data.get("connected"),
-            connection_error=connection_data.get("error"),
             inserted_at=attributes.get("inserted_at"),
             updated_at=attributes.get("updated_at"),
             last_checked_at=connection_data.get("last_checked_at"),

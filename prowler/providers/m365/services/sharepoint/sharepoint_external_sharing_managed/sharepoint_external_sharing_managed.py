@@ -11,12 +11,9 @@ class sharepoint_external_sharing_managed(Check):
     Check if Microsoft 365 SharePoint external sharing is managed through domain whitelists/blacklists.
 
     This check verifies that SharePoint external sharing settings are configured to restrict document sharing
-    to external domains by enforcing domain-based restrictions. This means that the setting
-    'sharingDomainRestrictionMode' must be set to either "AllowList" or "BlockList". If it is not, then
-    external sharing is not managed via domain restrictions, increasing the risk of unauthorized access.
-
-    Note: This check only evaluates the domain restriction mode and does not enforce the optional check
-    of verifying that the allowed/blocked domain list is not empty.
+    to external domains by enforcing domain-based restrictions. When external sharing is enabled, the setting
+    'sharingDomainRestrictionMode' must be set to either "AllowList" or "BlockList" with a corresponding
+    domain list. If external sharing is disabled at the organization level, the check passes.
     """
 
     def execute(self) -> List[CheckReportM365]:
@@ -40,7 +37,12 @@ class sharepoint_external_sharing_managed(Check):
             )
             report.status = "FAIL"
             report.status_extended = "SharePoint external sharing is not managed through domain restrictions."
-            if settings.sharingDomainRestrictionMode in ["allowList", "blockList"]:
+            if settings.sharingCapability == "Disabled":
+                report.status = "PASS"
+                report.status_extended = (
+                    "External sharing is disabled at organization level."
+                )
+            elif settings.sharingDomainRestrictionMode in ["allowList", "blockList"]:
                 report.status_extended = f"SharePoint external sharing is managed through domain restrictions with mode '{settings.sharingDomainRestrictionMode}' but the list is empty."
                 if (
                     settings.sharingDomainRestrictionMode == "allowList"

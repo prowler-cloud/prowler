@@ -61,7 +61,8 @@ export default async function Compliance({
 
       // Find the provider data in the included array
       const providerData = scansData.included?.find(
-        (item: any) => item.type === "providers" && item.id === providerId,
+        (item: { type: string; id: string }) =>
+          item.type === "providers" && item.id === providerId,
       );
 
       if (!providerData) {
@@ -234,6 +235,9 @@ const SSRComplianceGrid = async ({
           // Filter out ProwlerThreatScore from the grid
           return compliance.attributes.framework !== "ProwlerThreatScore";
         })
+        .sort((a: ComplianceOverviewData, b: ComplianceOverviewData) =>
+          a.attributes.framework.localeCompare(b.attributes.framework),
+        )
         .map((compliance: ComplianceOverviewData) => {
           const { attributes, id } = compliance;
           const {

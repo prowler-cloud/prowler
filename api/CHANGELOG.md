@@ -2,7 +2,40 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.15.0] (Prowler UNRELEASED)
+## [1.16.0] (Unreleased)
+
+### Added
+- New endpoint to retrieve an overview of the attack surfaces [(#9309)](https://github.com/prowler-cloud/prowler/pull/9309)
+- New endpoint `GET /api/v1/overviews/findings_severity/timeseries` to retrieve daily aggregated findings by severity level [(#9363)](https://github.com/prowler-cloud/prowler/pull/9363)
+- Lighthouse AI support for Amazon Bedrock API key [(#9343)](https://github.com/prowler-cloud/prowler/pull/9343)
+- Exception handler for provider deletions during scans [(#9414)](https://github.com/prowler-cloud/prowler/pull/9414)
+- Support to use admin credentials through the read replica database [(#9440)](https://github.com/prowler-cloud/prowler/pull/9440)
+
+### Changed
+
+- Error messages from Lighthouse celery tasks [(#9165)](https://github.com/prowler-cloud/prowler/pull/9165)
+- Restore the compliance overview endpoint's mandatory filters [(#9338)](https://github.com/prowler-cloud/prowler/pull/9338)
+
+---
+
+## [1.15.2] (Prowler v5.14.2)
+
+### Fixed
+- Unique constraint violation during compliance overviews task [(#9436)](https://github.com/prowler-cloud/prowler/pull/9436)
+- Division by zero error in ENS PDF report when all requirements are manual [(#9443)](https://github.com/prowler-cloud/prowler/pull/9443)
+
+---
+
+## [1.15.1] (Prowler v5.14.1)
+
+### Fixed
+- Fix typo in PDF reporting [(#9345)](https://github.com/prowler-cloud/prowler/pull/9345)
+- Fix IaC provider initialization failure when mutelist processor is configured [(#9331)](https://github.com/prowler-cloud/prowler/pull/9331)
+- Match logic for ThreatScore when counting findings [(#9348)](https://github.com/prowler-cloud/prowler/pull/9348)
+
+---
+
+## [1.15.0] (Prowler v5.14.0)
 
 ### Added
 - IaC (Infrastructure as Code) provider support for remote repositories [(#8751)](https://github.com/prowler-cloud/prowler/pull/8751)
@@ -29,6 +62,8 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### Fixed
 - Scans no longer fail when findings have UIDs exceeding 300 characters; such findings are now skipped with detailed logging [(#9246)](https://github.com/prowler-cloud/prowler/pull/9246)
+- Updated unique constraint for `Provider` model to exclude soft-deleted entries, resolving duplicate errors when re-deleting providers [(#9054)](https://github.com/prowler-cloud/prowler/pull/9054)
+- Removed compliance generation for providers without compliance frameworks [(#9208)](https://github.com/prowler-cloud/prowler/pull/9208)
 - Refresh output report timestamps for each scan [(#9272)](https://github.com/prowler-cloud/prowler/pull/9272)
 - Severity overview endpoint now ignores muted findings as expected [(#9283)](https://github.com/prowler-cloud/prowler/pull/9283)
 - Fixed discrepancy between ThreatScore PDF report values and database calculations [(#9296)](https://github.com/prowler-cloud/prowler/pull/9296)
@@ -38,13 +73,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
-## [1.14.2] (Prowler 5.13.2)
-
-### Fixed
-- Update unique constraint for `Provider` model to exclude soft-deleted entries, resolving duplicate errors when re-deleting providers [(#9054)](https://github.com/prowler-cloud/prowler/pull/9054)
-- Remove compliance generation for providers without compliance frameworks [(#9208)](https://github.com/prowler-cloud/prowler/pull/9208)
-
-## [1.14.1] (Prowler 5.13.1)
+## [1.14.1] (Prowler v5.13.1)
 
 ### Fixed
 - `/api/v1/overviews/providers` collapses data by provider type so the UI receives a single aggregated record per cloud family even when multiple accounts exist [(#9053)](https://github.com/prowler-cloud/prowler/pull/9053)
@@ -53,7 +82,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
-## [1.14.0] (Prowler 5.13.0)
+## [1.14.0] (Prowler v5.13.0)
 
 ### Added
 - Default JWT keys are generated and stored if they are missing from configuration [(#8655)](https://github.com/prowler-cloud/prowler/pull/8655)
@@ -77,14 +106,14 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
-## [1.13.2] (Prowler 5.12.3)
+## [1.13.2] (Prowler v5.12.3)
 
 ### Fixed
 - 500 error when deleting user [(#8731)](https://github.com/prowler-cloud/prowler/pull/8731)
 
 ---
 
-## [1.13.1] (Prowler 5.12.2)
+## [1.13.1] (Prowler v5.12.2)
 
 ### Changed
 - Renamed compliance overview task queue to `compliance` [(#8755)](https://github.com/prowler-cloud/prowler/pull/8755)
@@ -94,7 +123,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
-## [1.13.0] (Prowler 5.12.0)
+## [1.13.0] (Prowler v5.12.0)
 
 ### Added
 - Integration with JIRA, enabling sending findings to a JIRA project [(#8622)](https://github.com/prowler-cloud/prowler/pull/8622), [(#8637)](https://github.com/prowler-cloud/prowler/pull/8637)
@@ -103,7 +132,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
-## [1.12.0] (Prowler 5.11.0)
+## [1.12.0] (Prowler v5.11.0)
 
 ### Added
 - Lighthouse support for OpenAI GPT-5 [(#8527)](https://github.com/prowler-cloud/prowler/pull/8527)
@@ -115,7 +144,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ---
 
-## [1.11.0] (Prowler 5.10.0)
+## [1.11.0] (Prowler v5.10.0)
 
 ### Added
 - Github provider support [(#8271)](https://github.com/prowler-cloud/prowler/pull/8271)
