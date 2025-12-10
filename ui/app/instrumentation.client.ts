@@ -9,7 +9,6 @@
  */
 
 import * as Sentry from "@sentry/nextjs";
-import { browserTracingIntegration } from "@sentry/nextjs";
 
 const SENTRY_DSN = process.env.NEXT_PUBLIC_SENTRY_DSN;
 
@@ -48,7 +47,7 @@ if (SENTRY_DSN) {
       // 📊 Performance Monitoring: Core Web Vitals + RUM
       // Tracks LCP, FID, CLS, INP
       // Real User Monitoring captures actual user experience, not synthetic tests
-      browserTracingIntegration({
+      Sentry.browserTracingIntegration({
         enableLongTask: true, // Detect tasks that block UI (>50ms)
         enableInp: true, // Interaction to Next Paint (Core Web Vital)
       }),
